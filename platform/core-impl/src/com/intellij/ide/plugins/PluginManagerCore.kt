@@ -9,9 +9,6 @@ import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.invalidate
 import com.intellij.ide.plugins.PluginManagerCore.CORE_ID
-import com.intellij.ide.plugins.PluginManagerCore.DISABLE
-import com.intellij.ide.plugins.PluginManagerCore.EDIT
-import com.intellij.ide.plugins.PluginManagerCore.ENABLE
 import com.intellij.ide.plugins.PluginManagerCore.ULTIMATE_PLUGIN_ID
 import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
@@ -35,7 +32,6 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import com.intellij.util.PlatformUtils
-import com.intellij.util.containers.Java11Shim
 import com.intellij.util.lang.ZipEntryResolverPool
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
@@ -107,8 +103,8 @@ object PluginManagerCore {
     var nullablePluginSet: PluginSet? = null
     private val pluginNonLoadReasons: MutableMap<PluginId, PluginNonLoadReason> = hashMapOf()
     private val pluginErrors: ArrayList<PluginLoadingError> = ArrayList<PluginLoadingError>()
-    var pluginsToDisable: Set<PluginId>? = null
-    var pluginsToEnable: Set<PluginId>? = null
+    var pluginsToDisable: List<PluginStateChangeData> = emptyList()
+    var pluginsToEnable: List<PluginStateChangeData> = emptyList()
 
     /**
      * Bundled plugins that were updated.
@@ -133,11 +129,9 @@ object PluginManagerCore {
     }
 
     @Synchronized
-    fun consumeStartupActionsPluginsToEnableDisable(): Pair<Set<PluginId>, Set<PluginId>> {
-      val toEnable = pluginsToEnable ?: emptySet()
-      val toDisable = pluginsToDisable ?: emptySet()
-      pluginsToEnable = null
-      pluginsToDisable = null
+    fun getStartupActionsPluginsToEnableDisable(): Pair<List<PluginStateChangeData>, List<PluginStateChangeData>> {
+      val toEnable = pluginsToEnable
+      val toDisable = pluginsToDisable
       return toEnable to toDisable
     }
 
@@ -578,16 +572,17 @@ object PluginManagerCore {
     val pluginSetBuilder = PluginSetBuilder(loadingResult.getPluginsToAttemptLoading())
     selectPluginsForLoading(descriptors = pluginSetBuilder.unsortedPlugins, idMap = idMap, pluginNonLoadReasons = pluginNonLoadReasons, initContext = initContext)
     val cycleErrors = pluginSetBuilder.checkPluginCycles()
-    val pluginsToDisable = HashMap<PluginId, String>()
-    val pluginsToEnable = HashMap<PluginId, String>()
+    val pluginsToDisable = HashMap<PluginId, PluginStateChangeData>()
+    val pluginsToEnable = HashMap<PluginId, PluginStateChangeData>()
     
     fun registerLoadingError(loadingError: PluginNonLoadReason) {
       pluginNonLoadReasons.put(loadingError.plugin.pluginId, loadingError)
-      pluginsToDisable.put(loadingError.plugin.pluginId, loadingError.plugin.name)
+      pluginsToDisable.put(loadingError.plugin.pluginId, PluginStateChangeData(loadingError.plugin.pluginId, loadingError.plugin.name))
       if (loadingError is PluginDependencyIsDisabled) {
         val disabledDependencyId = loadingError.dependencyId
         if (initContext.isPluginDisabled(disabledDependencyId)) {
-          pluginsToEnable.put(disabledDependencyId, fullIdMap.get(disabledDependencyId)!!.getName())
+          val disabledPlugin = fullIdMap.get(disabledDependencyId)!!
+          pluginsToEnable.put(disabledDependencyId, PluginStateChangeData(disabledPlugin.pluginId, disabledPlugin.name))
         }
       }
     }
@@ -625,8 +620,7 @@ object PluginManagerCore {
       duplicateModuleMap = loadingResult.duplicateModuleMap ?: emptyMap(),
       cycleErrors = cycleErrors
     )
-    val actions = prepareActions(pluginNamesToDisable = pluginsToDisable.values, pluginNamesToEnable = pluginsToEnable.values)
-    pluginsState.addPluginLoadingErrors(errorList + actions.map { PluginLoadingError(reason = null, htmlMessageSupplier = it, error = null) })
+    pluginsState.addPluginLoadingErrors(errorList)
 
     if (initContext.checkEssentialPlugins) {
       checkEssentialPluginsAreAvailable(idMap, initContext.essentialPlugins, pluginNonLoadReasons)
@@ -636,8 +630,8 @@ object PluginManagerCore {
     ClassLoaderConfigurator(pluginSet, coreLoader).configure()
     return PluginManagerState(
       pluginSet = pluginSet,
-      pluginIdsToDisable = pluginsToDisable.keys,
-      pluginIdsToEnable = pluginsToEnable.keys,
+      pluginToDisable = pluginsToDisable.values.toList(),
+      pluginToEnable = pluginsToEnable.values.toList(),
       incompleteIdMapForLogging = loadingResult.getIncompleteIdMap(),
       shadowedBundledPlugins = loadingResult.shadowedBundledIds
     )
@@ -762,8 +756,8 @@ object PluginManagerCore {
         parentActivity = tracerShim.getTraceActivity(),
       )
       val pluginState = pluginsState
-      pluginState.pluginsToDisable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToDisable)
-      pluginState.pluginsToEnable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToEnable)
+      pluginState.pluginsToDisable = initResult.pluginToDisable
+      pluginState.pluginsToEnable = initResult.pluginToEnable
       pluginState.shadowedBundledPlugins = initResult.shadowedBundledPlugins
       //activity.setDescription("plugin count: ${initResult.pluginSet.enabledPlugins.size}")
       pluginState.nullablePluginSet = initResult.pluginSet
@@ -927,7 +921,7 @@ object PluginManagerCore {
   }
 
   @Internal
-  fun consumeStartupActionsPluginsToEnableDisable(): Pair<Set<PluginId>, Set<PluginId>> = pluginsState.consumeStartupActionsPluginsToEnableDisable()
+  fun getStartupActionsPluginsToEnableDisable(): Pair<List<PluginStateChangeData>, List<PluginStateChangeData>> = pluginsState.getStartupActionsPluginsToEnableDisable()
 
   //<editor-fold desc="Deprecated stuff.">
   @Deprecated("The platform code should use [JAVA_PLUGIN_ALIAS_ID] instead, plugins aren't supposed to use this")
@@ -1077,34 +1071,6 @@ private fun processAllNonOptionalDependencies(
     }
   }
   return true
-}
-
-private fun prepareActions(pluginNamesToDisable: Collection<String>, pluginNamesToEnable: Collection<String>): List<Supplier<HtmlChunk>> {
-  if (pluginNamesToDisable.isEmpty()) {
-    return emptyList()
-  }
-
-  val actions = ArrayList<Supplier<HtmlChunk>>()
-  val pluginNameToDisable = pluginNamesToDisable.singleOrNull()
-  val disableMessage = if (pluginNameToDisable != null) {
-    CoreBundle.message("link.text.disable.plugin", pluginNameToDisable)
-  }
-  else {
-    CoreBundle.message("link.text.disable.not.loaded.plugins")
-  }
-  actions.add(Supplier<HtmlChunk> { HtmlChunk.link(DISABLE, disableMessage) })
-  if (!pluginNamesToEnable.isEmpty()) {
-    val pluginNameToEnable = pluginNamesToEnable.singleOrNull()
-    val enableMessage = if (pluginNameToEnable != null) {
-      CoreBundle.message("link.text.enable.plugin", pluginNameToEnable)
-    }
-    else {
-      CoreBundle.message("link.text.enable.all.necessary.plugins")
-    }
-    actions.add(Supplier<HtmlChunk> { HtmlChunk.link(ENABLE, enableMessage) })
-  }
-  actions.add(Supplier<HtmlChunk> { HtmlChunk.link(EDIT, CoreBundle.message("link.text.open.plugin.manager")) })
-  return actions
 }
 
 @Internal

@@ -7,8 +7,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PluginManagerState internal constructor(
   val pluginSet: PluginSet,
-  val pluginIdsToDisable: Set<PluginId>,
-  val pluginIdsToEnable: Set<PluginId>,
+  val pluginToDisable: List<PluginStateChangeData>,
+  val pluginToEnable: List<PluginStateChangeData>,
   val incompleteIdMapForLogging: Map<PluginId, PluginMainDescriptor>, // TODO refactor
   val shadowedBundledPlugins: Set<PluginId>,
 )
+
+@ApiStatus.Internal
+class PluginStateChangeData(val pluginId: PluginId, val pluginName: String)
