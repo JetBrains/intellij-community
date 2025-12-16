@@ -538,44 +538,66 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
 
     fireBeforeShortcutTriggered(shortcut, actions, context)
 
-    val chosen = WriteIntentReadAction.compute(Computable {
-      val chosen = Utils.runUpdateSessionForInputEvent(
-        actions, e, wrappedContext, place, processor, presentationFactory
-      ) { rearranged, updater, events ->
-        doUpdateActionsInner(rearranged, updater, events, dumb, wouldBeEnabledIfNotDumb)
-      }
-      val doPerform = chosen != null && !this@IdeKeyEventDispatcher.context.secondStrokeActions.contains(chosen.action)
+    val isRwLockRequired = actions.any { it.templatePresentation.isRWLockRequired }
 
-      LOG.trace { "updateResult: chosen=$chosen, doPerform=$doPerform" }
-      val hasSecondStroke = chosen != null && this.context.secondStrokeActions.contains(chosen.action)
-      if (e.id == KeyEvent.KEY_PRESSED && !hasSecondStroke && (chosen != null || !wouldBeEnabledIfNotDumb.isEmpty())) {
-        ignoreNextKeyTypedEvent = true
+    val chosen = if (isRwLockRequired) {
+      WriteIntentReadAction.compute {
+        updateAndRunActionSynchronously(actions, e, wrappedContext, place, processor, presentationFactory, dumb, wouldBeEnabledIfNotDumb, project, shortcut)
       }
+    }
+    else {
+      updateAndRunActionSynchronously(actions, e, wrappedContext, place, processor, presentationFactory, dumb, wouldBeEnabledIfNotDumb, project, shortcut)
+    }
+    return chosen != null
+  }
 
-      if (doPerform) {
-        doPerformActionInner(e, processor, chosen.action, chosen.event)
-        logTimeMillis(chosen.startedAt, chosen.action)
-      }
-      else if (hasSecondStroke) {
-        waitSecondStroke(chosen.action, chosen.event.presentation)
-      }
-      else if (!wouldBeEnabledIfNotDumb.isEmpty()) {
-        val actionManager = ActionManager.getInstance()
-        showDumbModeBalloonLater(project = project,
-                                 message = getActionUnavailableMessage(wouldBeEnabledIfNotDumb),
-                                 expired = { e.isConsumed },
-                                 actionIds = actions.mapNotNull { action -> actionManager.getId(action) }) {
-          // invokeLater to make sure correct dataContext is taken from focus
-          ApplicationManager.getApplication().invokeLater {
-            DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
-              processAction(e, place, dataContext, actions, processor, presentationFactory, shortcut)
-            }
+  private fun updateAndRunActionSynchronously(
+    actions: List<AnAction>,
+    e: InputEvent,
+    wrappedContext: DataContext,
+    place: String,
+    processor: ActionProcessor,
+    presentationFactory: PresentationFactory,
+    dumb: Boolean,
+    wouldBeEnabledIfNotDumb: MutableList<AnAction>,
+    project: Project?,
+    shortcut: Shortcut,
+  ): UpdateResult? {
+    val chosen = Utils.runUpdateSessionForInputEvent(
+      actions, e, wrappedContext, place, processor, presentationFactory
+    ) { rearranged, updater, events ->
+      doUpdateActionsInner(rearranged, updater, events, dumb, wouldBeEnabledIfNotDumb)
+    }
+    val doPerform = chosen != null && !this@IdeKeyEventDispatcher.context.secondStrokeActions.contains(chosen.action)
+
+    LOG.trace { "updateResult: chosen=$chosen, doPerform=$doPerform" }
+    val hasSecondStroke = chosen != null && this.context.secondStrokeActions.contains(chosen.action)
+    if (e.id == KeyEvent.KEY_PRESSED && !hasSecondStroke && (chosen != null || !wouldBeEnabledIfNotDumb.isEmpty())) {
+      ignoreNextKeyTypedEvent = true
+    }
+
+    if (doPerform) {
+      doPerformActionInner(e, processor, chosen.action, chosen.event)
+      logTimeMillis(chosen.startedAt, chosen.action)
+    }
+    else if (hasSecondStroke) {
+      waitSecondStroke(chosen.action, chosen.event.presentation)
+    }
+    else if (!wouldBeEnabledIfNotDumb.isEmpty()) {
+      val actionManager = ActionManager.getInstance()
+      showDumbModeBalloonLater(project = project,
+                               message = getActionUnavailableMessage(wouldBeEnabledIfNotDumb),
+                               expired = { e.isConsumed },
+                               actionIds = actions.mapNotNull { action -> actionManager.getId(action) }) {
+        // invokeLater to make sure correct dataContext is taken from focus
+        ApplicationManager.getApplication().invokeLater {
+          DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
+            processAction(e, place, dataContext, actions, processor, presentationFactory, shortcut)
           }
         }
       }
-      chosen
-    })
-    return chosen != null
+    }
+    return chosen
   }
 
   /**
