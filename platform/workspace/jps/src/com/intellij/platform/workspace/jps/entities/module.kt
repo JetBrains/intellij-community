@@ -4,7 +4,10 @@
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
@@ -105,3 +108,37 @@ var ModuleEntity.Builder.testProperties: TestModulePropertiesEntity.Builder?
     (this as ModuleEntityBuilder).testProperties = value
   }
 //endregion
+
+
+@get:Internal
+val ModuleEntity.sdkId: SdkId?
+  get() = dependencies.sdk?.sdk
+
+@get:Internal
+@set:Internal
+var ModuleEntityBuilder.sdkId: SdkId?
+  get() = dependencies.sdk?.sdk
+  set(newSdkId) {
+    val currentSdk = dependencies.sdk
+    if (currentSdk?.sdk == newSdkId) {
+      return
+    }
+    else if (currentSdk != null) {
+      dependencies.remove(currentSdk)
+    }
+    if (newSdkId != null) {
+      dependencies.add(SdkDependency(newSdkId))
+    }
+  }
+
+
+private val Iterable<ModuleDependencyItem>.sdk: SdkDependency?
+  get() {
+    val currentSdk = firstNotNullOfOrNull {
+      when (it) {
+        InheritedSdkDependency, is LibraryDependency, is ModuleDependency, ModuleSourceDependency -> null
+        is SdkDependency -> it
+      }
+    }
+    return currentSdk
+  }
