@@ -8,8 +8,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import org.jetbrains.kotlin.idea.configuration.BuildSystemType
-import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import java.nio.file.Path
 
 internal const val COMPOSE_RESOURCES_DIR: String = "composeResources"
@@ -31,7 +29,7 @@ internal val String.withoutExtension: String get() = substringBeforeLast(".")
 
 /** Retrieves the module name for the Compose resources task of the given module. */
 internal fun Module.getModuleNameForComposeResourcesTask(): String? =
-  if (buildSystemType == BuildSystemType.AmperGradle) "" else ExternalSystemApiUtil.getExternalProjectId(this)?.getModuleName()
+  ExternalSystemApiUtil.getExternalProjectId(this)?.getModuleName()
 
 /**
  * Retrieves the directory for Compose resources for the specified source set name in the module.

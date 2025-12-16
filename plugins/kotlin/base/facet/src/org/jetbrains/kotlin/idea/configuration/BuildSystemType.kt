@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration
 
@@ -11,17 +11,7 @@ enum class BuildSystemType {
     Gradle,
     AndroidGradle,
     Maven,
-    /** 
-     * Standalone Amper build tool (without Gradle).
-     */
     Amper,
-    /**
-     * Gradle-based Amper, where Amper just acts as a configuration facade over Gradle via a settings plugin.
-     * 
-     * It is necessary to distinguish this case from [Gradle], because we don't want multiple project configurators
-     * to match the same module, so we need to prevent the Gradle one from kicking in for Amper modules.
-     */
-    AmperGradle,
 }
 
 interface BuildSystemTypeDetector {
