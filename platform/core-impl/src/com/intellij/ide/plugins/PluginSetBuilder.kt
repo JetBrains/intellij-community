@@ -429,7 +429,7 @@ private fun createCannotLoadError(
   val dependencyIdString = dependencyPluginId.idString
   val dependency = errors.get(dependencyPluginId)?.plugin
   if (dependency != null) {
-    return PluginDependencyCannotBeLoaded(plugin = descriptor, dependencyNameOrId = dependency.name ?: dependencyIdString, shouldNotifyUser = isNotifyUser)
+    return PluginDependencyCannotBeLoaded(plugin = descriptor, dependency = dependency, shouldNotifyUser = isNotifyUser)
   }
   else {
     return PluginDependencyIsNotInstalled(plugin = descriptor, dependencyNameOrId = dependencyIdString, shouldNotifyUser = isNotifyUser)
