@@ -567,8 +567,8 @@ open class IDETestContext(
       return this
     }
     this.onRemDevContext {
-      it.frontendIDEContext.setLicense(license)
-    }?.let { return it }
+      return frontendIDEContext.setLicense(license)
+    }
 
     val licenseKeyFileName: String = when (this.ide.productCode) {
       IdeProductProvider.IU.productCode -> "idea.key"
