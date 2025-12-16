@@ -66,10 +66,6 @@
             interface="org.jetbrains.kotlin.idea.base.projectStructure.KaModuleFactory"
             dynamic="true"/>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.analysis.additionalKDocResolutionProvider"
-            interface="org.jetbrains.kotlin.analysis.api.symbols.AdditionalKDocResolutionProvider"
-            dynamic="true"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.projectStructureInsightsProvider"
             interface="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureInsightsProvider"
             dynamic="true"/>
