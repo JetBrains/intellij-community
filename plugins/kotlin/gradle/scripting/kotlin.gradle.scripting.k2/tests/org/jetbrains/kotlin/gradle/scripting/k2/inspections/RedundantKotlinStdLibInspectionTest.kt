@@ -1063,39 +1063,6 @@ class RedundantKotlinStdLibInspectionTest : K2GradleCodeInsightTestCase() {
     }
 
     companion object {
-        private val WITH_CUSTOM_CONFIGURATIONS_AND_VERSION_CATALOGS_FIXTURE =
-            GradleTestFixtureBuilder.create("with-custom-configurations-and-version-catalogs") { gradleVersion ->
-                withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
-                    setProjectName("with-custom-configurations-and-version-catalogs")
-                }
-                withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
-                    withKotlinJvmPlugin()
-                    withPrefix { code("val customConf by configurations.creating {}") }
-                    withPrefix { code("val customSourceSet by sourceSets.creating {}") }
-                }
-                withFile(
-                    "gradle/libs.versions.toml", /* language=TOML */ """
-                    [versions]
-                    kotlin = "2.2.0"
-                    [plugins]
-                    kotlinJvm = "org.jetbrains.kotlin.jvm:2.2.0"
-                    kotlinJvmFull = { id = "org.jetbrains.kotlin.jvm", version = "2.2.0" }
-                    kotlinJvmFullRef = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-                    [libraries]
-                    kotlin-std-lib-simple = "org.jetbrains.kotlin:kotlin-stdlib:2.2.0"
-                    kotlin-std-lib-noVersion.module = "org.jetbrains.kotlin:kotlin-stdlib"
-                    kotlin-std-lib-moduleVersion = { module = "org.jetbrains.kotlin:kotlin-stdlib", version = "2.2.0" }
-                    kotlin-std-lib-moduleVersionRef = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
-                    kotlin-std-lib-groupNameVersion = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = "2.2.0" }
-                    kotlin-std-lib-groupNameVersionRef = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
-                    kotlin-std-lib-multiline = ""${'"'}org.jetbrains.kotlin
-                    :kotlin-stdlib
-                    :2.2.0
-                    ""${'"'}
-                    """.trimIndent()
-                )
-            }
-
         private val DISABLED_DEFAULT_STDLIB_FIXTURE =
             GradleTestFixtureBuilder.create("disabled-default-stdlib") { gradleVersion ->
                 withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {

@@ -1,16 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.scripting.k2.K2GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.codeInspection.GradleAvoidApplyPluginMethodInspection
-import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinDslScriptsModelImportIsSupported
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_CORE_PLUGIN_SHORT_NAMES
 import org.junit.jupiter.params.ParameterizedTest
@@ -23,10 +18,9 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         gradleVersion: GradleVersion,
         test: () -> Unit
     ) {
-        assumeThatGradleIsAtLeast(gradleVersion, "8.14") { "Best practice added in Gradle 8.14" }
-        test(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        assumeThatKotlinDslScriptsModelImportIsSupported(gradleVersion)
+        testKotlinDslEmptyProject(gradleVersion) {
             codeInsightFixture.enableInspections(GradleAvoidApplyPluginMethodInspection::class.java)
-            (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
             test()
         }
     }
@@ -675,13 +669,6 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     companion object {
-        private val EMPTY_PROJECT_WITH_BUILD_FILE = GradleTestFixtureBuilder.create("empty-project-with-build-file") { gradleVersion ->
-            withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
-                setProjectName("empty-project-with-build-file")
-            }
-            withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {}
-        }
-
         @JvmStatic
         @Suppress("unused") // used by testAllCorePlugins test
         private fun corePluginNamesFactory(): ArgumentSets =
