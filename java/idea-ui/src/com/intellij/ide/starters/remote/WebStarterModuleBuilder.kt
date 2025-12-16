@@ -98,6 +98,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
   protected open fun getDefaultLanguageLevel(): StarterLanguageLevel? = null
   protected open fun getApplicationTypes(): List<StarterAppType> = emptyList()
   protected open fun getPackagingTypes(): List<StarterAppPackaging> = emptyList()
+  protected open fun getConfigurationFileFormats(): List<StarterConfigFileFormat> = emptyList()
 
   protected open fun getFilePathsToOpen(): List<String> = emptyList()
 
@@ -119,7 +120,8 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
       getApplicationTypes(),
       getTestFrameworks(),
       getCustomizedMessages(),
-      isShowProjectTypes()
+      isShowProjectTypes(),
+      getConfigurationFileFormats()
     )
   }
 
@@ -134,6 +136,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     starterContext.languageLevel = starterSettings.defaultLanguageLevel ?: starterSettings.languageLevels.firstOrNull()
     starterContext.packaging = starterSettings.packagingTypes.firstOrNull()
     starterContext.testFramework = starterSettings.testFrameworks.firstOrNull()
+    starterContext.configFileFormat = starterSettings.configurationFileFormats.firstOrNull()
 
     return createOptionsStep(WebStarterContextProvider(this, context, starterContext, starterSettings, parentDisposable))
   }

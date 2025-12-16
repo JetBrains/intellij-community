@@ -46,6 +46,7 @@ import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.util.fireListenersAndLogAllExceptions
+import java.lang.ref.WeakReference
 import kotlin.time.Duration.Companion.seconds
 
 internal class TerminalToolWindowTabsManagerImpl(
@@ -133,6 +134,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     return tab
   }
 
+  @OptIn(AwaitCancellationAndInvoke::class)
   private fun doCreateTab(terminal: TerminalView): TerminalToolWindowTab {
     val panel = TerminalToolWindowPanel()
     panel.setContent(terminal.component)
@@ -165,6 +167,21 @@ internal class TerminalToolWindowTabsManagerImpl(
           }
         }
       }
+    }
+
+    // In case of project closing there can be a race between terminal coroutine scope cancellation
+    // and removing the content from the tool window.
+    // If the terminal coroutine scope is canceled before the content is removed, the editor may be shown green for a moment.
+    // The ideal solution is to cancel the terminal scope only after the content is removed.
+    // However, the terminal component has a broader lifecycle than the tool window tab (to be able to detach it),
+    // so it can't be tied to the content removal directly.
+    // Let's try to hide the tool window tab right on terminal scope cancellation,
+    // but do not store strong reference to the content to avoid leaks.
+    val tabReference = WeakReference(content)
+    terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.UiWithModelAccess) {
+      val content = tabReference.get() ?: return@awaitCancellationAndInvoke
+      val manager = content.manager ?: return@awaitCancellationAndInvoke
+      manager.removeContent(content, true)
     }
 
     return TerminalToolWindowTabImpl(terminal, content)

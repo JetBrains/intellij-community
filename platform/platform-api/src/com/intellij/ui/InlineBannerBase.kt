@@ -55,7 +55,7 @@ abstract class InlineBannerBase(
 
     message.isOpaque = isOpaque
     message.background = background
-    message.border = null
+    message.border = JBUI.Borders.empty()
     message.isEditable = false
     message.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, java.lang.Boolean.TRUE)
     message.contentType = UIUtil.HTML_MIME

@@ -1,6 +1,7 @@
 package com.intellij.json;
 
 import com.intellij.json.psi.JsonElementTypeConverterFactory;
+import com.intellij.json.syntax.JsonLanguageDefinition;
 import com.intellij.platform.syntax.psi.CommonElementTypeConverterFactory;
 import com.intellij.platform.syntax.psi.ElementTypeConverters;
 import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;

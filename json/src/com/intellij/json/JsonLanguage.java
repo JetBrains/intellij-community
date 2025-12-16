@@ -2,8 +2,11 @@
 package com.intellij.json;
 
 import com.intellij.lang.Language;
+import org.jetbrains.annotations.NotNull;
 
 public class JsonLanguage extends Language {
+  
+  @NotNull
   public static final JsonLanguage INSTANCE = new JsonLanguage();
 
   protected JsonLanguage(String ID, String... mimeTypes) {
