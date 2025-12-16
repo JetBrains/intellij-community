@@ -23,15 +23,17 @@ import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.application
+import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.GraphicsUtil
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
 import java.awt.Component
+import java.awt.EventQueue
 import java.awt.KeyboardFocusManager
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -42,6 +44,7 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JFrame
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * The IDE needs to run certain AWT events as soon as possible.
@@ -69,6 +72,10 @@ object SuvorovProgress {
 
   @Volatile
   private lateinit var eternalStealer: EternalEventStealer
+
+  // exposed in a field for debugging
+  @Volatile
+  private var stealer: EventStealer? = null
 
   fun init(disposable: Disposable) {
     eternalStealer = EternalEventStealer(disposable)
@@ -196,6 +203,7 @@ object SuvorovProgress {
         })
       }
     }
+    this.stealer = stealer
 
     repostAllEvents()
     var oldTimestamp = System.currentTimeMillis()
@@ -212,9 +220,52 @@ object SuvorovProgress {
       }
     }
     finally {
+      this.stealer = null
       niceOverlay.close()
       Disposer.dispose(disposable)
     }
+  }
+
+  fun logErrorIfTooLong(): AutoCloseable {
+    val loggingJob = deadlockLoggingJob(stealer, eternalStealer)
+    return AutoCloseable { loggingJob.cancel() }
+  }
+
+  @OptIn(DelicateCoroutinesApi::class)
+  private fun deadlockLoggingJob(stealer: EventStealer?, eternalStealer: EternalEventStealer): Job = GlobalScope.launch(blockingDispatcher) {
+    delay(5.seconds)
+    val stealerInfo = stealer?.dumpDebugInfo() ?: "No EventStealer"
+    val eternalStealerInfo = eternalStealer.dumpDebugInfo()
+    val ideEventQueueInfo = with (IdeEventQueue.getInstance()) {
+      buildString {
+        appendLine("IdeEventQueueInfo")
+        appendLine("- trueCurrentEvent = $trueCurrentEvent")
+        appendLine("- dispatchers = ${IdeEventQueue::class.java.getDeclaredField("dispatchers").also { it.setAccessible(true) }.get(this@with)}")
+        appendLine("- nonLockingDispatchers = ${IdeEventQueue::class.java.getDeclaredField("nonLockingDispatchers").also { it.setAccessible(true) }.get(this@with)}")
+        appendLine("- postEventListeners = ${IdeEventQueue::class.java.getDeclaredField("postEventListeners").also { it.setAccessible(true) }.get(this@with)}")
+        val queues = EventQueue::class.java.getDeclaredField("queues").also { it.setAccessible(true) }.get(this@with) as Array<*>
+        queues.forEachIndexed { index, queue ->
+          var head = queue?.javaClass?.getDeclaredField("head")?.also { it.setAccessible(true) }?.get(queue)
+          val tail = queue?.javaClass?.getDeclaredField("tail")?.also { it.setAccessible(true) }?.get(queue)
+          append("- queue#$index ($queue):")
+          if (head == null) {
+            appendLine()
+            return@forEachIndexed
+          }
+          val eventField = head.javaClass.getDeclaredField("event").also { it.setAccessible(true) }
+          val nextField = head.javaClass.getDeclaredField("next").also { it.setAccessible(true) }
+          while (head != null && head != tail) {
+            append(eventField.get(head))
+            append(", ")
+            head = nextField.get(head)
+          }
+          appendLine()
+        }
+      }
+    }
+
+    val edtTrace = "EDT stacktrace:\n" + EDT.getEventDispatchThread().stackTrace.joinToString("\n")
+    logger<SuvorovProgress>().error("Probable deadlock detected in SuvorovProgress:\n$stealerInfo\n$eternalStealerInfo\n$ideEventQueueInfo\n$edtTrace", Throwable())
   }
 
   private fun showPotemkinProgress(awaitedValue: Deferred<*>, isBar: Boolean) {
@@ -345,6 +396,11 @@ private class EternalEventStealer(disposable: Disposable) {
         }
         false
       }, disposable)
+  }
+
+  fun dumpDebugInfo(): String {
+    val events = specialEvents.map { event -> event.toString() }
+    return "EternalEventStealer: ${specialEvents.size} events " + if (events.isEmpty()) "" else "($events)"
   }
 
   fun dispatchAllEventsForTimeout(timeoutMillis: Long, deferred: Deferred<*>) {

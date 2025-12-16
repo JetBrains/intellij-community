@@ -130,6 +130,27 @@ public class EventStealer {
     }
   }
 
+  String dumpDebugInfo() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Input events: ");
+    sb.append(myInputEvents.size());
+    sb.append(" (");
+    for (InputEvent event: myInputEvents) {
+      sb.append(event.toString());
+      sb.append(", ");
+    }
+    sb.append("); ");
+    sb.append("Invocation events:");
+    sb.append(myInvocationEvents.size());
+    sb.append("(");
+    for (InvocationEvent event: myInvocationEvents) {
+      sb.append(event.toString());
+      sb.append(", ");
+    }
+    sb.append(")");
+    return sb.toString();
+  }
+
   void dispatchAllExistingEvents() {
     while (true) {
       InvocationEvent event = myInvocationEvents.poll();

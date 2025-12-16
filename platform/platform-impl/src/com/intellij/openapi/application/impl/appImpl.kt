@@ -7,6 +7,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ThreadingSupport.RunnableWithTransferredWriteAction
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.util.SuvorovProgress
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
@@ -210,7 +211,9 @@ object InternalThreading {
                                        val event = TransferredWriteActionEvent(toRun)
                                        try {
                                          IdeEventQueue.getInstance().doPostEvent(event, true)
-                                         event.blockingWait()
+                                         SuvorovProgress.logErrorIfTooLong().use {
+                                           event.blockingWait()
+                                         }
                                        }
                                        catch (e: InterruptedException) {
                                          exceptionRef.set(e)
