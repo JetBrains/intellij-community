@@ -86,12 +86,19 @@ internal class ContentModuleDependencyResolutionTest {
         }
       }
     }
-    val foo = pluginSet.getEnabledModule("foo")
-    val dependency = foo.moduleDependencies.modules.single()
-    assertThat(dependency.name).isEqualTo("platform")
-    assertThat(dependency.namespace).isNotEqualTo(PluginModuleId.JETBRAINS_NAMESPACE)
-    val fooPlatform = pluginSet.getEnabledPlugin("foo").contentModules.first { it.moduleId.name == "platform" }
-    assertThat(dependency.namespace).isEqualTo(fooPlatform.moduleId.namespace)
+    // namespaces are not active yet: (com.intellij.ide.plugins.PluginModuleId.useNamespaceInId)
+    if (System.getProperty("revert.IJPL220159") == "true") {
+      val foo = pluginSet.getEnabledModule("foo")
+      val dependency = foo.moduleDependencies.modules.single()
+      assertThat(dependency.name).isEqualTo("platform")
+      assertThat(dependency.namespace).isNotEqualTo(PluginModuleId.JETBRAINS_NAMESPACE)
+      val fooPlatform = pluginSet.getEnabledPlugin("foo").contentModules.first { it.moduleId.name == "platform" }
+      assertThat(dependency.namespace).isEqualTo(fooPlatform.moduleId.namespace)
+    } else {
+      // FIXME 'foo' and 'core' conflict on 'platform' module while namespaces are not active, they should be both excluded,
+      //  but it does not happen with old plugin init, 'foo' overwrites mapping for the module
+      assertThat(pluginSet).doesNotHaveEnabledPlugins()
+    }
   }
 
   @Test
@@ -118,10 +125,22 @@ internal class ContentModuleDependencyResolutionTest {
         }
       }
     }
-    val bar = pluginSet.getEnabledModule("bar")
-    val dependency = bar.moduleDependencies.modules.single()
-    assertThat(dependency.name).isEqualTo("foo")
-    assertThat(dependency.namespace).isEqualTo("bar_ns")
+    // namespaces are not active yet: (com.intellij.ide.plugins.PluginModuleId.useNamespaceInId)
+    if (System.getProperty("revert.IJPL220159") == "true") {
+      val bar = pluginSet.getEnabledModule("bar")
+      val dependency = bar.moduleDependencies.modules.single()
+      assertThat(dependency.name).isEqualTo("foo")
+      assertThat(dependency.namespace).isEqualTo("bar_ns")
+    } else {
+      // FIXME 'bar' and 'core' conflict on 'bar' module while namespaces are not active, they should be both excluded,
+      //  but it does not happen with old plugin init, 'bar' overwrites mapping for the module
+      assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
+      val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
+      assertThat(errors.joinToString { it.reason?.logMessage ?: "" }).contains(
+        "declares id 'foo' which conflicts with the same id from plugin 'bar'",
+        "declares id 'foo' which conflicts with the same id from plugin 'core'"
+      )
+    }
   }
 
   private fun buildPluginSet(builder: PluginSetSpecBuilder.() -> Unit): PluginSet {

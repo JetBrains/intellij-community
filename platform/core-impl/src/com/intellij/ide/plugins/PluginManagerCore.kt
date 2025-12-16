@@ -558,7 +558,7 @@ object PluginManagerCore {
       val shadowedBundledIds: MutableSet<PluginId>,
     )
     val (pluginsToLoad, pluginNonLoadReasons, incompletePlugins, idMap, fullIdMap, fullContentModuleIdMap, duplicateModuleMap, shadowedBundledIds) =
-      if (System.getProperty("revert.IJPL220159", "true") == "true") {
+      if (System.getProperty("revert.IJPL220159", "false") == "true") {
         val loadingResult = PluginLoadingResult()
         loadingResult.initAndAddAll(descriptorLoadingResult = discoveredPlugins, initContext = initContext)
         val pluginNonLoadReasons = loadingResult.copyPluginNonLoadReasons()
