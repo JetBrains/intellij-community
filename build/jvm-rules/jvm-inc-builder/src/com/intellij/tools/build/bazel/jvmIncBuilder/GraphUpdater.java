@@ -35,6 +35,9 @@ public final class GraphUpdater {
     }
     finally {
       if (diagnosticBuilder != null) {
+        if (!delta.isSourceOnly()) {
+          diagnosticBuilder.markLibrariesDifferentiateEnd();
+        }
         List<NodeSource> affected = nextSnapshotDelta == null? List.of() : collect(filter(nextSnapshotDelta.getModified(), src -> !modifiedBefore.contains(src)), new ArrayList<>());
         String decisionLog = logData.toString();
         if (delta.isSourceOnly()) {

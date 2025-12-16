@@ -3,8 +3,8 @@ package com.intellij.tools.build.bazel.jvmIncBuilder;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.*;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.forms.FormBinding;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.AsyncLibraryGraphLoader;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.DeltaView;
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.LibraryGraphLoader;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,10 +67,13 @@ public class BazelIncBuilder {
             srcSnapshotDelta.markRecompileAll();
           }
           else {
+            if (diagnosticCollector != null) {
+              diagnosticCollector.markLibrariesDifferentiateBegin();
+            }
             Predicate<NodeSource> isLibTracked = ns -> DataPaths.isLibraryTracked(ns.toString());
             ElementSnapshotDeltaImpl<NodeSource> libsSnapshotDelta = new ElementSnapshotDeltaImpl<>(
               ElementSnapshot.derive(pastState.getLibraries(), isLibTracked),
-              ElementSnapshot.derive(context.getBinaryDependencies(), isLibTracked)
+              ElementSnapshot.derive(presentState.getLibraries(), isLibTracked)
             );
             modifiedLibraries = libsSnapshotDelta.getModified();
             deletedLibraries = libsSnapshotDelta.getDeleted();
@@ -81,12 +84,14 @@ public class BazelIncBuilder {
               List<Graph> presentLibGraphs = new ArrayList<>();
               Set<NodeSource> changedLibNodeSources = new HashSet<>();
               Set<NodeSource> deletedLibNodeSources = new HashSet<>();
-              for (NodeSource presentLib : modifiedLibraries) {
-                Path presentLibPath = context.getPathMapper().toPath(presentLib);
-                Path pastLibPath = DataPaths.getJarBackupStoreFile(context, presentLibPath);
+              for (AsyncLibraryGraphLoader.GraphStateChange state : AsyncLibraryGraphLoader.submit(context, modifiedLibraries, pastState.getLibraries(), presentState.getLibraries())) {
+                if (srcSnapshotDelta.isRecompileAll()) {
+                  state.cancel(); // graph analysis not needed anymore
+                  continue;
+                }
                 try {
-                  Pair<NodeSourceSnapshot, Graph> presentGraph = LibraryGraphLoader.getLibraryGraph(presentLib, presentState.getLibraries().getDigest(presentLib), presentLibPath);
-                  Pair<NodeSourceSnapshot, Graph> pastGraph = LibraryGraphLoader.getLibraryGraph(presentLib, pastState.getLibraries().getDigest(presentLib), pastLibPath);
+                  Pair<NodeSourceSnapshot, Graph> pastGraph = state.getPast();
+                  Pair<NodeSourceSnapshot, Graph> presentGraph = state.getPresent();
                   NodeSourceSnapshotDelta delta = new SnapshotDeltaImpl(pastGraph.first, presentGraph.first);
                   if (!isEmpty(delta.getModified()) || !isEmpty(delta.getDeleted())) {
                     collect(delta.getModified(), changedLibNodeSources);
@@ -99,32 +104,40 @@ public class BazelIncBuilder {
                   LOG.log(Level.WARNING, "Problems loading library graphs, recompiling whole target " + context.getTargetName(), e);
                   srcSnapshotDelta.markRecompileAll();
                   context.report(Message.create(null, Message.Kind.WARNING, e));
-                  break;
                 }
               }
 
-              if (!changedLibNodeSources.isEmpty() || !deletedLibNodeSources.isEmpty()) {
+              if (!srcSnapshotDelta.isRecompileAll() && (!changedLibNodeSources.isEmpty() || !deletedLibNodeSources.isEmpty())) {
 
                 // Add to 'pastLibGraphs' all previously available graph parts, even if they are not changed. Reason: need full nodes info for graph node traversals
-                for (NodeSource lib : libsSnapshotDelta.getBaseSnapshot().getElements()) {
-                  if (!contains(libsSnapshotDelta.getModified(), lib)) {
-                    pastLibGraphs.add(
-                      LibraryGraphLoader.getLibraryGraph(lib, presentState.getLibraries().getDigest(lib), context.getPathMapper().toPath(lib)).second
-                    );
+                for (AsyncLibraryGraphLoader.GraphState state : AsyncLibraryGraphLoader.submit(libsSnapshotDelta.getBaseSnapshot(), lib -> !contains(libsSnapshotDelta.getModified(), lib), context.getPathMapper()::toPath)) {
+                  if (srcSnapshotDelta.isRecompileAll()) {
+                    state.cancel(); // graph analysis not needed anymore
+                    continue;
+                  }
+                  try {
+                    pastLibGraphs.add(state.get().second);
+                  }
+                  catch (Exception e) {
+                    LOG.log(Level.WARNING, "Problems loading library graphs, recompiling whole target " + context.getTargetName(), e);
+                    srcSnapshotDelta.markRecompileAll();
+                    context.report(Message.create(null, Message.Kind.WARNING, e));
                   }
                 }
 
-                try {
-                  Delta libDelta = new DeltaView(changedLibNodeSources, deletedLibNodeSources, CompositeGraph.create(presentLibGraphs));
-                  srcSnapshotDelta = graphUpdater.updateBeforeCompilation(storageManager.getGraph(), srcSnapshotDelta, libDelta, pastLibGraphs, diagnosticCollector);
-                  if (shouldRecompileAll(srcSnapshotDelta)) {
-                    srcSnapshotDelta.markRecompileAll();
+                if (!srcSnapshotDelta.isRecompileAll()) {
+                  try {
+                    Delta libDelta = new DeltaView(changedLibNodeSources, deletedLibNodeSources, CompositeGraph.create(presentLibGraphs));
+                    srcSnapshotDelta = graphUpdater.updateBeforeCompilation(storageManager.getGraph(), srcSnapshotDelta, libDelta, pastLibGraphs, diagnosticCollector);
+                    if (shouldRecompileAll(srcSnapshotDelta)) {
+                      srcSnapshotDelta.markRecompileAll();
+                    }
                   }
-                }
-                catch (IOException e) {
-                  LOG.log(Level.WARNING, "Problems loading dependency graph, recompiling whole target " + context.getTargetName(), e);
-                  srcSnapshotDelta.markRecompileAll();
-                  context.report(Message.create(null, Message.Kind.WARNING, e));
+                  catch (IOException e) {
+                    LOG.log(Level.WARNING, "Problems loading dependency graph, recompiling whole target " + context.getTargetName(), e);
+                    srcSnapshotDelta.markRecompileAll();
+                    context.report(Message.create(null, Message.Kind.WARNING, e));
+                  }
                 }
               }
             }

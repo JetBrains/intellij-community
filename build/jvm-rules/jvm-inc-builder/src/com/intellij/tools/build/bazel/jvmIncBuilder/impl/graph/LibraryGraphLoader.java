@@ -1,14 +1,14 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph;
 
-import com.dynatrace.hash4j.hashing.HashStream64;
 import com.dynatrace.hash4j.hashing.Hashing;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import com.intellij.tools.build.bazel.jvmIncBuilder.BuildContext;
 import com.intellij.tools.build.bazel.jvmIncBuilder.NodeSourceSnapshot;
 import com.intellij.tools.build.bazel.jvmIncBuilder.VMFlags;
+import com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ClassDataZipEntry;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.SourceSnapshotImpl;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.Delta;
 import org.jetbrains.jps.dependency.Graph;
@@ -46,34 +46,31 @@ public final class LibraryGraphLoader {
 
   private static Pair<NodeSourceSnapshot, Graph> loadReadonlyLibraryGraph(NodeSource lib, Delta delta, Iterator<ClassDataZipEntry> entries) {
     // for this presentation, we use packages within the given library as 'node sources', and class files in the corresponding package as 'nodes'
-    Map<String, Iterable<NodeSource>> sourcesMap = new HashMap<>();
-    Map<NodeSource, List<Pair<String, Long>>> packagesMap = new HashMap<>();
-    String prefix = lib.toString() + "!/";
+    Map<NodeSource, String> snapshotMap = new HashMap<>(); // map of [nodePath -> digest] where digest reflects the content state of the class Node
+    String prefix = getLibraryPathPrefix(lib);
     while (entries.hasNext()) {
       ClassDataZipEntry entry = entries.next();
-      String parent = entry.getParent();
-      if (parent != null) {
-        var libNode = JvmClassNodeBuilder.createForLibrary(entry.getPath(), entry.getClassReader()).getResult();
+      String entryPath = entry.getPath();
+      if (!ZipOutputBuilder.isDirectoryName(entryPath)) {
+        var libNode = JvmClassNodeBuilder.createForLibrary(entryPath, entry.getClassReader()).getResult();
         if (JvmClassNodeBuilder.isAbiNode(libNode)) { // with this check, the code is applicable for non-abi jars too
-          Iterable<NodeSource> libSrc = sourcesMap.computeIfAbsent(parent, n -> Set.of(new PathSource(prefix + n)));
-          delta.associate(libNode, libSrc);
-          packagesMap.computeIfAbsent(libSrc.iterator().next(), s -> new ArrayList<>()).add(Pair.create(entry.getPath(), Hashing.xxh3_64().hashBytesToLong(entry.getContent())));
+          NodeSource nodeSource = new PathSource(prefix + entryPath);
+          delta.associate(libNode, Set.of(nodeSource));
+          snapshotMap.put(nodeSource, Long.toHexString(Hashing.xxh3_64().hashBytesToLong(entry.getContent())));
         }
       }
     }
-    Map<NodeSource, String> snapshotMap = new HashMap<>(); // map of [packageName -> digest] where digest reflects the state of all classes currently present in the package
-    HashStream64 stream = Hashing.xxh3_64().hashStream();
-    for (Map.Entry<NodeSource, List<Pair<String, Long>>> entry : packagesMap.entrySet()) {
-      List<Pair<String, Long>> nodes = entry.getValue();
-      Collections.sort(nodes, Comparator.comparing(nameWithDigest -> nameWithDigest.first));
-      stream.reset();
-      for (Pair<String, Long> node : nodes) {
-        stream.putString(node.first);
-        stream.putLong(node.second);
-      }
-      snapshotMap.put(entry.getKey(), Long.toHexString(stream.getAsLong()));
-    }
     return Pair.create(new SourceSnapshotImpl(snapshotMap), delta);
+  }
+
+  private static @NotNull String getLibraryPathPrefix(NodeSource lib) {
+    String path = lib.toString();
+    int idx = path.lastIndexOf('/');
+    if (idx <= 0) {
+      return path + "!/";
+    }
+    // hash parent path to make the prefix shorter, yet distinct
+    return Long.toHexString(Utils.digest(path.substring(0, idx))) + path.substring(idx) + "!/";
   }
 
   private record LibDescriptor(@NotNull NodeSource library, @NotNull String digest, @NotNull Path loadPath) {
