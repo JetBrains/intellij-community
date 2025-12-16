@@ -588,7 +588,13 @@ internal class PluginDependenciesTest {
     }.buildDir(pluginDirPath.resolve("intellij.java.frontend"))
 
     val pluginSet = buildPluginSet()
-    assertThat(pluginSet).hasExactlyEnabledPlugins("com.intellij.java")
+    if (System.getProperty("revert.IJPL220159") == "true") {
+      // this is wrong: these two plugins conflict on declared content module ids, so they should be both excluded.
+      // Yet, in the old plugin init it's not an error
+      assertThat(pluginSet).hasExactlyEnabledPlugins("com.intellij.java")
+    } else {
+      assertThat(pluginSet).doesNotHaveEnabledPlugins()
+    }
   }
 
   @Test

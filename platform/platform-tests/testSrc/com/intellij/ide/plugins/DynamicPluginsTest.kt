@@ -1424,7 +1424,7 @@ private fun assertNoLoadingErrors(pluginId: PluginId) {
 
 private fun assertDisabledDependencyLoadingError(pluginId: PluginId, dependencyId: PluginId) {
   val error = PluginManagerCore.getPluginNonLoadReason(pluginId)
-  assertThat(error).isNotNull().isInstanceOf(PluginDependencyIsDisabled::class.java)
-  val disabledDependency = (error as PluginDependencyIsDisabled).dependencyId
+  assertThat(error).isNotNull().isInstanceOfAny(PluginDependencyIsDisabled::class.java, PluginDependencyCannotBeLoaded::class.java)
+  val disabledDependency = (error as? PluginDependencyIsDisabled)?.dependencyId ?: (error as? PluginDependencyCannotBeLoaded)!!.dependency.pluginId
   assertThat(disabledDependency).isNotNull().isEqualTo(dependencyId)
 }
