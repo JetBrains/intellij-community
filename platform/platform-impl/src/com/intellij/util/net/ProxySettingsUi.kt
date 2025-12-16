@@ -26,7 +26,8 @@ import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
 import com.intellij.ui.layout.selected
-import com.intellij.util.net.ProxyConfiguration.*
+import com.intellij.util.net.OverrideCapableProxySettings.State
+import com.intellij.util.net.ProxyConfiguration.ProxyProtocol
 import com.intellij.util.proxy.CommonProxy
 import com.intellij.util.proxy.JavaProxyProperty
 import com.intellij.util.ui.JBUI
@@ -72,10 +73,8 @@ internal class ProxySettingsUi(
   private lateinit var tunnelingAuthSchemeDisabledWarning: JLabel
   private lateinit var pluginOverrideCheckbox: JCheckBox
 
-  private var lastOverriderProvidedConfiguration: ProxyConfiguration? =
-    (proxySettings as? OverrideCapableProxySettings)?.overrideProvider?.proxyConfigurationProvider?.getProxyConfiguration()
-  private var lastUserConfiguration: ProxyConfiguration =
-    (proxySettings as? OverrideCapableProxySettings)?.originalProxyConfiguration ?: proxySettings.getProxyConfiguration()
+  private var lastOverriderProvidedConfiguration: State? = null
+  private lateinit var lastUserConfiguration: State
 
   private var checkConnectionUrl = "https://example.com/"
   private var lastProxyError: @NlsSafe String = ""
@@ -258,41 +257,51 @@ internal class ProxySettingsUi(
     reset(ProxySettings.getInstance())
   }
 
-  private fun parseProxyConfiguration(): Result<ProxyConfiguration> = runCatching {
-    if (noProxyRb.isSelected) return@runCatching ProxyConfiguration.direct
-    if (autoDetectProxyRb.isSelected) {
-      if (!pacUrlCheckBox.isSelected) return@runCatching ProxyConfiguration.autodetect
-      val pacUrl = pacUrlTextField.text
-      if (pacUrl.isNullOrBlank()) throw ConfigurationException(IdeBundle.message("dialog.message.url.is.empty"))
-      try {
-        return@runCatching ProxyConfiguration.proxyAutoConfiguration(URI(pacUrl).toURL())
-      } catch (_: MalformedURLException) {
-        throw ConfigurationException(IdeBundle.message("dialog.message.url.is.invalid"))
-      } catch (_: URISyntaxException) {
-        throw ConfigurationException(IdeBundle.message("dialog.message.url.is.invalid"))
-      }
+  private fun parseProxyConfiguration(): Result<State> = runCatching {
+    val type = when {
+      autoDetectProxyRb.isSelected && pacUrlCheckBox.isSelected -> State.Type.PAC
+      autoDetectProxyRb.isSelected -> State.Type.AUTO
+      useHttpProxyRb.isSelected -> State.Type.STATIC
+      else -> State.Type.DIRECT
     }
-    if (useHttpProxyRb.isSelected) {
-      val protocol = if (typeHttpRb.isSelected) ProxyProtocol.HTTP else ProxyProtocol.SOCKS
-      val host = proxyHostTextField.text
-      if (host.isNullOrBlank()) throw ConfigurationException(IdeBundle.message("dialog.message.host.name.empty"))
-      if (NetUtils.isValidHost(host) == NetUtils.ValidHostInfo.INVALID) {
-        throw ConfigurationException(IdeBundle.message("dialog.message.invalid.host.value"))
-      }
-      val port = proxyPortTextField.number
-      val exceptions = proxyExceptionsField.text.orEmpty()
-      return@runCatching ProxyConfiguration.proxy(protocol, host, port, exceptions)
+    val pacUrl = if (autoDetectProxyRb.isSelected && pacUrlCheckBox.isSelected) parsePacUrl() else pacUrlTextField.text?.trim().orEmpty()
+    val protocol = if (typeSocksRb.isSelected) ProxyProtocol.SOCKS else ProxyProtocol.HTTP
+    val host = if (useHttpProxyRb.isSelected) parseProxyHost() else proxyHostTextField.text?.trim().orEmpty()
+    val port = proxyPortTextField.number
+    val exceptions = proxyExceptionsField.text?.trim().orEmpty()
+    State(type, pacUrl, protocol, host, port, exceptions)
+  }
+
+  @Throws(ConfigurationException::class)
+  private fun parsePacUrl(): String {
+    val pacUrl = pacUrlTextField.text?.trim()
+    if (pacUrl.isNullOrBlank()) throw ConfigurationException(IdeBundle.message("dialog.message.url.is.empty"))
+    try {
+      URI(pacUrl).toURL()
+      return pacUrl
+    } catch (_: MalformedURLException) {
+      throw ConfigurationException(IdeBundle.message("dialog.message.url.is.invalid"))
+    } catch (_: URISyntaxException) {
+      throw ConfigurationException(IdeBundle.message("dialog.message.url.is.invalid"))
     }
-    error("unreachable")
+  }
+
+  @Throws(ConfigurationException::class)
+  private fun parseProxyHost(): String {
+    val host = proxyHostTextField.text?.trim()
+    if (host.isNullOrBlank()) throw ConfigurationException(IdeBundle.message("dialog.message.host.name.empty"))
+    if (NetUtils.isValidHost(host) == NetUtils.ValidHostInfo.INVALID) throw ConfigurationException(IdeBundle.message("dialog.message.invalid.host.value"))
+    return host
   }
 
   private fun parseCredentials(): Result<Credentials?> = runCatching {
-    if (!useHttpProxyRb.isSelected || !proxyAuthCheckBox.isSelected) return@runCatching null
     val login = proxyLoginTextField.text
-    if (login.isNullOrBlank()) throw ConfigurationException(IdeBundle.message("dialog.message.login.empty"))
     val password = proxyPasswordTextField.password
-    if (password.isEmpty()) throw ConfigurationException(IdeBundle.message("dialog.message.password.empty"))
-    Credentials(login, password)
+    if (useHttpProxyRb.isSelected && proxyAuthCheckBox.isSelected) {
+      if (login.isNullOrBlank()) throw ConfigurationException(IdeBundle.message("dialog.message.login.empty"))
+      if (password.isEmpty()) throw ConfigurationException(IdeBundle.message("dialog.message.password.empty"))
+    }
+    if (login.isNullOrBlank() || password.isEmpty()) null else Credentials(login, password)
   }
 
   override fun isModified(settings: ProxySettings): Boolean {
@@ -302,67 +311,63 @@ internal class ProxySettingsUi(
       // else user configuration is enabled
     }
     val uiConf = parseProxyConfiguration().getOrElse { return true }
-    if (uiConf != settings.getProxyConfiguration()) return true
-    if (uiConf is StaticProxyConfiguration) {
-      val credentials = parseCredentials().getOrElse { return true }
-      val storeCreds = credentialStore.getCredentials(uiConf.host, uiConf.port)
-      if (credentials != storeCreds) return true
-      if (rememberProxyPasswordCheckBox.isSelected != credentialStore.areCredentialsRemembered(uiConf.host, uiConf.port)) return true
+    if (settings is OverrideCapableProxySettings) {
+      if (uiConf != settings.proxyState) return true
+    } else {
+      if (uiConf.asProxyConfiguration() != settings.getProxyConfiguration()) return true
     }
+    val credentials = parseCredentials().getOrElse { return true }
+    val storeCreds = credentialStore.getCredentials(uiConf.PROXY_HOST, uiConf.PROXY_PORT)
+    if (credentials != storeCreds) return true
+    if (rememberProxyPasswordCheckBox.isSelected != credentialStore.areCredentialsRemembered(uiConf.PROXY_HOST, uiConf.PROXY_PORT)) return true
     return false
   }
 
-  private fun resetProxyConfiguration(conf: ProxyConfiguration) {
-    when (val conf = conf) {
-      is DirectProxy -> noProxyRb.isSelected = true
-      is AutoDetectProxy -> {
-        autoDetectProxyRb.isSelected = true
-        pacUrlCheckBox.isSelected = false
-        pacUrlTextField.text = ""
-      }
-      is ProxyAutoConfiguration -> {
-        autoDetectProxyRb.isSelected = true
-        pacUrlCheckBox.isSelected = true
-        pacUrlTextField.text = conf.pacUrl.toString()
-      }
-      is StaticProxyConfiguration -> {
-        useHttpProxyRb.isSelected = true
-        proxyHostTextField.text = conf.host
-        proxyPortTextField.number = conf.port
-        proxyExceptionsField.text = conf.exceptions
-        when (conf.protocol) {
-          ProxyProtocol.HTTP -> typeHttpRb.isSelected = true
-          ProxyProtocol.SOCKS -> typeSocksRb.isSelected = true
-        }
-        val creds = credentialStore.getCredentials(conf.host, conf.port)
-        proxyAuthCheckBox.isSelected = creds != null
-        proxyLoginTextField.text = creds?.userName
-        proxyPasswordTextField.text = creds?.password?.toString() ?: ""
-        rememberProxyPasswordCheckBox.isSelected = creds != null && credentialStore.areCredentialsRemembered(conf.host, conf.port)
-      }
+  private fun resetProxyConfiguration(state: State) {
+    noProxyRb.isSelected = state.PROXY_TYPE == State.Type.DIRECT
+
+    autoDetectProxyRb.isSelected = state.PROXY_TYPE == State.Type.AUTO || state.PROXY_TYPE == State.Type.PAC
+    pacUrlCheckBox.isSelected = state.PROXY_TYPE == State.Type.PAC
+    pacUrlTextField.text = state.PAC_URL
+
+    useHttpProxyRb.isSelected = state.PROXY_TYPE == State.Type.STATIC
+    when (state.PROXY_PROTOCOL) {
+      ProxyProtocol.HTTP -> typeHttpRb.isSelected = true
+      ProxyProtocol.SOCKS -> typeSocksRb.isSelected = true
     }
+    proxyHostTextField.text = state.PROXY_HOST
+    proxyPortTextField.number = state.PROXY_PORT
+    proxyExceptionsField.text = state.PROXY_EXCEPTIONS
+
+    val creds = credentialStore.getCredentials(state.PROXY_HOST, state.PROXY_PORT)
+    proxyAuthCheckBox.isSelected = creds != null
+    proxyLoginTextField.text = creds?.userName
+    proxyPasswordTextField.text = creds?.password?.toString().orEmpty()
+    rememberProxyPasswordCheckBox.isSelected = creds != null && credentialStore.areCredentialsRemembered(state.PROXY_HOST, state.PROXY_PORT)
   }
 
   private fun resetByOverrideState(overridden: Boolean) {
-    if (!overridden || lastOverriderProvidedConfiguration == null) {
-      noProxyRb.isEnabled = true
-      autoDetectProxyRb.isEnabled = true
-      useHttpProxyRb.isEnabled = true
-      resetProxyConfiguration(lastUserConfiguration)
-    } else {
+    if (overridden && lastOverriderProvidedConfiguration != null) {
       noProxyRb.isEnabled = false
       autoDetectProxyRb.isEnabled = false
       useHttpProxyRb.isEnabled = false
       resetProxyConfiguration(lastOverriderProvidedConfiguration!!)
     }
+    else {
+      noProxyRb.isEnabled = true
+      autoDetectProxyRb.isEnabled = true
+      useHttpProxyRb.isEnabled = true
+      resetProxyConfiguration(lastUserConfiguration)
+    }
   }
 
   override fun reset(settings: ProxySettings) {
     if (settings is OverrideCapableProxySettings) {
-      lastOverriderProvidedConfiguration = settings.overrideProvider?.proxyConfigurationProvider?.getProxyConfiguration()
-      lastUserConfiguration = settings.originalProxyConfiguration
-
       val overrideProvider = settings.overrideProvider
+
+      lastOverriderProvidedConfiguration = overrideProvider?.proxyConfigurationProvider?.getProxyConfiguration()?.let { State().amend(it) }
+      lastUserConfiguration = settings.proxyState
+
       pluginOverrideCheckbox.isVisible = overrideProvider != null
       pluginOverrideCheckbox.isSelected = overrideProvider != null && settings.isOverrideEnabled
       if (overrideProvider != null) {
@@ -373,10 +378,9 @@ internal class ProxySettingsUi(
       }
     } else {
       lastOverriderProvidedConfiguration = null
-      lastUserConfiguration = settings.getProxyConfiguration()
+      lastUserConfiguration = State().amend(settings.getProxyConfiguration())
     }
-
-    resetByOverrideState(lastOverriderProvidedConfiguration != null && pluginOverrideCheckbox.isSelected)
+    resetByOverrideState(pluginOverrideCheckbox.isSelected)
 
     errorLabel.isVisible = lastProxyError.isNotEmpty()
     errorLabel.text = lastProxyError
@@ -389,15 +393,17 @@ internal class ProxySettingsUi(
   override fun apply(settings: ProxySettings) {
     val modified = isModified(settings)
 
-    if (settings is OverrideCapableProxySettings && settings.overrideProvider != null) {
-      settings.isOverrideEnabled = pluginOverrideCheckbox.isSelected
-    }
-    val conf = parseProxyConfiguration().getOrThrow()
+    val state = parseProxyConfiguration().getOrThrow()
     val credentials = parseCredentials().getOrThrow()
-    settings.setProxyConfiguration(conf)
-    if (conf is StaticProxyConfiguration) {
-      credentialStore.setCredentials(conf.host, conf.port, credentials, rememberProxyPasswordCheckBox.isSelected)
+    if (settings is OverrideCapableProxySettings) {
+      if (settings.overrideProvider != null) {
+        settings.isOverrideEnabled = pluginOverrideCheckbox.isSelected
+      }
+      settings.proxyState = state
+    } else {
+      settings.setProxyConfiguration(state.asProxyConfiguration())
     }
+    credentialStore.setCredentials(state.PROXY_HOST, state.PROXY_PORT, credentials, rememberProxyPasswordCheckBox.isSelected)
 
     disabledPromptsManager.enableAllPromptedAuthentications()
     if (modified && JBCefApp.isStarted()) {
@@ -409,6 +415,7 @@ internal class ProxySettingsUi(
         .notify(null)
     }
 
+    lastUserConfiguration = state
     lastProxyError = ""
   }
 
