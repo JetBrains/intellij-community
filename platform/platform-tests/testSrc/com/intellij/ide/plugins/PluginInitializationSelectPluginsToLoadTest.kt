@@ -15,11 +15,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 /**
- * Tests for the complete plugin initialization pipeline:
- * - Phase 1: Plugin selection ([PluginInitializationContext.selectPluginsToLoad])
- * - Phase 2: ID conflict resolution ([PluginInitializationContext.resolveIdConflicts])
+ * Tests for plugin initialization: [PluginInitializationContext.selectPluginsToLoad]
+ * 
+ * This function performs plugin selection (compatibility, version selection, disabled/incompatible filtering)
+ * and ID conflict resolution in a single operation.
  */
-class PluginInitializationTest {
+class PluginInitializationSelectPluginsToLoadTest {
   
   init {
     Logger.setFactory(TestLoggerFactory::class.java)
@@ -60,39 +61,25 @@ class PluginInitializationTest {
     )
   }
 
-  private fun testPhase1Only(
-    productBuildNumber: BuildNumber = BuildNumber.fromString("241.0")!!,
-    discoveryResult: PluginDescriptorLoadingResult,
-  ): Pair<List<DiscoveredPluginsList>, MutableList<ExcludedPluginInfo>> {
-    val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
-    val initContext = createInitContext(productBuildNumber = productBuildNumber)
-
-    val filteredResult = initContext.selectPluginsToLoad(
-      discoveryResult.discoveredPlugins,
-      onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
-    )
-
-    return filteredResult to excludedPlugins
-  }
-
-  private fun testBothPhases(
+  private fun testPluginSelection(
     essentialPlugins: Set<PluginId> = emptySet(),
     disabledPlugins: Set<PluginId> = emptySet(),
     productBuildNumber: BuildNumber = BuildNumber.fromString("241.0")!!,
+    explicitPluginSubsetToLoad: Set<PluginId>? = null,
+    disablePluginLoadingCompletely: Boolean = false,
     discoveryResult: PluginDescriptorLoadingResult,
   ): Pair<UnambiguousPluginSet, MutableList<ExcludedPluginInfo>> {
     val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
-    val initContext = createInitContext(essentialPlugins, disabledPlugins, productBuildNumber)
-
-    // Phase 1: Plugin selection (disabled filtering, compatibility & version selection)
-    val compatiblePlugins = initContext.selectPluginsToLoad(
-      discoveryResult.discoveredPlugins,
-      onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+    val initContext = createInitContext(
+      essentialPlugins = essentialPlugins,
+      disabledPlugins = disabledPlugins,
+      productBuildNumber = productBuildNumber,
+      explicitPluginSubsetToLoad = explicitPluginSubsetToLoad,
+      disablePluginLoadingCompletely = disablePluginLoadingCompletely
     )
 
-    // Phase 2: ID conflict resolution
-    val result = initContext.resolveIdConflicts(
-      compatiblePlugins = compatiblePlugins,
+    val result = initContext.selectPluginsToLoad(
+      discoveryResult.discoveredPlugins,
       onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
     )
 
@@ -100,7 +87,7 @@ class PluginInitializationTest {
   }
 
   @Nested
-  inner class Phase1PluginSelection {
+  inner class PluginSelection {
 
     @Test
     fun `select newer version when multiple versions exist`() {
@@ -108,11 +95,10 @@ class PluginInitializationTest {
       plugin("foo") { version = "2.0" }.buildDir(pluginsDirPath.resolve("foo_2-0"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (filteredResult, excludedPlugins) = testPhase1Only(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
 
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(1)
-      assertThat(filteredResult[0].plugins[0].version).isEqualTo("2.0")
+      assertThat(result.plugins).hasSize(1)
+      assertThat(result.plugins[0].version).isEqualTo("2.0")
       assertThat(excludedPlugins).hasSize(1)
       assertThat(excludedPlugins[0].reason).isInstanceOf(PluginVersionIsSuperseded::class.java)
       assertThat(excludedPlugins[0].plugin.version).isEqualTo("1.0")
@@ -131,14 +117,13 @@ class PluginInitializationTest {
       }.buildDir(pluginsDirPath.resolve("foo_2-0"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (filteredResult, excludedPlugins) = testPhase1Only(
+      val (result, excludedPlugins) = testPluginSelection(
         productBuildNumber = BuildNumber.fromString("250.0")!!,
         discoveryResult = discoveryResult
       )
 
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(1)
-      assertThat(filteredResult[0].plugins[0].version).isEqualTo("1.0")
+      assertThat(result.plugins).hasSize(1)
+      assertThat(result.plugins[0].version).isEqualTo("1.0")
       assertThat(excludedPlugins).hasSize(1)
       assertThat(excludedPlugins[0].reason).isInstanceOf(PluginUntilBuildConstraintViolation::class.java)
       assertThat(excludedPlugins[0].plugin.version).isEqualTo("2.0")
@@ -164,15 +149,13 @@ class PluginInitializationTest {
         DiscoveredPluginsList(systemPlugins.discoveredPlugins[0].plugins, PluginsSourceContext.SystemPropertyProvided)
       )
       
-      val filteredResult = initContext.selectPluginsToLoad(
+      val result = initContext.selectPluginsToLoad(
         discoveredPlugins,
         onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
       )
 
-      assertThat(filteredResult).hasSize(2)
-      assertThat(filteredResult[0].plugins).hasSize(0)
-      assertThat(filteredResult[1].plugins).hasSize(1)
-      assertThat(filteredResult[1].plugins[0].version).isEqualTo("1.0")
+      assertThat(result.plugins).hasSize(1)
+      assertThat(result.plugins[0].version).isEqualTo("1.0")
       assertThat(excludedPlugins).hasSize(1)
       assertThat(excludedPlugins[0].reason).isInstanceOf(PluginVersionIsSuperseded::class.java)
       assertThat(excludedPlugins[0].plugin.version).isEqualTo("2.0")
@@ -185,11 +168,10 @@ class PluginInitializationTest {
       plugin("foo") { version = "3.0" }.buildDir(pluginsDirPath.resolve("foo_3-0"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (filteredResult, excludedPlugins) = testPhase1Only(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
 
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(1)
-      assertThat(filteredResult[0].plugins[0].version).isEqualTo("3.0")
+      assertThat(result.plugins).hasSize(1)
+      assertThat(result.plugins[0].version).isEqualTo("3.0")
       assertThat(excludedPlugins).hasSize(2)
       assertThat(excludedPlugins.all { it.reason is PluginVersionIsSuperseded }).isTrue()
     }
@@ -207,14 +189,13 @@ class PluginInitializationTest {
       }.buildDir(pluginsDirPath.resolve("bar"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (filteredResult, excludedPlugins) = testPhase1Only(
+      val (result, excludedPlugins) = testPluginSelection(
         productBuildNumber = BuildNumber.fromString("250.0")!!,
         discoveryResult = discoveryResult
       )
 
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(1)
-      assertThat(filteredResult[0].plugins[0].pluginId.idString).isEqualTo("foo")
+      assertThat(result.plugins).hasSize(1)
+      assertThat(result.plugins[0].pluginId.idString).isEqualTo("foo")
       assertThat(excludedPlugins).hasSize(1)
       assertThat(excludedPlugins[0].reason).isInstanceOf(PluginUntilBuildConstraintViolation::class.java)
       assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("bar")
@@ -233,13 +214,12 @@ class PluginInitializationTest {
       }.buildDir(pluginsDirPath.resolve("bar"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (filteredResult, excludedPlugins) = testPhase1Only(
+      val (result, excludedPlugins) = testPluginSelection(
         productBuildNumber = BuildNumber.fromString("250.0")!!,
         discoveryResult = discoveryResult
       )
 
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).isEmpty()
+      assertThat(result.plugins).isEmpty()
       assertThat(excludedPlugins).hasSize(2)
       assertThat(excludedPlugins.all { it.reason is PluginUntilBuildConstraintViolation }).isTrue()
     }
@@ -249,12 +229,12 @@ class PluginInitializationTest {
       val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
       val initContext = createInitContext()
       
-      val filteredResult = initContext.selectPluginsToLoad(
+      val result = initContext.selectPluginsToLoad(
         emptyList(),
         onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
       )
 
-      assertThat(filteredResult).isEmpty()
+      assertThat(result.plugins).isEmpty()
       assertThat(excludedPlugins).isEmpty()
     }
 
@@ -265,11 +245,10 @@ class PluginInitializationTest {
       plugin("baz") { version = "1.0" }.buildDir(pluginsDirPath.resolve("baz"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (filteredResult, excludedPlugins) = testPhase1Only(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
 
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(3)
-      assertThat(filteredResult[0].plugins.map { it.pluginId.idString })
+      assertThat(result.plugins).hasSize(3)
+      assertThat(result.plugins.map { it.pluginId.idString })
         .containsExactlyInAnyOrder("foo", "bar", "baz")
       assertThat(excludedPlugins).isEmpty()
     }
@@ -292,15 +271,14 @@ class PluginInitializationTest {
       }.buildDir(pluginsDirPath.resolve("foo_3-0"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (filteredResult, excludedPlugins) = testPhase1Only(
+      val (result, excludedPlugins) = testPluginSelection(
         productBuildNumber = BuildNumber.fromString("250.0")!!,
         discoveryResult = discoveryResult
       )
 
       // Only version 1.0 is compatible
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(1)
-      assertThat(filteredResult[0].plugins[0].version).isEqualTo("1.0")
+      assertThat(result.plugins).hasSize(1)
+      assertThat(result.plugins[0].version).isEqualTo("1.0")
       
       // Versions 2.0 and 3.0 are incompatible
       assertThat(excludedPlugins).hasSize(2)
@@ -322,14 +300,13 @@ class PluginInitializationTest {
         productBuildNumber = BuildNumber.fromString("250.0")!!
       )
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val result = initContext.selectPluginsToLoad(
         discoveryResult.discoveredPlugins,
         onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
       )
 
       // Plugin should be excluded as incompatible (compatibility check happens first)
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).isEmpty()
+      assertThat(result.plugins).isEmpty()
       assertThat(excludedPlugins).hasSize(1)
       assertThat(excludedPlugins[0].reason).isInstanceOf(PluginUntilBuildConstraintViolation::class.java)
       assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("foo")
@@ -337,7 +314,7 @@ class PluginInitializationTest {
   }
 
   @Nested
-  inner class Phase2IdConflictResolution {
+  inner class IdConflictResolution {
 
     @Test
     fun `essential plugin wins over non-essential on ID conflict`() {
@@ -352,7 +329,7 @@ class PluginInitializationTest {
       }.buildDir(pluginsDirPath.resolve("bar"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testBothPhases(
+      val (result, excludedPlugins) = testPluginSelection(
         essentialPlugins = setOf(PluginId.getId("foo")),
         discoveryResult = discoveryResult
       )
@@ -377,7 +354,7 @@ class PluginInitializationTest {
       }.buildDir(pluginsDirPath.resolve("bar"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testBothPhases(
+      val (result, excludedPlugins) = testPluginSelection(
         essentialPlugins = setOf(PluginId.getId("bar")),
         discoveryResult = discoveryResult
       )
@@ -402,7 +379,7 @@ class PluginInitializationTest {
       }.buildDir(pluginsDirPath.resolve("bar"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testBothPhases(
+      val (result, excludedPlugins) = testPluginSelection(
         essentialPlugins = setOf(PluginId.getId("foo"), PluginId.getId("bar")),
         discoveryResult = discoveryResult
       )
@@ -425,7 +402,7 @@ class PluginInitializationTest {
       }.buildDir(pluginsDirPath.resolve("bar"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testBothPhases(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).isEmpty()
       assertThat(excludedPlugins).hasSize(2)
@@ -441,7 +418,7 @@ class PluginInitializationTest {
       }.buildDir(pluginsDirPath.resolve("bar"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testBothPhases(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).isEmpty()
       assertThat(excludedPlugins).hasSize(2)
@@ -456,7 +433,7 @@ class PluginInitializationTest {
       }.buildDir(pluginsDirPath.resolve("foo"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testBothPhases(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).isEmpty()
       assertThat(excludedPlugins).hasSize(1)
@@ -477,7 +454,7 @@ class PluginInitializationTest {
       }.buildDir(pluginsDirPath.resolve("bar"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testBothPhases(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
 
       // Both plugins should be excluded due to conflict on "common" alias
       assertThat(result.plugins).isEmpty()
@@ -506,7 +483,7 @@ class PluginInitializationTest {
       }.buildDir(pluginsDirPath.resolve("bar"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testBothPhases(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
 
       // Both plugins should be excluded due to conflict
       assertThat(result.plugins).isEmpty()
@@ -516,7 +493,7 @@ class PluginInitializationTest {
   }
 
   @Nested
-  inner class Phase1DisabledPluginsAsEssentialDependencies {
+  inner class DisabledPluginsAsEssentialDependencies {
 
     @Test
     fun `disabled plugin loaded when required by essential plugin`() {
@@ -540,9 +517,8 @@ class PluginInitializationTest {
       )
 
       // Both foo and bar should be loaded (bar is required by essential foo)
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(2)
-      assertThat(filteredResult[0].plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
+      assertThat(filteredResult.plugins).hasSize(2)
+      assertThat(filteredResult.plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
       assertThat(excludedPlugins).isEmpty()
     }
 
@@ -564,9 +540,8 @@ class PluginInitializationTest {
       )
 
       // Only foo should be loaded, bar is disabled and not required
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(1)
-      assertThat(filteredResult[0].plugins[0].pluginId.idString).isEqualTo("foo")
+      assertThat(filteredResult.plugins).hasSize(1)
+      assertThat(filteredResult.plugins[0].pluginId.idString).isEqualTo("foo")
       
       assertThat(excludedPlugins).hasSize(1)
       assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsMarkedDisabled::class.java)
@@ -596,9 +571,8 @@ class PluginInitializationTest {
       )
 
       // foo and bar loaded (bar required by foo), baz excluded
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(2)
-      assertThat(filteredResult[0].plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
+      assertThat(filteredResult.plugins).hasSize(2)
+      assertThat(filteredResult.plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
       
       assertThat(excludedPlugins).hasSize(1)
       assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsMarkedDisabled::class.java)
@@ -607,7 +581,7 @@ class PluginInitializationTest {
   }
 
   @Nested
-  inner class Phase1IncompatibleWithEssentialPlugins {
+  inner class IncompatibleWithEssentialPlugins {
 
     @Test
     fun `plugin excluded when essential declares incompatible-with it`() {
@@ -630,9 +604,8 @@ class PluginInitializationTest {
       )
 
       // Only foo should be loaded, bar is incompatible with essential foo
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(1)
-      assertThat(filteredResult[0].plugins[0].pluginId.idString).isEqualTo("foo")
+      assertThat(filteredResult.plugins).hasSize(1)
+      assertThat(filteredResult.plugins[0].pluginId.idString).isEqualTo("foo")
       
       assertThat(excludedPlugins).hasSize(1)
       assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsIncompatibleWithAnotherPlugin::class.java)
@@ -661,9 +634,8 @@ class PluginInitializationTest {
       )
 
       // Both foo and bar loaded (dependency wins over incompatibility)
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(2)
-      assertThat(filteredResult[0].plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
+      assertThat(filteredResult.plugins).hasSize(2)
+      assertThat(filteredResult.plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
       assertThat(excludedPlugins).isEmpty()
     }
 
@@ -686,9 +658,8 @@ class PluginInitializationTest {
       )
 
       // Both loaded (only essential incompatibilities matter)
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(2)
-      assertThat(filteredResult[0].plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
+      assertThat(filteredResult.plugins).hasSize(2)
+      assertThat(filteredResult.plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
       assertThat(excludedPlugins).isEmpty()
     }
 
@@ -716,9 +687,8 @@ class PluginInitializationTest {
       )
 
       // Only foo should be loaded, bar is incompatible (via alias resolution)
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(1)
-      assertThat(filteredResult[0].plugins[0].pluginId.idString).isEqualTo("foo")
+      assertThat(filteredResult.plugins).hasSize(1)
+      assertThat(filteredResult.plugins[0].pluginId.idString).isEqualTo("foo")
       
       assertThat(excludedPlugins).hasSize(1)
       assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsIncompatibleWithAnotherPlugin::class.java)
@@ -756,9 +726,8 @@ class PluginInitializationTest {
       )
 
       // bar and its dependency foo should be loaded
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(2)
-      assertThat(filteredResult[0].plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
+      assertThat(filteredResult.plugins).hasSize(2)
+      assertThat(filteredResult.plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
 
       // baz excluded as not required
       assertThat(excludedPlugins).hasSize(1)
@@ -785,9 +754,8 @@ class PluginInitializationTest {
       )
 
       // foo (essential) and bar (explicit) should be loaded
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(2)
-      assertThat(filteredResult[0].plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
+      assertThat(filteredResult.plugins).hasSize(2)
+      assertThat(filteredResult.plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
 
       // baz excluded
       assertThat(excludedPlugins).hasSize(1)
@@ -813,9 +781,8 @@ class PluginInitializationTest {
       )
 
       // CORE and foo should be loaded
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(2)
-      assertThat(filteredResult[0].plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder(PluginManagerCore.CORE_ID.idString, "foo")
+      assertThat(filteredResult.plugins).hasSize(2)
+      assertThat(filteredResult.plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder(PluginManagerCore.CORE_ID.idString, "foo")
 
       // bar excluded
       assertThat(excludedPlugins).hasSize(1)
@@ -848,9 +815,8 @@ class PluginInitializationTest {
       )
 
       // c, b, and a should be loaded (transitive chain)
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(3)
-      assertThat(filteredResult[0].plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("a", "b", "c")
+      assertThat(filteredResult.plugins).hasSize(3)
+      assertThat(filteredResult.plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("a", "b", "c")
 
       // d excluded
       assertThat(excludedPlugins).hasSize(1)
@@ -879,9 +845,8 @@ class PluginInitializationTest {
       )
 
       // Both bar and foo should be loaded (explicit subset does not care about disabled plugins)
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(2)
-      assertThat(filteredResult[0].plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
+      assertThat(filteredResult.plugins).hasSize(2)
+      assertThat(filteredResult.plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
 
       // No exclusions
       assertThat(excludedPlugins).isEmpty()
@@ -908,9 +873,8 @@ class PluginInitializationTest {
       )
 
       // Only bar should remain
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(1)
-      assertThat(filteredResult[0].plugins[0].pluginId.idString).isEqualTo("bar")
+      assertThat(filteredResult.plugins).hasSize(1)
+      assertThat(filteredResult.plugins[0].pluginId.idString).isEqualTo("bar")
 
       // foo excluded as incompatible (not as "not required")
       assertThat(excludedPlugins).hasSize(1)
@@ -936,9 +900,8 @@ class PluginInitializationTest {
       )
 
       // Only bar should remain
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(1)
-      assertThat(filteredResult[0].plugins[0].pluginId.idString).isEqualTo("bar")
+      assertThat(filteredResult.plugins).hasSize(1)
+      assertThat(filteredResult.plugins[0].pluginId.idString).isEqualTo("bar")
 
       // Both foo versions excluded: 1.0 superseded, 2.0 not required
       assertThat(excludedPlugins).hasSize(2)
@@ -971,9 +934,8 @@ class PluginInitializationTest {
       )
 
       // CORE and foo (essential) should be loaded
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(2)
-      assertThat(filteredResult[0].plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder(PluginManagerCore.CORE_ID.idString, "foo")
+      assertThat(filteredResult.plugins).hasSize(2)
+      assertThat(filteredResult.plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder(PluginManagerCore.CORE_ID.idString, "foo")
 
       // bar excluded
       assertThat(excludedPlugins).hasSize(1)
@@ -1000,8 +962,7 @@ class PluginInitializationTest {
       )
 
       // No plugins should be loaded (CORE is not in our test set)
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).isEmpty()
+      assertThat(filteredResult.plugins).isEmpty()
 
       // All plugins excluded with PluginLoadingIsDisabledCompletely
       assertThat(excludedPlugins).hasSize(2)
@@ -1024,9 +985,8 @@ class PluginInitializationTest {
       )
 
       // Only CORE should be loaded
-      assertThat(filteredResult).hasSize(1)
-      assertThat(filteredResult[0].plugins).hasSize(1)
-      assertThat(filteredResult[0].plugins[0].pluginId).isEqualTo(PluginManagerCore.CORE_ID)
+      assertThat(filteredResult.plugins).hasSize(1)
+      assertThat(filteredResult.plugins[0].pluginId).isEqualTo(PluginManagerCore.CORE_ID)
 
       // Only foo excluded
       assertThat(excludedPlugins).hasSize(1)
@@ -1044,7 +1004,7 @@ class PluginInitializationTest {
         onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
       )
 
-      assertThat(filteredResult).isEmpty()
+      assertThat(filteredResult.plugins).isEmpty()
       assertThat(excludedPlugins).isEmpty()
     }
   }
@@ -1065,7 +1025,7 @@ class PluginInitializationTest {
       }.buildDir(pluginsDirPath.resolve("bar"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testBothPhases(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).hasSize(2)
       assertThat(excludedPlugins).isEmpty()
@@ -1094,7 +1054,7 @@ class PluginInitializationTest {
       plugin("foo") { version = "1.0" }.buildDir(pluginsDirPath.resolve("foo"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, _) = testBothPhases(discoveryResult = discoveryResult)
+      val (result, _) = testPluginSelection(discoveryResult = discoveryResult)
 
       assertThat(result.resolvePluginId(PluginId.getId("unknown"))).isNull()
     }
@@ -1120,7 +1080,7 @@ class PluginInitializationTest {
       plugin("baz") { version = "1.0" }.buildDir(pluginsDirPath.resolve("baz"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testBothPhases(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
 
       // Only baz should remain (foo versions conflict, bar conflicts with foo)
       assertThat(result.plugins).hasSize(1)
@@ -1135,7 +1095,7 @@ class PluginInitializationTest {
     @Test
     fun `empty plugin list produces empty result`() {
       val discoveryResult = PluginDescriptorLoadingResult.build(emptyList())
-      val (result, _) = testBothPhases(discoveryResult = discoveryResult)
+      val (result, _) = testPluginSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).isEmpty()
       assertThat(result.getFullPluginIdMapping()).isEmpty()
@@ -1150,7 +1110,7 @@ class PluginInitializationTest {
       }.buildDir(pluginsDirPath.resolve("foo"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testBothPhases(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).hasSize(1)
       assertThat(excludedPlugins).isEmpty()
@@ -1170,7 +1130,7 @@ class PluginInitializationTest {
       plugin("foo") { version = "3.0" }.buildDir(pluginsDirPath.resolve("foo_3-0"))
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testBothPhases(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).hasSize(1)
       assertThat(result.plugins[0].version).isEqualTo("3.0")
@@ -1193,7 +1153,7 @@ class PluginInitializationTest {
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
       
       // Neither plugin disabled
-      val (result, excludedPlugins) = testBothPhases(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
 
       // Both should be excluded due to ID conflict
       assertThat(result.plugins).isEmpty()
@@ -1216,7 +1176,7 @@ class PluginInitializationTest {
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
       
       // Disable foo, keep bar enabled
-      val (result, excludedPlugins) = testBothPhases(
+      val (result, excludedPlugins) = testPluginSelection(
         disabledPlugins = setOf(PluginId.getId("foo")),
         discoveryResult = discoveryResult
       )

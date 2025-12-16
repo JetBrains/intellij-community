@@ -12,25 +12,24 @@ import org.jetbrains.annotations.ApiStatus
  * Note: Input should already be filtered for compatibility and version selection using
  * [PluginInitializationContext.selectPluginsToLoad].
  * 
- * @param compatiblePlugins List of discovered plugins (already filtered for compatibility and version selection)
+ * @param compatiblePlugins List of plugins admitted for loading (already filtered for compatibility and version selection)
  * @param onPluginExcluded Callback invoked for each excluded plugin
  * @return Unambiguous plugin set with all ID conflicts resolved
  */
 @ApiStatus.Internal
 fun PluginInitializationContext.resolveIdConflicts(
-  compatiblePlugins: List<DiscoveredPluginsList>,
+  compatiblePlugins: List<PluginMainDescriptor>,
   onPluginExcluded: (PluginMainDescriptor, PluginNonLoadReason) -> Unit,
 ): UnambiguousPluginSet {
-  val allPlugins = compatiblePlugins.flatMapTo(ArrayList()) { it.plugins }
-  UnambiguousPluginSet.tryBuild(allPlugins)
+  UnambiguousPluginSet.tryBuild(compatiblePlugins)
     ?.let { return it }
   // slow path: there are conflicts
   val toExclude = HashSet<PluginMainDescriptor>()
-  allPlugins.resolveConflicts(essentialPlugins) { plugin, reason ->
+  compatiblePlugins.resolveConflicts(essentialPlugins) { plugin, reason ->
     onPluginExcluded(plugin, reason)
     toExclude.add(plugin)
   }
-  val filteredPlugins = allPlugins.filter { it !in toExclude }
+  val filteredPlugins = compatiblePlugins.filter { it !in toExclude }
   return UnambiguousPluginSet.tryBuild(filteredPlugins)
          ?: error("failed to build unambiguous plugin set after conflict resolution")
 }
