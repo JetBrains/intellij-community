@@ -563,7 +563,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
 
     @Override
     public String toString() {
-      return "Page[#" + pageIndex + "][offset: " + offsetInFile + ", length: " + pageBuffer.capacity() + " b)";
+      return "Page[#" + pageIndex + "]{offset: " + offsetInFile + ", length: " + pageBuffer.capacity() + " b}";
     }
 
 
