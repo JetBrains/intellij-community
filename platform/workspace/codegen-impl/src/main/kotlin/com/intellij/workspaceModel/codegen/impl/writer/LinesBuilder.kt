@@ -1,10 +1,6 @@
 package com.intellij.workspaceModel.codegen.impl.writer
 
-class LinesBuilder(
-  val result: StringBuilder,
-  val indentLevel: Int,
-  val indentSize: Int = 4
-) {
+class LinesBuilder(val result: StringBuilder) {
   var first = true
 
   fun line(str: String = "") {
@@ -17,7 +13,6 @@ class LinesBuilder(
       first = false
     }
 
-    result.append(" ".repeat(indentLevel * indentSize))
     result.append(str)
   }
 
@@ -27,28 +22,24 @@ class LinesBuilder(
     }
   }
 
-  fun section(s: LinesBuilder.() -> Unit) {
-    LinesBuilder(result, indentLevel + 1, indentSize).s()
-  }
-
   fun section(head: String, s: LinesBuilder.() -> Unit) {
     lineNoNl(head)
-    val sub = LinesBuilder(result, indentLevel+1, indentSize)
-    sub.result.append(" {\n")
+    val sub = LinesBuilder(result)
+    sub.result.append("{\n")
     sub.s()
     line("}")
   }
 
   fun sectionNoBrackets(head: String, s: LinesBuilder.() -> Unit) {
     lineNoNl(head)
-    val sub = LinesBuilder(result, indentLevel+1, indentSize)
+    val sub = LinesBuilder(result)
     sub.result.append("\n")
     sub.s()
   }
 }
 
-inline fun lines(level: Int = 0, lines: LinesBuilder.() -> Unit): String {
+inline fun lines(lines: LinesBuilder.() -> Unit): String {
   val result = StringBuilder()
-  LinesBuilder(result, level).lines()
+  LinesBuilder(result).lines()
   return result.toString()
 }

@@ -31,9 +31,5 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 
 fun ObjClass<*>.implWsCode(): String? {
   if (!openness.instantiatable) return null
-  return """
-${implWsEntityCode()}
-    
-${implWsDataClassCode()}
-    """.trimIndent()
+  return "${implWsEntityCode()}\n${implWsDataClassCode()}"
 }

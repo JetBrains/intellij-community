@@ -15,26 +15,24 @@ val ObjProperty<*, *>.implWsBuilderFieldCode: String
 
 private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, optionalSuffix: String = ""): String = when (this) {
   ValueType.Boolean, ValueType.Int -> """
-            override var ${field.javaName}: ${field.valueType.javaMutableType}$optionalSuffix
-                get() = getEntityData().${field.javaName}
-                set(value) {
-                    checkModificationAllowed()
-                    getEntityData(true).${field.javaName} = value
-                    changedProperty.add("${field.javaName}")
-                }
-                
-        """.trimIndent()
+    override var ${field.javaName}: ${field.valueType.javaMutableType}$optionalSuffix
+    get() = getEntityData().${field.javaName}
+    set(value) {
+    checkModificationAllowed()
+    getEntityData(true).${field.javaName} = value
+    changedProperty.add("${field.javaName}")
+    }
+    """.trimIndent()
 
   ValueType.String -> """
-            override var ${field.javaName}: ${field.valueType.javaMutableType}
-                get() = getEntityData().${field.javaName}
-                set(value) {
-                    checkModificationAllowed()
-                    getEntityData(true).${field.javaName} = value
-                    changedProperty.add("${field.javaName}")
-                }
-                
-        """.trimIndent()
+    override var ${field.javaName}: ${field.valueType.javaMutableType}
+    get() = getEntityData().${field.javaName}
+    set(value) {
+    checkModificationAllowed()
+    getEntityData(true).${field.javaName} = value
+    changedProperty.add("${field.javaName}")
+    }
+    """.trimIndent()
 
   is ValueType.ObjRef -> {
     val connectionName = field.refsConnectionId
@@ -48,11 +46,10 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
         section("get()") {
           line("val _diff = diff")
           line("return if (_diff != null) {")
-          line("    @OptIn($EntityStorageInstrumentationApi::class)")
-          line("    ((_diff as $MutableEntityStorageInstrumentation).${getterSetterNames.getterBuilder}($connectionName, this) as? $javaBuilderTypeWithGeneric)")
-          line("    ?: (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})]$notNullAssertion as$optionalSuffix $javaBuilderTypeWithGeneric)")
+          line("@OptIn($EntityStorageInstrumentationApi::class)")
+          line("((_diff as $MutableEntityStorageInstrumentation).${getterSetterNames.getterBuilder}($connectionName, this) as? $javaBuilderTypeWithGeneric) ?: (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})]$notNullAssertion as$optionalSuffix $javaBuilderTypeWithGeneric)")
           line("} else {")
-          line("    this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})]$notNullAssertion as$optionalSuffix $javaBuilderTypeWithGeneric")
+          line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})]$notNullAssertion as$optionalSuffix $javaBuilderTypeWithGeneric")
           line("}")
         }
         section("set(value)") {
@@ -67,7 +64,6 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
           }
           section("else") {
             backrefSetup(field)
-            line()
             line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] = value")
           }
           line("changedProperty.add(\"${field.javaName}\")")
@@ -82,15 +78,15 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
       val connectionName = field.refsConnectionId
       val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else error("It's prohibited to have nullable reference list")
       if ((elementType as ValueType.ObjRef<*>).target.openness.extendable) {
-        lines(level = 1) {
+        lines {
           sectionNoBrackets("override var ${field.javaName}: $javaBuilderTypeWithGeneric$optionalSuffix") {
             section("get()") {
               line("val _diff = diff")
               line("return if (_diff != null) {")
-              line("    @OptIn($EntityStorageInstrumentationApi::class)")
-              line("    ((_diff as $MutableEntityStorageInstrumentation).getManyChildrenBuilders($connectionName, this)$notNullAssertion.toList() as $javaBuilderTypeWithGeneric) + (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? $javaBuilderTypeWithGeneric ?: emptyList())")
+              line("@OptIn($EntityStorageInstrumentationApi::class)")
+              line("((_diff as $MutableEntityStorageInstrumentation).getManyChildrenBuilders($connectionName, this)$notNullAssertion.toList() as $javaBuilderTypeWithGeneric) + (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? $javaBuilderTypeWithGeneric ?: emptyList())")
               line("} else {")
-              line("    this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as $javaBuilderTypeWithGeneric ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
+              line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as $javaBuilderTypeWithGeneric ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
               line("}")
             }
             section("set(value)") {
@@ -111,7 +107,6 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
               }
               `else` {
                 backrefListSetup(field)
-                line()
                 line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] = value")
               }
               line("changedProperty.add(\"${field.javaName}\")")
@@ -128,11 +123,10 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
               lineComment("Getter of the list of non-abstract referenced types")
               line("val _diff = diff")
               line("return if (_diff != null) {")
-              line("    @OptIn($EntityStorageInstrumentationApi::class)")
-              line("    ((_diff as $MutableEntityStorageInstrumentation).getManyChildrenBuilders($connectionName, this)$notNullAssertion.toList() as $javaBuilderTypeWithGeneric) + (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? $javaBuilderTypeWithGeneric ?: emptyList())")
+              line("@OptIn($EntityStorageInstrumentationApi::class)")
+              line("((_diff as $MutableEntityStorageInstrumentation).getManyChildrenBuilders($connectionName, this)$notNullAssertion.toList() as $javaBuilderTypeWithGeneric) + (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? $javaBuilderTypeWithGeneric ?: emptyList())")
               line("} else {")
-              line(
-                "    this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? $javaBuilderTypeWithGeneric ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
+              line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? $javaBuilderTypeWithGeneric ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
               line("}")
             }
             section("set(value)") {
@@ -144,7 +138,6 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                   `if`("item_value is ${ModifiableWorkspaceEntityBase}<*, *> && (item_value as? ${ModifiableWorkspaceEntityBase}<*, *>)?.diff == null") {
                     lineComment("Backref setup before adding to store")
                     backrefSetup(field, "item_value")
-                    line()
                     line("_diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)")
                   }
                 }
@@ -152,7 +145,6 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
               }
               `else` {
                 backrefListSetup(field)
-                line()
                 line("this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] = value")
               }
               line("changedProperty.add(\"${field.javaName}\")")
@@ -163,28 +155,27 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
     }
     else {
       """
-            private val ${field.javaName}Updater: (value: List<${elementType.javaType}>) -> Unit = { value ->
-                ${elementType.addVirtualFileIndex(field)}
-                changedProperty.add("${field.javaName}")
-            }
-            override var ${field.javaName}: MutableList<${elementType.javaType}>
-                get() {
-                    val collection_${field.javaName} = getEntityData().${field.javaName}
-                    if (collection_${field.javaName} !is ${MutableWorkspaceList}) return collection_${field.javaName}
-                    if (diff == null || modifiable.get()) {
-                      collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
-                    } else {
-                      collection_${field.javaName}.cleanModificationUpdateAction()
-                    }
-                    return collection_${field.javaName}  
-                }
-                set(value) {
-                    checkModificationAllowed()
-                    getEntityData(true).${field.javaName} = value
-                    ${field.javaName}Updater.invoke(value)
-                }
-                
-            """.trimIndent()
+        private val ${field.javaName}Updater: (value: List<${elementType.javaType}>) -> Unit = { value ->
+        ${elementType.addVirtualFileIndex(field)}
+        changedProperty.add("${field.javaName}")
+        }
+        override var ${field.javaName}: MutableList<${elementType.javaType}>
+        get() {
+        val collection_${field.javaName} = getEntityData().${field.javaName}
+        if (collection_${field.javaName} !is ${MutableWorkspaceList}) return collection_${field.javaName}
+        if (diff == null || modifiable.get()) {
+        collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
+        } else {
+        collection_${field.javaName}.cleanModificationUpdateAction()
+        }
+        return collection_${field.javaName}
+        }
+        set(value) {
+        checkModificationAllowed()
+        getEntityData(true).${field.javaName} = value
+        ${field.javaName}Updater.invoke(value)
+        }
+        """.trimIndent()
     }
   }
 
@@ -195,61 +186,57 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
     }
     else {
       """
-            private val ${field.javaName}Updater: (value: Set<${elementType.javaType}>) -> Unit = { value ->
-                ${elementType.addVirtualFileIndex(field)}
-                changedProperty.add("${field.javaName}")
-            }
-            override var ${field.javaName}: MutableSet<${elementType.javaType}>
-                get() { 
-                    val collection_${field.javaName} = getEntityData().${field.javaName}
-                    if (collection_${field.javaName} !is ${MutableWorkspaceSet}) return collection_${field.javaName}
-                    if (diff == null || modifiable.get()) {
-                      collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
-                    } else {
-                      collection_${field.javaName}.cleanModificationUpdateAction()
-                    }
-                    return collection_${field.javaName} 
-                }
-                set(value) {
-                    checkModificationAllowed()
-                    getEntityData(true).${field.javaName} = value
-                    ${field.javaName}Updater.invoke(value)
-                }
-                
-            """.trimIndent()
+        private val ${field.javaName}Updater: (value: Set<${elementType.javaType}>) -> Unit = { value ->
+        ${elementType.addVirtualFileIndex(field)}
+        changedProperty.add("${field.javaName}")
+        }
+        override var ${field.javaName}: MutableSet<${elementType.javaType}>
+        get() { 
+        val collection_${field.javaName} = getEntityData().${field.javaName}
+        if (collection_${field.javaName} !is ${MutableWorkspaceSet}) return collection_${field.javaName}
+        if (diff == null || modifiable.get()) {
+        collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
+        } else {
+        collection_${field.javaName}.cleanModificationUpdateAction()
+        }
+        return collection_${field.javaName}
+        }
+        set(value) {
+        checkModificationAllowed()
+        getEntityData(true).${field.javaName} = value
+        ${field.javaName}Updater.invoke(value)
+        }
+        """.trimIndent()
     }
   }
 
   is ValueType.Map<*, *> -> """
-            override var ${field.javaName}: $javaType
-                get() = getEntityData().${field.javaName}
-                set(value) {
-                    checkModificationAllowed()
-                    getEntityData(true).${field.javaName} = value
-                    changedProperty.add("${field.javaName}")
-                }
-                
+    override var ${field.javaName}: $javaType
+    get() = getEntityData().${field.javaName}
+    set(value) {
+    checkModificationAllowed()
+    getEntityData(true).${field.javaName} = value
+    changedProperty.add("${field.javaName}")
+    }
     """.trimIndent()
 
   is ValueType.Optional<*> -> type.implWsBuilderBlockingCode(field, "?")
   is ValueType.Structure<*> -> "//TODO: ${field.javaName}"
   is ValueType.JvmClass -> """
-            override var ${field.javaName}: ${javaType.appendSuffix(optionalSuffix)}
-                get() = getEntityData().${field.javaName}
-                set(value) {
-                    checkModificationAllowed()
-                    getEntityData(true).${field.javaName} = value
-                    changedProperty.add("${field.javaName}")
-                    ${
-    if (javaType.decoded == VirtualFileUrl.decoded)
-      """val _diff = diff
-      |                    if (_diff != null) index(this, "${field.javaName}", value)
-                        """.trimMargin()
-    else ""
-  }
-                }
-                
+    override var ${field.javaName}: ${javaType.appendSuffix(optionalSuffix)}
+    get() = getEntityData().${field.javaName}
+    set(value) {
+    checkModificationAllowed()
+    getEntityData(true).${field.javaName} = value
+    changedProperty.add("${field.javaName}")
+    ${if (javaType.decoded == VirtualFileUrl.decoded) 
+      """
+        val _diff = diff
+        if (_diff != null) index(this, "${field.javaName}", value)
         """.trimIndent()
+    else ""}
+    }
+    """.trimIndent()
 
   else -> unsupportedTypeError()
 }
@@ -353,23 +340,24 @@ private fun LinesBuilder.isInitializedBaseCode(field: ObjProperty<*, *>, express
 private fun ValueType<*>.addVirtualFileIndex(field: ObjProperty<*, *>): String {
   return when {
     this is ValueType.Blob && kotlinClassName == VirtualFileUrl.decoded ->
-      """val _diff = diff
-|                    if (_diff != null) index(this, "${field.javaName}", value)
-        """.trimMargin()
+      """
+        val _diff = diff
+        if (_diff != null) index(this, "${field.javaName}", value)
+        """.trimIndent()
 
     this is ValueType.JvmClass && kotlinClassName == LibraryRoot.decoded -> """
-                    val _diff = diff
-                    if (_diff != null) {
-                        indexLibraryRoots(value)
-                    }
-        """
+      val _diff = diff
+      if (_diff != null) {
+      indexLibraryRoots(value)
+      }
+      """.trimIndent()
 
     this is ValueType.JvmClass && javaClassName == SdkRoot.decoded -> """
-                    val _diff = diff
-                    if (_diff != null) {
-                        indexSdkRoots(value)
-                    }
-        """
+      val _diff = diff
+      if (_diff != null) {
+      indexSdkRoots(value)
+      }
+      """.trimIndent()
 
     else -> ""
   }

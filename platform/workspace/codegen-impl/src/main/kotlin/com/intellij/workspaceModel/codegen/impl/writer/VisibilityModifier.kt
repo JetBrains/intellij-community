@@ -6,4 +6,4 @@ import com.intellij.workspaceModel.codegen.impl.engine.generatorSettings
 private const val PUBLIC_MODIFIER = "public"
 
 internal val generatedCodeVisibilityModifier: String
-  get() = if (generatorSettings.explicitApiEnabled) PUBLIC_MODIFIER else ""
+  get() = if (generatorSettings.explicitApiEnabled) "$PUBLIC_MODIFIER " else ""

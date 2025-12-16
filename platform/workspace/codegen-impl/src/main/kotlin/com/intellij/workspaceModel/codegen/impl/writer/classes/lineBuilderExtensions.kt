@@ -2,12 +2,6 @@ package com.intellij.workspaceModel.codegen.impl.writer.classes
 
 import com.intellij.workspaceModel.codegen.impl.writer.LinesBuilder
 
-internal fun LinesBuilder.lineWrapped(str: String) {
-  line()
-  line(str)
-  line()
-}
-
 internal fun LinesBuilder.sectionNl(head: String, s: LinesBuilder.() -> Unit) {
   section(head, s)
   result.append("\n")
@@ -59,5 +53,5 @@ internal fun <T> LinesBuilder.listBuilder(c: Collection<T>, f: LinesBuilder.(ite
 }
 
 internal fun LinesBuilder.wrapper(): LinesBuilder {
-  return LinesBuilder(result, indentLevel+1, indentSize)
+  return LinesBuilder(result)
 }

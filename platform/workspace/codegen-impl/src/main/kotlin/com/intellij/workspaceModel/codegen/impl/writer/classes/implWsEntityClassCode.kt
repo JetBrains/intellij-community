@@ -12,44 +12,39 @@ import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
 
 fun ObjClass<*>.implWsEntityCode(): String {
   val inheritanceModifier = when {
-    openness.extendable && !openness.instantiatable -> "abstract"
-    openness.extendable && openness.instantiatable -> "open"
+    openness.extendable && !openness.instantiatable -> "abstract "
+    openness.extendable && openness.instantiatable -> "open "
     else -> ""
   }
 
-  return """
-package ${module.implPackage}   
+  return """package ${module.implPackage}   
  
 import $module.${defaultJavaBuilderName}
 
 ${implWsEntityAnnotations}
 @OptIn($WorkspaceEntityInternalApi::class)
-internal $inheritanceModifier class $javaImplName(private val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}(dataSource) {
-    ${
-    """
-    private companion object {
-        ${allRefsFields.lines("        ") { refsConnectionIdCode }.trimEnd()}
-        
+internal ${inheritanceModifier}class $javaImplName(private val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}(dataSource) {
+
+private companion object {
+${allRefsFields.lines { refsConnectionIdCode }.trimEnd()}
 ${getLinksOfConnectionIds(this)}
-    }"""
-  }
-    ${allFields.find { it.name == "symbolicId" }?.let { "override val symbolicId: ${it.valueType.javaType} = super.symbolicId\n" } ?: ""}
-    ${allFields.filter { it.name !in listOf("entitySource", "symbolicId") }.lines("    ") { implWsEntityFieldCode }.trimEnd()}
-
-    override val entitySource: EntitySource
-        get() {
-            readField("entitySource")
-            return dataSource.entitySource
-        }
-    
-    override fun connectionIdList(): List<${ConnectionId}> {
-        return connections
-    }
-  
-
-    ${implWsEntityBuilderCode().indentRestOnly("    ")}
 }
-    """.trimIndent()
+${allFields.find { it.name == "symbolicId" }?.let { "override val symbolicId: ${it.valueType.javaType} = super.symbolicId\n" } ?: ""}
+${allFields.filter { it.name !in listOf("entitySource", "symbolicId") }.lines { implWsEntityFieldCode }.trimEnd()}
+
+override val entitySource: EntitySource
+get() {
+readField("entitySource")
+return dataSource.entitySource
+}
+
+override fun connectionIdList(): List<${ConnectionId}> {
+return connections
+}
+
+${implWsEntityBuilderCode()}
+}
+"""
 }
 
 private val ObjClass<*>.implWsEntityAnnotations: String
@@ -64,7 +59,7 @@ private val ObjClass<*>.implWsEntityAnnotations: String
   }
 
 private fun getLinksOfConnectionIds(type: ObjClass<*>): String {
-  return lines(2) {
+  return lines {
     line(type.allRefsFields.joinToString(separator = ",", prefix = "private val connections = listOf<$ConnectionId>(", postfix = ")") { it.refsConnectionId })
   }
 }

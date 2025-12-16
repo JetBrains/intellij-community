@@ -13,7 +13,6 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.implPackage
 internal fun implWsMetadataStorageCode(module: CompiledObjModule, types: List<ObjClass<*>>,
                                        abstractTypes: List<ValueType.AbstractClass<*>>): String = lines {
   line("package ${module.implPackage}")
-  line()
   line("@OptIn($WorkspaceEntityInternalApi::class)")
   section("internal object ${MetadataStorage.IMPL_NAME}: ${MetadataStorage.base}()") {
     val builtTypes: MutableList<String> = arrayListOf()
@@ -31,17 +30,17 @@ internal fun implWsMetadataStorageCode(module: CompiledObjModule, types: List<Ob
       builtPrimitiveTypes.forEach {
         line("val ${it.getVariableName()} = ${it.getConstructor()}")
       }
-      line()
+      line("")
       line("var typeMetadata: $StorageTypeMetadata")
       builtTypes.forEach {
-        line()
+        line("")
         line("typeMetadata = $it")
-        line()
+        line("")
         line("${MetadataStorage.addMetadata}(typeMetadata)")
       }
     }
 
-    sectionNl("override fun initializeMetadataHash()") {
+    section("override fun initializeMetadataHash()") {
       val jvmClassesToBuild = linkedMapOf<String, ValueType.JvmClass<*>>()
 
       types.forEach { it.collectJvmClasses(jvmClassesToBuild) }
@@ -64,7 +63,7 @@ internal fun implWsMetadataStorageCode(module: CompiledObjModule, types: List<Ob
 
 internal fun CompiledObjModule.implWsMetadataStorageBridgeCode(metadataStorageImpl: QualifiedName): String = lines {
   line("package ${this@implWsMetadataStorageBridgeCode.implPackage}")
-  line()
+  line("")
   line("@OptIn($WorkspaceEntityInternalApi::class)")
   line("internal object ${MetadataStorage.IMPL_NAME}: ${MetadataStorage.bridge}($metadataStorageImpl)")
 }
