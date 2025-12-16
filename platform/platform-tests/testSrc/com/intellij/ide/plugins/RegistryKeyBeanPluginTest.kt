@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.Disposable
@@ -17,16 +17,11 @@ import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.Ksuid
-import io.kotest.matchers.booleans.shouldBeTrue
-import io.kotest.matchers.nulls.shouldBeNull
-import io.kotest.matchers.nulls.shouldNotBeNull
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldStartWith
-import io.kotest.mpp.atomics.AtomicReference
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import kotlin.test.assertTrue
+import java.util.concurrent.atomic.AtomicReference
 
 @RunsInEdt
 class RegistryKeyBeanPluginTest {
@@ -66,7 +61,7 @@ class RegistryKeyBeanPluginTest {
       extensions(registryKey(key, defaultValue = true))
     }
     loadPlugins(testDisposable, plugin1)
-    assertTrue(Registry.get(key).asBoolean())
+    assertThat(Registry.get(key).asBoolean()).isTrue()
   }
 
   @Test
@@ -91,7 +86,8 @@ class RegistryKeyBeanPluginTest {
       extensions(registryKey("my.key", defaultValue = true, overrides = true))
     }
     val registry = emulateStaticRegistryLoad(plugin1, plugin2)
-    registry["my.key"].shouldNotBeNull().defaultValue.toBoolean() shouldBe true
+    assertThat(registry["my.key"]).isNotNull()
+    assertThat(registry["my.key"]!!.defaultValue.toBoolean()).isTrue()
   }
 
   @Test
@@ -107,7 +103,7 @@ class RegistryKeyBeanPluginTest {
     val message = executeAndReturnPluginLoadingWarning {
       loadPlugins(testDisposable, plugin1, plugin2)
     }
-    message.shouldStartWith("A dynamically-loaded plugin plugin2 is forbidden to override the registry key my.key introduced by plugin1.")
+    assertThat(message).startsWith("A dynamically-loaded plugin plugin2 is forbidden to override the registry key my.key introduced by plugin1.")
   }
 
   @Test
@@ -121,7 +117,8 @@ class RegistryKeyBeanPluginTest {
       extensions(registryKey("my.key", defaultValue = true, overrides = true))
     }
     val registry = emulateStaticRegistryLoad(plugin2, plugin1)
-    registry["my.key"].shouldNotBeNull().defaultValue.toBoolean() shouldBe true
+    assertThat(registry["my.key"]).isNotNull()
+    assertThat(registry["my.key"]!!.defaultValue.toBoolean()).isTrue()
   }
 
   @Test
@@ -138,9 +135,10 @@ class RegistryKeyBeanPluginTest {
     val message = executeAndReturnPluginLoadingWarning {
       registry = emulateStaticRegistryLoad(plugin1, plugin2)
     }
-    message.shouldStartWith("Conflicting registry key definition for key my.key: it was defined by plugin plugin1 but redefined by plugin plugin2.")
+    assertThat(message).startsWith("Conflicting registry key definition for key my.key: it was defined by plugin plugin1 but redefined by plugin plugin2.")
 
-    registry["my.key"].shouldNotBeNull().defaultValue.toBoolean().shouldBe(false)
+    assertThat(registry["my.key"]).isNotNull
+    assertThat(registry["my.key"]!!.defaultValue.toBoolean()).isFalse()
   }
 
   @Test
@@ -157,9 +155,9 @@ class RegistryKeyBeanPluginTest {
     val message = executeAndReturnPluginLoadingWarning {
       loadPlugins(testDisposable, plugin1, plugin2)
     }
-    message.shouldStartWith("Conflicting registry key definition for key my.key: it was defined by plugin plugin1 but redefined by plugin plugin2.")
+    assertThat(message).startsWith("Conflicting registry key definition for key my.key: it was defined by plugin plugin1 but redefined by plugin plugin2.")
     @Suppress("UnresolvedPluginConfigReference")
-    Registry.get("my.key").asBoolean().shouldBe(false)
+    assertThat(Registry.get("my.key").asBoolean()).isFalse()
   }
 
   @Test
@@ -181,9 +179,10 @@ class RegistryKeyBeanPluginTest {
     val message = executeAndReturnPluginLoadingWarning {
       registry = emulateStaticRegistryLoad(pluginB, plugin1, plugin2)
     }
-    message.shouldBe("Incorrect registry key override for key my.key: both plugins plugin1 and plugin2 claim to override it to different defaults.")
+    assertThat(message).isEqualTo("Incorrect registry key override for key my.key: both plugins plugin1 and plugin2 claim to override it to different defaults.")
 
-    registry["my.key"].shouldNotBeNull().defaultValue.shouldBe("1")
+    assertThat(registry["my.key"]).isNotNull
+    assertThat(registry["my.key"]!!.defaultValue).isEqualTo("1")
   }
 
   @Test
@@ -197,13 +196,15 @@ class RegistryKeyBeanPluginTest {
     try {
       loadPlugins(nestedDisposable, plugin1)
       val key = getContributedKeyDescriptor("my.key")
-      key.shouldNotBeNull().pluginId.shouldNotBeNull().shouldBe("plugin1")
+      assertThat(key).isNotNull
+      assertThat(key!!.pluginId).isNotNull()
+      assertThat(key.pluginId).isEqualTo("plugin1")
     }
     finally {
       Disposer.dispose(nestedDisposable)
     }
 
-    getContributedKeyDescriptor("my.key").shouldBeNull()
+    assertThat(getContributedKeyDescriptor("my.key")).isNull()
   }
 
   @Test
@@ -224,17 +225,21 @@ class RegistryKeyBeanPluginTest {
       val message = executeAndReturnPluginLoadingWarning {
         loadPlugins(nestedDisposable, plugin2)
       }
-      message.shouldStartWith("A dynamically-loaded plugin plugin2 is forbidden to override the registry key my.key introduced by plugin1.")
+      assertThat(message).startsWith("A dynamically-loaded plugin plugin2 is forbidden to override the registry key my.key introduced by plugin1.")
 
       val key = getContributedKeyDescriptor("my.key")
-      key.shouldNotBeNull().pluginId.shouldNotBeNull().shouldBe("plugin1")
+      assertThat(key).isNotNull()
+      assertThat(key!!.pluginId).isNotNull()
+      assertThat(key.pluginId).isEqualTo("plugin1")
     }
     finally {
       Disposer.dispose(nestedDisposable)
     }
 
-    getContributedKeyDescriptor("my.key").shouldNotBeNull()
-      .pluginId.shouldNotBeNull().shouldBe("plugin1")
+    val finalKey = getContributedKeyDescriptor("my.key")
+    assertThat(finalKey).isNotNull()
+    assertThat(finalKey!!.pluginId).isNotNull()
+    assertThat(finalKey.pluginId).isEqualTo("plugin1")
   }
 
   /**
@@ -292,12 +297,12 @@ private fun executeAndReturnPluginLoadingWarning(block: () -> Unit): String {
   LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
     override fun processWarn(category: String, message: String, t: Throwable?): Boolean {
       if (category == RegistryKeyBean.KEY_CONFLICT_LOG_CATEGORY) {
-        error.compareAndSet(null, message).shouldBeTrue()
+        assertThat(error.compareAndSet(null, message)).isTrue()
       }
 
       return super.processWarn(category, message, t)
     }
   }, block)
 
-  return error.value.shouldNotBeNull()
+  return error.get()!!
 }

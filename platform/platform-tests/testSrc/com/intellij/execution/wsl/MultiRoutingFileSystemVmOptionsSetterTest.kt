@@ -3,19 +3,18 @@ package com.intellij.execution.wsl
 
 import com.intellij.platform.ide.bootstrap.eel.MultiRoutingFileSystemVmOptionsSetter
 import com.intellij.testFramework.junit5.TestApplication
-import io.kotest.assertions.withClue
-import io.kotest.matchers.be
-import io.kotest.matchers.should
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
 class MultiRoutingFileSystemVmOptionsSetterTest {
   private infix fun Collection<Pair<String, String?>>.shouldMatch(other: Collection<String>) {
-    withClue("Improving test readability: lists should be sorted") {
-      other should be(other.sorted())
-    }
+    assertThat(other)
+      .withFailMessage("Improving test readability: lists should be sorted")
+      .isEqualTo(other.sorted())
 
-    sortedBy { it.first }.joinToString("\n") { (k, v) -> "$k$v" } should be(other.joinToString("\n"))
+    assertThat(sortedBy { it.first }.joinToString("\n") { (k, v) -> "$k$v" })
+      .isEqualTo(other.joinToString("\n"))
   }
 
   @Test
@@ -106,9 +105,9 @@ class MultiRoutingFileSystemVmOptionsSetterTest {
 
   private fun vmOptionsReader(data: String): (String) -> List<String> {
     val lines = data.lines()
-    withClue("Improving test readability: vm options should be sorted") {
-      lines should be(lines.sorted())
-    }
+    assertThat(lines)
+      .withFailMessage("Improving test readability: vm options should be sorted")
+      .isEqualTo(lines.sorted())
     return { prefix ->
       lines.map(String::trim).mapNotNull { line ->
         if (line.startsWith(prefix))
