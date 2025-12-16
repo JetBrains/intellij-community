@@ -1048,7 +1048,7 @@ public final class ConfigImportHelper {
           }
           return Unit.INSTANCE;
         }
-      ).stream().flatMap(list -> list.getPlugins().stream()).toList();
+      ).getPlugins();
       // TODO 'plugin is broken' is already applied by 'selectPluginsToLoad'
       if (Boolean.getBoolean(UPDATE_ONLY_INCOMPATIBLE_PLUGINS_PROPERTY)) {
         partitionNonBundled(loadablePlugins, pluginsToDownload, pluginsToMigrate, descriptor -> {
