@@ -12,6 +12,7 @@ import com.intellij.codeInsight.intention.IntentionSource;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -248,7 +249,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   @Override
   public @NotNull List<IntentionActionWithTextCaching> getValues() {
-    return myCachedIntentions.getAllActions();
+    return ReadAction.compute(() -> myCachedIntentions.getAllActions());
   }
 
   @Override
