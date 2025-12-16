@@ -2,7 +2,7 @@
 package git4idea.branch
 
 import com.intellij.dvcs.branch.DvcsSyncSettings
-import com.intellij.dvcs.repo.rpcId
+import com.intellij.dvcs.repo.repositoryId
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vcs.Executor.cd
@@ -254,7 +254,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
       val repositories = holder.getAll()
       //TODO replace with the actual tree from GitBranchesTreePopupBase
       val tree = Tree()
-      val preferredSelection = checkNotNull(holder.get(repo.rpcId()))
+      val preferredSelection = checkNotNull(holder.get(repo.repositoryId()))
       popupStep = GitDefaultBranchesPopupStep.create(project, preferredSelection, repositories)
       tree.cellRenderer = GitDefaultBranchesTreeRenderer(popupStep)
       tree.model = popupStep.treeModel

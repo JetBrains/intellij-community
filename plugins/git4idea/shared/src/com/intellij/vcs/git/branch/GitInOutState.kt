@@ -3,7 +3,7 @@ package com.intellij.vcs.git.branch
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.platform.vcs.impl.shared.RepositoryId
 import git4idea.i18n.GitBundle.message
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus

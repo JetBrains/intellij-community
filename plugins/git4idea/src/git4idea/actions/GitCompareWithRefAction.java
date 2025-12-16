@@ -39,7 +39,8 @@ public class GitCompareWithRefAction extends DvcsCompareWithAction<GitRepository
     return new GitCompareWithBranchPopup(project,
                                          new GitCompareWithBranchPopupStep(project,
                                                                            GitRepositoriesHolder.Companion.getInstance(project)
-                                                                             .get(RepositoryExtKt.rpcId(repository)), selectionHandler));
+                                                                             .get(RepositoryExtKt.repositoryId(repository)),
+                                                                           selectionHandler));
   }
 
   @Override

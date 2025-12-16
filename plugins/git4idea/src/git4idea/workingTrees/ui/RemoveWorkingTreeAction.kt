@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.platform.vcs.impl.shared.RepositoryId
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitWorkingTree
 import git4idea.actions.workingTree.GitWorkingTreeActionsDataKeys

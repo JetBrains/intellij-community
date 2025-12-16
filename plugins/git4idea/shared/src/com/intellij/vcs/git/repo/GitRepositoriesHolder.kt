@@ -8,7 +8,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.platform.vcs.impl.shared.RepositoryId
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.git.ref.GitCurrentRef
 import com.intellij.vcs.git.ref.GitFavoriteRefs

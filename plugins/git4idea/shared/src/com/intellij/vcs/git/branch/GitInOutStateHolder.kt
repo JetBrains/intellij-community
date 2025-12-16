@@ -6,7 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
-import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.platform.vcs.impl.shared.RepositoryId
 import com.intellij.vcs.git.rpc.GitIncomingOutgoingStateApi
 import fleet.rpc.client.durable
 import git4idea.GitStandardLocalBranch

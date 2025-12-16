@@ -3,7 +3,7 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.GroupingKey
-import com.intellij.dvcs.repo.rpcId
+import com.intellij.dvcs.repo.repositoryId
 import com.intellij.dvcs.ui.VcsRepositoryIconsProvider
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
@@ -110,7 +110,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
         )
         is BranchNodeDescriptor.Group, is BranchNodeDescriptor.RemoteGroup -> GitBranchesTreeIconProvider.forGroup()
           is BranchNodeDescriptor.Repository ->
-              VcsRepositoryIconsProvider.getInstance(descriptor.repository.project).getIcon(descriptor.repository.rpcId())
+            VcsRepositoryIconsProvider.getInstance(descriptor.repository.project).getIcon(descriptor.repository.repositoryId())
         else -> null
       }
 

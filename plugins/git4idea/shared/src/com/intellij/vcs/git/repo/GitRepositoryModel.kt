@@ -3,7 +3,7 @@ package com.intellij.vcs.git.repo
 
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.platform.vcs.impl.shared.RepositoryId
 import com.intellij.vcs.git.ref.GitFavoriteRefs
 import org.jetbrains.annotations.ApiStatus
 

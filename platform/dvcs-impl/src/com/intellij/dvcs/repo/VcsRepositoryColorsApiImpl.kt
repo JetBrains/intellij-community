@@ -38,7 +38,7 @@ internal class VcsRepositoryColorsApiImpl: VcsRepositoryColorsApi {
 
     val colors = repos.associate { repo ->
       val color = colorManager.getRootColor(repo.root)
-      repo.rpcId() to VcsRepositoryColor.of(color)
+      repo.repositoryId() to VcsRepositoryColor.of(color)
     }
 
     return VcsRepositoryColorsState(colors)

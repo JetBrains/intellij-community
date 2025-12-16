@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions.branch
 
-import com.intellij.dvcs.repo.rpcId
+import com.intellij.dvcs.repo.repositoryId
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
@@ -53,7 +53,7 @@ internal class GitBackendBranchesWidgetUiDataRule : UiDataRule {
   ) {
     val repositoriesHolder = GitRepositoriesHolder.getInstance(project)
     if (!repositoriesHolder.initialized) return
-    sink[SharedDataKeys.SELECTED_REPOSITORY] = backendSelectedRepository?.rpcId()?.let(repositoriesHolder::get)
-    sink[SharedDataKeys.AFFECTED_REPOSITORIES] = backendAffectedRepositories?.mapNotNull { repositoriesHolder.get(it.rpcId()) }
+    sink[SharedDataKeys.SELECTED_REPOSITORY] = backendSelectedRepository?.repositoryId()?.let(repositoriesHolder::get)
+    sink[SharedDataKeys.AFFECTED_REPOSITORIES] = backendAffectedRepositories?.mapNotNull { repositoriesHolder.get(it.repositoryId()) }
   }
 }
