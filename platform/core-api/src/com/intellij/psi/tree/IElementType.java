@@ -304,4 +304,9 @@ public class IElementType {
       return new TombstoneElementType("tombstone of " + type +" ("+type.getClass()+") belonged to unloaded "+pluginDescriptor);
     }
   }
+
+  @ApiStatus.Internal
+  public static boolean isTombstone(@NotNull IElementType type) {
+    return type instanceof TombstoneElementType;
+  }
 }
