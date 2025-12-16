@@ -42,7 +42,7 @@ internal class ShellArgumentContextImpl(
 
   override fun suggestions(vararg names: String) {
     val generator = ShellRuntimeDataGenerator(debugName = createCacheKey()) {
-      names.map { ShellCompletionSuggestion(it, type = ShellSuggestionType.ARGUMENT) }
+      names.map { ShellCompletionSuggestion(it) { type = ShellSuggestionType.ARGUMENT } }
     }
     generators.add(generator)
   }

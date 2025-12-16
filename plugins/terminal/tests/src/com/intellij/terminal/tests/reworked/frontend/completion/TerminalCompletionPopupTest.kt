@@ -58,9 +58,9 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
               }
             }
 
-            val abPriority = ShellCompletionSuggestion("ab", priority = 100)
-            val acPriority = ShellCompletionSuggestion("ac", priority = 100)
-            listOf(abPriority, acPriority) + items.map(::ShellCompletionSuggestion)
+            val abPriority = ShellCompletionSuggestion("ab") { priority = 100 }
+            val acPriority = ShellCompletionSuggestion("ac") { priority = 100 }
+            listOf(abPriority, acPriority) + items.map { ShellCompletionSuggestion(it) }
           }
         }
       }

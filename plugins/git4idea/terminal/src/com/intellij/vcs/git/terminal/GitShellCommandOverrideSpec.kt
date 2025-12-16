@@ -163,12 +163,11 @@ private val localOrRemoteBranchesGenerator: ShellRuntimeDataGenerator<List<Shell
 }
 
 private fun branchSuggestion(name: String, description: @Nls String? = null, priority: Int = 50): ShellCompletionSuggestion {
-  return ShellCompletionSuggestion(
-    name,
-    description = description,
-    priority = priority,
-    icon = AllIcons.Vcs.Branch
-  )
+  return ShellCompletionSuggestion(name) {
+    if (description != null) description(description)
+    this.priority = priority
+    icon(AllIcons.Vcs.Branch)
+  }
 }
 
 private fun ShellCommandContext.trackingOptions() {
@@ -205,7 +204,10 @@ private fun ShellArgumentContext.addHeadSuggestions() {
   suggestions {
     listOf(
       ShellCompletionSuggestion("HEAD", description = GitTerminalBundle.message("suggestion.head.description")),
-      ShellCompletionSuggestion("HEAD~<N>", description = GitTerminalBundle.message("suggestion.headn.description"), insertValue = "HEAD~")
+      ShellCompletionSuggestion("HEAD~<N>") {
+        description(GitTerminalBundle.message("suggestion.headn.description"))
+        insertValue = "HEAD~"
+      }
     )
   }
 }

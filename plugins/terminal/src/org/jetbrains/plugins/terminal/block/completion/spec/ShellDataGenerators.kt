@@ -23,7 +23,7 @@ object ShellDataGenerators {
    * This generator is caching the results based on the [typed prefix][com.intellij.terminal.completion.spec.ShellRuntimeContext.typedPrefix].
    *
    * Note that the suggestions are not filtered by the file prefix extracted from the [typed prefix][com.intellij.terminal.completion.spec.ShellRuntimeContext.typedPrefix].
-   * All the files from the base directory extracted from the typed prefix are returned as [ShellCompletionSuggestion]'s.
+   * All the files from the base directory extracted from the typed prefix are returned as [com.intellij.terminal.completion.spec.ShellCompletionSuggestion]'s.
    * All prefix matching logic is performed by the core completion logic.
    */
   fun fileSuggestionsGenerator(onlyDirectories: Boolean = false): ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> {
@@ -56,19 +56,21 @@ object ShellDataGenerators {
     val suggestions = files.flatMap {
       val type = if (it.type == ShellFileInfo.Type.DIRECTORY) ShellSuggestionType.FOLDER else ShellSuggestionType.FILE
       val name = it.name + if (type == ShellSuggestionType.FOLDER) File.separator else ""
-      val suggestion = ShellCompletionSuggestion(name, type = type, prefixReplacementIndex = prefixReplacementIndex)
+      val suggestion = ShellCompletionSuggestion(name) {
+        this.type = type
+        this.prefixReplacementIndex = prefixReplacementIndex
+      }
       if (type == ShellSuggestionType.FILE) {
         listOf(suggestion)
       }
       else {
         // Directory suggestion has a trailing file separator, but suggestion without it is also valid.
         // It is needed for the parser to consider it as a valid suggestion and not mark it as something unknown.
-        val hiddenSuggestion = ShellCompletionSuggestion(
-          name = it.name,
-          type = ShellSuggestionType.FOLDER,
-          prefixReplacementIndex = prefixReplacementIndex,
-          isHidden = true
-        )
+        val hiddenSuggestion = ShellCompletionSuggestion(it.name) {
+          this.type = ShellSuggestionType.FOLDER
+          this.prefixReplacementIndex = prefixReplacementIndex
+          this.isHidden = true
+        }
         listOf(suggestion, hiddenSuggestion)
       }
     }
@@ -77,7 +79,10 @@ object ShellDataGenerators {
     // Because the current typed prefix is already a valid value of the file argument.
     // It is needed for the parser to consider current typed prefix as a valid file suggestion.
     return if (path.isNotEmpty() && path == adjustedPrefix) {
-      val emptySuggestion = ShellCompletionSuggestion(name = "", prefixReplacementIndex = prefixReplacementIndex, isHidden = true)
+      val emptySuggestion = ShellCompletionSuggestion("") {
+        this.prefixReplacementIndex = prefixReplacementIndex
+        this.isHidden = true
+      }
       suggestions + emptySuggestion
     }
     else suggestions

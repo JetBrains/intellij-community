@@ -51,11 +51,10 @@ object ShellMakeCommandSpec {
     return makefileContents.splitToSequence("\n", "\r", "\r\n")
       .mapNotNull { MakefileTarget.parse(it) }
       .map { makefileTarget ->
-        ShellCompletionSuggestion(
-          makefileTarget.name,
-          ShellSuggestionType.ARGUMENT,
-          null,
-          listOfNotNull(
+        ShellCompletionSuggestion(makefileTarget.name) {
+          type = ShellSuggestionType.ARGUMENT
+          @Suppress("HardCodedStringLiteral")
+          val desc = listOfNotNull(
             makefileTarget.comment
               .nullize(true),
             makefileTarget.dependencies
@@ -63,7 +62,8 @@ object ShellMakeCommandSpec {
               ?.joinToString(" ")
               ?.let { "Dependencies: $it" }
           ).joinToString("\n").takeIf { it.isNotBlank() }
-        )
+          if (desc != null) description(desc)
+        }
       }
       .toList()
   }

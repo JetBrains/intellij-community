@@ -38,7 +38,13 @@ internal class ShellJsonBasedArgumentSpec(
           data.suggestions.flatMap { s ->
             s.names.map { name ->
               // TODO: there should be a way to localize the json-based descriptions
-              ShellCompletionSuggestion(name, ShellSuggestionType.ARGUMENT, s.displayName, s.description, s.insertValue, s.priority)
+              ShellCompletionSuggestion(name) {
+                type = ShellSuggestionType.ARGUMENT
+                displayName = s.displayName
+                if (s.description != null) description(s.description!!)
+                insertValue = s.insertValue
+                priority = s.priority
+              }
             }
           }
         })
