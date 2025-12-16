@@ -72,7 +72,6 @@ object DumbModeTestUtils {
   fun startEternalDumbModeTask(project: Project): EternalTaskShutdownToken {
     val finishDumbTask = CompletableDeferred<Boolean>()
     try {
-      thisLogger().warn("Before of waiting for eternal dumb mode start")
       val dumbTaskStarted = CompletableDeferred<Boolean>()
       GlobalScope.launch(currentThreadContext().minusKey(Job.Key), start = CoroutineStart.UNDISPATCHED) {
         DumbService.getInstance(project).runInDumbMode {
@@ -83,10 +82,10 @@ object DumbModeTestUtils {
       if (EDT.isCurrentThreadEdt() && !dumbTaskStarted.isCompleted) {
         PlatformTestUtil.waitWithEventsDispatching("Dumb task didn't start", { dumbTaskStarted.isCompleted }, 10)
       } else {
-        // yeah spinlock, I don't care
-        while (!dumbTaskStarted.isCompleted) {}
+        while (!dumbTaskStarted.isCompleted) {
+          Thread.sleep(1)
+        }
       }
-      thisLogger().warn("Out of waiting for eternal dumb mode start")
       assertTrue("Dumb mode didn't start", DumbService.isDumb(project))
       return EternalTaskShutdownToken.newInstance(project, finishDumbTask)
     }
