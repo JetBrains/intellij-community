@@ -25,5 +25,5 @@ class PythonEditorFloatingToolbarUi(data: ComponentData) : UiComponent(data) {
 
   // Requirements floating toolbar actions
   val setAsEnvDependenciesButton = x { byAccessibleName("Set as the environment dependencies list") }
-  val installAllButton = x { byAccessibleName("Install all") }
+  val installAllButton = x { byAccessibleName("Install All") }
 }
