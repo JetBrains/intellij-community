@@ -822,8 +822,6 @@ private fun MenuSubmenuItem(
     iconKey: IconKey? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = JewelTheme.menuStyle,
-    submenuItem: SubmenuItem? = null,
-    setSelectedSubMenu: (SubmenuItem?) -> Unit = {},
     @Suppress("DEPRECATION") content: @Composable (itemState: MenuItemState) -> Unit,
 ) {
     var itemState by
@@ -847,20 +845,6 @@ private fun MenuSubmenuItem(
                 is HoverInteraction.Exit -> itemState = itemState.copy(hovered = false)
                 is FocusInteraction.Focus -> itemState = itemState.copy(focused = true)
                 is FocusInteraction.Unfocus -> itemState = itemState.copy(focused = false)
-            }
-        }
-    }
-
-    LaunchedEffect(itemState.isHovered, isPopupHovered) {
-        if (itemState.isHovered || isPopupHovered) {
-            if (!selected) {
-                submenuItem?.let { setSelectedSubMenu(it) }
-            }
-        } else {
-            if (!itemState.isHovered && !isPopupHovered) {
-                if (selected) {
-                    setSelectedSubMenu(null)
-                }
             }
         }
     }
