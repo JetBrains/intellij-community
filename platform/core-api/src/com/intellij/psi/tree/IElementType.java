@@ -210,7 +210,7 @@ public class IElementType {
       throw new IllegalArgumentException("Trying to access element type from unloaded plugin: " + type);
     }
     if (type == null) {
-      throw new IndexOutOfBoundsException("Element type index " + idx + " is out of range (0.." + (size - 1) + ")");
+      throw new IndexOutOfBoundsException("Element type index " + idx + " is out of range (0.." + (getAllocatedTypesCount() - 1) + ")");
     }
     return type;
   }
@@ -225,7 +225,6 @@ public class IElementType {
     boolean matches(@NotNull IElementType type);
   }
 
-  @TestOnly
   @ApiStatus.Internal
   public static short getAllocatedTypesCount() {
     synchronized (lock) {
