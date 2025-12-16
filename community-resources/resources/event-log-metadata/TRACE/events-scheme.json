@@ -416,6 +416,7 @@
         "after" : [ "{util#llm_parameters}" ],
         "anonymous_id" : [ "{regexp#hash}" ],
         "before" : [ "{util#llm_parameters}" ],
+        "caret_offset" : [ "{regexp#integer}" ],
         "completion_id" : [ "{regexp#hash}" ],
         "context" : [ "{util#llm_parameters}" ],
         "deleted_length" : [ "{regexp#integer}" ],
@@ -511,5 +512,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6552"
+  "version" : "6567"
 }

@@ -3365,6 +3365,7 @@
         "accepted_jumps" : [ "{regexp#integer}" ],
         "anonymous_id" : [ "{regexp#hash}" ],
         "backend_provider_id" : [ "{util#backend_provider_id}" ],
+        "caret_offset" : [ "{regexp#integer}" ],
         "completion_id" : [ "{regexp#hash}" ],
         "deleted_length" : [ "{regexp#integer}" ],
         "deleted_lines_number" : [ "{regexp#integer}" ],
@@ -3636,5 +3637,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6554"
+  "version" : "6567"
 }
