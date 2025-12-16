@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public enum LoadingState {
@@ -20,7 +21,14 @@ public enum LoadingState {
   APP_STARTED("app started"),
   PROJECT_OPENED("project opened");
 
-  private static final AtomicReference<LoadingState> currentState = new AtomicReference<>(BOOTSTRAP);
+  private static final AtomicReference<LoadingState> staticState = new AtomicReference<>(BOOTSTRAP);
+
+  @NotNull
+  private static Supplier<AtomicReference<LoadingState>> currentState = () -> staticState;
+
+  public static void setStateSupplier(@NotNull Supplier<AtomicReference<LoadingState>> supplier) {
+    currentState = supplier;
+  }
 
   final String displayName;
 
@@ -44,7 +52,7 @@ public enum LoadingState {
       return;
     }
 
-    LoadingState currentState = LoadingState.currentState.get();
+    LoadingState currentState = LoadingState.currentState.get().get();
     if (currentState.compareTo(this) >= 0 || isKnownViolator()) {
       return;
     }
@@ -117,12 +125,12 @@ public enum LoadingState {
   }
 
   public boolean isOccurred() {
-    return currentState.get().compareTo(this) >= 0;
+    return currentState.get().get().compareTo(this) >= 0;
   }
 
   @ApiStatus.Internal
   public static void setCurrentState(@NotNull LoadingState state) {
-    LoadingState old = currentState.getAndSet(state);
+    LoadingState old = currentState.get().getAndSet(state);
     if (old.compareTo(state) > 0) {
       BiConsumer<String, Throwable> errorHandler = LoadingState.errorHandler;
       if (errorHandler != null) {
@@ -133,7 +141,7 @@ public enum LoadingState {
 
   @ApiStatus.Internal
   public static void compareAndSetCurrentState(@NotNull LoadingState expectedState, @NotNull LoadingState newState) {
-    currentState.compareAndSet(expectedState, newState);
+    currentState.get().compareAndSet(expectedState, newState);
   }
 
   @ApiStatus.Internal
@@ -141,7 +149,7 @@ public enum LoadingState {
     assert newState.compareTo(expectedState) > 0;
 
     while (true) {
-      LoadingState current = currentState.get();
+      LoadingState current = currentState.get().get();
       if (current.compareTo(expectedState) < 0) {
         // The expected state is not yet reached.
         return;
@@ -150,7 +158,7 @@ public enum LoadingState {
         // The current state is already equal or higher than the one we wanted to set.
         return;
       }
-      if (currentState.compareAndSet(current, newState)) {
+      if (currentState.get().compareAndSet(current, newState)) {
         // We succeeded in setting the state.
         return;
       }
