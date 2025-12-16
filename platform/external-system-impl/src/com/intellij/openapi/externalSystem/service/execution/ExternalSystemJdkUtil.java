@@ -12,13 +12,13 @@ import com.intellij.openapi.projectRoots.impl.DependentSdkType;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder;
 import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision;
 import com.intellij.openapi.roots.ui.configuration.SdkLookupUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -249,29 +250,14 @@ public final class ExternalSystemJdkUtil {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Sdk lookupJdkByName(@NotNull String sdkName, @Nullable EelDescriptor eel) {
+  public static @Nullable Sdk lookup(@NotNull Project project, @NotNull Function<SdkLookupBuilder, SdkLookupBuilder> customizer) {
     return SdkLookupUtil.lookupSdkBlocking(((builder) -> {
-      if (eel != null) {
-        builder = builder.withEel(eel);
-      }
-      return builder.withSdkName(sdkName)
-        .withSdkType(getJavaSdkType())
-        .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP);
-    }));
-  }
-
-  @ApiStatus.Internal
-  public static @Nullable Sdk lookupJdkByVersion(@NotNull JavaVersion javaVersion, @Nullable EelDescriptor eel) {
-    return SdkLookupUtil.lookupSdkBlocking(
-      (builder) -> {
-        if (eel != null) {
-          builder = builder.withEel(eel);
-        }
-        return builder.withVersionFilter(it -> matchJavaVersion(javaVersion, it))
+      return customizer.apply(
+        builder.withProject(project)
           .withSdkType(getJavaSdkType())
-          .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP);
-      }
-    );
+          .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP)
+      );
+    }));
   }
 
   @ApiStatus.Internal
