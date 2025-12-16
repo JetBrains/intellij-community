@@ -13,6 +13,60 @@ private const val OVERRIDE_ENABLED_PROPERTY = "intellij.platform.proxy.override.
 private val EP_NAME: ExtensionPointName<ProxySettingsOverrideProvider> = ExtensionPointName("com.intellij.proxySettingsOverrideProvider")
 
 internal class OverrideCapableProxySettings : ProxySettings, ProxyConfigurationProvider {
+  /** This class is intended to replace `HttpConfigurable` once the latter becomes ready for retirement. */
+  @Suppress("PropertyName")
+  internal data class State(
+    val PROXY_TYPE: Type,
+    val PAC_URL: String,
+    val PROXY_PROTOCOL: ProxyProtocol,
+    val PROXY_HOST: String,
+    val PROXY_PORT: Int,
+    val PROXY_EXCEPTIONS: String,
+  ) {
+    enum class Type { DIRECT, AUTO, PAC, STATIC }
+
+    constructor() : this(Type.DIRECT, "", ProxyProtocol.HTTP, "", 0, "")
+
+    fun asProxyConfiguration(): ProxyConfiguration = when (PROXY_TYPE) {
+      Type.DIRECT -> ProxyConfiguration.direct
+      Type.AUTO -> ProxyConfiguration.autodetect
+      Type.PAC -> {
+        try {
+          @Suppress("DEPRECATION") val url = URL(PAC_URL)
+          ProxyConfiguration.proxyAutoConfiguration(url)
+        }
+        catch (_: MalformedURLException) {
+          ProxyConfiguration.autodetect
+        }
+      }
+      Type.STATIC -> ProxyConfiguration.proxy(PROXY_PROTOCOL, PROXY_HOST, PROXY_PORT, PROXY_EXCEPTIONS)
+    }
+
+    fun amend(proxyConfiguration: ProxyConfiguration): State {
+      var pacUrl = PAC_URL
+      var protocol = PROXY_PROTOCOL
+      var host = PROXY_HOST
+      var port = PROXY_PORT
+      var exceptions = PROXY_EXCEPTIONS
+      val type = when (proxyConfiguration) {
+        is ProxyConfiguration.DirectProxy -> Type.DIRECT
+        is ProxyConfiguration.AutoDetectProxy -> Type.AUTO
+        is ProxyConfiguration.ProxyAutoConfiguration -> {
+          pacUrl = proxyConfiguration.pacUrl.toExternalForm()
+          Type.PAC
+        }
+        is ProxyConfiguration.StaticProxyConfiguration -> {
+          protocol = proxyConfiguration.protocol
+          host = proxyConfiguration.host
+          port = proxyConfiguration.port
+          exceptions = proxyConfiguration.exceptions
+          Type.STATIC
+        }
+      }
+      return State(type, pacUrl, protocol, host, port, exceptions)
+    }
+  }
+
   @Suppress("removal", "DEPRECATION")
   private val httpConfigurable get() = HttpConfigurable.getInstance()
 
@@ -35,7 +89,9 @@ internal class OverrideCapableProxySettings : ProxySettings, ProxyConfigurationP
     return result?.name
   }
 
-  internal val originalProxyConfiguration: ProxyConfiguration get() = httpConfigurable.getProxyConfiguration()
+  internal var proxyState: State
+    get() = httpConfigurable.getProxyState()
+    set(value) = httpConfigurable.setFromProxyState(value)
 
   override fun getProxyConfiguration(): ProxyConfiguration {
     if (isOverrideEnabled) {
@@ -44,71 +100,37 @@ internal class OverrideCapableProxySettings : ProxySettings, ProxyConfigurationP
         return overrideConf
       }
     }
-    return originalProxyConfiguration
+    return proxyState.asProxyConfiguration()
   }
 
   override fun setProxyConfiguration(proxyConfiguration: ProxyConfiguration) {
     if (!isOverrideEnabled || overrideProvider == null) {
-      httpConfigurable.setFromProxyConfiguration(proxyConfiguration)
+      httpConfigurable.setFromProxyState(proxyState.amend(proxyConfiguration))
     }
   }
 
   @Suppress("removal", "DEPRECATION")
-  private fun HttpConfigurable.getProxyConfiguration(): ProxyConfiguration {
-    try {
-      return when {
-        USE_PROXY_PAC -> {
-          val pacUrl = PAC_URL
-          if (USE_PAC_URL && !pacUrl.isNullOrEmpty()) {
-            try {
-              ProxyConfiguration.proxyAutoConfiguration(URL(pacUrl))
-            } catch (_: MalformedURLException) {
-              ProxyConfiguration.autodetect
-            }
-          }
-          else {
-            ProxyConfiguration.autodetect
-          }
-        }
-        USE_HTTP_PROXY -> {
-          val protocol = if (PROXY_TYPE_IS_SOCKS) ProxyProtocol.SOCKS else ProxyProtocol.HTTP
-          ProxyConfiguration.proxy(protocol, PROXY_HOST, PROXY_PORT, PROXY_EXCEPTIONS ?: "")
-        }
-        else -> ProxyConfiguration.direct
-      }
+  private fun HttpConfigurable.getProxyState(): State {
+    val type = when {
+      USE_PROXY_PAC && USE_PAC_URL -> State.Type.PAC
+      USE_PROXY_PAC -> State.Type.AUTO
+      USE_HTTP_PROXY -> State.Type.STATIC
+      else -> State.Type.DIRECT
     }
-    catch (_: IllegalArgumentException) { // just in case
-      return ProxySettings.defaultProxyConfiguration
-    }
+    val pacUrl = PAC_URL.orEmpty()
+    val protocol = if (PROXY_TYPE_IS_SOCKS) ProxyProtocol.SOCKS else ProxyProtocol.HTTP
+    return State(type, pacUrl, protocol, PROXY_HOST.orEmpty(), PROXY_PORT, PROXY_EXCEPTIONS.orEmpty())
   }
 
   @Suppress("removal", "DEPRECATION")
-  private fun HttpConfigurable.setFromProxyConfiguration(proxyConf: ProxyConfiguration) {
-    when (proxyConf) {
-      is ProxyConfiguration.DirectProxy -> {
-        USE_HTTP_PROXY = false
-        USE_PROXY_PAC = false
-      }
-      is ProxyConfiguration.AutoDetectProxy -> {
-        USE_HTTP_PROXY = false
-        USE_PROXY_PAC = true
-        USE_PAC_URL = false
-        PAC_URL = null
-      }
-      is ProxyConfiguration.ProxyAutoConfiguration -> {
-        USE_HTTP_PROXY = false
-        USE_PROXY_PAC = true
-        USE_PAC_URL = true
-        PAC_URL = proxyConf.pacUrl.toString()
-      }
-      is ProxyConfiguration.StaticProxyConfiguration -> {
-        USE_PROXY_PAC = false
-        USE_HTTP_PROXY = true
-        PROXY_TYPE_IS_SOCKS = proxyConf.protocol == ProxyProtocol.SOCKS
-        PROXY_HOST = proxyConf.host
-        PROXY_PORT = proxyConf.port
-        PROXY_EXCEPTIONS = proxyConf.exceptions
-      }
-    }
+  private fun HttpConfigurable.setFromProxyState(state: State) {
+    USE_PROXY_PAC = state.PROXY_TYPE == State.Type.AUTO || state.PROXY_TYPE == State.Type.PAC
+    USE_PAC_URL = state.PROXY_TYPE == State.Type.PAC
+    PAC_URL = state.PAC_URL
+    USE_HTTP_PROXY = state.PROXY_TYPE == State.Type.STATIC
+    PROXY_TYPE_IS_SOCKS = state.PROXY_PROTOCOL == ProxyProtocol.SOCKS
+    PROXY_HOST = state.PROXY_HOST
+    PROXY_PORT = state.PROXY_PORT
+    PROXY_EXCEPTIONS = state.PROXY_EXCEPTIONS
   }
 }

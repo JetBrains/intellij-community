@@ -49,18 +49,14 @@ private class HttpConfigurableToCredentialStoreAdapter(private val getHttpConfig
   // theoretically might change the behavior, but shouldn't be critical
 
   @Synchronized
-  override fun getCredentials(host: String, port: Int): Credentials? {
-    return if (httpConfigurable.USE_HTTP_PROXY && httpConfigurable.PROXY_HOST == host && httpConfigurable.PROXY_PORT == port) {
-      httpConfigurable.getCredentials()
-    }
-    else {
-      httpConfigurable.getGenericPassword(host, port)?.toCredentials()
-    }
+  override fun getCredentials(host: String, port: Int): Credentials? = when {
+    httpConfigurable.PROXY_HOST == host && httpConfigurable.PROXY_PORT == port -> httpConfigurable.getCredentials()
+    else -> httpConfigurable.getGenericPassword(host, port)?.toCredentials()
   }
 
   @Synchronized
   override fun setCredentials(host: String, port: Int, credentials: Credentials?, remember: Boolean) {
-    if (httpConfigurable.USE_HTTP_PROXY && httpConfigurable.PROXY_HOST == host && httpConfigurable.PROXY_PORT == port) {
+    if (httpConfigurable.PROXY_HOST == host && httpConfigurable.PROXY_PORT == port) {
       httpConfigurable.setCredentials(credentials)
       httpConfigurable.KEEP_PROXY_PASSWORD = credentials != null && remember
     }
@@ -73,13 +69,9 @@ private class HttpConfigurableToCredentialStoreAdapter(private val getHttpConfig
   }
 
   @Synchronized
-  override fun areCredentialsRemembered(host: String, port: Int): Boolean {
-    return if (httpConfigurable.USE_HTTP_PROXY && httpConfigurable.PROXY_HOST == host && httpConfigurable.PROXY_PORT == port) {
-      httpConfigurable.KEEP_PROXY_PASSWORD
-    }
-    else {
-      httpConfigurable.isGenericPasswordRemembered(host, port)
-    }
+  override fun areCredentialsRemembered(host: String, port: Int): Boolean = when {
+    httpConfigurable.PROXY_HOST == host && httpConfigurable.PROXY_PORT == port -> httpConfigurable.KEEP_PROXY_PASSWORD
+    else -> httpConfigurable.isGenericPasswordRemembered(host, port)
   }
 
   @Synchronized
