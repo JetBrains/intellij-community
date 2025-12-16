@@ -129,11 +129,14 @@ public final class PreferredProducerFind {
     configurationsFromContext.sort(ConfigurationFromContext.COMPARATOR);
 
     if(strict) {
-      final ConfigurationFromContext first = configurationsFromContext.get(0);
+      ConfigurationFromContext prev = configurationsFromContext.get(0);
       for (Iterator<ConfigurationFromContext> it = configurationsFromContext.iterator(); it.hasNext();) {
         ConfigurationFromContext producer = it.next();
-        if (producer != first && ConfigurationFromContext.COMPARATOR.compare(producer, first) > 0) {
+        if (producer == prev) continue;
+        if (ConfigurationFromContext.COMPARATOR.compare(producer, prev) > 0) {
           it.remove();
+        } else {
+          prev = producer;
         }
       }
     }

@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.execution.actions.ConfigurationFromContextImpl
+import com.intellij.execution.junit.AllInPackageConfigurationProducer
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
@@ -11,8 +13,10 @@ import org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestClassGradleConfigur
 import org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestMethodGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinAllInPackageGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.run.getConfiguration
+import org.jetbrains.kotlin.idea.run.getConfigurations
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer
+import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
@@ -57,6 +61,41 @@ class GradleTestRunConfigurationCustomTest16 : KotlinGradleImportingTestCase() {
                 val kotlinPackageConfiguration = getConfiguration(kotlinFile.parent, myProject, "")
                 assertEquals("Tests in 'my.company.pkg'", kotlinPackageConfiguration.configuration.name)
                 assertTrue(kotlinPackageConfiguration.isProducedBy(KotlinAllInPackageGradleConfigurationProducer::class.java))
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testAllInPackageWithChoosePerTest() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runReadAction {
+                currentExternalProjectSettings.testRunner = TestRunner.CHOOSE_PER_TEST
+
+                val kotlinFile = files.first { it.name == "MyKotlinTest.kt" }
+                val kotlinPackageConfigurations = getConfigurations(kotlinFile.parent, myProject, "")
+                val expectedConfigurations = arrayOf(
+                    "pkg in project.test" to AllInPackageConfigurationProducer::class.java,
+                    "Tests in 'pkg'" to KotlinAllInPackageGradleConfigurationProducer::class.java
+                )
+                assertEquals(expectedConfigurations.size, kotlinPackageConfigurations.size)
+                assertEquals("pkg in project.test", kotlinPackageConfigurations[0].configuration.name)
+                assertEquals("Tests in 'pkg'", kotlinPackageConfigurations[1].configuration.name)
+
+                for ((index, pair) in expectedConfigurations.withIndex()) {
+                    val configuration = kotlinPackageConfigurations[index].configuration
+                    assertEquals(pair.first, configuration.name)
+
+                    val producerClassName =
+                        ((configuration as? ConfigurationFromContextImpl)?.configurationProducer ?: configuration).javaClass.name
+                    val klass = pair.second
+                    assertTrue(
+                        "expected producer[$index] ${klass.javaClass.name}, actual $producerClassName",
+                        kotlinPackageConfigurations[index].isProducedBy(klass)
+                    )
+                }
             }
         }
     }

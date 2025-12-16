@@ -101,9 +101,8 @@ class KotlinJUnitRunConfigurationTest : AbstractRunConfigurationBaseTest() {
         val rename = RefactoringFactory.getInstance(project).createRename(obj, "MyBarKotlinTest")
         rename.run()
 
-        assert((kotlinClassConfiguration.configuration as JUnitConfiguration).persistentData.MAIN_CLASS_NAME == "MyBarKotlinTest")
-        assert((kotlinFunctionConfiguration.configuration as JUnitConfiguration).persistentData.MAIN_CLASS_NAME == "MyBarKotlinTest")
-    
+        assertEquals("MyBarKotlinTest", (kotlinClassConfiguration.configuration as JUnitConfiguration).persistentData.MAIN_CLASS_NAME)
+        assertEquals("MyBarKotlinTest", (kotlinFunctionConfiguration.configuration as JUnitConfiguration).persistentData.MAIN_CLASS_NAME)
     }
     
     fun testRenameKotlinMethod() {
@@ -134,23 +133,26 @@ class KotlinJUnitRunConfigurationTest : AbstractRunConfigurationBaseTest() {
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("runConfigurations/junit")
 }
 
-fun getConfiguration(file: VirtualFile, project: Project, pattern: String): ConfigurationFromContext {
+fun getConfigurations(file: VirtualFile, project: Project, pattern: String): List<ConfigurationFromContext> {
     val location: PsiLocation<PsiElement?> =
         when {
-          file.isFile -> {
-              val psiFile = PsiManager.getInstance(project).findFile(file) ?: error("PsiFile not found for $file")
-              val offset = psiFile.text.indexOf(pattern)
-              val psiElement = psiFile.findElementAt(offset)
-              PsiLocation(psiElement)
-          }
-          file.isDirectory -> {
-              val directory = PsiDirectoryFactory.getInstance(project).createDirectory(file)
-              PsiLocation(directory)
-          }
-          else -> {
-              error("")
-          }
+            file.isFile -> {
+                val psiFile = PsiManager.getInstance(project).findFile(file) ?: error("PsiFile not found for $file")
+                val offset = psiFile.text.indexOf(pattern)
+                val psiElement = psiFile.findElementAt(offset)
+                PsiLocation(psiElement)
+            }
+            file.isDirectory -> {
+                val directory = PsiDirectoryFactory.getInstance(project).createDirectory(file)
+                PsiLocation(directory)
+            }
+            else -> {
+                error("")
+            }
         }
     val context = ConfigurationContext.createEmptyContextForLocation(location)
-    return context.configurationsFromContext.orEmpty().singleOrNull() ?: error("Configuration not found for pattern $pattern")
+    return context.configurationsFromContext.orEmpty()
 }
+
+fun getConfiguration(file: VirtualFile, project: Project, pattern: String): ConfigurationFromContext =
+    getConfigurations(file, project, pattern).singleOrNull() ?: error("Configuration not found for pattern $pattern")
