@@ -4,6 +4,8 @@ package com.intellij.psi.tree;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
@@ -187,6 +189,7 @@ public class IElementType {
    *  [next_element]
    * </pre>
    * <p>See com.intellij.lang.impl.PsiBuilderImpl.prepareLightTree() for details.
+   *
    * @return true if empty elements of this type should be bound to the left.
    */
   public boolean isLeftBound() {
@@ -248,7 +251,7 @@ public class IElementType {
 
   /**
    * todo IJPL-562 mark experimental?
-   *
+   * <p>
    * Map all registered token types that match the specified predicate.
    *
    * @param p the predicate which should be matched by the element types.
@@ -273,6 +276,7 @@ public class IElementType {
       return;
     }
 
+    Throwable originalTrace = new Throwable();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       int length = MAX_INDEXED_TYPES;
       IElementType[] registrySnapshot = new IElementType[length];
@@ -280,19 +284,8 @@ public class IElementType {
         System.arraycopy(ourRegistry, 0, registrySnapshot, 0, length);
       }
 
-      Map<Language, List<IElementType>> byLang = Stream.of(registrySnapshot)
-        .filter(Objects::nonNull)
-        .collect(Collectors.groupingBy(ie -> ie.getLanguage()));
-
-      Map.Entry<Language, List<IElementType>> max = Collections.max(byLang.entrySet(), Comparator.comparingInt(e -> e.getValue().size()));
-
-      List<IElementType> maxTypes = max.getValue();
-      Language maxLanguage = max.getKey();
-      String first300ElementTypes = StringUtil.first(StringUtil.join(maxTypes, ", "), 300, true);
-
-      Logger.getInstance(IElementType.class)
-        .error("Too many element types registered. Out of (short) range. Most of element types (" + maxTypes.size() + ")" +
-               " were registered for '" + maxLanguage + "': " + first300ElementTypes);
+      Throwable error = TooManyElementTypesException.create(registrySnapshot, originalTrace);
+      Logger.getInstance(IElementType.class).error(error);
     });
   }
 
@@ -302,6 +295,46 @@ public class IElementType {
     }
     private static TombstoneElementType create(@NotNull IElementType type, @NotNull PluginDescriptor pluginDescriptor) {
       return new TombstoneElementType("tombstone of " + type +" ("+type.getClass()+") belonged to unloaded "+pluginDescriptor);
+    }
+  }
+
+  private static class TooManyElementTypesException extends IllegalStateException implements ExceptionWithAttachments {
+    private final Attachment[] myAttachments;
+
+    private TooManyElementTypesException(@NotNull String message, @NotNull Throwable cause, Attachment[] attachments) {
+      super(message, cause);
+      myAttachments = attachments;
+    }
+
+    @Override
+    public @NotNull Attachment @NotNull [] getAttachments() {
+      return myAttachments;
+    }
+
+    static @NotNull Throwable create(IElementType @NotNull [] snapshot, @NotNull Throwable cause) {
+      Map<Language, List<IElementType>> byLang = Stream.of(snapshot)
+        .filter(Objects::nonNull)
+        .collect(Collectors.groupingBy(ie -> ie.getLanguage()));
+
+      Map.Entry<Language, List<IElementType>> max = Collections.max(byLang.entrySet(), Comparator.comparingInt(e -> e.getValue().size()));
+
+      List<IElementType> maxTypes = max.getValue();
+      Language maxLanguage = max.getKey();
+      String first300ElementTypes = StringUtil.first(StringUtil.join(maxTypes, ", "), 300, true);
+      String allElementTypes = StringUtil.join(maxTypes, ", ");
+
+      String errorMessage = "Too many element types registered. Out of (short) range. Most of element types (" + maxTypes.size() + ")" +
+                            " were registered for '" + maxLanguage + "': " + first300ElementTypes;
+
+      String langDistributionText = byLang.entrySet().stream()
+        .map(e -> e.getKey() + ": " + e.getValue().size())
+        .collect(Collectors.joining("\n"));
+
+      Attachment langDistributionAttachment = new Attachment("languageDistribution.txt", langDistributionText);
+      Attachment allElementTypesAttachment = new Attachment("allElementTypesOfMaxLanguage.txt", allElementTypes);
+      Attachment[] attachments = {langDistributionAttachment, allElementTypesAttachment};
+
+      return new TooManyElementTypesException(errorMessage, cause, attachments);
     }
   }
 }
