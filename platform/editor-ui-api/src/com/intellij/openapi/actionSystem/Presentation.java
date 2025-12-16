@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.BitUtil;
@@ -456,6 +457,9 @@ public final class Presentation implements Cloneable {
    */
   @ApiStatus.Experimental
   public boolean isRWLockRequired() {
+    if (!Registry.is("actions.allow.running.without.rw.lock")) {
+      return true;
+    }
     return BitUtil.isSet(myFlags, IS_RW_LOCK_REQUIRED);
   }
 

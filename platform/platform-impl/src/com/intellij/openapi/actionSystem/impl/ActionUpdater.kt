@@ -667,8 +667,9 @@ internal class ActionUpdater @JvmOverloads constructor(
       val opCur = currentThreadContext()[OpElement]
       val sessionKey = SessionKey(opName, action)
       val opElement = OpElement.next(opCur, opCur?.action, OP_sessionData, updater.place, sessionKey)
+      val canRunOnEdtWithoutLocks = Registry.`is`("actions.update.edt.actions.without.rw.lock") && updateThread == ActionUpdateThread.EDT
       return runBlockingForActionExpand(opElement) {
-        updater.callAction(opElement, updateThread, updateThread == ActionUpdateThread.BGT) { supplier.get() }
+        updater.callAction(opElement, updateThread, !canRunOnEdtWithoutLocks) { supplier.get() }
       }
     }
 

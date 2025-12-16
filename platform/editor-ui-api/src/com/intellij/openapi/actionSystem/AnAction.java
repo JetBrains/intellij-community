@@ -10,6 +10,7 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SmartFMap;
@@ -389,7 +390,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
         presentation.putClientProperty("USE_SMALL_FONT_IN_TOOLBAR", true);
       }
     }
-    presentation.setRWLockRequired(getActionUpdateThread() == ActionUpdateThread.BGT);
+    boolean canRunEdtActionWithoutRwLock = Registry.is("actions.update.edt.actions.without.rw.lock", false) && getActionUpdateThread() == ActionUpdateThread.EDT;
+    presentation.setRWLockRequired(!canRunEdtActionWithoutRwLock);
     return presentation;
   }
 
