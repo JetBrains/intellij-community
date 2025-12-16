@@ -42,5 +42,6 @@ object SearchEverywhereFeature {
   val allRegistryKeys: List<String>
   @TestOnly get() = listOf(PLATFORM_KEY,
                            RIDER_KEY,
-                           CWM_CLIENT_KEY)
+                           CWM_CLIENT_KEY,
+                           ALLOW_AB_KEY)
 }
