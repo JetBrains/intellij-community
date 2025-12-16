@@ -813,7 +813,7 @@ public fun MenuSubmenuItem(
 }
 
 @Composable
-internal fun MenuSubmenuItem(
+private fun MenuSubmenuItem(
     showIcon: Boolean,
     selected: Boolean,
     submenu: MenuScope.() -> Unit,
@@ -822,6 +822,8 @@ internal fun MenuSubmenuItem(
     iconKey: IconKey? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = JewelTheme.menuStyle,
+    submenuItem: SubmenuItem? = null,
+    setSelectedSubMenu: (SubmenuItem?) -> Unit = {},
     @Suppress("DEPRECATION") content: @Composable (itemState: MenuItemState) -> Unit,
 ) {
     var itemState by
@@ -832,6 +834,7 @@ internal fun MenuSubmenuItem(
     remember(enabled) { itemState = itemState.copy(selected = false, enabled = enabled) }
 
     val focusRequester = remember { FocusRequester() }
+    var isPopupHovered by remember { mutableStateOf(false) }
 
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
@@ -844,6 +847,20 @@ internal fun MenuSubmenuItem(
                 is HoverInteraction.Exit -> itemState = itemState.copy(hovered = false)
                 is FocusInteraction.Focus -> itemState = itemState.copy(focused = true)
                 is FocusInteraction.Unfocus -> itemState = itemState.copy(focused = false)
+            }
+        }
+    }
+
+    LaunchedEffect(itemState.isHovered, isPopupHovered) {
+        if (itemState.isHovered || isPopupHovered) {
+            if (!selected) {
+                submenuItem?.let { setSelectedSubMenu(it) }
+            }
+        } else {
+            if (!itemState.isHovered && !isPopupHovered) {
+                if (selected) {
+                    setSelectedSubMenu(null)
+                }
             }
         }
     }
@@ -863,7 +880,7 @@ internal fun MenuSubmenuItem(
                 .drawItemBackground(menuMetrics.itemMetrics, backgroundColor)
                 .focusRequester(focusRequester)
                 .clickable(
-                    onClick = { itemState = itemState.copy(selected = !itemState.isSelected) },
+                    onClick = { /*itemState = itemState.copy(selected = !itemState.isSelected)*/ },
                     enabled = enabled,
                     interactionSource = interactionSource,
                     indication = null,
@@ -915,6 +932,7 @@ internal fun MenuSubmenuItem(
                     }
                 },
                 style = style,
+                onPopupHoverChange = { isPopupHovered = it },
                 content = submenu,
             )
         }
@@ -954,6 +972,7 @@ internal fun Submenu(
     onDismissRequest: (InputMode) -> Boolean,
     modifier: Modifier = Modifier,
     style: MenuStyle = JewelTheme.menuStyle,
+    onPopupHoverChange: (Boolean) -> Unit = {},
     content: MenuScope.() -> Unit,
 ) {
     val density = LocalDensity.current
@@ -975,7 +994,7 @@ internal fun Submenu(
     Popup(
         popupPositionProvider = popupPositionProvider,
         onDismissRequest = { menuController.closeAll(InputMode.Touch, false) },
-        properties = PopupProperties(focusable = true),
+        properties = PopupProperties(focusable = false),
         onPreviewKeyEvent = { false },
         cornerSize = style.metrics.cornerSize,
         onKeyEvent = {
@@ -990,7 +1009,9 @@ internal fun Submenu(
         inputModeManager = LocalInputModeManager.current
 
         CompositionLocalProvider(LocalMenuController provides menuController) {
-            MenuContent(modifier = modifier, content = content)
+            Box(modifier = modifier.onHover { onPopupHoverChange(it) }) {
+                MenuContent(modifier = Modifier, content = content)
+            }
         }
     }
 }
