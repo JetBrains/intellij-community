@@ -6,7 +6,6 @@ import com.intellij.lambda.testFramework.starter.UltimateTestCases.JpsEmptyProje
 import com.intellij.lambda.testFramework.testApi.editor.openFile
 import com.intellij.lambda.testFramework.testApi.getProject
 import com.intellij.lambda.testFramework.testApi.getProjects
-import com.intellij.lambda.testFramework.testApi.waitForProject
 import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.ProjectManager
@@ -22,7 +21,6 @@ import java.io.Serializable
 import java.util.stream.Stream
 import kotlin.io.path.createFile
 import kotlin.io.path.exists
-import kotlin.time.Duration.Companion.seconds
 
 @RunInMonolithAndSplitMode
 class SampleTest {
@@ -40,10 +38,6 @@ class SampleTest {
       }
     }
     ide.apply {
-      runInBackend {
-        waitForProject(20.seconds)
-      }
-
       runInFrontend {
         Logger.getInstance("test").warn("Projects: " + getProjects().joinToString { it.name })
       }

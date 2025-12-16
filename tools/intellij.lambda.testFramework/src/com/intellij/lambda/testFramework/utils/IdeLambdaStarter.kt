@@ -5,8 +5,10 @@ import com.intellij.ide.starter.driver.engine.LocalDriverRunner
 import com.intellij.ide.starter.ide.IDERemDevTestContext
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.onRemDevContext
+import com.intellij.ide.starter.project.NoProject
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
+import com.intellij.lambda.testFramework.testApi.waitForProject
 import com.intellij.remoteDev.tests.LambdaTestsConstants
 import com.intellij.remoteDev.tests.impl.LambdaTestHost.Companion.TEST_MODULE_ID_PROPERTY_NAME
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
@@ -20,6 +22,7 @@ import com.intellij.util.io.createDirectories
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.util.lifetime.EternalLifetime
 import com.jetbrains.rd.util.threading.SynchronousScheduler
+import kotlinx.coroutines.runBlocking
 import kotlin.io.path.exists
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -50,7 +53,16 @@ internal fun IDETestContext.runIdeWithLambda(
                                                       collectNativeThreads,
                                                       configure)
     listOf(backendRdSession, frontendRdSession).forEach { it.awaitSessionReady() }
-    IdeWithLambda(backgroundRun, rdSession = frontendRdSession, backendRdSession = backendRdSession)
+    IdeWithLambda(backgroundRun, rdSession = frontendRdSession, backendRdSession = backendRdSession).also {
+      if (remDev.testCase.projectInfo != NoProject) {
+        @Suppress("RAW_RUN_BLOCKING")
+        runBlocking {
+          it.runInFrontend("Wait for the project") {
+            waitForProject(20.seconds)
+          }
+        }
+      }
+    }
   }?.let { return it }
 
   val driverRunner = LocalDriverRunner()
