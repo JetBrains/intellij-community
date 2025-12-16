@@ -14753,6 +14753,105 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/lazyWithoutDelegation")
+        public static class LazyWithoutDelegation extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("annotatedProperty.kt")
+            public void testAnnotatedProperty() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/annotatedProperty.kt");
+            }
+
+            @TestMetadata("ifReceiver.kt")
+            public void testIfReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/ifReceiver.kt");
+            }
+
+            @TestMetadata("isFunctionVariable.kt")
+            public void testIsFunctionVariable() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/isFunctionVariable.kt");
+            }
+
+            @TestMetadata("isInitialized.kt")
+            public void testIsInitialized() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/isInitialized.kt");
+            }
+
+            @TestMetadata("isVar.kt")
+            public void testIsVar() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/isVar.kt");
+            }
+
+            @TestMetadata("jvmField.kt")
+            public void testJvmField() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/jvmField.kt");
+            }
+
+            @TestMetadata("lazyFunction.kt")
+            public void testLazyFunction() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/lazyFunction.kt");
+            }
+
+            @TestMetadata("lazyFunction2.kt")
+            public void testLazyFunction2() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/lazyFunction2.kt");
+            }
+
+            @TestMetadata("local.kt")
+            public void testLocal() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/local.kt");
+            }
+
+            @TestMetadata("manyValueOccurences.kt")
+            public void testManyValueOccurences() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/manyValueOccurences.kt");
+            }
+
+            @TestMetadata("namedArgument.kt")
+            public void testNamedArgument() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/namedArgument.kt");
+            }
+
+            @TestMetadata("private.kt")
+            public void testPrivate() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/private.kt");
+            }
+
+            @TestMetadata("propertyNameInBrackets.kt")
+            public void testPropertyNameInBrackets() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/propertyNameInBrackets.kt");
+            }
+
+            @TestMetadata("publicProperty.kt")
+            public void testPublicProperty() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/publicProperty.kt");
+            }
+
+            @TestMetadata("qualifiedInitializer.kt")
+            public void testQualifiedInitializer() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/qualifiedInitializer.kt");
+            }
+
+            @TestMetadata("thisReceiver.kt")
+            public void testThisReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/thisReceiver.kt");
+            }
+
+            @TestMetadata("withExplicitType.kt")
+            public void testWithExplicitType() throws Exception {
+                runTest("testData/inspectionsLocal/lazyWithoutDelegation/withExplicitType.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/liftOut")
         public abstract static class LiftOut extends AbstractK2LocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)

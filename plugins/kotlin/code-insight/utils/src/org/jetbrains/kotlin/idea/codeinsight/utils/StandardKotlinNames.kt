@@ -22,6 +22,12 @@ object StandardKotlinNames {
     object Boolean {
         @JvmField val not: FqName = (BUILT_INS_PACKAGE_FQ_NAME + "Boolean") + "not"
     }
+
+    object Lazy {
+        @JvmField val lazyClassId: ClassId = ClassId(BUILT_INS_PACKAGE_FQ_NAME, Name.identifier("Lazy"))
+        @JvmField val lazyValue: CallableId = CallableId(lazyClassId, Name.identifier("value"))
+    }
+
     object Collections {
         @JvmField val asSequence: FqName = BASE_COLLECTIONS_PACKAGE + "asSequence"
         @JvmField val filter: FqName = BASE_COLLECTIONS_PACKAGE + "filter"

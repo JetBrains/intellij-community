@@ -71,6 +71,7 @@ import org.jetbrains.kotlin.psi.KtWhileExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
@@ -535,3 +536,12 @@ fun KtProperty.getOverriddenProperty(): KtProperty? {
         return overriddenProperty
     }
 }
+
+@ApiStatus.Internal
+fun KtProperty.isInitializedByLazy(): Boolean = analyze(this) {
+    return initializer?.expressionType?.isSubtypeOf(StandardKotlinNames.Lazy.lazyClassId) == true
+}
+
+@ApiStatus.Internal
+fun KtProperty.collectReferencesInFile(): List<KtNameReferenceExpression> =
+    containingKtFile.collectDescendantsOfType<KtNameReferenceExpression> { name == it.getReferencedName() && it.mainReference.resolve() == this }

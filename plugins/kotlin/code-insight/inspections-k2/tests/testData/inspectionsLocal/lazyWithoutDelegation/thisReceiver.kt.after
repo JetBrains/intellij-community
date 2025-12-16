@@ -1,0 +1,7 @@
+class A {
+    private val p by lazy { "hello" }
+
+    fun test() {
+        println(this.p)
+    }
+}

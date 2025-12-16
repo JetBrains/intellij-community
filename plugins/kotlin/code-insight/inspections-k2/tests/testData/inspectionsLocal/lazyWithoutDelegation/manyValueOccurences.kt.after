@@ -1,0 +1,9 @@
+class A {
+
+    private val x by lazy { "hello" }
+
+    fun test() {
+        val len = x.length
+        println(x)
+    }
+}

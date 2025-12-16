@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.utils.collectReferencesInFile
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -44,7 +45,6 @@ import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.propertyVisitor
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.isAbstract
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
@@ -174,7 +174,6 @@ internal class ConvertToExplicitBackingFieldsInspection :
         updater: ModPsiUpdater
     ) {
         val propertyNameText = element.nameIdentifier?.text ?: return
-        val backingPropertyName = backingPropertyContext.name ?: return
         val containingClass = backingPropertyContext.containingClass()
 
         val fullQualifiedPropertyName = if (containingClass != null) {
@@ -187,10 +186,8 @@ internal class ConvertToExplicitBackingFieldsInspection :
             propertyNameText
         }
 
-        element.containingKtFile.collectDescendantsOfType<KtNameReferenceExpression>()
-            .filter { ref ->
-                ref.getReferencedName() == backingPropertyName && ref.mainReference.resolve() == backingPropertyContext
-            }
+        backingPropertyContext
+            .collectReferencesInFile()
             .map { updater.getWritable(it) }
             .map { writableRef ->
                 writableRef.replace(psiFactory.createExpression(fullQualifiedPropertyName)) as KtExpression

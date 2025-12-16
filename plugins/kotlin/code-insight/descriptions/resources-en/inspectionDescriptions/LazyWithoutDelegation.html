@@ -1,0 +1,26 @@
+<html>
+<body>
+Detects uses of <code>lazy { ... }</code> without delegation.
+<p><b>Example:</b></p>
+<pre><code>
+    private val x = lazy { "hello" }
+
+    fun test() {
+        printlin(x.value)
+    }
+</code></pre>
+A quick-fix is suggested if a lazy variable is only used by calling direct access to its value:
+<pre><code>
+  private val x by lazy { "hello" }
+
+  fun test() {
+        println(x)
+  }
+</code></pre>
+<p>Constructions with explicit lazy type like </p>
+<pre><code>
+    private val x: Lazy&lt;String&gt; = lazy { "hello" }
+</code></pre>
+are not reported, as they are assumed to be used intentionally.
+</body>
+</html>

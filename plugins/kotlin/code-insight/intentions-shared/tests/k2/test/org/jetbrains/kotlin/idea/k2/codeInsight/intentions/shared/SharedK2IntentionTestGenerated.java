@@ -847,9 +847,24 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             runTest("../testData/intentions/convertOrdinaryPropertyToLazy/const.kt");
         }
 
+        @TestMetadata("isLazy.kt")
+        public void testIsLazy() throws Exception {
+            runTest("../testData/intentions/convertOrdinaryPropertyToLazy/isLazy.kt");
+        }
+
         @TestMetadata("noInitializer.kt")
         public void testNoInitializer() throws Exception {
             runTest("../testData/intentions/convertOrdinaryPropertyToLazy/noInitializer.kt");
+        }
+
+        @TestMetadata("qualifiedLazyFunction.kt")
+        public void testQualifiedLazyFunction() throws Exception {
+            runTest("../testData/intentions/convertOrdinaryPropertyToLazy/qualifiedLazyFunction.kt");
+        }
+
+        @TestMetadata("qualifiedLazyProperty.kt")
+        public void testQualifiedLazyProperty() throws Exception {
+            runTest("../testData/intentions/convertOrdinaryPropertyToLazy/qualifiedLazyProperty.kt");
         }
 
         @TestMetadata("run.kt")
