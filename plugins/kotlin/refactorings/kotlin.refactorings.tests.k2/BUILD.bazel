@@ -55,7 +55,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//libraries/gson",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.refactorings.tests` end
