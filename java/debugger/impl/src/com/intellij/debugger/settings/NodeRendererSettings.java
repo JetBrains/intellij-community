@@ -246,7 +246,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       return true;
     });
 
-    if (Registry.is("debugger.renderers.annotations") && !DapMode.isDap()) {
+    if (Registry.is("debugger.renderers.annotations")) {
       addAnnotationRenderers(allRenderers, project);
     }
 
