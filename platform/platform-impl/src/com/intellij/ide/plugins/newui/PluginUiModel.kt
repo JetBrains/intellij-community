@@ -6,6 +6,9 @@ import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.ide.plugins.getTags
+import com.intellij.ide.plugins.marketplace.ModuleDependency
+import com.intellij.ide.plugins.marketplace.PluginContentModule
+import com.intellij.ide.plugins.marketplace.PluginModule
 import com.intellij.ide.plugins.newui.UiPluginManager.Companion.getInstance
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
@@ -124,6 +127,10 @@ interface PluginUiModel {
   @get:NlsSafe
   var channel: String?
   var installSource: FUSEventSource?
+
+  var contentModules: List<PluginContentModule>
+  var modules: List<PluginModule>
+  var mainModuleDependencies: List<ModuleDependency>
 
   @get:NlsSafe
   var description: String?

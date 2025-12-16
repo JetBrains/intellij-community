@@ -3,6 +3,9 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.api.PluginDto
+import com.intellij.ide.plugins.marketplace.ModuleDependency
+import com.intellij.ide.plugins.marketplace.PluginContentModule
+import com.intellij.ide.plugins.marketplace.PluginModule
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
@@ -183,6 +186,21 @@ class PluginDtoModelBuilder(pluginId: PluginId) : PluginUiModelBuilder {
 
   override fun setDisableAllowed(disabledAllowed: Boolean): PluginUiModelBuilder {
     resultDto.isDisableAllowed = disabledAllowed
+    return this
+  }
+
+  override fun setContentModules(content: List<PluginContentModule>): PluginUiModelBuilder {
+    resultDto.contentModules = content
+    return this
+  }
+
+  override fun setModules(modules: List<PluginModule>): PluginUiModelBuilder {
+    resultDto.modules = modules
+    return this
+  }
+
+  override fun setMainModuleDependencies(mainModuleDependencies: List<ModuleDependency>): PluginUiModelBuilder {
+    resultDto.mainModuleDependencies = mainModuleDependencies
     return this
   }
 

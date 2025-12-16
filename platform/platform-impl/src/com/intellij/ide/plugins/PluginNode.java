@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.plugins.marketplace.ModuleDependency;
+import com.intellij.ide.plugins.marketplace.PluginContentModule;
+import com.intellij.ide.plugins.marketplace.PluginModule;
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource;
@@ -73,6 +76,10 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private Collection<String> dependencyNames;
 
   private FUSEventSource installSource;
+
+  private List<PluginContentModule> contentModules = Collections.emptyList();
+  private List<PluginModule> modules = Collections.emptyList();
+  private List<ModuleDependency> moduleDependencies = Collections.emptyList();
 
   public PluginNode(@NotNull PluginId id) {
     this.id = id;
@@ -677,6 +684,36 @@ public final class PluginNode implements IdeaPluginDescriptor {
   @ApiStatus.Internal
   public void setInstallSource(FUSEventSource installSource) {
     this.installSource = installSource;
+  }
+
+  @ApiStatus.Internal
+  public List<PluginContentModule> getContentModules() {
+    return contentModules;
+  }
+
+  @ApiStatus.Internal
+  public void setContentModules(List<PluginContentModule> contentModules) {
+    this.contentModules = contentModules != null ? contentModules : Collections.emptyList();
+  }
+
+  @ApiStatus.Internal
+  public List<PluginModule> getModules() {
+    return modules;
+  }
+
+  @ApiStatus.Internal
+  public void setModules(List<PluginModule> modules) {
+    this.modules = modules != null ? modules : Collections.emptyList();
+  }
+
+  @ApiStatus.Internal
+  public List<ModuleDependency> getModuleDependencies() {
+    return moduleDependencies;
+  }
+
+  @ApiStatus.Internal
+  public void setModuleDependencies(List<ModuleDependency> moduleDependencies) {
+    this.moduleDependencies = moduleDependencies != null ? moduleDependencies : Collections.emptyList();
   }
 
   @Override

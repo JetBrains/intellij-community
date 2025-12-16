@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
+import com.intellij.ide.plugins.marketplace.ModuleDependency
+import com.intellij.ide.plugins.marketplace.PluginContentModule
+import com.intellij.ide.plugins.marketplace.PluginModule
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
@@ -45,6 +48,9 @@ interface PluginUiModelBuilder {
   fun setRepositoryName(repositoryName: String): PluginUiModelBuilder
   fun setVendorDetails(organization: String?): PluginUiModelBuilder
   fun setDisableAllowed(disabledAllowed: Boolean): PluginUiModelBuilder
+  fun setContentModules(content: List<PluginContentModule>): PluginUiModelBuilder
+  fun setModules(modules: List<PluginModule>): PluginUiModelBuilder
+  fun setMainModuleDependencies(mainModuleDependencies: List<ModuleDependency>): PluginUiModelBuilder
 
   fun build(): PluginUiModel
 }
