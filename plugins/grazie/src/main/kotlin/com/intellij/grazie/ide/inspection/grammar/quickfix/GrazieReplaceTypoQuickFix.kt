@@ -12,6 +12,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
+import com.intellij.grazie.grammar.LanguageToolChecker
 import com.intellij.grazie.ide.fus.AcceptanceRateTracker
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.ui.components.dsl.msg
@@ -179,10 +180,10 @@ object GrazieReplaceTypoQuickFix {
 
   @JvmStatic
   fun toRangeReplacements(replacementRange: TextRange, suggestion: CharSequence, problem: TextProblem): List<Pair<TextRange, String>> =
-    if (problem.isSpellingProblem) {
-      listOf(problem.text.textRangeToFile(replacementRange) to suggestion.toString())
-    } else {
+    if (problem is LanguageToolChecker.Problem) {
       toRangeReplacements(replacementRange, suggestion, problem.text)
+    } else {
+      listOf(problem.text.textRangeToFile(replacementRange) to suggestion.toString())
     }
 
   @JvmStatic
