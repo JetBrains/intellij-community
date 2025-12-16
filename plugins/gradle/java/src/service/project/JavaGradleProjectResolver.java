@@ -16,7 +16,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.NioPathUtil;
@@ -455,7 +454,7 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   private @NotNull Sdk lookupGradleJdkByPath(@NotNull String sdkHome) {
     var gradleJvm = lookupGradleJvmByPath(sdkHome);
     if (gradleJvm != null) return gradleJvm;
-    return ExternalSystemJdkUtil.lookupJdkByPath(sdkHome);
+    return ExternalSystemJdkUtil.lookupJdkByPath(resolverCtx.getProject(), sdkHome);
   }
 
   private @Nullable Sdk lookupGradleJdkByVersion(@NotNull JavaVersion sdkVersion) {
@@ -492,7 +491,7 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     if (projectSettings == null) return null;
     var gradleJvm = projectSettings.getGradleJvm();
     if (gradleJvm == null) return null;
-    return ProjectJdkTable.getInstance(resolverCtx.getProject()).findJdk(gradleJvm);
+    return ExternalSystemJdkUtil.getJdk(resolverCtx.getProject(), gradleJvm);
   }
 
   private @Nullable GradleProjectSettings getProjectSettings() {

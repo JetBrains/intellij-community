@@ -117,7 +117,7 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
             scriptingWarnLog("Gradle javaHome is null")
             return null
         }
-        return ExternalSystemJdkUtil.lookupJdkByPath(this).also {
+        return ExternalSystemJdkUtil.lookupJdkByPath(project, this).also {
             scriptingDebugLog { "resolved gradle sdk=$it, javaHome=$this" }
         }
     }
