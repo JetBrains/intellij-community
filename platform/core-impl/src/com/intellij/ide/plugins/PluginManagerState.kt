@@ -9,7 +9,7 @@ class PluginManagerState internal constructor(
   val pluginSet: PluginSet,
   val pluginToDisable: List<PluginStateChangeData>,
   val pluginToEnable: List<PluginStateChangeData>,
-  val incompleteIdMapForLogging: Map<PluginId, PluginMainDescriptor>, // TODO refactor
+  val incompletePluginsForLogging: List<PluginMainDescriptor>, // TODO refactor
   val shadowedBundledPlugins: Set<PluginId>,
 )
 

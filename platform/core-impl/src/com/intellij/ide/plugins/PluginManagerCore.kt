@@ -555,7 +555,8 @@ object PluginManagerCore {
                       value.pluginAliases.map { it to value }
                     }.toMap()
     val fullContentModuleIdMap = HashMap<PluginModuleId, ContentModuleDescriptor>()
-    for (descriptor in loadingResult.getIncompleteIdMap().values) {
+    val incompletePlugins = loadingResult.getIncompleteIdMap().values.toList()
+    for (descriptor in incompletePlugins) {
       descriptor.contentModules.associateByTo(fullContentModuleIdMap) { it.moduleId }
     }
     for (descriptor in idMap.values) {
@@ -588,7 +589,7 @@ object PluginManagerCore {
     }
 
     val additionalErrors = pluginSetBuilder.computeEnabledModuleMap(
-      incompletePlugins = loadingResult.getIncompleteIdMap().values,
+      incompletePlugins = incompletePlugins,
       initContext = initContext,
       disabler = { descriptor, disabledModuleToProblematicPlugin ->
         val loadingError = pluginSetBuilder.initEnableState(
@@ -626,13 +627,13 @@ object PluginManagerCore {
       checkEssentialPluginsAreAvailable(idMap, initContext.essentialPlugins, pluginNonLoadReasons)
     }
 
-    val pluginSet = pluginSetBuilder.createPluginSet(incompletePlugins = loadingResult.getIncompleteIdMap().values)
+    val pluginSet = pluginSetBuilder.createPluginSet(incompletePlugins = incompletePlugins)
     ClassLoaderConfigurator(pluginSet, coreLoader).configure()
     return PluginManagerState(
       pluginSet = pluginSet,
       pluginToDisable = pluginsToDisable.values.toList(),
       pluginToEnable = pluginsToEnable.values.toList(),
-      incompleteIdMapForLogging = loadingResult.getIncompleteIdMap(),
+      incompletePluginsForLogging = incompletePlugins,
       shadowedBundledPlugins = loadingResult.shadowedBundledIds
     )
   }
