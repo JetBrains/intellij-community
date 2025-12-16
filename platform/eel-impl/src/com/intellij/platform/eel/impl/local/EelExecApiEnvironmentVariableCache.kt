@@ -10,10 +10,17 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * [makeEnvironmentVariablesDeferred] MUST return deferreds with `CoroutineStart.LAZY`.
+ */
 @ApiStatus.Internal
 class EelExecApiEnvironmentVariableCache(
   private val makeEnvironmentVariablesDeferred: (EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode?) -> Deferred<Map<String, String>>,
 ) {
+  /**
+   * If the first feature is present, it is already completed successfully.
+   * The second feature can be in any state.
+   */
   @JvmInline
   private value class EnvVarCache(private val pair: Pair<Deferred<Map<String, String>>?, Deferred<Map<String, String>>>) {
     val envVarsInProgress: Deferred<Map<String, String>> get() = pair.second
