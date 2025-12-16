@@ -22,13 +22,12 @@ fun LambdaIdeContext.findNotification(content: String, checkExactMatch: Boolean 
 }
 
 suspend fun LambdaIdeContext.waitForNotification(content: String, timeout: Duration = 10.seconds, checkExactMatch: Boolean = true) =
-  waitSuspendingNotNull("Notification is found", timeout) {
+  waitSuspendingNotNull("Notification with content '$content' is found", timeout) {
     findNotification(content = content, checkExactMatch = checkExactMatch)
   }
 
 suspend fun waitTillNotificationIsExpired(notification: Notification, timeout: Duration) =
-  waitSuspendingNotNull("Notification is expired",
-                                                                                 timeout) { notification.isExpired }
+  waitSuspendingNotNull("Notification is expired", timeout) { notification.isExpired }
 
 fun getNotificationDisplayType(notification: Notification) =
   NotificationGroupManager.getInstance().getNotificationGroup(notification.groupId).displayType
