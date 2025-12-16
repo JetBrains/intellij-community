@@ -573,7 +573,7 @@ object PluginManagerCore {
 
     val pluginSetBuilder = PluginSetBuilder(loadingResult.getPluginsToAttemptLoading())
     selectPluginsForLoading(descriptors = pluginSetBuilder.unsortedPlugins, idMap = idMap, pluginNonLoadReasons = pluginNonLoadReasons, initContext = initContext)
-    pluginSetBuilder.checkPluginCycles(globalErrors)
+    globalErrors.addAll(pluginSetBuilder.checkPluginCycles())
     val pluginsToDisable = HashMap<PluginId, String>()
     val pluginsToEnable = HashMap<PluginId, String>()
     
