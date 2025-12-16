@@ -26,7 +26,6 @@ jvm_library(
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/core-impl",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//platform/testFramework",
@@ -35,6 +34,7 @@ jvm_library(
     "//plugins/kotlin/base/util:util_test_lib",
     "@lib//:junit4",
     "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.analysis.tests` end
