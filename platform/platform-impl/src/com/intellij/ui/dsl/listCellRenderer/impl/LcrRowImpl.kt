@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.listCellRenderer.impl
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.ListSeparator
@@ -134,7 +135,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     if (renderingType == RenderingType.COLLAPSED_SELECTED_COMBO_BOX_ITEM) {
       background = null
       selectionColor = null
-      enabled = getComboBox(list)?.isEnabled ?: true
+      enabled = getComboBox(list)?.isEnabled ?: (list.getClientProperty(DarculaComboBoxUI.COLLAPSED_VALUE_DISABLED) != true)
     }
     else {
       background = list.background

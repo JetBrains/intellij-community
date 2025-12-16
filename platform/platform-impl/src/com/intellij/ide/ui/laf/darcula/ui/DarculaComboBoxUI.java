@@ -47,6 +47,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   public static final Key<Boolean> PAINT_VERTICAL_LINE = Key.create("PAINT_VERTICAL_LINE");
   public static final String DISABLE_SETTING_FOREGROUND = "disable.setting.foreground";
 
+  @ApiStatus.Internal
+  public static final String COLLAPSED_VALUE_DISABLED = "DarculaComboBoxUI.disabled";
+
   @SuppressWarnings("UnregisteredNamedColor")
   private static final Color NON_EDITABLE_BACKGROUND = JBColor.namedColor("ComboBox.nonEditableBackground",
                                                                           JBColor.namedColor("ComboBox.darcula.nonEditableBackground", new JBColor(0xfcfcfc, 0x3c3f41)));
@@ -375,11 +378,27 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
   }
 
-  @Override
-  public void paintCurrentValue(Graphics g, Rectangle bounds, boolean hasFocus) {
+  private Component getCurrentRendererComponent() {
     ListCellRenderer<Object> renderer = comboBox.getRenderer();
     Object value = comboBox.getSelectedItem();
-    Component c = renderer.getListCellRendererComponent(listBox, value, -1, false, false);
+    boolean disabled = !comboBox.isEnabled();
+
+    if (disabled) {
+      listBox.putClientProperty(COLLAPSED_VALUE_DISABLED, true);
+    }
+    try {
+      return renderer.getListCellRendererComponent(listBox, value, -1, false, false);
+    }
+    finally {
+      if (disabled) {
+        listBox.putClientProperty(COLLAPSED_VALUE_DISABLED, null);
+      }
+    }
+  }
+
+  @Override
+  public void paintCurrentValue(Graphics g, Rectangle bounds, boolean hasFocus) {
+    Component c = getCurrentRendererComponent();
 
     c.setFont(comboBox.getFont());
     c.setBackground(getBackgroundColor());
