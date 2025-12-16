@@ -21,7 +21,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 /**

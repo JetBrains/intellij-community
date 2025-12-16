@@ -12,7 +12,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils.findLibraryId;
+import static com.intellij.workspaceModel.ide.legacyBridge.LibraryBridgesKt.findLibraryId;
+
 
 /**
  * Tracks leaks of libraries from global {@link LibraryTable}

@@ -39,10 +39,10 @@ import com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContr
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.SdkEntityFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Function
