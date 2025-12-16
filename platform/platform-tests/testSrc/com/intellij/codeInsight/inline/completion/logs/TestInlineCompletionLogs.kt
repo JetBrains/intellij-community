@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionLifecycleTestDSL
@@ -7,7 +7,7 @@ import com.intellij.codeInsight.inline.completion.logs.TestInlineCompletionLogs.
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.util.Disposer
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
-import io.kotest.common.runBlocking
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
