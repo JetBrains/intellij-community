@@ -20,6 +20,7 @@ import com.apollographql.apollo.annotations.ApolloExperimental
 import com.apollographql.apollo.ast.*
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.exc.InvalidNullException
+import com.fasterxml.jackson.databind.introspect.AnnotatedClass
 import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition
 import com.fasterxml.jackson.databind.type.ArrayType
 import com.fasterxml.jackson.databind.type.CollectionLikeType
@@ -289,27 +290,56 @@ class GHGQLDTOTest(val testCase: TestCase) {
     return gqlTypedef to fragment
   }
 
-  private fun verifyDtoClass(gqlTypedef: GQLTypeDefinition, gqlFields: List<GQLSelection>, javaType: JavaType) {
-    val beanDescription = mapper.serializationConfig.introspect(javaType)
+  private fun verifyDtoClass(gqlTypedef: GQLTypeDefinition, gqlFields: List<GQLSelection>, baseJavaType: JavaType) {
     val fragmentFields = listAllFragmentFields(gqlTypedef, gqlFields).associateBy { it.field.alias ?: it.field.name }
+    val baseBeanDescription = mapper.serializationConfig.introspect(baseJavaType)
 
-    for (field in beanDescription.findProperties()) {
-      if (field.name in ALWAYS_VALID_FIELD_NAMES) continue
+    val allSubtypes = getAllSubtypes(baseJavaType, baseBeanDescription.classInfo)
+    for (javaType in allSubtypes) {
+      val beanDescription = mapper.serializationConfig.introspect(javaType)
 
-      // Check that the field exists in the fragment
-      val fragmentFieldAndParent = fragmentFields[field.name]
-      if (fragmentFieldAndParent == null) {
-        errors.add("Field is defined in class, but not in fragment: `${field.name}` in `${javaType}`")
-        continue
+      for (field in beanDescription.findProperties()) {
+        if (field.name in ALWAYS_VALID_FIELD_NAMES) continue
+
+        // Skip fields which are not set by a constructor since they usually have computed values
+        if (field.constructorParameter == null) {
+          continue
+        }
+
+        // Check that the field exists in the fragment
+        val fragmentFieldAndParent = fragmentFields[field.name]
+        if (fragmentFieldAndParent == null) {
+          errors.add("Field is defined in class, but not in fragment: `${field.name}` in `${javaType}`")
+          continue
+        }
+        val (fieldParentTypedef, fragmentField) = fragmentFieldAndParent
+
+        // Check that the field's DTO type matches with the schema
+        val fieldDef = fieldParentTypedef.resolveFieldDefinition(fragmentField)
+        if (fieldDef == null) continue
+
+        verifyDtoField(fragmentField, fieldDef, field)
       }
-      val (fieldParentTypedef, fragmentField) = fragmentFieldAndParent
-
-      // Check that the field's DTO type matches with the schema
-      val fieldDef = fieldParentTypedef.resolveFieldDefinition(fragmentField)
-      if (fieldDef == null) continue
-
-      verifyDtoField(fragmentField, fieldDef, field)
     }
+  }
+
+  /**
+   * Find all possible subtypes (e.g., @JsonSubTypes) to make sure that they also will be resolved correctly
+   */
+  private fun getAllSubtypes(javaType: JavaType, annotatedClass: AnnotatedClass): List<JavaType> {
+    val config = mapper.serializationConfig
+    val namedSubtypes = config.subtypeResolver.collectAndResolveSubtypesByTypeId(config, annotatedClass)
+
+    val subtypeJavaTypes = namedSubtypes
+      .mapNotNull { it.type }
+      .filter { subtypeClass -> javaType.rawClass.isAssignableFrom(subtypeClass) }
+      .mapNotNull { subtypeClass -> mapper.typeFactory.constructSpecializedType(javaType, subtypeClass) }
+      .toList()
+
+    val result = mutableListOf<JavaType>()
+    result.add(javaType)
+    result.addAll(subtypeJavaTypes)
+    return result
   }
 
   private fun verifyDtoField(gqlField: GQLField, gqlFieldDef: GQLFieldDefinition, javaField: BeanPropertyDefinition) {
@@ -378,7 +408,7 @@ class GHGQLDTOTest(val testCase: TestCase) {
     // if the GQL field is non-null, again not a problem, it will just never be null
     if (gqlFieldDef.type is GQLNonNullType) return
 
-    errors.add("Field `${javaField.name}` is non-null (`${javaField.primaryType}`), but nullable according to the schema (`${gqlFieldDef.type.toGQLString()}`)")
+    errors.add("Field `${javaField.name}` is non-null (`${javaField.primaryType}, ${kClass.simpleName}`), but nullable according to the schema (`${gqlFieldDef.type.toGQLString()}`)")
   }
 
   private fun validateEnumField(name: String, type: JavaType, gqlTypedef: GQLEnumTypeDefinition) {
@@ -389,7 +419,8 @@ class GHGQLDTOTest(val testCase: TestCase) {
 
     val javaEnumValues = type.rawClass.enumConstants.map { it.toString() }.toSet()
     for (gqlValue in gqlTypedef.enumValues) {
-      if (gqlValue.name !in javaEnumValues) {
+      // todo: why do we use lowercased enum values?
+      if (gqlValue.name !in javaEnumValues && gqlValue.name.lowercase() !in javaEnumValues) {
         errors.add("Enum value `${gqlValue.name}` missing in type `${type.rawClass.name}` for field `$name`")
       }
     }
@@ -828,7 +859,7 @@ internal class MetaTest {
         }
       """.trimIndent(),
       expectedErrors = listOf(
-        "Field `l` is non-null (`[simple type, class java.lang.String]`), but nullable according to the schema (`String`)"
+        "Field `l` is non-null (`[simple type, class java.lang.String], StringHolder`), but nullable according to the schema (`String`)"
       )
     )
   }
@@ -929,7 +960,7 @@ internal class MetaTest {
         }
       """.trimIndent(),
       expectedErrors = listOf(
-        "Field `l` is non-null (`[collection type; class java.util.List, contains [simple type, class java.lang.String]]`), but nullable according to the schema (`[String!]`)"
+        "Field `l` is non-null (`[collection type; class java.util.List, contains [simple type, class java.lang.String]], ListHolderWithoutDefault`), but nullable according to the schema (`[String!]`)"
       )
     )
   }

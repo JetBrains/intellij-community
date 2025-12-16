@@ -7,5 +7,5 @@ import java.util.*
 
 data class GHPRAssignedEvent(override val actor: GHActor?,
                              override val createdAt: Date,
-                             val user: GHUser)
+                             val user: GHUser?)
   : GHPRTimelineEvent.Simple

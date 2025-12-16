@@ -86,9 +86,9 @@ internal class GHPRTimelineEventComponentFactoryImpl(
     override fun createComponent(event: GHPRTimelineEvent.Simple): JComponent {
       return when (event) {
         is GHPRAssignedEvent ->
-          eventItem(event, assigneesText(assigned = listOf(event.user)))
+          eventItem(event, assigneesText(assigned = event.user?.let { listOf(it) } ?: emptyList()))
         is GHPRUnassignedEvent ->
-          eventItem(event, assigneesText(unassigned = listOf(event.user)))
+          eventItem(event, assigneesText(unassigned = event.user?.let { listOf(it) } ?: emptyList()))
 
         is GHPRReviewRequestedEvent ->
           eventItem(event, reviewersText(added = listOf(event.requestedReviewer)))
