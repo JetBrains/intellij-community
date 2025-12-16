@@ -38,17 +38,25 @@ val ShellRuntimeContext.project: Project
 val ShellRuntimeContext.eelDescriptor: EelDescriptor
   get() = getUserData(EEL_DESCRIPTOR_KEY) ?: throwUnsupportedInExpTerminalException()
 
+/**
+ * The same as [ShellRuntimeContext.currentDirectory] but parsed as [EelPath]
+ * in the environment if [eelDescriptor].
+ */
 @get:ApiStatus.Experimental
 val ShellRuntimeContext.currentDirectoryPath: EelPath
   get() = EelPath.parse(currentDirectory, eelDescriptor)
 
+/**
+ * Currently, popup-completion is supported in both Experimental 2024 and Reworked terminals.
+ * So, this method helps to adjust the behavior that depends on the terminal implementation.
+ */
 @get:ApiStatus.Experimental
 val ShellRuntimeContext.isReworkedTerminal: Boolean
   get() = getUserData(IS_REWORKED_KEY) ?: false
 
 /**
  * Returns the list of [path] child file names.
- * [path] can be either an absolute path, relative path or home-relative path like `~/abc`.
+ * [path] can be either an absolute path, relative path, or home-relative path like `~/abc`.
  * In case of the relative path, it is related to [ShellRuntimeContext.currentDirectory].
  *
  * Use [ShellDataGenerators.getParentPath] utility to get the right [path] from the user typed prefix.

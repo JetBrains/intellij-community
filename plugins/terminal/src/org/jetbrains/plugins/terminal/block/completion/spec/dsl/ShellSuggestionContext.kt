@@ -6,28 +6,32 @@ import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
 /**
- * DSL for specifying common variables of [ShellCommandContext] and [ShellOptionContext].
+ * DSL for specifying common variables of [ShellCommandContext], [ShellOptionContext] and [ShellCompletionSuggestionContext].
  */
 @ApiStatus.Experimental
 @ShellCommandSpecDsl
 sealed interface ShellSuggestionContext {
   /**
-   * Sets the string to be shown in the completion popup instead of command/option name.
+   * Sets the string to be shown in the completion popup instead of the command / option name.
    */
   fun displayName(name: String)
 
   /**
    * Text to be shown in the documentation popup for this command/option.
+   *
+   * **Documentation popup currently is not supported in the Reworked Terminal.**
    */
   fun description(@Nls text: String)
 
   /**
    * Text to be shown in the documentation popup for this command/option.
+   *
+   * **Documentation popup currently is not supported in the Reworked Terminal.**
    */
   fun description(supplier: Supplier<@Nls String>)
 
   /**
-   * The string to be inserted on completion instead of command/option name.
+   * The string to be inserted on completion instead of the command / option name.
    * Supports specifying caret position after completion item insertion in a form `some{caret}item`.
    * In this example `someitem` text will be inserted and caret is placed between `some` and `item`.
    */

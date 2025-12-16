@@ -13,7 +13,7 @@ import javax.swing.Icon
 @ShellCommandSpecDsl
 sealed interface ShellCompletionSuggestionContext : ShellSuggestionContext {
   /**
-   * Used for now only to automatically configure the icon.
+   * Used for now mostly to automatically configure the icon.
    */
   fun type(type: ShellSuggestionType)
 

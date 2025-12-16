@@ -11,7 +11,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.dsl.*
 /**
  * The single true way of creating [ShellCommandSpec].
  * @param name name of the shell command
- * @param content description of subcommands, options and arguments using DSL
+ * @param content description of subcommands, options, and arguments using DSL
  */
 @ApiStatus.Experimental
 @ShellCommandSpecDsl

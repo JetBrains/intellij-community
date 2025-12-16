@@ -6,11 +6,11 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * DSL for declaring the content and arguments of the Shell option.
  *
- * Shell options are also can be named as keys or flags in the shell command.
+ * Shell options also can be named as keys or flags in the shell command.
  * Usually, the option is starting with `-` for a short option or `--` for a long one.
  * For example `-a`, `-l` are the short options, while `--long` is a more verbose option.
  * But generally, any meaningful string can be an option, even without `-`.
- * Shell options can have its own arguments.
+ * Shell options can have their own arguments.
  */
 @ApiStatus.Experimental
 @ShellCommandSpecDsl
@@ -29,6 +29,9 @@ sealed interface ShellOptionContext : ShellSuggestionContext {
    * Specifies the separator between the option name and the argument value (if the option has an argument).
    * For example, in case of `--opt=value`, the separator should be `=`.
    * Whitespace is used as a separator by default.
+   *
+   * Currently, separators support implementation is not finished.
+   * There are several known issues: IJPL-150188, IJPL-157693, IJPL-182543.
    */
   fun separator(separator: String)
 

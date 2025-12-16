@@ -31,7 +31,7 @@ interface ShellRuntimeContext {
   val commandTokens: List<String>
 
   /**
-   * User typed prefix of the current token we are trying to complete.
+   * User-typed prefix of the current token we are trying to complete.
    *
    * For example, if [commandTokens] are `[ls, -al, ~/Documents/proj]`,
    * then typed prefix is `~/Documents/proj`

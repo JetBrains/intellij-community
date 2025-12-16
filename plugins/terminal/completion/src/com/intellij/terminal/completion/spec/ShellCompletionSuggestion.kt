@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
 /**
- * Base interface for shell command, option and argument value suggestions.
+ * Base interface for shell command, option, and argument value suggestions.
  */
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
@@ -17,22 +17,24 @@ interface ShellCompletionSuggestion {
   val name: @NonNls String
 
   /**
-   * Used for now only to automatically configure the icon.
+   * Used for now mostly to automatically configure the icon.
    */
   val type: ShellSuggestionType
 
   /**
-   * The string to be shown in the completion popup instead of [names] if specified.
+   * The string to be shown in the completion popup instead of [name] if specified.
    */
   val displayName: @NonNls String?
 
   /**
    * Text to be shown in the documentation popup.
+   *
+   * **Documentation popup currently is not supported in the Reworked Terminal.**
    */
   val description: @Nls String?
 
   /**
-   * The string to be inserted on completion instead of [names] if specified.
+   * The string to be inserted on completion instead of [name] if specified.
    * Supports specifying caret position after completion item insertion in a form `some{caret}item`.
    * In this example `someitem` text will be inserted and caret is placed between `some` and `item`.
    */
@@ -62,7 +64,7 @@ interface ShellCompletionSuggestion {
 
   /**
    * If true, then this suggestion won't be shown in the completion popup.
-   * It may be needed to specify that this suggestion is also a valid value for the argument.
+   * It may be necessary to specify that this suggestion is also a valid value for the argument.
    * So parser will be able to distinguish it and not mark it as something unknown.
    *
    * For example, if there is a directory suggestion, then it may have a trailing file separator or may not.

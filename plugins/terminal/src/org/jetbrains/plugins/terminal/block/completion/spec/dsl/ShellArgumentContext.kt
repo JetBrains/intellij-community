@@ -65,11 +65,12 @@ sealed interface ShellArgumentContext {
    * If you need custom caching logic or don't need it at all,
    * use another [suggestions] method overload and provide the ready to use [ShellRuntimeDataGenerator].
    *
-   * Use [helper function][org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion] to create [ShellCompletionSuggestion].
+   * Use [helper function][org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion]
+   * to create [ShellCompletionSuggestion] objects.
    *
    * @param content is a suspending function that will be executed at the moment of requesting the argument value suggestions.
    * Inside [content] you can access the values of [ShellRuntimeContext] and generate the list of suggestions depending on
-   * current shell directory, typed prefix, project and so on.
+   * current shell directory, typed prefix, project, and so on.
    */
   fun suggestions(content: suspend (ShellRuntimeContext) -> List<ShellCompletionSuggestion>)
 

@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Entry point for providing shell command specifications, used for command completion in the New Terminal.
+ * Entry point for providing shell command specifications, used for command completion in the Reworked Terminal.
  * Implement this interface and add it as an extension to the plugin.xml:
  * ```
  * <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">

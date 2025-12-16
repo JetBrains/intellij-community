@@ -24,8 +24,8 @@ enum class ShellCommandSpecConflictStrategy {
    * if you only need to add some option to it.
    *
    * But it is not recursive for options and arguments.
-   * If option is defined in the overriding spec, only its content will be effective.
-   * Arguments are always must be defined in the subcommands/options of the overriding spec if there should be any,
+   * If an option is defined in the overriding spec, only its content will be effective.
+   * Arguments always must be defined in the subcommands/options of the overriding spec if there should be any,
    * because they are not taken from the base spec.
    *
    * If there are two or more specs with this strategy, and they override the same subcommand/option, the result is undefined.
