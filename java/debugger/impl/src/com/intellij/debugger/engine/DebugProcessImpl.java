@@ -423,7 +423,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     int mask = getTraceMask();
     if (ApplicationManager.getApplication().isUnitTestMode() && vm instanceof VirtualMachineImpl extendedVM) {
       extendedVM.disableSoftReferences();
-      if (!DapMode.isDap() && mask == VirtualMachine.TRACE_NONE && Registry.is("debugger.log.jdi.in.unit.tests")) {
+      if (mask == VirtualMachine.TRACE_NONE && Registry.is("debugger.log.jdi.in.unit.tests")) {
         mask = VirtualMachine.TRACE_ALL;
         extendedVM.setDebugTraceConsumer(
           strings -> LOG.debug(strings.stream().map(s -> "[JDI: " + s + "]").collect(Collectors.joining("\n"))));
