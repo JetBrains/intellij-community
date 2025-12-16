@@ -2,7 +2,7 @@
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
-import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
@@ -30,7 +30,7 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb, LazyTooltip
   @Override
   public String getTooltip() {
     if (needCalculateTooltip()) {
-      WriteIntentReadAction.run(() -> {
+      ReadAction.run(() -> {
         PsiElement element = getElement(this);
         tooltip = element == null ? null
                                   : provider.getElementTooltip(element);
