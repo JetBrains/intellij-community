@@ -24,6 +24,7 @@ import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -31,6 +32,7 @@ import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.siyeh.ig.psiutils.TypeUtils
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
@@ -128,6 +130,69 @@ internal class ComponentModuleRegistrationChecker(
     return false
   }
 
+  @ApiStatus.Experimental
+  fun checkProperXmlFileForClassesIncludingDependency(element: DomElement) {
+    val xmlElement = element.xmlElement ?: return
+    for (psiElement in xmlElement.children) {
+      val text = when (psiElement) {
+                   is XmlTag -> psiElement.value.text
+                   is XmlAttribute -> psiElement.value
+                   else -> continue
+                 } ?: continue
+      val project = psiElement.project
+      val psiClass = JavaPsiFacade.getInstance(project).findClass(text, GlobalSearchScope.projectScope(project))
+      checkProperXmlFileForClassesIncludingDependency(element, psiClass)
+    }
+  }
+
+  private fun findModuleXmlFile(module: Module): XmlFile? {
+    for (sourceRoot in ModuleRootManager.getInstance(module).getSourceRoots(false)) {
+      for (file in sourceRoot.children) {
+        if (file.name == module.name + ".xml") {
+          val psiFile = PsiManager.getInstance(module.project).findFile(file)
+          if (psiFile is XmlFile) {
+            return psiFile
+          }
+        }
+      }
+    }
+    return null
+  }
+
+  private fun checkProperXmlFileForClassesIncludingDependency(element: DomElement, psiClass: PsiClass?) {
+    if (psiClass == null) return
+    val definingModule = psiClass.let { ModuleUtilCore.findModuleForPsiElement(it) } ?: return
+
+    val elementModule = element.module
+    if (elementModule == null || definingModule == elementModule) return
+
+    val elementXml = findModuleXmlFile(elementModule) ?: findModulePluginXmlFile(elementModule)
+
+    val declaredDependencies = mutableSetOf<String>()
+    elementXml?.rootTag
+      ?.findSubTags("dependencies")
+      ?.flatMap { it.subTags.toList() }
+      ?.forEach { depTag ->
+        when (depTag.name) {
+          "plugin" -> depTag.getAttributeValue("id")?.takeIf { it.isNotBlank() }?.let(declaredDependencies::add)
+          "module" -> depTag.getAttributeValue("name")?.takeIf { it.isNotBlank() }?.let(declaredDependencies::add)
+        }
+      }
+    if (definingModule.name.startsWith("intellij.platform.")) return
+    val isCoveredByDependencies = declaredDependencies.contains(definingModule.name)
+    if (isCoveredByDependencies) return
+
+    val definingPlugin = moduleToModuleSet.value[definingModule.name]
+    val elementPlugin = moduleToModuleSet.value[elementModule.name]
+    if (definingPlugin != null && definingPlugin === elementPlugin) return
+
+    annotationHolder.createProblem(element, ProblemHighlightType.ERROR,
+                                   DevKitBundle.message("inspections.plugin.xml.ComponentModuleRegistrationChecker.element.registered.wrong.module",
+                                                        definingModule.name,
+                                                        psiClass.qualifiedName), null)
+  }
+
+
   fun checkProperXmlFileForClass(element: DomElement, psiClass: PsiClass?): Boolean {
     if (psiClass == null) return false
     if (ignoredClasses.contains(psiClass.qualifiedName)) return false
@@ -153,7 +218,9 @@ internal class ComponentModuleRegistrationChecker(
     }
     val fix = if (modulePluginXmlFile != null) MoveRegistrationQuickFix(pluginXmlModule, modulePluginXmlFile.name) else null
     annotationHolder.createProblem(element, ProblemHighlightType.WARNING,
-                                   DevKitBundle.message("inspections.plugin.xml.ComponentModuleRegistrationChecker.element.registered.wrong.module", definingModule.name, psiClass.qualifiedName), null,
+                                   DevKitBundle.message("inspections.plugin.xml.ComponentModuleRegistrationChecker.element.registered.wrong.module",
+                                                        definingModule.name,
+                                                        psiClass.qualifiedName), null,
                                    *LocalQuickFix.notNullElements(fix))
     return true
   }
@@ -211,10 +278,12 @@ internal class ComponentModuleRegistrationChecker(
     }
 
     @Nls
-    override fun getName(): String = DevKitBundle.message("inspections.plugin.xml.ComponentModuleRegistrationChecker.fix.move.registration.name", myTargetFileName)
+    override fun getName(): String =
+      DevKitBundle.message("inspections.plugin.xml.ComponentModuleRegistrationChecker.fix.move.registration.name", myTargetFileName)
 
     @Nls
-    override fun getFamilyName(): String = DevKitBundle.message("inspections.plugin.xml.ComponentModuleRegistrationChecker.fix.move.registration.family.name")
+    override fun getFamilyName(): String =
+      DevKitBundle.message("inspections.plugin.xml.ComponentModuleRegistrationChecker.fix.move.registration.family.name")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val tag = PsiTreeUtil.getParentOfType(descriptor.psiElement, XmlTag::class.java, false) ?: return
