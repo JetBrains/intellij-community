@@ -11,8 +11,7 @@ internal object LayoutUtil {
      */
     @JvmStatic
     fun getPreferredSize(component: Component): Dimension {
-        val size = component.preferredSize
-        if (size == null) return Dimension() // rare
+        val size = component.preferredSize ?: return Dimension() // rare
 
         if (component.isMaximumSizeSet) {
             val max = component.getMaximumSize()

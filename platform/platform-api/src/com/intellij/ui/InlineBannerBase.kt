@@ -14,6 +14,8 @@ import javax.swing.JEditorPane
 import javax.swing.JPanel
 import kotlin.math.max
 
+private const val MINIMUM_WIDTH = 256
+
 abstract class InlineBannerBase(
   status: EditorNotificationPanel.Status,
   gap: Int,
@@ -57,16 +59,18 @@ abstract class InlineBannerBase(
     message.background = background
     message.border = JBUI.Borders.empty()
     message.isEditable = false
-    message.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, java.lang.Boolean.TRUE)
+    message.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
     message.contentType = UIUtil.HTML_MIME
     message.editorKit = HTMLEditorKitBuilder().build()
     message.addHyperlinkListener(BrowserHyperlinkListener())
 
     this.messageText = messageText
+
+    withMinimumWidth(MINIMUM_WIDTH)
   }
 
   override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
-    super.setBounds(x, y, max(width, JBUI.scale(256)), height)
+    super.setBounds(x, y, max(width, JBUI.scale(MINIMUM_WIDTH)), height)
   }
 
   override fun paintComponent(g: Graphics) {

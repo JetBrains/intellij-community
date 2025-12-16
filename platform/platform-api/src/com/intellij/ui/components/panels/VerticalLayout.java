@@ -5,6 +5,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
@@ -14,8 +15,8 @@ import java.util.List;
 
 /**
  * This class is intended to lay out added components vertically.
- * It allows to add them into the TOP, CENTER, or BOTTOM group, which are aligned separately.
- * Every group can contain any amount of components. The specified gap is added between components,
+ * It allows adding them into the TOP, CENTER, or BOTTOM group, which are aligned separately.
+ * Every group can contain any number of components. The specified gap is added between components,
  * and the double gap is added between groups of components. The gap will be scaled automatically.
  * <p><b>NB!: this class must be modified together with the {@code HorizontalLayout} class accordingly</b></p>
  *
@@ -138,21 +139,21 @@ public final class VerticalLayout implements LayoutManager2 {
 
   @Override
   public Dimension preferredLayoutSize(Container container) {
-    return getPreferredSize(container, true);
+    return getSize(container, true);
   }
 
   @Override
   public Dimension minimumLayoutSize(Container container) {
-    return getPreferredSize(container, false);
+    return getSize(container, false);
   }
 
   @Override
   public void layoutContainer(Container container) {
     int gap = myGap.get();
     synchronized (container.getTreeLock()) {
-      Dimension top = getPreferredSize(myTop);
-      Dimension bottom = getPreferredSize(myBottom);
-      Dimension center = getPreferredSize(myCenter);
+      Dimension top = getSize(myTop, true);
+      Dimension bottom = getSize(myBottom, true);
+      Dimension center = getSize(myCenter, true);
 
       Insets insets = container.getInsets();
       int width = container.getWidth() - insets.left - insets.right;
@@ -213,7 +214,7 @@ public final class VerticalLayout implements LayoutManager2 {
     return y;
   }
 
-  private static Dimension join(Dimension result, int gap, Dimension size) {
+  private static Dimension join(@Nullable Dimension result, int gap, @Nullable Dimension size) {
     if (size == null) {
       return result;
     }
@@ -227,28 +228,32 @@ public final class VerticalLayout implements LayoutManager2 {
     return result;
   }
 
-  private Dimension getPreferredSize(List<? extends Component> list) {
+  private @Nullable Dimension getSize(List<? extends Component> list, boolean preferredSize) {
     int gap = myGap.get();
     Dimension result = null;
     for (Component component : list) {
       if (component.isVisible()) {
-        result = join(result, gap, LayoutUtil.getPreferredSize(component));
+        var size = preferredSize ? LayoutUtil.getPreferredSize(component) : component.getMinimumSize();
+        result = join(result, gap, size);
       }
     }
     return result;
   }
 
-  private Dimension getPreferredSize(Container container, boolean aligned) {
+  /**
+   * @param preferredSize - true for preferred size, false for minimum size
+   */
+  private Dimension getSize(Container container, boolean preferredSize) {
     int gap2 = 2 * myGap.get();
     synchronized (container.getTreeLock()) {
-      Dimension top = getPreferredSize(myTop);
-      Dimension bottom = getPreferredSize(myBottom);
-      Dimension center = getPreferredSize(myCenter);
+      Dimension top = getSize(myTop, preferredSize);
+      Dimension bottom = getSize(myBottom, preferredSize);
+      Dimension center = getSize(myCenter, preferredSize);
       Dimension result = join(join(join(null, gap2, top), gap2, center), gap2, bottom);
       if (result == null) {
         result = new Dimension();
       }
-      else if (aligned && center != null) {
+      else if (preferredSize && center != null) {
         int topHeight = top == null ? 0 : top.height;
         int bottomHeight = bottom == null ? 0 : bottom.height;
         result.height += Math.abs(topHeight - bottomHeight);
