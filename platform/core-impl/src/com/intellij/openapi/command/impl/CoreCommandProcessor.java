@@ -338,7 +338,6 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                 ", in transparent action = " + isUndoTransparentActionInProgress());
     }
     if (undoTransparentCount++ == 0) {
-      //CommandIdService.advanceTransparentCommandId();
       eventPublisher.undoTransparentActionStarted();
     }
   }
@@ -353,7 +352,6 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   private void fireCommandStarted() {
-    //CommandIdService.advanceCommandId();
     CommandEvent event = createCurrentCommandEvent();
     eventPublisher.commandStarted(event);
   }
