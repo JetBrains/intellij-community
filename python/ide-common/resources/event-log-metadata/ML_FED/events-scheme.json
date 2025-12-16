@@ -101,6 +101,7 @@
         "inline_api_starting.caret_scope_valuable_symbols_after" : [ "{enum#boolean}" ],
         "inline_api_starting.caret_scope_valuable_symbols_before" : [ "{enum#boolean}" ],
         "inline_api_starting.column_number" : [ "{regexp#integer}" ],
+        "inline_api_starting.completion_id" : [ "{regexp#hash}" ],
         "inline_api_starting.editor_type" : [ "{enum:MAIN_EDITOR|XDEBUGGER|COMMIT_MESSAGES|AI_ASSISTANT_CHAT_INPUT|TERMINAL|UNKNOWN}" ],
         "inline_api_starting.element_prefix_length" : [ "{regexp#integer}" ],
         "inline_api_starting.experiment_group" : [ "{regexp#integer}" ],
@@ -601,7 +602,7 @@
     },
     "anonymized_fields" : [ {
       "event" : "session",
-      "fields" : [ "completion_model_execution.file_path" ]
+      "fields" : [ "completion_model_execution.file_path", "inline_api_starting.completion_id" ]
     } ]
   }, {
     "id" : "federatedCompute.dependencyCollector",
@@ -1173,5 +1174,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6537"
+  "version" : "6567"
 }
