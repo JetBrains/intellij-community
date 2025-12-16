@@ -48,7 +48,6 @@ sealed interface RpcCompletionResponseEvent {
 
   @Serializable
   data class AddWatchedPrefix(
-    val offset: Int,
     val condition: RpcPrefixCondition,
   ) : RpcCompletionResponseEvent
 
