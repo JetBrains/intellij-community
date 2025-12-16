@@ -4,18 +4,20 @@ package com.intellij.lambda.sampleTestsWithFixtures.util
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.trustedProjects.impl.TrustedProjectStartupDialog
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.remoteDev.tests.LambdaBackendContext
+import com.intellij.testFramework.common.cleanApplicationState
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
-import kotlinx.coroutines.job
 
 context(lambdaBackendContext: LambdaBackendContext)
 suspend fun openNewProjectAndEditor(relativePath: String) {
   val disposable = Disposer.newDisposable("Dialog setup")
   lambdaBackendContext.addPostCleanup {
+    ApplicationManager.getApplication().cleanApplicationState()
     Disposer.dispose(disposable)
   }
   TrustedProjectStartupDialog.setDialogChoiceInTests(OpenUntrustedProjectChoice.TRUST_AND_OPEN, disposable)
