@@ -27,6 +27,7 @@ jvm_library(
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/core-api:core",
     "//platform/execution",
+    "//platform/util/concurrency",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.rpc` end

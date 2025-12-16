@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.platform.debugger.impl.rpc.XDebuggerTreeSelectedValueId;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
@@ -33,7 +34,6 @@ import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkActionProvider;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -55,7 +55,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Function;
 
 public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvider, Disposable {
@@ -384,9 +383,8 @@ public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvi
     var xValueIdsList = Arrays.stream(selection)
       .map(node -> {
         var xValueId = xDebugManagerProxy.getXValueId(node.getValueContainer());
-        return xValueId != null ? new XDebuggerTreeSelectedValueId(xValueId, node.getName()) : null;
+        return new XDebuggerTreeSelectedValueId(xValueId, node.getName(), node);
       })
-      .filter(Objects::nonNull)
       .toList();
     sink.set(SplitDebuggerUIUtil.SPLIT_SELECTED_VALUES_KEY, xValueIdsList);
 

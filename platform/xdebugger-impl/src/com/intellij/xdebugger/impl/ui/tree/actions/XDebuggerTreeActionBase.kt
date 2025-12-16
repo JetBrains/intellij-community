@@ -66,8 +66,9 @@ abstract class XDebuggerTreeActionBase : AnAction(), ActionRemoteBehaviorSpecifi
      */
     @JvmStatic
     fun getSelectedNodes(dataContext: DataContext): List<XValueNodeImpl> {
-      val selectedNodes = XDebuggerTree.SELECTED_NODES.getData(dataContext) ?: emptyList()
-      if (!SplitDebuggerMode.isSplitDebugger()) return selectedNodes
+      if (!SplitDebuggerMode.isSplitDebugger()) {
+        return XDebuggerTree.SELECTED_NODES.getData(dataContext) ?: emptyList()
+      }
 
       if (showSplitWarnings() && AppMode.isRemoteDevHost()) {
         LOG.error("""
@@ -77,12 +78,9 @@ abstract class XDebuggerTreeActionBase : AnAction(), ActionRemoteBehaviorSpecifi
         """)
         return emptyList()
       }
-      val selectedValues = getSelectedSplitValues(dataContext)
-      if (selectedNodes.size != selectedValues.size) {
-        LOG.error("The number of selected nodes and corresponding backend values should be equal")
-        return emptyList()
-      }
-      return selectedNodes.zip(selectedValues) { node, backendValue ->
+
+      return SplitDebuggerUIUtil.getXDebuggerTreeSelectedBackendValues(dataContext).mapNotNull { (backendValue, _, node) ->
+        if (node == null) return@mapNotNull null
         object : XValueNodeImplDelegate(node, backendValue) {
           override fun getValueContainer(): XValue {
             return backendValue
@@ -90,6 +88,7 @@ abstract class XDebuggerTreeActionBase : AnAction(), ActionRemoteBehaviorSpecifi
         }
       }
     }
+
 
     /**
      * Returns the first of the selected nodes returned by [getSelectedNodes] or null if no nodes were selected.
@@ -110,11 +109,7 @@ abstract class XDebuggerTreeActionBase : AnAction(), ActionRemoteBehaviorSpecifi
      */
     @JvmStatic
     fun getSelectedValue(dataContext: DataContext): XValue? =
-      getSelectedSplitValues(dataContext).firstOrNull()
-
-    private fun getSelectedSplitValues(dataContext: DataContext): List<XValue> {
-      return SplitDebuggerUIUtil.getXDebuggerTreeSelectedBackendValues(dataContext).map { it.xValue }
-    }
+      SplitDebuggerUIUtil.getXDebuggerTreeSelectedBackendValues(dataContext).firstOrNull()?.xValue
 
     private val LOG = Logger.getInstance(XDebuggerTreeActionBase::class.java)
   }
