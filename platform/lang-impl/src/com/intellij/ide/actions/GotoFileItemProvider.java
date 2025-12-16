@@ -192,9 +192,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     // Find all directories and files names similar to the last component in patternComponents
     List<MatchResult> matchingNames = new ArrayList<>();
     final String fullPattern = String.join("", patternComponents);
-    final MinusculeMatcher fullMatcher = buildPatternMatcher(fullPattern, true);
+    final MinusculeMatcher fullMatcher = buildPatternMatcher(fullPattern, true, base.getModel());
     String lastPatternComponent = patternComponents.get(patternComponents.size() - 1);
-    MinusculeMatcher matcher = buildPatternMatcher(lastPatternComponent, true);
+    MinusculeMatcher matcher = buildPatternMatcher(lastPatternComponent, true, base.getModel());
     var nameMatchingCheck = new ProcessorWithThrottledCancellationCheck<>(
       (CharSequence fileNameCharSeq) -> {
         indicator.checkCanceled();
@@ -234,7 +234,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       if (patternComponents.size() > 1) {
         int patternSize = patternComponents.size();
         LevenshteinCalculator calculator = new LevenshteinCalculator(patternComponents.subList(0, patternSize - 1));
-        float distance = calculator.distanceToVirtualFile(psiFileItem.getVirtualFile().getParent(), false, false);
+        float distance = calculator.distanceToVirtualFile(psiFileItem.getVirtualFile().getParent(), false, false, base.getModel());
         if (distance >= LevenshteinCalculator.MIN_ACCEPTABLE_DISTANCE) {
           int avgWeight = (psiFileItemWeight + LevenshteinCalculator.weightFromDistance(distance) * (patternSize - 1)) / patternSize;
           matchingItems.add(new FoundItemDescriptor<>(psiFileItem, avgWeight));
