@@ -813,7 +813,7 @@ public fun MenuSubmenuItem(
 }
 
 @Composable
-private fun MenuSubmenuItem(
+internal fun MenuSubmenuItem(
     showIcon: Boolean,
     selected: Boolean,
     submenu: MenuScope.() -> Unit,
@@ -832,7 +832,6 @@ private fun MenuSubmenuItem(
     remember(enabled) { itemState = itemState.copy(selected = false, enabled = enabled) }
 
     val focusRequester = remember { FocusRequester() }
-    var isPopupHovered by remember { mutableStateOf(false) }
 
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
@@ -864,7 +863,7 @@ private fun MenuSubmenuItem(
                 .drawItemBackground(menuMetrics.itemMetrics, backgroundColor)
                 .focusRequester(focusRequester)
                 .clickable(
-                    onClick = { /*itemState = itemState.copy(selected = !itemState.isSelected)*/ },
+                    onClick = { itemState = itemState.copy(selected = !itemState.isSelected)},
                     enabled = enabled,
                     interactionSource = interactionSource,
                     indication = null,
@@ -916,7 +915,6 @@ private fun MenuSubmenuItem(
                     }
                 },
                 style = style,
-                onPopupHoverChange = { isPopupHovered = it },
                 content = submenu,
             )
         }
@@ -956,7 +954,6 @@ internal fun Submenu(
     onDismissRequest: (InputMode) -> Boolean,
     modifier: Modifier = Modifier,
     style: MenuStyle = JewelTheme.menuStyle,
-    onPopupHoverChange: (Boolean) -> Unit = {},
     content: MenuScope.() -> Unit,
 ) {
     val density = LocalDensity.current
@@ -993,9 +990,7 @@ internal fun Submenu(
         inputModeManager = LocalInputModeManager.current
 
         CompositionLocalProvider(LocalMenuController provides menuController) {
-            Box(modifier = modifier.onHover { onPopupHoverChange(it) }) {
-                MenuContent(modifier = Modifier, content = content)
-            }
+            MenuContent(modifier = modifier, content = content)
         }
     }
 }
