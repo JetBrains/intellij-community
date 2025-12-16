@@ -10,6 +10,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.projectId
 import fleet.rpc.client.durable
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.toList
 import org.jetbrains.annotations.ApiStatus
 
@@ -27,15 +29,13 @@ fun findAllTodos(
 }
 
 @ApiStatus.Internal
-fun getFilesWithTodos(
+suspend fun getFilesWithTodos(
   project: Project,
   filter: TodoFilter?
-): List<VirtualFile> = runBlockingCancellable {
-  durable {
-    val projectId: ProjectId = project.projectId()
-    val fileIds = TodoRemoteApi.getInstance().getFilesWithTodos(projectId, filter?.let { toConfig(it) })
-    fileIds.mapNotNull { it.virtualFile() }
-  }
+): Flow<VirtualFile> = durable {
+  val projectId: ProjectId = project.projectId()
+  TodoRemoteApi.getInstance().getFilesWithTodos(projectId, filter?.let { toConfig(it) })
+    .mapNotNull { it.virtualFile() }
 }
 
 @ApiStatus.Internal

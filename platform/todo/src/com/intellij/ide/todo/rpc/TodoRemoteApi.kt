@@ -21,7 +21,7 @@ interface TodoRemoteApi : RemoteApi<Unit> {
   suspend fun getFilesWithTodos(
     projectId: ProjectId,
     filter: TodoFilterConfig?
-  ): List<VirtualFileId>
+  ): Flow<VirtualFileId>
 
   suspend fun getTodoCount(
     projectId: ProjectId,

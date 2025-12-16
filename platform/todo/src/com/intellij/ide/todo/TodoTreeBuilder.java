@@ -352,16 +352,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   @RequiresBackgroundThread
   protected void collectFiles(@NotNull Consumer<? super @NotNull PsiFile> consumer) {
     if (shouldUseSplitTodo()) {
-      TodoFilter filter = getTodoTreeStructure().getTodoFilter();
-      List<VirtualFile> filesWithTodos = getFilesWithTodos(myProject, filter);
-
-      PsiManager psiManager = PsiManager.getInstance(myProject);
-      for (VirtualFile virtualFile : filesWithTodos) {
-        PsiFile psiFile = psiManager.findFile(virtualFile);
-        if (psiFile != null) {
-          consumer.accept(psiFile);
-        }
-      }
+      myCoroutineHelper.collectFilesFromFlow(getTodoTreeStructure().getTodoFilter(), consumer);
     } else {
       TodoTreeStructure treeStructure = getTodoTreeStructure();
       PsiTodoSearchHelper searchHelper = getSearchHelper();

@@ -73,14 +73,12 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
   override suspend fun getFilesWithTodos(
     projectId: ProjectId,
     filter: TodoFilterConfig?,
-  ): List<VirtualFileId> {
-
-    val project = projectId.findProjectOrNull() ?: return emptyList()
+  ): Flow<VirtualFileId> = channelFlow {
+    val project = projectId.findProjectOrNull() ?: return@channelFlow
     val resolvedFilter = resolveFilter(project, filter)
 
-    return readAction {
+    readAction {
       blockingContextToIndicator {
-        val files = mutableListOf<VirtualFileId>()
         val helper = PsiTodoSearchHelper.getInstance(project)
 
         helper.processFilesWithTodoItems { psiFile ->
@@ -93,11 +91,10 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
           }
 
           if (matchesFilter) {
-            files.add(virtualFile.rpcId())
+            trySend(virtualFile.rpcId())
           }
           true
         }
-        files
       }
     }
   }

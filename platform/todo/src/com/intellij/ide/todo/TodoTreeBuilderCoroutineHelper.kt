@@ -3,19 +3,24 @@ package com.intellij.ide.todo
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
+import com.intellij.ide.todo.rpc.getFilesWithTodos
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
 
 private val ASYNC_BATCH_SIZE by lazy { RegistryManager.getInstance().get("ide.tree.ui.async.batch.size") }
 
@@ -28,6 +33,20 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
 
   override fun dispose() {
     scope.cancel()
+  }
+
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  fun collectFilesFromFlow(filter: TodoFilter?, consumer: Consumer<in PsiFile>) {
+    runBlockingCancellable {
+      val psiManager = PsiManager.getInstance(treeBuilder.project)
+      getFilesWithTodos(treeBuilder.project, filter).collect { virtualFile ->
+        val psiFile = psiManager.findFile(virtualFile)
+        if (psiFile != null) {
+          consumer.accept(psiFile)
+        }
+      }
+    }
   }
 
   fun scheduleCacheAndTreeUpdate(vararg constraints: ReadConstraint): CompletableFuture<*> {
