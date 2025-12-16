@@ -8,10 +8,23 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Selects plugins to load by applying all business logic for plugin selection.
- * This is a single comprehensive phase that:
- * - Filters out disabled plugins
- * - Validates plugin compatibility
- * - Selects the most recent version per plugin ID
+ * 
+ * The selection process depends on the configuration:
+ * 
+ * **Regular mode** (default):
+ * 1. Validates plugin compatibility (build version constraints)
+ * 2. Selects the most recent version per plugin ID
+ * 3. Filters out disabled plugins (except those required by essential plugins)
+ * 4. Filters out plugins incompatible with essential plugins (except those required by essential plugins)
+ * 
+ * **Explicit subset mode** ([PluginInitializationContext.explicitPluginSubsetToLoad] is set):
+ * 1. Validates plugin compatibility
+ * 2. Selects the most recent version per plugin ID
+ * 3. Loads only explicitly listed plugins and their transitive dependencies
+ * 4. Does NOT filter disabled plugins or incompatible-with declarations
+ * 
+ * **Disabled completely mode** ([PluginInitializationContext.disablePluginLoadingCompletely] is true):
+ * - Loads only the CORE plugin, all others are excluded
  *
  * @param onPluginExcluded Callback invoked for each excluded plugin
  * @return Filtered list containing only plugins selected for loading.
@@ -26,17 +39,20 @@ fun PluginInitializationContext.selectPluginsToLoad(
     return emptyList()
   }
   if (explicitPluginSubsetToLoad != null) {
+    // does not care about disabled plugins and incompatible-with for essential plugins
     return selectFromExplicitSubset(discoveredPlugins, onPluginExcluded)
   }
   if (disablePluginLoadingCompletely) {
     return selectOnlyCorePlugin(discoveredPlugins, onPluginExcluded)
   }
-  return regularSelect(onPluginExcluded, discoveredPlugins)
+  val compatible = selectMostRecentCompatible(discoveredPlugins, onPluginExcluded)
+  val filtered = applyDisabledAndIncompatibleWithForEssentialPluginsFilters(compatible, onPluginExcluded)
+  return filtered
 }
 
-private fun PluginInitializationContext.regularSelect(
-  onPluginExcluded: (PluginMainDescriptor, PluginNonLoadReason) -> Unit,
+private fun PluginInitializationContext.selectMostRecentCompatible(
   discoveredPlugins: List<DiscoveredPluginsList>,
+  onPluginExcluded: (PluginMainDescriptor, PluginNonLoadReason) -> Unit,
 ): List<DiscoveredPluginsList> {
   val selectedPluginsByPluginId = LinkedHashMap<PluginId, PluginMainDescriptor>()
   var hasExclusions = false
@@ -48,10 +64,6 @@ private fun PluginInitializationContext.regularSelect(
 
   for (pluginList in discoveredPlugins) {
     for (plugin in pluginList.plugins) {
-      if (isPluginDisabled(plugin.pluginId)) {
-        onPluginExcluded(plugin, PluginIsMarkedDisabled(plugin))
-        continue
-      }
       validatePluginIsCompatible(plugin)?.let { reason ->
         onPluginExcluded(plugin, reason)
         continue
@@ -85,28 +97,72 @@ private fun PluginInitializationContext.regularSelect(
   }
 }
 
+private fun PluginInitializationContext.applyDisabledAndIncompatibleWithForEssentialPluginsFilters(
+  compatible: List<DiscoveredPluginsList>,
+  onPluginExcluded: (PluginMainDescriptor, PluginNonLoadReason) -> Unit
+): List<DiscoveredPluginsList> {
+  val compatiblePlugins = compatible.flatMap { it.plugins }
+  val essentialIds = essentialPlugins + setOf(CORE_ID)
+  val essentialPlugins = compatiblePlugins.filter { it.pluginId in essentialIds }
+  val ambiguousPluginSet = AmbiguousPluginSet.build(compatiblePlugins)
+  val allEssentialModules = PluginDependencyAnalysis.getRequiredTransitiveModules(
+    this,
+    essentialPlugins,
+    ambiguousPluginSet,
+  )
+  // we should exclude incompatibilities for essential modules early, because otherwise it might result in a dependency cycle later
+  // note: includes possible incompatible-with for content modules IJPL-200858
+  val incompatibleWithEssentialModules = hashMapOf<PluginModuleDescriptor, PluginModuleDescriptor>()
+  for (essentialModule in allEssentialModules) {
+    for (incompatibleId in essentialModule.incompatiblePlugins) {
+      for (incompatibleModule in ambiguousPluginSet.resolvePluginId(incompatibleId)) {
+        incompatibleWithEssentialModules.putIfAbsent(incompatibleModule, essentialModule)
+      }
+    }
+  }
+  return compatible.map { pluginsList ->
+    DiscoveredPluginsList(
+      pluginsList.plugins.filter { plugin ->
+        when {
+          isPluginDisabled(plugin.pluginId) && plugin !in allEssentialModules -> {
+            onPluginExcluded(plugin, PluginIsMarkedDisabled(plugin))
+            false
+          }
+          plugin in incompatibleWithEssentialModules.keys && plugin !in allEssentialModules -> {
+            onPluginExcluded(plugin, PluginIsIncompatibleWithAnotherPlugin(plugin, incompatibleWithEssentialModules[plugin]!!, true))
+            false
+          }
+          else -> {
+            true
+          }
+        }
+      },
+      pluginsList.source
+    )
+  }
+}
 
 private fun PluginInitializationContext.selectFromExplicitSubset(
   discoveredPlugins: List<DiscoveredPluginsList>,
   onPluginExcluded: (PluginMainDescriptor, PluginNonLoadReason) -> Unit,
 ): List<DiscoveredPluginsList> {
-  val regularSelectResult = regularSelect(onPluginExcluded, discoveredPlugins)
-  val regularSelectionPlugins = regularSelectResult.flatMap { it.plugins }
+  val compatible = selectMostRecentCompatible(discoveredPlugins, onPluginExcluded)
+  val compatiblePlugins = compatible.flatMap { it.plugins }
   val pluginIdsSubset = essentialPlugins + explicitPluginSubsetToLoad!! + setOf(CORE_ID)
-  val pluginSubset = regularSelectionPlugins.filter { it.pluginId in pluginIdsSubset }
-  val ambiguousPluginSet = AmbiguousPluginSet.build(regularSelectionPlugins)
+  val pluginSubset = compatiblePlugins.filter { it.pluginId in pluginIdsSubset }
+  val ambiguousPluginSet = AmbiguousPluginSet.build(compatiblePlugins)
   val requiredModules = PluginDependencyAnalysis.getRequiredTransitiveModules(
     this,
     pluginSubset,
     ambiguousPluginSet,
   )
-  return regularSelectResult.map { pluginsList ->
-    DiscoveredPluginsList(pluginsList.plugins.mapNotNull { plugin ->
+  return compatible.map { pluginsList ->
+    DiscoveredPluginsList(pluginsList.plugins.filter { plugin ->
       if (plugin in requiredModules) {
-        plugin
+        true
       } else {
         onPluginExcluded(plugin, PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins(plugin))
-        null
+        false
       }
     }, pluginsList.source)
   }
@@ -118,13 +174,13 @@ private fun selectOnlyCorePlugin(
   onPluginExcluded: (PluginMainDescriptor, PluginNonLoadReason) -> Unit,
 ): List<DiscoveredPluginsList> {
   return discoveredPlugins.map { pluginsList ->
-    DiscoveredPluginsList(pluginsList.plugins.mapNotNull { plugin ->
+    DiscoveredPluginsList(pluginsList.plugins.filter { plugin ->
       if (plugin.pluginId == CORE_ID) {
-        plugin
+        true
       }
       else {
         onPluginExcluded(plugin, PluginLoadingIsDisabledCompletely(plugin))
-        null
+        false
       }
     }, pluginsList.source)
   }
