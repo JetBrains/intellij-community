@@ -155,10 +155,10 @@ class AnalysisToolset : McpToolset {
     val buildFinished = CompletableDeferred<Unit>()
 
     logger.trace { "Starting build task with timeout ${timeout}ms" }
+    var buildStarted = false
     val buildResult = withTimeoutOrNull(timeout.milliseconds) {
       coroutineScope {
         val buildViewManager = project.serviceAsync<BuildViewManager>()
-        
         // Listen to build events to collect problems directly
         buildViewManager.addListener(BuildProgressListener { buildId, event ->
           logger.trace { "Received build event: ${event.javaClass.simpleName}, buildId=$buildId" }
@@ -166,6 +166,7 @@ class AnalysisToolset : McpToolset {
           when (event) {
             is StartBuildEvent -> {
               logger.trace { "Build started: ${event.buildDescriptor.title}" }
+              buildStarted = true
             }
             
             is FileMessageEvent -> {
@@ -239,15 +240,25 @@ class AnalysisToolset : McpToolset {
         val result = ProjectTaskManager.getInstance(project).run(context, task).await()
 
         logger.trace { "Build task completed, waiting for FinishBuildEvent..." }
-        buildFinished.await()
+        if (buildStarted) {
+          logger.trace { "Build was started, waiting for FinishBuildEvent" }
+          buildFinished.await()
+        }
+        else {
+          logger.trace { "Build was not started, skipping waiting for FinishBuildEvent" }
+        }
 
-        logger.trace { "FinishBuildEvent received or timed out" }
+        logger.trace { "FinishBuildEvent received" }
         result
       }
     }
     logger.trace { "Build completed: result=$buildResult, hasErrors=${buildResult?.hasErrors()}, problemsCount=${problems.size}" }
 
     logger.trace { "build_project completed: buildTimedOut=${buildResult == null}, problemsCount=${problems.size}" }
+    // for the cases when the build doesn't report messages via BuildViewManager
+    if (!buildStarted) {
+      problems.add(ProjectProblem(message = "The project has limited build diagnostics functionality. Build messages cannot be collected."))
+    }
     return BuildProjectResult(
       timedOut = buildResult == null,
       isSuccess = buildResult != null && !buildResult.hasErrors() && problems.none { it.kind == Kind.ERROR.name },
