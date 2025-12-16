@@ -16,7 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.UnaryOperator;
 
 /**
- * Intention action replacement that operates on {@link ModCommand}.
+ * An {@link IntentionAction intention action} replacement that, once {@link #perform performed},
+ * produces a declarative {@link ModCommand} instead of performing the action right away.
  * <p>
  * If you need your action to work in the dumb mode, extend it with {@link com.intellij.openapi.project.DumbAware}
  * or override {@link PossiblyDumbAware#isDumbAware()}
