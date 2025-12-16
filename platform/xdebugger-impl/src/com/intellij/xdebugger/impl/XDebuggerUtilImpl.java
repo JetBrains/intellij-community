@@ -706,6 +706,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return XDebuggerSettingManagerImpl.getInstanceImpl().getSettings(aClass);
   }
 
+  /**
+   * @deprecated Use {@link XDebuggerTreeActionBase#getSelectedValue(DataContext)} instead.
+   */
+  @Deprecated
   @Override
   public XValueContainer getValueContainer(DataContext dataContext) {
     return XDebuggerTreeActionBase.getSelectedValue(dataContext);

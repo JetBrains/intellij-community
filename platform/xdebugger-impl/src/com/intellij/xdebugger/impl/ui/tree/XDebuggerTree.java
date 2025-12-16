@@ -484,6 +484,9 @@ public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvi
     return XDEBUGGER_TREE_KEY.getData(context);
   }
 
+  /**
+   * @return selected nodes in the debugger. Should not be called from backend, as there is no tree on the backend.
+   */
   @ApiStatus.Internal
   public static @NotNull List<XValueNodeImpl> getSelectedNodes(@NotNull DataContext context) {
     if (SplitDebuggerMode.showSplitWarnings() && AppMode.isRemoteDevHost()) {
