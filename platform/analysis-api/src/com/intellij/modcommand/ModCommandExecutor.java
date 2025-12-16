@@ -26,7 +26,7 @@ public interface ModCommandExecutor {
    *
    * @param context current context
    * @param command a command to execute
-   * @param editor context editor, if known
+   * @param editor  context editor, if known
    */
   @RequiresEdt
   void executeInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @Nullable Editor editor);
@@ -37,9 +37,9 @@ public interface ModCommandExecutor {
    * The {@linkplain CommandProcessor command} will be created automatically, if necessary.
    * Do not use it directly, use {@link #executeInteractively(ActionContext, String, Editor, Supplier)} instead.
    *
-   * @param context action context
-   * @param title user-visible title to display if background computation takes a long time.
-   * @param editor context editor, if known
+   * @param context         action context
+   * @param title           user-visible title to display if background computation takes a long time.
+   * @param editor          context editor, if known
    * @param commandSupplier a side-effect-free function to produce a {@link ModCommand}
    */
   @ApiStatus.Internal
@@ -63,18 +63,17 @@ public interface ModCommandExecutor {
    * Apply a command for non-physical file copy.
    *
    * @param command command to apply
-   * @param file a non-physical file copy to apply the command to
+   * @param file    a non-physical file copy to apply the command to
    * @throws UnsupportedOperationException if the command does something except modifying the specified file
    */
   void executeForFileCopy(@NotNull ModCommand command, @NotNull PsiFile file) throws UnsupportedOperationException;
 
   /**
    * @param modCommand {@link ModCommand} to generate preview for
-   * @param context context in which the action is about to be executed
+   * @param context    context in which the action is about to be executed
    * @return default preview for a given ModCommand
    */
-  @NotNull
-  IntentionPreviewInfo getPreview(@NotNull ModCommand modCommand, @NotNull ActionContext context);
+  @NotNull IntentionPreviewInfo getPreview(@NotNull ModCommand modCommand, @NotNull ActionContext context);
 
   /**
    * @return an instance of this service
@@ -89,10 +88,10 @@ public interface ModCommandExecutor {
    * The {@linkplain CommandProcessor command} will be created automatically, if necessary.
    * Must be executed either in EDT, or during intention preview computation. In the latter case,
    * only the commands that change the current file are accepted.
-   * 
-   * @param context action context
-   * @param title user-visible title to display if background computation takes a long time.
-   * @param editor context editor, if known
+   *
+   * @param context         action context
+   * @param title           user-visible title to display if background computation takes a long time.
+   * @param editor          context editor, if known
    * @param commandSupplier a side-effect-free function to produce a {@link ModCommand}
    */
   static void executeInteractively(@NotNull ActionContext context,
@@ -116,9 +115,11 @@ public interface ModCommandExecutor {
     /**
      * @return message to display in the UI that describes the execution result
      */
-    @NotNull @Nls String getMessage();
+    @NotNull
+    @Nls
+    String getMessage();
   }
-  
+
   enum Result implements BatchExecutionResult {
     /**
      * Action was successfully executed.
@@ -155,6 +156,7 @@ public interface ModCommandExecutor {
 
   /**
    * Indicates that the action execution was unsuccessful.
+   *
    * @param message user-readable error message
    */
   record Error(@NotNull @NlsContexts.Tooltip String message) implements BatchExecutionResult {
