@@ -120,10 +120,25 @@ public class LabelPainter {
     int remainingWidth = availableWidth - getCurrentWidth(bookmarkLabels, middlePadding) - sidePaddingsWidth;
     List<Presentation> referenceLabels = processReferenceLabels(refGroups, fontMetrics, remainingWidth, background, height, compact);
 
-    List<Presentation> result = new ArrayList<>(bookmarkLabels);
-    result.addAll(referenceLabels);
+    List<Presentation> result = getPresentations(bookmarkLabels, referenceLabels);
+    int width = getPresentationsWidth(result, middlePadding);
+    return new Presentations(result, width > 0 ? width + sidePaddingsWidth : 0);
+  }
 
-    return new Presentations(result, sidePaddingsWidth + getPresentationsWidth(result, middlePadding));
+  private @NotNull List<Presentation> getPresentations(@NotNull List<Presentation> bookmarkLabels,
+                                                       @NotNull List<Presentation> referenceLabels) {
+    if (bookmarkLabels.isEmpty()) return referenceLabels;
+
+    List<Presentation> result = new ArrayList<>(bookmarkLabels.size() + referenceLabels.size());
+    if (isLeftAligned()) {
+      result.addAll(bookmarkLabels);
+      result.addAll(referenceLabels);
+    }
+    else {
+      result.addAll(referenceLabels);
+      result.addAll(bookmarkLabels);
+    }
+    return result;
   }
 
   private static int getCurrentWidth(@NotNull List<Presentation> result, int middlePadding) {
