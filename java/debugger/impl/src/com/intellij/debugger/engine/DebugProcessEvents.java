@@ -435,10 +435,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
       if (canBeModified) {
         createStackCapturingBreakpoints();
-        if (!DapMode.isDap()) {
-          AsyncStacksUtils.setupAgent(this);
-          CollectionBreakpointUtils.setupCollectionBreakpointAgent(this);
-        }
+        AsyncStacksUtils.setupAgent(this);
+        CollectionBreakpointUtils.setupCollectionBreakpointAgent(this);
       }
 
       XDebugSessionImpl session = (XDebugSessionImpl)getSession().getXDebugSession();
