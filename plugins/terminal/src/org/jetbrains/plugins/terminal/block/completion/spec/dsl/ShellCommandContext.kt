@@ -17,17 +17,15 @@ import org.jetbrains.annotations.ApiStatus
 @ShellCommandSpecDsl
 sealed interface ShellCommandContext : ShellSuggestionContext {
   /**
-   * Whether this command can't be executed without mentioning the subcommand.
-   *
-   * False by default.
+   * Specifies that this command can't be executed without mentioning the subcommand.
    */
-  var requiresSubcommand: Boolean
+  fun requiresSubcommand()
 
   /**
    * Allows modifying default parser options.
    * @see [ShellCommandParserOptions]
    */
-  var parserOptions: ShellCommandParserOptions
+  fun parserOptions(options: ShellCommandParserOptions)
 
   /**
    * Specify the subcommands of the current command.
@@ -62,7 +60,7 @@ sealed interface ShellCommandContext : ShellSuggestionContext {
   /**
    * Specifies that this Shell command should have an argument.
    * Note that arguments are not optional by default.
-   * If your argument is not necessary to be specified, then set [ShellArgumentContext.isOptional] to true.
+   * If your argument is not necessary to be specified, specify [ShellArgumentContext.optional].
    * Arguments should be defined in the same order as it is expected in the command line.
    * @param [content] description of the argument
    */

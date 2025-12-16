@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.block.completion.spec.dsl
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
 
 /**
@@ -12,12 +11,10 @@ import java.util.function.Supplier
 @ApiStatus.Experimental
 @ShellCommandSpecDsl
 sealed interface ShellSuggestionContext {
-  val names: List<@NonNls String>
-
   /**
-   * The string to be shown in the completion popup instead of command/option name.
+   * Sets the string to be shown in the completion popup instead of command/option name.
    */
-  var displayName: String?
+  fun displayName(name: String)
 
   /**
    * Text to be shown in the documentation popup for this command/option.
@@ -34,12 +31,15 @@ sealed interface ShellSuggestionContext {
    * Supports specifying caret position after completion item insertion in a form `some{caret}item`.
    * In this example `someitem` text will be inserted and caret is placed between `some` and `item`.
    */
-  var insertValue: String?
+  fun insertValue(value: String)
+
+  @set:Deprecated("Please use priority() method instead")
+  var priority: Int
 
   /**
    * Int from 0 to 100 with default 50.
    * Allows specifying the order of the items in the completion popup.
    * The greater the number, the closer the item will be to the first place.
    */
-  var priority: Int
+  fun priority(priority: Int)
 }

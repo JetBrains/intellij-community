@@ -16,56 +16,47 @@ import org.jetbrains.annotations.ApiStatus
 @ShellCommandSpecDsl
 sealed interface ShellOptionContext : ShellSuggestionContext {
   /**
-   * Whether this option can be available for all subcommands of the current Shell command.
-   *
-   * False by default.
+   * Makes this option available for all subcommands of the current Shell command.
    */
-  var isPersistent: Boolean
+  fun persistent()
 
   /**
-   * Whether this option always must be present in the Shell command call.
-   *
-   * False by default.
+   * Specifies that this option always must be present in the Shell command call.
    */
-  var isRequired: Boolean
+  fun required()
 
   /**
-   * The separator between the option name and the argument value (if option has an argument).
+   * Specifies the separator between the option name and the argument value (if the option has an argument).
    * For example, in case of `--opt=value`, the separator should be `=`.
-   *
-   * Whitespace is used as a separator by default (but the value of the property is null in this case).
+   * Whitespace is used as a separator by default.
    */
-  var separator: String?
+  fun separator(separator: String)
 
   /**
-   * The maximum amount of times this option can be present in the command line.
+   * Specifies the maximum number of times this option can be present in the command line.
    * Zero value means that it can be repeated infinitely.
    * If the option is already present this number of times in the command, it won't be shown in the completion popup anymore.
    *
    * One by default.
    */
-  var repeatTimes: Int
+  fun repeatTimes(times: Int)
 
   /**
-   * Names of the options with those this option cannot be used.
+   * Specifies the names of the options with those this option cannot be used.
    * If any of such options is used in the command, this option won't be shown in the completion popup.
-   *
-   * Empty list by default.
    */
-  var exclusiveOn: List<String>
+  fun exclusiveOn(on: List<String>)
 
   /**
-   * Names of the options required to use this option.
+   * Specifies names of the options required to use this option.
    * Until all such options are used in the command, this option won't be shown in the completion popup.
-   *
-   * Empty list by default.
    */
-  var dependsOn: List<String>
+  fun dependsOn(on: List<String>)
 
   /**
    * Specifies that this Shell option should have an argument.
    * Note that arguments are not optional by default.
-   * If your argument is not necessary to be specified, then set [ShellArgumentContext.isOptional] to true.
+   * If your argument is not necessary to be specified, specify [ShellArgumentContext.optional].
    * Arguments should be defined in the same order as it is expected in the command line.
    * @param [content] description of the argument
    */

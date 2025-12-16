@@ -15,7 +15,7 @@ sealed interface ShellCompletionSuggestionContext : ShellSuggestionContext {
   /**
    * Used for now only to automatically configure the icon.
    */
-  var type: ShellSuggestionType
+  fun type(type: ShellSuggestionType)
 
   /**
    * Custom icon instead of autodetected from [type].
@@ -30,15 +30,15 @@ sealed interface ShellCompletionSuggestionContext : ShellSuggestionContext {
    * 2. If typed prefix is `foo/b` and suggestion name is `bar` (we want to suggest the part of the path after `/`),
    * then the replacement index should be `4`.
    */
-  var prefixReplacementIndex: Int
+  fun prefixReplacementIndex(index: Int)
 
   /**
-   * If true, then this suggestion won't be shown in the completion popup.
-   * It may be needed to specify that this suggestion is also a valid value for the argument.
+   * Marks this suggestion to not show it in the completion popup.
+   * It may be necessary to specify that this suggestion is also a valid value for the argument.
    * So parser will be able to distinguish it and not mark it as something unknown.
    *
    * For example, if there is a directory suggestion, then it may have a trailing file separator or may not.
    * Both options are acceptable, but only one of them should be shown in the completion popup.
    */
-  var isHidden: Boolean
+  fun hidden()
 }

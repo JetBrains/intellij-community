@@ -57,8 +57,8 @@ object ShellDataGenerators {
       val type = if (it.type == ShellFileInfo.Type.DIRECTORY) ShellSuggestionType.FOLDER else ShellSuggestionType.FILE
       val name = it.name + if (type == ShellSuggestionType.FOLDER) File.separator else ""
       val suggestion = ShellCompletionSuggestion(name) {
-        this.type = type
-        this.prefixReplacementIndex = prefixReplacementIndex
+        type(type)
+        prefixReplacementIndex(prefixReplacementIndex)
       }
       if (type == ShellSuggestionType.FILE) {
         listOf(suggestion)
@@ -67,9 +67,9 @@ object ShellDataGenerators {
         // Directory suggestion has a trailing file separator, but suggestion without it is also valid.
         // It is needed for the parser to consider it as a valid suggestion and not mark it as something unknown.
         val hiddenSuggestion = ShellCompletionSuggestion(it.name) {
-          this.type = ShellSuggestionType.FOLDER
-          this.prefixReplacementIndex = prefixReplacementIndex
-          this.isHidden = true
+          type(ShellSuggestionType.FOLDER)
+          prefixReplacementIndex(prefixReplacementIndex)
+          hidden()
         }
         listOf(suggestion, hiddenSuggestion)
       }
@@ -80,8 +80,8 @@ object ShellDataGenerators {
     // It is needed for the parser to consider current typed prefix as a valid file suggestion.
     return if (path.isNotEmpty() && path == adjustedPrefix) {
       val emptySuggestion = ShellCompletionSuggestion("") {
-        this.prefixReplacementIndex = prefixReplacementIndex
-        this.isHidden = true
+        prefixReplacementIndex(prefixReplacementIndex)
+        hidden()
       }
       suggestions + emptySuggestion
     }

@@ -11,13 +11,14 @@ import java.util.function.Supplier
 /**
  * Params [parentNames] and [argNumber] used to build cache key/debug name of the generators
  */
+@Suppress("OVERRIDE_DEPRECATION")
 internal class ShellArgumentContextImpl(
   private val parentNames: List<String>,
   private val argNumber: Int
 ) : ShellArgumentContext {
   override var isOptional: Boolean = false
   override var isVariadic: Boolean = false
-  override var optionsCanBreakVariadicArg: Boolean = true
+  private var optionsCanBreakVariadicArg: Boolean = true
 
   private var displayNameSupplier: Supplier<String>? = null
 
@@ -27,6 +28,18 @@ internal class ShellArgumentContextImpl(
 
   override fun displayName(supplier: Supplier<String>) {
     displayNameSupplier = supplier
+  }
+
+  override fun optional() {
+    isOptional = true
+  }
+
+  override fun variadic() {
+    isVariadic = true
+  }
+
+  override fun optionsCantBreakVariadicArg() {
+    optionsCanBreakVariadicArg = false
   }
 
   private val generators: MutableList<ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>>> = mutableListOf()
@@ -42,7 +55,7 @@ internal class ShellArgumentContextImpl(
 
   override fun suggestions(vararg names: String) {
     val generator = ShellRuntimeDataGenerator(debugName = createCacheKey()) {
-      names.map { ShellCompletionSuggestion(it) { type = ShellSuggestionType.ARGUMENT } }
+      names.map { ShellCompletionSuggestion(it) { type(ShellSuggestionType.ARGUMENT) } }
     }
     generators.add(generator)
   }

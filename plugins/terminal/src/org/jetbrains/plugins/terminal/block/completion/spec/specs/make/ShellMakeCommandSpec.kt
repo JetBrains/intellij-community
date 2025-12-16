@@ -19,7 +19,7 @@ object ShellMakeCommandSpec {
   fun create(): ShellCommandSpec = ShellCommandSpec("make") {
     description(TerminalBundle.messagePointer("make.command.description"))
     argument {
-      isVariadic = true
+      variadic()
 
       displayName(TerminalBundle.messagePointer("make.command.arg.displayName"))
 
@@ -52,7 +52,7 @@ object ShellMakeCommandSpec {
       .mapNotNull { MakefileTarget.parse(it) }
       .map { makefileTarget ->
         ShellCompletionSuggestion(makefileTarget.name) {
-          type = ShellSuggestionType.ARGUMENT
+          type(ShellSuggestionType.ARGUMENT)
           @Suppress("HardCodedStringLiteral")
           val desc = listOfNotNull(
             makefileTarget.comment

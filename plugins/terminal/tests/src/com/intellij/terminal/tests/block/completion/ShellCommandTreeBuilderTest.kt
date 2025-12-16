@@ -44,13 +44,13 @@ internal class ShellCommandTreeBuilderTest(private val engine: TerminalEngine) {
     option("--bcde")
     option("--argum") {
       argument {
-        isOptional = true
+        optional()
         suggestions("someArg")
       }
     }
 
     argument {
-      isOptional = true
+      optional()
       suggestions("aaa", "bbb")
     }
 
@@ -61,7 +61,7 @@ internal class ShellCommandTreeBuilderTest(private val engine: TerminalEngine) {
             option("--manyArgs") {
               argument()
               argument {
-                isOptional = true
+                optional()
                 suggestions("a2")
               }
             }
@@ -71,7 +71,7 @@ internal class ShellCommandTreeBuilderTest(private val engine: TerminalEngine) {
         option("-a")
 
         argument {
-          isOptional = true
+          optional()
           suggestions {
             listOf(
               ShellAliasSuggestion("alias-1", "al --manyArgs somearg"),
@@ -93,23 +93,23 @@ internal class ShellCommandTreeBuilderTest(private val engine: TerminalEngine) {
         }
         option("--withOptArg") {
           argument {
-            isOptional = true
+            optional()
           }
         }
         option("--manyArgs") {
           argument()
           argument {
-            isOptional = true
+            optional()
             suggestions("a2")
           }
         }
         option("--skippedArg") {
           argument {
-            isOptional = true
+            optional()
           }
           argument()
           argument {
-            isOptional = true
+            optional()
             suggestions("opt2")
           }
         }
@@ -118,22 +118,24 @@ internal class ShellCommandTreeBuilderTest(private val engine: TerminalEngine) {
           suggestions("somePath")
         }
         argument {
-          isOptional = true
+          optional()
           suggestions("arg1", "arg2")
         }
       }
 
       subcommand("nonPosix") {
-        parserOptions = ShellCommandParserOptions.builder()
-          .flagsArePosixNonCompliant(true)
-          .build()
+        parserOptions(
+          ShellCommandParserOptions.builder()
+            .flagsArePosixNonCompliant(true)
+            .build()
+        )
         option("-a")
         option("-b")
       }
 
       subcommand("sep") {
         option("--withSeparator") {
-          separator = "="
+          separator("=")
           argument()
         }
       }

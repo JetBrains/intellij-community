@@ -14,8 +14,8 @@ internal class ShellCommandContextImpl(
   names: List<String>,
   private val parentNames: List<String> = emptyList()
 ) : ShellSuggestionContextBase(names), ShellCommandContext {
-  override var requiresSubcommand: Boolean = false
-  override var parserOptions: ShellCommandParserOptions = ShellCommandParserOptions.DEFAULT
+  private var requiresSubcommand: Boolean = false
+  private var parserOptions: ShellCommandParserOptions = ShellCommandParserOptions.DEFAULT
 
   private var subcommandSuppliers: MutableList<suspend (ShellRuntimeContext) -> List<ShellCommandSpec>> = mutableListOf()
   private var dynamicOptionSuppliers: MutableList<suspend (ShellRuntimeContext) -> List<ShellOptionSpec>> = mutableListOf()
@@ -23,6 +23,14 @@ internal class ShellCommandContextImpl(
   private val argumentSuppliers: MutableList<() -> ShellArgumentSpec> = mutableListOf()
 
   private val parentNamesWithSelf: List<String> = parentNames + names.first()
+
+  override fun requiresSubcommand() {
+    requiresSubcommand = true
+  }
+
+  override fun parserOptions(options: ShellCommandParserOptions) {
+    parserOptions = options
+  }
 
   override fun subcommands(content: suspend ShellChildCommandsContext.(ShellRuntimeContext) -> Unit) {
     val supplier: suspend (ShellRuntimeContext) -> List<ShellCommandSpec> = { shellContext ->

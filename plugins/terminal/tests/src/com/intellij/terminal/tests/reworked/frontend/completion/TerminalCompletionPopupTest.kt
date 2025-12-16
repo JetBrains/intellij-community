@@ -31,14 +31,14 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
       subcommand("sync")
       subcommand("show") {
         argument {
-          isOptional = true
+          optional()
           suggestions("roots", "files", "statuses")
         }
       }
 
       subcommand("start") {
         argument {
-          isOptional = true
+          optional()
           suggestions("platform/", "platform-ui/", "shared\\", "shared-ui\\")
         }
       }
@@ -58,8 +58,8 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
               }
             }
 
-            val abPriority = ShellCompletionSuggestion("ab") { priority = 100 }
-            val acPriority = ShellCompletionSuggestion("ac") { priority = 100 }
+            val abPriority = ShellCompletionSuggestion("ab") { priority(100) }
+            val acPriority = ShellCompletionSuggestion("ac") { priority(100) }
             listOf(abPriority, acPriority) + items.map { ShellCompletionSuggestion(it) }
           }
         }

@@ -50,18 +50,18 @@ internal class ShellCommandSpecSuggestionsTest(private val engine: TerminalEngin
   private val spec = ShellCommandSpec(commandName) {
     option("-a", "--asd")
     option("--bcde") {
-      isPersistent = true
-      repeatTimes = 2
+      persistent()
+      repeatTimes(2)
     }
     option("--argum") {
       argument {
-        isOptional = true
+        optional()
         suggestions("all", "none", "default")
       }
     }
 
     argument {
-      isOptional = true
+      optional()
       suggestions("abc")
     }
 
@@ -69,7 +69,7 @@ internal class ShellCommandSpecSuggestionsTest(private val engine: TerminalEngin
       subcommand("sub") {
         option("-o", "--opt1")
         option("-a") {
-          repeatTimes = 0
+          repeatTimes(0)
         }
         option("--long")
         option("--withReqArg") {
@@ -79,7 +79,7 @@ internal class ShellCommandSpecSuggestionsTest(private val engine: TerminalEngin
         }
         option("--withOptArg") {
           argument {
-            isOptional = true
+            optional()
           }
         }
 
@@ -87,26 +87,26 @@ internal class ShellCommandSpecSuggestionsTest(private val engine: TerminalEngin
           suggestions("file")
         }
         argument {
-          isOptional = true
+          optional()
           suggestions("s1")
         }
       }
 
       subcommand("excl") {
         option("-a") {
-          exclusiveOn = listOf("-b")
+          exclusiveOn(listOf("-b"))
         }
         option("-b") {
-          exclusiveOn = listOf("-a")
+          exclusiveOn(listOf("-a"))
         }
         option("-c")
         option("-d") {
-          dependsOn = listOf("-a", "-c")
+          dependsOn(listOf("-a", "-c"))
         }
       }
 
       subcommand("reqSub") {
-        requiresSubcommand = true
+        requiresSubcommand()
         subcommands {
           subcommand("abc")
         }
@@ -115,14 +115,14 @@ internal class ShellCommandSpecSuggestionsTest(private val engine: TerminalEngin
 
       subcommand("manyArgs") {
         argument {
-          isOptional = true
+          optional()
           suggestions("arg1")
         }
         argument {
           suggestions("arg2", "arg22")
         }
         argument {
-          isOptional = true
+          optional()
           suggestions("arg3")
         }
         argument {
@@ -131,13 +131,15 @@ internal class ShellCommandSpecSuggestionsTest(private val engine: TerminalEngin
       }
 
       subcommand("optPrecedeArgs") {
-        parserOptions = ShellCommandParserOptions.builder()
-          .optionsMustPrecedeArguments(true)
-          .build()
+        parserOptions(
+          ShellCommandParserOptions.builder()
+            .optionsMustPrecedeArguments(true)
+            .build()
+        )
         option("-c")
         option("-d")
         argument {
-          isOptional = true
+          optional()
           suggestions("arg")
         }
 
@@ -156,7 +158,7 @@ internal class ShellCommandSpecSuggestionsTest(private val engine: TerminalEngin
         option("-a")
         option("--var") {
           argument {
-            isVariadic = true
+            variadic()
             suggestions("var1", "var2")
           }
         }
@@ -164,11 +166,11 @@ internal class ShellCommandSpecSuggestionsTest(private val engine: TerminalEngin
           suggestions("req")
         }
         argument {
-          isVariadic = true
+          variadic()
           suggestions("v")
         }
         argument {
-          isOptional = true
+          optional()
           suggestions("opt")
         }
       }
@@ -177,14 +179,14 @@ internal class ShellCommandSpecSuggestionsTest(private val engine: TerminalEngin
         option("-b")
         option("---") {
           argument {
-            isVariadic = true
-            optionsCanBreakVariadicArg = false
+            variadic()
+            optionsCantBreakVariadicArg()
             suggestions("var")
           }
         }
         argument {
-          isVariadic = true
-          optionsCanBreakVariadicArg = false
+          variadic()
+          optionsCantBreakVariadicArg()
           suggestions("v")
         }
         argument {
@@ -209,17 +211,17 @@ internal class ShellCommandSpecSuggestionsTest(private val engine: TerminalEngin
         option("--opt") {
           argument {
             suggestions("3", "4", "5")
-            isOptional = true
+            optional()
           }
         }
 
         argument {
           suggestions("1", "2", "3")
-          isOptional = true
+          optional()
         }
         argument {
           suggestions("2", "3", "4")
-          isOptional = true
+          optional()
         }
       }
 

@@ -40,7 +40,7 @@ internal fun aliasGenerator(): ShellRuntimeDataGenerator<List<ShellAliasSuggesti
 
 internal fun ShellCommandContext.addGitAliases() {
   argument {
-    isOptional = true
+    optional()
     suggestions(aliasGenerator())
   }
 }

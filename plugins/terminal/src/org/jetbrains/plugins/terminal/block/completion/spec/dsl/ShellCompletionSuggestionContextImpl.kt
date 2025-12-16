@@ -11,13 +11,25 @@ import javax.swing.Icon
 internal class ShellCompletionSuggestionContextImpl(
   private val name: String,
 ) : ShellSuggestionContextBase(listOf(name)), ShellCompletionSuggestionContext {
-  override var type: ShellSuggestionType = ShellSuggestionType.ARGUMENT
+  private var type: ShellSuggestionType = ShellSuggestionType.ARGUMENT
   private var icon: Icon? = null
-  override var prefixReplacementIndex: Int = 0
-  override var isHidden: Boolean = false
+  private var prefixReplacementIndex: Int = 0
+  private var isHidden: Boolean = false
+
+  override fun type(type: ShellSuggestionType) {
+    this.type = type
+  }
 
   override fun icon(icon: Icon) {
     this.icon = icon
+  }
+
+  override fun prefixReplacementIndex(index: Int) {
+    this.prefixReplacementIndex = index
+  }
+
+  override fun hidden() {
+    isHidden = true
   }
 
   fun build(): ShellCompletionSuggestion {

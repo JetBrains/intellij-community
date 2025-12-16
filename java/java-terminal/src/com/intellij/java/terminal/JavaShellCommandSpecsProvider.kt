@@ -19,10 +19,12 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
   }
 
   private fun getSpecs(): ShellCommandSpec = ShellCommandSpec("java") {
-    parserOptions = ShellCommandParserOptions.builder()
-      .flagsArePosixNonCompliant(true)
-      .optionsMustPrecedeArguments(true)
-      .build()
+    parserOptions(
+      ShellCommandParserOptions.builder()
+        .flagsArePosixNonCompliant(true)
+        .optionsMustPrecedeArguments(true)
+        .build()
+    )
 
     dynamicOptions { terminalContext ->
       val javaContext = JavaShellCommandContext.create(terminalContext)
@@ -38,7 +40,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     val errorStreamName: @Nls String = JavaTerminalBundle.message("error.stream.name")
     description(JavaTerminalBundle.message("java.command.terminal.description"))
     option("-?", "-help", "-h") {
-      exclusiveOn = listOf("--help")
+      exclusiveOn(listOf("--help"))
       description(JavaTerminalBundle.message("java.command.terminal.help.option.description", errorStreamName))
     }
     option("-jar") {
@@ -49,11 +51,11 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       description(JavaTerminalBundle.message("java.command.terminal.jar.option.description"))
     }
     option("-version") {
-      exclusiveOn = listOf("--version")
+      exclusiveOn(listOf("--version"))
       description(JavaTerminalBundle.message("java.command.terminal.version.option.description", errorStreamName))
     }
     option("-classpath", "-cp") {
-      exclusiveOn = listOf("--class-path")
+      exclusiveOn(listOf("--class-path"))
       description(JavaTerminalBundle.message("java.command.terminal.classpath.option.description"))
       argument {
         suggestions(JavaShellCommandUtils.classpathSuggestionsGenerator())
@@ -61,7 +63,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       }
     }
     option("-showversion") {
-      exclusiveOn = listOf("--show-version")
+      exclusiveOn(listOf("--show-version"))
       description(JavaTerminalBundle.message("java.command.terminal.show.version.option.description", errorStreamName))
     }
     argument {
@@ -88,12 +90,12 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
         description(optionDescription)
 
         val info = OPTION_UI_INFO_MAP[presentableName] ?: DEFAULT_UI_OPTION_INSTANCE
-        repeatTimes = info.repeatTimes
-        separator = info.separator
+        repeatTimes(info.repeatTimes)
+        info.separator?.let { separator(it) }
         val argumentName = info.argumentName
         if (argumentName != null) {
           argument {
-            isOptional = info.isArgumentOptional
+            if (info.isArgumentOptional) optional()
             displayName(argumentName)
           }
         }
@@ -104,15 +106,15 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
   private fun ShellChildOptionsContext.addOptionsFromJava11() {
     val outputStreamName = JavaTerminalBundle.message("output.stream.name")
     option("--version") {
-      exclusiveOn = listOf("-version")
+      exclusiveOn(listOf("-version"))
       description(JavaTerminalBundle.message("java.command.terminal.version.option.description", outputStreamName))
     }
     option("--show-version") {
-      exclusiveOn = listOf("-show-version")
+      exclusiveOn(listOf("-show-version"))
       description(JavaTerminalBundle.message("java.command.terminal.show.version.option.description", outputStreamName))
     }
     option("--dry-run") {
-      exclusiveOn = listOf("-dry-run")
+      exclusiveOn(listOf("-dry-run"))
       description(JavaTerminalBundle.message("java.command.terminal.dry.run.option.description"))
     }
     option("--class-path") {
@@ -123,7 +125,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       }
     }
     option("--help") {
-      exclusiveOn = listOf("-?", "-help", "-h")
+      exclusiveOn(listOf("-?", "-help", "-h"))
       description(JavaTerminalBundle.message("java.command.terminal.help.option.description", outputStreamName))
     }
     option("--enable-preview") {
@@ -132,10 +134,10 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
 
     option("-verbose") {
       description(JavaTerminalBundle.message("java.command.terminal.verbose.option.description"))
-      separator=":"
-      repeatTimes = 0
+      separator(":")
+      repeatTimes(0)
       argument {
-        isOptional = true
+        optional()
         displayName(CLASS_GC_GNI_MODULE_ARGUMENT_NAME)
       }
     }
@@ -144,10 +146,10 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
   private fun ShellChildOptionsContext.addOptionsFromJava8() {
     option("-verbose") {
       description(JavaTerminalBundle.message("java.command.terminal.verbose.option.description"))
-      separator=":"
-      repeatTimes = 0
+      separator(":")
+      repeatTimes(0)
       argument {
-        isOptional = true
+        optional()
         displayName(CLASS_GC_GNI_ARGUMENT_NAME)
       }
     }

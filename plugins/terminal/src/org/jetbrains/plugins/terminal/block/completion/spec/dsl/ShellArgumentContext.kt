@@ -29,28 +29,35 @@ sealed interface ShellArgumentContext {
   fun displayName(supplier: Supplier<@Nls String>)
 
   /**
-   * Whether this argument is not required to have a value.
+   * Specifies that this argument is not required to have a value.
    *
-   * False by default (the argument is required).
+   * By default, the argument is required.
    */
+  fun optional()
+
+  @Deprecated("Please use optional() method instead")
   var isOptional: Boolean
 
   /**
    * Specifies that this argument can be repeated infinitely.
    * For example, `git add` takes a variadic argument of filenames.
    *
-   * False by default.
+   * By default, the argument value can be specified only once.
    */
+  fun variadic()
+
+  @Deprecated("Please use variadic() method instead")
   var isVariadic: Boolean
 
   /**
-   * Specifies that the options can be placed between values of the variadic argument.
-   * For example, it is true for `git add` command.
-   * We can write like this: `git add file1 file2 -v file3`. Where `-v` is the option.
+   * Specifies that the options can't be placed between values of the variadic argument.
+   * By default, this behavior is allowed.
    *
-   * True by default.
+   * For example, it is not allowed for `echo` command.
+   * If we write: `echo hello -n world`, `-n` will be considered as a variadic argument value rather than an option.
+   * So, we should write `echo -n hello world` instead.
    */
-  var optionsCanBreakVariadicArg: Boolean
+  fun optionsCantBreakVariadicArg()
 
   /**
    * Generate suggestions for the argument values.
