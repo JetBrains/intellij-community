@@ -56,9 +56,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
   private val project: Project = event.project!!
   private val navigationHandler: SearchEverywhereNavigationHandler = FileSearchEverywhereNavigationContributionHandler(project)
 
-  override fun getSearchProviderId(): String {
-    return "NonIndexableFilesSEContributor"
-  }
+  override fun getSearchProviderId(): String = ID
 
   override fun getGroupName(): @Nls String {
     return IdeBundle.message("search.everywhere.group.name.non.indexable.files")
@@ -171,6 +169,11 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
   }
 
   override fun createExtendedInfo(): @Nls ExtendedInfo = createPsiExtendedInfo()
+
+  companion object {
+    @ApiStatus.Internal
+    const val ID: String = "NonIndexableFilesSEContributor"
+  }
 
   @ApiStatus.Internal
   class Factory : SearchEverywhereContributorFactory<Any?> {
