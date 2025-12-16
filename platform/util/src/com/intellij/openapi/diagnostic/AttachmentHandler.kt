@@ -158,7 +158,8 @@ internal class AttachmentHandler(logPath: Path) : Handler() {
 
   private fun writeAttachments(dir: Path, attachments: Array<Attachment>, prefix: String) {
     val usedNames = HashSet<String>()
-    for (attachment in attachments) {
+    for (attachment: Attachment? in attachments) { // we can't enforce not-null elements of array, so let's be conservative here
+      if (attachment == null) continue
       val base = sanitizeFileName(attachment.name.ifEmpty { "attachment" })
       val fileName = uniqueName(prefix + base, usedNames)
       val file = dir.resolve(fileName)
