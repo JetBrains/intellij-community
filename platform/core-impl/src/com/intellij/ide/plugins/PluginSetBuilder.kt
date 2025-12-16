@@ -32,11 +32,12 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
   private val enabledPluginIds = HashMap<PluginId, PluginModuleDescriptor>(unsortedPlugins.size)
   private val enabledModuleV2Ids = HashMap<PluginModuleId, ContentModuleDescriptor>(unsortedPlugins.size * 2)
 
-  internal fun checkPluginCycles(errors: MutableList<PluginLoadingError>) {
+  internal fun checkPluginCycles(): List<PluginLoadingError> {
     if (builder.isAcyclic) {
-      return
+      return emptyList()
     }
 
+    val errors = ArrayList<PluginLoadingError>()
     for (component in builder.components) {
       if (component.size < 2) {
         continue
@@ -75,6 +76,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         }
       PluginManagerCore.logger.info(detailedMessage.toString())
     }
+    return errors
   }
 
   // Only plugins returned. Not modules. See PluginManagerTest.moduleSort test to understand the issue.
