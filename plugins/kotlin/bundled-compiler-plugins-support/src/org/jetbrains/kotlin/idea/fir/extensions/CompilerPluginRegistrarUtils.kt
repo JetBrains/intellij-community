@@ -1,10 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.extensions
 
+import java.nio.file.FileSystems
 import java.nio.file.Path
-import java.util.zip.ZipFile
 import kotlin.io.path.extension
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.notExists
+import kotlin.io.path.readText
 
 /**
  * Utility class to read the content of registrar files from Kotlin compiler plugins.
@@ -34,9 +36,14 @@ object CompilerPluginRegistrarUtils {
 private fun readFirstExistingFileContentFromJar(jarFile: Path, pathsInJar: List<String>): String? {
     if (jarFile.notExists() || jarFile.extension != "jar") return null
 
-    ZipFile(jarFile.toFile()).use { zipFile ->
-        val entry = pathsInJar.firstNotNullOfOrNull { pathInJar -> zipFile.getEntry(pathInJar) } ?: return null
+    FileSystems.newFileSystem(jarFile).use { fileSystem ->
+        for (path in pathsInJar) {
+            val resolvedPath = fileSystem.getPath(path)
+            if (!resolvedPath.isRegularFile()) continue
 
-        return zipFile.getInputStream(entry).bufferedReader().use { it.readText() }
+            return resolvedPath.readText()
+        }
+
+        return null
     }
 }
