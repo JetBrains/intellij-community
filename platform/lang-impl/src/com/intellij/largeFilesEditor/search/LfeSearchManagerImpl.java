@@ -20,6 +20,7 @@ import com.intellij.largeFilesEditor.search.searchTask.SearchTaskOptions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DefaultCustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
@@ -114,7 +115,11 @@ public final class LfeSearchManagerImpl implements LfeSearchManager, CloseSearch
 
   @Override
   public void onSearchActionHandlerExecuted() {
-    largeFileEditor.getEditor().setHeaderComponent(mySearchReplaceComponent);
+    InternalUICustomization uiCustomization = InternalUICustomization.getInstance();
+    JComponent component =
+      uiCustomization == null ? mySearchReplaceComponent : uiCustomization.configureLfeSearchReplaceComponent(mySearchReplaceComponent);
+
+    largeFileEditor.getEditor().setHeaderComponent(component);
     mySearchReplaceComponent.requestFocusInTheSearchFieldAndSelectContent(largeFileEditor.getProject());
     mySearchReplaceComponent.getSearchTextComponent().selectAll();
   }

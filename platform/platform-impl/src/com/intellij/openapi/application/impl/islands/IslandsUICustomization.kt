@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.impl.content.ContentLayout
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
+import com.intellij.toolWindow.InternalDecoratorImpl.Companion.preventRecursiveBackgroundUpdateOnToolwindow
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
@@ -217,6 +218,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
     if (isToolWindow) {
       if (component.background == JBColor.PanelBackground) {
+        if (UIUtil.getGeneralizedParentOfType(SearchReplaceWrapper::class.java, component) != null) {
+          return@AWTEventListener
+        }
+
         component.background = JBUI.CurrentTheme.ToolWindow.background()
       }
     }
@@ -615,10 +620,32 @@ internal class IslandsUICustomization : InternalUICustomization() {
     configureBackgroundPainting(component, recursive = true)
   }
 
+  override fun configureLfeSearchReplaceComponent(component: EditorHeaderComponent): JComponent {
+    val originalBorder = component.getClientProperty("originalBorder")
+    if (originalBorder == null || originalBorder !is Border) {
+      component.putClientProperty("originalBorder", component.border)
+    }
+    return configureSearchReplaceComponent(component, null)
+  }
+
+  override fun configureTerminalSearchReplaceComponent(component: EditorHeaderComponent): JComponent {
+    component.putClientProperty("originalBorder", component.border)
+    val header = configureSearchReplaceComponent(component, 6)
+    preventRecursiveBackgroundUpdateOnToolwindow(header)
+    return header
+  }
+
   override fun configureSearchReplaceComponent(component: EditorHeaderComponent): JComponent {
     component.putClientProperty("originalBorder", component.border)
+    return configureSearchReplaceComponent(component, null)
+  }
 
+  private fun configureSearchReplaceComponent(component: EditorHeaderComponent, extraTopBorder: Any?): JComponent {
     val wrapper = SearchReplaceWrapper(component)
+    wrapper.putClientProperty("SearchComponent", component)
+    if (extraTopBorder != null) {
+      wrapper.putClientProperty("extraTopBorder", extraTopBorder)
+    }
     wrapper.background = JBUI.CurrentTheme.EditorTabs.background()
     wrapper.isOpaque = true
 
@@ -685,7 +712,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
     (component as SearchReplaceFacade).configureUI(enabled)
   }
 
-  private fun getTopBorderTakingIntoHeader(component: Component): Int {
+  private fun getTopBorderTakingIntoHeader(component: JComponent): Int {
+    val extraBorder = component.getClientProperty("extraTopBorder")
+    if (extraBorder is Int) {
+      return extraBorder
+    }
+
     val editorCompositePanel = UIUtil.getParentOfType(EditorCompositePanel::class.java, component)
     val header = UIUtil.findComponentOfType(editorCompositePanel, EditorTopPanel::class.java)
     if (header != null && header.componentCount > 0) {

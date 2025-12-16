@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.labels.LinkListener;
@@ -90,6 +91,7 @@ public abstract class PluginsTab {
     };
 
     JPanel listPanel = new JPanel(new BorderLayout());
+    listPanel.setBorder(new CustomLineBorder(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR, JBUI.insetsTop(1)));
     listPanel.add(searchTextField, BorderLayout.NORTH);
     listPanel.add(cardPanel);
 
@@ -203,13 +205,10 @@ public abstract class PluginsTab {
       }
     });
 
-    searchTextField.setBorder(JBUI.Borders.customLine(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR));
-
     JBTextField editor = searchTextField.getTextEditor();
     editor.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
     editor.putClientProperty("JTextField.Search.GapEmptyText", JBUIScale.scale(-1));
     editor.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, (Predicate<JBTextField>)field -> field.getText().isEmpty());
-    editor.setBorder(JBUI.Borders.empty(0, 6));
     editor.setOpaque(true);
     editor.setBackground(PluginManagerConfigurable.SEARCH_BG_COLOR);
     editor.getAccessibleContext().setAccessibleName(IdeBundle.message("plugin.manager.search.accessible.name"));

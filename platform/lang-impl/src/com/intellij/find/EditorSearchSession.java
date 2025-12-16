@@ -323,7 +323,6 @@ public class EditorSearchSession implements SearchSession,
     if (customization != null) {
       JComponent header = customization.configureSearchReplaceComponent(myComponent);
       if (header != myComponent) {
-        header.putClientProperty("SearchComponent", myComponent);
         header.putClientProperty("SearchSession", this);
       }
       return header;

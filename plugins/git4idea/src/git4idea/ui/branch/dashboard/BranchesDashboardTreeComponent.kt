@@ -14,16 +14,14 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.SideBorder
-import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.StatusText
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.ui.ProgressStripe
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
@@ -66,16 +64,7 @@ object BranchesDashboardTreeComponent {
 
     val searchComponent = when (searchLook) {
       is SearchLook.Inline -> {
-        with(branchesSearchField) {
-          textEditor.border = JBUI.Borders.emptyLeft(5)
-          apply(UIUtil::setNotOpaqueRecursively)
-        }.let {
-          Wrapper(it).apply {
-            background = UIUtil.getListBackground()
-            border = createBorder(SideBorder.BOTTOM)
-            setVerticalSizeReferent(searchLook.heightReferent)
-          }
-        }
+        SearchFieldWithExtension(JBLabel(), branchesSearchField)
       }
       is SearchLook.Standalone -> {
         JPanel(null).apply {

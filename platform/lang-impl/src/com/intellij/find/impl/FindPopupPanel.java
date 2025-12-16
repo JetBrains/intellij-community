@@ -13,6 +13,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -42,7 +43,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.ComponentValidator;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -64,6 +68,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.*;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.ui.dsl.listCellRenderer.LcrUtilsKt;
 import com.intellij.ui.hover.TableHoverListener;
@@ -829,10 +834,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       header.panel.setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
       header.cbFileFilter.setOpaque(false);
       setBackground(background);
-      mySearchTextArea.setOpaque(false);
-      mySearchTextArea.setBorder(PopupUtil.createComplexPopupTextFieldBorder());
-      myReplaceTextArea.setOpaque(false);
-      myReplaceTextArea.setBorder(PopupUtil.createComplexPopupTextFieldBorder());
+      configureTextAreaComponent(mySearchTextArea, background);
+      configureTextAreaComponent(myReplaceTextArea, background);
       scopesPanel.setOpaque(false);
       myScopeSelectionToolbar.getComponent().setOpaque(false);
       myScopeDetailsPanel.setOpaque(false);
@@ -863,8 +866,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     PopupUtil.applyPreviewTitleInsets(myUsagePreviewTitle);
     add(header.panel, "growx, pushx, wrap");
 
-    add(mySearchTextArea, "pushx, growx, wrap");
-    add(myReplaceTextArea, "pushx, growx, wrap");
+    add(wrapTextAreaComponent(mySearchTextArea), "pushx, growx, wrap");
+    add(wrapTextAreaComponent(myReplaceTextArea), "pushx, growx, wrap");
     add(scopesPanel, "pushx, growx, ax left, wrap");
     add(myPreviewSplitter, "pushx, growx, growy, pushy, wrap");
     add(bottomPanel, "pushx, growx, dock south");
@@ -887,6 +890,50 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
       Touchbar.setButtonActions(bottomPanel, null, principalButtons, myOKButton, new DefaultActionGroup(myCaseSensitiveAction, myWholeWordsAction, myRegexAction));
     }
+  }
+
+  private static JComponent wrapTextAreaComponent(@NotNull JComponent component) {
+    Wrapper wrapper = new Wrapper(component);
+    wrapper.setBorder(JBUI.Borders.empty(2, 5));
+    return wrapper;
+  }
+
+  private static void configureTextAreaComponent(@NotNull SearchTextArea component, @NotNull Color background) {
+    component.setBackground(background);
+    component.setOpaque(false);
+
+    component.setBorder(new DarculaTextBorder() {
+      @Override
+      public Insets getBorderInsets(Component c) {
+        return JBInsets.create(5, 3);
+      }
+
+      @Override
+      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        JTextArea area = ((SearchTextArea)c).getTextArea();
+        boolean enabled = area.isEnabled() && area.isEditable();
+        Rectangle r = new Rectangle(c.getSize());
+        boolean fillBackground = JBColor.isBright();
+        Color bgColor = fillBackground ? UIUtil.getTextFieldBackground() : null;
+        paintDarculaSearchArea((Graphics2D)g, r, area, bgColor, fillBackground, enabled, true);
+      }
+    });
+
+    component.getTextArea().addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        update();
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        update();
+      }
+
+      private void update() {
+        component.repaint();
+      }
+    });
   }
 
   @Override

@@ -12,6 +12,7 @@ import com.intellij.find.impl.livePreview.SearchResults
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -44,7 +45,7 @@ internal class TerminalSearchSession(
 ) : SearchSession, SearchResults.SearchResultsListener, SearchReplaceComponent.Listener {
   private val disposable = Disposer.newDisposable(TerminalSearchSession::class.java.name)
   private val component: SearchReplaceComponent = createSearchComponent()
-  val wrapper: JComponent = DataContextWrapper(component)
+  val wrapper: JComponent = DataContextWrapper(wrappSearchComponent())
   private val searchResults: SearchResults = TerminalSearchResults()
   private val livePreviewController: LivePreviewController = LivePreviewController(searchResults, this, disposable)
 
@@ -99,6 +100,10 @@ internal class TerminalSearchSession(
         (it.searchTextComponent as? JTextArea)?.columns = 14  // default is 12
         it.border = JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 1, 1,0)
       }
+  }
+
+  private fun wrappSearchComponent(): JComponent {
+    return InternalUICustomization.getInstance()?.configureTerminalSearchReplaceComponent(component) ?: component
   }
 
   private fun findModelChanged() {

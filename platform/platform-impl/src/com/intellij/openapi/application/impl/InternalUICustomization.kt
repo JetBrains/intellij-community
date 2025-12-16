@@ -114,6 +114,10 @@ open class InternalUICustomization {
 
   open fun configureSearchReplaceComponent(component: EditorHeaderComponent): JComponent = component
 
+  open fun configureLfeSearchReplaceComponent(component: EditorHeaderComponent): JComponent = component
+
+  open fun configureTerminalSearchReplaceComponent(component: EditorHeaderComponent): JComponent = component
+
   open fun configureEditorTopComponent(component: JComponent, top: Boolean): JComponent? = null
 
   open fun configureEditorTopContainer(container: JComponent) {}

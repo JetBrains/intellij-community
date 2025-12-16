@@ -3520,9 +3520,7 @@ c:com.intellij.ide.plugins.newui.PluginSearchTextField
 - com.intellij.ui.SearchTextField
 - <init>():V
 - addNotify():V
-- getPreferredSize():java.awt.Dimension
 - isSkipDocumentEvents():Z
-- setBounds(I,I,I,I):V
 - p:setEmptyHistory():V
 - setHistoryPropertyName(java.lang.String):V
 - setSelectedItem(java.lang.String):V

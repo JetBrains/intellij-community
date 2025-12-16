@@ -20,12 +20,27 @@ import javax.swing.plaf.PanelUI
 
 private const val UI_CLASS_ID = "SearchFieldWithExtensionUI"
 
-class SearchFieldWithExtension(
+class SearchFieldWithExtension private constructor(
   extensionComponent: JComponent,
-  private val searchTextField: SearchTextField
+  searchTextField: JComponent,
+  val textField: JTextField,
+  private val fixedBackgroud: Boolean,
 ) : JPanel(BorderLayout()) {
-  val textField: JTextField
-    get() = searchTextField.textEditor
+
+  constructor(extensionComponent: JComponent, searchTextField: SearchTextField) : this(extensionComponent,
+                                                                                       searchTextField,
+                                                                                       searchTextField.textEditor, true)
+
+  constructor(searchTextField: SearchTextField, bgColor: Color?) : this(JBLabel(),
+                                                                        searchTextField,
+                                                                        searchTextField.textEditor,
+                                                                        bgColor == null) {
+    background = bgColor
+  }
+
+  constructor(textField: JBTextField, bgColor: Color?) : this(JBLabel(), textField, textField, bgColor == null) {
+    background = bgColor
+  }
 
   init {
     extensionComponent.apply {
@@ -60,7 +75,7 @@ class SearchFieldWithExtension(
 
   override fun requestFocus(): Unit = textField.requestFocus()
 
-  override fun setBackground(bg: Color?): Unit = super.setBackground(UIUtil.getTextFieldBackground())
+  override fun setBackground(bg: Color?): Unit = super.setBackground(if (fixedBackgroud) UIUtil.getTextFieldBackground() else bg)
 
   override fun hasFocus(): Boolean = textField.hasFocus()
 }

@@ -1333,6 +1333,9 @@ com.intellij.ui.colorpicker.ColorPipetteProvider
 com.intellij.ui.components.DialogManager
 - a:performAction(kotlin.jvm.functions.Function0):V
 - bs:performAction$default(com.intellij.ui.components.DialogManager,kotlin.jvm.functions.Function0,I,java.lang.Object):V
+f:com.intellij.ui.components.SearchFieldWithExtension
+- <init>(com.intellij.ui.SearchTextField,java.awt.Color):V
+- <init>(com.intellij.ui.components.JBTextField,java.awt.Color):V
 com.intellij.ui.content.MessageView
 - sf:Companion:com.intellij.ui.content.MessageView$Companion
 - a:awaitInitialized(kotlin.coroutines.Continuation):java.lang.Object

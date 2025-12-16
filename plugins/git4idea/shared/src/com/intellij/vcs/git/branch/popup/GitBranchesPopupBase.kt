@@ -3,6 +3,7 @@ package com.intellij.vcs.git.branch.popup
 
 import com.intellij.dvcs.branch.BranchType
 import com.intellij.ide.DataManager
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.actionSystem.*
@@ -14,6 +15,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.util.*
 import com.intellij.ui.*
+import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -173,8 +175,12 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
       border = JBUI.Borders.emptyLeft(6)
     }
 
-    val searchBorder = mySpeedSearchPatternField.border
     mySpeedSearchPatternField.border = null
+
+    val textField = mySpeedSearchPatternField.textEditor
+    textField.putClientProperty("TextFieldWithoutMargins", null)
+    textField.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, null)
+    textField.putClientProperty("TextField.NoMinHeightBounds", null)
 
     val topPanel = BorderLayoutPanel().apply {
       val dragArea = simplePanel().apply {
@@ -190,12 +196,12 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
     }
 
     val panel = BorderLayoutPanel()
-      .addToCenter(mySpeedSearchPatternField)
+      .addToCenter(SearchFieldWithExtension(mySpeedSearchPatternField, JBUI.CurrentTheme.Popup.BACKGROUND))
       .apply {
         if (toolbar != null) {
           addToRight(toolbar)
         }
-        border = searchBorder
+        border = JBUI.Borders.empty(0, 10, 0, 8)
         background = JBUI.CurrentTheme.Popup.BACKGROUND
       }
 
