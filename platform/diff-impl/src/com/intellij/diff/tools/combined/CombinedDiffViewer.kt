@@ -82,6 +82,8 @@ class CombinedDiffViewer(
 
   private val collapsedDiffBlocks: BitSet = BitSet(blockState.blocksCount)
 
+  private var needsInitialBlockSelection = true
+
   private val blocksPanel: CombinedDiffBlocksPanel = CombinedDiffBlocksPanel(blockState) { (blockId, blockHeight) ->
     if (blockId.isCollapsed) blockHeight else maxOf(blockHeight, scrollPane.viewport.height)
   }
@@ -153,7 +155,6 @@ class CombinedDiffViewer(
   init {
     blockState.addListener({ old, new -> changeSelection(old, new) }, this)
     blockListeners.listeners.add(blockListener)
-    selectDiffBlock(blockState.currentBlock, true)
 
     cs.launch {
       viewState.separatorState.collect { visible ->
@@ -190,7 +191,13 @@ class CombinedDiffViewer(
     }
 
     if (blockState.currentBlock == blockId) {
-      scrollToFirstChange(blockId, false, ScrollPolicy.SCROLL_TO_CARET)
+      if (needsInitialBlockSelection && newContent.viewer !is CombinedDiffLoadingBlock) {
+        needsInitialBlockSelection = false
+        selectDiffBlock(blockId, true)
+      }
+      else {
+        scrollToFirstChange(blockId, false, ScrollPolicy.SCROLL_TO_CARET)
+      }
     }
   }
 
