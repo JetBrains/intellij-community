@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ignore.actions.IgnoreFileActionGroup
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.vcs.impl.shared.changes.ChangeListDnDSupport
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.vcs.commit.CommitSessionCollector
@@ -63,7 +62,7 @@ internal class BackendChangesTreeCompatibilityProvider : ChangesTreeCompatibilit
     return VcsImplUtil.findValidParentAccurately(filePath)
   }
 
-  override fun acceptIgnoredFilesDrop(project: Project, dragOwner: ChangeListDnDSupport, dragBean: ChangeListDragBean) {
+  override fun acceptIgnoredFilesDrop(project: Project, dragBean: ChangeListDragBean) {
     val tree = dragBean.sourceComponent as? Tree ?: return
     val vcs = dragBean.unversionedFiles.firstNotNullOfOrNull { file -> getVcsFor(project, file) } ?: return
 

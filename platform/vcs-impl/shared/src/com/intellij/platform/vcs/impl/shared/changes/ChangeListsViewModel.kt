@@ -8,14 +8,17 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.project.projectId
 import com.intellij.platform.project.projectIdOrNull
 import com.intellij.platform.vcs.changes.ChangeListManagerState
 import com.intellij.platform.vcs.impl.shared.RdLocalChanges
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi
+import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -23,7 +26,7 @@ import org.jetbrains.annotations.ApiStatus
 class ChangeListsViewModel(
   private val project: Project,
   private val cs: CoroutineScope,
-) {
+) : ChangeListDnDSupport {
   val areChangeListsEnabled: StateFlow<Boolean> = changeListsApiFlow(checkRegistry = false) { api, projectId ->
     emitAll(api.areChangeListsEnabled(projectId))
   }.stateIn(cs, SharingStarted.Eagerly, true)
@@ -52,6 +55,18 @@ class ChangeListsViewModel(
   }.stateIn(cs, SharingStarted.Eagerly, ChangeLists.EMPTY)
 
   fun resolveChange(changeId: ChangeId): Change? = changeListsState.value.changesIdMapping[changeId]
+
+  override fun moveChangesTo(list: LocalChangeList, changes: List<Change>) {
+    cs.launch {
+      ChangeListsApi.getInstance().moveChanges(project.projectId(), changes.map(ChangeId::getId), list.id)
+    }
+  }
+
+  override fun addUnversionedFiles(list: LocalChangeList, unversionedFiles: List<FilePath>) {
+    cs.launch {
+      ChangeListsApi.getInstance().addUnversionedFiles(project.projectId(), unversionedFiles.map(FilePathDto::toDto), list.id)
+    }
+  }
 
   private fun <T> changeListsApiFlow(checkRegistry: Boolean = true, flowProducer: suspend FlowCollector<T>.(ChangeListsApi, ProjectId) -> Unit): Flow<T> =
     if (checkRegistry && !RdLocalChanges.isEnabled()) emptyFlow()

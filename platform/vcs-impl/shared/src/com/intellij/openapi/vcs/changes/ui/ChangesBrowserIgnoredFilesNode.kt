@@ -28,7 +28,7 @@ class ChangesBrowserIgnoredFilesNode(private val project: Project,
 
   @ApiStatus.Internal
   override fun acceptDrop(dragOwner: ChangeListDnDSupport, dragBean: ChangeListDragBean) {
-    ChangesTreeCompatibilityProvider.getInstance().acceptIgnoredFilesDrop(project, dragOwner, dragBean)
+    ChangesTreeCompatibilityProvider.getInstance().acceptIgnoredFilesDrop(project, dragBean)
   }
 
   @Nls

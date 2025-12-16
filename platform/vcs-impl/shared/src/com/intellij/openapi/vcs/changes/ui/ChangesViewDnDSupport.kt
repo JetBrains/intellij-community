@@ -7,7 +7,7 @@ import com.intellij.ide.dnd.DnDEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.platform.vcs.impl.shared.changes.ChangeListDnDSupport.Companion.getInstance
+import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -50,7 +50,7 @@ open class ChangesViewDnDSupport(tree: ChangesTree) : ChangesTreeDnDSupport(tree
     if (attached is ChangeListDragBean) {
       val changesBrowserNode = attached.targetNode
       if (changesBrowserNode != null) {
-        changesBrowserNode.acceptDrop(getInstance(myTree.project), attached)
+        changesBrowserNode.acceptDrop(ChangeListsViewModel.getInstance(myTree.project), attached)
       }
     }
   }

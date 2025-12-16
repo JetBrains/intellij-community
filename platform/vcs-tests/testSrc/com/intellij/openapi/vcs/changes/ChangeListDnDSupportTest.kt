@@ -5,7 +5,6 @@ import app.cash.turbine.test
 import com.intellij.openapi.vcs.BaseChangeListsTest
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.vcs.impl.shared.changes.ChangeListDnDSupport
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import com.intellij.vcsUtil.VcsUtil
 import kotlinx.coroutines.flow.filter
@@ -32,7 +31,7 @@ internal class ChangeListDnDSupportTest : BaseChangeListsTest() {
     refreshCLM()
 
     val changesToMove = clm.allChanges.toList().take(2)
-    ChangeListDnDSupport.getInstance(project).moveChangesTo(targetList.asListNameToList(), changesToMove)
+    ChangeListsViewModel.getInstance(project).moveChangesTo(targetList.asListNameToList(), changesToMove)
 
     // Waiting for the state with non-empty target change list
     runBlocking {
@@ -68,7 +67,7 @@ internal class ChangeListDnDSupportTest : BaseChangeListsTest() {
     }
 
     val filePaths = listOf(file1, file2).map { VcsUtil.getFilePath(it) }
-    ChangeListDnDSupport.getInstance(project).addUnversionedFiles(listName.asListNameToList(), filePaths)
+    ChangeListsViewModel.getInstance(project).addUnversionedFiles(listName.asListNameToList(), filePaths)
 
     runBlocking {
       ChangeListsViewModel.getInstance(project).changeListsState.filter { state ->
