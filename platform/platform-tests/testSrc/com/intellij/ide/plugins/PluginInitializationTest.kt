@@ -43,6 +43,8 @@ class PluginInitializationTest {
     essentialPlugins: Set<PluginId> = emptySet(),
     disabledPlugins: Set<PluginId> = emptySet(),
     productBuildNumber: BuildNumber = BuildNumber.fromString("241.0")!!,
+    explicitPluginSubsetToLoad: Set<PluginId>? = null,
+    disablePluginLoadingCompletely: Boolean = false,
   ): PluginInitializationContext {
     return PluginInitializationContext.buildForTest(
       essentialPlugins = essentialPlugins,
@@ -52,8 +54,8 @@ class PluginInitializationTest {
       getProductBuildNumber = { productBuildNumber },
       requirePlatformAliasDependencyForLegacyPlugins = false,
       checkEssentialPlugins = false,
-      explicitPluginSubsetToLoad = null,
-      disablePluginLoadingCompletely = false,
+      explicitPluginSubsetToLoad = explicitPluginSubsetToLoad,
+      disablePluginLoadingCompletely = disablePluginLoadingCompletely,
       currentProductModeId = "test"
     )
   }
@@ -510,6 +512,331 @@ class PluginInitializationTest {
       assertThat(result.plugins).isEmpty()
       assertThat(excludedPlugins).hasSize(2)
       assertThat(excludedPlugins.all { it.reason is PluginDeclaresConflictingId }).isTrue()
+    }
+  }
+
+  @Nested
+  inner class ExplicitPluginSubset {
+
+    @Test
+    fun `only explicitly configured plugins and their dependencies are loaded`() {
+      plugin("foo") {
+        version = "1.0"
+      }.buildDir(pluginsDirPath.resolve("foo"))
+
+      plugin("bar") {
+        version = "1.0"
+        depends("foo")
+      }.buildDir(pluginsDirPath.resolve("bar"))
+
+      plugin("baz") {
+        version = "1.0"
+      }.buildDir(pluginsDirPath.resolve("baz"))
+
+      val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
+      val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
+      val initContext = createInitContext(
+        explicitPluginSubsetToLoad = setOf(PluginId.getId("bar"))
+      )
+
+      val filteredResult = initContext.selectPluginsToLoad(
+        discoveryResult.discoveredPlugins,
+        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+      )
+
+      // bar and its dependency foo should be loaded
+      assertThat(filteredResult).hasSize(1)
+      assertThat(filteredResult[0].plugins).hasSize(2)
+      assertThat(filteredResult[0].plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
+
+      // baz excluded as not required
+      assertThat(excludedPlugins).hasSize(1)
+      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins::class.java)
+      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("baz")
+    }
+
+    @Test
+    fun `essential plugins are always included in subset`() {
+      plugin("foo") { version = "1.0" }.buildDir(pluginsDirPath.resolve("foo"))
+      plugin("bar") { version = "1.0" }.buildDir(pluginsDirPath.resolve("bar"))
+      plugin("baz") { version = "1.0" }.buildDir(pluginsDirPath.resolve("baz"))
+
+      val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
+      val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
+      val initContext = createInitContext(
+        essentialPlugins = setOf(PluginId.getId("foo")),
+        explicitPluginSubsetToLoad = setOf(PluginId.getId("bar"))
+      )
+
+      val filteredResult = initContext.selectPluginsToLoad(
+        discoveryResult.discoveredPlugins,
+        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+      )
+
+      // foo (essential) and bar (explicit) should be loaded
+      assertThat(filteredResult).hasSize(1)
+      assertThat(filteredResult[0].plugins).hasSize(2)
+      assertThat(filteredResult[0].plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
+
+      // baz excluded
+      assertThat(excludedPlugins).hasSize(1)
+      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins::class.java)
+      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("baz")
+    }
+
+    @Test
+    fun `CORE plugin is always included in subset`() {
+      plugin(PluginManagerCore.CORE_ID.idString) { version = "1.0" }.buildDir(pluginsDirPath.resolve("core"))
+      plugin("foo") { version = "1.0" }.buildDir(pluginsDirPath.resolve("foo"))
+      plugin("bar") { version = "1.0" }.buildDir(pluginsDirPath.resolve("bar"))
+
+      val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
+      val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
+      val initContext = createInitContext(
+        explicitPluginSubsetToLoad = setOf(PluginId.getId("foo"))
+      )
+
+      val filteredResult = initContext.selectPluginsToLoad(
+        discoveryResult.discoveredPlugins,
+        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+      )
+
+      // CORE and foo should be loaded
+      assertThat(filteredResult).hasSize(1)
+      assertThat(filteredResult[0].plugins).hasSize(2)
+      assertThat(filteredResult[0].plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder(PluginManagerCore.CORE_ID.idString, "foo")
+
+      // bar excluded
+      assertThat(excludedPlugins).hasSize(1)
+      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins::class.java)
+      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("bar")
+    }
+
+    @Test
+    fun `transitive dependencies are included in subset`() {
+      plugin("a") { version = "1.0" }.buildDir(pluginsDirPath.resolve("a"))
+      plugin("b") {
+        version = "1.0"
+        depends("a")
+      }.buildDir(pluginsDirPath.resolve("b"))
+      plugin("c") {
+        version = "1.0"
+        depends("b")
+      }.buildDir(pluginsDirPath.resolve("c"))
+      plugin("d") { version = "1.0" }.buildDir(pluginsDirPath.resolve("d"))
+
+      val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
+      val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
+      val initContext = createInitContext(
+        explicitPluginSubsetToLoad = setOf(PluginId.getId("c"))
+      )
+
+      val filteredResult = initContext.selectPluginsToLoad(
+        discoveryResult.discoveredPlugins,
+        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+      )
+
+      // c, b, and a should be loaded (transitive chain)
+      assertThat(filteredResult).hasSize(1)
+      assertThat(filteredResult[0].plugins).hasSize(3)
+      assertThat(filteredResult[0].plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("a", "b", "c")
+
+      // d excluded
+      assertThat(excludedPlugins).hasSize(1)
+      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins::class.java)
+      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("d")
+    }
+
+    @Test
+    fun `disabled plugins are filtered before subset selection`() {
+      plugin("foo") { version = "1.0" }.buildDir(pluginsDirPath.resolve("foo"))
+      plugin("bar") {
+        version = "1.0"
+        depends("foo")
+      }.buildDir(pluginsDirPath.resolve("bar"))
+
+      val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
+      val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
+      val initContext = createInitContext(
+        disabledPlugins = setOf(PluginId.getId("foo")),
+        explicitPluginSubsetToLoad = setOf(PluginId.getId("bar"))
+      )
+
+      val filteredResult = initContext.selectPluginsToLoad(
+        discoveryResult.discoveredPlugins,
+        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+      )
+
+      // Only bar should remain (foo is disabled)
+      assertThat(filteredResult).hasSize(1)
+      assertThat(filteredResult[0].plugins).hasSize(1)
+      assertThat(filteredResult[0].plugins[0].pluginId.idString).isEqualTo("bar")
+
+      // foo excluded as disabled (not as "not required")
+      assertThat(excludedPlugins).hasSize(1)
+      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsMarkedDisabled::class.java)
+      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("foo")
+    }
+
+    @Test
+    fun `incompatible plugins are filtered before subset selection`() {
+      plugin("foo") {
+        version = "1.0"
+        untilBuild = "100.*"
+      }.buildDir(pluginsDirPath.resolve("foo"))
+      plugin("bar") { version = "1.0" }.buildDir(pluginsDirPath.resolve("bar"))
+
+      val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
+      val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
+      val initContext = createInitContext(
+        explicitPluginSubsetToLoad = setOf(PluginId.getId("bar")),
+        productBuildNumber = BuildNumber.fromString("250.0")!!
+      )
+
+      val filteredResult = initContext.selectPluginsToLoad(
+        discoveryResult.discoveredPlugins,
+        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+      )
+
+      // Only bar should remain
+      assertThat(filteredResult).hasSize(1)
+      assertThat(filteredResult[0].plugins).hasSize(1)
+      assertThat(filteredResult[0].plugins[0].pluginId.idString).isEqualTo("bar")
+
+      // foo excluded as incompatible (not as "not required")
+      assertThat(excludedPlugins).hasSize(1)
+      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginUntilBuildConstraintViolation::class.java)
+      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("foo")
+    }
+
+    @Test
+    fun `version selection happens before subset filtering`() {
+      plugin("foo") { version = "1.0" }.buildDir(pluginsDirPath.resolve("foo_1-0"))
+      plugin("foo") { version = "2.0" }.buildDir(pluginsDirPath.resolve("foo_2-0"))
+      plugin("bar") { version = "1.0" }.buildDir(pluginsDirPath.resolve("bar"))
+
+      val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
+      val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
+      val initContext = createInitContext(
+        explicitPluginSubsetToLoad = setOf(PluginId.getId("bar"))
+      )
+
+      val filteredResult = initContext.selectPluginsToLoad(
+        discoveryResult.discoveredPlugins,
+        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+      )
+
+      // Only bar should remain
+      assertThat(filteredResult).hasSize(1)
+      assertThat(filteredResult[0].plugins).hasSize(1)
+      assertThat(filteredResult[0].plugins[0].pluginId.idString).isEqualTo("bar")
+
+      // Both foo versions excluded: 1.0 superseded, 2.0 not required
+      assertThat(excludedPlugins).hasSize(2)
+      val supersededExclusion = excludedPlugins.find { it.reason is PluginVersionIsSuperseded }
+      val notRequiredExclusion = excludedPlugins.find { it.reason is PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins }
+      
+      assertThat(supersededExclusion).isNotNull()
+      assertThat(supersededExclusion!!.plugin.version).isEqualTo("1.0")
+      
+      assertThat(notRequiredExclusion).isNotNull()
+      assertThat(notRequiredExclusion!!.plugin.version).isEqualTo("2.0")
+    }
+
+    @Test
+    fun `empty explicit subset loads only essential and CORE plugins`() {
+      plugin(PluginManagerCore.CORE_ID.idString) { version = "1.0" }.buildDir(pluginsDirPath.resolve("core"))
+      plugin("foo") { version = "1.0" }.buildDir(pluginsDirPath.resolve("foo"))
+      plugin("bar") { version = "1.0" }.buildDir(pluginsDirPath.resolve("bar"))
+
+      val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
+      val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
+      val initContext = createInitContext(
+        essentialPlugins = setOf(PluginId.getId("foo")),
+        explicitPluginSubsetToLoad = emptySet()
+      )
+
+      val filteredResult = initContext.selectPluginsToLoad(
+        discoveryResult.discoveredPlugins,
+        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+      )
+
+      // CORE and foo (essential) should be loaded
+      assertThat(filteredResult).hasSize(1)
+      assertThat(filteredResult[0].plugins).hasSize(2)
+      assertThat(filteredResult[0].plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder(PluginManagerCore.CORE_ID.idString, "foo")
+
+      // bar excluded
+      assertThat(excludedPlugins).hasSize(1)
+      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins::class.java)
+      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("bar")
+    }
+  }
+
+  @Nested
+  inner class DisablePluginLoadingCompletely {
+
+    @Test
+    fun `only CORE plugin is loaded when plugin loading is disabled`() {
+      plugin("foo") { version = "1.0" }.buildDir(pluginsDirPath.resolve("foo"))
+      plugin("bar") { version = "1.0" }.buildDir(pluginsDirPath.resolve("bar"))
+
+      val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
+      val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
+      val initContext = createInitContext(disablePluginLoadingCompletely = true)
+
+      val filteredResult = initContext.selectPluginsToLoad(
+        discoveryResult.discoveredPlugins,
+        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+      )
+
+      // No plugins should be loaded (CORE is not in our test set)
+      assertThat(filteredResult).hasSize(1)
+      assertThat(filteredResult[0].plugins).isEmpty()
+
+      // All plugins excluded with PluginLoadingIsDisabledCompletely
+      assertThat(excludedPlugins).hasSize(2)
+      assertThat(excludedPlugins.all { it.reason is PluginLoadingIsDisabledCompletely }).isTrue()
+      assertThat(excludedPlugins.map { it.plugin.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
+    }
+
+    @Test
+    fun `CORE plugin is loaded when plugin loading is disabled`() {
+      plugin(PluginManagerCore.CORE_ID.idString) { version = "1.0" }.buildDir(pluginsDirPath.resolve("core"))
+      plugin("foo") { version = "1.0" }.buildDir(pluginsDirPath.resolve("foo"))
+
+      val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
+      val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
+      val initContext = createInitContext(disablePluginLoadingCompletely = true)
+
+      val filteredResult = initContext.selectPluginsToLoad(
+        discoveryResult.discoveredPlugins,
+        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+      )
+
+      // Only CORE should be loaded
+      assertThat(filteredResult).hasSize(1)
+      assertThat(filteredResult[0].plugins).hasSize(1)
+      assertThat(filteredResult[0].plugins[0].pluginId).isEqualTo(PluginManagerCore.CORE_ID)
+
+      // Only foo excluded
+      assertThat(excludedPlugins).hasSize(1)
+      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginLoadingIsDisabledCompletely::class.java)
+      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("foo")
+    }
+
+    @Test
+    fun `empty plugin list produces empty result when plugin loading is disabled`() {
+      val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
+      val initContext = createInitContext(disablePluginLoadingCompletely = true)
+
+      val filteredResult = initContext.selectPluginsToLoad(
+        emptyList(),
+        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+      )
+
+      assertThat(filteredResult).isEmpty()
+      assertThat(excludedPlugins).isEmpty()
     }
   }
 
