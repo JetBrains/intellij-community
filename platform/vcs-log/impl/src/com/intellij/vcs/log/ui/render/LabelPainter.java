@@ -34,7 +34,7 @@ public class LabelPainter {
   public static final JBValue BOTTOM_TEXT_PADDING = JBVG.value(2);
   public static final JBValue RIGHT_PADDING = JBVG.value(4);
   public static final JBValue LEFT_PADDING = JBVG.value(4);
-  public static final JBValue COMPACT_MIDDLE_PADDING = JBVG.value(2);
+  public static final JBValue COMPACT_MIDDLE_PADDING = JBVG.value(6);
   public static final JBValue MIDDLE_PADDING = JBVG.value(12);
   public static final JBValue ICON_TEXT_PADDING = JBVG.value(1);
   public static final JBValue LABEL_ARC = JBVG.value(6);
