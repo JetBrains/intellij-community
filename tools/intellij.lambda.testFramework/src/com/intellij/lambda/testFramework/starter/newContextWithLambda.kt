@@ -12,13 +12,12 @@ fun Starter.newContextWithLambda(testName: String, config: IdeStartConfig): IDET
     AdditionalModulesForDevBuildServer.addAdditionalModules(*LambdaTestPluginHolder.additionalPluginIds().toTypedArray())
 
     return newTestContainer().newContext(testName = testName, testCase = config.testCase, preserveSystemDir = false).apply {
-      config.configureTestContext(this)
-
       val contextToApplyHeadless = if (this.isRemDevContext()) this.asRemDevContext().frontendIDEContext else this
       //backend can't be started in headless mode, would fail
       contextToApplyHeadless.applyVMOptionsPatch {
         inHeadlessMode()
       }
+      config.configureTestContext(this)
     }
   }
   finally {
