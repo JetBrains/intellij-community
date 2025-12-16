@@ -9066,6 +9066,23 @@
       }
     }
   }, {
+    "id" : "pycharm.community.to.unified.promo",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "1"
+    } ],
+    "rules" : {
+      "event_id" : [ "{enum#__event_id}" ],
+      "event_data" : {
+        "control" : [ "{enum:update_now|learn_more}" ],
+        "duration_ms" : [ "{regexp#integer}" ],
+        "reason" : [ "{enum:ignore|remind_later|update_now}", "{enum:dismissed|update_now}" ]
+      },
+      "enums" : {
+        "__event_id" : [ "update.dialog.closed", "tooltip.shown", "tooltip.closed", "promo.modal.shown", "welcome.banner.clicked", "update.dialog.shown", "update.ready.restart.notification.shown", "welcome.banner.shown", "promo.modal.closed" ]
+      }
+    }
+  }, {
     "id" : "pycharm.processOutputToolWindow",
     "builds" : [ ],
     "versions" : [ {
@@ -13669,5 +13686,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6556"
+  "version" : "6558"
 }
