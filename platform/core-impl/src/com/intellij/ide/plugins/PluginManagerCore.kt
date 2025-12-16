@@ -561,6 +561,7 @@ object PluginManagerCore {
     for (descriptor in idMap.values) {
       descriptor.contentModules.associateByTo(fullContentModuleIdMap) { it.moduleId }
     }
+    selectPluginsForLoading(descriptors = loadingResult.getPluginsToAttemptLoading(), idMap = idMap, pluginNonLoadReasons = pluginNonLoadReasons, initContext = initContext)
 
     if (initContext.checkEssentialPlugins && !idMap.containsKey(CORE_ID)) {
       throw EssentialPluginMissingException(listOf("$CORE_ID (platform prefix: ${System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)})"))
@@ -570,7 +571,6 @@ object PluginManagerCore {
     checkThirdPartyPluginsPrivacyConsent(parentActivity, idMap)
 
     val pluginSetBuilder = PluginSetBuilder(loadingResult.getPluginsToAttemptLoading())
-    selectPluginsForLoading(descriptors = pluginSetBuilder.unsortedPlugins, idMap = idMap, pluginNonLoadReasons = pluginNonLoadReasons, initContext = initContext)
     val cycleErrors = pluginSetBuilder.checkPluginCycles()
     val pluginsToDisable = HashMap<PluginId, PluginStateChangeData>()
     val pluginsToEnable = HashMap<PluginId, PluginStateChangeData>()
