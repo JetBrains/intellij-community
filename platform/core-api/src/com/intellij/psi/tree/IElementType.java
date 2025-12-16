@@ -297,6 +297,11 @@ public class IElementType {
     }
   }
 
+  @ApiStatus.Internal
+  public static boolean isTombstone(@NotNull IElementType type) {
+    return type instanceof TombstoneElementType;
+  }
+
   private static class TooManyElementTypesException extends IllegalStateException implements ExceptionWithAttachments {
     private final Attachment[] myAttachments;
 
