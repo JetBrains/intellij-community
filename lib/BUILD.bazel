@@ -2098,16 +2098,16 @@ jvm_import(
 java_library(
   name = "grazie-core-org-jetbrains-intellij-deps-languagetool-language-en",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-en-6_7_19_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-en-6_7_20_http_import",
     ":org_languagetool-english-pos-dict-0_6_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-en-6_7_19_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-en-6_7_19_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-en-6_7_19-sources_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-en-6_7_20_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-en-6_7_20_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-en-6_7_20-sources_http//file"
 )
 
 jvm_import(
@@ -2118,16 +2118,16 @@ jvm_import(
 java_library(
   name = "grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_19_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_20_http_import",
     ":edu_washington_cs_knowitall-openregex-1_1_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_19_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_19_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_19-sources_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_20_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_20_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_20-sources_http//file"
 )
 
 jvm_import(
@@ -2178,16 +2178,16 @@ jvm_import(
 java_library(
   name = "grazie-tests-jetbrains-intellij-deps-languagetool-language-be",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-be-6_7_19_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-be-6_7_20_http_import",
     ":io_github_belarus-linguistics_grammardb_spell_languagetool-1_0_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-be-6_7_19_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-be-6_7_19_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-be-6_7_19-sources_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-be-6_7_20_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-be-6_7_20_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-be-6_7_20-sources_http//file"
 )
 
 jvm_import(
@@ -2198,16 +2198,16 @@ jvm_import(
 java_library(
   name = "grazie-tests-jetbrains-intellij-deps-languagetool-language-uk",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-uk-6_7_19_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-uk-6_7_20_http_import",
     ":ua_net_nlp-morfologik-ukrainian-lt-6_7_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-uk-6_7_19_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-uk-6_7_19_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-uk-6_7_19-sources_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-uk-6_7_20_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-uk-6_7_20_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-uk-6_7_20-sources_http//file"
 )
 
 jvm_import(
@@ -2218,7 +2218,7 @@ jvm_import(
 java_library(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-de",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-de-6_7_19_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-de-6_7_20_http_import",
     ":de_danielnaber-german-pos-dict-1_2_4_http_import",
     ":de_danielnaber-jwordsplitter-4_7_http_import",
   ],
@@ -2226,9 +2226,9 @@ java_library(
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-de-6_7_19_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-de-6_7_19_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-de-6_7_19-sources_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-de-6_7_20_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-de-6_7_20_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-de-6_7_20-sources_http//file"
 )
 
 jvm_import(
@@ -2244,38 +2244,38 @@ jvm_import(
 
 jvm_import(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-it",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-it-6_7_19_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-it-6_7_19-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-it-6_7_20_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-it-6_7_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-pt",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-pt-6_7_19_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-pt-6_7_19-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-pt-6_7_20_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-pt-6_7_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-ru",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_19_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_19-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_20_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-zh",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-zh-6_7_19_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-zh-6_7_20_http_import",
     ":com_hankcs-hanlp-portable-1_8_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-zh-6_7_19_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-zh-6_7_19_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-zh-6_7_19-sources_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-zh-6_7_20_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-zh-6_7_20_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-zh-6_7_20-sources_http//file"
 )
 
 jvm_import(
@@ -2287,7 +2287,7 @@ jvm_import(
 java_library(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-languagetool-core",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_19_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_20_http_import",
     ":edu_washington_cs_knowitall-openregex-1_1_1_http_import",
   ],
   visibility = ["//visibility:public"]
@@ -2412,7 +2412,7 @@ jvm_import(
 java_library(
   name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-core",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_19_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_20_http_import",
     ":com_carrotsearch-hppc-0_8_2_http_import",
     ":com_fasterxml_jackson_core-jackson-databind-2_18_0_http_import",
     ":com_fasterxml_jackson_core-jackson-annotations-2_18_0_http_import",
@@ -3001,7 +3001,7 @@ jvm_import(
 java_library(
   name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-de",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-de-6_7_19_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-de-6_7_20_http_import",
     ":de_danielnaber-german-pos-dict-1_2_4_http_import",
     ":de_danielnaber-jwordsplitter-4_7_http_import",
     ":edu_washington_cs_knowitall-openregex-1_1_1_http_import",
@@ -3013,16 +3013,16 @@ java_library(
 java_library(
   name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-el",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-el-6_7_19_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-el-6_7_20_http_import",
     ":org_ioperm-morphology-el-1_0_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-el-6_7_19_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-el-6_7_19_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-el-6_7_19-sources_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-el-6_7_20_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-el-6_7_20_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-el-6_7_20-sources_http//file"
 )
 
 jvm_import(
@@ -3034,22 +3034,22 @@ jvm_import(
 java_library(
   name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-ru",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-ru-6_7_19_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-ru-6_7_20_http_import",
     ":edu_washington_cs_knowitall-openregex-1_1_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-ru-6_7_19_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_19_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_19-sources_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-ru-6_7_20_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_20_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_20-sources_http//file"
 )
 
 java_library(
   name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-uk",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-uk-6_7_19_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-uk-6_7_20_http_import",
     ":ua_net_nlp-morfologik-ukrainian-lt-6_7_1_http_import",
   ],
   visibility = ["//visibility:public"]
