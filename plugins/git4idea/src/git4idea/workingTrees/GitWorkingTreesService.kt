@@ -42,7 +42,7 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
     }
 
     val model = repositoryModels[0]
-    val modelRoot = model.root ?: return null
+    val modelRoot = model.root.virtualFile ?: return null
     if (modelRoot != projectRoot) {
       return null
     }
