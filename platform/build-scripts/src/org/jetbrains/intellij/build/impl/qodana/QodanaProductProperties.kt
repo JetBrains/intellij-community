@@ -23,6 +23,7 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Dexternal.system.auto.import.headless.async=true",
   "-Dmaven.default.headless.import=true",
   "-Dide.do.not.check.ls.on.startup=true",
+  "-Dintellij.console.use.severe.log.level=true",
   )
 
 private const val IS_EAP = false
