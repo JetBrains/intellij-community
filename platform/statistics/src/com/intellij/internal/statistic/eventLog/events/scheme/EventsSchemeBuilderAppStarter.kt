@@ -52,6 +52,7 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
         testEventsScheme = arg.substringAfter(testEventSchemeParameter).toBoolean()
       }
     }
+    RegisteredLogDescriptionsProcessor.configureDescriptionRegistration(true)
     val groups: List<GroupDescriptor>
     try {
       groups = EventsSchemeBuilder.buildEventsScheme(recorderId, pluginId, getPluginsToSkipSchemeGeneration())
