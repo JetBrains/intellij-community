@@ -112,27 +112,21 @@ fun PluginDependencyAnalysis.sequenceOptionalDependsStatements(plugin: PluginMai
 @ApiStatus.Internal
 fun PluginDependencyAnalysis.getRequiredTransitiveModules(
   initContext: PluginInitializationContext,
-  plugins: Collection<PluginMainDescriptor>,
+  plugins: Collection<PluginModuleDescriptor>,
   ambiguousPluginSet: AmbiguousPluginSet,
   onUnresolvedStrictDependency: (node: PluginModuleDescriptor, dependency: DependencyRef) -> Unit = { _, _ -> },
 ): Set<PluginModuleDescriptor> {
   val bfs = object : PluginDependencyAnalysis.BFS<PluginModuleDescriptor>() {
     override fun visit(node: PluginModuleDescriptor) {
       for (dep in PluginDependencyAnalysis.sequenceStrictDependencies(node)) {
+        val resolvedNodes = when (dep) {
+          is DependencyRef.Plugin -> ambiguousPluginSet.resolvePluginId(dep.pluginId)
+          is DependencyRef.ContentModule -> ambiguousPluginSet.resolveContentModuleId(dep.moduleId)
+        }
         var resolvedAny = false
-        when (dep) {
-          is DependencyRef.Plugin -> {
-            for (depModule in ambiguousPluginSet.resolvePluginId(dep.pluginId)) {
-              schedule(depModule)
-              resolvedAny = true
-            }
-          }
-          is DependencyRef.ContentModule -> {
-            for (depModule in ambiguousPluginSet.resolveContentModuleId(dep.moduleId)) {
-              schedule(depModule)
-              resolvedAny = true
-            }
-          }
+        for (depModule in resolvedNodes) {
+          schedule(depModule)
+          resolvedAny = true
         }
         if (!resolvedAny) {
           onUnresolvedStrictDependency(node, dep)
