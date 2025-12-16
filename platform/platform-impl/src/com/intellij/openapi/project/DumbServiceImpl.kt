@@ -4,7 +4,6 @@ package com.intellij.openapi.project
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.application.impl.InternalThreading
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -33,6 +32,7 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
@@ -267,24 +267,32 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     }
   }
 
+  private fun tryIncrementStateCounter(): Boolean {
+    return _state.getAndUpdate { it.tryIncrementDumbCounter() }.incrementWillChangeDumbState
+  }
+
+  @RequiresWriteLock
+  private fun doIncrementStateCounter(): Boolean {
+    val old = _state.getAndUpdate { it.incrementDumbCounter() }
+    return old.isSmart
+  }
+
   // We cannot make this function `suspend`, because we have a contract that if dumb task is queued from EDT, dumb service becomes dumb
   // immediately. DumbService.queue is blocking method at the moment.
   @RequiresBlockingContext
   @RequiresEdt
   private fun incrementDumbCounterBlocking(trace: Throwable) {
-    if (_state.getAndUpdate { it.tryIncrementDumbCounter() }.incrementWillChangeDumbState) {
+    if (tryIncrementStateCounter()) {
       // If already dumb - just increment the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
       // Otherwise, increment the counter under write action because this will change dumb state
-      val enteredDumb = application.runWriteAction(Computable {
-        val old = _state.getAndUpdate { it.incrementDumbCounter() }
-        return@Computable old.isSmart
-      })
+      val enteredDumb = application.runWriteAction(Computable(::doIncrementStateCounter))
       proceedWithPublishingOfIncrementEvents(enteredDumb, trace)
     }
 
     LOG.assertTrue(state.value.isDumb, "Should be dumb")
   }
 
+  // we need a separate dispatcher because background write actions need to be protected from thread starvation
   private val dispatcher = Dispatchers.IO.limitedParallelism(1)
 
   /**
@@ -292,15 +300,15 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
    */
   private suspend fun incrementDumbCounterSuspending(trace: Throwable) {
     withContext(dispatcher) {
-      getGlobalThreadingSupport().runWriteActionWithCheckInWriteIntent(
-      {
-        _state.getAndUpdate { it.tryIncrementDumbCounter() }.incrementWillChangeDumbState
-      }) {
+      // `runWriteActionWithCheckInWriteIntent` is a glorified 'if' statement that provides atomic transition to background write action if the condition is true
+      val enteredDumb = getGlobalThreadingSupport().runWriteActionWithCheckInWriteIntent(::tryIncrementStateCounter) {
         // If already dumb - just increment the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
         // Otherwise, increment the counter under write action because this will change dumb state
-        val old = _state.getAndUpdate { it.incrementDumbCounter() }
-        InternalThreading.invokeAndWaitWithTransferredWriteAction {
-          proceedWithPublishingOfIncrementEvents(old.isSmart, trace)
+        doIncrementStateCounter()
+      }
+      if (enteredDumb != null) {
+        withContext(Dispatchers.EDT) {
+          proceedWithPublishingOfIncrementEvents(enteredDumb, trace)
         }
       }
     }
@@ -324,17 +332,24 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     }
   }
 
+  private fun tryDecrementDumbCounter(): Boolean {
+    return _state.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState
+  }
+
+  @RequiresWriteLock
+  private fun doDecrementDumbCounter(): Boolean {
+    val new = _state.updateAndGet { it.decrementDumbCounter() }
+    return new.isSmart
+  }
+
   // this method is not `suspend` for the sake of symmetry: incrementDumbCounter is not `suspend` as of now
   @RequiresBlockingContext
   @RequiresEdt
   private fun decrementDumbCounterBlocking() {
     // If there are other dumb tasks - just decrement the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
     // Otherwise, decrement the counter under write action because this will change dumb state
-    if (_state.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState) {
-      val exitDumb = application.runWriteAction(Computable {
-        val new = _state.updateAndGet { it.decrementDumbCounter() }
-        return@Computable new.isSmart
-      })
+    if (tryDecrementDumbCounter()) {
+      val exitDumb = application.runWriteAction(Computable(::doDecrementDumbCounter))
       proceedWithPublishingOfDecrementEvents(exitDumb)
     }
   }
@@ -348,13 +363,15 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   }
 
   private suspend fun decrementDumbCounterSuspending() {
-    if (_state.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState) {
-      backgroundWriteAction {
-        val new = _state.updateAndGet { it.decrementDumbCounter() }
-        // unfortunately, some implementations of DumbModeListener execute a write action
-        // hence we place this event sending inside WA to ensure consistency
-        InternalThreading.invokeAndWaitWithTransferredWriteAction {
-          proceedWithPublishingOfDecrementEvents(new.isSmart)
+    LOG.assertTrue(state.value.isDumb, "Should be dumb")
+    withContext(dispatcher) {
+      // `runWriteActionWithCheckInWriteIntent` is a glorified 'if' statement that provides atomic transition to background write action if the condition is true
+      val isNowSmart = getGlobalThreadingSupport().runWriteActionWithCheckInWriteIntent(::tryDecrementDumbCounter) {
+        doDecrementDumbCounter()
+      }
+      if (isNowSmart != null) {
+        withContext(Dispatchers.EDT) {
+          proceedWithPublishingOfDecrementEvents(isNowSmart)
         }
       }
     }
