@@ -57,12 +57,34 @@ class SampleTest {
         text
       }
 
-      assert(returnResult is String) { "Expected String, but got ${returnResult::class.java.name}"}
+      assert(returnResult is String) { "Expected String, but got ${returnResult::class.java.name}" }
       assert(returnResult == text) { "Expected '$text', but got '$returnResult'" }
 
       runInFrontend("Print serializable received from backend", listOf(returnResult)) { param ->
         thisLogger().warn("Got parameter: ${param.single()}")
         assert(param.single() == text) { "Expected '$text', but got '${param.single()}'" }
+      }
+    }
+    Unit
+  }
+
+  @TestTemplate // AT-3662
+  fun `serialized test with shared context`(ide: IdeWithLambda) = runBlocking {
+    ide.apply {
+      runInBackend("Store some non serializable value to the test context") { arguments ->
+        assert(testData == null)
+        testData = StringBuilder("/testPath")
+      }
+      runInBackend("Check stored value is accessible in different lambda") {
+        assert(testData is StringBuilder)
+        assert(testData.hashCode() != StringBuilder("/testPath").hashCode()) // actually a different instance
+        assert((testData as StringBuilder).toString() == "/testPath")
+      }
+
+      if (ide.isRemoteDev) {
+        runInFrontend("Check stored value is not accessible in different IDE") {
+          assert(testData == null)
+        }
       }
     }
     Unit

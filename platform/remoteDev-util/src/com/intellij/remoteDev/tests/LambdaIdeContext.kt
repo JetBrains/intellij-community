@@ -9,7 +9,8 @@ import kotlin.coroutines.CoroutineContext
  * Provides access to all essential entities on this agent required to perform test operations
  */
 @ApiStatus.Internal
-interface LambdaIdeContext: CoroutineScope {
+interface LambdaIdeContext : CoroutineScope {
+  var testData: Any?
   fun addPostCleanup(action: () -> Unit) {
     coroutineContext.job.invokeOnCompletion {
       action()
@@ -18,17 +19,21 @@ interface LambdaIdeContext: CoroutineScope {
 }
 
 @ApiStatus.Internal
-interface LambdaMonolithContext: LambdaBackendContext, LambdaFrontendContext
-@ApiStatus.Internal
-interface LambdaBackendContext: LambdaIdeContext
-@ApiStatus.Internal
-interface LambdaFrontendContext: LambdaIdeContext
+interface LambdaMonolithContext : LambdaBackendContext, LambdaFrontendContext
 
 @ApiStatus.Internal
-class LambdaBackendContextClass(override val coroutineContext: CoroutineContext) : LambdaBackendContext
+interface LambdaBackendContext : LambdaIdeContext
 
 @ApiStatus.Internal
-class LambdaFrontendContextClass(override val coroutineContext: CoroutineContext) : LambdaFrontendContext
+interface LambdaFrontendContext : LambdaIdeContext
 
 @ApiStatus.Internal
-class LambdaMonolithContextClass(override val coroutineContext: CoroutineContext) : LambdaMonolithContext
+class LambdaBackendContextClass(override val coroutineContext: CoroutineContext, override var testData: Any? = null) : LambdaBackendContext
+
+@ApiStatus.Internal
+class LambdaFrontendContextClass(override val coroutineContext: CoroutineContext, override var testData: Any? = null) :
+  LambdaFrontendContext
+
+@ApiStatus.Internal
+class LambdaMonolithContextClass(override val coroutineContext: CoroutineContext, override var testData: Any? = null) :
+  LambdaMonolithContext

@@ -7,6 +7,7 @@ import com.intellij.remoteDev.tests.LambdaFrontendContext
 import com.intellij.remoteDev.tests.LambdaIdeContext
 import com.intellij.remoteDev.tests.impl.utils.SerializedLambdaWithIdeContextHelper
 import com.intellij.remoteDev.tests.impl.utils.runLogged
+import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdSerialized
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
 import java.io.Serializable
@@ -18,7 +19,7 @@ import kotlin.time.Duration.Companion.minutes
 class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession, val backendRdSession: LambdaRdTestSession?) :
   IBackgroundRun by delegate {
   fun defaultStepName(): String = "Step " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS"))
-
+  val isRemoteDev: Boolean = rdSession.rdIdeType == LambdaRdIdeType.FRONTEND
   suspend inline fun <T : LambdaIdeContext, R : Serializable> LambdaRdTestSession.runGetResult(
     name: String,
     timeout: Duration = 1.minutes,

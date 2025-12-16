@@ -26,11 +26,11 @@ import kotlin.io.path.exists
 class SampleTest {
   @TestTemplate
   fun `serialized test`(ide: IdeWithLambda) = runBlocking {
-    Assumptions.assumeThat(ide.rdSession.rdIdeType)
+    Assumptions.assumeThat(ide.isRemoteDev)
       .describedAs("works in both modes if headless is turned off for monolith in com.intellij.lambda.testFramework.starter.NewContextWithLambdaKt.newContextWithLambda" +
                    "as ProjectManager returns empty projects list in headless IJPL-221229")
       // TODO: https://youtrack.jetbrains.com/issue/AT-3645/Lambda-tests-possibility-to-use-RunInMonolithAndSplitMode-annotation-on-test-methods
-      .isNotIn(LambdaRdIdeType.MONOLITH)
+      .isTrue
     JpsEmptyProject.projectInfo.projectDir.resolve("src").resolve("FormattingExamplesExpected.java").let {
       if (!it.exists()) {
         it.parent.createDirectories()
