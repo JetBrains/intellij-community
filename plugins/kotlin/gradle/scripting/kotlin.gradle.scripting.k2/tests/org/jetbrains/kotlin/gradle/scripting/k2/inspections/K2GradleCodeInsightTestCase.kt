@@ -9,7 +9,11 @@ import org.jetbrains.kotlin.gradle.AbstractKotlinGradleCodeInsightBaseTest
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
 import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.UseK2PluginMode
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.Assertions.assertTrue
 
 @UseK2PluginMode
@@ -66,5 +70,20 @@ abstract class K2GradleCodeInsightTestCase : AbstractKotlinGradleCodeInsightBase
             data.init()
             (codeInsightFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(data)
         }
+    }
+
+    companion object {
+        @JvmStatic
+        protected val WITH_CUSTOM_CONFIGURATIONS_FIXTURE =
+            GradleTestFixtureBuilder.create("with-custom-configurations") { gradleVersion ->
+                withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+                    setProjectName("with-custom-configurations")
+                }
+                withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+                    withKotlinJvmPlugin()
+                    withPrefix { code("val customConf by configurations.creating {}") }
+                    withPrefix { code("val customSourceSet by sourceSets.creating {}") }
+                }
+            }
     }
 }

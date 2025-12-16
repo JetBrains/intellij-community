@@ -3,13 +3,10 @@ package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArgumentsNotationInspection
-import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderThan
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinDslScriptsModelImportIsSupported
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.junit.jupiter.params.ParameterizedTest
 
 class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeInsightTestCase() {
@@ -19,7 +16,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         test: () -> Unit,
     ) {
         assumeThatKotlinDslScriptsModelImportIsSupported(gradleVersion)
-        test(gradleVersion, DEFAULT_FIXTURE) {
+        test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             codeInsightFixture.enableInspections(GradleAvoidDependencyNamedArgumentsNotationInspection::class.java)
             test()
         }
@@ -847,14 +844,5 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     companion object {
         private const val WARNING_START = "<weak_warning>"
         private const val WARNING_END = "</weak_warning>"
-        private val DEFAULT_FIXTURE = GradleTestFixtureBuilder.create("kotlin_dsl_avoid_named_arguments") { gradleVersion ->
-            withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
-                withJavaPlugin()
-                withPrefix {
-                    code("val customSourceSet by sourceSets.creating {}")
-                    code("val customConf by configurations.creating {}")
-                }
-            }
-        }
     }
 }
