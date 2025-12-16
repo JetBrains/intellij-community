@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.LightProjectDescriptor
 
 abstract class JUnitAssertEqualsMayBeAssertSameInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: JUnitAssertEqualsMayBeAssertSameInspection = JUnitAssertEqualsMayBeAssertSameInspection()
@@ -29,5 +30,9 @@ abstract class JUnitAssertEqualsMayBeAssertSameInspectionTestBase : JvmInspectio
     """.trimIndent())
   }
 
-  override fun getProjectDescriptor(): JUnitProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST)
+  override fun getProjectDescriptor(): LightProjectDescriptor = junitProjectDescriptorHighestJavaLevel
+
+  protected companion object {
+    protected val junitProjectDescriptorHighestJavaLevel: JUnitProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST)
+  }
 }

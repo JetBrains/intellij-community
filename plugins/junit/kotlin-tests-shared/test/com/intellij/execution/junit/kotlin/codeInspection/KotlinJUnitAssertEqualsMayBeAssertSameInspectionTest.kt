@@ -2,11 +2,32 @@
 package com.intellij.execution.junit.kotlin.codeInspection
 
 import com.intellij.junit.testFramework.JUnitAssertEqualsMayBeAssertSameInspectionTestBase
+import com.intellij.junit.testFramework.addJUnit4Library
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.MavenDependencyUtil
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
+private val ktProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
+  listOf(TestKotlinArtifacts.kotlinStdlib), listOf(TestKotlinArtifacts.kotlinStdlibSources)
+) {
+  override fun configureModule(module: Module, model: ModifiableRootModel) {
+    super.configureModule(module, model)
+    model.addJUnit4Library()
+  }
+}
+
 abstract class KotlinJUnitAssertEqualsMayBeAssertSameInspectionTest : JUnitAssertEqualsMayBeAssertSameInspectionTestBase(), ExpectedPluginModeProvider {
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return ktProjectDescriptor
+  }
+
   override fun setUp() {
     setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
   }
