@@ -6,6 +6,7 @@ import com.intellij.mcpserver.impl.util.network.*
 import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
+import com.intellij.mcpserver.stdio.IJ_MCP_ALLOWED_TOOLS
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.util.findMostRelevantProject
 import com.intellij.openapi.application.*
@@ -76,11 +77,6 @@ private fun getTracer(): IJTracer =
 
 @Service(Service.Level.APP)
 class McpServerService(val cs: CoroutineScope) {
-  companion object {
-    fun getInstance(): McpServerService = service()
-    suspend fun getInstanceAsync(): McpServerService = serviceAsync()
-  }
-
   enum class AskCommandExecutionMode {
     ASK,
     DONT_ASK,
@@ -90,8 +86,15 @@ class McpServerService(val cs: CoroutineScope) {
      */
     RESPECT_GLOBAL_SETTINGS,
   }
+  class McpSessionOptions(
+    val commandExecutionMode: AskCommandExecutionMode,
+    val toolFilter: McpToolFilter = McpToolFilter.AllowAll
+  )
 
-  class McpSessionOptions(val commandExecutionMode: AskCommandExecutionMode)
+  companion object {
+    fun getInstance(): McpServerService = service()
+    suspend fun getInstanceAsync(): McpServerService = serviceAsync()
+  }
 
   private val server = MutableStateFlow(startGlobalServerIfEnabled())
 
@@ -188,10 +191,12 @@ class McpServerService(val cs: CoroutineScope) {
     }
   }
 
-  private fun isKnownToken(token: String): Boolean = activeAuthorizedSessions.containsKey(token)
+  private fun isKnownToken(token: String): Boolean {
+    return activeAuthorizedSessions.containsKey(token)
+  }
 
   private fun getSessionOptions(token: String?): McpSessionOptions {
-    return token?.let { activeAuthorizedSessions[it] }
+    return token?.let { activeAuthorizedSessions[token] }
            ?: McpSessionOptions(commandExecutionMode = AskCommandExecutionMode.RESPECT_GLOBAL_SETTINGS)
   }
 
@@ -274,6 +279,23 @@ class McpServerService(val cs: CoroutineScope) {
       }) { applicationCall, transport ->
         // this is added because now a Kotlin MCP client doesn't support header adjusting for each request, only for initial one, see McpStdioRunner
         val projectPath = applicationCall.request.headers[IJ_MCP_SERVER_PROJECT_PATH]
+        val authToken = if (authCheck) applicationCall.request.headers[IJ_MCP_AUTH_TOKEN] else null
+
+        // Check for tool filter from header (for stdio/CLI usage)
+        val allowedToolsFromHeader = applicationCall.request.headers[IJ_MCP_ALLOWED_TOOLS]
+        val headerFilter = allowedToolsFromHeader?.let { toolsStr ->
+          val tools = toolsStr.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+          if (tools.isNotEmpty()) McpToolFilter.AllowList(tools) else McpToolFilter.AllowAll
+        }
+
+        // Merge filters: auth-based session options take precedence over header
+        val baseSessionOptions = getSessionOptions(authToken)
+        // if no header provided, use the existing filter from sessionOptions
+        val sessionOptions = if (headerFilter != null) {
+          McpSessionOptions(baseSessionOptions.commandExecutionMode, headerFilter)
+        } else {
+          baseSessionOptions
+        }
         val mcpServer = Server(
           Implementation(
             name = "${ApplicationNamesInfo.getInstance().fullProductName} MCP Server",
@@ -292,18 +314,21 @@ class McpServerService(val cs: CoroutineScope) {
           )
         )
         val session = mcpServer.createSession(transport)
-        //session.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(Method.Defined.LoggingSetLevel) { _, _ ->
+        //session.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(Method.Defined.LoggingSetLevel) { request, extra ->
         //  // Workaround inspector failure
         //  return@setRequestHandler EmptyRequestResult()
         //}
         launch {
           var previousTools: List<McpTool>? = null
           mcpTools.collectLatest { updatedTools ->
+            // Apply session-specific filter
+            val filteredTools = updatedTools.filter { sessionOptions.toolFilter.shouldInclude(it.descriptor.name) }
+
             previousTools?.forEach { previousTool ->
               mcpServer.removeTool(previousTool.descriptor.name)
             }
-            mcpServer.addTools(updatedTools.map { it.mcpToolToRegisteredTool(mcpServer, session, projectPath) })
-            previousTools = updatedTools
+            mcpServer.addTools(filteredTools.map { it.mcpToolToRegisteredTool(mcpServer, session, projectPath) })
+            previousTools = filteredTools
           }
         }
         return@mcpPatched session
@@ -311,14 +336,17 @@ class McpServerService(val cs: CoroutineScope) {
     }.start(wait = false)
   }
 
-  private fun getMcpTools() = McpToolsProvider.EP.extensionList.flatMap {
-    try {
-      it.getTools()
+  private fun getMcpTools(filter: McpToolFilter = McpToolFilter.AllowAll): List<McpTool> {
+    val allTools = McpToolsProvider.EP.extensionList.flatMap {
+      try {
+        it.getTools()
+      }
+      catch (e: Exception) {
+        logger.error("Cannot load tools for $it", e)
+        emptyList()
+      }
     }
-    catch (e: Exception) {
-      logger.error("Cannot load tools for $it", e)
-      emptyList()
-    }
+    return allTools.filter { filter.shouldInclude(it.descriptor.name) }
   }
 
   private fun McpTool.mcpToolToRegisteredTool(
@@ -333,8 +361,6 @@ class McpServerService(val cs: CoroutineScope) {
         httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH) ?: (request.meta?.get(IJ_MCP_SERVER_PROJECT_PATH) as? JsonPrimitive)?.content
         ?: projectPathFromInitialRequest
       val projectPathFromMcpRequest = (request.arguments?.get(projectPathParameterName) as? JsonPrimitive)?.content
-
-      @Suppress("IncorrectCancellationExceptionHandling")
       val project = try {
         if (!projectPathFromMcpRequest.isNullOrBlank()) {
           logger.trace { "Project path specified in MCP request: $projectPathFromMcpRequest" }
