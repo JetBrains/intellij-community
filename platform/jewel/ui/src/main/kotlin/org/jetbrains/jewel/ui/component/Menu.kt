@@ -832,6 +832,7 @@ internal fun MenuSubmenuItem(
     remember(enabled) { itemState = itemState.copy(selected = false, enabled = enabled) }
 
     val focusRequester = remember { FocusRequester() }
+    var submenuFocusable by remember { mutableStateOf(false) }
 
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
@@ -840,7 +841,11 @@ internal fun MenuSubmenuItem(
                 is PressInteraction.Cancel,
                 is PressInteraction.Release -> itemState = itemState.copy(pressed = false)
 
-                is HoverInteraction.Enter -> itemState = itemState.copy(hovered = true)
+                is HoverInteraction.Enter -> {
+                    itemState = itemState.copy(hovered = true)
+                    submenuFocusable = false
+                    focusRequester.requestFocus()
+                }
                 is HoverInteraction.Exit -> itemState = itemState.copy(hovered = false)
                 is FocusInteraction.Focus -> itemState = itemState.copy(focused = true)
                 is FocusInteraction.Unfocus -> itemState = itemState.copy(focused = false)
@@ -870,6 +875,7 @@ internal fun MenuSubmenuItem(
                 )
                 .onKeyEvent {
                     if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionRight) {
+                        submenuFocusable = true
                         itemState = itemState.copy(selected = true)
                         true
                     } else {
@@ -915,6 +921,7 @@ internal fun MenuSubmenuItem(
                     }
                 },
                 style = style,
+                focusable = submenuFocusable,
                 content = submenu,
             )
         }
@@ -954,6 +961,7 @@ internal fun Submenu(
     onDismissRequest: (InputMode) -> Boolean,
     modifier: Modifier = Modifier,
     style: MenuStyle = JewelTheme.menuStyle,
+    focusable: Boolean,
     content: MenuScope.() -> Unit,
 ) {
     val density = LocalDensity.current
@@ -975,7 +983,7 @@ internal fun Submenu(
     Popup(
         popupPositionProvider = popupPositionProvider,
         onDismissRequest = { menuController.closeAll(InputMode.Touch, false) },
-        properties = PopupProperties(focusable = false),
+        properties = PopupProperties(focusable = focusable),
         onPreviewKeyEvent = { false },
         cornerSize = style.metrics.cornerSize,
         onKeyEvent = {
