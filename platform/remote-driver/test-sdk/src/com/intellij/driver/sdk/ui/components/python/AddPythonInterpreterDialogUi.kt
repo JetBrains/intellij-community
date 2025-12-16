@@ -12,6 +12,8 @@ class AddPythonInterpreterDialogUi(data: ComponentData): UiComponent(data) {
   val pythonPath = x {byClass("PythonInterpreterComboBox")}
   val okButton = x { byAccessibleName("OK") }
   val useVenv1Link = x { byAccessibleName("Use .venv1") }
+  val selectExistingLink = x { and (byAccessibleName("Select existing interpreter"), (byClass("ActionLink"))) }
+  val locationField = x { and (byAccessibleName("Location:"), (byClass("ExtendableTextField"))) }
   val selectExisting = x { byAccessibleName("Select existing") }
   val generateNew = x { byAccessibleName("Generate new") }
   val browseButton = x("//div[@tooltiptext='Browse…']")
