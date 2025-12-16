@@ -898,7 +898,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
     Set<PsiFile> dependenciesSet = new HashSet<>();
     collectDependencies(myTag, myFile, dependenciesSet);
-    dependencies = ArrayUtil.toObjectArray(dependenciesSet);
+    dependencies = ArrayUtil.append(ArrayUtil.toObjectArray(dependenciesSet), ExternalResourceManager.getInstance());
   }
 
   @Override
