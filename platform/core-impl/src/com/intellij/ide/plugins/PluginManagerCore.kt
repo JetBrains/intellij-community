@@ -331,7 +331,36 @@ object PluginManagerCore {
   }
 
   @Suppress("LoggingSimilarMessage")
-  private fun preparePluginErrors(pluginLoadingErrors: Map<PluginId, PluginNonLoadReason>, globalErrors: List<PluginLoadingError>): List<PluginLoadingError> {
+  private fun preparePluginErrors(
+    pluginLoadingErrors: Map<PluginId, PluginNonLoadReason>,
+    descriptorLoadingErrors: List<PluginDescriptorLoadingError>,
+    duplicateModuleMap: Map<PluginId, MutableList<PluginMainDescriptor>>,
+    cycleErrors: List<PluginLoadingError>,
+  ): List<PluginLoadingError> {
+    val globalErrors = ArrayList<PluginLoadingError>().apply {
+      for (descriptorLoadingError in descriptorLoadingErrors) {
+        add(PluginLoadingError(
+          reason = null,
+          htmlMessageSupplier = Supplier {
+            HtmlChunk.text(CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor",
+                                              PluginUtils.pluginPathToUserString(descriptorLoadingError.path)))
+          },
+          error = descriptorLoadingError.error,
+        ))
+      }
+      for ((key, value) in duplicateModuleMap) {
+        add(PluginLoadingError(
+          reason = null,
+          htmlMessageSupplier = Supplier {
+            HtmlChunk.text(CoreBundle.message("plugin.loading.error.module.declared.by.multiple.plugins",
+                                              key,
+                                              value.joinToString(separator = ("\n  ")) { it.toString() }))
+          },
+          error = null,
+        ))
+      }
+      addAll(cycleErrors)
+    }
     if (pluginLoadingErrors.isEmpty() && globalErrors.isEmpty()) {
       return emptyList()
     }
@@ -522,34 +551,9 @@ object PluginManagerCore {
     coreLoader: ClassLoader,
     parentActivity: Activity?,
   ): PluginManagerState {
-    val globalErrors = ArrayList<PluginLoadingError>()
-    for (descriptorLoadingError in descriptorLoadingErrors) {
-      globalErrors.add(PluginLoadingError(
-        reason = null,
-        htmlMessageSupplier = Supplier {
-          HtmlChunk.text(CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor",
-                                            PluginUtils.pluginPathToUserString(descriptorLoadingError.path)))
-        },
-        error = descriptorLoadingError.error,
-      ))
-    }
-
     val loadingResult = PluginLoadingResult()
     loadingResult.initAndAddAll(descriptorLoadingResult = discoveredPlugins, initContext = initContext)
     val pluginNonLoadReasons = loadingResult.copyPluginNonLoadReasons()
-    if (loadingResult.duplicateModuleMap != null) {
-      for ((key, value) in loadingResult.duplicateModuleMap!!) {
-        globalErrors.add(PluginLoadingError(
-          reason = null,
-          htmlMessageSupplier = Supplier {
-            HtmlChunk.text(CoreBundle.message("plugin.loading.error.module.declared.by.multiple.plugins",
-                                              key,
-                                              value.joinToString(separator = ("\n  ")) { it.toString() }))
-          },
-          error = null,
-        ))
-      }
-    }
 
     val idMap = loadingResult.getIdMap()
     val fullIdMap = idMap + loadingResult.getIncompleteIdMap() +
@@ -573,7 +577,7 @@ object PluginManagerCore {
 
     val pluginSetBuilder = PluginSetBuilder(loadingResult.getPluginsToAttemptLoading())
     selectPluginsForLoading(descriptors = pluginSetBuilder.unsortedPlugins, idMap = idMap, pluginNonLoadReasons = pluginNonLoadReasons, initContext = initContext)
-    globalErrors.addAll(pluginSetBuilder.checkPluginCycles())
+    val cycleErrors = pluginSetBuilder.checkPluginCycles()
     val pluginsToDisable = HashMap<PluginId, String>()
     val pluginsToEnable = HashMap<PluginId, String>()
     
@@ -615,7 +619,12 @@ object PluginManagerCore {
     }
 
     pluginsState.addPluginNonLoadReasons(pluginNonLoadReasons)
-    val errorList = preparePluginErrors(pluginNonLoadReasons, globalErrors)
+    val errorList = preparePluginErrors(
+      pluginLoadingErrors = pluginNonLoadReasons,
+      descriptorLoadingErrors = descriptorLoadingErrors,
+      duplicateModuleMap = loadingResult.duplicateModuleMap ?: emptyMap(),
+      cycleErrors = cycleErrors
+    )
     val actions = prepareActions(pluginNamesToDisable = pluginsToDisable.values, pluginNamesToEnable = pluginsToEnable.values)
     pluginsState.addPluginLoadingErrors(errorList + actions.map { PluginLoadingError(reason = null, htmlMessageSupplier = it, error = null) })
 
