@@ -3,19 +3,26 @@ package com.intellij.openapi.command.impl
 
 import com.intellij.openapi.command.CommandId
 import com.intellij.openapi.project.Project
+import java.util.Collections
 
 
-internal class NoCommandMeta(private val id: CommandId) : CommandMeta {
+internal class MutableCommandMetaImpl(private val id: CommandId) : MutableCommandMeta {
+
+  private val metaMap: MutableMap<Project?, UndoMeta> = Collections.synchronizedMap(mutableMapOf())
 
   override fun commandId(): CommandId {
     return id
   }
 
+  override fun addUndoMeta(undoMeta: UndoMeta) {
+    metaMap[undoMeta.undoProject()] = undoMeta
+  }
+
   override fun undoMeta(project: Project?): UndoMeta? {
-    TODO("not implemented")
+    return metaMap[project]
   }
 
   override fun undoMeta(): List<UndoMeta> {
-    TODO("not implemented")
+    return metaMap.values.toList()
   }
 }

@@ -37,7 +37,7 @@ public enum UndoableActionType {
       case MENTION_ONLY -> new MentionOnlyUndoableAction(docRefs.toArray(DocumentReference.EMPTY_ARRAY));
       case EDITOR_CHANGE -> new MockEditorChangeAction(first(docRefs));
       case NON_UNDOABLE -> new NonUndoableAction(first(docRefs), isGlobal);
-      case RESET_ORIGINATOR -> new ResetOriginatorAction();
+      case RESET_ORIGINATOR -> ResetOriginatorAction.INSTANCE;
       case GLOBAL -> new MockGlobalUndoableAction(docRefs);
       case OTHER -> new MockUndoableAction(docRefs, isGlobal);
     };

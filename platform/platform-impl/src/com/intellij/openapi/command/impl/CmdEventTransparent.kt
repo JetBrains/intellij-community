@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 
 internal class CmdEventTransparent(
   private val project: Project?,
-  meta: UndoCommandMeta,
+  meta: CommandMeta,
 ) : CmdEventBase(meta) {
 
   fun withProject(project: Project?): CmdEvent {

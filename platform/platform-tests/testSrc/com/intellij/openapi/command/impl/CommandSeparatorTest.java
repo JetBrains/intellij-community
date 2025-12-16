@@ -6,7 +6,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -200,13 +199,13 @@ public final class CommandSeparatorTest extends LightPlatformTestCase {
   private static @NotNull CommandSeparator createSeparator(List<State> output) {
     return new CommandSeparator(new SeparatedCommandListener() {
       @Override
-      public void onCommandStarted(@Nullable CommandEvent event, @NotNull UndoCommandMeta meta) {
-        output.add(event == null ? State.TRANSPARENT_STARTED : State.COMMAND_STARTED);
+      public void onCommandStarted(@NotNull CmdEvent cmdEvent) {
+        output.add(cmdEvent.isTransparent() ? State.TRANSPARENT_STARTED : State.COMMAND_STARTED);
       }
 
       @Override
-      public void onCommandFinished(@Nullable CommandEvent event, @NotNull UndoCommandMeta meta) {
-        output.add(event == null ? State.TRANSPARENT_FINISHED : State.COMMAND_FINISHED);
+      public void onCommandFinished(@NotNull CmdEvent cmdEvent) {
+        output.add(cmdEvent.isTransparent() ? State.TRANSPARENT_FINISHED : State.COMMAND_FINISHED);
       }
     });
   }

@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandId;
 import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.command.undo.CommandMeta;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,20 +118,20 @@ public final class CommandSeparator implements CommandListener {
   }
 
   private void start(@Nullable CommandEvent event) {
-    UndoCommandMeta meta = getUndoCommandMeta(event, true);
-    publisher.onCommandStarted(event, meta);
+    CmdEvent cmdEvent = getCmdEvent(event, true);
+    publisher.onCommandStarted(cmdEvent);
     UndoSpy undoSpy = UndoSpy.getInstance();
     if (undoSpy != null) {
-      undoSpy.commandStarted(event, meta);
+      undoSpy.commandStarted(cmdEvent);
     }
   }
 
   private void finish(@Nullable CommandEvent event) {
-    UndoCommandMeta meta = getUndoCommandMeta(event, false);
-    publisher.onCommandFinished(event, meta);
+    CmdEvent cmdEvent = getCmdEvent(event, false);
+    publisher.onCommandFinished(cmdEvent);
     UndoSpy undoSpy = UndoSpy.getInstance();
     if (undoSpy != null) {
-      undoSpy.commandFinished(event, meta);
+      undoSpy.commandFinished(cmdEvent);
     }
   }
 
@@ -160,20 +159,25 @@ public final class CommandSeparator implements CommandListener {
     }
   }
 
-  private static @NotNull UndoCommandMeta getUndoCommandMeta(@Nullable CommandEvent event, boolean isStart) {
-    if (event == null) {
-      // domestic transparent
-      CommandId commandId = isStart ? ID_GENERATOR.nextTransparentId() : ID_GENERATOR.currentCommandId();
-      return isStart ? new DomesticCommandMeta(commandId) : new NoCommandMeta(commandId);
+  private static @NotNull CmdEvent getCmdEvent(@Nullable CommandEvent event, boolean isStart) {
+    CmdEvent foreignCommand = ForeignCommandProcessor.getInstance().currentCommand();
+    if (foreignCommand != null) {
+      // foreign command or foreign transparent
+      return foreignCommand;
     }
-    CommandMeta meta = event.getCommandMeta();
-    if (meta == null) {
-      // domestic command
-      CommandId commandId = isStart ? ID_GENERATOR.nextCommandId() : ID_GENERATOR.currentCommandId();
-      return isStart ? new DomesticCommandMeta(commandId) : new NoCommandMeta(commandId);
+    boolean isTransparent = event == null;
+    CommandId commandId = getCommandId(isTransparent, isStart);
+    var meta = isStart
+      ? new MutableCommandMetaImpl(commandId)
+      : new NoCommandMeta(commandId);
+    return isTransparent ? CmdEvent.createTransparent(null, meta) : CmdEvent.create(event, meta);
+  }
+
+  private static @NotNull CommandId getCommandId(boolean isTransparent, boolean isStart) {
+    if (isTransparent) {
+      return isStart ? ID_GENERATOR.nextTransparentId() : ID_GENERATOR.currentCommandId();
     }
-    // foreign command or foreign transparent
-    return (UndoCommandMeta) meta;
+    return isStart ? ID_GENERATOR.nextCommandId() : ID_GENERATOR.currentCommandId();
   }
 
   private static @NotNull SeparatedCommandListener getPublisher() {

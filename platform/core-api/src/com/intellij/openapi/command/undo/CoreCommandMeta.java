@@ -8,6 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public interface CommandMeta {
+public interface CoreCommandMeta {
   @NotNull CommandId commandId();
 }

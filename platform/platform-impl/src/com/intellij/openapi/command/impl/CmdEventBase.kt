@@ -6,7 +6,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.util.NlsContexts.Command
 
 
-internal abstract class CmdEventBase(private val meta: UndoCommandMeta) : CmdEvent {
+internal abstract class CmdEventBase(private val meta: CommandMeta) : CmdEvent {
 
   override fun id(): CommandId {
     return meta.commandId()
@@ -28,7 +28,7 @@ internal abstract class CmdEventBase(private val meta: UndoCommandMeta) : CmdEve
     return false
   }
 
-  override fun meta(): UndoCommandMeta {
+  override fun meta(): CommandMeta {
     return meta
   }
 }

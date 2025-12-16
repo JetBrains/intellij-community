@@ -118,7 +118,7 @@ final class CommandBuilder {
     originalDocument = null;
     UndoSpy undoSpy = UndoSpy.getInstance();
     if (undoSpy != null) {
-      undoSpy.undoableActionAdded(undoProject, new ResetOriginatorAction(), UndoableActionType.RESET_ORIGINATOR);
+      undoSpy.undoableActionAdded(undoProject, ResetOriginatorAction.INSTANCE, UndoableActionType.RESET_ORIGINATOR);
     }
   }
 
@@ -268,7 +268,7 @@ final class CommandBuilder {
     public boolean isTransparent() { throw new UnsupportedOperationException(); }
 
     @Override
-    public @NotNull UndoCommandMeta meta() { throw new UnsupportedOperationException(); }
+    public @NotNull CommandMeta meta() { throw new UnsupportedOperationException(); }
 
     // endregion
   }

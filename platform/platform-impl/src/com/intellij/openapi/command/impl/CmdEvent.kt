@@ -20,21 +20,21 @@ interface CmdEvent {
   fun confirmationPolicy(): UndoConfirmationPolicy
   fun recordOriginalDocument(): Boolean
   fun isTransparent(): Boolean
-  fun meta(): UndoCommandMeta
+  fun meta(): CommandMeta
 
   companion object {
     @JvmStatic
-    fun create(event: CommandEvent, meta: UndoCommandMeta): CmdEvent {
+    fun create(event: CommandEvent, meta: CommandMeta): CmdEvent {
       return CmdEventImpl(event, meta)
     }
 
     @JvmStatic
-    fun createTransparent(project: Project?, meta: UndoCommandMeta): CmdEvent {
+    fun createTransparent(project: Project?, meta: CommandMeta): CmdEvent {
       return CmdEventTransparent(project, meta)
     }
 
     @JvmStatic
-    fun createNonUndoable(meta: UndoCommandMeta): CmdEvent {
+    fun createNonUndoable(meta: CommandMeta): CmdEvent {
       return CmdEventNonUndoable(meta)
     }
   }

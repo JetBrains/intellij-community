@@ -17,11 +17,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface UndoSpy {
 
-  fun commandStarted(event: CommandEvent?, meta: UndoCommandMeta)
+  fun commandStarted(cmdEvent: CmdEvent)
 
   fun undoableActionAdded(undoProject: Project?, action: UndoableAction, type: UndoableActionType)
 
-  fun commandFinished(event: CommandEvent?, meta: UndoCommandMeta)
+  fun commandFinished(cmdEvent: CmdEvent)
 
   fun <T> withBlind(action: () -> T): T
 
