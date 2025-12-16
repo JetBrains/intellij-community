@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.gradleJava.testing
 
 import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiPackage
@@ -11,6 +12,10 @@ import org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConf
 import org.jetbrains.plugins.gradle.execution.test.runner.getSourceFile
 
 open class KotlinAllInPackageGradleConfigurationProducer: AllInPackageGradleConfigurationProducer() {
+
+    override fun shouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean {
+        return other.isProducedBy(AllInPackageGradleConfigurationProducer::class.java) || super.shouldReplace(self, other)
+    }
 
     override fun getElement(context: ConfigurationContext): PsiPackage? {
         val module = context.module ?: return null
