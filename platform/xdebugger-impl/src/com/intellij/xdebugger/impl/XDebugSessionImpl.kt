@@ -181,8 +181,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   init {
     var contentToReuse = contentToReuse
+    ValueLookupManagerController.getInstance(myProject).startListening()
+
     if (!DapMode.isDap()) {
-      ValueLookupManagerController.getInstance(myProject).startListening()
       DebuggerInlayListener.getInstance(myProject).startListening()
     }
 
