@@ -164,7 +164,7 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                 val compilerTarget = KaCompilerTarget.Jvm(
                     isTestMode = false,
                     compiledClassHandler = null,
-                    debuggerExtension = DebuggerExtension(ExecutionStack(context)))
+                    debuggerExtension = KaDebuggerExtension(ExecutionStack(context)))
                 val allowedErrorFilter = KotlinCompilerIdeAllowedErrorFilter.getInstance()
 
                 when (val result =
