@@ -581,6 +581,8 @@ com.intellij.ide.bookmark.BookmarksManager
 com.intellij.openapi.roots.ModifiableModelsProvider
 - *a:getGlobalLibraryTableModifiableModel(com.intellij.openapi.project.Project):com.intellij.openapi.roots.libraries.LibraryTable$ModifiableModel
 *:com.intellij.openapi.roots.SkipAddingToWatchedRoots
+c:com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
+- *:canOpenLibrarySettings(com.intellij.platform.workspace.jps.entities.LibraryEntity):Z
 *a:com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItem
 - <init>():V
 - f:createWidgetAction():com.intellij.openapi.actionSystem.AnAction

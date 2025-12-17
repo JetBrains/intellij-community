@@ -909,6 +909,8 @@ com.intellij.openapi.roots.ui.OrderRootTypeUIFactory
 - a:createPathEditor(com.intellij.openapi.projectRoots.Sdk):com.intellij.openapi.projectRoots.ui.SdkPathEditor
 - a:getIcon():javax.swing.Icon
 - a:getNodeText():java.lang.String
+c:com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
+- <init>():V
 com.intellij.psi.codeStyle.CodeStyleConfigurable
 - com.intellij.openapi.options.Configurable
 - a:apply(com.intellij.psi.codeStyle.CodeStyleSettings):V
