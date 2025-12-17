@@ -449,7 +449,9 @@ com.intellij.openapi.ui.DialogBuilder$ActionDescriptor
 com.intellij.openapi.ui.DialogBuilder$CustomizableAction
 - a:setText(java.lang.String):V
 a:com.intellij.openapi.ui.DialogWrapper
+- f:isMaximizable():Z
 - setDoNotAskOption(com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):V
+- f:setMaximizable(Z):V
 com.intellij.openapi.ui.DialogWrapper$DoNotAskOption
 - com.intellij.openapi.ui.DoNotAskOption
 a:com.intellij.openapi.ui.DialogWrapper$DoNotAskOption$Adapter
@@ -458,6 +460,9 @@ a:com.intellij.openapi.ui.DialogWrapper$DoNotAskOption$Adapter
 - <init>():V
 com.intellij.openapi.ui.DialogWrapperDialog
 - a:getDialogWrapper():com.intellij.openapi.ui.DialogWrapper
+a:com.intellij.openapi.ui.DialogWrapperPeer
+- isMaximizable():Z
+- setMaximizable(Z):V
 com.intellij.openapi.ui.ErrorBorderCapable
 com.intellij.openapi.ui.GenericListComponentUpdater
 - a:paintBusy(Z):V

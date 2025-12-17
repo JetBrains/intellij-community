@@ -5,6 +5,7 @@ import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.ui.MaximizeDialogKt;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -374,6 +375,18 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   @Override
   public void setResizable(boolean resizable) {
     myDialog.setResizable(resizable);
+  }
+
+  @Override
+  public boolean isMaximizable() {
+    if (!(myDialog instanceof JDialog jDialog)) return false;
+    return MaximizeDialogKt.isMaximizable(jDialog);
+  }
+
+  @Override
+  public void setMaximizable(boolean maximizable) {
+    if (!(myDialog instanceof JDialog jDialog)) return;
+    MaximizeDialogKt.setMaximizable(jDialog, maximizable);
   }
 
   @Override

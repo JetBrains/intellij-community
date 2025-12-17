@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
@@ -23,6 +24,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
+import java.beans.PropertyChangeEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -110,6 +112,13 @@ private class WindowsDialogHeaderButton(
   minSize: () -> Dimension,
 ) : ActionButton(maximizeAction, null, "DialogHeader", minSize) {
   var isActive = true
+
+  override fun presentationPropertyChanged(e: PropertyChangeEvent) {
+    super.presentationPropertyChanged(e)
+    if (e.propertyName == Presentation.PROP_VISIBLE) {
+      isVisible = myPresentation.isVisible
+    }
+  }
 
   override fun updateIcon() {
     super.updateIcon()

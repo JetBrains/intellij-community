@@ -1287,6 +1287,28 @@ public abstract class DialogWrapper {
   }
 
   /**
+   * Checks whether the dialog can be maximized.
+   * <p>
+   * See {@link com.intellij.ide.ui.MaximizeDialogKt#isMaximizable(JDialog)}.
+   * </p>
+   * @return true if the dialog is maximizable, false otherwise
+   */
+  public final boolean isMaximizable() {
+    return myPeer.isMaximizable();
+  }
+
+  /**
+   * Determines whether the dialog can be maximized.
+   * <p>
+   * See {@link com.intellij.ide.ui.MaximizeDialogKt#isMaximizable(JDialog)}.
+   * </p>
+   * @param maximizable true if the dialog should be maximizable, false otherwise
+   */
+  public final void setMaximizable(boolean maximizable) {
+    myPeer.setMaximizable(maximizable);
+  }
+
+  /**
    * @return window owner
    * @see Window#getOwner
    */

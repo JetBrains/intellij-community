@@ -30,6 +30,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
+import static com.intellij.ide.ui.MaximizeDialogKt.setMaximizable;
+
 @ApiStatus.Internal
 public final class FloatingDecorator extends JDialog implements FloatingDecoratorMarker, ToolWindowExternalDecorator, DisposableWindow {
   private static final Logger LOG = Logger.getInstance(FloatingDecorator.class);
@@ -128,6 +130,8 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     if (SystemInfo.isWindows && WindowRoundedCornersManager.isAvailable()) {
       WindowRoundedCornersManager.setRoundedCorners(this);
     }
+
+    setMaximizable(this, true);
   }
 
   @Override

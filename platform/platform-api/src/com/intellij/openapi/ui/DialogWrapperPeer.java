@@ -110,6 +110,12 @@ public abstract class DialogWrapperPeer {
    */
   public abstract boolean isResizable();
 
+  public boolean isMaximizable() {
+    return false;
+  }
+
+  public void setMaximizable(boolean maximizable) { }
+
   /**
    * @see JDialog#setResizable
    */

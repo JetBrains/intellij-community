@@ -362,8 +362,10 @@ com.intellij.ide.trustedProjects.TrustedProjectsLocator$LocatedProject
 f:com.intellij.ide.ui.MaximizeDialogKt
 - sf:canBeMaximized(javax.swing.JDialog):Z
 - sf:canBeNormalized(javax.swing.JDialog):Z
+- sf:isMaximizable(javax.swing.JDialog):Z
 - sf:maximize(javax.swing.JDialog):V
 - sf:normalize(javax.swing.JDialog):V
+- sf:setMaximizable(javax.swing.JDialog,Z):V
 - sf:toggleMaximized(javax.swing.JDialog):V
 com.intellij.ide.ui.OptionsSearchTopHitProvider$ApplicationLevelProvider
 - com.intellij.ide.SearchTopHitProvider
@@ -927,6 +929,11 @@ com.intellij.openapi.project.configuration.ConfigurationResult
 com.intellij.openapi.project.configuration.ConfigurationResult$Failure
 - com.intellij.openapi.project.configuration.ConfigurationResult
 - a:getMessage():java.lang.String
+f:com.intellij.openapi.ui.WindowWrapperBuilder
+- setMaximizable(Z):com.intellij.openapi.ui.WindowWrapperBuilder
+c:com.intellij.openapi.ui.impl.DialogWrapperPeerImpl
+- isMaximizable():Z
+- setMaximizable(Z):V
 com.intellij.openapi.ui.playback.PlaybackCommand
 - a:canGoFurther():Z
 - a:execute(com.intellij.openapi.ui.playback.PlaybackContext):java.util.concurrent.CompletableFuture

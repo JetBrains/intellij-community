@@ -47,12 +47,18 @@ public abstract class WindowAction extends AnAction implements ActionRemoteBehav
       enabled = editor == null || !editor.getContentComponent().hasFocus();
     }
     event.getPresentation().setEnabled(enabled);
+    event.getPresentation().setVisible(isVisibleFor(window));
     event.getPresentation().setIcon(getIconFor(window));
   }
 
   @ApiStatus.Internal
   protected @Nullable Icon getIconFor(@Nullable Window window) {
     return null;
+  }
+
+  @ApiStatus.Internal
+  protected boolean isVisibleFor(@Nullable Window window) {
+    return true;
   }
 
   private static boolean isEnabledFor(@Nullable Window window) {

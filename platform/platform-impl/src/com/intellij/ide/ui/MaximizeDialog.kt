@@ -11,6 +11,25 @@ import javax.swing.JDialog
 import kotlin.math.abs
 
 /**
+ * Determines whether the given dialog is maximizable.
+ *
+ * Unlike [canBeMaximized], which checks whether the dialog can be maximized right now,
+ * this property determines whether the maximize/restore functionality should be available for the given dialog at all.
+ *
+ * By default, dialogs are not maximizable, because they're not designed to be maximizable.
+ * If they're maximized, e.g., by accidentally double-clicking on the header, they just don't look right.
+ *
+ * In the current implementation, this property only affects behavior on Windows.
+ * On macOS, all dialogs are maximizable by the OS.
+ * On Linux, dialogs have native headers, and it's the environment that determines whether they can be maximized (usually they can not).
+ */
+var JDialog.isMaximizable: Boolean
+  get() = ClientProperty.isTrue(this, MAXIMIZABLE)
+  set(value) {
+    ClientProperty.put(this, MAXIMIZABLE, if (value) true else null)
+  }
+
+/**
  * Attempts to toggle the maximized state of the dialog.
  *
  * If the dialog is currently not maximized, then it's maximized.
@@ -20,6 +39,8 @@ import kotlin.math.abs
  * Note that if the dialog was maximized using some other means, it's impossible to normalize it this way,
  * because the "normal, not maximized" size and location are unknown then,
  * as they're stored internally.
+ *
+ * @see [isMaximizable]
  */
 fun JDialog.toggleMaximized() {
   if (canBeMaximized()) {
@@ -31,11 +52,13 @@ fun JDialog.toggleMaximized() {
 }
 
 /**
- * Checks if the dialog can be maximized.
+ * Checks if the dialog can be maximized right now.
  *
  * It's possible to maximize a dialog if it's resizable, showing, has a root pane and is not currently maximized.
  *
  * If this function returns `true`, then the dialog can be maximized using [maximize] or [toggleMaximized].
+ *
+ * @see [isMaximizable]
  */
 fun JDialog.canBeMaximized(): Boolean {
   if (!commonResizingConditionsAreMet()) return false
@@ -50,6 +73,8 @@ fun JDialog.canBeMaximized(): Boolean {
  * The dialog will still look as not maximized according to its window decorations, but it's the best that can be done due to technical limitations.
  *
  * See [canBeMaximized] for the exact conditions when a dialog can be maximized.
+ *
+ * @see [isMaximizable]
  */
 fun JDialog.maximize() {
   if (!canBeMaximized()) return
@@ -66,7 +91,7 @@ fun JDialog.maximize() {
 }
 
 /**
- * Checks if the dialog can be normalized.
+ * Checks if the dialog can be normalized right now.
  *
  * It's possible to normalize a dialog if it's resizable, showing, has a root pane, was previously maximized using [maximize] or [toggleMaximized]
  * and it's still maximized.
@@ -76,6 +101,8 @@ fun JDialog.maximize() {
  * as they're stored internally.
  *
  * If this function returns `true`, then the dialog can be normalized using [normalize] or [toggleMaximized].
+ *
+ * @see [isMaximizable]
  */
 fun JDialog.canBeNormalized(): Boolean {
   if (!commonResizingConditionsAreMet()) return false
@@ -92,6 +119,8 @@ fun JDialog.canBeNormalized(): Boolean {
  * (in case the screen configuration has changed, for example).
  *
  * See [canBeNormalized] for the exact conditions when it's possible to normalize a dialog.
+ *
+ * @see [isMaximizable]
  */
 fun JDialog.normalize() {
   if (!canBeNormalized()) return
@@ -114,6 +143,7 @@ var JDialog.normalBounds: Rectangle?
 private fun JDialog.commonResizingConditionsAreMet(): Boolean =
   isShowing && // needed for getScreenRectangle
   isResizable && // can't resize if it's not resizable to begin with
+  isMaximizable && // maximization is enabled by the client
   rootPane != null // needed to store the client property
 
 private fun almostEquals(r1: Rectangle, r2: Rectangle): Boolean {
@@ -130,3 +160,4 @@ private fun almostHaveTheSameSize(r1: Rectangle, r2: Rectangle): Boolean {
 }
 
 private val NORMAL_BOUNDS = Key.create<Rectangle>("NORMAL_BOUNDS")
+private val MAXIMIZABLE = Key.create<Rectangle>("MAXIMIZABLE")
