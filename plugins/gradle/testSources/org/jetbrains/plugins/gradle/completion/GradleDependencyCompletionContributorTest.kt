@@ -22,6 +22,8 @@ import kotlin.io.path.Path
 class GradleDependencyCompletionContributorTest {
   @TestDisposable private lateinit var disposable: Disposable
 
+  private val eelDescriptor = Path("").getEelDescriptor()
+
   @ParameterizedTest
   @CsvSource(
     "\"\"",   // empty string
@@ -35,7 +37,7 @@ class GradleDependencyCompletionContributorTest {
 
     val expected = listOf(DependencyCompletionResult("group", "artifact", "version"))
 
-    val context = GradleDependencyCompletionContext(Path("").getEelDescriptor())
+    val context = GradleDependencyCompletionContext(eelDescriptor)
     val request = DependencyCompletionRequest(searchString, context)
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.search(request)
@@ -45,7 +47,7 @@ class GradleDependencyCompletionContributorTest {
   private fun configureLocalIndex(vararg gav: String) {
     application.replaceService(
       GradleLocalRepositoryIndexer::class.java,
-      GradleLocalRepositoryIndexerTestImpl(*gav),
+      GradleLocalRepositoryIndexerTestImpl(eelDescriptor, *gav),
       disposable)
   }
 }
