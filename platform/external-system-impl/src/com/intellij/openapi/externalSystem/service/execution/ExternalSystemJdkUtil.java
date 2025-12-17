@@ -91,8 +91,16 @@ public final class ExternalSystemJdkUtil {
 
   private static @NotNull Sdk getJavaHomeJdk() {
     String javaHome = getJavaHome();
-    if (StringUtil.isEmptyOrSpaces(javaHome)) throw new UndefinedJavaHomeException();
-    if (!isValidJdk(javaHome)) throw new InvalidJavaHomeException(javaHome);
+    if (StringUtil.isEmptyOrSpaces(javaHome)) {
+      throw new UndefinedJavaHomeException();
+    }
+    Sdk sdk = findJdkInSdkTableByPath(javaHome);
+    if (sdk != null) {
+      return sdk;
+    }
+    if (!isValidJdk(javaHome)) {
+      throw new InvalidJavaHomeException(javaHome);
+    }
     return ExternalSystemJdkProvider.getInstance().createJdk(null, javaHome);
   }
 
