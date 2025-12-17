@@ -2,9 +2,7 @@
 package org.jetbrains.kotlin.gradle.scripting.shared.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PlatformPatterns.psiFile
 import com.intellij.patterns.PsiElementPattern
@@ -198,20 +196,6 @@ internal fun callExpressionElementWithLambdaPattern(blockName: String): PsiEleme
 
 internal fun callExpressionWithName(blockName: String): PsiElementPattern.Capture<KtCallExpression> = psiElement<KtCallExpression>()
     .withFirstChild(psiElement<KtNameReferenceExpression>().withText(blockName))
-
-@ApiStatus.Internal
-fun removeDummySuffix(value: String?): String {
-    if (value == null) {
-        return ""
-    }
-    val index = value.indexOf(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)
-    val result = if (index >= 0) {
-        value.take(index)
-    } else {
-        value
-    }
-    return result.trim()
-}
 
 @ApiStatus.Internal
 fun CompletionParameters.getCompletionContext(): DependencyCompletionContext =
