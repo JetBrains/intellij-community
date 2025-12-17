@@ -12,6 +12,7 @@ import org.jetbrains.idea.completion.api.*
 import org.jetbrains.kotlin.gradle.scripting.shared.completion.*
 import org.jetbrains.plugins.gradle.completion.FullStringInsertHandler
 import org.jetbrains.plugins.gradle.completion.GradleDependencyCompletionMatcher
+import org.jetbrains.plugins.gradle.completion.getCompletionContext
 import org.jetbrains.plugins.gradle.completion.removeDummySuffix
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 import org.toml.lang.psi.TomlLiteral

@@ -196,7 +196,3 @@ internal fun callExpressionElementWithLambdaPattern(blockName: String): PsiEleme
 
 internal fun callExpressionWithName(blockName: String): PsiElementPattern.Capture<KtCallExpression> = psiElement<KtCallExpression>()
     .withFirstChild(psiElement<KtNameReferenceExpression>().withText(blockName))
-
-@ApiStatus.Internal
-fun CompletionParameters.getCompletionContext(): DependencyCompletionContext =
-    GradleDependencyCompletionContext(originalFile.virtualFile.toNioPath().getEelDescriptor())
