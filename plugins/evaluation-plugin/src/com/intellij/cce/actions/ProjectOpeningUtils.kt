@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.backend.observation.Observation
+
 import com.intellij.warmup.util.OpenProjectArgs
 import com.intellij.warmup.util.importOrOpenProjectAsync
 import kotlinx.coroutines.TimeoutCancellationException
@@ -34,12 +36,24 @@ object ProjectOpeningUtils {
     }
   }
 
-  fun open(projectPath: String, timeoutForOneAttempt: Duration = 20.minutes): Project {
+  fun open(
+    projectPath: String,
+    timeoutForOneAttempt: Duration = 20.minutes,
+    additionalAwaitConfiguration: Boolean = false,
+  ): Project {
     println("Open and load project $projectPath. Operation may take a few minutes.")
-    return tryToOpenProject(OpenProjectArgsData(FileSystems.getDefault().getPath(projectPath)), timeoutForOneAttempt)
+    return tryToOpenProject(
+      OpenProjectArgsData(FileSystems.getDefault().getPath(projectPath)),
+      timeoutForOneAttempt,
+      additionalAwaitConfiguration
+    )
   }
 
-  private fun tryToOpenProject(openProjectArgsData: OpenProjectArgsData, timeoutForOneAttempt: Duration): Project {
+  private fun tryToOpenProject(
+    openProjectArgsData: OpenProjectArgsData,
+    timeoutForOneAttempt: Duration,
+    additionalAwaitConfiguration: Boolean,
+  ): Project {
     repeat(3) { iteration ->
       if (iteration > 0) {
         println("Retry to open project. attempt ${iteration + 1}")
@@ -48,7 +62,12 @@ object ProjectOpeningUtils {
       val project = runUnderModalProgressIfIsEdt {
         try {
           withTimeout(timeoutForOneAttempt) {
-            importOrOpenProjectAsync(openProjectArgsData)
+            val project = importOrOpenProjectAsync(openProjectArgsData)
+            if (additionalAwaitConfiguration) {
+              println("Await project configuration")
+              Observation.awaitConfiguration(project)
+            }
+            project
           }
         } catch (_: TimeoutCancellationException) {
           null
