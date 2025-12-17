@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.QualifyContextSensitiveResolutionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.InsertRequiredTypeArgumentsInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.StringTemplateCompletion.correctParametersForInStringTemplateCompletion
 import org.jetbrains.kotlin.psi.KtFile
@@ -121,6 +122,7 @@ internal sealed class KotlinFirCompletionParameters(
     enum class CorrectionType {
         BRACES_FOR_STRING_TEMPLATE,
         INSERTED_TYPE_ARGS,
+        QUALIFIED_CONTEXT_SENSITIVE_RESOLUTION
     }
 
     companion object {
@@ -135,6 +137,7 @@ internal sealed class KotlinFirCompletionParameters(
 
         fun create(parameters: CompletionParameters): KotlinFirCompletionParameters? {
             InsertRequiredTypeArgumentsInsertHandler.correctParametersForTypeArgumentInsertion(parameters)?.let { return it }
+            QualifyContextSensitiveResolutionHandler.qualifyExpressionForContextSensitiveResolution(parameters)?.let { return it }
 
             return when (val correctedParameters = correctParametersForInStringTemplateCompletion(parameters)) {
                 null -> Original.create(parameters)

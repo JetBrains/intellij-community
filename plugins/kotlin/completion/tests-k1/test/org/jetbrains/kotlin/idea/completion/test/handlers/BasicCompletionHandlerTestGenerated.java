@@ -281,6 +281,30 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/handlers/basic/contextSensitiveResolution")
+    public static class ContextSensitiveResolution extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("dontQualifyQualifiedEnum.kt")
+        public void testDontQualifyQualifiedEnum() throws Exception {
+            runTest("../testData/handlers/basic/contextSensitiveResolution/dontQualifyQualifiedEnum.kt");
+        }
+
+        @TestMetadata("qualifyEnum.kt")
+        public void testQualifyEnum() throws Exception {
+            runTest("../testData/handlers/basic/contextSensitiveResolution/qualifyEnum.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/defaultImports")
     public static class DefaultImports extends AbstractBasicCompletionHandlerTest {
         @java.lang.Override

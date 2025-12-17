@@ -800,6 +800,45 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/basic/common/contextSensitiveResolution")
+    public static class ContextSensitiveResolution extends AbstractKotlinKmpCompletionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        @java.lang.Override
+        public KMPTestPlatform getTestPlatform() {
+            return KMPTestPlatform.CommonNativeJvm;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("NoEnumValueIfDisabled.kt")
+        public void testNoEnumValueIfDisabled() throws Exception {
+            runTest("../../completion/testData/basic/common/contextSensitiveResolution/NoEnumValueIfDisabled.kt");
+        }
+
+        @TestMetadata("ShowQualifiedExtensionFunctions.kt")
+        public void testShowQualifiedExtensionFunctions() throws Exception {
+            runTest("../../completion/testData/basic/common/contextSensitiveResolution/ShowQualifiedExtensionFunctions.kt");
+        }
+
+        @TestMetadata("ShowQualifiedFields.kt")
+        public void testShowQualifiedFields() throws Exception {
+            runTest("../../completion/testData/basic/common/contextSensitiveResolution/ShowQualifiedFields.kt");
+        }
+
+        @TestMetadata("ShowQualifiedMethods.kt")
+        public void testShowQualifiedMethods() throws Exception {
+            runTest("../../completion/testData/basic/common/contextSensitiveResolution/ShowQualifiedMethods.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/basic/common/dslMarker")
     public static class DslMarker extends AbstractKotlinKmpCompletionTest {
         @java.lang.Override

@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOri
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.AdaptToExplicitReceiverInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.addRequiredTypeArgumentsIfNecessary
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.qualifyContextSensitiveResolutionIfNecessary
 import org.jetbrains.kotlin.idea.completion.impl.k2.hasNoExplicitReceiver
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
@@ -104,6 +105,7 @@ internal fun createCallableLookupElements(
 
         lookup.applyWeighs(symbolWithOrigin)
             .addRequiredTypeArgumentsIfNecessary(context.positionContext)
+            .qualifyContextSensitiveResolutionIfNecessary(context.positionContext)
             .applyKindToPresentation()
     }
 }

@@ -766,6 +766,40 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/basic/common/contextSensitiveResolution")
+        public static class ContextSensitiveResolution extends AbstractK1MLPerformanceCompletionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("NoEnumValueIfDisabled.kt")
+            public void testNoEnumValueIfDisabled() throws Exception {
+                runTest("../testData/basic/common/contextSensitiveResolution/NoEnumValueIfDisabled.kt");
+            }
+
+            @TestMetadata("ShowQualifiedExtensionFunctions.kt")
+            public void testShowQualifiedExtensionFunctions() throws Exception {
+                runTest("../testData/basic/common/contextSensitiveResolution/ShowQualifiedExtensionFunctions.kt");
+            }
+
+            @TestMetadata("ShowQualifiedFields.kt")
+            public void testShowQualifiedFields() throws Exception {
+                runTest("../testData/basic/common/contextSensitiveResolution/ShowQualifiedFields.kt");
+            }
+
+            @TestMetadata("ShowQualifiedMethods.kt")
+            public void testShowQualifiedMethods() throws Exception {
+                runTest("../testData/basic/common/contextSensitiveResolution/ShowQualifiedMethods.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/dslMarker")
         public static class DslMarker extends AbstractK1MLPerformanceCompletionTest {
             @java.lang.Override

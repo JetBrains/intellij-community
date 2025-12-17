@@ -766,6 +766,40 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../completion/testData/basic/common/contextSensitiveResolution")
+        public static class ContextSensitiveResolution extends AbstractK2JvmBasicCompletionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("NoEnumValueIfDisabled.kt")
+            public void testNoEnumValueIfDisabled() throws Exception {
+                runTest("../../completion/testData/basic/common/contextSensitiveResolution/NoEnumValueIfDisabled.kt");
+            }
+
+            @TestMetadata("ShowQualifiedExtensionFunctions.kt")
+            public void testShowQualifiedExtensionFunctions() throws Exception {
+                runTest("../../completion/testData/basic/common/contextSensitiveResolution/ShowQualifiedExtensionFunctions.kt");
+            }
+
+            @TestMetadata("ShowQualifiedFields.kt")
+            public void testShowQualifiedFields() throws Exception {
+                runTest("../../completion/testData/basic/common/contextSensitiveResolution/ShowQualifiedFields.kt");
+            }
+
+            @TestMetadata("ShowQualifiedMethods.kt")
+            public void testShowQualifiedMethods() throws Exception {
+                runTest("../../completion/testData/basic/common/contextSensitiveResolution/ShowQualifiedMethods.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/dslMarker")
         public static class DslMarker extends AbstractK2JvmBasicCompletionTest {
             @java.lang.Override
