@@ -29,6 +29,7 @@ class LibraryScopeCacheTest {
   fun `library used in single module`() {
     val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
     val module = projectModel.createModule("moduleA")
+    val moduleB = projectModel.createModule("moduleB")
     val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("lib")
     val libraryFile = projectModel.baseProjectDir.newVirtualFile("lib/Lib.class")
     val library = projectModel.addProjectLevelLibrary("testLib") {
@@ -37,11 +38,13 @@ class LibraryScopeCacheTest {
     ModuleRootModificationUtil.addDependency(module, library)
 
     val moduleSourceRoot = projectModel.addSourceRoot(module, "src", JavaSourceRootType.SOURCE)
+    val moduleBSourceRoot = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
 
     val scope = libraryScopeCache.getLibraryScope(libraryRoot)
 
     assertTrue(scope.contains(libraryFile), "Library scope should contain library files")
     assertTrue(scope.contains(moduleSourceRoot), "Library scope should contain module source that uses the library")
+    assertFalse(scope.contains(moduleBSourceRoot), "Library scope should NOT contain module that doesn't use the library")
   }
 
   @Test
@@ -49,6 +52,7 @@ class LibraryScopeCacheTest {
     val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
     val moduleA = projectModel.createModule("moduleA")
     val moduleB = projectModel.createModule("moduleB")
+    val moduleC = projectModel.createModule("moduleC")
 
     val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("lib")
     val library = projectModel.addProjectLevelLibrary("sharedLib") {
@@ -60,11 +64,13 @@ class LibraryScopeCacheTest {
 
     val sourceRootA = projectModel.addSourceRoot(moduleA, "src", JavaSourceRootType.SOURCE)
     val sourceRootB = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
+    val sourceRootC = projectModel.addSourceRoot(moduleC, "src", JavaSourceRootType.SOURCE)
 
     val scope = libraryScopeCache.getLibraryScope(libraryRoot)
 
     assertTrue(scope.contains(sourceRootA), "Library scope should contain moduleA sources")
     assertTrue(scope.contains(sourceRootB), "Library scope should contain moduleB sources")
+    assertFalse(scope.contains(sourceRootC), "Library scope should NOT contain moduleC which doesn't use the library")
   }
 
   @Test
@@ -158,6 +164,7 @@ class LibraryScopeCacheTest {
     val moduleA = projectModel.createModule("moduleA")
     val moduleB = projectModel.createModule("moduleB")
     val moduleC = projectModel.createModule("moduleC")
+    val moduleD = projectModel.createModule("moduleD")
 
     val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("lib")
     val library = projectModel.addProjectLevelLibrary("chainLib") {
@@ -171,18 +178,21 @@ class LibraryScopeCacheTest {
     val sourceRootA = projectModel.addSourceRoot(moduleA, "src", JavaSourceRootType.SOURCE)
     val sourceRootB = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
     val sourceRootC = projectModel.addSourceRoot(moduleC, "src", JavaSourceRootType.SOURCE)
+    val sourceRootD = projectModel.addSourceRoot(moduleD, "src", JavaSourceRootType.SOURCE)
 
     val useScope = libraryScopeCache.getLibraryUseScope(libraryRoot)
 
     assertTrue(useScope.contains(sourceRootC), "Library use scope should contain moduleC (direct dependency)")
     assertTrue(useScope.contains(sourceRootB), "Library use scope should contain moduleB (via exported from moduleC)")
     assertTrue(useScope.contains(sourceRootA), "Library use scope should contain moduleA (via exported chain)")
+    assertFalse(useScope.contains(sourceRootD), "Library use scope should NOT contain moduleD (not in dependency chain)")
   }
 
   @Test
   fun `module level library scope`() {
     val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
     val module = projectModel.createModule("moduleA")
+    val moduleB = projectModel.createModule("moduleB")
 
     val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("moduleLib")
     projectModel.addModuleLevelLibrary(module, "moduleLevelLib") {
@@ -190,8 +200,10 @@ class LibraryScopeCacheTest {
     }
 
     val sourceRoot = projectModel.addSourceRoot(module, "src", JavaSourceRootType.SOURCE)
+    val moduleBSourceRoot = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
     val scope = libraryScopeCache.getLibraryScope(libraryRoot)
     assertTrue(scope.contains(sourceRoot), "Module-level library scope should contain the module's sources")
+    assertFalse(scope.contains(moduleBSourceRoot), "Module-level library scope should NOT contain other module's sources")
   }
 
   @ParameterizedTest
@@ -200,6 +212,7 @@ class LibraryScopeCacheTest {
     val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
     val moduleA = projectModel.createModule("moduleA")
     val moduleB = projectModel.createModule("moduleB")
+    val moduleC = projectModel.createModule("moduleC")
 
     val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("lib")
     val library = projectModel.addProjectLevelLibrary("transitiveLib") {
@@ -211,11 +224,13 @@ class LibraryScopeCacheTest {
 
     val sourceRootA = projectModel.addSourceRoot(moduleA, "src", JavaSourceRootType.SOURCE)
     val sourceRootB = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
+    val sourceRootC = projectModel.addSourceRoot(moduleC, "src", JavaSourceRootType.SOURCE)
 
     val useScope = libraryScopeCache.getLibraryUseScope(libraryRoot)
 
     assertTrue(useScope.contains(sourceRootB), "Library use scope should contain moduleB sources (direct dependency with scope=$scope)")
     assertTrue(useScope.contains(sourceRootA), "Library use scope should contain moduleA sources (moduleA depends on moduleB which uses the library)")
+    assertFalse(useScope.contains(sourceRootC), "Library use scope should NOT contain moduleC (not in dependency chain)")
   }
 
   @ParameterizedTest
@@ -225,6 +240,7 @@ class LibraryScopeCacheTest {
     val moduleA = projectModel.createModule("moduleA")
     val moduleB = projectModel.createModule("moduleB")
     val moduleC = projectModel.createModule("moduleC")
+    val moduleD = projectModel.createModule("moduleD")
 
     val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("lib")
     val library = projectModel.addProjectLevelLibrary("chainLib") {
@@ -239,12 +255,14 @@ class LibraryScopeCacheTest {
     val sourceRootA = projectModel.addSourceRoot(moduleA, "src", JavaSourceRootType.SOURCE)
     val sourceRootB = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
     val sourceRootC = projectModel.addSourceRoot(moduleC, "src", JavaSourceRootType.SOURCE)
+    val sourceRootD = projectModel.addSourceRoot(moduleD, "src", JavaSourceRootType.SOURCE)
 
     val useScope = libraryScopeCache.getLibraryUseScope(libraryRoot)
 
     assertTrue(useScope.contains(sourceRootC), "Library use scope should contain moduleC (direct dependency with scope=$scope, exported=$exported)")
     assertTrue(useScope.contains(sourceRootB), "Library use scope should contain moduleB (via exported from moduleC)")
     assertTrue(useScope.contains(sourceRootA), "Library use scope should contain moduleA (via exported chain)")
+    assertFalse(useScope.contains(sourceRootD), "Library use scope should NOT contain moduleD (not in dependency chain)")
   }
 
   @ParameterizedTest
@@ -254,6 +272,7 @@ class LibraryScopeCacheTest {
     val moduleA = projectModel.createModule("moduleA")
     val moduleB = projectModel.createModule("moduleB")
     val moduleC = projectModel.createModule("moduleC")
+    val moduleD = projectModel.createModule("moduleD")
 
     val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("lib")
     val library = projectModel.addProjectLevelLibrary("chainLib") {
@@ -268,12 +287,14 @@ class LibraryScopeCacheTest {
     val sourceRootA = projectModel.addSourceRoot(moduleA, "src", JavaSourceRootType.SOURCE)
     val sourceRootB = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
     val sourceRootC = projectModel.addSourceRoot(moduleC, "src", JavaSourceRootType.SOURCE)
+    val sourceRootD = projectModel.addSourceRoot(moduleD, "src", JavaSourceRootType.SOURCE)
 
     val libraryScope = libraryScopeCache.getLibraryScope(libraryRoot)
 
     assertTrue(libraryScope.contains(sourceRootC), "Library use scope should contain moduleC (direct dependency with scope=$scope, exported=$exported)")
     assertTrue(libraryScope.contains(sourceRootB), "Library use scope should contain moduleB (via exported from moduleC)")
     assertTrue(libraryScope.contains(sourceRootA), "Library use scope should contain moduleA (via exported chain)")
+    assertFalse(libraryScope.contains(sourceRootD), "Library scope should NOT contain moduleD (not in dependency chain)")
   }
 
   companion object {
