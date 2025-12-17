@@ -194,6 +194,8 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt",
     "//java/testFramework/backend",
     "@lib//:junit5Pioneer",
+    "//plugins/repository-search",
+    "//plugins/repository-search:repository-search_test_lib",
   ],
   exports = ["//platform/external-system-api/testFramework"],
   runtime_deps = [":gradle-tests"]
