@@ -76,8 +76,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
     PsiMethod[] overrides = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
     for (int i = 0; i < overrides.length; i++) {
       final PsiElement navigationElement = ReadAction.compute(overrides[i]::getNavigationElement);
-      if (navigationElement instanceof PsiMethod) {
-        overrides[i] = (PsiMethod)navigationElement;
+      if (navigationElement instanceof PsiMethod m) {
+        overrides[i] = m;
       }
     }
     List<PsiElement> elementsToSearch = new ArrayList<>(overrides.length + 1);
@@ -91,8 +91,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
     }
 
     FunctionalExpressionSearch.search(method).asIterable().forEach(element -> {
-      if (element instanceof PsiLambdaExpression) {
-        PsiParameter[] parameters = ReadAction.compute(() -> ((PsiLambdaExpression)element).getParameterList().getParameters());
+      if (element instanceof PsiLambdaExpression lambda) {
+        PsiParameter[] parameters = ReadAction.compute(() -> lambda.getParameterList().getParameters());
         if (idx < parameters.length) {
           elementsToSearch.add(parameters[idx]);
         }
@@ -124,10 +124,10 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
         }
       }
     }
-    else if (element instanceof PsiMethod && myFactory.getFindMethodOptions().isSearchForBaseMethod &&
+    else if (element instanceof PsiMethod method && myFactory.getFindMethodOptions().isSearchForBaseMethod &&
              //temporary workaround
              !DumbService.isDumb(element.getProject())) {
-      return SuperMethodWarningUtil.getTargetMethodCandidates((PsiMethod)element, Collections.emptyList());
+      return SuperMethodWarningUtil.getTargetMethodCandidates(method, Collections.emptyList());
     }
     return myElementsToSearch.length == 0 ? new PsiElement[]{element} : myElementsToSearch;
   }
@@ -135,8 +135,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
   @Override
   public PsiElement @NotNull [] getSecondaryElements() {
     PsiElement element = getPsiElement();
-    if (element instanceof PsiField) {
-      Set<PsiMethod> accessors = getFieldAccessors((PsiField)element);
+    if (element instanceof PsiField field) {
+      Set<PsiMethod> accessors = getFieldAccessors(field);
       if (!accessors.isEmpty()) {
         boolean containsPhysical = ContainerUtil.find(accessors, psiMethod -> psiMethod.isPhysical()) != null;
         boolean doSearch = !containsPhysical || myFactory.getFindVariableOptions().isSearchForAccessors;
@@ -154,8 +154,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
         }
       }
     }
-    else if (element instanceof PsiClass && ((PsiClass)element).isRecord()) {
-      return ContainerUtil.findAllAsArray(((PsiClass)element).getConstructors(), LightRecordCanonicalConstructor.class);
+    else if (element instanceof PsiClass aClass && aClass.isRecord()) {
+      return ContainerUtil.findAllAsArray(aClass.getConstructors(), LightRecordCanonicalConstructor.class);
     }
     return super.getSecondaryElements();
   }
@@ -179,7 +179,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
   }
 
   @Override
-  public @NotNull FindUsagesOptions getFindUsagesOptions(final @Nullable DataContext dataContext) {
+  public @NotNull FindUsagesOptions getFindUsagesOptions(@Nullable DataContext dataContext) {
     PsiElement element = getPsiElement();
     if (element instanceof PsiPackage) {
       return myFactory.getFindPackageOptions();
@@ -200,14 +200,14 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
   }
 
   @Override
-  protected Set<String> getStringsToSearch(final @NotNull PsiElement element) {
+  protected Set<String> getStringsToSearch(@NotNull PsiElement element) {
     return JavaFindUsagesHelper.getElementNames(element);
   }
 
   @Override
-  public boolean processElementUsages(final @NotNull PsiElement element,
-                                      final @NotNull Processor<? super UsageInfo> processor,
-                                      final @NotNull FindUsagesOptions options) {
+  public boolean processElementUsages(@NotNull PsiElement element,
+                                      @NotNull Processor<? super UsageInfo> processor,
+                                      @NotNull FindUsagesOptions options) {
     return JavaFindUsagesHelper.processElementUsages(element, options, processor);
   }
 
@@ -218,24 +218,25 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
   }
 
   @Override
-  public @Unmodifiable @NotNull Collection<PsiReference> findReferencesToHighlight(final @NotNull PsiElement target, final @NotNull SearchScope searchScope) {
-    if (target instanceof PsiMethod) {
+  public @Unmodifiable @NotNull Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target,
+                                                                                   @NotNull SearchScope searchScope) {
+    if (target instanceof PsiMethod method) {
       Set<PsiMethod> superTargets = new LinkedHashSet<>();
-      PsiMethod[] superMethods = ((PsiMethod)target).findDeepestSuperMethods();
+      PsiMethod[] superMethods = method.findDeepestSuperMethods();
       if (superMethods.length == 0) {
-        superTargets.add((PsiMethod)target);
+        superTargets.add(method);
       }
-      if (searchScope instanceof LocalSearchScope) {
-        PsiElement[] scopeElements = ((LocalSearchScope)searchScope).getScope();
+      if (searchScope instanceof LocalSearchScope scope) {
         GlobalSearchScope resolveScope =
-          GlobalSearchScope.union(ContainerUtil.map2Array(scopeElements, GlobalSearchScope.class, PsiElement::getResolveScope));
-        for (HierarchicalMethodSignature superSignature : PsiSuperMethodImplUtil.getHierarchicalMethodSignature((PsiMethod)target, resolveScope)
-          .getSuperSignatures()) {
-          PsiMethod method = superSignature.getMethod();
-          PsiMethod[] deepestSupers = method.findDeepestSuperMethods();
-          Collections.addAll(superTargets, deepestSupers.length == 0 ? new PsiMethod[]{method} : deepestSupers);
+          GlobalSearchScope.union(ContainerUtil.map2Array(scope.getScope(), GlobalSearchScope.class, PsiElement::getResolveScope));
+        for (HierarchicalMethodSignature superSignature :
+          PsiSuperMethodImplUtil.getHierarchicalMethodSignature(method, resolveScope).getSuperSignatures()) {
+          PsiMethod superMethod = superSignature.getMethod();
+          PsiMethod[] deepestSupers = superMethod.findDeepestSuperMethods();
+          Collections.addAll(superTargets, deepestSupers.length == 0 ? new PsiMethod[]{superMethod} : deepestSupers);
         }
-      } else {
+      }
+      else {
         Collections.addAll(superTargets, superMethods);
       }
 
