@@ -6195,6 +6195,15 @@
       }
     }
   }, {
+    "id" : "kmp.preview",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "1"
+    } ],
+    "rules" : {
+      "event_id" : [ "{enum:failed|out_of_date|refreshed|opened}" ]
+    }
+  }, {
     "id" : "kmp.project.environment",
     "builds" : [ ],
     "versions" : [ {
@@ -15230,5 +15239,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6569"
+  "version" : "6571"
 }
