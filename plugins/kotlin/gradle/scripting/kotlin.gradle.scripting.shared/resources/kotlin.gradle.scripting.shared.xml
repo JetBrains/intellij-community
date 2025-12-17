@@ -18,8 +18,6 @@
                             id="KotlinGradleScriptCompletionContributor"
                             order="first, before KotlinCompletionContributor, before liveTemplates"
                             implementationClass="org.jetbrains.kotlin.gradle.scripting.shared.completion.KotlinGradleScriptCompletionContributor"/>
-    <registryKey key="gradle.dependency.completion.service" defaultValue="true"
-                 description="Use dependency completion service for dependency completion in gradle scripts"/>
   </extensions>
 
   <actions resource-bundle="messages.KotlinGradleScriptingBundle">
