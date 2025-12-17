@@ -5,6 +5,7 @@ import com.intellij.ide.starter.config.classFileVerification
 import com.intellij.ide.starter.config.includeRuntimeModuleRepositoryInIde
 import com.intellij.ide.starter.config.monitoringDumpsIntervalSeconds
 import com.intellij.ide.starter.di.di
+import com.intellij.ide.starter.ide.IDERemDevTestContext
 import com.intellij.ide.starter.ide.IDEStartConfig
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.asRemDevContext
@@ -246,7 +247,7 @@ data class IDERunContext(
     snapshotsDir: Path,
     runContext: IDERunContext,
   ) {
-    if (!runContext.calculateVmOptions().hasHeadlessMode()) {
+    if (!runContext.calculateVmOptions().hasHeadlessMode() && runContext.testContext !is IDERemDevTestContext) {
       catchAll {
         takeScreenshot(logsDir)
       }
