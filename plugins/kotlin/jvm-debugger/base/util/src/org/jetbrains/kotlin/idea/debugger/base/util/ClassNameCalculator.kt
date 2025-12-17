@@ -7,12 +7,12 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.containers.Stack
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator.Companion.EP_NAME
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import java.util.*
+import java.util.WeakHashMap
+import kotlin.collections.ArrayDeque
 
 /**
  * Calculates the fq Class names of KtElements in a file by implementing the naming rules of the Kotlin JVM backend.
@@ -132,9 +132,9 @@ private object DefaultClassNameCalculator : ClassNameCalculator {
     }
 }
 
-private class ClassNameCalculatorVisitor() : KtTreeVisitorVoid() {
-    private val names = Stack<String?>()
-    private val anonymousIndices = Stack<Int>()
+private class ClassNameCalculatorVisitor : KtTreeVisitorVoid() {
+    private val names = ArrayDeque<String?>()
+    private val anonymousIndices = ArrayDeque<Int>()
     private var collectedNames = WeakHashMap<KtElement, String>()
 
     val allNames: Map<KtElement, String>
@@ -221,8 +221,8 @@ private class ClassNameCalculatorVisitor() : KtTreeVisitorVoid() {
     }
 
     private fun push(element: KtElement, name: String?, recordName: Boolean = true) {
-        names.push(name)
-        anonymousIndices.push(0)
+        names.addLast(name)
+        anonymousIndices.addLast(0)
         if (recordName) {
             saveName(element, names.joinToString("$"))
         }
@@ -233,13 +233,13 @@ private class ClassNameCalculatorVisitor() : KtTreeVisitorVoid() {
     }
 
     private fun pop() {
-        names.pop()
-        anonymousIndices.pop()
+        names.removeLast()
+        anonymousIndices.removeLast()
     }
 
     private fun nextAnonymousName(): String {
-        val index = anonymousIndices.pop() + 1
-        anonymousIndices.push(index)
+        val index = anonymousIndices.removeLast() + 1
+        anonymousIndices.addLast(index)
         return index.toString()
     }
 }
