@@ -4,16 +4,11 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
 
-
 class Logger(clazz: KClass<*>) {
   private val className = clazz.simpleName
   fun info(message: String) = logOutput("[$className]: $message")
   fun error(message: String) = logError("[$className]: $message")
   fun error(message: String, t: Throwable?) = logError("[$className]: $message", t)
-  fun debug(vararg objects: Any) {
-    if (!System.getenv("DEBUG_LOGGING_ENABLED").toBoolean()) return
-    logOutput("[$className]: ", objects)
-  }
 }
 
 inline fun <reified T> starterLogger() = Logger(T::class)
