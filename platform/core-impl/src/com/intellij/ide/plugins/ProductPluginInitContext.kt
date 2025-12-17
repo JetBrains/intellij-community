@@ -17,7 +17,12 @@ class ProductPluginInitContext(
   private val expiredPluginsOverride: Set<PluginId>? = null,
   private val brokenPluginVersionsOverride: Map<PluginId, Set<String>>? = null,
 ) : PluginInitializationContext {
-  override val essentialPlugins: Set<PluginId> by lazy { ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds().toSet() }
+  override val essentialPlugins: Set<PluginId> by lazy {
+    buildSet {
+      add(PluginManagerCore.CORE_ID)
+      addAll(ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds())
+    }
+  }
   private val disabledPlugins: Set<PluginId> by lazy { disabledPluginsOverride ?: DisabledPluginsState.getDisabledIds() }
   private val expiredPlugins: Set<PluginId> by lazy { expiredPluginsOverride ?: ExpiredPluginsState.expiredPluginIds }
   private val brokenPluginVersions: Map<PluginId, Set<String>> by lazy { brokenPluginVersionsOverride ?: getBrokenPluginVersions() }
