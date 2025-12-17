@@ -15,6 +15,7 @@ import java.lang.annotation.Inherited
 @Retention(AnnotationRetention.RUNTIME)
 @Inherited
 @ExtendWith(
+  TestFactoryLoggerSetter::class,
   StartIdeBeforeEachCallback::class,
   IdeConfigReset::class,
   ConfigureCoroutineCancellationTimeout::class,

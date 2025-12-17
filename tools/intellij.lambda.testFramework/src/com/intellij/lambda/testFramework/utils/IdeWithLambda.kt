@@ -2,6 +2,7 @@ package com.intellij.lambda.testFramework.utils
 
 import com.intellij.ide.starter.driver.engine.BackgroundRun
 import com.intellij.ide.starter.driver.engine.IBackgroundRun
+import com.intellij.lambda.testFramework.starter.IdeInstance.runContext
 import com.intellij.remoteDev.tests.LambdaBackendContext
 import com.intellij.remoteDev.tests.LambdaFrontendContext
 import com.intellij.remoteDev.tests.LambdaIdeContext
@@ -15,6 +16,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession, val backendRdSession: LambdaRdTestSession?) :
   IBackgroundRun by delegate {
@@ -93,6 +95,11 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
   }
 
   suspend inline fun cleanUp() {
-    listOfNotNull(rdSession, backendRdSession).forEach { it.cleanUp.startSuspending(Unit) }
+    val inDebug = runContext.frontendContext.calculateVmOptions().isUnderDebug()
+    listOfNotNull(rdSession, backendRdSession).forEach {
+      runLogged("Clean up for ${it.rdIdeType}", if (!inDebug) 10.seconds else 10.minutes) {
+        it.cleanUp.startSuspending(Unit)
+      }
+    }
   }
 }

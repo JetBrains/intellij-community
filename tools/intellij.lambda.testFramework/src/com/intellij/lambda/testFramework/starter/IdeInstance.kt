@@ -13,18 +13,16 @@ import com.intellij.ide.starter.utils.catchAll
 import com.intellij.lambda.testFramework.junit.IdeRunMode
 import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.lambda.testFramework.utils.runIdeWithLambda
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.tools.ide.starter.bus.EventsBus
-import com.intellij.tools.ide.util.common.starterLogger
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
-
-private val LOG = starterLogger<IdeInstance>()
 
 data class RunContext(var frontendContext: IDERunContext, var backendContext: IDERunContext? = null)
 
 object IdeInstance {
+
+  private val LOG by lazy { logger<IdeInstance>() }
+
   private var _ide: IdeWithLambda? = null
   val ide: IdeWithLambda
     get() = _ide ?: throw IllegalStateException("IDE is not started yet")
@@ -110,17 +108,13 @@ object IdeInstance {
     runContext.backendContext?.publishArtifacts(publish = true)
   }
 
-  fun cleanup() = synchronized(this) {
+  internal fun cleanup(): Unit = synchronized(this) {
     if (!isStarted()) return@synchronized
-
-    @Suppress("RAW_RUN_BLOCKING")
-    runBlocking(testSuiteSupervisorScope.coroutineContext) {
-      val inDebug = runContext.frontendContext.calculateVmOptions().isUnderDebug()
-      withTimeout(if (!inDebug) 10.seconds else 10.minutes) {
-        catchAll("IDE instance cleanup") {
-          ide.cleanUp()
-        }
+    runCatching {
+      @Suppress("RAW_RUN_BLOCKING")
+      runBlocking(testSuiteSupervisorScope.coroutineContext) {
+        ide.cleanUp()
       }
-    }
+    }.onFailure { LOG.error("Problems when cleaning up IDE: ${it.message}", it) }
   }
 }

@@ -1,6 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
-import com.intellij.tools.ide.util.common.starterLogger
+import com.intellij.openapi.diagnostic.fileLogger
 import org.junit.platform.engine.*
 import org.junit.platform.engine.discovery.ClassSelector
 import org.junit.platform.engine.discovery.ClasspathRootSelector
@@ -16,7 +16,7 @@ internal const val JUPITER_ENGINE_ID = "junit-jupiter"
 
 private val jupiterUniqueId = UniqueId.forEngine(JUPITER_ENGINE_ID)
 
-private val LOG = starterLogger<GroupByModeTestEngine>()
+private val LOG = fileLogger()
 
 /**
  * Custom TestEngine that wraps JUnit Jupiter and enables grouped by [IdeRunMode] test execution.
