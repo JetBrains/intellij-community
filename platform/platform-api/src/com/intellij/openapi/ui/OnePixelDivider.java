@@ -83,6 +83,7 @@ public class OnePixelDivider extends Divider {
     if (myDisposable != null && !Disposer.isDisposed(myDisposable)) {
       Disposer.dispose(myDisposable);
     }
+    myGlassPane = null;
     super.removeNotify();
   }
 
