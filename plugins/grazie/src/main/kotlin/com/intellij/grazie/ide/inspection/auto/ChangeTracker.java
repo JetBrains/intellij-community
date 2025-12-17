@@ -57,7 +57,7 @@ public final class ChangeTracker implements Disposable {
     Document document = event.getDocument();
     Deque<RecentChange> changes = document.getUserData(DATA_KEY);
     if (changes == null) {
-      document.putUserData(DATA_KEY, changes = new LinkedList<>());
+      document.putUserData(DATA_KEY, changes = new ArrayDeque<>(RANGES_THRESHOLD));
     }
 
     long now = System.nanoTime();
