@@ -53,8 +53,16 @@ fun JDialog.canBeMaximized(): Boolean {
  */
 fun JDialog.maximize() {
   if (!canBeMaximized()) return
-  this.normalBounds = bounds
-  bounds = ScreenUtil.getScreenRectangle(this)
+  val screenRectangle = ScreenUtil.getScreenRectangle(this)
+  val bounds = this.bounds
+  // A special case: the dialog has already the maximum size, but its location is off.
+  // This means it can be "maximized" (moved to fit the screen), but we should not store the current bounds, for two reasons:
+  // 1. It won't be possible to normalize it anyway because of the fit-to-screen logic.
+  // 2. If the dialog was previously maximized, it already has sensible normal bounds stored, and we want to keep them.
+  if (!almostHaveTheSameSize(bounds, screenRectangle)) {
+    this.normalBounds = bounds
+  }
+  this.bounds = screenRectangle
 }
 
 /**
@@ -114,6 +122,11 @@ private fun almostEquals(r1: Rectangle, r2: Rectangle): Boolean {
          abs(r1.y - r2.y) <= tolerance &&
          abs(r1.width - r2.width) <= tolerance &&
          abs(r1.height - r2.height) <= tolerance
+}
+
+private fun almostHaveTheSameSize(r1: Rectangle, r2: Rectangle): Boolean {
+  val tolerance = Registry.intValue("ide.dialog.maximize.tolerance", 10)
+  return abs(r1.width - r2.width) <= tolerance && abs(r1.height - r2.height) <= tolerance
 }
 
 private val NORMAL_BOUNDS = Key.create<Rectangle>("NORMAL_BOUNDS")
