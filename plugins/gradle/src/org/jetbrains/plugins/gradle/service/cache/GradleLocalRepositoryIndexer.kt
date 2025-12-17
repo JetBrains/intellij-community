@@ -13,13 +13,3 @@ interface GradleLocalRepositoryIndexer {
 
   fun launchIndexUpdate(project: Project)
 }
-
-class GradleLocalRepositoryIndexerTestImpl : GradleLocalRepositoryIndexer {
-  override fun groups(descriptor: EelDescriptor): Collection<String> = emptySet()
-
-  override fun artifacts(descriptor: EelDescriptor, groupId: String): Set<String> = emptySet()
-
-  override fun versions(descriptor: EelDescriptor, groupId: String, artifactId: String): Set<String> = emptySet()
-
-  override fun launchIndexUpdate(project: Project) {}
-}

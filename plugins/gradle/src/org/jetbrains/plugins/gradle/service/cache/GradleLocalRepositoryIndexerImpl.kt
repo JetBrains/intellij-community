@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.isDirectory
 
-class GradleLocalRepositoryIndexerImpl(private val coroutineScope: CoroutineScope) : GradleLocalRepositoryIndexer {
+private class GradleLocalRepositoryIndexerImpl(private val coroutineScope: CoroutineScope) : GradleLocalRepositoryIndexer {
 
   private data class IndexSnapshot(
     val groupIds: Set<String>,
@@ -60,7 +60,7 @@ class GradleLocalRepositoryIndexerImpl(private val coroutineScope: CoroutineScop
     }
   }
 
-  internal class GradleLocalRepositoryIndexInitializer : ProjectActivity {
+  class GradleLocalRepositoryIndexInitializer : ProjectActivity {
     override suspend fun execute(project: Project) {
       if (GradleSettings.getInstance(project).linkedProjectsSettings.isEmpty()) return
       service<GradleLocalRepositoryIndexer>().let { indexer ->
@@ -71,7 +71,7 @@ class GradleLocalRepositoryIndexerImpl(private val coroutineScope: CoroutineScop
     }
   }
 
-  internal class GradleLocalRepositoryIndexUpdater : ExternalSystemTaskNotificationListener {
+  class GradleLocalRepositoryIndexUpdater : ExternalSystemTaskNotificationListener {
     override fun onEnd(proojecPath: String, id: ExternalSystemTaskId) {
       if (id.projectSystemId == GradleConstants.SYSTEM_ID && id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
         val project = id.findProject() ?: return
@@ -146,4 +146,14 @@ class GradleLocalRepositoryIndexerImpl(private val coroutineScope: CoroutineScop
   companion object {
     private val LOG = logger<GradleLocalRepositoryIndexerImpl>()
   }
+}
+
+private class GradleLocalRepositoryIndexerTestImpl : GradleLocalRepositoryIndexer {
+  override fun groups(descriptor: EelDescriptor): Collection<String> = emptySet()
+
+  override fun artifacts(descriptor: EelDescriptor, groupId: String): Set<String> = emptySet()
+
+  override fun versions(descriptor: EelDescriptor, groupId: String, artifactId: String): Set<String> = emptySet()
+
+  override fun launchIndexUpdate(project: Project) {}
 }
