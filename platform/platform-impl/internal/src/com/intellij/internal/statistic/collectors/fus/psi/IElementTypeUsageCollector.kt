@@ -13,9 +13,10 @@ internal class IElementTypeUsageCollector : ApplicationUsagesCollector() {
   override fun getMetrics(): Set<MetricEvent> {
     val result = mutableSetOf<MetricEvent>()
 
-    result += ELEMENT_TYPE_COUNT.metric(IElementType.getAllocatedTypesCount().toInt())
-
     val elementTypes = IElementType.enumerate(IElementType.TRUE)
+
+    result += ELEMENT_TYPES.metric(value1 = IElementType.getAllocatedTypesCount().toInt(),
+                                   value2 = elementTypes.count { IElementType.isTombstone(it) })
 
     val byLanguage = elementTypes
       .asSequence()
@@ -24,10 +25,8 @@ internal class IElementTypeUsageCollector : ApplicationUsagesCollector() {
       .mapValues { it.value.size }
 
     for ((language, count) in byLanguage) {
-      result += BY_LANGUAGE_COUNT.metric(language, count)
+      result += ELEMENT_TYPES_BY_LANGUAGE_COUNT.metric(language, count)
     }
-
-    result += TOMBSTONE_COUNT.metric(elementTypes.count { IElementType.isTombstone(it) })
 
     return result
   }
@@ -35,26 +34,21 @@ internal class IElementTypeUsageCollector : ApplicationUsagesCollector() {
 
 private val GROUP = EventLogGroup(
   id = "ielement.type",
-  version = 1,
+  version = 2,
   recorder = "FUS",
   description = "Collects usage statistics for various aspects of registered IElementTypes"
 )
 
-private val ELEMENT_TYPE_COUNT = GROUP.registerEvent(
-  eventId = "element_type_count",
-  eventField1 = EventFields.RoundedInt("element_type_count"),
+private val ELEMENT_TYPES = GROUP.registerEvent(
+  eventId = "element_types",
+  eventField1 = EventFields.RoundedInt("all_element_type_count"),
+  eventField2 = EventFields.RoundedInt("tombstone_count"),
   description = "Registered IElementTypes"
 )
 
-private val BY_LANGUAGE_COUNT = GROUP.registerEvent(
+private val ELEMENT_TYPES_BY_LANGUAGE_COUNT = GROUP.registerEvent(
   eventId = "element_type_by_language",
   eventField1 = EventFields.Language,
-  eventField2 = EventFields.RoundedInt("element_type_by_language"),
+  eventField2 = EventFields.RoundedInt("count"),
   description = "Number of registered IElementTypes per Language"
-)
-
-private val TOMBSTONE_COUNT = GROUP.registerEvent(
-  eventId = "tombstone_element_types",
-  eventField1 = EventFields.RoundedInt("tombstone_element_types"),
-  description = "Number of tombstone element types"
 )
