@@ -31,7 +31,7 @@ fun getProjectOrNull(): Project? {
 
 context(lambdaIdeContext: LambdaIdeContext)
 fun getProject(): Project =
-  getProjectOrNull() ?: error("Have not been able to find project")
+  getProjects().single()
 
 context(lambdaIdeContext: LambdaIdeContext)
 val Project.frame
