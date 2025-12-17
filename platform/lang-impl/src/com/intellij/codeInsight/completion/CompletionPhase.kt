@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments.C
 import com.intellij.codeInsight.completion.CompletionPhase.Companion.NoCompletion
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl.Companion.assertPhase
-import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationListener
@@ -385,7 +384,6 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   class BgCalculation internal constructor(indicator: CompletionProgressIndicator) : CompletionPhase(indicator) {
     @JvmField
     internal var modifiersChanged: Boolean = false
-    private val ownerId = ClientId.current
 
     init {
       restartOnWriteAction()
@@ -395,7 +393,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
     private fun restartOnWriteAction() {
       ApplicationManager.getApplication().addApplicationListener(object : ApplicationListener {
         override fun beforeWriteActionStart(action: Any) {
-          if (!indicator!!.lookup.isLookupDisposed && !indicator.isCanceled && ownerId == ClientId.current) {
+          if (!indicator!!.lookup.isLookupDisposed && !indicator.isCanceled) {
             indicator.cancel()
             if (EDT.isCurrentThreadEdt()) {
               indicator.scheduleRestart()
