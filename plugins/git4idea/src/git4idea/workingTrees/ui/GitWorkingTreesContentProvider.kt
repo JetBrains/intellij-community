@@ -103,7 +103,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
 
     fun reload(project: Project) {
       clear()
-      val currentRepository = GitWorkingTreesService.getInstance(project).getSingleRepositoryInProjectRootOrNull()
+      val currentRepository = GitWorkingTreesService.getSingleRepositoryOrNullIfEnabled(project)
       repository = currentRepository
       val workingTrees = currentRepository?.workingTreeHolder?.getWorkingTrees()
       if (workingTrees != null && workingTrees.size > 1) {

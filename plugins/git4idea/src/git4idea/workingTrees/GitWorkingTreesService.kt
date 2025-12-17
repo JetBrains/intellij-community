@@ -3,9 +3,7 @@ package git4idea.workingTrees
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CoroutineScope
@@ -17,34 +15,20 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
     private const val WORKING_TREE_TAB_CLOSED_BY_USER_PROPERTY: String = "Git.Working.Tree.Tab.closed.by.user"
 
     fun getInstance(project: Project): GitWorkingTreesService = project.getService(GitWorkingTreesService::class.java)
-  }
 
-  /**
-   * So far only the case `single repository in project root` is supported for working trees
-   */
-  fun getSingleRepositoryInProjectRootOrNull(): GitRepository? {
-    val projectRoot = getOnlyProjectRootOrNull()
-    if (projectRoot == null) {
-      return null
+    /**
+     * So far only the `single repository` case is supported for working trees
+     */
+    fun getSingleRepositoryOrNullIfEnabled(project: Project?): GitRepository? {
+      if (project == null) return null
+      if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled()) return null
+      val repositories = GitRepositoryManager.getInstance(project).repositories
+      return repositories.singleOrNull()
     }
-    val repositories = GitRepositoryManager.getInstance(project).repositories
-    val repository = repositories.singleOrNull() ?: return null
-    if (projectRoot != repository.root) {
-      return null
-    }
-    return repository
-  }
-
-  private fun getOnlyProjectRootOrNull(): VirtualFile? {
-    val baseDirectories = project.getBaseDirectories()
-    return baseDirectories.singleOrNull()
   }
 
   fun shouldWorkingTreesTabBeShown(): Boolean {
-    if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled()) {
-      return false
-    }
-    if (getSingleRepositoryInProjectRootOrNull() == null) {
+    if (getSingleRepositoryOrNullIfEnabled(project) == null) {
       return false
     }
     return !PropertiesComponent.getInstance(project).getBoolean(WORKING_TREE_TAB_CLOSED_BY_USER_PROPERTY, false)
