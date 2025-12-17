@@ -4,6 +4,7 @@ package com.intellij.java.psi.search
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.usages.rules.PsiElementUsage
 
 class FindFixtureBasedTest : LightJavaCodeInsightFixtureTestCase() {
   fun testDefaultConstructorWithVarargsParameters() {
@@ -43,5 +44,19 @@ class FindFixtureBasedTest : LightJavaCodeInsightFixtureTestCase() {
     assertSize(1, constructors)
     val reference = MethodReferencesSearch.search(constructors[0]).findFirst()
     assertTrue(reference?.element is PsiReferenceExpression)
+  }
+  
+  fun testFindEnumConstructorUsages() {
+    myFixture.configureByText("LastOfItsKinds.java", """
+      public enum LastOfItsKind<caret> {
+        A, B;
+
+        LastOfItsKind() {
+        }
+      }
+    """.trimIndent())
+    val usages = myFixture.testFindUsagesUsingAction()
+    val result = usages.map { u -> if (u is PsiElementUsage) u.element.text else "" }
+    assertEquals(listOf("A", "B"), result)
   }
 }
