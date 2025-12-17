@@ -7,6 +7,10 @@ import com.intellij.platform.eel.EelDescriptor
 interface GradleLocalRepositoryIndexer {
   fun groups(descriptor: EelDescriptor): Collection<String>
 
+  fun groups(descriptor: EelDescriptor, artifactId: String): Set<String>
+
+  fun artifacts(descriptor: EelDescriptor): Set<String>
+
   fun artifacts(descriptor: EelDescriptor, groupId: String): Set<String>
 
   fun versions(descriptor: EelDescriptor, groupId: String, artifactId: String): Set<String>

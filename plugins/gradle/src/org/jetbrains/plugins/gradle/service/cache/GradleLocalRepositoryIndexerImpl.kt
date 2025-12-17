@@ -53,6 +53,7 @@ open class GradleLocalRepositoryIndexerImpl : GradleLocalRepositoryIndexer {
       TreeSet(VersionComparatorUtil.COMPARATOR).apply { addAll(it.value) }.descendingSet()
     }
     val groupIds: SortedSet<String> = group2Artifacts.keys.toSortedSet()
+    val artifactIds: SortedSet<String> = artifact2Groups.keys.toSortedSet()
     val createdAtMillis: Long = System.currentTimeMillis()
     companion object {
       val EMPTY: IndexSnapshot = IndexSnapshot(emptyMap(), emptyMap())
@@ -64,6 +65,11 @@ open class GradleLocalRepositoryIndexerImpl : GradleLocalRepositoryIndexer {
   private fun snapshot(descriptor: EelDescriptor): IndexSnapshot = indices[descriptor]?.get() ?: IndexSnapshot.EMPTY
 
   override fun groups(descriptor: EelDescriptor): Collection<String> = snapshot(descriptor).groupIds
+
+  override fun groups(descriptor: EelDescriptor, artifactId: String): Set<String> =
+    snapshot(descriptor).artifact2Groups[artifactId] ?: emptySet()
+
+  override fun artifacts(descriptor: EelDescriptor): Set<String> = snapshot(descriptor).artifactIds
 
   override fun artifacts(descriptor: EelDescriptor, groupId: String): Set<String> =
     snapshot(descriptor).group2Artifacts[groupId] ?: emptySet()

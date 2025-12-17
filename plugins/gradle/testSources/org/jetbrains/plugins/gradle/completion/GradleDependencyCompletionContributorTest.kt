@@ -15,7 +15,7 @@ import org.jetbrains.plugins.gradle.service.cache.GradleLocalRepositoryIndexer
 import org.jetbrains.plugins.gradle.service.cache.GradleLocalRepositoryIndexerTestImpl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.ValueSource
 import kotlin.io.path.Path
 
 @TestApplication
@@ -25,13 +25,13 @@ class GradleDependencyCompletionContributorTest {
   private val eelDescriptor = Path("").getEelDescriptor()
 
   @ParameterizedTest
-  @CsvSource(
-    "\"\"",   // empty string
+  @ValueSource(strings = [
+    "",
     "g",
     "group",
     "a",
     "artifact",
-  )
+  ])
   fun `test search single result`(searchString: String) = runBlocking {
     configureLocalIndex("group", "artifact", "version")
 

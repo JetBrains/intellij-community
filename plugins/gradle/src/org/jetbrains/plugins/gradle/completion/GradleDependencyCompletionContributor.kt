@@ -17,12 +17,42 @@ class GradleDependencyCompletionContributor : DependencyCompletionContributor {
     val searchString = request.searchString.trim()
 
     val parts = searchString.split(":")
-    if (parts.isEmpty()) return emptyList()
 
     val groupPrefix = parts.getOrNull(0).orEmpty()
     val artifactPrefix = parts.getOrNull(1).orEmpty()
     val versionPrefix = parts.getOrNull(2).orEmpty()
 
+    return when (parts.size) {
+      1 -> searchSingle(request, groupPrefix)
+      else -> searchFull(request, groupPrefix, artifactPrefix, versionPrefix)
+    }
+  }
+
+  private fun searchSingle(request: DependencyCompletionRequest, prefix: String): List<DependencyCompletionResult> {
+    val eelDescriptor = request.context.eelDescriptor
+    val indexer = service<GradleLocalRepositoryIndexer>()
+    val results = indexer.artifacts(eelDescriptor)
+      .asSequence()
+      .startsWithPrefix(prefix)
+      .flatMap { artifact ->
+        indexer.groups(eelDescriptor, artifact)
+          .asSequence()
+          .flatMap { group ->
+            indexer.versions(eelDescriptor, group, artifact)
+              .asSequence()
+              .map { version -> DependencyCompletionResult(group, artifact, version) }
+          }
+      }.toList()
+    if (results.isNotEmpty()) return results
+    return searchFull(request, prefix, "", "")
+  }
+
+  private fun searchFull(
+    request: DependencyCompletionRequest,
+    groupPrefix: String,
+    artifactPrefix: String,
+    versionPrefix: String,
+  ): List<DependencyCompletionResult> {
     val eelDescriptor = request.context.eelDescriptor
     val indexer = service<GradleLocalRepositoryIndexer>()
     return indexer.groups(eelDescriptor)
