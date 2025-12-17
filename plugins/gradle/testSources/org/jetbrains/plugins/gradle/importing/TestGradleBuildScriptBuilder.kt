@@ -89,7 +89,7 @@ open class TestGradleBuildScriptBuilder(
 
   fun withLocalGradleIdeaExtPlugin(jarFile: File) = apply {
     withBuildScriptMavenCentral()
-    addBuildScriptClasspath(call("file", jarFile.absolutePath))
+    addBuildScriptClasspath(call("files", jarFile.absolutePath))
     addBuildScriptClasspath("com.google.code.gson:gson:2.8.2")
     addBuildScriptClasspath("com.google.guava:guava:25.1-jre")
     applyPlugin("org.jetbrains.gradle.plugin.idea-ext")
