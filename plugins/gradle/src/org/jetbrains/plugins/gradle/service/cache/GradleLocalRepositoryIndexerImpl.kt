@@ -14,6 +14,7 @@ import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,6 +24,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.TreeSet
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.isDirectory
@@ -120,7 +122,9 @@ private class GradleLocalRepositoryIndexerImpl(private val coroutineScope: Corou
 
       // sort beforehand so that contributors don't have to
       val immutableGroup2Artifacts = group2ArtifactsLocal.mapValues { it.value.toSortedSet() }
-      val immutableModule2Versions = module2VersionsLocal.mapValues { it.value.toSortedSet().reversed() } //TODO semantic version sorting?
+      val immutableModule2Versions = module2VersionsLocal.mapValues {
+        TreeSet(VersionComparatorUtil.COMPARATOR).apply { addAll(it.value) }.descendingSet()
+      }
       val groupIds = immutableGroup2Artifacts.keys.toSortedSet()
       val indexSnapshot = IndexSnapshot(
         groupIds = groupIds,
