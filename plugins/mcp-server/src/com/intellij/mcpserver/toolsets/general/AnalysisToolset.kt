@@ -216,7 +216,7 @@ class AnalysisToolset : McpToolset {
           }
         }, this.asDisposable())
 
-        val task = if (filesToRebuild != null) {
+        val task = if (!filesToRebuild.isNullOrEmpty()) {
           val filePaths = filesToRebuild.map { file -> project.resolveInProject(file) }
           logger.trace { "Refreshing files: $filePaths..." }
           LocalFileSystem.getInstance().refreshNioFiles(filePaths)
