@@ -73,7 +73,6 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         val offset = parameters.offset
         val startOffset = getDependencyCompletionStartOffset(documentText, offset)
         val text = documentText.substring(startOffset, offset)
-        if (text.isEmpty()) return
 
         val completionService = service<DependencyCompletionService>()
         val request = DependencyCompletionRequest(text, parameters.getCompletionContext())
