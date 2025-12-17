@@ -175,19 +175,20 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         }
       }
     });
-    JComponent listWithToolbar = ToolbarDecorator.createDecorator(myList)
-      .disableUpDownActions()
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          deleteSelectedItems();
-        }
-      })
-      .createPanel();
-    JComponent listWithFilter = ListWithFilter.wrap(
-      myList, ScrollPaneFactory.createScrollPane(listWithToolbar), o -> o.getShortText(renderer.previewChars), true);
 
-    mySplitter.setFirstComponent(listWithFilter);
+    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myList)
+      .disableUpDownActions()
+      .setRemoveAction(button -> deleteSelectedItems());
+    toolbarDecorator.createPanel();
+
+    JScrollPane scroll = ScrollPaneFactory.createScrollPane(myList);
+    JComponent listWithFilter = ListWithFilter.wrap(myList, scroll, o -> o.getShortText(renderer.previewChars), true);
+
+    JPanel filteringListWithToolbar = new JPanel(new BorderLayout());
+    filteringListWithToolbar.add(toolbarDecorator.getActionsPanel(), BorderLayout.NORTH);
+    filteringListWithToolbar.add(listWithFilter, BorderLayout.CENTER);
+
+    mySplitter.setFirstComponent(filteringListWithToolbar);
     mySplitter.setSecondComponent(new JPanel());
     mySplitter.getFirstComponent().addComponentListener(new ComponentAdapter() {
       @Override
@@ -221,6 +222,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   }
 
   private void deleteSelectedItems() {
+    int bottomVisibleComponent = myList.getLastVisibleIndex();
     int newSelectionIndex = -1;
     for (Item o : myList.getSelectedValuesList()) {
       int i = o.index;
@@ -237,6 +239,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     }
     newSelectionIndex = Math.min(newSelectionIndex, myAllContents.size() - 1);
     myList.setSelectedIndex(newSelectionIndex);
+    myList.ensureIndexIsVisible(Math.min(bottomVisibleComponent, myList.getItemsCount() - 1));
   }
 
   protected abstract void removeContentAt(final Data content);
