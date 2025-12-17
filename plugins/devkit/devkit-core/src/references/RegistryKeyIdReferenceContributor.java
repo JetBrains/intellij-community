@@ -12,7 +12,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -29,6 +28,7 @@ import org.jetbrains.uast.UExpression;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.patterns.uast.UastPatterns.injectionHostUExpression;
@@ -42,7 +42,7 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
                                        .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
                                        .methodCallParameter(0, psiMethod()
                                          .withName(string().oneOf("get", "is", "intValue", "doubleValue", "stringValue", "getColor"))
-                                         .definedInClass(PsiJavaPatterns.psiClass().withQualifiedName(string().oneOf(
+                                         .definedInClass(psiClass().withQualifiedName(string().oneOf(
                                            //kotlin would resolve in the companion,
                                            //while java would pretend to see static method in class
                                            Registry.class.getName(),
@@ -57,12 +57,37 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
                                          return new PsiReference[]{new RegistryKeyIdReference(host)};
                                        }
                                      }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
+
+    UastReferenceRegistrar.registerUastReferenceProvider(
+      registrar,
+      injectionHostUExpression()
+        .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
+        .methodCallParameter(0, psiMethod()
+          .withName(string().oneOf("addSystemProperty"))
+          .definedInClass(psiClass().withQualifiedName(string().oneOf(
+            "com.intellij.ide.starter.models.VMOptions"
+          )))),
+      new UastInjectionHostReferenceProvider() {
+        @Override
+        public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression uExpression,
+                                                                      @NotNull PsiLanguageInjectionHost host,
+                                                                      @NotNull ProcessingContext context) {
+          // Registry keys are extensively used in tests, but we operate with VM Options there
+          // We can only use soft references for them as they are not guaranteed to be an existing Registry key
+          return new PsiReference[]{new RegistryKeyIdReference(host, true)};
+        }
+      }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
   static final class RegistryKeyIdReference extends ExtensionReferenceBase {
-
     RegistryKeyIdReference(@NotNull PsiElement element) {
       super(element);
+    }
+
+    RegistryKeyIdReference(@NotNull PsiElement element, boolean isSoft) {
+      super(element);
+
+      mySoft = isSoft;
     }
 
     @Override
