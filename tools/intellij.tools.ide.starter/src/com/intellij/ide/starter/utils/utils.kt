@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.io.createParentDirectories
+import com.intellij.util.system.OS
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -63,7 +64,12 @@ fun takeScreenshot(logsDir: Path, screenshotName: String, ignoreExceptions: Bool
     screenshotJar.copyTo(screenshotTool.createParentDirectories().outputStream())
   }
 
-  val javaPath = ProcessHandle.current().info().command().orElseThrow().toString()
+  val javaPath = ProcessHandle.current().info().command().orElseGet {
+    // for local runs on mac
+    val javaHome = System.getProperty("java.home")
+    val javaBin = if (OS.CURRENT == OS.Windows) "java.exe" else "java"
+    Path.of(javaHome, "bin", javaBin).toString()
+  }
   val stdOut = ExecOutputRedirect.ToStdOut("[take-screenshot-out]")
   val stdErr = ExecOutputRedirect.ToStdOut("[take-screenshot-err]")
   try {
