@@ -389,11 +389,18 @@ class CombinedDiffViewer(
     afterViewport: List<CombinedBlockId>,
     hidden: ArrayList<CombinedBlockId>,
   ) {
-    if (hidden.isNotEmpty()) {
-      blockListeners.multicaster.blocksHidden(hidden)
+    val currentBlock = blockState.currentBlock
+    val needsInitialBlockSelection = needsInitialBlockSelection
+    val blocksAroundCurrent: List<CombinedBlockId>? = if (needsInitialBlockSelection) getBlocksAroundCurrent(currentBlock) else null
+
+    val blocksToHide = if (blocksAroundCurrent != null) hidden.filter { it !in blocksAroundCurrent } else hidden
+
+    if (blocksToHide.isNotEmpty()) {
+      blockListeners.multicaster.blocksHidden(blocksToHide)
     }
 
-    val totalVisible = inViewport + afterViewport + beforeViewport
+    val totalVisible = blocksAroundCurrent ?: (inViewport + afterViewport + beforeViewport)
+
     if (totalVisible.isNotEmpty()) {
       blockListeners.multicaster.blocksVisible(totalVisible)
       if (context.getUserData(DISABLE_LOADING_BLOCKS) == true) {
@@ -407,6 +414,15 @@ class CombinedDiffViewer(
         updateBlockContent(content)
       }
     }
+  }
+
+  private fun getBlocksAroundCurrent(currentBlock: CombinedBlockId): List<CombinedBlockId> {
+    val delta = CombinedDiffRegistry.getPreloadedBlocksCount()
+    val currentIndex = blockState.indexOf(currentBlock)
+    val startIndex = maxOf(0, currentIndex - delta)
+    val endIndex = minOf(blockState.blocksCount - 1, currentIndex + delta)
+
+    return (startIndex..endIndex).mapNotNull { blockState.getOrNull(it) }
   }
 
   private fun updateStickyHeader() {
