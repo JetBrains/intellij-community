@@ -21,7 +21,6 @@ import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTE
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.UrlClassLoader
-import com.intellij.util.system.CpuArch
 import org.jetbrains.idea.devkit.requestHandlers.passDataAboutBuiltInServer
 import java.lang.ClassLoader.getSystemClassLoader
 import java.net.URLClassLoader
@@ -138,11 +137,8 @@ private fun updateParametersForDevBuild(javaParameters: JavaParameters, configur
   }
 
   val runDir = workingDirectory.resolve("out/dev-run/$productClassifier")
-  for ((name, value) in getIdeSystemProperties(runDir)) {
-    vmParameters.addProperty(name, value)
-  }
-
   if (vmParameters.getPropertyValue("idea.dev.skip.build").toBoolean()) {
+    // todo broken for now, if this mode will be needed, proper binary maybe implemented
     vmParameters.addProperty(PathManager.PROPERTY_HOME_PATH, runDir.invariantSeparatorsPathString)
     val files = try {
       Files.readAllLines(runDir.resolve("core-classpath.txt"))
@@ -175,20 +171,6 @@ private fun setPropertyIfAbsent(vmParameters: ParametersList, @Suppress("SamePar
   if (!vmParameters.hasProperty(name)) {
     vmParameters.addProperty(name, "true")
   }
-}
-
-private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
-  // see BuildContextImpl.getAdditionalJvmArguments - we should somehow deduplicate code
-  val libDir = runDir.resolve("lib")
-  return mapOf(
-    "jna.boot.library.path" to "$libDir/jna/${if (CpuArch.isArm64()) "aarch64" else "amd64"}",
-    // todo "skiko.library.path" to "$libDir/skiko-awt-runtime-all",
-    "pty4j.preferred.native.folder" to "$libDir/pty4j",
-    // require bundled JNA dispatcher lib
-    "jna.nosys" to "true",
-    "jna.noclasspath" to "true",
-    "compose.swing.render.on.graphics" to "true",
-  )
 }
 
 /**

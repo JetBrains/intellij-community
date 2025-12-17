@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build.dev
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonToken
-import com.intellij.openapi.util.io.NioFiles
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -39,7 +38,7 @@ fun getIdeSystemProperties(runDir: Path): VmProperties {
   val result = LinkedHashMap<String, String>()
 
   val properties = Properties()
-  //we need this only because PathManager take idea.properties to the sources if 'idea.use.dev.build.server' is set to 'true'
+  // we need this only because PathManager take idea.properties to the sources if 'idea.use.dev.build.server' is set to 'true'
   properties.load(Files.newInputStream(runDir.resolve("bin/idea.properties")))
   for (property in properties) {
     result.put(property.key.toString(), property.value.toString())
@@ -100,9 +99,10 @@ private fun extractAdditionalJvmArguments(productInfoFile: Path): List<String> {
 fun readVmOptions(runDir: Path): List<String> {
   val result = ArrayList<String>()
 
-  val vmOptionsFile = Files.newDirectoryStream(runDir.resolve("bin"), "*.vmoptions").use { it.singleOrNull() }
+  val binDir = runDir.resolve("bin")
+  val vmOptionsFile = Files.newDirectoryStream(binDir, "*.vmoptions").use { it.singleOrNull() }
   requireNotNull(vmOptionsFile) {
-    "No single *.vmoptions file in ${runDir} (${NioFiles.list(runDir).map(Path::getFileName).joinToString()})}"
+    "No single *.vmoptions file in $binDir (${Files.newDirectoryStream(binDir).use { it.asSequence().map(Path::getFileName).joinToString() }})"
   }
   result.addAll(vmOptionsFile.readLines())
   result.add("-Djb.vmOptionsFile=${vmOptionsFile}")
