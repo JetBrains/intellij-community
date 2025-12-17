@@ -337,7 +337,7 @@ open class IDETestContext(
 
   fun enableCloudRegistry(registryHost: String): IDETestContext = applyVMOptionsPatch {
     addSystemProperty("ide.registry.refresh.debug", true)
-    addSystemProperty("ide.registry.refresh.delay.seconds", 0)
+    addSystemProperty("ide.registry.refresh.initial.delay.seconds", 0)
     addSystemProperty("ide.registry.refresh.host", registryHost)
   }
 
