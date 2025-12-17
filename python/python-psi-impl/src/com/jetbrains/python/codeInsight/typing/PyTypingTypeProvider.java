@@ -12,10 +12,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.QualifiedName;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,12 +33,12 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
+import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.psi.types.PyTypeParameterMapping.Option;
 import one.util.streamex.StreamEx;
@@ -723,7 +720,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   private static @NotNull List<PyClassType> evaluateSuperClassesAsTypeHints(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
     List<PyClassType> results = new ArrayList<>();
-    for (PyExpression superClassExpression : PyClassElementType.getSuperClassExpressions(pyClass)) {
+    for (PyExpression superClassExpression : getSuperClassExpressions(pyClass)) {
       PsiFile containingFile = superClassExpression.getContainingFile();
       if (containingFile instanceof PyExpressionCodeFragment) {
         containingFile.putUserData(FRAGMENT_OWNER, pyClass);
@@ -749,7 +746,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     }
     // See https://mypy.readthedocs.io/en/stable/generics.html#defining-sub-classes-of-generic-classes
     List<PySubscriptionExpression> parameterizedSuperClassExpressions =
-      ContainerUtil.filterIsInstance(PyClassElementType.getSuperClassExpressions(cls), PySubscriptionExpression.class);
+      ContainerUtil.filterIsInstance(getSuperClassExpressions(cls), PySubscriptionExpression.class);
     PySubscriptionExpression genericAsSuperClass = ContainerUtil.find(parameterizedSuperClassExpressions, s -> {
       return resolvesToQualifiedNames(s.getOperand(), context.myContext, GENERIC);
     });
@@ -777,6 +774,24 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       .distinct()
       .toList();
   }
+
+  /**
+   * If the class' stub is present, return expressions in the base classes list, converting
+   * their saved text chunks into {@link PyExpressionCodeFragment} and extracting top-level expressions
+   * from them. Otherwise, get superclass expressions directly from AST.
+   */
+  private static @NotNull List<PyExpression> getSuperClassExpressions(@NotNull PyClass pyClass) {
+    final PyClassStub classStub = pyClass.getStub();
+    if (classStub == null) {
+      return List.of(pyClass.getSuperClassExpressions());
+    }
+    return CachedValuesManager.getCachedValue(pyClass, () -> CachedValueProvider.Result.create(
+      (ContainerUtil.mapNotNull(classStub.getSuperClassesText(),
+                                x -> PyUtil.createExpressionFromFragment(x, pyClass.getContainingFile()))),
+      PsiModificationTracker.MODIFICATION_COUNT)
+    );
+  }
+
 
   private static @NotNull List<PyTypeParameterType> collectTypeParametersFromTypeAliasStatement(@NotNull PyTypeAliasStatement typeAliasStatement,
                                                                                                 @NotNull Context context) {

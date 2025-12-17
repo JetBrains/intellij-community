@@ -7,9 +7,6 @@ import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.*;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyStubElementTypes;
@@ -74,23 +71,6 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     }
 
     return result;
-  }
-
-  /**
-   * If the class' stub is present, return expressions in the base classes list, converting
-   * their saved text chunks into {@link PyExpressionCodeFragment} and extracting top-level expressions
-   * from them. Otherwise, get superclass expressions directly from AST.
-   */
-  public static @NotNull List<PyExpression> getSuperClassExpressions(@NotNull PyClass pyClass) {
-    final PyClassStub classStub = pyClass.getStub();
-    if (classStub == null) {
-      return List.of(pyClass.getSuperClassExpressions());
-    }
-    return CachedValuesManager.getCachedValue(pyClass, () -> CachedValueProvider.Result.create(
-      (ContainerUtil.mapNotNull(classStub.getSuperClassesText(),
-                                x -> PyUtil.createExpressionFromFragment(x, pyClass.getContainingFile()))),
-      PsiModificationTracker.MODIFICATION_COUNT)
-    );
   }
 
   private static @Nullable QualifiedName resolveOriginalSuperClassQName(@NotNull PyExpression superClassExpression) {
