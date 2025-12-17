@@ -260,7 +260,7 @@ final class PsiUpdateImpl {
     private int myCaretOffset;
     private int myCaretVirtualEnd;
     private @NotNull TextRange mySelection;
-    private @Nullable ModRegisterTabOut myTabOutCommand;
+    private @NotNull List<@NotNull ModRegisterTabOut> myTabOutCommands = new ArrayList<>();
     private final Consumer<@NotNull Document> myCopyCleaner;
     private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
     private final List<ModStartTemplate.TemplateField> myTemplateFields = new ArrayList<>();
@@ -570,8 +570,11 @@ final class PsiUpdateImpl {
 
     @Override
     public void registerTabOut(@NotNull TextRange range, int tabOutOffset) {
+      if (tabOutOffset <= range.getEndOffset()) {
+        throw new IllegalArgumentException("Tab out offset must be greater than range end offset: " + tabOutOffset + "; range = " + range);
+      }
       range = mapRange(range);
-      myTabOutCommand = new ModRegisterTabOut(navigationFile(), range.getStartOffset(), range.getEndOffset(), mapOffset(tabOutOffset));
+      myTabOutCommands.add(new ModRegisterTabOut(navigationFile(), range.getStartOffset(), range.getEndOffset(), mapOffset(tabOutOffset)));
     }
 
     @Override
@@ -689,12 +692,12 @@ final class PsiUpdateImpl {
         ModStartRename.RenameSymbolRange renameSymbolRange = myRenameSymbol.symbolRange();
         myRenameSymbol = myRenameSymbol.withRange(updateRange(event, renameSymbolRange));
       }
-      if (myTabOutCommand != null) {
-        int left = updateOffset(event, myTabOutCommand.rangeStart(), true);
-        int right = updateOffset(event, myTabOutCommand.rangeEnd(), false);
-        int target = updateOffset(event, myTabOutCommand.target(), false);
-        myTabOutCommand = new ModRegisterTabOut(myTabOutCommand.file(), left, right, target);
-      }
+      myTabOutCommands.replaceAll(command -> {
+        int left = updateOffset(event, command.rangeStart(), true);
+        int right = updateOffset(event, command.rangeEnd(), false);
+        int target = updateOffset(event, command.target(), false);
+        return new ModRegisterTabOut(command.file(), left, right, target);
+      });
     }
 
     private static @NotNull ModStartRename.RenameSymbolRange updateRange(@NotNull DocumentEvent event,
@@ -751,7 +754,7 @@ final class PsiUpdateImpl {
         .andThen(getNavigateCommand()).andThen(getHighlightCommand()).andThen(getTemplateCommand())
         .andThen(myTrackedDeclarations.stream().<ModCommand>map(c -> c).reduce(nop(), ModCommand::andThen))
         .andThen(myRenameSymbol == null ? nop() : myRenameSymbol)
-        .andThen(myTabOutCommand == null ? nop() : myTabOutCommand)
+        .andThen(myTabOutCommands.stream().<ModCommand>map(c -> c).reduce(nop(), ModCommand::andThen))
         .andThen(myInfoMessage == null ? nop() : ModCommand.info(myInfoMessage));
     }
 
