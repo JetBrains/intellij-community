@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -29,6 +30,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.oracle.javafx.scenebuilder.kit.editor.EditorController;
@@ -211,12 +213,10 @@ public class SceneBuilderImpl implements SceneBuilder {
       return module.getName();
     }
     else {
-      final OrderEntry entry = LibraryUtil.findLibraryEntry(vFile, myProject);
-      if (entry instanceof LibraryOrderEntry) {
-        final String libraryName = ((LibraryOrderEntry)entry).getLibraryName();
-        if (libraryName != null) {
-          return libraryName;
-        }
+      var libraryEntity = ContainerUtil.getFirstItem(ProjectFileIndex.getInstance(myProject).findContainingLibraries(vFile));
+      final String libraryName = LibraryNameGenerator.INSTANCE.getLegacyLibraryName(libraryEntity.getSymbolicId());
+      if (libraryName != null) {
+        return libraryName;
       }
     }
     return null;

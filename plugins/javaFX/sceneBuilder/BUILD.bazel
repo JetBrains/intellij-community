@@ -18,6 +18,8 @@ jvm_library(
     "//platform/util/nanoxml",
     "@lib//:java_f_x-scene_builder-_scene_builder_kit11-provided",
     "//platform/indexing-impl",
+    "//platform/workspace/jps",
+    "//platform/workspace/storage",
   ]
 )
 ### auto-generated section `build intellij.javaFX.sceneBuilder` end
