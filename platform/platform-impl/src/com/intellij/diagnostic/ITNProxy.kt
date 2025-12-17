@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
+import com.intellij.openapi.diagnostic.UnhandledException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemInfo
@@ -184,6 +185,10 @@ internal object ITNProxy {
 
     append(builder, "error.message", error.event.message?.trim { it <= ' ' } ?: "")
     append(builder, "error.stacktrace", error.event.throwableText)
+    (error.event.throwable as? UnhandledException)?.let {
+      append(builder, "error.unhandled.interactive", it.isInteractive.toString())
+    }
+
     append(builder, "error.description", error.comment)
     if (error.event.throwable is RecoveredThrowable) {
       append(builder, "error.redacted", "true")

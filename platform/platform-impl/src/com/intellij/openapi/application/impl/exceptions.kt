@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionContextElement
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Interactive
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.UnhandledException
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
@@ -22,7 +23,7 @@ import kotlin.coroutines.CoroutineContext
 private val LOG: Logger = fileLogger()
 
 internal fun processUnhandledException(
-  exception: Throwable,
+  cause: Throwable,
   coroutineContext: CoroutineContext?,
 ) {
   val coroutineContext = coroutineContext ?: currentThreadContextOrNull()
@@ -30,8 +31,9 @@ internal fun processUnhandledException(
 
   when (val interactiveMode = interactiveMode(coroutineContext)) {
     is Mode.Interactive -> {
+      val exception = UnhandledException(cause, isInteractive = true)
       SwingUtilities.invokeLater {
-        logExceptionSafely(message, exception, interactive = true)
+        logExceptionSafely(message, exception)
         val defaultMessage = LogMessage(exception, message, emptyList())
         // "clear" button doesn't play well with interactive message. Once cleared, windows becomes empty.
         val application = ApplicationManager.getApplication()
@@ -49,14 +51,14 @@ internal fun processUnhandledException(
       }
     }
     Mode.NonInteractive -> {
-      logExceptionSafely(message, exception, interactive = false)
+      logExceptionSafely(message, UnhandledException(cause, isInteractive = false))
     }
   }
 }
 
-private fun logExceptionSafely(message: String, exception: Throwable, interactive: Boolean) {
+private fun logExceptionSafely(message: String, exception: UnhandledException) {
   try {
-    LOG.error("$message, interactive mode: $interactive", exception)
+    LOG.error(message, exception)
   }
   catch (_: Throwable) {
   }

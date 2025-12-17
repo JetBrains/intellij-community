@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.UnhandledException;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.Strings;
@@ -28,7 +29,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
 
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 75);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 76);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -77,6 +78,11 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     LIFECYCLE.registerEvent("ide.freeze.ignored.plugin", EventFields.PluginInfo);
 
   private static final ClassEventField errorField = EventFields.Class("error");
+  /**
+   * See IJPL-100
+   */
+  private static final BooleanEventField unhandledExceptionInteractiveField = EventFields.Boolean("unhandled_exception_interactive");
+
   private static final EventField<VMOptions.MemoryKind> memoryErrorKindField =
     EventFields.Enum("memory_error_kind", VMOptions.MemoryKind.class, kind -> Strings.toLowerCase(kind.name()));
   private static final EventField<Integer> errorHashField = EventFields.Int("error_hash");
@@ -85,7 +91,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final EventField<Integer> errorSizeField = EventFields.Int("error_size");
   private static final EventField<Boolean> tooManyErrorsField = EventFields.Boolean("too_many_errors");
   private static final VarargEventId IDE_ERROR = LIFECYCLE.registerVarargEvent(
-    "ide.error", EventFields.PluginInfo, errorField, memoryErrorKindField, errorHashField, errorFramesField, errorSizeField, tooManyErrorsField);
+    "ide.error", EventFields.PluginInfo, errorField, memoryErrorKindField, errorHashField, errorFramesField, errorSizeField, tooManyErrorsField, unhandledExceptionInteractiveField);
 
   private static final EventId IDE_CRASH_DETECTED = LIFECYCLE.registerEvent("ide.crash.detected");
 
@@ -185,6 +191,9 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
       data.add(EventFields.PluginInfo.with(pluginId == null ? getPlatformPlugin() : getPluginInfoById(pluginId)));
       data.add(errorField.with(description.getThrowableClass()));
 
+      if (throwable instanceof UnhandledException uh) { // See IJPL-100
+        data.add(unhandledExceptionInteractiveField.with(uh.isInteractive()));
+      }
       if (memoryErrorKind != null) {
         data.add(memoryErrorKindField.with(memoryErrorKind));
       }

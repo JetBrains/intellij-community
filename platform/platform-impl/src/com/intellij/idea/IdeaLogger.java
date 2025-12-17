@@ -17,6 +17,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.diagnostic.UnhandledException;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
@@ -189,6 +190,11 @@ public final class IdeaLogger extends JulLogger {
 
     if (t != null && shouldRethrow(t)) {
       ExceptionUtil.rethrow(t);
+    }
+
+    // Unhandled exception wraps real exception which might be control flow exception
+    if (t instanceof UnhandledException uh && shouldRethrow(uh.getCause())) {
+      ExceptionUtil.rethrow(uh.getCause());
     }
 
     if (t != null) {
