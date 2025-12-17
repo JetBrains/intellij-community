@@ -28,22 +28,12 @@ interface WelcomeRightTabContentProvider {
   val title: Supplier<@Nls String>
   val secondaryTitle: Supplier<@Nls String>
 
-  val featureButtonSize: FeatureButtonSize
-    get() = FeatureButtonSize.COMMON
-
   val isDisableOptionVisible: Boolean
 
   fun shouldBeFocused(project: Project): Boolean = true
 
   @Composable
   fun getFeatureButtonModels(project: Project): List<FeatureButtonModel>
-
-  /**
-   * Labels for the buttons might be too long, so we provide a way to change their size.
-   */
-  enum class FeatureButtonSize {
-    COMMON, LARGE
-  }
 
   /**
    * Base feature button model. Use for frontend-only features.

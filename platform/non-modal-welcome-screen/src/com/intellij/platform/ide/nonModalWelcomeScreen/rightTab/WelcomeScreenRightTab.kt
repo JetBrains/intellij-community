@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draganddrop.DragAndDropTarget
@@ -23,7 +24,6 @@ import androidx.compose.ui.draganddrop.awtTransferable
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.unit.Dp
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import java.awt.datatransfer.DataFlavor
 import com.intellij.openapi.application.EDT
@@ -181,13 +181,6 @@ class WelcomeScreenRightTab(
     }
   }
 
-  @Stable
-  private inline val WelcomeRightTabContentProvider.FeatureButtonSize.dp: Dp
-    get() = when (this) {
-      WelcomeRightTabContentProvider.FeatureButtonSize.COMMON -> 112
-      WelcomeRightTabContentProvider.FeatureButtonSize.LARGE -> 125
-    }.dp
-
   @Composable
   private fun FeatureButton(model: WelcomeRightTabContentProvider.FeatureButtonModel, scope: CoroutineScope) {
     WelcomeScreenCustomButton(
@@ -195,15 +188,28 @@ class WelcomeScreenRightTab(
         model.onClick(project, scope)
       },
       style = CustomButtonStyle(),
-      modifier = Modifier.size(contentProvider.featureButtonSize.dp, 87.dp),
+      modifier = Modifier.size(128.dp, 96.dp),
     ) {
-      Column {
-        Icon(key = model.icon, contentDescription = model.text, tint = model.tint,
-             modifier = Modifier.size(24.dp).align(Alignment.CenterHorizontally))
+      Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+      ) {
+        Icon(
+          key = model.icon,
+          contentDescription = model.text,
+          tint = model.tint,
+          modifier = Modifier.size(24.dp)
+        )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(model.text, color = fontColor,
-             fontSize = 13.sp, lineHeight = 16.sp,
-             modifier = Modifier.align(Alignment.CenterHorizontally))
+        Text(
+          model.text,
+          color = fontColor,
+          fontSize = 13.sp,
+          lineHeight = 16.sp,
+          maxLines = 2,
+          textAlign = TextAlign.Center
+        )
       }
     }
   }
@@ -322,7 +328,7 @@ class WelcomeScreenRightTab(
       ButtonMetrics(
         cornerSize = CornerSize(8.dp),
         minSize = minSize,
-        padding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
+        padding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         borderWidth = 0.dp,
         focusOutlineExpand = 0.dp,
       )
