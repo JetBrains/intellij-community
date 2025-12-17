@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.util.*;
@@ -107,10 +108,10 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
     @NotNull IdeModifiableModelsProvider modelsProvider
   ) {
     Library library = entry.getLibrary();
-    VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
+    String[] libraryFiles = library.getUrls(OrderRootType.CLASSES);
     Set<String> moduleLibraryKey = new HashSet<>(libraryFiles.length);
-    for (VirtualFile file : libraryFiles) {
-      moduleLibraryKey.add(ExternalSystemApiUtil.getLocalFileSystemPath(file) + entry.getScope().name());
+    for (String file : libraryFiles) {
+      moduleLibraryKey.add(JpsPathUtil.urlToPath(file) + entry.getScope().name());
     }
     LibraryDependencyData existing = moduleLibrariesToImport.remove(moduleLibraryKey);
     if (existing == null || !StringUtil.equals(StringUtil.nullize(existing.getInternalName()), library.getName())) {
