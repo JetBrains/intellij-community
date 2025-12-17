@@ -1124,6 +1124,8 @@ open class FileEditorManagerImpl(
       return session.serviceOrNull<ClientFileEditorManager>()
     }
 
+  protected open fun onNewModalityOnWaiting() {}
+
   /**
    * This method can be invoked from background thread. Of course, UI for returned editors should be accessed from EDT in any case.
    */
@@ -1166,7 +1168,7 @@ open class FileEditorManagerImpl(
         val composite = open()
         if (composite is EditorComposite) {
           if (options.waitForCompositeOpen) {
-            blockingWaitForCompositeFileOpen(composite)
+            blockingWaitForCompositeFileOpen(composite, this::onNewModalityOnWaiting)
             if (composite.providerSequence.none()) {
               closeFile(window = window, composite = composite, runChecks = false)
               return@Computable FileEditorComposite.EMPTY
@@ -2477,7 +2479,7 @@ private fun reopenVirtualFileInEditor(
 @Suppress("SSBasedInspection")
 @RequiresEdt
 @Internal
-fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
+fun blockingWaitForCompositeFileOpen(composite: EditorComposite, onNewModality: () -> Unit = {}) {
   ThreadingAssertions.assertEventDispatchThread()
 
   val job = composite.coroutineScope.launch {
@@ -2500,6 +2502,7 @@ fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
   }
   else if (LaterInvocator.isInModalContext()) {
     inModalContext(ObjectUtils.sentinel("Opening file=${composite.file.name}")) {
+      onNewModality()
       job.waitBlockingAndPumpEdt()
     }
   }
