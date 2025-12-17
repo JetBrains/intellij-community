@@ -7,14 +7,12 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.JetBrainsPermanentInstallationID;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.LicensingFacade;
-import com.intellij.util.Url;
-import com.intellij.util.io.URLUtil;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
@@ -24,16 +22,11 @@ public class DefaultUpdateRequestParametersProvider implements UpdateRequestPara
     lazyNullable(() -> MachineIdManager.INSTANCE.getAnonymizedMachineId("JetBrainsUpdates"));
 
   @Override
-  public @NotNull Url amendUpdateRequest(@NotNull Url url) {
-    if (URLUtil.FILE_PROTOCOL.equals(url.getScheme())) {
-      return url;
-    }
-
-    var parameters = new LinkedHashMap<String, String>();
-
+  public void amendUpdateRequest(@NotNull Map<String, String> parameters) {
     parameters.put("build", ApplicationInfo.getInstance().getBuild().asString());
 
-    parameters.put("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION);
+    var os = OS.CURRENT;
+    parameters.put("os", (os == OS.macOS ? "Mac OS X" : os.name()) + ' ' + os.version());
 
     if (ApplicationInfoEx.getInstanceEx().isEAP()) {
       parameters.put("eap", "");
@@ -68,7 +61,5 @@ public class DefaultUpdateRequestParametersProvider implements UpdateRequestPara
         parameters.put("userBucket", userBucket);
       }
     }
-
-    return url.addParameters(parameters);
   }
 }
