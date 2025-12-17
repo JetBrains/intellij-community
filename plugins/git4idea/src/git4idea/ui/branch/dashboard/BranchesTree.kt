@@ -319,11 +319,11 @@ internal class FilteringBranchesTree(
 private val BRANCH_TREE_TRANSFER_HANDLER = object : TransferHandler() {
   override fun createTransferable(tree: JComponent): Transferable? {
     if (tree is BranchesTreeComponent) {
-      val branches = tree.getSelection().selectedBranches
-      if (branches.isEmpty()) return null
+      val refs = tree.getSelection().selectedRefs
+      if (refs.isEmpty()) return null
 
-      return object : TransferableList<BranchInfo>(branches.toList()) {
-        override fun toString(branch: BranchInfo) = branch.toString()
+      return object : TransferableList<RefInfo>(refs.toList()) {
+        override fun toString(ref: RefInfo) = ref.toString()
       }
     }
     return null
