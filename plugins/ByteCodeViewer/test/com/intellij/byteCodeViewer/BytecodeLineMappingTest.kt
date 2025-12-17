@@ -39,7 +39,8 @@ internal class BytecodeLineMappingTest : BasePlatformTestCase() {
     bytecodeSelectionEndLine++ // because string operations are 0-indexed but the editor is 1-indexed
 
     val bytecode = if (showDebugInfo) fixture.bytecodeWithDebugInfo else fixture.bytecode
-    assertEquals(expectedBytecodeSelection, bytecode.lines().subList(fromIndex = bytecodeSelectionStartLine, toIndex = bytecodeSelectionEndLine).joinToString("\n"))
+    assertEquals(expectedBytecodeSelection,
+                 bytecode.lines().subList(fromIndex = bytecodeSelectionStartLine, toIndex = bytecodeSelectionEndLine).joinToString("\n"))
   }
 
   fun `test removeDebugInfo`() {
@@ -715,10 +716,10 @@ internal class BytecodeLineMappingTest : BasePlatformTestCase() {
     private val testDataPath: String
       get() = PlatformTestUtil.getCommunityPath() + "/plugins/ByteCodeViewer/testData/lineMapping"
 
-    private val simple1: Fixture by lazy { createFixture("simple1") }
+    private val simple1: Fixture get() = createFixture("simple1")
 
-    private val simple2: Fixture by lazy { createFixture("simple2") }
+    private val simple2: Fixture get() = createFixture("simple2")
 
-    private val simple3: Fixture by lazy { createFixture("simple3") }
+    private val simple3: Fixture get() = createFixture("simple3")
   }
 }
