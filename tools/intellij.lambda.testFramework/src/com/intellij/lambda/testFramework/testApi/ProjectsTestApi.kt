@@ -125,6 +125,7 @@ suspend fun openProject(projectPath: Path): Project {
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
       projectManager.forceCloseProjectAsync(project, save = false)
+      waitForProject(timeout = 5.seconds) // waits there is a single project left
     }
   }
   project.waitInitialised()
