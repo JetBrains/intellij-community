@@ -2,7 +2,6 @@
 package com.intellij.openapi.command.impl
 
 import com.intellij.openapi.command.CommandEvent
-import com.intellij.openapi.command.CommandId
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.Command

@@ -228,8 +228,7 @@ final class UndoClientState implements Disposable {
         action instanceof NonUndoableAction,
         "Undoable actions allowed inside commands only (see com.intellij.openapi.command.CommandProcessor.executeCommand())"
       );
-      CommandMeta meta = new NoCommandMeta(CommandSeparator.ID_GENERATOR.nextCommandId());
-      CmdEvent cmdEvent = CmdEvent.createNonUndoable(meta);
+      CmdEvent cmdEvent = CmdEventTransform.getInstance().createNonUndoable();
       commandStarted(cmdEvent, editorProvider);
       try {
         commandBuilder.addUndoableAction(action);

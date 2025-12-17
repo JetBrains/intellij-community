@@ -3,7 +3,6 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
-import com.intellij.openapi.command.CommandId;
 import com.intellij.openapi.command.CommandListener;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +26,6 @@ import org.jetbrains.annotations.TestOnly;
  */
 @ApiStatus.Internal
 public final class CommandSeparator implements CommandListener {
-
-  static final @NotNull CommandIdGenerator ID_GENERATOR = new CommandIdGenerator();
-
   private final @NotNull SeparatedCommandListener publisher;
   private boolean commandStarted;
   private boolean transparentStarted;
@@ -102,36 +98,35 @@ public final class CommandSeparator implements CommandListener {
   }
 
   private void notifyCommandStarted(@NotNull CommandEvent event) {
-    start(event);
+    notifyCommand(event, true);
   }
 
   private void notifyCommandFinished(@NotNull CommandEvent event) {
-    finish(event);
+    notifyCommand(event, false);
   }
 
   private void notifyTransparentStarted() {
-    start(null);
+    notifyCommand(null, true);
   }
 
   private void notifyTransparentFinished() {
-    finish(null);
+    notifyCommand(null, false);
   }
 
-  private void start(@Nullable CommandEvent event) {
-    CmdEvent cmdEvent = getCmdEvent(event, true);
-    publisher.onCommandStarted(cmdEvent);
-    UndoSpy undoSpy = UndoSpy.getInstance();
-    if (undoSpy != null) {
-      undoSpy.commandStarted(cmdEvent);
+  private void notifyCommand(@Nullable CommandEvent event, boolean isStart) {
+    CmdEvent cmdEvent = CmdEventTransform.getInstance().create(event, isStart);
+    if (isStart) {
+      publisher.onCommandStarted(cmdEvent);
+    } else {
+      publisher.onCommandFinished(cmdEvent);
     }
-  }
-
-  private void finish(@Nullable CommandEvent event) {
-    CmdEvent cmdEvent = getCmdEvent(event, false);
-    publisher.onCommandFinished(cmdEvent);
     UndoSpy undoSpy = UndoSpy.getInstance();
     if (undoSpy != null) {
-      undoSpy.commandFinished(cmdEvent);
+      if (isStart) {
+        undoSpy.commandStarted(cmdEvent);
+      } else {
+        undoSpy.commandFinished(cmdEvent);
+      }
     }
   }
 
@@ -157,28 +152,6 @@ public final class CommandSeparator implements CommandListener {
     if (transparentStarted) {
       throw new IllegalStateException("Transparent action already started");
     }
-  }
-
-  private static @NotNull CmdEvent getCmdEvent(@Nullable CommandEvent event, boolean isStart) {
-    CmdEvent foreignCommand = ForeignCommandProcessor.getInstance().currentCommand();
-    if (foreignCommand != null) {
-      return foreignCommand;
-    }
-    boolean isTransparent = event == null;
-    CommandId commandId = getCommandId(isTransparent, isStart);
-    var meta = isStart
-      ? new MutableCommandMetaImpl(commandId)
-      : new NoCommandMeta(commandId);
-    return isTransparent
-           ? CmdEvent.createTransparent(null, meta)
-           : CmdEvent.create(event, meta);
-  }
-
-  private static @NotNull CommandId getCommandId(boolean isTransparent, boolean isStart) {
-    if (isTransparent) {
-      return isStart ? ID_GENERATOR.nextTransparentId() : ID_GENERATOR.currentCommandId();
-    }
-    return isStart ? ID_GENERATOR.nextCommandId() : ID_GENERATOR.currentCommandId();
   }
 
   private static @NotNull SeparatedCommandListener getPublisher() {

@@ -2,7 +2,6 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandId;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
