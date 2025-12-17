@@ -1,5 +1,6 @@
 package com.jetbrains.performancePlugin;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
@@ -28,8 +29,8 @@ public class SetupProjectSdkCommandTest extends HeavyPlatformTestCase {
   private void doCommand(@NotNull String sdkName, @NotNull SdkType type, @NotNull String home) {
     new SetupProjectSdkCommand("command-name " + sdkName + " " + type.getName() + " \"" + home + "\"", 1) {
       @Override
-      protected void registerNewSdk(@NotNull Sdk newSdk) {
-        ProjectJdkTable.getInstance().addJdk(newSdk, getTestRootDisposable());
+      protected void registerNewSdk(@NotNull Project project, @NotNull Sdk newSdk) {
+        ProjectJdkTable.getInstance(project).addJdk(newSdk, getTestRootDisposable());
       }
     }.computePromise(System.out::println, getProject());
   }

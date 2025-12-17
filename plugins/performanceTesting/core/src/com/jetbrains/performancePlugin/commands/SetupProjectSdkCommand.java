@@ -52,7 +52,7 @@ public class SetupProjectSdkCommand extends AbstractCommand {
   private void runUnderPromiseInEDT(@NotNull Consumer<String> logMessage,
                                     @NotNull Project project) {
     logMessage.accept("Settings up SDK: name: " + mySdkName + ", type: " + mySdkType + ", home: " + mySdkHome);
-    Sdk sdk = setupOrDetectSdk(logMessage);
+    Sdk sdk = setupOrDetectSdk(project, logMessage);
 
     ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
 
@@ -74,8 +74,9 @@ public class SetupProjectSdkCommand extends AbstractCommand {
     }
   }
 
-  private @NotNull Sdk setupOrDetectSdk(@NotNull Consumer<String> logMessage) {
-    Sdk oldSdk = ProjectJdkTable.getInstance().findJdk(mySdkName);
+  private @NotNull Sdk setupOrDetectSdk(@NotNull Project project, @NotNull Consumer<String> logMessage) {
+    ProjectJdkTable jdkTable = ProjectJdkTable.getInstance(project);
+    Sdk oldSdk = jdkTable.findJdk(mySdkName);
     if (oldSdk != null) {
       if (Objects.equals(oldSdk.getSdkType().getName(), mySdkName) && FileUtil.pathsEqual(oldSdk.getHomePath(), mySdkHome)) {
         logMessage.accept("Existing SDK is already configured the expected way");
@@ -83,7 +84,7 @@ public class SetupProjectSdkCommand extends AbstractCommand {
       }
 
       logMessage.accept("Existing different SDK will be removed: " + oldSdk);
-      ProjectJdkTable.getInstance().removeJdk(oldSdk);
+      jdkTable.removeJdk(oldSdk);
     }
 
     SdkType sdkType = SdkType.findByName(mySdkType);
@@ -103,7 +104,7 @@ public class SetupProjectSdkCommand extends AbstractCommand {
       throw new IllegalArgumentException("Sdk home " + mySdkHome + " for " + sdkType + " is not valid");
     }
 
-    Sdk newSdk = ProjectJdkTable.getInstance().createSdk(mySdkName, sdkType);
+    Sdk newSdk = jdkTable.createSdk(mySdkName, sdkType);
     SdkModificator mod = newSdk.getSdkModificator();
     try {
       mod.setVersionString(sdkType.getVersionString(mySdkHome));
@@ -125,13 +126,13 @@ public class SetupProjectSdkCommand extends AbstractCommand {
         "Failed to setup Sdk home for " + mySdkHome + " for " + sdkType + " is not valid. " + t.getMessage(), t);
     }
 
-    registerNewSdk(newSdk);
+    registerNewSdk(project, newSdk);
     logMessage.accept("Registered new SDK to ProjectJdkTable: " + newSdk);
     return newSdk;
   }
 
-  protected void registerNewSdk(@NotNull Sdk newSdk) {
-    ProjectJdkTable.getInstance().addJdk(newSdk);
+  protected void registerNewSdk(@NotNull Project project, @NotNull Sdk newSdk) {
+    ProjectJdkTable.getInstance(project).addJdk(newSdk);
   }
 
   @Override
