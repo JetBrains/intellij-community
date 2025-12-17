@@ -137,26 +137,7 @@ private fun TestFixture<Path>.fileFixture(fileName: String, content: (file: Path
 }
 
 
-@TestOnly
-internal fun TestFixture<Project>.sdkFixture(name: String, type: SdkTypeId, pathFixture: TestFixture<Path>): TestFixture<Sdk> = testFixture("sdkFixture $name") {
-  val project = this@sdkFixture.init()
-  val jdkTable = ProjectJdkTable.getInstance(project)
-  val homePath = pathFixture.init().pathString
-  val sdk = jdkTable.createSdk(name, type)
-  val root = requireNotNull(VfsUtil.findFile(Path(homePath), true))
-  edtWriteAction {
-    val sdkModificator = sdk.sdkModificator
-    sdkModificator.homePath = homePath
-    sdkModificator.addRoot(root, OrderRootType.CLASSES)
-    sdkModificator.commitChanges()
-    jdkTable.addJdk(sdk)
-  }
-  initialized(sdk) {
-    writeAction {
-      ProjectJdkTable.getInstance(project).removeJdk(sdk)
-    }
-  }
-}
+
 
 private fun getSourceRootType(isTestSource: Boolean, isResource: Boolean): JpsModuleSourceRootType<*> = when {
   isTestSource && isResource -> JavaResourceRootType.TEST_RESOURCE

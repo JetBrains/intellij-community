@@ -3,11 +3,23 @@ package com.intellij.platform.testFramework.junit5.projectStructure.fixture
 
 import com.intellij.codeInsight.multiverse.MultiverseTestEnabler
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkTypeId
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.impl.MultiverseFixtureInitializer
 import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.TestFixtureInitializer
 import com.intellij.testFramework.junit5.fixture.testFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
+import java.nio.file.Path
+import kotlin.io.path.pathString
 
 /**
  * This fixture allows setting up the project structure via a simple DSL
@@ -37,3 +49,41 @@ fun TestFixture<Project>.withSharedSourceEnabled(): TestFixture<Project> = testF
   MultiverseTestEnabler.enableSharedSourcesForTheNextProject()
   initialized(this@withSharedSourceEnabled.init()) {}
 }
+
+/**
+ * Create SDK [sdkName] of [type] with [pathFixture] [Sdk.getHomePath] and register it in [ProjectJdkTable]
+ */
+@TestOnly
+fun TestFixture<Project>.sdkFixture(sdkName: String, type: SdkTypeId, pathFixture: TestFixture<Path>): TestFixture<Sdk> =
+  sdkFixture { jdkTable ->
+    val homePath = pathFixture.init()
+    val sdk = jdkTable.createSdk(sdkName, type)
+    val root = withContext(Dispatchers.IO) { VfsUtil.findFile(homePath, true)!! }
+    edtWriteAction {
+      val sdkModificator = sdk.sdkModificator
+      sdkModificator.homePath = homePath.pathString
+      sdkModificator.addRoot(root, OrderRootType.CLASSES)
+      sdkModificator.commitChanges()
+    }
+    return@sdkFixture sdk
+  }
+
+/**
+ * Create SDK using [sdkProvider] and register it in [ProjectJdkTable].
+ * [sdkProvider] should **not** register JDK. In most cases, it shouldn't use argument at all.
+ */
+@TestOnly
+fun TestFixture<Project>.sdkFixture(sdkProvider: suspend TestFixtureInitializer.R<Sdk>.(ProjectJdkTable) -> Sdk): TestFixture<Sdk> =
+  testFixture {
+    val project = this@sdkFixture.init()
+    val projectJDKTable = ProjectJdkTable.getInstance(project)
+    val sdk = sdkProvider(projectJDKTable)
+    writeAction {
+      projectJDKTable.addJdk(sdk)
+    }
+    initialized(sdk) {
+      writeAction {
+        ProjectJdkTable.getInstance(project).removeJdk(sdk)
+      }
+    }
+  }

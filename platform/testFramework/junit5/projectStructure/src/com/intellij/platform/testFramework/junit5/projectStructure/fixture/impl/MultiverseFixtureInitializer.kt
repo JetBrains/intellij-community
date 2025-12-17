@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.ProjectBuilder
+import com.intellij.platform.testFramework.junit5.projectStructure.fixture.sdkFixture
 import com.intellij.testFramework.junit5.fixture.*
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
