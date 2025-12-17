@@ -33,7 +33,7 @@ class GradleTomlVersionCatalogEntrySearcherTest {
   private val entrySearcher = GradleTomlVersionCatalogEntrySearcher()
   private val project by projectFixture()
 
-  private fun testFindTomlCatalogKey(
+  private fun testFindEntryElement(
     tomlKeyPath: String,
     versionCatalogText: String,
     checker: (PsiElement?) -> Unit,
@@ -45,8 +45,8 @@ class GradleTomlVersionCatalogEntrySearcherTest {
   }
 
   @Test
-  fun testFindInLibraries() {
-    testFindTomlCatalogKey("groovy.core", """
+  fun `test findEntryElement for a library entry`() {
+    testFindEntryElement("groovy.core", """
       plugins.groovy-core = "plugin"
       [libraries]
       groovy-core = "lib"
@@ -56,7 +56,7 @@ class GradleTomlVersionCatalogEntrySearcherTest {
       assertEquals("groovy-core = \"lib\"", it.text)
     }
 
-    testFindTomlCatalogKey("groovy.core", """
+    testFindEntryElement("groovy.core", """
       libraries = { groovy-core = "lib" }
       """.trimIndent()
     ) {
@@ -64,7 +64,7 @@ class GradleTomlVersionCatalogEntrySearcherTest {
       assertEquals("groovy-core = \"lib\"", it.text)
     }
 
-    testFindTomlCatalogKey("groovy.core", """
+    testFindEntryElement("groovy.core", """
       libraries.groovy-core = "lib"
       """.trimIndent()
     ) {
@@ -74,8 +74,8 @@ class GradleTomlVersionCatalogEntrySearcherTest {
   }
 
   @Test
-  fun testFindInBundles() {
-    testFindTomlCatalogKey("bundles.bundle", """
+  fun `test findEntryElement for a bundle entry`() {
+    testFindEntryElement("bundles.bundle", """
       [bundles]
       bundle = ["lib"]
       """.trimIndent()
@@ -84,7 +84,7 @@ class GradleTomlVersionCatalogEntrySearcherTest {
       assertEquals("bundle = [\"lib\"]", it.text)
     }
 
-    testFindTomlCatalogKey("bundles.bundle.core", """
+    testFindEntryElement("bundles.bundle.core", """
       bundles = { bundle-core = ["lib"] }
       """.trimIndent()
     ) {
@@ -92,7 +92,7 @@ class GradleTomlVersionCatalogEntrySearcherTest {
       assertEquals("bundle-core = [\"lib\"]", it.text)
     }
 
-    testFindTomlCatalogKey("bundles.bundle.core", """
+    testFindEntryElement("bundles.bundle.core", """
       bundles.bundle-core = "lib"
       """.trimIndent()
     ) {
@@ -102,8 +102,8 @@ class GradleTomlVersionCatalogEntrySearcherTest {
   }
 
   @Test
-  fun testFindInPlugins() {
-    testFindTomlCatalogKey("plugins.plugin", """
+  fun `test findEntryElement for a plugin entry`() {
+    testFindEntryElement("plugins.plugin", """
       [plugins]
       plugin = "plugin"
       """.trimIndent()
@@ -112,7 +112,7 @@ class GradleTomlVersionCatalogEntrySearcherTest {
       assertEquals("plugin = \"plugin\"", it.text)
     }
 
-    testFindTomlCatalogKey("plugins.plugin.core", """
+    testFindEntryElement("plugins.plugin.core", """
       plugins = { plugin_core = ["plugin"] }
       """.trimIndent()
     ) {
@@ -120,7 +120,7 @@ class GradleTomlVersionCatalogEntrySearcherTest {
       assertEquals("plugin_core = [\"plugin\"]", it.text)
     }
 
-    testFindTomlCatalogKey("plugins.plugin.core", """
+    testFindEntryElement("plugins.plugin.core", """
       plugins.plugin_core = "plugin"
       """.trimIndent()
     ) {
@@ -130,8 +130,8 @@ class GradleTomlVersionCatalogEntrySearcherTest {
   }
 
   @Test
-  fun testFindComplexPath() {
-    testFindTomlCatalogKey("alias_core-ext", """
+  fun `test findEntryElement for a complex entry path`() {
+    testFindEntryElement("alias_core-ext", """
       [libraries]
       alias-core-ext = "aaa"
       """.trimIndent()
@@ -140,16 +140,16 @@ class GradleTomlVersionCatalogEntrySearcherTest {
       assertEquals("alias-core-ext = \"aaa\"", it.text)
     }
 
-    testFindTomlCatalogKey("alias.core.ext", """
+    testFindEntryElement("alias.core.ext", """
       [libraries]
-      alias-core-ext = "aaa"
+      alias_core-ext = "aaa"
       """.trimIndent()
     ) {
       assertNotNull(it)
-      assertEquals("alias-core-ext = \"aaa\"", it.text)
+      assertEquals("alias_core-ext = \"aaa\"", it.text)
     }
 
-    testFindTomlCatalogKey("alias.core", """
+    testFindEntryElement("alias.core", """
       [libraries]
       alias-core-ext = "aaa"
       alias-core = "aaa"
@@ -161,8 +161,8 @@ class GradleTomlVersionCatalogEntrySearcherTest {
   }
 
   @Test
-  fun testFindFirstLetterWithDifferentCase() {
-    testFindTomlCatalogKey("alias_core-ext", """
+  fun `test findEntryElement when first letter after the separator is Uppercase`() {
+    testFindEntryElement("alias_core-ext", """
         [libraries]
         alias-Core-ext = "aaa"
         """.trimIndent()
@@ -171,7 +171,7 @@ class GradleTomlVersionCatalogEntrySearcherTest {
       assertEquals("alias-Core-ext = \"aaa\"", it.text)
     }
 
-    testFindTomlCatalogKey("alias.core.ext", """
+    testFindEntryElement("alias.core.ext", """
       [libraries]
       alias-core-Ext = "aaa"
       """.trimIndent()
@@ -180,7 +180,7 @@ class GradleTomlVersionCatalogEntrySearcherTest {
       assertEquals("alias-core-Ext = \"aaa\"", it.text)
     }
 
-    testFindTomlCatalogKey("alias.core", """
+    testFindEntryElement("alias.core", """
       [libraries]
       alias-core-ext = "aaa"
       alias-Core = "aaa"
@@ -190,7 +190,7 @@ class GradleTomlVersionCatalogEntrySearcherTest {
       assertEquals("alias-Core = \"aaa\"", it.text)
     }
 
-    testFindTomlCatalogKey("alias.core.Ext", """
+    testFindEntryElement("alias.core.Ext", """
       [libraries]
       alias-core-ext = "aaa"
       """.trimIndent()
