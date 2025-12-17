@@ -180,11 +180,6 @@ open class CodeVisionHost(val project: Project) {
     invalidateProviderSignal.fire(signal)
   }
 
-  fun getNumber(providerId: String): Int {
-    if (lifeSettingModel.disabledCodeVisionProviderIds.contains(providerId)) return -1
-    return defaultSortedProvidersList.indexOf(providerId)
-  }
-
   fun CodeVisionAnchorKind?.nullIfDefault(): CodeVisionAnchorKind? = if (this === CodeVisionAnchorKind.Default) null else this
 
   fun getPriorityForEntry(entry: CodeVisionEntry): Int {

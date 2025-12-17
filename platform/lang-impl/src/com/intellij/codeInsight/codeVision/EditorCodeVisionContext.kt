@@ -140,11 +140,11 @@ open class EditorCodeVisionContext(
                                                       editor as EditorImpl,
                                                       range,
                                                       codeVisionModel,
-                                                      groupedLenses.map {
-                                                        it.key to it.value.map { it.codeVisionEntryOrThrow }.sortedBy {
+                                                      groupedLenses.mapValues {
+                                                        it.value.map { it.codeVisionEntryOrThrow }.sortedBy {
                                                           codeVisionHost.getPriorityForEntry(it)
                                                         }
-                                                      }.associate { it })
+                                                      })
         val moreRange = TextRange(editor.document.getLineStartOffset(editor.document.getLineNumber(range.startOffset)), range.endOffset)
         submittedGroupings.add(moreRange to handlerLambda)
       }
