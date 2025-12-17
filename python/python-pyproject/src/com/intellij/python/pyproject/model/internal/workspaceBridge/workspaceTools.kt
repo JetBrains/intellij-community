@@ -56,7 +56,7 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfo) {
  *
  * For each module in [storage] stores `sdkId` and `moduleId`, then calls [transfer] and sets `sdkId` for modules with the same id
  */
-private fun relocateUserDefinedModuleSdk(storage: MutableEntityStorage, transfer: () -> Unit) {
+internal fun relocateUserDefinedModuleSdk(storage: MutableEntityStorage, transfer: () -> Unit) {
 
   // Store SDK
   val moduleIdToSdkId = storage.entities(ModuleEntity::class.java)
@@ -203,7 +203,7 @@ private suspend fun createEntityStorage(
 }
 
 
-private class PyProjectTomlEntitySource(tomlFile: VirtualFileUrl) : EntitySource {
+internal class PyProjectTomlEntitySource(tomlFile: VirtualFileUrl) : EntitySource {
   override val virtualFileUrl: VirtualFileUrl = tomlFile
 }
 
