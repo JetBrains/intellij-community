@@ -105,11 +105,19 @@ open class CodeVisionHost(val project: Project) {
   val invalidateProviderSignal: Signal<LensInvalidateSignal> = Signal()
 
   var providers: List<CodeVisionProvider<*>> = CodeVisionProviderFactory.createAllProviders(project)
+    private set
 
   private val defaultSortedProvidersList = mutableListOf<String>()
 
   @RequiresEdt
-  open fun initialize() {
+  internal fun initializeIfNeeded() {
+    if (_isInitialised) return
+    initialize()
+    _isInitialised = true
+  }
+
+  @RequiresEdt
+  protected open fun initialize() {
     lifeSettingModel.isRegistryEnabled.whenTrue(codeVisionLifetime) { enableCodeVisionLifetime ->
       runReadAction {
         if (project.isDisposed) {
@@ -128,12 +136,7 @@ open class CodeVisionHost(val project: Project) {
   val isInitialised: Boolean get() = _isInitialised
   private var _isInitialised = false
 
-  @RequiresEdt
-  fun finishInitialisation() {
-    _isInitialised = true
-  }
-
-  open fun collectAllProviders(): List<Pair<String, CodeVisionProvider<*>>> {
+  protected open fun collectAllProviders(): List<Pair<String, CodeVisionProvider<*>>> {
     return providers.map { it.id to it }
   }
 
