@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui.components.common
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.step
@@ -17,7 +18,6 @@ import com.intellij.driver.sdk.ui.remote.Window
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitForIndicators
 import java.awt.Frame
-import java.awt.Point
 import javax.swing.JFrame
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -93,7 +93,7 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
 
   override fun toFront() {
     super.toFront()
-    click(Point(component.width / 2, 0))
+    robot.click(getLocationOnScreen().apply { translate(component.width / 2, 0) }, RemoteMouseButton.LEFT)
   }
 
   fun isMinimized() = ideaFrameComponent.getState() == Frame.ICONIFIED
