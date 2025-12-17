@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution
 
+import com.intellij.idea.TestFor
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.eel.EelOsFamily
@@ -12,6 +13,7 @@ import org.jetbrains.idea.maven.project.MavenWrapper
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.junit.Assume
 import org.junit.Test
+import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -59,7 +61,8 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
     waitForImportWithinTimeout {
       mavenGeneralSettings.mavenHomeType = MavenWrapper
       val path = MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toString()
-      val executionInfo = execute(MavenRunnerParameters(true, anotherLinkedProject.parent.path, null as String?, mutableListOf("verify"), emptyList()))
+      val executionInfo =
+        execute(MavenRunnerParameters(true, anotherLinkedProject.parent.path, null as String?, mutableListOf("verify"), emptyList()))
       assertTrue("Should run bundled maven ($path) in this case, but command line was: ${executionInfo.system}",
                  executionInfo.system.contains(if (SystemInfo.isWindows) "\\bin\\mvn.cmd" else "/bin/mvn"))
 
@@ -88,9 +91,11 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
          <version>1</version>"""
     )
 
-    val executionInfo = execute(MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("verify"), emptyList()), settings = MavenRunnerSettings().also {
-      it.setVmOptions("-XABC")
-    })
+    val executionInfo =
+      execute(MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("verify"), emptyList()),
+              settings = MavenRunnerSettings().also {
+                it.setVmOptions("-XABC")
+              })
     assertTrue("Should run maven", executionInfo.stdout.contains(mavenOutput))
     shouldContainOption(executionInfo, "-XABC")
   }
@@ -108,9 +113,11 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
          <version>1</version>"""
     )
 
-    val executionInfo = execute(MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("verify"), emptyList()), settings = MavenRunnerSettings().also {
-      it.setVmOptions("-XABC")
-    })
+    val executionInfo =
+      execute(MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("verify"), emptyList()),
+              settings = MavenRunnerSettings().also {
+                it.setVmOptions("-XABC")
+              })
     assertTrue("Should run maven", executionInfo.stdout.contains(mavenOutput))
     shouldContainOption(executionInfo, "-XABC")
   }
@@ -131,7 +138,6 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
       Files.write(binFile, "#!/bin/sh\necho $mavenOutput\necho $@ \nprintenv ".toByteArray(StandardCharsets.UTF_8))
     }
   }
-
 
 
   @Test
@@ -156,7 +162,11 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
     )
     createFakeProjectWrapper()
     mavenGeneralSettings.mavenHomeType = MavenWrapper
-    val executionInfo = execute(MavenRunnerParameters(true, projectPath.resolve("m1").toCanonicalPath(), null as String?, mutableListOf("verify"), emptyList()))
+    val executionInfo = execute(MavenRunnerParameters(true,
+                                                      projectPath.resolve("m1").toCanonicalPath(),
+                                                      null as String?,
+                                                      mutableListOf("verify"),
+                                                      emptyList()))
     assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
 
   }
@@ -172,7 +182,11 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
     createFakeProjectWrapper()
     mavenGeneralSettings.mavenHomeType = MavenWrapper
 
-    val debugExecInfo = debugMavenRunConfiguration(MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("exec:java"), emptyList()))
+    val debugExecInfo = debugMavenRunConfiguration(MavenRunnerParameters(true,
+                                                                         projectPath.toCanonicalPath(),
+                                                                         null as String?,
+                                                                         mutableListOf("exec:java"),
+                                                                         emptyList()))
     assertTrue("Should run wrapper", debugExecInfo.stdout.contains(wrapperOutput))
     val debugOpts = debugExecInfo.stdout.lines().singleOrNull { it.startsWith("MAVEN_OPTS") }
     assertNotNull(debugExecInfo.toString(), debugOpts)
@@ -200,7 +214,8 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
                                   it.environmentProperties = mapOf("FOOOOO" to "BAAAAAAR")
                                 })
     assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
-    assertTrue("Should pass env variables in run configuration  but stdout: ${executionInfo.stdout}", executionInfo.stdout.contains("FOOOOO=BAAAAAAR"))
+    assertTrue("Should pass env variables in run configuration  but stdout: ${executionInfo.stdout}",
+               executionInfo.stdout.contains("FOOOOO=BAAAAAAR"))
 
   }
 
@@ -222,7 +237,31 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
                                   it.environmentProperties = mapOf("MAVEN_OPTS" to "-Dfile.encoding=CP866")
                                 })
     assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
-    assertTrue("Should pass env variables in run configuration  but stdout: ${executionInfo.stdout}", executionInfo.stdout.contains("MAVEN_OPTS=-Dfile.encoding=CP866"))
+    assertTrue("Should pass env variables in run configuration  but stdout: ${executionInfo.stdout}",
+               executionInfo.stdout.contains("MAVEN_OPTS=-Dfile.encoding=CP866"))
+
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-382803"])
+  fun testShouldUseExistingEncodingIfDefinedInMavenOptsWithQuotes() = runBlocking {
+    importProjectAsync("""
+         <groupId>test</groupId>
+         <artifactId>project</artifactId>
+         <version>1</version>
+         """
+    )
+    createFakeProjectWrapper()
+    mavenGeneralSettings.mavenHomeType = MavenWrapper
+    val executionInfo = execute(params = MavenRunnerParameters(
+      true, projectPath.toCanonicalPath(),
+      null as String?,
+      mutableListOf("verify"), emptyList()),
+                                settings = MavenRunnerSettings().also {
+                                  it.environmentProperties = mapOf("MAVEN_OPTS" to "-Dfile.encoding=\"CP866\"")
+                                })
+    assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
+    assertEquals("Should take encoding from maven_opts", Charset.forName("CP866"), executionInfo.charset)
 
   }
 
@@ -244,7 +283,8 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
                                   it.environmentProperties = mapOf("JAVA_TOOLS_OPTIONS" to "-Dfile.encoding=CP866")
                                 })
     assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
-    assertTrue("Should pass env variables in run configuration  but stdout: ${executionInfo.stdout}", executionInfo.stdout.contains("JAVA_TOOLS_OPTIONS=-Dfile.encoding=CP866"))
+    assertTrue("Should pass env variables in run configuration  but stdout: ${executionInfo.stdout}",
+               executionInfo.stdout.contains("JAVA_TOOLS_OPTIONS=-Dfile.encoding=CP866"))
 
   }
 
@@ -333,10 +373,11 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
                                 }
     )
     assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
-    assertTrue("Should proper pass local repository: ${executionInfo.system}", executionInfo.system.contains(" -Dmaven.repo.local=$localCache "))
+    assertTrue("Should proper pass local repository: ${executionInfo.system}",
+               executionInfo.system.contains(" -Dmaven.repo.local=$localCache "))
 
   }
-  
+
   companion object {
     const val wrapperOutput = "WRAPPER REPLACEMENT in Intellij tests"
     const val mavenOutput = "MAVEN REPLACEMENT in Intellij tests"
