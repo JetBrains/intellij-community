@@ -1,11 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle
+package org.jetbrains.plugins.gradle.completion
 
 import com.intellij.openapi.components.service
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.completion.api.*
 import org.jetbrains.plugins.gradle.service.cache.GradleLocalRepositoryIndexer
 
-private class GradleDependencyCompletionContributor : DependencyCompletionContributor {
+@ApiStatus.Internal
+class GradleDependencyCompletionContributor : DependencyCompletionContributor {
 
   override fun isApplicable(context: DependencyCompletionContext): Boolean {
     return context is GradleDependencyCompletionContext
