@@ -50,6 +50,7 @@ public abstract class MergeWindow {
       .setParent(myHints.getParent())
       .setDimensionServiceKey(dialogGroupKey)
       .setInitialSize(JBUI.DialogSizes.extraLarge())
+      .setMaximizable(true)
       .setPreferredFocusedComponent(() -> myProcessor.getPreferredFocusedComponent())
       .setOnShowCallback(() -> WriteIntentReadAction.run(() -> initProcessor(myProcessor)))
       .setOnCloseHandler(() -> myProcessor.checkCloseAction())
