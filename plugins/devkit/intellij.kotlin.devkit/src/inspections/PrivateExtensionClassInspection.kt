@@ -9,6 +9,7 @@ import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.inspections.ExtensionUtil
 import org.jetbrains.idea.devkit.inspections.ExtensionUtil.isExtensionPointImplementationCandidate
+import org.jetbrains.idea.devkit.inspections.isServiceImplementationRegisteredInPluginXml
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -27,10 +28,11 @@ internal class PrivateExtensionClassInspection : LocalInspectionTool() {
         if (!klass.isPrivate()) return
 
         val ktLightClass = klass.toLightClass() ?: return
-        if (!isExtensionOrAction(ktLightClass)) return
-
-        holder.registerProblem(klass.modifierList ?: klass, DevKitKotlinBundle.message("inspection.private.extension.class.text"),
-                               InternalVisibilityFix())
+        if (isExtensionOrAction(ktLightClass)
+            || isServiceImplementationRegisteredInPluginXml(ktLightClass)) {
+          holder.registerProblem(klass.modifierList ?: klass, DevKitKotlinBundle.message("inspection.private.extension.class.text"),
+                                 InternalVisibilityFix())
+        }
 
         super.visitClass(klass)
       }

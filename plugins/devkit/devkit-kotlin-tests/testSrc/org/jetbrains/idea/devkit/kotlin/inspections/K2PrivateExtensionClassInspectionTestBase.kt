@@ -46,6 +46,25 @@ abstract class K2PrivateExtensionClassInspectionTestBase : LightDevKitInspection
       public class AnAction { }
     """.trimIndent())
 
+    myFixture.addClass("""
+      package com.intellij.util.xmlb.annotations;
+      
+      public @interface Attribute { String value() default ""; }
+    """.trimIndent())
+    myFixture.addClass("""
+      package com.intellij.openapi.components;
+      
+      import com.intellij.util.xmlb.annotations.Attribute;
+      
+      public class ServiceDescriptor {
+        @Attribute("serviceImplementation")
+        public String serviceImplementation;
+      
+        @Attribute("serviceInterface")
+        public String serviceInterface;
+      }
+    """.trimIndent())
+
     myFixture.configureByFile("plugin.xml")
     myFixture.enableInspections(PrivateExtensionClassInspection())
   }
