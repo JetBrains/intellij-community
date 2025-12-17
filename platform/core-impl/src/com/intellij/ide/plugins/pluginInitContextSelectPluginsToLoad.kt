@@ -95,8 +95,7 @@ private fun PluginInitializationContext.applyDisabledAndIncompatibleWithForEssen
   compatiblePlugins: List<PluginMainDescriptor>,
   onPluginExcluded: (PluginMainDescriptor, PluginNonLoadReason) -> Unit
 ): List<PluginMainDescriptor> {
-  val essentialIds = essentialPlugins + setOf(CORE_ID)
-  val essentialPlugins = compatiblePlugins.filter { it.pluginId in essentialIds }
+  val essentialPlugins = compatiblePlugins.filter { it.pluginId in essentialPlugins }
   val ambiguousPluginSet = AmbiguousPluginSet.build(compatiblePlugins)
   val allEssentialModules = PluginDependencyAnalysis.getRequiredTransitiveModules(
     this,
@@ -135,7 +134,7 @@ private fun PluginInitializationContext.selectFromExplicitSubset(
   onPluginExcluded: (PluginMainDescriptor, PluginNonLoadReason) -> Unit,
 ): List<PluginMainDescriptor> {
   val compatiblePlugins = selectMostRecentCompatible(discoveredPlugins, onPluginExcluded)
-  val pluginIdsSubset = essentialPlugins + explicitPluginSubsetToLoad!! + setOf(CORE_ID)
+  val pluginIdsSubset = essentialPlugins + explicitPluginSubsetToLoad!!
   val pluginSubset = compatiblePlugins.filter { it.pluginId in pluginIdsSubset }
   val ambiguousPluginSet = AmbiguousPluginSet.build(compatiblePlugins)
   val requiredModules = PluginDependencyAnalysis.getRequiredTransitiveModules(

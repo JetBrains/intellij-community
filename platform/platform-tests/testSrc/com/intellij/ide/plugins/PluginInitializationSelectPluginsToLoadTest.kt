@@ -764,33 +764,6 @@ class PluginInitializationSelectPluginsToLoadTest {
     }
 
     @Test
-    fun `CORE plugin is always included in subset`() {
-      plugin(PluginManagerCore.CORE_ID.idString) { version = "1.0" }.buildDir(pluginsDirPath.resolve("core"))
-      plugin("foo") { version = "1.0" }.buildDir(pluginsDirPath.resolve("foo"))
-      plugin("bar") { version = "1.0" }.buildDir(pluginsDirPath.resolve("bar"))
-
-      val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
-      val initContext = createInitContext(
-        explicitPluginSubsetToLoad = setOf(PluginId.getId("foo"))
-      )
-
-      val filteredResult = initContext.selectPluginsToLoad(
-        discoveryResult.discoveredPlugins,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
-      )
-
-      // CORE and foo should be loaded
-      assertThat(filteredResult.plugins).hasSize(2)
-      assertThat(filteredResult.plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder(PluginManagerCore.CORE_ID.idString, "foo")
-
-      // bar excluded
-      assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins::class.java)
-      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("bar")
-    }
-
-    @Test
     fun `transitive dependencies are included in subset`() {
       plugin("a") { version = "1.0" }.buildDir(pluginsDirPath.resolve("a"))
       plugin("b") {
@@ -915,8 +888,9 @@ class PluginInitializationSelectPluginsToLoadTest {
       assertThat(notRequiredExclusion!!.plugin.version).isEqualTo("2.0")
     }
 
+
     @Test
-    fun `empty explicit subset loads only essential and CORE plugins`() {
+    fun `empty explicit subset loads only essential plugins`() {
       plugin(PluginManagerCore.CORE_ID.idString) { version = "1.0" }.buildDir(pluginsDirPath.resolve("core"))
       plugin("foo") { version = "1.0" }.buildDir(pluginsDirPath.resolve("foo"))
       plugin("bar") { version = "1.0" }.buildDir(pluginsDirPath.resolve("bar"))
@@ -924,7 +898,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
       val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
       val initContext = createInitContext(
-        essentialPlugins = setOf(PluginId.getId("foo")),
+        essentialPlugins = setOf(PluginId.getId("foo"), PluginManagerCore.CORE_ID),
         explicitPluginSubsetToLoad = emptySet()
       )
 
