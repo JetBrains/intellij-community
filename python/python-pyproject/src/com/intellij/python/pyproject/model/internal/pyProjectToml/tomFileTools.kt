@@ -1,4 +1,4 @@
-package com.intellij.python.pyproject.model.internal
+package com.intellij.python.pyproject.model.internal.pyProjectToml
 
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.python.pyproject.PY_PROJECT_TOML
@@ -54,12 +54,9 @@ internal suspend fun walkFileSystem(root: Directory): FSWalkInfo {
   return FSWalkInfo(tomlFiles = tomlFiles, excludeDir.toSet())
 }
 
-internal data class FSWalkInfo(val tomlFiles: Map<Path, PyProjectToml>, val excludeDir: Set<Directory>)
-
-internal suspend fun getProjectStructureDefault(
+ suspend fun getProjectStructureDefault(
   entries: Map<ProjectName, PyProjectTomlProject>,
   rootIndex: Map<Directory, ProjectName>,
-  //  dependenciesGetter: (PyProjectTomlProject) -> Set<Directory>,
 ): ProjectStructureInfo = withContext(Dispatchers.Default) {
   val deps = entries.asSequence().associate { (name, entry) ->
     val deps = getDependenciesFromToml(entry.pyProjectToml).mapNotNull { dir ->
