@@ -65,7 +65,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     )
 
     val consoleView = if (SplitDebuggerMode.isSplitDebugger()) {
-      currentSession.consoleView!!.toRpc(currentSession.tabCoroutineScope, debugProcess)
+      currentSession.consoleView?.toRpc(currentSession.tabCoroutineScope, debugProcess)
     }
     else {
       null
