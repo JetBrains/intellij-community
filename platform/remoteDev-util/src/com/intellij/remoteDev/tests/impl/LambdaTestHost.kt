@@ -37,6 +37,7 @@ import java.io.Serializable
 import java.net.InetAddress
 import java.net.URLClassLoader
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.io.path.Path
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.isSubclassOf
@@ -251,7 +252,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
           assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
           withContext(ideContext.coroutineContext + Dispatchers.Default + CoroutineName("Lambda task: ${lambda.stepName}") + clientIdContextToRunLambda()) {
             runLogged(lambda.stepName, 10.minutes) {
-              val urls = lambda.classPath.map { File(it).toURI().toURL() }
+              val urls = lambda.classPath.map { Path(it).toUri().toURL() }
               URLClassLoader(urls.toTypedArray(), testModuleDescriptor?.pluginClassLoader ?: this::class.java.classLoader).use { cl ->
                 SerializedLambdaWithIdeContextHelper().let { loader ->
                   val params = lambda.parametersBase64.map {
