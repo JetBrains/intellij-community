@@ -263,6 +263,8 @@
                  description="Use ArtifactResolutionQuery instead of ArtifactView to resolve Javadoc/Sources"/>
     <registryKey key="gradle.auto.auto.jdk.fix.disabled" defaultValue="false"
                  description="Disable attempt to fix unknown JDK in Gradle configuration on project open"/>
+    <registryKey key="gradle.dependency.completion.service" defaultValue="true"
+                 description="Use dependency completion service for dependency completion in gradle scripts"/>
 
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <warmupConfigurator implementation="org.jetbrains.plugins.gradle.GradleWarmupConfigurator"/>
