@@ -10,7 +10,16 @@ resourcegroup(
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/toml",
+    "//plugins/toml/core",
+    "//plugins/toml/backend",
+    "//plugins/toml/frontend",
+    "//plugins/toml/json",
+    "//plugins/toml/grazie",
+    "//platform/testFramework",
+  ]
 )
 
 jvm_library(
@@ -35,7 +44,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
     "//plugins/grazie/src/test:grazie-tests_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.toml.tests` end
 

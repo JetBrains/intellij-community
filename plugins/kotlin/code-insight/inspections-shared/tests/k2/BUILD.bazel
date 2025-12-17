@@ -50,7 +50,8 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
-  ]
+  ],
+  runtime_deps = [":k2"]
 )
 ### auto-generated section `build kotlin.code-insight.inspections-shared.tests.k2` end
 

@@ -29,7 +29,8 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/execution",
     "//platform/core-api:core",
-  ]
+  ],
+  runtime_deps = [":conda"]
 )
 ### auto-generated section `build intellij.python.community.junit5Tests.framework.conda` end
 

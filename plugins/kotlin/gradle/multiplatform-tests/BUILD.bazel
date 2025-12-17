@@ -4,7 +4,23 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "multiplatform-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/gradle/java",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//plugins/kotlin/gradle/gradle",
+    "//plugins/kotlin/compiler-plugins/lombok/gradle",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlin-tooling-core",
+    "//plugins/kotlin/base/project-model",
+    "//android/android-plugin:plugin",
+    "//plugins/kotlin/gradle/gradle-java/tests.shared",
+  ]
 )
 
 jvm_library(
@@ -50,7 +66,8 @@ jvm_library(
     "//plugins/gradle/java:java-tests_test_lib",
     "//plugins/kotlin/gradle/gradle-java/tests.shared",
     "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
-  ]
+  ],
+  runtime_deps = [":multiplatform-tests"]
 )
 ### auto-generated section `build intellij.kotlin.gradle.multiplatformTests` end
 

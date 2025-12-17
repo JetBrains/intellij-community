@@ -4,7 +4,18 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "compiler-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//java/compiler/impl",
+    "//java/compiler/openapi:java-compiler",
+    "//java/testFramework",
+    "//java/openapi:java",
+    "//java/compiler/instrumentation-util",
+    "//java/idea-ui:ui",
+    "//spellchecker",
+    "//platform/core-ui",
+    "//platform/workspace/jps",
+  ]
 )
 
 jvm_library(
@@ -41,7 +52,7 @@ jvm_library(
     "@lib//:jet_check",
     "//java/testFramework/backend",
   ],
-  runtime_deps = ["//spellchecker"]
+  runtime_deps = [":compiler-tests"]
 )
 ### auto-generated section `build intellij.java.compiler.tests` end
 

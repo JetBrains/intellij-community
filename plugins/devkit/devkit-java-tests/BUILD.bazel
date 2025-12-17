@@ -10,7 +10,20 @@ resourcegroup(
 jvm_library(
   name = "java-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/ide-core-impl",
+    "//plugins/devkit",
+    "//xml/dom-impl",
+    "//jvm/jvm-analysis-api:analysis",
+    "//platform/usageView",
+    "//plugins/devkit/devkit-tests:testFramework",
+    "//platform/testFramework/junit5/codeInsight",
+    "//plugins/properties:properties-backend",
+    "//platform/core-ui",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+  ]
 )
 
 jvm_library(
@@ -72,7 +85,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//java/codeserver/highlighting",
   ],
-  runtime_deps = ["//plugins/devkit"]
+  runtime_deps = [":java-tests"]
 )
 ### auto-generated section `build intellij.devkit.java.tests` end
 

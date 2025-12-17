@@ -29,7 +29,13 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "test",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/core-api:core",
+    "//java/debugger/openapi:java-debugger",
+    "//plugins/kotlin/uast/uast-kotlin",
+    "//plugins/kotlin/gradle/gradle",
+  ]
 )
 
 jvm_library(
@@ -115,10 +121,6 @@ jvm_library(
     "//plugins/kotlin/idea/tests:tests_test_lib",
     "//platform/execution",
   ],
-  runtime_deps = [
-    "//platform/core-api:core",
-    "//plugins/kotlin/uast/uast-kotlin",
-    "//plugins/kotlin/gradle/gradle",
-  ]
+  runtime_deps = [":test"]
 )
 ### auto-generated section `build kotlin.jvm-debugger.test` end

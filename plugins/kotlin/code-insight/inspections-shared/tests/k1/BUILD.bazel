@@ -50,7 +50,8 @@ jvm_library(
     "//platform/util/jdom",
     "//plugins/kotlin/code-insight/inspections-k1:kotlin-code-insight-inspections-k1",
     "//platform/core-ui",
-  ]
+  ],
+  runtime_deps = [":k1"]
 )
 ### auto-generated section `build kotlin.code-insight.inspections-shared.tests.k1` end
 

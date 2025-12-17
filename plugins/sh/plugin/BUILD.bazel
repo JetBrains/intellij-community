@@ -36,14 +36,6 @@ jvm_library(
   module_name = "intellij.sh.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    "//plugins/sh/plugin",
-    "//plugins/sh/core",
-    "//plugins/sh/backend",
-    "//plugins/sh/terminal",
-    "//plugins/sh/copyright",
-    "//plugins/sh/markdown",
-    "//plugins/sh/python",
-  ]
+  runtime_deps = [":plugin-main"]
 )
 ### auto-generated section `build intellij.sh.plugin.main` end

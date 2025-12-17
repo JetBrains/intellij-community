@@ -4,7 +4,25 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:junit4",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/jvm/shared",
+    "//plugins/kotlin/coverage",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/test-framework",
+    "//plugins/kotlin/uast/uast-kotlin",
+    "//plugins/kotlin/gradle/gradle",
+    "//platform/core-impl",
+    "//platform/indexing-api:indexing",
+    "//plugins/coverage",
+  ]
 )
 
 jvm_library(
@@ -40,11 +58,7 @@ jvm_library(
     "//plugins/coverage",
     "//plugins/coverage:coverage_test_lib",
   ],
-  runtime_deps = [
-    "//plugins/kotlin/uast/uast-kotlin",
-    "//plugins/kotlin/gradle/gradle",
-    "//platform/indexing-api:indexing",
-  ]
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.coverage.tests` end
 

@@ -23,7 +23,8 @@ jvm_library(
     "//plugins/grazie/src/test:grazie-tests_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "//platform/core-api:core",
-  ]
+  ],
+  runtime_deps = [":kotlin-grazie-tests"]
 )
 ### auto-generated section `build intellij.kotlin.grazie.tests` end
 

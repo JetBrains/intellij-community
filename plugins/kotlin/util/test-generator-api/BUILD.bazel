@@ -28,7 +28,8 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/util/jdom",
     "//java/java-runtime:rt",
-  ]
+  ],
+  runtime_deps = [":test-generator-api"]
 )
 ### auto-generated section `build kotlin.util.test-generator-api` end
 

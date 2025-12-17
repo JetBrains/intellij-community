@@ -54,7 +54,8 @@ jvm_library(
     "@lib//:junit4",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ]
+  ],
+  runtime_deps = [":progress-tests"]
 )
 ### auto-generated section `build intellij.platform.util.progress.tests` end
 

@@ -59,7 +59,26 @@ resourcegroup(
 jvm_library(
   name = "builtInServer-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/ide-core-impl",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/xdebugger-api:debugger",
+    "//libraries/guava",
+    "//libraries/gson",
+    "//libraries/commons/imaging",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/vcs-api:vcs",
+    "//platform/built-in-server:builtInServer-impl",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/netty/buffer",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+  ]
 )
 
 jvm_library(
@@ -98,7 +117,8 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
-  ]
+  ],
+  runtime_deps = [":builtInServer-tests"]
 )
 ### auto-generated section `build intellij.platform.builtInServer.tests` end
 

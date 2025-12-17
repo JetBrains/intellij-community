@@ -22,7 +22,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "parcelize",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//plugins/kotlin/plugin/k2"]
 )
 
 jvm_library(
@@ -47,6 +48,7 @@ jvm_library(
     "//java/testFramework",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//android/streaming",
-  ]
+  ],
+  runtime_deps = [":parcelize"]
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test.parcelize` end

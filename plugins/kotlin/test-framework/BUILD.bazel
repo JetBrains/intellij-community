@@ -4,7 +4,21 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "test-framework",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = ["//java/testFramework"],
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/ide-core-impl",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/project-configuration",
+  ]
 )
 
 jvm_library(
@@ -66,7 +80,8 @@ jvm_library(
     "//platform/statistics/testFramework",
     "//plugins/kotlin/base/frontend-agnostic",
   ],
-  exports = ["//java/testFramework"]
+  exports = ["//java/testFramework"],
+  runtime_deps = [":test-framework"]
 )
 ### auto-generated section `build intellij.kotlin.testFramework` end
 

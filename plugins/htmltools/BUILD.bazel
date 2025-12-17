@@ -39,7 +39,12 @@ jvm_library(
 jvm_library(
   name = "html-tools-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/htmltools:html-tools",
+    "//xml/impl",
+    "//platform/core-ui",
+  ]
 )
 
 jvm_library(
@@ -72,7 +77,8 @@ jvm_library(
     "//platform/refactoring",
     "//platform/core-impl",
     "//xml/xml-analysis-api:analysis",
-  ]
+  ],
+  runtime_deps = [":html-tools-tests"]
 )
 ### auto-generated section `build intellij.html.tools.tests` end
 

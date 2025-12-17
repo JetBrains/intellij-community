@@ -10,7 +10,11 @@ resourcegroup(
 jvm_library(
   name = "maven-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/vcs-api:vcs",
+    "//platform/util/progress",
+  ]
 )
 
 jvm_library(
@@ -84,7 +88,8 @@ jvm_library(
     "//xml/xml-psi-impl:psi-impl",
     "//xml/xml-ui-common:ui-common",
     "//platform/execution",
-  ]
+  ],
+  runtime_deps = [":maven-tests"]
 )
 ### auto-generated section `build intellij.maven.tests` end
 

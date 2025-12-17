@@ -20,7 +20,8 @@ jvm_library(
     "//platform/util",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ]
+  ],
+  runtime_deps = [":ide-plugin-projectStructureTests"]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.projectStructureTests` end
 

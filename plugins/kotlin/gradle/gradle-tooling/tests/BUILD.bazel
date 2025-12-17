@@ -4,7 +4,19 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-test",
+    "@lib//:junit4",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//plugins/gradle/tooling-extension-api:toolingExtension",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "@lib//:kotlin-tooling-core",
+  ]
 )
 
 jvm_library(
@@ -27,7 +39,8 @@ jvm_library(
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     "@lib//:gradle",
     "@lib//:kotlin-tooling-core",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.gradle.tooling.tests` end
 

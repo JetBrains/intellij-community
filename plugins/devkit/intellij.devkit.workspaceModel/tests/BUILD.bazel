@@ -4,7 +4,18 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/devkit",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/workspace/jps/tests",
+    "@lib//:workspace-model-codegen",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//libraries/rd/core",
+    "//libraries/rd/framework",
+    "//platform/util/jdom",
+    "//plugins/editorconfig:editorconfig-plugin",
+  ]
 )
 
 jvm_library(
@@ -54,7 +65,7 @@ jvm_library(
     "//plugins/editorconfig:editorconfig-plugin",
     "@lib//:studio-platform",
   ],
-  runtime_deps = ["//plugins/devkit"]
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.devkit.workspaceModel.tests` end
 

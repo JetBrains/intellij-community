@@ -13,7 +13,14 @@ create_kotlinc_options(
 jvm_library(
   name = "durability",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/util-ex",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util",
+    "//platform/util/storages",
+    "//libraries/fastutil",
+  ]
 )
 
 jvm_library(
@@ -35,7 +42,8 @@ jvm_library(
     "//platform/util",
     "//platform/util/storages",
     "//libraries/fastutil",
-  ]
+  ],
+  runtime_deps = [":durability"]
 )
 ### auto-generated section `build intellij.platform.durability` end
 

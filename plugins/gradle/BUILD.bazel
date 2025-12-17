@@ -109,7 +109,18 @@ resourcegroup(
 jvm_library(
   name = "gradle-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = ["//platform/external-system-api/testFramework"],
+  runtime_deps = [
+    "//platform/backend/workspace",
+    "//platform/external-system-api/dependency-updater",
+    "//platform/observable",
+    "//platform/core-ui",
+    "//platform/execution.dashboard",
+    "//libraries/gson",
+    "//libraries/guava",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
 )
 
 jvm_library(
@@ -183,7 +194,7 @@ jvm_library(
     "@lib//:junit5Pioneer",
   ],
   exports = ["//platform/external-system-api/testFramework"],
-  runtime_deps = ["//platform/execution.dashboard"]
+  runtime_deps = [":gradle-tests"]
 )
 ### auto-generated section `build intellij.gradle.tests` end
 

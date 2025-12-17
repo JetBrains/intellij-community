@@ -46,7 +46,8 @@ jvm_library(
     "//platform/lang-core",
     "//platform/core-ui",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.intentions.tests` end
 

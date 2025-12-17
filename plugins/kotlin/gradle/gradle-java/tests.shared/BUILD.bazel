@@ -4,7 +4,19 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests.shared",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:kotlin-gradle-plugin-idea"],
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/smRunner",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/backend/workspace",
+    "@lib//:kotlin-gradle-plugin-idea",
+    "@lib//:kotlin-test",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/gradle/gradle-java",
+  ]
 )
 
 jvm_library(
@@ -98,7 +110,8 @@ jvm_library(
     "//platform/execution",
     "//plugins/junit",
   ],
-  exports = ["@lib//:kotlin-gradle-plugin-idea"]
+  exports = ["@lib//:kotlin-gradle-plugin-idea"],
+  runtime_deps = [":tests.shared"]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java.tests.shared` end
 

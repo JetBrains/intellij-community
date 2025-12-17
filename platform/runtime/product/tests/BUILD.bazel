@@ -4,7 +4,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/runtime/product"]
 )
 
 jvm_library(
@@ -18,7 +19,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/runtime/repository",
     "//platform/runtime/repository/tests:tests_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.platform.runtime.product.tests` end
 

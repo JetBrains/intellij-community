@@ -4,7 +4,27 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//libraries/asm",
+    "//plugins/kotlin/uast/uast-kotlin-base",
+    "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-k2",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/fir",
+    "//uast/uast-common:uast",
+    "//platform/core-api:core",
+    "//java/java-psi-impl:psi-impl",
+    "//uast/uast-java:java-uast",
+    "//plugins/kotlin/uast/uast-kotlin-idea-fir:kotlin-uast-idea",
+    "@lib//:kotlinc-low-level-api-fir",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "@lib//:kotlinc-symbol-light-classes",
+  ]
 )
 
 jvm_library(
@@ -44,10 +64,7 @@ jvm_library(
     "@lib//:kotlinc-symbol-light-classes",
     "//uast/testFramework",
   ],
-  runtime_deps = [
-    "//plugins/kotlin/fir",
-    "//plugins/kotlin/uast/uast-kotlin-idea-fir:kotlin-uast-idea",
-  ]
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.uast.tests` end
 

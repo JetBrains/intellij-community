@@ -4,7 +4,13 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "test",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/fir",
+    "//platform/usageView",
+    "//plugins/kotlin/base/analysis",
+  ]
 )
 
 jvm_library(
@@ -32,7 +38,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/base/analysis",
   ],
-  runtime_deps = ["//plugins/kotlin/fir"]
+  runtime_deps = [":test"]
 )
 ### auto-generated section `build intellij.kotlin.searching.test` end
 

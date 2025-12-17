@@ -10,7 +10,15 @@ resourcegroup(
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/workspace/storage",
+    "//platform/workspace/jps",
+    "//libraries/fastutil",
+    "//platform/lang-impl:lang-tests",
+    "//platform/core-ui",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+  ]
 )
 
 jvm_library(
@@ -57,7 +65,8 @@ jvm_library(
     "@lib//:jet_check",
     "//platform/testFramework/junit5/projectStructure",
     "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.platform.workspace.jps.tests` end
 

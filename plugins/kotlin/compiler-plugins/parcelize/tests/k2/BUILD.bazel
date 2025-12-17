@@ -32,7 +32,8 @@ jvm_library(
     "//java/testFramework",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
-  ]
+  ],
+  runtime_deps = [":kotlin-compilerPlugins-parcelize-tests"]
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.parcelize.tests` end
 

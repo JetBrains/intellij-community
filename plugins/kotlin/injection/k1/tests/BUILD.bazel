@@ -27,7 +27,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
     "//plugins/kotlin/injection/base/tests:tests_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build kotlin.injection.tests` end
 

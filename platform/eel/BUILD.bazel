@@ -19,7 +19,19 @@ jvm_library(
 jvm_library(
   name = "eel-codegen",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//plugins/copyright",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//platform/testFramework",
+    "//platform/testFramework/junit5",
+    "//platform/util/jdom",
+    "//plugins/kotlin/base/test",
+    "//plugins/kotlin:kotlin-plugin-community-main",
+  ]
 )
 
 jvm_library(
@@ -53,7 +65,7 @@ jvm_library(
     "//plugins/kotlin/base/indices",
     "//platform/execution",
   ],
-  runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"]
+  runtime_deps = [":eel-codegen"]
 )
 ### auto-generated section `build intellij.platform.eel.codegen` end
 
@@ -70,7 +82,8 @@ jps_test(
 jvm_library(
   name = "eel-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["@lib//:kotlin-stdlib"]
 )
 
 jvm_library(
@@ -87,7 +100,8 @@ jvm_library(
     "@lib//:kotlin-test-assertions-core-jvm",
     "//libraries/kotlinx/coroutines/test",
     "//platform/util-class-loader:util-classLoader",
-  ]
+  ],
+  runtime_deps = [":eel-tests"]
 )
 ### auto-generated section `build intellij.platform.eel.tests` end
 

@@ -10,7 +10,19 @@ resourcegroup(
 jvm_library(
   name = "tests.pro",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/rd/core",
+    "//python/pluginCore:community-plugin",
+    "//plugins/kotlin:kotlin-plugin-community-main",
+    "//plugins/grazie",
+    "//plugins/grazie/src:core",
+    "@lib//:grazie-tests-pro-ai-grazie-model-ner-jvm",
+    "@lib//:grazie-tests-pro-ai-grazie-model-tree-jvm",
+    "@lib//:grazie-tests-pro-ai-grazie-spell-gec-engine-local-jvm",
+    "//platform/analysis-impl",
+  ]
 )
 
 jvm_library(
@@ -59,10 +71,7 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
   ],
-  runtime_deps = [
-    "//python/pluginCore:community-plugin",
-    "//plugins/kotlin:kotlin-plugin-community-main",
-  ]
+  runtime_deps = [":tests.pro"]
 )
 ### auto-generated section `build intellij.grazie.tests.pro` end
 

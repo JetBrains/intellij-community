@@ -46,7 +46,11 @@ jvm_library(
 jvm_library(
   name = "structuralSearch-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/structuralsearch:structuralSearch",
+    "//xml/impl",
+  ]
 )
 
 jvm_library(
@@ -70,7 +74,8 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/testRunner",
     "//platform/testRunner:testRunner_test_lib",
-  ]
+  ],
+  runtime_deps = [":structuralSearch-tests"]
 )
 ### auto-generated section `build intellij.platform.structuralSearch.tests` end
 

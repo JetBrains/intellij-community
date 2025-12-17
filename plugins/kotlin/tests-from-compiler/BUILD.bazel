@@ -4,7 +4,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests-from-compiler",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/util/trove"]
 )
 
 jvm_library(
@@ -30,7 +31,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/devkit/jps-plugin:jps",
   ],
-  runtime_deps = ["//platform/util/trove"]
+  runtime_deps = [":tests-from-compiler"]
 )
 ### auto-generated section `build kotlin.testsFromCompiler` end
 

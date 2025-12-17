@@ -76,7 +76,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/evaluation-plugin/languages/python",
     "@lib//:mockito-kotlin",
-  ]
+  ],
+  runtime_deps = [":evaluationPlugin-tests"]
 )
 ### auto-generated section `build intellij.evaluationPlugin.tests` end
 

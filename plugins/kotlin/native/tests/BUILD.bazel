@@ -4,7 +4,16 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/native",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//java/idea-ui:ui",
+  ]
 )
 
 jvm_library(
@@ -25,7 +34,8 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/java-psi-api:psi",
     "//java/idea-ui:ui",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.native.tests` end
 

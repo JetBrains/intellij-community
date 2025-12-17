@@ -78,7 +78,8 @@ jvm_library(
 jvm_library(
   name = "execution-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/forms_rt:java-guiForms-rt"]
 )
 
 jvm_library(
@@ -104,7 +105,8 @@ jvm_library(
     "//platform/eel",
     "//platform/eel-provider",
     "//platform/forms_rt:java-guiForms-rt",
-  ]
+  ],
+  runtime_deps = [":execution-tests"]
 )
 ### auto-generated section `build intellij.platform.execution.tests` end
 

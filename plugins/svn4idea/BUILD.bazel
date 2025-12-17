@@ -59,7 +59,19 @@ jvm_library(
 jvm_library(
   name = "vcs-svn-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/svn4idea:vcs-svn",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/lang-api:lang",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
 )
 
 jvm_library(
@@ -91,7 +103,8 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/forms_rt:java-guiForms-rt",
-  ]
+  ],
+  runtime_deps = [":vcs-svn-tests"]
 )
 ### auto-generated section `build intellij.vcs.svn.tests` end
 

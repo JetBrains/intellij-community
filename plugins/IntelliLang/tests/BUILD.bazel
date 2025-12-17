@@ -44,7 +44,8 @@ jvm_library(
     "//platform/util/jdom",
     "//plugins/IntelliLang/backend",
     "//plugins/markdown/plugin:plugin-main",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.platform.langInjection.tests` end
 

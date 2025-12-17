@@ -37,7 +37,12 @@ jvm_library(
 jvm_library(
   name = "jps-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/groovy/jps-plugin:jps",
+    "//plugins/groovy/rt-constants:constants-rt",
+    "@lib//:kotlin-stdlib",
+  ]
 )
 
 jvm_library(
@@ -51,7 +56,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ]
+  ],
+  runtime_deps = [":jps-tests"]
 )
 ### auto-generated section `build intellij.groovy.jps.tests` end
 

@@ -4,7 +4,18 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/idea",
+    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
+  ]
 )
 
 jvm_library(
@@ -36,7 +47,8 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/idea/tests:tests_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build kotlin.compiler-plugins.kotlinx-serialization.tests` end
 

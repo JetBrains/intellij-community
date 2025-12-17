@@ -61,7 +61,8 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/java-runtime:rt",
-  ]
+  ],
+  runtime_deps = [":externalSystem-dependencyUpdater-tests"]
 )
 ### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater.tests` end
 

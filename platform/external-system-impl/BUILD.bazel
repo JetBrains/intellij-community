@@ -73,7 +73,15 @@ resourcegroup(
 jvm_library(
   name = "externalSystem-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = ["//platform/lang-impl:lang-tests"],
+  runtime_deps = [
+    "//platform/observable",
+    "//libraries/kotlin/reflect",
+    "//platform/core-ui",
+    "//platform/workspace/storage",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
 )
 
 jvm_library(
@@ -126,7 +134,8 @@ jvm_library(
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
   ],
-  exports = ["//platform/lang-impl:lang-tests_test_lib"]
+  exports = ["//platform/lang-impl:lang-tests_test_lib"],
+  runtime_deps = [":externalSystem-tests"]
 )
 ### auto-generated section `build intellij.platform.externalSystem.tests` end
 

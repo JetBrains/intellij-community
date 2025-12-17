@@ -22,7 +22,8 @@ resourcegroup(
 jvm_library(
   name = "ui-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  plugins = ["@lib//:compose-plugin"]
 )
 
 jvm_library(
@@ -51,6 +52,7 @@ jvm_library(
     "//libraries/compose-runtime-desktop",
     "//libraries/kotlinx/coroutines/test",
   ],
+  runtime_deps = [":ui-tests"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.jewel.uiTests` end

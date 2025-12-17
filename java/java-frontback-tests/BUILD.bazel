@@ -4,7 +4,20 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "frontback-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:easymock",
+    "@lib//:mockito",
+    "@lib//:assert_j",
+    "@lib//:kotlin-test",
+    "//platform/testFramework",
+    "//platform/testFramework/junit5",
+    "//platform/platform-tests:tests",
+  ],
+  runtime_deps = [
+    "//platform/ide-core-impl",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+  ]
 )
 
 jvm_library(
@@ -50,7 +63,8 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/platform-tests:tests_test_lib",
-  ]
+  ],
+  runtime_deps = [":frontback-tests"]
 )
 ### auto-generated section `build intellij.java.frontback.tests` end
 

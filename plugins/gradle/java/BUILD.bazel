@@ -93,7 +93,13 @@ resourcegroup(
 jvm_library(
   name = "java-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/observable",
+    "//platform/external-system-api/dependency-updater",
+    "//platform/core-ui",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+  ]
 )
 
 jvm_library(
@@ -165,7 +171,8 @@ jvm_library(
     "//platform/smRunner:smRunner_test_lib",
     "//platform/statistics/testFramework",
     "//platform/execution",
-  ]
+  ],
+  runtime_deps = [":java-tests"]
 )
 ### auto-generated section `build intellij.gradle.java.tests` end
 

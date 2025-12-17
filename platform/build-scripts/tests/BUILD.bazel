@@ -51,7 +51,8 @@ jvm_library(
     "//jps/model-serialization",
     "//jps/model-api:model",
     "//libraries/jsoup",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.platform.buildScripts.tests` end
 

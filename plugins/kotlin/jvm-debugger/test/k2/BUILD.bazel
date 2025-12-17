@@ -23,7 +23,12 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "kotlin-jvm-debugger-test",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/core-api:core",
+    "//plugins/kotlin/uast/uast-kotlin",
+    "//plugins/kotlin/gradle/gradle",
+  ]
 )
 
 jvm_library(
@@ -90,10 +95,6 @@ jvm_library(
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "//plugins/kotlin/base/scripting/scripting.shared",
   ],
-  runtime_deps = [
-    "//platform/core-api:core",
-    "//plugins/kotlin/uast/uast-kotlin",
-    "//plugins/kotlin/gradle/gradle",
-  ]
+  runtime_deps = [":kotlin-jvm-debugger-test"]
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test` end

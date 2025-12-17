@@ -12,7 +12,13 @@ kt_javac_options(
 jvm_library(
   name = "benchmarks",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/util/storages",
+    "//platform/indexing-impl",
+    "//platform/lang-impl",
+  ]
 )
 
 jvm_library(
@@ -38,7 +44,8 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/util:util-tests_test_lib",
     "//platform/core-impl",
-  ]
+  ],
+  runtime_deps = [":benchmarks"]
 )
 ### auto-generated section `build intellij.platform.benchmarks` end
 

@@ -4,7 +4,12 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/kotlin/plugin/k2",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//uast/uast-common:uast",
+  ]
 )
 
 jvm_library(
@@ -31,7 +36,8 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/uast/uast-kotlin-fir/tests:tests_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.uast.idea.tests` end
 

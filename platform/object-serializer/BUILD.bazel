@@ -74,7 +74,13 @@ jvm_library(
 jvm_library(
   name = "objectSerializer-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util-ex",
+    "//libraries/ion",
+    "//libraries/fastutil",
+  ]
 )
 
 jvm_library(
@@ -95,7 +101,8 @@ jvm_library(
     "//platform/object-serializer:objectSerializer-annotations",
     "//libraries/ion",
     "//libraries/fastutil",
-  ]
+  ],
+  runtime_deps = [":objectSerializer-tests"]
 )
 ### auto-generated section `build intellij.platform.objectSerializer.tests` end
 

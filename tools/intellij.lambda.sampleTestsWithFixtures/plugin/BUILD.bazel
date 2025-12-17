@@ -18,6 +18,7 @@ jvm_library(
   module_name = "intellij.lambda.sampleTestsWithFixtures.plugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":plugin_test_resources"]
+  resources = [":plugin_test_resources"],
+  runtime_deps = [":plugin"]
 )
 ### auto-generated section `build intellij.lambda.sampleTestsWithFixtures.plugin` end

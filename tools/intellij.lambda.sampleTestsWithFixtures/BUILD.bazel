@@ -73,7 +73,8 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/projectModel-api:projectModel",
-  ]
+  ],
+  runtime_deps = [":lambda-sampleTestsWithFixtures"]
 )
 ### auto-generated section `build intellij.lambda.sampleTestsWithFixtures` end
 

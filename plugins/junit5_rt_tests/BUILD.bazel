@@ -4,7 +4,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "junit-v5-rt-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/junit5_rt:junit-v5-rt",
+    "//platform/smRunner",
+  ]
 )
 
 jvm_library(
@@ -43,7 +47,8 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/execution",
-  ]
+  ],
+  runtime_deps = [":junit-v5-rt-tests"]
 )
 ### auto-generated section `build intellij.junit.v5.rt.tests` end
 

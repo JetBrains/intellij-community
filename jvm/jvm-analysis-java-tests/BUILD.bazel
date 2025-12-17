@@ -28,7 +28,8 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework",
     "@lib//:jet_check",
-  ]
+  ],
+  runtime_deps = [":analysis-java-tests"]
 )
 ### auto-generated section `build intellij.jvm.analysis.java.tests` end
 

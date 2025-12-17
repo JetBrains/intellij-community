@@ -16,7 +16,34 @@ create_kotlinc_options(
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlinc-analysis-api",
+    "//java/testFramework",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-low-level-api-fir",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//platform/usageView",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/project-structure",
+    "//platform/editor-ui-ex:editor-ex",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
+    "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
+    "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared",
+    "//plugins/kotlin/fir",
+    "//plugins/gradle:gradle-tests",
+    "//xml/xml-psi-api:psi",
+    "//plugins/kotlin/test-framework",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+  ]
 )
 
 jvm_library(
@@ -100,7 +127,8 @@ jvm_library(
     "//plugins/kotlin/kotlin.searching",
     "//plugins/kotlin/run-configurations/junit",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build kotlin.fir.tests` end
 

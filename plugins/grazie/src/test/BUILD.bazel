@@ -10,7 +10,21 @@ resourcegroup(
 jvm_library(
   name = "grazie-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//plugins/grazie",
+    "@lib//:grazie-tests-ai-grazie-spell-hunspell-de",
+    "@lib//:grazie-tests-ai-grazie-spell-hunspell-ru",
+    "@lib//:grazie-tests-ai-grazie-spell-hunspell-uk",
+  ],
+  runtime_deps = [
+    "//spellchecker",
+    "//plugins/grazie",
+    "@lib//:kotlin-test",
+    "//java/testFramework",
+    "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-languagetool-core",
+    "//platform/vcs-api:vcs",
+  ]
 )
 
 jvm_library(
@@ -71,7 +85,8 @@ jvm_library(
     "@lib//:grazie-tests-ai-grazie-spell-hunspell-de",
     "@lib//:grazie-tests-ai-grazie-spell-hunspell-ru",
     "@lib//:grazie-tests-ai-grazie-spell-hunspell-uk",
-  ]
+  ],
+  runtime_deps = [":grazie-tests"]
 )
 ### auto-generated section `build intellij.grazie.tests` end
 

@@ -11,7 +11,11 @@ create_kotlinc_options(
 jvm_library(
   name = "kotlin-refactorings-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/kotlin/fir",
+    "//plugins/kotlin/base/psi",
+  ]
 )
 
 jvm_library(
@@ -56,7 +60,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//libraries/gson",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
-  ]
+  ],
+  runtime_deps = [":kotlin-refactorings-tests"]
 )
 ### auto-generated section `build intellij.kotlin.refactorings.tests` end
 

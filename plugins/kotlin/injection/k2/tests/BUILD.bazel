@@ -36,7 +36,8 @@ jvm_library(
     "//plugins/kotlin/idea/tests:tests_test_lib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.injection.tests` end
 

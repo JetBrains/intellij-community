@@ -57,7 +57,20 @@ jvm_library(
 jvm_library(
   name = "settingsRepository-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/vcs-impl",
+    "//platform/projectModel-impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jna",
+    "//platform/core-impl",
+    "//platform/vcs-api:vcs",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//plugins/settings-repository",
+    "//platform/workspace/jps",
+  ]
 )
 
 jvm_library(
@@ -92,7 +105,8 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/util/jdom",
     "//platform/workspace/jps",
-  ]
+  ],
+  runtime_deps = [":settingsRepository-tests"]
 )
 ### auto-generated section `build intellij.settingsRepository.tests` end
 

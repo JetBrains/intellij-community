@@ -10,7 +10,8 @@ create_kotlinc_options(
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/editor-ui-ex:editor-ex"]
 )
 
 jvm_library(
@@ -37,7 +38,8 @@ jvm_library(
     "//plugins/IntelliLang:langInjection",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/IntelliLang/backend",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build kotlin.base.injection.tests` end
 

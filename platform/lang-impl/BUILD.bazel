@@ -145,7 +145,48 @@ jvm_library(
 jvm_library(
   name = "lang-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/indexing-impl",
+    "//platform/projectModel-impl",
+    "//platform/ide-core-impl",
+    "//platform/analysis-impl",
+    "//platform/structure-view-impl:structureView-impl",
+  ],
+  runtime_deps = [
+    "//platform/boot",
+    "//platform/lang-api:lang",
+    "//platform/vcs-api:vcs",
+    "//libraries/oro-matcher",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/usageView",
+    "//libraries/cli-parser",
+    "//platform/indexing-api:indexing",
+    "//platform/indexing-impl",
+    "//platform/refactoring",
+    "//platform/projectModel-impl",
+    "//platform/ide-core-impl",
+    "//libraries/guava",
+    "//platform/editor-ui-ex:editor-ex",
+    "//libraries/gson",
+    "//jps/model-impl",
+    "//platform/analysis-impl",
+    "//platform/structure-view-impl:structureView-impl",
+    "//libraries/commons/logging",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/xz",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/lang-impl/testEntities",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/diagnostic/telemetry",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
 )
 
 jvm_library(
@@ -249,7 +290,8 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/analysis-impl",
     "//platform/structure-view-impl:structureView-impl",
-  ]
+  ],
+  runtime_deps = [":lang-tests"]
 )
 ### auto-generated section `build intellij.platform.lang.tests` end
 

@@ -10,7 +10,11 @@ resourcegroup(
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/ide-core-impl",
+  ]
 )
 
 jvm_library(
@@ -54,7 +58,8 @@ jvm_library(
     "//platform/syntax/syntax-util:util",
     "//platform/core-impl",
     "//platform/util/jdom",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.json.tests` end
 

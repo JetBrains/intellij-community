@@ -20,7 +20,8 @@ jvm_library(
     "//platform/util/rt-java8",
     "@community//build:zip",
     "//libraries/hash4j",
-  ]
+  ],
+  runtime_deps = [":benchmark"]
 )
 ### auto-generated section `build intellij.platform.util.immutableKeyValueStore.benchmark` end
 

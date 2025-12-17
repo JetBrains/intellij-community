@@ -4,7 +4,31 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//libraries/kotlin/reflect",
+    "//plugins/kotlin/plugin/k1",
+    "//plugins/kotlin/base/test",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/idea",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/project-wizard/cli",
+    "//plugins/kotlin/project-wizard/core",
+    "//plugins/kotlin/project-wizard/idea",
+    "//plugins/kotlin/gradle/gradle",
+    "//platform/execution",
+    "//plugins/kotlin/gradle/gradle-java",
+    "//plugins/gradle:gradle-common",
+    "//plugins/kotlin/jvm-debugger/core-fe10",
+    "//plugins/kotlin/uast/uast-kotlin",
+  ]
 )
 
 jvm_library(
@@ -86,7 +110,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
     "//plugins/kotlin/base/scripting/scripting.shared",
   ],
-  runtime_deps = ["//plugins/kotlin/plugin/k1"]
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build kotlin.project-wizard.tests` end
 

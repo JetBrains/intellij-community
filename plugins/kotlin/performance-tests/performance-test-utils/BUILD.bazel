@@ -4,7 +4,18 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "performance-test-utils",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/execution",
+    "//plugins/kotlin/base/util",
+    "//platform/vcs-api:vcs",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/compiler-plugins/lombok/gradle",
+  ]
 )
 
 jvm_library(
@@ -63,7 +74,7 @@ jvm_library(
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "@lib//:okhttp",
   ],
-  runtime_deps = ["//plugins/kotlin/compiler-plugins/lombok/gradle"]
+  runtime_deps = [":performance-test-utils"]
 )
 ### auto-generated section `build kotlin.performance-tests.performance-test-utils` end
 

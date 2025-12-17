@@ -35,7 +35,12 @@ resourcegroup(
 jvm_library(
   name = "model-serialization-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//jps/model-serialization",
+    "//platform/projectModel-impl",
+    "//platform/workspace/jps",
+  ]
 )
 
 jvm_library(
@@ -58,7 +63,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "//jps/model-test-framework:model-testFramework",
   ],
-  runtime_deps = ["//platform/workspace/jps"]
+  runtime_deps = [":model-serialization-tests"]
 )
 ### auto-generated section `build intellij.platform.jps.model.serialization.tests` end
 

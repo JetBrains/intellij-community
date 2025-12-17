@@ -4,7 +4,21 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "//libraries/asm",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/uast/uast-kotlin",
+    "//uast/uast-common:uast",
+    "//java/java-psi-impl:psi-impl",
+    "//uast/uast-java:java-uast",
+    "@lib//:vavr",
+  ]
 )
 
 jvm_library(
@@ -49,7 +63,8 @@ jvm_library(
     "//plugins/groovy/groovy-uast-tests:uast-tests_test_lib",
     "@lib//:vavr",
     "//plugins/kotlin/idea/tests:tests_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build kotlin.uast.uast-kotlin.tests` end
 

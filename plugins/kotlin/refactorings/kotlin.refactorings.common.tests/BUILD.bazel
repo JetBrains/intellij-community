@@ -4,7 +4,15 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "kotlin-refactorings-common-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//java/openapi:java",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//libraries/kotlin/reflect",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/test-framework",
+  ]
 )
 
 jvm_library(
@@ -35,7 +43,8 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/test-framework",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-  ]
+  ],
+  runtime_deps = [":kotlin-refactorings-common-tests"]
 )
 ### auto-generated section `build kotlin.refactorings.common.tests` end
 

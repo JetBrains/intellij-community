@@ -4,7 +4,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "kotlin-gradle-codeInsight-groovy-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+  ]
 )
 
 jvm_library(
@@ -27,7 +31,8 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy",
-  ]
+  ],
+  runtime_deps = [":kotlin-gradle-codeInsight-groovy-tests"]
 )
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.groovy.tests` end
 

@@ -23,7 +23,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",
     "//plugins/junit/testFramework",
-  ]
+  ],
+  runtime_deps = [":groovy-tests"]
 )
 ### auto-generated section `build intellij.junit.groovy.tests` end
 

@@ -4,7 +4,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "java-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/smRunner"]
 )
 
 jvm_library(
@@ -43,7 +44,8 @@ jvm_library(
     "//java/compiler/openapi:java-compiler",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/execution",
-  ]
+  ],
+  runtime_deps = [":java-tests"]
 )
 ### auto-generated section `build intellij.junit.java.tests` end
 

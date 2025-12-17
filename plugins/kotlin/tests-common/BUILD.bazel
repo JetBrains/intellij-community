@@ -4,7 +4,27 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "common-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-cli",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//libraries/guava",
+    "//platform/ide-core-impl",
+    "@lib//:kotlin-test",
+    "@lib//:junit4",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/plugin",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/boot",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//java/java-psi-api:psi",
+    "//java/testFramework",
+  ]
 )
 
 jvm_library(
@@ -44,7 +64,8 @@ jvm_library(
     "//java/testFramework",
     "@lib//:kotlinc-analysis-api-impl-base",
     "//jps/model-api:model",
-  ]
+  ],
+  runtime_deps = [":common-tests"]
 )
 ### auto-generated section `build intellij.kotlin.common.tests` end
 

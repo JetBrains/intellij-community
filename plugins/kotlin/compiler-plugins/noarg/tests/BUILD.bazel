@@ -4,7 +4,25 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-noarg-compiler-plugin",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:junit4",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
+    "//plugins/kotlin/compiler-plugins/noarg/common",
+    "//plugins/kotlin/test-framework",
+    "//plugins/kotlin/gradle/gradle",
+    "//plugins/kotlin/uast/uast-kotlin",
+    "//platform/core-impl",
+    "//java/java-psi-impl:psi-impl",
+  ]
 )
 
 jvm_library(
@@ -39,10 +57,7 @@ jvm_library(
     "//platform/core-impl",
     "//java/java-psi-impl:psi-impl",
   ],
-  runtime_deps = [
-    "//plugins/kotlin/gradle/gradle",
-    "//plugins/kotlin/uast/uast-kotlin",
-  ]
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build kotlin.compiler-plugins.noarg.tests` end
 

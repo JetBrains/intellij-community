@@ -16,7 +16,41 @@ resourcegroup(
 jvm_library(
   name = "lambda-sampleTestsWithPlugin",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kodein-di-jvm",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-test",
+    "@lib//:assert_j",
+    "//libraries/kotlin/reflect",
+    "//tools/intellij.tools.ide.starter:ide-starter",
+    "//tools/intellij.tools.ide.starter.driver:ide-starter-driver",
+    "//tools/intellij.tools.ide.starter.build.server:ide-starter-build-server",
+    "//platform/projectModel-api:projectModel",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/platform-api:ide",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/testFramework/junit5",
+    "//platform/code-style-api:codeStyle",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/remoteDev-util",
+    "//platform/analysis-api:analysis",
+    "//plugins/performanceTesting/core:performanceTesting",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/util/concurrency",
+    "//platform/usageView",
+    "//tools/intellij.lambda.testFramework:lambda-testFramework",
+    "//libraries/rd/framework",
+    "//libraries/rd/core",
+  ]
 )
 
 jvm_library(
@@ -70,7 +104,8 @@ jvm_library(
     "//libraries/junit5-pioneer",
     "//libraries/rd/framework",
     "//libraries/rd/core",
-  ]
+  ],
+  runtime_deps = [":lambda-sampleTestsWithPlugin"]
 )
 ### auto-generated section `build intellij.lambda.sampleTestsWithPlugin` end
 

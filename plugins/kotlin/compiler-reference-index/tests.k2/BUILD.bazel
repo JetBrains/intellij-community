@@ -4,7 +4,12 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "kotlin-compilerReferenceIndex-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/compiler-reference-index",
+  ]
 )
 
 jvm_library(
@@ -33,7 +38,8 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
-  ]
+  ],
+  runtime_deps = [":kotlin-compilerReferenceIndex-tests"]
 )
 ### auto-generated section `build intellij.kotlin.compilerReferenceIndex.tests` end
 

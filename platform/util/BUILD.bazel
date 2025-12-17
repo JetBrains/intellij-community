@@ -72,7 +72,11 @@ resourcegroup(
 jvm_library(
   name = "util-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/core-impl",
+    "//libraries/kotlinx/coroutines/debug",
+  ]
 )
 
 jvm_library(
@@ -130,7 +134,8 @@ jvm_library(
     "//platform/ijent/buildConstants",
     "//platform/testFramework/monorepo",
     "//platform/testFramework/monorepo:monorepo_test_lib",
-  ]
+  ],
+  runtime_deps = [":util-tests"]
 )
 ### auto-generated section `build intellij.platform.util.tests` end
 

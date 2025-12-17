@@ -91,7 +91,8 @@ jvm_library(
     "//libraries/guava",
     "//platform/util/trove",
     "//libraries/commons/lang3",
-  ]
+  ],
+  runtime_deps = [":toolingExtension-tests"]
 )
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` end
 

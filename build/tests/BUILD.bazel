@@ -21,7 +21,8 @@ jvm_library(
     "//platform/util",
     "//libraries/kotlinx/coroutines/core",
     "//platform/build-scripts/downloader",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.idea.community.build.tests` end
 

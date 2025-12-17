@@ -10,7 +10,37 @@ resourcegroup(
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/observable",
+    "//platform/vcs-api:vcs",
+    "//platform/testFramework",
+    "//platform/platform-impl:ide-impl",
+    "//platform/usageView",
+    "//platform/ide-core-impl",
+    "//platform/ide-core/plugins",
+    "//platform/workspace/storage",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/workspace/jps",
+    "//platform/platform-impl/bootstrap",
+    "//platform/lvcs-impl",
+    "//platform/vcs-impl",
+    "//xml/dom-impl",
+    "//xml/relaxng",
+    "//spellchecker",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/platform-impl/concurrency",
+    "//libraries/kotlin/reflect",
+    "//platform/settings",
+    "//libraries/jsvg",
+    "//platform/util/storages",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/eel-impl",
+  ]
 )
 
 jvm_library(
@@ -184,11 +214,7 @@ jvm_library(
     "@lib//:jet_check",
     "@lib//:jediterm-core",
   ],
-  runtime_deps = [
-    "//xml/dom-impl",
-    "//xml/relaxng",
-    "//platform/xdebugger-impl:debugger-impl",
-  ]
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.platform.tests` end
 

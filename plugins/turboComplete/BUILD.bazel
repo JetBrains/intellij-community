@@ -51,7 +51,8 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/ml-impl",
     "//platform/ml-impl:ml-impl_test_lib",
-  ]
+  ],
+  runtime_deps = [":turboComplete-tests"]
 )
 ### auto-generated section `build intellij.turboComplete.tests` end
 

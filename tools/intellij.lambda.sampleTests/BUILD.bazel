@@ -10,7 +10,11 @@ create_kotlinc_options(
 jvm_library(
   name = "lambda-sampleTests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+  ]
 )
 
 jvm_library(
@@ -34,7 +38,8 @@ jvm_library(
     "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5_test_lib",
     "//tools/intellij.tools.ide.starter.driver:ide-starter-driver",
     "//tools/intellij.tools.ide.starter.build.server:ide-starter-build-server",
-  ]
+  ],
+  runtime_deps = [":lambda-sampleTests"]
 )
 ### auto-generated section `build intellij.lambda.sampleTests` end
 

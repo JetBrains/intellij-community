@@ -4,7 +4,21 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "kotlin-completion-tests-shared",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//libraries/guava",
+    "//libraries/gson",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/formatter",
+    "//plugins/kotlin/completion/api",
+    "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared",
+    "//platform/analysis-impl",
+    "//platform/service-container",
+  ]
 )
 
 jvm_library(
@@ -42,7 +56,8 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/service-container",
     "//platform/service-container:service-container_test_lib",
-  ]
+  ],
+  runtime_deps = [":kotlin-completion-tests-shared"]
 )
 ### auto-generated section `build kotlin.completion.tests.shared` end
 

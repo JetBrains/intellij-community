@@ -4,7 +4,22 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/tasks/tasks-api:tasks",
+    "//plugins/tasks/tasks-java:java",
+    "//plugins/tasks/tasks-compatibility:compatibility",
+    "//platform/vcs-api:vcs",
+    "//platform/ide-core-impl",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/vcs-impl",
+    "//libraries/xml-rpc",
+    "//spellchecker",
+    "//java/debugger/openapi:java-debugger",
+    "//plugins/xslt-debugger",
+    "//libraries/gson",
+    "//platform/core-ui",
+  ]
 )
 
 jvm_library(
@@ -59,7 +74,7 @@ jvm_library(
     "//platform/dvcs-impl/shared",
     "//plugins/tasks/tasks-core/trac",
   ],
-  runtime_deps = ["//spellchecker"]
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.tasks.tests` end
 

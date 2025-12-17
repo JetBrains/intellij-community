@@ -21,7 +21,8 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
-  ]
+  ],
+  runtime_deps = [":uast-tests"]
 )
 ### auto-generated section `build intellij.groovy.uast.tests` end
 

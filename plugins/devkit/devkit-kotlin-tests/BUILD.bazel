@@ -10,7 +10,11 @@ resourcegroup(
 jvm_library(
   name = "kotlin-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/devkit",
+    "//plugins/devkit/devkit-tests:testFramework",
+  ]
 )
 
 jvm_library(
@@ -55,7 +59,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//platform/execution",
   ],
-  runtime_deps = ["//plugins/devkit"]
+  runtime_deps = [":kotlin-tests"]
 )
 ### auto-generated section `build intellij.devkit.kotlin.tests` end
 

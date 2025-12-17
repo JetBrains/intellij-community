@@ -4,7 +4,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/lang-core",
+    "//platform/smRunner",
+  ]
 )
 
 jvm_library(
@@ -34,7 +38,8 @@ jvm_library(
     "//platform/core-ui",
     "//plugins/testng_rt:testng-rt",
     "//platform/platform-util-io:ide-util-io",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.testng.rt.tests` end
 

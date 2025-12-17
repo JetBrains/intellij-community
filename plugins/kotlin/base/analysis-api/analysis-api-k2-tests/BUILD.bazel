@@ -10,7 +10,11 @@ create_kotlinc_options(
 jvm_library(
   name = "kotlin-base-analysis-analysis-api-k2-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-analysis-api",
+  ]
 )
 
 jvm_library(
@@ -40,7 +44,8 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-platform-interface",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
-  ]
+  ],
+  runtime_deps = [":kotlin-base-analysis-analysis-api-k2-tests"]
 )
 ### auto-generated section `build kotlin.base.analysis.analysis-api.k2.tests` end
 

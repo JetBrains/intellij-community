@@ -30,7 +30,11 @@ jvm_library(
 jvm_library(
   name = "core-nio-fs-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/core-nio-fs",
+    "//platform/util",
+  ]
 )
 
 jvm_library(
@@ -48,7 +52,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-test-assertions-core-jvm",
     "//libraries/mockito",
-  ]
+  ],
+  runtime_deps = [":core-nio-fs-tests"]
 )
 ### auto-generated section `build intellij.platform.core.nio.fs.tests` end
 

@@ -22,7 +22,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "compose",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//plugins/kotlin/plugin/k2"]
 )
 
 jvm_library(
@@ -54,6 +55,7 @@ jvm_library(
     "//plugins/kotlin/tests-compose:tests-compose_test_lib",
     "//android/adt-ui",
     "//android/adt-ui:adt-ui_test_lib",
-  ]
+  ],
+  runtime_deps = [":compose"]
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test.compose` end

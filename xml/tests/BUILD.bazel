@@ -10,7 +10,18 @@ resourcegroup(
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//xml/impl",
+    "//java/testFramework",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/ide-core-impl",
+    "//RegExpSupport:regexp",
+    "//platform/util/nanoxml",
+    "//xml/langInjection",
+    "//java/langInjection",
+    "//platform/core-ui",
+  ]
 )
 
 jvm_library(
@@ -70,7 +81,7 @@ jvm_library(
     "//xml/xml-analysis-api:analysis",
     "//xml/emmet",
   ],
-  runtime_deps = ["//xml/langInjection"]
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.xml.tests` end
 

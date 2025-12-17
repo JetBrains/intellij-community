@@ -4,7 +4,29 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/compiler-reference-index",
+    "//plugins/kotlin/frontend-independent",
+    "//jps/jps-builders:build",
+    "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/analysis-impl",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//java/compiler/impl",
+    "//java/java-indexing-impl:indexing-impl",
+  ]
 )
 
 jvm_library(
@@ -52,7 +74,8 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/util",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build kotlin.compiler-reference-index.tests` end
 

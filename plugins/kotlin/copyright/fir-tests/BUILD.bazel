@@ -4,7 +4,13 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "kotlin-copyright-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/kotlin/copyright/tests",
+    "@lib//:kotlin-stdlib",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/test-framework",
+  ]
 )
 
 jvm_library(
@@ -28,7 +34,8 @@ jvm_library(
     "//plugins/kotlin/test-framework",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
-  ]
+  ],
+  runtime_deps = [":kotlin-copyright-tests"]
 )
 ### auto-generated section `build intellij.kotlin.copyright.tests` end
 

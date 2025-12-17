@@ -75,7 +75,14 @@ jvm_library(
 jvm_library(
   name = "ui-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//java/idea-ui:ui",
+    "//platform/core-ui",
+    "//platform/ide-core-impl",
+    "@lib//:kotlin-test",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
 )
 
 jvm_library(
@@ -125,7 +132,8 @@ jvm_library(
     "//xml/xml-psi-impl:psi-impl",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
-  ]
+  ],
+  runtime_deps = [":ui-tests"]
 )
 ### auto-generated section `build intellij.java.ui.tests` end
 

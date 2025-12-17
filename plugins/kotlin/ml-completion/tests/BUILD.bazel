@@ -4,7 +4,13 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/kotlin/plugin/k1",
+    "@lib//:kotlin-stdlib",
+    "//plugins/kotlin/ml-completion:completion-ml",
+    "//platform/platform-impl/internal",
+  ]
 )
 
 jvm_library(
@@ -18,7 +24,7 @@ jvm_library(
     "//plugins/kotlin/ml-completion:completion-ml",
     "//platform/platform-impl/internal",
   ],
-  runtime_deps = ["//plugins/kotlin/plugin/k1"]
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.completion.ml.tests` end
 

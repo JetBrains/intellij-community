@@ -32,7 +32,8 @@ jvm_library(
     "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes",
     "//plugins/kotlin/fir/tests:tests_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.fixes.tests` end
 

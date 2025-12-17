@@ -36,7 +36,8 @@ jvm_library(
     "//platform/instanceContainer",
     "//platform/testFramework/common",
     "//platform/testFramework/core",
-  ]
+  ],
+  runtime_deps = [":instanceContainer-tests"]
 )
 ### auto-generated section `build intellij.platform.instanceContainer.tests` end
 

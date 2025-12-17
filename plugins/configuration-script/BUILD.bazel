@@ -90,7 +90,11 @@ jps_test(
 jvm_library(
   name = "configurationScript-test-java",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/execution",
+    "//platform/lang-impl",
+  ]
 )
 
 jvm_library(
@@ -110,7 +114,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:assert_j",
     "//platform/lang-impl",
-  ]
+  ],
+  runtime_deps = [":configurationScript-test-java"]
 )
 ### auto-generated section `build intellij.configurationScript.test.java` end
 

@@ -89,7 +89,8 @@ jvm_library(
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/navbar/testFramework",
     "//java/java-impl-inspections:impl-inspections",
-  ]
+  ],
+  runtime_deps = [":base-test"]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end
 

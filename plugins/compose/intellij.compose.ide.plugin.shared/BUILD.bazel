@@ -96,7 +96,8 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-tests_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
-  ]
+  ],
+  runtime_deps = [":ide-plugin-shared-tests"]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.shared.tests` end
 

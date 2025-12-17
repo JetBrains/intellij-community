@@ -20,6 +20,6 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":java-resources-en_test_resources"],
-  runtime_deps = ["//platform/backend"]
+  runtime_deps = [":java-resources-en"]
 )
 ### auto-generated section `build intellij.java.resources.en` end

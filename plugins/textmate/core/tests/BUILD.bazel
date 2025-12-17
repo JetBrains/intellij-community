@@ -24,7 +24,8 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "@lib//:kotlin-test-junit5",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.textmate.core.tests` end
 

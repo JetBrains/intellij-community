@@ -4,7 +4,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/execution"]
 )
 
 jvm_library(
@@ -38,7 +39,8 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//platform/duplicates-analysis",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.structuralSearch.tests` end
 

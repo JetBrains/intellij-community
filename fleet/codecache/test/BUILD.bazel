@@ -35,7 +35,8 @@ jvm_library(
     "//fleet/util/network",
     "//fleet/ktor/client/core",
     "@lib//:kotlinx-serialization-core",
-  ]
+  ],
+  runtime_deps = [":test"]
 )
 ### auto-generated section `build fleet.codecache.test` end
 

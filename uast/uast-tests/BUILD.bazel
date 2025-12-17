@@ -4,7 +4,25 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//uast/uast-common:uast",
+    "//uast/uast-java-ide:java-uast-ide",
+    "//uast/testFramework",
+  ],
+  runtime_deps = [
+    "//uast/uast-common:uast",
+    "@lib//:kotlin-stdlib",
+    "@lib//:junit4",
+    "//platform/core-impl",
+    "//uast/uast-java-ide:java-uast-ide",
+    "//java/java-runtime:rt",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/testFramework",
+    "//java/java-tests:tests",
+    "//java/testFramework",
+    "//platform/vcs-impl",
+  ]
 )
 
 jvm_library(
@@ -37,7 +55,7 @@ jvm_library(
     "//uast/uast-java-ide:java-uast-ide",
     "//uast/testFramework",
   ],
-  runtime_deps = ["//java/java-tests:tests"]
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.platform.uast.tests` end
 

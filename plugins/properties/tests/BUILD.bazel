@@ -4,7 +4,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = ["//plugins/properties:properties-backend"]
 )
 
 jvm_library(
@@ -52,7 +53,8 @@ jvm_library(
     "//libraries/fastutil",
     "@lib//:jet_check",
   ],
-  exports = ["//plugins/properties:properties-backend"]
+  exports = ["//plugins/properties:properties-backend"],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.properties.tests` end
 

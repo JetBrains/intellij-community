@@ -66,7 +66,12 @@ resourcegroup(
 jvm_library(
   name = "build-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//jps/jps-builders:build",
+    "@community//build:dependency-graph",
+    "@community//build:build-javac-rt",
+  ]
 )
 
 jvm_library(
@@ -101,7 +106,8 @@ jvm_library(
     "//libraries/mvstore",
     "@lib//:memoryfilesystem",
     "//jps/model-test-framework:model-testFramework",
-  ]
+  ],
+  runtime_deps = [":build-tests"]
 )
 ### auto-generated section `build intellij.platform.jps.build.tests` end
 

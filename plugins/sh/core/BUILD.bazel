@@ -45,7 +45,16 @@ jvm_library(
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/sh/core",
+    "//platform/analysis-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//platform/testRunner",
+  ]
 )
 
 jvm_library(
@@ -76,7 +85,8 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/testRunner",
     "//platform/testRunner:testRunner_test_lib",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.sh.tests` end
 

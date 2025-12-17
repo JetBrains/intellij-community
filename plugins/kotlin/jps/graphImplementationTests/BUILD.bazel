@@ -4,7 +4,12 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "graphImplementationTests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/util/trove",
+    "//jps/jps-builders:build-tests",
+    "//libraries/kotlin/reflect",
+  ]
 )
 
 jvm_library(
@@ -35,7 +40,7 @@ jvm_library(
     "//libraries/kotlin/reflect",
     "//plugins/kotlin/tests-from-compiler:tests-from-compiler_test_lib",
   ],
-  runtime_deps = ["//platform/util/trove"]
+  runtime_deps = [":graphImplementationTests"]
 )
 ### auto-generated section `build kotlin.jps.graphImplementationTests` end
 

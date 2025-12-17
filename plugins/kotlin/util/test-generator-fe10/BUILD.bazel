@@ -56,7 +56,8 @@ jvm_library(
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1_test_lib",
-  ]
+  ],
+  runtime_deps = [":test-generator-fe10"]
 )
 ### auto-generated section `build kotlin.util.test-generator-fe10` end
 

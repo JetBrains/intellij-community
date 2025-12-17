@@ -55,7 +55,8 @@ jvm_library(
     "//platform/object-serializer",
     "//platform/object-serializer:object-serializer_test_lib",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
-  ]
+  ],
+  runtime_deps = [":gradle-native-tooling-tests"]
 )
 ### auto-generated section `build intellij.gradle.native.tooling.tests` end
 

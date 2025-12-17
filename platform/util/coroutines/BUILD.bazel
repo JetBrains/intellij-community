@@ -37,7 +37,8 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
-  ]
+  ],
+  runtime_deps = [":coroutines-tests"]
 )
 ### auto-generated section `build intellij.platform.util.coroutines.tests` end
 

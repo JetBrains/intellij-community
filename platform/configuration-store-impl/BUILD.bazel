@@ -65,7 +65,8 @@ resourcegroup(
 jvm_library(
   name = "configurationStore-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/ide-core/plugins"]
 )
 
 jvm_library(
@@ -107,7 +108,8 @@ jvm_library(
     "//java/java-impl:impl",
     "//java/java-impl:impl_test_lib",
     "//platform/lang-api:lang",
-  ]
+  ],
+  runtime_deps = [":configurationStore-tests"]
 )
 ### auto-generated section `build intellij.platform.configurationStore.tests` end
 

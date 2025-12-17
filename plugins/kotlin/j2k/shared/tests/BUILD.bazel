@@ -10,7 +10,12 @@ create_kotlinc_options(
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+  ]
 )
 
 jvm_library(
@@ -47,7 +52,8 @@ jvm_library(
     "//plugins/kotlin/code-insight/utils",
     "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/base/code-insight/minimal",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build kotlin.j2k.shared.tests` end
 

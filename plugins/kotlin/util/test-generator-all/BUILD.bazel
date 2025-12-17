@@ -24,7 +24,8 @@ jvm_library(
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/util/project-model-updater",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
-  ]
+  ],
+  runtime_deps = [":test-generator-all"]
 )
 ### auto-generated section `build kotlin.util.test-generator-all` end
 

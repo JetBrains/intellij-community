@@ -10,7 +10,36 @@ resourcegroup(
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/markdown/core:markdown",
+    "//plugins/markdown/fenceInjection",
+    "//plugins/markdown/frontmatter",
+    "//plugins/markdown/frontmatter/toml",
+    "//platform/core-impl",
+    "//plugins/markdown/frontmatter/yaml",
+    "//platform/editor-ui-ex:editor-ex",
+    "//plugins/markdown/images",
+    "//plugins/markdown/model",
+    "//plugins/markdown/spellchecker",
+    "//plugins/markdown/xml",
+    "//platform/usageView",
+    "//spellchecker",
+    "//plugins/yaml",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/core-ui",
+    "//xml/xml-parser:parser",
+    "//platform/lang-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//libraries/jsoup",
+    "//libraries/jcef",
+    "//platform/util-ex",
+    "//libraries/markdown",
+    "//plugins/toml",
+    "//plugins/toml/core",
+    "//plugins/yaml/backend",
+  ]
 )
 
 jvm_library(
@@ -69,7 +98,8 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//xml/testFramework",
     "//platform/lang-api:lang",
-  ]
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.markdown.tests` end
 

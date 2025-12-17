@@ -82,7 +82,30 @@ resourcegroup(
 jvm_library(
   name = "polySymbols-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-api:core",
+    "//platform/usageView",
+    "//platform/refactoring",
+    "//libraries/jackson/databind",
+    "//platform/analysis-impl",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/fastutil",
+    "//libraries/commons/compress",
+    "//libraries/markdown",
+    "//libraries/gson",
+    "//platform/markdown-utils",
+    "//platform/testFramework",
+    "//platform/polySymbols",
+    "//platform/polySymbols:polySymbols-testFramework",
+    "//java/java-runtime:rt",
+  ]
 )
 
 jvm_library(
@@ -117,7 +140,8 @@ jvm_library(
     "//platform/polySymbols",
     "//platform/polySymbols:polySymbols-testFramework",
     "//java/java-runtime:rt",
-  ]
+  ],
+  runtime_deps = [":polySymbols-tests"]
 )
 ### auto-generated section `build intellij.platform.polySymbols.tests` end
 

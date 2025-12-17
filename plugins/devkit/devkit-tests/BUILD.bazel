@@ -4,7 +4,19 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "testFramework",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/devkit/devkit-core:core",
+    "//java/testFramework",
+    "//platform/util",
+    "//platform/testFramework",
+    "//xml/dom-tests",
+    "//java/compiler:compiler-tests",
+    "//xml/dom-openapi:dom",
+    "//xml/dom-impl",
+    "//java/compiler/openapi:java-compiler",
+    "//jvm/jvm-analysis-api:analysis",
+  ]
 )
 
 jvm_library(
@@ -37,7 +49,8 @@ jvm_library(
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//plugins/grazie/src:core",
-  ]
+  ],
+  runtime_deps = [":testFramework"]
 )
 ### auto-generated section `build intellij.devkit.testFramework` end
 

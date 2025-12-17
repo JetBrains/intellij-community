@@ -10,7 +10,50 @@ resourcegroup(
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:kotlin-tooling-core"],
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//libraries/guava",
+    "@lib//:junit4",
+    "@lib//:kotlin-test",
+    "//plugins/kotlin/base/util",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/test",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/idea",
+    "//plugins/kotlin/idea/tests",
+    "//plugins/kotlin/jvm/shared",
+    "//plugins/kotlin/migration",
+    "//plugins/kotlin/inspections",
+    "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy",
+    "//plugins/kotlin/gradle/gradle",
+    "//plugins/kotlin/gradle/code-insight-common:kotlin-gradle-codeInsight-common",
+    "//plugins/groovy/groovy-psi:psi",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/test-framework",
+    "//plugins/gradle/java",
+    "//plugins/gradle:gradle-tests",
+    "//libraries/kotlin/reflect",
+    "//plugins/kotlin/native",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:kotlin-tooling-core",
+  ]
 )
 
 jvm_library(
@@ -83,7 +126,8 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
   ],
-  exports = ["@lib//:kotlin-tooling-core"]
+  exports = ["@lib//:kotlin-tooling-core"],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.gradle.gradle.tests` end
 

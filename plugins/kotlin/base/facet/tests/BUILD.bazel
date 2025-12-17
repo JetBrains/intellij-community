@@ -4,7 +4,31 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
+  ]
 )
 
 jvm_library(
@@ -50,7 +74,7 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/project-configuration",
   ],
-  runtime_deps = ["//plugins/kotlin/compiler-plugins/kotlinx-serialization/common"]
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.kotlin.base.facet.tests` end
 

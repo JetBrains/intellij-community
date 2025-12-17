@@ -4,7 +4,13 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "kotlin-tests-shared",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//plugins/kotlin/plugin/common",
+    "//plugins/junit/testFramework",
+    "//platform/testFramework/junit5",
+    "//plugins/junit/java-tests",
+  ]
 )
 
 jvm_library(
@@ -38,7 +44,8 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//plugins/junit/java-tests:java-tests_test_lib",
-  ]
+  ],
+  runtime_deps = [":kotlin-tests-shared"]
 )
 ### auto-generated section `build intellij.junit.kotlin.tests.shared` end
 
