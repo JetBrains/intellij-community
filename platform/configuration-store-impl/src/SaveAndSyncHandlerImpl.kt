@@ -3,9 +3,13 @@ package com.intellij.configurationStore
 
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.*
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -228,7 +232,7 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
 
           if (settings.isSaveOnFrameDeactivation && canSyncOrSave()) {
             // for many tasks (compilation, web development, etc.), it is important to save documents on frame deactivation ASAP
-            if (Registry.`is`("document.save.in.background.allowed")) {
+            if (!AppMode.isRemoteDevHost() && Registry.`is`("document.save.in.background.allowed")) {
               saveDocumentsInBackgroundWriteAction()
             }
             else {
