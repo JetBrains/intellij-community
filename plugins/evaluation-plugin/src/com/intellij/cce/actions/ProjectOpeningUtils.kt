@@ -49,6 +49,11 @@ object ProjectOpeningUtils {
     )
   }
 
+  suspend fun awaitProject(project: Project) {
+    println("Await project configuration")
+    Observation.awaitConfiguration(project)
+  }
+
   private fun tryToOpenProject(
     openProjectArgsData: OpenProjectArgsData,
     timeoutForOneAttempt: Duration,
@@ -64,8 +69,7 @@ object ProjectOpeningUtils {
           withTimeout(timeoutForOneAttempt) {
             val project = importOrOpenProjectAsync(openProjectArgsData)
             if (additionalAwaitConfiguration) {
-              println("Await project configuration")
-              Observation.awaitConfiguration(project)
+              awaitProject(project)
             }
             project
           }
