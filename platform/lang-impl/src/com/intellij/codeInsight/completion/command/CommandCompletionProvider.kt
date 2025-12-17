@@ -580,6 +580,7 @@ internal fun findCommandCompletionType(
   if (isNonWritten) {
     return InvocationCommandType.FullSuffix("", editor.document.immutableCharSequence.substring(0, editor.caretModel.offset))
   }
+
   val indexOf = findActualIndex(suffix, text, offset)
   if (offset - indexOf < 0) return null
   if (indexOf == 1 && text[offset - indexOf] == factory.suffix()) {
@@ -588,7 +589,9 @@ internal fun findCommandCompletionType(
                                                text.substring(offset - indexOf, offset - indexOf + 1))
   }
   //two points
-  else if (offset - indexOf + 2 <= text.length && text.substring(offset - indexOf, offset - indexOf + 2) == suffix) {
+  else if (offset - indexOf + 2 <= text.length &&
+           offset >= offset - indexOf + 2 &&
+           text.substring(offset - indexOf, offset - indexOf + 2) == suffix) {
     return InvocationCommandType.FullSuffix(text.substring(offset - indexOf + 2, offset),
                                             text.substring(offset - indexOf, offset - indexOf + 2))
   }
