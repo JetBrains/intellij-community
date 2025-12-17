@@ -57,7 +57,7 @@ internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: St
         val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else ""
         if ((fieldType.elementType as ValueType.ObjRef<*>).target.openness.extendable) { 
           """
-            overide val $name: ${fieldType.javaType}$optionalSuffix
+            override val $name: ${fieldType.javaType}$optionalSuffix
             get() = snapshot.${EntityStorage.extractOneToAbstractManyChildren}<${fieldType.elementType.javaType}>($connectionName, this)$notNullAssertion.toList()
             """.trimIndent()
         }
