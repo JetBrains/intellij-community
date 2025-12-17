@@ -22,7 +22,7 @@ class LinesBuilder(val result: StringBuilder) {
     }
   }
 
-  fun section(head: String, s: LinesBuilder.() -> Unit) {
+  inline fun section(head: String, s:  LinesBuilder.() -> Unit) {
     lineNoNl(head)
     val sub = LinesBuilder(result)
     sub.result.append("{\n")

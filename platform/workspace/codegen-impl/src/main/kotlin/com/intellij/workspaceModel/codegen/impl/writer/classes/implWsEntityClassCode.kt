@@ -2,15 +2,18 @@
 package com.intellij.workspaceModel.codegen.impl.writer.classes
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
-import com.intellij.workspaceModel.codegen.impl.writer.*
-import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsEntityFieldCode
-import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionId
-import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionIdCode
+import com.intellij.workspaceModel.codegen.engine.GenerationProblem
+import com.intellij.workspaceModel.codegen.engine.ProblemLocation
 import com.intellij.workspaceModel.codegen.impl.CodeGeneratorVersionCalculator
+import com.intellij.workspaceModel.codegen.impl.engine.ProblemReporter
+import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
-import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
+import com.intellij.workspaceModel.codegen.impl.writer.fields.*
 
-fun ObjClass<*>.implWsEntityCode(): String {
+fun ObjClass<*>.implWsEntityCode(reporter: ProblemReporter): String {
+  checkReferences(this@implWsEntityCode, reporter)
+  if (reporter.hasErrors()) return ""
+
   val inheritanceModifier = when {
     openness.extendable && !openness.instantiatable -> "abstract "
     openness.extendable && openness.instantiatable -> "open "
@@ -60,6 +63,51 @@ private val ObjClass<*>.implWsEntityAnnotations: String
 
 private fun getLinksOfConnectionIds(type: ObjClass<*>): String {
   return lines {
-    line(type.allRefsFields.joinToString(separator = ",", prefix = "private val connections = listOf<$ConnectionId>(", postfix = ")") { it.refsConnectionId })
+    line(type.allRefsFields.joinToString(separator = ",",
+                                         prefix = "private val connections = listOf<$ConnectionId>(",
+                                         postfix = ")") { it.refsConnectionId })
+  }
+}
+
+private fun checkReferences(objClass: ObjClass<*>, reporter: ProblemReporter) {
+  for (refField in objClass.allRefsFields) {
+    val ref = refField.valueType.getRefType()
+    val declaredReferenceFromChild =
+      ref.target.refsFields.filter { it.valueType.getRefType().target == objClass && it != refField } + setOf(ref.target.module,
+                                                                                                              objClass.module).flatMap { it.extensions }
+        .filter { it.valueType.getRefType().target == objClass && it.receiver == ref.target && it != refField }
+    if (declaredReferenceFromChild.isEmpty()) {
+      reporter.reportProblem(
+        GenerationProblem("Reference should be declared at both entities. It exist at ${objClass.name}#${refField.name}, but is absent from ${ref.target.name}",
+                          GenerationProblem.Level.ERROR,
+                          ProblemLocation.Property(refField))
+      )
+      return@checkReferences
+    }
+    if (declaredReferenceFromChild.size > 1) {
+      reporter.reportProblem(
+        GenerationProblem("""
+        |More then one reference to ${objClass.name} declared at ${declaredReferenceFromChild[0].receiver.name}#${declaredReferenceFromChild[0].name}, 
+        |${declaredReferenceFromChild[1].receiver.name}#${declaredReferenceFromChild[1].name}
+        |""".trimMargin(), 
+                          GenerationProblem.Level.ERROR, 
+                          ProblemLocation.Property(declaredReferenceFromChild[0]))
+      )
+      return@checkReferences
+    }
+    val referencedField = declaredReferenceFromChild[0]
+    if (ref.child == referencedField.valueType.getRefType().child) {
+      val (childStr, fix) = if (ref.child) {
+        "child" to "Probably @Parent annotation is missing from one of the properties."
+      }
+      else {
+        "parent" to "Probably both properties are annotated with @Parent, while only one should be."
+      }
+      reporter.reportProblem(
+        GenerationProblem("Both fields ${objClass.name}#${refField.name} and ${ref.target.name}#${referencedField.name} are marked as $childStr. $fix",
+                          GenerationProblem.Level.ERROR,
+                          ProblemLocation.Property(refField))
+      )
+    }
   }
 }

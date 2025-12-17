@@ -10,8 +10,6 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 import com.intellij.workspaceModel.codegen.impl.writer.fields.*
 
 fun ObjClass<*>.generateMutableCode(reporter: ProblemReporter): String = lines {
-  checkSuperTypes(this@generateMutableCode, reporter)
-  checkSymbolicId(this@generateMutableCode, reporter)
   if (additionalAnnotations.isNotEmpty()) {
     line(additionalAnnotations)
   }
@@ -23,9 +21,10 @@ fun ObjClass<*>.generateMutableCode(reporter: ProblemReporter): String = lines {
   val header = "${generatedCodeVisibilityModifier}interface $defaultJavaBuilderName$typeDeclaration: ${WorkspaceEntity.Builder}<$typeParameter>$superBuilders"
 
   section(header) {
-    list(allFields.noSymbolicId()) {
-      checkProperty(this, reporter)
-      getWsBuilderApi(this@generateMutableCode)
+    for (field in allFields.noSymbolicId()) {
+      checkProperty(field, reporter)
+      if (reporter.hasErrors()) return@generateMutableCode ""
+      line(field.getWsBuilderApi(this@generateMutableCode))
     }
   }
 }
@@ -43,7 +42,7 @@ fun checkSuperTypes(objClass: ObjClass<*>, reporter: ProblemReporter) {
   }
 }
 
-private fun checkSymbolicId(objClass: ObjClass<*>, reporter: ProblemReporter) {
+fun checkSymbolicId(objClass: ObjClass<*>, reporter: ProblemReporter) {
   if (!objClass.isEntityWithSymbolicId) return
   if (objClass.openness == ObjClass.Openness.abstract) return
   if (objClass.fields.none { it.name == "symbolicId" }) {

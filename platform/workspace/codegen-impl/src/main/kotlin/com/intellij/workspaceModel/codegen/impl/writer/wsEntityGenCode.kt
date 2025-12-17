@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.codegen.impl.writer
 import com.intellij.workspaceModel.codegen.impl.writer.classes.implWsDataClassCode
 import com.intellij.workspaceModel.codegen.impl.writer.classes.implWsEntityCode
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.impl.engine.ProblemReporter
 
 /**
  * TODO:
@@ -29,7 +30,7 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
  * Перенести тесты идеи к нам или наоборрот <--
  */
 
-fun ObjClass<*>.implWsCode(): String? {
+fun ObjClass<*>.implWsCode(reporter: ProblemReporter): String? {
   if (!openness.instantiatable) return null
-  return "${implWsEntityCode()}\n${implWsDataClassCode()}"
+  return "${implWsEntityCode(reporter)}\n${implWsDataClassCode()}"
 }
