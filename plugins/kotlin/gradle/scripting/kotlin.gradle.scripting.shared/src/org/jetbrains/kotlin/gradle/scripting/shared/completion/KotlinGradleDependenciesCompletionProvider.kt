@@ -10,6 +10,7 @@ import com.intellij.util.ProcessingContext
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.idea.completion.api.*
 import org.jetbrains.plugins.gradle.completion.FullStringInsertHandler
+import org.jetbrains.plugins.gradle.completion.GradleDependencyCompletionMatcher
 import org.jetbrains.plugins.gradle.completion.removeDummySuffix
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 
@@ -79,7 +80,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         val completionService = service<DependencyCompletionService>()
         val request = DependencyCompletionRequest(text, parameters.getCompletionContext())
 
-        val resultSet = result.withPrefixMatcher(KotlinGradleDependencyCompletionMatcher(text))
+        val resultSet = result.withPrefixMatcher(GradleDependencyCompletionMatcher(text))
 
         runBlockingCancellable {
             completionService.suggestCompletions(request)

@@ -2,12 +2,12 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle.completion
 
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.gradle.scripting.shared.completion.KotlinGradleDependencyCompletionMatcher
+import org.jetbrains.plugins.gradle.completion.GradleDependencyCompletionMatcher
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
-class KotlinGradleDependencyCompletionMatcherTest {
+class GradleDependencyCompletionMatcherTest {
     @ParameterizedTest
     @CsvSource(
         "'juni', 'implementation(\"junit:junit:4.13.2\")', true",
@@ -16,7 +16,7 @@ class KotlinGradleDependencyCompletionMatcherTest {
         "'google:gson', 'implementation(\"com.google.code.gson:gson:1.7.2\")', true",
     )
     fun `test prefixMatches`(prefix: String, name: String, expected: Boolean) {
-        val matcher = KotlinGradleDependencyCompletionMatcher(prefix)
+        val matcher = GradleDependencyCompletionMatcher(prefix)
         val result = matcher.prefixMatches(name)
         assertEquals(
             expected,
@@ -82,7 +82,7 @@ class KotlinGradleDependencyCompletionMatcherTest {
 
         val name = parseAnnotated(annotatedName)
 
-        val matcher = KotlinGradleDependencyCompletionMatcher(prefix)
+        val matcher = GradleDependencyCompletionMatcher(prefix)
         val fragments = matcher.getMatchingFragments(prefix, name)
 
         require(fragments != null) { "Expected non-null fragments" }
