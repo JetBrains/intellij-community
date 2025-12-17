@@ -326,8 +326,7 @@ final class ReferenceItemProvider implements ModCompletionItemProvider {
     PsiSubstitutor substitutor = completionElement.getSubstitutor();
     if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
     if (completion instanceof PsiClass cls) {
-      return List.of(new ClassReferenceCompletionItem(cls).withSubstitutor(substitutor));
-      //return JavaConstructorCallElement.wrap(classItem, reference.getElement());
+      return ConstructorCallCompletionItem.tryWrap(new ClassReferenceCompletionItem(cls).withSubstitutor(substitutor), reference.getElement());
     }
     //if (completion instanceof PsiMethod) {
     //  if (reference instanceof PsiMethodReferenceExpression) {
@@ -357,8 +356,6 @@ final class ReferenceItemProvider implements ModCompletionItemProvider {
                        .withPresentation(new ModCompletionItemPresentation(MarkupText.plainText(pkg.getName()+(addDot?".":"")))
                                            .withMainIcon(() -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Package))));
     }
-    //
-    //return Collections.singletonList(LookupItemUtil.objectToLookupItem(completion));
 
     return List.of();
   }

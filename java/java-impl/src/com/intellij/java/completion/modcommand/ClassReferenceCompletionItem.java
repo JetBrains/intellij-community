@@ -28,7 +28,6 @@ import com.siyeh.ig.psiutils.JavaDeprecationUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Objects;
 
 @NotNullByDefault
@@ -58,6 +57,10 @@ public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem<
   
   public ClassReferenceCompletionItem withSubstitutor(PsiSubstitutor substitutor) {
     return new ClassReferenceCompletionItem(contextObject(), substitutor, myForcedPresentableName);
+  }
+
+  public PsiSubstitutor getSubstitutor() {
+    return mySubstitutor;
   }
 
   @Override

@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -180,7 +181,8 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
     return Collections.singletonList(classItem);
   }
 
-  private static boolean shouldSuggestConstructor(@NotNull PsiClass psiClass, @NotNull PsiElement position, PsiMethod constructor) {
+  @ApiStatus.Internal
+  public static boolean shouldSuggestConstructor(@NotNull PsiClass psiClass, @NotNull PsiElement position, PsiMethod constructor) {
     return JavaResolveUtil.isAccessible(constructor, psiClass, constructor.getModifierList(), position, null, null) ||
            willBeAccessibleInAnonymous(psiClass, constructor);
   }
@@ -189,7 +191,8 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
     return !constructor.hasModifierProperty(PsiModifier.PRIVATE) && psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
   }
 
-  static boolean isConstructorCallPlace(@NotNull PsiElement position) {
+  @ApiStatus.Internal
+  public static boolean isConstructorCallPlace(@NotNull PsiElement position) {
     return CachedValuesManager.getCachedValue(position, () -> {
       boolean result = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position) &&
                        !JavaClassNameInsertHandler.isArrayTypeExpected(PsiTreeUtil.getParentOfType(position, PsiNewExpression.class));
