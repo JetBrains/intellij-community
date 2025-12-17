@@ -95,6 +95,11 @@ public class FirGotoDeclarationTestGenerated extends AbstractFirGotoDeclarationT
         runTest("../../idea/tests/testData/navigation/gotoDeclaration/listFlexibleType.test");
     }
 
+    @TestMetadata("navigationToLibrary.test")
+    public void testNavigationToLibrary() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/navigationToLibrary.test");
+    }
+
     @TestMetadata("thisExtensionFunction.test")
     public void testThisExtensionFunction() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoDeclaration/thisExtensionFunction.test");

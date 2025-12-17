@@ -95,6 +95,11 @@ public class GotoDeclarationTestGenerated extends AbstractGotoDeclarationTest {
         runTest("testData/navigation/gotoDeclaration/listFlexibleType.test");
     }
 
+    @TestMetadata("navigationToLibrary.test")
+    public void testNavigationToLibrary() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/navigationToLibrary.test");
+    }
+
     @TestMetadata("thisExtensionFunction.test")
     public void testThisExtensionFunction() throws Exception {
         runTest("testData/navigation/gotoDeclaration/thisExtensionFunction.test");
