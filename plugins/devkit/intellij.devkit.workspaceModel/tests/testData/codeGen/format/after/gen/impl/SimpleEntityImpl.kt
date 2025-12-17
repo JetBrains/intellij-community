@@ -1,5 +1,8 @@
+// 2700-2200 BCE fake copyright for test
+// another line of fake copyright
 package com.intellij.workspaceModel.test.api.impl
 
+import com.intellij.another.module.ClassToImport
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -42,6 +45,11 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
     get() {
       readField("isSimple")
       return dataSource.isSimple
+    }
+  override val imported: ClassToImport
+    get() {
+      readField("imported")
+      return dataSource.imported
     }
 
   override val entitySource: EntitySource
@@ -88,6 +96,9 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
       if (!getEntityData().isNameInitialized()) {
         error("Field SimpleEntity#name should be initialized")
       }
+      if (!getEntityData().isImportedInitialized()) {
+        error("Field SimpleEntity#imported should be initialized")
+      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -101,6 +112,7 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
       if (this.version != dataSource.version) this.version = dataSource.version
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.isSimple != dataSource.isSimple) this.isSimple = dataSource.isSimple
+      if (this.imported != dataSource.imported) this.imported = dataSource.imported
       updateChildToParentReferences(parents)
     }
 
@@ -134,6 +146,14 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
         getEntityData(true).isSimple = value
         changedProperty.add("isSimple")
       }
+    override var imported: ClassToImport
+      get() = getEntityData().imported
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).imported = value
+        changedProperty.add("imported")
+
+      }
 
     override fun getEntityClass(): Class<SimpleEntity> = SimpleEntity::class.java
   }
@@ -145,10 +165,12 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
   var version: Int = 0
   lateinit var name: String
   var isSimple: Boolean = false
+  lateinit var imported: ClassToImport
 
 
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
 
+  internal fun isImportedInitialized(): Boolean = ::imported.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SimpleEntity> {
     val modifiable = SimpleEntityImpl.Builder(null)
@@ -177,7 +199,7 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return SimpleEntity(version, name, isSimple, entitySource)
+    return SimpleEntity(version, name, isSimple, imported, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
@@ -193,6 +215,7 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
     if (this.version != other.version) return false
     if (this.name != other.name) return false
     if (this.isSimple != other.isSimple) return false
+    if (this.imported != other.imported) return false
     return true
   }
 
@@ -203,6 +226,7 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
     if (this.version != other.version) return false
     if (this.name != other.name) return false
     if (this.isSimple != other.isSimple) return false
+    if (this.imported != other.imported) return false
     return true
   }
 
@@ -211,6 +235,7 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
     result = 31 * result + version.hashCode()
     result = 31 * result + name.hashCode()
     result = 31 * result + isSimple.hashCode()
+    result = 31 * result + imported.hashCode()
     return result
   }
 
@@ -219,6 +244,7 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
     result = 31 * result + version.hashCode()
     result = 31 * result + name.hashCode()
     result = 31 * result + isSimple.hashCode()
+    result = 31 * result + imported.hashCode()
     return result
   }
 }

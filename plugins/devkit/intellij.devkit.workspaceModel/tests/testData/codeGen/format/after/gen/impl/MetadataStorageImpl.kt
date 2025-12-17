@@ -1,3 +1,5 @@
+// 2700-2200 BCE fake copyright for test
+// another line of fake copyright
 package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -45,6 +47,16 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           isOpen = false,
                                                                           name = "isSimple",
                                                                           valueType = primitiveTypeBooleanNotNullable,
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "imported",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                                fqName = "com.intellij.another.module.ClassToImport",
+                                                                                                                                properties = listOf(),
+                                                                                                                                supertypes = listOf())),
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
@@ -53,6 +65,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
   }
 
   override fun initializeMetadataHash() {
-    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SimpleEntity", metadataHash = 284369588)
+    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SimpleEntity", metadataHash = 711104309)
+    addMetadataHash(typeFqn = "com.intellij.another.module.ClassToImport", metadataHash = -2116758707)
   }
 }

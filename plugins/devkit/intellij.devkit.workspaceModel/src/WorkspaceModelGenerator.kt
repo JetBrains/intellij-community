@@ -146,7 +146,8 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
     const val RIDER_MODULES_PREFIX: String = "intellij.rider"
 
     val modulesWithAbstractTypes: Set<String> = setOf(
-      "intellij.platform.workspace.storage.testEntities"
+      "intellij.platform.workspace.storage.testEntities",
+      "intellij.android.projectSystem.gradle"
     )
 
     fun getInstance(project: Project): WorkspaceModelGenerator = project.service()

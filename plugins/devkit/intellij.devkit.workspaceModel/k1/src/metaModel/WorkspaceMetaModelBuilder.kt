@@ -157,7 +157,7 @@ internal class WorkspaceMetaModelBuilder(
 
       val blobType = ValueType.Blob<Any>(javaClassFqn, superTypes)
       val inheritors = descriptor.inheritors(javaPsiFacade, allScope)
-        .filter { it.packageName == compiledObjModule.name } // && it.module == moduleDescriptor }
+        .filter { it.packageName == compiledObjModule.name && it.name.identifier != "NonPersistentEntitySource" }
         .map { classDescriptorToValueType(it, hashMapOf(javaClassFqn to blobType), true) }
 
       if (inheritors.isNotEmpty()) {

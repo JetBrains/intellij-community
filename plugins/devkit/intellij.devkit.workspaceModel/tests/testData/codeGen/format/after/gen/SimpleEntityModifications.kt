@@ -1,12 +1,14 @@
+// 2700-2200 BCE fake copyright for test
+// another line of fake copyright
 @file:JvmName("SimpleEntityModifications")
 
 package com.intellij.workspaceModel.test.api
 
+import com.intellij.another.module.ClassToImport
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 
 @GeneratedCodeApiVersion(3)
@@ -15,6 +17,7 @@ interface SimpleEntityBuilder : WorkspaceEntityBuilder<SimpleEntity> {
   var version: Int
   var name: String
   var isSimple: Boolean
+  var imported: ClassToImport
 }
 
 internal object SimpleEntityType : EntityType<SimpleEntity, SimpleEntityBuilder>() {
@@ -23,6 +26,7 @@ internal object SimpleEntityType : EntityType<SimpleEntity, SimpleEntityBuilder>
     version: Int,
     name: String,
     isSimple: Boolean,
+    imported: ClassToImport,
     entitySource: EntitySource,
     init: (SimpleEntityBuilder.() -> Unit)? = null,
   ): SimpleEntityBuilder {
@@ -30,6 +34,7 @@ internal object SimpleEntityType : EntityType<SimpleEntity, SimpleEntityBuilder>
     builder.version = version
     builder.name = name
     builder.isSimple = isSimple
+    builder.imported = imported
     builder.entitySource = entitySource
     init?.invoke(builder)
     return builder
@@ -47,6 +52,7 @@ fun SimpleEntity(
   version: Int,
   name: String,
   isSimple: Boolean,
+  imported: ClassToImport,
   entitySource: EntitySource,
   init: (SimpleEntityBuilder.() -> Unit)? = null,
-): SimpleEntityBuilder = SimpleEntityType(version, name, isSimple, entitySource, init)
+): SimpleEntityBuilder = SimpleEntityType(version, name, isSimple, imported, entitySource, init)

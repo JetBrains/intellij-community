@@ -41,5 +41,6 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-common" level="project" />
     <orderEntry type="module" module-name="intellij.editorconfig.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.editorconfig.plugin" />
+    <orderEntry type="library" scope="TEST" name="studio-platform" level="project" />
   </component>
 </module>

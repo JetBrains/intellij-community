@@ -19,7 +19,10 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
     doTest()
   }
 
-  fun testSimpleCaseWithCodestyle() {
+  /**
+   * Tests that code is formatted properly: codestyle, copyright is added, imports are optimized.
+   */
+  fun testFormat() {
     doTest(formatCode = true)
   }
 
@@ -77,14 +80,6 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
 
   fun testUnknownPropertyType() {
     doTest(processAbstractTypes = true)
-  }
-
-  fun testAddCopyrightComment() {
-    doTest(processAbstractTypes = true)
-  }
-
-  fun testImports() {
-    doTest()
   }
 
   fun testOpenClassProperty() {

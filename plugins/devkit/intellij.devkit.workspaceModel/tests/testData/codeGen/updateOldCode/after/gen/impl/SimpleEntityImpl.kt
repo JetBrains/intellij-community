@@ -1,4 +1,3 @@
-//new comment
 package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId

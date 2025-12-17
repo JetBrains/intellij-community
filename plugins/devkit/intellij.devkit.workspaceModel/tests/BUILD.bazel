@@ -52,6 +52,7 @@ jvm_library(
     "//plugins/editorconfig/backend",
     "//plugins/editorconfig/backend:backend_test_lib",
     "//plugins/editorconfig:editorconfig-plugin",
+    "@lib//:studio-platform",
   ],
   runtime_deps = ["//plugins/devkit"]
 )
