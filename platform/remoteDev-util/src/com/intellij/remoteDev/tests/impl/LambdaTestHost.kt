@@ -7,6 +7,7 @@ import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginModuleId
@@ -103,6 +104,11 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         }
         coroutineDumperOnTimeout.cancel()
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          runLogged("Flush queue before tests") {
+            withContext(Dispatchers.EDT) {
+              IdeEventQueue.getInstance().flushQueue()
+            }
+          }
           createProtocol(hostAddress, port)
         }
       }
@@ -197,6 +203,11 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         session.cleanUp.setSuspend(sessionBgtDispatcher) { _, _ ->
           LOG.info("Resetting scopes")
           ideContext.coroutineContext.job.cancelAndJoin()
+          runLogged("Flush queue in between tests") {
+            withContext(Dispatchers.EDT) {
+              IdeEventQueue.getInstance().flushQueue()
+            }
+          }
           ideContext = getLambdaIdeContext()
         }
 

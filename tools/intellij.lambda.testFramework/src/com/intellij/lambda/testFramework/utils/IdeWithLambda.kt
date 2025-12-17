@@ -97,7 +97,7 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
   suspend inline fun cleanUp() {
     val inDebug = runContext.frontendContext.calculateVmOptions().isUnderDebug()
     listOfNotNull(rdSession, backendRdSession).forEach {
-      runLogged("Clean up for ${it.rdIdeType}", if (!inDebug) 10.seconds else 10.minutes) {
+      runLogged("Clean up for ${it.rdIdeType}", if (!inDebug) 30.seconds else 10.minutes) {
         it.cleanUp.startSuspending(Unit)
       }
     }
