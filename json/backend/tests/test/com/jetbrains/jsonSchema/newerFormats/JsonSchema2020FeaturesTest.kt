@@ -12,6 +12,7 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
 import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectBackedByJacksonBase
 import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage
+import com.jetbrains.jsonSchema.isJsonSchemaObjectV2
 import org.junit.Assert
 import org.junit.Assume
 
@@ -20,7 +21,7 @@ internal class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     get() = TestDataLanguage.JSON
 
   fun `test dynamic anchor resolve`() {
-    Assume.assumeTrue(Registry.`is`("json.schema.object.v2"))
+    Assume.assumeTrue(isJsonSchemaObjectV2())
     val schemaFile = LightVirtualFile("schema.json", """
       {
         "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",

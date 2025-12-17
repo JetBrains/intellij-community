@@ -12,6 +12,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.CollectionFactory
+import com.jetbrains.jsonSchema.isJsonSchemaObjectV2
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentMap
 
@@ -24,7 +25,7 @@ class JsonSchemaCacheManager : Disposable {
    *  Computes [JsonSchemaObject] preventing multiple concurrent computations of the same schema.
    */
   fun computeSchemaObject(schemaVirtualFile: VirtualFile, schemaPsiFile: PsiFile): JsonSchemaObject? {
-    if (Registry.`is`("json.schema.object.v2")) {
+    if (isJsonSchemaObjectV2()) {
       assert(false) {
         "Should not use cache with the new json object impl"
       }
