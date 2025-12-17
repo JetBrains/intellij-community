@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.util.ProcessingContext
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.idea.completion.api.*
+import org.jetbrains.plugins.gradle.completion.FullStringInsertHandler
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 
 private val exclude = setOf(

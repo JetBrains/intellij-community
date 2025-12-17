@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.scripting.shared.completion
+package org.jetbrains.plugins.gradle.completion
 
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
@@ -15,19 +15,19 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 object FullStringInsertHandler : InsertHandler<LookupElement> {
-    override fun handleInsert(context: InsertionContext, item: LookupElement) {
-        val result = item.getObject() as? String ?: return
-        // IDEA was so kind to have replaced part of the initial string for us,
-        // but we would like to replace the whole string
-        context.commitDocument()
-        val docManager = PsiDocumentManager.getInstance(context.project)
-        val psiFile = docManager.getPsiFile(context.document)!!
-        val element = psiFile.findElementAt(context.startOffset)!!
+  override fun handleInsert(context: InsertionContext, item: LookupElement) {
+    val result = item.getObject() as? String ?: return
+    // IDEA was so kind to have replaced part of the initial string for us,
+    // but we would like to replace the whole string
+    context.commitDocument()
+    val docManager = PsiDocumentManager.getInstance(context.project)
+    val psiFile = docManager.getPsiFile(context.document)!!
+    val element = psiFile.findElementAt(context.startOffset)!!
 
-        context.document.replaceString(
-          element.startOffset,
-          element.endOffset,
-          result
-        )
-    }
+    context.document.replaceString(
+      element.startOffset,
+      element.endOffset,
+      result
+    )
+  }
 }
