@@ -36,7 +36,6 @@ public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem<
   private final @Nullable String myQualifiedName;
   private final @Nullable String myForcedPresentableName;
   @NlsSafe private final String myPackageDisplayName;
-  private final @Nullable Icon myIcon;
   private final boolean myStrikeout;
   private final PsiSubstitutor mySubstitutor;
   
@@ -45,7 +44,6 @@ public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem<
     myQualifiedName = psiClass.getQualifiedName();
     myForcedPresentableName = forcedPresentableName;
     myPackageDisplayName = PsiFormatUtil.getPackageDisplayName(psiClass);
-    myIcon = psiClass.getIcon(Registry.is("ide.completion.show.visibility.icon") ? Iconable.ICON_FLAG_VISIBILITY : 0);
     myStrikeout = JavaDeprecationUtils.isDeprecated(psiClass, null);
     mySubstitutor = substitutor;
   }
@@ -128,7 +126,7 @@ public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem<
       .append(name, myStrikeout ? MarkupText.Kind.STRIKEOUT : MarkupText.Kind.NORMAL)
       .append(tailText, MarkupText.Kind.GRAYED).build();
     return new ModCompletionItemPresentation(mainText)
-      .withMainIcon(myIcon);
+      .withMainIcon(() -> psiClass.getIcon(Registry.is("ide.completion.show.visibility.icon") ? Iconable.ICON_FLAG_VISIBILITY : 0));
   }
 
   @NlsSafe

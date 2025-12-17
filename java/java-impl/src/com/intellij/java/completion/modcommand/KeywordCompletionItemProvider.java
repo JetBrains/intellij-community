@@ -489,7 +489,7 @@ final class KeywordCompletionItemProvider implements ModCompletionItemProvider {
       return new CommonCompletionItem(keyword + " " + className)
         .withPresentation(
           new ModCompletionItemPresentation(MarkupText.builder().append(keyword, STRONG).append(" " + className, NORMAL).build())
-            .withMainIcon(CreateClassKind.valueOf(keyword.toUpperCase(Locale.ROOT)).getKindIcon()))
+            .withMainIcon(() -> CreateClassKind.valueOf(keyword.toUpperCase(Locale.ROOT)).getKindIcon()))
         .withAdditionalUpdater((start, updater) -> {
           Document document = updater.getDocument();
           int offset = updater.getCaretOffset();

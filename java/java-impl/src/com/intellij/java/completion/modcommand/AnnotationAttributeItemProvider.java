@@ -84,7 +84,7 @@ final class AnnotationAttributeItemProvider implements ModCompletionItemProvider
       MarkupText.plainText(lookupString)
         .highlightAll(JavaDeprecationUtils.isDeprecated(annoMethod, position) ? MarkupText.Kind.STRIKEOUT : MarkupText.Kind.NORMAL)
         .concat(grayTail, MarkupText.Kind.GRAYED))
-      .withMainIcon(annoMethod.getIcon(0))
+      .withMainIcon(() -> annoMethod.getIcon(0))
       .withDetailText(JavaModCompletionUtils.typeMarkup(annoMethod.getReturnType()));
     return new CommonCompletionItem(lookupString)
       .withObject(annoMethod)

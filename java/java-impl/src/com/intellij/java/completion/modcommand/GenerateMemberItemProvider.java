@@ -21,17 +21,18 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
-import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.SmartList;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 import org.jetbrains.java.generate.exception.GenerateCodeException;
 
 import javax.swing.*;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -92,8 +93,9 @@ final class GenerateMemberItemProvider implements ModCompletionItemProvider {
         PsiMethod existingMethod = parent.findMethodBySignature(prototype, false);
         if ((existingMethod == null || existingMethod instanceof SyntheticElement) &&
             addedSignatures.add(prototype.getSignature(PsiSubstitutor.EMPTY))) {
-          Icon icon = prototype.getIcon(Iconable.ICON_FLAG_VISIBILITY);
-          sink.accept(createGenerateMethodElement(prototype, PsiSubstitutor.EMPTY, icon, "",
+          sink.accept(createGenerateMethodElement(prototype, PsiSubstitutor.EMPTY, 
+                                                  () -> prototype.getIcon(Iconable.ICON_FLAG_VISIBILITY), 
+                                                  "",
                                                   (completionStart, updater) -> {
                                                     removeLookupString(completionStart, updater);
 
@@ -142,9 +144,6 @@ final class GenerateMemberItemProvider implements ModCompletionItemProvider {
                                                                     boolean generateDefaultMethods,
                                                                     PsiClass targetClass) {
 
-    RowIcon icon = IconManager
-      .getInstance()
-      .createRowIcon(baseMethod.getIcon(0), implemented ? AllIcons.Gutter.ImplementingMethod : AllIcons.Gutter.OverridingMethod);
     CommonCompletionItem.UpdateHandler handler = (int completionStart, ModPsiUpdater updater) -> {
       removeLookupString(completionStart, updater);
 
@@ -154,7 +153,10 @@ final class GenerateMemberItemProvider implements ModCompletionItemProvider {
       List<PsiMethod> prototypes = OverrideImplementUtil.overrideOrImplementMethod(parent, baseMethod, false);
       insertGenerationInfos(completionStart, updater, OverrideImplementUtil.convert2GenerationInfos(prototypes));
     };
-    return createGenerateMethodElement(baseMethod, substitutor, icon, baseClass.getName(), handler,
+    Supplier<Icon> iconSupplier = () -> IconManager
+      .getInstance()
+      .createRowIcon(baseMethod.getIcon(0), implemented ? AllIcons.Gutter.ImplementingMethod : AllIcons.Gutter.OverridingMethod);
+    return createGenerateMethodElement(baseMethod, substitutor, iconSupplier, baseClass.getName(), handler,
                                        generateDefaultMethods, targetClass);
   }
 
@@ -177,7 +179,7 @@ final class GenerateMemberItemProvider implements ModCompletionItemProvider {
 
   private static CommonCompletionItem createGenerateMethodElement(PsiMethod prototype,
                                                                   PsiSubstitutor substitutor,
-                                                                  Icon icon,
+                                                                  @UnknownNullability Supplier<Icon> icon,
                                                                   @Nullable @NlsSafe String typeText,
                                                                   CommonCompletionItem.UpdateHandler insertHandler,
                                                                   boolean generateDefaultMethod,

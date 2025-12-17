@@ -162,7 +162,7 @@ final class ReferenceItemProvider implements ModCompletionItemProvider {
           final String text = variable.getName() + "[0]";
           return new CommonCompletionItem(text)
             .withPresentation(new ModCompletionItemPresentation(MarkupText.plainText(text))
-                                .withMainIcon(variable.getIcon(Iconable.ICON_FLAG_VISIBILITY))
+                                .withMainIcon(() -> variable.getIcon(Iconable.ICON_FLAG_VISIBILITY))
                                 .withDetailText(JavaModCompletionUtils.typeMarkup(arrayType.getComponentType())));
         }
       }
@@ -306,7 +306,7 @@ final class ReferenceItemProvider implements ModCompletionItemProvider {
         ModCompletionItemPresentation presentation = 
           new ModCompletionItemPresentation(
             MarkupText.plainText(method.getName()).concat(parameters, MarkupText.Kind.GRAYED))
-            .withMainIcon(method.getIcon(Iconable.ICON_FLAG_VISIBILITY))
+            .withMainIcon(() -> method.getIcon(Iconable.ICON_FLAG_VISIBILITY))
             .withDetailText(JavaModCompletionUtils.typeMarkup(method.getReturnType()));
         return List.of(new CommonCompletionItem(method.getName())
           .withObject(method)
@@ -355,7 +355,7 @@ final class ReferenceItemProvider implements ModCompletionItemProvider {
                        .withObject(pkg)
                        .withTail(addDot ? ModNavigatorTailType.dotType() : ModNavigatorTailType.noneType())
                        .withPresentation(new ModCompletionItemPresentation(MarkupText.plainText(pkg.getName()+(addDot?".":"")))
-                                           .withMainIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Package))));
+                                           .withMainIcon(() -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Package))));
     }
     //
     //return Collections.singletonList(LookupItemUtil.objectToLookupItem(completion));

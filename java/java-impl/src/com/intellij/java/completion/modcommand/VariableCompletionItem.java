@@ -264,7 +264,7 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
     }
     main = main.concat(locationTail, MarkupText.Kind.GRAYED);
     ModCompletionItemPresentation presentation = new ModCompletionItemPresentation(main)
-      .withMainIcon(variable.getIcon(0));
+      .withMainIcon(() -> variable.getIcon(0));
     return presentation.withDetailText(JavaModCompletionUtils.typeMarkup(mySubstitutor.substitute(variable.getType())));
   }
 }

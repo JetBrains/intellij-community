@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Objects;
 
 @NotNullByDefault
@@ -34,7 +33,6 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem<PsiType
   private final boolean myIndicateAnonymous;
   private final boolean myAddArrayInitializer;
   private final String myLocationString;
-  private final @Nullable Icon myIcon;
   private final boolean myStrikeout;
   private final @Nullable String myForcedPresentableName;
 
@@ -46,8 +44,6 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem<PsiType
     myLocationString = locationString;
     myForcedPresentableName = null;
     PsiClass psiClass = PsiUtil.resolveClassInType(type);
-    myIcon =
-      psiClass == null ? null : psiClass.getIcon(Registry.is("ide.completion.show.visibility.icon") ? Iconable.ICON_FLAG_VISIBILITY : 0);
     myStrikeout = psiClass != null && psiClass.isDeprecated();
   }
 
@@ -192,7 +188,12 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem<PsiType
     if (myAddArrayInitializer) {
       text = text.concat("{...}", MarkupText.Kind.GRAYED);
     }
-    return new ModCompletionItemPresentation(text).withMainIcon(myIcon);
+    return new ModCompletionItemPresentation(text)
+      .withMainIcon(() -> {
+        PsiClass psiClass = PsiUtil.resolveClassInType(contextObject());
+        return psiClass == null ? null : 
+               psiClass.getIcon(Registry.is("ide.completion.show.visibility.icon") ? Iconable.ICON_FLAG_VISIBILITY : 0);
+      });
   }
 
   public static void addImportForItem(PsiClass aClass, PsiFile file, int startOffset, ModPsiUpdater updater) {
