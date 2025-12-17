@@ -90,6 +90,9 @@
                  description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>
     <registryKey key="jar.http.downloader.enabled" defaultValue="false"
                  description="Enabled maven-less library roots resolver for JPS (for internal JetBrains use only)"/>
+    <registryKey key="starters.dependency.update.host"
+                 defaultValue="https://frameworks.jetbrains.com"
+                 description="The host is used to download dependency config updates for framework starters"/>
     <registryKey defaultValue="false" description="Suggested refactoring from call-site in Java"
                  key="ide.java.refactoring.suggested.call.site"/>
     <registryKey key="java.completion.argument.live.template" defaultValue="false"
