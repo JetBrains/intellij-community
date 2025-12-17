@@ -21,6 +21,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -87,6 +88,10 @@ private class GradleLocalRepositoryIndexerImpl(private val coroutineScope: Corou
   }
 
   private fun update(project: Project) {
+    if (!useDependencyCompletionService()) {
+      return
+    }
+
     var groupNumber = 0
     var artifactNumber = 0
     var versionNumber = 0

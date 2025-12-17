@@ -216,8 +216,3 @@ fun removeDummySuffix(value: String?): String {
 @ApiStatus.Internal
 fun CompletionParameters.getCompletionContext(): DependencyCompletionContext =
     GradleDependencyCompletionContext(originalFile.virtualFile.toNioPath().getEelDescriptor())
-
-@ApiStatus.Internal
-fun useDependencyCompletionService() : Boolean {
-    return Registry.`is`("gradle.dependency.completion.service", true)
-}
