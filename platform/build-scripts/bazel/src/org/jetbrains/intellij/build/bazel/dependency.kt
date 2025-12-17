@@ -61,12 +61,12 @@ internal fun generateDeps(
   val runtimeDeps = mutableListOf<BazelLabel>()
   val provided = mutableListOf<BazelLabel>()
 
-  if (isTest) {
+  if (isTest) {  // test always depends on production
     if (hasSources && module.sources.isNotEmpty()) {
       // associates also is a dependency
       associates.add(BazelLabel(":${module.targetName}", module))
     }
-    else if (module.sources.isNotEmpty() || module.resources.isNotEmpty()) {
+    else {
       runtimeDeps.add(BazelLabel(":${module.targetName}", module))
     }
   }
@@ -470,7 +470,7 @@ private fun addDep(
   isExported: Boolean,
 ) {
   if (isTest) {
-    val hasProductionDependentModule = dependentModule.sources.isNotEmpty() || dependentModule.resources.isNotEmpty()
+    val hasProductionDependentModule = true  // test always depends on production, skip runtime dependencies
     when (scope) {
       JpsJavaDependencyScope.COMPILE -> {
         if (hasSources) {
