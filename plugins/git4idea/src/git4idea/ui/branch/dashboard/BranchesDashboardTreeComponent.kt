@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.SearchFieldWithExtension
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
@@ -60,6 +61,8 @@ object BranchesDashboardTreeComponent {
       // fixme: this needs to be dynamic
       accessibleContext.accessibleDescription = message("git.log.branches.search.field.accessible.description",
                                                         KeymapUtil.getFirstKeyboardShortcutText("Vcs.Log.FocusTextFilter"))
+      textEditor.emptyText.text = message("git.log.branches.search.placeholder")
+      TextComponentEmptyText.setupPlaceholderVisibility(textEditor)
     }
 
     val searchComponent = when (searchLook) {
