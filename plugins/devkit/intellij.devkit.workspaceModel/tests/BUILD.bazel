@@ -49,6 +49,9 @@ jvm_library(
     "//libraries/rd/framework",
     "//platform/util/jdom",
     "@lib//:kotlinc-kotlin-scripting-common",
+    "//plugins/editorconfig/backend",
+    "//plugins/editorconfig/backend:backend_test_lib",
+    "//plugins/editorconfig:editorconfig-plugin",
   ],
   runtime_deps = ["//plugins/devkit"]
 )

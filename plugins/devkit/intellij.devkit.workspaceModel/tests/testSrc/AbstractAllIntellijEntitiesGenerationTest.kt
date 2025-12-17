@@ -119,6 +119,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     val path = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl)).invariantSeparatorsPathString
     LOG.info("Generating workspace code for module: ${moduleEntity.name}, path $path")
     myFixture.copyDirectoryToProject(path, path)
+    val copiedEditorConfig = myFixture.copyFileToProject("/community/.editorconfig", ".editorconfig")
 
     if (moduleEntity.name == "intellij.javascript.backend") {
       javascriptNodeModulesPackageExclusionFixForTests()
@@ -137,7 +138,8 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
       relativePathToEntitiesDirectory = path,
       processAbstractTypes = moduleEntity.withAbstractTypes,
       explicitApiEnabled = false,
-      isTestModule = isTestModule
+      isTestModule = isTestModule,
+      formatCode = true
     )
 
     if (libraries.isNotEmpty())

@@ -16,7 +16,7 @@ interface DefaultFieldEntity : WorkspaceEntity {
     @Default get() = emptyList<String>()
   val defaultMap: Map<String, String>
     @Default get() = emptyMap<String, String>()
-
+  
 }
 
 data class TestData(val name: String, val description: String)

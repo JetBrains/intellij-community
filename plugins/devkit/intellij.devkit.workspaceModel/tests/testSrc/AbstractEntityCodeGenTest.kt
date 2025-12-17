@@ -19,6 +19,14 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
     doTest()
   }
 
+  fun testSimpleCaseWithCodestyle() {
+    doTest(formatCode = true)
+  }
+
+  fun testSimpleNonWsmExtension() {
+    doTest()
+  }
+
   fun testFinalProperty() {
     doTest()
   }
@@ -139,14 +147,18 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
     assertEquals(expectedMessage, actualMessage)
   }
 
-  private fun doTest(processAbstractTypes: Boolean = false, explicitApiEnabled: Boolean = false, isTestModule: Boolean = false) {
-    generateAndCompare(
-      dirWithExpectedApiFiles = getExpectedDir(),
-      dirWithExpectedImplFiles = getExpectedDir().resolve("gen"),
-      processAbstractTypes = processAbstractTypes,
-      explicitApiEnabled = explicitApiEnabled,
-      isTestModule = isTestModule
-    )
+  private fun doTest(
+    processAbstractTypes: Boolean = false,
+    explicitApiEnabled: Boolean = false,
+    isTestModule: Boolean = false,
+    formatCode: Boolean = false,
+  ) {
+    generateAndCompare(dirWithExpectedApiFiles = getExpectedDir(),
+                       dirWithExpectedImplFiles = getExpectedDir().resolve("gen"),
+                       processAbstractTypes = processAbstractTypes,
+                       explicitApiEnabled = explicitApiEnabled,
+                       isTestModule = isTestModule,
+                       formatCode = formatCode)
   }
 
   private fun getExpectedDir(): Path {

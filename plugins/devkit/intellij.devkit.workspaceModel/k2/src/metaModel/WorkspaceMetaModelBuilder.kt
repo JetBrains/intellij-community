@@ -67,6 +67,7 @@ internal class WorkspaceMetaModelBuilder(
       .mapNotNull { propertySymbol ->
         propertySymbol.receiverType?.expandedSymbol
           ?.takeIf { receiverClassSymbol -> isEntityInterface(receiverClassSymbol) && !isEntityBuilderInterface(receiverClassSymbol) }
+          ?.takeIf { isEntityReference(propertySymbol.returnType) }
           ?.let { propertySymbol to it }
       }
     return objModuleStub.registerContent(this@registerObjModuleContent, extensionProperties.toList())

@@ -20,173 +20,163 @@ import com.intellij.workspaceModel.test.api.PrivateEntityBuilder
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class PrivateEntityImpl(private val dataSource: PrivateEntityData) : PrivateEntity, WorkspaceEntityBase(dataSource) {
+internal class PrivateEntityImpl(private val dataSource: PrivateEntityData): PrivateEntity, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
+private companion object {
 
+private val connections = listOf<ConnectionId>()
 
-    private val connections = listOf<ConnectionId>()
+}
 
-  }
+override val name: String
+get() {
+readField("name")
+return dataSource.name
+}
 
-  override val name: String
-    get() {
-      readField("name")
-      return dataSource.name
-    }
+override val entitySource: EntitySource
+get() {
+readField("entitySource")
+return dataSource.entitySource
+}
 
-  override val entitySource: EntitySource
-    get() {
-      readField("entitySource")
-      return dataSource.entitySource
-    }
-
-  override fun connectionIdList(): List<ConnectionId> {
-    return connections
-  }
-
-
-  internal class Builder(result: PrivateEntityData?) : ModifiableWorkspaceEntityBase<PrivateEntity, PrivateEntityData>(result), PrivateEntityBuilder {
-    internal constructor() : this(PrivateEntityData())
-
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity PrivateEntity is already created in a different builder")
-        }
-      }
-
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-
-      // Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
-    }
-
-    private fun checkInitialization() {
-      val _diff = diff
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field WorkspaceEntity#entitySource should be initialized")
-      }
-      if (!getEntityData().isNameInitialized()) {
-        error("Field PrivateEntity#name should be initialized")
-      }
-    }
-
-    override fun connectionIdList(): List<ConnectionId> {
-      return connections
-    }
-
-    // Relabeling code, move information from dataSource to this builder
-    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as PrivateEntity
-      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.name != dataSource.name) this.name = dataSource.name
-      updateChildToParentReferences(parents)
-    }
+override fun connectionIdList(): List<ConnectionId> {
+return connections
+}
 
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).entitySource = value
-        changedProperty.add("entitySource")
+internal class Builder(result: PrivateEntityData?): ModifiableWorkspaceEntityBase<PrivateEntity, PrivateEntityData>(result), PrivateEntityBuilder {
+internal constructor(): this(PrivateEntityData())
 
-      }
+override fun applyToBuilder(builder: MutableEntityStorage){
+if (this.diff != null){
+if (existsInBuilder(builder)){
+this.diff = builder
+return
+}
+else{
+error("Entity PrivateEntity is already created in a different builder")
+}
+}
+this.diff = builder
+addToBuilder()
+this.id = getEntityData().createEntityId()
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
+this.currentEntityData = null
+// Process linked entities that are connected without a builder
+processLinkedEntities(builder)
+checkInitialization() // TODO uncomment and check failed tests
+}
 
-    override var name: String
-      get() = getEntityData().name
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).name = value
-        changedProperty.add("name")
-      }
+private fun checkInitialization(){
+val _diff = diff
+if (!getEntityData().isEntitySourceInitialized()){
+error("Field WorkspaceEntity#entitySource should be initialized")
+}
+if (!getEntityData().isNameInitialized()){
+error("Field PrivateEntity#name should be initialized")
+}
+}
+override fun connectionIdList(): List<ConnectionId>{
+return connections
+}
+// Relabeling code, move information from dataSource to this builder
+override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?){
+dataSource as PrivateEntity
+if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+if (this.name != dataSource.name) this.name = dataSource.name
+updateChildToParentReferences(parents)
+}
 
-    override fun getEntityClass(): Class<PrivateEntity> = PrivateEntity::class.java
-  }
+        
+override var entitySource: EntitySource
+get() = getEntityData().entitySource
+set(value) {
+checkModificationAllowed()
+getEntityData(true).entitySource = value
+changedProperty.add("entitySource")
+
+}
+override var name: String
+get() = getEntityData().name
+set(value) {
+checkModificationAllowed()
+getEntityData(true).name = value
+changedProperty.add("name")
+}
+
+override fun getEntityClass(): Class<PrivateEntity> = PrivateEntity::class.java
+}
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class PrivateEntityData : WorkspaceEntityData<PrivateEntity>() {
-  lateinit var name: String
+internal class PrivateEntityData : WorkspaceEntityData<PrivateEntity>(){
+lateinit var name: String
 
-  internal fun isNameInitialized(): Boolean = ::name.isInitialized
+internal fun isNameInitialized(): Boolean = ::name.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<PrivateEntity> {
-    val modifiable = PrivateEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
+override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<PrivateEntity>{
+val modifiable = PrivateEntityImpl.Builder(null)
+modifiable.diff = diff
+modifiable.id = createEntityId()
+return modifiable
+}
 
-  @OptIn(EntityStorageInstrumentationApi::class)
-  override fun createEntity(snapshot: EntityStorageInstrumentation): PrivateEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = PrivateEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
+@OptIn(EntityStorageInstrumentationApi::class)
+override fun createEntity(snapshot: EntityStorageInstrumentation): PrivateEntity{
+val entityId = createEntityId()
+return snapshot.initializeEntity(entityId){
+val entity = PrivateEntityImpl(this)
+entity.snapshot = snapshot
+entity.id = entityId
+entity
+}
+}
 
-  override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.PrivateEntity") as EntityMetadata
-  }
+override fun getMetadata(): EntityMetadata{
+return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.PrivateEntity") as EntityMetadata
+}
 
-  override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return PrivateEntity::class.java
-  }
+override fun getEntityInterface(): Class<out WorkspaceEntity>{
+return PrivateEntity::class.java
+}
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return PrivateEntity(name, entitySource)
-  }
+override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*>{
+return PrivateEntity(name, entitySource)
+}
 
-  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
-    val res = mutableListOf<Class<out WorkspaceEntity>>()
-    return res
-  }
+override fun getRequiredParents(): List<Class<out WorkspaceEntity>>{
+val res = mutableListOf<Class<out WorkspaceEntity>>()
+return res
+}
 
-  override fun equals(other: Any?): Boolean {
-    if (other == null) return false
-    if (this.javaClass != other.javaClass) return false
+override fun equals(other: Any?): Boolean{
+if (other == null) return false
+if (this.javaClass != other.javaClass) return false
+other as PrivateEntityData
+if (this.entitySource != other.entitySource) return false
+if (this.name != other.name) return false
+return true
+}
 
-    other as PrivateEntityData
+override fun equalsIgnoringEntitySource(other: Any?): Boolean{
+if (other == null) return false
+if (this.javaClass != other.javaClass) return false
+other as PrivateEntityData
+if (this.name != other.name) return false
+return true
+}
 
-    if (this.entitySource != other.entitySource) return false
-    if (this.name != other.name) return false
-    return true
-  }
-
-  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
-    if (other == null) return false
-    if (this.javaClass != other.javaClass) return false
-
-    other as PrivateEntityData
-
-    if (this.name != other.name) return false
-    return true
-  }
-
-  override fun hashCode(): Int {
-    var result = entitySource.hashCode()
-    result = 31 * result + name.hashCode()
-    return result
-  }
-
-  override fun hashCodeIgnoringEntitySource(): Int {
-    var result = javaClass.hashCode()
-    result = 31 * result + name.hashCode()
-    return result
-  }
+override fun hashCode(): Int{
+var result = entitySource.hashCode()
+result = 31 * result + name.hashCode()
+return result
+}
+override fun hashCodeIgnoringEntitySource(): Int{
+var result = javaClass.hashCode()
+result = 31 * result + name.hashCode()
+return result
+}
 }

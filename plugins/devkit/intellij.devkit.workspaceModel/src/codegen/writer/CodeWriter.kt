@@ -8,6 +8,7 @@ import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.lang.ASTNode
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.executeCommand
@@ -15,10 +16,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -41,6 +44,7 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.resolve.ImportPath
 import java.io.IOException
 import java.net.URL
+import java.nio.file.Path
 import java.util.*
 import java.util.jar.Manifest
 import kotlin.time.Duration.Companion.seconds
@@ -55,6 +59,7 @@ object CodeWriter {
     isTestSourceFolder: Boolean, isTestModule: Boolean,
     targetFolderGenerator: () -> VirtualFile?,
     existingTargetFolder: () -> VirtualFile?,
+    formatCode: Boolean
   ) {
     val sourceFilePerObjModule = HashMap<String, VirtualFile>()
     val ktClasses = HashMap<String, KtClassOrObject>()
@@ -162,11 +167,15 @@ object CodeWriter {
         importsByFile.forEach { (file, imports) ->
           addImports(file, imports)
         }
+        val copiedEditorconfig = copyEditorConfigIfIntellij(project, genFolder)
         generatedFiles.forEachIndexed { i, file ->
           indicator.fraction = 0.25 + 0.7 * i / generatedFiles.size
-          CodeStyleManager.getInstance(project).reformat(file)
+          if (formatCode) {
+            CodeStyleManager.getInstance(project).reformat(file)
+          }
           file.apiFileNameForImplFile?.let { ktClasses[it] }?.containingKtFile?.let { apiFile -> copyHeaderComment(apiFile, file) }
         }
+        copiedEditorconfig?.delete(CodeWriter)
         topLevelDeclarations.entrySet().forEach { (file, placeAndDeclarations) ->
           val addedElements = ArrayList<KtDeclaration>()
           for ((place, declarations) in placeAndDeclarations) {
@@ -184,6 +193,15 @@ object CodeWriter {
         }
       }
     }
+  }
+
+  private fun copyEditorConfigIfIntellij(project: Project, genFolder: VirtualFile): VirtualFile? {
+    if (!IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
+      return null
+    }
+    val editorconfigFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(Path.of(PathManager.getHomePath(), "community", ".editorconfig"))!!
+    val copied = VfsUtil.copyFile(this, editorconfigFile, genFolder)
+    return copied
   }
 
   /**
@@ -365,15 +383,11 @@ object CodeWriter {
         generatedApiImports.add(import.pathStr)
       }
       val psiFactory = KtPsiFactory(apiClass.project)
-      val topLevelCode = code.topLevelCode ?: ""
+      val topLevelCode = code.topLevelCode ?: return@run
       val filename = "${code.target.name}Modifications"
       val generatedApiFile = psiFactory.createFile("$filename.kt", generatedApiImports.findAndRemoveFqns(topLevelCode))
-      generatedApiFile.packageFqName = apiFile.packageFqName
-      generatedApiFile.addBefore(psiFactory.createFileAnnotation("JvmName(\"$filename\")"), generatedApiFile.firstChild)
 
       val compatibilityTopLevelDeclarations = mutableListOf<KtDeclaration>()
-      // val allDeclarationsFile = psiFactory.createFile(apiImports.findAndRemoveFqns(topLevelCode))
-      // allDeclarationsFile.importList?.copy()?.let { generatedApiFile.importList?.replace(it) }
       val declarations = generatedApiFile.declarations
       for (declaration in declarations) {
         if (declaration.firstChild.text.contains("Deprecated")) {

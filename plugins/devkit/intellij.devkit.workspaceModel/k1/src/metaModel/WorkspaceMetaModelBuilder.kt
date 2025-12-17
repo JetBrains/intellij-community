@@ -69,8 +69,11 @@ internal class WorkspaceMetaModelBuilder(
     }
     val externalProperties = extensionProperties.mapNotNull { property ->
       val receiver = property.extensionReceiverParameter?.value?.type?.constructor?.declarationDescriptor as? ClassDescriptor
-      receiver?.let { property to receiver }
-    }.filter { it.second.isEntityInterface && !it.second.isEntityBuilderInterface }
+      val entityReceiver = receiver?.takeIf { it.isEntityInterface && !it.isEntityBuilderInterface }
+      if (entityReceiver == null) return@mapNotNull null
+      if (!isEntityReference(property.returnType)) return@mapNotNull null
+      property to entityReceiver
+    }
     return objModuleStub.registerContent(externalProperties)
   }
 

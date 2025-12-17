@@ -16,10 +16,13 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 
@@ -148,3 +151,13 @@ internal fun KaSession.createObjTypeStub(symbol: KaClassSymbol, module: Compiled
 
 internal fun KaSession.isParent(kaType: KaAnnotated) =
   kaType.isAnnotatedBy(WorkspaceModelDefaults.PARENT_ANNOTATION.classId)
+
+internal fun KaSession.isEntityReference(kaType: KaType?): Boolean {
+  if (kaType !is KaClassType) return false
+  if (kaType.isSubtypeOf(StandardClassIds.List) || kaType.isSubtypeOf(StandardClassIds.Set)) {
+    val typeArgument = kaType.typeArguments.firstNotNullOf { it.type }
+    return isEntityReference(typeArgument)
+  }
+  val classSymbol = kaType.expandedSymbol ?: return false
+  return classSymbol.classKind == KaClassKind.INTERFACE && kaType.isSubtypeOf(WorkspaceModelDefaults.WORKSPACE_ENTITY.classId)
+}

@@ -44,7 +44,6 @@ internal fun ClassDescriptor.inheritors(
 ): List<ClassDescriptor> {
   val psiClass = javaPsiFacade.findClass(fqNameSafe.asString(), scope) ?: return emptyList()
   val inheritors = ClassInheritorsSearch.search(psiClass, scope, true, true, false)
-    .asIterable()
     .filterNot { it.qualifiedName == null }
     .sortedBy { it.qualifiedName } // Sorting is needed for consistency in case of regeneration
   return inheritors.map { it.getJavaClassDescriptor()!! }
@@ -134,4 +133,18 @@ private val standardTypes = setOf(Any::class.qualifiedName, CommonClassNames.JAV
 
 private fun Iterable<String>.withoutStandardTypes(): List<String> {
   return filterNot { standardTypes.contains(it) }
+}
+
+internal fun isEntityReference(type: KotlinType?): Boolean {
+  if (type == null) return false
+  val descriptor = type.constructor.declarationDescriptor
+  if (descriptor !is ClassDescriptor) return false
+  val fqName = descriptor.fqNameSafe
+  
+  if (fqName.isList || fqName.isSet) {
+    val genericType = type.arguments.first().type
+    return isEntityReference(genericType)
+  }
+  
+  return descriptor.isEntityInterface
 }

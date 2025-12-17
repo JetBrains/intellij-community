@@ -89,7 +89,8 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
           },
           existingTargetFolder = {
             calculateExistingGenFolder(sourceRoot)
-          }
+          },
+          formatCode = true
         )
       }
     }
