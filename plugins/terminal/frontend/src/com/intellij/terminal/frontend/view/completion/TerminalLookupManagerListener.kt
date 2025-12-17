@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.frontend.view.impl.TerminalInput
 import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
@@ -73,11 +74,25 @@ private class TerminalLookupListener : LookupListener {
       return false
     }
 
+    // First step - remove the typed prefix
     val commandSize = lookup.itemPattern(item).length
     if (commandSize > 0) {
       terminalInput.sendBytes(ByteArray(commandSize) { Ascii.DEL })
     }
+
+    // Second step - insert the completion item
     terminalInput.sendString(item.lookupString)
+
+    // Third step - move the cursor to the custom position if it is specified
+    val suggestion = item.`object` as ShellCompletionSuggestion
+    val cursorOffset = suggestion.insertValue?.indexOf("{cursor}")
+    if (cursorOffset != null && cursorOffset != -1) {
+      val delta = item.lookupString.length - cursorOffset
+      repeat(delta) {
+        terminalInput.sendLeft()
+      }
+    }
+
     // if one of the listeners returns false - the item is not inserted
     return false
   }

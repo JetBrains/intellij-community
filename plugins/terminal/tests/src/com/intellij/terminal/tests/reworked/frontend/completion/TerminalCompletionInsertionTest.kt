@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,6 +33,26 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
       subcommand("start") {
         argument {
           suggestions("app", "application")
+        }
+      }
+      subcommand("with-cursor-single") {
+        argument {
+          suggestions {
+            listOf(ShellCompletionSuggestion("suggestion().after") { insertValue("suggestion({cursor}).after") })
+          }
+        }
+      }
+      subcommand("with-cursor-double") {
+        argument {
+          suggestions {
+            listOf(
+              ShellCompletionSuggestion("suggestion"),
+              ShellCompletionSuggestion("suggestion().after") {
+                priority(100)
+                insertValue("suggestion({cursor}).after")
+              }
+            )
+          }
         }
       }
     }
@@ -119,6 +140,41 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
     val expectedText = "test_cmd stop shared\\\n"
     val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong())
     fixture.assertOutputModelState(expectedText, expectedCursorOffset)
+  }
+
+  @Test
+  fun `test cursor placed correctly after inserting suggestion with custom cursor position`() {
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      val fixture = createFixture()
+
+      fixture.type("test_cmd with-cursor-double sugg")
+      fixture.callCompletionPopup()
+      val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+      assertThat(lookup.items.map { it.lookupString })
+        .hasSameElementsAs(listOf("suggestion", "suggestion().after"))
+      assertThat(lookup.currentItem?.lookupString)
+        .isEqualTo("suggestion().after")
+
+      fixture.insertSelectedItem()
+
+      val expectedText = "test_cmd with-cursor-double suggestion().after"
+      val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong() - 7) // cursor is between parentheses
+      fixture.assertOutputModelState(expectedText, expectedCursorOffset)
+    }
+  }
+
+  @Test
+  fun `test cursor placed correctly after auto-inserting single suggestion with custom cursor position`() {
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      val fixture = createFixture()
+
+      fixture.type("test_cmd with-cursor-single sugg")
+      fixture.callCompletionPopup(waitForPopup = false)
+
+      val expectedText = "test_cmd with-cursor-single suggestion().after"
+      val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong() - 7) // cursor is between parentheses
+      fixture.assertOutputModelState(expectedText, expectedCursorOffset)
+    }
   }
 
   private suspend fun TerminalCompletionFixture.assertOutputModelState(
