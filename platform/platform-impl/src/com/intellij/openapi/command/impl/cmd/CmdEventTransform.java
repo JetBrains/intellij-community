@@ -1,21 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.command.impl;
+package com.intellij.openapi.command.impl.cmd;
 
 import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class CmdEventTransform {
-
+public final class CmdEventTransform {
   private static final @NotNull CmdEventTransform INSTANCE = new CmdEventTransform();
 
-  static @NotNull CmdEventTransform getInstance() {
+  public static @NotNull CmdEventTransform getInstance() {
     return INSTANCE;
   }
 
-  private final @NotNull CommandIdGenerator idGenerator = new CommandIdGenerator();
+  private final @NotNull CmdIdGenerator idGenerator = new CmdIdGenerator();
 
-  @NotNull CmdEvent create(@Nullable CommandEvent event, boolean isStart) {
+  public @NotNull CmdEvent create(@Nullable CommandEvent event, boolean isStart) {
     CmdEvent foreignCommand = ForeignCommandProcessor.getInstance().currentCommand();
     if (foreignCommand != null) {
       return foreignCommand;
@@ -23,21 +23,21 @@ final class CmdEventTransform {
     boolean isTransparent = event == null;
     CommandId commandId = getCommandId(isTransparent, isStart);
     var meta = isStart
-               ? new MutableCommandMetaImpl()
-               : NoCommandMeta.INSTANCE;
+               ? CmdMeta.createMutable()
+               : CmdMeta.createEmpty();
     return isTransparent
            ? CmdEvent.createTransparent(commandId, meta)
            : CmdEvent.create(event, commandId, meta);
   }
 
-  @NotNull CmdEvent createNonUndoable() {
-    return CmdEvent.createNonUndoable(idGenerator.nextCommandId(), NoCommandMeta.INSTANCE);
+  public @NotNull CmdEvent createNonUndoable() {
+    return CmdEvent.createNonUndoable(idGenerator.nextCommandId(), NoCmdMeta.INSTANCE);
   }
 
   private @NotNull CommandId getCommandId(boolean isTransparent, boolean isStart) {
     if (isTransparent) {
-      return isStart ? idGenerator.nextTransparentId() : idGenerator.currentCommandId();
+      return isStart ? idGenerator.nextTransparentId() : idGenerator.currentId();
     }
-    return isStart ? idGenerator.nextCommandId() : idGenerator.currentCommandId();
+    return isStart ? idGenerator.nextCommandId() : idGenerator.currentId();
   }
 }

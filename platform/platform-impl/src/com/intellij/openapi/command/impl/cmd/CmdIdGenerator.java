@@ -1,13 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.command.impl;
+package com.intellij.openapi.command.impl.cmd;
 
+import com.intellij.openapi.command.impl.CommandId;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 
-final class CommandIdGenerator {
+final class CmdIdGenerator {
 
   // for debug purpose: command - even number, transparent - odd number
   private final AtomicLong idGenerator = new AtomicLong();
@@ -23,7 +24,7 @@ final class CommandIdGenerator {
     return createId(commandId);
   }
 
-  @NotNull CommandId currentCommandId() {
+  @NotNull CommandId currentId() {
     return currentId.get();
   }
 

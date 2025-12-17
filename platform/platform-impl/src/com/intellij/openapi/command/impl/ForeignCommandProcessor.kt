@@ -4,6 +4,7 @@ package com.intellij.openapi.command.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.CommandProcessorEx
+import com.intellij.openapi.command.impl.cmd.CmdEvent
 import com.intellij.openapi.components.service
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.ThreadingAssertions
