@@ -190,8 +190,8 @@ open class EnvVariablesTable : ListTableWithButtons<EnvironmentVariable>() {
       for (environmentVariable in variables) {
         if (isEmpty(environmentVariable)) continue
         if (!sb.isEmpty()) sb.append(';')
-        sb.append(StringUtil.escapeChars(environmentVariable!!.getName(), '=', ';')).append('=')
-          .append(StringUtil.escapeChars(environmentVariable.getValue(), '=', ';'))
+        sb.append(StringUtil.escapeChars(environmentVariable!!.getName(), '=', ';', '\n')).append('=')
+          .append(StringUtil.escapeChars(environmentVariable.getValue(), '=', ';', '\n'))
       }
       CopyPasteManager.getInstance().setContents(StringSelection(sb.toString()))
     }
