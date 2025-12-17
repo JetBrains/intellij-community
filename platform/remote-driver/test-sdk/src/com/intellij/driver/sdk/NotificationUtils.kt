@@ -21,6 +21,8 @@ interface NotificationUtils {
 
   fun disableAllBalloonNotifications()
 
+  fun enableAllBalloonNotifications()
+
   fun disableBalloonNotificationsByGroupIdPattern(groupIdsPattern: String)
 
   fun disableAllBalloonNotificationsWithExcludesPattern(excludesPattern: String)
