@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.vcs.BaseChangeListsTest
+import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
 import com.intellij.vcs.changes.ChangesViewChangeIdCache
@@ -45,9 +46,11 @@ internal class ChangesViewChangeIdCacheTest : BaseChangeListsTest() {
   }
 
   fun `test return null for unknown id`() {
-    val file = addLocalFile(name = "file.txt", content = "content", baseContent = "base1")
-    refreshCLM()
-    val nonExistentId = ChangeId.getId(file.change!!)
+    val change = Change(null,
+                        SimpleContentRevision("text", LocalFilePath("q", false), "2"))
+
+    val fakeChange = ChangeListChange(change, "test", "test")
+    val nonExistentId = ChangeId.getId(fakeChange)
     val resolvedChange = cache.getChangeListChange(nonExistentId)
     assertNull(resolvedChange)
   }

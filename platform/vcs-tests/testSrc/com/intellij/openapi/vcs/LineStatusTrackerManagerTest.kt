@@ -1053,12 +1053,11 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       val shelvedList = shelveManager.shelveChanges(list.changes, "X", false)
 
       runCommand { file.document.setText(parseInput("a_b_c_d_e_f")) }
-      removeBaseVersion(FILE_1)
       refreshCLM()
       lstm.waitUntilBaseContentsLoaded()
+      tracker.assertTextContentIs("a_b_c_d_e_f")
 
       shelveManager.unshelveChangeList(shelvedList, null, null, list, false)
-      setBaseVersion(FILE_1, "a_b_c_d_e_f")
       refreshCLM()
       lstm.waitUntilBaseContentsLoaded()
       tracker.assertTextContentIs("a1_b_c_d_e_f1")
