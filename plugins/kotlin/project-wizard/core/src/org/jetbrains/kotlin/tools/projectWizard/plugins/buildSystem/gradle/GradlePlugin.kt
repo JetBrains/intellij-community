@@ -127,13 +127,6 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
                             "version" to gradleVersion.settingValue
                         )
                     )
-                ).andThen(
-                    // This is here temporarily until the Kotlin Multiplatform wizard has been removed
-                    compute {
-                        val assets = StandardAssetsProvider().getGradlewAssets() + KotlinAssetsProvider.getKotlinGradleIgnoreAssets()
-                        AssetsProcessor.getInstance().generateSources(projectPath, assets, emptyMap())
-                        Unit
-                    }
                 )
             }
         }
