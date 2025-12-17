@@ -1867,6 +1867,10 @@
                  defaultValue="25"
                  description="Limit of recent items for search everywhere tabs"/>
 
+    <registryKey key="search.everywhere.round.text.field"
+                 defaultValue="true"
+                 description="Enables round search text field"/>
+
     <registryKey key="highlighting.passes.cache"
                  defaultValue="false"
                  description="Enables highlighting passes cache"/>

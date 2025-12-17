@@ -66,8 +66,10 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.SearchFieldWithExtension;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.popup.PopupUpdateProcessorBase;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.scale.JBUIScale;
@@ -658,6 +660,26 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     res.putClientProperty(SEARCH_EVERYWHERE_SEARCH_FILED_KEY, true);
     res.setLayout(new BorderLayout());
     return res;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  protected @NotNull JComponent wrapSearchField() {
+    if (!Registry.is("search.everywhere.round.text.field", false)) {
+      return mySearchField;
+    }
+
+    Wrapper wrapper = new Wrapper(new SearchFieldWithExtension(mySearchField, JBUI.CurrentTheme.Popup.BACKGROUND));
+    wrapper.setOpaque(true);
+    wrapper.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+    wrapper.setBorder(JBUI.Borders.empty(3, 5));
+    return wrapper;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  protected int getTextFieldExtraHeight() {
+    return Registry.is("search.everywhere.round.text.field", false) ? JBUI.scale(-1) : super.getTextFieldExtraHeight();
   }
 
   private void showPopup(@NotNull RelativePoint relativePoint) {
