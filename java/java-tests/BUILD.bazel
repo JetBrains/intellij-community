@@ -159,7 +159,6 @@ jvm_library(
     "//platform/lang-impl",
     "//xml/impl",
     "//platform/syntax/syntax-scripts:scripts",
-    "@lib//:byte-buddy",
     "//plugins/grazie/src:core",
     "//platform/testFramework/junit5/codeInsight",
     "//java/java-psi-impl:psi-impl",

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.openapi.module.Module;
@@ -9,10 +9,10 @@ import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.junit5.RunInEdt;
 import com.intellij.testFramework.rules.TempDirectoryExtension;
-import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.implementation.StubMethod;
-import net.bytebuddy.jar.asm.Opcodes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,10 +74,27 @@ public class ClsResolveTest {
   }
 
   private static byte[] classBytes(String name, String method) {
-    return new ByteBuddy()
-      .subclass(Object.class).modifiers(Opcodes.ACC_PUBLIC).name(name)
-      .defineMethod(method, void.class, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC).intercept(StubMethod.INSTANCE)
-      .make().getBytes();
+    ClassWriter cw = new ClassWriter(0);
+    cw.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, name.replace('.', '/'), null, "java/lang/Object", null);
+
+    // Default constructor
+    MethodVisitor mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
+    mv.visitCode();
+    mv.visitVarInsn(Opcodes.ALOAD, 0);
+    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+    mv.visitInsn(Opcodes.RETURN);
+    mv.visitMaxs(1, 1);
+    mv.visitEnd();
+
+    // Static void method
+    mv = cw.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, method, "()V", null, null);
+    mv.visitCode();
+    mv.visitInsn(Opcodes.RETURN);
+    mv.visitMaxs(0, 0);
+    mv.visitEnd();
+
+    cw.visitEnd();
+    return cw.toByteArray();
   }
   //</editor-fold>
 
