@@ -26,6 +26,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.util.concurrent.Callable
@@ -170,8 +171,9 @@ fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
     val actualProject = projectFun.invoke(item)
     if (actualFile == null) return null
 
-    return ProjectFileIndex.getInstance(actualProject ?: return null).getSourceRootForFile(actualFile)
-             ?.let { VfsUtilCore.getRelativePath(actualFile, it) }
+    val rootForFile = ProjectFileIndex.getInstance(actualProject ?: return null).getSourceRootForFile(actualFile)
+                      ?: WorkspaceFileIndex.getInstance(actualProject).getContentFileSetRoot(actualFile, true)
+    return rootForFile?.let { VfsUtilCore.getRelativePath(actualFile, it) }
            ?: FileUtil.getLocationRelativeToUserHome(actualFile.path)
   }
 
