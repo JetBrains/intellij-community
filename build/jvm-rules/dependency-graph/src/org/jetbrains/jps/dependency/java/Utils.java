@@ -39,7 +39,7 @@ public final class Utils {
    * @param isDelta false, if new nodes in Delta should be taken into account, false otherwise
    */
   public Utils(@NotNull DifferentiateContext context, boolean isDelta) {
-    this(context.getGraph(), isDelta? context.getDelta() : null, context.getParams().affectionFilter(), context::isDeleted);
+    this(context.getGraph(), isDelta? context.getDelta() : null, context.getParams().scopeFilter(), context::isDeleted);
   }
 
   /**
@@ -48,7 +48,7 @@ public final class Utils {
    * @param sourceFilter NodeSource filter limiting the scope of traversal. Usually this is used to limit the sources set to some scope defined by some external layout, (i.e. a module structure)
    */
   public Utils(@NotNull Graph graph, @NotNull Predicate<? super NodeSource> sourceFilter) {
-    this(graph, null, sourceFilter, id -> false);
+    this(graph, null, sourceFilter, __-> false);
   }
 
   /**
@@ -231,7 +231,7 @@ public final class Utils {
   }
 
   public Set<JvmNodeReferenceID> collectSubclassesWithoutField(JvmNodeReferenceID classId, JvmField field) {
-    return collectSubclassesWithoutMember(classId, f -> Objects.equals(field.getName(), f.getName()), JvmClass::getFields);
+    return collectSubclassesWithoutMember(classId, field::isSame, JvmClass::getFields);
   }
 
   public Set<JvmNodeReferenceID> collectSubclassesWithoutMethod(JvmNodeReferenceID classId, JvmMethod method) {
@@ -436,7 +436,7 @@ public final class Utils {
     return Boolean.FALSE;
   }
 
-  private static <K, V> Function<K, V> cachingFunction(Function<K, V> f) {
+  public static <K, V> Function<K, V> cachingFunction(Function<K, V> f) {
     Map<K, V> cache = new HashMap<>();
     return k -> cache.computeIfAbsent(k, f);
   }
