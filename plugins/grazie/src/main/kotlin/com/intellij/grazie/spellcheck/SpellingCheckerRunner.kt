@@ -100,6 +100,7 @@ class SpellingCheckerRunner(val text: TextContent) {
             ProgressManager.checkCanceled()
             it.validPhrases(text)
           }
+          .map { it.range() }
           .toList()
       }
     }
