@@ -26,11 +26,11 @@ public final class ResetOriginatorAction implements UndoableAction {
 
   @Override
   public DocumentReference @Nullable [] getAffectedDocuments() {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   @Override
   public boolean isGlobal() {
-    throw new UnsupportedOperationException();
+    return false;
   }
 }

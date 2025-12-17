@@ -162,7 +162,6 @@ public final class CommandSeparator implements CommandListener {
   private static @NotNull CmdEvent getCmdEvent(@Nullable CommandEvent event, boolean isStart) {
     CmdEvent foreignCommand = ForeignCommandProcessor.getInstance().currentCommand();
     if (foreignCommand != null) {
-      // foreign command or foreign transparent
       return foreignCommand;
     }
     boolean isTransparent = event == null;
@@ -170,7 +169,9 @@ public final class CommandSeparator implements CommandListener {
     var meta = isStart
       ? new MutableCommandMetaImpl(commandId)
       : new NoCommandMeta(commandId);
-    return isTransparent ? CmdEvent.createTransparent(null, meta) : CmdEvent.create(event, meta);
+    return isTransparent
+           ? CmdEvent.createTransparent(null, meta)
+           : CmdEvent.create(event, meta);
   }
 
   private static @NotNull CommandId getCommandId(boolean isTransparent, boolean isStart) {
