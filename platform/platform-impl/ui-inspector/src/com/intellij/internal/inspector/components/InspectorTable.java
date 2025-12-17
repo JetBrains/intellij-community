@@ -155,7 +155,7 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
             public void colorChanged(Color color, Object source) {
               if (component != null) {
                 component.setBackground(color);
-                String name = myModel.myProperties.get(row).propertyName;
+                String name = myModel.myProperties.get(row).getPropertyName();
                 myModel.myProperties.set(row, new PropertyBean(name, color));
               }
             }
@@ -287,7 +287,7 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
     public @Nullable Object getValueAt(int row, int column) {
       final PropertyBean bean = myProperties.get(row);
       if (bean != null) {
-        return column == 0 ? bean.propertyName : bean.propertyValue;
+        return column == 0 ? bean.getPropertyName() : bean.getPropertyValue();
       }
 
       return null;
@@ -302,7 +302,7 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
     public void setValueAt(Object value, int row, int col) {
       PropertyBean bean = myProperties.get(row);
       try {
-        myProperties.set(row, new PropertyBean(bean.propertyName, Objects.requireNonNull(updater(bean)).fun(value)));
+        myProperties.set(row, new PropertyBean(bean.getPropertyName(), Objects.requireNonNull(updater(bean)).fun(value)));
       }
       catch (Exception ignored) {
       }
@@ -311,7 +311,7 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
     public @Nullable Function<Object, Object> updater(PropertyBean bean) {
       if (myComponent == null) return null;
 
-      String name = bean.propertyName.trim();
+      String name = bean.getPropertyName().trim();
       try {
         try {
           Method getter;
@@ -693,7 +693,7 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
       final TableModel model = table.getModel();
       boolean changed = false;
       if (model instanceof MyModel) {
-        changed = ((MyModel)model).myProperties.get(row).changed;
+        changed = ((MyModel)model).myProperties.get(row).getChanged();
       }
 
       if (myFailedInspections != null && value != null) {

@@ -444,8 +444,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
       if (myInfo != null) {
         Rectangle bounds = null;
         for (PropertyBean bean : myInfo) {
-          if (UiInspectorAction.RENDERER_BOUNDS.equals(bean.propertyName)) {
-            bounds = (Rectangle)bean.propertyValue;
+          if (UiInspectorAction.RENDERER_BOUNDS.equals(bean.getPropertyName())) {
+            bounds = (Rectangle)bean.getPropertyValue();
             break;
           }
         }

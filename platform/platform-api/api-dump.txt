@@ -161,6 +161,15 @@ com.intellij.ide.warmup.WarmupStatus
 a:com.intellij.ide.wizard.AbstractWizard
 - p:getHelpID():java.lang.String
 - p:getHelpId():java.lang.String
+f:com.intellij.internal.inspector.PropertyBean
+- sf:Companion:com.intellij.internal.inspector.PropertyBean$Companion
+- <init>(java.lang.String,java.lang.Object):V
+- <init>(java.lang.String,java.lang.Object,Z):V
+- b:<init>(java.lang.String,java.lang.Object,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getChanged():Z
+- f:getPropertyName():java.lang.String
+- f:getPropertyValue():java.lang.Object
+f:com.intellij.internal.inspector.PropertyBean$Companion
 com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider
 - a:getUiInspectorContext(javax.swing.JTree,java.lang.Object,I):java.util.List
 com.intellij.openapi.GitRepositoryInitializer

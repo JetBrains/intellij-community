@@ -1164,12 +1164,6 @@ f:com.intellij.idea.ActionsBundle
 - s:groupText(java.lang.String):java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
-c:com.intellij.internal.inspector.PropertyBean
-- f:changed:Z
-- f:propertyName:java.lang.String
-- f:propertyValue:java.lang.Object
-- <init>(java.lang.String,java.lang.Object):V
-- <init>(java.lang.String,java.lang.Object,Z):V
 com.intellij.internal.inspector.UiInspectorContextProvider
 - a:getUiInspectorContext():java.util.List
 com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider

@@ -2,6 +2,8 @@
 package com.intellij.ui.dsl.listCellRenderer
 
 import com.intellij.icons.AllIcons
+import com.intellij.internal.inspector.PropertyBean
+import com.intellij.internal.inspector.UiInspectorContextProvider
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBList
@@ -14,6 +16,7 @@ import java.awt.Component
 import javax.swing.JList
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class BuilderTest {
 
@@ -78,6 +81,22 @@ class BuilderTest {
       text(copyText)
       text("Secondary text")
     })
+  }
+
+  @Test
+  fun testUiInspectorContext() {
+    val renderer = listCellRenderer<Int> {
+      val text = "Item $value"
+      text(text)
+      uiInspectorContext = listOf(PropertyBean("id", value), PropertyBean("text", text))
+    }
+
+    val component = renderer.getListCellRendererComponent(JBList(), 1, 0, false, false)
+                      as? UiInspectorContextProvider ?: fail()
+
+    assertEquals(component.uiInspectorContext.size, 2)
+    assertTrue(PropertyBean.compare(component.uiInspectorContext[0], PropertyBean("id", 1)))
+    assertTrue(PropertyBean.compare(component.uiInspectorContext[1], PropertyBean("text", "Item 1")))
   }
 
   private fun getCopyText(init: LcrRow<Unit>.() -> Unit): String? {
