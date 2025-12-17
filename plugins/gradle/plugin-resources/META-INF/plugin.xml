@@ -271,6 +271,8 @@
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON" bundle="messages.GradleBundle" key="notification.group.gradle"/>
     <statistics.notificationIdsHolder implementation="org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder"/>
 
+    <lookup.charFilter implementation="org.jetbrains.plugins.gradle.completion.GradleCompletionCharFilter" />
+
     <!--advanced settings-->
     <advancedSetting id="gradle.run.using.gradle" default="true" bundle="messages.GradleBundle" groupKey="advanced.settings.gradle"/>
     <advancedSetting id="gradle.download.sources" default="true" bundle="messages.GradleBundle" groupKey="advanced.settings.gradle"/>
