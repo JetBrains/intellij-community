@@ -7670,17 +7670,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.jetbrains.mlapi/mlapi-catboost-0.2.1.jar_copy",
-  src = "@com_jetbrains_mlapi-mlapi-catboost-0_2_1_http//file",
-  out = "com.jetbrains.mlapi/mlapi-catboost-0.2.1.jar",
+  name = "com.jetbrains.mlapi/mlapi-catboost-0.2.3.jar_copy",
+  src = "@com_jetbrains_mlapi-mlapi-catboost-0_2_3_http//file",
+  out = "com.jetbrains.mlapi/mlapi-catboost-0.2.3.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "jetbrains-mlapi-catboost",
-  jar = "@com_jetbrains_mlapi-mlapi-catboost-0_2_1_http//file",
-  source_jar = "@com_jetbrains_mlapi-mlapi-catboost-0_2_1-sources_http//file",
+  jar = "@com_jetbrains_mlapi-mlapi-catboost-0_2_3_http//file",
+  source_jar = "@com_jetbrains_mlapi-mlapi-catboost-0_2_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -7699,17 +7699,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.jetbrains.mlapi/mlapi-core-0.2.1.jar_copy",
-  src = "@com_jetbrains_mlapi-mlapi-core-0_2_1_http//file",
-  out = "com.jetbrains.mlapi/mlapi-core-0.2.1.jar",
+  name = "com.jetbrains.mlapi/mlapi-core-0.2.3.jar_copy",
+  src = "@com_jetbrains_mlapi-mlapi-core-0_2_3_http//file",
+  out = "com.jetbrains.mlapi/mlapi-core-0.2.3.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "jetbrains-mlapi-core",
-  jar = "@com_jetbrains_mlapi-mlapi-core-0_2_1_http//file",
-  source_jar = "@com_jetbrains_mlapi-mlapi-core-0_2_1-sources_http//file",
+  jar = "@com_jetbrains_mlapi-mlapi-core-0_2_3_http//file",
+  source_jar = "@com_jetbrains_mlapi-mlapi-core-0_2_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
