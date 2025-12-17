@@ -55,6 +55,7 @@ public abstract class DiffWindowBase {
       .setParent(myHints.getParent())
       .setDimensionServiceKey(dialogGroupKey)
       .setInitialSize(JBUI.DialogSizes.extraLarge())
+      .setMaximizable(true)
       .setPreferredFocusedComponent(() -> myProcessor.getPreferredFocusedComponent())
       .setOnShowCallback(() -> myProcessor.updateRequest())
       .build();
