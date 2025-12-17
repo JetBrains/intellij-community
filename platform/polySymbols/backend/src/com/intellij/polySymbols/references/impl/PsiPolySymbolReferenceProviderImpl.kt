@@ -66,7 +66,7 @@ class PsiPolySymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
     // causing a coroutine to fail cancellation.
     return cache[cacheKeys].let {
       it ?: getSymbolOffsetsAndReferencesNoCache(element, target).also { result ->
-        cache.computeIfAbsent(cacheKeys) { result }
+        cache.putIfAbsent(cacheKeys, result)
       }
     }
   }
