@@ -131,7 +131,7 @@ public abstract class PrefixMatcher {
   /**
    * @return a list of text ranges in the given name that match the prefix.
    */
-  public @Nullable List<@NotNull MatchedFragment> getMatchingFragments(@NotNull String name) {
+  public @Nullable List<@NotNull MatchedFragment> getMatchingFragments(@NotNull String prefix, @NotNull String name) {
     return null;
   }
 }

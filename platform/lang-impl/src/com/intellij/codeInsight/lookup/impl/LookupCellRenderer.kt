@@ -471,7 +471,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     val prefix = if (item is EmptyLookupItem) "" else lookup.itemPattern(item)
     if (prefix.isNotEmpty()) {
       val itemMatcher = lookup.itemMatcher(item)
-      var ranges: List<MatchedFragment>? = itemMatcher.getMatchingFragments(name) ?: getMatchingFragmentList(prefix, name)
+      var ranges: List<MatchedFragment>? = itemMatcher.getMatchingFragments(prefix, name) ?: getMatchingFragmentList(prefix, name)
       if (ranges == null) {
         val startIndex = item.lookupString.indexOf(name)
         if (startIndex != -1) {

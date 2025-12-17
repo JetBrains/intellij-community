@@ -83,7 +83,7 @@ class KotlinGradleDependencyCompletionMatcherTest {
         val name = parseAnnotated(annotatedName)
 
         val matcher = KotlinGradleDependencyCompletionMatcher(prefix)
-        val fragments = matcher.getMatchingFragments(name)
+        val fragments = matcher.getMatchingFragments(prefix, name)
 
         require(fragments != null) { "Expected non-null fragments" }
 

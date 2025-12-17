@@ -18,16 +18,16 @@ class KotlinGradleDependencyCompletionMatcher(prefix: String) : PrefixMatcher(pr
         return KotlinGradleDependencyCompletionMatcher(prefix)
     }
 
-    override fun getMatchingFragments(name: String): List<TextRange>? {
+    override fun getMatchingFragments(prefix: String, name: String): List<TextRange>? {
         try {
-            return tryGetMatchingFragments(name)
+            return tryGetMatchingFragments(prefix, name)
         } catch (e: Throwable) {
             log.error("Error while matching fragments, name $name, prefix $prefix", e)
             return emptyList()
         }
     }
 
-    private fun tryGetMatchingFragments(name: String): List<TextRange>? {
+    private fun tryGetMatchingFragments(prefix: String, name: String): List<TextRange>? {
         // handle top level completion case:
         // implementation("org.example:lib-implementation:1.0") - "implementation" in the artifact name should be matched
         val start = name.indexOf("(").coerceAtLeast(0)
