@@ -32,7 +32,7 @@ class ScrollEditorCommand(text: String, line: Int): PerformanceCommandCoroutineA
         editor.scrollingModel.scrollTo(logicalPosition, ScrollType.RELATIVE)
       }
       lineToScrollTo += 5
-      delay(100)
+      delay(10)
     }
     timer.stop()
   }
