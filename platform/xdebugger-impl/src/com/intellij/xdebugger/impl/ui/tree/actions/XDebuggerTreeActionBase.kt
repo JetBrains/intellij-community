@@ -79,8 +79,11 @@ abstract class XDebuggerTreeActionBase : AnAction(), ActionRemoteBehaviorSpecifi
         return emptyList()
       }
 
-      return SplitDebuggerUIUtil.getXDebuggerTreeSelectedBackendValues(dataContext).mapNotNull { (backendValue, _, node) ->
+      return fetchSelectedValues(dataContext).mapNotNull { (backendValue, _, node) ->
         if (node == null) return@mapNotNull null
+        // no need to wrap if the node already exposes the backend value
+        if (node.valueContainer === backendValue) return@mapNotNull node
+        // replace the node with a delegate that exposes the backend value
         object : XValueNodeImplDelegate(node, backendValue) {
           override fun getValueContainer(): XValue {
             return backendValue
@@ -109,7 +112,28 @@ abstract class XDebuggerTreeActionBase : AnAction(), ActionRemoteBehaviorSpecifi
      */
     @JvmStatic
     fun getSelectedValue(dataContext: DataContext): XValue? =
-      SplitDebuggerUIUtil.getXDebuggerTreeSelectedBackendValues(dataContext).firstOrNull()?.xValue
+      fetchSelectedValues(dataContext).firstOrNull()?.xValue
+
+    private fun fetchSelectedValues(dataContext: DataContext): List<XDebuggerTreeSelectedValue> {
+      val splitValues = SplitDebuggerUIUtil.getXDebuggerTreeSelectedBackendValues(dataContext)
+      return splitValues + fetchSelectedNodeValues(splitValues, dataContext)
+    }
+
+    /**
+     * Nodes could be added into context manually (e.g. from tests)
+     */
+    private fun fetchSelectedNodeValues(
+      selectedSplitValues: List<XDebuggerTreeSelectedValue>,
+      dataContext: DataContext,
+    ): List<XDebuggerTreeSelectedValue> {
+      if (!SplitDebuggerMode.isSplitDebugger()) return emptyList()
+      val selectedNodes = XDebuggerTree.SELECTED_NODES.getData(dataContext) ?: return emptyList()
+
+      val splitValueNodes = selectedSplitValues.map { it.node }
+      return selectedNodes
+        .filter { it !in splitValueNodes }
+        .map { XDebuggerTreeSelectedValue(it.valueContainer, it.name, it) }
+    }
 
     private val LOG = Logger.getInstance(XDebuggerTreeActionBase::class.java)
   }
