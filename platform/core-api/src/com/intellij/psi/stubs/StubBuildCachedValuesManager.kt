@@ -4,6 +4,7 @@ package com.intellij.psi.stubs
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.StubBuildCachedValuesManager.finishBuildingStubs
 import com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueIfBuildingStubs
@@ -18,6 +19,9 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Function
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 /**
  * This class serves as an entry point for optimizing usage of cached values during stub building, i.e., during indexing.
@@ -41,7 +45,7 @@ import java.util.function.Function
 object StubBuildCachedValuesManager {
 
   private val myStubBuildId = ThreadLocal<Long?>()
-  private val myComputingCachedValue = ThreadLocal<Boolean?>()
+  private val myComputingCachedValueLevel = ThreadLocal<Int?>()
   private val ourStubBuildIdCounter = AtomicLong()
 
   @JvmStatic
@@ -63,7 +67,7 @@ object StubBuildCachedValuesManager {
   @JvmStatic
   @get:ApiStatus.Internal
   val isComputingCachedValue: Boolean
-    get() = myComputingCachedValue.get() == true
+    get() = (myComputingCachedValueLevel.get() ?: 0) > 0
 
   private val stubBuildId: Long?
     get() = myStubBuildId.get()
@@ -74,24 +78,12 @@ object StubBuildCachedValuesManager {
     stubBuildingKey: Key<StubBuildCachedValue<T>>,
     parameter: P,
     provider: Function<P, T>,
-  ): T {
-    val stubBuildId = stubBuildId
-    if (stubBuildId != null) {
-      val node = dataHolder.getNode()
-      var current = node.getUserData(stubBuildingKey)
-      if (current == null || current.buildId != stubBuildId) {
-        myComputingCachedValue.set(true)
-        current = try {
-          StubBuildCachedValue<T>(stubBuildId, provider.apply(parameter))
-        } finally {
-          myComputingCachedValue.remove()
-        }
-        node.putUserData<StubBuildCachedValue<T>>(stubBuildingKey, current)
-      }
-      return current.value
-    }
-    return provider.apply(parameter)
-  }
+  ): T = computeCachedValue(
+    { dataHolder },
+    stubBuildingKey,
+    { provider.apply(parameter) },
+    { provider.apply(parameter) }
+  )
 
   @JvmStatic
   fun <T, P> getCachedValueStubBuildOptimized(
@@ -101,55 +93,38 @@ object StubBuildCachedValuesManager {
     stubBuildingKey: Key<StubBuildCachedValue<T>>,
     provider: ParameterizedCachedValueProvider<T, P>,
     parameter: P,
-  ): T {
-    val stubBuildId = stubBuildId
-    if (stubBuildId != null) {
-      var current = node.getUserData(stubBuildingKey)
-      if (current == null || current.buildId != stubBuildId) {
-        myComputingCachedValue.set(true)
-        val value = try {
-          provider.compute(parameter)
-        } finally {
-          myComputingCachedValue.remove()
-        }
-        current = StubBuildCachedValue(stubBuildId, value.getValue())
-        node.putUserData(stubBuildingKey, current)
+  ): T =
+    computeCachedValue(
+      { node },
+      stubBuildingKey,
+      { provider.compute(parameter).getValue() },
+      {
+        CachedValuesManager.getManager(project).getParameterizedCachedValue(
+          node, key, provider.wrapWithNonPhysicalPsiHandlerProviderIfNeeded(parameter),
+          false, parameter
+        )
       }
-      return current.value
-    }
-    return CachedValuesManager.getManager(project).getParameterizedCachedValue(
-      node, key,  provider.wrapWithNonPhysicalPsiHandlerProviderIfNeeded(parameter),
-      false, parameter
     )
-  }
 
   @JvmStatic
-  fun <T, P: PsiElement> getCachedValueStubBuildOptimized(
+  fun <T, P : PsiElement> getCachedValueStubBuildOptimized(
     psiElement: P,
     provider: StubBuildCachedValueProvider<T, P>,
-  ): T {
-    val stubBuildId = stubBuildId
-    if (stubBuildId != null) {
-      val node = psiElement.getNode() ?: psiElement
-      var current = node.getUserData(provider.stubCacheKey)
-      if (current == null || current.buildId != stubBuildId) {
-        myComputingCachedValue.set(true)
-        val value = try {
-          provider.parametrizedCachedValueProvider.compute(psiElement)
-        }
-        finally {
-          myComputingCachedValue.remove()
-        }
-        current = StubBuildCachedValue(stubBuildId, value.getValue())
-        node.putUserData(provider.stubCacheKey, current)
+  ): T =
+    computeCachedValue(
+      { psiElement.getNode() ?: psiElement },
+      provider.stubCacheKey,
+      { provider.parametrizedCachedValueProvider.compute(psiElement).getValue() },
+      {
+        CachedValuesManager.getManager(psiElement.getProject()).getParameterizedCachedValue(
+          psiElement,
+          provider.parametrizedCacheKey,
+          provider.parametrizedCachedValueProvider.wrapWithNonPhysicalPsiHandlerProviderIfNeeded(psiElement),
+          false,
+          psiElement
+        )
       }
-      return current.value
-    }
-    return CachedValuesManager.getManager(psiElement.getProject()).getParameterizedCachedValue(
-      psiElement, provider.parametrizedCacheKey, provider.parametrizedCachedValueProvider.wrapWithNonPhysicalPsiHandlerProviderIfNeeded(psiElement),
-      false, psiElement
     )
-  }
 
   /**
    * This overload is provided for convenience. Consider
@@ -159,31 +134,24 @@ object StubBuildCachedValuesManager {
   @JvmStatic
   fun <T> getCachedValueStubBuildOptimized(
     dataHolder: PsiElement,
-    stubBuildingKey: Key<StubBuildCachedValue<T?>>,
+    stubBuildingKey: Key<StubBuildCachedValue<T>>,
     provider: CachedValueProvider<T>,
-  ): T? {
-    val stubBuildId = stubBuildId
-    if (stubBuildId != null) {
-      val node = dataHolder.getNode() ?: dataHolder
-      var current = node.getUserData(stubBuildingKey)
-      if (current == null || current.buildId != stubBuildId) {
-        myComputingCachedValue.set(true)
-        val value =  try {
-          provider.compute()
-        } finally {
-          myComputingCachedValue.remove()
-        }
-        current = StubBuildCachedValue(stubBuildId, value?.getValue())
-        node.putUserData(stubBuildingKey, current)
-      }
-      return current.value
-    }
-    return CachedValuesManager.getCachedValue(dataHolder, provider)
-  }
+  ): T =
+    computeCachedValue(
+      { dataHolder.getNode() ?: dataHolder },
+      stubBuildingKey,
+      {
+        provider.compute().apply {
+          if (this == null)
+            throw IllegalStateException("Cached value provider returned null result. It is not allowed when using getCachedValueStubBuildOptimized.")
+        }!!.value
+      },
+      { CachedValuesManager.getCachedValue(dataHolder, provider) }
+    )
 
   class StubBuildCachedValueProvider<ResultType, ParameterType>(
     key: String,
-    val parametrizedCachedValueProvider: ParameterizedCachedValueProvider<ResultType, ParameterType>
+    val parametrizedCachedValueProvider: ParameterizedCachedValueProvider<ResultType, ParameterType>,
   ) {
     val stubCacheKey: Key<StubBuildCachedValue<ResultType>> = Key.create("$key.stub.building")
     val parametrizedCacheKey: Key<ParameterizedCachedValue<ResultType, ParameterType>> = Key.create(key)
@@ -197,6 +165,45 @@ object StubBuildCachedValuesManager {
       NonPhysicalPsiHandlerProvider(this)
     else
       this
+
+  @OptIn(ExperimentalContracts::class)
+  private inline fun <T> computeCachedValue(
+    dataHolderProvider: () -> UserDataHolder,
+    stubBuildingKey: Key<StubBuildCachedValue<T>>,
+    stubCachedValueProvider: () -> T,
+    regularCacheValueProvider: () -> T,
+  ): T {
+    contract {
+      callsInPlace(dataHolderProvider, InvocationKind.AT_MOST_ONCE)
+      callsInPlace(stubCachedValueProvider, InvocationKind.AT_MOST_ONCE)
+      callsInPlace(regularCacheValueProvider, InvocationKind.AT_MOST_ONCE)
+    }
+
+    val stubBuildId = stubBuildId
+    if (stubBuildId != null) {
+      val dataHolder = dataHolderProvider()
+      var current = dataHolder.getUserData(stubBuildingKey)
+      if (current == null || current.buildId != stubBuildId) {
+        val level = myComputingCachedValueLevel.get() ?: 0
+        myComputingCachedValueLevel.set(level + 1)
+        val value = try {
+          stubCachedValueProvider()
+        }
+        finally {
+          if (level == 0) {
+            myComputingCachedValueLevel.remove()
+          }
+          else {
+            myComputingCachedValueLevel.set(level)
+          }
+        }
+        current = StubBuildCachedValue(stubBuildId, value)
+        dataHolder.putUserData(stubBuildingKey, current)
+      }
+      return current.value
+    }
+    return regularCacheValueProvider()
+  }
 
   private class NonPhysicalPsiHandlerProvider<T, P>(private val delegate: ParameterizedCachedValueProvider<T, P>) :
     ParameterizedCachedValueProvider<T, P> {
