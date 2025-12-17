@@ -1308,6 +1308,13 @@ com.intellij.ui.viewModel.extraction.ToolWindowViewModelListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:toolWindowChanged(java.lang.String):V
 - a:toolWindowsChanged():V
+c:com.intellij.util.net.HttpProxyConfigurable
+- com.intellij.openapi.options.ConfigurableBase
+- com.intellij.openapi.options.Configurable$NoMargin
+- <init>():V
+- p:createUi():com.intellij.openapi.options.ConfigurableUi
+- s:editConfigurable(javax.swing.JComponent):Z
+- p:getSettings():com.intellij.util.net.ProxySettings
 com.intellij.util.net.JdkProxyProvider
 - sf:Companion:com.intellij.util.net.JdkProxyProvider$Companion
 - s:ensureDefault():V

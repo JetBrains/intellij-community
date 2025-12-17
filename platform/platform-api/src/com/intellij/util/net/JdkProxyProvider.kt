@@ -102,7 +102,7 @@ sealed interface JdkProxyProvider {
   }
 }
 
-private class OverrideDefaultJdkProxy : ApplicationInitializedListener {
+internal class OverrideDefaultJdkProxy : ApplicationInitializedListener {
   override suspend fun execute() {
     val jdkProxyProvider = JdkProxyProvider.getInstance()
     val jdkProxyCustomizer = JdkProxyCustomizer.getInstance()

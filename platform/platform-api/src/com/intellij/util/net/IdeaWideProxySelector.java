@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,11 +16,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @deprecated use {@link JdkProxyProvider#getProxySelector()} or {@link IdeProxySelector}
- */
-@SuppressWarnings("removal")
-@Deprecated
+/** @deprecated use {@link JdkProxyProvider#getProxySelector()} or {@link IdeProxySelector} */
+@SuppressWarnings({"removal", "unused"})
+@Deprecated(forRemoval = true)
 public final class IdeaWideProxySelector extends ProxySelector {
   private static final Logger LOG = Logger.getInstance(IdeaWideProxySelector.class);
   private static final String DOCUMENT_BUILDER_FACTORY_KEY = "javax.xml.parsers.DocumentBuilderFactory";
@@ -36,7 +34,7 @@ public final class IdeaWideProxySelector extends ProxySelector {
 
   @Override
   public List<Proxy> select(@NotNull URI uri) {
-    LOG.debug("IDEA-wide proxy selector asked for " + uri.toString());
+    LOG.debug("IDEA-wide proxy selector asked for " + uri);
 
     String scheme = uri.getScheme();
     if (!("http".equals(scheme) || "https".equals(scheme))) {

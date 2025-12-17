@@ -28,7 +28,6 @@ import com.intellij.ui.layout.not
 import com.intellij.ui.layout.selected
 import com.intellij.util.net.OverrideCapableProxySettings.State
 import com.intellij.util.net.ProxyConfiguration.ProxyProtocol
-import com.intellij.util.proxy.CommonProxy
 import com.intellij.util.proxy.JavaProxyProperty
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
@@ -44,7 +43,6 @@ import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
 
 // TODO: shouldn't accept services, should instead accept UI model or some temporary mutable representation of the settings
-@Suppress("DEPRECATION")
 internal class ProxySettingsUi(
   proxySettings: ProxySettings,
   private val credentialStore: ProxyCredentialStore,
@@ -87,7 +85,7 @@ internal class ProxySettingsUi(
       row {
         systemProxyDefinedWarning = label(UIBundle.message("proxy.system.label")).applyToComponent {
           icon = Messages.getWarningIcon()
-          isVisible = java.lang.Boolean.getBoolean(JavaProxyProperty.USE_SYSTEM_PROXY)
+          isVisible = System.getProperty(JavaProxyProperty.USE_SYSTEM_PROXY).toBoolean()
         }.component
       }
       row {
@@ -123,12 +121,11 @@ internal class ProxySettingsUi(
             pacUrlTextField = textField().align(AlignX.FILL).comment(UIBundle.message("proxy.pac.url.example")).component
           }
           row {
-            @Suppress("DialogTitleCapitalization")
             clearPasswordsButton = button(UIBundle.message("proxy.pac.pw.clear.button")) {
               credentialStore.clearAllCredentials()
-              @Suppress("DialogTitleCapitalization")
-              Messages.showMessageDialog(getMainPanel(), IdeBundle.message("message.text.proxy.passwords.were.cleared"),
-                                         IdeBundle.message("dialog.title.auto.detected.proxy"), Messages.getInformationIcon())
+              Messages.showMessageDialog(
+                getMainPanel(), IdeBundle.message("message.text.proxy.passwords.were.cleared"), IdeBundle.message("dialog.title.auto.detected.proxy"), Messages.getInformationIcon()
+              )
             }.component
           }
         }.enabledIf(autoDetectProxyRb.selected and pluginOverrideCheckbox.selected.not())
@@ -197,7 +194,6 @@ internal class ProxySettingsUi(
         }.component
       }
       row {
-        @Suppress("DialogTitleCapitalization")
         checkButton = button(UIBundle.message("proxy.test.button")) {
           doCheckConnection()
         }.applyToComponent {
@@ -385,7 +381,8 @@ internal class ProxySettingsUi(
     errorLabel.isVisible = lastProxyError.isNotEmpty()
     errorLabel.text = lastProxyError
 
-    val javaPropsMessage = CommonProxy.getMessageFromProps(CommonProxy.getOldStyleProperties())
+    @Suppress("DEPRECATION") val javaPropsMessage =
+      com.intellij.util.proxy.CommonProxy.getMessageFromProps(com.intellij.util.proxy.CommonProxy.getOldStyleProperties())
     javaPropertiesWarning.isVisible = !javaPropsMessage.isNullOrBlank()
     javaPropertiesWarning.text = javaPropsMessage
   }
@@ -408,10 +405,8 @@ internal class ProxySettingsUi(
     disabledPromptsManager.enableAllPromptedAuthentications()
     if (modified && JBCefApp.isStarted()) {
       JBCefApp.getNotificationGroup()
-        .createNotification(IdeBundle.message("notification.title.jcef.proxyChanged"),
-                            IdeBundle.message("notification.content.jcef.applySettings"), NotificationType.WARNING)
-        .addAction(
-          NotificationAction.createSimple(IdeBundle.message("action.jcef.restart")) { ApplicationManager.getApplication().restart() })
+        .createNotification(IdeBundle.message("notification.title.jcef.proxyChanged"), IdeBundle.message("notification.content.jcef.applySettings"), NotificationType.WARNING)
+        .addAction(NotificationAction.createSimple(IdeBundle.message("action.jcef.restart")) { ApplicationManager.getApplication().restart() })
         .notify(null)
     }
 
@@ -422,7 +417,7 @@ internal class ProxySettingsUi(
   override fun getComponent(): JComponent {
     mainPanel.setBorder(JBUI.Borders.empty(11, 16, 16, 16))
     val scrollPane = JBScrollPane(mainPanel, VERTICAL_SCROLLBAR_ALWAYS, HORIZONTAL_SCROLLBAR_NEVER)
-    scrollPane.setBorder(null)
+    scrollPane.setBorder(JBUI.Borders.empty())
     return scrollPane
   }
 }
