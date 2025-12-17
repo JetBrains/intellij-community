@@ -34,12 +34,14 @@ interface LspHandlersBuilder {
 
 class LspHandlerContext(
     val lspClient: LspClient,
+    val lspScope: CoroutineScope,
 )
 
 context(context: LspHandlerContext)
 val lspClient: LspClient get() = context.lspClient
 
-
+context(context: LspHandlerContext)
+val lspScope: CoroutineScope get() = context.lspScope
 
 class LspRequestHandler<Params, Result, Error>(
     val requestType: RequestType<Params, Result, Error>,

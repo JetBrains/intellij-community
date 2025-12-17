@@ -99,7 +99,7 @@ suspend fun withLsp(
           }
         }
 
-        val lspHandlerContext = LspHandlerContext(lspClient)
+        val lspHandlerContext = LspHandlerContext(lspClient, this)
 
         launch(CoroutineName("incoming requests accepter") + createCoroutineContext(lspClient)) {
             withSupervisor { supervisor ->
