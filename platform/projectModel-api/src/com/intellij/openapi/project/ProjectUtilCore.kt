@@ -7,15 +7,17 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.roots.JdkOrderEntry
-import com.intellij.openapi.roots.libraries.LibraryUtil
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil.ELLIPSIS
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.util.PathUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
+import com.intellij.workspaceModel.ide.presentableName
 import org.jetbrains.annotations.TestOnly
 
 @NlsSafe
@@ -57,10 +59,12 @@ private fun displayFilePath(project: Project, url: String, file: VirtualFile): @
 
 fun decorateWithLibraryName(file: VirtualFile, project: Project, result: String): String? {
   if (file.fileSystem.protocol == URLUtil.JAR_PROTOCOL) {
-    val libraryEntry = LibraryUtil.findLibraryEntry(file, project)
-    when {
-      libraryEntry is JdkOrderEntry -> return "${result} [${libraryEntry.jdkName}]"
-      libraryEntry != null -> return "${result} [${libraryEntry.presentableName}]"
+    val libs = ProjectFileIndex.getInstance(project).findContainingSdks(file).asSequence()
+    val sdks = ProjectFileIndex.getInstance(project).findContainingLibraries(file).asSequence()
+    val entity = (libs + sdks).firstOrNull()
+    when (entity) {
+      is SdkEntity -> return "${result} [${entity.name}]"
+      is LibraryEntity -> return "${result} [${entity.presentableName}]"
     }
   }
   return null
