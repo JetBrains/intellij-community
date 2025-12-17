@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScreenUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 import javax.swing.JDialog
 import kotlin.math.abs
@@ -52,7 +53,7 @@ fun JDialog.canBeMaximized(): Boolean {
  */
 fun JDialog.maximize() {
   if (!canBeMaximized()) return
-  ClientProperty.put(this, NORMAL_BOUNDS, bounds)
+  this.normalBounds = bounds
   bounds = ScreenUtil.getScreenRectangle(this)
 }
 
@@ -71,8 +72,7 @@ fun JDialog.maximize() {
 fun JDialog.canBeNormalized(): Boolean {
   if (!commonResizingConditionsAreMet()) return false
   val screenRectangle = ScreenUtil.getScreenRectangle(this)
-  return almostEquals(bounds, screenRectangle) &&
-         ClientProperty.get(this, NORMAL_BOUNDS) != null
+  return almostEquals(bounds, screenRectangle) && normalBounds != null
 }
 
 /**
@@ -87,13 +87,21 @@ fun JDialog.canBeNormalized(): Boolean {
  */
 fun JDialog.normalize() {
   if (!canBeNormalized()) return
-  val normalBounds = ClientProperty.get(this, NORMAL_BOUNDS)
+  val normalBounds = this.normalBounds
   if (normalBounds != null) {
     ScreenUtil.fitToScreen(normalBounds)
     bounds = normalBounds
-    ClientProperty.remove(this, NORMAL_BOUNDS)
+    this.normalBounds = null
   }
 }
+
+@get:ApiStatus.Internal
+@set:ApiStatus.Internal
+var JDialog.normalBounds: Rectangle?
+  get() = ClientProperty.get(this, NORMAL_BOUNDS)
+  set(value) {
+    ClientProperty.put(this, NORMAL_BOUNDS, value)
+  }
 
 private fun JDialog.commonResizingConditionsAreMet(): Boolean =
   isShowing && // needed for getScreenRectangle
