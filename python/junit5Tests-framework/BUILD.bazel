@@ -60,6 +60,10 @@ jvm_library(
     "//python/python-sdk:sdk_test_lib",
     "//python/python-poetry/common",
     "//python/python-psi-impl:psi-impl",
+    "//platform/testFramework/junit5/projectStructure",
+    "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
+    "//platform/lang-core",
+    "//platform/util/jdom",
   ],
   exports = [
     "//libraries/system-stubs-jupiter",

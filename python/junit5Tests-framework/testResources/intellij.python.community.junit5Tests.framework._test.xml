@@ -8,5 +8,7 @@
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.python.community.testFramework.testEnv"/>
     <module name="intellij.python.community.impl.poetry.common"/>
+    <module name="intellij.platform.testFramework.junit5.projectStructure"/>
+    <module name="intellij.platform.lang.core"/>
   </dependencies>
 </idea-plugin>
