@@ -18,6 +18,7 @@ import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -157,12 +158,46 @@ private class GradleLocalRepositoryIndexerImpl(private val coroutineScope: Corou
   }
 }
 
-private class GradleLocalRepositoryIndexerTestImpl : GradleLocalRepositoryIndexer {
-  override fun groups(descriptor: EelDescriptor): Collection<String> = emptySet()
+@ApiStatus.Internal
+class GradleLocalRepositoryIndexerTestImpl : GradleLocalRepositoryIndexer {
+  private val index: Map<String, Map<String, Set<String>>>
 
-  override fun artifacts(descriptor: EelDescriptor, groupId: String): Set<String> = emptySet()
+  constructor() {
+    index = emptyMap()
+  }
 
-  override fun versions(descriptor: EelDescriptor, groupId: String, artifactId: String): Set<String> = emptySet()
+  /**
+   * Vararg constructor:
+   * expects arguments in triples: groupId, artifactId, version
+   */
+  constructor(vararg gav: String) {
+    require(gav.size % 3 == 0) {
+      "GradleLocalRepositoryIndexerTestImpl requires arguments in triples: (group, artifact, version)"
+    }
+
+    val entries = mutableListOf<Triple<String, String, String>>()
+    for (i in gav.indices step 3) {
+      entries += Triple(gav[i], gav[i + 1], gav[i + 2])
+    }
+
+    index = entries
+      .groupBy { it.first } // groupId
+      .mapValues { (_, groupTriples) ->
+        groupTriples.groupBy { it.second } // artifactId
+          .mapValues { (_, artifactTriples) ->
+            artifactTriples.map { it.third }.toSet() // versions
+          }
+      }
+  }
+
+  override fun groups(descriptor: EelDescriptor): Collection<String> =
+    index.keys
+
+  override fun artifacts(descriptor: EelDescriptor, groupId: String): Set<String> =
+    index[groupId]?.keys ?: emptySet()
+
+  override fun versions(descriptor: EelDescriptor, groupId: String, artifactId: String): Set<String> =
+    index[groupId]?.get(artifactId) ?: emptySet()
 
   override fun launchIndexUpdate(project: Project) {}
 }
