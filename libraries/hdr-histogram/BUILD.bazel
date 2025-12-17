@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":hdr-histogram_resources"],
-  exports = ["@lib//:hdr_histogram"],
-  runtime_deps = ["@lib//:hdr_histogram"]
+  exports = ["@lib//:libraries-hdr-histogram-_hdr_histogram"],
+  runtime_deps = ["@lib//:libraries-hdr-histogram-_hdr_histogram"]
 )
 ### auto-generated section `build intellij.libraries.hdr.histogram` end

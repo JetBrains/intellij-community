@@ -593,7 +593,6 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("google-baksmali")
       spec.withProjectLibrary("google-dexlib2")
       //spec.withProjectLibrary("gradle-shared-proto")
-      spec.withProjectLibrary("HdrHistogram")
       spec.withProjectLibrary("javax-inject")
       //spec.withProjectLibrary("jetty")
       spec.withProjectLibrary("kotlinx-coroutines-guava")

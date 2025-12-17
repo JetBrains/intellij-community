@@ -3219,13 +3219,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "hdr_histogram",
-  jar = "@org_hdrhistogram-HdrHistogram-2_2_2_http//file",
-  source_jar = "@org_hdrhistogram-HdrHistogram-2_2_2-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
 java_library(
   name = "http-client",
   exports = [
@@ -6011,6 +6004,13 @@ jvm_import(
   name = "libraries-hash4j-hash4j",
   jar = "@com_dynatrace_hash4j-hash4j-0_26_0_http//file",
   source_jar = "@com_dynatrace_hash4j-hash4j-0_26_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-hdr-histogram-_hdr_histogram",
+  jar = "@org_hdrhistogram-HdrHistogram-2_2_2_http//file",
+  source_jar = "@org_hdrhistogram-HdrHistogram-2_2_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
