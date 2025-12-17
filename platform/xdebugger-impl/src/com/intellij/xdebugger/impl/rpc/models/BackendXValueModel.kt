@@ -165,9 +165,9 @@ suspend fun BackendXValueModel.toXValueDto(): XValueDto {
 }
 
 @ApiStatus.Internal
-fun XFullValueEvaluator.toRpc(): XFullValueEvaluatorDto = XFullValueEvaluatorDto(
+suspend fun XFullValueEvaluator.toRpc(): XFullValueEvaluatorDto = XFullValueEvaluatorDto(
   linkText,
-  isEnabled,
+  isEnabledFlow.toRpc(),
   isShowValuePopup,
   linkAttributes?.let { attributes ->
     FullValueEvaluatorLinkAttributes(attributes.linkIcon?.rpcId(), attributes.linkTooltipText, attributes.shortcutSupplier?.get())

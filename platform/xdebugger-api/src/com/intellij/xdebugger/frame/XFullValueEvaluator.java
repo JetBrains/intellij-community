@@ -1,8 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.frame;
 
 import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.XDebuggerBundle;
+import kotlinx.coroutines.flow.MutableStateFlow;
+import kotlinx.coroutines.flow.StateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +28,7 @@ public abstract class XFullValueEvaluator {
 
   private boolean myShowValuePopup = true;
 
-  private boolean myIsEnabled = true;
+  private final MutableStateFlow<Boolean> myIsEnabledFlow = StateFlowKt.MutableStateFlow(true);
 
   protected XFullValueEvaluator() {
     this(XDebuggerBundle.message("node.test.show.full.value"));
@@ -48,7 +52,7 @@ public abstract class XFullValueEvaluator {
 
   public boolean isShowValuePopup() { return myShowValuePopup; }
 
-  public boolean isEnabled() { return myIsEnabled; }
+  public boolean isEnabled() { return myIsEnabledFlow.getValue(); }
 
   public @NotNull XFullValueEvaluator setShowValuePopup(boolean value) {
     myShowValuePopup = value;
@@ -56,8 +60,13 @@ public abstract class XFullValueEvaluator {
   }
 
   public @NotNull XFullValueEvaluator setIsEnabled(boolean value) {
-    myIsEnabled = value;
+    myIsEnabledFlow.setValue(value);
     return this;
+  }
+
+  @ApiStatus.Internal
+  public StateFlow<Boolean> getIsEnabledFlow() {
+    return myIsEnabledFlow;
   }
 
   /**

@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.frontend.evaluate.quick
 
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto
 import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorResult
 import com.intellij.platform.debugger.impl.rpc.XValueApi
@@ -23,9 +24,18 @@ internal class FrontendXFullValueEvaluator(
     LinkAttributes(it.tooltipText, it.shortcut?.let { shortcut -> Supplier { shortcut } }, it.linkIcon?.icon())
   }
 
-  private var isShowValuePopup = dto.isShowValuePopup
+  private var isShowValuePopup: Boolean = dto.isShowValuePopup
 
-  private var isEnabled = dto.isEnabled
+  @Volatile
+  private var isEnabled: Boolean = true
+
+  init {
+    xValueCs.launch {
+      dto.isEnabledFlow.toFlow().collect { value ->
+        isEnabled = value
+      }
+    }
+  }
 
   override fun isShowValuePopup(): Boolean {
     return isShowValuePopup
@@ -41,7 +51,7 @@ internal class FrontendXFullValueEvaluator(
   }
 
   override fun setIsEnabled(value: Boolean): XFullValueEvaluator {
-    isEnabled = value
+    logger<FrontendXFullValueEvaluator>().warn("Don't call setIsEnabled on frontend, state is managed by backend")
     return this
   }
 

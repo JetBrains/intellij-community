@@ -166,7 +166,7 @@ data class XDebuggerEvaluatorDto(val canEvaluateInDocument: Boolean)
 @Serializable
 data class XFullValueEvaluatorDto(
   @NlsSafe @JvmField val linkText: String,
-  @JvmField val isEnabled: Boolean,
+  @JvmField val isEnabledFlow: RpcFlow<Boolean>,
   @JvmField val isShowValuePopup: Boolean,
   @JvmField val attributes: FullValueEvaluatorLinkAttributes?,
 ) {
