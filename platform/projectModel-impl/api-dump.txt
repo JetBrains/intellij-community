@@ -411,8 +411,6 @@ f:com.intellij.psi.presentation.java.SymbolPresentationUtil
 f:com.intellij.util.modules.CircularModuleDependenciesDetector
 - <init>():V
 - s:addingDependencyFormsCircularity(com.intellij.openapi.module.Module,com.intellij.openapi.module.Module):com.intellij.openapi.util.Couple
-f:com.intellij.workspaceModel.ide.LibraryEntities
-- sf:getPresentableName(com.intellij.platform.workspace.jps.entities.LibraryEntity):java.lang.String
 f:com.intellij.workspaceModel.ide.NonPersistentEntitySource
 - com.intellij.platform.workspace.storage.EntitySource
 - sf:INSTANCE:com.intellij.workspaceModel.ide.NonPersistentEntitySource
