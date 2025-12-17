@@ -45,14 +45,15 @@ use_repo(maven, "j2b_maven")
 
 bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
 
-toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
+toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains", dev_dependency = True)  # `dev_dependency = True` because of https://github.com/bazel-contrib/toolchains_llvm/issues/569
 
 use_repo(toolchains, "zig_sdk")
 
 register_toolchains(
     "@zig_sdk//toolchain/...",
     "@zig_sdk//libc_aware/toolchain/...",
-)
+    dev_dependency = True,
+)  # `dev_dependency = True` to avoid registering toolchains in modules using that module
 
 bazel_dep(name = "rules_python", version = "1.6.3")
 
