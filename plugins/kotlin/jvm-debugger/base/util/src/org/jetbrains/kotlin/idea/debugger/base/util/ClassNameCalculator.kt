@@ -3,27 +3,45 @@
 package org.jetbrains.kotlin.idea.debugger.base.util
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.Stack
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
+import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator.Companion.EP_NAME
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import java.util.*
 
 /**
- * JVM backend requires files to be analyzed against JVM-targeted libraries, so calling it from common modules
- * (that depend on common libraries) leads to unpredictable results. Also, JVM backend initialization is quite expensive
+ * Calculates the fq Class names of KtElements in a file by implementing the naming rules of the Kotlin JVM backend.
+ * Note: There are several known cases where the names might not be accurate
+ *   - Compiler Plugins (e.g., Compose) might transform code and emit synthetic classes
+ *   - The JVM backend might emit synthetic classes for 'DefaultImpls'
+ *   - ...
+ * Such additional 'candidates' can be resolved using the [org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider].
+ *
+ * ## Context
+ * The JVM backend requires files to be analyzed against JVM-targeted libraries, so calling it from common modules
+ * (that depend on common libraries) leads to unpredictable results. Also, the JVM backend initialization is quite expensive
  * as it calculates a lot more information than the debugger needs.
  *
  * `ClassNameCalculator` aims to fix breakpoints in common modules. It's somehow similar to Ultra Light Classes – it also doesn't depend
  * on the backend. In case if all goes wrong, there's a registry key available that turns off the new behavior.
  *
+ * ## Extension Point
  * The default implementation can be extended using the [EP_NAME]:
  * Later extensions will overwrite previous extensions.
+ * Extending the [ClassNameCalculator] is no longer recommended and should be avoided.
  */
+@Deprecated(
+    message = "Use 'ClassNameProvider' instead",
+    replaceWith = ReplaceWith("org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider"),
+    level = DeprecationLevel.ERROR
+)
 interface ClassNameCalculator {
+    @Suppress("DEPRECATION_ERROR")
     companion object : ClassNameCalculator {
         @JvmStatic
         fun getInstance(): ClassNameCalculator {
@@ -63,6 +81,7 @@ interface ClassNameCalculator {
  * Note: the order of [instances] matters! Later instances will override results from previous ones.
  * (It is expected that the first instance is a default implementation, the following instances are additional extensions)
  */
+@Suppress("DEPRECATION_ERROR")
 private class CompositeClassNameCalculator(
     private val instances: List<ClassNameCalculator>
 ) : ClassNameCalculator {
@@ -82,6 +101,7 @@ private class CompositeClassNameCalculator(
     }
 }
 
+@Suppress("DEPRECATION_ERROR")
 private object DefaultClassNameCalculator : ClassNameCalculator {
     override fun getClassNames(file: KtFile): Map<KtElement, String> {
         return CachedValuesManager.getCachedValue(file) {

@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.debugger.base.util
+package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -8,10 +8,10 @@ import com.intellij.psi.util.parents
 import com.sun.jdi.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
+import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-
 
 @ApiStatus.Internal
 interface KotlinFileSelector {
@@ -26,7 +26,7 @@ object FileApplicabilityChecker : KotlinFileSelector {
 
     private class ApplicabilityContext(
         val file: KtFile,
-        val classNames: Map<KtElement, String>
+        val classNames: ClassNameProvider
     )
 
     override suspend fun chooseMostApplicableFile(files: List<KtFile>, location: Location): KtFile {
@@ -40,7 +40,7 @@ object FileApplicabilityChecker : KotlinFileSelector {
 
     private suspend fun getApplicability(file: KtFile, location: Location): Applicability {
         try {
-            val context = readAction { ApplicabilityContext(file, ClassNameCalculator.getClassNames(file)) }
+            val context = ApplicabilityContext(file, ClassNameProvider())
             return context.getApplicability(location)
         } catch (e: ProcessCanceledException) {
             throw e
@@ -91,7 +91,7 @@ object FileApplicabilityChecker : KotlinFileSelector {
         for (declaration in callableParents) {
             if (declaration !is KtDeclaration) continue
             val classParent = findClassParent(declaration) ?: file
-            if (classNames[classParent] != typeName) {
+            if (typeName !in classNames.getCandidatesForElement(classParent)) {
                 return Applicability.NO
             }
 
@@ -124,8 +124,7 @@ object FileApplicabilityChecker : KotlinFileSelector {
         clazz: Class<out KtElement>
     ): Applicability {
         for (declaration in file.findElementsOfTypeInRange(rangeOfLine, clazz)) {
-            val expectedClassName = classNames[declaration] ?: continue
-            if (expectedClassName == typeName) {
+            if (typeName in classNames.getCandidatesForElement(declaration)) {
                 return Applicability.YES
             }
         }

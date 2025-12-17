@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionSymbol
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INVOKE_SUSPEND_METHOD_NAME
+import org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider.Configuration.Companion.STOP_AT_LAMBDA
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
@@ -100,11 +101,13 @@ private suspend fun isInlinedArgument(localVariables: List<LocalVariable>, inlin
             .map { it.drop(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT.length) }
             .any { variableName ->
                 if (variableName.startsWith("-")) {
-                    val lambdaClassName = ClassNameCalculator.getClassName(inlineArgument)?.substringAfterLast('.') ?: return@any false
                     val cleanedVarName = dropInlineSuffix(variableName).dropInlineScopeInfo().removePrefix("-")
-                    if (!cleanedVarName.endsWith("-$lambdaClassName")) return@any false
-                    val candidateMethodName = cleanedVarName.removeSuffix("-$lambdaClassName")
-                    candidateMethodName == functionName || nameMatchesUpToDollar(candidateMethodName, functionName)
+                    ClassNameProvider(STOP_AT_LAMBDA).getCandidatesForElement(inlineArgument).any { lambdaClassNameCandidate ->
+                        val lambdaClassName = lambdaClassNameCandidate.substringAfterLast('.')
+                        if (!cleanedVarName.endsWith("-$lambdaClassName")) return@any false
+                        val candidateMethodName = cleanedVarName.removeSuffix("-$lambdaClassName")
+                        candidateMethodName == functionName || nameMatchesUpToDollar(candidateMethodName, functionName)
+                    }
                 } else {
                     // For Kotlin up to 1.3.10
                     lambdaOrdinalByLocalVariable(variableName) == lambdaOrdinal
@@ -136,7 +139,7 @@ fun <T : Any> DebugProcessImpl.invokeInManagerThread(f: (DebuggerContextImpl) ->
 }
 
 private fun lambdaOrdinalByArgument(elementAt: KtFunction): Int {
-    val className = ClassNameCalculator.getClassName(elementAt) ?: return 0
+    val className = ClassNameProvider(STOP_AT_LAMBDA).getCandidatesForElement(elementAt).firstOrNull() ?: return 0
     return className.substringAfterLast("$").toIntOrNull() ?: 0
 }
 

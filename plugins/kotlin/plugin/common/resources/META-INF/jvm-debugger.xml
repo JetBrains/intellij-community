@@ -22,7 +22,11 @@
     <extensionPoint qualifiedName="com.intellij.debugger.dexBytecodeInspector"
                     interface="org.jetbrains.kotlin.idea.debugger.core.DexBytecodeInspector" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.debugger.base.util.classNameCalculator"
-                    interface="org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator" dynamic="true"/>
+                    interface="org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator" dynamic="true"
+                    />
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.debugger.core.classNameContributor" dynamic="true"
+                    interface="org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider$ClassNameContributor"
+    />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

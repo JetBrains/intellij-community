@@ -20,8 +20,8 @@ import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companio
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.MINOR
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.NORMAL
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.ZERO
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinFileSelector
 import org.jetbrains.kotlin.idea.debugger.base.util.safeArguments
+import org.jetbrains.kotlin.idea.debugger.core.KotlinFileSelector
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext

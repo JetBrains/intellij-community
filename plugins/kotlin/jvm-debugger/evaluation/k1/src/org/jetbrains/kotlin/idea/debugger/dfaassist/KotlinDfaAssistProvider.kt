@@ -26,12 +26,11 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
+import org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.inspections.dfa.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -44,8 +43,7 @@ private class KotlinDfaAssistProvider : DfaAssistProvider {
         return readAction {
             val file = element.containingFile
             if (file !is KtFile) return@readAction false
-            val classNames = ClassNameCalculator.getClassNames(file)
-            element.parentsWithSelf.any { e -> classNames[e] == jdiClassName }
+            jdiClassName in ClassNameProvider().getCandidatesForElement(element)
         }
     }
 

@@ -37,16 +37,15 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
-import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
 import org.jetbrains.kotlin.idea.debugger.base.util.getInlineDepth
+import org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import java.util.*
 import org.jetbrains.org.objectweb.asm.Type as AsmType
@@ -57,8 +56,8 @@ private class K2DfaAssistProvider : DfaAssistProvider {
         return readAction {
             val file = element.containingFile
             if (file !is KtFile) return@readAction false
-            val classNames = ClassNameCalculator.getClassNames(file)
-            element.parentsWithSelf.any { e -> classNames[e] == jdiClassName }
+            val classNames = ClassNameProvider().getCandidatesForElement(element)
+            jdiClassName in classNames
         }
     }
 

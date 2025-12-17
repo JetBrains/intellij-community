@@ -32,6 +32,7 @@ jvm_library(
     "//plugins/kotlin/base/psi",
     "//platform/util",
     "//platform/util/multiplatform",
+    "//plugins/kotlin/jvm-debugger/core",
   ]
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.evaluation` end
