@@ -10,10 +10,12 @@ import org.junit.jupiter.api.extension.ExtensionContext
 class SetLambdaPluginCallback : BeforeAllCallback, AfterAllCallback {
   val localCustomLambdaPlugin = LambdaTestPluginHolder.AdditionalLambdaPlugin("intellij.lambda.sampleTestsWithFixtures._test",
                                                                               "intellij.lambda.sampleTestsWithFixtures.plugin",
-                                                                              "lambda-sampleTestsWithFixtures-plugin")
+                                                                              "lambda-sampleTestsWithFixtures-plugin",
+                                                                              LambdaTestPluginHolder.LoadingInSplitMode.All)
 
   override fun beforeAll(context: ExtensionContext) {
-    LambdaTestPluginHolder.setupAdditionalLambdaPlugins(localCustomLambdaPlugin.moduleID, listOf(localCustomLambdaPlugin, defaultLambdaPlugin))
+    LambdaTestPluginHolder.setupAdditionalLambdaPlugins(localCustomLambdaPlugin.moduleID,
+                                                        listOf(localCustomLambdaPlugin, defaultLambdaPlugin))
   }
 
   override fun afterAll(context: ExtensionContext) {
