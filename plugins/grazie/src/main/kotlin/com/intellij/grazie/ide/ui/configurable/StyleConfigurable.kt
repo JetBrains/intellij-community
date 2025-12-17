@@ -1,5 +1,6 @@
 package com.intellij.grazie.ide.ui.configurable
 
+import ai.grazie.gec.model.problem.ActionSuggestion
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.utils.englishName
 import ai.grazie.nlp.langs.utils.nativeName
@@ -8,6 +9,7 @@ import ai.grazie.rules.settings.Setting
 import ai.grazie.rules.settings.SettingComponent
 import ai.grazie.rules.settings.TextStyle
 import ai.grazie.rules.toolkit.LanguageToolkit
+import ai.grazie.rules.tree.Parameter
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.detection.toLanguage
@@ -258,8 +260,17 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
     val ruleEngineLanguages: List<Language> = listOf(Language.ENGLISH, Language.GERMAN, Language.RUSSIAN, Language.UKRAINIAN)
 
     @JvmStatic
-    fun focusSetting(setting: Setting, domain: TextStyleDomain, language: Language, project: Project): Boolean {
-      return focusSetting(setting, null, domain, language, project)
+    fun focusSetting(parameter: ActionSuggestion.ChangeParameter, domain: TextStyleDomain, language: Language, project: Project): Boolean {
+      val configurable = StyleConfigurable().apply {
+        createComponent()
+        val style = if (domain == TextStyleDomain.Other) GrazieConfig.get().getTextStyle() else domain.textStyle
+        selectTextStyle(style, language)
+        featuredSettings(language)
+          .filterIsInstance<Parameter>()
+          .find { it.id() == parameter.parameterId }
+          ?.let { focusFeaturedSetting(this, it, style, language, project) }
+      }
+      return ShowSettingsUtil.getInstance().editConfigurable(project, configurable)
     }
 
     @JvmStatic

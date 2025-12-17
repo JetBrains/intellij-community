@@ -1,7 +1,9 @@
 package com.intellij.grazie.text;
 
+import ai.grazie.gec.model.problem.ActionSuggestion;
 import ai.grazie.gec.model.problem.Problem;
 import ai.grazie.gec.model.problem.ProblemFix;
+import ai.grazie.gec.model.problem.SuppressableKind;
 import ai.grazie.nlp.langs.Language;
 import ai.grazie.rules.Example;
 import ai.grazie.rules.MatchingResult;
@@ -14,8 +16,6 @@ import ai.grazie.rules.settings.RuleSetting;
 import ai.grazie.rules.settings.Setting;
 import ai.grazie.rules.settings.TextStyle;
 import ai.grazie.rules.toolkit.LanguageToolkit;
-import ai.grazie.rules.tree.ActionSuggestion;
-import ai.grazie.rules.tree.NodeMatch.SuppressableKind;
 import ai.grazie.rules.tree.Parameter;
 import ai.grazie.rules.tree.Tree;
 import ai.grazie.rules.tree.Tree.ParameterValues;
@@ -572,14 +572,19 @@ public final class TreeRuleChecker {
 
     @Override
     public @NotNull List<LocalQuickFix> getCustomFixes() {
-      return ContainerUtil.concat(customFixes, ContainerUtil.mapNotNull(match.actions(), sug -> {
-        if (sug instanceof ActionSuggestion.ChangeParameter(Parameter parameter, String suggestedValue, String quickFixText)) {
-          if (parameter.id().equals(Parameter.LANGUAGE_VARIANT)) {
-            return ChangeLanguageVariant.create(match.rule().language(), Objects.requireNonNull(suggestedValue), quickFixText);
+      if (getSource().getActionSuggestions() == null) return customFixes;
+      return ContainerUtil.concat(customFixes, ContainerUtil.mapNotNull(getSource().getActionSuggestions(), sug -> {
+        if (sug instanceof ActionSuggestion.ChangeParameter parameter) {
+          if (parameter.getParameterId().endsWith(Parameter.LANGUAGE_VARIANT)) {
+            return ChangeLanguageVariant.create(
+              match.rule().language(),
+              Objects.requireNonNull(parameter.getSuggestedValue()).getId(),
+              parameter.getQuickFixText()
+            );
           }
-          return new ConfigureSuggestedParameter(parameter, domain, match.rule().language(), quickFixText);
+          return new ConfigureSuggestedParameter(parameter, domain, match.rule().language(), parameter.getQuickFixText());
         }
-        if (sug == ActionSuggestion.REPHRASE) {
+        if (sug == ActionSuggestion.RephraseAround.INSTANCE) {
           return new RephraseAction();
         }
         return null;
@@ -593,7 +598,7 @@ public final class TreeRuleChecker {
     @Override
     public boolean fitsGroup(@NotNull RuleGroup group) {
       Set<String> rules = group.getRules();
-      SuppressableKind kind = match.suppressableKind();
+      SuppressableKind kind = getSource().getSuppressableKind();
       if (rules.contains(RuleGroup.INCOMPLETE_SENTENCE) && kind == SuppressableKind.INCOMPLETE_SENTENCE) {
         return true;
       }
