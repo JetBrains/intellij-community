@@ -10,6 +10,7 @@ import com.intellij.util.ProcessingContext
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.idea.completion.api.*
 import org.jetbrains.plugins.gradle.completion.FullStringInsertHandler
+import org.jetbrains.plugins.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
 import org.jetbrains.plugins.gradle.completion.GradleDependencyCompletionMatcher
 import org.jetbrains.plugins.gradle.completion.getCompletionContext
 import org.jetbrains.plugins.gradle.completion.removeDummySuffix
@@ -92,6 +93,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
                         .withPresentableText(lookupString)
                         .withInsertHandler(insertHandler)
                     lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
+                    lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
 
                     resultSet.addElement(lookupElement)
                 }

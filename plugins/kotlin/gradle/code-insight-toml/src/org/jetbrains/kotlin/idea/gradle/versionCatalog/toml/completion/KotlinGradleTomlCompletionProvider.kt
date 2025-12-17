@@ -9,8 +9,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.util.ProcessingContext
 import org.jetbrains.idea.completion.api.*
-import org.jetbrains.kotlin.gradle.scripting.shared.completion.*
 import org.jetbrains.plugins.gradle.completion.FullStringInsertHandler
+import org.jetbrains.plugins.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
 import org.jetbrains.plugins.gradle.completion.GradleDependencyCompletionMatcher
 import org.jetbrains.plugins.gradle.completion.getCompletionContext
 import org.jetbrains.plugins.gradle.completion.removeDummySuffix
@@ -98,6 +98,7 @@ internal class KotlinGradleTomlCompletionProvider : CompletionProvider<Completio
             .create(lookupObject, lookupString)
             .withPresentableText(lookupString)
             .withInsertHandler(FullStringInsertHandler)
+        lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
 
         this.addElement(lookupElement)
     }
