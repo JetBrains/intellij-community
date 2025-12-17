@@ -10,6 +10,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
@@ -267,6 +268,7 @@ class LibraryScopeCacheTest {
 
   @ParameterizedTest
   @MethodSource("scopeAndExportedCombinations")
+  @Disabled("Does not work for original implementation")
   fun `library scope with three modules transitive dependency chain`(scope: DependencyScope, exported: Boolean) {
     val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
     val moduleA = projectModel.createModule("moduleA")

@@ -10,6 +10,7 @@ import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
 import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
@@ -127,46 +128,51 @@ public final class LibraryScopeCache {
   }
 
   private @NotNull GlobalSearchScope calcLibraryScope(@NotNull VirtualFile virtualFile) {
-    var index = ProjectFileIndex.getInstance(myProject);
-    var sdks = index.findContainingSdks(virtualFile);
+    if (Registry.is("use.workspace.model.for.calculation.library.scope")) {
+      var index = ProjectFileIndex.getInstance(myProject);
+      var sdks = index.findContainingSdks(virtualFile);
 
-    for (var sdk : sdks) {
-      return getScopeForSdk(sdk);
-    }
+      for (var sdk : sdks) {
+        return getScopeForSdk(sdk);
+      }
 
-    var libraries = index.findContainingLibraries(virtualFile);
-    var currentSnapshot = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
-    LibraryEntity lib = null;
-    List<Module> modulesLibraryUsedIn = new ArrayList<>();
+      var libraries = index.findContainingLibraries(virtualFile);
+      var currentSnapshot = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
+      LibraryEntity lib = null;
+      List<Module> modulesLibraryUsedIn = new ArrayList<>();
 
-    for (var library: libraries) {
-      lib = library;
-      var ownerModules = SequencesKt.toList(currentSnapshot.referrers(library.getSymbolicId(), ModuleEntity.class));
-      for (var module : ownerModules) {
-        var moduleBridge = ModuleBridges.findModule(module, currentSnapshot);
-        if (moduleBridge != null) {
-          modulesLibraryUsedIn.add(moduleBridge);
-        }
-        var dependantModules = ModuleEntityUtils.getDependantModules(module, currentSnapshot, true);
-        for (var dependantModule : dependantModules) {
-          var dependantModuleBridge = ModuleBridges.findModule(dependantModule, currentSnapshot);
-          if (dependantModuleBridge != null) {
-            modulesLibraryUsedIn.add(dependantModuleBridge);
+      for (var library: libraries) {
+        lib = library;
+        var ownerModules = SequencesKt.toList(currentSnapshot.referrers(library.getSymbolicId(), ModuleEntity.class));
+        for (var module : ownerModules) {
+          var moduleBridge = ModuleBridges.findModule(module, currentSnapshot);
+          if (moduleBridge != null) {
+            modulesLibraryUsedIn.add(moduleBridge);
+          }
+          var dependantModules = ModuleEntityUtils.getDependantModules(module, currentSnapshot, true);
+          for (var dependantModule : dependantModules) {
+            var dependantModuleBridge = ModuleBridges.findModule(dependantModule, currentSnapshot);
+            if (dependantModuleBridge != null) {
+              modulesLibraryUsedIn.add(dependantModuleBridge);
+            }
           }
         }
       }
-    }
 
-    if (lib != null) {
-      var roots = lib.getRoots().stream()
-        .map(LibraryRoot::getUrl)
-        .map(VirtualFileUrls::getVirtualFile)
-        .toArray(VirtualFile[]::new);
+      if (lib != null) {
+        var roots = lib.getRoots().stream()
+          .map(LibraryRoot::getUrl)
+          .map(VirtualFileUrls::getVirtualFile)
+          .toArray(VirtualFile[]::new);
 
-      return getScopeForLibrary(modulesLibraryUsedIn, new  LibraryRuntimeClasspathScope(myProject, roots));
-    }
-    else {
-      return getScopeForLibrary(modulesLibraryUsedIn, null);
+        return getScopeForLibrary(modulesLibraryUsedIn, new  LibraryRuntimeClasspathScope(myProject, roots));
+      }
+      else {
+        return getScopeForLibrary(modulesLibraryUsedIn, null);
+      }
+    } else {
+      List<OrderEntry> orderEntries = ProjectFileIndex.getInstance(myProject).getOrderEntriesForFile(virtualFile);
+      return calcLibraryScope(orderEntries);
     }
   }
 
@@ -240,16 +246,21 @@ public final class LibraryScopeCache {
   }
 
   private @NotNull GlobalSearchScope calcLibraryUseScope(@NotNull VirtualFile virtualFile) {
-    var index  = ProjectFileIndex.getInstance(myProject);
-    var currentSnapshot = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
-    var libs = ContainerUtil.map(index.findContainingLibraries(virtualFile), LibraryEntity::getSymbolicId);
-    var sdks = ContainerUtil.map(index.findContainingSdks(virtualFile), SdkEntity::getSymbolicId);
+    if (Registry.is("use.workspace.model.for.calculation.library.scope")) {
+      var index  = ProjectFileIndex.getInstance(myProject);
+      var currentSnapshot = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
+      var libs = ContainerUtil.map(index.findContainingLibraries(virtualFile), LibraryEntity::getSymbolicId);
+      var sdks = ContainerUtil.map(index.findContainingSdks(virtualFile), SdkEntity::getSymbolicId);
 
-    Set<Module> modulesWithSdk = processEntityWithId(sdks, currentSnapshot);
-    Set<Module> modulesWithLibrary = new HashSet<>(processEntityWithId(libs, currentSnapshot));
-    modulesWithLibrary.addAll(index.getModulesForFile(virtualFile, false));
+      Set<Module> modulesWithSdk = processEntityWithId(sdks, currentSnapshot);
+      Set<Module> modulesWithLibrary = new HashSet<>(processEntityWithId(libs, currentSnapshot));
+      modulesWithLibrary.addAll(index.getModulesForFile(virtualFile, false));
 
-    return calcLibraryUseScope(modulesWithLibrary, modulesWithSdk);
+      return calcLibraryUseScope(modulesWithLibrary, modulesWithSdk);
+    } else {
+      List<? extends OrderEntry> entries = ProjectFileIndex.getInstance(myProject).getOrderEntriesForFile(virtualFile);
+      return calcLibraryUseScope(entries);
+    }
   }
 
   private @NotNull GlobalSearchScope calcLibraryUseScope(Set<Module> modulesWithLibrary, Set<Module> modulesWithSdk) {
