@@ -11,6 +11,10 @@ import kotlin.coroutines.CoroutineContext
 @ApiStatus.Internal
 interface LambdaIdeContext : CoroutineScope {
   var testData: Any?
+
+  /**
+   * Added action will be executed after the current test finishes
+   */
   fun addPostCleanup(action: () -> Unit) {
     coroutineContext.job.invokeOnCompletion {
       action()
