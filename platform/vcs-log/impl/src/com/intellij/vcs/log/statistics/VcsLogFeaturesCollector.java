@@ -59,7 +59,8 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
   private static final VarargEventId LABELS_COMPACT = GROUP.registerVarargEvent("labels.compact", EventFields.Enabled);
   private static final VarargEventId LABELS_SHOW_TAG_NAMES = GROUP.registerVarargEvent("labels.showTagNames", EventFields.Enabled);
   private static final VarargEventId LABELS_ON_THE_LEFT = GROUP.registerVarargEvent("labels.onTheLeft", EventFields.Enabled);
-  private static final VarargEventId ISSUE_SHOW_PREVIEW_ON_HOVER = GROUP.registerVarargEvent("issue.showPreviewOnHover", EventFields.Enabled);
+  private static final VarargEventId ISSUE_SHOW_PREVIEW_ON_HOVER = GROUP.registerVarargEvent(
+    "issue.showPreviewOnHover", "Tracks enablement of showing issue preview on hover in the VCS log.", EventFields.Enabled);
   private static final VarargEventId SHOW_COMMIT_DATE = GROUP.registerVarargEvent("showCommitDate", EventFields.Enabled);
   private static final VarargEventId TEXT_FILTER_REGEX = GROUP.registerVarargEvent("textFilter.regex", EventFields.Enabled);
   private static final VarargEventId TEXT_FILTER_MATCH_CASE = GROUP.registerVarargEvent("textFilter.matchCase", EventFields.Enabled);
