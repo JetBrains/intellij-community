@@ -69,8 +69,6 @@ internal class RpcChangesViewProxy(project: Project, scope: CoroutineScope) : Ch
   override fun setToolbarHorizontal(horizontal: Boolean) {
   }
 
-  override fun isModelUpdateInProgress(): Boolean = false
-
   override fun scheduleRefreshNow(callback: Runnable?) {
     refresher.scheduleRefreshNow(callback)
   }

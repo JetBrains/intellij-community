@@ -7,6 +7,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Serializable
 enum class ChangesViewDiffAction {
-  TRY_SHOW_PREVIEW,
+  SINGLE_CLICK_DIFF_PREVIEW,
   PERFORM_DIFF,
 }

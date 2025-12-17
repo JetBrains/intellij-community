@@ -36,7 +36,6 @@ internal abstract class ChangesViewProxy(val project: Project, val scope: Corout
   abstract fun initPanel()
 
   abstract fun setToolbarHorizontal(horizontal: Boolean)
-  abstract fun isModelUpdateInProgress(): Boolean
 
   abstract fun scheduleRefreshNow(callback: Runnable?)
   abstract fun scheduleDelayedRefresh()

@@ -39,8 +39,8 @@ internal class ChangesViewEditorDiffPreview(
       changesView.diffRequests.collectLatest { (diffAction, clientId) ->
         withExplicitClientId(clientId) {
           when (diffAction) {
-            ChangesViewDiffAction.TRY_SHOW_PREVIEW -> {
-              if (!isSplitterPreviewPresent() && !changesView.isModelUpdateInProgress()) {
+            ChangesViewDiffAction.SINGLE_CLICK_DIFF_PREVIEW -> {
+              if (!isSplitterPreviewPresent()) {
                 val opened = openPreview(false)
                 if (!opened) closePreview()
               }

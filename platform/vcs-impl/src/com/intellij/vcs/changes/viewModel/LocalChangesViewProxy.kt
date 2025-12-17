@@ -36,8 +36,6 @@ internal class LocalChangesViewProxy(
     panel.isToolbarHorizontal = horizontal
   }
 
-  override fun isModelUpdateInProgress(): Boolean = panel.changesView.isModelUpdateInProgress
-
   override fun scheduleRefreshNow(callback: Runnable?) {
     panel.scheduleRefreshNow(if (callback == null) null else callback::run)
   }
