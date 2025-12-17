@@ -48,7 +48,7 @@ public final class JsonCachedValues {
 
   public static @Nullable JsonSchemaObject getSchemaObject(@NotNull VirtualFile schemaFile, @NotNull Project project) {
     JsonFileResolver.startFetchingHttpFileIfNeeded(schemaFile, project);
-    if (Registry.is("json.schema.object.v2")) {
+    if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2()) {
       return JsonSchemaObjectStorage.getInstance(project)
         .getOrComputeSchemaRootObject(schemaFile);
     }
@@ -64,7 +64,7 @@ public final class JsonCachedValues {
 
   public static @Nullable String getSchemaUrlFromSchemaProperty(@NotNull VirtualFile file,
                                                                 @NotNull Project project) {
-    if (Registry.is("json.schema.object.v2")) {
+    if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2()) {
       JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(project).getComputedSchemaRootOrNull(file);
       if (schemaRootOrNull != null) {
         return schemaRootOrNull.getSchema();
@@ -129,7 +129,7 @@ public final class JsonCachedValues {
     //skip content loading for generated schema files (IntellijConfigurationJsonSchemaProviderFactory)
     if (schemaFile instanceof LightVirtualFile) return null;
 
-    if (Registry.is("json.schema.object.v2")) {
+    if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2()) {
       JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(project).getOrComputeSchemaRootObject(schemaFile);
       if (schemaRootOrNull != null) {
         return schemaRootOrNull.getId();

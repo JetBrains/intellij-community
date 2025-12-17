@@ -146,7 +146,7 @@ public final class JsonSchemaVariantsTreeBuilder {
 
   private static boolean interestingSchema(@NotNull JsonSchemaObject schema) {
     boolean hasAggregators;
-    if (Registry.is("json.schema.object.v2")) {
+    if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2()) {
       hasAggregators =
         schema.hasChildNode(ANY_OF) || schema.hasChildNode(ONE_OF) || schema.hasChildNode(ALL_OF) || schema.hasChildNode(IF);
     }

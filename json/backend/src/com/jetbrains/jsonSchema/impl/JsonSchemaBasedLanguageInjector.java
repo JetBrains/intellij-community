@@ -31,7 +31,7 @@ public final class JsonSchemaBasedLanguageInjector extends JsonSchemaInjectorBas
     Project project = context.getProject();
     PsiFile containingFile = context.getContainingFile();
     JsonSchemaObject schemaObject = JsonSchemaService.Impl.get(project).getSchemaObject(containingFile);
-    if (Registry.is("json.schema.object.v2")
+    if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2()
         && schemaObject instanceof RootJsonSchemaObjectBackedByJackson rootSchema
         && !rootSchema.checkHasInjections()) {
       return null;

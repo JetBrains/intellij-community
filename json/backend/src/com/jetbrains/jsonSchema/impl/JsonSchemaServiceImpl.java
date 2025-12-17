@@ -424,7 +424,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
 
   private @Nullable JsonSchemaVersion getSchemaVersionFromSchemaUrl(@NotNull VirtualFile file) {
     String schemaPropertyValue;
-    if (file instanceof  LightVirtualFile || Registry.is("json.schema.object.v2")) {
+    if (file instanceof  LightVirtualFile || com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2()) {
       JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(myProject).getComputedSchemaRootOrNull(file);
       if (schemaRootOrNull != null) {
         schemaPropertyValue = schemaRootOrNull.getSchema();

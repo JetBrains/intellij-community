@@ -109,7 +109,7 @@ public final class JsonSchemaReader {
   }
 
   public @Nullable JsonSchemaObject read(@NotNull PsiFile file) {
-    if (Registry.is("json.schema.object.v2")) {
+    if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2()) {
       return getOrComputeSchemaObjectForSchemaFile(file.getOriginalFile().getVirtualFile(), file.getProject());
     }
 

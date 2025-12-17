@@ -197,7 +197,7 @@ public final class JsonPointerReferenceProvider extends PsiReferenceProvider {
     @Override
     public @Nullable PsiElement resolveInner() {
       String id = null;
-      if (Registry.is("json.schema.object.v2")) {
+      if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2()) {
         JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(myElement.getProject())
           .getComputedSchemaRootOrNull(myElement.getContainingFile().getVirtualFile());
         if (schemaRootOrNull instanceof RootJsonSchemaObject<?,?> rootJsonSchemaObject) {

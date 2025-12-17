@@ -229,7 +229,7 @@ public final class ObjectValidation implements JsonSchemaValidation {
       JsonSchemaObject propertySchema = resolvePropertySchema(schema, req);
       Object defaultValue = propertySchema == null ? null : propertySchema.getDefault();
       if (defaultValue == null) {
-        if (Registry.is("json.schema.object.v2")) {
+        if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2()) {
           defaultValue = schema.getExampleByName(req);
         }
         else {

@@ -84,7 +84,7 @@ public final class JsonSchemaObjectReadingUtils {
     final VirtualFile schemaFile = service.resolveSchemaFile(schema);
     if (schemaFile == null) return null;
     final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter;
-    if (Registry.is("json.schema.object.v2")) {
+    if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2()) {
       splitter = complexReferenceCache.get(ref);
     }
     else {
@@ -295,7 +295,7 @@ public final class JsonSchemaObjectReadingUtils {
     if (!ref.startsWith("#/")) {
       return null;
     }
-    if (Registry.is("json.schema.object.v2") && !(schemaObject instanceof JsonSchemaObjectImpl)) {
+    if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2() && !(schemaObject instanceof JsonSchemaObjectImpl)) {
       return schemaObject.findRelativeDefinition(ref);
     }
     ref = ref.substring(2);
