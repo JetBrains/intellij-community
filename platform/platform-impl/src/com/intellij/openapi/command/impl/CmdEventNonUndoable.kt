@@ -4,7 +4,10 @@ package com.intellij.openapi.command.impl
 import com.intellij.openapi.project.Project
 
 
-internal class CmdEventNonUndoable(meta: CommandMeta) : CmdEventBase(meta) {
+internal class CmdEventNonUndoable(
+  commandId: CommandId,
+  meta: CommandMeta,
+) : CmdEventBase(commandId, meta) {
 
   override fun project(): Project? {
     return null

@@ -23,16 +23,15 @@ final class CmdEventTransform {
     boolean isTransparent = event == null;
     CommandId commandId = getCommandId(isTransparent, isStart);
     var meta = isStart
-               ? new MutableCommandMetaImpl(commandId)
-               : new NoCommandMeta(commandId);
+               ? new MutableCommandMetaImpl()
+               : NoCommandMeta.INSTANCE;
     return isTransparent
-           ? CmdEvent.createTransparent(null, meta)
-           : CmdEvent.create(event, meta);
+           ? CmdEvent.createTransparent(commandId, meta)
+           : CmdEvent.create(event, commandId, meta);
   }
 
   @NotNull CmdEvent createNonUndoable() {
-    CommandMeta meta = new NoCommandMeta(idGenerator.nextCommandId());
-    return CmdEvent.createNonUndoable(meta);
+    return CmdEvent.createNonUndoable(idGenerator.nextCommandId(), NoCommandMeta.INSTANCE);
   }
 
   private @NotNull CommandId getCommandId(boolean isTransparent, boolean isStart) {

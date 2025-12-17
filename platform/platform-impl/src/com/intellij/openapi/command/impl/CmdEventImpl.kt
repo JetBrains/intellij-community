@@ -9,8 +9,9 @@ import com.intellij.openapi.util.NlsContexts.Command
 
 internal class CmdEventImpl(
   private val event: CommandEvent,
+  id: CommandId,
   meta: CommandMeta,
-) : CmdEventBase(meta) {
+) : CmdEventBase(id, meta) {
 
   override fun project(): Project? {
     return event.project

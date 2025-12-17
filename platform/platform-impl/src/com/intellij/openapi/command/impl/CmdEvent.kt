@@ -23,18 +23,18 @@ interface CmdEvent {
 
   companion object {
     @JvmStatic
-    fun create(event: CommandEvent, meta: CommandMeta): CmdEvent {
-      return CmdEventImpl(event, meta)
+    fun create(event: CommandEvent, id: CommandId, meta: CommandMeta): CmdEvent {
+      return CmdEventImpl(event, id, meta)
     }
 
     @JvmStatic
-    fun createTransparent(project: Project?, meta: CommandMeta): CmdEvent {
-      return CmdEventTransparent(project, meta)
+    fun createTransparent(id: CommandId, meta: CommandMeta): CmdEvent {
+      return CmdEventTransparent(null, id, meta)
     }
 
     @JvmStatic
-    fun createNonUndoable(meta: CommandMeta): CmdEvent {
-      return CmdEventNonUndoable(meta)
+    fun createNonUndoable(commandId: CommandId, meta: CommandMeta): CmdEvent {
+      return CmdEventNonUndoable(commandId, meta)
     }
   }
 }

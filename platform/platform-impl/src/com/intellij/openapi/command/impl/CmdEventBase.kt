@@ -5,29 +5,14 @@ import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.util.NlsContexts.Command
 
 
-internal abstract class CmdEventBase(private val meta: CommandMeta) : CmdEvent {
-
-  override fun id(): CommandId {
-    return meta.commandId()
-  }
-
-  override fun name(): @Command String? {
-    return ""
-  }
-
-  override fun groupId(): Any? {
-    return null
-  }
-
-  override fun confirmationPolicy(): UndoConfirmationPolicy {
-    return UndoConfirmationPolicy.DEFAULT
-  }
-
-  override fun recordOriginalDocument(): Boolean {
-    return false
-  }
-
-  override fun meta(): CommandMeta {
-    return meta
-  }
+internal abstract class CmdEventBase(
+  private val commandId: CommandId,
+  private val meta: CommandMeta
+) : CmdEvent {
+  final override fun id(): CommandId = commandId
+  final override fun meta(): CommandMeta = meta
+  override fun name(): @Command String? = ""
+  override fun groupId(): Any? = null
+  override fun confirmationPolicy(): UndoConfirmationPolicy = UndoConfirmationPolicy.DEFAULT
+  override fun recordOriginalDocument(): Boolean = false
 }

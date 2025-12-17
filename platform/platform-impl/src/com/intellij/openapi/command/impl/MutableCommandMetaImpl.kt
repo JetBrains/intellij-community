@@ -5,13 +5,8 @@ import com.intellij.openapi.project.Project
 import java.util.Collections
 
 
-internal class MutableCommandMetaImpl(private val id: CommandId) : MutableCommandMeta {
-
+internal class MutableCommandMetaImpl : MutableCommandMeta {
   private val metaMap: MutableMap<Project?, UndoMeta> = Collections.synchronizedMap(mutableMapOf())
-
-  override fun commandId(): CommandId {
-    return id
-  }
 
   override fun addUndoMeta(undoMeta: UndoMeta) {
     metaMap[undoMeta.undoProject()] = undoMeta

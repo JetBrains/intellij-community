@@ -4,11 +4,7 @@ package com.intellij.openapi.command.impl
 import com.intellij.openapi.project.Project
 
 
-internal class NoCommandMeta(private val id: CommandId) : CommandMeta {
-
-  override fun commandId(): CommandId {
-    return id
-  }
+internal object NoCommandMeta : CommandMeta {
 
   override fun undoMeta(project: Project?): UndoMeta? {
     TODO("not implemented")

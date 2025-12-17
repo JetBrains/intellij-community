@@ -9,7 +9,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Experimental
 @Internal
 interface CommandMeta {
-  fun commandId(): CommandId
   fun undoMeta(project: Project?): UndoMeta?
   fun undoMeta(): List<UndoMeta>
 }

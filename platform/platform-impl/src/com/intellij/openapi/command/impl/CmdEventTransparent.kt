@@ -6,14 +6,15 @@ import com.intellij.openapi.project.Project
 
 internal class CmdEventTransparent(
   private val project: Project?,
+  id: CommandId,
   meta: CommandMeta,
-) : CmdEventBase(meta) {
+) : CmdEventBase(id, meta) {
 
   fun withProject(project: Project?): CmdEvent {
     if (project === this.project) {
       return this
     }
-    return CmdEventTransparent(project, meta())
+    return CmdEventTransparent(project, id(), meta())
   }
 
   override fun project(): Project? {
