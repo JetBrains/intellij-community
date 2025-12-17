@@ -89,6 +89,21 @@ internal sealed class KotlinFirCompletionParameters(
         }
 
         companion object {
+            fun fromFixedPosition(
+                parameters: CompletionParameters,
+                fixedPosition: PsiElement,
+                correctionType: CorrectionType
+            ): Corrected? {
+                if (fixedPosition == parameters.position) return null
+
+                val offsetInIdentifier = parameters.offset - parameters.position.textOffset
+                val correctedParameters = parameters.withPosition(fixedPosition, fixedPosition.textOffset + offsetInIdentifier)
+                return create(
+                    correctedParameters = correctedParameters,
+                    originalParameters = parameters,
+                    correctionType = correctionType
+                )
+            }
 
             fun create(
                 correctedParameters: CompletionParameters,
@@ -126,6 +141,7 @@ internal sealed class KotlinFirCompletionParameters(
                 else -> Corrected.create(correctedParameters, parameters, CorrectionType.BRACES_FOR_STRING_TEMPLATE)
             }
         }
+
         private inline val CompletionParameters.originalKtFile: KtFile?
             get() = originalFile as? KtFile
 

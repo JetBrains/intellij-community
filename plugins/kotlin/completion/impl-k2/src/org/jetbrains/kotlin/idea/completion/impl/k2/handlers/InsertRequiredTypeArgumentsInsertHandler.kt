@@ -63,15 +63,7 @@ internal class InsertRequiredTypeArgumentsInsertHandler(
             val parentKtElement = parameters.position.parent as? KtElement ?: return null
             analyze(parentKtElement) {
                 val fixedPosition = addParamTypesIfNeeded(parameters.position) ?: return null
-                if (fixedPosition == parameters.position) return null
-
-                val offsetInIdentifier = parameters.offset - parameters.position.textOffset
-                val correctedParameters = parameters.withPosition(fixedPosition, fixedPosition.textOffset + offsetInIdentifier)
-                return Corrected.create(
-                    correctedParameters = correctedParameters,
-                    originalParameters = parameters,
-                    correctionType = CorrectionType.INSERTED_TYPE_ARGS
-                )
+                return Corrected.fromFixedPosition(parameters, fixedPosition, CorrectionType.INSERTED_TYPE_ARGS)
             }
         }
     }
