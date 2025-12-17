@@ -74,6 +74,9 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
+import static com.intellij.ide.ui.MaximizeDialogKt.getNormalBounds;
+import static com.intellij.ide.ui.MaximizeDialogKt.setNormalBounds;
+
 public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   @SuppressWarnings("LoggerInitializedWithForeignClass")
   private static final Logger LOG = Logger.getInstance(DialogWrapper.class);
@@ -610,6 +613,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
      */
     private Dimension myInitialSize;
     private String myDimensionServiceKey;
+    private static final String NORMAL_BOUNDS_SUFFIX = "_normalized";
     private boolean myOpened = false;
     private boolean myDisposed = false;
 
@@ -870,14 +874,19 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           if (LOG.isDebugEnabled()) {
             LOG.debug("The project is " + projectGuess);
           }
-          location = getWindowStateService(projectGuess).getLocation(myDimensionServiceKey);
-          Dimension size = getWindowStateService(projectGuess).getSize(myDimensionServiceKey);
+          var windowStateService = getWindowStateService(projectGuess);
+          location = windowStateService.getLocation(myDimensionServiceKey);
+          Dimension size = windowStateService.getSize(myDimensionServiceKey);
           if (LOG.isDebugEnabled()) {
             LOG.debug("The stored location and size are " + location + " and " + size + (size != null ? ", using them to set the initial bounds" : ""));
           }
           if (size != null) {
             myInitialSize = new Dimension(size);
             _setSizeForLocation(myInitialSize.width, myInitialSize.height, location);
+          }
+          var normalBounds = windowStateService.getBounds(myDimensionServiceKey + NORMAL_BOUNDS_SUFFIX);
+          if (normalBounds != null) {
+            setNormalBounds(this, normalBounds);
           }
         }
 
@@ -1081,20 +1090,25 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           final Project projectGuess = guessProjectDependingOnKey(myDimensionServiceKey);
           // Save location
           Point location = getLocation();
-          getWindowStateService(projectGuess).putLocation(myDimensionServiceKey, location);
+          var windowStateService = getWindowStateService(projectGuess);
+          windowStateService.putLocation(myDimensionServiceKey, location);
           if (LOG.isDebugEnabled()) {
             LOG.debug("Saved location: " + location);
           }
           // Save size
           Dimension size = getSize();
           if (!myInitialSize.equals(size)) {
-            getWindowStateService(projectGuess).putSize(myDimensionServiceKey, size);
+            windowStateService.putSize(myDimensionServiceKey, size);
             if (LOG.isDebugEnabled()) {
               LOG.debug("Saved size: " + size + " (the initial size was " + myInitialSize + ")");
             }
           }
           else if (LOG.isDebugEnabled()) {
             LOG.debug("Didn't save size because it's the same as the initial size: " + size);
+          }
+          var normalBounds = getNormalBounds(MyDialog.this);
+          if (normalBounds != null) {
+            windowStateService.putBounds(myDimensionServiceKey + NORMAL_BOUNDS_SUFFIX, normalBounds);
           }
           myOpened = false;
         }
