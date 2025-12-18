@@ -37,7 +37,6 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils.TransferTarget
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.search.ExecutionSearchScopes
-import com.intellij.util.containers.with
 import com.intellij.util.io.outputStream
 import com.intellij.util.text.nullize
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap
@@ -77,16 +76,22 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       val exe = if (isWindows()) "cmd.exe" else "/bin/sh"
       val env = getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug)
 
-      val charset = tryToGetCharset(env, eelApi)
-      val envWithCharsets =
-        env.with("JAVA_TOOL_OPTIONS",
-                 listOfNotNull(env["JAVA_TOOL_OPTIONS"], "-Dfile.encoding=${charset?.name() ?: "UTF-8"}").joinToString(" "))
+      val charset = tryToGetCharset(env, eelApi) ?: Charsets.UTF_8
+      val envWithCharsets = applyCharset(env, charset)
 
-      val processHandler = runProcessInEel(eelApi, exe, envWithCharsets, charset ?: Charsets.UTF_8)
+      val processHandler = runProcessInEel(eelApi, exe, envWithCharsets, charset)
       JavaRunConfigurationExtensionManager.instance
         .attachExtensionsToProcess(myConfiguration, processHandler, environment.runnerSettings)
       return@runWithModalProgressBlocking processHandler
     }
+  }
+
+  private fun applyCharset(env: MutableMap<String, String>, charset: Charset): Map<String, String> {
+    val mavenOpts = env["MAVEN_OPTS"]
+    if (mavenOpts != null && mavenOpts.contains("-Dfile.encoding")) return env
+    val newOpts = listOf(mavenOpts, "-Dfile.encoding=${charset.name()}").joinToString(" ").trim()
+    env["MAVEN_OPTS"] = newOpts
+    return env
   }
 
   private suspend fun runProcessInEel(
@@ -225,6 +230,9 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       extractCharsetFromEnv(env["JAVA_TOOL_OPTIONS"])?.let {
         MavenLog.LOG.debug("extracted charset $it from JAVA_TOOL_OPTIONS")
         return Charset.forName(it)
+      }
+      if(eelApi.descriptor.osFamily.isWindows) {
+        return null
       }
       eelApi.exec.getCodepage()?.let {
         MavenLog.LOG.debug("extracted charset $it executing command")
