@@ -37,6 +37,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.VolatileImage;
 import java.util.ArrayList;
@@ -193,7 +194,11 @@ public final class ImmediatePainter {
       EditorPainter.fillRectExact(graphics, rectangle2, attributes2.getBackgroundColor());
       drawChar(graphics, c2, p2x, p2y + ascent, font2, attributes2.getForegroundColor());
 
-      fillRect(graphics, caretRectangle, getCaretColor(editor));
+      if (isBlockCursor) {
+        fillRect(graphics, caretRectangle, getCaretColor(editor));
+      } else {
+        paintCaretBar(graphics, caretRectangle, getCaretColor(editor));
+      }
 
       EditorPainter.fillRectExact(graphics, rectangle1, attributes1.getBackgroundColor());
       drawChar(graphics, c1, p2x - width1, p2y + ascent, font1, attributes1.getForegroundColor());
@@ -283,6 +288,18 @@ public final class ImmediatePainter {
       if (imageConfig != null && componentConfig != null && imageConfig.getDevice() != componentConfig.getDevice()) return false;
     }
     return image.validate(componentConfig) != VolatileImage.IMAGE_INCOMPATIBLE;
+  }
+
+  private void paintCaretBar(final Graphics2D g, final Rectangle2D r, final Color color) {
+    int arc = JBUIScale.scale(Registry.intValue("editor.caret.corner.radius"));
+
+    var old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g.setColor(color);
+    g.fill(new RoundRectangle2D.Double(r.getX(), r.getY(), r.getWidth(), r.getHeight(), arc, arc));
+    if (old != null) {
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
+    }
   }
 
   private static void fillRect(final Graphics2D g, final Rectangle2D r, final Color color) {
