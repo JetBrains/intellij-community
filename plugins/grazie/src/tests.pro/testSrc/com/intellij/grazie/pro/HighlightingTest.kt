@@ -546,6 +546,18 @@ class HighlightingTest : BaseTestCase() {
     """.trimIndent())
   }
 
+  @NeedsCloud
+  @Test
+  fun `test aggregator provides relevant suggestions`() {
+    configureByText("a.java", "// <caret>Jim get over here!")
+    myFixture.doHighlighting()
+
+    // Suggestions are reordered by [TextProblemAggregator] starting with the most meaningful ones
+    val intentions = availableIntentions
+    assertEquals(intentions[1].text, "Jim, get")
+    assertEquals(intentions[2].text, "Jim gets")
+  }
+
   companion object {
     @JvmStatic
     fun enableLanguages(langs: Set<Lang>, project: Project, disposable: Disposable) {

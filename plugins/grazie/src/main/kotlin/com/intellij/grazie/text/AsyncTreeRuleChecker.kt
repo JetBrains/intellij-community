@@ -41,4 +41,12 @@ sealed class AsyncTreeRuleChecker : ExternalTextChecker() {
       return super.checkExternally(context).filter { it.isStyleLike }
     }
   }
+
+  class Spelling : AsyncTreeRuleChecker() {
+    override fun getRules(locale: Locale): Collection<Rule> = emptyList()
+
+    override suspend fun checkExternally(context: ProofreadingContext): Collection<TreeProblem> {
+      return super.checkExternally(context).filter { it.isSpellingProblem }
+    }
+  }
 }

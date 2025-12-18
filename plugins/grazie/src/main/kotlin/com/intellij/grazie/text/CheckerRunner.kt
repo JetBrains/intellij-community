@@ -123,30 +123,14 @@ class CheckerRunner(val text: TextContent) {
     }
   }
 
-  private fun filter(problems: List<TextProblem>): List<TextProblem> {
-    val filtered = ArrayList<TextProblem>()
-    problems.forEach { problem ->
-      processProblem(problem, filtered)
-    }
-    return filtered
-  }
+  private fun filter(problems: List<TextProblem>): List<TextProblem> =
+    TextProblemAggregator.aggregate(text.toString(), problems.filterNot { shouldBeIgnored(it) })
 
-  private fun processProblem(problem: TextProblem, filtered: MutableList<TextProblem>): Boolean {
-    require(problem.text == text)
-
-    if (isSuppressed(problem) ||
-        hasIgnoredCategory(problem) ||
-        isIgnoredByStrategies(problem) ||
-        ProblemFilter.allIgnoringFilters(problem).findAny().isPresent) {
-      return false
-    }
-
-    if (filtered.none { it.highlightRanges.any { r1 -> problem.highlightRanges.any { r2 -> r1.intersects(r2) } } }) {
-      filtered.add(problem)
-      return true
-    }
-    return false
-  }
+  private fun shouldBeIgnored(problem: TextProblem): Boolean =
+    isSuppressed(problem) ||
+    hasIgnoredCategory(problem) ||
+    isIgnoredByStrategies(problem) ||
+    ProblemFilter.allIgnoringFilters(problem).findAny().isPresent
 
   fun toProblemDescriptors(problem: TextProblem, isOnTheFly: Boolean): List<ProblemDescriptor> {
     val parent = text.commonParent
