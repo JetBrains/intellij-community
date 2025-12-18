@@ -14,15 +14,6 @@ import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
-
-/**
- * @deprecated This class will be removed in the future. The main purpose of it is to read json schema file, that can currently be achieved
- * via `com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage#getOrComputeSchemaRootObject` call. Other utility methods will stay as is,
- * because they have different semantics.
- */
-@Deprecated
 public final class JsonSchemaReader {
   private static final int MAX_SCHEMA_LENGTH = FileSizeLimit.getDefaultContentLoadLimit();
 
