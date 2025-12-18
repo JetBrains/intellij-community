@@ -283,6 +283,9 @@ internal class RefreshSessionImpl internal constructor(
     }
   }
 
+  val events: List<VFileEvent>
+    get() = myEvents
+
   private fun invokeOnEdt(r: Runnable) {
     if (EDT.isCurrentThreadEdt()) {
       r.run()
