@@ -5,8 +5,10 @@ import com.intellij.platform.debugger.impl.backend.hotswap.BackendXDebuggerHotSw
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
+import org.jetbrains.annotations.ApiStatus
 
-private class BackendXDebuggerRemoteApiProviders : RemoteApiProvider {
+@ApiStatus.Internal
+class BackendXDebuggerRemoteApiProviders : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<XDebuggerValueLookupHintsRemoteApi>()) {
       BackendXDebuggerValueLookupHintsRemoteApi()
