@@ -34,7 +34,6 @@ jvm_library(
     "//plugins/kotlin/code-insight/utils",
     "//plugins/kotlin/code-insight/intentions-k2/tests:tests_test_lib",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "//platform/core-impl",
     "//platform/analysis-api:analysis",

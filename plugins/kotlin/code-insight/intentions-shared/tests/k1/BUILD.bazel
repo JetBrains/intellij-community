@@ -42,6 +42,7 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//platform/core-api:core",
   ]
 )
 ### auto-generated section `build kotlin.code-insight.intentions-shared.tests.k1` end

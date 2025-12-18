@@ -1,12 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInsight.hints.InlayHintsProvider
 import com.intellij.codeInsight.hints.InlayHintsProviderFactory
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.modcommand.*
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandAction
+import com.intellij.modcommand.ModCommandExecutor
+import com.intellij.modcommand.ModCompositeCommand
+import com.intellij.modcommand.ModDisplayMessage
+import com.intellij.modcommand.ModShowConflicts
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -30,11 +36,14 @@ import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.base.test.registerDirectiveBasedChooserOptionInterceptor
-import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinAbstractHintsProvider
-import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE
-import org.jetbrains.kotlin.idea.test.k1DiagnosticsProvider
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
+import org.jetbrains.kotlin.idea.test.configureRegistryAndRun
+import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
@@ -42,6 +51,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
 import org.junit.Assert
 import java.io.File
 import java.util.concurrent.ExecutionException
+import kotlin.collections.iterator
 
 abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun intentionFileName(): String = ".intention"
@@ -66,16 +76,17 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
     }
 
     private fun resetInlayHints(project: Project) {
+        val hintsSettings = InlayHintsSettings.instance()
         val language = KotlinLanguage.INSTANCE
-        val providerInfos =
-            InlayHintsProviderFactory.EP.extensionList
-                .flatMap { it.getProvidersInfo() }
-                .filter { it.language == language }
-                .mapNotNull { it.provider as? KotlinAbstractHintsProvider<KotlinAbstractHintsProvider.HintsSettings> }
-        providerInfos.forEach {
-            val hintsSettings = InlayHintsSettings.instance()
-            hintsSettings.storeSettings(it.key, language, it.createSettings())
-        }
+        InlayHintsProviderFactory.EP.extensionList
+            .flatMap { it.getProvidersInfo() }
+            .filter { it.language == language }
+            .forEach {
+                val provider = it.provider as? InlayHintsProvider<InlayHintsSettings>
+                if (provider != null) {
+                    hintsSettings.storeSettings(provider.key, language, provider.createSettings())
+                }
+            }
     }
 
     protected open fun intentionTextDirectiveName(): String = "INTENTION_TEXT"
@@ -140,13 +151,13 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
             ConfigLibraryUtil.configureLibrariesByDirective(module, fileText)
             val ktFile = myFixture.file as KtFile
             if (ktFile.isScript()) {
-                ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
+                updateScriptDependenciesSynchronously()
             }
 
             configureCodeStyleAndRun(project, { FormatSettingsUtil.createConfigurator(fileText, it).configureSettings() }) {
                 configureRegistryAndRun(project, fileText) {
                     try {
-                        TestCase.assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
+                        assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
 
                         InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MIN_JAVA_VERSION: ")?.let { minJavaVersion ->
                             if (Runtime.version().feature() < minJavaVersion.toInt()) return@configureRegistryAndRun
@@ -167,11 +178,14 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         }
     }
 
+    protected open fun updateScriptDependenciesSynchronously() {
+    }
+
     protected open val skipErrorsBeforeCheckDirectives: List<String> =
-        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_BEFORE")
+        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_BEFORE")
 
     protected open val skipErrorsAfterCheckDirectives: List<String> =
-        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
+        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
 
     private fun checkForUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String, beforeCheck: Boolean) {
         if (beforeCheck) {
@@ -193,22 +207,9 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         }
     }
 
-    protected open fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, DirectiveBasedActionUtils.ERROR_DIRECTIVE, k1DiagnosticsProvider)
-    }
+    protected abstract fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String)
 
-    protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
-        if (!InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_WARNINGS_AFTER")) {
-            DirectiveBasedActionUtils.checkForUnexpectedWarnings(
-                ktFile,
-                disabledByDefault = false,
-                directiveName = "AFTER-WARNING",
-                diagnosticsProvider = k1DiagnosticsProvider
-            )
-        }
-
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, DirectiveBasedActionUtils.ERROR_DIRECTIVE, k1DiagnosticsProvider)
-    }
+    protected abstract fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String)
 
     protected open fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
         val mainFilePath = mainFile.name
