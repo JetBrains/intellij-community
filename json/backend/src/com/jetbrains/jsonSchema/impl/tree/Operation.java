@@ -1,12 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.tree;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SmartList;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
-import com.jetbrains.jsonSchema.impl.JsonSchemaObjectImpl;
 import com.jetbrains.jsonSchema.impl.SchemaResolveState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,12 +64,13 @@ public abstract class Operation {
   }
 
   private static void clearVariants(@NotNull JsonSchemaObject object) {
-    if (!(object instanceof JsonSchemaObjectImpl cst)) {
-      return;
-    }
-    cst.setAllOf(null);
-    cst.setAnyOf(null);
-    cst.setOneOf(null);
+    Logger.getInstance(Operation.class).info("Clearing variants for object not supported anymore");
+    //if (!(object instanceof JsonSchemaObjectImpl cst)) {
+    //  return;
+    //}
+    //cst.setAllOf(null);
+    //cst.setAnyOf(null);
+    //cst.setOneOf(null);
   }
 
   protected @Nullable Operation createExpandOperation(@NotNull JsonSchemaObject schema,

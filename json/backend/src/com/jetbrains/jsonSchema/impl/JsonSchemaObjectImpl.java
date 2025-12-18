@@ -282,37 +282,7 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
     };
   }
 
-  @Override
-  public @Nullable JsonSchemaType mergeTypes(@Nullable JsonSchemaType selfType,
-                                             @Nullable JsonSchemaType otherType,
-                                             @Nullable Set<JsonSchemaType> otherTypeVariants) {
-    if (selfType == null) return otherType;
-    if (otherType == null) {
-      if (otherTypeVariants != null && !otherTypeVariants.isEmpty()) {
-        Set<JsonSchemaType> filteredVariants = EnumSet.noneOf(JsonSchemaType.class);
-        for (JsonSchemaType variant : otherTypeVariants) {
-          JsonSchemaType subtype = getSubtypeOfBoth(selfType, variant);
-          if (subtype != null) filteredVariants.add(subtype);
-        }
-        if (filteredVariants.isEmpty()) {
-          myIsValidByExclusion = false;
-          return selfType;
-        }
-        if (filteredVariants.size() == 1) {
-          return filteredVariants.iterator().next();
-        }
-        return null; // will be handled by variants
-      }
-      return selfType;
-    }
 
-    JsonSchemaType subtypeOfBoth = getSubtypeOfBoth(selfType, otherType);
-    if (subtypeOfBoth == null) {
-      myIsValidByExclusion = false;
-      return otherType;
-    }
-    return subtypeOfBoth;
-  }
 
   @Override
   public Set<JsonSchemaType> mergeTypeVariantSets(@Nullable Set<JsonSchemaType> self, @Nullable Set<JsonSchemaType> other) {
@@ -424,20 +394,6 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
     myForceCaseInsensitive = myForceCaseInsensitive || other.myForceCaseInsensitive;
   }
 
-  public static void mergeProperties(@NotNull JsonSchemaObjectImpl thisObject, @NotNull JsonSchemaObject otherObject) {
-    for (var prop : otherObject.getProperties().entrySet()) {
-      String key = prop.getKey();
-      var otherProp = prop.getValue();
-      if (!(otherProp instanceof JsonSchemaObjectImpl impl)) continue;
-      if (!thisObject.myProperties.containsKey(key)) {
-        thisObject.myProperties.put(key, impl);
-      }
-      else {
-        JsonSchemaObjectImpl existingProp = thisObject.myProperties.get(key);
-        thisObject.myProperties.put(key, merge(existingProp, impl, ((JsonSchemaObjectImpl)otherProp)));
-      }
-    }
-  }
 
   public void setShouldValidateAgainstJSType(boolean value) {
     myShouldValidateAgainstJSType = value;
@@ -455,12 +411,7 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
     return target;
   }
 
-  public static @Nullable <K, V> Map<K, V> copyMap(@Nullable Map<K, V> target, @Nullable Map<K, V> source) {
-    if (source == null || source.isEmpty()) return target;
-    if (target == null) target = new HashMap<>(source.size());
-    target.putAll(source);
-    return target;
-  }
+
 
   @Override
   public @Nullable Map<String, JsonSchemaObjectImpl> getDefinitionsMap() {
@@ -613,13 +564,7 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
             myAdditionalPropertiesNotAllowedFor.contains(myFileUrl + myPointer));
   }
 
-  public void addAdditionalPropsNotAllowedFor(String url, String pointer) {
-    Set<String> newSet = myAdditionalPropertiesNotAllowedFor == null
-                         ? new HashSet<>()
-                         : new HashSet<>(myAdditionalPropertiesNotAllowedFor);
-    newSet.add(url + pointer);
-    myAdditionalPropertiesNotAllowedFor = newSet;
-  }
+
 
   @Override
   public @Nullable JsonSchemaObjectImpl getPropertyNamesSchema() {
