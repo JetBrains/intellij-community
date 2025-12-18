@@ -14,7 +14,7 @@ val ExtProperty<*, *>.wsCode: String
       line(additionalAnnotations)
     }
     sectionNoBrackets("$parentAnnotation${generatedCodeVisibilityModifier}var ${receiver.defaultJavaBuilderName}$generic.$name: ${valueType.javaBuilderTypeWithGeneric}") {
-      line("by WorkspaceEntity.extensionBuilder(${valueType.entityType}::class.java)")
+      line("by $WorkspaceEntity.extensionBuilder(${valueType.entityType}::class.java)")
     }
   }
 

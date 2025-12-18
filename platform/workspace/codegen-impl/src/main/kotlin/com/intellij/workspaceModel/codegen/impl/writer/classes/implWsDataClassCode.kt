@@ -114,8 +114,8 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         }
       }
 
-      sectionNl("override fun getRequiredParents(): List<Class<out WorkspaceEntity>>") {
-        line("val res = mutableListOf<Class<out WorkspaceEntity>>()")
+      sectionNl("override fun getRequiredParents(): List<Class<out $WorkspaceEntity>>") {
+        line("val res = mutableListOf<Class<out $WorkspaceEntity>>()")
         allRefsFields.filterNot { it.valueType.getRefType().child }.forEach {
           val parentType = it.valueType
           if (parentType !is ValueType.Optional) {
