@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.k2.metaModel
 
+import com.intellij.devkit.workspaceModel.metaModel.MetaModelBuilderException
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceModelDefaults
 import com.intellij.devkit.workspaceModel.metaModel.impl.CompiledObjModuleImpl
 import com.intellij.devkit.workspaceModel.metaModel.impl.ObjAnnotationImpl
@@ -39,11 +40,10 @@ internal fun KaSession.inheritors(
   // can be rewritten using org.jetbrains.kotlin.idea.searching.inheritors.KotlinSearchUtilKt.findAllInheritors
   val psiClass = javaPsiFacade.findClass(classSymbol.javaClassFqn, scope) ?: return emptyList()
   return ClassInheritorsSearch.search(psiClass, scope, true, true, false)
-    .asIterable()
     .filterNot { it.isAnonymous }
     .sortedBy { it.qualifiedName } // Sorting is needed for consistency in case of regeneration
-    .mapNotNull {
-      KotlinFullClassNameIndex[it.qualifiedName!!, it.project, scope].firstOrNull()
+    .mapNotNull { psiClass ->
+      psiClass.qualifiedName?.let { KotlinFullClassNameIndex[it, psiClass.project, scope].firstOrNull() }
     }
 }
 
@@ -88,7 +88,7 @@ internal val KaClassLikeSymbol.packageName: String
   get() = packageOrDie.asString()
 
 internal val KaClassLikeSymbol.packageOrDie: FqName
-  get() = classId?.packageFqName ?: error("$name has no package")
+  get() = classId?.packageFqName ?: throw MetaModelBuilderException("$name has no package", sourcePsiSafe())
 
 internal fun KaSession.getPackageSymbol(classSymbol: KaClassSymbol): KaPackageSymbol? =
   classSymbol.classId?.packageFqName?.let { findPackage(it) }
@@ -145,8 +145,10 @@ internal fun KaSession.createObjTypeStub(symbol: KaClassSymbol, module: Compiled
   val propertyAnnotations = symbol.annotations
     .mapNotNull { it.classId?.asSingleFqName() }
     .map { ObjAnnotationImpl(it.asString(), it.pathSegments().map { segment -> segment.asString() }) }
+  
+  val identifier = symbol.name?.identifier ?: throw MetaModelBuilderException("Could not get identifier of ${symbol.name}", symbol.sourcePsiSafe())
 
-  return ObjClassImpl(module, symbol.name?.identifier!!, openness, symbol.sourcePsi(), propertyAnnotations)
+  return ObjClassImpl(module, identifier, openness, symbol.sourcePsi(), propertyAnnotations)
 }
 
 internal fun KaSession.isParent(kaType: KaAnnotated) =

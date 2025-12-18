@@ -98,7 +98,16 @@ object CodeWriter {
       ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(title, project, null) { indicator ->
         indicator.text = DevKitWorkspaceModelBundle.message("progress.text.collecting.classes.metadata")
         val metaLoader: WorkspaceMetaModelProvider = service<WorkspaceMetaModelProvider>()
-        val objModules = metaLoader.loadObjModules(ktClasses, module, processAbstractTypes, isTestSourceFolder)
+        val (objModules, metaProblems) = metaLoader.loadObjModules(ktClasses, module, processAbstractTypes, isTestSourceFolder)
+        if (metaProblems.isNotEmpty()) {
+          WorkspaceCodegenProblemsProvider.getInstance(project).reportMetaProblem(metaProblems)
+          val genFolder = existingTargetFolder.invoke()
+          if (genFolder != null) {
+            indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
+            removeGeneratedCode(genFolder)
+          }
+          return@runWriteActionWithCancellableProgressInDispatchThread
+        }
 
         val results = generate(codeGenerator, objModules, explicitApiEnabled, isTestModule)
         val generatedCode = results.flatMap { it.generatedCode }
@@ -106,7 +115,6 @@ object CodeWriter {
         WorkspaceCodegenProblemsProvider.getInstance(project).reportProblems(problems)
 
         if (generatedCode.isEmpty() || problems.any { it.level == GenerationProblem.Level.ERROR }) {
-          LOG.info("Not found types for generation")
           val genFolder = existingTargetFolder.invoke()
           if (genFolder != null) {
             indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")

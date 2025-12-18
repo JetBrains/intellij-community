@@ -103,7 +103,7 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
   }
 
   fun testBothLinksAreChildren() {
-    doTestAndCheckErrorMessage("Both fields MainEntity#secondaryEntities and SecondaryEntity#mainEntity are marked as child. Probably @Parent annotation is missing from one of the properties.")
+    doTestAndCheckErrorMessage("Failed to generate code for secondaryEntities (MainEntity): Both fields MainEntity#secondaryEntities and SecondaryEntity#mainEntity are marked as child. Probably @Parent annotation is missing from one of the properties.")
   }
 
   fun testChildrenShouldBeNullable() {
@@ -119,11 +119,11 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
   }
 
   fun testInheritanceEntityAndSource() {
-    doTestAndCheckErrorMessage("com.intellij.workspaceModel.test.api.IllegalEntity extends WorkspaceEntity and EntitySource at the same time, which is prohibited.")
+    doTestAndCheckErrorMessage("Failed to collect metadata: com.intellij.workspaceModel.test.api.IllegalEntity should not extend WorkspaceEntity and EntitySource at the same time")
   }
 
   fun testInheritanceMultiple() {
-    doTestAndCheckErrorMessage("com.intellij.workspaceModel.test.api.MultipleInheritanceEntity extends multiple @Abstract entities, which is prohibited: AbstractEntity3, AnotherAbstractEntity.")
+    doTestAndCheckErrorMessage("Failed to collect metadata: com.intellij.workspaceModel.test.api.MultipleInheritanceEntity should not extend multiple @Abstract entities: AbstractEntity3, AnotherAbstractEntity")
   }
 
   fun testInheritanceNonAbstract() {

@@ -1,12 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.k2.metaModel
 
-import com.intellij.devkit.workspaceModel.metaModel.WorkspaceEntityInheritsEntitySourceException
-import com.intellij.devkit.workspaceModel.metaModel.IncorrectObjInterfaceException
-import com.intellij.devkit.workspaceModel.metaModel.WorkspaceEntityMultipleInheritanceException
-import com.intellij.devkit.workspaceModel.metaModel.WorkspaceModelDefaults
+import com.intellij.devkit.workspaceModel.metaModel.*
 import com.intellij.devkit.workspaceModel.metaModel.impl.*
-import com.intellij.devkit.workspaceModel.metaModel.unsupportedType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
@@ -36,8 +32,9 @@ internal class WorkspaceMetaModelBuilder(
     kaModule: KaModule,
   ): CompiledObjModule = analyze(kaModule) {
     val ktFile = KotlinExactPackagesIndex.get(packageName, project, kaModule.contentScope).firstOrNull()
-                 ?: error("Cannot find any files with package $packageName in module ${kaModule}")
-    val packageSymbol = findPackage(ktFile.packageFqName) ?: error("Could not find package $packageName in module ${kaModule}")
+                 ?: throw MetaModelBuilderException("Cannot find any files with package $packageName in module ${kaModule}", null)
+    val packageSymbol = findPackage(ktFile.packageFqName)
+                        ?: throw MetaModelBuilderException("Could not find package $packageName in module ${kaModule}", null)
     getObjModule(packageName, packageSymbol, kaModule)
   }
 
@@ -92,10 +89,17 @@ internal class WorkspaceMetaModelBuilder(
   }
 
   private fun KaSession.getObjClass(entityInterface: KaClassSymbol): ObjClass<*> {
-    val containingPackage = getPackageSymbol(entityInterface) ?: error("Cannot find package for ${entityInterface.name ?: entityInterface}")
-    val objModule = getObjModule(entityInterface.packageName, containingPackage, entityInterface.containingModule)
-    val entityInterfaceName = entityInterface.name?.identifier ?: error("Too many errors")
-    return objModule.types.find { it.name == entityInterfaceName } ?: error("Cannot find $entityInterfaceName in $objModule")
+    val packageSymbol = getPackageSymbol(entityInterface)
+    if (packageSymbol == null) {
+      throw MetaModelBuilderException("Cannot find package for ${entityInterface.name ?: entityInterface}", entityInterface.sourcePsiSafe())
+    }
+    val objModule = getObjModule(entityInterface.packageName, packageSymbol, entityInterface.containingModule)
+    val objClass = entityInterface.name?.identifier?.let { entityInterfaceName -> objModule.types.find { it.name == entityInterfaceName } }
+    if (objClass == null) {
+      throw MetaModelBuilderException("Cannot find class ${entityInterface.name ?: entityInterface} in module ${objModule.name}",
+                                      entityInterface.sourcePsiSafe())
+    }
+    return objClass
   }
 
   private inner class ObjModuleStub(
@@ -136,11 +140,11 @@ internal class WorkspaceMetaModelBuilder(
                 extendedAbstract.add(superClass.name)
               }
               if (isEntitySource(superSymbol)) {
-                throw WorkspaceEntityInheritsEntitySourceException(classSymbol.javaClassFqn)
+                throw MetaModelBuilderException("${classSymbol.javaClassFqn} should not extend WorkspaceEntity and EntitySource at the same time", classSymbol.sourcePsiSafe())
               }
             }
           if (extendedAbstract.size > 1) {
-            throw WorkspaceEntityMultipleInheritanceException(classSymbol.javaClassFqn, extendedAbstract)
+            throw MetaModelBuilderException("${classSymbol.javaClassFqn} should not extend multiple @Abstract entities: ${extendedAbstract.joinToString(", ")}", classSymbol.sourcePsiSafe())
           }
 
           compiledObjModule.addType(objType)
@@ -207,9 +211,17 @@ internal class WorkspaceMetaModelBuilder(
         }
       } ?: emptyList()
 
-      return ExtPropertyImpl(findObjClass(receiverClass), extProperty.name.identifier, valueType, computeKind(extProperty),
-                             extProperty.isAnnotatedBy(WorkspaceModelDefaults.OPEN_ANNOTATION.classId), !extProperty.isVal, false, compiledObjModule,
-                             extPropertyId, propertyAnnotations, extProperty.sourcePsiSafe())
+      return ExtPropertyImpl(findObjClass(receiverClass),
+                             extProperty.name.identifier,
+                             valueType,
+                             computeKind(extProperty),
+                             extProperty.isAnnotatedBy(WorkspaceModelDefaults.OPEN_ANNOTATION.classId),
+                             !extProperty.isVal,
+                             false,
+                             compiledObjModule,
+                             extPropertyId,
+                             propertyAnnotations,
+                             extProperty.sourcePsiSafe())
     }
 
     private fun KaSession.convertType(
@@ -217,7 +229,8 @@ internal class WorkspaceMetaModelBuilder(
       knownTypes: MutableMap<String, ValueType.Blob<*>>,
       hasParentAnnotation: Boolean,
     ): ValueType<*> {
-      if (type !is KaClassType) error("$type is not a class in module ${compiledObjModule.name}")
+      if (type !is KaClassType) throw MetaModelBuilderException("$type is not a class in module ${compiledObjModule.name}",
+                                                                type.expandedSymbol?.sourcePsiSafe())
       if (type.isMarkedNullable) {
         val nonNullableType = type.withNullability(false)
         return ValueType.Optional(convertType(nonNullableType, knownTypes, hasParentAnnotation))
@@ -234,7 +247,7 @@ internal class WorkspaceMetaModelBuilder(
           when {
             type.isSubtypeOf(StandardClassIds.List) -> return ValueType.List(genericType)
             type.isSubtypeOf(StandardClassIds.Set) -> return ValueType.Set(genericType)
-            else -> return unsupportedType(type.toString())
+            else -> return unsupportedType(type.toString(), type.expandedSymbol?.sourcePsiSafe())
           }
         }
 
@@ -252,13 +265,14 @@ internal class WorkspaceMetaModelBuilder(
         return classSymbolToValueType(symbol, knownTypes, processAbstractTypes)
       }
 
-      return unsupportedType(type.toString())
+      return unsupportedType(type.toString(), type.expandedSymbol?.sourcePsiSafe())
     }
 
     private fun KaSession.findObjClass(classSymbol: KaClassSymbol): ObjClass<*> {
       if (classSymbol.packageOrDie.asString() == compiledObjModule.name) {
         return entityTypes.find { it.first.classId == classSymbol.classId }?.second
-               ?: error("Cannot find ${classSymbol.name} in $compiledObjModule")
+               ?: throw MetaModelBuilderException("Cannot find ${classSymbol.name} in ${compiledObjModule.name}",
+                                                  classSymbol.sourcePsiSafe())
       }
       return getObjClass(classSymbol)
     }
@@ -294,7 +308,8 @@ internal class WorkspaceMetaModelBuilder(
         }
         classSymbol.classKind == KaClassKind.INTERFACE || classSymbol.modality != KaSymbolModality.FINAL -> {
           if (!processAbstractTypes) {
-            throw IncorrectObjInterfaceException("$javaClassFqn is abstract type. Abstract types are not supported in generator")
+            throw MetaModelBuilderException("$javaClassFqn is abstract type. Abstract types are not supported in generator",
+                                            classSymbol.sourcePsiSafe())
           }
           val inheritors = inheritors(classSymbol, javaPsiFacade, allProjectScope)
             .mapNotNull { ktClassOrObject ->

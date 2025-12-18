@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.k1.metaModel
 
-import com.intellij.devkit.workspaceModel.metaModel.IncorrectObjInterfaceException
+import com.intellij.devkit.workspaceModel.metaModel.MetaModelBuilderException
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceEntityInheritsEntitySourceException
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceEntityMultipleInheritanceException
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceModelDefaults
@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.workspaceModel.codegen.deft.meta.*
+import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
@@ -259,7 +260,7 @@ internal class WorkspaceMetaModelBuilder(
         }
         classDescriptor.isAbstractClassOrInterface -> {
           if (!processAbstractTypes) {
-            throw IncorrectObjInterfaceException("$javaClassFqn is abstract type. Abstract types are not supported in generator")
+            throw MetaModelBuilderException("$javaClassFqn is abstract type. Abstract types are not supported in generator", classDescriptor.psiElement)
           }
           val inheritors = classDescriptor.inheritors(javaPsiFacade, allScope)
             .filter { !it.isEntitySource || ( it.packageName == compiledObjModule.name) } // && it.module == moduleDescriptor) }
