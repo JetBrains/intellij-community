@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import org.jetbrains.jps.model.java.JavaResourceRootType
 
-private val ModulePattern = """(intellij|kotlin|fleet|android)(\.[-\w]+)+""".toRegex()
+internal val ModulePattern = """(intellij|kotlin|fleet|android)(\.[-\w]+)+""".toRegex()
 
 internal class ModulePathFilterProvider : ConsoleFilterProvider {
   init {
@@ -29,7 +29,7 @@ internal class ModulePathFilterProvider : ConsoleFilterProvider {
   }
 }
 
-private class ModulePathFilter(private val project: Project) : Filter {
+internal class ModulePathFilter(private val project: Project) : Filter {
   override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
     val matchResult = ModulePattern.findAll(line)
     val textStartOffset = entireLength - line.length
@@ -59,7 +59,7 @@ private class ModulePathFilter(private val project: Project) : Filter {
  * When registry key `devkit.module.hyperlink.show.chooser` is enabled,
  * shows a chooser if multiple files exist (iml + descriptor XML).
  */
-private class ModuleFilesHyperlinkInfo(private val module: Module) : HyperlinkInfoBase() {
+internal class ModuleFilesHyperlinkInfo(private val module: Module) : HyperlinkInfoBase() {
   override fun navigate(project: Project, hyperlinkLocationPoint: RelativePoint?) {
     if (Registry.`is`("devkit.module.hyperlink.show.chooser")) {
       val descriptorFiles = findDescriptorFiles(module).toList()

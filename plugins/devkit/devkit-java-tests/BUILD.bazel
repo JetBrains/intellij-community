@@ -38,6 +38,7 @@ jvm_library(
     "//xml/xml-analysis-impl:analysis-impl",
     "//platform/ide-core-impl",
     "//java/execution/openapi:java-execution",
+    "//platform/execution",
     "//java/idea-ui:ui",
     "//java/openapi:java",
     "@lib//:assert_j",
