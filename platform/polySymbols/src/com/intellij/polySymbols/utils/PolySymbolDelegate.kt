@@ -26,8 +26,8 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolScope {
     get() = delegate.psiContext
   override val origin: PolySymbolOrigin
     get() = delegate.origin
-  override val qualifiedKind: PolySymbolQualifiedKind
-    get() = delegate.qualifiedKind
+  override val kind: PolySymbolKind
+    get() = delegate.kind
   override val queryScope: List<PolySymbolScope>
     get() = delegate.queryScope
   override val name: String
@@ -61,11 +61,11 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolScope {
     ?: emptyList()
 
   override fun getSymbols(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     params: PolySymbolListSymbolsQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
-    (delegate as? PolySymbolScope)?.getSymbols(qualifiedKind, params, stack)
+    (delegate as? PolySymbolScope)?.getSymbols(kind, params, stack)
     ?: emptyList()
 
   override fun getCodeCompletions(
@@ -76,8 +76,8 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolScope {
     (delegate as? PolySymbolScope)?.getCodeCompletions(qualifiedName, params, stack)
     ?: emptyList()
 
-  override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
-    (delegate as? PolySymbolScope)?.isExclusiveFor(qualifiedKind)
+  override fun isExclusiveFor(kind: PolySymbolKind): Boolean =
+    (delegate as? PolySymbolScope)?.isExclusiveFor(kind)
     ?: false
 
   override val searchTarget: PolySymbolSearchTarget?

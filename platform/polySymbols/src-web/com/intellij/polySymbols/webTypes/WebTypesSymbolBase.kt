@@ -108,12 +108,12 @@ open class WebTypesSymbolBase : WebTypesSymbol {
       .toList()
 
   final override fun getSymbols(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     params: PolySymbolListSymbolsQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     base.rootScope
-      .getSymbols(base.contributionForQuery, this.origin as WebTypesJsonOrigin, qualifiedKind, params)
+      .getSymbols(base.contributionForQuery, this.origin as WebTypesJsonOrigin, kind, params)
       .toList()
 
   final override fun getCodeCompletions(
@@ -125,8 +125,8 @@ open class WebTypesSymbolBase : WebTypesSymbol {
       .getCodeCompletions(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, stack)
       .toList()
 
-  final override val qualifiedKind: PolySymbolQualifiedKind
-    get() = base.qualifiedKind
+  final override val kind: PolySymbolKind
+    get() = base.kind
 
   final override val origin: PolySymbolOrigin
     get() = base.jsonOrigin
@@ -191,9 +191,9 @@ open class WebTypesSymbolBase : WebTypesSymbol {
       .plus(this)
       .toList()
 
-  final override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
-    base.isExclusiveFor(qualifiedKind)
-    || superContributions.flatMap { it.queryScope }.any { it.isExclusiveFor(qualifiedKind) }
+  final override fun isExclusiveFor(kind: PolySymbolKind): Boolean =
+    base.isExclusiveFor(kind)
+    || superContributions.flatMap { it.queryScope }.any { it.isExclusiveFor(kind) }
 
   override fun matchContext(context: PolyContext): Boolean =
     super.matchContext(context) && base.contribution.requiredContext.evaluate(context)

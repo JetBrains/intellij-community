@@ -7,25 +7,23 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.NonExtendable
 interface PolySymbolQualifiedName {
 
-  val qualifiedKind: PolySymbolQualifiedKind
+  val namespace: @NlsSafe PolySymbolNamespace
+
+  val kind: PolySymbolKind
 
   val name: @NlsSafe String
 
-  val kind: @NlsSafe PolySymbolKind
-
-  val namespace: @NlsSafe PolySymbolNamespace
-
   fun withName(name: String): PolySymbolQualifiedName
 
-  fun matches(qualifiedKind: PolySymbolQualifiedKind): Boolean
+  fun matches(kind: PolySymbolKind): Boolean
 
-  fun matches(qualifiedKind: PolySymbolQualifiedKind, vararg qualifiedKinds: PolySymbolQualifiedKind): Boolean
+  fun matches(kind: PolySymbolKind, vararg kinds: PolySymbolKind): Boolean
 
   companion object {
 
     @JvmStatic
-    operator fun get(namespace: PolySymbolNamespace, kind: PolySymbolKind, name: String): PolySymbolQualifiedName =
-      PolySymbolQualifiedKind[namespace, kind].withName(name)
+    operator fun get(namespace: PolySymbolNamespace, kindName: PolySymbolKindName, name: String): PolySymbolQualifiedName =
+      PolySymbolKind[namespace, kindName].withName(name)
   }
 
 }

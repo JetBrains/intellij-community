@@ -394,13 +394,13 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
           params: PolySymbolNameMatchQueryParams,
           stack: PolySymbolQueryStack,
         ): List<PolySymbol> {
-          return if (qualifiedName.qualifiedKind == HTML_ATTRIBUTES) {
+          return if (qualifiedName.kind == HTML_ATTRIBUTES) {
             listOf(object : PolySymbol {
               override val origin: PolySymbolOrigin
                 get() = object : PolySymbolOrigin {
                   override val framework: FrameworkId get() = "vue"
                 }
-              override val qualifiedKind: PolySymbolQualifiedKind
+              override val kind: PolySymbolKind
                 get() = HTML_ATTRIBUTES
               override val name: String
                 get() = "bar"

@@ -2,11 +2,11 @@
 package com.intellij.polySymbols.references
 
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind
 
 sealed interface PolySymbolReferenceProblem {
-  val symbolKinds: Set<PolySymbolQualifiedKind>
+  val symbolKinds: Set<PolySymbolKind>
   val kind: ProblemKind
   val descriptor: ProblemDescriptor
 
@@ -20,7 +20,7 @@ sealed interface PolySymbolReferenceProblem {
 
   companion object {
     fun create(
-      symbolKinds: Set<PolySymbolQualifiedKind>,
+      symbolKinds: Set<PolySymbolKind>,
       kind: ProblemKind,
       descriptor: ProblemDescriptor,
     ): PolySymbolReferenceProblem =
@@ -29,7 +29,7 @@ sealed interface PolySymbolReferenceProblem {
 }
 
 private data class PolySymbolReferenceProblemData(
-  override val symbolKinds: Set<PolySymbolQualifiedKind>,
+  override val symbolKinds: Set<PolySymbolKind>,
   override val kind: ProblemKind,
   override val descriptor: ProblemDescriptor,
 ) : PolySymbolReferenceProblem

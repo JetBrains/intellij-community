@@ -237,7 +237,7 @@ internal data class PolySymbolCodeCompletionItemImpl(
     override var icon: Icon? = symbol?.let {
       it.icon
       ?: it.origin.defaultIcon
-      ?: PolySymbolDefaultIconProvider.get(it.qualifiedKind)
+      ?: PolySymbolDefaultIconProvider.get(it.kind)
     }
     private var typeTextStatic: String? = null
     private var typeTextProvider: (() -> String?)? = null

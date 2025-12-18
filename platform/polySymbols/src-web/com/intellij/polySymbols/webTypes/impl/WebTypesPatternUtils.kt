@@ -3,8 +3,8 @@ package com.intellij.polySymbols.webTypes.impl
 
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolModifier
-import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.impl.canUnwrapSymbols
 import com.intellij.polySymbols.patterns.ComplexPatternOptions
@@ -119,9 +119,10 @@ private class WebTypesComplexPatternConfigProvider(
           PatternSymbolsResolver(it)
         }
 
-  private class PatternDelegateSymbolsResolver(override val delegate: PolySymbol) : com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver {
-    override fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolQualifiedKind> =
-      setOf(delegate.qualifiedKind)
+  private class PatternDelegateSymbolsResolver(override val delegate: PolySymbol) :
+    com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver {
+    override fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolKind> =
+      setOf(delegate.kind)
 
     override fun codeCompletion(
       name: String,
@@ -153,7 +154,7 @@ private class WebTypesComplexPatternConfigProvider(
           else {
             val lastContribution = stack.peek() as PolySymbol
             listOf(PolySymbolMatch.create(listResult.name, listResult.segments,
-                                          PolySymbolQualifiedKind[lastContribution.namespace, SPECIAL_MATCHED_CONTRIB],
+                                          PolySymbolKind[lastContribution.namespace, SPECIAL_MATCHED_CONTRIB],
                                           lastContribution.origin))
           }
         }
@@ -175,7 +176,7 @@ private class WebTypesComplexPatternConfigProvider(
           else {
             val lastContribution = stack.peek() as PolySymbol
             sequenceOf(PolySymbolMatch.create(name, matchResult.segments,
-                                              PolySymbolQualifiedKind[lastContribution.namespace, SPECIAL_MATCHED_CONTRIB],
+                                              PolySymbolKind[lastContribution.namespace, SPECIAL_MATCHED_CONTRIB],
                                               lastContribution.origin))
           }
         }
@@ -184,7 +185,7 @@ private class WebTypesComplexPatternConfigProvider(
   }
 
   private class PatternSymbolsResolver(val items: ListReference) : com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver {
-    override fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolQualifiedKind> =
+    override fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolKind> =
       items.asSequence().mapNotNull { it.getSymbolKind(context) }.toSet()
 
     override val delegate: PolySymbol?

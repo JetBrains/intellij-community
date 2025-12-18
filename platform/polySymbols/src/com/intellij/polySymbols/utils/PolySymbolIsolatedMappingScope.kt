@@ -15,7 +15,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.applyIf
 
 abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
-  protected val mappings: Map<PolySymbolQualifiedKind, PolySymbolQualifiedKind>,
+  protected val mappings: Map<PolySymbolKind, PolySymbolKind>,
   /**
    * Allows to optimize for symbols with a particular [PolySymbolOrigin.framework].
    * If `null` all symbols will be accepted and scope will be queried in all contexts.
@@ -31,10 +31,14 @@ abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
 
   protected abstract val subScopeBuilder: (PolySymbolQueryExecutor, T) -> List<PolySymbolScope>
 
-  override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName, params: PolySymbolCodeCompletionQueryParams, stack: PolySymbolQueryStack): List<PolySymbolCodeCompletionItem> {
+  override fun getCodeCompletions(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolCodeCompletionQueryParams,
+    stack: PolySymbolQueryStack,
+  ): List<PolySymbolCodeCompletionItem> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
-    val sourceKind = mappings[qualifiedName.qualifiedKind] ?: return emptyList()
+    val sourceKind = mappings[qualifiedName.kind] ?: return emptyList()
     var result: List<PolySymbolCodeCompletionItem> = emptyList()
     RecursionManager.runInNewContext {
       result = subQuery.codeCompletionQuery(sourceKind, qualifiedName.name, params.position) {
@@ -46,10 +50,14 @@ abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
     return result
   }
 
-  override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName, params: PolySymbolNameMatchQueryParams, stack: PolySymbolQueryStack): List<PolySymbol> {
+  override fun getMatchingSymbols(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolNameMatchQueryParams,
+    stack: PolySymbolQueryStack,
+  ): List<PolySymbol> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
-    val sourceKind = mappings[qualifiedName.qualifiedKind] ?: return emptyList()
+    val sourceKind = mappings[qualifiedName.kind] ?: return emptyList()
     var result: List<PolySymbol> = emptyList()
     RecursionManager.runInNewContext {
       result = subQuery.nameMatchQuery(sourceKind, qualifiedName.name) {
@@ -58,15 +66,19 @@ abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
         additionalScope(additionalScope)
       }
         .filter { acceptSymbol(it) }
-        .map { it.withMatchedKind(qualifiedName.qualifiedKind) }
+        .map { it.withMatchedKind(qualifiedName.kind) }
     }
     return result
   }
 
-  override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind, params: PolySymbolListSymbolsQueryParams, stack: PolySymbolQueryStack): List<PolySymbol> {
+  override fun getSymbols(
+    kind: PolySymbolKind,
+    params: PolySymbolListSymbolsQueryParams,
+    stack: PolySymbolQueryStack,
+  ): List<PolySymbol> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
-    val sourceKind = mappings[qualifiedKind] ?: return emptyList()
+    val sourceKind = mappings[kind] ?: return emptyList()
     var result: List<PolySymbol> = emptyList()
     RecursionManager.runInNewContext {
       result = subQuery.listSymbolsQuery(sourceKind, params.expandPatterns) {
@@ -75,7 +87,7 @@ abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
         additionalScope(additionalScope)
       }
         .filter { acceptSymbol(it) }
-        .applyIf(params.expandPatterns) { map { it.withMatchedKind(qualifiedKind) } }
+        .applyIf(params.expandPatterns) { map { it.withMatchedKind(kind) } }
     }
     return result
   }

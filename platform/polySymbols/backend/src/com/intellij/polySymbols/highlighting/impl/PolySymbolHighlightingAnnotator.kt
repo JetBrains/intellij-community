@@ -24,9 +24,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.PolySymbolNameSegment.MatchProblem
-import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolsBundle
 import com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider
 import com.intellij.polySymbols.highlighting.PolySymbolHighlightingCustomizer
@@ -84,12 +84,17 @@ internal class PolySymbolHighlightingAnnotator : Annotator {
     val segment: PolySymbolNameSegment,
     val offset: Int,
     val depth: Int,
-    val parentKind: PolySymbolQualifiedKind?,
+    val parentKind: PolySymbolKind?,
     val parentTextAttributesKey: TextAttributesKey?,
     val additionalChildSegments: List<Pair<Int, PolySymbolNameSegment>>,
   )
 
-  private fun highlightSymbols(offsetInFile: Int, topLevelSymbols: Collection<PolySymbol>, host: PsiExternalReferenceHost, holder: AnnotationHolder) {
+  private fun highlightSymbols(
+    offsetInFile: Int,
+    topLevelSymbols: Collection<PolySymbol>,
+    host: PsiExternalReferenceHost,
+    holder: AnnotationHolder,
+  ) {
     val result = MultiMap<TextRange, Pair<Int, TextAttributesKey>>()
 
     val queue = LinkedList(topLevelSymbols.map {
@@ -128,8 +133,8 @@ internal class PolySymbolHighlightingAnnotator : Annotator {
               ?.let { TextAttributesKey.find(it) }
               ?.let { return@mapNotNull it }
 
-            if (symbol.qualifiedKind != parentKind)
-              PolySymbolHighlightingCustomizer.getTextAttributesFor(symbol.qualifiedKind)
+            if (symbol.kind != parentKind)
+              PolySymbolHighlightingCustomizer.getTextAttributesFor(symbol.kind)
                 ?.let { return@mapNotNull it }
             null
           }
@@ -158,7 +163,7 @@ internal class PolySymbolHighlightingAnnotator : Annotator {
                   i++
                 }
               }
-              queue.add(SegmentHighlightingInfo(segment, nestedOffset, depth + 1, s.qualifiedKind,
+              queue.add(SegmentHighlightingInfo(segment, nestedOffset, depth + 1, s.kind,
                                                 textAttributesKey ?: parentTextAttributesKey, segmentNestedSegments))
             }
           }
@@ -239,7 +244,7 @@ internal class PolySymbolHighlightingAnnotator : Annotator {
   ): List<InspectionToolInfo> =
     symbolKinds
       .mapNotNull { symbolType ->
-        PolySymbolInspectionToolMappingEP.Companion.get(symbolType.namespace, symbolType.kind, problemKind)?.toolShortName
+        PolySymbolInspectionToolMappingEP.Companion.get(symbolType.namespace, symbolType.kindName, problemKind)?.toolShortName
       }.map {
         map.computeIfAbsent(it) { createToolInfo(it, holder.currentAnnotationSession.file) }
       }

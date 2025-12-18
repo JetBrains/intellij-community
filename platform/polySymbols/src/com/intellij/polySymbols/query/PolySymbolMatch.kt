@@ -21,11 +21,11 @@ interface PolySymbolMatch : CompositePolySymbol {
     fun create(
       matchedName: String,
       nameSegments: List<PolySymbolNameSegment>,
-      qualifiedKind: PolySymbolQualifiedKind,
+      kind: PolySymbolKind,
       origin: PolySymbolOrigin,
       explicitPriority: PolySymbol.Priority? = null,
     ): PolySymbolMatch =
-      PolySymbolMatchBase.BuilderImpl(matchedName, qualifiedKind, origin)
+      PolySymbolMatchBase.BuilderImpl(matchedName, kind, origin)
         .also { builder ->
           builder.addNameSegments(nameSegments)
           explicitPriority?.let { builder.explicitPriority(it) }
@@ -35,22 +35,22 @@ interface PolySymbolMatch : CompositePolySymbol {
     @JvmStatic
     fun create(
       matchedName: String,
-      qualifiedKind: PolySymbolQualifiedKind,
+      kind: PolySymbolKind,
       origin: PolySymbolOrigin,
       builder: (PolySymbolMatchBuilder.() -> Unit),
     ): PolySymbolMatch =
-      PolySymbolMatchBase.BuilderImpl(matchedName, qualifiedKind, origin)
+      PolySymbolMatchBase.BuilderImpl(matchedName, kind, origin)
         .also { builder.invoke(it) }
         .build()
 
     @JvmStatic
     fun create(
       matchedName: String,
-      qualifiedKind: PolySymbolQualifiedKind,
+      kind: PolySymbolKind,
       origin: PolySymbolOrigin,
       vararg nameSegments: PolySymbolNameSegment,
     ): PolySymbolMatch =
-      PolySymbolMatchBase.BuilderImpl(matchedName, qualifiedKind, origin)
+      PolySymbolMatchBase.BuilderImpl(matchedName, kind, origin)
         .also { it.addNameSegments(*nameSegments) }
         .build()
 

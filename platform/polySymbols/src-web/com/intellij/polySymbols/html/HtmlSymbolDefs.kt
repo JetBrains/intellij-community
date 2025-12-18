@@ -4,24 +4,24 @@
 package com.intellij.polySymbols.html
 
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolProperty
-import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.query.impl.PolySymbolMatchBase
 import com.intellij.polySymbols.utils.merge
 
 const val NAMESPACE_HTML: String = "html"
 
 @JvmField
-val HTML_ELEMENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind.Companion[NAMESPACE_HTML, "elements"]
+val HTML_ELEMENTS: PolySymbolKind = PolySymbolKind.Companion[NAMESPACE_HTML, "elements"]
 
 @JvmField
-val HTML_ATTRIBUTES: PolySymbolQualifiedKind = PolySymbolQualifiedKind.Companion[NAMESPACE_HTML, "attributes"]
+val HTML_ATTRIBUTES: PolySymbolKind = PolySymbolKind.Companion[NAMESPACE_HTML, "attributes"]
 
 @JvmField
-val HTML_ATTRIBUTE_VALUES: PolySymbolQualifiedKind = PolySymbolQualifiedKind.Companion[NAMESPACE_HTML, "values"]
+val HTML_ATTRIBUTE_VALUES: PolySymbolKind = PolySymbolKind.Companion[NAMESPACE_HTML, "values"]
 
 @JvmField
-val HTML_SLOTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind.Companion[NAMESPACE_HTML, "slots"]
+val HTML_SLOTS: PolySymbolKind = PolySymbolKind.Companion[NAMESPACE_HTML, "slots"]
 
 val PolySymbol.htmlAttributeValue: PolySymbolHtmlAttributeValue?
   get() = if (this is PolySymbolMatchBase)

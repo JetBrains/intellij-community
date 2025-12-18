@@ -3,9 +3,9 @@ package com.intellij.polySymbols.patterns.impl
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.PolySymbolOrigin
-import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.impl.CompoundInsertHandler
 import com.intellij.polySymbols.html.NAMESPACE_HTML
@@ -241,7 +241,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
             symbol = PolySymbolMatch.create(
               name,
               lastMatched.segments.filter { it.start < it.end }.withOffset(-lastMatched.start),
-              PolySymbolQualifiedKind[NAMESPACE_HTML, SPECIAL_MATCHED_CONTRIB],
+              PolySymbolKind[NAMESPACE_HTML, SPECIAL_MATCHED_CONTRIB],
               PolySymbolOrigin.empty()
             ))
         }
@@ -412,7 +412,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
     val mainSymbol = second ?: first ?: return null
 
-    return PolySymbolMatch.create(name, mainSymbol.qualifiedKind, mainSymbol.origin) {
+    return PolySymbolMatch.create(name, mainSymbol.kind, mainSymbol.origin) {
       addNameSegments(first.toNameSegments(0, firstNameLength))
       addNameSegments(second.toNameSegments(firstNameLength, name.length))
     }

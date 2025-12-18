@@ -20,9 +20,9 @@ import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.PolySymbolProperty
-import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
@@ -33,7 +33,7 @@ import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-private val TASKS_TASKS = PolySymbolQualifiedKind["tasks", "tasks"]
+private val TASKS_TASKS = PolySymbolKind["tasks", "tasks"]
 val TASK_PROPERTY: PolySymbolProperty<Task> = PolySymbolProperty["task", Task::class.java]
 
 class TaskSymbol(override val task: Task) : AbstractTaskSymbol(task)
@@ -68,7 +68,7 @@ sealed class AbstractTaskSymbol : PolySymbol, DocumentationSymbol {
   override val origin: PolySymbolOrigin
     get() = PolySymbolOrigin.empty()
 
-  override val qualifiedKind: PolySymbolQualifiedKind
+  override val kind: PolySymbolKind
     get() = TASKS_TASKS
 
   override val name: @NlsSafe String

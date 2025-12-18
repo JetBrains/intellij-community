@@ -2,7 +2,7 @@
 package com.intellij.polySymbols.html
 
 import com.intellij.polySymbols.FrameworkId
-import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer
 import com.intellij.psi.PsiElement
@@ -13,10 +13,10 @@ class HtmlCodeCompletionItemCustomizer : PolySymbolCodeCompletionItemCustomizer 
   override fun customize(
     item: PolySymbolCodeCompletionItem,
     framework: FrameworkId?,
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     location: PsiElement,
   ): PolySymbolCodeCompletionItem =
-    when (qualifiedKind) {
+    when (kind) {
       HTML_ELEMENTS -> item.withTypeText(item.symbol?.origin?.library)
       HTML_ATTRIBUTES -> item // TODO - we can figure out the actual type with full match provided
       else -> item

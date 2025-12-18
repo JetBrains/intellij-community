@@ -2,23 +2,23 @@
 package com.intellij.polySymbols
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.polySymbols.impl.PolySymbolQualifiedKindData
+import com.intellij.polySymbols.impl.PolySymbolKindData
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.NonExtendable
-interface PolySymbolQualifiedKind {
+interface PolySymbolKind {
 
   val namespace: @NlsSafe PolySymbolNamespace
 
-  val kind: @NlsSafe PolySymbolKind
+  val kindName: @NlsSafe PolySymbolKindName
 
   fun withName(name: String): PolySymbolQualifiedName
 
   companion object {
 
     @JvmStatic
-    operator fun get(namespace: PolySymbolNamespace, kind: PolySymbolKind): PolySymbolQualifiedKind =
-      PolySymbolQualifiedKindData.create(namespace, kind)
+    operator fun get(namespace: PolySymbolNamespace, kindName: PolySymbolKindName): PolySymbolKind =
+      PolySymbolKindData.create(namespace, kindName)
 
   }
 

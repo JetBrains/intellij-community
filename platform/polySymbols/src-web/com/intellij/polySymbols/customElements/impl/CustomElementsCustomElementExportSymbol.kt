@@ -12,8 +12,8 @@ import com.intellij.polySymbols.customElements.json.toApiStatus
 import com.intellij.polySymbols.html.HTML_ELEMENTS
 import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.patterns.PolySymbolPattern
-import com.intellij.polySymbols.query.PolySymbolWithPattern
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolWithPattern
 
 class CustomElementsCustomElementExportSymbol private constructor(
   override val name: String,
@@ -22,7 +22,7 @@ class CustomElementsCustomElementExportSymbol private constructor(
   override val apiStatus: PolySymbolApiStatus,
 ) : CustomElementsSymbol, PolySymbolWithPattern, StaticPolySymbolScopeBase.StaticSymbolContributionAdapter {
 
-  override val qualifiedKind: PolySymbolQualifiedKind
+  override val kind: PolySymbolKind
     get() = HTML_ELEMENTS
 
   override val framework: FrameworkId?

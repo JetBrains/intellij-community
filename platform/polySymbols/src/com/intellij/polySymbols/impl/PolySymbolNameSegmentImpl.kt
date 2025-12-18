@@ -5,8 +5,8 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolNameSegment
-import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.utils.matchedNameOrName
 import org.jetbrains.annotations.ApiStatus
 
@@ -17,7 +17,7 @@ class PolySymbolNameSegmentImpl internal constructor(
   override val problem: PolySymbolNameSegment.MatchProblem?,
   override val displayName: @NlsSafe String?,
   override val matchScore: Int,
-  symbolKinds: Set<PolySymbolQualifiedKind>?,
+  symbolKinds: Set<PolySymbolKind>?,
   private val explicitApiStatus: PolySymbolApiStatus?,
   private val explicitPriority: PolySymbol.Priority?,
   @ApiStatus.Internal val highlightingEnd: Int?,
@@ -35,10 +35,10 @@ class PolySymbolNameSegmentImpl internal constructor(
   override val priority: PolySymbol.Priority?
     get() = explicitPriority ?: symbols.asSequence().mapNotNull { it.priority }.maxOrNull()
 
-  override val symbolKinds: Set<PolySymbolQualifiedKind>
+  override val symbolKinds: Set<PolySymbolKind>
     get() =
       forcedSymbolKinds
-      ?: symbols.asSequence().map { it.qualifiedKind }.toSet()
+      ?: symbols.asSequence().map { it.kind }.toSet()
 
   override fun getName(symbol: PolySymbol): @NlsSafe String =
     symbol.matchedNameOrName.substring(start, end)

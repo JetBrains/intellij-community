@@ -5,7 +5,7 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
@@ -48,7 +48,7 @@ interface PolySymbolQueryExecutor : ModificationTracker {
 
   fun listSymbolsQuery(
     path: List<PolySymbolQualifiedName>,
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     expandPatterns: Boolean,
   ): ListSymbolsQueryBuilder
 
@@ -59,10 +59,10 @@ interface PolySymbolQueryExecutor : ModificationTracker {
   ): CodeCompletionQueryBuilder
 
   fun nameMatchQuery(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     name: String,
   ): NameMatchQueryBuilder =
-    nameMatchQuery(listOf(qualifiedKind.withName(name)))
+    nameMatchQuery(listOf(kind.withName(name)))
 
   fun nameMatchQuery(
     path: List<PolySymbolQualifiedName>,
@@ -71,40 +71,40 @@ interface PolySymbolQueryExecutor : ModificationTracker {
     nameMatchQuery(path).apply(configurator).run()
 
   fun nameMatchQuery(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     name: String,
     configurator: NameMatchQueryBuilder.() -> Unit,
   ): List<PolySymbol> =
-    nameMatchQuery(listOf(qualifiedKind.withName(name))).apply(configurator).run()
+    nameMatchQuery(listOf(kind.withName(name))).apply(configurator).run()
 
   fun listSymbolsQuery(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     expandPatterns: Boolean,
   ): ListSymbolsQueryBuilder =
-    listSymbolsQuery(emptyList(), qualifiedKind, expandPatterns)
+    listSymbolsQuery(emptyList(), kind, expandPatterns)
 
   fun listSymbolsQuery(
     path: List<PolySymbolQualifiedName>,
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     expandPatterns: Boolean,
     configurator: ListSymbolsQueryBuilder.() -> Unit,
   ): List<PolySymbol> =
-    listSymbolsQuery(path, qualifiedKind, expandPatterns).apply(configurator).run()
+    listSymbolsQuery(path, kind, expandPatterns).apply(configurator).run()
 
   fun listSymbolsQuery(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     expandPatterns: Boolean = false,
     configurator: ListSymbolsQueryBuilder.() -> Unit,
   ): List<PolySymbol> =
-    listSymbolsQuery(emptyList(), qualifiedKind, expandPatterns).apply(configurator).run()
+    listSymbolsQuery(emptyList(), kind, expandPatterns).apply(configurator).run()
 
   fun codeCompletionQuery(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     name: String,
     /** Position to complete at in the last segment of the path **/
     position: Int,
   ): CodeCompletionQueryBuilder =
-    codeCompletionQuery(listOf(qualifiedKind.withName(name)), position)
+    codeCompletionQuery(listOf(kind.withName(name)), position)
 
   fun codeCompletionQuery(
     path: List<PolySymbolQualifiedName>,
@@ -115,17 +115,17 @@ interface PolySymbolQueryExecutor : ModificationTracker {
     codeCompletionQuery(path, position).apply(configurator).run()
 
   fun codeCompletionQuery(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     name: String,
     /** Position to complete at in the last segment of the path **/
     position: Int,
     configurator: CodeCompletionQueryBuilder.() -> Unit,
   ): List<PolySymbolCodeCompletionItem> =
-    codeCompletionQuery(listOf(qualifiedKind.withName(name)), position).apply(configurator).run()
+    codeCompletionQuery(listOf(kind.withName(name)), position).apply(configurator).run()
 
   fun withNameConversionRules(rules: List<PolySymbolNameConversionRules>): PolySymbolQueryExecutor
 
-  fun hasExclusiveScopeFor(qualifiedKind: PolySymbolQualifiedKind, scope: List<PolySymbolScope> = emptyList()): Boolean
+  fun hasExclusiveScopeFor(kind: PolySymbolKind, scope: List<PolySymbolScope> = emptyList()): Boolean
 
   interface QueryBuilder<T> : PolySymbolQueryParams.Builder<T> {
     fun additionalScope(scope: PolySymbolScope): T
@@ -134,15 +134,18 @@ interface PolySymbolQueryExecutor : ModificationTracker {
     fun additionalScope(stack: PolySymbolQueryStack): T
   }
 
-  interface NameMatchQueryBuilder : QueryBuilder<NameMatchQueryBuilder>, PolySymbolNameMatchQueryParams.BuilderMixin<NameMatchQueryBuilder> {
+  interface NameMatchQueryBuilder : QueryBuilder<NameMatchQueryBuilder>,
+                                    PolySymbolNameMatchQueryParams.BuilderMixin<NameMatchQueryBuilder> {
     fun run(): List<PolySymbol>
   }
 
-  interface ListSymbolsQueryBuilder : QueryBuilder<ListSymbolsQueryBuilder>, PolySymbolListSymbolsQueryParams.BuilderMixin<ListSymbolsQueryBuilder> {
+  interface ListSymbolsQueryBuilder : QueryBuilder<ListSymbolsQueryBuilder>,
+                                      PolySymbolListSymbolsQueryParams.BuilderMixin<ListSymbolsQueryBuilder> {
     fun run(): List<PolySymbol>
   }
 
-  interface CodeCompletionQueryBuilder : QueryBuilder<CodeCompletionQueryBuilder>, PolySymbolCodeCompletionQueryParams.BuilderMixin<CodeCompletionQueryBuilder> {
+  interface CodeCompletionQueryBuilder : QueryBuilder<CodeCompletionQueryBuilder>,
+                                         PolySymbolCodeCompletionQueryParams.BuilderMixin<CodeCompletionQueryBuilder> {
     fun run(): List<PolySymbolCodeCompletionItem>
   }
 

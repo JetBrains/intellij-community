@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.html
 
-import com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolDescriptor
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.openapi.util.TextRange
+import com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolDescriptor
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.xml.SchemaPrefix
@@ -26,7 +26,7 @@ open class HtmlSymbolsXmlExtension : HtmlXmlExtension() {
       .map { it.symbol }
       .flatMap { it.nameSegments.asSequence().filter { segment -> segment.problem == null } }
       .flatMap { it.symbols }
-      .any { it.name == attrName && it.qualifiedKind == HTML_ATTRIBUTES }
+      .any { it.name == attrName && it.kind == HTML_ATTRIBUTES }
   }
 
   override fun getPrefixDeclaration(context: XmlTag, namespacePrefix: String?): SchemaPrefix? {

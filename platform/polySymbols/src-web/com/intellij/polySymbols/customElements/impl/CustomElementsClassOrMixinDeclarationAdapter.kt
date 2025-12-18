@@ -26,7 +26,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
 
   private val cacheHolder = UserDataHolderBase()
 
-  override val qualifiedKind: PolySymbolQualifiedKind
+  override val kind: PolySymbolKind
     get() = CustomElementsSymbol.CEM_DECLARATIONS
 
   override val pattern: PolySymbolPattern?
@@ -70,8 +70,8 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
     override val origin: CustomElementsJsonOrigin
       get() = base.origin
 
-    override val qualifiedKind: PolySymbolQualifiedKind
-      get() = base.qualifiedKind
+    override val kind: PolySymbolKind
+      get() = base.kind
 
     override val name: String
       get() = base.name
@@ -115,12 +115,12 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
         .toList()
 
     override fun getSymbols(
-      qualifiedKind: PolySymbolQualifiedKind,
+      kind: PolySymbolKind,
       params: PolySymbolListSymbolsQueryParams,
       stack: PolySymbolQueryStack,
     ): List<PolySymbol> =
       base.rootScope
-        .getSymbols(base.declaration, this.origin, qualifiedKind, params)
+        .getSymbols(base.declaration, this.origin, kind, params)
         .toList()
 
     override fun getCodeCompletions(
