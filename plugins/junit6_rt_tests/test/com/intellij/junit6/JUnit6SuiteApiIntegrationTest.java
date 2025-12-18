@@ -91,7 +91,7 @@ public class JUnit6SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
 
   private static Map<String, TestStarted> getStartedTests(List<ServiceMessage> messages) {
     return messages.stream().filter(TestStarted.class::isInstance).map(TestStarted.class::cast)
-      .collect(Collectors.toMap(t -> t.getAttributes().get("id"), t -> t));
+      .collect(Collectors.toMap(t -> t.getAttributes().get("id"), t -> t, (existing, replacement) -> existing));
   }
 
   private static <T extends BaseTestMessage> Set<String> getTestIds(Map<String, TestStarted> tests, Set<String> locationHints) {

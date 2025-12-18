@@ -87,17 +87,7 @@ public class JUnit5TestRunnerBuilder {
       public void write(int b) {
         myStringBuffer.append(new String(new byte[]{(byte)b}, StandardCharsets.UTF_8));
       }
-    }, false, StandardCharsets.UTF_8)) {
-      @Override
-      protected long getDuration() {
-        return 0;
-      }
-
-      @Override
-      protected String getTrace(Throwable ex) {
-        return "TRACE";
-      }
-    };
+    }, false, StandardCharsets.UTF_8));
   }
 
   public TestDescriptorContext withTestMethod(Class<?> testClass, String methodName) throws NoSuchMethodException {
@@ -220,7 +210,12 @@ public class JUnit5TestRunnerBuilder {
   }
 
   public String getFormattedOutput() {
-    return StringUtil.convertLineSeparators(myStringBuffer.toString()).replaceAll("\\|r", "");
+    String out = myStringBuffer.toString();
+    return StringUtil.convertLineSeparators(out)
+      .replaceAll("\\|r", "")
+      .replaceAll("##teamcity\\[", "##TC[")
+      .replaceAll(" duration='[0-9]+'", "")
+      .replaceAll("details='.*?'\\]", "details='TRACE']");
   }
 
   public JUnit5TestExecutionListener getExecutionListener() {

@@ -85,6 +85,7 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier> {
     myForkedTestPlan = LauncherFactory.create().discover(discoveryRequest);
     final Set<TestIdentifier> roots = myForkedTestPlan.getRoots();
     if (roots.isEmpty()) return null;
+    @SuppressWarnings("SSBasedInspection")
     List<TestIdentifier> nonEmptyRoots = roots.stream()
       .filter(identifier -> !myForkedTestPlan.getChildren(identifier).isEmpty())
       .collect(Collectors.toList());
@@ -115,6 +116,7 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier> {
     final TestIdentifier testIdentifier = child;
     final String className = JUnit5TestExecutionListener.getClassName(testIdentifier);
     final String methodSignature = JUnit5TestExecutionListener.getMethodSignature(testIdentifier);
+    //noinspection ConstantValue
     if (methodSignature != null) {
       return className + "," + methodSignature;
     }

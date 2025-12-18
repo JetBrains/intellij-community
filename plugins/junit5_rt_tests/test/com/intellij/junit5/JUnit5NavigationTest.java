@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
+import com.intellij.junit5.report.LocationInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -53,8 +54,7 @@ class JUnit5NavigationTest {
     myTestSource = anySupportedSource();
     String locationHint = locationHint();
 
-    Assertions.assertTrue(locationHint.startsWith("locationHint='"), locationHint);
-    Assertions.assertTrue(locationHint.endsWith("'"), locationHint);
+    Assertions.assertEquals("java:suite://java.lang.String", locationHint);
   }
 
   @Test
@@ -115,7 +115,8 @@ class JUnit5NavigationTest {
 
   private String locationHint() {
     TestIdentifier testIdentifier = TestIdentifier.from(new ConfigurableTestDescriptor(myTestSource));
-    return JUnit5TestExecutionListener.getLocationHint(testIdentifier, null);
+    LocationInfo info = new LocationInfo(testIdentifier.getSource().orElse(null), null, null);
+    return info.locationHint();
   }
 
   private String locationHintValue() {
@@ -124,7 +125,8 @@ class JUnit5NavigationTest {
 
   private static String locationHintValue(final ConfigurableTestDescriptor descriptor) {
     TestIdentifier testIdentifier = TestIdentifier.from(descriptor);
-    return JUnit5TestExecutionListener.getLocationHintValue(testIdentifier.getSource().orElseThrow(IllegalStateException::new), null);
+    LocationInfo info = new LocationInfo(testIdentifier.getSource().orElseThrow(IllegalStateException::new), null, null);
+    return info.locationHint();
   }
 
   private static ClassSource anySupportedSource() {
