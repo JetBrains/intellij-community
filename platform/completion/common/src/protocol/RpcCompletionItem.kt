@@ -12,7 +12,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class RpcCompletionItem(
   val lookupString: String,
-  val allLookupStrings: Set<String>,
+  /** null means setOf(lookupString) */
+  val allLookupStrings: Set<String>? = null,
   val presentation: RpcCompletionItemPresentation,
   val id: RpcCompletionItemId,
   val insertHandler: RpcInsertHandler = RpcInsertHandler.Backend,
