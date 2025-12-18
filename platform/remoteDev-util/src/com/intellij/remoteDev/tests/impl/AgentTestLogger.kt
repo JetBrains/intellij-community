@@ -7,6 +7,7 @@ import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionException
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionLightException
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionStackTraceElement
+import com.jetbrains.rd.util.string.printToString
 
 open class AgentTestLogger(logger: Logger, private val factory: AgentTestLoggerFactory) : DelegatingLogger<Logger>(logger) {
   override fun error(message: String?, t: Throwable?, vararg details: String) {
@@ -28,7 +29,7 @@ open class AgentTestLogger(logger: Logger, private val factory: AgentTestLoggerF
     val rdtseStackTrace = getRdtseStackTrace(t?.stackTrace)
     val rdtseCause = getRdtseCause(t)
     val rdtseSuppressedExceptions = getRdtseSuppressedExceptions(t)
-    val rdTestSessionException = RdTestSessionException(type = rdtseType, originalType = null, message = rdtseMessage,
+    val rdTestSessionException = RdTestSessionException(type = rdtseType, messageWithStacktrace = t?.printToString() ?: "", message = rdtseMessage,
                                                         stacktrace = rdtseStackTrace, cause = rdtseCause, suppressedExceptions = rdtseSuppressedExceptions)
 
     info("Fired ex to the test runner ${rdTestSessionException.message}")
