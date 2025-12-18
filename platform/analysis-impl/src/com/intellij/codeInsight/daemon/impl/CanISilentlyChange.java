@@ -39,7 +39,7 @@ import java.util.List;
 final class CanISilentlyChange {
   private static boolean canUndo(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     ThreadingAssertions.assertEventDispatchThread();
-    List<FileEditor> editors = FileEditorManager.getInstance(project).getEditorList(virtualFile);
+    List<FileEditor> editors = FileEditorManager.getInstance(project).getAllEditorList(virtualFile);
     if (editors.isEmpty()) {
       return false;
     }
