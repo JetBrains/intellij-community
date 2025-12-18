@@ -49,7 +49,11 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * The IDE needs to run certain AWT events as soon as possible.
  * This class handles the situation where the IDE is frozen on acquisition of a lock, and instead of waiting for lock permit,
- * it dispatches certain safe events.
+ * it dispatches certain events.
+ *
+ * The types of events are described here: [com.intellij.openapi.progress.util.EventStealer.isUrgentInvocationEvent].
+ * One of these events is [com.intellij.openapi.application.ThreadingSupport.RunnableWithTransferredWriteAction],
+ * which is used to perform `invokeAndWait` from inside a background write action (see [com.intellij.util.concurrency.TransferredWriteActionService.runOnEdtWithTransferredWriteActionAndWait])
  *
  * It is relevant for the following scenario
  * ```kotlin
