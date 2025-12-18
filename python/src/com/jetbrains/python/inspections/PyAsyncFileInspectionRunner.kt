@@ -8,6 +8,8 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -50,11 +52,11 @@ internal class PyAsyncFileInspectionRunner(
     if (!cached) {
       fixes.invokeOnCompletion {
         val project = module.project
-        project.service<InspectionRunnerService>().scope.launch {
+        project.serviceIfCreated<InspectionRunnerService>()?.scope?.launch {
           backgroundWriteAction {
             DaemonCodeAnalyzer.getInstance(project).restart(node, "$progressTitle finished")
           }
-        }
+        } ?: thisLogger().warn("No service was found, this is most likely due to project being disposed")
       }
     }
 
