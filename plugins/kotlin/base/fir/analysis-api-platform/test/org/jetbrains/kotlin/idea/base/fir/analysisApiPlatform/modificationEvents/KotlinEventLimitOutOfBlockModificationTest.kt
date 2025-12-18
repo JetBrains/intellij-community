@@ -5,9 +5,15 @@ import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
 import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventKind
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockPsiTreeChangePreprocessor
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.junit.Assert
@@ -196,6 +202,100 @@ class KotlinEventLimitOutOfBlockModificationTest : AbstractKotlinModificationEve
             deleteFirstLineInFunction(fileD)
 
             moduleTracker.assertNotModified()
+            globalTracker.assertModifiedOnce()
+        }
+    }
+
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
+    fun `test that modification event limits are reset after analysis in the same write action`() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText("a.kt", """
+                    fun foo() = run {
+                        println("Hello1!")
+                        println("Hello2!")
+                        10
+                    }
+
+                    // The test doesn't have access to the `run` function out of the box.
+                    inline fun <T, R> run(block: () -> R): R = block()
+                """.trimIndent()),
+                FileWithText("b.kt", "fun bar(): Int = 20"),
+                FileWithText("c.kt", "fun baz(): Int = 30"),
+                FileWithText("d.kt", "fun qux(): Int = 40"),
+            )
+        }
+
+        val globalTracker = createGlobalTracker(
+            "the project after modifying multiple files",
+            expectedEventKind = KotlinModificationEventKind.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION,
+            additionalAllowedEventKinds = setOf(
+                KotlinModificationEventKind.MODULE_OUT_OF_BLOCK_MODIFICATION
+            )
+        )
+
+        val moduleTracker = createModuleTracker(
+            moduleA.toKaSourceModuleForProduction()!!,
+            "module A after modifying multiple files",
+            expectedEventKind = KotlinModificationEventKind.MODULE_OUT_OF_BLOCK_MODIFICATION,
+            additionalAllowedEventKinds = setOf(KotlinModificationEventKind.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION),
+        )
+
+        val fileA = moduleA.findSourceKtFile("a.kt")
+        val fileB = moduleA.findSourceKtFile("b.kt")
+        val fileC = moduleA.findSourceKtFile("c.kt")
+        val fileD = moduleA.findSourceKtFile("d.kt")
+
+        fun deleteTypeReference(file: KtFile) {
+            file.firstTopLevelFunction.typeReference!!.delete()
+        }
+
+        fun deleteFirstLineInRunFunction(file: KtFile) {
+            val callExpression = file.firstTopLevelFunction.bodyExpression as KtCallExpression
+            val lambdaBody = callExpression.lambdaArguments.single().getLambdaExpression()!!.bodyExpression!!
+            lambdaBody.firstStatement!!.delete()
+        }
+
+        runUndoTransparentWriteAction {
+            // The function in `fileA` has an implicit type, so deleting the first line should cause an OOBM.
+            deleteFirstLineInRunFunction(fileA)
+
+            moduleTracker.assertModifiedOnce()
+            globalTracker.assertNotModified()
+
+            // An out-of-block change in `fileB` is still within the processing limit of two files, so another out-of-block modification
+            // event should be published.
+            deleteTypeReference(fileB)
+
+            moduleTracker.assertModifiedExactly(times = 2)
+            globalTracker.assertNotModified()
+
+            // When changes in `fileC` are encountered, a single global OOBM event should be published, as we're now dealing with more than
+            // two files.
+            deleteTypeReference(fileC)
+
+            moduleTracker.assertModifiedExactly(times = 2)
+            globalTracker.assertModifiedOnce()
+
+            // Changes in `fileD` should not lead to any further modification events.
+            deleteTypeReference(fileD)
+
+            moduleTracker.assertModifiedExactly(times = 2)
+            globalTracker.assertModifiedOnce()
+
+            // `analyze` should reset the processing limits as it might populate caches.
+            allowAnalysisOnEdt {
+                allowAnalysisFromWriteAction {
+                    analyze(fileA) {
+                        Assert.assertEquals(builtinTypes.int, fileA.firstTopLevelFunction.returnType)
+                    }
+                }
+            }
+
+            // Deleting another line in the function of `fileA` should then cause another OOBM.
+            deleteFirstLineInRunFunction(fileA)
+
+            moduleTracker.assertModifiedExactly(times = 3)
             globalTracker.assertModifiedOnce()
         }
     }
