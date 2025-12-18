@@ -325,6 +325,7 @@ object CommunityModuleSets {
     module("intellij.grid.csv.core.impl")
     module("intellij.grid.core.impl")
     module("intellij.grid.impl")
+    module("intellij.grid.impl.ide")
   }
 
   /**

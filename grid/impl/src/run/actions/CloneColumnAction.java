@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.database.run.actions.AddColumnAction.newInsertOrCloneColumnRequestSource;
 import static com.intellij.database.run.actions.DeleteColumnsAction.getColumns;
 
-public class CloneColumnAction extends DumbAwareAction implements GridAction {
+public class CloneColumnAction extends DumbAwareAction implements GridEditAction {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;

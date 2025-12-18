@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author Gregory.Shrago
  */
-public class EditValueAction extends AnAction implements DumbAware, GridAction {
+public class EditValueAction extends AnAction implements DumbAware, GridEditAction {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.database.datagrid.GridUtil.newInsertOrCloneRowRequestSource;
 
-public class CloneRowAction extends DumbAwareAction implements GridAction {
+public class CloneRowAction extends DumbAwareAction implements GridEditAction {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;

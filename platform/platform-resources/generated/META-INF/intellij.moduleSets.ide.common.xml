@@ -295,6 +295,7 @@
     <module name="intellij.grid.csv.core.impl"/>
     <module name="intellij.grid.core.impl"/>
     <module name="intellij.grid.impl"/>
+    <module name="intellij.grid.impl.ide"/>
     <!-- endregion -->
 
     <!-- region nested: vcs -->

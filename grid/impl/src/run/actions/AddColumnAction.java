@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 
-public class AddColumnAction extends DumbAwareAction implements GridAction {
+public class AddColumnAction extends DumbAwareAction implements GridEditAction {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;

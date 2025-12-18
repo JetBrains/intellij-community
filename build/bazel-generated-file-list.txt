@@ -265,6 +265,7 @@ grid/core-impl
 grid/csv
 grid/images
 grid/impl
+grid/impl-ide
 grid/json
 grid/types
 idea/customization/backend
