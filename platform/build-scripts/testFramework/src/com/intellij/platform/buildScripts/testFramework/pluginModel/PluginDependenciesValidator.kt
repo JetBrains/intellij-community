@@ -38,7 +38,7 @@ import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.java.JpsJavaDependencyScope
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
@@ -196,8 +196,11 @@ class PluginDependenciesValidator private constructor(
           .mapTo(HashSet()) { getModuleName(it) }
 
       val enumerator = JpsJavaExtensionService.dependencies(sourceModule).satisfying {
-        //for now only dependencies used in source code are checked; in the future, we can check dependencies with 'Runtime' scope as well
-        JpsJavaExtensionService.getInstance().getDependencyExtension(it)?.scope == JpsJavaDependencyScope.COMPILE 
+        /* for now only dependencies used for compilation of production code are checked; in the future, we can check dependencies with 'Runtime' scope as well;
+           note that dependencies with scope 'Provided' are checked by intention: in some cases, such dependencies are used for modules from other plugins, and we need to check
+           corresponding dependency at runtime in these cases */
+        val scope = JpsJavaExtensionService.getInstance().getDependencyExtension(it)?.scope
+        scope != null && scope.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_COMPILE)
       }
       enumerator.processModules { targetModule ->
         val targetModuleName = targetModule.name
