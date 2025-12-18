@@ -328,16 +328,19 @@ final class ReferenceItemProvider implements ModCompletionItemProvider {
     if (completion instanceof PsiClass cls) {
       return ConstructorCallCompletionItem.tryWrap(new ClassReferenceCompletionItem(cls).withSubstitutor(substitutor), reference.getElement());
     }
-    //if (completion instanceof PsiMethod) {
-    //  if (reference instanceof PsiMethodReferenceExpression) {
-    //    return Collections.singleton((LookupElement)new JavaMethodReferenceElement(
-    //      (PsiMethod)completion, (PsiMethodReferenceExpression)reference, completionElement.getMethodRefType()));
-    //  }
-    //
-    //  JavaMethodCallElement item = new JavaMethodCallElement((PsiMethod)completion).setQualifierSubstitutor(substitutor);
-    //  item.setForcedQualifier(completionElement.getQualifierText());
-    //  return Collections.singletonList(item);
-    //}
+    if (completion instanceof PsiMethod method) {
+      if (reference instanceof PsiMethodReferenceExpression) {
+        String lookup = method.isConstructor() ? JavaKeywords.NEW : method.getName();
+        return List.of(new CommonCompletionItem(lookup)
+                         .withObject(method)
+                         .withPresentation(new ModCompletionItemPresentation(MarkupText.plainText(lookup))
+                                             .withMainIcon(() -> method.getIcon(Iconable.ICON_FLAG_VISIBILITY))));
+      }
+
+      //JavaMethodCallElement item = new JavaMethodCallElement((PsiMethod)completion).setQualifierSubstitutor(substitutor);
+      //item.setForcedQualifier(completionElement.getQualifierText());
+      //return Collections.singletonList(item);
+    }
     if (completion instanceof PsiVariable var) {
       if (completion instanceof PsiEnumConstant enumConstant &&
           PsiTreeUtil.isAncestor(enumConstant.getArgumentList(), reference.getElement(), true)) {

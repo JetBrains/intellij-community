@@ -557,7 +557,7 @@ public final class JavaCompletionUtil {
       return JavaConstructorCallElement.wrap(classItem, reference.getElement());
     }
     if (completion instanceof PsiMethod) {
-      if (reference instanceof PsiMethodReferenceExpression) {
+      if (reference instanceof PsiMethodReferenceExpression && !ModCompletionItemProvider.modCommandCompletionEnabled()) {
         return Collections.singleton((LookupElement)new JavaMethodReferenceElement(
           (PsiMethod)completion, (PsiMethodReferenceExpression)reference, completionElement.getMethodRefType()));
       }
