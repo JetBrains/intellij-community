@@ -25,10 +25,12 @@ fun projectViewPaneProviderId(idString: @NonNls String): ProjectViewPaneProvider
 @ApiStatus.Internal
 fun projectViewPaneId(idString: @NonNls String): ProjectViewPaneId = ProjectViewPaneIdImpl(idString)
 
+@Serializable
 private data class ProjectViewPaneProviderIdImpl(
   override val idString: @NonNls String
 ) : ProjectViewPaneProviderId
 
+@Serializable
 private data class ProjectViewPaneIdImpl(
   override val idString: @NonNls String
 ) : ProjectViewPaneId

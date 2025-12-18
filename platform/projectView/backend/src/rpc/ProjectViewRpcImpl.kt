@@ -7,12 +7,13 @@ import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneServ
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
+import com.intellij.platform.projectView.pane.ProjectViewPaneStateEventDTO
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 internal class ProjectViewRpcProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
@@ -42,7 +43,9 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
     projectId: ProjectId,
     providerId: ProjectViewPaneProviderId,
     paneId: ProjectViewPaneId,
-  ): Flow<ProjectViewPaneStateEvent> {
-    return BackendProjectViewPaneService.getInstanceSuspend(projectId.findProject()).getPaneStateFlow(providerId, paneId)
+  ): Flow<ProjectViewPaneStateEventDTO> {
+    return BackendProjectViewPaneService.getInstanceSuspend(projectId.findProject()).getPaneStateFlow(providerId, paneId).map {
+      it.toDTO()
+    }
   }
 }

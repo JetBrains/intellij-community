@@ -49,9 +49,9 @@ internal class ProjectViewToolWindowServiceImpl(
       }
       val rpc = ProjectViewRpc.getInstance()
       launch(CoroutineName("Pane $providerId:${pane.id} state updates")) {
-        rpc.getPaneStateFlow(toolWindow.project.projectId(), providerId, pane.id).collect { event ->
+        rpc.getPaneStateFlow(toolWindow.project.projectId(), providerId, pane.id).collect { eventDTO ->
           withContext(Dispatchers.UI) {
-            pane.applyStateChange(event)
+            pane.applyStateChange(eventDTO.toEvent())
           }
         }
       }

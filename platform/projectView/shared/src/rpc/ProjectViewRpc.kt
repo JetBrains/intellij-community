@@ -5,7 +5,7 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
+import com.intellij.platform.projectView.pane.ProjectViewPaneStateEventDTO
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -21,7 +21,7 @@ interface ProjectViewRpc : RemoteApi<Unit> {
   
   suspend fun getPaneIds(projectId: ProjectId, providerId: ProjectViewPaneProviderId): List<ProjectViewPaneId>
 
-  suspend fun getPaneStateFlow(projectId: ProjectId, providerId: ProjectViewPaneProviderId, paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent>
+  suspend fun getPaneStateFlow(projectId: ProjectId, providerId: ProjectViewPaneProviderId, paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEventDTO>
   
   companion object {
     suspend fun getInstance(): ProjectViewRpc = RemoteApiProviderService.resolve(remoteApiDescriptor<ProjectViewRpc>())
