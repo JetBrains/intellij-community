@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -51,6 +52,14 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
     myPriority = priority;
     myAdditionalUpdater = additionalUpdater;
     myPolicy = policy;
+  }
+
+  @Override
+  public boolean isValid() {
+    if (contextObject() instanceof PsiElement element) {
+      return element.isValid();
+    }
+    return true;
   }
 
   /**
