@@ -6,8 +6,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.scripting.k2.K2GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.codeInspection.AvoidRepositoriesInBuildGradleInspection
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.getFoojayPluginVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.isFoojayPluginSupported
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.*
@@ -1001,29 +999,6 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @AllGradleVersionsSource
     fun testMoveRepositoriesWithoutSettingsFile(gradleVersion: GradleVersion) {
         assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
-        val settingsAfter =
-            if (isFoojayPluginSupported(gradleVersion)) """
-                plugins {
-                    id("org.gradle.toolchains.foojay-resolver-convention") version "${getFoojayPluginVersion(gradleVersion)}"
-                }
-                rootProject.name = "empty-project-with-only-build-file"
-                dependencyResolutionManagement {
-                    ${repositoriesModeText(gradleVersion, "PREFER_PROJECT")}
-                    repositories {
-                        mavenCentral()
-                    }
-                }
-            """.trimIndent()
-            else """
-                rootProject.name = "empty-project-with-only-build-file"
-                dependencyResolutionManagement {
-                    ${repositoriesModeText(gradleVersion, "PREFER_PROJECT")}
-                    repositories {
-                        mavenCentral()
-                    }
-                }
-            """.trimIndent()
-
         runTest(gradleVersion, EMPTY_PROJECT_WITH_ONLY_BUILD_FILE) {
             testHighlighting(
                 """
@@ -1040,7 +1015,14 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 "",
                 null,
-                settingsAfter,
+                """
+                dependencyResolutionManagement {
+                    ${repositoriesModeText(gradleVersion, "PREFER_PROJECT")}
+                    repositories {
+                        mavenCentral()
+                    }
+                }
+                """.trimIndent(),
                 isForPlugins = false
             )
         }
@@ -1049,27 +1031,6 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testMoveRepositoriesInBuildscriptWithoutSettingsFile(gradleVersion: GradleVersion) {
-        val settingsAfter =
-            if (isFoojayPluginSupported(gradleVersion)) """
-                pluginManagement {
-                    repositories {
-                        mavenCentral()
-                    }
-                }
-                plugins {
-                    id("org.gradle.toolchains.foojay-resolver-convention") version "${getFoojayPluginVersion(gradleVersion)}"
-                }
-                rootProject.name = "empty-project-with-only-build-file"
-            """.trimIndent()
-            else """
-                pluginManagement {
-                    repositories {
-                        mavenCentral()
-                    }
-                }
-                rootProject.name = "empty-project-with-only-build-file"
-            """.trimIndent()
-
         runTest(gradleVersion, EMPTY_PROJECT_WITH_ONLY_BUILD_FILE) {
             testHighlighting(
                 """
@@ -1093,7 +1054,13 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
                 """.trimIndent(),
                 null,
-                settingsAfter,
+                """
+                pluginManagement {
+                    repositories {
+                        mavenCentral()
+                    }
+                }
+                """.trimIndent(),
                 isForPlugins = true
             )
         }

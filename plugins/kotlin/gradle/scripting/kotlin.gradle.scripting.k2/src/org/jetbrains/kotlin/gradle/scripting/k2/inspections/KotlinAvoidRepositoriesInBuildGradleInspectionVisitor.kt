@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.settingsScript
-import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.isFoojayPluginSupported
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_REPOSITORY_HANDLER
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
 import org.jetbrains.plugins.gradle.util.getGradleVersion
@@ -124,8 +123,6 @@ private class CreateSettingsAndMoveRepositoriesAction(
         val element = context.element ?: return ModNothing()
 
         val settingsText = settingsScript(gradleVersion, GradleDsl.KOTLIN) {
-            if (isFoojayPluginSupported(gradleVersion)) withFoojayPlugin()
-            setProjectName(context.project.name)
             when (repositoriesParentBlockKind) {
                 RepositoriesParentBlockKind.PLUGIN -> pluginManagement { code(element.text.normalizeBlockIndent().lines()) }
 
