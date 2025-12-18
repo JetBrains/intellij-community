@@ -78,10 +78,10 @@ public abstract class Operation {
                                                       @Nullable JsonSchemaNodeExpansionRequest expansionRequest) {
     Operation forConflict = getOperationForConflict(schema, service, expansionRequest);
     if (forConflict != null) return forConflict;
-    if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2() && schema.hasChildNode(ANY_OF) || schema.getAnyOf() != null) return new AnyOfOperation(schema, service, expansionRequest);
-    if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2() && schema.hasChildNode(ONE_OF) || schema.getOneOf() != null) return new OneOfOperation(schema, service, expansionRequest);
-    if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2() && schema.hasChildNode(ALL_OF) || schema.getAllOf() != null) return new AllOfOperation(schema, service, expansionRequest);
-    if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2() && schema.hasChildNode(IF) || schema.getIfThenElse() != null) return new IfThenElseBranchOperation(schema, expansionRequest, service);
+    if (schema.hasChildNode(ANY_OF)) return new AnyOfOperation(schema, service, expansionRequest);
+    if (schema.hasChildNode(ONE_OF)) return new OneOfOperation(schema, service, expansionRequest);
+    if (schema.hasChildNode(ALL_OF)) return new AllOfOperation(schema, service, expansionRequest);
+    if (schema.hasChildNode(IF)) return new IfThenElseBranchOperation(schema, expansionRequest, service);
     return null;
   }
 
@@ -89,10 +89,9 @@ public abstract class Operation {
                                                              @NotNull JsonSchemaService service,
                                                              @Nullable JsonSchemaNodeExpansionRequest expansionRequest) {
     // in case of several incompatible operations, choose the most permissive one
-    var anyOf = com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2() && schema.hasChildNode(ANY_OF) || schema.getAnyOf() != null;
-    var oneOf = com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2() && schema.hasChildNode(ONE_OF) || schema.getOneOf() != null;
-    var allOf = com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2() && schema.hasChildNode(ALL_OF) || schema.getAllOf() != null;
-
+    var anyOf = schema.hasChildNode(ANY_OF);
+    var oneOf = schema.hasChildNode(ONE_OF);
+    var allOf = schema.hasChildNode(ALL_OF);
 
     if (anyOf && (oneOf || allOf)) {
       return new AnyOfOperation(schema, service, expansionRequest) {{

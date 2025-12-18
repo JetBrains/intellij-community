@@ -4,7 +4,6 @@ package com.jetbrains.jsonSchema.newerFormats
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.navigation.action.GotoDeclarationUtil
 import com.intellij.json.psi.JsonProperty
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.asSafely
@@ -12,16 +11,13 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
 import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectBackedByJacksonBase
 import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage
-import com.jetbrains.jsonSchema.isJsonSchemaObjectV2
 import org.junit.Assert
-import org.junit.Assume
 
 internal class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
   override val testDataLanguage: TestDataLanguage
     get() = TestDataLanguage.JSON
 
   fun `test dynamic anchor resolve`() {
-    Assume.assumeTrue(isJsonSchemaObjectV2())
     val schemaFile = LightVirtualFile("schema.json", """
       {
         "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",

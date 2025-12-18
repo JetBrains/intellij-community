@@ -74,13 +74,7 @@ public final class JsonSchemaObjectReadingUtils {
 
     final VirtualFile schemaFile = service.resolveSchemaFile(schema);
     if (schemaFile == null) return null;
-    final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter;
-    if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2()) {
-      splitter = complexReferenceCache.get(ref);
-    }
-    else {
-      splitter = new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter(ref);
-    }
+    final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter = complexReferenceCache.get(ref);
     String schemaId = splitter.getSchemaId();
     if (schemaId != null) {
       var refSchema = resolveSchemaByReference(service, schemaFile, schemaId);

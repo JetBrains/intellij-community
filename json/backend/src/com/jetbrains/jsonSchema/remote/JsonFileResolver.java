@@ -81,7 +81,7 @@ public final class JsonFileResolver {
     if (StringUtil.isEmpty(schemaUrl)) {
       return null;
     }
-    else if (!schemaUrl.startsWith("http") || !com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2()) {
+    else if (!schemaUrl.startsWith("http")) {
       return urlToFile(schemaUrl);
     }
     else {

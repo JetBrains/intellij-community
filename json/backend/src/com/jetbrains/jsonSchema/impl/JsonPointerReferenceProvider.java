@@ -14,7 +14,6 @@ import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -197,12 +196,11 @@ public final class JsonPointerReferenceProvider extends PsiReferenceProvider {
     @Override
     public @Nullable PsiElement resolveInner() {
       String id = null;
-      if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2()) {
-        JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(myElement.getProject())
-          .getComputedSchemaRootOrNull(myElement.getContainingFile().getVirtualFile());
-        if (schemaRootOrNull instanceof RootJsonSchemaObject<?,?> rootJsonSchemaObject) {
-          id = rootJsonSchemaObject.resolveId(myText);
-        }
+
+      JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(myElement.getProject())
+        .getComputedSchemaRootOrNull(myElement.getContainingFile().getVirtualFile());
+      if (schemaRootOrNull instanceof RootJsonSchemaObject<?,?> rootJsonSchemaObject) {
+        id = rootJsonSchemaObject.resolveId(myText);
       }
       if (id == null)  {
         id = JsonCachedValues.resolveId(myElement.getContainingFile(), myText);

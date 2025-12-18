@@ -6,7 +6,6 @@ import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
@@ -31,9 +30,7 @@ public final class JsonSchemaBasedLanguageInjector extends JsonSchemaInjectorBas
     Project project = context.getProject();
     PsiFile containingFile = context.getContainingFile();
     JsonSchemaObject schemaObject = JsonSchemaService.Impl.get(project).getSchemaObject(containingFile);
-    if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2()
-        && schemaObject instanceof RootJsonSchemaObjectBackedByJackson rootSchema
-        && !rootSchema.checkHasInjections()) {
+    if (schemaObject instanceof RootJsonSchemaObjectBackedByJackson rootSchema && !rootSchema.checkHasInjections()) {
       return null;
     }
     if (schemaObject == null) return null;
