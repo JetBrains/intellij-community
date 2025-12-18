@@ -25,7 +25,7 @@ public class HtmlSpellcheckingStrategy extends XmlSpellcheckingStrategy implemen
 
   @Override
   public @NotNull Tokenizer getTokenizer(PsiElement element) {
-    if (element instanceof HtmlDocumentImpl && !useTextLevelSpellchecking()) {
+    if (element instanceof HtmlDocumentImpl && !useTextLevelSpellchecking(element)) {
       return myDocumentTextTokenizer;
     }
     if (shouldAttributeBeIgnored(element)) return EMPTY_TOKENIZER;

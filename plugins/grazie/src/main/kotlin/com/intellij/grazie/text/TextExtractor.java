@@ -110,7 +110,11 @@ public abstract class TextExtractor {
    * @return text contents intersecting the given PSI element with the domains from the allowed set.
    * <p>
    * Same as {@link #findTextsAt}, but the extensions are queried only for the given {@code psi}. The results are cached and reused.
+   *
+   * @deprecated {@link #findTextsAt} or {@link #findUniqueTextsAt} should be used instead.
    */
+  @SuppressWarnings("unused")
+  @Deprecated(forRemoval = true)
   public static @NotNull List<TextContent> findTextsExactlyAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     PsiFile file = psi.getContainingFile();
     return ContainerUtil.filter(
@@ -305,7 +309,7 @@ public abstract class TextExtractor {
     for (PsiFile root : vp.getAllFiles()) {
       for (PsiElement element : SyntaxTraverser.psiTraverser(root)) {
         if (element instanceof PsiWhiteSpace) continue;
-        allContents.addAll(findTextsExactlyAt(element, domains));
+        allContents.addAll(findTextsAt(element, domains));
       }
     }
     return allContents;

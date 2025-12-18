@@ -20,7 +20,7 @@ items:
     'it are error here':   It <GRAMMAR_ERROR descr="IT_VBZ">are</GRAMMAR_ERROR> error here
     size:      8
     # It
-    # <GRAMMAR_ERROR descr="IT_VBZ">are</GRAMMAR_ERROR> bad price
+    # <GRAMMAR_ERROR descr="IT_VBZ">are</GRAMMAR_ERROR> bad price. <TYPO descr="Typo: In word 'Typpopo'">Typpopo</TYPO>
     price:     133.7
     quantity:
       - It <GRAMMAR_ERROR descr="IT_VBZ">are</GRAMMAR_ERROR> error here

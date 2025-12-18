@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
-import com.intellij.psi.PsiElement
 import com.intellij.spellchecker.SpellCheckerManager
 import com.intellij.spellchecker.inspections.IdentifierSplitter.MINIMAL_TYPO_LENGTH
 import com.intellij.util.containers.ContainerUtil
@@ -44,13 +43,6 @@ class SpellingCheckerRunner(val text: TextContent) {
 
   companion object {
     private val knownPhrases = ContainerUtil.createConcurrentSoftValueMap<Language, KnownPhrases>()
-
-    @JvmStatic
-    fun belongsToElement(typo: TypoProblem, element: PsiElement): Boolean {
-      val psiRange = element.textRange
-      val range = typo.text.textRangeToFile(typo.range)
-      return psiRange.contains(range)
-    }
   }
 
   fun run(): List<TypoProblem> {

@@ -112,7 +112,7 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
           element, strategy, session,
           typo -> {
             if (hasSameNamedReferenceInFile(typo.getWord(), element, strategy)) return;
-            registerProblem(typo, element, holder);
+            registerProblem(typo, holder);
           }
         );
         if (result == SpellCheckingResult.Checked) return;
@@ -149,7 +149,8 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
     holder.registerProblem(problemDescriptor);
   }
 
-  private static void registerProblem(@NotNull TypoProblem typo, @NotNull PsiElement element, @NotNull ProblemsHolder holder) {
+  private static void registerProblem(@NotNull TypoProblem typo, @NotNull ProblemsHolder holder) {
+    PsiElement element = typo.getText().getCommonParent();
     SpellcheckingStrategy strategy = getSpellcheckingStrategy(element);
     CheckerRunner.fileHighlightRanges(typo)
       .stream()

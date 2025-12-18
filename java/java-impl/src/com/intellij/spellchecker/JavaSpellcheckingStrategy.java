@@ -26,10 +26,12 @@ public final class JavaSpellcheckingStrategy extends SpellcheckingStrategy imple
       return myMethodNameTokenizer;
     }
     if (element instanceof PsiDocComment) {
-      return myDocCommentTokenizer;
+      return useTextLevelSpellchecking() ? EMPTY_TOKENIZER : myDocCommentTokenizer;
     }
     if (element instanceof PsiLiteralExpression literalExpression) {
-      if (ChronoUtil.isPatternForDateFormat(literalExpression) || SuppressManager.isSuppressedInspectionName(literalExpression)) {
+      if (useTextLevelSpellchecking()
+          || ChronoUtil.isPatternForDateFormat(literalExpression)
+          || SuppressManager.isSuppressedInspectionName(literalExpression)) {
         return EMPTY_TOKENIZER;
       }
       return myLiteralExpressionTokenizer;

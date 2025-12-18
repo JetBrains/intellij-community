@@ -30,16 +30,15 @@ object GrazieTextLevelSpellCheckingExtension {
     session: LocalInspectionToolSession,
     consumer: Consumer<TypoProblem>,
   ): SpellCheckingResult {
-    if (!strategy.useTextLevelSpellchecking()) return SpellCheckingResult.Ignored
+    if (!strategy.useTextLevelSpellchecking(element)) return SpellCheckingResult.Ignored
     ProgressManager.checkCanceled()
 
-    val texts = sortByPriority(TextExtractor.findTextsExactlyAt(element, TextDomain.ALL), session.priorityRange)
+    val texts = sortByPriority(TextExtractor.findUniqueTextsAt(element, TextDomain.ALL), session.priorityRange)
     if (texts.isEmpty()) return SpellCheckingResult.Ignored
 
     texts.asSequence()
       .filter { ProblemFilter.allIgnoringFilters(it).findAny().isEmpty }
       .flatMap { SpellingCheckerRunner(it).run() }
-      .filter { SpellingCheckerRunner.belongsToElement(it, element) }
       .filter { ProblemFilter.allIgnoringFilters(it).findAny().isEmpty }
       .forEach { consumer.accept(it) }
     return SpellCheckingResult.Checked

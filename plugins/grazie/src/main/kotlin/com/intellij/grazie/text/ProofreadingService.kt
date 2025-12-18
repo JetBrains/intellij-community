@@ -6,8 +6,6 @@ import com.intellij.grazie.spellcheck.TypoProblem
 import com.intellij.grazie.text.TextContent.TextDomain
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.text.TextRangeUtil
 import org.jetbrains.annotations.ApiStatus
 
@@ -15,31 +13,14 @@ import org.jetbrains.annotations.ApiStatus
 class ProofreadingService(private val root: PsiElement) {
 
   fun getProblems(): ProofreadingProblems {
-    val texts = findAllUniqueTexts(GrazieInspection.checkedDomains())
+    val viewProvider = root.containingFile.viewProvider
+    val texts = TextExtractor.findAllTextContents(viewProvider, GrazieInspection.checkedDomains())
     if (GrazieInspection.skipCheckingTooLargeTexts(texts)) return ProofreadingProblems(emptyList())
     val textProblems = texts.flatMap { CheckerRunner(it).run() }
-    val typos = findAllTextsExactlyAt().flatMap { SpellingCheckerRunner(it).run() }
+    val typos = TextExtractor.findAllTextContents(viewProvider, TextDomain.ALL).flatMap { SpellingCheckerRunner(it).run() }
     return ProofreadingProblems(textProblems + typos)
   }
-
-  private fun findAllUniqueTexts(domains: Set<TextDomain>): Set<TextContent> {
-    return findAllTexts { TextExtractor.findUniqueTextsAt(it, domains) }
-  }
-
-  private fun findAllTextsExactlyAt(): Set<TextContent> {
-    return findAllTexts { TextExtractor.findTextsExactlyAt(it, TextDomain.ALL) }
-  }
-
-  private fun findAllTexts(extractor: (PsiElement) -> List<TextContent>): Set<TextContent> {
-    val allContents = HashSet<TextContent>()
-    for (element in SyntaxTraverser.psiTraverser(root)) {
-      if (element is PsiWhiteSpace) continue
-      allContents.addAll(extractor(element))
-    }
-    return allContents
-  }
 }
-
 
 data class ProofreadingProblems(val problems: List<TextProblem>) {
   // Replace with `ProblemAggregator` with the next platform-update
