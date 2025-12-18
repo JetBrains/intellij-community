@@ -1,4 +1,8 @@
-<idea-plugin visibility="public">
+<!--
+  This file contains only v2 dependencies.
+  All new extensions, actions, services, extension points, etc. should go to intellij.platform.debugger.impl.shared.content.xml
+-->
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
@@ -18,22 +22,5 @@
   </dependencies>
   <!-- endregion -->
 
-  <extensionPoints>
-    <extensionPoint name="xdebugger.consoleViewDataConverter"
-                    interface="com.intellij.platform.debugger.impl.rpc.XDebuggerConsoleViewConverter"
-                    dynamic="true"/>
-    <extensionPoint name="xdebugger.descriptorStateManager"
-                    interface="com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManagerExtension"
-                    dynamic="true"/>
-    <extensionPoint name="xdebugger.managerProxy" interface="com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.xdebugger.monolithAccessPoint"
-                    interface="com.intellij.platform.debugger.impl.shared.XDebuggerMonolithAccessPoint"
-                    dynamic="true"/>
-  </extensionPoints>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <statistics.validation.customValidationRule implementation="com.intellij.platform.debugger.impl.shared.FrameTypeValidator"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.debugger.impl.shared.XDebuggerActionsCollector"/>
-  </extensions>
+  <xi:include href="intellij.platform.debugger.impl.shared.content.xml"/>
 </idea-plugin>
