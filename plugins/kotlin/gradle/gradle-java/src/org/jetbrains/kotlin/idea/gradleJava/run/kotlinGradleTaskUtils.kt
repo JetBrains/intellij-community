@@ -149,7 +149,16 @@ private fun KaSession.isStringParameterSignature(signature: KaVariableSignature<
 fun KtNamedFunction.getKMPGradleConfigurationName(runTask: KotlinJvmRunTaskData): String =
     "${getConfigurationName()} [${runTask.targetName}]"
 
-fun KtNamedFunction.getConfigurationName(): String? = ReadAction.compute<Module, Throwable> { module }?.getSubprojectNameOfGradleRoot() ?: name
+fun KtNamedFunction.getConfigurationName(): String? {
+    val gradleSubprojectName = ReadAction.compute<Module?, Throwable> { module }?.getSubprojectNameOfGradleRoot() ?: return name
+    val fileName =
+        ReadAction.compute<String?, Throwable> { containingKtFile.virtualFile?.nameWithoutExtension } ?: return gradleSubprojectName
+
+    return when (fileName.equals("main", ignoreCase = true)) {
+        true -> gradleSubprojectName
+        false -> "$gradleSubprojectName.$fileName"
+    }
+}
 
 @RequiresReadLock
 fun kmpJvmGradleTaskParameters(function: KtNamedFunction): String = "${mainClassScriptParameter(function)} $quietParameter"
