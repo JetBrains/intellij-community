@@ -160,10 +160,10 @@ object CodeWriter {
         for ((i, file) in generatedFiles.withIndex()) {
           DumbService.getInstance(project).completeJustSubmittedTasks()
           indicator.fraction = 0.25 + 0.7 * i / generatedFiles.size
-          PsiDocumentManager.getInstance(file.project).doPostponedOperationsAndUnblockDocument(file.viewProvider.document!!)
           addCopyright(file, ktClasses)
-          CodeStyleManager.getInstance(project).reformat(file)
           kotlinImportOptimizer?.processFile(file)?.run()
+          PsiDocumentManager.getInstance(file.project).doPostponedOperationsAndUnblockDocument(file.viewProvider.document!!)
+          CodeStyleManager.getInstance(project).reformat(file)
         }
         copiedEditorconfig?.delete(CodeWriter)
       }

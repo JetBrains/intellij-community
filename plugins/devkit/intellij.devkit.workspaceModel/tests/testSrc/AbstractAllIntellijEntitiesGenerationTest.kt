@@ -105,7 +105,9 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     }
     if (storageChanged) {
       val affectedEntitySources = modulesToCheck.map { it.first.entitySource }.toSet()
-      (jpsProjectSerializer as JpsProjectSerializersImpl).saveAffectedEntities(storage, affectedEntitySources, createProjectConfigLocation())
+      (jpsProjectSerializer as JpsProjectSerializersImpl).saveAffectedEntities(storage,
+                                                                               affectedEntitySources,
+                                                                               createProjectConfigLocation())
     }
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
   }
@@ -116,10 +118,10 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     isTestModule: Boolean,
     libraries: List<RelatedLibrary>,
   ): Pair<VirtualFile, VirtualFile> {
-    val path = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl)).invariantSeparatorsPathString
+    val path = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy())
+      .relativize(Path.of(sourceRoot.url.presentableUrl)).invariantSeparatorsPathString
     LOG.info("Generating workspace code for module: ${moduleEntity.name}, path $path")
     myFixture.copyDirectoryToProject(path, path)
-    val copiedEditorConfig = myFixture.copyFileToProject("/community/.editorconfig", ".editorconfig")
 
     if (moduleEntity.name == "intellij.javascript.backend") {
       javascriptNodeModulesPackageExclusionFixForTests()
@@ -235,7 +237,8 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
   }
 
   private fun createGenSourceRoot(storage: MutableEntityStorage, sourceRoot: SourceRootEntity): SourceRootEntity {
-    val genFolderVirtualFile = VfsUtil.createDirectories("${sourceRoot.contentRoot.url.presentableUrl}/${WorkspaceModelGenerator.GENERATED_FOLDER_NAME}")
+    val genFolderVirtualFile =
+      VfsUtil.createDirectories("${sourceRoot.contentRoot.url.presentableUrl}/${WorkspaceModelGenerator.GENERATED_FOLDER_NAME}")
     val javaSourceRoot = sourceRoot.javaSourceRoots.first()
     val updatedContentRoot = storage.modifyContentRootEntity(sourceRoot.contentRoot) {
       this.sourceRoots += SourceRootEntity(genFolderVirtualFile.toVirtualFileUrl(virtualFileManager),
@@ -324,10 +327,11 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
 
       srcRoots@ for (sourceRoot in storage.entities<SourceRootEntity>()) {
         val moduleEntity = sourceRoot.contentRoot.module
+
         if (moduleEntity.name in skippedModules) continue
         if (sourceRoot.javaSourceRoots.none { !it.generated }) continue
-        var toCheck = false
 
+        var toCheck = false
         for (file in File(sourceRoot.url.presentableUrl).walk()) {
           if (file.isFile && file.extension == "kt") {
             processFileIfMatch(file, regexToDetectWsmClasses) {
