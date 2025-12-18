@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.AsyncExecutionServiceImpl
+import com.intellij.openapi.application.impl.concurrencyTest
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -13,6 +14,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.writeText
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -21,6 +23,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.utils.io.createFile
 import com.intellij.util.FileContentUtilCore
 import com.intellij.util.application
 import com.intellij.util.io.delete
@@ -34,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReferenceArray
+import kotlin.io.path.createTempDirectory
 import kotlin.io.path.createTempFile
 import kotlin.test.assertEquals
 
@@ -272,5 +276,33 @@ class VfsRefreshTest {
       FileContentUtilCore.reparseFiles(virtualFile)
     }
     assertThat(counter.get()).isEqualTo(2)
+  }
+
+  @Test
+  fun `event processing can start regardless of active scan`() = concurrencyTest {
+    val dir = createTempDirectory()
+    dir.resolve("file2").createFile()
+    val file2 = createTempFile()
+    val virtualFile1 = VirtualFileManager.getInstance().findFileByNioPath(dir)!!
+    val virtualFile2 = VirtualFileManager.getInstance().findFileByNioPath(file2)!!
+
+    writeAction {
+      virtualFile2.writeText("43")
+    }
+
+    RefreshQueueImpl.setTestListener {
+      checkpoint(1)
+      checkpoint(4)
+    }
+    try {
+      launch(Dispatchers.Default) {
+        RefreshQueue.getInstance().refresh(false, listOf(virtualFile1))
+      }
+      checkpoint(2)
+      RefreshQueue.getInstance().processEvents(listOf(VFileContentChangeEvent(Any(), virtualFile2, 0, 1)))
+      checkpoint(3)
+    } finally {
+      RefreshQueueImpl.setTestListener(null)
+    }
   }
 }
