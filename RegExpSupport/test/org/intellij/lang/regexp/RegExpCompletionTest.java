@@ -1,27 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
-
-  // util methods
-    private static String getInputDataFileName(String testName) {
-        return Character.toUpperCase(testName.charAt(0)) + testName.substring(1) + ".regexp";
-    }
-
-    private static String getExpectedResultFileName(String testName) {
-        return Character.toUpperCase(testName.charAt(0)) + testName.substring(1) + "Expected" + ".regexp";
-    }
 
     public void testNamedCharacter() {
       myFixture.configureByText(RegExpFileType.INSTANCE, "\\N{SMILE<caret>}");
@@ -59,42 +48,28 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
     }
 
     public void testBackSlashVariants() {
-        List<String> nameList =
+        List<String> expected =
           new ArrayList<>(Arrays.asList("d", "D", "s", "S", "w", "W", "b", "B", "A", "G", "Z", "z", "Q", "E",
                                         "t", "n", "r", "f", "a", "e", "h", "H", "v", "V", "R", "X", "b{g}"));
         for (String[] stringArray : DefaultRegExpPropertiesProvider.getInstance().getAllKnownProperties()) {
-            nameList.add("p{" + stringArray[0] + "}");
+            expected.add("p{" + stringArray[0] + "}");
         }
-      myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), ArrayUtilRt.toStringArray(nameList));
+        myFixture.configureByText(getTestName(false) + ".regexp", "[0-9]\\<caret>\n");
+        myFixture.completeBasic();
+        UsefulTestCase.assertSameElements(myFixture.getLookupElementStrings(), expected);
     }
 
     public void testPropertyVariants() {
-        List<String> nameList = new ArrayList<>();
-        for (String[] stringArray : DefaultRegExpPropertiesProvider.getInstance().getAllKnownProperties()) {
-            nameList.add("{" + stringArray[0] + "}");
-        }
-      myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), ArrayUtilRt.toStringArray(nameList));
+      List<String> expected =
+        ContainerUtil.map(DefaultRegExpPropertiesProvider.getInstance().getAllKnownProperties(), p -> "{" + p[0] + "}");
+      myFixture.configureByText(getTestName(false) + ".regexp", "[0-9].*\\p<caret>\n");
+      myFixture.completeBasic();
+      UsefulTestCase.assertSameElements(myFixture.getLookupElementStrings(), expected);
     }
 
     public void testPropertyAlpha() {
       myFixture.configureByText(RegExpFileType.INSTANCE, "\\P{Alp<caret>}");
       myFixture.completeBasic();
       myFixture.checkResult("\\P{Alpha<caret>}");
-    }
-
-    public void doTest() {
-        String inputDataFileName = getInputDataFileName(getTestName(true));
-        String expectedResultFileName = getExpectedResultFileName(getTestName(true));
-        myFixture.testCompletion(inputDataFileName, expectedResultFileName);
-    }
-
-    @Override
-    protected String getBasePath() {
-      String homePath = PathManager.getHomePath();
-      File candidate = new File(homePath, "community/RegExpSupport/testData/completion");
-      if (candidate.isDirectory()) {
-        return "/community/RegExpSupport/testData/completion";
-      }
-      return "/RegExpSupport/testData/completion";
     }
 }
