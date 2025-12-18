@@ -5,6 +5,8 @@ import com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments.C
 import com.intellij.codeInsight.completion.CompletionPhase.Companion.NoCompletion
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl.Companion.assertPhase
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationListener
@@ -384,6 +386,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   class BgCalculation internal constructor(indicator: CompletionProgressIndicator) : CompletionPhase(indicator) {
     @JvmField
     internal var modifiersChanged: Boolean = false
+    private val ownerId = ClientId.current
 
     init {
       restartOnWriteAction()
@@ -394,20 +397,22 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       ApplicationManager.getApplication().addApplicationListener(object : ApplicationListener {
         override fun beforeWriteActionStart(action: Any) {
           if (!indicator!!.lookup.isLookupDisposed && !indicator.isCanceled) {
-            indicator.cancel()
-            if (EDT.isCurrentThreadEdt()) {
-              indicator.scheduleRestart()
-            }
-            else {
-              // this branch is possible because completion can be canceled on background write action
-              ApplicationManager.getApplication().invokeLater(
-                /* runnable = */ { indicator.scheduleRestart() },
+            withExplicitClientId(ownerId) {
+              indicator.cancel()
+              if (EDT.isCurrentThreadEdt()) {
+                indicator.scheduleRestart()
+              }
+              else {
+                // this branch is possible because completion can be canceled on background write action
+                ApplicationManager.getApplication().invokeLater(
+                  /* runnable = */ { indicator.scheduleRestart() },
 
-                // since we break the synchronous execution here, it is possible that some other EDT event finishes completion before us
-                // in this case, the current indicator becomes obsolete, and we don't need to reschedule the session anymore
+                  // since we break the synchronous execution here, it is possible that some other EDT event finishes completion before us
+                  // in this case, the current indicator becomes obsolete, and we don't need to reschedule the session anymore
 
-                /* expired = */ { CompletionServiceImpl.currentCompletionProgressIndicator != indicator }
-              )
+                  /* expired = */ { CompletionServiceImpl.currentCompletionProgressIndicator != indicator }
+                )
+              }
             }
           }
         }
