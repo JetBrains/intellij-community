@@ -46,7 +46,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
-private const val MAX_WORD_LENGTH = 32
+const val MAX_WORD_LENGTH: Int = 32
 internal val LIFECYCLE_EP_NAME: ExtensionPointName<SpellcheckerLifecycle> = ExtensionPointName("com.intellij.spellchecker.lifecycle")
 
 class GrazieSpellCheckerEngine(
@@ -118,7 +118,7 @@ class GrazieSpellCheckerEngine(
     val wordList = ExtendedWordListWithFrequency(enDictionary.dict, adapter)
     return GrazieSpeller.UserConfig(model = LanguageModel(
       language = Language.ENGLISH,
-      words = ExtendedWordListWithFrequency(enDictionary.dict, adapter),
+      words = wordList,
       rules = RuleDictionary.Aggregated(this.replacingRules),
       ranker = DiacriticSuggestionRanker(LanguageModel.getRanker(Language.ENGLISH, wordList)),
       filter = RadiusSuggestionFilter(0.05),
@@ -177,7 +177,7 @@ class GrazieSpellCheckerEngine(
     if (speller.isAlien(word)) {
       return true
     }
-    return !speller.isMisspelled(word = word, caseSensitive = false)
+    return !speller.isMisspelled(word, caseSensitive = false)
   }
 
   override fun getSuggestions(word: String, maxSuggestions: Int, maxMetrics: Int): List<String> {
