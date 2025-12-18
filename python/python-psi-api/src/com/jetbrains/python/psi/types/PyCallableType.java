@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyFunction;
@@ -43,6 +45,34 @@ public interface PyCallableType extends PyType {
    */
   default @Nullable List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return null;
+  }
+
+  @Override
+  @Nullable
+  default String getName() {
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(null);
+    List<PyCallableParameter> parameters = getParameters(context);
+    PyType returnType = getReturnType(context);
+    return String.format("(%s) -> %s",
+                         parameters != null ?
+                         StringUtil.join(parameters,
+                                         param -> {
+                                           if (param != null) {
+                                             final StringBuilder builder = new StringBuilder();
+                                             final String name = param.getName();
+                                             final PyType type = param.getType(context);
+                                             if (name != null) {
+                                               builder.append(name);
+                                               builder.append(": ");
+                                             }
+                                             builder.append(type != null ? type.getName() : PyNames.UNKNOWN_TYPE);
+                                             return builder.toString();
+                                           }
+                                           return PyNames.UNKNOWN_TYPE;
+                                         },
+                                         ", ") :
+                         "...",
+                         returnType != null ? returnType.getName() : PyNames.UNKNOWN_TYPE);
   }
 
   default @Nullable PyCallable getCallable() {
