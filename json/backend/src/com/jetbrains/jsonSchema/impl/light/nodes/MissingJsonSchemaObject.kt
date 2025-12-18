@@ -258,14 +258,6 @@ internal object MissingJsonSchemaObject : JsonSchemaObjectBackedByJacksonBase(Mi
     throw UnsupportedOperationException(ERROR_MESSAGE)
   }
 
-  override fun getDefinitionsMap(): MutableMap<String, out JsonSchemaObject>? {
-    throw UnsupportedOperationException(ERROR_MESSAGE)
-  }
-
-  override fun getProperties(): Map<String, JsonSchemaObjectBackedByJacksonBase> {
-    throw UnsupportedOperationException(ERROR_MESSAGE)
-  }
-
   override fun getMetadata(): MutableList<JsonSchemaMetadataEntry>? {
     throw UnsupportedOperationException(ERROR_MESSAGE)
   }

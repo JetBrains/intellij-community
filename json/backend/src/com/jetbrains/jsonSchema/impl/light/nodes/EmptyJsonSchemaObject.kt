@@ -304,18 +304,6 @@ object EmptyJsonSchemaObject: JsonSchemaObject() {
     return null
   }
 
-  override fun getProperties(): Map<String?, JsonSchemaObject?> {
-    return emptyMap()
-  }
-
-  override fun getBackReference(): JsonSchemaObject? {
-    return null
-  }
-
-  override fun getExample(): Map<String?, Any?>? {
-    return null
-  }
-
   override fun isForceCaseInsensitive(): Boolean {
     return false
   }
@@ -336,30 +324,7 @@ object EmptyJsonSchemaObject: JsonSchemaObject() {
     return false
   }
 
-  override fun getDefinitionsMap(): Map<String?, JsonSchemaObject?>? {
-    return null
-  }
-
   override fun resolveRefSchema(service: JsonSchemaService): JsonSchemaObject? {
     return null
-  }
-
-  override fun mergeTypes(
-    selfType: JsonSchemaType?,
-    otherType: JsonSchemaType?,
-    otherTypeVariants: Set<JsonSchemaType?>?,
-  ): JsonSchemaType? {
-    return null
-  }
-
-  override fun mergeTypeVariantSets(
-    self: Set<JsonSchemaType?>?,
-    other: Set<JsonSchemaType?>?,
-  ): Set<JsonSchemaType?>? {
-    return null
-  }
-
-  override fun mergeValues(other: JsonSchemaObject) {
-    // No-op for empty schema object
   }
 }

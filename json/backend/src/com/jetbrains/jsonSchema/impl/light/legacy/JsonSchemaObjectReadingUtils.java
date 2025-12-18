@@ -9,12 +9,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature;
 import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.*;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
+import com.jetbrains.jsonSchema.impl.JsonSchemaType;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder;
+import com.jetbrains.jsonSchema.impl.RootJsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.light.nodes.EmptyJsonSchemaObject;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
@@ -89,21 +91,6 @@ public final class JsonSchemaObjectReadingUtils {
     if (rootSchema == null) {
       LOG.debug(String.format("Schema object not found for %s", schemaFile.getPath()));
       return null;
-    }
-    if (recursive && ref.startsWith("#")) {
-      while (rootSchema.isRecursiveAnchor()) {
-        var backRef = rootSchema.getBackReference();
-        if (backRef == null) break;
-        VirtualFile file = ObjectUtils.coalesce(backRef.getRawFile(),
-                                                backRef.getFileUrl() == null ? null : JsonFileResolver.urlToFile(backRef.getFileUrl()));
-        if (file == null) break;
-        try {
-          rootSchema = JsonSchemaReader.readFromFile(service.getProject(), file);
-        }
-        catch (Exception e) {
-          break;
-        }
-      }
     }
     return findRelativeDefinition(rootSchema, splitter, service);
   }

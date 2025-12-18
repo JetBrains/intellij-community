@@ -342,14 +342,6 @@ internal class InheritedJsonSchemaObjectView(
     return baseIfConditionOrOther(JsonSchemaObject::getHtmlDescription, String?::isNotBlank)
   }
 
-  override fun getExample(): Map<String, Any>? {
-    return baseIfConditionOrOther(JsonSchemaObject::getExample, Any?::isNotNull)
-  }
-
-  override fun getBackReference(): JsonSchemaObject? {
-    return baseIfConditionOrOther(JsonSchemaObject::getBackReference, Any?::isNotNull)
-  }
-
   override fun isForceCaseInsensitive(): Boolean {
     return booleanOr(JsonSchemaObject::isForceCaseInsensitive)
   }
@@ -372,28 +364,6 @@ internal class InheritedJsonSchemaObjectView(
 
   override fun resolveRefSchema(service: JsonSchemaService): JsonSchemaObject? {
     return other.resolveRefSchema(service) ?: base.resolveRefSchema(service)
-  }
-
-  override fun mergeTypes(selfType: JsonSchemaType?,
-                          otherType: JsonSchemaType?,
-                          otherTypeVariants: MutableSet<JsonSchemaType>?): JsonSchemaType? {
-    throw UnsupportedOperationException("Must not call mergeTypes on light aggregated object")
-  }
-
-  override fun mergeTypeVariantSets(self: MutableSet<JsonSchemaType>?, other: MutableSet<JsonSchemaType>?): MutableSet<JsonSchemaType> {
-    throw UnsupportedOperationException("Must not call mergeTypeVariantSets on light aggregated object")
-  }
-
-  override fun mergeValues(other: JsonSchemaObject) {
-    throw UnsupportedOperationException("Must not call mergeValues on light aggregated object")
-  }
-
-  override fun getProperties(): Map<String, JsonSchemaObject> {
-    throw UnsupportedOperationException("Must not call propertiesMap on light aggregated object")
-  }
-
-  override fun getDefinitionsMap(): Map<String, JsonSchemaObject>? {
-    throw UnsupportedOperationException("Must not call definitionsMap on light aggregated object")
   }
 }
 

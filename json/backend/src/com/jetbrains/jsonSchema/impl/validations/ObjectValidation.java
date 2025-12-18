@@ -6,7 +6,6 @@ import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -229,13 +228,7 @@ public final class ObjectValidation implements JsonSchemaValidation {
       JsonSchemaObject propertySchema = resolvePropertySchema(schema, req);
       Object defaultValue = propertySchema == null ? null : propertySchema.getDefault();
       if (defaultValue == null) {
-        if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2()) {
-          defaultValue = schema.getExampleByName(req);
-        }
-        else {
-          var example = schema.getExample();
-          defaultValue = example == null ? null : example.get(req);
-        }
+        defaultValue = schema.getExampleByName(req);
       }
       Ref<Integer> enumCount = Ref.create(0);
 
