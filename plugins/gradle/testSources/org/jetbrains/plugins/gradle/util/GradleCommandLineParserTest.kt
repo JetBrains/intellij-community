@@ -229,6 +229,28 @@ class GradleCommandLineParserTest : GradleCommandLineParserTestCase() {
   }
 
   @Test
+  fun `test built-in task options`() {
+    GradleCommandLine.parse("anyTaskName --rerun")
+      .assertText("anyTaskName --rerun")
+      .assertTaskText("anyTaskName --rerun")
+      .assertNoOptionText()
+      .assertTokens("anyTaskName", "--rerun")
+      .assertTaskTokens("anyTaskName", "--rerun")
+      .assertNoOptionTokens()
+      .assertTasks(SimpleTask("anyTaskName", VarargNotation("--rerun")))
+      .assertNoOptions()
+    GradleCommandLine.parse("anyTaskName --rerun anotherTaskName")
+      .assertText("anyTaskName --rerun anotherTaskName")
+      .assertTaskText("anyTaskName --rerun anotherTaskName")
+      .assertNoOptionText()
+      .assertTokens("anyTaskName", "--rerun", "anotherTaskName")
+      .assertTaskTokens("anyTaskName", "--rerun", "anotherTaskName")
+      .assertNoOptionTokens()
+      .assertTasks(SimpleTask("anyTaskName", VarargNotation("--rerun")), SimpleTask("anotherTaskName"))
+      .assertNoOptions()
+  }
+
+  @Test
   fun `test options with arguments`() {
     GradleCommandLine.parse("bootRun --include-build /home/user/project")
       .assertText("bootRun --include-build /home/user/project")
