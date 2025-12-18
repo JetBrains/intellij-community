@@ -280,6 +280,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
               for (i in 0..<fixes.size) {
                 val action = QuickFixWrapper.wrap(descriptor, i)
                 if (action is EmptyIntentionAction) continue
+                if (action is CustomizableIntentionAction && !action.isSelectable) continue
                 if (intentionCommandSkipper != null && intentionCommandSkipper.skip(action, psiFile, currentOffset)) continue
                 if (!isInjected && !ShowIntentionActionsHandler.availableFor(topLevelFile, topLevelEditor, topLevelOffset, action)) continue
                 if (isInjected && action.asModCommandAction() == null) continue
