@@ -11,7 +11,7 @@ Driver uses [JMX](https://en.wikipedia.org/wiki/Java_Management_Extensions) as t
 -Dcom.sun.management.jmxremote.rmi.port=5000
 -Dcom.sun.management.jmxremote.authenticate=false
 -Dcom.sun.management.jmxremote.ssl=false
--Djava.rmi.server.hostname=<host-ip>
+-Djava.rmi.server.hostname=${host-ip}
 ```
 
 Then, you will be able to create a driver and call IDE:
