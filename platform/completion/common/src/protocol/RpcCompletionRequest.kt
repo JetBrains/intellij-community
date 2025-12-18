@@ -12,13 +12,10 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class RpcCompletionRequest(
+  val id: UID = UID.random(),
   val projectId: ProjectId,
   val editorId: EditorId,
   val startingEditorVersion: Int,
   val completionType: CompletionType,
   val invocationCount: Int,
-) {
-  val id: UID = UID.random()
-}
-
-
+)
