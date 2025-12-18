@@ -72,4 +72,9 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
       myFixture.completeBasic();
       myFixture.checkResult("\\P{Alpha<caret>}");
     }
+    
+    public void testNoWeirdCompletion() {
+      myFixture.configureByText(getTestName(false) + ".regexp", "N<caret>");
+      assertEquals(0, myFixture.completeBasic().length);
+    }
 }
