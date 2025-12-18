@@ -908,7 +908,7 @@ object LSP {
         classDiscriminator = "kind"
     }
 
-  val ProgressNotificationType: NotificationType<ProgressParams> =
+    val ProgressNotificationType: NotificationType<ProgressParams> =
         NotificationType("$/progress", ProgressParams.serializer())
 
     val CancelNotificationType: NotificationType<CancelParams> =
