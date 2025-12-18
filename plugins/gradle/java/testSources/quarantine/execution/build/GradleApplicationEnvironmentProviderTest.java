@@ -21,6 +21,54 @@ import org.junit.Test;
 public class GradleApplicationEnvironmentProviderTest extends GradleApplicationEnvironmentProviderTestCase {
 
   @Test
+  @TargetVersions("7.0+") // full JPMS support added by Gradle starting from Gradle 7.0
+  public void testConfigurationsShouldNotBeResolvedDuringTheProjectEvaluation() throws Exception {
+    PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
+    @Language("Java")
+    String appClass = """
+      package my;
+      public class Application {       
+          public static void main(String[] args){
+              System.out.println("Hello expected world");
+          }
+      }
+      """;
+    createProjectSubFile("src/main/java/my/Application.java", appClass);
+    createProjectSubFile("src/main/java/module-info.java", "module my {}");
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .withIdeaPlugin()
+        .withGradleIdeaExtPlugin()
+        .addImport("org.jetbrains.gradle.ext.*")
+        .addPostfix(
+          "idea {",
+          "  project.settings {",
+          "    runConfigurations {",
+          "       MyApp(Application) {",
+          "           mainClass = 'my.Application'",
+          "           moduleName = 'moduleName.main'",
+          "       }",
+          "    }",
+          "  }",
+          "}")
+        .addPostfix(
+          """
+            afterEvaluate {
+                configurations.runtimeOnly {
+                    extendsFrom(configurations.compileOnly)
+                }
+            }
+            """
+        ).generate()
+    );
+    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(getMyProject()).findConfigurationByName("MyApp");
+    assertAppRunOutput(configurationSettings, "Hello expected world");
+  }
+
+  @Test
   @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
