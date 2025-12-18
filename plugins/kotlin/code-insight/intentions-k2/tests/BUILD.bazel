@@ -35,7 +35,6 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//java/testFramework",
@@ -46,6 +45,7 @@ jvm_library(
     "//plugins/kotlin/base/analysis",
     "//platform/lang-core",
     "//platform/core-ui",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.intentions.tests` end

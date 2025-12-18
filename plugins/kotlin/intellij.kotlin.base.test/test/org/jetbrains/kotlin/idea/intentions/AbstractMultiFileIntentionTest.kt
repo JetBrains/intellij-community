@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.intentions
 
 import com.google.gson.JsonObject
@@ -8,16 +7,18 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.VfsTestUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.util.getString
-import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -55,7 +56,7 @@ abstract class AbstractMultiFileIntentionTest : KotlinLightCodeInsightFixtureTes
                     "isAvailable() for ${intentionAction::class.java} should return $isApplicableExpected",
                     isApplicableExpected == intentionAction.isAvailable(project, editor, mainFile)
                 )
-                config.getNullableString("intentionText")?.let {
+                config["intentionText"]?.asString?.let {
                     TestCase.assertEquals("Intention text mismatch", it, intentionAction.text)
                 }
 
@@ -84,7 +85,7 @@ abstract class AbstractMultiFileIntentionTest : KotlinLightCodeInsightFixtureTes
         val afterDir = beforeDir.substringBeforeLast("/") + "/after"
         val afterDirIOFile = File(testDataDirectory, afterDir)
         val afterVFile = LocalFileSystem.getInstance().findFileByIoFile(afterDirIOFile)!!
-        UsefulTestCase.refreshRecursively(afterVFile)
+        refreshRecursively(afterVFile)
 
         VfsUtilCore.visitChildrenRecursively(beforeVFile, object : VirtualFileVisitor<Void?>() {
             override fun visitFile(file: VirtualFile): Boolean {
