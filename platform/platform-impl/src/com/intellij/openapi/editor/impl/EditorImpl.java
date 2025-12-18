@@ -3193,6 +3193,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final @NotNull EditorCaretMoveService caretMoveService = EditorCaretMoveService.getInstance();
 
+  @ApiStatus.Internal
+  void pauseBlinking() {
+    synchronized (caretRepaintService) {
+      caretRepaintService.setEditor(this);
+      caretRepaintService.pause();
+    }
+  }
+
+  @ApiStatus.Internal
+  void resumeBlinking() {
+    synchronized (caretRepaintService) {
+      caretRepaintService.setEditor(this);
+      caretRepaintService.restart();
+    }
+  }
+
   private void setCursorPosition() {
     synchronized (caretMoveService) {
       if (!getSettings().isAnimatedCaret() || gainedFocus.getAndSet(false)) {
@@ -3318,6 +3334,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private boolean myEnabled = true;
 
     private boolean myIsShown;
+    private float myBlinkOpacity = 1.0f;
     private long myStartTime;
 
     public boolean isEnabled() {
@@ -3358,6 +3375,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
+    float getBlinkOpacity() {
+      synchronized (caretRepaintService) {
+        return myBlinkOpacity;
+      }
+    }
+
+    void setBlinkOpacity(float opacity) {
+      synchronized (caretRepaintService) {
+        myBlinkOpacity = opacity;
+      }
+    }
+
     long getStartTime() {
       synchronized (caretRepaintService) {
         return myStartTime;
@@ -3394,6 +3423,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       return myLocations;
     }
+  }
+
+  @ApiStatus.Internal
+  public float getCaretBlinkOpacity() {
+    return myCaretCursor.getBlinkOpacity();
   }
 
   private final class ScrollingTimer {

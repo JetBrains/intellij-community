@@ -88,6 +88,11 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
   }
 
   private suspend fun processRequest(editor: EditorImpl) {
+    val cursor = editor.myCaretCursor
+
+    editor.pauseBlinking()
+    cursor.blinkOpacity = 1.0f
+
     val refreshRate = clamp(
       editor.component.graphicsConfiguration?.device?.displayMode?.refreshRate ?: 120,
       60, 360)
@@ -98,8 +103,6 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
       val lastPos = editor.lastPosMap.getOrPut(it.caret) { it.finalPos }
       AnimationState(lastPos, it)
     }
-
-    val cursor = editor.myCaretCursor
 
     val stateDurations = animationStates.associateWith { state ->
       val dx = state.update.finalPos.x - state.startPos.x
@@ -144,6 +147,9 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
 
       delay(step.toLong())
     }
+
+    delay(editor.settings.caretBlinkPeriod.toLong())
+    editor.resumeBlinking()
   }
 }
 
