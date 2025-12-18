@@ -89,7 +89,6 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
@@ -108,6 +107,7 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "//platform/lang-api:lang",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.lineMarkers` end

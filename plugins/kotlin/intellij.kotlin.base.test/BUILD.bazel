@@ -78,6 +78,7 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//java/java-impl-refactorings:impl-refactorings",
     "//java/java-tests:tests_test_lib",
+    "//platform/external-system-impl:externalSystem-impl",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end

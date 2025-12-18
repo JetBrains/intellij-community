@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
@@ -18,8 +17,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.UsefulTestCase
-import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerCodeMetaInfo
@@ -28,7 +25,11 @@ import org.jetbrains.kotlin.idea.base.test.KotlinExpectedHighlightingData
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.TestableLineMarkerNavigator
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
 import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.junit.Assert
@@ -122,7 +123,7 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
             myFixture.file as KtFile, KotlinTestUtils.CommentType.BLOCK_COMMENT, false
         )
         if (navigationDataComments.isEmpty()) return
-        val markerCodeMetaInfos = markers.map { InnerLineMarkerCodeMetaInfo(InnerLineMarkerConfiguration.configuration, it) }
+        val markerCodeMetaInfos = markers.map { InnerLineMarkerCodeMetaInfo(InnerLineMarkerConfiguration.Companion.configuration, it) }
 
         for ((navigationCommentIndex, navigationComment) in navigationDataComments.reversed().withIndex()) {
             val description = getLineMarkerDescription(navigationComment)
@@ -131,7 +132,7 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
             }
             val navigateMarker = navigateMarkers.singleOrNull() ?: navigateMarkers.getOrNull(navigationCommentIndex)
 
-            TestCase.assertNotNull(
+            assertNotNull(
                 String.format("Can't find marker for navigation check with description \"%s\"\n\navailable: \n\n%s",
                               description,
                               ActionUtil.underModalProgress(project, "") {
@@ -156,7 +157,7 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
                 }
                 val actualNavigationData = NavigationTestUtils.getNavigateElementsText(project, targets)
 
-                UsefulTestCase.assertSameLines(getExpectedNavigationText(navigationComment), actualNavigationData)
+                assertSameLines(getExpectedNavigationText(navigationComment), actualNavigationData)
 
             }
 
@@ -166,7 +167,7 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
                 }
                 val actualNavigationData = NavigationTestUtils.getNavigateElementsText(project, navigateElements)
 
-                UsefulTestCase.assertSameLines(getExpectedNavigationText(navigationComment), actualNavigationData)
+                assertSameLines(getExpectedNavigationText(navigationComment), actualNavigationData)
             }
 
             else -> {
@@ -177,13 +178,13 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
 
     private fun getLineMarkerDescription(navigationComment: String): String {
         val firstLineEnd = navigationComment.indexOf("\n")
-        TestCase.assertTrue(
+        assertTrue(
             "The first line in block comment must contain description of marker for navigation check", firstLineEnd != -1
         )
 
         var navigationMarkerText = navigationComment.substring(0, firstLineEnd)
 
-        TestCase.assertTrue(
+        assertTrue(
             String.format("Add %s directive in first line of comment", LINE_MARKER_PREFIX),
             navigationMarkerText.startsWith(LINE_MARKER_PREFIX)
         )
@@ -198,7 +199,7 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
 
         var expectedNavigationText = navigationComment.substring(firstLineEnd + 1)
 
-        TestCase.assertTrue(
+        assertTrue(
             String.format("Marker %s is expected before navigation data", TARGETS_PREFIX),
             expectedNavigationText.startsWith(TARGETS_PREFIX)
         )
