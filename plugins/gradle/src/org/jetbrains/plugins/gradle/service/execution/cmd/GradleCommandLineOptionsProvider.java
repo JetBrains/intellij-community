@@ -27,6 +27,7 @@ public final class GradleCommandLineOptionsProvider {
 
   public static final Options TASK_OPTIONS;
   public static final OptionGroup TEST_TASK_OPTIONS;
+  public static final OptionGroup COMPOSE_HOT_RELOAD_RUN_TASK_OPTIONS;
 
   public static Options getSupportedOptions() {
     return OPTIONS;
@@ -151,7 +152,15 @@ public final class GradleCommandLineOptionsProvider {
     TEST_TASK_OPTIONS = new OptionGroup()
       .addOption(Option.builder().longOpt("tests").hasArg().build());
 
+    // https://github.com/JetBrains/compose-hot-reload/blob/b304b0e1fda3fcf1ca842ca9774fa9712cbf6c61/hot-reload-gradle-plugin/src/main/kotlin/org/jetbrains/compose/reload/gradle/arguments.kt#L103
+    // https://github.com/JetBrains/compose-hot-reload/blob/b304b0e1fda3fcf1ca842ca9774fa9712cbf6c61/hot-reload-runtime-jvm/src/main/kotlin/org/jetbrains/compose/reload/jvm/DevApplication.kt#L45
+    COMPOSE_HOT_RELOAD_RUN_TASK_OPTIONS = new OptionGroup()
+      .addOption(Option.builder().longOpt("mainClass").hasArg().build())
+      .addOption(Option.builder().longOpt("className").hasArg().build())
+      .addOption(Option.builder().longOpt("funName").hasArg().build());
+
     TASK_OPTIONS = new Options()
-      .addOptionGroup(TEST_TASK_OPTIONS);
+      .addOptionGroup(TEST_TASK_OPTIONS)
+      .addOptionGroup(COMPOSE_HOT_RELOAD_RUN_TASK_OPTIONS);
   }
 }
