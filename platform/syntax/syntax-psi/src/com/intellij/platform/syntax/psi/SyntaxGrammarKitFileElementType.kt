@@ -9,8 +9,7 @@ import com.intellij.platform.syntax.util.runtime.ParserUserState
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IFileElementType
 
-class SyntaxGrammarKitFileElementType(language: Language) : IFileElementType(language) {
-
+open class SyntaxGrammarKitFileElementType(language: Language) : IFileElementType(language) {
   override fun doParseContents(chameleon: ASTNode, psi: PsiElement): ASTNode? {
     val builderFactory = PsiSyntaxBuilderFactory.getInstance()
     val elementType = chameleon.getElementType()
