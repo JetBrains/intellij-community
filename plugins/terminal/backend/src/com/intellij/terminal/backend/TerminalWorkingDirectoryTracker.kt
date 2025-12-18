@@ -66,11 +66,12 @@ private fun addHeuristicBasedCwdListener(
       }
   }
 
+  // TODO: Investigate why it may cause deadlock in tests were we start the real shell session.
   // Trigger the initial value calculation immediately without waiting
-  coroutineScope.launch {
-    val cwd = doCalculateCurrentDirectory(ttyConnector) ?: return@launch
-    listener(cwd)
-  }
+  //coroutineScope.launch {
+  //  val cwd = doCalculateCurrentDirectory(ttyConnector) ?: return@launch
+  //  listener(cwd)
+  //}
 }
 
 private suspend fun doCalculateCurrentDirectory(ttyConnector: TtyConnector): String? {
