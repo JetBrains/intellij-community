@@ -163,6 +163,8 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
       if (adjustedParameters.injectedFile == null) return
       if (adjustedParameters.injectedOffset == null) return
       if (!commandCompletionFactory.isApplicable(adjustedParameters.injectedFile, adjustedParameters.injectedOffset)) return
+      val originalCompletionFactory = commandCompletionService.getFactory(adjustedParameters.copyFile.language) ?: return
+      if (!originalCompletionFactory.isApplicableForHost(adjustedParameters.copyFile, adjustedParameters.copyOffset)) return
     }
     else {
       if (!commandCompletionFactory.isApplicable(adjustedParameters.copyFile, adjustedParameters.copyOffset)) return
