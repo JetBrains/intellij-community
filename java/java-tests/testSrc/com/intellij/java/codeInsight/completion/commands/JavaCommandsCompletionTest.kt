@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion.commands
 
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.completion.command.CommandCompletionDocumentationProvider
 import com.intellij.codeInsight.completion.command.CommandCompletionLookupElement
@@ -113,6 +114,31 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       }
     """.trimIndent()
     assertEquals(preview.modifiedText(), expected)
+  }
+
+  fun testFormatNothing() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+        void foo() {
+            int y = 10.<caret>;
+            int x = y;
+        } 
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    val item = elements.first { element -> element.lookupString.contains("format", ignoreCase = true) }
+      .`as`(CommandCompletionLookupElement::class.java)
+    if (item == null) {
+      fail()
+      return
+    }
+    val preview = item.command.getPreview()
+    if (preview !is IntentionPreviewInfo.Html) {
+      fail()
+      return
+    }
+    assertEquals(preview.content().toString(), CodeInsightBundle.message("command.completion.reformat.nothing"))
   }
 
   fun testFormatWholeMethod() {
