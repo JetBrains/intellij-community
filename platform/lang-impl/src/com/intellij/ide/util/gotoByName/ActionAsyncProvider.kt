@@ -17,6 +17,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.platform.util.coroutines.mapConcurrent
@@ -260,13 +261,30 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
             else {
               if (action is ActionStubBase) actionManager.getId(action)?.let { unmatchedIdsChannel.send(it) }
             }
-          }.getOrLogException(LOG)
+          }.onFailure { t ->
+            handleCancellationError(t)
+          }
         }
       }
     }.toList()
 
     val comparator = Comparator.comparing<MatchedAction, Int> { it.weight ?: 0 }.reversed()
     return@coroutineScope matchedActions.sortedWith(comparator)
+  }
+
+  private fun handleCancellationError(throwable: Throwable) {
+    if (throwable is CancellationException) {
+      try {
+        ProgressManager.checkCanceled()
+      }
+      catch (ce: CancellationException) {
+        ce.addSuppressed(throwable)
+        throw ce
+      }
+      LOG.error(RuntimeException("Improper cancellation propagation", throwable))
+    } else {
+      LOG.error(throwable)
+    }
   }
 
   private fun CoroutineScope.processUnmatchedStubs(nonMatchedIds: ReceiveChannel<String>,
