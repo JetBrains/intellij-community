@@ -65,7 +65,7 @@ private class DynamicPluginVfsListener : AsyncFileListener {
       return null
     }
 
-    val pluginsToReload = hashSetOf<IdeaPluginDescriptorImpl>()
+    val pluginsToReload = hashSetOf<PluginMainDescriptor>()
     for (event in events) {
       if (!event.isFromRefresh) continue
       if (event is VFileContentChangeEvent) {
@@ -112,13 +112,13 @@ private class DynamicPluginVfsListener : AsyncFileListener {
     }
   }
 
-  private fun findPluginByPath(file: VirtualFile): IdeaPluginDescriptorImpl? {
+  private fun findPluginByPath(file: VirtualFile): PluginMainDescriptor? {
     if (!VfsUtilCore.isAncestorOrSelf(PathManager.getPluginsPath(), file)) {
       return null
     }
-    return PluginManager.getPlugins().firstOrNull {
+    return PluginManagerCore.getPluginSet().allPlugins.firstOrNull {
       VfsUtilCore.isAncestorOrSelf(it.pluginPath.toAbsolutePath().toString(), file)
-    } as IdeaPluginDescriptorImpl?
+    }
   }
 }
 

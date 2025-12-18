@@ -39,15 +39,31 @@ class ClassUsageReplacementStrategy(
         when (val parent = usage.parent) {
             is KtUserType -> {
                 if (typeReplacement == null) return null
-                return {
+                return replacement@{
                     val oldArgumentList = parent.typeArgumentList?.copy() as? KtTypeArgumentList
-                    val replaced = parent.replaced(typeReplacement)
+                    val fqName = typeReplacement.referenceExpression?.resolve()?.kotlinFqName
+                    val typeReference = parent.referenceExpression?.mainReference?.takeIf { fqName != null }
+                    val replaced =
+                        if (typeReference != null) typeReference.bindToFqName(fqName!!, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING) as? KtUserType
+                            else parent.replaced(typeReplacement)
+                    if (replaced == null) return@replacement null
                     val newArgumentList = replaced.typeArgumentList
-                    if (oldArgumentList != null && oldArgumentList.arguments.size == newArgumentList?.arguments?.size) {
+                    if (typeReference != null) {
+                        val argumentList = typeReplacement.typeArgumentList
+                        if (argumentList != null) {
+                            if (newArgumentList == null) {
+                                replaced.add(argumentList)
+                            } else if (argumentList.arguments.size != newArgumentList.arguments.size){
+                                newArgumentList.replace(argumentList)
+                            }
+                        } else {
+                            newArgumentList?.delete()
+                        }
+                    } else if (oldArgumentList != null && oldArgumentList.arguments.size == newArgumentList?.arguments?.size) {
                         newArgumentList.replace(oldArgumentList)
                     }
 
-                    shortenReferences(replaced) as? KtElement
+                    shortenReferences(replaced)
                 }
             }
 

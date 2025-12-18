@@ -51,6 +51,7 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import java.awt.Color
 import java.awt.Font
+import java.awt.Graphics
 import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -67,6 +68,17 @@ internal class DocumentationUI(
   val locationLabel: JLabel
   val fontSize: DocumentationFontSizeModel = DocumentationFontSizeModel()
   val switcherToolbarComponent: JComponent
+  var useToolwindowBackground: Boolean = false
+    set(value) {
+      field = value
+
+      editorPane.isOpaque = !value
+      if (value) {
+        setBackground(JBUI.CurrentTheme.ToolWindow.background())
+      } else {
+        setFromDocumentationBackground(editorPane.backgroundFlow.value)
+      }
+    }
 
   private var imageResolver: DocumentationImageResolver? = null
   private val linkHandler: DocumentationLinkHandler
@@ -107,13 +119,9 @@ internal class DocumentationUI(
     }
     scrollPane.setViewportView(editorPane, locationLabel)
     trackDocumentationBackgroundChange(this) {
-      // Force update of the background color for scroll pane
-      @Suppress("UseJBColor")
-      val color = Color(it.rgb)
-      editorPane.parent.background = color
-      scrollPane.viewport.background = color
-      locationLabel.background = color
-      switcherToolbarComponent.background = color
+      if (!useToolwindowBackground) {
+        setFromDocumentationBackground(it)
+      }
     }
 
     browser.ui = this
@@ -152,6 +160,18 @@ internal class DocumentationUI(
     }
   }
 
+  fun setBackground(color: Color) {
+    editorPane.parent.background = color
+    scrollPane.viewport.background = color
+    switcherToolbarComponent.background = color
+  }
+
+  private fun setFromDocumentationBackground(color: Color) {
+    // Force update of the background color for scroll pane
+    @Suppress("UseJBColor")
+    setBackground(Color(color.rgb))
+  }
+
   override fun dispose() {
     cs.cancel("DocumentationUI disposal")
     clearImages()
@@ -165,7 +185,7 @@ internal class DocumentationUI(
     }
   }
 
-  fun setBackground(color: Color): Disposable {
+  fun setTemporaryEditorBackground(color: Color): Disposable {
     val editorBG = editorPane.background
     editorPane.background = color
     return Disposable {

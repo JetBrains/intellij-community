@@ -8,6 +8,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -26,7 +27,7 @@ internal class DocumentationToolWindowUI(
 
   val browser: DocumentationBrowser get() = ui.browser
 
-  val contentComponent: JComponent = JPanel(BorderLayout()).also { panel: JPanel ->
+  val contentComponent: JComponent = NonOpaquePanel(BorderLayout()).also { panel: JPanel ->
     panel.add(ui.scrollPane, BorderLayout.CENTER)
     panel.add(ui.switcherToolbarComponent, BorderLayout.NORTH)
   }
@@ -63,6 +64,7 @@ internal class DocumentationToolWindowUI(
   // - > search handler
   init {
     content.putUserData(TW_UI_KEY, this)
+    ui.useToolwindowBackground = true
     Disposer.register(content, this)
     Disposer.register(this, ui)
     reusable = cs.updateContentTab(browser, content, asterisk = true).also {

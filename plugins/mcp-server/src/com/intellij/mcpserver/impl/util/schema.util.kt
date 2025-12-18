@@ -67,7 +67,7 @@ private fun projectPathParameterStub(
     | If you're not aware about the project path you can ask user about it.""")
   projectPath: String? = null) {}
 private val projectPathParameter: KParameter get() = ::projectPathParameterStub.parameters.single()
-internal val projectPathParameterName: String get() = projectPathParameter.name ?: error("Parameter has no name: ${projectPathParameter.name}")
+val projectPathParameterName: String get() = projectPathParameter.name ?: error("Parameter has no name: ${projectPathParameter.name}")
 
 fun KCallable<*>.returnTypeSchema(): McpToolSchema? {
   val type = this.returnType

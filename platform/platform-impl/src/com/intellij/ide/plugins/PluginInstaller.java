@@ -98,7 +98,7 @@ public final class PluginInstaller {
   @ApiStatus.Internal
   public static boolean unloadDynamicPlugin(
     @Nullable JComponent parentComponent,
-    @NotNull IdeaPluginDescriptorImpl pluginDescriptor,
+    @NotNull PluginMainDescriptor pluginDescriptor,
     boolean isUpdate
   ) {
     var options = new DynamicPlugins.UnloadPluginOptions().withDisable(false).withWaitForClassloaderUnload(true).withUpdate(isUpdate);
@@ -110,7 +110,7 @@ public final class PluginInstaller {
   @ApiStatus.Internal
   public static boolean uninstallDynamicPlugin(
     @Nullable JComponent parentComponent,
-    @NotNull IdeaPluginDescriptorImpl pluginDescriptor,
+    @NotNull PluginMainDescriptor pluginDescriptor,
     boolean isUpdate
   ) {
     if (pluginDescriptor.isBundled()) {

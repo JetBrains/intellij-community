@@ -271,6 +271,10 @@ object CommunityLibraryLicenses {
       .apache("https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:LICENSE.txt")
       .suppliedByOrganizations(Suppliers.GOOGLE),
 
+    LibraryLicense("Compose Runtime Retained", libraryName = "androidx.compose.runtime.retain.desktop", url = "https://source.android.com/")
+      .apache("https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:LICENSE.txt")
+      .suppliedByOrganizations(Suppliers.GOOGLE),
+
     LibraryLicense("Compose Runtime Saveable Desktop", libraryName = "androidx.compose.runtime.saveable.desktop", url = "https://source.android.com/")
       .apache("https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:LICENSE.txt")
       .suppliedByOrganizations(Suppliers.GOOGLE),
@@ -652,14 +656,6 @@ object CommunityLibraryLicenses {
 
     LibraryLicense("JetBrains Annotations", libraryName = "jetbrains-annotations", url = "https://github.com/JetBrains/java-annotations")
       .apache("https://github.com/JetBrains/java-annotations/blob/master/LICENSE.txt"),
-
-    LibraryLicense("JetBrains Jewel IDE LaF Bridge", url = "https://github.com/JetBrains/jewel", libraryName = "jewel-ide-laf-bridge-243")
-      .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
-      .suppliedByOrganizations(Suppliers.JETBRAINS),
-
-    LibraryLicense("JetBrains Jewel Markdown IDE LaF Bridge Styling", url = "https://github.com/JetBrains/jewel", libraryName = "jewel-markdown-ide-laf-bridge-styling-243")
-      .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
-      .suppliedByOrganizations(Suppliers.JETBRAINS),
 
     LibraryLicense("JetBrains Runtime", version = "21", attachedTo = "intellij.platform.ide.impl", url = "https://github.com/JetBrains/JetBrainsRuntime")
       .gpl2ce("https://github.com/JetBrains/JetBrainsRuntime/blob/master/LICENSE"),
@@ -1189,7 +1185,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(
       name = "Skiko Runtime",
       libraryName = "jetbrains.skiko.awt.runtime.all",
-      additionalLibraryNames = listOf("jetbrains.skiko.awt.runtime.all.0.8.18"),
       url = "https://github.com/JetBrains/skiko/"
     ).apache("https://github.com/JetBrains/skiko/blob/master/LICENSE"),
 

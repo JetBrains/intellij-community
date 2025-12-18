@@ -6,7 +6,7 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.python.community.impl.pipenv.pipenvPath
-import com.intellij.python.community.impl.poetry.poetryPath
+import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.intellij.python.community.testFramework.testEnv.PythonType
 import com.intellij.python.community.testFramework.testEnv.TypeVanillaPython3
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath

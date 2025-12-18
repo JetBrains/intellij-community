@@ -11,6 +11,10 @@ inputs:
   product:
     description: 'a product, available options: intellij_idea, pycharm'
     required: true
+  system_properties:
+    default: ''
+    description: 'any custom system properties'
+    required: false
 runs:
   using: composite
   steps:
@@ -27,4 +31,4 @@ runs:
     - name: Build ${{inputs.arch}}.${{inputs.extension}}
       shell: bash
       # language=bash
-      run: docker run --rm --user "$(id -u)" --volume "${PWD}:/community" ${{inputs.product}} -Dintellij.build.target.os=${{inputs.os}} -Dintellij.build.target.arch=${{inputs.arch}}
+      run: docker run --rm --user "$(id -u)" --volume "${PWD}:/community" ${{inputs.product}} -Dintellij.build.target.os=${{inputs.os}} -Dintellij.build.target.arch=${{inputs.arch}} ${{inputs.system_properties}}

@@ -335,7 +335,12 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     private fun fireEvents(events: Collection<VFileEvent>, session: RefreshSessionImpl) {
       var t = System.nanoTime()
       val compoundEvents = events.map { event: VFileEvent -> CompoundVFileEvent(event) }
-      session.fireEvents(compoundEvents, listOf(), false)
+      if (EDT.isCurrentThreadEdt()) {
+        session.fireEvents(compoundEvents, listOf(), false)
+      }
+      else {
+        session.fireEventsInBackgroundWriteAction(compoundEvents, listOf())
+      }
       t = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t)
       VfsUsageCollector.logEventProcessing(-1L, -1L, -1, t, compoundEvents.size)
     }

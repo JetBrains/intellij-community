@@ -504,7 +504,7 @@
           <action id="ImportSettings" class="com.intellij.configurationStore.ImportSettingsAction"/>
           <action id="ExportSettings" class="com.intellij.configurationStore.ExportSettingsAction"/>
           <separator/>
-          <action id="RestoreDefaultSettings" class="com.intellij.configurationStore.RestoreDefaultSettingsAction"/>
+          <action id="RestoreDefaultSettings" class="com.intellij.configurationStore.defaults.RestoreDefaultSettingsAction"/>
         </group>
         <group id="FileOtherSettingsGroup" class="com.intellij.ide.actions.SmartPopupActionGroup">
           <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>

@@ -71,6 +71,7 @@ sealed class GitExecutable {
   abstract val id: String
   abstract val exePath: String
   abstract val isLocal: Boolean
+  open val isRemote: Boolean get() = !isLocal
 
   /**
    * Convert an absolute file path into a form that can be passed into executable arguments.
@@ -162,6 +163,9 @@ sealed class GitExecutable {
     override fun getLocaleEnv(): Map<String, String> = VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git")
   }
 
+  /**
+   * Ideally, can represent any git executable, either local or remote. Actual instantiation depends on the feature flags enabled.
+   */
   data class Eel(override val exePath: @NonNls String, val eel: EelApi) : GitExecutable() {
     private val delegate = Local(exePath)
 
@@ -197,6 +201,10 @@ sealed class GitExecutable {
     }
   }
 
+  /**
+   * Legacy option of handling wsl git.
+   * Now [Eel] is used for representing wsl git (as well as git inside docker and any other non-demdev remote git).
+   */
   data class Wsl(
     override val exePath: String,
     val distribution: WSLDistribution,
@@ -300,6 +308,7 @@ sealed class GitExecutable {
 
   data class Unknown(override val id: String, override val exePath: String, val errorMessage: @Nls String) : GitExecutable() {
     override val isLocal: Boolean = false
+    override val isRemote: Boolean = false
     override fun toString(): String = "$id: $exePath"
 
     override fun getModificationTime(): Long {

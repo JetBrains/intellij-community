@@ -20,13 +20,13 @@ private class MyService(val coroutineScope: CoroutineScope)
  */
 @ApiStatus.Internal
 
-internal fun <T : Any> Flow<T>.oneShotConsumer(consumer: Consumer<T>) {
+internal fun <T : Any> Flow<T>.oneShotConsumer(consumer: (T) -> Unit) {
   ApplicationManager.getApplication().service<MyService>().coroutineScope.launch(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
     // Platform doesn't guarantee write intent lock on EDT
     //todo fix all clients and remove global lock from here
     val t = this@oneShotConsumer.first()
     writeIntentReadAction {
-      consumer.accept(t)
+      consumer(t)
     }
   }
 }

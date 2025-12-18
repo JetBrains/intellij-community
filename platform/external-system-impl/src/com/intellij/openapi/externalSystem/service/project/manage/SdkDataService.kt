@@ -77,8 +77,8 @@ internal class ModuleSdkDataService : AbstractProjectDataService<ModuleSdkData, 
     val projectRootManager = ProjectRootManager.getInstance(module.project)
     val projectSdk = projectRootManager.projectSdk
     when {
+      moduleSdkName == null -> modifiableRootModel.inheritSdk()
       useDefaultsIfCan && sdk == projectSdk -> modifiableRootModel.inheritSdk()
-      moduleSdkName == null && sdk == null -> modifiableRootModel.inheritSdk()
       sdk == null -> modifiableRootModel.setInvalidSdk(moduleSdkName, ExternalSystemBundle.message("unknown.sdk.type"))
       else -> modifiableRootModel.sdk = sdk
     }

@@ -66,6 +66,7 @@ class IjentSessionRegistry(private val coroutineScope: CoroutineScope) {
    */
   @OptIn(ExperimentalCoroutinesApi::class)
   suspend fun get(ijentId: IjentId): IjentSession<IjentPosixApi> {
+    val currentDispatcher = currentCoroutineDispatcher()
     val bundle = ijents.compute(ijentId, @Suppress("NAME_SHADOWING") { ijentId, oldBundle ->
       require(oldBundle != null) {
         "Not registered: $ijentId"
@@ -84,7 +85,7 @@ class IjentSessionRegistry(private val coroutineScope: CoroutineScope) {
 
       val actualDeferred =
         reusedOldDeferred
-        ?: coroutineScope.async(start = CoroutineStart.LAZY) {
+        ?: coroutineScope.async(context = currentDispatcher, start = CoroutineStart.LAZY) {
           oldBundle.factory(ijentId)
         }
 

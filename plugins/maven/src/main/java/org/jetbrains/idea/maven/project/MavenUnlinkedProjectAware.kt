@@ -14,7 +14,7 @@ import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 
-internal class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
+class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
   override val systemId: ProjectSystemId = MavenUtil.SYSTEM_ID
 
   override fun buildFileExtensions(): Array<String> = arrayOf(XmlFileType.DEFAULT_EXTENSION)
@@ -27,6 +27,9 @@ internal class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
       VfsUtilCore.pathEqualsTo(it.directoryFile, externalProjectPath)
     }
   }
+
+  override fun getLinkedProjectsPaths(project: Project): Set<String> =
+    MavenProjectsManager.getInstance(project).projects.map { it.directory }.toSet()
 
   override fun subscribe(project: Project, listener: ExternalSystemProjectLinkListener, parentDisposable: Disposable) {
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)

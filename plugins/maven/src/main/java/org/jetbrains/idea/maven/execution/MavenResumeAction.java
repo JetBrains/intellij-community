@@ -1,16 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -19,12 +16,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.execution.build.DelegateBuildRunner;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenDistribution;
@@ -101,12 +98,11 @@ public class MavenResumeAction extends AnAction {
         return MavenDistributionsCache.getInstance(runConfiguration.getProject())
           .getMavenDistribution(runConfiguration.getRunnerParameters().getWorkingDirPath()).getVersion();
       }
-
     }
   }
 
-  private static boolean hasResumeFromParameter(MavenRunConfiguration runConfiguration) {
-    List<String> goals = runConfiguration.getRunnerParameters().getGoals();
+  private static boolean hasResumeFromParameter(MavenRunnerParameters parameters) {
+    List<String> goals = parameters.getGoals();
     return goals.size() > 2 && "-rf".equals(goals.get(goals.size() - 2));
   }
 
@@ -131,7 +127,8 @@ public class MavenResumeAction extends AnAction {
     }
 
     for (MavenProject mavenProject : projects) {
-      String id = mavenProject.getMavenId().getGroupId() + ':' + mavenProject.getMavenId().getArtifactId() + ':' + mavenProject.getPackaging();
+      String id =
+        mavenProject.getMavenId().getGroupId() + ':' + mavenProject.getMavenId().getArtifactId() + ':' + mavenProject.getPackaging();
       if (projectName.contains(id)) {
         if (candidate == null) {
           candidate = mavenProject;
@@ -160,12 +157,20 @@ public class MavenResumeAction extends AnAction {
     return candidate;
   }
 
-  public static boolean isApplicable(@NotNull Project project, JavaParameters javaParameters, MavenRunConfiguration runConfiguration) {
-    if (hasResumeFromParameter(runConfiguration)) { // This runConfiguration was created by other MavenResumeAction.
+  public static boolean isApplicable(@NotNull MavenRunConfiguration runConfiguration) {
+    return isApplicable(runConfiguration.getProject(), null, runConfiguration);
+  }
+
+
+  public static boolean isApplicable(@NotNull Project project,
+                                     @Nullable JavaParameters javaParameters,
+                                     @NotNull MavenRunConfiguration runConfiguration) {
+    if (hasResumeFromParameter(runConfiguration.getRunnerParameters())) { // This runConfiguration was created by other MavenResumeAction.
       MavenRunConfiguration clonedRunConf = runConfiguration.clone();
-      List<String> clonedGoals = clonedRunConf.getRunnerParameters().getGoals();
+      List<String> clonedGoals = new ArrayList<>(clonedRunConf.getRunnerParameters().getGoals());
       clonedGoals.remove(clonedGoals.size() - 1);
       clonedGoals.remove(clonedGoals.size() - 1);
+      clonedRunConf.getRunnerParameters().setGoals(clonedGoals);
       try {
         javaParameters = clonedRunConf.createJavaParameters(project);
       }
@@ -173,8 +178,16 @@ public class MavenResumeAction extends AnAction {
         return false;
       }
     }
+    final List<String> paramsToCheck;
+    if (javaParameters != null) {
+      paramsToCheck = javaParameters.getProgramParametersList().getList();
+    }
+    else {
+      paramsToCheck = new ArrayList<>(runConfiguration.getRunnerParameters().getGoals());
+      paramsToCheck.addAll(runConfiguration.getRunnerParameters().getOptions());
+    }
 
-    for (String params : javaParameters.getProgramParametersList().getList()) {
+    for (String params : paramsToCheck) {
       if (PARAMS_DISABLING_RESUME.contains(params)) {
         return false;
       }
@@ -190,14 +203,13 @@ public class MavenResumeAction extends AnAction {
     else {
       LOG.warn(message, new Exception());
     }
-
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (myResumeFromModuleName != null && myResumeModuleId != null) {
       e.getPresentation().setEnabled(true);
-      e.getPresentation().setText(RunnerBundle.message("maven.resume.from.template",  myResumeFromModuleName));
+      e.getPresentation().setText(RunnerBundle.message("maven.resume.from.template", myResumeFromModuleName));
     }
     else {
       e.getPresentation().setEnabled(false);
@@ -212,34 +224,35 @@ public class MavenResumeAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = myEnvironment.getProject();
-    try {
-      MavenRunConfiguration runConfiguration = ((MavenRunConfiguration)myEnvironment.getRunProfile()).clone();
+    MavenRunConfiguration runConfiguration = ((MavenRunConfiguration)myEnvironment.getRunProfile()).clone();
 
-      List<String> goals = new ArrayList<>(runConfiguration.getRunnerParameters().getGoals());
+    List<String> goals = new ArrayList<>(runConfiguration.getRunnerParameters().getGoals());
 
-      if (goals.size() > 2 && "-rf".equals(goals.get(goals.size() - 2))) { // This runConfiguration was created by other MavenResumeAction.
-        goals.set(goals.size() - 1, myResumeModuleId);
-      }
-      else {
-        goals.add("-rf");
-        goals.add(myResumeModuleId);
-      }
-
-      runConfiguration.getRunnerParameters().setGoals(goals);
-
-      myRunner.execute(new ExecutionEnvironmentBuilder(myEnvironment).contentToReuse(null).runProfile(runConfiguration).build());
+    if (goals.size() > 2 && "-rf".equals(goals.get(goals.size() - 2))) { // This runConfiguration was created by other MavenResumeAction.
+      goals.set(goals.size() - 1, myResumeModuleId);
     }
-    catch (RunCanceledByUserException ignore) {
+    else {
+      goals.add("-rf");
+      goals.add(myResumeModuleId);
     }
-    catch (ExecutionException e1) {
-      Messages.showErrorDialog(project, e1.getMessage(), ExecutionBundle.message("restart.error.message.title"));
-    }
+
+    runConfiguration.getRunnerParameters().setGoals(goals);
+
+    MavenRunConfigurationType.runConfiguration(
+      runConfiguration.getProject(),
+      runConfiguration.getRunnerParameters(),
+      runConfiguration.getGeneralSettings(),
+      runConfiguration.getRunnerSettings(),
+      null,
+      myRunner instanceof DelegateBuildRunner
+    );
+    //  myRunner.execute(new ExecutionEnvironmentBuilder(myEnvironment).contentToReuse(null).runProfile(runConfiguration).build());
   }
 
   private class LegacyMavenResumeProcessAdapter extends ProcessAdapter {
     private final MavenRunConfiguration myRunConfiguration;
 
-    LegacyMavenResumeProcessAdapter(MavenRunConfiguration runConfiguration) {myRunConfiguration = runConfiguration;}
+    LegacyMavenResumeProcessAdapter(MavenRunConfiguration runConfiguration) { myRunConfiguration = runConfiguration; }
 
     @Override
     public void processTerminated(@NotNull ProcessEvent event) {
@@ -252,7 +265,7 @@ public class MavenResumeAction extends AnAction {
       }
 
       if (event.getExitCode() == 1 && myBuildingProjectIndex > 0) {
-        if (myBuildingProjectIndex == 1 && !hasResumeFromParameter(myRunConfiguration)) {
+        if (myBuildingProjectIndex == 1 && !hasResumeFromParameter(myRunConfiguration.getRunnerParameters())) {
           return;
         }
 
@@ -327,7 +340,8 @@ public class MavenResumeAction extends AnAction {
             myState = STATE_WAIT_FOR_BUILD;
           }
         }
-        case STATE_WTF -> { }
+        case STATE_WTF -> {
+        }
         default -> throw new IllegalStateException();
       }
     }
@@ -356,7 +370,7 @@ public class MavenResumeAction extends AnAction {
         if (myContext.getStartedProjects().isEmpty()) {
           return;
         }
-        if (myContext.getStartedProjects().size() == 1 && !hasResumeFromParameter(myRunConfiguration)) {
+        if (myContext.getStartedProjects().size() == 1 && !hasResumeFromParameter(myRunConfiguration.getRunnerParameters())) {
           return;
         }
 

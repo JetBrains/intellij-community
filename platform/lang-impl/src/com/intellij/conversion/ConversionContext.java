@@ -25,7 +25,10 @@ public interface ConversionContext {
    */
   @Nullable Path getSettingsBaseDir();
 
-  @NotNull ComponentManagerSettings getProjectSettings();
+  /**
+   * @return .ipr file for a file-based storage scheme or {@code null} for directory-based scheme
+   */
+  @Nullable ComponentManagerSettings getProjectSettings();
 
   WorkspaceSettings getWorkspaceSettings() throws CannotConvertException;
 

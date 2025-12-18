@@ -10,12 +10,12 @@ import com.intellij.testFramework.junit5.fixture.*
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.sse.SSE
 import io.ktor.client.request.header
-import io.modelcontextprotocol.kotlin.sdk.CallToolResultBase
-import io.modelcontextprotocol.kotlin.sdk.Implementation
-import io.modelcontextprotocol.kotlin.sdk.TextContent
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.SseClientTransport
 import org.junit.jupiter.api.Assertions.assertEquals
+import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
+import io.modelcontextprotocol.kotlin.sdk.types.Implementation
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeAll
 import org.junit.platform.commons.annotation.Testable
@@ -76,8 +76,8 @@ abstract class McpToolsetTestBase {
     }
   }
 
-  protected val CallToolResultBase.textContent: TextContent get() = content.firstOrNull() as? TextContent
-                                                                    ?: fail("Tool call result should be TextContent")
+  protected val CallToolResult.textContent: TextContent get() = content.firstOrNull() as? TextContent
+                                                                ?: fail("Tool call result should be TextContent")
   protected suspend fun testMcpTool(
     toolName: String,
     input: kotlinx.serialization.json.JsonObject,
@@ -93,7 +93,7 @@ abstract class McpToolsetTestBase {
   protected suspend fun testMcpTool(
     toolName: String,
     input: kotlinx.serialization.json.JsonObject,
-    resultChecker: (CallToolResultBase) -> Unit,
+    resultChecker: (CallToolResult) -> Unit,
   ) {
     withConnection { client ->
       // Call the tool with the provided input

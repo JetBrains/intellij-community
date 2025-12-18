@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
@@ -516,6 +516,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     sink.set(CommonDataKeys.PROJECT, myProject);
     sink.set(SELECTED_ITEM_INFO, onlyItem);
     sink.set(PlatformCoreDataKeys.SELECTED_ITEM, onlyItem == null ? null : onlyItem.getElement());
+    sink.set(CommonDataKeys.LANGUAGE, SearchEverywhereLanguage.INSTANCE);
     sink.set(PlatformCoreDataKeys.SELECTED_ITEMS,
              ContainerUtil.map2Array(selection, Object.class, SearchEverywhereFoundElementInfo::getElement));
     sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {

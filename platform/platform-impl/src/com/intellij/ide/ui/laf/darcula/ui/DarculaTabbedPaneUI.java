@@ -7,6 +7,7 @@ import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.JBTabsPaneImpl;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter2D;
@@ -300,7 +301,8 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   @Override
   protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
     InternalUICustomization customization = InternalUICustomization.getInstance();
-    if (customization != null && customization.paintTab(g, new Rectangle(x, y, w, h), tabIndex == hoverTab, isSelected)) {
+    if (customization != null && customization.paintTab(g, JBTabsPaneImpl.swingConstantToEnum(tabPlacement), new Rectangle(x, y, w, h),
+                                                        tabIndex == hoverTab, isSelected)) {
       return;
     }
 

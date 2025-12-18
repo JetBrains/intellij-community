@@ -168,6 +168,9 @@ sealed class IdeaPluginDescriptorImpl(
       }
     }
 
+    private val ULTIMATE_PLUGIN_ID = PluginId.getId("com.intellij.modules.ultimate")
+    private val DATABASE_PLUGIN_ID = PluginId.getId("com.intellij.database")
+
     @JvmStatic
     protected fun convertDependencies(dependencies: List<DependenciesElement>, parent: PluginMainDescriptor?): ModuleDependencies {
       if (dependencies.isEmpty()) {
@@ -193,6 +196,9 @@ sealed class IdeaPluginDescriptorImpl(
           }
           else -> LOG.error("Unknown dependency type: $dep")
         }
+      }
+      if (PlatformUtils.isPyCharmPro() && parent?.pluginId == DATABASE_PLUGIN_ID) {
+        pluginDeps.add(ULTIMATE_PLUGIN_ID)
       }
       return ModuleDependencies(moduleDeps, pluginDeps)
     }

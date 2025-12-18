@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 public class GitScriptGenerator extends ScriptGeneratorImpl {
+  @Nullable
   private final WSLDistribution myWSLDistribution;
 
 
@@ -27,10 +28,6 @@ public class GitScriptGenerator extends ScriptGeneratorImpl {
     else {
       myWSLDistribution = null;
     }
-  }
-
-  public GitScriptGenerator(@Nullable WSLDistribution wslDistribution) {
-    myWSLDistribution = wslDistribution;
   }
 
   @Override

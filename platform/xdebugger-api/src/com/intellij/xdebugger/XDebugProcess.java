@@ -295,6 +295,11 @@ public abstract class XDebugProcess {
     return frame == null ? null : frame.getEvaluator();
   }
 
+  @ApiStatus.Internal
+  public XDebugSessionEventsProvider getSessionEventsProvider() {
+    return null;
+  }
+
   /**
    * Whether the "isShowLibraryStackFrames" setting is respected.
    * If true, the ShowLibraryFramesAction will be shown, for example.

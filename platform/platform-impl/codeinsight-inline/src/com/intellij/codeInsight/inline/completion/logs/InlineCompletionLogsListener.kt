@@ -20,6 +20,7 @@ import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.TOTAL_INSER
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.WAS_SHOWN
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsUtils.isLoggable
+import com.intellij.codeInsight.inline.completion.logs.StartingLogs.COMPLETION_ID
 import com.intellij.codeInsight.inline.completion.logs.StartingLogs.EDITOR_TYPE
 import com.intellij.codeInsight.inline.completion.logs.StartingLogs.FILE_LANGUAGE
 import com.intellij.codeInsight.inline.completion.logs.StartingLogs.INLINE_API_PROVIDER
@@ -74,6 +75,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     val container = InlineCompletionLogsContainer.create(event.request.editor)
     container.addProject(event.request.editor.project)
     container.add(REQUEST_ID with event.request.requestId)
+    container.add(COMPLETION_ID with event.request.requestId.toString())
     container.add(REQUEST_EVENT with event.request.event.javaClass)
     container.add(EDITOR_TYPE with InlineCompletionEditorType.get(event.request.editor))
     container.add(INLINE_API_PROVIDER with event.provider)
@@ -216,6 +218,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
 
 private object StartingLogs : PhasedLogs(Phase.INLINE_API_STARTING) {
   val REQUEST_ID = register(EventFields.Long("request_id", "Unique request id for the inline completion session"))
+  val COMPLETION_ID = register(EventFields.AnonymizedField("completion_id", "Unique request id for the inline completion session"))
   val REQUEST_EVENT = register(EventFields.Class("request_event", "Type of the event that caused the request for the inline completion session"))
   val EDITOR_TYPE = register(EventFields.Enum<InlineCompletionEditorType>("editor_type", "Type of the editor"))
   val INLINE_API_PROVIDER = register(EventFields.Class("inline_api_provider", "Type of the inline completion provider that was used for the request"))

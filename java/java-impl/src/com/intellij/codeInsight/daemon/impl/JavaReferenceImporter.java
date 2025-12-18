@@ -42,6 +42,7 @@ public final class JavaReferenceImporter implements ReferenceImporter {
     List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiFile, startOffset, endOffset);
     for (PsiElement element : elements) {
       if (element instanceof PsiJavaCodeReferenceElement ref) {
+        if (ref.resolve() != null) continue;
         ImportClassFix fix = new ImportClassFix(ref);
         if (fix.isAvailable(psiFile.getProject(), null, psiFile)) {
           return fix;

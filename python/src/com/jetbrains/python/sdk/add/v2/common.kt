@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -25,11 +26,17 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
+import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
+import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
+import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
+import com.intellij.python.community.impl.uv.common.icons.PythonCommunityImplUVCommonIcons
 import com.intellij.python.hatch.icons.PythonHatchIcons
+import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
@@ -42,12 +49,13 @@ import com.jetbrains.python.parser.icons.PythonParserIcons
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
+import com.jetbrains.python.sdk.configuration.PIPENV_TOOL_ID
+import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
-import com.jetbrains.python.sdk.poetry.POETRY_ICON
-import com.jetbrains.python.sdk.uv.UV_ICON
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.PythonInterpreterInstallationIdsHolder.Companion.PYTHON_INSTALLATION_INTERRUPTED
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
@@ -56,6 +64,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import javax.swing.Icon
 
 abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInterpreterModel<P>) {
@@ -65,6 +74,9 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
 
   internal val propertyGraph
     get() = model.propertyGraph
+
+  protected abstract val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?>?
+  protected abstract val toolExecutablePersister: suspend (P) -> Unit
 
   abstract fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor)
   abstract fun onShown(scope: CoroutineScope)
@@ -77,6 +89,7 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
   protected abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk>
 
   protected suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+    savePathToExecutableToProperties(null)
     val sdk = getOrCreateSdk(moduleOrProject).getOr { return it }
 
     moduleOrProject.project.excludeInnerVirtualEnv(sdk)
@@ -101,6 +114,17 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
                                   TaskCancellation.cancellable()) {
       setupSdk(moduleOrProject)
     }
+  }
+
+  /**
+   * Saves the provided path to an executable in the properties of the environment
+   *
+   * @param [pathHolder] The path holder of the path to the executable that needs to be saved. This may be null when we try to find the tool automatically.
+   */
+  protected suspend fun savePathToExecutableToProperties(pathHolder: P?) {
+    val savingPath = pathHolder ?: toolExecutable?.get()?.pathHolder ?: return
+    if (!model.fileSystem.isLocal) return
+    toolExecutablePersister(savingPath)
   }
 
   open suspend fun createPythonModuleStructure(module: Module): PyResult<Unit> = Result.success(Unit)
@@ -137,17 +161,18 @@ abstract class PythonExistingEnvironmentConfigurator<P : PathHolder>(model: Pyth
 
 
 enum class PythonSupportedEnvironmentManagers(
+  val toolId: ToolId,
   val nameKey: String,
   val icon: Icon,
   val isFSSupported: (FileSystem<*>) -> Boolean = { (it as? FileSystem.Eel)?.eelApi == localEel },
 ) {
-  VIRTUALENV("sdk.create.custom.virtualenv", PythonIcons.Python.Virtualenv, { true }),
-  CONDA("sdk.create.custom.conda", PythonIcons.Python.Anaconda, { true }),
-  POETRY("sdk.create.custom.poetry", POETRY_ICON),
-  PIPENV("sdk.create.custom.pipenv", PIPENV_ICON),
-  UV("sdk.create.custom.uv", UV_ICON),
-  HATCH("sdk.create.custom.hatch", PythonHatchIcons.Logo, { it is FileSystem.Eel }),
-  PYTHON("sdk.create.custom.python", PythonParserIcons.PythonFile, { true })
+  VIRTUALENV(VENV_TOOL_ID, "sdk.create.custom.virtualenv", PythonIcons.Python.Virtualenv, { true }),
+  CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonIcons.Python.Anaconda, { true }),
+  POETRY(POETRY_TOOL_ID, "sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry),
+  PIPENV(PIPENV_TOOL_ID, "sdk.create.custom.pipenv", PIPENV_ICON),
+  UV(UV_TOOL_ID, "sdk.create.custom.uv", PythonCommunityImplUVCommonIcons.UV),
+  HATCH(HATCH_TOOL_ID, "sdk.create.custom.hatch", PythonHatchIcons.Logo, { it is FileSystem.Eel }),
+  PYTHON(VENV_TOOL_ID, "sdk.create.custom.python", PythonParserIcons.PythonFile, { true })
 }
 
 enum class PythonInterpreterSelectionMode(val nameKey: String) {
@@ -306,5 +331,12 @@ internal suspend fun BinaryToExec.getToolVersion(toolVersionPrefix: String): PyR
   else {
     val versionPresentation = StringUtil.shortenTextWithEllipsis(version, 250, 0, true)
     PyResult.localizedError(message("selected.tool.is.wrong", toolVersionPrefix.trim(), versionPresentation))
+  }
+}
+
+internal fun savePathForEelOnly(pathHolder: PathHolder, pathPersister: (Path) -> Unit) {
+  when (pathHolder) {
+    is PathHolder.Eel -> pathPersister(pathHolder.path)
+    is PathHolder.Target -> Unit
   }
 }

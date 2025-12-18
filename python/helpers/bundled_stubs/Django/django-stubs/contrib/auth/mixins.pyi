@@ -6,7 +6,7 @@ from django.http.response import HttpResponseBase, HttpResponseRedirect
 from django.utils.functional import _StrOrPromise
 
 class AccessMixin:
-    login_url: Any
+    login_url: _StrOrPromise | None
     permission_denied_message: _StrOrPromise
     raise_exception: bool
     redirect_field_name: Any

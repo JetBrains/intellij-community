@@ -6,17 +6,15 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import com.intellij.python.common.tools.ToolId
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.cli.HatchEnvironment
 import com.intellij.python.hatch.getHatchService
-import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
-import com.jetbrains.python.PyToolUIInfo
-import com.jetbrains.python.ToolId
+import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.hatch.sdk.createSdk
-import com.jetbrains.python.projectModel.hatch.HATCH_TOOL_ID
 import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 import org.jetbrains.annotations.ApiStatus
@@ -27,16 +25,13 @@ class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
     private val LOGGER = Logger.getInstance(PyHatchSdkConfiguration::class.java)
   }
 
-  override val toolInfo: PyToolUIInfo = PyToolUIInfo("Hatch", PythonSdkUIIcons.Tools.Hatch)
   override val toolId: ToolId = HATCH_TOOL_ID
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo,
     { checkExistence -> checkManageableEnv(module, checkExistence, true) },
   ) { envExists -> { createSdk(module, envExists) } }
 
   override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo,
     { checkExistence -> checkManageableEnv(module, checkExistence, false) },
   ) { envExists -> { createSdk(module, envExists) } }
 

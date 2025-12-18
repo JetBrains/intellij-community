@@ -14,7 +14,7 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
-import com.intellij.python.community.impl.poetry.poetryPath
+import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.*
 import com.jetbrains.python.errorProcessing.PyResult
@@ -181,7 +181,7 @@ fun parsePoetryShow(input: String): List<PythonPackage> {
 
 @Internal
 suspend fun poetryShowOutdated(sdk: Sdk): PyResult<Map<String, PythonOutdatedPackage>> {
-  val output = runPoetryWithSdk(sdk, "show", "--outdated").getOr { return it }
+  val output = runPoetryWithSdk(sdk, "show", "--all", "--outdated").getOr { return it }
 
   return parsePoetryShowOutdated(output).let { PyResult.success(it) }
 }

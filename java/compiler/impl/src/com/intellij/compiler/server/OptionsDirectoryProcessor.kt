@@ -16,7 +16,7 @@ import kotlin.io.path.*
 private val ENVIRONMENT_ASSOCIATED_FILENAMES = setOf("jdk.table.xml", "applicationLibraries.xml")
 
 internal fun transferOptionsToRemote(optionsDir: Path, eelDescriptor: EelDescriptor): Path {
-  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation", true)) {
+  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) {
     return transferLocalContentToRemote(optionsDir, EelPathUtils.TransferTarget.Temporary(eelDescriptor))
   }
   val machine = eelDescriptor.machine

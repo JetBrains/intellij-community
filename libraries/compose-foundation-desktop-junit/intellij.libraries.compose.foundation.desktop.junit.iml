@@ -12,20 +12,23 @@
     <orderEntry type="module" module-name="intellij.libraries.jbr" scope="TEST" />
     <orderEntry type="module-library" exported="" scope="TEST">
       <library name="org.jetbrains.compose.ui.ui.test.junit4.desktop" type="repository">
-        <properties maven-id="org.jetbrains.compose.ui:ui-test-junit4-desktop:1.9.0-beta03">
+        <properties maven-id="org.jetbrains.compose.ui:ui-test-junit4-desktop:1.10.0-beta01">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.9.0-beta03/ui-test-junit4-desktop-1.9.0-beta03.jar">
-              <sha256sum>7d1244618abff60a17ba0c596cb13addeff74664acc8400d2b785bbd8ee66b52</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.10.0-beta01/ui-test-junit4-desktop-1.10.0-beta01.jar">
+              <sha256sum>de2f63543b8f646b85c789e3bf53121e4e6d89d3c7c0afc0358954cc27316a71</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.9.0-beta03/ui-test-desktop-1.9.0-beta03.jar">
-              <sha256sum>f25e0e5b778c6cb67c66f5bbb4c327f103ebddeac6ddf09a6f48bc900577e672</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.10.0-beta01/ui-test-desktop-1.10.0-beta01.jar">
+              <sha256sum>65e46ce4ce2291ed0cead9d184ef96d8e10e31770e23901f71deadde6be72b2e</sha256sum>
             </artifact>
           </verification>
           <exclude>
             <dependency maven-id="androidx.annotation:annotation-jvm" />
+            <dependency maven-id="androidx.collection:collection-jvm" />
+            <dependency maven-id="androidx.lifecycle:lifecycle-viewmodel-desktop" />
+            <dependency maven-id="androidx.navigationevent:navigationevent-desktop" />
             <dependency maven-id="com.google.truth:truth" />
             <dependency maven-id="junit:junit" />
-            <dependency maven-id="androidx.collection:collection-jvm" />
+            <dependency maven-id="org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose-desktop" />
             <dependency maven-id="org.jetbrains.compose.runtime:runtime-desktop" />
             <dependency maven-id="org.jetbrains.compose.ui:ui-desktop" />
             <dependency maven-id="org.jetbrains.compose.ui:ui-text-desktop" />
@@ -39,16 +42,16 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.9.0-beta03/ui-test-junit4-desktop-1.9.0-beta03.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.9.0-beta03/ui-test-desktop-1.9.0-beta03.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.10.0-beta01/ui-test-junit4-desktop-1.10.0-beta01.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.10.0-beta01/ui-test-desktop-1.10.0-beta01.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.9.0-beta03/ui-test-junit4-desktop-1.9.0-beta03-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.9.0-beta03/ui-test-desktop-1.9.0-beta03-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.10.0-beta01/ui-test-junit4-desktop-1.10.0-beta01-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.10.0-beta01/ui-test-desktop-1.10.0-beta01-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.9.0-beta03/ui-test-junit4-desktop-1.9.0-beta03-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.9.0-beta03/ui-test-desktop-1.9.0-beta03-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.10.0-beta01/ui-test-junit4-desktop-1.10.0-beta01-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.10.0-beta01/ui-test-desktop-1.10.0-beta01-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

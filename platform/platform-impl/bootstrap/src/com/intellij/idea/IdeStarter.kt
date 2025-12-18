@@ -158,6 +158,8 @@ open class IdeStarter : ModernApplicationStarter() {
         return@span true
       }
 
+      FUSProjectHotStartUpMeasurer.reportWelcomeScreenShown()
+
       val customHandler = findNoProjectStateHandler()
       if (customHandler == null) {
         return@span showWelcomeFrame(publisher)

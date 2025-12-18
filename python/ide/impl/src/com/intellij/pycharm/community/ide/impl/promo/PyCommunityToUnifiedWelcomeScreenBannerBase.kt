@@ -6,6 +6,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.BannerStartPagePromoter
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.ui.JBColor
+import com.intellij.ui.RoundedLineBorder
 import com.intellij.util.SVGLoader
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
@@ -38,6 +40,7 @@ abstract class PyCommunityToUnifiedWelcomeScreenBannerBase : BannerStartPageProm
     val backgroundPanel = BackgroundPanel(BorderLayout(), backgroundImage)
     backgroundPanel.add(panel, BorderLayout.CENTER)
     backgroundPanel.isOpaque = false
+    backgroundPanel.border = RoundedLineBorder(JBColor.border(), 16, 1)
     return backgroundPanel
   }
 

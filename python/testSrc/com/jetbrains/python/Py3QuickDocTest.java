@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -173,6 +174,7 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   }
 
   public void testPropOldGetter() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
     checkHTMLOnly();
   }
 

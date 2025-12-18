@@ -20,7 +20,7 @@ from django.template.base import Template
 from django.test.client import AsyncClient, Client
 from django.test.html import Element
 from django.test.utils import CaptureQueriesContext, ContextList
-from django.utils.functional import classproperty
+from django.utils.functional import _StrOrPromise, classproperty
 from typing_extensions import Self
 
 def to_list(value: Any) -> list[Any]: ...
@@ -78,14 +78,14 @@ class SimpleTestCase(unittest.TestCase):
     ) -> None: ...
     def assertURLEqual(
         self,
-        url1: str | Any,  # Any for reverse_lazy() support
-        url2: str | Any,
+        url1: _StrOrPromise,
+        url2: _StrOrPromise,
         msg_prefix: str = ...,
     ) -> None: ...
     def assertContains(
         self,
         response: HttpResponseBase,
-        text: bytes | int | str,
+        text: bytes | int | _StrOrPromise,
         count: int | None = ...,
         status_code: int = ...,
         msg_prefix: str = ...,
@@ -94,7 +94,7 @@ class SimpleTestCase(unittest.TestCase):
     def assertNotContains(
         self,
         response: HttpResponseBase,
-        text: bytes | str,
+        text: bytes | int | _StrOrPromise,
         status_code: int = ...,
         msg_prefix: str = ...,
         html: bool = ...,
@@ -249,4 +249,4 @@ class SerializeMixin:
 
 def connections_support_transactions(aliases: Iterable[str] | None = ...) -> bool: ...
 
-__all__ = ("TestCase", "TransactionTestCase", "SimpleTestCase", "skipIfDBFeature", "skipUnlessDBFeature")
+__all__ = ("SimpleTestCase", "TestCase", "TransactionTestCase", "skipIfDBFeature", "skipUnlessDBFeature")

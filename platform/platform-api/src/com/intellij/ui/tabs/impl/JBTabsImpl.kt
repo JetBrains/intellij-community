@@ -2234,14 +2234,9 @@ open class JBTabsImpl internal constructor(
     for (tabInfo in hiddenInfos.keys) {
       reset(tabInfo = tabInfo, resetLabels = resetLabels)
     }
-    for (eachDeferred in deferredToRemove.keys) {
-      resetLayout(eachDeferred as JComponent)
-    }
   }
 
   private fun reset(tabInfo: TabInfo, resetLabels: Boolean) {
-    val c = tabInfo.component
-    resetLayout(c)
     resetLayout(infoToForeToolbar.get(tabInfo))
     resetLayout(infoToToolbar.get(tabInfo))
     if (resetLabels) {
@@ -2260,7 +2255,7 @@ open class JBTabsImpl internal constructor(
       }
       return
     }
-    tabPainter.fillBackground((g as Graphics2D), Rectangle(0, 0, width, height))
+    tabPainter.fillBackground(this, (g as Graphics2D), Rectangle(0, 0, width, height))
     drawBorder(g)
     drawToolbarSeparator(g)
   }

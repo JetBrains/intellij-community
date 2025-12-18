@@ -187,6 +187,7 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
       roamingType = roamingType,
       pathMacroManager = macroSubstitutor,
       provider = provider,
+      listener = null,
       controller = null,
     )
   }

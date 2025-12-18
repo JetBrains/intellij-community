@@ -1148,7 +1148,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     Map<String, ScopeOwner> scopesToSkip = StreamEx.of(getInstanceAttributes())
       .filter(e -> e.getName() != null)
       .mapToEntry(e -> e.getName(), e -> ScopeUtil.getScopeOwner(e))
-      .distinct()
+      .distinctKeys()
       .toMap();
     attributes = collectInstanceAttributes(scopesToSkip);
     myFallbackInstanceAttributes = attributes;

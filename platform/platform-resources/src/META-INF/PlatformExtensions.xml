@@ -1,6 +1,9 @@
 <!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.execution.wsl.GatewayNativeWslProjectOpener"
+                        serviceImplementation="com.intellij.execution.wsl.GatewayNativeWslProjectOpenerImpl"/>
+
     <applicationService
       serviceInterface="com.intellij.diagnostic.StartUpPerformanceService"
       serviceImplementation="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.IdeStartUpPerformanceService"
@@ -8,7 +11,7 @@
     />
 
     <applicationService
-            serviceInterface="com.intellij.openapi.application.impl.TransferredWriteActionService"
+            serviceInterface="com.intellij.util.concurrency.TransferredWriteActionService"
             serviceImplementation="com.intellij.openapi.application.impl.TransferredWriteActionServiceImpl"
     />
 
@@ -917,6 +920,14 @@ Android Studio: don't register IntelliJ fork -->
     />
 
     <typedHandler implementation="com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypedHandlerDelegate"/>
+    <inline.completion.suppress.state.supplier
+      implementation="com.intellij.codeInsight.inline.completion.suppress.InlineCompletionSuppressStateByInlinePromptSupplier"/>
+    <inline.edit.awaiter implementation="com.intellij.codeInsight.inline.edit.InlineCompletionAwaiter"/>
+    <editorActionHandler
+      action="CallInlineCompletionAction"
+      id="inline.edit.no.suggestions.hint"
+      order="last"
+      implementationClass="com.intellij.codeInsight.inline.completion.action.CallInlineCompletionAction$ShowNoSuggestionsHintIfNeededHandler"/>
 
     <registryKey key="editor.action.caretMovement.UpDownIgnoreSelectionBoundaries" defaultValue="false"
                  description="Allows to restore the legacy behavior of Up/Down w.r.t. selection boundaries.\n\
@@ -1556,8 +1567,13 @@ Android Studio: b/285867050 -->
     <applicationService serviceInterface="com.intellij.ui.AutoScrollToSourceTaskManager"
                         serviceImplementation="com.intellij.ui.AutoScrollToSourceTaskManagerImpl"/>
 
+    <applicationService serviceInterface="com.intellij.logCollector.CollectZippedLogsService"
+                        serviceImplementation="com.intellij.platform.ide.impl.logsUploader.CollectZippedLogsServiceImpl"/>
+
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService" headlessImplementation=""/>
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerProjectActivity" order="last"/>
+
+    <registryKey key="ide.enable.notification.trace.data.sharing" defaultValue="true" description="Enables notification about sharing trace data"/>
 
     <applicationService serviceImplementation="com.intellij.usages.impl.UsageFilteringRuleStateService" client="all"/>
 
@@ -2025,6 +2041,9 @@ Android Studio: b/285867050 -->
     <registryKey key="ide.suppress.low.memory.notifications.when.dumb" defaultValue="false"
                  description="Disables Low Memory notifications during indexing for the sake of less false-positive detection for users" />
     <configFolderChangedListener implementation="com.intellij.configurationStore.ComponentStoreImplReloadListener"/>
+
+    <applicationService serviceInterface="com.intellij.configurationStore.defaults.DefaultSettingsService"
+                        serviceImplementation="com.intellij.configurationStore.defaults.DefaultSettingsServiceImpl" />
   </extensions>
 
   <applicationListeners>

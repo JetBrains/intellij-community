@@ -19,12 +19,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.*
@@ -369,7 +364,9 @@ object UpdateChecker {
     for (host in RepositoryHelper.getPluginHosts()) {
       try {
         if (host == null && ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
-          findUpdatesInJetBrainsRepository(updateable, toUpdate, toUpdateDisabled, buildNumber, state, indicator)
+          // consider it as updateCheck only if we collected plugins here, and they are not passed from outside
+          findUpdatesInJetBrainsRepository(updateable, toUpdate, toUpdateDisabled, buildNumber, state, indicator,
+                                           updateCheck = updateablePluginsMap == null)
         }
         else {
           RepositoryHelper.loadPluginModels(host, buildNumber, indicator).forEach { model ->
@@ -468,10 +465,11 @@ object UpdateChecker {
     buildNumber: BuildNumber?,
     state: InstalledPluginsState,
     indicator: ProgressIndicator?,
+    updateCheck: Boolean = false,
   ) {
     val marketplacePluginIds = MarketplaceRequests.getInstance().getMarketplacePlugins(indicator)
     val idsToUpdate = updateable.keys.filter { it in marketplacePluginIds }.toSet()
-    val updates = MarketplaceRequests.checkLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
+    val updates = MarketplaceRequests.checkLastCompatiblePluginUpdate(idsToUpdate, buildNumber, false, updateCheck)
     for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString }
       if (lastUpdate != null &&

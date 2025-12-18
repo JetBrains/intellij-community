@@ -891,6 +891,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(CommonDataKeys.LANGUAGE, FindInFilesLanguage.INSTANCE);
     Map<Integer, Usage> usages = getSelectedUsages();
     if (usages == null) return;
     sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> usages.values().stream()

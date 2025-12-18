@@ -129,7 +129,7 @@ private fun isApplicationLevelFile(filePath: String): Boolean = Path.of(filePath
  * @see PathManager.getOptionsDir
  */
 private fun getCollapsedPath(filePath: String): String =
-  if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
+  if (Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) {
     PathManager.getOptionsDir().relativize(Path.of(filePath)).toString()
   }
   else {

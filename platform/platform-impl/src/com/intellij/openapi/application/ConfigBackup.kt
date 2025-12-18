@@ -16,7 +16,7 @@ import kotlin.io.path.*
 @ApiStatus.Internal
 class ConfigBackup(private val configDir: Path) {
   @Throws(IOException::class)
-  fun moveToBackup(dirToMove: Path) {
+  fun moveToBackup(dirToMove: Path): Path {
     val backupDir = getBackupDir(configDir)
     if (backupDir.exists()) {
       migratePreviousBackupIfExists(backupDir)
@@ -27,6 +27,8 @@ class ConfigBackup(private val configDir: Path) {
     LOG.info("Move backup from $dirToMove to $backupPath")
     NioFiles.copyRecursively(dirToMove, backupPath)
     NioFiles.deleteRecursively(dirToMove)
+
+    return backupPath
   }
 
   private fun migratePreviousBackupIfExists(backupDir: Path) {

@@ -27,6 +27,9 @@ internal data class CacheEntry(
   @JvmField val sha256: String,
 )
 
+/**
+ * @param isPrivate is set according to a heuristic, see [org.jetbrains.intellij.build.bazel.loadJarRepositories]
+ */
 internal data class JarRepository(val url: String, val isPrivate: Boolean) {
   init {
     check(!url.endsWith("/")) {
@@ -212,7 +215,16 @@ internal class UrlCache(val modulesBazel: List<Path>, val repositories: List<Jar
       ?.followRedirectsIfNeeded()
     val statusCode = response?.statusCode()
     if (statusCode == 401) {
-      throw IllegalStateException("Not authorized: $url")
+      throw IllegalStateException(buildString {
+        append("Not authorized: $url")
+        if (!repo.isPrivate) {
+          append(
+            ". If that remote is intended to be private, " +
+            "please make sure that the corresponding <remote-repository> element " +
+            "in .idea/jarRepositories.xml has substring 'private' in its id"
+          )
+        }
+      })
     }
     return statusCode == 200
   }

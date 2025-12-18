@@ -187,6 +187,7 @@ abstract class ModuleManagerBridgeImpl(
     unloadedEntities: List<ModuleEntity>,
     targetBuilder: MutableEntityStorage?,
     initializeFacets: Boolean,
+    globalWsmAppliedToProjectWsm: CompletableDeferred<Project>?,
   ): Unit = loadAllModulesTimeMs.addMeasuredTime {
     LOG.debug { "Loading modules for ${loadedEntities.size} entities: [${loadedEntities.joinToString { it.name }}]" }
 
@@ -218,7 +219,7 @@ abstract class ModuleManagerBridgeImpl(
     // Facets that are loaded from the cache do not generate "EntityAdded" event and aren't initialized
     // We initialize the facets manually here (after modules loading).
     if (initializeFacets) {
-      initFacets(result)
+      initFacets(result, globalWsmAppliedToProjectWsm)
     }
 
     coroutineScope.launch {
@@ -247,7 +248,7 @@ abstract class ModuleManagerBridgeImpl(
     }
   }
 
-  protected open fun initFacets(modules: Collection<Pair<ModuleEntity, ModuleBridge>>) {
+  protected open fun initFacets(modules: Collection<Pair<ModuleEntity, ModuleBridge>>, globalWsmAppliedToProjectWsm: CompletableDeferred<Project>?) {
   }
 
   final override fun calculateUnloadModules(

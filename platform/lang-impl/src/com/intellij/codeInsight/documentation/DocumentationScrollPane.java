@@ -56,8 +56,6 @@ public final class DocumentationScrollPane extends JBScrollPane {
     };
     panel.add(editorPane, BorderLayout.CENTER);
     panel.add(locationLabel, BorderLayout.SOUTH);
-    panel.setOpaque(true);
-    locationLabel.setOpaque(true);
     setViewportView(panel);
   }
 

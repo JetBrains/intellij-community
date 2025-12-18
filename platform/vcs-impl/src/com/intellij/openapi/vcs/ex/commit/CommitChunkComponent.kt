@@ -239,6 +239,7 @@ private class CommitChunkWorkflow(project: Project) : NonModalCommitWorkflow(pro
 
   override val isDefaultCommitEnabled: Boolean
     get() = true
+  override val canSkipCommitChecksInDumbMode: Boolean = true
 
   override fun performCommit(sessionInfo: CommitSessionInfo) {
     val committer = LocalChangesCommitter(project, state, commitContext)

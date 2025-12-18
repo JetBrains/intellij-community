@@ -226,7 +226,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   private fun willSkipPostCommitChecks() = isCommitChecksResultUpToDate == RecentCommitChecks.POST_FAILED
 
-  private fun willSkipSmartCommitChecks() = smartChecksWereBlocked
+  private fun canSkipSmartCommitChecks() = smartChecksWereBlocked || workflow.canSkipCommitChecksInDumbMode
 
   protected fun resetCommitChecksResult() {
     isCommitChecksResultUpToDate = RecentCommitChecks.UNKNOWN
@@ -321,12 +321,12 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       val skipModificationCommitChecks = !isOnlyRunCommitChecks && willSkipModificationCommitChecks()
       val skipLateCommitChecks = !isOnlyRunCommitChecks && willSkipLateCommitChecks()
       val skipPostCommitChecks = !isOnlyRunCommitChecks && willSkipPostCommitChecks()
-      val allowSkippingSmartCommitChecks = willSkipSmartCommitChecks()
+      val canSkipSmartCommitChecks = canSkipSmartCommitChecks()
       resetCommitChecksResult()
 
       ui.commitProgressUi.runWithProgress(isOnlyRunCommitChecks) {
         val failure = runNonModalBeforeCommitChecks(commitInfo, skipEarlyCommitChecks, skipModificationCommitChecks,
-                                                    skipLateCommitChecks, skipPostCommitChecks, allowSkippingSmartCommitChecks)
+                                                    skipLateCommitChecks, skipPostCommitChecks, canSkipSmartCommitChecks)
         handleCommitProblem(failure, isOnlyRunCommitChecks)
       }
     }
@@ -340,7 +340,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     skipModificationCommitChecks: Boolean,
     skipLateCommitChecks: Boolean,
     skipPostCommitChecks: Boolean,
-    allowSkippingSmartCommitChecks: Boolean,
+    canSkipSmartCommitChecks: Boolean,
   ): NonModalCommitChecksFailure? = reportSequentialProgress { reporter ->
     try {
       val handlers = workflow.commitHandlers
@@ -365,7 +365,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         }?.let { return it }
       }
 
-      if (!allowSkippingSmartCommitChecks && dumbModeFailure != null) {
+      if (!canSkipSmartCommitChecks && dumbModeFailure != null) {
         return dumbModeFailure
       }
 

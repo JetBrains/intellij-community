@@ -4,9 +4,10 @@ from typing import Any, Literal, NamedTuple
 
 from django.db.backends.utils import CursorWrapper
 from django.db.models import Field, FilteredRelation, Model, Q
-from django.db.models.expressions import BaseExpression, Combinable, Expression, OrderBy
+from django.db.models.expressions import BaseExpression, Combinable, Expression
 from django.db.models.lookups import Lookup, Transform
 from django.db.models.options import Options
+from django.db.models.query import _OrderByFieldName
 from django.db.models.query_utils import PathInfo
 from django.db.models.sql.datastructures import BaseTable, Join
 from django.db.models.sql.where import WhereNode
@@ -58,7 +59,7 @@ class Query(BaseExpression):
     filter_is_sticky: bool
     subquery: bool
     group_by: None | Sequence[Combinable] | Sequence[str] | Literal[True]
-    order_by: Sequence[Any]
+    order_by: Sequence[_OrderByFieldName]
     distinct: bool
     distinct_fields: tuple[str, ...]
     select: Sequence[BaseExpression]
@@ -78,7 +79,7 @@ class Query(BaseExpression):
     combined_queries: tuple
     extra_select_mask: set[str] | None
     extra_tables: tuple
-    extra_order_by: Sequence[Any]
+    extra_order_by: Sequence[_OrderByFieldName]
     deferred_loading: tuple[set[str] | frozenset[str], bool]
     explain_query: bool
     explain_format: str | None
@@ -188,9 +189,9 @@ class Query(BaseExpression):
     def clear_select_clause(self) -> None: ...
     def clear_select_fields(self) -> None: ...
     def set_select(self, cols: list[Expression]) -> None: ...
-    def add_distinct_fields(self, *field_names: Any) -> None: ...
+    def add_distinct_fields(self, *field_names: str) -> None: ...
     def add_fields(self, field_names: Iterable[str], allow_m2m: bool = True) -> None: ...
-    def add_ordering(self, *ordering: str | OrderBy) -> None: ...
+    def add_ordering(self, *ordering: _OrderByFieldName) -> None: ...
     def clear_where(self) -> None: ...
     def clear_ordering(self, force: bool = False, clear_default: bool = True) -> None: ...
     def set_group_by(self, allow_aliases: bool = True) -> None: ...
@@ -202,7 +203,7 @@ class Query(BaseExpression):
         where: Sequence[str] | None,
         params: Sequence[str] | None,
         tables: Sequence[str] | None,
-        order_by: Sequence[str] | None,
+        order_by: Sequence[_OrderByFieldName] | None,
     ) -> None: ...
     def clear_deferred_loading(self) -> None: ...
     def add_deferred_loading(self, field_names: Iterable[str]) -> None: ...

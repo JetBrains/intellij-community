@@ -164,11 +164,13 @@ class VcsLogAsyncChangesTreeModel(
     }
     else changesState
 
-    return if (state is ChangesState.Changes) {
-      buildTreeModelSync(state.changes, state.changesToParents, affectedPaths, isShowOnlyAffectedChanges, isShowChangesFromParents, grouping)
+    if (state is ChangesState.Changes) {
+      val treeModel = buildTreeModelSync(state.changes, state.changesToParents, affectedPaths, isShowOnlyAffectedChanges, isShowChangesFromParents, grouping)
+      val modifiedTreeBuilder = VcsLogChangesTreeModifier.modifyTreeModelBuilder(treeModel, state)
+      return modifiedTreeBuilder.build()
     }
     else {
-      TreeModelBuilder.buildEmpty()
+      return TreeModelBuilder.buildEmpty()
     }
   }
 
@@ -218,7 +220,7 @@ class VcsLogAsyncChangesTreeModel(
     showOnlyAffectedChanges: Boolean,
     showChangesFromParents: Boolean,
     grouping: ChangesGroupingPolicyFactory,
-  ): DefaultTreeModel {
+  ): TreeModelBuilder {
     val changes = collectAffectedChanges(
       changes,
       affectedPaths, showOnlyAffectedChanges
@@ -244,7 +246,7 @@ class VcsLogAsyncChangesTreeModel(
         builder.insertChanges(changesFromParent, parentNode)
       }
     }
-    return builder.build()
+    return builder
   }
 
   fun interface Listener : EventListener {

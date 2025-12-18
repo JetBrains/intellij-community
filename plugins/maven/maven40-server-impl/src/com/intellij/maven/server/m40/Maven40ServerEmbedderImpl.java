@@ -462,7 +462,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigPropertiesForNestedProjectDir(file.getParentFile()));
       }
       userProperties.putAll(customProperties);
-
+      request.setPom(file);
       return request;
     }
     catch (Exception e) {

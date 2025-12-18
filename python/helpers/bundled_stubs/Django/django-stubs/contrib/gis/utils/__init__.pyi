@@ -5,4 +5,4 @@ from django.contrib.gis.utils.ogrinspect import mapping as mapping
 from django.contrib.gis.utils.ogrinspect import ogrinspect as ogrinspect
 from django.contrib.gis.utils.srs import add_srs_entry as add_srs_entry
 
-__all__ = ["add_srs_entry", "mapping", "ogrinfo", "ogrinspect", "LayerMapError", "LayerMapping"]
+__all__ = ["LayerMapError", "LayerMapping", "add_srs_entry", "mapping", "ogrinfo", "ogrinspect"]

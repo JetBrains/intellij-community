@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 
 # Mypy has special handling for functools.cached_property, reuse typeshed's definition instead of defining our own
 from functools import cached_property as cached_property
@@ -84,7 +84,7 @@ class SimpleLazyObject(LazyObject):
 _PartitionMember = TypeVar("_PartitionMember")
 
 def partition(
-    predicate: Callable[[_PartitionMember], int | bool], values: list[_PartitionMember]
+    predicate: Callable[[_PartitionMember], int | bool], values: Iterable[_PartitionMember]
 ) -> tuple[list[_PartitionMember], list[_PartitionMember]]: ...
 
 _Get = TypeVar("_Get", covariant=True)

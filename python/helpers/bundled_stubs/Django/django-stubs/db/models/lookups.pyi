@@ -1,7 +1,6 @@
 from collections.abc import Iterable, Sequence
 from typing import Any, Generic, Literal, TypeVar
 
-from django.core.exceptions import EmptyResultSet
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models.expressions import Combinable, Expression, Func
 from django.db.models.fields import BooleanField
@@ -79,8 +78,8 @@ class LessThan(FieldGetDbPrepValueMixin, BuiltinLookup[_T]): ...
 class LessThanOrEqual(FieldGetDbPrepValueMixin, BuiltinLookup[_T]): ...
 
 class IntegerFieldOverflow:
-    underflow_exception: type[EmptyResultSet]
-    overflow_exception: type[EmptyResultSet]
+    underflow_exception: type[Exception]
+    overflow_exception: type[Exception]
     def process_rhs(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...
 
 class IntegerFieldFloatRounding:

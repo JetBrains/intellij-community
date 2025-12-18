@@ -6,7 +6,7 @@ from json import JSONEncoder
 from typing import Any, Literal, NoReturn, TypeVar, overload, type_check_only
 
 from django.utils.datastructures import CaseInsensitiveMapping, _PropertyDescriptor
-from django.utils.functional import cached_property
+from django.utils.functional import _StrOrPromise, cached_property
 
 class BadHeaderError(ValueError): ...
 
@@ -132,7 +132,9 @@ class FileResponse(StreamingHttpResponse):
 
 class HttpResponseRedirectBase(HttpResponse):
     allowed_schemes: list[str]
-    def __init__(self, redirect_to: str, preserve_request: bool = False, *args: Any, **kwargs: Any) -> None: ...
+    def __init__(
+        self, redirect_to: _StrOrPromise, preserve_request: bool = False, *args: Any, **kwargs: Any
+    ) -> None: ...
     @property
     def url(self) -> str: ...
 

@@ -225,6 +225,9 @@ com.intellij.collaboration.auth.CredentialsRepository
 com.intellij.collaboration.auth.DefaultAccountHolder
 - a:getAccount():com.intellij.collaboration.auth.Account
 - a:setAccount(com.intellij.collaboration.auth.Account):V
+com.intellij.collaboration.auth.ObservableAccountsRepository
+- com.intellij.collaboration.auth.AccountsRepository
+- a:getAccountsFlow():kotlinx.coroutines.flow.StateFlow
 f:com.intellij.collaboration.auth.PasswordSafeCredentialsRepository
 - com.intellij.collaboration.auth.CredentialsRepository
 - <init>(java.lang.String,com.intellij.collaboration.auth.PasswordSafeCredentialsRepository$CredentialsMapper):V

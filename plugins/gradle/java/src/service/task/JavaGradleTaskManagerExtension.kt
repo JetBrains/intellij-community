@@ -9,6 +9,8 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.text.nullize
 import org.gradle.util.GradleVersion
@@ -18,7 +20,6 @@ import org.jetbrains.plugins.gradle.service.execution.loadIjTestLoggerInitScript
 import org.jetbrains.plugins.gradle.service.execution.loadJvmDebugInitScript
 import org.jetbrains.plugins.gradle.service.execution.loadJvmOptionsInitScript
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
-import kotlin.text.startsWith
 
 class JavaGradleTaskManagerExtension : GradleTaskManagerExtension {
 
@@ -57,7 +58,8 @@ class JavaGradleTaskManagerExtension : GradleTaskManagerExtension {
     if (debuggerDispatchPort != null) {
 
       val javaParameters = JavaParameters()
-      AsyncStacksUtils.addDebuggerAgent(javaParameters, id.findProject(), false)
+      val matchWithExecutionTarget = id.project.getEelDescriptor() != LocalEelDescriptor
+      AsyncStacksUtils.addDebuggerAgent(javaParameters, id.findProject(), false, null, matchWithExecutionTarget)
 
       val jvmArgs = javaParameters.vmParametersList.list.filterNot { it.startsWith("-agentlib:jdwp=") }
 

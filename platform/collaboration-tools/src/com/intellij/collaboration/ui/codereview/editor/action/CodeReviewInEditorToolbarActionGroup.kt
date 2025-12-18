@@ -15,10 +15,14 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 @ApiStatus.Internal
-class CodeReviewInEditorToolbarActionGroup(private val vm: CodeReviewInEditorViewModel) : ActionGroup(), DumbAware {
+class CodeReviewInEditorToolbarActionGroup(
+  private val vm: CodeReviewInEditorViewModel,
+  private val customWarningSupplier: (() -> @Nls String)? = null,
+) : ActionGroup(), DumbAware {
   private val updateAction = UpdateAction()
 
   private val disableReviewAction =
@@ -41,11 +45,6 @@ class CodeReviewInEditorToolbarActionGroup(private val vm: CodeReviewInEditorVie
       isPopupGroup = true
       putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
       putClientProperty(ActionUtil.USE_SMALL_FONT_IN_TOOLBAR, true)
-      description = CollaborationToolsBundle.message("review.editor.mode.description.title")
-      val tooltip = HelpTooltip()
-        .setTitle(CollaborationToolsBundle.message("review.editor.mode.description.title"))
-        .setDescription(CollaborationToolsBundle.message("review.editor.mode.description"))
-      putClientProperty(ActionButton.CUSTOM_HELP_TOOLTIP, tooltip)
     }
   }
 
@@ -53,10 +52,18 @@ class CodeReviewInEditorToolbarActionGroup(private val vm: CodeReviewInEditorVie
     val shown = vm.discussionsViewOption.value != DiscussionsViewOption.DONT_SHOW
     val synced = !vm.updateRequired.value
     with(e.presentation) {
+      description = CollaborationToolsBundle.message("review.editor.mode.description.title")
+      val customWarning = customWarningSupplier?.invoke()
+      val detailedDescription = customWarning ?: CollaborationToolsBundle.message("review.editor.mode.description")
+      val tooltip = HelpTooltip()
+        .setTitle(CollaborationToolsBundle.message("review.editor.mode.description.title"))
+        .setDescription(detailedDescription)
+      putClientProperty(ActionButton.CUSTOM_HELP_TOOLTIP, tooltip)
+
       if (shown) {
         text = CollaborationToolsBundle.message("review.editor.mode.title")
         putClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR, true)
-        icon = if (synced) null else getWarningIcon()
+        icon = if (customWarning != null || !synced) getWarningIcon() else null
       }
       else {
         text = null

@@ -21,6 +21,9 @@ class GradleUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
 
   override fun isBuildFile(project: Project, buildFile: VirtualFile): Boolean = buildFile.name in GradleConstants.KNOWN_GRADLE_FILES
 
+  override fun getLinkedProjectsPaths(project: Project): Set<String> =
+    GradleSettings.getInstance(project).linkedProjectsSettings.mapNotNull { it.externalProjectPath }.toSet()
+
   override fun isLinkedProject(project: Project, externalProjectPath: String): Boolean {
     val gradleSettings = GradleSettings.getInstance(project)
     val projectSettings = gradleSettings.getLinkedProjectSettings(externalProjectPath)

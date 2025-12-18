@@ -95,7 +95,7 @@ abstract class AbstractChangesBrowserFilePathNode<U>(
     }
   }
 
-  override fun getPathElementId(): String = filePath.name
+  override fun getPathElementId(): String = filePath.path
 
   override fun getFlattenedElements(): List<SerializablePathElement?>? {
     if (flattenedParents.isEmpty()) return null

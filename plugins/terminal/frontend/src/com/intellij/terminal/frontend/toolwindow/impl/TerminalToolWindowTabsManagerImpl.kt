@@ -88,6 +88,10 @@ internal class TerminalToolWindowTabsManagerImpl(
       val manager = tab.content.manager ?: error("No content manager for $tab")
       manager.removeContent(tab.content, true)
     }
+    val toolWindow = getToolWindow()
+    if (toolWindow.contentManager.isEmpty) {
+      toolWindow.hide()
+    }
     return tab.view
   }
 
@@ -346,15 +350,15 @@ internal class TerminalToolWindowTabsManagerImpl(
       ToolWindowContentUi.setAllowTabsReordering(toolWindow, true)
       ToolWindowContentUi.setToolWindowInEditorSupport(toolWindow, TerminalInEditorSupport())
 
-      if (toolWindow is ToolWindowEx) {
-        installDirectoryDnD(toolWindow, manager.coroutineScope.asDisposable())
-        TerminalDockContainer.install(toolWindow.project, toolWindow.decorator)
+      TerminalFocusFusService.ensureInitialized()
 
+      if (toolWindow is ToolWindowEx) {
         toolWindow.setTabActions(ActionManager.getInstance().getAction("TerminalToolwindowActionGroup"))
         toolWindow.setTabDoubleClickActions(listOf(TerminalRenameTabAction()))
-      }
 
-      TerminalFocusFusService.ensureInitialized()
+        installDirectoryDnD(toolWindow, manager.coroutineScope.asDisposable())
+        TerminalDockContainer.install(toolWindow.project, toolWindow.decorator)
+      }
     }
 
     private fun scheduleTabsRestoring(manager: TerminalToolWindowTabsManagerImpl) {

@@ -19,6 +19,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.python.common.tools.ToolId
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.api.ModelRebuiltListener
 import com.intellij.python.pyproject.model.spi.ProjectName
@@ -26,7 +27,6 @@ import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.Tool
 import com.intellij.python.pyproject.model.spi.WorkspaceName
 import com.intellij.util.messages.Topic
-import com.jetbrains.python.ToolId
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -148,6 +148,7 @@ private suspend fun generatePyProjectTomlEntries(files: Map<Path, PyProjectToml>
   val allNames = entriesByName.keys
   for (tool in Tool.EP.extensionList) {
     val (dependencies, workspaceMembers) = tool.getProjectStructure(entriesByName, namesByDir)
+                                           ?: getProjectStructureDefault(entriesByName, namesByDir)
     for ((name, deps) in dependencies) {
       val orphanNames = deps - allNames
       assert(orphanNames.isEmpty()) { "Tool $tool retuned wrong project names ${orphanNames.joinToString(", ")}" }
@@ -209,7 +210,7 @@ private suspend fun createEntityStorage(
         }
       }
 
-      pyProjectTomlEntity = PyProjectTomlWorkspaceEntity(participatedTools = participatedTools, entitySource)
+      pyProjectTomlEntity = PyProjectTomlWorkspaceEntity(participatedTools = participatedTools, pyProject.tomlFile.parent.toVirtualFileUrl(fileUrlManager), entitySource)
       exModuleOptions = ExternalSystemModuleOptionsEntity(entitySource) {
         externalSystem = PYTHON_SOURCE_ROOT_TYPE.name
       }

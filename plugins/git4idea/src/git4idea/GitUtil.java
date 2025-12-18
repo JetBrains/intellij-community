@@ -28,6 +28,10 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.path.EelPathException;
+import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
@@ -137,6 +141,28 @@ public final class GitUtil {
   }
 
   private static @Nullable Path findRealRepositoryDir(@NotNull @NonNls Path rootPath, @NotNull @NonNls String path) {
+    EelPath rootPathEel = EelNioBridgeServiceKt.asEelPath(rootPath);
+    // TODO there is no need of processing local case separately
+    if (!(rootPathEel.getDescriptor() instanceof LocalEelDescriptor)) {
+      EelPath eelResolved;
+      try {
+        eelResolved = EelPath.parse(path, rootPathEel.getDescriptor());
+      }
+      catch (EelPathException e) {
+        try {
+          eelResolved = rootPathEel.resolve(path);
+        } catch (EelPathException e1) {
+          return null;
+        }
+      }
+      Path result = EelNioBridgeServiceKt.asNioPath(eelResolved);
+      if (Files.isDirectory(result)) {
+        return result;
+      }
+      else {
+        return null;
+      }
+    }
     if (!FileUtil.isAbsolute(path)) {
       String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootPath.toString(), path), true);
       path = FileUtil.toSystemIndependentName(canonicalPath);

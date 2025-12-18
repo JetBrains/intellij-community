@@ -42,10 +42,10 @@ _AnyURL: TypeAlias = URLPattern | URLResolver  # noqa: PYI047
 __all__ = [
     "LocalePrefixPattern",
     "NoReverseMatch",
-    "URLPattern",
-    "URLResolver",
     "Resolver404",
     "ResolverMatch",
+    "URLPattern",
+    "URLResolver",
     "clear_script_prefix",
     "clear_url_caches",
     "get_callable",

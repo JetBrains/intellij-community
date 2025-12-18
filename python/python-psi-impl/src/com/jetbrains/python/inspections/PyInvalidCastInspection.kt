@@ -83,7 +83,7 @@ private fun computeSuggestedIntermediateTypeName(targetType: PyType?, actualType
     fun mro(t: PyClassLikeType): List<PyClassLikeType> {
       val result = ArrayList<PyClassLikeType>()
       result.add(t)
-      result.addAll(t.getAncestorTypes(context))
+      result.addAll(t.getAncestorTypes(context).filterNotNull())
       return result
     }
 

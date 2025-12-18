@@ -47,8 +47,10 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.welcomeScreen.PluginsTabFactory;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenEventCollector;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBScrollPane;
@@ -921,7 +923,8 @@ public final class PluginManagerConfigurablePanel implements Disposable {
                     result.sortByName();
                     return;
                   }
-                } catch (Exception e) {
+                }
+                catch (Exception e) {
                   LOG.error("Error while loading internal plugins group", e);
                 }
               }
@@ -929,7 +932,9 @@ public final class PluginManagerConfigurablePanel implements Disposable {
               PluginModelAsyncOperationsExecutor.INSTANCE.getCustomRepositoriesPluginMap(myCoroutineScope, map -> {
                 Map<String, List<PluginUiModel>> customRepositoriesMap = (Map<String, List<PluginUiModel>>)map;
                 if (parser.suggested && project != null) {
-                  result.addModels(PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customRepositoriesMap));
+                  List<PluginUiModel> plugins = PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customRepositoriesMap);
+                  result.addModels(plugins);
+                  updateSearchPanel(result, runQuery, plugins);
                 }
                 else if (!parser.repositories.isEmpty()) {
                   for (String repository : parser.repositories) {
@@ -950,10 +955,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
                   }
                   result.removeDuplicates();
                   result.sortByName();
-                  Set<PluginId> ids = result.getModels().stream().map(it -> it.getPluginId()).collect(Collectors.toSet());
-                  result.getPreloadedModel().setInstalledPlugins(UiPluginManager.getInstance().findInstalledPluginsSync(ids));
-                  result.getPreloadedModel().setPluginInstallationStates(UiPluginManager.getInstance().getInstallationStatesSync());
-                  updatePanel(runQuery);
+                  updateSearchPanel(result, runQuery, result.getModels());
                 }
                 else {
                   PluginModelAsyncOperationsExecutor.INSTANCE
@@ -969,6 +971,13 @@ public final class PluginManagerConfigurablePanel implements Disposable {
                 }
                 return null;
               });
+            }
+
+            private void updateSearchPanel(@NotNull PluginsGroup result, AtomicBoolean runQuery, List<@NotNull PluginUiModel> plugins) {
+              Set<PluginId> ids = plugins.stream().map(it -> it.getPluginId()).collect(Collectors.toSet());
+              result.getPreloadedModel().setInstalledPlugins(UiPluginManager.getInstance().findInstalledPluginsSync(ids));
+              result.getPreloadedModel().setPluginInstallationStates(UiPluginManager.getInstance().getInstallationStatesSync());
+              updatePanel(runQuery);
             }
 
             private void applySearchResult(@NotNull PluginsGroup result,
@@ -1942,6 +1951,9 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   @Override
   public void dispose() {
     myDisposeStarted = true;
+    if (ComponentUtil.getParentOfType(WelcomeScreen.class, myCardPanel) != null && isModified()) {
+      scheduleApply();
+    }
     InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
     if (myPluginModelFacade.getModel().toBackground()) {
       pluginsState.clearShutdownCallback();
@@ -1977,7 +1989,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
   public void cancel() {
     myPluginModelFacade.getModel().cancel(myCardPanel, true);
-    myPluginModelFacade.closeSession();
   }
 
   public boolean isModified() {

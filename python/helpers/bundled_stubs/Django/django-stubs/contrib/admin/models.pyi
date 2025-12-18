@@ -12,7 +12,7 @@ DELETION: int
 ACTION_FLAG_CHOICES: Any
 
 class LogEntryManager(models.Manager[LogEntry]):
-    @deprecated("log_action() is deprecated and will be removed in Django 6.0. Use log_action_new() instead.")
+    @deprecated("log_action() is deprecated and will be removed in Django 6.0. Use log_actions() instead.")
     def log_action(
         self,
         user_id: int | str | UUID,

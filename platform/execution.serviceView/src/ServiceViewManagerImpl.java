@@ -566,7 +566,10 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       myModel.getInvoker().invoke(() -> {
         Condition<? super ServiceViewItem> fileCondition = item -> {
           ServiceViewDescriptor descriptor = item.getViewDescriptor();
-          return fileServices.contains(descriptor.getId());
+          return fileServices.contains(descriptor.getId()) ||
+                 // todo: this fallback must be refactored in our own service view contributors in favor of new LocatableSearcher api
+                 (descriptor instanceof ServiceViewLocatableDescriptor locatableDescriptor &&
+                  virtualFile.equals(locatableDescriptor.getVirtualFile()));
         };
 
         // Multiple services may target to one virtual file.

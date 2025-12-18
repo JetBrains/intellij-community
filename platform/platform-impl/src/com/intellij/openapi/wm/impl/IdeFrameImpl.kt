@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.LoadingState
-import com.intellij.ide.AssertiveRepaintManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
@@ -10,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.traceThrowable
 import com.intellij.openapi.project.Project
@@ -50,8 +50,11 @@ import javax.swing.JFrame
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 import kotlin.math.abs
+import kotlin.time.ComparableTimeMark
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 @ApiStatus.Internal
 class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
@@ -78,8 +81,15 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
     }
     IdeEventQueue.getInstance().addDispatcher(mouseActivationWatcher, mouseActivationWatcher)
     launchOnShow("IdeFrameImpl.restoreBoundsRequests") {
+      var lastAttemptTime: ComparableTimeMark? = null
       restoreBoundsRequests.collectLatest {
+        val delay = lastAttemptTime?.plus(validSizeCheckInterval().seconds)?.minus(TimeSource.Monotonic.markNow())
+        if (delay != null && delay > Duration.ZERO) {
+          IDE_FRAME_EVENT_LOG.debug { "The frame keeps resizing too quickly, waiting $delay" }
+          delay(delay)
+        }
         tryToRestoreValidBounds()
+        lastAttemptTime = TimeSource.Monotonic.markNow()
       }
     }
   }
@@ -419,9 +429,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
     if (
       !SystemInfoRt.isWindows ||
       !boundsInitialized ||
-      // The default value is hardcoded to false here regardless of the default value in registry.properties,
-      // because it makes exactly zero sense for this functionality to work before the registry is loaded.
-      !Registry.`is`("ide.project.frame.auto.fix.size.windows", false) ||
+      validSizeCheckInterval() <= 0 ||
       !isShowing
     ) {
       return
@@ -504,6 +512,10 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
 
 private fun isValidSize(size: Dimension): Boolean =
   size.width >= FrameBoundsConverter.MIN_WIDTH && size.height >= FrameBoundsConverter.MIN_HEIGHT
+
+// The default value is hardcoded to zero here regardless of the actual default value defined in the XML,
+// because it makes exactly zero sense for this functionality to work before the registry is loaded.
+private fun validSizeCheckInterval(): Int = Registry.intValue("ide.project.frame.auto.fix.size.windows.interval", defaultValue = 0)
 
 private fun isClose(x1: Int, y1: Int, x2: Int, y2: Int): Boolean {
   val threshold = 3

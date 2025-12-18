@@ -4724,6 +4724,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Toolbar
 - s:mainToolbarButtonInsetsKey():java.lang.String
 - s:recentProjectAvatarIconSize():I
 - s:recentProjectAvatarIconSizeKey():java.lang.String
+- s:stripeButtonArc(Z):com.intellij.util.ui.JBValue
 - s:stripeToolbarButtonIconPadding(Z,Z):java.awt.Insets
 - s:stripeToolbarButtonIconSize():I
 - s:stripeToolbarButtonIconSizeKey():java.lang.String
@@ -5536,6 +5537,7 @@ f:com.intellij.util.ui.UIUtil$TextPainter
 - withFont(java.awt.Font):com.intellij.util.ui.UIUtil$TextPainter
 - withLineSpacing(F):com.intellij.util.ui.UIUtil$TextPainter
 - withShadow(Z,java.awt.Color):com.intellij.util.ui.UIUtil$TextPainter
+- withShortcutColor(java.awt.Color):com.intellij.util.ui.UIUtil$TextPainter
 e:com.intellij.util.ui.UnixDesktopEnv
 - java.lang.Enum
 - s:CURRENT:com.intellij.util.ui.UnixDesktopEnv

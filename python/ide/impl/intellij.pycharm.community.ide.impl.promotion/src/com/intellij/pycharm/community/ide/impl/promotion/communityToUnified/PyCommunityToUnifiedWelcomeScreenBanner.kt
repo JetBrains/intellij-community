@@ -35,7 +35,7 @@ internal class PyCommunityToUnifiedWelcomeScreenBanner : PyCommunityToUnifiedWel
 
   private val mainBannerPanel = createMainPanel()
 
-  val container: Wrapper = Wrapper(mainBannerPanel).apply { isVisible = false }
+  val container: Wrapper = Wrapper().apply { isVisible = false }
 
   override fun getPromotion(isEmptyState: Boolean): JComponent {
     val service = service<PyCommunityToUnifiedPromoService>()
@@ -43,7 +43,8 @@ internal class PyCommunityToUnifiedWelcomeScreenBanner : PyCommunityToUnifiedWel
       val shouldShowBanner = service.shouldShowWelcomeScreenBanner()
       if (shouldShowBanner) {
         withContext(Dispatchers.EDT) {
-          container.setContent(mainBannerPanel)
+          val wrapped = wrapIntoSvgBackgroundPanel(mainBannerPanel)
+          container.setContent(wrapped)
           container.isVisible = true
           PyCommunityUnifiedPromoFusCollector.WelcomeScreenBannerShown.log()
           container.revalidate()
@@ -51,7 +52,7 @@ internal class PyCommunityToUnifiedWelcomeScreenBanner : PyCommunityToUnifiedWel
         }
       }
     }
-    return wrapIntoSvgBackgroundPanel(container)
+    return container
   }
 
   override fun canCreatePromo(isEmptyState: Boolean): Boolean {

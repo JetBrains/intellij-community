@@ -90,7 +90,7 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
     ThreadingAssertions.assertWriteAccess();
 
     WorkspaceModel workspaceModel = WorkspaceModel.getInstance(myProject);
-    workspaceModel.updateProjectModel("setLanguageLevelInternal", mutableStorage -> {
+    workspaceModel.updateProjectModel("setLanguageLevelInternal: " + languageLevel + " default: " + isDefault, mutableStorage -> {
       JavaEntitiesWsmUtils.addOrModifyJavaProjectSettingsEntity(myProject, mutableStorage, entity -> {
         var ll = languageLevel != null ? languageLevel.name() : null;
         entity.setLanguageLevelId(ll);

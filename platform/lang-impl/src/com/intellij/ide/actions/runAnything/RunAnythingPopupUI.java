@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.Executor;
@@ -57,10 +57,7 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -79,7 +76,8 @@ import static com.intellij.ide.actions.runAnything.RunAnythingIconHandler.MATCHE
 import static com.intellij.ide.actions.runAnything.RunAnythingSearchListModel.RunAnythingMainListModel;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
-public final class RunAnythingPopupUI extends BigPopupUI {
+@ApiStatus.Internal
+public final class RunAnythingPopupUI extends BigPopupUI implements UiDataProvider {
   public static final int SEARCH_FIELD_COLUMNS = 25;
   public static final Icon UNKNOWN_CONFIGURATION_ICON = AllIcons.Actions.RunAnything;
   static final String RUN_ANYTHING = "RunAnything";
@@ -307,6 +305,11 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     }
 
     return getBaseDirectory(getModule());
+  }
+
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(CommonDataKeys.LANGUAGE, RunAnythingLanguage.INSTANCE);
   }
 
   private @NotNull VirtualFile getBaseDirectory(@Nullable Module module) {

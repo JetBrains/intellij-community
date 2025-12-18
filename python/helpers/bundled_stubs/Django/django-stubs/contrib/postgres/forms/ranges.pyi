@@ -43,10 +43,10 @@ class DateRangeField(BaseRangeField):
 
 __all__ = [
     "BaseRangeField",
-    "IntegerRangeField",
-    "DecimalRangeField",
-    "DateTimeRangeField",
     "DateRangeField",
+    "DateTimeRangeField",
+    "DecimalRangeField",
     "HiddenRangeWidget",
+    "IntegerRangeField",
     "RangeWidget",
 ]

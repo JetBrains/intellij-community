@@ -1175,6 +1175,33 @@
       "List.selectionBackground": "#36393a",
       "Panel.background": "#313435",
       "percent.foreground": "#404040"
+    },
+    
+    "Recap": {
+      "ijnext": "#55339C",
+      "cardBackground": "#2B2B2B",
+      "cardBorderColor": "#2B2B2B",
+      "cardHeaderTitle": "#D3D3D3",
+      "cardHeaderLinkBackground": "#3D3F41",
+      "cardHeaderSubtitle": "#B4B8BF",
+      "cardFooterForeground": "#CED0D6",
+      "chroniclesBackground": "#3D3F41",
+      "chroniclesBorderColor": "#3D3F41",
+      "chroniclesBackgroundHovered": "#5E6771",
+      "chroniclesForeground": "#DFE1E5",
+      "chroniclesForegroundGreyed": "#868A91",
+      "errorBackground": "#3D3223",
+      "errorBorder": "#5E4D33",
+      "errorForeground": "#DFE1E5"
+    },
+
+    "OpenTelemetry": {
+      "Span.regularBounds": "#CED0D6",
+      "Span.regularFillStart": "#4A83B8",
+      "Span.regularFillEnd": "#7750BA",
+      "Span.selectedBounds": "#F0F1F2",
+      "Span.selectedFillStart": "#23A0FF",
+      "Span.selectedFillEnd": "#AF60FF"
     }
   },
 

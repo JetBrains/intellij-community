@@ -9,9 +9,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 private val LOG = Logger.getInstance(VcsFreezingProcess::class.java)
@@ -95,7 +97,10 @@ open class VcsFreezingProcess(private val myProject: Project, private val myOper
       LOG.debug("finished.")
     }
 
-    private fun saveAndBlock(project: Project) {
+    @RequiresEdt
+    @JvmStatic
+    @ApiStatus.Internal
+    fun saveAndBlock(project: Project) {
       getInstance(project).blockReloadingProjectOnExternalChanges()
       FileDocumentManager.getInstance().saveAllDocuments()
 
@@ -104,7 +109,10 @@ open class VcsFreezingProcess(private val myProject: Project, private val myOper
       saveAndSyncHandler.blockSyncOnFrameActivation()
     }
 
-    private fun unblock(project: Project) {
+    @RequiresEdt
+    @JvmStatic
+    @ApiStatus.Internal
+    fun unblock(project: Project) {
       getInstance(project).unblockReloadingProjectOnExternalChanges()
       val saveAndSyncHandler = getInstance()
       saveAndSyncHandler.unblockSaveOnFrameDeactivation()

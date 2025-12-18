@@ -3,11 +3,14 @@ package com.jetbrains.python.sdk.add.v2.venv
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.isNotNull
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
@@ -26,6 +29,8 @@ import kotlinx.coroutines.plus
 class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>) : PythonNewEnvironmentCreator<P>(model) {
   private lateinit var versionComboBox: PythonInterpreterComboBox<P>
   private lateinit var venvPathField: ValidatedPathField<Unit, P, ValidatedPath.Folder<P>>
+  override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?>? = null
+  override val toolExecutablePersister: suspend (P) -> Unit = { }
 
   private val venvAlreadyExistsError = propertyGraph.property<VenvAlreadyExistsError<P>?>(null)
   private val venvAlreadyExistsErrorMessage: ObservableMutableProperty<String> = propertyGraph.property("")

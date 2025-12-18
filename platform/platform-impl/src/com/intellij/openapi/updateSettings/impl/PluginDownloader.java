@@ -399,13 +399,20 @@ public final class PluginDownloader {
 
   private static boolean unloadDescriptorById(PluginId pluginId) {
     var descriptor = PluginManagerCore.findPlugin(pluginId);
-    return descriptor != null &&
-           DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor) &&
-           DynamicPlugins.INSTANCE.unloadPlugin(descriptor,
-                                                new DynamicPlugins.UnloadPluginOptions()
-                                                  .withDisable(false)
-                                                  .withUpdate(true)
-                                                  .withWaitForClassloaderUnload(true));
+    if (descriptor == null) {
+      return false;
+    }
+    var pluginDescriptor = IdeaPluginDescriptorImplKt.getMainDescriptor(descriptor);
+    if (!DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)) {
+      return false;
+    }
+    return DynamicPlugins.INSTANCE.unloadPlugin(
+      pluginDescriptor,
+      new DynamicPlugins.UnloadPluginOptions()
+        .withDisable(false)
+        .withUpdate(true)
+        .withWaitForClassloaderUnload(true)
+    );
   }
 
   @ApiStatus.Internal

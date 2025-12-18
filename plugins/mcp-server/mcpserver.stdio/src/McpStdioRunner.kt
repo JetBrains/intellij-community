@@ -64,6 +64,14 @@ suspend fun main() {
     }
   }
 
+  sseClientTransport.onClose {
+    @Suppress("RAW_RUN_BLOCKING")
+    runBlocking {
+      info("SSE closed -> closing STDIO")
+      stdioServerTransport.close()
+    }
+  }
+
   stdioServerTransport.onError {
     error("Error in STDIO: $it")
   }

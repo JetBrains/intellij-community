@@ -40,6 +40,8 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
+import static com.intellij.ide.plugins.PluginManagerCore.MARKETPLACE_PLUGIN_ID;
+import static com.intellij.ide.plugins.PluginManagerCore.ULTIMATE_PLUGIN_ID;
 
 public final class RepositoryHelper {
   private static final Logger LOG = Logger.getInstance(RepositoryHelper.class);
@@ -47,8 +49,6 @@ public final class RepositoryHelper {
   /** Duplicates VmOptionsGenerator.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY */
   private static final String CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url";
   @SuppressWarnings("SpellCheckingInspection") private static final String PLUGIN_LIST_FILE = "availables.xml";
-  private static final String MARKETPLACE_PLUGIN_ID = "com.intellij.marketplace";
-  private static final String ULTIMATE_MODULE = "com.intellij.modules.ultimate";
 
   /**
    * Returns a list of configured custom plugin repository hosts.
@@ -70,7 +70,7 @@ public final class RepositoryHelper {
 
     pluginsUrl = System.getProperty(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY);
     if (pluginsUrl != null) {
-      hosts.add(pluginsUrl);
+      hosts.addAll(Arrays.asList(pluginsUrl.split(",")));
     }
 
     ContainerUtil.removeDuplicates(hosts);
@@ -216,13 +216,13 @@ public final class RepositoryHelper {
   private static boolean isPaidPluginsRequireMarketplacePlugin() {
     var core = PluginManagerCore.findPlugin(PluginManagerCore.CORE_ID);
     return core == null ||
-           !core.getPluginAliases().contains(PluginId.getId(ULTIMATE_MODULE)) ||
+           !core.getPluginAliases().contains(ULTIMATE_PLUGIN_ID) ||
            !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains();
   }
 
   private static void addMarketplacePluginDependencyIfRequired(PluginUiModel node, boolean isPaidPluginsRequireMarketplacePlugin) {
     if (isPaidPluginsRequireMarketplacePlugin && node.getProductCode() != null) {
-      node.addDependency(PluginId.getId(MARKETPLACE_PLUGIN_ID), false);
+      node.addDependency(MARKETPLACE_PLUGIN_ID, false);
     }
   }
 

@@ -15,6 +15,8 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
+import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
@@ -383,6 +385,12 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
         } finally {
             notificationManager.removeNotificationListener(stdErrListener)
         }
+    }
+
+    fun assertModuleSdk(moduleName: String, expectedLevel: JavaSdkVersion?) {
+        val module = getModule(moduleName)
+        val sdk = ModuleRootManager.getInstance(module).sdk
+        assertEquals(expectedLevel, JavaSdkVersionUtil.getJavaSdkVersion(sdk))
     }
 
     companion object {

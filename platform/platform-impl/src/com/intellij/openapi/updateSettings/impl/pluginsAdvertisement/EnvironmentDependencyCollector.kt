@@ -6,8 +6,8 @@ import com.intellij.ide.plugins.DependencyCollector
 import com.intellij.ide.plugins.DependencyInformation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.EnvironmentUtil
+import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -16,8 +16,6 @@ import java.nio.file.Path
 import kotlin.io.path.isExecutable
 import kotlin.io.path.isRegularFile
 
-@ApiStatus.Internal
-@IntellijInternalApi
 internal class EnvironmentDependencyCollector : DependencyCollector {
   private val ALLOWED_EXECUTABLES: List<String> = listOf(
     "docker",
@@ -45,7 +43,11 @@ internal class EnvironmentDependencyCollector : DependencyCollector {
 object EnvironmentScanner {
   fun getPathNames(): List<Path> {
     val fs = FileSystems.getDefault()
-    val pathNames = EnvironmentUtil.getEnvironmentMap()["PATH"]?.split(fs.separator)
+
+    @Suppress("IO_FILE_USAGE")
+    val pathDelimiter = java.io.File.pathSeparatorChar
+
+    val pathNames = EnvironmentUtil.getEnvironmentMap()["PATH"]?.split(pathDelimiter)
       ?.mapNotNull {
         try {
           fs.getPath(it)
@@ -59,7 +61,7 @@ object EnvironmentScanner {
   }
 
   fun hasToolInLocalPath(pathNames: List<Path>, executableWithoutExt: String): Boolean {
-    val baseNames = if (SystemInfo.isWindows) {
+    val baseNames = if (OS.CURRENT == OS.Windows) {
       sequenceOf(".bat", ".cmd", ".com", ".exe")
         .map { exeSuffix -> executableWithoutExt + exeSuffix }
     }
@@ -72,7 +74,6 @@ object EnvironmentScanner {
         baseNames.map { basename -> pathEntry.resolve(basename) }
       }
       .filter(Path::isRegularFile)
-      .filter(Path::isExecutable)
-      .any()
+      .any(Path::isExecutable)
   }
 }

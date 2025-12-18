@@ -182,10 +182,18 @@ object ProjectUtil {
       }
     }
 
-    if (isValidProjectPath(file)) {
+    val storePathManager = serviceAsync<ProjectStorePathManager>()
+    val descriptor = withContext(Dispatchers.IO) {
+      storePathManager.getStoreDescriptor(file)
+    }
+    if (descriptor.testStoreDirectoryExistsForProjectRoot()) {
       LOG.info("Opening existing project with .idea at $file")
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
-      return (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options.copy(runConfigurators = true))
+      val options = options.copy(
+        runConfigurators = true,
+        projectRootDir = descriptor.historicalProjectBasePath,
+      )
+      return (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options)
     }
 
     if (!options.preventIprLookup && Files.isDirectory(file)) {

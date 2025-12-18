@@ -16,7 +16,9 @@ internal suspend fun PythonBinary.findEnvOrNull(@IntentionName intentionName: St
   validatePythonAndGetInfo().findEnvOrNull(intentionName)
 
 internal suspend fun Sdk.findEnvOrNull(@IntentionName intentionName: String): EnvCheckerResult.EnvFound? =
-  asBinToExecute().validatePythonAndGetInfo().findEnvOrNull(intentionName)
+  asBinToExecute().orLogExceptionAsWarn(logger)?.validatePythonAndGetInfo()?.findEnvOrNull(intentionName)
 
-internal fun PyResult<PythonInfo>.findEnvOrNull(@IntentionName intentionName: String): EnvCheckerResult.EnvFound? =
-  orLogExceptionAsWarn(fileLogger())?.let { EnvCheckerResult.EnvFound(it, intentionName) }
+internal fun PyResult<PythonInfo>.findEnvOrNull(@IntentionName intentionName: String): EnvCheckerResult.EnvFound? {
+  return orLogExceptionAsWarn(logger)?.let { EnvCheckerResult.EnvFound(it, intentionName) }
+}
+private val logger = fileLogger()

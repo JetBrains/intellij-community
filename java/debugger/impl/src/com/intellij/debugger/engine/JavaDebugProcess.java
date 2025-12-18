@@ -78,6 +78,7 @@ public class JavaDebugProcess extends XDebugProcess {
   private final NodeManagerImpl myNodeManager;
   private final JvmSmartStepIntoActionHandler mySmartStepIntoActionHandler;
   private final JvmDropFrameActionHandler myDropFrameActionActionHandler;
+  private final JavaDebugSessionEventsProvider myJavaDebugSessionEventsProvider;
 
   private static final JavaBreakpointHandlerFactory[] ourDefaultBreakpointHandlerFactories = {
     process -> new JavaBreakpointHandler.JavaLineBreakpointHandler(process),
@@ -226,6 +227,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
     mySmartStepIntoActionHandler = new JvmSmartStepIntoActionHandler(javaSession);
     myDropFrameActionActionHandler = new JvmDropFrameActionHandler(javaSession);
+    myJavaDebugSessionEventsProvider = new JavaDebugSessionEventsProvider(this);
   }
 
   private boolean shouldApplyContext(DebuggerContextImpl context) {
@@ -255,6 +257,11 @@ public class JavaDebugProcess extends XDebugProcess {
 
   public DebuggerSession getDebuggerSession() {
     return myJavaSession;
+  }
+
+  @Override
+  public XDebugSessionEventsProvider getSessionEventsProvider() {
+    return myJavaDebugSessionEventsProvider;
   }
 
   @Override

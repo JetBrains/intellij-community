@@ -60,7 +60,7 @@ class SetUnusablePasswordMixin(Generic[_UserType]):
     def validate_password_for_user(self, user: _UserType, **kwargs: Any) -> None: ...
     def set_password_and_save(self, user: _User, commit: bool = True, **kwargs: Any) -> _User: ...
 
-class BaseUserCreationForm(Generic[_UserType], forms.ModelForm[_UserType]):
+class BaseUserCreationForm(forms.ModelForm[_UserType], Generic[_UserType]):
     error_messages: _ErrorMessagesDict
     password1: forms.Field
     password2: forms.Field
@@ -112,7 +112,7 @@ class PasswordResetForm(forms.Form):
         extra_email_context: dict[str, str] | None = ...,
     ) -> None: ...
 
-class SetPasswordForm(Generic[_UserType], SetPasswordMixin, forms.Form):
+class SetPasswordForm(SetPasswordMixin, forms.Form, Generic[_UserType]):
     new_password1: forms.Field
     new_password2: forms.Field
     user: _UserType
@@ -123,7 +123,7 @@ class PasswordChangeForm(SetPasswordForm):
     old_password: forms.Field
     def clean_old_password(self) -> str: ...
 
-class AdminPasswordChangeForm(Generic[_UserType], forms.Form):
+class AdminPasswordChangeForm(forms.Form, Generic[_UserType]):
     error_messages: _ErrorMessagesDict
     required_css_class: str
     usable_password_help_text: str

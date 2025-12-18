@@ -8,4 +8,4 @@ from .where import AND as AND
 from .where import OR as OR
 from .where import XOR as XOR
 
-__all__ = ["Query", "AND", "OR", "XOR"]
+__all__ = ["AND", "OR", "XOR", "Query"]

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus
 
 import com.intellij.lang.Language
@@ -15,10 +15,13 @@ object DataContextUtils {
   /**
    * Returns language from [CommonDataKeys.PSI_FILE]
    * or by file type from [CommonDataKeys.VIRTUAL_FILE] or [PlatformCoreDataKeys.FILE_EDITOR]
+   * or by the stored language (useful when the action was invoked for file-free popups like "Search Everywhere" or "Find in Files")
    */
   @JvmStatic
   fun getFileLanguage(dataContext: DataContext): Language? {
-    return CommonDataKeys.PSI_FILE.getData(dataContext)?.language ?: getFileTypeLanguage(dataContext)
+    return CommonDataKeys.PSI_FILE.getData(dataContext)?.language
+           ?: getFileTypeLanguage(dataContext)
+           ?: CommonDataKeys.LANGUAGE.getData(dataContext)
   }
 
   /**

@@ -81,5 +81,6 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
   </component>
 </module>

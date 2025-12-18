@@ -79,18 +79,7 @@ public final class PluginsTabFactory implements WelcomeTabFactory {
     protected JComponent buildComponent() {
       PluginManagerConfigurable configurable = new PluginManagerConfigurable();
       Disposer.register(parentDisposable, configurable::disposeUIResources);
-      JComponent panel = createPluginsPanel(configurable);
-      panel.addAncestorListener(new AncestorListenerAdapter() {
-        @Override
-        public void ancestorRemoved(AncestorEvent event) {
-          if (!configurable.isModified()) {
-            return;
-          }
-          configurable.scheduleApply();
-        }
-      });
-
-      return panel;
+      return createPluginsPanel(configurable);
     }
   }
 

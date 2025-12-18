@@ -72,7 +72,7 @@ public class GridFilterPanel extends GridEditorPanelBase {
 
   @Override
   public Dimension getMinimumSize() {
-    return getPreferredSize();
+    return new Dimension(200, -1);
   }
 
   @Override

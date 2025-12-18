@@ -601,7 +601,7 @@ fun Sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCo
  * corresponding target provides file system operations (see [com.jetbrains.python.pathValidation.ValidationRequest]).
  *
  * Note that if [PythonSdkAdditionalData] of this [Sdk] is [PyRemoteSdkAdditionalData] this method does not do any checks and returns
- * `true`. This behavior may be improved in the future by generating [TargetEnvironmentConfiguration] based on the present
+ * `false`. This behavior may be improved in the future by generating [TargetEnvironmentConfiguration] based on the present
  * [PyRemoteSdkAdditionalData].
  *
  * @see PythonSdkFlavor.sdkSeemsValid
@@ -611,6 +611,6 @@ val Sdk.sdkSeemsValid: Boolean
     if (!isPythonSdk(this, true)) return false
 
     val pythonSdkAdditionalData = getOrCreateAdditionalData()
-    if (pythonSdkAdditionalData is PyRemoteSdkAdditionalData) return true
+    if (pythonSdkAdditionalData is PyRemoteSdkAdditionalData) return false
     return pythonSdkAdditionalData.flavorAndData.sdkSeemsValid(this, targetEnvConfiguration)
   }

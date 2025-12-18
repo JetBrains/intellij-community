@@ -212,7 +212,7 @@ internal data class HatchFormFields<P : PathHolder>(
 
     with(validatedPathField) {
       initialize(scope)
-      pathValidator.backProperty.afterChange { executable ->
+      model.hatchViewModel.hatchExecutable.afterChange { executable ->
         if (executable != model.hatchViewModel.hatchExecutable.get()) {
           model.hatchViewModel.hatchExecutable.set(executable)
         }

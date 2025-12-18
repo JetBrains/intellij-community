@@ -2,19 +2,14 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
-import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.util.io.FileUtil
 import junit.framework.TestCase
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -631,28 +626,12 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
 
     @Test
     fun testJDKImport() {
-        val mockJdkPath = FileUtil.toSystemDependentName("${PathManager.getHomePath()}/community/java/mockJDK-1.8")
-        runWriteActionAndWait {
-            val jdk = JavaSdk.getInstance().createJdk("myJDK", mockJdkPath)
-            runReadAction<ProjectJdkTable> { ProjectJdkTable.getInstance() }.addJdk(jdk)
-            ProjectRootManager.getInstance(myProject).projectSdk = jdk
-        }
+        configureByFiles()
+        importProject()
 
-        try {
-            configureByFiles()
-            importProject()
-
-            val moduleSDK = ModuleRootManager.getInstance(getModule("project.main")).sdk!!
-            assertTrue(moduleSDK.sdkType is JavaSdk)
-            assertEquals("myJDK", moduleSDK.name)
-            assertEquals(mockJdkPath, moduleSDK.homePath?.let(FileUtil::toSystemDependentName))
-        } finally {
-            runWriteActionAndWait {
-                val jdkTable = runReadAction<ProjectJdkTable> { ProjectJdkTable.getInstance() }
-                jdkTable.removeJdk(jdkTable.findJdk("myJDK")!!)
-                ProjectRootManager.getInstance(myProject).projectSdk = null
-            }
-        }
+        assertModuleSdk("project", JavaSdkVersion.JDK_17)
+        assertModuleSdk("project.main", JavaSdkVersion.JDK_17)
+        assertModuleSdk("project.test", JavaSdkVersion.JDK_17)
     }
 
     @Test

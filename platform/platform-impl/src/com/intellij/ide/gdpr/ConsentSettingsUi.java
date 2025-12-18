@@ -2,10 +2,8 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.gdpr.ui.consents.AiDataCollectionConsentUi;
-import com.intellij.ide.gdpr.ui.consents.ConsentUi;
-import com.intellij.ide.gdpr.ui.consents.DefaultConsentUi;
-import com.intellij.ide.gdpr.ui.consents.UsageStatisticsConsentUi;
+import com.intellij.ide.gdpr.localConsents.LocalConsentOptions;
+import com.intellij.ide.gdpr.ui.consents.*;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,6 +15,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +27,7 @@ import java.awt.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -100,12 +100,14 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     return viewer;
   }
 
-  static @NotNull ConsentUi getConsentUi(Consent consent) {
+  @ApiStatus.Internal
+  public static @NotNull ConsentUi getConsentUi(Consent consent) {
     if (ConsentOptions.condUsageStatsConsent().test(consent)) {
       return new UsageStatisticsConsentUi(consent);
     }
-    if (ConsentOptions.condAiDataCollectionConsent().test(consent)) {
-      return new AiDataCollectionConsentUi(consent);
+    if (LocalConsentOptions.condTraceDataCollectionComLocalConsent().test(consent) ||
+        LocalConsentOptions.condTraceDataCollectionNonComLocalConsent().test(consent)) {
+      return new TraceDataCollectionConsentUI(consent);
     }
     return new DefaultConsentUi(consent);
   }
@@ -120,6 +122,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     for (ConsentStateSupplier supplier : consentMapping) {
       result.add(supplier.consent.derive(supplier.getState()));
     }
+    result.sort(Comparator.comparing(Consent::getId));
     return result;
   }
 

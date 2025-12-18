@@ -91,7 +91,7 @@ sealed class ExecuteGetProcessError<T : PyError>(val pyError: T) {
   /**
    * Failed to create environment for process (i.e. failed to start docker)
    */
-  class EnvironmentError internal constructor(pyError: MessageError) : ExecuteGetProcessError<MessageError>(pyError)
+  class EnvironmentError(pyError: MessageError) : ExecuteGetProcessError<MessageError>(pyError)
 
   /**
    * Process couldn't be started

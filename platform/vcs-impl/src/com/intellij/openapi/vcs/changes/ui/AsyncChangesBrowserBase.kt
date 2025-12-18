@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.Project
+import com.intellij.ui.AnimatedIcon
 import javax.swing.tree.DefaultTreeModel
 
 /**
@@ -44,6 +45,7 @@ abstract class AsyncChangesBrowserBase(project: Project,
     init {
       setDoubleClickAndEnterKeyHandler { browser.onDoubleClick() }
       setInclusionListener { browser.onIncludedChanged() }
+      putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
     }
 
     override val changesTreeModel: AsyncChangesTreeModel

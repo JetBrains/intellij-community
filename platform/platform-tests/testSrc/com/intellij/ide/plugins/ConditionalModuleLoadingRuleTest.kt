@@ -79,7 +79,7 @@ class ConditionalModuleLoadingRuleTest {
       }
     }.buildDir(pluginsDirPath.resolve("foo"))
     val pluginSet = buildPluginSet { withProductMode(ProductMode.findById(appMode)!!) }
-    if (appMode == "monolith") {
+    if (appMode != "frontend") {
       assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
     } else {
       assertThat(pluginSet).doesNotHaveEnabledPlugins()

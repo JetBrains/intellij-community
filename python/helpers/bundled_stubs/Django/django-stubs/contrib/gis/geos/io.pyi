@@ -9,4 +9,4 @@ class WKBReader(_WKBReader):
 class WKTReader(_WKTReader):
     def read(self, wkt: bytes | str) -> GEOSGeometry: ...
 
-__all__ = ["WKBWriter", "WKTWriter", "WKBReader", "WKTReader"]
+__all__ = ["WKBReader", "WKBWriter", "WKTReader", "WKTWriter"]

@@ -65,9 +65,12 @@ internal class TerminalTypeAheadOutputModelController(
   }
 
   private fun isTypeAheadEnabled(): Boolean {
-    val enabledInRegistry = Registry.`is`("terminal.type.ahead", false)
-    val outputStatus = shellIntegrationDeferred.getNow()?.outputStatus?.value
-    return enabledInRegistry && outputStatus == TerminalOutputStatus.TypingCommand
+    if (!Registry.`is`("terminal.type.ahead", false)) return false
+    val shellIntegration = shellIntegrationDeferred.getNow() ?: return false
+    val activeBlock = shellIntegration.blocksModel.activeBlock as? TerminalCommandBlock ?: return false
+    // Ensure that the active block has "commandStartOffset" set to protect prompt from deleting in typeahead logic.
+    val isActiveBlockValid = activeBlock.commandStartOffset != null && activeBlock.outputStartOffset == null
+    return shellIntegration.outputStatus.value == TerminalOutputStatus.TypingCommand && isActiveBlockValid
   }
 
   override fun type(string: String) {

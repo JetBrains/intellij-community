@@ -63,6 +63,20 @@ class PyTestUnpassedFixtureInspection : PyInspection() {
       // no warning if a fixture is in '@pytest.mark.usefixtures' arguments
       if (isParameterInDecorator(element, testFunction)) return
 
+      // if a reference resolves to a local binding target (assignment/with/for/walrus),
+      // then it's not a fixture usage and should be ignored.
+      element.reference.resolve()?.let { resolved ->
+        when (resolved) {
+          is PyTargetExpression -> return
+          is PyNamedParameter -> Unit // parameters are handled above
+          else -> Unit // do not early-return for functions/imports/etc.
+        }
+      }
+
+      // Ignore all qualified attribute references (e.g., self.fixture, module.fixture)
+      // PyTest fixtures are not requested via qualified names, so treat them as non-fixture usages.
+      if (element.qualifier != null) return
+
       // no warning if an element has type OTHER
       if (getType(element) == ResolveType.OTHER) return
 

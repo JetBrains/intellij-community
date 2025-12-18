@@ -2,6 +2,7 @@
   <dependencies>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.helpersLocator"/>
+    <module name="intellij.python.common"/>
   </dependencies>
   <extensionPoints>
     <extensionPoint qualifiedName="Pythonid.pythonSdkFlavor" interface="com.jetbrains.python.sdk.flavors.PythonSdkFlavor" dynamic="true"/>

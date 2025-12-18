@@ -2,17 +2,13 @@
 package com.jetbrains.python.sdk.add.v2.pipenv
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.platform.eel.LocalEelApi
 import com.intellij.python.community.impl.pipenv.pipenvPath
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
-import com.jetbrains.python.sdk.add.v2.FileSystem
-import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
-import com.jetbrains.python.sdk.add.v2.ToolValidator
+import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.sdk.pipenv.setupPipEnvSdkWithProgressReport
 import com.jetbrains.python.statistics.InterpreterType
 import java.nio.file.Path
@@ -20,15 +16,9 @@ import java.nio.file.Path
 internal class EnvironmentCreatorPip<P : PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, errorSink: ErrorSink) : CustomNewEnvironmentCreator<P>("pipenv", model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.PIPENV
   override val toolValidator: ToolValidator<P> = model.pipenvViewModel.toolValidator
-
-  override suspend fun savePathToExecutableToProperties(pathHolder: PathHolder?) {
-    if ((model.fileSystem as? FileSystem.Eel)?.eelApi !is LocalEelApi) return
-
-    val savingPath = (pathHolder as? PathHolder.Eel)?.path
-                     ?: (toolValidator.backProperty.get()?.pathHolder as? PathHolder.Eel)?.path
-    savingPath?.let {
-      PropertiesComponent.getInstance().pipenvPath = it.toString()
-    }
+  override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.pipenvViewModel.pipenvExecutable
+  override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
+    savePathForEelOnly(pathHolder) { path -> PropertiesComponent.getInstance().pipenvPath = path.toString() }
   }
 
   override suspend fun setupEnvSdk(moduleBasePath: Path, baseSdks: List<Sdk>, basePythonBinaryPath: P?, installPackages: Boolean): PyResult<Sdk> {

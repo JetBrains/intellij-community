@@ -3,6 +3,7 @@ package com.intellij.terminal.tests.reworked.util
 import com.google.common.base.Ascii
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.terminal.backend.TerminalSessionsManager
 import com.intellij.terminal.backend.createTerminalSession
@@ -12,6 +13,10 @@ import com.intellij.util.EnvironmentUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.asDisposable
 import com.jediterm.core.util.TermSize
+import com.jediterm.terminal.TtyConnector
+import com.pty4j.windows.conpty.WinConPtyProcess
+import com.pty4j.windows.cygwin.CygwinPtyProcess
+import com.pty4j.windows.winpty.WinPtyProcess
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
@@ -25,19 +30,26 @@ import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.util.ShellEelProcess
+import org.junit.Assert
 import org.junit.Assume
+import org.junit.jupiter.api.Assumptions
 import java.nio.file.Files
 import java.nio.file.Path
 
 internal object TerminalSessionTestUtil {
   /** Starts the same terminal session used in production */
-  suspend fun startTestTerminalSession(
+  fun startTestTerminalSession(
     project: Project,
     shellPath: String,
+    workingDirectory: String?,
     coroutineScope: CoroutineScope,
-  ): TerminalSession {
+  ): TestTerminalSessionResult {
     val shellCommand = createShellCommand(shellPath)
-    val options = ShellStartupOptions.Builder().shellCommand(shellCommand).build()
+    val options = ShellStartupOptions.Builder()
+      .shellCommand(shellCommand)
+      .workingDirectory(workingDirectory)
+      .build()
     return startTestTerminalSession(project, options, isLowLevelSession = false, coroutineScope)
   }
 
@@ -56,25 +68,26 @@ internal object TerminalSessionTestUtil {
     options: ShellStartupOptions,
     isLowLevelSession: Boolean,
     coroutineScope: CoroutineScope,
-  ): TerminalSession {
+  ): TestTerminalSessionResult {
     assert(options.shellCommand != null) { "shellCommand should be configured in the provided options" }
 
     TerminalTestUtil.setTerminalEngineForTest(TerminalEngine.REWORKED, coroutineScope.asDisposable())
 
     val allOptions = options.builder()
       .envVariables(options.envVariables + mapOf(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE to "true", "HISTFILE" to "/dev/null"))
-      .workingDirectory(options.workingDirectory ?: System.getProperty("user.home"))
       .initialTermSize(options.initialTermSize ?: TermSize(80, 24))
       .build()
 
     return if (isLowLevelSession) {
       val (ttyConnector, configuredOptions) = startTerminalProcess(project, allOptions)
-      createTerminalSession(project, ttyConnector, configuredOptions, JBTerminalSystemSettingsProvider(), coroutineScope)
+      val session = createTerminalSession(project, ttyConnector, configuredOptions, JBTerminalSystemSettingsProvider(), coroutineScope)
+      TestTerminalSessionResult(session, ttyConnector)
     }
     else {
-      val manager = TerminalSessionsManager.Companion.getInstance()
+      val manager = TerminalSessionsManager.getInstance()
       val sessionStartResult = manager.startSession(allOptions, project, coroutineScope)
-      manager.getSession(sessionStartResult.sessionId)!!
+      val session = manager.getSession(sessionStartResult.sessionId)!!
+      TestTerminalSessionResult(session, sessionStartResult.ttyConnector)
     }
   }
 
@@ -121,5 +134,30 @@ internal object TerminalSessionTestUtil {
     }
   }
 
+  /**
+   * To have stable tests, we need a reliable VT/ANSI sequences supplier.
+   * Windows: let's restrict different Windows PTY-emulators to
+   * require the bundled ConPTY library only.
+   */
+  fun assumeTestableProcess(shellEelProcess: ShellEelProcess) {
+    val descriptor = shellEelProcess.eelApi.descriptor
+    Assumptions.assumeFalse(
+      descriptor.osFamily.isWindows && descriptor != LocalEelDescriptor,
+      "Remote Windows may not support shell integration (latest ConPTY is required)"
+    )
+    val javaProcess = shellEelProcess.process
+    if (javaProcess is WinPtyProcess || javaProcess is CygwinPtyProcess) {
+      Assert.fail("Shell integration on Windows requires ConPTY, but ${javaProcess::class.java} was supplied")
+    }
+    if (javaProcess is WinConPtyProcess) {
+      Assumptions.assumeTrue(javaProcess.isBundledConPtyLibrary, "Shell integration on Windows requires latest version of ConPTY")
+    }
+  }
+
   val ENTER_BYTES: ByteArray = byteArrayOf(Ascii.CR)
 }
+
+internal class TestTerminalSessionResult(
+  val session: TerminalSession,
+  val ttyConnector: TtyConnector,
+)

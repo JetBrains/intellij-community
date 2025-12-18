@@ -25,7 +25,6 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.platform.ide.impl.wsl.WslEelDescriptor
 import com.intellij.platform.util.coroutines.flow.debounceBatch
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -75,14 +74,17 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     @JvmStatic
     fun isEnabled(project: Project, executable: GitExecutable): Boolean =
       (Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry", false) || application.isUnitTestMode)
-      && (SystemInfo.isUnix || (executable !is GitExecutable.Unknown && !executable.isLocal))
+      && (isRemDevOrWsl(executable) || isLocalUnix(executable))
       && signingIsEnabledInAnyRepo(project)
 
     private fun isUnitTestModeOnUnix(): Boolean =
       SystemInfo.isUnix && application.isUnitTestMode
 
+    private fun isLocalUnix(executable: GitExecutable): Boolean =
+      executable.isLocal && SystemInfo.isUnix
+
     private fun isRemDevOrWsl(executable: GitExecutable): Boolean =
-      AppMode.isRemoteDevHost() || (executable !is GitExecutable.Unknown && !executable.isLocal)
+      AppMode.isRemoteDevHost() || executable.isRemote
 
     // do not configure Gpg Agent for roots without commit.gpgSign and user.signingkey enabled
     private fun signingIsEnabledInAnyRepo(project: Project): Boolean = GitRepositoryManager.getInstance(project)
@@ -223,8 +225,8 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     }
   }
 
-  private suspend fun generatePinentryLauncher(executable: GitExecutable, gpgAgentPaths: GpgAgentPaths, pinentryFallback: String?) {
-    LOG.info("Creating pinentry launcher with fallback: ${pinentryFallback ?: "-"}")
+  private suspend fun generatePinentryLauncher(executable: GitExecutable, gpgAgentPaths: GpgAgentPaths, pinentryFallback: String) {
+    LOG.info("Creating pinentry launcher with fallback: ${pinentryFallback}")
     PinentryShellScriptLauncherGenerator(executable).generate(project, gpgAgentPaths, pinentryFallback)
   }
 
@@ -343,7 +345,7 @@ private class GpgAgentCommandExecutorImpl(
 
 internal class PinentryShellScriptLauncherGenerator(val executable: GitExecutable) {
 
-  suspend fun generate(project: Project, gpgAgentPaths: GpgAgentPaths, fallbackPinentryPath: String?) = withContext(Dispatchers.IO) {
+  suspend fun generate(project: Project, gpgAgentPaths: GpgAgentPaths, fallbackPinentryPath: String) = withContext(Dispatchers.IO) {
     val path = gpgAgentPaths.gpgPinentryAppLauncher
     try {
       path.createParentDirectories().writeText(getScriptTemplate(fallbackPinentryPath))
@@ -366,30 +368,23 @@ internal class PinentryShellScriptLauncherGenerator(val executable: GitExecutabl
   }
 
   fun getCommandLine(): String {
-    val gitScriptGenerator = when (executable) {
-      is GitExecutable.Eel -> {
-        GitScriptGenerator((executable.eel.descriptor as? WslEelDescriptor)?.distribution)
-      }
-      else -> {
-        GitScriptGenerator(executable)
-      }
-    }
-    return gitScriptGenerator.addParameters(*getCommandLineParameters()).commandLine(PinentryApp::class.java, false)
+    return GitScriptGenerator(executable).addParameters(*getCommandLineParameters()).commandLine(PinentryApp::class.java, false)
   }
 
-  @Language("Shell Script")
-  private fun getScriptTemplate(fallbackPinentryPath: String?): String {
-    return if (fallbackPinentryPath == null) {
-      """|#!/bin/sh
-         |${getCommandLine()}
-      """.trimMargin()
-    }
-    else {
+  @Language("ShellScript")
+  private fun getScriptTemplate(fallbackPinentryPath: String): String {
+    return run {
       """|#!/bin/sh
          |if [ -n "${'$'}$PINENTRY_USER_DATA_ENV" ]; then
          |  case "${'$'}$PINENTRY_USER_DATA_ENV" in
          |    ${PinentryData.PREFIX}*)
          |      ${getCommandLine()}
+         |      exit $?
+         |    ;;
+         |    ${PinentryData.ENTRYPOINT_PREFIX}*)
+         |      EXTERNAL_CLI_ENTRYPOINT=${'$'}{PINENTRY_USER_DATA#IJ_PINENTRY_ENTRYPOINT=}
+         |      EXTERNAL_CLI_ENTRYPOINT=${'$'}{EXTERNAL_CLI_ENTRYPOINT%%:*}
+         |      ${'$'}EXTERNAL_CLI_ENTRYPOINT
          |      exit $?
          |    ;;
          |  esac

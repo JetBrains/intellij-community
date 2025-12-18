@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension
 import com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension.RUNTIME_MODULE_DIR_KEY
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
 import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.gradle.service.task.debugger.GradleDebuggerSupport
 
 class GradleJvmDebuggerBackend : DebuggerBackendExtension {
 
@@ -25,7 +26,10 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
 
     val configuration = runSettings.configuration as RemoteConfiguration
     configuration.HOST = "localhost"
-    configuration.PORT = description[ForkedDebuggerHelper.DEBUG_SERVER_PORT_KEY]
+
+    val debuggerPort = description[ForkedDebuggerHelper.DEBUG_SERVER_PORT_KEY]
+    val localDebuggerPort = GradleDebuggerSupport.getDebuggeeLocalPort(project, debuggerPort)
+    configuration.PORT = localDebuggerPort
     configuration.USE_SOCKET_TRANSPORT = true
     configuration.SERVER_MODE = true
     configuration.putUserData(RUNTIME_MODULE_DIR_KEY, description[ForkedDebuggerHelper.RUNTIME_MODULE_DIR_KEY])

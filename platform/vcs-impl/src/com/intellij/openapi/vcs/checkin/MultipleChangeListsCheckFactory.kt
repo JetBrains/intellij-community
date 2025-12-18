@@ -5,7 +5,9 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListChange
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -25,9 +27,28 @@ private class MultipleChangeListsCheckHandler(
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     val changes = commitInfo.committedChanges
-    val changeListIds = changes.mapNotNullTo(HashSet()) { (it as? ChangeListChange)?.changeListId }
-    if (changeListIds.size > 1) {
-      return MultipleChangeListsCommitProblem()
+
+    val selectedCountByListId = changes
+      .filterIsInstance<ChangeListChange>()
+      .groupingBy { it.changeListId }
+      .eachCount()
+
+    if (selectedCountByListId.size > 1) {
+      val clm = ChangeListManager.getInstance(panel.project)
+      for ((changeListId, selectedCount) in selectedCountByListId) {
+        val changeList = clm.getChangeList(changeListId) ?: continue
+        if (selectedCount < changeList.changes.size) {
+          return MultipleChangeListsCommitProblem()
+        }
+      }
+
+      val executor = commitInfo.executor
+      if (executor == null || executor.supportsPartialCommit()) {
+        val hasPartialChanges = changes.any { change -> PartialChangesUtil.isPartialChange(change) }
+        if (hasPartialChanges) {
+          return MultipleChangeListsCommitProblem()
+        }
+      }
     }
 
     return null

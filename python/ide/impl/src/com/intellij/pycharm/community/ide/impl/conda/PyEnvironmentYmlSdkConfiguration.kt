@@ -19,12 +19,11 @@ import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationC
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
 import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewCondaEnvFromFilePanel
 import com.intellij.pycharm.community.ide.impl.findEnvOrNull
+import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.execService.BinOnEel
-import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
 import com.intellij.util.FileName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -64,10 +63,10 @@ import kotlin.io.path.name
 @ApiStatus.Internal
 class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
 
-  override val toolInfo: PyToolUIInfo = PyToolUIInfo("Conda", PythonSdkUIIcons.Tools.Anaconda)
+  override val toolId: ToolId = CONDA_TOOL_ID
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo, { checkManageableEnv(module, it) }
+    { checkManageableEnv(module, it) }
   ) { envExists ->
     { needsConfirmation -> createAndAddSdk(module, if (needsConfirmation) Source.CONFIGURATOR else Source.INSPECTION, envExists) }
   }

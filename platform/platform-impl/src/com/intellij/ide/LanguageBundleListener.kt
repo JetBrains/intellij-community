@@ -28,7 +28,7 @@ private class LanguageBundleListener : AppLifecycleListener {
    * This ensures that any changes made externally (e.g., via Toolbox) to the localization settings are accurately reflected. 
    * */
   override fun appClosing() {
-    val earlyAccessRegistryFile = PathManager.getConfigDir().resolve(EarlyAccessRegistryManager.fileName)
+    val earlyAccessRegistryFile = PathManager.getOriginalConfigDir().resolve(EarlyAccessRegistryManager.fileName)
     val lines = try {
       Files.lines(earlyAccessRegistryFile)
     }

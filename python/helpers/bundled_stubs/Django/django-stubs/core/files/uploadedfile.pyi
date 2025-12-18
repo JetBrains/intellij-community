@@ -6,7 +6,7 @@ from typing_extensions import Self
 class UploadedFile(File):
     content_type: str | None
     charset: str | None
-    content_type_extra: dict[str, str] | None
+    content_type_extra: dict[str, bytes] | None
     size: int | None  # type: ignore[assignment]
     name: str | None
     def __init__(
@@ -16,7 +16,7 @@ class UploadedFile(File):
         content_type: str | None = None,
         size: int | None = None,
         charset: str | None = None,
-        content_type_extra: dict[str, str] | None = None,
+        content_type_extra: dict[str, bytes] | None = None,
     ) -> None: ...
 
 class TemporaryUploadedFile(UploadedFile):
@@ -26,7 +26,7 @@ class TemporaryUploadedFile(UploadedFile):
         content_type: str | None,
         size: int | None,
         charset: str | None,
-        content_type_extra: dict[str, str] | None = None,
+        content_type_extra: dict[str, bytes] | None = None,
     ) -> None: ...
     def temporary_file_path(self) -> str: ...
 
@@ -40,7 +40,7 @@ class InMemoryUploadedFile(UploadedFile):
         content_type: str | None,
         size: int | None,
         charset: str | None,
-        content_type_extra: dict[str, str] | None = None,
+        content_type_extra: dict[str, bytes] | None = None,
     ) -> None: ...
     def open(self, mode: str | None = None) -> Self: ...  # type: ignore[override]
 
@@ -50,8 +50,8 @@ class SimpleUploadedFile(InMemoryUploadedFile):
     def from_dict(cls, file_dict: dict[str, str | bytes]) -> Self: ...
 
 __all__ = (
-    "UploadedFile",
-    "TemporaryUploadedFile",
     "InMemoryUploadedFile",
     "SimpleUploadedFile",
+    "TemporaryUploadedFile",
+    "UploadedFile",
 )

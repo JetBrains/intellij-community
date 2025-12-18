@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.projectImport.ProjectOpenedCallback
@@ -164,9 +165,16 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
   var createModule: Boolean = true
 
   var project: Project? = null
+    set(value) {
+      field = value
+      createModule = false
+    }
 
   @PublishedApi internal inline fun build(builder: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
     builder()
+    if (project != null && createModule) {
+      thisLogger().warn("Project is explicitly set (name=${project?.name}), but createModule is true")
+    }
     return OpenProjectTask(
       forceOpenInNewFrame = forceOpenInNewFrame,
       forceReuseFrame = forceReuseFrame,

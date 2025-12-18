@@ -2,7 +2,9 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.openapi.util.text.StringUtil;
-import junit.framework.TestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +15,8 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public class ConsentsTest extends TestCase{
+@TestApplication
+public class ConsentsTest {
   private static final String JSON_CONSENTS_DATA = "[{\"consentId\":\"rsch.test.consent.option.for.intellij\",\"version\":\"1.0\",\"text\":\"This is a text of test consent option.\",\"printableName\":\"Test consent option\",\"accepted\":true,\"deleted\":false,\"acceptanceTime\":0},{\"consentId\":\"rsch.send.usage.stat\",\"version\":\"1.0\",\"text\":\"I consent to submit anonymous usage statistics to help JetBrains make better releases and refine the most important areas of the products. I agree that the following information will be sent\\n  * Information about which product features is used\\n  * General statistics (number of files, file types) of the solutions I am working on\\n  * General information about my hardware configuration (for example, amount of RAM, CPU speed and number of cores)\\n  * General information about my software configuration (for example, OS version)\",\"printableName\":\"Send anonymous usage statistics to JetBrains\",\"accepted\":false,\"deleted\":false,\"acceptanceTime\":0}]";
   private static final String JSON_MINOR_UPGRADE_CONSENTS_DATA = "[{\"consentId\":\"rsch.test.consent.option.for.intellij\",\"version\":\"1.5\",\"text\":\"This is an upgraded text of test consent option.\",\"printableName\":\"Test consent option\",\"accepted\":true,\"deleted\":false,\"acceptanceTime\":0}]";
   private static final String JSON_MAJOR_UPGRADE_CONSENTS_DATA = "[{\"consentId\":\"rsch.send.usage.stat\",\"version\":\"2.0\",\"text\":\"This is an major-upgraded text of usage stats option.\",\"printableName\":\"Test consent option\",\"accepted\":true,\"deleted\":false,\"acceptanceTime\":0}]";
@@ -21,12 +24,19 @@ public class ConsentsTest extends TestCase{
   private static final String CONSENT_ID_1 = "rsch.test.consent.option.for.intellij";
   private static final String CONSENT_ID_USAGE_STATS = "rsch.send.usage.stat";
 
+  // Compatibility helpers to keep a legacy assertion call style while using JUnit 5
+  private static void assertTrue(String message, boolean condition) { org.junit.jupiter.api.Assertions.assertTrue(condition, message); }
+  private static void assertFalse(String message, boolean condition) { org.junit.jupiter.api.Assertions.assertFalse(condition, message); }
+  private static void assertTrue(boolean condition) { org.junit.jupiter.api.Assertions.assertTrue(condition); }
+  private static void assertFalse(boolean condition) { org.junit.jupiter.api.Assertions.assertFalse(condition); }
+
   private static String createUpgradeJson(String id, boolean isAccepted) {
     final long tstamp = System.currentTimeMillis();
     return "[{\"consentId\":\"" + id + "\",\"version\":\"1.5\",\"text\":\"This is an upgraded text of test consent option.\",\"printableName\":\"Test consent option\",\"accepted\":" +
            isAccepted + ",\"deleted\":false,\"acceptanceTime\":" + tstamp + "}]";
   }
 
+  @Test
   public void testUpdateDefaultsAndConfirmedFromServer() throws InterruptedException {
     final Pair<ConsentOptions, MemoryIOBackend> data = createConsentOptions("", JSON_CONSENTS_DATA);
     final ConsentOptions options = data.getFirst();
@@ -69,6 +79,7 @@ public class ConsentsTest extends TestCase{
     }
   }
 
+  @Test
   public void testConsentMinorVersionUpgrade() {
     final Pair<ConsentOptions, MemoryIOBackend> data = createConsentOptions("", JSON_CONSENTS_DATA);
     final ConsentOptions options = data.getFirst();
@@ -103,6 +114,7 @@ public class ConsentsTest extends TestCase{
     assertEquals(Version.fromString("1.5"), consentAfterUpgrade.getVersion());
   }
 
+  @Test
   public void testConsentMajorVersionUpgrade() {
     final Pair<ConsentOptions, MemoryIOBackend> data = createConsentOptions("", JSON_CONSENTS_DATA);
     final ConsentOptions options = data.getFirst();
@@ -177,6 +189,7 @@ public class ConsentsTest extends TestCase{
     }
   }
 
+  @Test
   public void testUsageStatsPermission() {
     final Pair<ConsentOptions, MemoryIOBackend> data = createConsentOptions(JSON_CONSENTS_DATA, JSON_CONSENTS_DATA);
     final ConsentOptions options = data.getFirst();
@@ -201,6 +214,7 @@ public class ConsentsTest extends TestCase{
     assertEquals(ConsentOptions.Permission.NO, options.isSendingUsageStatsAllowed());
   }
 
+  @Test
   public void testLoadReadAndConfirm() {
     final Pair<ConsentOptions, MemoryIOBackend> data = createConsentOptions(JSON_CONSENTS_DATA, JSON_CONSENTS_DATA);
     final ConsentOptions options = data.getFirst();

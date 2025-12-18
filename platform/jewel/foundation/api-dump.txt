@@ -319,6 +319,7 @@ f:org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 - getLastScrolledForward():Z
 - f:getLayoutInfo():androidx.compose.foundation.lazy.LazyListLayoutInfo
 - f:getLazyListState():androidx.compose.foundation.lazy.LazyListState
+- getScrollIndicatorState():androidx.compose.foundation.ScrollIndicatorState
 - getSelectedKeys():java.util.Set
 - f:isKeyboardNavigating():Z
 - isScrollInProgress():Z
@@ -571,6 +572,7 @@ f:org.jetbrains.jewel.foundation.lazy.tree.TreeState
 - getLastScrolledBackward():Z
 - getLastScrolledForward():Z
 - f:getOpenNodes():java.util.Set
+- getScrollIndicatorState():androidx.compose.foundation.ScrollIndicatorState
 - getSelectedKeys():java.util.Set
 - isScrollInProgress():Z
 - f:openNodes(java.util.List):V

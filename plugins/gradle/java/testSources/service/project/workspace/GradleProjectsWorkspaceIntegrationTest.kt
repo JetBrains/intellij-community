@@ -1,9 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.workspace
 
-import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.INHERITED_SDK
-import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.MODULE_SOURCE
-import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.assertDependencies
+import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.assertLibraryDependencies
+import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.assertModuleDependencies
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModuleEntity
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.useProjectAsync
@@ -37,8 +36,8 @@ class GradleProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrat
       assertModules(project, "workspace",
                     "gradle-app", "gradle-app.main", "gradle-app.test")
       assertModuleEntity(project, "gradle-app.main") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "Gradle: org.example:gradle-lib:1.0-SNAPSHOT")
+        assertModuleDependencies(module, emptyList())
+        assertLibraryDependencies(module, "Gradle: org.example:gradle-lib:1.0-SNAPSHOT")
       }
 
       linkProject(project, "workspace/gradle-lib", SYSTEM_ID)
@@ -47,8 +46,8 @@ class GradleProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrat
                     "gradle-app", "gradle-app.main", "gradle-app.test",
                     "gradle-lib", "gradle-lib.main", "gradle-lib.test")
       assertModuleEntity(project, "gradle-app.main") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "gradle-lib.main")
+        assertModuleDependencies(module, "gradle-lib.main")
+        assertLibraryDependencies(module, emptyList())
       }
     }
   }
@@ -79,8 +78,8 @@ class GradleProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrat
       assertModules(project, "workspace",
                     "gradle-app", "gradle-app.main", "gradle-app.test")
       assertModuleEntity(project, "gradle-app.main") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "Gradle: org.example:gradle-lib:1.0-SNAPSHOT")
+        assertModuleDependencies(module, emptyList())
+        assertLibraryDependencies(module, "Gradle: org.example:gradle-lib:1.0-SNAPSHOT")
       }
     }
   }
@@ -118,21 +117,21 @@ class GradleProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrat
       linkProject(project, "workspace/gradle-app", SYSTEM_ID)
 
       assertModuleEntity(project, "gradle-app.main") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "Gradle: org.example:gradle-lib:1.0-SNAPSHOT",
-                           "Gradle: org.example:gradle-super-lib:1.0-SNAPSHOT")
+        assertModuleDependencies(module, emptyList())
+        assertLibraryDependencies(module,
+                                  "Gradle: org.example:gradle-lib:1.0-SNAPSHOT",
+                                  "Gradle: org.example:gradle-super-lib:1.0-SNAPSHOT")
       }
 
       linkProject(project, "workspace/gradle-lib", SYSTEM_ID)
 
       assertModuleEntity(project, "gradle-app.main") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "gradle-lib.main",
-                           "Gradle: org.example:gradle-super-lib:1.0-SNAPSHOT")
+        assertModuleDependencies(module, "gradle-lib.main")
+        assertLibraryDependencies(module, "Gradle: org.example:gradle-super-lib:1.0-SNAPSHOT")
       }
       assertModuleEntity(project, "gradle-lib.main") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "Gradle: org.example:gradle-super-lib:1.0-SNAPSHOT")
+        assertModuleDependencies(module, emptyList())
+        assertLibraryDependencies(module, "Gradle: org.example:gradle-super-lib:1.0-SNAPSHOT")
       }
 
       linkProject(project, "workspace/gradle-super-lib", SYSTEM_ID)
@@ -142,13 +141,12 @@ class GradleProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrat
                     "gradle-lib", "gradle-lib.main", "gradle-lib.test",
                     "gradle-super-lib", "gradle-super-lib.main", "gradle-super-lib.test")
       assertModuleEntity(project, "gradle-app.main") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "gradle-lib.main",
-                           "gradle-super-lib.main")
+        assertModuleDependencies(module, "gradle-lib.main", "gradle-super-lib.main")
+        assertLibraryDependencies(module, emptyList())
       }
       assertModuleEntity(project, "gradle-lib.main") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "gradle-super-lib.main")
+        assertModuleDependencies(module, "gradle-super-lib.main")
+        assertLibraryDependencies(module, emptyList())
       }
     }
   }

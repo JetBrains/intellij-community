@@ -100,6 +100,59 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `command start offset is updated correctly after prompt reprinting`() = runBlocking(Dispatchers.EDT) {
+    val outputModel = TerminalTestUtil.createOutputModel()
+    val blocksModel = createBlocksModel(outputModel)
+
+    // Prepare
+    outputModel.update(0, "\n\n\n")
+    blocksModel.startNewBlock(TerminalOffset.ZERO)
+    outputModel.update(0, "myPrompt ... > \n\n\n")
+    blocksModel.updateCommandStartOffset(TerminalOffset.of(15))
+    outputModel.update(0, "myPrompt ... > 123\n\n\n")
+
+    // Test
+    blocksModel.startNewBlock(TerminalOffset.ZERO)
+    outputModel.update(0, "myPrompt (main) > 123\n\n\n")
+    blocksModel.updateCommandStartOffset(TerminalOffset.of(18))
+
+
+    assertEquals(1, blocksModel.blocks.size)
+    val block = blocksModel.activeBlock as TerminalCommandBlock
+
+    assertEquals(TerminalOffset.ZERO, block.startOffset)
+    assertEquals(TerminalOffset.of(18), block.commandStartOffset)
+    assertEquals(null, block.outputStartOffset)
+    assertEquals(TerminalOffset.of(24), block.endOffset)
+    assertEquals("123", block.getTypedCommandText(outputModel))
+  }
+
+  @Test
+  fun `command start offset is updated text change inside prompt`() = runBlocking(Dispatchers.EDT) {
+    val outputModel = TerminalTestUtil.createOutputModel()
+    val blocksModel = createBlocksModel(outputModel)
+
+    // Prepare
+    outputModel.update(0, "\n\n\n")
+    blocksModel.startNewBlock(TerminalOffset.ZERO)
+    outputModel.update(0, "myPrompt ... > \n\n\n")
+    blocksModel.updateCommandStartOffset(TerminalOffset.of(15))
+    outputModel.update(0, "myPrompt ... > 123\n\n\n")
+
+    // Test
+    outputModel.update(0, "myPrompt (main) > 123\n\n\n")
+
+    assertEquals(1, blocksModel.blocks.size)
+    val block = blocksModel.activeBlock as TerminalCommandBlock
+
+    assertEquals(TerminalOffset.ZERO, block.startOffset)
+    assertEquals(TerminalOffset.of(18), block.commandStartOffset)
+    assertEquals(null, block.outputStartOffset)
+    assertEquals(TerminalOffset.of(24), block.endOffset)
+    assertEquals("123", block.getTypedCommandText(outputModel))
+  }
+
+  @Test
   fun `block end offset is updated on command typing`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
     val blocksModel = createBlocksModel(outputModel)

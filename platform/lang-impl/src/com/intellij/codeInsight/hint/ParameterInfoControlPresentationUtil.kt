@@ -16,16 +16,30 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.applyIf
-import com.intellij.util.ui.UIUtil
 import java.awt.Color
+import javax.swing.UIManager
 
 internal fun disabledSignatureAlpha(isDarkTheme: Boolean) =
-  if (isDarkTheme) 0.5 else 0.75
+  namedAlphaWithDefaults("ParameterInfo.mismatchedOverloadOpacity", if (isDarkTheme) 0.5 else 0.75)
 
 internal fun selectedSignatureAlpha(isDarkTheme: Boolean) =
-  if (isDarkTheme) 0.05 else 0.15
+  namedAlphaWithDefaults("ParameterInfo.matchedOverloadBackgroundOpacity", if (isDarkTheme) 0.05 else 0.15)
 
+internal fun mismatchedParameterAlpha(isDarkTheme: Boolean) =
+  namedAlphaWithDefaults("ParameterInfo.mismatchedParameterBackgroundOpacity", if (isDarkTheme) 0.05 else 0.2)
+
+internal fun defaultParameterAlpha(isDarkTheme: Boolean) =
+  namedAlphaWithDefaults("ParameterInfo.defaultValueOpacity", if (isDarkTheme) 0.5 else 0.75)
+
+internal fun deselectedParameterAlpha(isDarkTheme: Boolean) =
+  namedAlphaWithDefaults("ParameterInfo.notCurrentParameterOpacity", if (isDarkTheme) 0.6 else 0.9)
+
+internal val selectedOverloadBackgroundBlendBase = JBColor.namedColor("ParameterInfo.matchedOverloadBackgroundBase", JBColor.GREEN)
+private val mismatchedParameterColor = JBColor.namedColor("ParameterInfo.mismatchedParameterBackgroundBase", JBColor.RED)
 private val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
+
+private fun namedAlphaWithDefaults(name: String, default: Double) =
+  (UIManager.get(name) as? Int)?.let { it / 100.0 }?.coerceIn(0.0, 1.0) ?: default
 
 @NlsSafe
 internal fun renderSignaturePresentationToHtml(
@@ -38,10 +52,10 @@ internal fun renderSignaturePresentationToHtml(
 ): String {
   val backgroundColor = context.defaultParameterColor ?: JBColor.WHITE
   val isDarkTheme = ColorUtil.isDark(backgroundColor)
-  val deselectedParamAlpha = if (isDarkTheme) 0.6 else 0.9
-  val defaultParamAlpha = if (isDarkTheme) 0.5 else 0.75
+  val deselectedParamAlpha = deselectedParameterAlpha(isDarkTheme)
+  val defaultParamAlpha = defaultParameterAlpha(isDarkTheme)
   val disabledSignatureAlpha = disabledSignatureAlpha(isDarkTheme)
-  val mismatchedParameterAlpha = if (isDarkTheme) 0.05 else 0.2
+  val mismatchedParameterAlpha = mismatchedParameterAlpha(isDarkTheme)
   val textAttributes = TextAttributes().apply {
     foregroundColor = EditorColorsManager.getInstance().getGlobalScheme().let {
       it.getAttributes(HighlighterColors.TEXT).foregroundColor
@@ -50,7 +64,7 @@ internal fun renderSignaturePresentationToHtml(
   }
   val currentParameter = currentParameterIndex
 
-  val mismatchedParameterBgColor = "#${ColorUtil.toHex(ColorUtil.blendColorsInRgb(backgroundColor, JBColor.RED, mismatchedParameterAlpha))}"
+  val mismatchedParameterBgColor = "#${ColorUtil.toHex(ColorUtil.blendColorsInRgb(backgroundColor, mismatchedParameterColor, mismatchedParameterAlpha))}"
   val backgroundColorHex = "#${ColorUtil.toHex(backgroundColor)}"
   val separatorStr = "<span style=\"color:#${ColorUtil.toHex(textAttributes.foregroundColor)};\">$separator</span>"
   val parameters = parametersPresentation
@@ -75,7 +89,8 @@ internal fun renderSignaturePresentationToHtml(
           }
           else if (!isUnitTestMode) {
             "<code>$it</code>"
-          } else it
+          }
+          else it
         }
     }
 

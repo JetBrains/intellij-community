@@ -96,8 +96,8 @@ class AlterIndexTogether(AlterTogetherOptionOperation):
 
 class AlterOrderWithRespectTo(ModelOptionOperation):
     option_name: str
-    order_with_respect_to: str
-    def __init__(self, name: str, order_with_respect_to: str) -> None: ...
+    order_with_respect_to: str | None
+    def __init__(self, name: str, order_with_respect_to: str | None) -> None: ...
 
 class AlterModelOptions(ModelOptionOperation):
     ALTER_OPTION_KEYS: list[str]

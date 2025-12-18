@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.add.v2.venv
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.dsl.builder.Panel
@@ -9,24 +10,16 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
-import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterComboBox
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
-import com.jetbrains.python.sdk.add.v2.existingSdks
-import com.jetbrains.python.sdk.add.v2.pythonInterpreterComboBox
-import com.jetbrains.python.sdk.add.v2.setupSdk
-import com.jetbrains.python.sdk.add.v2.sortForExistingEnvironment
-import com.jetbrains.python.sdk.add.v2.toStatisticsField
+import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 
-class PythonExistingEnvironmentSelector<P: PathHolder>(model: PythonAddInterpreterModel<P>, private val module: Module?) : PythonExistingEnvironmentConfigurator<P>(model) {
-
+class PythonExistingEnvironmentSelector<P : PathHolder>(model: PythonAddInterpreterModel<P>, private val module: Module?) : PythonExistingEnvironmentConfigurator<P>(model) {
   private lateinit var comboBox: PythonInterpreterComboBox<P>
+  override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?>? = null
+  override val toolExecutablePersister: suspend (P) -> Unit = { }
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {

@@ -19,7 +19,7 @@ class FileUploadHandler:
     content_type: str | None
     content_length: int | None
     charset: str | None
-    content_type_extra: dict[str, str] | None
+    content_type_extra: dict[str, bytes] | None
     request: HttpRequest | None
     field_name: str
     def __init__(self, request: HttpRequest | None = None) -> None: ...
@@ -38,7 +38,7 @@ class FileUploadHandler:
         content_type: str,
         content_length: int | None,
         charset: str | None = None,
-        content_type_extra: dict[str, str] | None = None,
+        content_type_extra: dict[str, bytes] | None = None,
     ) -> None: ...
     def receive_data_chunk(self, raw_data: bytes, start: int) -> bytes | None: ...
     def file_complete(self, file_size: int) -> UploadedFile | None: ...
@@ -54,7 +54,7 @@ class TemporaryFileUploadHandler(FileUploadHandler):
         content_type: str,
         content_length: int | None,
         charset: str | None = ...,
-        content_type_extra: dict[str, str] | None = ...,
+        content_type_extra: dict[str, bytes] | None = ...,
     ) -> None: ...
     def receive_data_chunk(self, raw_data: bytes, start: int) -> bytes | None: ...
     def file_complete(self, file_size: int) -> UploadedFile | None: ...
@@ -78,7 +78,7 @@ class MemoryFileUploadHandler(FileUploadHandler):
         content_type: str,
         content_length: int | None,
         charset: str | None = ...,
-        content_type_extra: dict[str, str] | None = ...,
+        content_type_extra: dict[str, bytes] | None = ...,
     ) -> None: ...
     def receive_data_chunk(self, raw_data: bytes, start: int) -> bytes | None: ...
     def file_complete(self, file_size: int) -> UploadedFile | None: ...
@@ -86,12 +86,12 @@ class MemoryFileUploadHandler(FileUploadHandler):
 def load_handler(path: str, *args: Any, **kwargs: Any) -> FileUploadHandler: ...
 
 __all__ = [
-    "UploadFileException",
-    "StopUpload",
-    "SkipFile",
     "FileUploadHandler",
-    "TemporaryFileUploadHandler",
     "MemoryFileUploadHandler",
-    "load_handler",
+    "SkipFile",
     "StopFutureHandlers",
+    "StopUpload",
+    "TemporaryFileUploadHandler",
+    "UploadFileException",
+    "load_handler",
 ]

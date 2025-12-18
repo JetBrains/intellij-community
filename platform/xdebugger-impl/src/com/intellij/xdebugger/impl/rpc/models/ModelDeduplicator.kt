@@ -3,17 +3,18 @@ package com.intellij.xdebugger.impl.rpc.models
 
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
-import com.intellij.xdebugger.impl.util.identityConcurrentHashMap
-import com.intellij.xdebugger.impl.util.identityWrapper
+import com.intellij.xdebugger.impl.util.IdentityWrapper
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ConcurrentHashMap
 
-internal open class ModelDeduplicator<Entity, EntityModel> {
+internal open class ModelDeduplicator<Entity : Any, EntityModel : Any>(
+  private val valueTransformer: (Entity) -> Any = { IdentityWrapper(it) },
+) {
   private val scopesMap = ConcurrentHashMap<CoroutineScope, ScopeBoundStorage<Entity, EntityModel>>()
 
   @OptIn(AwaitCancellationAndInvoke::class)
   fun getOrCreateModel(coroutineScope: CoroutineScope, entity: Entity, createModel: () -> EntityModel) = scopesMap.computeIfAbsent(coroutineScope) {
-    ScopeBoundStorage<Entity, EntityModel>().also { scopeBoundStorage ->
+    ScopeBoundStorage<Entity, EntityModel>(valueTransformer).also { scopeBoundStorage ->
       coroutineScope.awaitCancellationAndInvoke {
         // Note that it's still up to BackendGlobalIdsManager to remove global IDs once their relevant coroutine scopes are canceled
         scopesMap.remove(coroutineScope)
@@ -24,14 +25,18 @@ internal open class ModelDeduplicator<Entity, EntityModel> {
 
 }
 
-private class ScopeBoundStorage<Entity, EntityModel> {
-  private val groupToModelMap = identityConcurrentHashMap<Entity, EntityModel>()
+private class ScopeBoundStorage<Entity : Any, EntityModel : Any>(private val transformer: EntityTransformer<Entity>) {
+  private val groupToModelMap = ConcurrentHashMap<Any, EntityModel>()
 
   fun getOrStore(value: Entity, createModel: () -> EntityModel): EntityModel {
-    return groupToModelMap.computeIfAbsent(value.identityWrapper()) { createModel() }
+    return groupToModelMap.computeIfAbsent(transformer.transform(value)) { createModel() }
   }
 
   fun clear() {
     groupToModelMap.clear()
   }
+}
+
+internal fun interface EntityTransformer<Entity : Any> {
+  fun transform(value: Entity): Any
 }

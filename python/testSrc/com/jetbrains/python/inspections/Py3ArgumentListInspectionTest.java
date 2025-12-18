@@ -514,4 +514,24 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   public void testClassWith__init__Deconstructed() {
     doTest();
   }
+
+  // PY-83347
+  public void testZipUnpackedArguments() {
+    doTestByText("""
+                   lines: list[str] = []
+                   zipped = zip(*lines)
+                   """);
+  }
+
+  // PY-83347
+  public void testPositionalOnlyParameterMappedToUnpackedArgument() {
+    doTestByText("""
+                   def f(x, /):
+                       pass
+                   
+                   xs = [42]
+                   f(*xs)
+                   """);
+  }
+
 }

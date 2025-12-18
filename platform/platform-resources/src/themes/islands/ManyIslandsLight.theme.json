@@ -56,12 +56,14 @@
       "selectedBackground": "BackgroundMid",
       "hoverBackground": "#0000000D",
       "separatorColor": "#00000012",
-      "foreground": "#00000099"
+      "foreground": "Gray6"
     },
 
     "MainToolbar": {
       "background": "BackgroundDark",
       "borderColor": "BorderTransparent",
+      "Icon.hoverBackground": "Gray11",
+      "Dropdown.hoverBackground": "Gray11",
       "Button.arc.compact": 8
     },
 
@@ -89,7 +91,8 @@
       "Stripe": {
         "background": "BackgroundDark",
         "borderColor": "BorderTransparent"
-      }
+      },
+      "Button.DragAndDrop.stripeBackground": "BackgroundDark"
     },
 
     "StripeToolbar.Button": {
@@ -119,6 +122,8 @@
 
       "tabInsets": "-6,8,-6,8",
       "tabInsets.compact": "-2,6,-2,4",
+      "verticalTabInsets": "-2,10,-2,10",
+      "verticalTabInsets.compact": "0,10,0,10",
       "tabContentActionsRightInsets": "0,2,0,2"
     },
 
@@ -194,7 +199,10 @@
       }
     },
 
-    "SearchEverywhere.Header.insets": "2,4,0,9",
+    "SearchEverywhere": {
+      "Header.insets": "2,4,0,9",
+      "List.settingsBackground": "PopupBackground"
+    },
 
     "HelpBrowser.UserMessage.background": "#EDEEF2",
 
@@ -253,11 +261,30 @@
 
       "ToolWindow.Header.inactiveBackground": "#F7F6F8",
       "ToolWindow.background": "#F7F6F8",
+      "ToolWindow.Button.DragAndDrop.stripeBackground": "AltBackgroundDark",
 
       "Borders.color": "#E8E9ED",
       "Borders.ContrastBorderColor": "#E8E9ED",
       "ToolWindow.Header.borderColor": "#E8E9ED",
       "Island.borderColor": "#F7F6F8"
+    },
+    
+    "Recap": {
+      "ijnext": "#DCCBFB",
+      "cardBackground": "#F7F8FA",
+      "cardBorderColor": "#F7F8FA",
+      "cardHeaderTitle": "#000000",
+      "cardHeaderLinkBackground": "#EBECF0",
+      "cardHeaderSubtitle": "#888888",
+      "cardFooterForeground": "#888888",
+      "chroniclesBackground": "#EBECF0",
+      "chroniclesBorderColor": "#EBECF0",
+      "chroniclesBackgroundHovered": "#DFE1E5",
+      "chroniclesForeground": "#000000",
+      "chroniclesForegroundGreyed": "#888888",
+      "errorBackground": "#FFFAEB",
+      "errorBorder": "#FED277",
+      "errorForeground": "#000000"
     }
   }
 }

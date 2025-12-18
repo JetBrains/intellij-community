@@ -210,6 +210,27 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
   }
 
+  @Internal
+  fun patchSinceUntilRange(
+    customSinceValue: String? = System.getProperty("$mainModule.plugin.build.sinceValue")?.takeUnless { it.isBlank() },
+    customUntilValue: String? = System.getProperty("$mainModule.plugin.build.untilValue")?.takeUnless { it.isBlank() },
+  ) {
+    require((customSinceValue == null) == (customUntilValue == null)) {
+      "$mainModule: custom since and until values cannot be set independently. Either both or neither should be provided."
+    }
+    val originalEvaluator = versionEvaluator
+    versionEvaluator = PluginVersionEvaluator { pluginXmlSupplier, ideBuildVersion, context ->
+      val version = originalEvaluator.evaluate(pluginXmlSupplier, ideBuildVersion, context)
+      val sinceUntil = if (customSinceValue != null && customUntilValue != null) {
+        customSinceValue to customUntilValue
+      }
+      else {
+        version.sinceUntil
+      }
+      PluginVersionEvaluatorResult(version.pluginVersion, sinceUntil)
+    }
+  }
+
   sealed class PluginLayoutBuilder(@JvmField protected val layout: PluginLayout) : BaseLayoutSpec(layout) {
     /**
      * Returns [PluginBundlingRestrictions] instance which can be used to exclude the plugin from some distributions.

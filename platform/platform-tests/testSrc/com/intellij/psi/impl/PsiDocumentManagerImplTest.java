@@ -45,6 +45,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -70,6 +71,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
@@ -1132,12 +1134,17 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   private static final Key<Boolean> MY_DOC_KEY = Key.create("MY_DOC_TEST_KEY");
   public void testChangedDocumentMustNotBeHardRetainedByDocumentCommit2() throws Exception {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    AtomicReference<Throwable> error = new AtomicReference<>();
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
       public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, Throwable t) {
         if (message.contains("Too many uncommitted documents")) {
           return Action.NONE;
         }
+        if (t instanceof AlreadyDisposedException) {
+          return Action.NONE;
+        }
+        error.compareAndSet(null, t);
         return super.processError(category, message, details, t);
       }
     }, () -> {
@@ -1165,6 +1172,12 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
         }
       });
     });
+
+    // by throwing a logged error here, the test can fail locally instead of only on TC
+    Throwable t = error.get();
+    if (t != null) {
+      throw new RuntimeException(t);
+    }
   }
 
   private void modifyAndSaveDocument(VirtualFile virtualFile) {

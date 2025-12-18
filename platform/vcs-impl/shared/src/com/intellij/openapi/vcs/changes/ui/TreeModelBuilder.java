@@ -232,23 +232,10 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
         ChangeNodeDecorator baseDecorator = modelBuilderEx != null ?
                                             modelBuilderEx.getChangeNodeInChangelistBaseDecorator(listRemoteState, change, i) : null;
         ChangeNodeDecorator decorator = changeDecoratorProvider != null ? changeDecoratorProvider.apply(baseDecorator) : baseDecorator;
-        if (ChangesUtil.isMergeConflict(change)) {
-          if (conflictsRoot == null) {
-            conflictsRoot = new ChangesBrowserConflictsNode(myProject);
-            conflictsRoot.markAsHelperNode();
-            myModel.insertNodeInto(conflictsRoot, myRoot, myModel.getChildCount(myRoot));
-          }
-          ChangesBrowserNode<?> changeNode = Objects.requireNonNullElseGet(
-            ChangesTreeNodeFactory.Companion.createChangeNode(myProject, change, decorator, conflictsRoot),
-            () -> createChangeNode(change, decorator));
-          insertChangeNode(change, conflictsRoot, changeNode);
-        }
-        else {
-          ChangesBrowserNode<?> changeNode = Objects.requireNonNullElseGet(
-            ChangesTreeNodeFactory.Companion.createChangeNode(myProject, change, decorator, changesParent),
-            () -> createChangeNode(change, decorator));
-          insertChangeNode(change, changesParent, changeNode);
-        }
+        ChangesBrowserNode<?> changeNode = Objects.requireNonNullElseGet(
+          ChangesTreeNodeFactory.Companion.createChangeNode(myProject, change, decorator, changesParent),
+          () -> createChangeNode(change, decorator));
+        insertChangeNode(change, changesParent, changeNode);
       }
     }
     return this;

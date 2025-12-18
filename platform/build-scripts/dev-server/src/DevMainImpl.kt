@@ -28,8 +28,15 @@ data class BuildDevInfo(
 fun buildDevMain(): java.util.AbstractMap.SimpleImmutableEntry<String, Collection<Path>> {
   val info = buildDevImpl()
 
-  @Suppress("SpellCheckingInspection")
-  val exceptions = hashSetOf("jna.boot.library.path", "pty4j.preferred.native.folder", "jna.nosys", "jna.noclasspath", "jb.vmOptionsFile")
+  val exceptions = hashSetOf(
+    "jna.boot.library.path",
+    "pty4j.preferred.native.folder",
+    "jna.nosys",
+    "jna.noclasspath",
+    "jb.vmOptionsFile",
+    "skiko.library.path"
+  )
+
   val systemProperties = System.getProperties()
   for ((name, value) in info.systemProperties) {
     if (exceptions.contains(name) || !systemProperties.containsKey(name)) {

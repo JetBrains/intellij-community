@@ -218,6 +218,11 @@ internal class ArrayListEelAbsolutePath private constructor(
     /** https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#traditional-dos-paths */
     @Throws(EelPathException::class)
     private fun findAbsoluteTraditionalDosPath(raw: String, descriptor: EelDescriptor): ArrayListEelAbsolutePath? {
+      var raw = raw
+      if (raw.length == 2 && raw.endsWith(":")) {
+        // For cases like "C:" (which is "c:\\")
+        raw += "\\"
+      }
       if (raw.length < 3) return null
       if (!raw[0].isLetter()) return null
       if (raw[1] != ':') return null

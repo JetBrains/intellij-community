@@ -84,11 +84,11 @@ public class PyTypeProviderBase implements PyTypeProvider {
   }
 
   @Override
-  public @Nullable List<@NotNull PyTypedResolveResult> getMemberTypes(@NotNull PyType type,
-                                                                     @NotNull String name,
-                                                                     @Nullable PyExpression location,
-                                                                     @NotNull AccessDirection direction,
-                                                                     @NotNull PyResolveContext context) {
+  public @Nullable List<@NotNull PyTypeMember> getMemberTypes(@NotNull PyType type,
+                                                              @NotNull String name,
+                                                              @Nullable PyExpression location,
+                                                              @NotNull AccessDirection direction,
+                                                              @NotNull PyResolveContext context) {
     return null;
   }
 

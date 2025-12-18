@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="private">
   <dependencies>
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.sdk"/>
@@ -6,6 +6,7 @@
     <module name="intellij.python.sdkConfigurator.common"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.python.common"/>
   </dependencies>
   <resource-bundle>messages.PySdkConfiguratorBundle</resource-bundle>
   <projectListeners>
@@ -15,11 +16,11 @@
   <extensions defaultExtensionNs="com.intellij.platform">
     <rpc.backend.remoteApiProvider implementation="com.intellij.python.sdkConfigurator.backend.impl.rpcBridge.ApiProvider"/>
   </extensions>
-
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.projectRemoteTopicListener
-      implementation="com.intellij.python.sdkConfigurator.backend.impl.rpcBridge.BackendTopicListener"/>
+    <registryKey defaultValue="1" description="How many SDK lookup processes execute in parallel"
+                 key="intellij.python.sdkConfigurator.backend.sdk.parallel"/>
   </extensions>
+
   <actions>
     <action class="com.intellij.python.sdkConfigurator.backend.impl.platformBridge.ConfigureSDKAction" id="ConfigureSDKAction"/>
   </actions>

@@ -257,6 +257,15 @@ public final class ExternalSystemJdkUtil {
   }
 
   @ApiStatus.Internal
+  public static @Nullable Sdk lookupJdkByVersion(@NotNull JavaVersion javaVersion) {
+    return SdkLookupUtil.lookupSdkBlocking(builder -> builder
+      .withVersionFilter(it -> matchJavaVersion(javaVersion, it))
+      .withSdkType(getJavaSdkType())
+      .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP)
+    );
+  }
+
+  @ApiStatus.Internal
   public static @NotNull Sdk lookupJdkByPath(@NotNull String sdkHome) {
     var jdk = findJdkInSdkTableByPath(sdkHome);
     if (jdk != null) {

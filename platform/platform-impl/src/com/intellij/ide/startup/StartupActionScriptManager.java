@@ -4,6 +4,7 @@ package com.intellij.ide.startup;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.io.Decompressor;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public final class StartupActionScriptManager {
   @ApiStatus.Internal
@@ -159,6 +161,48 @@ public final class StartupActionScriptManager {
   private static @Nullable Path mapPath(String path, Path oldTarget, Path newTarget) {
     var fsPath = oldTarget.getFileSystem().getPath(path);
     return fsPath.startsWith(oldTarget) ? newTarget.resolve(oldTarget.relativize(fsPath)) : null;
+  }
+
+  @ApiStatus.Internal
+  public static synchronized void executeMarketplaceCommandsFromActionScript() throws IOException {
+    var scriptFile = getActionScriptFile();
+    @Nullable List<ActionCommand> remainingCommands = null;
+    boolean marketplaceCommandsFound = false;
+    try {
+      var commands = loadActionScript(scriptFile);
+
+      var partitioned = commands.stream().collect(Collectors.partitioningBy(command -> {
+        if (command instanceof CopyCommand copyCommand) {
+          return hasMarketplaceInPath(copyCommand.getSource());
+        }
+        else if (command instanceof UnzipCommand unzipCommand) {
+          return hasMarketplaceInPath(unzipCommand.getSource());
+        }
+        else if (command instanceof DeleteCommand deleteCommand) {
+          return hasMarketplaceInPath(deleteCommand.mySource);
+        }
+        return false;
+      }));
+
+      var marketplaceCommands = partitioned.get(true);
+      remainingCommands = partitioned.get(false);
+
+      for (var command : marketplaceCommands) {
+        marketplaceCommandsFound = true;
+        command.execute();
+      }
+    } finally {
+      if (remainingCommands == null || remainingCommands.isEmpty()) {
+        Files.deleteIfExists(scriptFile);
+      }
+      else if (marketplaceCommandsFound) { // the file won't change if no marketplace commands were found
+        saveActionScript(remainingCommands, scriptFile);
+      }
+    }
+  }
+
+  private static boolean hasMarketplaceInPath(@NotNull String path) {
+    return StringsKt.contains(path, "marketplace", true);
   }
 
   public interface ActionCommand {

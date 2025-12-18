@@ -100,14 +100,17 @@ class SuggestedRefactoringChangeCollector(
 
   private fun updateAvailabilityIndicator() {
     val state = this.state
+    val publisher = availabilityIndicator.project.messageBus.syncPublisher(SuggestedRefactoringAvailabilityListener.TOPIC)
     if (state == null || state.oldSignature == state.newSignature && state.errorLevel == ErrorLevel.NO_ERRORS) {
       availabilityIndicator.clear()
+      publisher.cleared()
       return
     }
 
     val refactoringSupport = state.refactoringSupport
     if (!state.anchor.isValid || refactoringSupport.nameRange(state.anchor) == null) {
       availabilityIndicator.disable()
+      publisher.disabled()
       return
     }
 
@@ -116,6 +119,7 @@ class SuggestedRefactoringChangeCollector(
     else
       null
     availabilityIndicator.update(state.anchor, refactoringData, refactoringSupport)
+    publisher.updated(state)
   }
 
   @set:TestOnly

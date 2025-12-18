@@ -1222,10 +1222,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           return true;
         }
       }
-      if (info.getHighlighter() != null && !CodeInsightContextHighlightingUtil.acceptRangeHighlighter(highlightingContext, info.getHighlighter())) {
-        return true;
+      RangeHighlighterEx highlighter = info.getHighlighter();
+      if (highlighter == null || CodeInsightContextHighlightingUtil.acceptRangeHighlighter(highlightingContext, highlighter)) {
+        foundInfoList.add(info);
       }
-      foundInfoList.add(info);
       return true;
     }
 

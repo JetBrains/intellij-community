@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -12,9 +13,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import com.intellij.platform.workspace.storage.EntityStorageSerializer
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
@@ -56,16 +55,17 @@ class WorkspaceCacheTest {
   fun `save non-persistent modules`() {
     val projectData = prepareProject()
 
-    val project = loadProject(projectData.projectDir)
-
-    val initialModulesSize = ModuleManager.getInstance(project).modules.size
-    ApplicationManager.getApplication().invokeAndWait {
-      ApplicationManager.getApplication().runWriteAction {
-        ModuleManager.getInstance(project).newNonPersistentModule("Non", "Non")
+    val initialModulesSize = ProjectUtil.openOrImport(projectData.projectDir.toPath(), OpenProjectTaskBuilder().build())!!.useProject { project ->
+      val initialModulesSize = ModuleManager.getInstance(project).modules.size
+      ApplicationManager.getApplication().invokeAndWait {
+        ApplicationManager.getApplication().runWriteAction {
+          ModuleManager.getInstance(project).newNonPersistentModule("Non", "Non")
+        }
       }
-    }
 
-    WorkspaceModelCache.getInstance(project)?.saveCacheNow()
+      WorkspaceModelCache.getInstance(project)?.saveCacheNow()
+      initialModulesSize
+    }
 
     val project2 = loadProject(projectData.projectDir)
 

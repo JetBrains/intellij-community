@@ -108,4 +108,23 @@ class JavaTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionI
       }
     """.trimIndent(), "SimpleTest")
   }
+
+  fun `test no highlighting on before and after suite`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.junit.platform.suite.api.AfterSuite;
+      import org.junit.platform.suite.api.BeforeSuite;
+      import org.junit.platform.suite.api.SelectPackages;
+      import org.junit.platform.suite.api.Suite;
+      
+      @Suite
+      @SelectPackages("example")
+      class BeforeAndAfterSuiteDemo {
+          @BeforeSuite
+          static void beforeSuite() { }
+
+          @AfterSuite
+          static void afterSuite() { }
+      }
+    """.trimIndent(), "SimpleTest")
+  }
 }

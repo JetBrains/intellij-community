@@ -4,6 +4,7 @@
   <module value="com.intellij.modules.python-core-capable"/>
   <!-- for compatibility -->
   <module value="com.intellij.platform.ide.provisioner"/>
+  <module value="com.intellij.modules.jcef"/>
   <!-- for compatibility -->
 
   <content namespace="jetbrains">

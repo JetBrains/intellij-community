@@ -135,6 +135,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     }
 
     fun withLanguages(langs: Set<Lang>): State = copy(enabledLanguages = langs)
+    fun withCheckingContext(context: CheckingContext): State = copy(checkingContext = context)
     fun withAutoFix(autoFix: Boolean): State = copy(autoFix = autoFix)
     fun withOxfordSpelling(useOxford: Boolean): State = copy(useOxfordSpelling = useOxford)
     fun withParameter(domain: TextStyleDomain, language: Language, parameter: Parameter, value: String?): State {

@@ -13,7 +13,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -217,7 +216,7 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
 
     private fun scheduleCalculateAndUpdate() {
       coroutineScope.launch(Dispatchers.IO) {
-        val modified = UiPluginManager.getInstance().isModified(sessionId)
+        val modified = UiPluginManager.getInstance().isModified()
         if (isModified != modified) {
           isModified = modified
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
@@ -233,7 +232,7 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
   class SyncSessionModificationTracker(private val sessionId: String) : SessionModificationTracker {
     @Suppress("RAW_RUN_BLOCKING") //will take little time for the old implementation, it was always blocking before
     override fun isModified(): Boolean {
-      return runBlocking { UiPluginManager.getInstance().isModified(sessionId) }
+      return runBlocking { UiPluginManager.getInstance().isModified() }
     }
   }
 }

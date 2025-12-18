@@ -9,7 +9,9 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -105,6 +107,15 @@ class GlobalWorkspaceModel internal constructor(
 
   private val updateModelMethodName = GlobalWorkspaceModel::updateModel.name
   private val onChangedMethodName = GlobalWorkspaceModel::onChanged.name
+
+  /**
+   * ModuleBridgeLoaderService applies changed from the global model to a newly created project.
+   * But if the global model is modified again before the project is added to the list of open projects in [ProjectManager]
+   * those changes won't be applied to the project.
+   *
+   * Therefore, we need to keep the list of projects that are being initialized.
+   */
+  private val initializingAndOpenProjects = ConcurrentHashMap.newKeySet<Project>()
 
   init {
     LOG.debug { "Loading global workspace model" }
@@ -222,6 +233,25 @@ class GlobalWorkspaceModel internal constructor(
     GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers(eelMachine).forEach { it.handleBeforeChangeEvents(change) }
   }
 
+  fun registerInitializingProjectForUpdatesFromGlobalModel(project: Project) {
+    LOG.info("Project ${project.name} is added to the list of initializing and open projects")
+    initializingAndOpenProjects.add(project)
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectCloseListener.TOPIC,
+      object : ProjectCloseListener {
+        override fun projectClosed(project: Project) {
+          if (initializingAndOpenProjects.remove(project)) {
+            LOG.info("Project ${project.name} is removed from the list of initializing and open projects. Project was closed.")
+          }
+        }
+      },
+    )
+    Disposer.register(project) {
+      if (initializingAndOpenProjects.remove(project)) {
+        LOG.info("Project ${project.name} is removed from the list of initializing and open projects. Project was disposed.")
+      }
+    }
+  }
+
   @RequiresWriteLock
   private fun onChanged(change: VersionedStorageChange) {
     ThreadingAssertions.assertWriteAccess()
@@ -230,11 +260,12 @@ class GlobalWorkspaceModel internal constructor(
 
     globalWorkspaceModels.globalWorkspaceModelCache?.scheduleCacheSave()
     isFromGlobalWorkspaceModel = true
-    for (project in ProjectManager.getInstance().openProjects) {
+    for (project in initializingAndOpenProjects) {
       if (project.isDisposed || project.getEelDescriptor().machine != eelMachine) {
         continue
       }
       applyStateToProject(project)
+      LOG.info("During global workspace model update the changes were also applied to project: ${project.name}")
     }
     isFromGlobalWorkspaceModel = false
   }
@@ -431,25 +462,27 @@ class GlobalWorkspaceModelRegistry {
   private val environmentToModel = ConcurrentHashMap<EelMachine, GlobalWorkspaceModel>()
 
   fun getGlobalModel(eelMachine: EelMachine): GlobalWorkspaceModel {
-    val protectedMachine = if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) eelMachine else LocalEelMachine
+    val protectedMachine = if (Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) eelMachine else LocalEelMachine
     val internalEnvironmentName = protectedMachine.getInternalEnvironmentNameImpl()
     return environmentToModel.computeIfAbsent(protectedMachine) { GlobalWorkspaceModel(globalWorkspaceModels, protectedMachine, internalEnvironmentName) }
   }
 
   fun getGlobalModelByEnvironmentName(name: InternalEnvironmentName): GlobalWorkspaceModel {
-    val protectedName = if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) name else InternalEnvironmentName.Local
+    val protectedName = if (Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) name else InternalEnvironmentName.Local
     val machine = if (protectedName == InternalEnvironmentName.Local) {
       LocalEelMachine
     }
     else {
-      EelProvider.EP_NAME.extensionList.firstNotNullOf { eelProvider -> eelProvider.getEelMachineByInternalName(protectedName.name) }
+      EelProvider.EP_NAME.extensionList.firstNotNullOfOrNull { eelProvider ->
+        eelProvider.getEelMachineByInternalName(protectedName.name)
+      } ?: throw IllegalStateException("No EelMachine found for internal name: ${protectedName.name}")
     }
     val model = getGlobalModel(machine)
     return model
   }
 
   fun getGlobalModels(): List<GlobalWorkspaceModel> {
-    return if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
+    return if (Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) {
       environmentToModel.values.toList()
     }
     else {
@@ -466,7 +499,7 @@ class GlobalWorkspaceModelRegistry {
 
 @ApiStatus.Internal
 fun EelMachine.getInternalEnvironmentName(): InternalEnvironmentName {
-  val protectedMachine = if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) this else LocalEelMachine
+  val protectedMachine = if (Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) this else LocalEelMachine
   return protectedMachine.getInternalEnvironmentNameImpl()
 }
 

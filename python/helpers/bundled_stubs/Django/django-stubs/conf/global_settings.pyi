@@ -5,7 +5,10 @@ from re import Pattern
 # django.utils.translation -- that module depends on the settings.
 from typing import Any, Literal, Protocol, TypeAlias, TypedDict, type_check_only
 
+from django.utils.functional import _StrOrPromise
 from typing_extensions import NotRequired
+
+from django_stubs_ext.settings import TemplatesSetting
 
 _Admins: TypeAlias = list[tuple[str, str]]
 
@@ -74,6 +77,10 @@ MANAGERS: _Admins
 # Content-Type header.
 DEFAULT_CHARSET: str
 
+# `SERIALIZATION_MODULES` is a dictionary (`dict[str, str]`) of modules containing serializer definitions.
+# Because Django doesn't define it, we can't provide its type here. Use `getattr` for type-safe access
+# e.g. `getattr(settings, "SERIALIZATION_MODULES")`
+
 # Email address that error messages come from.
 SERVER_EMAIL: str
 
@@ -92,6 +99,10 @@ DATABASE_ROUTERS: list[str | Router]
 # Third-party backends can be specified by providing a Python path
 # to a module that defines an EmailBackend class.
 EMAIL_BACKEND: str
+
+# `EMAIL_FILE_PATH` is a `str` indicating the directory used by the file email backend to store output files.
+# Because Django doesn't define it, we can't provide its type here. Use `getattr` for type-safe access
+# e.g. `getattr(settings, "EMAIL_FILE_PATH")`
 
 # Host for sending email.
 EMAIL_HOST: str
@@ -114,7 +125,7 @@ EMAIL_TIMEOUT: int | None
 # List of strings representing installed apps.
 INSTALLED_APPS: list[str]
 
-TEMPLATES: list[dict[str, Any]]
+TEMPLATES: list[TemplatesSetting]
 
 # Default form rendering class.
 FORM_RENDERER: str
@@ -167,6 +178,10 @@ ABSOLUTE_URL_OVERRIDES: dict[str, Any]
 #    ]
 IGNORABLE_404_URLS: list[Pattern[str]]
 
+# `ROOT_URLCONF` is a string representing the full Python import path to the root `URLconf`.
+# Because Django doesn't define it, we can't provide its type here. Use `getattr` for type-safe access
+# e.g. `getattr(settings, "ROOT_URLCONF")`
+
 # A secret key for this particular Django installation. Used in secret-key
 # hashing algorithms. Set this in your settings, or Django will complain
 # loudly.
@@ -185,6 +200,10 @@ MEDIA_ROOT: str
 # URL that handles the media served from MEDIA_ROOT.
 # Examples: "http://example.com/media/", "http://media.example.com/"
 MEDIA_URL: str
+
+# `SITE_ID` is the ID, as an integer, of the current site in the `django_site` database table.
+# Because Django doesn't define it, we can't provide its type here. Use `getattr` for type-safe access
+# e.g. `getattr(settings, "SITE_ID")`
 
 # Absolute path to the directory static files should be collected to.
 # Example: "/var/www/example.com/static/"
@@ -389,11 +408,11 @@ AUTH_USER_MODEL: str
 
 AUTHENTICATION_BACKENDS: Sequence[str]
 
-LOGIN_URL: str
+LOGIN_URL: _StrOrPromise
 
-LOGIN_REDIRECT_URL: str
+LOGIN_REDIRECT_URL: _StrOrPromise
 
-LOGOUT_REDIRECT_URL: str | None
+LOGOUT_REDIRECT_URL: _StrOrPromise | None
 
 # The number of seconds a password reset link is valid for
 PASSWORD_RESET_TIMEOUT: int

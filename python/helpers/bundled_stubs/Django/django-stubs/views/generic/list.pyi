@@ -13,7 +13,7 @@ class _HasModel(Protocol):
     @property
     def model(self) -> type[Model]: ...
 
-class MultipleObjectMixin(Generic[_M], ContextMixin):
+class MultipleObjectMixin(ContextMixin, Generic[_M]):
     allow_empty: bool
     queryset: QuerySet[_M] | None
     model: type[_M] | None

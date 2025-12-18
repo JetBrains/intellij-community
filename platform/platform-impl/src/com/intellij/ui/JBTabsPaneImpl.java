@@ -8,6 +8,7 @@ import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +85,8 @@ public class JBTabsPaneImpl implements TabbedPane {
     tabs.setTabsPosition(position);
   }
 
-  private static @NotNull JBTabsPosition swingConstantToEnum(int tabPlacement) {
+  @ApiStatus.Internal
+  public static @NotNull JBTabsPosition swingConstantToEnum(int tabPlacement) {
     return switch (tabPlacement) {
       case SwingConstants.TOP -> JBTabsPosition.top;
       case SwingConstants.BOTTOM -> JBTabsPosition.bottom;

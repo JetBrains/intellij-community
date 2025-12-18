@@ -13,6 +13,7 @@ import com.pty4j.unix.UnixPtyProcess;
 import com.pty4j.windows.conpty.WinConPtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.util.ShellEelProcess;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -34,6 +35,15 @@ public class LocalTerminalTtyConnector extends PtyProcessTtyConnector {
   @ApiStatus.Internal
   public @NotNull EelDescriptor getEelDescriptor() {
     return myShellProcessHolder.getDescriptor();
+  }
+
+  @ApiStatus.Internal
+  public @NotNull ShellEelProcess getShellEelProcess() {
+    return new ShellEelProcess(
+      myShellProcessHolder.getEelProcess(),
+      myShellProcessHolder.getEelApi(),
+      myProcess
+    );
   }
 
   @Override

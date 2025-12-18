@@ -82,6 +82,11 @@ internal class DocumentationSearchHandler(
         cell(toolbar.component)
       }
     }
+
+    for (component in listOf(searchPanel, search.searchField, search.searchField.textEditor, toolbar.component)) {
+      component.isOpaque = false
+    }
+
     contentComponent.add(searchPanel, BorderLayout.NORTH)
     Disposer.register(search) {
       contentComponent.remove(searchPanel)

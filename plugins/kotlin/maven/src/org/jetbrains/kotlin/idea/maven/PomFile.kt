@@ -155,6 +155,27 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         return plugin
     }
 
+    fun addPluginDependency(plugin: MavenDomPlugin, artifact: MavenId): MavenDomDependency? {
+        ensureBuild()
+
+        val dependencies = plugin.dependencies
+
+        dependencies.dependencies.firstOrNull {
+            it.groupId.stringValue == artifact.groupId &&
+            it.artifactId.stringValue == artifact.artifactId
+        }?.let { return it }
+
+        with(dependencies.addDependency()) {
+            groupId.stringValue = artifact.groupId
+            artifactId.stringValue = artifact.artifactId
+            artifact.version?.let {
+                version.stringValue = it
+            }
+            ensureTagExists()
+            return this
+        }
+    }
+
     fun findPlugin(groupArtifact: MavenId): MavenDomPlugin? = domModel.build.plugins.plugins.firstOrNull { it.matches(groupArtifact) }
 
     fun isPluginAfter(plugin: MavenDomPlugin, referencePlugin: MavenDomPlugin): Boolean {
@@ -650,14 +671,15 @@ fun PomFile.changeLanguageVersion(languageVersion: String?, apiVersion: String?)
 }
 
 @ApiStatus.Internal
-fun PomFile.addKotlinCompilerPlugins(name: String) {
-    val kotlinPlugin = findPlugin(kotlinPluginId(null)) ?: return
+fun PomFile.addKotlinCompilerPlugin(name: String): MavenDomPlugin? {
+    val kotlinPlugin = findPlugin(kotlinPluginId(null)) ?: return null
     val configurationTag = kotlinPlugin.configuration.ensureTagExists()
     val compilerPluginsTag = configurationTag.findSubTagOrCreate("compilerPlugins")
     compilerPluginsTag.findSubTags("plugin").firstOrNull { it.value.trimmedText == name } ?: run {
         val pluginTag = compilerPluginsTag.createChildTag("plugin", name)
         compilerPluginsTag.add(pluginTag)
     }
+    return kotlinPlugin
 }
 
 internal fun MavenDomDependencies.findDependencies(artifact: MavenId, scope: MavenArtifactScope? = null) =

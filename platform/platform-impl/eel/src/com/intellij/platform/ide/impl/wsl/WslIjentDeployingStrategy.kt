@@ -7,11 +7,10 @@ import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
-import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.ijent.spi.IjentConnectionStrategy
 import com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategy
 import com.intellij.util.io.computeDetached
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
@@ -20,11 +19,12 @@ import java.nio.file.Path
 @ApiStatus.Internal
 class WslIjentDeployingStrategy(
   scope: CoroutineScope,
+  currentDispatcher: CoroutineDispatcher,
   override val ijentLabel: String,
   private val distribution: WSLDistribution,
   private val project: Project?,
   private val wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
-) : IjentDeployingOverShellProcessStrategy(scope) {
+) : IjentDeployingOverShellProcessStrategy(scope, currentDispatcher) {
   override suspend fun mapPath(path: Path): String? =
     distribution.getWslPath(path)
 

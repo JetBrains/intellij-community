@@ -49,7 +49,7 @@ import java.util.concurrent.ConcurrentHashMap
  *   environments from processing changes.
  */
 private fun SdkEntity.getAssociatedEffectiveWorkspaceEelDescriptor(): EelDescriptor {
-  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
+  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) {
     return LocalEelDescriptor
   }
   return try {
@@ -165,7 +165,7 @@ private class GlobalSdkBridgesLoader(private val eelMachine: EelMachine) : Globa
    * Not all of them are interested in every change, especially if the change happens in an unrelated environment.
    */
   private fun shouldSkipEntityProcessing(entity: SdkEntity): Boolean {
-    if (!Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
+    if (!Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) {
       return false
     }
     return entity.homePath?.toPath()?.getEelDescriptor()?.machine != eelMachine

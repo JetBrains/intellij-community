@@ -173,6 +173,7 @@ fun <T : CommandChain> T.findUsages(expectedElementName: String = "", scope: Str
 
 fun <T : CommandChain> T.findUsagesInToolWindow(expectedElementName: String = "", scope: String = "Project Files", warmup: Boolean = false): T = apply {
   navigateAndFindUsages(expectedElementName, "", scope, warmup = warmup, runInToolWindow = true)
+  addCommand("${CMD_PREFIX}findUsagesInToolWindowWait")
 }
 
 fun <T : CommandChain> T.navigateAndFindUsages(
@@ -782,6 +783,10 @@ fun <T : CommandChain> T.startInlineRename(): T = apply {
 }
 
 fun <T : CommandChain> T.setRegistry(registry: String, value: Boolean): T = apply {
+  addCommand("${CMD_PREFIX}set $registry=$value")
+}
+
+fun <T : CommandChain> T.setRegistry(registry: String, value: Int): T = apply {
   addCommand("${CMD_PREFIX}set $registry=$value")
 }
 

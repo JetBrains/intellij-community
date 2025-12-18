@@ -37,6 +37,7 @@ jvm_library(
     "@lib//:grazie-tests-ai-grazie-spell-hunspell-uk",
     "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-languagetool-core",
     "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-language-ru",
+    "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-language-zh",
     "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-language-de",
     "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-language-it",
     "@lib//:grazie-tests-jetbrains-intellij-deps-languagetool-language-uk",

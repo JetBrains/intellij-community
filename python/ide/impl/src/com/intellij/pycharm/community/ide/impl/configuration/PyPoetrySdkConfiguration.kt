@@ -12,15 +12,13 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.findEnvOrNull
+import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.pyproject.PyProjectToml
-import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PyToolUIInfo
-import com.jetbrains.python.ToolId
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.poetry.findPoetryLock
 import com.jetbrains.python.poetry.getPyProjectTomlForPoetry
-import com.jetbrains.python.projectModel.poetry.POETRY_TOOL_ID
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.*
@@ -42,16 +40,13 @@ class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
     private val LOGGER = Logger.getInstance(PyPoetrySdkConfiguration::class.java)
   }
 
-  override val toolInfo: PyToolUIInfo = PyToolUIInfo("Poetry", PythonSdkUIIcons.Tools.Poetry)
   override val toolId: ToolId = POETRY_TOOL_ID
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo,
     { checkExistence -> checkManageableEnv(module, checkExistence, true) },
   ) { { createPoetry(module) } }
 
   override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo,
     { checkExistence -> checkManageableEnv(module, checkExistence, false) },
   ) { { createPoetry(module) } }
 

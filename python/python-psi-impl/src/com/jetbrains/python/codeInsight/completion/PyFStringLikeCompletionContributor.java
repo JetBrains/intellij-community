@@ -131,45 +131,7 @@ public final class PyFStringLikeCompletionContributor extends CompletionContribu
       return false;
     }
     PyClassType templateType = psiFacade.createClassType(templateClass, false);
-    return isArgumentOfFunctionExpectingTemplateString(stringLiteral, templateType, typeEvalContext) ||
-           isAssignedToVariableExpectingTemplateString(stringLiteral, templateType, typeEvalContext);
-  }
-
-  private static boolean isAssignedToVariableExpectingTemplateString(@NotNull PyStringLiteralExpression literal,
-                                                                     @NotNull PyClassType templateType,
-                                                                     @NotNull TypeEvalContext typeEvalContext) {
-    PsiElement unpackedValueParent = PsiTreeUtil.skipParentsOfType(literal, PyParenthesizedExpression.class, PyTupleExpression.class);
-    if (!(unpackedValueParent instanceof PyAssignmentStatement assignment)) {
-      return false;
-    }
-    List<Pair<PyExpression, PyExpression>> mapping = assignment.getTargetsToValuesMapping();
-    Pair<PyExpression, PyExpression> matchingPair = ContainerUtil.find(mapping, pair -> pair.getSecond() == literal);
-    if (matchingPair == null || !(matchingPair.getFirst() instanceof PyTargetExpression target)) {
-      return false;
-    }
-    return templateType.equals(typeEvalContext.getType(target));
-  }
-
-  private static boolean isArgumentOfFunctionExpectingTemplateString(@NotNull PyStringLiteralExpression stringLiteral,
-                                                                     @NotNull PyClassType templateType,
-                                                                     @NotNull TypeEvalContext typeEvalContext) {
-    PsiElement callArgument = stringLiteral.getParent() instanceof PyKeywordArgument kwArg ? kwArg : stringLiteral;
-    if (!(callArgument.getParent() instanceof PyArgumentList argumentList) ||
-        !(argumentList.getParent() instanceof PyCallExpression call)) {
-      return false;
-    }
-    return ContainerUtil.all(call.multiMapArguments(PyResolveContext.defaultContext(typeEvalContext)), mapping -> {
-      PyCallableParameter param = mapping.getMappedParameters().get(callArgument);
-      if (param == null) return false;
-      PyType paramType = param.getType(typeEvalContext);
-      if (param.isPositionalContainer() && paramType instanceof PyTupleType tupleType && tupleType.isHomogeneous()) {
-        paramType = tupleType.getElementTypes().get(0);
-      }
-      else if (param.isKeywordContainer() && paramType instanceof PyCollectionType dictType &&
-               PyNames.DICT.equals(dictType.getPyClass().getName())) {
-        paramType = ContainerUtil.getOrElse(dictType.getElementTypes(), 1, null);
-      }
-      return templateType.equals(paramType);
-    });
+    PyType expectedType = PyTypeChecker.getExpectedType(stringLiteral, typeEvalContext);
+    return templateType.equals(expectedType);
   }
 }

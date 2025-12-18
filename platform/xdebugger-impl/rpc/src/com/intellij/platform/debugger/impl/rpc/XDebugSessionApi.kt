@@ -67,6 +67,8 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun muteBreakpoints(sessionDataId: XDebugSessionDataId, muted: Boolean)
 
+  suspend fun getUiUpdateEventsFlow(sessionId: XDebugSessionId): Flow<Unit>
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebugSessionApi {

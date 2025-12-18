@@ -4,6 +4,7 @@ package com.intellij.toolWindow
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.impl.EditorWindow
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.openapi.wm.impl.content.*
@@ -244,7 +245,10 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
 
   private fun dropIntoEditor(content: Content, sourceDecorator: InternalDecoratorImpl, editorWindow: EditorWindow) {
     val support = getEditorSupport(sourceDecorator) ?: return
+    // The support should extract the toolWindow-specific component from the content object and open it in the editor.
     support.openInEditor(content, editorWindow)
+    // Now, the tab is not showing in the Tool Window, so let's dispose the content.
+    Disposer.dispose(content)
   }
 
   override fun cancelDragging(): Boolean {
@@ -306,25 +310,33 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       return
     }
 
-    val content = myDraggingTab!!.content
+    val tab = myDraggingTab!!
+    val content = tab.content
     content.putUserData(TEMPORARY_REMOVED_KEY, true)
     if (content is SingleContentLayout.SubContent && sourceDecorator.isSingleContentLayout()) {
       val tabs = content.supplier.getTabs()
       val tabInfo = content.info
       val index = tabs.getIndexOf(tabInfo)
       SwingUtilities.invokeLater {
+        if (tab != myDraggingTab) {
+          return@invokeLater  // no more actual
+        }
+
         tabInfo.isHidden = true
-        sourceDecorator.setDropInfoIndex(index, myDraggingTab!!.width)
+        sourceDecorator.setDropInfoIndex(index, tab.width)
       }
     }
     else {
       val manager = sourceDecorator.contentManager
       val index = manager.getIndexOfContent(content) + 1
       SwingUtilities.invokeLater {
+        if (tab != myDraggingTab) {
+          return@invokeLater  // no more actual
+        }
         try {
           sourceDecorator.isSplitUnsplitInProgress = true
           manager.removeContent(content, false)
-          sourceDecorator.setDropInfoIndex(index, myDraggingTab!!.width)
+          sourceDecorator.setDropInfoIndex(index, tab.width)
         }
         finally {
           sourceDecorator.isSplitUnsplitInProgress = false

@@ -98,7 +98,7 @@
       "selectedBackground": "ToolWindowBackground",
       "hoverBackground": "#FFFFFF12",
       "separatorColor": "#FFFFFF16",
-      "foreground": "#FFFFFF65"
+      "foreground": "Gray8"
     },
 
     "MainToolbar": {
@@ -136,7 +136,8 @@
         "background": "BackgroundLight",
         "borderColor": "BorderTransparent",
         "separatorColor": "Gray5"
-      }
+      },
+      "Button.DragAndDrop.stripeBackground": "BackgroundLight"
     },
 
     "StripeToolbar.Button": {
@@ -166,6 +167,8 @@
 
       "tabInsets": "-7,8,-7,8",
       "tabInsets.compact": "-2,6,-2,4",
+      "verticalTabInsets": "-2,10,-2,10",
+      "verticalTabInsets.compact": "0,10,0,10",
       "tabContentActionsRightInsets": "0,4,0,2"
     },
 
@@ -266,7 +269,8 @@
 
     "SearchEverywhere": {
       "Header.insets": "2,4,0,9",
-      "Advertiser.foreground": "#868a91"
+      "Advertiser.foreground": "#868a91",
+      "List.settingsBackground": "PopupBackground"
     },
 
     "Button": {
@@ -719,6 +723,7 @@
 
       "ToolWindow.Header.inactiveBackground": "#212326",
       "ToolWindow.background": "#212326",
+      "ToolWindow.Button.DragAndDrop.stripeBackground": "AltBackgroundLight",
 
       "Borders.color": "#2E3033",
       "Borders.ContrastBorderColor": "#2E3033",
@@ -726,6 +731,24 @@
       "Island.borderColor": "#212326"
     },
 
-    "AlertDialog.background": "PopupBackground"
+    "AlertDialog.background": "PopupBackground",
+    
+    "Recap": {
+      "ijnext": "#55339C",
+      "cardBackground": "#212326",
+      "cardBorderColor": "#1E1F22",
+      "cardHeaderTitle": "#F0F1F2",
+      "cardHeaderLinkBackground": "#2B2D30",
+      "cardHeaderSubtitle": "#888888",
+      "cardFooterForeground": "#888888",
+      "chroniclesBackground": "#26282C",
+      "chroniclesBorderColor": "#26282C",
+      "chroniclesBackgroundHovered": "#33353B",
+      "chroniclesForeground": "#DFE1E5",
+      "chroniclesForegroundGreyed": "#888888",
+      "errorBackground": "#3D3223",
+      "errorBorder": "#5E4D33",
+      "errorForeground": "#DFE1E5"
+    }
   }
 }

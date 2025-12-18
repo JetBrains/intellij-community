@@ -218,6 +218,9 @@ class ChangesViewCommitWorkflowHandler(
   }
 
   private fun setCurrentChangeList(newChangeList: LocalChangeList) {
+    if (!ChangeListClassifierProvider.providesCommitMessage(project, newChangeList))
+      return
+
     val oldChangeList = currentChangeList
     currentChangeList = newChangeList
 

@@ -16,8 +16,18 @@ import kotlin.test.assertTrue
 @RunWith(JUnit4::class)
 class AccountManagerBaseTest {
 
-  private val accountsRepository = object : AccountsRepository<MockAccount> {
-    override var accounts: Set<MockAccount> = emptySet()
+  private val accountsRepository = object : ObservableAccountsRepository<MockAccount> {
+
+    override var accounts: Set<MockAccount>
+      get() = accountsFlow.value
+      set(value) {
+        accountsFlow.value = value
+      }
+    override val accountsFlow = MutableStateFlow(emptySet<MockAccount>())
+
+    fun changeAccountsExternally(newAccounts: Set<MockAccount>) {
+      accountsFlow.value = newAccounts
+    }
   }
 
   private val credentialsRepository = object : CredentialsRepository<MockAccount, String> {
@@ -36,6 +46,7 @@ class AccountManagerBaseTest {
 
   private val account = MockAccount()
   private val account2 = MockAccount()
+  private val account3 = MockAccount()
 
   @Before
   fun setUp() {
@@ -71,6 +82,23 @@ class AccountManagerBaseTest {
   fun `test account usable after addition`() = runTest {
     manager.updateAccount(account, "test")
     assertNotNull(manager.findCredentials(account))
+  }
+
+  @Test
+  fun `test external account changes available in manager`() = runTest {
+    val state = manager.accountsState
+
+    manager.updateAccount(account, "test")
+    assertEquals(1, state.value.size)
+
+    accountsRepository.changeAccountsExternally(setOf(account, account2))
+    assertEquals(2, state.value.size)
+
+    manager.updateAccount(account3, "test")
+    assertEquals(3, state.value.size)
+
+    accountsRepository.changeAccountsExternally(setOf())
+    assertTrue(state.value.isEmpty())
   }
 
   private class MockAccount(override val id: String = generateId()) : Account() {

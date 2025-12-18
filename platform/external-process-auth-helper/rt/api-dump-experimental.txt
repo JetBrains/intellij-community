@@ -1,0 +1,12 @@
+*:externalApp.ExternalAppEntry
+- s:fromMain(java.lang.String[]):externalApp.ExternalAppEntry
+- s:fromMain(java.lang.String[],java.lang.Class):externalApp.ExternalAppEntry
+- a:getArgs():java.lang.String[]
+- a:getEnvironment():java.util.Map
+- a:getExecutablePath():java.nio.file.Path
+- a:getStderr():java.io.PrintStream
+- a:getStdin():java.io.InputStream
+- a:getStdout():java.io.PrintStream
+- a:getWorkingDirectory():java.lang.String
+*:externalApp.ExternalCli
+- a:entryPoint(externalApp.ExternalAppEntry):I

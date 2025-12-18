@@ -558,7 +558,7 @@
     },
 
     "SearchEverywhere": {
-      "List.settingsBackground": "Gray8",
+      "List.settingsBackground": "Gray3",
       "Tab": {
         "selectedBackground": "Blue2",
         "selectedForeground": "Gray14"
@@ -1209,7 +1209,25 @@
     "ManagedIdeMenuItemHover": "Gray4",
 
     "InlineBanner.hoverBackground": "#FFFFFF14",
-    "InlineBanner.pressedBackground": "#FFFFFF1E"
+    "InlineBanner.pressedBackground": "#FFFFFF1E",
+    
+    "Recap": {
+      "ijnext": "#55339C",
+      "cardBackground": "#1E1F22",
+      "cardBorderColor": "#1E1F22",
+      "cardHeaderTitle": "#F0F1F2",
+      "cardHeaderLinkBackground": "#2B2D30",
+      "cardHeaderSubtitle": "#B4B8BF",
+      "cardFooterForeground": "#CED0D6",
+      "chroniclesBackground": "#2B2D30",
+      "chroniclesBorderColor": "#2B2D30",
+      "chroniclesBackgroundHovered": "#393B40",
+      "chroniclesForeground": "#DFE1E5",
+      "chroniclesForegroundGreyed": "#868A91",
+      "errorBackground": "#3D3223",
+      "errorBorder": "#5E4D33",
+      "errorForeground": "#DFE1E5"
+    }
   },
 
   "icons": {

@@ -17,3 +17,5 @@
       - name: $MAVEN_REPOSITORY$/org/jspecify/jspecify/1/jspecify-1.jar
       - name: $MAVEN_REPOSITORY$/androidx/arch/core/core-common/2/core-common-2.jar
       - name: $MAVEN_REPOSITORY$/androidx/annotation/annotation/1/annotation-1.jar
+      androidx.compose.runtime.retain.desktop:
+      - name: $MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-retain-desktop/1/runtime-retain-desktop-1.jar

@@ -35,7 +35,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
@@ -140,7 +140,9 @@ private suspend fun getSuitableSdkFix(name: String?, module: Module): LocalQuick
   val systemWideSdk = mostPreferred(filterSystemWideSdks(existingSdks))
   if (systemWideSdk != null) return@withContext UseExistingInterpreterFix(systemWideSdk, module)
 
-  val fallbackCreateSdkInfo = PyCondaSdkCustomizer.instance.fallbackConfigurator?.checkEnvironmentAndPrepareSdkCreator(module)
+  val fallbackCreateSdkInfo = PyCondaSdkCustomizer.instance.fallbackConfigurator?.let { configurator ->
+    configurator.checkEnvironmentAndPrepareSdkCreator(module)?.let { CreateSdkInfoWithTool(it, configurator.toolId) }
+  }
   if (fallbackCreateSdkInfo != null) return@withContext UseProvidedInterpreterFix(module, fallbackCreateSdkInfo)
 
   val detectedSystemWideSdk = detectSystemWideSdks(module, existingSdks).firstOrNull()
@@ -194,19 +196,21 @@ private class ConfigureInterpreterFix : LocalQuickFix {
   }
 }
 
-private class UseProvidedInterpreterFix(private val myModule: Module, private val myCreateSdkInfo: CreateSdkInfo) : LocalQuickFix {
+private class UseProvidedInterpreterFix(private val myModule: Module, private val myCreateSdkInfo: CreateSdkInfoWithTool) : LocalQuickFix {
   @IntentionFamilyName
   override fun getFamilyName(): String = PyPsiBundle.message("INSP.interpreter.use.suggested.interpreter")
 
   @IntentionName
-  override fun getName(): String = myCreateSdkInfo.intentionName
+  override fun getName(): String = myCreateSdkInfo.createSdkInfo.intentionName
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     if (!enableSDKAutoConfigurator) {
       return PyProjectSdkConfiguration.configureSdkUsingCreateSdkInfo(myModule, myCreateSdkInfo)
     }
 
-    detectSdkForModulesIn(project)
+    project.service<MyService>().scope.launch {
+      detectSdkForModulesIn(project)
+    }
   }
 
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {

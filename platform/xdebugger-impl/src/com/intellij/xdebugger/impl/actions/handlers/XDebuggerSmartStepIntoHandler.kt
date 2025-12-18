@@ -131,8 +131,8 @@ internal open class XDebuggerSmartStepIntoHandler : XDebuggerProxySuspendedActio
       catch (ce: CancellationException) {
         throw ce
       }
-      catch (e: Throwable) {
-        LOG.error("Exception while smart step into, falling back to step into", e)
+      catch (_: Throwable) {
+        // TODO: need to show some error notification here, but currently we don't have a proper error handling mechanism
         session.stepInto(ignoreBreakpoints = false)
       }
     }

@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,9 +39,9 @@ public class PythonSpellcheckerGenerateDictionariesAction extends AnAction {
       if (root.getName().equals("Lib")) {
         generator.addFolder("python", root);
         generator.excludeFolder(root.findChild("test"));
-        generator.excludeFolder(root.findChild("site-packages"));
+        generator.excludeFolder(root.findChild(PyNames.SITE_PACKAGES));
       }
-      else if (root.getName().equals("site-packages")) {
+      else if (root.getName().equals(PyNames.SITE_PACKAGES)) {
         VirtualFile djangoRoot = root.findChild("django");
         if (djangoRoot != null) {
           generator.addFolder("django", djangoRoot);

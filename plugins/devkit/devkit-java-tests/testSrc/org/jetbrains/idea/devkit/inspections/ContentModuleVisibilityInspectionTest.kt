@@ -6,6 +6,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
+import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.module.PluginModuleType
 
 abstract class ContentModuleVisibilityInspectionTestBase : JavaCodeInsightFixtureTestCase() {
@@ -924,6 +925,208 @@ class ContentModuleVisibilityInspectionTest : ContentModuleVisibilityInspectionT
       </idea-plugin>
       """.trimIndent())
 
+    testHighlighting(testedFile)
+  }
+
+  fun `test should report module dependency that is from different namespace in sources, but from the same namespace in a library`() {
+    // this module is duplicated by the library added with PsiTestUtil.addLibrary below
+    // (namespace in the library is test-namespace, as in com.example.plugin, so no issue would be reported, if the lib descriptor was taken)
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.internalmodule",
+      "com.example.plugin.with.internalmodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.internalmodule</id>
+        <content namespace="another-namespace">
+          <module name="com.example.internalmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.internalmodule",
+      "com.example.internalmodule/com.example.internalmodule.xml",
+      """
+      <idea-plugin visibility="internal">
+      </idea-plugin>
+      """.trimIndent())
+
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin",
+      "com.example.plugin/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <content namespace="test-namespace">
+          <module name="com.example.currentmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+
+    val currentModuleName = "com.example.currentmodule"
+    val currentModule = PsiTestUtil.addModule(
+      project, PluginModuleType.getInstance(), currentModuleName, myFixture.tempDirFixture.findOrCreateDir(currentModuleName)
+    )
+    PsiTestUtil.addLibrary(
+      currentModule, "${DevkitJavaTestsUtil.TESTDATA_ABSOLUTE_PATH}contentModules/com.example.plugin.with.internal.module.jar"
+    )
+
+    val testedFile = myFixture.addXmlFile(
+      "com.example.currentmodule/com.example.currentmodule.xml",
+      """
+      <idea-plugin>
+        <dependencies>
+          <module name="<error descr="The 'com.example.internalmodule' module is internal and declared in namespace 'another-namespace' in 'com.example.plugin.with.internalmodule/…/plugin.xml', so it cannot be accessed from module 'com.example.currentmodule', which is declared in namespace 'test-namespace' in 'com.example.plugin/…/plugin.xml'">com.example.internalmodule</error>"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test should report module dependency that is from different namespace and provider in a library`() {
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.internalmodule",
+      "com.example.internalmodule/com.example.internalmodule.xml",
+      """
+      <idea-plugin visibility="internal">
+      </idea-plugin>
+      """.trimIndent())
+
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin",
+      "com.example.plugin/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <content namespace="test-namespace">
+          <module name="com.example.currentmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+
+    val currentModuleName = "com.example.currentmodule"
+    val currentModule = PsiTestUtil.addModule(
+      project, PluginModuleType.getInstance(), currentModuleName, myFixture.tempDirFixture.findOrCreateDir(currentModuleName)
+    )
+    PsiTestUtil.addLibrary(
+      currentModule,
+      "${DevkitJavaTestsUtil.TESTDATA_ABSOLUTE_PATH}contentModules/com.example.plugin.with.internal.module-another-namespace.jar"
+    )
+
+    val testedFile = myFixture.addXmlFile(
+      "com.example.currentmodule/com.example.currentmodule.xml",
+      """
+      <idea-plugin>
+        <dependencies>
+          <module name="<error descr="The 'com.example.internalmodule' module is internal and declared in namespace 'another-namespace' in 'plugin.xml', so it cannot be accessed from module 'com.example.currentmodule', which is declared in namespace 'test-namespace' in 'plugin.xml'">com.example.internalmodule</error>"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test should report module dependency that is private in source, but public in library`() {
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.public.or.private.module",
+      "com.example.plugin.with.public.or.private.module/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.public.or.private.module</id>
+        <content>
+          <module name="com.example.public.or.private.module"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+
+    // this module is duplicated by the library added with PsiTestUtil.addLibrary below
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.public.or.private.module",
+      "com.example.public.or.private.module/com.example.public.or.private.module.xml",
+      """
+      <idea-plugin visibility="private">
+      </idea-plugin>
+      """.trimIndent())
+
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.currentmodule",
+      "com.example.plugin.with.currentmodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.currentmodule</id>
+        <content namespace="test-namespace">
+          <module name="com.example.currentmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+
+    val currentModuleName = "com.example.currentmodule"
+    val currentModule = PsiTestUtil.addModule(
+      project, PluginModuleType.getInstance(), currentModuleName, myFixture.tempDirFixture.findOrCreateDir(currentModuleName)
+    )
+    PsiTestUtil.addLibrary(currentModule,
+                           "${DevkitJavaTestsUtil.TESTDATA_ABSOLUTE_PATH}contentModules/com.example.public.or.private.module.jar")
+
+    val testedFile = myFixture.addXmlFile(
+      "com.example.currentmodule/com.example.currentmodule.xml",
+      """
+      <idea-plugin>
+        <dependencies>
+          <module name="<error descr="The 'com.example.public.or.private.module' module is private and declared in plugin 'com.example.plugin.with.public.or.private.module', so it cannot be accessed from module 'com.example.currentmodule' declared in plugin 'com.example.plugin.with.currentmodule'">com.example.public.or.private.module</error>"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test should report module dependency that is private and provided from a library`() {
+    val pluginWithPrivateModuleName = "com.example.plugin.with.private.module"
+    val pluginWithPrivateModuleModule = PsiTestUtil.addModule(
+      myFixture.project, PluginModuleType.getInstance(), pluginWithPrivateModuleName,
+      myFixture.tempDirFixture.findOrCreateDir(pluginWithPrivateModuleName)
+    )
+    myFixture.addXmlFile("com.example.plugin.with.private.module/META-INF/plugin.xml", """
+        <idea-plugin>
+          <id>com.example.plugin.with.private.module</id>
+          <content>
+            <module name="com.example.private.module"/>
+          </content>
+        </idea-plugin>
+        """.trimIndent())
+
+    val privateModuleJarPath = "${DevkitJavaTestsUtil.TESTDATA_ABSOLUTE_PATH}contentModules/com.example.private.module.jar"
+    PsiTestUtil.addLibrary(pluginWithPrivateModuleModule, privateModuleJarPath)
+
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.currentmodule",
+      "com.example.plugin.with.currentmodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.currentmodule</id>
+        <content namespace="test-namespace">
+          <module name="com.example.currentmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+
+    val currentModuleName = "com.example.currentmodule"
+    val currentModule = PsiTestUtil.addModule(
+      project, PluginModuleType.getInstance(), currentModuleName, myFixture.tempDirFixture.findOrCreateDir(currentModuleName)
+    )
+    PsiTestUtil.addLibrary(currentModule, privateModuleJarPath)
+
+    val testedFile = myFixture.addXmlFile(
+      "com.example.currentmodule/com.example.currentmodule.xml",
+      """
+      <idea-plugin>
+        <dependencies>
+          <module name="<error descr="The 'com.example.private.module' module is private and declared in plugin 'com.example.plugin.with.private.module', so it cannot be accessed from module 'com.example.currentmodule' declared in plugin 'com.example.plugin.with.currentmodule'">com.example.private.module</error>"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
     testHighlighting(testedFile)
   }
 

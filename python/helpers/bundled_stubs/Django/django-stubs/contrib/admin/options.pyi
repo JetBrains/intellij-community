@@ -299,7 +299,7 @@ class ModelAdmin(BaseModelAdmin[_ModelT]):
 _ChildModelT = TypeVar("_ChildModelT", bound=Model)
 _ParentModelT = TypeVar("_ParentModelT", bound=Model)
 
-class InlineModelAdmin(Generic[_ChildModelT, _ParentModelT], BaseModelAdmin[_ChildModelT]):
+class InlineModelAdmin(BaseModelAdmin[_ChildModelT], Generic[_ChildModelT, _ParentModelT]):
     model: type[_ChildModelT]
     fk_name: str | None
     formset: type[BaseInlineFormSet[_ChildModelT, _ParentModelT, forms.ModelForm[_ChildModelT]]]

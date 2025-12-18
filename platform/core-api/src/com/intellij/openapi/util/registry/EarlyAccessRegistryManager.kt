@@ -10,6 +10,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager.fileName
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -24,7 +25,7 @@ private val LOG: Logger
   get() = logger<EarlyAccessRegistryManager>()
 
 private val configFile: Path by lazy {
-  PathManager.getConfigDir().resolve(EarlyAccessRegistryManager.fileName)
+  PathManager.getOriginalConfigDir().resolve(EarlyAccessRegistryManager.fileName)
 }
 
 private const val DISABLE_SAVE_PROPERTY = "early.access.registry.disable.saving"

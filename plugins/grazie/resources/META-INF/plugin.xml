@@ -140,8 +140,24 @@
       <language/>
       <bundleName>messages.GrazieBundle</bundleName>
       <categoryKey>intention.category.natural.languages</categoryKey>
-      <className>com.intellij.grazie.ide.inspection.rephrase.RephraseAction</className>
+      <className>com.intellij.grazie.ide.inspection.ai.RephraseAction</className>
       <descriptionDirectoryName>RephraseAction</descriptionDirectoryName>
+    </intentionAction>
+
+    <intentionAction>
+      <language/>
+      <bundleName>messages.GrazieBundle</bundleName>
+      <categoryKey>intention.category.natural.languages</categoryKey>
+      <className>com.intellij.grazie.ide.inspection.ai.TranslateAction</className>
+      <descriptionDirectoryName>TranslateAction</descriptionDirectoryName>
+    </intentionAction>
+
+    <intentionAction>
+      <language/>
+      <bundleName>messages.GrazieBundle</bundleName>
+      <categoryKey>intention.category.natural.languages</categoryKey>
+      <className>com.intellij.grazie.ide.inspection.ai.WordDefinitions</className>
+      <descriptionDirectoryName>WordDefinitions</descriptionDirectoryName>
     </intentionAction>
   </extensions>
 

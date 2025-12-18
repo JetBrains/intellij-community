@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Sequence
-from typing import Any, Generic, Literal, TypeAlias, TypeVar, overload
+from typing import Any, Generic, TypeAlias, TypeVar, overload
 
 from django.apps.config import AppConfig
 from django.apps.registry import Apps
@@ -64,7 +64,7 @@ class Options(Generic[_M]):
     order_with_respect_to: str | None
     db_tablespace: str
     required_db_features: _ListOrTuple[str]
-    required_db_vendor: Literal["sqlite", "postgresql", "mysql", "oracle"] | None
+    required_db_vendor: str | None
     meta: type | None
     pk: Field
     auto_field: AutoField | None

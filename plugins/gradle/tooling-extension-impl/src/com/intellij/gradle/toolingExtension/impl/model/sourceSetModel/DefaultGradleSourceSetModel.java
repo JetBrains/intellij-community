@@ -13,6 +13,7 @@ import java.util.*;
 @ApiStatus.Internal
 public final class DefaultGradleSourceSetModel implements GradleSourceSetModel {
 
+  private @Nullable Integer toolchainVersion;
   private @Nullable String sourceCompatibility;
   private @Nullable String targetCompatibility;
   private @NotNull List<File> taskArtifacts;
@@ -22,12 +23,22 @@ public final class DefaultGradleSourceSetModel implements GradleSourceSetModel {
   private @NotNull List<File> additionalArtifacts;
 
   public DefaultGradleSourceSetModel() {
+    toolchainVersion = null;
     sourceCompatibility = null;
     targetCompatibility = null;
     taskArtifacts = new ArrayList<>();
     configurationArtifacts = new LinkedHashMap<>();
     sourceSets = new LinkedHashMap<>();
     additionalArtifacts = new ArrayList<>(0);
+  }
+
+  @Override
+  public @Nullable Integer getToolchainVersion() {
+    return toolchainVersion;
+  }
+
+  public void setToolchainVersion(@Nullable Integer javaToolchainVersion) {
+    this.toolchainVersion = javaToolchainVersion;
   }
 
   @Override

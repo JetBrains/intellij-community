@@ -79,7 +79,9 @@ internal class RunDashboardServiceRpcImpl : RunDashboardServiceRpc {
 
   override suspend fun pauseLuxingContentForService(projectId: ProjectId, id: RunDashboardServiceId) {
     val project = projectId.findProjectOrNull() ?: return
-    BackendLuxedRunDashboardContentManager.getInstance(project).pauseLuxing(id)
+    withContext(Dispatchers.EDT) {
+      BackendLuxedRunDashboardContentManager.getInstance(project).pauseLuxing(id)
+    }
   }
 
   override suspend fun getAvailableConfigurations(projectId: ProjectId): Flow<Set<RunDashboardConfigurationDto>> {

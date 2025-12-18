@@ -20,9 +20,17 @@
                     interface="com.intellij.xml.XmlUndefinedElementFixProvider"
                     dynamic="true"/>
 
-    <extensionPoint name="xml.validateHandler" interface="com.intellij.xml.actions.validate.ValidateXmlHandler" dynamic="true"/>
+    <extensionPoint name="xml.validateHandler"
+                    interface="com.intellij.xml.actions.validate.ValidateXmlHandler"
+                    dynamic="true"/>
 
-    <extensionPoint name="xml.implicitIdRefProvider" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider" dynamic="true"/>
+    <extensionPoint name="xml.implicitIdRefProvider"
+                    interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="html.skipReferenceCheck"
+                    interface="com.intellij.codeInsight.daemon.impl.analysis.HtmlSkipReferenceCheck"
+                    dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <highlightingPassFactory order="last" implementation="com.intellij.xml.XmlCustomTagHighlightingPassFactory" />

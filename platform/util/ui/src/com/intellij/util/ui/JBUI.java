@@ -1344,6 +1344,10 @@ public final class JBUI {
       private static @NotNull String stripeToolbarTextOffsetKey(boolean left) {
         return "StripeToolbar.Button." + (left ? "left" : "right") + "StripeTextOffset";
       }
+
+      public static @NotNull JBValue stripeButtonArc(boolean compact) {
+        return new JBValue.UIInteger("Button.ToolWindow.arc", compact ? 8 : 12);
+      }
     }
 
     public static final class FloatingToolbar {
@@ -1766,6 +1770,14 @@ public final class JBUI {
 
       public static final @NotNull Color LIST_SETTINGS_BACKGROUND =
         JBColor.namedColor("SearchEverywhere.List.settingsBackground", LightColors.SLIGHTLY_GRAY);
+
+      @ApiStatus.Internal
+      public static @NotNull Color getListSettingsBackground() {
+        if (StartupUiUtil.isUnderDarcula() && UIManager.get("SearchEverywhere.List.settingsBackground") == null) {
+          return ColorUtil.brighter(UIUtil.getListBackground(), 1);
+        }
+        return LIST_SETTINGS_BACKGROUND;
+      }
 
       public static @NotNull Color listTitleLabelForeground() {
         return JBColor.namedColor("SearchEverywhere.List.separatorForeground", UIUtil.getLabelDisabledForeground());

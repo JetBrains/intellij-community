@@ -175,6 +175,7 @@ abstract class ChartWrapper : ChartComponent {
 
   open val component: JComponent by lazy {
     createCentralPanel().apply {
+      background = this@ChartWrapper.background
       with(MouseAware()) {
         addMouseMotionListener(this)
         addMouseListener(this)
@@ -217,7 +218,7 @@ abstract class ChartWrapper : ChartComponent {
   private inner class CentralPanel : JComponent() {
     override fun paintComponent(g: Graphics) {
       (g as Graphics2D).clip(Rectangle(0, 0, width, height))
-      g.color = this@ChartWrapper.background
+      g.color = background
       (g as Graphics2D).fill(g.clip)
       this@ChartWrapper.height = height
       this@ChartWrapper.width = width

@@ -5,9 +5,11 @@ import com.intellij.diff.actions.impl.DiffFileNavigationAction.Companion.isAvail
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.PrevNextFileIterable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 
-internal abstract class DiffFileNavigationAction : AnAction(), DumbAware, ActionPromoter {
+internal abstract class DiffFileNavigationAction : AnAction(), DumbAware, ActionPromoter, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   init {
     isEnabledInModalContext = true
   }
@@ -21,9 +23,13 @@ internal abstract class DiffFileNavigationAction : AnAction(), DumbAware, Action
     val iterable = e.getData(DiffDataKeys.PREV_NEXT_FILE_ITERABLE)
     val isAvailable = isAvailable(iterable)
     if (!isAvailable) {
+      e.presentation.putClientProperty(ActionRemoteBehavior.SKIP_FALLBACK_UPDATE, null)
       e.presentation.setEnabledAndVisible(false)
       return
     }
+
+    // Prevents the action button from being hidden when the action is disabled
+    e.presentation.putClientProperty(ActionRemoteBehavior.SKIP_FALLBACK_UPDATE, true)
 
     e.presentation.setVisible(true)
     e.presentation.setEnabled(iterable != null && iterable.canNavigate(true))

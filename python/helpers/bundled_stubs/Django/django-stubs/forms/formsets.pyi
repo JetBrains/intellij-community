@@ -25,7 +25,7 @@ class ManagementForm(Form):
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     def clean(self) -> dict[str, int | None]: ...
 
-class BaseFormSet(Generic[_F], Sized, RenderableFormMixin):
+class BaseFormSet(Sized, RenderableFormMixin, Generic[_F]):
     form: type[_F]
     extra: int
     can_order: bool
@@ -125,4 +125,4 @@ def formset_factory(
 ) -> type[BaseFormSet[_F]]: ...
 def all_valid(formsets: Sequence[BaseFormSet[_F]]) -> bool: ...
 
-__all__ = ("BaseFormSet", "formset_factory", "all_valid")
+__all__ = ("BaseFormSet", "all_valid", "formset_factory")

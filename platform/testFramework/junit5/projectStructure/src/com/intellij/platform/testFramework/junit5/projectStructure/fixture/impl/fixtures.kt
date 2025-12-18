@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
@@ -66,33 +67,49 @@ internal fun TestFixture<Module>.customSourceRootFixture(
   initialized(path) {}
 }
 
-@TestOnly
-internal fun dirFixture(dir: Path): TestFixture<Path> = testFixture("dirFixture") {
-  val tempDir = withContext(Dispatchers.IO) {
+private suspend fun createDirectory(dir: Path) {
+  withContext(Dispatchers.IO) {
     if (!dir.exists()) {
       dir.createDirectories()
     }
-    dir
   }
-  initialized(tempDir) {
-    withContext(Dispatchers.IO) {
-      if (tempDir.exists()) {
-        tempDir.delete(recursively = true)
-      }
+}
+
+private suspend fun deleteDirectory(dir: Path) {
+  withContext(Dispatchers.IO) {
+    if (dir.exists()) {
+      dir.delete(recursively = true)
     }
+  }
+}
+
+@TestOnly
+internal fun dirFixture(dir: Path): TestFixture<Path> = testFixture("dirFixture") {
+  createDirectory(dir)
+  initialized(dir) {
+    deleteDirectory(dir)
   }
 }
 
 @TestOnly
 internal fun TestFixture<Path>.subDirFixture(name: String): TestFixture<Path> = testFixture("subDirFixture") {
   val path = this@subDirFixture.init().resolve(name)
-  val result = dirFixture(path).init()
-  initialized(result) {}
+  createDirectory(path)
+  initialized(path) {
+    deleteDirectory(path)
+  }
 }
 
 @TestOnly
 internal fun TestFixture<Path>.fileFixture(fileName: String, content: CharSequence): TestFixture<Path> =
   fileFixture(fileName) { it.writeText(content) }
+
+@TestOnly
+fun TestFixture<Path>.executableFileFixture(fileName: String, content: CharSequence): TestFixture<Path> =
+  fileFixture(fileName) {
+    it.writeText(content)
+    NioFiles.setExecutable(it)
+  }
 
 @TestOnly
 internal fun TestFixture<Path>.fileFixture(fileName: String, content: ByteArray): TestFixture<Path> =

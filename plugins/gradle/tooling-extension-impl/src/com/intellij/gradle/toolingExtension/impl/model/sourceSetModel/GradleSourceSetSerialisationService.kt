@@ -45,15 +45,16 @@ class GradleSourceSetSerialisationService : SerializationService<GradleSourceSet
   }
 
   class SourceSetModelReadContext {
-    val dependencyContext = DependencyReadContext()
+    val dependencyContext: DependencyReadContext = DependencyReadContext()
   }
 
   class SourceSetModelWriteContext {
-    val dependencyContext = DependencyWriteContext()
+    val dependencyContext: DependencyWriteContext = DependencyWriteContext()
   }
 
   companion object {
 
+    private const val SOURCE_SET_MODEL_TOOLCHAIN_VERSION_FIELD: String = "toolchainVersion"
     private const val SOURCE_SET_MODEL_SOURCE_COMPATIBILITY_FIELD: String = "sourceCompatibility"
     private const val SOURCE_SET_MODEL_TARGET_COMPATIBILITY_FIELD: String = "targetCompatibility"
     private const val SOURCE_SET_MODEL_TASK_ARTIFACTS_FIELD: String = "taskArtifacts"
@@ -87,6 +88,7 @@ class GradleSourceSetSerialisationService : SerializationService<GradleSourceSet
     @JvmStatic
     fun writeSourceSetModel(writer: IonWriter, context: SourceSetModelWriteContext, model: GradleSourceSetModel) {
       writer.step(IonType.STRUCT) {
+        writeInteger(writer, SOURCE_SET_MODEL_TOOLCHAIN_VERSION_FIELD, model.toolchainVersion)
         writeString(writer, SOURCE_SET_MODEL_SOURCE_COMPATIBILITY_FIELD, model.sourceCompatibility)
         writeString(writer, SOURCE_SET_MODEL_TARGET_COMPATIBILITY_FIELD, model.targetCompatibility)
         writeFiles(writer, SOURCE_SET_MODEL_TASK_ARTIFACTS_FIELD, model.taskArtifacts)
@@ -104,6 +106,7 @@ class GradleSourceSetSerialisationService : SerializationService<GradleSourceSet
     fun readSourceSetModel(reader: IonReader, context: SourceSetModelReadContext): DefaultGradleSourceSetModel {
       return reader.step {
         DefaultGradleSourceSetModel().apply {
+          toolchainVersion = readInteger(reader, SOURCE_SET_MODEL_TOOLCHAIN_VERSION_FIELD)
           sourceCompatibility = readString(reader, SOURCE_SET_MODEL_SOURCE_COMPATIBILITY_FIELD)
           targetCompatibility = readString(reader, SOURCE_SET_MODEL_TARGET_COMPATIBILITY_FIELD)
           taskArtifacts = readFileList(reader, SOURCE_SET_MODEL_TASK_ARTIFACTS_FIELD)

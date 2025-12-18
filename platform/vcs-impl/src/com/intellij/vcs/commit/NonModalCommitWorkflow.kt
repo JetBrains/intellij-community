@@ -14,6 +14,9 @@ import kotlin.coroutines.coroutineContext
 private val LOG = logger<NonModalCommitWorkflow>()
 
 abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
+  // Doesn't block a commit attempt in dumb mode if some smart check is needed
+  internal open val canSkipCommitChecksInDumbMode: Boolean = false
+
   internal fun launchAsyncSession(scope: CoroutineScope,
                                   sessionInfo: CommitSessionInfo,
                                   commitChecks: suspend () -> CommitChecksResult) {

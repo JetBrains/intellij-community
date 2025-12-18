@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
@@ -23,6 +25,7 @@ import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.io.File
 import java.io.Serializable
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.rmi.RemoteException
 import java.util.*
@@ -259,8 +262,10 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     progressReporter: RawProgressReporter,
     eventHandler: MavenEventHandler,
   ): List<MavenGoalExecutionResult> {
+    val processedRequests = requests.map { it.asNativeRequest() }
+      .toCollection(ArrayList<MavenGoalExecutionRequest>())
     return runLongRunningTask(
-      LongRunningEmbedderTask { embedder, taskInput -> embedder.executeGoal(taskInput, ArrayList(requests), goal, ourToken) },
+      LongRunningEmbedderTask { embedder, taskInput -> embedder.executeGoal(taskInput, processedRequests, goal, ourToken) },
       progressReporter, eventHandler)
   }
 
@@ -418,5 +423,29 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
 
   protected fun interface LongRunningEmbedderTask<R : Serializable> {
     fun run(embedder: MavenServerEmbedder, longRunningTaskInput: LongRunningTaskInput): MavenServerResponse<R>
+  }
+
+  /**
+   * The only difference is location of the pom file.
+   * In case of local execution, we don't have to map the pom path.
+   * In case of non-local execution (e.g. Docker, WSL) the pom path should be a local one.
+   */
+  private fun MavenGoalExecutionRequest.asNativeRequest(): MavenGoalExecutionRequest {
+    val eelPath = try {
+      val path = file().toPath()
+      path.asEelPath()
+    }
+    catch (_: InvalidPathException) {
+      return this
+    }
+    return when (eelPath.descriptor) {
+      LocalEelDescriptor -> this
+      else -> MavenGoalExecutionRequest(
+        File(eelPath.toString()),
+        profiles(),
+        selectedProjects(),
+        userProperties()
+      )
+    }
   }
 }

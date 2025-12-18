@@ -26,7 +26,7 @@ private class SdkTableProjectViewProviderImpl(project: Project) : SdkTableProjec
 
   init {
     val registryValue = Registry.get("ide.workspace.model.per.environment.model.separation")
-    perEnvironmentModelSeparation = registryValue.asBoolean()
+    perEnvironmentModelSeparation = Registry.`is`("ide.workspace.model.per.environment.model.separation", false)
     registryValue.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
         perEnvironmentModelSeparation = value.asBoolean()

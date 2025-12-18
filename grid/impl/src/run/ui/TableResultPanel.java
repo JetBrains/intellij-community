@@ -875,9 +875,6 @@ public class TableResultPanel extends UserDataHolderBase
   protected void uiDataSnapshot(@NotNull DataSink sink) {
     sink.set(CommonDataKeys.PROJECT, myProject);
     sink.setNull(CommonDataKeys.EDITOR);
-    sink.set(PlatformDataKeys.COPY_PROVIDER, new GridCopyProvider(this));
-    sink.set(PlatformDataKeys.PASTE_PROVIDER, new GridPasteProvider(this, GridUtil::retrieveDataFromText));
-    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new DeleteRowsAction());
     sink.set(DatabaseDataKeys.DATA_GRID_KEY, this);
     sink.set(LangDataKeys.NO_NEW_ACTION, Boolean.TRUE);
 

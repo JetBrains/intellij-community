@@ -601,8 +601,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     highlightBounds.location = point
     g.color = bg
     if (ExperimentalUI.isNewUI()) {
-      JBInsets.removeFrom(highlightBounds, effectComponent.insets)
-      JBInsets.addTo(highlightBounds, JBUI.CurrentTheme.StatusBar.hoverInsets())
+      JBInsets.removeFrom(highlightBounds, calcHoverInsetsCorrection(effectComponent))
       val g2 = g.create() as Graphics2D
       try {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
@@ -618,6 +617,19 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     else {
       g.fillRect(highlightBounds.x, highlightBounds.y, highlightBounds.width, highlightBounds.height)
     }
+  }
+
+  private fun calcHoverInsetsCorrection(effectComponent: JComponent): Insets {
+    val comp = effectComponent.insets
+    val hover = JBUI.CurrentTheme.StatusBar.hoverInsets()
+
+    // Don't allow hover be outside the component
+    @Suppress("UseDPIAwareInsets")
+    return Insets(
+      max(0, comp.top - hover.top),
+      max(0, comp.left - hover.left),
+      max(0, comp.bottom - hover.bottom),
+      max(0, comp.right - hover.right))
   }
 
   override fun paintChildren(g: Graphics) {

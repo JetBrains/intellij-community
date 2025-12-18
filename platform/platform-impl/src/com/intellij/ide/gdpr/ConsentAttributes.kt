@@ -13,7 +13,7 @@ import kotlinx.serialization.json.Json
 internal class ConsentAttributes {
   companion object {
     @OptIn(ExperimentalSerializationApi::class)
-    private val jsonConfig by lazy {
+    internal val jsonConfig by lazy {
       Json {
         ignoreUnknownKeys = true
         isLenient = true

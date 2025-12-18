@@ -79,7 +79,8 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     myDebuggerManager = debuggerManager;
     myCoroutineScope = coroutineScope;
     myDependentBreakpointManager = new XDependentBreakpointManager(this, messageBusConnection);
-    myLineBreakpointManager = new XLineBreakpointManager(project, coroutineScope, !useFeLineBreakpointProxy());
+    myLineBreakpointManager = new XLineBreakpointManager(project, coroutineScope, !useFeLineBreakpointProxy(),
+                                                         new XBreakpointManagerProxy.Monolith(this));
 
     XBreakpointType.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @SuppressWarnings("unchecked")

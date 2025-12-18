@@ -2,8 +2,8 @@ package com.intellij.python.sdkConfigurator.common
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.rpc.topics.sendToClient
-import com.intellij.python.sdkConfigurator.common.impl.DETECT_SDK_FOR_MODULES
+import com.intellij.platform.project.projectId
+import com.intellij.python.sdkConfigurator.common.impl.SdkConfiguratorBackEndApi
 
 
 /**
@@ -11,14 +11,10 @@ import com.intellij.python.sdkConfigurator.common.impl.DETECT_SDK_FOR_MODULES
  */
 val enableSDKAutoConfigurator: Boolean get() = Registry.`is`("intellij.python.sdkConfigurator.auto")
 
+
 /**
- * Check if [enableSDKAutoConfigurator] (return `false` if not) and start detecting process.
- * it might ask user for list of modules and then detect them
+ * it might ask user for list of modules and then detect SDK for them
  */
-fun detectSdkForModulesIn(project: Project): Boolean {
-  if (!enableSDKAutoConfigurator) {
-    return false
-  }
-  DETECT_SDK_FOR_MODULES.sendToClient(project, Unit)
-  return true
+suspend fun detectSdkForModulesIn(project: Project) {
+  SdkConfiguratorBackEndApi().configureAskingUser(project.projectId())
 }

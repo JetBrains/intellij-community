@@ -177,6 +177,7 @@ jvm_library(
     "//platform/locking.impl",
     "//platform/testFramework/junit5/highlighting",
     "//platform/vcs-impl/shared",
+    "@lib//:jediterm-core",
     "@lib//:com-jetbrains-fus-reporting-connection-client",
   ],
   runtime_deps = [

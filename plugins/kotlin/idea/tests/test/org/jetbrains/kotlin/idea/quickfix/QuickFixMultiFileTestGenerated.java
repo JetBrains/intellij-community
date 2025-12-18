@@ -2560,6 +2560,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             public void testRootPackage() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/imports/rootPackage.before.Main.kt");
             }
+
+            @TestMetadata("sameShortNameAnnotation.before.Main.kt")
+            public void testSameShortNameAnnotation() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/imports/sameShortNameAnnotation.before.Main.kt");
+            }
+
+            @TestMetadata("sameShortNameTypeAlias.before.Main.kt")
+            public void testSameShortNameTypeAlias() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/imports/sameShortNameTypeAlias.before.Main.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

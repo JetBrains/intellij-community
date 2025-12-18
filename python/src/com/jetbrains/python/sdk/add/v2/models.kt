@@ -53,7 +53,7 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
   val navigator: PythonNewEnvironmentDialogNavigator = PythonNewEnvironmentDialogNavigator()
   open val state: AddInterpreterState<P> = AddInterpreterState(propertyGraph)
 
-  val condaViewModel: CondaViewModel<P> = CondaViewModel(fileSystem, propertyGraph)
+  val condaViewModel: CondaViewModel<P> = CondaViewModel(fileSystem, propertyGraph, projectPathFlows)
   val uvViewModel: UvViewModel<P> = UvViewModel(fileSystem, propertyGraph)
   val pipenvViewModel: PipenvViewModel<P> = PipenvViewModel(fileSystem, propertyGraph)
   val poetryViewModel: PoetryViewModel<P> = PoetryViewModel(fileSystem, propertyGraph)

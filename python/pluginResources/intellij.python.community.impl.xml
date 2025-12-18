@@ -4,12 +4,14 @@
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.syntax"/>
     <module name="intellij.python.community"/>
+    <module name="intellij.python.common"/>
     <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.interpreters"/>
-    <module name="intellij.python.community.impl.poetry"/>
+    <module name="intellij.python.community.impl.poetry.common"/>
+    <module name="intellij.python.community.impl.uv.common"/>
     <module name="intellij.python.community.impl.pipenv"/>
     <module name="intellij.python.hatch"/>
     <module name="intellij.python.pydev"/>
@@ -53,8 +55,10 @@
                                           language="Python"
                                           nameKey="INLAY.type.hints"
                                           providerId="python.type.inlays">
-      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.reveal.type" enabledByDefault="true" nameKey="INLAY.reveal.type" optionId="python.type.inlays.reveal_type" />
-      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.function.return" enabledByDefault="false" nameKey="INLAY.function.return" optionId="python.type.inlays.function.return" />
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.reveal.type" enabledByDefault="true" nameKey="INLAY.reveal.type"
+              optionId="python.type.inlays.reveal_type"/>
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.function.return" enabledByDefault="false" nameKey="INLAY.function.return"
+              optionId="python.type.inlays.function.return"/>
     </codeInsight.declarativeInlayProvider>
 
 
@@ -84,11 +88,7 @@
     <statistics.validation.customValidationRule implementation="com.jetbrains.python.run.features.PyRunToolIdValidator"/>
   </extensions>
 
-  <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
-    <tool implementation="com.jetbrains.python.projectModel.poetry.PoetryTool"/>
-    <tool implementation="com.jetbrains.python.projectModel.uv.UvTool"/>
-    <tool implementation="com.jetbrains.python.projectModel.hatch.HatchTool"/>
-  </extensions>
+
 
   <projectListeners>
     <listener class="com.jetbrains.python.packaging.PyDependencyCollectorListener"
@@ -688,8 +688,13 @@
     <!-- uv -->
     <configurationType implementation="com.jetbrains.python.sdk.uv.run.UvRunConfigurationType"/>
 
+    <!-- ux survey -->
+    <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PyCharmUxSurvey"/>
+
     <!-- Debugger Show value tooltip -->
     <registryKey defaultValue="true" description="Show value tooltip" key="python.debugger.show.value.tooltip"/>
+
+    <registryKey defaultValue="3" description="Timeout to guess the best suitable SDK when adding new interpreter (seconds)" key="python.guess.sdk.timeout.seconds"/>
   </extensions>
 
   <extensionPoints>

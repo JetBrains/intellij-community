@@ -2,8 +2,8 @@
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.TransferredWriteActionService;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.concurrency.TransferredWriteActionService;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 

@@ -13,6 +13,7 @@ import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.EditorComponentImpl
+import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
 import com.intellij.driver.sdk.ui.components.common.editor
 import com.intellij.driver.sdk.ui.components.common.ideFrame
@@ -89,7 +90,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     get() = xx("//div[@class='LetsPlotComponent']", LetsPlotComponent::class.java).list()
   val toolbar: UiComponent
     get() = x("//div[@class='JupyterFileEditorToolbar']")
-  val kotlinNotebookToolbarActions: KotlinNotebookActionToolBarComponent
+  val kotlinNotebookToolbar: KotlinNotebookActionToolBarComponent
     get() = x(
       "//div[@class='ActionToolbarImpl' and contains(@myvisibleactions, 'Kotlin Notebook')]",
       KotlinNotebookActionToolBarComponent::class.java
@@ -156,13 +157,13 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     }
   }
 
-  fun runCellAndWaitExecuted(timeout: Duration = 30.seconds): Unit = step("Executing cell") {
+  fun runCellAndWaitExecuted(
+    timeout: Duration = 30.seconds,
+    expectedFinalExecutionCount: Int = 1,
+  ): Unit = step("Executing cell") {
     runCell()
     waitFor(timeout = timeout) {
-      // TODO: what if the cell we ran doesn't have an execution label yet, and we are waiting for the previous one?
-      notebookCellExecutionInfos.isNotEmpty() && notebookCellExecutionInfos.last().getParent().x {
-        contains(byAttribute("defaulticon", "greenCheckmark.svg"))
-      }.present()
+      areAllExecutionsFinishedSuccessfully(expectedFinalExecutionCount)
     }
   }
 
@@ -177,7 +178,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
       val last = notebookCellExecutionInfos.lastOrNull()
       if (last == null) {
         false
-      } else {
+      }
+      else {
         val timeBefore = last.getExecutionTimeInMsSafe()
         wait(250.milliseconds)
         val timeAfter = last.getExecutionTimeInMsSafe()
@@ -191,14 +193,23 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     waitFor(timeout = timeout) {
       // TODO: what if we have some cells that were executed before, and their checkmarks are still there,
       //  while new execution labels are not yet created?
-      val infos = notebookCellExecutionInfos
-
-      infos.isNotEmpty()
-      && infos.size == notebookCellEditors.size
-      && infos.all {
-        it.getParent().x { contains(byAttribute("defaulticon", "greenCheckmark.svg")) }.present()
-      }
+      areAllExecutionsFinishedSuccessfully(notebookCellEditors.size)
     }
+  }
+
+  /**
+   * Checks if there are exactly [expectedFinalExecutionCount] finished cells with green checkmark
+   * in the current notebook editor.
+   */
+  private fun areAllExecutionsFinishedSuccessfully(
+    expectedFinalExecutionCount: Int,
+  ): Boolean {
+    val infos = notebookCellExecutionInfos
+    return infos.isNotEmpty() &&
+           infos.size == expectedFinalExecutionCount &&
+           infos.all {
+             it.getParent().x { contains(byAttribute("defaulticon", "greenCheckmark.svg")) }.present()
+           }
   }
 
   /**
@@ -288,7 +299,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     if (text.isEmpty()) return@step null
 
     val seconds = Regex("""(\d+)s""").find(text)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
-    val millis  = Regex("""(\d+)ms""").find(text)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+    val millis = Regex("""(\d+)ms""").find(text)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
 
     seconds * 1_000 + millis
   }
@@ -391,3 +402,18 @@ fun Driver.closeRightToolWindow(stripeButtonName: String) {
     }
   }
 }
+
+/**
+ * Executes a test block within the context of the notebook editor UI component.
+ * Note: only the NotebookEditorUiComponent and its successors are directly available in the context of this block.
+ * If you need to access other UI components in testBody(), use the `driver.ideFrame {}`.
+ *
+ * @param testBody A lambda containing the test actions to be executed with the `NotebookEditorUiComponent`.
+ */
+fun Driver.withNotebookEditor(testBody: NotebookEditorUiComponent.() -> Unit): IdeaFrameUI = ideFrame {
+  notebookEditor {
+    testBody()
+  }
+}
+
+

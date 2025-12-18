@@ -3,12 +3,17 @@ package com.intellij.grazie.spellcheck.dictionary
 
 import ai.grazie.nlp.similarity.Levenshtein
 import ai.grazie.spell.lists.WordList
-import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Alien
+import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.detection.toLanguage
+import com.intellij.grazie.spellcheck.GrazieCheckers
+import com.intellij.openapi.components.service
 import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present
 
 internal class WordListAdapter : WordList, EditableWordListAdapter() {
   fun isAlien(word: String): Boolean {
-    return dictionaries.values.all { it.lookup(word) == Alien } && !aggregator.contains(word)
+    val matchedLanguages = GrazieConfig.get().availableLanguages
+      .filter { it.toLanguage().alphabet.matchEntire(word) }
+    return (matchedLanguages.isEmpty() || !service<GrazieCheckers>().hasSpellerTool(matchedLanguages)) && !aggregator.contains(word)
   }
 
   override fun contains(word: String, caseSensitive: Boolean): Boolean {

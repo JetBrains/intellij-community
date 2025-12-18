@@ -9,6 +9,7 @@ import com.intellij.ide.CliResult
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.bootstrap.InitAppContext
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.AppMode
 import com.intellij.idea.LoggerFactory
@@ -229,9 +230,23 @@ fun startApplication(
     // AppStarter.prepareStart might need to prevent some plugins from loading
     appStartPreparedJob.join()
 
-    if (!PluginAutoUpdater.shouldSkipAutoUpdate()) {
-      span("plugin auto update") {
-        PluginAutoUpdater.applyPluginUpdates(logDeferred)
+    // action.script and auto-update data are located in the system directory, it must be first locked before accessing
+    lockSystemDirsJob.join()
+    // command line starters should opt in to apply plugin updates
+    if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
+      span("run action.script") {
+        // Consider following steps:
+        // - user opens settings, and installs some plugins;
+        // - the plugins are downloaded and saved somewhere;
+        // - IDE prompts for restart;
+        // - after restart, the plugins are moved to proper directories ("installed") by the next line.
+        // TODO get rid of this: plugins should be installed before restarting the IDE
+        runActionScript()
+      }
+      if (!PluginAutoUpdater.shouldSkipAutoUpdate()) {
+        span("plugin auto update") {
+          PluginAutoUpdater.applyPluginUpdates(logDeferred)
+        }
       }
     }
 
@@ -661,4 +676,17 @@ interface AppStarter {
 
   /* called from IDE init thread */
   fun importFinished(newConfigDir: Path) {}
+}
+
+/** action script file contains commands for plugin (un-)installation/updates; may contain third-party commands */
+private fun runActionScript() {
+  try {
+    val scriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE)
+    if (Files.isRegularFile(scriptFile)) {
+      StartupActionScriptManager.executeActionScript()
+    }
+  }
+  catch (e: Throwable) {
+    StartupErrorReporter.pluginInstallationProblem(e)
+  }
 }

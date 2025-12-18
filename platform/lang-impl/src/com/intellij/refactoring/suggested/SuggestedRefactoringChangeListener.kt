@@ -47,6 +47,7 @@ class SuggestedRefactoringChangeListener(
   }
 
   fun reset(withNewIdentifiers: Boolean = false) {
+    project.messageBus.syncPublisher(SuggestedRefactoringAvailabilityListener.TOPIC).reset()
     if (editingState != null) {
       editingState!!.signatureRangeMarker.dispose()
       editingState!!.importRangeMarker?.dispose()

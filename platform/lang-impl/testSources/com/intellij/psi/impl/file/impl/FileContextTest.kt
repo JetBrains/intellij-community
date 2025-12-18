@@ -4,18 +4,22 @@ package com.intellij.psi.impl.file.impl
 import com.intellij.codeInsight.multiverse.*
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.rootManager
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.withSharedSourceEnabled
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.*
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 internal class FileContextTest {
@@ -28,11 +32,10 @@ internal class FileContextTest {
     private val sourceRoot = sharedSourceRootFixture(module1, module2)
   }
 
-  private val fileFixture = sourceRoot.virtualFileFixture("TestCommon.txt", "Test file Common")
+  private val virtualFile by sourceRoot.virtualFileFixture("TestCommon.txt", "Test file Common")
+  private val project by projectFixture
 
-  private val virtualFile by lazy { fileFixture.get() }
-  private val project by lazy { projectFixture.get() }
-  private val psiManager by lazy { PsiManager.getInstance(project) }
+  private val psiManager by lazy { PsiManagerEx.getInstanceEx(project) }
   private val contextManager by lazy { CodeInsightContextManagerImpl.getInstanceImpl(project) }
 
   private fun findPsiFile(): PsiFile = requireNotNull(psiManager.findFile(virtualFile))
@@ -83,7 +86,7 @@ internal class FileContextTest {
 
       assertContextsEqual(anyContext(), rawContext)
 
-      val file1= findPsiFile(context1)
+      val file1 = findPsiFile(context1)
       assertEquals(file1, file)
 
       val rawContext1 = contextManager.getCodeInsightContextRaw(file1.viewProvider)
@@ -96,15 +99,34 @@ internal class FileContextTest {
     val context1 = module1.moduleContext()
     val context2 = module2.moduleContext()
 
+    val fileWithRawContext = withTimeout(1.seconds) {
+      // trying to get a file with "any" context.
+      // some unrelated project activities can instantiate the proper context,
+      // so let's just drop the PsiFile in that case and try again.
+      var file: PsiFile
+      do {
+        ensureActive()
+
+        file = readAction { findPsiFile() }
+        val rawContext = contextManager.getCodeInsightContextRaw(file.viewProvider)
+        if (rawContext == anyContext()) {
+          break
+        }
+
+        writeAction {
+          psiManager.fileManager.setViewProvider(virtualFile, null)
+        }
+      }
+      while (true)
+
+      file
+    }
+
     readAction {
-      val file = findPsiFile()
-      val rawContext = contextManager.getCodeInsightContextRaw(file.viewProvider)
-      assertContextsEqual(anyContext(), rawContext)
+      val file1 = findPsiFile(context1)
+      val file2 = findPsiFile(context2)
 
-      val file1= findPsiFile(context1)
-      val file2= findPsiFile(context2)
-
-      assertEquals(file1, file)
+      assertEquals(file1, fileWithRawContext)
       assertNotEquals(file1, file2)
 
       val rawContext1 = contextManager.getCodeInsightContextRaw(file1.viewProvider)

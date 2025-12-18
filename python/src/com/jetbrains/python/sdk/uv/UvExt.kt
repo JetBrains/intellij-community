@@ -42,9 +42,6 @@ internal fun suggestedSdkName(basePath: Path): @NlsSafe String {
   return "uv (${PathUtil.getFileName(basePath.pathString)})"
 }
 
-val UV_ICON: Icon = PythonIcons.UV
-
-
 suspend fun setupNewUvSdkAndEnv(
   workingDir: Path,
   existingSdks: List<Sdk>,

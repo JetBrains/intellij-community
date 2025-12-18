@@ -271,6 +271,10 @@ f:com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentationKt
 - getMaxWidth():java.lang.Integer
 - a:getTextAttributesKey():com.intellij.openapi.editor.colors.TextAttributesKey
 - paint(com.intellij.openapi.editor.Editor,java.awt.Graphics,java.awt.Rectangle):V
+com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
+- *:onHiddenByEsc(com.intellij.openapi.actionSystem.DataContext):V
+f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$DefaultImpls
+- *s:onHiddenByEsc(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider,com.intellij.openapi.actionSystem.DataContext):V
 *f:com.intellij.openapi.fileChooser.ex.FileTextFieldUtil
 - <init>():V
 - s:getLookupString(com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile,com.intellij.openapi.fileChooser.ex.FileLookup$Finder,com.intellij.openapi.fileChooser.ex.FileTextFieldUtil$CompletionResult):java.lang.String

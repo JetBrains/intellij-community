@@ -23,6 +23,13 @@ interface StateStorageManager {
 
   fun removeStreamProvider(aClass: Class<out StreamProvider>)
 
+  /**
+   * Adds a listener for changes in configuration files
+   *
+   * @param listener the listener
+   */
+  fun addOperationListener(listener: OperationListener) {}
+
   fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage?
 
   fun expandMacro(collapsedPath: String): Path

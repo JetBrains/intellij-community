@@ -14,8 +14,12 @@ import com.intellij.driver.sdk.ui.components.elements.WindowUiComponent
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Window
 import com.intellij.driver.sdk.ui.ui
+import com.intellij.driver.sdk.waitForIndicators
 import java.awt.Frame
+import java.awt.Point
 import javax.swing.JFrame
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 fun Finder.ideFrame() = x(IdeaFrameUI::class.java) { byClass("IdeFrameImpl") }
 
@@ -53,6 +57,21 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
 
   val rightToolWindowToolbar: ToolWindowRightToolbarUi = x(ToolWindowRightToolbarUi::class.java) { byClass("ToolWindowRightToolbar") }
 
+  fun waitForIndicators(timeout: Duration = 5.minutes) {
+    driver.waitForIndicators(::project, timeout)
+  }
+
+  fun waitForIndicatorsAndEnsureFocused(timeout: Duration = 5.minutes) {
+    waitForIndicators(timeout)
+    ensureFocused()
+  }
+
+  fun ensureFocused() {
+    if (!isFocused() || !robot.hasInputFocus()) {
+      toFront()
+    }
+  }
+
   fun closeProject() {
     step("Close project window and wait for it to disappear") {
       driver.invokeAction("CloseProject")
@@ -71,7 +90,7 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
 
   override fun toFront() {
     super.toFront()
-    mainToolbar.click()
+    click(Point(component.width / 2, 0))
   }
 
   fun isMinimized() = ideaFrameComponent.getState() == Frame.ICONIFIED

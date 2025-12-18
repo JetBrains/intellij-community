@@ -783,14 +783,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   @Override
   public void updateIssues(final @Nullable Runnable onComplete) {
-    TaskRepository first = ContainerUtil.find(getAllRepositories(), repository -> repository.isConfigured());
-    if (first == null) {
-      myIssueCache.clear();
-      if (onComplete != null) {
-        onComplete.run();
-      }
-      return;
-    }
     myUpdating = true;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       doUpdate(onComplete);
@@ -802,6 +794,14 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   private void doUpdate(@Nullable Runnable onComplete) {
     try {
+      TaskRepository first = ContainerUtil.find(getAllRepositories(), repository -> repository.isConfigured());
+      if (first == null) {
+        myIssueCache.clear();
+        if (onComplete != null) {
+          onComplete.run();
+        }
+        return;
+      }
       List<Task> issues = getIssuesFromRepositories(null, 0, myConfig.updateIssuesCount, false, false, new EmptyProgressIndicator());
       if (issues == null) return;
 

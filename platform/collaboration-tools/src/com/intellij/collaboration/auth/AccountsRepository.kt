@@ -4,6 +4,10 @@ package com.intellij.collaboration.auth
 /**
  * In most cases should be an instance of [com.intellij.openapi.components.PersistentStateComponent]
  */
-interface AccountsRepository<A: Account> {
+@Deprecated(
+  "Prefer implementing the ObservableAccountsRepository to propagate external changes to the AccountManagerBase",
+  ReplaceWith("ObservableAccountsRepository<A>")
+)
+interface AccountsRepository<A : Account> {
   var accounts: Set<A>
 }

@@ -17,14 +17,13 @@ import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationC
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.PipEnvResult
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
 import com.intellij.pycharm.community.ide.impl.findEnvOrNull
+import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.execService.ZeroCodeStdoutParserTransformer
 import com.intellij.python.community.impl.pipenv.pipenvPath
-import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.sdk.PythonSdkType
@@ -53,10 +52,10 @@ private val LOGGER = Logger.getInstance(PyPipfileSdkConfiguration::class.java)
 @ApiStatus.Internal
 class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
-  override val toolInfo: PyToolUIInfo = PyToolUIInfo("Pipenv", PythonSdkUIIcons.Tools.Pip)
+  override val toolId: ToolId = PIPENV_TOOL_ID
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo, { checkManageableEnv(module, it) }
+    { checkManageableEnv(module, it) }
   ) { envExists ->
     { needsConfirmation -> createAndAddSdk(module, if (needsConfirmation) Source.CONFIGURATOR else Source.INSPECTION, envExists) }
   }

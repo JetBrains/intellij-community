@@ -52,7 +52,7 @@ fun Driver.waitForIndicators(timeout: Duration, waitSmartLongEnough: Boolean = t
 /**
  * Method waits till a project is opened and there are no indicators for 10 seconds.
  */
-private fun Driver.waitForIndicators(projectGet: () -> Project, timeout: Duration, waitSmartLongEnough: Boolean = true) {
+internal fun Driver.waitForIndicators(projectGet: () -> Project?, timeout: Duration, waitSmartLongEnough: Boolean = true) {
   var smartLongEnoughStart: Instant? = null
 
   waitFor("Indicators", timeout) {

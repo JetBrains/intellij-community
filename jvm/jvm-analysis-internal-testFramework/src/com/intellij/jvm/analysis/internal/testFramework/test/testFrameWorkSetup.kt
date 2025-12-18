@@ -34,6 +34,10 @@ internal fun ModifiableRootModel.addJUnit5Library(version: String = "5.9.1") {
   MavenDependencyUtil.addFromMaven(this, "org.junit.jupiter:junit-jupiter-params:$version")
 }
 
+internal fun ModifiableRootModel.addJUnitSuiteLibrary(version: String = "6.0.0") {
+  MavenDependencyUtil.addFromMaven(this, "org.junit.platform:junit-platform-suite-api:$version")
+}
+
 internal fun ModifiableRootModel.addAssertJLibrary(version: String = "3.24.2") {
   MavenDependencyUtil.addFromMaven(this, "org.assertj:assertj-core:$version")
 }

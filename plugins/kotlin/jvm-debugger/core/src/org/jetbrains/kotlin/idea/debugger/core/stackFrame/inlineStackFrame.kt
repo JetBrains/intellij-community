@@ -9,6 +9,7 @@ import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.ui.DebuggerColors
 import com.sun.jdi.Location
 import java.awt.Color
+import java.util.Objects
 
 class InlineStackFrame(
     location: Location?,
@@ -29,9 +30,35 @@ class InlineStackFrame(
         descriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER)
     }
 
+    private val inlineDepth: Int?
+        get() = (descriptor.frameProxy as? InlineStackFrameProxyImpl)?.inlineDepth
+
     override fun getBackgroundColor(): Color? =
         EditorColorsManager.getInstance()
             .schemeForCurrentUITheme
             .getAttributes(DebuggerColors.INLINE_STACK_FRAMES)
             .backgroundColor
+
+    override fun toString(): String {
+        val mainString = super.toString()
+        val inlineDepth = inlineDepth ?: return mainString
+        return "$mainString (inline depth = $inlineDepth)"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is InlineStackFrame) {
+            return false
+        }
+        if (!super.equals(other)) {
+            return false
+        }
+        return inlineDepth == other.inlineDepth
+                && descriptor.location == other.descriptor.location
+    }
+
+    override fun hashCode(): Int {
+        var result = super.hashCode()
+        result = 31 * result + inlineDepth.hashCode()
+        return result
+    }
 }

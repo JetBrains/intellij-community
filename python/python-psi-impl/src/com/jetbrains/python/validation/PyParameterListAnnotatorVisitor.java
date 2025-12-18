@@ -19,7 +19,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
-import com.jetbrains.python.psi.impl.PyFunctionImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -38,7 +37,6 @@ public class PyParameterListAnnotatorVisitor extends PyElementVisitor {
   @Override
   public void visitPyParameterList(final @NotNull PyParameterList paramlist) {
     final LanguageLevel languageLevel = LanguageLevel.forElement(paramlist);
-    final var hasImplicit = paramlist.getParent() instanceof PyFunction function && PyFunctionImpl.isMethod(function);
 
     ParamHelper.walkDownParamArray(
       paramlist.getParameters(),
@@ -55,7 +53,7 @@ public class PyParameterListAnnotatorVisitor extends PyElementVisitor {
         @Override
         public void visitNamedParameter(PyNamedParameter parameter, boolean first, boolean last) {
           final var name = parameter.getName();
-          if (!hadKeyword && name != null && !(hasImplicit && first) && !isPrivate(name)) {
+          if (!hadKeyword && name != null && !parameter.isSelf() && !isPrivate(name)) {
             hadKeyword = true;
           }
           else if (hadKeyword && !hadPositionalContainer && !hadSingleStar && name != null && !hadSlash && isPrivate(name)) {

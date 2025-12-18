@@ -185,7 +185,8 @@ public final class ParameterInfoComponent extends JPanel {
                      ? ColorUtil.blendColorsInRgb(BACKGROUND, FOREGROUND, disabledSignatureAlpha(isDarkTheme))
                      : JBColor.namedColor("ParameterInfo.disabledForeground", new JBColor(0xA8A8A8, 0x777777));
     HIGHLIGHTED_BACKGROUND = mySimpleDesignMode
-                             ? ColorUtil.blendColorsInRgb(BACKGROUND, JBColor.GREEN, selectedSignatureAlpha(isDarkTheme))
+                             ? ColorUtil.blendColorsInRgb(BACKGROUND, getSelectedOverloadBackgroundBlendBase(),
+                                                          selectedSignatureAlpha(isDarkTheme))
                              : JBColor.namedColor("ParameterInfo.currentOverloadBackground", BORDER_COLOR);
     HIGHLIGHTED_COLOR = mySimpleDesignMode
                         ? FOREGROUND

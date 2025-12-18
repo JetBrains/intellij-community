@@ -31,7 +31,10 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import javax.swing.Icon
 
-class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
+class SuggestedRefactoringAvailabilityIndicator(
+  @get:ApiStatus.Internal
+  val project: Project
+) {
   private class Data(
     val document: Document,
     val highlighterRangeMarker: RangeMarker,

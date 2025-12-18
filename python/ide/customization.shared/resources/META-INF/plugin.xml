@@ -10,6 +10,9 @@
     <module name="intellij.pycharm.community.ide.implTraining"/>
     <module name="intellij.platform.whatsNew"/>
     <module name="intellij.python.common.frontend"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen.frontend"/>
   </content>
 </idea-plugin>
 
