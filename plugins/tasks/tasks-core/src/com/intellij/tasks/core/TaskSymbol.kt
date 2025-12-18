@@ -168,7 +168,7 @@ sealed class AbstractTaskSymbol : PolySymbol, DocumentationSymbol {
     @Suppress("HardCodedStringLiteral")
     @Nls
     private fun String.removeImages(): String =
-      replace(Regex("!\\[]\\([^) \t\n]+\\)(\\{[^} \t\n]+})?"), "")
+      replace(Regex("!\\[]\\([^)\t\n]+\\)(\\{[^} \t\n]+})?"), "")
         .replace(Regex("<img [^>]*>"), "")
   }
 }
