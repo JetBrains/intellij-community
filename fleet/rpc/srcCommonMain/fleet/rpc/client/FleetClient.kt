@@ -55,6 +55,7 @@ fun fleetClient(
   abortOnError: Boolean,
   delayStrategy: DelayStrategy = Exponential,
   requestInterceptor: RpcInterceptor = RpcInterceptor,
+  debugName: String? = null,
 ): Resource<FleetClient> =
   resource { cc ->
     val stats = MutableStateFlow(TransportStats())
@@ -62,6 +63,7 @@ fun fleetClient(
       transportFactory = transportFactory,
       transportStats = stats,
       delayStrategy = delayStrategy,
+      debugName = debugName
     ) { transport ->
       rpcClient(transport, clientId.uid, requestInterceptor, abortOnError)
     }.use { connectionStatus ->
