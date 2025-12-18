@@ -12,7 +12,6 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.*
 import com.jetbrains.jsonSchema.impl.light.*
-import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectLegacyAdapter
 import com.jetbrains.jsonSchema.impl.light.legacy.isOldParserAwareOfFieldName
 import com.jetbrains.jsonSchema.impl.light.legacy.tryReadEnumMetadata
 import com.jetbrains.jsonSchema.impl.light.versions.JsonSchemaInterpretationStrategy
@@ -33,7 +32,7 @@ private const val INVALID_PATTERN_FALLBACK = "__invalid_ij_pattern"
 abstract class JsonSchemaObjectBackedByJacksonBase(
   override val rawSchemaNode: JsonNode,
   private val jsonPointer: String,
-) : JsonSchemaObjectLegacyAdapter(), JsonSchemaNodePointer<JsonNode> {
+) : JsonSchemaObject(), JsonSchemaNodePointer<JsonNode> {
 
   abstract override fun getRootSchemaObject(): RootJsonSchemaObjectBackedByJackson
 

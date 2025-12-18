@@ -202,25 +202,6 @@ public abstract class JsonSchemaObject {
   public abstract @Nullable String getHtmlDescription();
 
   /**
-   * @deprecated use {@link JsonSchemaObject#getPropertyNames} and {@link JsonSchemaObject#getPropertyByName}
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  public abstract @NotNull Map<String, ? extends JsonSchemaObject> getProperties();
-
-  /**
-   * @deprecated Do not use
-   */
-  @Deprecated
-  public abstract @Nullable JsonSchemaObject getBackReference();
-
-  /**
-   * @deprecated use {@link JsonSchemaObject#getExampleByName}
-   */
-  @Deprecated
-  public abstract @Nullable Map<String, Object> getExample();
-
-  /**
    * @deprecated use {@link JsonSchemaObject#readChildNodeValue)} with the corresponding parameter
    */
   @Deprecated
@@ -251,38 +232,8 @@ public abstract class JsonSchemaObject {
   public abstract boolean isShouldValidateAgainstJSType();
 
   /**
-   * @deprecated use {@link JsonSchemaObject#getDefinitionNames} and {@link JsonSchemaObject#getDefinitionByName}
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  public abstract @Nullable Map<String, ? extends JsonSchemaObject> getDefinitionsMap();
-
-  /**
    * @deprecated use {@link JsonSchemaObjectReadingUtils#resolveRefSchema}
    */
   @Deprecated
   public abstract @Nullable JsonSchemaObject resolveRefSchema(@NotNull JsonSchemaService service);
-
-  /**
-   * @deprecated Do not use
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  public abstract @Nullable JsonSchemaType mergeTypes(@Nullable JsonSchemaType selfType,
-                                                      @Nullable JsonSchemaType otherType,
-                                                      @Nullable Set<JsonSchemaType> otherTypeVariants);
-
-  /**
-   * @deprecated Do not use
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  public abstract Set<JsonSchemaType> mergeTypeVariantSets(@Nullable Set<JsonSchemaType> self, @Nullable Set<JsonSchemaType> other);
-
-  /**
-   * @deprecated Do not use
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  public abstract void mergeValues(@NotNull JsonSchemaObject other);
 }
