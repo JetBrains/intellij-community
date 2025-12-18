@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.highlighting;
 
@@ -303,6 +303,56 @@ public class K2HighlightExitPointsTestGenerated extends AbstractK2HighlightExitP
     @TestMetadata("returnWhenStatement.kt")
     public void testReturnWhenStatement() throws Exception {
         runTest("../../idea/tests/testData/exitPoints/returnWhenStatement.kt");
+    }
+
+    @TestMetadata("sequenceInLambda.kt")
+    public void testSequenceInLambda() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/sequenceInLambda.kt");
+    }
+
+    @TestMetadata("sequenceNested.kt")
+    public void testSequenceNested() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/sequenceNested.kt");
+    }
+
+    @TestMetadata("sequenceNested2.kt")
+    public void testSequenceNested2() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/sequenceNested2.kt");
+    }
+
+    @TestMetadata("sequenceNestedMixedSyntax.kt")
+    public void testSequenceNestedMixedSyntax() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/sequenceNestedMixedSyntax.kt");
+    }
+
+    @TestMetadata("sequenceNestedParenthesized.kt")
+    public void testSequenceNestedParenthesized() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/sequenceNestedParenthesized.kt");
+    }
+
+    @TestMetadata("sequenceSimple.kt")
+    public void testSequenceSimple() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/sequenceSimple.kt");
+    }
+
+    @TestMetadata("sequenceTryCatch.kt")
+    public void testSequenceTryCatch() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/sequenceTryCatch.kt");
+    }
+
+    @TestMetadata("sequenceWithControlFlow.kt")
+    public void testSequenceWithControlFlow() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/sequenceWithControlFlow.kt");
+    }
+
+    @TestMetadata("sequenceWithLambdaContinue.kt")
+    public void testSequenceWithLambdaContinue() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/sequenceWithLambdaContinue.kt");
+    }
+
+    @TestMetadata("sequenceWithReturn.kt")
+    public void testSequenceWithReturn() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/sequenceWithReturn.kt");
     }
 
     @TestMetadata("simple.kt")

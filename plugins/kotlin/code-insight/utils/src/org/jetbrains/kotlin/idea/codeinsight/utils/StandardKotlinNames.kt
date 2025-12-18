@@ -61,6 +61,10 @@ object StandardKotlinNames {
 
         @JvmField val Sequence: FqName = BASE_SEQUENCES_PACKAGE + "Sequence"
 
+        @JvmField val sequence: FqName = BASE_SEQUENCES_PACKAGE + "sequence"
+        @JvmField val yield: FqName = BASE_SEQUENCES_PACKAGE + "SequenceScope.yield"
+        @JvmField val yieldAll: FqName = BASE_SEQUENCES_PACKAGE + "SequenceScope.yieldAll"
+
         @JvmField val terminations: List<FqName> =
             collectionTerminationFunctionNames.map { BASE_SEQUENCES_PACKAGE + it }
 
