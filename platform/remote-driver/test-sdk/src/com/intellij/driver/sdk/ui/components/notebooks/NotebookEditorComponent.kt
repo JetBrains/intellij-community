@@ -350,6 +350,17 @@ fun Driver.openLeftToolWindow(stripeButtonName: String) {
   }
 }
 
+fun Driver.closeLeftToolWindow(stripeButtonName: String) {
+  ideFrame {
+    val leftToolbar = xx(ToolWindowLeftToolbarUi::class.java) { byClass("ToolWindowLeftToolbar") }.list().firstOrNull()
+                      ?: return@ideFrame
+    val varsButton = leftToolbar.stripeButton(stripeButtonName)
+    if (varsButton.present()) {
+      varsButton.close()
+    }
+  }
+}
+
 /**
  * Executes a test block within the context of the notebook editor UI component.
  * Note: only the NotebookEditorUiComponent and its successors are directly available in the context of this block.
