@@ -4,10 +4,10 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,20 +58,5 @@ class JavaMethodReferenceElement extends LookupElement implements TypedLookupIte
   public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setIcon(myIcon);
     super.renderElement(presentation);
-  }
-
-  @Override
-  public void handleInsert(@NotNull InsertionContext context) {
-    if (!(myRefPlace instanceof PsiMethodReferenceExpression)) {
-      PsiClass containingClass = Objects.requireNonNull(myMethod.getContainingClass());
-      String qualifiedName = Objects.requireNonNull(containingClass.getQualifiedName());
-
-      final Editor editor = context.getEditor();
-      final Document document = editor.getDocument();
-      final int startOffset = context.getStartOffset();
-
-      document.insertString(startOffset, qualifiedName + "::");
-      JavaCompletionUtil.shortenReference(context.getFile(), startOffset + qualifiedName.length() - 1);
-    }
   }
 }
