@@ -62,7 +62,7 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
   suspend inline fun runInFrontend(
     name: String = defaultStepName(),
     parameters: List<Serializable> = emptyList(),
-    lambdaConsumer: SerializedLambdaWithIdeContextHelper.SuspendingSerializableConsumer<LambdaFrontendContext, Any>,
+    lambdaConsumer: SerializedLambdaWithIdeContextHelper.SuspendingSerializableConsumer<LambdaFrontendContext, Any?>,
   ) {
     runInFrontendGetResult(name, parameters) { parameters ->
       with(lambdaConsumer) {
@@ -84,7 +84,7 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
   suspend inline fun runInBackend(
     name: String = defaultStepName(),
     parameters: List<Serializable> = emptyList(),
-    lambdaConsumer: SerializedLambdaWithIdeContextHelper.SuspendingSerializableConsumer<LambdaBackendContext, Any>,
+    lambdaConsumer: SerializedLambdaWithIdeContextHelper.SuspendingSerializableConsumer<LambdaBackendContext, Any?>,
   ) {
     runInBackendGetResult(name, parameters) { parameters ->
       with(lambdaConsumer) {

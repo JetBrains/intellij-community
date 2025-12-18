@@ -8,7 +8,7 @@ import java.io.Serializable
 import kotlin.jvm.javaClass
 
 class SerializedLambdaWithIdeContextHelper: SerializedLambdaHelper() {
-  fun interface SuspendingSerializableConsumer<T : LambdaIdeContext, R : Any> : Serializable {
+  fun interface SuspendingSerializableConsumer<T : LambdaIdeContext, R> : Serializable {
     suspend fun T.runSerializedLambda(parameters: List<Serializable>): R
   }
 
