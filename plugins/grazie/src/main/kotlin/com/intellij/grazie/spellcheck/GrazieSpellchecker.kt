@@ -63,7 +63,8 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
       return synchronized(speller) {
         computeWithClassLoader<Boolean, Throwable>(GraziePlugin.classLoader) {
           val sentence = tool.getRawAnalyzedSentence(word)
-          if (sentence.nonWhitespaceTokenCount == 1) return@computeWithClassLoader !speller.isMisspelled(word)
+          // First token is always sentence start
+          if (sentence.nonWhitespaceTokenCount <= 2) return@computeWithClassLoader !speller.isMisspelled(word)
           if (speller.match(sentence).isEmpty()) {
             if (!speller.isMisspelled(word)) true
             else {
