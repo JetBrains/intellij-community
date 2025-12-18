@@ -101,7 +101,6 @@ import kotlin.Unit;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
-
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.Border;
@@ -135,6 +134,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
+import kotlinx.coroutines.Job;
 
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable,
@@ -1207,6 +1207,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         Disposer.dispose(myAdEditorModel);
       }
       clearCaretThread();
+      if (caretAnimationJob != null) {
+        caretAnimationJob.cancel(null);
+        caretAnimationJob = null;
+      }
 
       myFocusListeners.clear();
       myMouseListeners.clear();
@@ -3191,6 +3195,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @ApiStatus.Internal
   final ConcurrentHashMap<Caret, Point2D> lastPosMap = new ConcurrentHashMap<>();
 
+  @ApiStatus.Internal
+  @Nullable
+  Job caretAnimationJob = null;
+
+  @ApiStatus.Internal
+  double caretAnimationElapsed;
+
   private final @NotNull EditorCaretMoveService caretMoveService = EditorCaretMoveService.getInstance();
 
   @ApiStatus.Internal
@@ -3317,11 +3328,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public final @Nullable Caret myCaret;
     public final boolean myIsRtl;
 
-    CaretRectangle(@NotNull Point2D point, float width, @Nullable Caret caret, boolean isRtl) {
+    @ApiStatus.Internal
+    public final float myOpacity;
+
+    CaretRectangle(@NotNull Point2D point, float width, @Nullable Caret caret, boolean isRtl, float opacity) {
       myPoint = point;
       myWidth = Math.max(width, 2);
       myCaret = caret;
       myIsRtl = isRtl;
+      myOpacity = opacity;
     }
 
     Point2D getPoint() {
@@ -3330,7 +3345,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   final class CaretCursor {
-    private CaretRectangle @NotNull [] myLocations = {new CaretRectangle(new Point(0, 0), 0, null, false)};
+    private CaretRectangle @NotNull [] myLocations = {new CaretRectangle(new Point(0, 0), 0, null, false, 1.0f)};
     private boolean myEnabled = true;
 
     private boolean myIsShown;
