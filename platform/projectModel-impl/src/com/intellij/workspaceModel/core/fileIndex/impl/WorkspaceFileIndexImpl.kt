@@ -215,16 +215,16 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     val virtualFileUrl = virtualFileUrlManager.findByUrl(dir.url) ?: return VirtualFileVisitor.SKIP_CHILDREN
     val processed = virtualFileUrlManager.processChildrenRecursively(virtualFileUrl) { childUrl ->
       val childFile = childUrl.virtualFile ?: return@processChildrenRecursively TreeNodeProcessingResult.SKIP_CHILDREN
-      val isChildInIndexableContent = runReadAction {
+      val isChildInContent = runReadAction {
         findFileSet(file = childFile,
                     honorExclusion = true,
                     includeContentSets = true,
-                    includeContentNonIndexableSets = false,
+                    includeContentNonIndexableSets = true,
                     includeExternalSets = false,
                     includeExternalSourceSets = false,
                     includeCustomKindSets = false) != null
       }
-      return@processChildrenRecursively if (isChildInIndexableContent) {
+      return@processChildrenRecursively if (isChildInContent) {
         if (processContentUnderDirectory(childFile, processor, customFilter, fileSetFilter, numberOfExcludedParentDirectories + 1)) {
           TreeNodeProcessingResult.SKIP_CHILDREN
         }
