@@ -14,13 +14,15 @@ class SyntaxGrammarKitFileElementType(language: Language) : IFileElementType(lan
   override fun doParseContents(chameleon: ASTNode, psi: PsiElement): ASTNode? {
     val builderFactory = PsiSyntaxBuilderFactory.getInstance()
     val elementType = chameleon.getElementType()
-    val syntaxLanguageDefinition = LanguageSyntaxDefinitions.INSTANCE.forLanguage(language) as? GrammarKitLanguageDefinition 
+    val syntaxLanguageDefinition = LanguageSyntaxDefinitions.INSTANCE.forLanguage(language) as? GrammarKitLanguageDefinition
                                    ?: throw IllegalStateException("Failed to cast LanguageSyntaxDefinition for language: $language — to GrammarKitLanguageDefinition")
     val lexer = syntaxLanguageDefinition.createLexer()
-    val syntaxBuilder = builderFactory.createBuilder(chameleon,
-                                                     lexer,
-                                                     language,
-                                                     chameleon.getChars())
+    val syntaxBuilder = builderFactory.createBuilder(
+      chameleon = chameleon,
+      lexer = lexer,
+      lang = language,
+      text = chameleon.getChars()
+    )
     val converter = getConverter(language)
     val convertedElement = converter.convert(elementType)
                            ?: throw IllegalStateException("Failed convert element type: $elementType. Converter: Converter: ${converter}")
@@ -34,9 +36,8 @@ class SyntaxGrammarKitFileElementType(language: Language) : IFileElementType(lan
       syntaxLanguageDefinition.parse(convertedElement, parserRuntime)
       syntaxBuilder.getTreeBuilt()
     }
-    return root.getFirstChildNode() 
+    return root.getFirstChildNode()
   }
-  
+
   open fun createExtendedParserUserState(): ParserUserState? = null
-  
 }
