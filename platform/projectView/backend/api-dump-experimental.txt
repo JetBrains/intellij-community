@@ -1,1 +1,0 @@
-*:com.intellij.platform.projectView.backend.pane.BackendProjectViewPane

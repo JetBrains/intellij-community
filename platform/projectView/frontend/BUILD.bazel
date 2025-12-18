@@ -25,6 +25,8 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/core-api:core",
     "//platform/core-ui",
+    "//platform/project/shared:project",
+    "//fleet/rpc",
   ]
 )
 

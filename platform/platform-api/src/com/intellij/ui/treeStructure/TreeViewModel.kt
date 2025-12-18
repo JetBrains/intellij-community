@@ -34,13 +34,20 @@ interface TreeViewModelVisitor {
 }
 
 @ApiStatus.Experimental
-interface TreeNodeViewModel {
+interface TreeNodeWithPresentation {
+  val presentation: TreeNodePresentation
+}
+
+@ApiStatus.Experimental
+interface TreeNodeViewModel : TreeNodeWithPresentation {
   val domainModel: TreeNodeDomainModel
   val parent: TreeNodeViewModel?
   val state: Flow<TreeNodeState>
   val children: Flow<List<TreeNodeViewModel>>
   fun stateSnapshot(): TreeNodeState
   fun setExpanded(isExpanded: Boolean)
+  override val presentation: TreeNodePresentation
+    get() = stateSnapshot().presentation
 }
 
 @ApiStatus.Experimental

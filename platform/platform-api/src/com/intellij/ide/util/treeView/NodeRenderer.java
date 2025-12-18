@@ -16,7 +16,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.TreeNodePresentationImpl;
-import com.intellij.ui.treeStructure.TreeNodeViewModel;
+import com.intellij.ui.treeStructure.TreeNodeWithPresentation;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -66,8 +66,8 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
 
   @Override
   public void customizeCellRenderer(@NotNull JTree tree, @NlsSafe Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-    if (value instanceof TreeNodeViewModel vm) {
-      customizeViewModelRenderer((TreeNodePresentationImpl)vm.stateSnapshot().getPresentation(), selected, hasFocus);
+    if (value instanceof TreeNodeWithPresentation withPresentation) {
+      customizeViewModelRenderer((TreeNodePresentationImpl)withPresentation.getPresentation(), selected, hasFocus);
     }
     else {
       customizeLegacyRenderer(tree, value, selected, expanded, leaf, row, hasFocus);

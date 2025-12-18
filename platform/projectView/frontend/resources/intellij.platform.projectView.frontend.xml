@@ -5,11 +5,17 @@
     <module name="intellij.platform.projectView"/>
     <!-- endregion -->
   </dependencies>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.project.view.pane.frontend" interface="com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneProvider" dynamic="true"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlRegistrationCheck --> <!-- (false positive, IJPL-149684) -->
     <projectService
       serviceInterface="com.intellij.platform.projectView.window.ProjectViewToolWindowService"
       serviceImplementation="com.intellij.platform.projectView.frontend.window.ProjectViewToolWindowServiceImpl"
+    />
+    <project.view.pane.frontend
+      implementation="com.intellij.platform.projectView.frontend.impl.legacy.LegacyFrontendProjectViewPaneProvider"
     />
   </extensions>
 </idea-plugin>

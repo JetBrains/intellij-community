@@ -7,4 +7,5 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface ProjectViewToolWindowService {
   fun setupToolWindow(toolWindow: ToolWindow)
+  suspend fun manageToolWindow(toolWindow: ToolWindow)
 }

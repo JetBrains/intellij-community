@@ -738,12 +738,16 @@ f:com.intellij.ui.dsl.builder.TextFieldWithBrowseButtonKt
 - a:getPresentation():com.intellij.ui.treeStructure.TreeNodePresentation
 - a:isExpanded():Z
 *:com.intellij.ui.treeStructure.TreeNodeViewModel
+- com.intellij.ui.treeStructure.TreeNodeWithPresentation
 - a:getChildren():kotlinx.coroutines.flow.Flow
 - a:getDomainModel():com.intellij.ui.treeStructure.TreeNodeDomainModel
 - a:getParent():com.intellij.ui.treeStructure.TreeNodeViewModel
+- getPresentation():com.intellij.ui.treeStructure.TreeNodePresentation
 - a:getState():kotlinx.coroutines.flow.Flow
 - a:setExpanded(Z):V
 - a:stateSnapshot():com.intellij.ui.treeStructure.TreeNodeState
+*:com.intellij.ui.treeStructure.TreeNodeWithPresentation
+- a:getPresentation():com.intellij.ui.treeStructure.TreeNodePresentation
 *:com.intellij.ui.treeStructure.TreeSwingModel
 - com.intellij.ui.tree.TreeVisitor$LoadingAwareAcceptor
 - com.intellij.ui.treeStructure.BgtAwareTreeModel

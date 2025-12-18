@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -472,7 +473,8 @@ private class FakeRootDomainModel(private val treeModel: TreeDomainModel) : Tree
   }
 }
 
-internal class TreeNodePresentationBuilderImpl(val isLeaf: Boolean) : TreeNodePresentationBuilder {
+@ApiStatus.Internal
+class TreeNodePresentationBuilderImpl(val isLeaf: Boolean) : TreeNodePresentationBuilder {
   // these "Value" suffixes to avoid signature clashes with the setters
   private var iconValue: Icon? = null
   private var mainTextValue: String? = null

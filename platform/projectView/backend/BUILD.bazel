@@ -22,6 +22,18 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
     "//platform/projectView/shared:projectView",
+    "//fleet/rpc",
+    "//platform/kernel/rpc.backend",
+    "//platform/core-api:core",
+    "//platform/extensions",
+    "//platform/util",
+    "//platform/project/shared:project",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//platform/util/coroutines",
+    "//platform/util:util-ui",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
   ]
 )
 

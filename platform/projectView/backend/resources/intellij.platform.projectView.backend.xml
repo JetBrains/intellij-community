@@ -5,4 +5,15 @@
     <module name="intellij.platform.projectView"/>
     <!-- endregion -->
   </dependencies>
+  <extensionPoints>
+    <extensionPoint 
+      qualifiedName="com.intellij.project.view.pane.backend" 
+      interface="com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneProvider" 
+      dynamic="true"
+    />
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.projectView.backend.rpc.ProjectViewRpcProvider"/>
+    <project.view.pane.backend implementation="com.intellij.platform.projectView.backend.impl.legacy.LegacyBackendProjectViewPaneProvider"/>
+  </extensions>
 </idea-plugin>

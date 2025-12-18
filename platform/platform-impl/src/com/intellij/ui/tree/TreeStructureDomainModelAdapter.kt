@@ -124,6 +124,14 @@ internal fun buildPresentation(builder: TreeNodePresentationBuilder, userObject:
     return builder.build()
   }
   userObject.update()
+  return buildPresentation(userObject, builder)
+}
+
+@ApiStatus.Internal
+fun buildPresentation(
+  userObject: PresentableNodeDescriptor<*>,
+  builder: TreeNodePresentationBuilder,
+): TreeNodePresentation {
   val colorScheme = EditorColorsManager.getInstance().schemeForCurrentUITheme
   val presentation = userObject.presentation
   return builder.run {

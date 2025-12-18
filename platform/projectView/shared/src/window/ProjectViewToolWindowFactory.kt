@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ToolWindowManager
 import javax.swing.Icon
 
 internal class ProjectViewToolWindowFactory : ToolWindowFactory, DumbAware {
@@ -23,6 +24,13 @@ internal class ProjectViewToolWindowFactory : ToolWindowFactory, DumbAware {
     else {
       val legacyProjectView = ProjectViewImpl.getInstance(project) as ProjectViewImpl
       legacyProjectView.setupImpl(toolWindow)
+    }
+  }
+
+  override suspend fun manage(toolWindow: ToolWindow, toolWindowManager: ToolWindowManager) {
+    if (Registry.`is`("project.view.toolwindow.split", defaultValue = false)) {
+      // In the split tool window mode we only create the tool window on the frontend (or in the monolith), hence serviceOrNull.
+      toolWindow.project.serviceOrNull<ProjectViewToolWindowService>()?.manageToolWindow(toolWindow)
     }
   }
 }
