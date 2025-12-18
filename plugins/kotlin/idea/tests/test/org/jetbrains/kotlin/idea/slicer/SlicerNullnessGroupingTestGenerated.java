@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/slicer/inflow")
-public class SlicerNullnessGroupingTestGenerated extends AbstractSlicerNullnessGroupingTest {
+public class SlicerNullnessGroupingTestGenerated extends AbstractK1SlicerNullnessGroupingTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {

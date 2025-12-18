@@ -79,6 +79,16 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//java/java-tests:tests_test_lib",
     "//platform/external-system-impl:externalSystem-impl",
+    "//plugins/junit",
+    "//plugins/kotlin/run-configurations/junit",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/psi",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/navbar/testFramework",
+    "//java/java-impl-inspections:impl-inspections",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end

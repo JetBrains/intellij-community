@@ -10,12 +10,6 @@ import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import java.io.File
 
 
-abstract class AbstractKotlinGotoImplementationMultiModuleTest : AbstractKotlinNavigationMultiModuleTest() {
-    override fun getTestDataDirectory(): File = IDEA_TEST_DATA_DIR.resolve("navigation/implementations/multiModule")
-
-    override fun doNavigate(editor: Editor, file: PsiFile) = NavigationTestUtils.invokeGotoImplementations(editor, file)!!
-}
-
 abstract class AbstractKotlinGotoSuperMultiModuleTest : AbstractKotlinNavigationMultiModuleTest() {
     override fun getTestDataDirectory(): File = IDEA_TEST_DATA_DIR.resolve("navigation/gotoSuper/multiModule")
 

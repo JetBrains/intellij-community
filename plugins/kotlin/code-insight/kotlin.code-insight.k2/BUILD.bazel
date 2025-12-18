@@ -132,7 +132,6 @@ jvm_library(
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//platform/usageView",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "//plugins/kotlin/frontend-independent",
     "//platform/lang-impl",
@@ -177,6 +176,7 @@ jvm_library(
     "//plugins/kotlin/bundled-compiler-plugins-support",
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
     ":plugins_kotlin_code-insight_descriptions_provided",
   ]
 )

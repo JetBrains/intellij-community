@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/codeInsight/hints/lambda")
-public class KotlinLambdasHintsProviderGenerated extends AbstractKotlinLambdasHintsProvider {
+public class KotlinLambdasHintsProviderGenerated extends AbstractK1KotlinLambdasHintsProvider {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {

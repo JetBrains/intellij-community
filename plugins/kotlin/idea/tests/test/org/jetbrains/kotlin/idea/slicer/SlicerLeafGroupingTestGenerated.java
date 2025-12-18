@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/slicer/inflow")
-public class SlicerLeafGroupingTestGenerated extends AbstractSlicerLeafGroupingTest {
+public class SlicerLeafGroupingTestGenerated extends AbstractK1SlicerLeafGroupingTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
