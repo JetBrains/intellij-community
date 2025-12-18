@@ -66,7 +66,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     }
 
     for (result in results) {
-      trySend(result)
+      send(result)
     }
   }
 
@@ -77,9 +77,10 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     val project = projectId.findProjectOrNull() ?: return@channelFlow
     val resolvedFilter = resolveFilter(project, filter)
 
-    readAction {
+    val results = readAction {
       blockingContextToIndicator {
         val helper = PsiTodoSearchHelper.getInstance(project)
+        val fileIds = mutableListOf<VirtualFileId>()
 
         helper.processFilesWithTodoItems { psiFile ->
           val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
@@ -91,11 +92,16 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
           }
 
           if (matchesFilter) {
-            trySend(virtualFile.rpcId())
+            fileIds.add(virtualFile.rpcId())
           }
           true
         }
+        fileIds
       }
+    }
+
+    for (result in results) {
+      send(result)
     }
   }
 
