@@ -93,14 +93,15 @@ internal interface ChildStatusBarWidget {
   fun createForChild(childStatusBar: IdeStatusBarImpl): StatusBarWidget
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 open class IdeStatusBarImpl @Internal constructor(
   parentCs: CoroutineScope,
   private val getProject: () -> Project?,
   addToolWindowWidget: Boolean,
   currentFileEditorFlow: StateFlow<FileEditor?>? = null,
 ) : JComponent(), Accessible, StatusBarEx, UiDataProvider {
-  internal var currentFileEditorFlow: StateFlow<FileEditor?>? = currentFileEditorFlow
-    private set
+  private val customCurrentFileEditorFlow: MutableStateFlow<StateFlow<FileEditor?>?> = MutableStateFlow(currentFileEditorFlow)
+
   internal val coroutineScope = parentCs.childScope("IdeStatusBarImpl", supervisor = false)
   private var infoAndProgressPanel: InfoAndProgressPanel? = null
 
@@ -699,18 +700,19 @@ open class IdeStatusBarImpl @Internal constructor(
   override val project: Project?
     get() = getProject()
 
-  @get:Internal
-  override val currentEditor: StateFlow<FileEditor?>
-    get() = currentFileEditorFlow ?: defaultEditorFlow
-
   private val defaultEditorFlow: StateFlow<FileEditor?> by lazy {
     val project = project ?: return@lazy MutableStateFlow(null)
     project.service<StatusBarWidgetsManager>().dataContext.currentFileEditor
   }
 
+  @get:Internal
+  override val currentEditor: StateFlow<FileEditor?> = customCurrentFileEditorFlow
+    .flatMapLatest { it ?: defaultEditorFlow }
+    .stateIn(coroutineScope, SharingStarted.Eagerly, null)
+
   @Internal
-  fun setCurrentFileEditorFlow(flow: StateFlow<FileEditor?>) {
-    currentFileEditorFlow = flow
+  fun setCurrentFileEditorFlow(flow: StateFlow<FileEditor?>?) {
+    customCurrentFileEditorFlow.value = flow
   }
 
   override fun getAccessibleContext(): AccessibleContext {
