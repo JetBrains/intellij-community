@@ -430,7 +430,8 @@
         "test" : [ "{enum#boolean}" ],
         "time_ms" : [ "{regexp#integer}" ],
         "too_many_errors" : [ "{enum#boolean}" ],
-        "total_duration_ms" : [ "{regexp#integer}" ]
+        "total_duration_ms" : [ "{regexp#integer}" ],
+        "unhandled_exception_interactive" : [ "{enum#boolean}" ]
       },
       "enums" : {
         "__event_id" : [ "ide.error", "ide.freeze", "ide.start", "ide.close", "project.opening.finished", "project.opened", "project.closed", "frame.activated", "frame.deactivated", "project.module.attached", "project.frame.selected", "ide.crash.detected", "protocol.open.command.handled", "ide.deadlock.detected", "project.closed.and.disposed", "early.errors", "ide.freeze.ignored.plugin", "ide.freeze.reported.plugin", "ide.freeze.detected.plugin", "freeze.popup.shown" ],
@@ -2125,5 +2126,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6569"
+  "version" : "6573"
 }
