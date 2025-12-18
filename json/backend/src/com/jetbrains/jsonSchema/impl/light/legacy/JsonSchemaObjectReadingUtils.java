@@ -16,6 +16,7 @@ import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature;
 import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.*;
+import com.jetbrains.jsonSchema.impl.light.nodes.EmptyJsonSchemaObject;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,7 @@ import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.*;
 
 public final class JsonSchemaObjectReadingUtils {
   private static final Logger LOG = Logger.getInstance(JsonSchemaObjectReadingUtils.class);
-  public static final @NotNull JsonSchemaObject NULL_OBJ = new JsonSchemaObjectImpl("$_NULL_$");
+  public static final @NotNull JsonSchemaObject NULL_OBJ = EmptyJsonSchemaObject.INSTANCE;
 
   public static boolean hasProperties(@NotNull JsonSchemaObject schemaObject) {
     return schemaObject.getPropertyNames().hasNext();

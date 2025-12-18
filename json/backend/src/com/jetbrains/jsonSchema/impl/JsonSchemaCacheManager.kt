@@ -73,7 +73,7 @@ class JsonSchemaCacheManager : Disposable {
 
   private fun completeSync(schemaVirtualFile: VirtualFile, schemaPsiFile: PsiFile, future: JsonSchemaObjectFuture) {
     try {
-      future.complete(JsonSchemaReader(schemaVirtualFile).read(schemaPsiFile))
+      future.complete(JsonSchemaReader().read(schemaPsiFile))
     }
     catch (e: Exception) {
       future.completeExceptionally(e)
