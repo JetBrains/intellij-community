@@ -130,6 +130,23 @@ private fun addJarDirectoryBaseOnClass(model: ModifiableRootModel, libraryName: 
   addDependencyFromCompilationOutput(model, libraryName, baseClass)
 }
 
+private fun getSharedClassesRootVirtualFile(): VirtualFile {
+  val classesPathUrl = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(WorkspaceEntity::class.java))
+  val classesRootVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(classesPathUrl)
+  val sharedClassesRootVirtualFile = classesRootVirtualFile?.parent
+  assertNotNull("Cannot find $sharedClassesRootVirtualFile. Possibly, project was not compiled", sharedClassesRootVirtualFile)
+  return sharedClassesRootVirtualFile!!
+}
+
+internal fun refreshCompilationOutputInVfs() {
+  val sharedClassesRootVirtualFile = getSharedClassesRootVirtualFile()
+  VfsUtil.markDirtyAndRefresh(false, true, true, sharedClassesRootVirtualFile)
+  // markDirtyAndRefresh above is not enough, it does not add "new" files to the VFS
+  VfsUtil.iterateChildrenRecursively(sharedClassesRootVirtualFile!!, null) {
+    true
+  }
+}
+
 private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libraryName: String, baseClass: Class<*>) {
   val library = model.moduleLibraryTable.modifiableModel.createLibrary(libraryName)
   val modifiableModel = library.modifiableModel
@@ -163,15 +180,7 @@ private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libra
     assertNotNull("Cannot find $classpathFolder in production classes jars. Possibly, project was partially compiled", classpathRootVirtualFile)
   }
   else {
-    val classesPathUrl = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(WorkspaceEntity::class.java))
-    val classesRootVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(classesPathUrl)
-    val sharedClassesRootVirtualFile = classesRootVirtualFile?.parent
-    assertNotNull("Cannot find $sharedClassesRootVirtualFile. Possibly, project was not compiled", sharedClassesRootVirtualFile)
-    VfsUtil.markDirtyAndRefresh(false, true, true, sharedClassesRootVirtualFile)
-    // mark dirty and refresh above is not enough, it does not add "new" files to the VFS
-    VfsUtil.iterateChildrenRecursively(sharedClassesRootVirtualFile!!, null) {
-      true
-    }
+    val sharedClassesRootVirtualFile = getSharedClassesRootVirtualFile()
     classpathRootVirtualFile = sharedClassesRootVirtualFile.children?.find { it.name == classpathFolder }
     assertNotNull("Cannot find $classpathFolder in $sharedClassesRootVirtualFile. Possibly, project was partially compiled", classpathRootVirtualFile)
   }

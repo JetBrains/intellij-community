@@ -93,6 +93,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     val (storage, jpsProjectSerializer) = runBlocking { loadProjectIntellijProject() }
 
     val modulesToCheck = findModulesWhichRequireWorkspace(storage)
+    refreshCompilationOutputInVfs()
 
     var storageChanged = false
     modulesToCheck.forEachIndexed { index, (moduleEntity, sourceRoot) ->
