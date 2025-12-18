@@ -10,4 +10,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class RpcCompletionItemId(
   val id: UID = UID.random(),
-)
+) {
+  override fun toString(): String = "RpcId($id)"
+}

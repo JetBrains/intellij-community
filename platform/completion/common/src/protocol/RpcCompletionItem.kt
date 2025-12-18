@@ -23,7 +23,21 @@ data class RpcCompletionItem(
   val shouldStopLookupInsertion: Boolean = false,
   val isDirectInsertion: Boolean = false,
   val prefixMatcher: RpcPrefixMatcher,
-)
+) {
+  override fun toString(): String = buildToString("RpcCompletionItem") {
+    field("lookupString", lookupString)
+    fieldWithNullDefault("allLookupStrings", allLookupStrings)
+    field("presentation", presentation)
+    field("id", id)
+    fieldWithDefault("insertHandler", insertHandler, RpcInsertHandler.Backend)
+    fieldWithDefault("requiresCommittedDocuments", requiresCommittedDocuments, true)
+    fieldWithDefault("autoCompletionPolicy", autoCompletionPolicy, AutoCompletionPolicy.SETTINGS_DEPENDENT)
+    fieldWithDefault("isCaseSensitive", isCaseSensitive, true)
+    fieldWithDefault("shouldStopLookupInsertion", shouldStopLookupInsertion, false)
+    fieldWithDefault("isDirectInsertion", isDirectInsertion, false)
+    field("prefixMatcher", prefixMatcher)
+  }
+}
 
 fun CompletionResult.toRpc(): RpcCompletionItem {
   val element = this.lookupElement

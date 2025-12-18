@@ -13,4 +13,10 @@ data class RpcCompletionArrangement(
   val weightsOfMatchedItems: List<RpcCompletionItemWeight> = emptyList(),
   val nonMatchedItems: List<RpcCompletionItemId> = emptyList(),
   val startMatches: List<RpcCompletionItemId> = emptyList(),
-)
+) {
+  override fun toString(): String = buildToString("RpcCompletionArrangement") {
+    fieldWithEmptyDefault("weightsOfMatchedItems", weightsOfMatchedItems)
+    fieldWithEmptyDefault("nonMatchedItems", nonMatchedItems)
+    fieldWithEmptyDefault("startMatches", startMatches)
+  }
+}

@@ -11,7 +11,12 @@ import kotlinx.serialization.Serializable
 data class RpcDecoratedTextRange(
   val textRange: TextRangeId,
   val decoration: LookupElementPresentation.LookupItemDecoration,
-)
+) {
+  override fun toString(): String = buildToString("RpcDecoratedTextRange") {
+    field("textRange", textRange)
+    field("decoration", decoration)
+  }
+}
 
 fun DecoratedTextRange.toRpc(): RpcDecoratedTextRange {
   return RpcDecoratedTextRange(

@@ -18,7 +18,12 @@ sealed interface RpcCompletionResponseEvent {
   data class NewItems(
     val newItems: List<RpcCompletionItem> = emptyList(),
     val completionArrangement: RpcCompletionArrangement,
-  ) : RpcCompletionResponseEvent
+  ) : RpcCompletionResponseEvent {
+    override fun toString(): String = buildToString("NewItems") {
+      fieldWithEmptyDefault("newItems", newItems)
+      field("completionArrangement", completionArrangement)
+    }
+  }
 
   /**
    * This event is sent when all items are already emitted,
@@ -27,7 +32,11 @@ sealed interface RpcCompletionResponseEvent {
   @Serializable
   data class NewArrangement(
     val completionArrangement: RpcCompletionArrangement,
-  ) : RpcCompletionResponseEvent
+  ) : RpcCompletionResponseEvent {
+    override fun toString(): String = buildToString("NewArrangement") {
+      field("completionArrangement", completionArrangement)
+    }
+  }
 
   /**
    * This event is sent when all completion items are sent.
@@ -44,12 +53,21 @@ sealed interface RpcCompletionResponseEvent {
   class Advertisement(
     val message: @NlsContexts.PopupAdvertisement String,
     val icon: IconId? = null,
-  ) : RpcCompletionResponseEvent
+  ) : RpcCompletionResponseEvent {
+    override fun toString(): String = buildToString("Advertisement") {
+      field("message", message)
+      fieldWithNullDefault("icon", icon)
+    }
+  }
 
   @Serializable
   data class AddWatchedPrefix(
     val condition: RpcPrefixCondition,
-  ) : RpcCompletionResponseEvent
+  ) : RpcCompletionResponseEvent {
+    override fun toString(): String = buildToString("AddWatchedPrefix") {
+      field("condition", condition)
+    }
+  }
 
   /**
    * The last event of the completion session.

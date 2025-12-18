@@ -18,4 +18,13 @@ data class RpcCompletionRequest(
   val startingEditorVersion: Int,
   val completionType: CompletionType = CompletionType.BASIC,
   val invocationCount: Int = 0,
-)
+) {
+  override fun toString(): String = buildToString("RpcCompletionRequest") {
+    field("id", id)
+    field("projectId", projectId)
+    field("editorId", editorId)
+    field("startingEditorVersion", startingEditorVersion)
+    fieldWithDefault("completionType", completionType, CompletionType.BASIC)
+    fieldWithDefault("invocationCount", invocationCount, 0)
+  }
+}

@@ -35,7 +35,11 @@ sealed interface RpcInsertHandler {
   @Serializable
   data class Frontend(
     val insertHandler: FrontendFriendlyInsertHandler,
-  ) : RpcInsertHandler
+  ) : RpcInsertHandler {
+    override fun toString(): String = buildToString("Frontend") {
+      field("insertHandler", insertHandler)
+    }
+  }
 }
 
 fun LookupElement.getRpcInsertHandler(): RpcInsertHandler {

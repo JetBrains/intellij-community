@@ -12,7 +12,14 @@ data class RpcTextFragment(
   val grayed: Boolean = false,
   val italic: Boolean = false,
   val fgColor: ColorId? = null,
-)
+) {
+  override fun toString(): String = buildToString("RpcTextFragment") {
+    field("text", text)
+    fieldWithDefault("grayed", grayed, false)
+    fieldWithDefault("italic", italic, false)
+    fieldWithNullDefault("fgColor", fgColor)
+  }
+}
 
 fun TextFragment.toRpc(): RpcTextFragment = RpcTextFragment(
   text = text,

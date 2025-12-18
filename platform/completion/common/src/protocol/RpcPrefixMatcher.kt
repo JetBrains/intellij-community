@@ -12,13 +12,26 @@ import kotlinx.serialization.Serializable
 sealed interface RpcPrefixMatcher {
   /** Represents [com.intellij.codeInsight.completion.impl.CamelHumpMatcher] */
   @Serializable
-  data class CamelHumpMatcher(val prefix: String, val caseSensitive: Boolean, val typoTolerant: Boolean) : RpcPrefixMatcher
+  data class CamelHumpMatcher(val prefix: String, val caseSensitive: Boolean, val typoTolerant: Boolean) : RpcPrefixMatcher {
+    override fun toString(): String = buildToString("CamelHumpMatcher") {
+      field("prefix", prefix)
+      field("caseSensitive", caseSensitive)
+      field("typoTolerant", typoTolerant)
+    }
+  }
+
 
   /**
    * Represents a [PrefixMatcher] that is not available on the frontend.
    */
   @Serializable
-  data class Backend(val id: RpcCompletionItemId, val prefix: String) : RpcPrefixMatcher
+  data class Backend(val id: RpcCompletionItemId, val prefix: String) : RpcPrefixMatcher {
+    override fun toString(): String = buildToString("Backend") {
+      field("id", id)
+      field("prefix", prefix)
+    }
+  }
+
 }
 
 fun PrefixMatcher.toRpc(itemId: RpcCompletionItemId): RpcPrefixMatcher {

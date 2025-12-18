@@ -17,7 +17,11 @@ sealed interface RpcPrefixCondition {
 
   /** condition that yields true if the given string equals to [value] */
   @Serializable
-  class EqualsTo(val value: String) : RpcPrefixCondition
+  class EqualsTo(val value: String) : RpcPrefixCondition {
+    override fun toString(): String = buildToString("EqualsTo") {
+      field("value", value)
+    }
+  }
 }
 
 fun ElementPattern<String>.toRpc(): RpcPrefixCondition {

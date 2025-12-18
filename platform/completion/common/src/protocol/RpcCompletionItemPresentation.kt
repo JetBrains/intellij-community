@@ -30,7 +30,24 @@ data class RpcCompletionItemPresentation(
   val itemTailDecorations: List<RpcDecoratedTextRange> = emptyList(),
   val typeGrayed: Boolean = false,
   val tail: List<RpcTextFragment> = emptyList(),
-)
+) {
+  override fun toString(): String = buildToString("RpcCompletionItemPresentation") {
+    fieldWithNullDefault("icon", icon)
+    fieldWithNullDefault("typeIcon", typeIcon)
+    fieldWithDefault("typeIconRightAligned", typeIconRightAligned, false)
+    fieldWithDefault("itemText", itemText, "")
+    fieldWithDefault("typeText", typeText, "")
+    fieldWithDefault("strikeout", strikeout, false)
+    field("itemTextForeground", itemTextForeground)
+    fieldWithDefault("itemTextBold", itemTextBold, false)
+    fieldWithDefault("itemTextUnderlined", itemTextUnderlined, false)
+    fieldWithDefault("itemTextItalic", itemTextItalic, false)
+    fieldWithEmptyDefault("itemNameDecorations", itemNameDecorations)
+    fieldWithEmptyDefault("itemTailDecorations", itemTailDecorations)
+    fieldWithDefault("typeGrayed", typeGrayed, false)
+    fieldWithEmptyDefault("tail", tail)
+  }
+}
 
 fun RpcCompletionItemPresentation.render(presentation: LookupElementPresentation) {
   val rpc = this

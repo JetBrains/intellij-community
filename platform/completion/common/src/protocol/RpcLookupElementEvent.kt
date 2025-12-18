@@ -14,11 +14,26 @@ sealed interface RpcLookupElementEvent {
   data class SelectedItem(
     val request: RpcCompletionRequest,
     val itemId: RpcCompletionItemId,
-  ) : RpcLookupElementEvent
+  ) : RpcLookupElementEvent {
+    override fun toString(): String = buildToString("SelectedItem") {
+      field("request", request)
+      field("itemId", itemId)
+    }
+  }
 
   @Serializable
-  data class Cancel(val projectId: ProjectId) : RpcLookupElementEvent
+  data class Cancel(val projectId: ProjectId) : RpcLookupElementEvent {
+    override fun toString(): String = buildToString("Cancel") {
+      field("projectId", projectId)
+    }
+  }
 
   @Serializable
-  class Show(val projectId: ProjectId, val editor: EditorId) : RpcLookupElementEvent
+  class Show(val projectId: ProjectId, val editor: EditorId) : RpcLookupElementEvent {
+    override fun toString(): String = buildToString("Show") {
+      field("projectId", projectId)
+      field("editor", editor)
+    }
+  }
 }
+

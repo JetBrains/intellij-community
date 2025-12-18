@@ -16,5 +16,9 @@ sealed interface RpcPrefixUpdate {
 
   /** A new character is appended to the prefix. */
   @Serializable
-  class Append(val char: Char) : RpcPrefixUpdate
+  class Append(val char: Char) : RpcPrefixUpdate {
+    override fun toString(): String = buildToString("Append") {
+      field("char", char)
+    }
+  }
 }
