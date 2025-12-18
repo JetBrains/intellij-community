@@ -82,7 +82,7 @@ internal class ComponentAreaPopupContext(
       val position = calculatePosition(myComponentReference.get() ?: return, popup)
 
       alarm!!.addRequest(Runnable {
-        if (hideRequested) {
+        if (hideRequested || !popup.canShow()) {
           popup.cancel()
           return@Runnable
         }
