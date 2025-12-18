@@ -140,7 +140,7 @@ internal class ReplOutputProcessor(
     private fun getAttributesForSeverity(start: Int, end: Int, severity: Severity): TextAttributes = when (severity) {
         Severity.ERROR ->
             getAttributesForSeverity(HighlightInfoType.ERROR, HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES, start, end)
-        Severity.WARNING, Severity.FIXED_WARNING ->
+        Severity.WARNING, Severity.FIXED_WARNING, Severity.STRONG_WARNING ->
             getAttributesForSeverity(
                 HighlightInfoType.WARNING,
                 HighlightSeverity.WARNING,
