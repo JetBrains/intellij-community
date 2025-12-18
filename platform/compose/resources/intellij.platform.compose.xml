@@ -6,6 +6,7 @@
                  description="Allows changing how ComposePanel is rendered using rendering on Graphics (when `true`, it provides smooth Swing interop) or on native AWT texture (when `false`). Works only in internal mode"
                  key="compose.swing.render.on.graphics"/>
     <search.traverseUiHelper implementation="com.intellij.platform.compose.ComposeTraverseUiHelper"/>
+    <undoManagerProvider implementation="com.intellij.platform.compose.ComposeUndoManagerProvider"/>
   </extensions>
 
   <dependencies>

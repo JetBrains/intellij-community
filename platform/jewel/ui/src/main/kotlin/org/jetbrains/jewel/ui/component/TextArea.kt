@@ -48,6 +48,7 @@ import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.theme.scrollbarStyle
 import org.jetbrains.jewel.ui.theme.textAreaStyle
+import org.jetbrains.jewel.ui.util.addUndoRedoSemantics
 
 /**
  * A multi-line text input component that follows the standard visual styling.
@@ -139,7 +140,7 @@ public fun TextArea(
             },
         undecorated = undecorated,
         scrollState = scrollState,
-        modifier = modifier,
+        modifier = modifier.addUndoRedoSemantics(state.undoState),
     )
 }
 

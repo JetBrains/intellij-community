@@ -4,15 +4,13 @@ package org.jetbrains.jewel.bridge.actionSystem
 import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.semantics.AccessibilityAction
 import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.semantics.SemanticsNode
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.semantics.getOrNull
 import com.intellij.ide.PasteProvider
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.jewel.bridge.ComposeSemanticsTreeUtils.findFocusedComponent
 import org.jetbrains.jewel.foundation.InternalJewelApi
 
 @Internal
@@ -35,15 +33,5 @@ public class ComposePasteProvider : PasteProvider {
         val focused = composePanel.findFocusedComponent() ?: return null
 
         return focused.config.getOrNull(SemanticsActions.PasteText)
-    }
-}
-
-@Internal
-@InternalJewelApi
-public fun ComposePanel.findFocusedComponent(): SemanticsNode? {
-    return semanticsOwners.firstNotNullOfOrNull { o ->
-        o.getAllSemanticsNodes(mergingEnabled = true).firstOrNull {
-            it.config.getOrNull(SemanticsProperties.Focused) == true
-        }
     }
 }
