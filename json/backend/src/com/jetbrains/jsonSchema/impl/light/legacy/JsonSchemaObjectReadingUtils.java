@@ -4,7 +4,6 @@ package com.jetbrains.jsonSchema.impl.light.legacy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
@@ -21,14 +20,16 @@ import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
-import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.*;
+import static com.jetbrains.jsonSchema.JsonPointerUtil.isSelfReference;
 
 public final class JsonSchemaObjectReadingUtils {
   private static final Logger LOG = Logger.getInstance(JsonSchemaObjectReadingUtils.class);
@@ -47,12 +48,6 @@ public final class JsonSchemaObjectReadingUtils {
     final String ref = schemaNode.getRef();
     assert !StringUtil.isEmptyOrSpaces(ref);
 
-    if (schemaNode instanceof JsonSchemaObjectImpl schemaImpl) {
-      var refsStorage = schemaImpl.getComputedRefsStorage(service.getProject());
-      var schemaObject = refsStorage.getOrDefault(ref, NULL_OBJ);
-      if (schemaObject != NULL_OBJ) return schemaObject;
-    }
-
     var value = fetchSchemaFromRefDefinition(ref, schemaNode, service, schemaNode.isRefRecursive());
     if (!JsonFileResolver.isHttpPath(ref)) {
       service.registerReference(ref);
@@ -63,13 +58,6 @@ public final class JsonSchemaObjectReadingUtils {
       if (virtualFile != null && !(virtualFile instanceof HttpVirtualFile)) {
         service.registerReference(virtualFile.getName());
       }
-    }
-
-    if (schemaNode instanceof JsonSchemaObjectImpl schemaImpl && value instanceof JsonSchemaObjectImpl valueImpl) {
-      if (value != NULL_OBJ && !Objects.equals(value.getFileUrl(), schemaNode.getFileUrl())) {
-        valueImpl.setBackReference(schemaImpl);
-      }
-      schemaImpl.getComputedRefsStorage(service.getProject()).put(ref, value);
     }
     return value;
   }
@@ -296,52 +284,7 @@ public final class JsonSchemaObjectReadingUtils {
     if (!ref.startsWith("#/")) {
       return null;
     }
-    if (com.jetbrains.jsonSchema.TempUtilsKt.isJsonSchemaObjectV2() && !(schemaObject instanceof JsonSchemaObjectImpl)) {
-      return schemaObject.findRelativeDefinition(ref);
-    }
-    ref = ref.substring(2);
-    final List<String> parts = split(ref);
-    JsonSchemaObject current = schemaObject;
-    for (int i = 0; i < parts.size(); i++) {
-      if (current == null) return null;
-      final String part = parts.get(i);
-      if (JSON_DEFINITIONS.equals(part) || DEFS.equals(part)) {
-        if (i == (parts.size() - 1)) return null;
-        //noinspection AssignmentToForLoopParameter
-        final String nextPart = parts.get(++i);
-        current = current.getDefinitionByName(unescapeJsonPointerPart(nextPart));
-        continue;
-      }
-      if (JSON_PROPERTIES.equals(part)) {
-        if (i == (parts.size() - 1)) return null;
-        //noinspection AssignmentToForLoopParameter
-        current = current.getPropertyByName(unescapeJsonPointerPart(parts.get(++i)));
-        continue;
-      }
-      if (ITEMS.equals(part)) {
-        if (i == (parts.size() - 1)) {
-          current = current.getItemsSchema();
-        }
-        else {
-          //noinspection AssignmentToForLoopParameter
-          Integer next = tryParseInt(parts.get(++i));
-          var itemsSchemaList = current.getItemsSchemaList();
-          if (itemsSchemaList != null && next != null && next < itemsSchemaList.size()) {
-            current = itemsSchemaList.get(next);
-          }
-        }
-        continue;
-      }
-      if (ADDITIONAL_ITEMS.equals(part)) {
-        if (i == (parts.size() - 1)) {
-          current = current.getAdditionalItemsSchema();
-        }
-        continue;
-      }
-
-      current = current.getDefinitionByName(part);
-    }
-    return current;
+    return schemaObject.findRelativeDefinition(ref);
   }
 
   private static @Nullable Integer tryParseInt(String s) {

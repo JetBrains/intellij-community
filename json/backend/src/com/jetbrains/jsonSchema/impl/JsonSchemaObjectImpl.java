@@ -257,30 +257,7 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
     return myLanguageInjectionPostfix;
   }
 
-  public static @Nullable JsonSchemaType getSubtypeOfBoth(@NotNull JsonSchemaType selfType,
-                                                          @NotNull JsonSchemaType otherType) {
-    if (otherType == JsonSchemaType._any) return selfType;
-    if (selfType == JsonSchemaType._any) return otherType;
-    return switch (selfType) {
-      case _string -> otherType == JsonSchemaType._string || otherType == JsonSchemaType._string_number ? JsonSchemaType._string : null;
-      case _number -> {
-        if (otherType == JsonSchemaType._integer) yield JsonSchemaType._integer;
-        yield otherType == JsonSchemaType._number || otherType == JsonSchemaType._string_number ? JsonSchemaType._number : null;
-      }
-      case _integer -> otherType == JsonSchemaType._number
-                       || otherType == JsonSchemaType._string_number
-                       || otherType == JsonSchemaType._integer ? JsonSchemaType._integer : null;
-      case _object -> otherType == JsonSchemaType._object ? JsonSchemaType._object : null;
-      case _array -> otherType == JsonSchemaType._array ? JsonSchemaType._array : null;
-      case _boolean -> otherType == JsonSchemaType._boolean ? JsonSchemaType._boolean : null;
-      case _null -> otherType == JsonSchemaType._null ? JsonSchemaType._null : null;
-      case _string_number -> otherType == JsonSchemaType._integer
-                             || otherType == JsonSchemaType._number
-                             || otherType == JsonSchemaType._string
-                             || otherType == JsonSchemaType._string_number ? otherType : null;
-      default -> otherType;
-    };
-  }
+
 
 
 
@@ -995,13 +972,13 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
     );
   }
 
-  public static @NotNull JsonSchemaObjectImpl merge(@NotNull JsonSchemaObjectImpl base,
-                                                    @NotNull JsonSchemaObjectImpl other,
-                                                    @NotNull JsonSchemaObjectImpl pointTo) {
-    final JsonSchemaObjectImpl object = new JsonSchemaObjectImpl(pointTo.myRawFile, pointTo.myFileUrl, pointTo.getPointer());
-    object.mergeValues(other);
-    object.mergeValues(base);
-    object.setRef(other.getRef());
-    return object;
-  }
+  //public static @NotNull JsonSchemaObjectImpl merge(@NotNull JsonSchemaObjectImpl base,
+  //                                                  @NotNull JsonSchemaObjectImpl other,
+  //                                                  @NotNull JsonSchemaObjectImpl pointTo) {
+  //  final JsonSchemaObjectImpl object = new JsonSchemaObjectImpl(pointTo.myRawFile, pointTo.myFileUrl, pointTo.getPointer());
+  //  object.mergeValues(other);
+  //  object.mergeValues(base);
+  //  object.setRef(other.getRef());
+  //  return object;
+  //}
 }

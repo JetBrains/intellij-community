@@ -2,7 +2,6 @@
 package com.jetbrains.jsonSchema.impl.light.legacy;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.jetbrains.jsonSchema.impl.JsonSchemaObjectImpl;
 import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -85,6 +84,26 @@ public final class LegacyJsonSchemaObjectMerger {
 
   public static @Nullable JsonSchemaType getSubtypeOfBoth(@NotNull JsonSchemaType selfType,
                                                           @NotNull JsonSchemaType otherType) {
-    return JsonSchemaObjectImpl.getSubtypeOfBoth(selfType, otherType);
+    if (otherType == JsonSchemaType._any) return selfType;
+    if (selfType == JsonSchemaType._any) return otherType;
+    return switch (selfType) {
+      case _string -> otherType == JsonSchemaType._string || otherType == JsonSchemaType._string_number ? JsonSchemaType._string : null;
+      case _number -> {
+        if (otherType == JsonSchemaType._integer) yield JsonSchemaType._integer;
+        yield otherType == JsonSchemaType._number || otherType == JsonSchemaType._string_number ? JsonSchemaType._number : null;
+      }
+      case _integer -> otherType == JsonSchemaType._number
+                       || otherType == JsonSchemaType._string_number
+                       || otherType == JsonSchemaType._integer ? JsonSchemaType._integer : null;
+      case _object -> otherType == JsonSchemaType._object ? JsonSchemaType._object : null;
+      case _array -> otherType == JsonSchemaType._array ? JsonSchemaType._array : null;
+      case _boolean -> otherType == JsonSchemaType._boolean ? JsonSchemaType._boolean : null;
+      case _null -> otherType == JsonSchemaType._null ? JsonSchemaType._null : null;
+      case _string_number -> otherType == JsonSchemaType._integer
+                             || otherType == JsonSchemaType._number
+                             || otherType == JsonSchemaType._string
+                             || otherType == JsonSchemaType._string_number ? otherType : null;
+      default -> otherType;
+    };
   }
 }
