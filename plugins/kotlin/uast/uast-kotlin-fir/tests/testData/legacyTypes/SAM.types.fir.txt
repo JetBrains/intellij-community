@@ -11,7 +11,7 @@ UFile (package = ) [import java.lang.Thread...]
         UField (name = foo) [@org.jetbrains.annotations.NotNull private static var foo: java.lang.Runnable = { ...}]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
-                UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
         UField (name = baz) [@org.jetbrains.annotations.NotNull private static final var baz: java.lang.Runnable = java.lang.Runnable({ ...})]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UQualifiedReferenceExpression [java.lang.Runnable({ ...})] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
@@ -50,7 +50,7 @@ UFile (package = ) [import java.lang.Thread...]
                 UBinaryExpression (operator = =) [foo = { ...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     USimpleNameReferenceExpression (identifier = foo) [foo] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
                     ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
-                        UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                        UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                 UDeclarationsExpression [var a: java.lang.Runnable = { ...} as java.lang.Runnable]
                     ULocalVariable (name = a) [var a: java.lang.Runnable = { ...} as java.lang.Runnable]
                         UBinaryExpressionWithType [{ ...} as java.lang.Runnable] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
@@ -63,7 +63,7 @@ UFile (package = ) [import java.lang.Thread...]
                         UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                 UReturnExpression [return { ...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
                     ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
-                        UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                        UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
         UMethod (name = getBaz) [public static final fun getBaz() : java.lang.Runnable = UastEmptyExpression]
         UMethod (name = getSamImplicitLabel) [public static final fun getSamImplicitLabel() : java.lang.Runnable = UastEmptyExpression]
         UMethod (name = getSamExplicitLabel) [public static final fun getSamExplicitLabel() : java.lang.Runnable = UastEmptyExpression]

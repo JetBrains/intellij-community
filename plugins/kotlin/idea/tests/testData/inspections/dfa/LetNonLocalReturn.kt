@@ -24,7 +24,7 @@ fun testChain3(file: String): Boolean {
 }
 
 fun testElvis(param: String?, other: String) = param ?: other.let {
-    if (it.isNotEmpty()) return it
+    if (it.isNotEmpty()) <warning descr="[RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY_WARNING] Return in function with expression body and without explicit return type. Use block body '{...}' or add an explicit return type. This will become an error in language version 2.4. See https://youtrack.jetbrains.com/issue/KTLC-288.">return</warning> it
 
     null
 }
