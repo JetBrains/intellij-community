@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.plugins.gradle.execution.build.GradleApplicationEnvironmentProviderTestCase;
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
 /**
@@ -20,6 +21,55 @@ import org.junit.Test;
 public class GradleApplicationEnvironmentProviderTest extends GradleApplicationEnvironmentProviderTestCase {
 
   @Test
+  @TargetVersions("7.0+") // full JPMS support added by Gradle starting from Gradle 7.0
+  public void testConfigurationsShouldNotBeResolvedDuringTheProjectEvaluation() throws Exception {
+    PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
+    @Language("Java")
+    String appClass = """
+      package my;
+      public class Application {       
+          public static void main(String[] args){
+              System.out.println("Hello expected world");
+          }
+      }
+      """;
+    createProjectSubFile("src/main/java/my/Application.java", appClass);
+    createProjectSubFile("src/main/java/module-info.java", "module my {}");
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .withIdeaPlugin()
+        .withGradleIdeaExtPlugin()
+        .addImport("org.jetbrains.gradle.ext.*")
+        .addPostfix(
+          "idea {",
+          "  project.settings {",
+          "    runConfigurations {",
+          "       MyApp(Application) {",
+          "           mainClass = 'my.Application'",
+          "           moduleName = 'moduleName.main'",
+          "       }",
+          "    }",
+          "  }",
+          "}")
+        .addPostfix(
+          """
+            afterEvaluate {
+                configurations.runtimeOnly {
+                    extendsFrom(configurations.compileOnly)
+                }
+            }
+            """
+        ).generate()
+    );
+    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(getMyProject()).findConfigurationByName("MyApp");
+    assertAppRunOutput(configurationSettings, "Hello expected world");
+  }
+
+  @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
     @Language("Java")
@@ -84,6 +134,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
   }
 
   @Test
+  @TargetVersions("6.4+") // initial JPMS support added by Gradle starting from Gradle 6.4
   public void testJavaModuleRunConfigurationWithResources() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
     @Language("Java")
@@ -147,6 +198,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
   }
 
   @Test
+  @TargetVersions("7.0+") // full JPMS support added by Gradle starting from Gradle 7.0
   public void testJavaModuleRunConfigurationWithProvider() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
     @Language("Java") String appClass = """
@@ -205,6 +257,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testRunApplicationInnerStaticClass() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
     @Language("Java")
@@ -247,6 +300,9 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
   }
 
   @Test
+  // A task could be executed via included task fqdn like :root:something:something only starting from Gradle 6.8
+  // This behavior for older Gradle version is broken due to IDEA-382710
+  @TargetVersions("6.8+")
   public void testRunApplicationInNestedComposite() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
     @Language("Java")
