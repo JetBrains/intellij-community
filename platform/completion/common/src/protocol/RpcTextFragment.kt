@@ -9,9 +9,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class RpcTextFragment(
   val text: String,
-  val grayed: Boolean,
-  val italic: Boolean,
-  val fgColor: ColorId?,
+  val grayed: Boolean = false,
+  val italic: Boolean = false,
+  val fgColor: ColorId? = null,
 )
 
 fun TextFragment.toRpc(): RpcTextFragment = RpcTextFragment(

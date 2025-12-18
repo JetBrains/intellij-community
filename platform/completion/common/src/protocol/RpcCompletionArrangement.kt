@@ -10,7 +10,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class RpcCompletionArrangement(
-  val weightsOfMatchedItems: List<RpcCompletionItemWeight>,
-  val nonMatchedItems: List<RpcCompletionItemId>,
-  val startMatches: List<RpcCompletionItemId>,
+  val weightsOfMatchedItems: List<RpcCompletionItemWeight> = emptyList(),
+  val nonMatchedItems: List<RpcCompletionItemId> = emptyList(),
+  val startMatches: List<RpcCompletionItemId> = emptyList(),
 )

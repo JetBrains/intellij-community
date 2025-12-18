@@ -16,6 +16,6 @@ data class RpcCompletionRequest(
   val projectId: ProjectId,
   val editorId: EditorId,
   val startingEditorVersion: Int,
-  val completionType: CompletionType,
-  val invocationCount: Int,
+  val completionType: CompletionType = CompletionType.BASIC,
+  val invocationCount: Int = 0,
 )

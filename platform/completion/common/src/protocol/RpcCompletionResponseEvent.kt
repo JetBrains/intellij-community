@@ -16,7 +16,7 @@ sealed interface RpcCompletionResponseEvent {
    */
   @Serializable
   data class NewItems(
-    val newItems: List<RpcCompletionItem>,
+    val newItems: List<RpcCompletionItem> = emptyList(),
     val completionArrangement: RpcCompletionArrangement,
   ) : RpcCompletionResponseEvent
 

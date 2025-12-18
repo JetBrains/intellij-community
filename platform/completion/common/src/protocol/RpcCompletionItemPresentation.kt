@@ -16,20 +16,20 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class RpcCompletionItemPresentation(
-  val icon: IconId?,
-  val typeIcon: IconId?,
-  val typeIconRightAligned: Boolean,
-  val itemText: String,
-  val typeText: String,
-  val strikeout: Boolean,
+  val icon: IconId? = null,
+  val typeIcon: IconId? = null,
+  val typeIconRightAligned: Boolean = false,
+  val itemText: String = "",
+  val typeText: String = "",
+  val strikeout: Boolean = false,
   val itemTextForeground: ColorId,
-  val itemTextBold: Boolean,
-  val itemTextUnderlined: Boolean,
-  val itemTextItalic: Boolean,
-  val itemNameDecorations: List<RpcDecoratedTextRange>,
-  val itemTailDecorations: List<RpcDecoratedTextRange>,
-  val typeGrayed: Boolean,
-  val tail: List<RpcTextFragment>,
+  val itemTextBold: Boolean = false,
+  val itemTextUnderlined: Boolean = false,
+  val itemTextItalic: Boolean = false,
+  val itemNameDecorations: List<RpcDecoratedTextRange> = emptyList(),
+  val itemTailDecorations: List<RpcDecoratedTextRange> = emptyList(),
+  val typeGrayed: Boolean = false,
+  val tail: List<RpcTextFragment> = emptyList(),
 )
 
 fun RpcCompletionItemPresentation.render(presentation: LookupElementPresentation) {
