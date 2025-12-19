@@ -625,8 +625,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                   WrappingStrategy.DO_NOT_WRAP,
                                   mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION);
       }
-      else if (childType == JavaElementType.ENUM_CONSTANT && myNode instanceof ClassElement) {
-        child = processEnumBlock(result, child, ((ClassElement)myNode).findEnumConstantListDelimiterPlace());
+      else if (childType == JavaElementType.ENUM_CONSTANT && myNode instanceof ClassElement classElement) {
+        child = processEnumBlock(result, child, classElement.findEnumConstantListDelimiterPlace());
       }
       else if (mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE && isTernaryOperationSign(child)) {
         child = processTernaryOperationRange(result, child, defaultWrap, childIndent);
@@ -1251,14 +1251,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   protected static @Nullable ASTNode getTreeNode(final Block block) {
-    if (block instanceof JavaBlock) {
-      return ((JavaBlock)block).getFirstTreeNode();
+    if (block instanceof JavaBlock javaBlock) {
+      return javaBlock.getFirstTreeNode();
     }
-    if (block instanceof LeafBlock) {
-      return ((LeafBlock)block).getTreeNode();
+    if (block instanceof LeafBlock leafBlock) {
+      return leafBlock.getTreeNode();
     }
-    if (block instanceof CStyleCommentBlock) {
-      return ((CStyleCommentBlock)block).getNode();
+    if (block instanceof CStyleCommentBlock commentBlock) {
+      return commentBlock.getNode();
     }
     return null;
   }
@@ -1286,8 +1286,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   protected boolean isAfter(final int newChildIndex, final IElementType @NotNull [] elementTypes) {
     if (newChildIndex == 0) return false;
     final Block previousBlock = getSubBlocks().get(newChildIndex - 1);
-    if (!(previousBlock instanceof AbstractBlock)) return false;
-    final IElementType previousElementType = ((AbstractBlock)previousBlock).getNode().getElementType();
+    if (!(previousBlock instanceof AbstractBlock block)) return false;
+    final IElementType previousElementType = block.getNode().getElementType();
     return ArrayUtil.contains(previousElementType, elementTypes);
   }
 
