@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
+import org.jetbrains.kotlin.extensions.ExtensionPointDescriptor
 import org.jetbrains.kotlin.fir.extensions.FirAssignExpressionAltererExtension
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
@@ -90,7 +90,7 @@ class KtCompilerPluginsCache private constructor(
     @OptIn(KaExperimentalApi::class)
     fun <T : Any> getRegisteredExtensions(
         module: KaModule,
-        extensionType: ProjectExtensionDescriptor<T>
+        extensionType: ExtensionPointDescriptor<T>
     ): List<T> {
         if (!module.areCompilerPluginsSupported()) return emptyList()
         val classLoader = pluginsClassLoader
@@ -116,7 +116,7 @@ class KtCompilerPluginsCache private constructor(
         classLoader: ClassLoader,
         registrarForModule: ConcurrentMap<K, Optional<CompilerPluginRegistrar.ExtensionStorage>>,
         cacheKey: K,
-        extensionType: ProjectExtensionDescriptor<T>
+        extensionType: ExtensionPointDescriptor<T>
     ): List<T> {
         val extensionStorage = registrarForModule.computeIfAbsent(cacheKey) {
             Optional.ofNullable(computeExtensionStorage(classLoader, this))
