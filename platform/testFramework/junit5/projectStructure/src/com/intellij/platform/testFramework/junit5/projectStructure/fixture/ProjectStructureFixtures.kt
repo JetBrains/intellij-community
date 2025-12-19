@@ -55,7 +55,7 @@ fun TestFixture<Project>.withSharedSourceEnabled(): TestFixture<Project> = testF
  */
 @TestOnly
 fun TestFixture<Project>.sdkFixture(sdkName: String, type: SdkTypeId, pathFixture: TestFixture<Path>): TestFixture<Sdk> =
-  sdkFixture { jdkTable ->
+  sdkFixtureImpl { jdkTable ->
     val homePath = pathFixture.init()
     val sdk = jdkTable.createSdk(sdkName, type)
     val root = withContext(Dispatchers.IO) { VfsUtil.findFile(homePath, true)!! }
@@ -65,17 +65,20 @@ fun TestFixture<Project>.sdkFixture(sdkName: String, type: SdkTypeId, pathFixtur
       sdkModificator.addRoot(root, OrderRootType.CLASSES)
       sdkModificator.commitChanges()
     }
-    return@sdkFixture sdk
+    return@sdkFixtureImpl sdk
   }
 
 /**
  * Create SDK using [sdkProvider] and register it in [ProjectJdkTable].
- * [sdkProvider] should **not** register JDK. In most cases, it shouldn't use argument at all.
  */
 @TestOnly
-fun TestFixture<Project>.sdkFixture(sdkProvider: suspend TestFixtureInitializer.R<Sdk>.(ProjectJdkTable) -> Sdk): TestFixture<Sdk> =
+fun TestFixture<Project>.sdkFixture(sdkProvider: suspend TestFixtureInitializer.R<Sdk>.() -> Sdk): TestFixture<Sdk> =
+  sdkFixtureImpl { sdkProvider() }
+
+@TestOnly
+private fun TestFixture<Project>.sdkFixtureImpl(sdkProvider: suspend TestFixtureInitializer.R<Sdk>.(ProjectJdkTable) -> Sdk): TestFixture<Sdk> =
   testFixture {
-    val project = this@sdkFixture.init()
+    val project = this@sdkFixtureImpl.init()
     val projectJDKTable = ProjectJdkTable.getInstance(project)
     val sdk = sdkProvider(projectJDKTable)
     writeAction {
