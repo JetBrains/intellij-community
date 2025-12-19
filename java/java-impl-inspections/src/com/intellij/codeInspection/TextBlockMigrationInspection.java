@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.options.OptPane;
@@ -115,17 +115,15 @@ public final class TextBlockMigrationInspection extends AbstractBaseJavaLocalIns
       if (expression == null) return;
       Document document = expression.getContainingFile().getViewProvider().getDocument();
       if (document == null) return;
-      PsiLiteralExpression literalExpression = tryCast(expression, PsiLiteralExpression.class);
-      if (literalExpression != null) {
-        replaceWithTextBlock(new PsiExpression[]{literalExpression}, literalExpression);
-        return;
+      if (expression instanceof PsiLiteralExpression literalExpression) {
+        replaceWithTextBlock(literalExpression, new PsiExpression[]{literalExpression});
       }
-      PsiPolyadicExpression polyadicExpression = tryCast(expression, PsiPolyadicExpression.class);
-      if (polyadicExpression == null || !ExpressionUtils.hasStringType(polyadicExpression)) return;
-      replaceWithTextBlock(polyadicExpression.getOperands(), polyadicExpression);
+      else if (expression instanceof PsiPolyadicExpression polyadicExpression && ExpressionUtils.hasStringType(polyadicExpression)) {
+        replaceWithTextBlock(polyadicExpression, polyadicExpression.getOperands());
+      }
     }
 
-    private static void replaceWithTextBlock(PsiExpression @NotNull [] operands, @NotNull PsiExpression toReplace) {
+    private static void replaceWithTextBlock(@NotNull PsiExpression toReplace, PsiExpression @NotNull [] operands) {
       String[] lines = getContentLines(operands);
       if (lines == null) return;
       CommentTracker tracker = new CommentTracker();
@@ -138,6 +136,12 @@ public final class TextBlockMigrationInspection extends AbstractBaseJavaLocalIns
       if (indent != 0 && lines.length > 0 && !lines[lines.length - 1].endsWith("\n")) {
         // append \ + newline at the end of the last line, so we can use closing """ to indent
         lines[lines.length - 1] += "\\\n";
+      }
+      for (int i = 0; i < lines.length - 1; i++) {
+        String line = lines[i];
+        if (line.endsWith("\\\n") && lines[i + 1].equals("\n")) {
+          lines[i] = line.substring(0, line.length() - 2); // normalize strings with leading newlines
+        }
       }
       String content = StringUtil.join(lines);
       if (content.endsWith(" ")) {
