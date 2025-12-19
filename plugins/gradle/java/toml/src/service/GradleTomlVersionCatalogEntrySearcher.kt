@@ -34,7 +34,7 @@ class GradleTomlVersionCatalogEntrySearcher : GradleVersionCatalogEntrySearcher 
           return findAlias(element, lookupKey)
         }
       }
-      // for corner cases, the section is not declared as [table]
+      // for corner cases, when the section is not declared as [table]
       if (element is TomlKeyValue) {
         val keyText = element.key.text
         // libraries.alias = ""
@@ -71,40 +71,16 @@ private fun findAlias(valueOwner: TomlKeyValueOwner, target: String): PsiElement
   return null
 }
 
+private fun keysMatch(keyText: String, lookupKey: String): Boolean {
+  if (keyText.length != lookupKey.length) return false
 
-private fun keysMatch(keyText: String?, reference: String): Boolean {
-  keyText ?: return false
-  if (keyText.length != reference.length) {
-    return false
-  }
-  for (i in keyText.indices) {
-    if (isAfterDelimiter(i, keyText)) {
-      // first character may be capital after `-_.` symbols in TOML
-      // it still makes it equal to low case reference - Gradle implementation detail
-      if (keyText[i].normalizeIgnoreCase() != reference[i].normalize())
-        return false
-    }
-    else if (keyText[i].normalize() != reference[i].normalize()) {
-      return false
-    }
-  }
-  return true
+  val tomlKeyParts = getKeyParts(keyText)
+    // The first character may be capital after `-_.` symbols in TOML
+    // it still makes it equal to low-case reference - Gradle implementation detail
+    .map { part -> part.replaceFirstChar { it.lowercaseChar() } }
+
+  val lookupKeyParts = getKeyParts(lookupKey)
+  return tomlKeyParts == lookupKeyParts
 }
 
-private fun isAfterDelimiter(index: Int, s: String): Boolean =
-  index > 0 && s[index - 1].normalize() == '.'
-
-private fun Char.normalizeIgnoreCase(): Char {
-  if (this == '-' || this == '_') {
-    return '.'
-  }
-  return this.lowercaseChar()
-}
-
-// Gradle converts dashed-keys or dashed_keys into dashed.keys
-private fun Char.normalize(): Char {
-  if (this == '-' || this == '_') {
-    return '.'
-  }
-  return this
-}
+private fun getKeyParts(keyText: String): List<String> = keyText.split('-', '_', '.')
