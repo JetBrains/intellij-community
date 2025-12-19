@@ -125,13 +125,9 @@
                  description="Controls whether expensive linguistic checks should be performed during pre-commit code analysis"/>
     <registryKey key="grazie.show.gpl.warning" defaultValue="false" description="Whether to show warning for GPL licensed languages"/>
 
-    <!-- Order matters here, please do not change it until it's on purpose -->
-    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Grammar" id="treeRules"/>
+    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker" id="treeRules"/>
     <grazie.textChecker implementation="com.intellij.grazie.grammar.LanguageToolChecker" id="languageTool"/>
     <grazie.textChecker implementation="com.intellij.grazie.mlec.MlecChecker" id="mlec"/>
-    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$GrammarLowPriority" id="grammarLowPriority"/>
-    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Style" id="styleTreeRules"/>
-    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Spelling" id="spellingTreeRules"/>
 
     <spellchecker.quickFixFactory implementation="com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieMassApplyActionProvider"/>
 
