@@ -852,6 +852,13 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
       return true;
     }
 
+    if (CompletionServiceImpl.isPhase(CompletionPhase.BgCalculation.class)) {
+      // We must restart completion if candidates are still being inferred.
+      // Otherwise, the not-yet-processed contributors have no chance to install their own prefix conditions.
+      // Alternatively, this can be solved by delayed processing of possible future prefix conditions, but that's a more tricky solution.
+      return true;
+    }
+
     // restart if myRestartingPrefixConditions say so
     return shouldRestartCompletion(myEditor, myRestartingPrefixConditions, "");
   }

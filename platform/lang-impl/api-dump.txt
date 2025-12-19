@@ -117,6 +117,8 @@ com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEntry
 com.intellij.codeInsight.codeVision.ui.renderers.painters.ICodeVisionEntryBasePainter
 - a:paint(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.markup.TextAttributes,java.awt.Graphics,java.lang.Object,java.awt.Point,com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel$InlayState,Z,com.intellij.codeInsight.codeVision.CodeVisionEntry):V
 - a:size(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel$InlayState,java.lang.Object):java.awt.Dimension
+c:com.intellij.codeInsight.completion.CodeCompletionHandlerBase
+- s:setAutoInsertTimeout(I,com.intellij.openapi.Disposable):V
 com.intellij.codeInsight.completion.CompletionPhaseListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:completionPhaseChanged(Z):V

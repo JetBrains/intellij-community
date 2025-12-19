@@ -14,6 +14,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
@@ -77,7 +78,7 @@ public class CodeCompletionHandlerBase {
   final boolean invokedExplicitly;
   final boolean synchronous;
   final boolean autopopup;
-  private static int ourAutoInsertItemTimeout = Registry.intValue("ide.completion.auto.insert.item.timeout", 2000);
+  private static int ourAutoInsertItemTimeout = getDefaultAutoInsertTimeout();
 
   private final Tracer completionTracer = TelemetryManager.getInstance().getTracer(CodeCompletion);
 
@@ -861,9 +862,15 @@ public class CodeCompletionHandlerBase {
   }
 
   @TestOnly
-  public static void setAutoInsertTimeout(int timeout) {
+  public static void setAutoInsertTimeout(int timeout, @NotNull Disposable parentDisposable) {
     ourAutoInsertItemTimeout = timeout;
+    Disposer.register(parentDisposable, () -> ourAutoInsertItemTimeout = getDefaultAutoInsertTimeout());
   }
+
+  private static int getDefaultAutoInsertTimeout() {
+    return Registry.intValue("ide.completion.auto.insert.item.timeout", 2000);
+  }
+
 
   protected boolean isTestingCompletionQualityMode() {
     return false;
