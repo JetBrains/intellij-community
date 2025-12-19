@@ -5,9 +5,10 @@ class B(object):
 class C(B):
     __slots__ = ['attr', 'bar']
 
-C.attr = 'spam'
-print(C.attr)
-
 c = C()
-<warning descr="'C' object has no attribute 'attr'">c.attr</warning> = 'spam'
-print(c.attr)
+c.attr = 'spam'
+B.attr = 'baz'
+print(c.attr) # outputs 'spam'
+
+C.attr = 'spam' # this shadows descriptor c.attr rendering the assignment c.attr = 'spam' invalid
+print(C.attr)

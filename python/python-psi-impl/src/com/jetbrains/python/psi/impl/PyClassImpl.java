@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
@@ -56,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
@@ -231,7 +231,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     final PyClassType currentType = new PyClassTypeImpl(this, true);
     final TypeEvalContext contextToUse = notNullizeContext(context);
 
-    for (PyClassLikeType type : Iterables.concat(Collections.singletonList(currentType), getAncestorTypes(contextToUse))) {
+    List<PyClassLikeType> meAndAncestors = ContainerUtil.concat(Collections.singletonList(currentType), getAncestorTypes(contextToUse));
+    for (PyClassLikeType type : ContainerUtil.reverse(meAndAncestors)) {
       if (!(type instanceof PyClassType)) return null;
 
       final PyClass cls = ((PyClassType)type).getPyClass();
@@ -240,6 +241,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       }
 
       if (!cls.isNewStyleClass(contextToUse)) return null;
+
+      result.removeAll(getNamesOfOwnAttributesThatHaveAssignedValues()); // remove slots that are shadowed by class attributes
 
       List<String> ownSlots = cls.getOwnSlots();
       if (ownSlots != null && ownSlots.contains(PyNames.DUNDER_DICT)) {
@@ -266,16 +269,32 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return stub.getSlots();
     }
 
-    final PyTargetExpression slots = ContainerUtil.find(getClassAttributes(), target -> PyNames.SLOTS.equals(target.getName()));
-    if (slots != null) {
-      final PyExpression value = slots.findAssignedValue();
+    final PyTargetExpression slotsTargetExpr = ContainerUtil.find(getClassAttributes(), target -> PyNames.SLOTS.equals(target.getName()));
+    if (slotsTargetExpr != null) {
+      final PyExpression slotsValue = slotsTargetExpr.findAssignedValue();
+      final LinkedHashSet<String> slots = new LinkedHashSet<>();
+      if (slotsValue instanceof PyStringLiteralExpression) {
+        slots.add(((PyStringLiteralExpression)slotsValue).getStringValue());
+      }
+      else {
+        List<@NotNull String> slotsValues = PyUtilCore.strListValue(slotsValue);
+        if (slotsValues != null) {
+          slots.addAll(slotsValues);
+        }
+      }
 
-      return value instanceof PyStringLiteralExpression
-             ? Collections.singletonList(((PyStringLiteralExpression)value).getStringValue())
-             : PyUtilCore.strListValue(value);
+      slots.removeAll(getNamesOfOwnAttributesThatHaveAssignedValues()); // remove slots that are shadowed by class attributes
+
+      return new ArrayList<>(slots);
     }
 
     return null;
+  }
+
+  private Set<String> getNamesOfOwnAttributesThatHaveAssignedValues() {
+    return getClassAttributes().stream()
+      .filter(target -> target.hasAssignedValue() && target.getName() != null)
+      .map(PyTargetExpression::getName).collect(Collectors.toSet());
   }
 
 
@@ -383,9 +402,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       boolean found = false;
       PyClassLikeType head = null; // to keep compiler happy; really head is assigned in the loop at least once.
       for (List<PyClassLikeType> seq : nonBlankSequences) {
-        head = seq.get(0);
+        head = seq.getFirst();
         if (head == null) {
-          seq.remove(0);
+          seq.removeFirst();
           found = true;
           break;
         }
@@ -413,8 +432,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       // remove it from heads of other sequences
       if (head != null) {
         for (List<PyClassLikeType> seq : nonBlankSequences) {
-          if (Comparing.equal(seq.get(0), head)) {
-            seq.remove(0);
+          if (Comparing.equal(seq.getFirst(), head)) {
+            seq.removeFirst();
           }
         }
       }
@@ -467,7 +486,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       }
       result = mroMerge(lines);
       if (addThisType) {
-        result.add(0, type);
+        result.addFirst(type);
       }
       result = Collections.unmodifiableList(result);
     }
