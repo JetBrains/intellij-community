@@ -6836,6 +6836,29 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-86463
+  public void testMatchingWithInheritedGenericProtocol() {
+    doTest("int", """
+      from typing import Protocol
+      
+      class P[T](Protocol):
+          def method(self, x: T) -> T:
+              pass
+      
+      class P2[T](P[T], Protocol):
+          pass
+      
+      class Impl:
+          def method(self, x: int) -> int:
+              return 42
+      
+      def expects_generic[T](x: P2[T]) -> T:
+          return x.method()
+      
+      expr = expects_generic(Impl())
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

@@ -636,9 +636,8 @@ public final class PyTypeChecker {
 
       final PyType rawProtocolElementType =
         dropSelfIfNeeded(expected, protocolMember.getType(), matchContext.context);
-      final GenericSubstitutions concreteExpectedSubstitutions = expectedSubstitutions.withOnlySolvedSubstitutions(matchContext.context);
 
-      final PyType protocolElementType = substitute(rawProtocolElementType, concreteExpectedSubstitutions, matchContext.context);
+      final PyType protocolElementType = substitute(rawProtocolElementType, expectedSubstitutions, matchContext.context);
       final boolean elementResult = ContainerUtil.exists(subclassElementMembers, subclassElementMember -> {
         if (protocolMember.isWritable() && !subclassElementMember.isWritable()) {
           return false;
@@ -664,14 +663,15 @@ public final class PyTypeChecker {
     }
 
 
-    if (expected instanceof PyCollectionType) {
-      PyCollectionType genericSuperClass = findGenericDefinitionType(expected.getPyClass(), matchContext.context);
-      if (genericSuperClass != null) {
-        PyCollectionType concreteSuperClass =
-          (PyCollectionType)substitute(genericSuperClass, protocolContext.mySubstitutions, protocolContext.context);
-        assert concreteSuperClass != null;
-        return matchGenericClassesParameterWise((PyCollectionType)expected, concreteSuperClass, matchContext);
-      }
+    if (expected instanceof PyCollectionType genericExpected && hasGenerics(expected, matchContext.context)) {
+      PyCollectionType concreteExpected =
+        (PyCollectionType)substitute(expected, protocolContext.mySubstitutions, protocolContext.context);
+      assert concreteExpected != null;
+      // This match is supposed to succeed since all protocol members were compatible. 
+      // Effectively, we're just copying substitutions for the terminal type parameters e.g.
+      // extracting: T@func -> str 
+      // from: Iterable[T@func] <- Iterable[str]
+      return matchGenericClassesParameterWise(genericExpected, concreteExpected, matchContext);
     }
 
     return true;
@@ -2019,29 +2019,6 @@ public final class PyTypeChecker {
 
     public @Nullable PyType getQualifierType() {
       return qualifierType;
-    }
-
-    private @NotNull GenericSubstitutions withOnlySolvedSubstitutions(@NotNull TypeEvalContext context) {
-      GenericSubstitutions concreteExpectedSubs = new GenericSubstitutions();
-      for (Map.Entry<PyTypeVarType, Ref<PyType>> e : this.typeVars.entrySet()) {
-        PyType mapped = Ref.deref(e.getValue());
-        if (mapped != null && !hasGenerics(mapped, context)) {
-          concreteExpectedSubs.typeVars.put(e.getKey(), Ref.create(mapped));
-        }
-      }
-      for (Map.Entry<PyParamSpecType, PyCallableParameterVariadicType> e : this.paramSpecs.entrySet()) {
-        PyCallableParameterVariadicType mapped = e.getValue();
-        if (mapped != null && !hasGenerics(mapped, context)) {
-          concreteExpectedSubs.paramSpecs.put(e.getKey(), mapped);
-        }
-      }
-      for (Map.Entry<PyTypeVarTupleType, PyPositionalVariadicType> e : this.typeVarTuples.entrySet()) {
-        PyPositionalVariadicType mapped = e.getValue();
-        if (mapped != null && !hasGenerics(mapped, context)) {
-          concreteExpectedSubs.typeVarTuples.put(e.getKey(), mapped);
-        }
-      }
-      return concreteExpectedSubs;
     }
 
     @Override

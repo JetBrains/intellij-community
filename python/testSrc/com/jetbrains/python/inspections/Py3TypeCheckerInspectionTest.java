@@ -3398,6 +3398,29 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-86463
+  public void testInheritedGenericProtocol() {
+    doTestByText("""
+      from typing import Protocol, overload
+      
+      class P[T](Protocol):
+          def method(self, x: T) -> T:
+              pass
+      
+      class P2[T](P[T], Protocol):
+          pass
+      
+      class Impl:
+          def method(self, x: int) -> int:
+              ...
+      
+      def expects_P2_str(x: P2[str]):
+          pass
+      
+      expr = expects_P2_str(<warning descr="Expected type 'P2[str]', got 'Impl' instead">Impl()</warning>)
+      """);
+  }
+
   // PY-76822
   public void testExplicitAnyInConcreteType() {
     doTestByText("""
