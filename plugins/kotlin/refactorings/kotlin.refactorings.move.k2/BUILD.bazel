@@ -108,7 +108,6 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -122,6 +121,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-platform-interface",
     "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
     "//platform/util/jdom",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.refactorings.move` end

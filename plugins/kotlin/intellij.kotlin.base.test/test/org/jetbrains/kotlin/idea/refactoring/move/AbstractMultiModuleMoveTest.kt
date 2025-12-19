@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.google.gson.JsonObject
@@ -48,7 +47,7 @@ fun KotlinMultiFileTestCase.withConfiguredRuntime(config: JsonObject, action: Ko
     val modulesWithCommonRuntime: List<Module>
 
     if (withRuntime) {
-        val moduleManager = ModuleManager.getInstance(project)
+        val moduleManager = ModuleManager.Companion.getInstance(project)
         modulesWithJvmRuntime = (config["modulesWithRuntime"]?.asJsonArray?.map { moduleManager.findModuleByName(it.asString!!)!! }
             ?: moduleManager.modules.toList())
         modulesWithJvmRuntime.forEach { ConfigLibraryUtil.configureKotlinRuntimeAndSdk(it, IdeaTestUtil.getMockJdk18()) }
