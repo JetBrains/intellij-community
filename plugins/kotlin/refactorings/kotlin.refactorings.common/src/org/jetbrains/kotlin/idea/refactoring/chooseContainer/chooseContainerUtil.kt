@@ -41,7 +41,24 @@ fun <T> chooseContainerElementIfNecessary(
     selection: T? = null,
     toPsi: (T) -> PsiElement,
     onSelect: (T) -> Unit
-): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, selection, toPsi, onSelect)
+) {
+    when {
+        containers.isEmpty() -> return
+        containers.size == 1 -> onSelect(containers.first())
+        else -> {
+            val psiElements = containers.map(toPsi)
+            choosePsiContainerElement(
+                psiElements,
+                editor,
+                title,
+                highlightSelection,
+                selection?.let(toPsi),
+                psi2Container = { containers[psiElements.indexOf(it)] },
+                onSelect = onSelect
+            )
+        }
+    }
+}
 
 fun <T : PsiElement> chooseContainerElementIfNecessary(
     containers: List<T>,
@@ -50,63 +67,17 @@ fun <T : PsiElement> chooseContainerElementIfNecessary(
     highlightSelection: Boolean,
     selection: T? = null,
     onSelect: (T) -> Unit
-): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, selection, null, onSelect)
-
-private fun <T> chooseContainerElementIfNecessaryImpl(
-    containers: List<T>,
-    editor: Editor,
-    @NlsContexts.PopupTitle title: String,
-    highlightSelection: Boolean,
-    selection: T? = null,
-    toPsi: ((T) -> PsiElement)?,
-    onSelect: (T) -> Unit
 ) {
-    when {
-        containers.isEmpty() -> return
-        containers.size == 1 -> onSelect(containers.first())
-        toPsi != null -> chooseContainerElement(containers, editor, title, highlightSelection, toPsi, onSelect)
-        else -> {
-            @Suppress("UNCHECKED_CAST")
-            chooseContainerElement(containers as List<PsiElement>, editor, title, highlightSelection, selection as PsiElement?, onSelect = onSelect as (PsiElement)->Unit)
-        }
-    }
-}
-
-private fun <T> chooseContainerElement(
-    containers: List<T>,
-    editor: Editor,
-    @NlsContexts.PopupTitle title: String,
-    highlightSelection: Boolean,
-    toPsi: (T) -> PsiElement,
-    onSelect: (T) -> Unit
-) {
-    val psiElements = containers.map(toPsi)
-    choosePsiContainerElement(
-        elements = psiElements,
-        editor = editor,
-        title = title,
-        highlightSelection = highlightSelection,
-        psi2Container = { containers[psiElements.indexOf(it)] },
+    chooseContainerElementIfNecessary(
+        containers,
+        editor,
+        title,
+        highlightSelection,
+        selection,
+        toPsi = { it },
         onSelect = onSelect
     )
 }
-
-private fun <T : PsiElement> chooseContainerElement(
-    elements: List<T>,
-    editor: Editor,
-    @NlsContexts.PopupTitle title: String,
-    highlightSelection: Boolean,
-    selection: T? = null,
-    onSelect: (T) -> Unit
-): Unit = choosePsiContainerElement(
-    elements = elements,
-    editor = editor,
-    title = title,
-    highlightSelection = highlightSelection,
-    selection = selection,
-    psi2Container = { it },
-    onSelect = onSelect,
-)
 
 private fun <T, E : PsiElement> choosePsiContainerElement(
     elements: List<E>,
