@@ -3,15 +3,15 @@ package org.jetbrains.intellij.build.productLayout.json
 
 import com.fasterxml.jackson.core.JsonGenerator
 import kotlinx.serialization.Serializable
-import org.jetbrains.intellij.build.productLayout.analysis.DependencyPathResult
-import org.jetbrains.intellij.build.productLayout.analysis.MergeImpactResult
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleDependenciesResult
-import org.jetbrains.intellij.build.productLayout.analysis.ModulePathsResult
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleReachabilityResult
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetOverlap
-import org.jetbrains.intellij.build.productLayout.analysis.ProductSimilarityPair
-import org.jetbrains.intellij.build.productLayout.analysis.ProductUsageAnalysis
-import org.jetbrains.intellij.build.productLayout.analysis.UnificationSuggestion
+import org.jetbrains.intellij.build.productLayout.tooling.MergeImpactResult
+import org.jetbrains.intellij.build.productLayout.tooling.ModulePathsResult
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetOverlap
+import org.jetbrains.intellij.build.productLayout.tooling.ProductSimilarityPair
+import org.jetbrains.intellij.build.productLayout.tooling.ProductUsageAnalysis
+import org.jetbrains.intellij.build.productLayout.tooling.UnificationSuggestion
+import org.jetbrains.intellij.build.productLayout.traversal.DependencyPathResult
+import org.jetbrains.intellij.build.productLayout.traversal.ModuleDependenciesResult
+import org.jetbrains.intellij.build.productLayout.traversal.ModuleReachabilityResult
 
 /**
  * Writes product similarity analysis to JSON.

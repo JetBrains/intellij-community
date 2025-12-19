@@ -16,9 +16,9 @@ import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.findFileInModuleDependenciesRecursiveAsync
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.ModuleSet
-import org.jetbrains.intellij.build.productLayout.analysis.XIncludeResolutionError
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.util.getProductionModuleDependencies
+import org.jetbrains.intellij.build.productLayout.validation.XIncludeResolutionError
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
@@ -44,6 +44,8 @@ internal data class PluginContentInfo(
   @JvmField val jpsDependencies: () -> List<String>,
   /** Errors encountered during xi:include resolution */
   @JvmField val xIncludeErrors: List<XIncludeResolutionError> = emptyList(),
+  /** Module dependencies from <dependencies>/<module name="..."/> in plugin.xml */
+  @JvmField val moduleDependencies: Set<String> = emptySet(),
 )
 
 /**
@@ -87,10 +89,11 @@ internal suspend fun extractPluginContent(
   }
 
   // BFS traversal with concurrent xi:include resolution
-  val contentModules = extractContentModules(input = content.toByteArray(), skipXIncludePaths = skipXIncludePaths, xIncludeResolver = xIncludeResolver)
+  val extractedContent = extractContentModules(input = content.toByteArray(), skipXIncludePaths = skipXIncludePaths, xIncludeResolver = xIncludeResolver)
 
   // Filter out module names with '/' (v2 module paths, not supported yet)
-  val filteredModules = contentModules.filter { !it.name.contains('/') }
+  val filteredModules = extractedContent.contentModules.filter { !it.name.contains('/') }
+  val filteredModuleDependencies = extractedContent.moduleDependencies.filterNotTo(LinkedHashSet()) { it.contains('/') }
 
   return PluginContentInfo(
     pluginXmlPath = pluginXmlPath,
@@ -99,19 +102,26 @@ internal suspend fun extractPluginContent(
     contentModuleLoadings = filteredModules.associate { it.name to it.loadingRule },
     jpsDependencies = { jpsModule.getProductionModuleDependencies().map { it.moduleReference.moduleName }.toList() },
     xIncludeErrors = errors,
+    moduleDependencies = filteredModuleDependencies,
   )
 }
 
+private class ExtractedContent(
+  @JvmField val contentModules: List<ContentModuleElement>,
+  @JvmField val moduleDependencies: Set<String>,
+)
+
 /**
- * Extracts content modules from XML using BFS traversal with suspend xi:include resolution.
+ * Extracts content modules and module dependencies from XML using BFS traversal with suspend xi:include resolution.
  * Resolves all `xi:includes` at each level concurrently for optimal I/O performance.
  */
 private suspend fun extractContentModules(
   input: ByteArray,
   skipXIncludePaths: Set<String>,
   xIncludeResolver: suspend (path: String) -> ByteArray?,
-): List<ContentModuleElement> {
+): ExtractedContent {
   val allContent = ArrayList<ContentModuleElement>()
+  val allModuleDependencies = LinkedHashSet<String>()
   val processedPaths = HashSet<String>()
 
   // BFS queue: (input bytes, baseDir) pairs
@@ -123,9 +133,10 @@ private suspend fun extractContentModules(
       parseContentAndXIncludes(input = data, locationSource = null)
     }
 
-    // Collect content modules from all parsed files
+    // Collect content modules and module dependencies from all parsed files
     for (result in results) {
       allContent.addAll(result.contentModules)
+      allModuleDependencies.addAll(result.moduleDependencies)
     }
 
     // Collect unique xi:include paths not yet processed
@@ -152,7 +163,7 @@ private suspend fun extractContentModules(
     }
   }
 
-  return allContent
+  return ExtractedContent(allContent, allModuleDependencies)
 }
 
 private suspend fun resolveXInclude(
@@ -184,10 +195,7 @@ private suspend fun resolveXInclude(
 
   return XIncludeResult.Failure(
     path = path,
-    debugInfo = "searched ${jpsModule.name} output, dependencies, and all outputs (" +
-                "filterPrefix=$prefix, " +
-                "outputProvider=$outputProvider, " +
-                ")",
+    debugInfo = "searched ${jpsModule.name} output, dependencies, and all outputs (filterPrefix=$prefix, outputProvider=$outputProvider)",
   )
 }
 

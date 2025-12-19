@@ -1,6 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.productLayout.analysis
+package org.jetbrains.intellij.build.productLayout.traversal
 
+import org.jetbrains.intellij.build.productLayout.tooling.ModulePath
+import org.jetbrains.intellij.build.productLayout.tooling.ModulePathsResult
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
+import org.jetbrains.intellij.build.productLayout.tooling.PathFileReference
+import org.jetbrains.intellij.build.productLayout.tooling.ProductSpec
 import java.nio.file.Path
 
 /**
@@ -19,7 +24,7 @@ internal fun findModulePaths(
   products: List<ProductSpec>,
   projectRoot: Path
 ): ModulePathsResult {
-  val paths = mutableListOf<ModulePath>()
+  val paths = ArrayList<ModulePath>()
   
   // Find which module sets directly contain this module
   val moduleInSets = allModuleSets.filter { msEntry ->

@@ -6,25 +6,22 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.ModuleSet
-import org.jetbrains.intellij.build.productLayout.analysis.JsonFilter
-import org.jetbrains.intellij.build.productLayout.analysis.MergeOperation
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetTraversalCache
-import org.jetbrains.intellij.build.productLayout.analysis.ParseResult
-import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
-import org.jetbrains.intellij.build.productLayout.analysis.analyzeMergeImpact
-import org.jetbrains.intellij.build.productLayout.analysis.analyzeProductSimilarity
-import org.jetbrains.intellij.build.productLayout.analysis.analyzeProductUsage
-import org.jetbrains.intellij.build.productLayout.analysis.checkModuleReachability
-import org.jetbrains.intellij.build.productLayout.analysis.detectModuleSetOverlap
-import org.jetbrains.intellij.build.productLayout.analysis.findDependencyPath
-import org.jetbrains.intellij.build.productLayout.analysis.findModulePaths
-import org.jetbrains.intellij.build.productLayout.analysis.getModuleDependencies
-import org.jetbrains.intellij.build.productLayout.analysis.parseModulesXml
-import org.jetbrains.intellij.build.productLayout.analysis.suggestModuleSetUnification
-import org.jetbrains.intellij.build.productLayout.analysis.validateCommunityProducts
-import org.jetbrains.intellij.build.productLayout.analysis.validateModuleSetLocations
-import org.jetbrains.intellij.build.productLayout.analysis.validateNoRedundantModuleSets
+import org.jetbrains.intellij.build.productLayout.tooling.JsonFilter
+import org.jetbrains.intellij.build.productLayout.tooling.MergeOperation
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
+import org.jetbrains.intellij.build.productLayout.tooling.ParseResult
+import org.jetbrains.intellij.build.productLayout.tooling.ProductSpec
+import org.jetbrains.intellij.build.productLayout.tooling.analyzeMergeImpact
+import org.jetbrains.intellij.build.productLayout.tooling.analyzeProductSimilarity
+import org.jetbrains.intellij.build.productLayout.tooling.analyzeProductUsage
+import org.jetbrains.intellij.build.productLayout.tooling.detectModuleSetOverlap
+import org.jetbrains.intellij.build.productLayout.tooling.suggestModuleSetUnification
+import org.jetbrains.intellij.build.productLayout.traversal.ModuleSetTraversalCache
+import org.jetbrains.intellij.build.productLayout.traversal.checkModuleReachability
+import org.jetbrains.intellij.build.productLayout.traversal.findDependencyPath
+import org.jetbrains.intellij.build.productLayout.traversal.findModulePaths
+import org.jetbrains.intellij.build.productLayout.traversal.getModuleDependencies
+import org.jetbrains.intellij.build.productLayout.validation.rules.validateNoRedundantModuleSets
 import java.nio.file.Path
 import java.time.Instant
 
@@ -137,7 +134,7 @@ private fun handleProductsFilter(gen: JsonGenerator, products: List<ProductSpec>
 private fun handleModuleSetsFilter(gen: JsonGenerator, allModuleSets: List<ModuleSetMetadata>, cache: ModuleSetTraversalCache) {
   gen.writeArrayFieldStart("moduleSets")
   for ((moduleSet, location, sourceFilePath) in allModuleSets) {
-    writeModuleSet(gen, moduleSet, location, sourceFilePath, cache)
+    writeModuleSet(gen, moduleSet, location.name, sourceFilePath, cache)
   }
   gen.writeEndArray()
 }
@@ -179,7 +176,7 @@ private fun handleSingleModuleSetFilter(gen: JsonGenerator, moduleSetName: Strin
     gen.writeFieldName("moduleSet")
     gen.writeStartObject()
     gen.writeStringField("name", moduleSetEntry.moduleSet.name)
-    gen.writeStringField("location", moduleSetEntry.location)
+    gen.writeStringField("location", moduleSetEntry.location.name)
     gen.writeStringField("sourceFile", moduleSetEntry.sourceFile)
     gen.writeArrayFieldStart("directNestedSets")
     for (nestedSet in moduleSetEntry.directNestedSets) {
@@ -297,7 +294,7 @@ private suspend fun writeAllSections(
 
   gen.writeArrayFieldStart("moduleSets")
   for ((moduleSet, location, sourceFilePath) in allModuleSets) {
-    writeModuleSet(gen = gen, moduleSet = moduleSet, location = location, sourceFilePath = sourceFilePath, cache = cache)
+    writeModuleSet(gen = gen, moduleSet = moduleSet, location = location.name, sourceFilePath = sourceFilePath, cache = cache)
   }
   gen.writeEndArray()
 
@@ -310,7 +307,7 @@ private suspend fun writeAllSections(
 
   // Write duplicate analysis
   gen.writeObjectFieldStart("duplicateAnalysis")
-  writeDuplicateAnalysis(gen, allModuleSets, products, projectRoot, cache)
+  writeDuplicateAnalysis(gen = gen, allModuleSets = allModuleSets, products = products, projectRoot = projectRoot, cache = cache)
   gen.writeEndObject()
 
   // Write product composition analysis
@@ -328,7 +325,7 @@ private suspend fun writeAllSections(
     }
   }
   gen.writeFieldName("moduleDistribution")
-  writeModuleDistribution(gen, allModuleSets, products, moduleLocations, cache)
+  writeModuleDistribution(gen = gen, allModuleSets = allModuleSets, products = products, moduleLocations = moduleLocations, cache = cache)
 
   // Write module set hierarchy
   gen.writeFieldName("moduleSetHierarchy")
@@ -339,7 +336,13 @@ private suspend fun writeAllSections(
   writeModuleUsageIndex(gen, allModuleSets, products, cache)
 
   // Validate community products don't use ultimate modules
-  val communityViolations = validateCommunityProducts(products, allModuleSets, moduleLocations, projectRoot, cache)
+  val communityViolations = validateCommunityProducts(
+    products = products,
+    allModuleSets = allModuleSets,
+    moduleLocations = moduleLocations,
+    projectRoot = projectRoot,
+    cache = cache,
+  )
   gen.writeObjectFieldStart("communityProductViolations")
   writeCommunityProductViolations(gen, communityViolations)
   gen.writeEndObject()

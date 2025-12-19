@@ -1,7 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.stats
 
-import java.nio.file.Path
+import org.jetbrains.intellij.build.productLayout.validation.ValidationError
+import org.jetbrains.intellij.build.productLayout.validation.formatValidationErrors
 
 private val SEPARATOR = "\u2501".repeat(60)
 
@@ -11,8 +12,6 @@ private fun statusIcon(status: FileChangeStatus): String = when (status) {
   FileChangeStatus.UNCHANGED -> "${AnsiColors.GRAY}\u2022${AnsiColors.RESET}"
   FileChangeStatus.DELETED -> "${AnsiColors.RED}-${AnsiColors.RESET}"
 }
-
-private fun <T : HasFileChangeStatus> List<T>.hasChanges(): Boolean = any { it.status != FileChangeStatus.UNCHANGED }
 
 private fun changeCounts(created: Int, modified: Int, unchanged: Int, deleted: Int = 0): String = buildList {
   if (created > 0) add("${AnsiColors.YELLOW}$created created${AnsiColors.RESET}")
@@ -24,33 +23,31 @@ private fun changeCounts(created: Int, modified: Int, unchanged: Int, deleted: I
 /**
  * Prints a formatted summary of generation results with colors.
  * Uses compact mode when no changes, detailed mode when there are changes.
+ * Shows validation errors with failure indicator when present.
  */
-internal fun printGenerationSummary(
-  moduleSetResults: List<ModuleSetGenerationResult>,
-  dependencyResult: DependencyGenerationResult?,
-  pluginDependencyResult: PluginDependencyGenerationResult?,
-  productResult: ProductGenerationResult?,
-  @Suppress("UNUSED_PARAMETER") projectRoot: Path,
-  durationMs: Long,
+fun printGenerationSummary(
+  stats: GenerationStats,
+  errors: List<ValidationError> = emptyList(),
 ) {
-  val hasChanges = moduleSetResults.any { it.files.hasChanges() } ||
-                   dependencyResult?.files?.hasChanges() == true ||
-                   pluginDependencyResult?.files?.hasChanges() == true ||
-                   productResult?.products?.hasChanges() == true
+  val hasErrors = errors.isNotEmpty()
+  val frameColor = if (hasErrors) AnsiColors.YELLOW else AnsiColors.CYAN
 
   print(buildString {
     appendLine()
-    appendLine("${AnsiColors.CYAN}${AnsiColors.BOLD}$SEPARATOR${AnsiColors.RESET}")
+    appendLine("${frameColor}${AnsiColors.BOLD}$SEPARATOR${AnsiColors.RESET}")
 
-    if (hasChanges) {
-      appendDetailedSummary(moduleSetResults, dependencyResult, pluginDependencyResult, productResult)
-    }
-    else {
-      appendCompactSummary(moduleSetResults, dependencyResult, pluginDependencyResult, productResult)
+    when {
+      hasErrors -> {
+        appendLine("${AnsiColors.RED}\u2717${AnsiColors.RESET} Validation failed")
+        appendLine()
+        append(formatValidationErrors(errors, useAnsi = true))
+      }
+      stats.hasChanges -> appendDetailedSummary(stats.moduleSetResults, stats.dependencyResult, stats.pluginDependencyResult, stats.productResult)
+      else -> appendCompactSummary(stats.moduleSetResults, stats.dependencyResult, stats.pluginDependencyResult, stats.productResult)
     }
 
-    appendLine("${AnsiColors.GREEN}\u23F1${AnsiColors.RESET} Completed in ${AnsiColors.BOLD}${durationMs / 1000.0}s${AnsiColors.RESET}")
-    appendLine("${AnsiColors.CYAN}${AnsiColors.BOLD}$SEPARATOR${AnsiColors.RESET}")
+    appendLine("${frameColor}\u23F1${AnsiColors.RESET} Completed in ${AnsiColors.BOLD}${stats.durationMs / 1000.0}s${AnsiColors.RESET}")
+    appendLine("${frameColor}${AnsiColors.BOLD}$SEPARATOR${AnsiColors.RESET}")
   })
 }
 

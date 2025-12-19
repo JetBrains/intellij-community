@@ -1,13 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.stats
 
-import org.jetbrains.intellij.build.productLayout.analysis.ValidationError
+import org.jetbrains.intellij.build.productLayout.validation.FileDiff
+import org.jetbrains.intellij.build.productLayout.validation.ValidationError
 import java.nio.file.Path
 
 /**
  * Status of a generated file.
  */
-internal enum class FileChangeStatus {
+enum class FileChangeStatus {
   /** File was newly created */
   CREATED,
   /** File content was modified */
@@ -21,30 +22,33 @@ internal enum class FileChangeStatus {
 /**
  * Interface for items that have a file change status.
  */
-internal sealed interface HasFileChangeStatus {
+sealed interface HasFileChangeStatus {
   val status: FileChangeStatus
 }
 
 /** Count of items with CREATED status */
-internal val <T : HasFileChangeStatus> List<T>.createdCount: Int
+val <T : HasFileChangeStatus> List<T>.createdCount: Int
   get() = count { it.status == FileChangeStatus.CREATED }
 
 /** Count of items with MODIFIED status */
-internal val <T : HasFileChangeStatus> List<T>.modifiedCount: Int
+val <T : HasFileChangeStatus> List<T>.modifiedCount: Int
   get() = count { it.status == FileChangeStatus.MODIFIED }
 
 /** Count of items with UNCHANGED status */
-internal val <T : HasFileChangeStatus> List<T>.unchangedCount: Int
+val <T : HasFileChangeStatus> List<T>.unchangedCount: Int
   get() = count { it.status == FileChangeStatus.UNCHANGED }
 
 /** Count of items with DELETED status */
-internal val <T : HasFileChangeStatus> List<T>.deletedCount: Int
+val <T : HasFileChangeStatus> List<T>.deletedCount: Int
   get() = count { it.status == FileChangeStatus.DELETED }
+
+/** Returns true if any item has a non-UNCHANGED status */
+fun <T : HasFileChangeStatus> List<T>.hasChanges(): Boolean = any { it.status != FileChangeStatus.UNCHANGED }
 
 /**
  * Result of generating a single module set XML file.
  */
-internal data class ModuleSetFileResult(
+data class ModuleSetFileResult(
   /** File name (e.g., "intellij.moduleSets.essential.xml") */
   @JvmField val fileName: String,
   /** Change status of the file */
@@ -56,7 +60,7 @@ internal data class ModuleSetFileResult(
 /**
  * Result of generating all module sets for a label (community or ultimate).
  */
-internal data class ModuleSetGenerationResult(
+data class ModuleSetGenerationResult(
   /** Label ("community" or "ultimate") */
   @JvmField val label: String,
   /** Output directory path */
@@ -73,7 +77,7 @@ internal data class ModuleSetGenerationResult(
 /**
  * Result of generating a single product XML file.
  */
-internal data class ProductFileResult(
+data class ProductFileResult(
   /** Product name (e.g., "Gateway") */
   @JvmField val productName: String,
   /** Relative path from project root */
@@ -91,14 +95,14 @@ internal data class ProductFileResult(
 /**
  * Result of generating all product XML files.
  */
-internal data class ProductGenerationResult(
+data class ProductGenerationResult(
   @JvmField val products: List<ProductFileResult>,
 )
 
 /**
  * Result of generating a single module descriptor dependency file.
  */
-internal data class DependencyFileResult(
+data class DependencyFileResult(
   /** Module name (e.g., "intellij.platform.core.ui") */
   @JvmField val moduleName: String,
   /** Absolute path to the descriptor file */
@@ -112,10 +116,12 @@ internal data class DependencyFileResult(
 /**
  * Result of generating all module descriptor dependencies.
  */
-internal data class DependencyGenerationResult(
+data class DependencyGenerationResult(
   @JvmField val files: List<DependencyFileResult>,
   /** Validation errors found during dependency generation */
   @JvmField val errors: List<ValidationError> = emptyList(),
+  /** Diffs for .iml files shown as proposed fixes (test library scope violations) - not auto-applied */
+  @JvmField val diffs: List<FileDiff> = emptyList(),
 ) {
   val totalDependencies: Int get() = files.sumOf { it.dependencyCount }
 }
@@ -123,7 +129,7 @@ internal data class DependencyGenerationResult(
 /**
  * Result of generating a single plugin.xml dependency file.
  */
-internal data class PluginDependencyFileResult(
+data class PluginDependencyFileResult(
   /** Plugin module name (e.g., "intellij.database.plugin") */
   @JvmField val pluginModuleName: String,
   /** Absolute path to the plugin.xml file */
@@ -139,10 +145,13 @@ internal data class PluginDependencyFileResult(
 /**
  * Result of generating all plugin.xml dependencies for bundled plugins.
  */
-internal data class PluginDependencyGenerationResult(
+data class PluginDependencyGenerationResult(
   @JvmField val files: List<PluginDependencyFileResult>,
+  /** Validation errors for plugin dependencies that cannot be resolved in any bundling product */
+  @JvmField val errors: List<ValidationError> = emptyList(),
 ) {
   val totalDependencies: Int get() = files.sumOf { it.dependencyCount }
+  val hasChanges: Boolean get() = files.hasChanges() || files.any { it.contentModuleResults.hasChanges() }
 
   // Content module statistics
   private val allContentModuleResults: List<DependencyFileResult>
@@ -158,9 +167,16 @@ internal data class PluginDependencyGenerationResult(
  * Combined results from all generation operations.
  * Used to collect parallel generation results before printing summary.
  */
-internal data class GenerationResults(
+data class GenerationStats(
   @JvmField val moduleSetResults: List<ModuleSetGenerationResult>,
-  @JvmField val dependencyResult: DependencyGenerationResult,
+  @JvmField val dependencyResult: DependencyGenerationResult?,
   @JvmField val pluginDependencyResult: PluginDependencyGenerationResult?,
-  @JvmField val productResult: ProductGenerationResult,
-)
+  @JvmField val productResult: ProductGenerationResult?,
+  @JvmField val durationMs: Long,
+) {
+  val hasChanges: Boolean
+    get() = moduleSetResults.any { it.files.hasChanges() } ||
+            dependencyResult?.files?.hasChanges() == true ||
+            pluginDependencyResult?.hasChanges == true ||
+            productResult?.products?.hasChanges() == true
+}

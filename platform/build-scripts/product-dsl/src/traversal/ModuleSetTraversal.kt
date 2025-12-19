@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.productLayout.analysis
+package org.jetbrains.intellij.build.productLayout.traversal
 
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 
@@ -57,7 +57,7 @@ internal object ModuleSetTraversal {
     toSet: String,
     allModuleSets: List<ModuleSet>
   ): List<String>? {
-    return buildChainRecursive(fromSet, toSet, allModuleSets, mutableSetOf())
+    return buildChainRecursive(currentSet = fromSet, targetSet = toSet, allModuleSets = allModuleSets, visited = HashSet())
   }
   
   private fun buildChainRecursive(
@@ -101,7 +101,7 @@ internal object ModuleSetTraversal {
   ): Set<String> {
     cache?.get(moduleSet.name)?.let { return it }
     
-    val result = mutableSetOf<String>()
+    val result = HashSet<String>()
     collectModulesRecursive(moduleSet, result)
     
     cache?.put(moduleSet.name, result)

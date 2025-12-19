@@ -2,8 +2,8 @@
 package org.jetbrains.intellij.build.productLayout.json
 
 import com.fasterxml.jackson.core.JsonGenerator
-import org.jetbrains.intellij.build.productLayout.analysis.CommunityProductViolation
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetLocationViolation
+import org.jetbrains.intellij.build.productLayout.tooling.CommunityProductViolation
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetLocationViolation
 
 /**
  * Writes community product validation violations to JSON.

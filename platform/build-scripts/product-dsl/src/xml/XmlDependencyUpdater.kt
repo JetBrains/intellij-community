@@ -2,11 +2,9 @@
 package org.jetbrains.intellij.build.productLayout.xml
 
 import com.intellij.util.xml.dom.createXmlStreamReaderWithLocation
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
+import org.jetbrains.intellij.build.productLayout.util.FileUpdateStrategy
 import java.io.StringReader
-import java.nio.file.Files
 import java.nio.file.Path
 import javax.xml.stream.XMLStreamConstants
 
@@ -71,13 +69,15 @@ private fun StringBuilder.appendModules(indent: String, modules: List<String>) {
  * @param content Current file content
  * @param moduleDependencies New module dependencies to add
  * @param preserveExistingModule Predicate to identify which existing modules should be preserved (manual deps)
+ * @param strategy File update strategy (actual writer or dry run recorder)
  * @return FileChangeStatus indicating what changed
  */
-internal suspend fun updateXmlDependencies(
+internal fun updateXmlDependencies(
   path: Path,
   content: String,
   moduleDependencies: List<String>,
   preserveExistingModule: ((String) -> Boolean)? = null,
+  strategy: FileUpdateStrategy,
 ): FileChangeStatus {
   if (content.isEmpty()) {
     return FileChangeStatus.UNCHANGED
@@ -88,7 +88,7 @@ internal suspend fun updateXmlDependencies(
     if (moduleDependencies.isEmpty()) {
       return FileChangeStatus.UNCHANGED
     }
-    return writeIfChanged(path = path, oldContent = content, newContent = insertDependenciesSection(content, moduleDependencies))
+    return strategy.writeIfChanged(path = path, oldContent = content, newContent = insertDependenciesSection(content, moduleDependencies))
   }
 
   // Extract module names for convenience
@@ -122,7 +122,7 @@ internal suspend fun updateXmlDependencies(
     }
   }
 
-  return writeIfChanged(path = path, oldContent = content, newContent = content.substring(0, info.startOffset) + replacement + content.substring(info.endOffset))
+  return strategy.writeIfChanged(path = path, oldContent = content, newContent = content.substring(0, info.startOffset) + replacement + content.substring(info.endOffset))
 }
 
 private fun parseDependenciesInfo(content: String): DependenciesInfo? {
@@ -244,12 +244,3 @@ private fun buildWithEntries(indent: String, manualEntries: List<DepEntry>, auto
   }.toString()
 }
 
-private suspend fun writeIfChanged(path: Path, oldContent: String, newContent: String): FileChangeStatus {
-  if (newContent == oldContent) {
-    return FileChangeStatus.UNCHANGED
-  }
-  withContext(Dispatchers.IO) {
-    Files.writeString(path, newContent)
-  }
-  return if (oldContent.contains(REGION_MARKER) || oldContent.contains(LEGACY_MARKER)) FileChangeStatus.MODIFIED else FileChangeStatus.CREATED
-}

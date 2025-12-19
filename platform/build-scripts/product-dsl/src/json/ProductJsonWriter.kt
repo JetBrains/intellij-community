@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.productLayout.json
 
 import com.fasterxml.jackson.core.JsonGenerator
 import org.jetbrains.intellij.build.productLayout.CompositionType
-import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
+import org.jetbrains.intellij.build.productLayout.tooling.ProductSpec
 
 /**
  * Writes a single product to JSON using kotlinx.serialization.

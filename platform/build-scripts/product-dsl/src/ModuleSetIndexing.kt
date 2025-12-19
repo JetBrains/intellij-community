@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.productLayout
 
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetTraversal
+import org.jetbrains.intellij.build.productLayout.traversal.ModuleSetTraversal
 
 /**
  * Index of all modules in module sets for dependency validation.
@@ -29,11 +29,11 @@ internal data class ModuleSetIndex(
  * @return Module set index with containment and reachability information
  */
 internal fun buildModuleSetIndex(allModuleSets: List<ModuleSet>): ModuleSetIndex {
-  val allModules = mutableSetOf<String>()
-  val moduleToDirectSets = mutableMapOf<String, MutableSet<String>>()
+  val allModules = HashSet<String>()
+  val moduleToDirectSets = HashMap<String, MutableSet<String>>()
   
   // Build a map from module set name to the ModuleSet object for reachability computation
-  val moduleSetsByName = mutableMapOf<String, ModuleSet>()
+  val moduleSetsByName = HashMap<String, ModuleSet>()
   
   /**
    * Processes a single module set: records its modules and processes nested sets recursively.
@@ -44,7 +44,7 @@ internal fun buildModuleSetIndex(allModuleSets: List<ModuleSet>): ModuleSetIndex
     // Record direct modules (those in this moduleSet.modules)
     for (module in moduleSet.modules) {
       allModules.add(module.name)
-      moduleToDirectSets.getOrPut(module.name) { mutableSetOf() }.add(moduleSet.name)
+      moduleToDirectSets.computeIfAbsent(module.name) { HashSet() }.add(moduleSet.name)
     }
     
     // Process nested sets recursively
@@ -82,13 +82,13 @@ private fun buildReachabilityGraph(
   moduleToDirectSets: Map<String, MutableSet<String>>,
   moduleSetsByName: Map<String, ModuleSet>
 ): Map<String, Set<String>> {
-  val moduleToReachableModules = mutableMapOf<String, Set<String>>()
+  val moduleToReachableModules = HashMap<String, Set<String>>()
   // Cache for repeated traversals of the same module set
-  val cache = mutableMapOf<String, Set<String>>()
+  val cache = HashMap<String, Set<String>>()
   
   // For each module, collect all modules reachable from its containing sets
   for ((moduleName, directSets) in moduleToDirectSets) {
-    val reachable = mutableSetOf<String>()
+    val reachable = HashSet<String>()
     
     for (setName in directSets) {
       val moduleSet = moduleSetsByName.get(setName)

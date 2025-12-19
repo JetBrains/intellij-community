@@ -1,9 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
-package org.jetbrains.intellij.build.productLayout.analysis
+package org.jetbrains.intellij.build.productLayout.json
 
 import com.intellij.openapi.util.JDOMUtil
+import org.jetbrains.intellij.build.productLayout.tooling.CommunityProductViolation
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleLocation
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleLocationInfo
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetLocationViolation
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
+import org.jetbrains.intellij.build.productLayout.tooling.ParseResult
+import org.jetbrains.intellij.build.productLayout.tooling.ProductSpec
+import org.jetbrains.intellij.build.productLayout.traversal.ModuleSetTraversalCache
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -17,15 +25,11 @@ import java.nio.file.Path
 internal fun parseModulesXml(projectRoot: Path): ParseResult<Map<String, ModuleLocationInfo>> {
   val modulesXmlPath = projectRoot.resolve(".idea/modules.xml")
   
-  if (!Files.exists(modulesXmlPath)) {
-    return ParseResult.Failure(
-      error = "File not found: $modulesXmlPath",
-      partial = emptyMap()
-    )
+  if (Files.notExists(modulesXmlPath)) {
+    return ParseResult.Failure(error = "File not found: $modulesXmlPath", partial = emptyMap())
   }
   
-  val modules = mutableMapOf<String, ModuleLocationInfo>()
-  
+  val modules = LinkedHashMap<String, ModuleLocationInfo>()
   try {
     val document = JDOMUtil.load(modulesXmlPath)
     
@@ -51,19 +55,14 @@ internal fun parseModulesXml(projectRoot: Path): ParseResult<Map<String, ModuleL
       val moduleName = Path.of(filepath).fileName.toString().removeSuffix(".iml")
       
       // Determine location based on filepath
-      val location = when {
-        filepath.contains("/community/") -> "community"
-        filepath.contains("/ultimate/") -> "ultimate"
-        else -> "unknown"
-      }
-      
-      modules[moduleName] = ModuleLocationInfo(location, filepath)
+      val location = ModuleLocation.fromPath(filepath)
+
+      modules.put(moduleName, ModuleLocationInfo(location, filepath))
     }
     
     return ParseResult.Success(modules)
   }
   catch (e: Exception) {
-    System.err.println("Warning: Failed to parse .idea/modules.xml: ${e.message}")
     return ParseResult.Failure(
       error = "Failed to parse .idea/modules.xml: ${e.message}",
       partial = modules  // Return any modules parsed before failure
@@ -114,11 +113,11 @@ internal fun validateCommunityProducts(
         var unknownModulesCount = 0
         
         for (moduleName in allModules) {
-          val locationInfo = moduleLocations[moduleName]
+          val locationInfo = moduleLocations.get(moduleName)
           when (locationInfo?.location) {
-            "ultimate" -> ultimateModules.add(moduleName)
-            "community" -> communityModulesCount++
-            else -> unknownModulesCount++
+            ModuleLocation.ULTIMATE -> ultimateModules.add(moduleName)
+            ModuleLocation.COMMUNITY -> communityModulesCount++
+            ModuleLocation.UNKNOWN, null -> unknownModulesCount++
           }
         }
         
@@ -171,11 +170,11 @@ internal fun validateModuleSetLocations(
     var unknownCount = 0
     
     for (module in ms.modules) {
-      val locationInfo = moduleLocations[module.name]
+      val locationInfo = moduleLocations.get(module.name)
       when (locationInfo?.location) {
-        "ultimate" -> ultimateModules.add(module.name)
-        "community" -> communityModules.add(module.name)
-        else -> unknownCount++
+        ModuleLocation.ULTIMATE -> ultimateModules.add(module.name)
+        ModuleLocation.COMMUNITY -> communityModules.add(module.name)
+        ModuleLocation.UNKNOWN, null -> unknownCount++
       }
     }
     

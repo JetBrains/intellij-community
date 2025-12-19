@@ -1,9 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.productLayout.analysis
+package org.jetbrains.intellij.build.productLayout.traversal
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.buildModuleSetIndex
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
 import org.jetbrains.intellij.build.productLayout.util.getProductionModuleDependencies
 
 /**

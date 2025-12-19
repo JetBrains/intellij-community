@@ -2,100 +2,98 @@
 package org.jetbrains.intellij.build.productLayout.util
 
 import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
+import org.jetbrains.intellij.build.productLayout.validation.FileChangeType
+import org.jetbrains.intellij.build.productLayout.validation.FileDiff
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * Status indicating what type of change would occur in dry-run mode.
+ * Strategy for file update operations.
+ * Implementations determine whether to actually write files or record diffs for validation.
  */
-enum class DryRunChangeStatus {
-  /** File would be newly created */
-  WOULD_CREATE,
-  /** File content would be modified */
-  WOULD_MODIFY,
+sealed interface FileUpdateStrategy {
+  /**
+   * Updates a file if content has changed, or records diff in dry run mode.
+   * @return Status indicating whether file was created, modified, or unchanged
+   */
+  fun updateIfChanged(path: Path, newContent: String): FileChangeStatus
+
+  /**
+   * Writes file if content changed, or records diff in dry run mode.
+   * @return Status indicating whether file was modified or unchanged
+   */
+  fun writeIfChanged(path: Path, oldContent: String, newContent: String): FileChangeStatus
+
+  /**
+   * Deletes a file or records deletion diff in dry run mode.
+   */
+  fun delete(path: Path)
+
+  /**
+   * Returns diffs collected during operations.
+   */
+  fun getDiffs(): List<FileDiff>
 }
 
 /**
- * Represents a difference detected during dry-run mode.
- * Used to report files that would be modified if the generator were run.
+ * Deferred file writer - collects changes during generation,
+ * commits only when explicitly requested.
+ * Use when you want to validate before writing.
  */
-data class DryRunDiff(
-  @JvmField val path: Path,
-  @JvmField val expectedContent: String,
-  @JvmField val actualContent: String,
-  @JvmField val status: DryRunChangeStatus,
-)
+internal class DeferredFileUpdater(private val projectRoot: Path) : FileUpdateStrategy {
+  private val _diffs = CopyOnWriteArrayList<FileDiff>()
 
-/**
- * Collector for dry-run mode diffs.
- * Pass through the call chain to record file changes without writing.
- */
-class DryRunCollector {
-  private val _diffs = CopyOnWriteArrayList<DryRunDiff>()
-
-  val diffs: List<DryRunDiff> get() = _diffs
-
-  fun record(diff: DryRunDiff) {
-    _diffs.add(diff)
-  }
-}
-
-/**
- * Utilities for atomic file updates with change detection.
- * Provides consistent file update logic across all generators.
- */
-internal object FileUpdateUtils {
-  /**
-   * Updates a file if its content has changed.
-   * Creates parent directories if needed.
-   * If collector is provided, records diffs instead of writing.
-   *
-   * @param path The file path to update
-   * @param newContent The new content to write
-   * @param dryRunCollector If non-null, records diffs instead of writing
-   * @return Status indicating whether the file was created, modified, or unchanged
-   */
-  fun updateIfChanged(path: Path, newContent: String, dryRunCollector: DryRunCollector? = null): FileChangeStatus {
-    if (Files.exists(path)) {
-      return writeIfChanged(path = path, oldContent = Files.readString(path), newContent = newContent, dryRunCollector = dryRunCollector)
-    }
-    else {
-      writeOrRecord(path = path, oldContent = "", newContent = newContent, dryRunCollector = dryRunCollector, status = DryRunChangeStatus.WOULD_CREATE, createDirs = true)
-      return FileChangeStatus.CREATED
-    }
+  override fun updateIfChanged(path: Path, newContent: String): FileChangeStatus {
+    val oldContent = if (Files.exists(path)) Files.readString(path) else ""
+    return writeIfChanged(path, oldContent, newContent)
   }
 
-  /**
-   * Compares old and new content and writes if changed.
-   * Use when you already have the old content loaded.
-   * If collector is provided, records diffs instead of writing.
-   *
-   * @param path The file path to update
-   * @param oldContent The current content of the file
-   * @param newContent The new content to write
-   * @param dryRunCollector If non-null, records diffs instead of writing
-   * @return Status indicating whether the file was modified or unchanged
-   */
-  fun writeIfChanged(path: Path, oldContent: String, newContent: String, dryRunCollector: DryRunCollector? = null): FileChangeStatus {
+  override fun writeIfChanged(path: Path, oldContent: String, newContent: String): FileChangeStatus {
     if (newContent == oldContent) {
       return FileChangeStatus.UNCHANGED
     }
-    else {
-      writeOrRecord(path = path, oldContent = oldContent, newContent = newContent, dryRunCollector = dryRunCollector, status = DryRunChangeStatus.WOULD_MODIFY, createDirs = false)
-      return FileChangeStatus.MODIFIED
-    }
+
+    val changeType = if (oldContent.isEmpty()) FileChangeType.CREATE else FileChangeType.MODIFY
+    val relativePath = projectRoot.relativize(path)
+    val context = "Generated file is out of sync: $relativePath\nRun 'Generate Product Layouts' or 'bazel run //platform/buildScripts:plugin-model-tool' to update."
+    _diffs.add(FileDiff(context = context, path = path, expectedContent = newContent, actualContent = oldContent, changeType = changeType))
+    return if (oldContent.isEmpty()) FileChangeStatus.CREATED else FileChangeStatus.MODIFIED
   }
 
-  private fun writeOrRecord(path: Path, oldContent: String, newContent: String, dryRunCollector: DryRunCollector?, status: DryRunChangeStatus, createDirs: Boolean) {
-    if (dryRunCollector != null) {
-      dryRunCollector.record(DryRunDiff(path, expectedContent = oldContent, actualContent = newContent, status))
-    }
-    else {
-      if (createDirs) {
-        Files.createDirectories(path.parent)
+  override fun delete(path: Path) {
+    val existingContent = if (Files.exists(path)) Files.readString(path) else ""
+    val relativePath = projectRoot.relativize(path)
+    val context = "File should be deleted: $relativePath\nRun 'Generate Product Layouts' or 'bazel run //platform/buildScripts:plugin-model-tool' to update."
+    _diffs.add(FileDiff(
+      context = context,
+      path = path,
+      expectedContent = "",
+      actualContent = existingContent,
+      changeType = FileChangeType.DELETE,
+    ))
+  }
+
+  override fun getDiffs(): List<FileDiff> = _diffs.toList()
+
+  /**
+   * Commits all collected changes to disk.
+   * Call only after validation passes.
+   */
+  fun commit() {
+    for (diff in _diffs) {
+      when (diff.changeType) {
+        FileChangeType.CREATE -> {
+          Files.createDirectories(diff.path.parent)
+          Files.writeString(diff.path, diff.expectedContent)
+        }
+        FileChangeType.MODIFY -> {
+          Files.writeString(diff.path, diff.expectedContent)
+        }
+        FileChangeType.DELETE -> {
+          Files.deleteIfExists(diff.path)
+        }
       }
-      Files.writeString(path, newContent)
     }
   }
 }

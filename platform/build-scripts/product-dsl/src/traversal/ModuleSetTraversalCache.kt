@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
-package org.jetbrains.intellij.build.productLayout.analysis
+package org.jetbrains.intellij.build.productLayout.traversal
 
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import org.jetbrains.intellij.build.productLayout.ModuleSet
@@ -103,6 +103,18 @@ internal class ModuleSetTraversalCache(allModuleSets: List<ModuleSet>) {
     }
     for (module in contentSpec.additionalModules) {
       result.add(module.name)
+    }
+    return result
+  }
+
+  /**
+   * Returns all module names from all module sets.
+   * Useful for global validation across the entire codebase.
+   */
+  fun getAllModuleNames(): Set<String> {
+    val result = HashSet<String>()
+    for (moduleSet in moduleSetsByName.values) {
+      result.addAll(getModuleNames(moduleSet))
     }
     return result
   }

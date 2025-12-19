@@ -103,7 +103,7 @@ fun checkThatContentIsNotChanged(
     requiresApproval = isReviewRequired,
   )
 
-  throw FileComparisonFailedError(resultMessage, expectedString, actualString, expectedFile.toString())
+  throw FileComparisonFailedError(message = resultMessage, expected = expectedString, actual = actualString, expectedFilePath = expectedFile.toString())
 }
 
 internal fun normalizeContentReport(fileEntries: List<FileEntry>, short: Boolean): List<FileEntry> {

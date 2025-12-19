@@ -1,9 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.productLayout.analysis
+package org.jetbrains.intellij.build.productLayout.tooling
 
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import org.jetbrains.intellij.build.productLayout.traversal.ModuleSetTraversalCache
 
 /**
  * Detects overlapping or redundant module sets.
@@ -23,7 +24,7 @@ internal suspend fun detectModuleSetOverlap(
   cache: ModuleSetTraversalCache,
   minOverlapPercent: Int = 50
 ): List<ModuleSetOverlap> = coroutineScope {
-  val comparisons = mutableListOf<Deferred<ModuleSetOverlap?>>()
+  val comparisons = ArrayList<Deferred<ModuleSetOverlap?>>()
 
   for (i in allModuleSets.indices) {
     for (j in i + 1 until allModuleSets.size) {
@@ -119,7 +120,7 @@ internal suspend fun analyzeProductSimilarity(
   similarityThreshold: Double = 0.7
 ): List<ProductSimilarityPair> = coroutineScope {
   val productsWithContent = products.filter { it.contentSpec != null }
-  val comparisons = mutableListOf<Deferred<ProductSimilarityPair?>>()
+  val comparisons = ArrayList<Deferred<ProductSimilarityPair?>>()
 
   for (i in productsWithContent.indices) {
     for (j in i + 1 until productsWithContent.size) {

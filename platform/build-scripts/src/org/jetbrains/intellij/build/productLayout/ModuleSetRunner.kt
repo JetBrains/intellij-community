@@ -8,14 +8,15 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.impl.BazelModuleOutputProvider
 import org.jetbrains.intellij.build.impl.JpsModuleOutputProvider
 import org.jetbrains.intellij.build.impl.bazelOutputRoot
-import org.jetbrains.intellij.build.productLayout.analysis.JsonFilter
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
-import org.jetbrains.intellij.build.productLayout.analysis.ProductCategory
-import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
-import org.jetbrains.intellij.build.productLayout.analysis.ValidationError
-import org.jetbrains.intellij.build.productLayout.analysis.formatValidationErrors
+import org.jetbrains.intellij.build.productLayout.discovery.GenerationResult
 import org.jetbrains.intellij.build.productLayout.discovery.findProductPropertiesSourceFile
 import org.jetbrains.intellij.build.productLayout.json.streamModuleAnalysisJson
+import org.jetbrains.intellij.build.productLayout.stats.printGenerationSummary
+import org.jetbrains.intellij.build.productLayout.tooling.JsonFilter
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleLocation
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
+import org.jetbrains.intellij.build.productLayout.tooling.ProductCategory
+import org.jetbrains.intellij.build.productLayout.tooling.ProductSpec
 import org.jetbrains.intellij.build.telemetry.withoutTracer
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
@@ -46,7 +47,7 @@ private fun determineProductCategory(contentSpec: ProductModulesContentSpec?): P
  * @param arg The command line argument (e.g., "--json" or "--json={...}")
  * @return JsonFilter if filter is specified, null for full JSON output
  */
-fun parseJsonArgument(arg: String): JsonFilter? {
+private fun parseJsonArgument(arg: String): JsonFilter? {
   if (arg.contains('=')) {
     val filterJson = arg.substringAfter("=")
     try {
@@ -77,7 +78,7 @@ fun parseJsonArgument(arg: String): JsonFilter? {
  * @param communitySourceFile Source file path for community module sets
  * @param ultimateSourceFile Source file path for ultimate module sets (or null for community-only)
  * @param projectRoot Project root path
- * @param generateXmlImpl Lambda to generate XML files, returns validation errors
+ * @param generateXmlImpl Lambda to generate XML files, returns generation result with errors and diffs
  */
 suspend fun runModuleSetMain(
   args: Array<String>,
@@ -87,7 +88,7 @@ suspend fun runModuleSetMain(
   communitySourceFile: String,
   ultimateSourceFile: String?,
   projectRoot: Path,
-  generateXmlImpl: suspend (outputProvider: ModuleOutputProvider) -> List<ValidationError>,
+  generateXmlImpl: suspend (outputProvider: ModuleOutputProvider) -> GenerationResult,
 ) {
   withoutTracer {
     // Parse `--json` arg with optional filter
@@ -96,9 +97,9 @@ suspend fun runModuleSetMain(
       val outputProvider = createModuleOutputProvider(projectRoot = projectRoot, scope = this)
       if (jsonArg == null) {
         // Default mode: Generate XML files
-        val errors = generateXmlImpl(outputProvider)
-        if (errors.isNotEmpty()) {
-          System.err.print(formatValidationErrors(errors))
+        val result = generateXmlImpl(outputProvider)
+        printGenerationSummary(result.stats, result.errors)
+        if (result.errors.isNotEmpty()) {
           exitProcess(1)
         }
       }
@@ -132,7 +133,7 @@ private suspend fun jsonResponse(
   val communityModuleSetsWithMeta = communityModuleSets.map {
     ModuleSetMetadata(
       moduleSet = it,
-      location = "community",
+      location = ModuleLocation.COMMUNITY,
       sourceFile = communitySourceFile,
       directNestedSets = it.nestedSets.map { nested -> nested.name }
     )
@@ -144,7 +145,7 @@ private suspend fun jsonResponse(
     ultimateModuleSets.map {
       ModuleSetMetadata(
         moduleSet = it,
-        location = "ultimate",
+        location = ModuleLocation.ULTIMATE,
         sourceFile = ultimateSourceFile,
         directNestedSets = it.nestedSets.map { nested -> nested.name }
       )

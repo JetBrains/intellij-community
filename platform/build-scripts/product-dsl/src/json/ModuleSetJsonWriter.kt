@@ -4,10 +4,10 @@ package org.jetbrains.intellij.build.productLayout.json
 import com.fasterxml.jackson.core.JsonGenerator
 import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.productLayout.ModuleSet
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetTraversalCache
-import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
-import org.jetbrains.intellij.build.productLayout.analysis.detectDuplicates
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
+import org.jetbrains.intellij.build.productLayout.tooling.ProductSpec
+import org.jetbrains.intellij.build.productLayout.tooling.detectDuplicates
+import org.jetbrains.intellij.build.productLayout.traversal.ModuleSetTraversalCache
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile

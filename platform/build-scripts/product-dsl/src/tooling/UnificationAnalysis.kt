@@ -1,10 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
-package org.jetbrains.intellij.build.productLayout.analysis
+package org.jetbrains.intellij.build.productLayout.tooling
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import org.jetbrains.intellij.build.productLayout.traversal.ModuleSetTraversal
+import org.jetbrains.intellij.build.productLayout.traversal.ModuleSetTraversalCache
 
 /**
  * Index for O(1) lookup of products by module set name.
@@ -14,10 +16,10 @@ internal class ProductModuleSetIndex(products: List<ProductSpec>) {
   private val productsByModuleSet: Map<String, List<ProductSpec>>
 
   init {
-    val index = mutableMapOf<String, MutableList<ProductSpec>>()
+    val index = HashMap<String, MutableList<ProductSpec>>()
     for (product in products) {
       for (msRef in (product.contentSpec?.moduleSets ?: emptyList())) {
-        index.getOrPut(msRef.moduleSet.name) { mutableListOf() }.add(product)
+        index.computeIfAbsent(msRef.moduleSet.name) { ArrayList() }.add(product)
       }
     }
     productsByModuleSet = index
@@ -80,8 +82,8 @@ internal suspend fun suggestModuleSetUnification(
   val suggestions = mergeJob.await() + inlineJob.await() + factorJob.await() + splitJob.await()
 
   // Remove duplicates and sort by priority
-  val uniqueSuggestions = mutableListOf<UnificationSuggestion>()
-  val seen = mutableSetOf<String>()
+  val uniqueSuggestions = ArrayList<UnificationSuggestion>()
+  val seen = HashSet<String>()
   for (suggestion in suggestions) {
     val key = listOf(suggestion.strategy, suggestion.moduleSet1, suggestion.moduleSet2, suggestion.moduleSet).toString()
     if (!seen.contains(key)) {
@@ -238,8 +240,8 @@ internal fun analyzeProductUsage(
   cache: ModuleSetTraversalCache,
 ): ProductUsageAnalysis {
   val moduleSetsList = allModuleSets.map { it.moduleSet }
-  val directUsage = mutableListOf<ProductUsageEntry>()
-  val indirectUsage = mutableListOf<ProductUsageEntry>()
+  val directUsage = ArrayList<ProductUsageEntry>()
+  val indirectUsage = ArrayList<ProductUsageEntry>()
   
   for (product in products) {
     val topLevelSets = product.contentSpec?.moduleSets?.map { it.moduleSet.name } ?: emptyList()
@@ -405,12 +407,12 @@ internal fun analyzeMergeImpact(
   val duplicateModules = sourceModules.intersect(targetModules)
   
   // Check for community/ultimate violations
-  val violations = mutableListOf<MergeViolation>()
+  val violations = ArrayList<MergeViolation>()
   if (operation == MergeOperation.MERGE && targetEntry != null) {
     val sourceLocation = sourceEntry.location
     val targetLocation = targetEntry.location
     
-    if (sourceLocation == "ultimate" && targetLocation == "community") {
+    if (sourceLocation == ModuleLocation.ULTIMATE && targetLocation == ModuleLocation.COMMUNITY) {
       violations.add(MergeViolation(
         type = "location",
         severity = "error",
@@ -425,7 +427,7 @@ internal fun analyzeMergeImpact(
       !productSets.contains("commercialIdeBase") && !productSets.contains("ide.ultimate")
     }
     
-    if (sourceLocation == "ultimate" && communityProductsUsingTarget.isNotEmpty()) {
+    if (sourceLocation == ModuleLocation.ULTIMATE && communityProductsUsingTarget.isNotEmpty()) {
       violations.add(MergeViolation(
         type = "community-uses-ultimate",
         severity = "error",

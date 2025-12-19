@@ -14,3 +14,17 @@ internal object AnsiColors {
   const val CYAN = "\u001B[36m"
   const val GRAY = "\u001B[90m"
 }
+
+/**
+ * ANSI-aware style helper that returns color codes or empty strings based on [useAnsi] flag.
+ */
+internal class AnsiStyle(private val useAnsi: Boolean) {
+  val reset: String get() = if (useAnsi) AnsiColors.RESET else ""
+  val bold: String get() = if (useAnsi) AnsiColors.BOLD else ""
+  val red: String get() = if (useAnsi) AnsiColors.RED else ""
+  val green: String get() = if (useAnsi) AnsiColors.GREEN else ""
+  val yellow: String get() = if (useAnsi) AnsiColors.YELLOW else ""
+  val blue: String get() = if (useAnsi) AnsiColors.BLUE else ""
+  val cyan: String get() = if (useAnsi) AnsiColors.CYAN else ""
+  val gray: String get() = if (useAnsi) AnsiColors.GRAY else ""
+}

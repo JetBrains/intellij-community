@@ -11,7 +11,7 @@ import org.jetbrains.intellij.build.productLayout.discovery.discoverModuleSets
 import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetGenerationResult
-import org.jetbrains.intellij.build.productLayout.util.DryRunCollector
+import org.jetbrains.intellij.build.productLayout.util.FileUpdateStrategy
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.nio.file.Files
 import java.nio.file.Path
@@ -55,8 +55,8 @@ data class ModuleSet(
  */
 @ProductDslMarker
 class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) {
-  private val modules = mutableListOf<ContentModule>()
-  private val nestedSets = mutableListOf<ModuleSet>()
+  private val modules = ArrayList<ContentModule>()
+  private val nestedSets = ArrayList<ModuleSet>()
 
   /**
    * Add a single module.
@@ -232,10 +232,12 @@ internal fun buildModuleSetXml(moduleSet: ModuleSet, label: String): ModuleSetBu
  * Scans each output directory and deletes files matching the module set pattern that aren't in the generated set.
  *
  * @param outputDirToGeneratedFiles Map of output directory to set of generated file names
+ * @param strategy File update strategy (actual deletion or dry run recording)
  * @return List of deleted file results
  */
 internal fun cleanupOrphanedModuleSetFiles(
-  outputDirToGeneratedFiles: Map<Path, Set<String>>
+  outputDirToGeneratedFiles: Map<Path, Set<String>>,
+  strategy: FileUpdateStrategy,
 ): List<ModuleSetFileResult> {
   val deletedFiles = mutableListOf<ModuleSetFileResult>()
 
@@ -269,7 +271,7 @@ internal fun cleanupOrphanedModuleSetFiles(
         val fileName = filePath.fileName.toString()
         println("Deleting orphaned module set file: $fileName from $dir")
         println("  Reason: File not in generated set: $generatedFiles")
-        Files.delete(filePath)
+        strategy.delete(filePath)
         deletedFiles.add(ModuleSetFileResult(fileName, FileChangeStatus.DELETED, 0))
       }
     }
@@ -309,7 +311,7 @@ internal suspend fun doGenerateAllModuleSetsInternal(
   outputDir: Path,
   label: String,
   outputProvider: ModuleOutputProvider? = null,
-  dryRunCollector: DryRunCollector? = null,
+  strategy: FileUpdateStrategy,
 ): ModuleSetGenerationResult = coroutineScope {
   Files.createDirectories(outputDir)
 
@@ -319,7 +321,7 @@ internal suspend fun doGenerateAllModuleSetsInternal(
   val fileResults = moduleSets.map { moduleSet ->
     async {
       val targetOutputDir = resolveOutputDir(moduleSet, outputDir, outputProvider)
-      generateModuleSetXml(moduleSet = moduleSet, outputDir = targetOutputDir, label = label, dryRunCollector = dryRunCollector)
+      generateModuleSetXml(moduleSet = moduleSet, outputDir = targetOutputDir, label = label, strategy = strategy)
     }
   }.awaitAll()
 

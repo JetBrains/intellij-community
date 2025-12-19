@@ -1024,6 +1024,8 @@ private fun getEventTypeString(eventType: Int): String {
 class ContentParseResult(
   @JvmField val contentModules: List<ContentModuleElement>,
   @JvmField val xIncludePaths: List<String>,
+  /** Module dependencies from <dependencies><module name="..."/> elements */
+  @JvmField val moduleDependencies: List<String> = emptyList(),
 )
 
 /**
@@ -1057,6 +1059,7 @@ fun parseContentAndXIncludes(input: ByteArray, locationSource: String?): Content
 private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): ContentParseResult {
   val xIncludePaths = ArrayList<String>()
   val contentModules = ArrayList<ContentModuleElement>()
+  val moduleDependencies = ArrayList<String>()
   consumeChildElements(reader) { localName ->
     when (localName) {
       PluginXmlConst.INCLUDE_ELEM if reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI -> {
@@ -1078,6 +1081,18 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
           }
         }
       }
+      PluginXmlConst.DEPENDENCIES_ELEM -> {
+        // Parse module dependencies
+        consumeChildElements(reader) { childName ->
+          if (childName == PluginXmlConst.DEPENDENCIES_MODULE_ELEM) {
+            val name = XmlReadUtils.findAttributeValue(reader, PluginXmlConst.DEPENDENCIES_MODULE_NAME_ATTR)
+            if (name != null) {
+              moduleDependencies.add(name)
+            }
+          }
+          reader.skipElement()
+        }
+      }
       else -> {
         // Recursively check nested elements for xi:includes (they can appear at root level only,
         // but we still need to traverse to find them in case of nested structures)
@@ -1088,7 +1103,7 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
       }
     }
   }
-  return ContentParseResult(contentModules, xIncludePaths)
+  return ContentParseResult(contentModules, xIncludePaths, moduleDependencies)
 }
 
 private fun readContentModuleElement(reader: XMLStreamReader2): ContentModuleElement {

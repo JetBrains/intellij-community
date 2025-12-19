@@ -8,9 +8,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.productLayout.ModuleSet
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetTraversalCache
-import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
+import org.jetbrains.intellij.build.productLayout.tooling.ProductSpec
+import org.jetbrains.intellij.build.productLayout.traversal.ModuleSetTraversalCache
 import org.jetbrains.intellij.build.productLayout.visitAllModules
 
 // kotlinx.serialization Json instance for serializing data structures
@@ -60,7 +60,7 @@ internal fun writeModuleDistribution(
   gen: JsonGenerator,
   allModuleSets: List<ModuleSetMetadata>,
   products: List<ProductSpec>,
-  moduleLocations: Map<String, org.jetbrains.intellij.build.productLayout.analysis.ModuleLocationInfo>,
+  moduleLocations: Map<String, org.jetbrains.intellij.build.productLayout.tooling.ModuleLocationInfo>,
   cache: ModuleSetTraversalCache
 ) {
   @Serializable
@@ -93,11 +93,11 @@ internal fun writeModuleDistribution(
   // Build result map
   val allModuleNames = (inModuleSets.keys + inProducts.keys).sorted()
   val result = allModuleNames.associateWith { moduleName ->
-    val locationInfo = moduleLocations[moduleName]
+    val locationInfo = moduleLocations.get(moduleName)
     Entry(
-      inModuleSets = inModuleSets[moduleName]?.sorted() ?: emptyList(),
-      inProducts = inProducts[moduleName]?.sorted() ?: emptyList(),
-      location = locationInfo?.location ?: "unknown",
+      inModuleSets = inModuleSets.get(moduleName)?.sorted() ?: emptyList(),
+      inProducts = inProducts.get(moduleName)?.sorted() ?: emptyList(),
+      location = locationInfo?.location?.name ?: "UNKNOWN",
       imlPath = locationInfo?.imlPath
     )
   }
@@ -180,7 +180,7 @@ internal fun writeModuleUsageIndex(
   for ((moduleSet, location, sourceFile) in allModuleSets) {
     visitAllModules(moduleSet) { module ->
       moduleSetsMap.computeIfAbsent(module.name) { mutableListOf() }
-        .add(ModuleSetRef(moduleSet.name, location, sourceFile))
+        .add(ModuleSetRef(moduleSet.name, location.name, sourceFile))
     }
   }
 

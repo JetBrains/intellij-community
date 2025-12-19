@@ -24,9 +24,25 @@ Validation runs automatically when you execute:
 - **CLI**: `UltimateModuleSets.main()` or `CommunityModuleSets.main()`
 - **Bazel**: `bazel run //platform/buildScripts:plugin-model-tool`
 
-## Two-Tier Validation System
+## Validation System
 
-The build system uses a **two-tier validation approach** to ensure module dependencies are resolvable while avoiding false positives.
+The build system uses a **multi-tier validation approach** to ensure module dependencies are resolvable while avoiding false positives.
+
+### Execution Architecture
+
+Validation runs in parallel tiers during `Generate Product Layouts`:
+
+```
+TIER 2 (parallel):
+├── Self-contained module set validation
+├── Product-level module set validation
+└── Library module dependency validation
+
+TIER 3 (parallel with TIER 2):
+└── Plugin dependency validation (checks generated deps are resolvable)
+```
+
+Both tiers share pre-computed data via `Deferred` values (see Performance Considerations).
 
 ### Tier 1: Product-Level Validation
 
@@ -169,6 +185,97 @@ When you encounter a validation error for a cross-plugin dependency:
    }
    ```
 
+## Test Plugin Detection
+
+### The Problem
+
+Test plugins (plugins used only for testing, not shipped in production) can declare modules as `<content>` that would otherwise satisfy plugin dependencies. For example:
+
+```xml
+<!-- remote-dev/rdct-tests/pluginsWithTests/backendPlugin/resources/META-INF/plugin.xml -->
+<content namespace="jetbrains">
+  <module name="intellij.libraries.junit4" />
+  <module name="intellij.libraries.junit5" />
+  <module name="intellij.platform.testFramework" />
+  <module name="intellij.libraries.assertj.core" />
+  ...
+</content>
+```
+
+If a production plugin like `intellij.featuresTrainer` depends on `intellij.libraries.assertj.core`, and validation considers test plugin content modules as valid targets, the error won't be caught at build time. At runtime, the test plugins won't be installed, causing:
+
+```
+Plugin 'IDE Features Trainer' has module dependency 'intellij.libraries.assertj.core' which cannot be loaded
+```
+
+### How Test Plugins Are Detected
+
+Test plugins are identified by their **content modules**. If a plugin declares any test framework module as `<content>`, it's considered a test plugin:
+
+| Test Framework Content Module | Description |
+|------------------------------|-------------|
+| `intellij.libraries.junit4` | JUnit 4 library |
+| `intellij.libraries.junit5` | JUnit 5 base |
+| `intellij.libraries.junit5.jupiter` | JUnit Jupiter API |
+| `intellij.libraries.junit5.launcher` | JUnit Platform Launcher |
+| `intellij.libraries.junit5.params` | JUnit Parameterized Tests |
+| `intellij.libraries.junit5.vintage` | JUnit Vintage Engine |
+| `intellij.platform.testFramework` | IntelliJ Test Framework |
+| `intellij.platform.testFramework.common` | Test Framework Common |
+| `intellij.platform.testFramework.core` | Test Framework Core |
+| `intellij.platform.testFramework.impl` | Test Framework Implementation |
+| `intellij.tools.testsBootstrap` | Test Bootstrap Tools |
+
+### Configuration
+
+The list of test framework content modules is configured in `ultimateGenerator.kt` via `testFrameworkContentModules`:
+
+```kotlin
+generateAllModuleSetsWithProducts(
+  ModuleSetGenerationConfig(
+    // ...
+    testFrameworkContentModules = setOf(
+      "intellij.libraries.junit4",
+      "intellij.libraries.junit5",
+      "intellij.platform.testFramework",
+      // ...
+    ),
+  )
+)
+```
+
+### How It Works
+
+During plugin dependency validation:
+
+1. For each plugin's content modules, check if any are in `testFrameworkContentModules`
+2. If yes, the plugin is a test plugin - skip its content modules from `productionPluginModules`
+3. Production plugin dependencies are validated against `crossProductModules` + `productionPluginModules`
+4. Test plugin content modules are NOT valid targets for production dependencies
+
+```kotlin
+// In PluginDependencyGenerator.kt
+fun isTestPlugin(contentModules: Set<String>, testFrameworkContentModules: Set<String>): Boolean {
+  return testFrameworkContentModules.isNotEmpty() && contentModules.any { it in testFrameworkContentModules }
+}
+
+// During validation
+for ((_, job) in pluginContentJobs) {
+  val contentModules = job.await()?.contentModules ?: continue
+  if (isTestPlugin(contentModules, testFrameworkContentModules)) {
+    continue  // Skip test plugins
+  }
+  productionPluginModules.addAll(contentModules)
+}
+```
+
+### Adding New Test Framework Modules
+
+If a new test framework module is introduced and test plugins start declaring it as content:
+
+1. Add the module name to `testFrameworkContentModules` in `ultimateGenerator.kt`
+2. Run "Generate Product Layouts" to verify no production plugins incorrectly depend on test plugin content
+
 ## allowMissingDependencies
 
 ### What It Is
@@ -208,6 +315,22 @@ Do NOT use for:
 
 ## Performance Considerations
 
+### Shared Computation Pattern
+
+The generation system uses `Deferred` values to compute shared data once and reuse across tiers:
+
+```
+ProductGeneration.kt
+├── pluginContentJobs          (shared plugin extraction)
+├── allPluginModulesDeferred   (shared: all plugin content module names)
+├── traversalCache             (shared: module set traversal)
+├── productIndicesDeferred     (shared: ProductModuleIndex per product)
+├── TIER 2: validation uses full ProductModuleIndex
+└── TIER 3: plugin dep validation uses productIndices.mapValues { it.allModules }
+```
+
+This eliminates duplicate computation - both TIER 2 and TIER 3 await the same `Deferred` values.
+
 ### Caching Strategy
 
 The validation system uses multiple caching layers to minimize redundant work:
@@ -222,8 +345,9 @@ The validation system uses multiple caching layers to minimize redundant work:
    - Caches: module sets by name, nested set closure, module names, loading modes
    - Thread-safe using `ConcurrentHashMap.computeIfAbsent()`
 
-3. **ProductModuleIndex**: Per-product module composition built once before validation.
+3. **ProductModuleIndex**: Per-product module composition built once as `Deferred`.
    - Collects all modules, loading modes, and source tracking
+   - Shared between TIER 2 (product validation) and TIER 3 (plugin dependency validation)
    - Enables parallel validation without redundant collection
 
 ### Per-Product vs Global Validation
