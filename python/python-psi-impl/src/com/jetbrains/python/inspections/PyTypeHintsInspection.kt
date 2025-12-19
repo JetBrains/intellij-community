@@ -1096,8 +1096,14 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkGenericTypeParameterization(node: PySubscriptionExpression) {
-      val declaration = node.operand.reference
-        ?.let { PyResolveUtil.resolveDeclaration(it, resolveContext) }
+      val operandRefExpression = node.operand as? PyReferenceExpression ?: return
+      val declaration = multiFollowAssignmentsChain(operandRefExpression) {
+        return@multiFollowAssignmentsChain when {
+          PyTypingTypeProvider.isExplicitTypeAlias(it, myTypeEvalContext) -> false
+          PyTypingAliasStubType.getAssignedValueStubLike(it) is PyReferenceExpression -> followNotTypingOpaque(it)
+          else -> false
+        }
+      }.firstOrNull()
 
       when (declaration) {
         is PyTargetExpression -> checkTypeAliasParameterization(node, declaration)
@@ -1134,11 +1140,9 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun checkTypeAliasParameterization(node: PySubscriptionExpression, declaration: PyTargetExpression) {
       val assignedValue = PyTypingAliasStubType.getAssignedValueStubLike(declaration) ?: return
-      if (PyTypingTypeProvider.resolveToQualifiedNames(assignedValue, myTypeEvalContext)
-          .any { PyTypingTypeProvider.OPAQUE_NAMES.contains(it) }) return
       val assignedValueType = Ref.deref(PyTypingTypeProvider.getType(assignedValue, myTypeEvalContext)) ?: return
 
-      val isExplicitTypeAlias = declaration.annotationValue != null
+      val isExplicitTypeAlias = PyTypingTypeProvider.isExplicitTypeAlias(declaration, myTypeEvalContext)
       val generics = collectTypeParametersFromTypeAlias(assignedValue, assignedValueType, isExplicitTypeAlias)
       if (generics.isEmpty) {
         registerProblem(node.indexExpression, PyPsiBundle.message("INSP.type.hints.generic.type.alias.is.not.generic.or.already.parameterized"), ProblemHighlightType.WARNING)
