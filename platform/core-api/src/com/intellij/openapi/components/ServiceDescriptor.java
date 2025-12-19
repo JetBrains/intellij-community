@@ -112,7 +112,7 @@ public final class ServiceDescriptor {
       return headlessImplementation;
     }
     else {
-      return serviceImplementation;
+      return serviceImplementation; // empty serviceImplementation will be replaced with null by the reader
     }
   }
 

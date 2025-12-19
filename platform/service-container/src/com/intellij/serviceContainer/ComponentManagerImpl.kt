@@ -566,14 +566,22 @@ abstract class ComponentManagerImpl(
       }
 
       // Allow to re-define service implementations in plugins.
-      // Empty serviceImplementation means we want unregistering service.
-      val implementation = when {
+      // Null serviceImplementation means we want unregistering service. (empty serviceImplementation will be nullized by the reader)
+      // This is the same code as in the ServiceDescriptor.getImplementation with the difference in how application instance is obtained.
+      val implementation: String? = when {
         descriptor.testServiceImplementation != null && app.isUnitTestMode -> descriptor.testServiceImplementation
         descriptor.headlessImplementation != null && app.isHeadlessEnvironment -> descriptor.headlessImplementation
         else -> descriptor.serviceImplementation
       }
 
       val key = descriptor.serviceInterface ?: implementation
+      if (key == null) {
+        LOG.error("Either 'serviceInterface' or 'serviceImplementation' must be non-null and non-empty. " +
+                  "(isUnitTestMode=${app.isUnitTestMode}, isHeadlessEnvironment=${app.isHeadlessEnvironment}. " +
+                  "Error while loading service descriptor: $descriptor")
+        continue
+      }
+
       if (descriptor.overrides) {
         registrar.overrideInitializer(
           keyClassName = key,
