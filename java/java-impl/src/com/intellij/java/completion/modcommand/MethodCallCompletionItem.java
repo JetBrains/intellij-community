@@ -237,10 +237,14 @@ final class MethodCallCompletionItem extends PsiUpdateCompletionItem<PsiMethod> 
     }
     int caret = updater.getCaretOffset();
     updater.getDocument().insertString(caret, parens);
-    int inParensOffset = caret + inparens;
-    updater.moveCaretTo(inParensOffset);
-    if (needRightParenth) {
-      updater.registerTabOut(TextRange.create(inParensOffset, inParensOffset), caret + parens.length());
+    if (mayHaveParameters == ThreeState.NO) {
+      updater.moveCaretTo(caret + parens.length());
+    } else {
+      int inParensOffset = caret + inparens;
+      updater.moveCaretTo(inParensOffset);
+      if (needRightParenth) {
+        updater.registerTabOut(TextRange.create(inParensOffset, inParensOffset), caret + parens.length());
+      }
     }
   }
   

@@ -126,6 +126,8 @@ final class ConstructorCallCompletionItem extends PsiUpdateCompletionItem<Object
     PsiFile file = updater.getPsiFile();
     boolean needRightParenth = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
     CommonCodeStyleSettings styleSettings = CodeStyle.getLanguageSettings(file, JavaLanguage.INSTANCE);
+    PsiMethod[] constructors = psiClass.getConstructors();
+    boolean alwaysEmpty = constructors.length == 0 || constructors.length == 1 && !constructors[0].hasParameters();
     String typeParams = "";
     if (psiClass.hasTypeParameters()) {
       typeParams = "<>";
@@ -147,14 +149,19 @@ final class ConstructorCallCompletionItem extends PsiUpdateCompletionItem<Object
     }
     document.insertString(caret + typeParams.length(), parens);
     int inParensOffset = caret + inparens + typeParams.length();
+    int endOffset = caret + typeParams.length() + parens.length();
     if (!typeParams.isEmpty()) {
-      updater.registerTabOut(TextRange.create(caret + 1, caret + 1), inParensOffset);
+      updater.registerTabOut(TextRange.create(caret + 1, caret + 1), alwaysEmpty ? endOffset : inParensOffset);
       updater.moveCaretTo(updater.getCaretOffset() + 1);
     } else {
-       updater.moveCaretTo(inParensOffset);
+      if (alwaysEmpty) {
+        updater.moveCaretTo(endOffset);
+      } else {
+        updater.moveCaretTo(inParensOffset);
+      }
     }
-    if (needRightParenth) {
-      updater.registerTabOut(TextRange.create(inParensOffset, inParensOffset), caret + typeParams.length() + parens.length());
+    if (needRightParenth && !alwaysEmpty) {
+      updater.registerTabOut(TextRange.create(inParensOffset, inParensOffset), endOffset);
     }
   }
 
