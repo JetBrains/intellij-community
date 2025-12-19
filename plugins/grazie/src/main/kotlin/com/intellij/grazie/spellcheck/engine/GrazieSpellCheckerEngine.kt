@@ -123,7 +123,7 @@ class GrazieSpellCheckerEngine(
       ranker = DiacriticSuggestionRanker(LanguageModel.getRanker(Language.ENGLISH, wordList)),
       filter = RadiusSuggestionFilter(0.05),
       normalizer = StripAccentsNormalizer(),
-      isAlien = { !Alphabet.ENGLISH.matchAny(it) && adapter.isAlien(it) }
+      isAlien = { adapter.isAlien(it) }
     ))
   }
 

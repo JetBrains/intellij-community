@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.grazie.spellcheck.dictionary
 
+import ai.grazie.nlp.langs.alphabet.Alphabet
 import ai.grazie.nlp.similarity.Levenshtein
 import ai.grazie.spell.lists.WordList
 import com.intellij.grazie.GrazieConfig
@@ -11,6 +12,10 @@ import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present
 
 internal class WordListAdapter : WordList, EditableWordListAdapter() {
   fun isAlien(word: String): Boolean {
+    if (Alphabet.ENGLISH.matchAny(word)) {
+      // Asian English mixed text should never be highlighted. Each of the tokens must be checked separately
+      return Alphabet.Group.ASIAN.matchAny(word)
+    }
     val matchedLanguages = GrazieConfig.get().availableLanguages
       .filter { it.toLanguage().alphabet.matchEntire(word) }
     return (matchedLanguages.isEmpty() || !service<GrazieCheckers>().hasSpellerTool(matchedLanguages)) && !aggregator.contains(word)

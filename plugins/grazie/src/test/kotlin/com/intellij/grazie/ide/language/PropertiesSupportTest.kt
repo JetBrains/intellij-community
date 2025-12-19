@@ -28,6 +28,15 @@ class PropertiesSupportTest : GrazieTestBase() {
     }
   }
 
+  fun `test asian-english mixed text in properties file`() {
+    myFixture.configureByText("a.properties", "title=本地daemon插件jar")
+    myFixture.checkHighlighting()
+
+    enableProofreadingFor(setOf(Lang.CHINESE))
+    myFixture.configureByText("a.properties", "title=本地daemon插件jar")
+    myFixture.checkHighlighting()
+  }
+
   fun `test grammar check in file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
 
