@@ -12,6 +12,9 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.Constructor
 
+const val FACTORY_METHOD_CONSTRUCTOR: String = "<ctor>"
+const val FACTORY_METHOD_SEPARATOR: Char = '#'
+
 /**
  * Instantiates [instanceClass] using [resolver] to find instances for constructor parameter types.
  * This function searches for a constructor which matches one of [supportedSignatures].
@@ -26,9 +29,10 @@ suspend fun <T> instantiate(
   resolver: DependencyResolver,
   parentScope: CoroutineScope,
   instanceClass: Class<T>,
+  factoryMethodName: String,
   supportedSignatures: List<MethodType>,
 ): T {
-  val (signature, constructor) = findConstructor(instanceClass, supportedSignatures)
+  val (signature, constructor) = findFactoryMethod(instanceClass, factoryMethodName, supportedSignatures)
   when (val result = resolveArguments(resolver, signature.parameterArray(), instanceClass, round = 0)) {
     is ResolutionResult.UnresolvedParameter -> {
       throw InstantiationException(
@@ -50,11 +54,17 @@ suspend fun <T> instantiate(
   }
 }
 
-private fun findConstructor(instanceClass: Class<*>, signatures: List<MethodType>): Pair<MethodType, MethodHandle> {
+private fun findFactoryMethod(instanceClass: Class<*>, factoryMethodName: String, signatures: List<MethodType>): Pair<MethodType, MethodHandle> {
   val lookup = MethodHandles.privateLookupIn(instanceClass, MethodHandles.lookup())
   for (signature in signatures) {
     try {
-      return signature to lookup.findConstructor(instanceClass, signature)
+      return if (factoryMethodName == FACTORY_METHOD_CONSTRUCTOR) {
+        signature to lookup.findConstructor(instanceClass, signature)
+      }
+      else {
+        val factorySignature = signature.changeReturnType(Object::class.java)
+        signature to lookup.findStatic(instanceClass, factoryMethodName, factorySignature)
+      }
     }
     catch (_: NoSuchMethodException) { }
     catch (_: IllegalAccessException) { }
