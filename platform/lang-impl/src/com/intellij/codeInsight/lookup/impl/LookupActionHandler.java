@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -37,7 +37,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   }
 
   @Override
-  public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext){
+  public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null || !lookup.isAvailableToUser()) {
       Project project = editor.getProject();
@@ -72,17 +72,17 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
     if (up) {
       ScrollingUtil.moveUp(lookup.getList(), 0);
-    } else {
+    }
+    else {
       ScrollingUtil.moveDown(lookup.getList(), 0);
     }
     lookup.markSelectionTouched();
     lookup.refreshUi(false, true);
-
   }
 
   public static final class DownHandler extends LookupActionHandler {
 
-    public DownHandler(EditorActionHandler originalHandler){
+    public DownHandler(EditorActionHandler originalHandler) {
       super(originalHandler);
     }
 
@@ -90,7 +90,6 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     protected void executeInLookup(final LookupImpl lookup, DataContext context, Caret caret) {
       executeUpOrDown(lookup, false);
     }
-
   }
 
   public static final class UpAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
@@ -146,7 +145,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   }
 
   public static final class UpHandler extends LookupActionHandler {
-    public UpHandler(EditorActionHandler originalHandler){
+    public UpHandler(EditorActionHandler originalHandler) {
       super(originalHandler);
     }
 
@@ -160,7 +159,6 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       }
       executeUpOrDown(lookup, true);
     }
-
   }
 
   public static final class PageDownHandler extends LookupActionHandler {
@@ -176,7 +174,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   }
 
   public static final class PageUpHandler extends LookupActionHandler {
-    public PageUpHandler(EditorActionHandler originalHandler){
+    public PageUpHandler(EditorActionHandler originalHandler) {
       super(originalHandler);
     }
 
@@ -208,6 +206,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       BackspaceHandler.truncatePrefix(context, lookup, myOriginalHandler, lookup.getLookupStart() - 1, caret);
     }
   }
+
   public static class RightHandler extends LookupActionHandler {
     public RightHandler(@Nullable EditorActionHandler originalHandler) {
       super(originalHandler);
@@ -264,5 +263,4 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       }
     }
   }
-
 }
