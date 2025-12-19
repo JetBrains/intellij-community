@@ -164,12 +164,11 @@ object CodeWriter {
         if (!formatCode) return@runWriteActionWithCancellableProgressInDispatchThread
 
         val copiedEditorconfig = copyEditorConfigIfIntellij(project, genFolder)
-        val kotlinImportOptimizer = generatedFiles.firstOrNull()?.let { LanguageImportStatements.INSTANCE.forFile(it) }?.firstOrNull()
         for ((i, file) in generatedFiles.withIndex()) {
           DumbService.getInstance(project).completeJustSubmittedTasks()
           indicator.fraction = 0.25 + 0.7 * i / generatedFiles.size
           addCopyright(file, ktClasses)
-          kotlinImportOptimizer?.processFile(file)?.run()
+          LanguageImportStatements.INSTANCE.forFile(file).forEach { it.processFile(file).run() }
           PsiDocumentManager.getInstance(file.project).doPostponedOperationsAndUnblockDocument(file.viewProvider.document!!)
           CodeStyleManager.getInstance(project).reformat(file)
         }
