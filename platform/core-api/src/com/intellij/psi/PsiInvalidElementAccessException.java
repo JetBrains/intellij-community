@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
@@ -107,7 +108,11 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
       // don't try element.getNode() because this can trigger lazy file tree building
       return findFileCreationTrace((PsiFile)element);
     }
-    return findCreationTrace(element.getNode());
+
+    return RecursionManager.doPreventingRecursion(element, false, () ->
+      // StubBasedPsiElementBase causes SOE on calling #getNode
+      findCreationTrace(element.getNode())
+    );
   }
 
   private static @Nullable Object findCreationTrace(@Nullable ASTNode node) {
