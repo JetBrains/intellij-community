@@ -58,7 +58,6 @@ suspend fun eelProxy(@GeneratedBuilder opts: EelTunnelsApiRunProxyOpts): EelProx
   return eelProxyImpl(
     acceptorFactory = opts.acceptorFactory,
     connectionFactory = opts.connectionFactory,
-    transferSpeed = opts.transferSpeed,
     onConnection = opts.onConnection,
     onConnectionClosed = opts.onConnectionClosed,
     onConnectionError = opts.onConnectionError,
@@ -111,13 +110,6 @@ interface EelTunnelsApiRunProxyOpts {
     get() = { error("Forgot to set remoteConnectionFactory") }
 
   /**
-   * The variants of this function are likely to change.
-   */
-  @EelDelicateApi
-  val transferSpeed: TransferSpeed
-    get() = TransferSpeed.MEMORY_EFFICIENT
-
-  /**
    * Receives connections instantiated by [connectionFactory].
    *
    * The function is called before transferring any data.
@@ -146,18 +138,6 @@ interface EelTunnelsApiRunProxyOpts {
    */
   val debugLabel: String?
     get() = null
-
-  @EelDelicateApi
-  enum class TransferSpeed {
-    MEMORY_EFFICIENT,
-
-    /**
-     * This mode was supposed to work faster, but preliminary tests show that there's no significant difference in remote cases.
-     */
-    READ_AHEAD,
-
-    TMP_COPY_MODE,
-  }
 
   /** For internal use inside Eel only. */
   @Suppress("PropertyName")

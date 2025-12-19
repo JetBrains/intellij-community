@@ -89,8 +89,6 @@ object eelProxyKtHelpers {
 
     private var onConnectionError: ((EelConnectionError) -> Unit)? = null
 
-    private var transferSpeed: EelTunnelsApiRunProxyOpts.TransferSpeed = EelTunnelsApiRunProxyOpts.TransferSpeed.MEMORY_EFFICIENT
-
     /**
      * For internal use inside Eel only.
      */
@@ -177,26 +175,6 @@ object eelProxyKtHelpers {
     }
 
     /**
-     * The variants of this function are likely to change.
-     */
-    @EelDelicateApi
-    fun transferSpeed(arg: EelTunnelsApiRunProxyOpts.TransferSpeed): EelProxy = apply {
-      this.transferSpeed = arg
-    }
-
-    fun memoryEfficient(): EelProxy =
-      transferSpeed(EelTunnelsApiRunProxyOpts.TransferSpeed.MEMORY_EFFICIENT)
-
-    /**
-     * This mode was supposed to work faster, but preliminary tests show that there's no significant difference in remote cases.
-     */
-    fun readAhead(): EelProxy =
-      transferSpeed(EelTunnelsApiRunProxyOpts.TransferSpeed.READ_AHEAD)
-
-    fun tmpCopyMode(): EelProxy =
-      transferSpeed(EelTunnelsApiRunProxyOpts.TransferSpeed.TMP_COPY_MODE)
-
-    /**
      * Complete the builder and call [eelProxy]
      * with an instance of [com.intellij.platform.eel.EelTunnelsApiRunProxyOpts].
      */
@@ -213,7 +191,6 @@ object eelProxyKtHelpers {
           onConnection = onConnection,
           onConnectionClosed = onConnectionClosed,
           onConnectionError = onConnectionError,
-          transferSpeed = transferSpeed,
         )
       )
   }

@@ -7,14 +7,7 @@ import com.intellij.platform.eel.channels.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
-import org.jetbrains.annotations.ApiStatus
-import java.io.IOException
-import java.net.SocketTimeoutException
-import java.nio.ByteBuffer
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 // TODO Maybe move to eel.impl?
@@ -22,7 +15,6 @@ import kotlin.time.Duration.Companion.seconds
 internal suspend fun eelProxyImpl(
   acceptorFactory: @ThrowsChecked(EelConnectionError::class) suspend () -> EelTunnelsApi.ConnectionAcceptor,
   connectionFactory: @ThrowsChecked(EelConnectionError::class) suspend () -> EelTunnelsApi.Connection,
-  transferSpeed: EelTunnelsApiRunProxyOpts.TransferSpeed,
   onConnection: ((EelTunnelsApi.Connection) -> Unit)?,
   onConnectionClosed: ((EelTunnelsApi.Connection) -> Unit)?,
   onConnectionError: ((EelConnectionError) -> Unit)?,
@@ -42,7 +34,6 @@ internal suspend fun eelProxyImpl(
     RealEelProxy(
       acceptor = acceptorFactory(),
       remoteConnectionFactory = connectionFactory,
-      transferSpeed = transferSpeed,
       onConnection = onConnection,
       onConnectionClosed = onConnectionClosed,
       onConnectionError = onConnectionError,
@@ -70,7 +61,6 @@ private class FakeEelProxy(localAddress: EelTunnelsApi.ResolvedSocketAddress) : 
 private class RealEelProxy(
   override val acceptor: EelTunnelsApi.ConnectionAcceptor,
   private val remoteConnectionFactory: @ThrowsChecked(exceptionClasses = [EelConnectionError::class]) (suspend () -> EelTunnelsApi.Connection),
-  private val transferSpeed: EelTunnelsApiRunProxyOpts.TransferSpeed,
   private val onConnection: ((EelTunnelsApi.Connection) -> Unit)?,
   private val onConnectionClosed: ((EelTunnelsApi.Connection) -> Unit)?,
   private val onConnectionError: ((EelConnectionError) -> Unit)?,
@@ -84,7 +74,6 @@ private class RealEelProxy(
             handleIncomingConnection(
               localSocket = localSocket,
               remoteConnectionFactory = remoteConnectionFactory,
-              transferSpeed = transferSpeed,
               onConnection = onConnection,
               onConnectionClosed = onConnectionClosed,
               onConnectionError = onConnectionError,
@@ -145,7 +134,6 @@ private fun fakeListenAddress(
 private suspend fun handleIncomingConnection(
   localSocket: EelTunnelsApi.Connection,
   remoteConnectionFactory: @ThrowsChecked(EelConnectionError::class) suspend () -> EelTunnelsApi.Connection,
-  transferSpeed: EelTunnelsApiRunProxyOpts.TransferSpeed,
   onConnection: ((EelTunnelsApi.Connection) -> Unit)?,
   onConnectionClosed: ((EelTunnelsApi.Connection) -> Unit)?,
   onConnectionError: ((EelConnectionError) -> Unit)?,
@@ -167,34 +155,8 @@ private suspend fun handleIncomingConnection(
       for ((receiveSocket, sendSocket) in listOf(localSocket to connection, connection to localSocket)) {
         val receiveChannel = receiveSocket.receiveChannel
         val sendChannel = sendSocket.sendChannel
-        when (transferSpeed) {
-          EelTunnelsApiRunProxyOpts.TransferSpeed.MEMORY_EFFICIENT -> {
-            launch(CoroutineName("$debugLabel memory-efficient transfer $receiveSocket ==> $sendSocket")) {
-              memoryEfficientTransfer(receiveChannel, sendChannel)
-            }
-          }
-          EelTunnelsApiRunProxyOpts.TransferSpeed.READ_AHEAD -> {
-            val debugLabel = "$debugLabel read-ahead transfer $receiveSocket ==> $sendSocket"
-            launch(CoroutineName(debugLabel)) {
-              readAheadTransfer(receiveChannel, sendChannel, debugLabel)
-            }
-          }
-
-          EelTunnelsApiRunProxyOpts.TransferSpeed.TMP_COPY_MODE -> {
-            val debugLabel = "$debugLabel tmp-copy transfer $receiveSocket ==> $sendSocket"
-            launch(CoroutineName(debugLabel)) {
-              copy(receiveChannel, sendChannel,
-                   onReadError = {
-                     if (it is SocketTimeoutException && sendChannel.isClosed) {
-                       OnError.EXIT
-                     }
-                     else {
-                       OnError.RETRY
-                     }
-                   })
-              sendChannel.close(null)
-            }
-          }
+        launch(CoroutineName("$debugLabel memory-efficient transfer $receiveSocket ==> $sendSocket")) {
+          memoryEfficientTransfer(receiveChannel, sendChannel)
         }
       }
     }
@@ -244,97 +206,6 @@ private suspend fun memoryEfficientTransfer(receiveChannel: EelReceiveChannel, s
   }
 }
 
-private fun CoroutineScope.readAheadTransfer(receiveChannel: EelReceiveChannel, sendChannel: EelSendChannel, debugLabel: String) {
-  val readAheadNumber = 2
-  val transferChannel = Channel<ByteBuffer>(readAheadNumber)
-
-  val pool =
-    if (receiveChannel.prefersDirectBuffers || sendChannel.prefersDirectBuffers) EelLowLevelObjectsPool.directByteBuffers
-    else EelLowLevelObjectsPool.fakeByteBufferPool
-
-  launch(CoroutineName("$debugLabel: reading from $receiveChannel")) {
-    receiveIntoQueue(pool, receiveChannel, transferChannel, debugLabel)
-  }
-
-  launch(CoroutineName("$debugLabel: writing to $sendChannel")) {
-    sendFromQueue(pool, transferChannel, sendChannel)
-  }
-}
-
-private suspend fun receiveIntoQueue(
-  pool: EelLowLevelObjectsPool<ByteBuffer>,
-  receiveChannel: EelReceiveChannel,
-  sendChannel: SendChannel<ByteBuffer>,
-  debugLabel: String,
-) {
-  var failed = false
-  try {
-    while (true) {
-      val buffer = pool.borrow()
-      when (receiveChannel.receive(buffer)) {
-        ReadResult.EOF -> {
-          break
-        }
-        ReadResult.NOT_EOF -> {
-          buffer.flip()
-          sendChannel.send(buffer)
-        }
-      }
-    }
-  }
-  catch (err: EelChannelException) {
-    LOG.fine {
-      val prefix = when (err) {
-        is EelReceiveChannelException -> "Error during receiving from ${err.channel}"
-        is EelSendChannelException -> "Error during sending to ${err.channel}"
-      }
-      "$prefix: ${err.stackTraceToString()}"
-    }
-    failed = true
-  }
-  finally {
-    sendChannel.close()
-    finalization {
-      if (!failed) {
-        launch(CoroutineName("$debugLabel: finalization")) { receiveChannel.closeForReceive() }
-      }
-    }
-  }
-}
-
-private suspend fun sendFromQueue(
-  pool: EelLowLevelObjectsPool<ByteBuffer>,
-  receiveChannel: ReceiveChannel<ByteBuffer>,
-  sendChannel: EelSendChannel,
-) {
-  var failed = false
-  try {
-    for (buffer in receiveChannel) {
-      try {
-        sendChannel.sendWholeBuffer(buffer)
-      }
-      finally {
-        pool.returnBack(buffer)
-      }
-    }
-  }
-  catch (err: EelSendChannelException) {
-    LOG.fine { "Error during sending to ${err.channel}: ${err.stackTraceToString()}" }
-    failed = true
-  }
-  catch (err: Throwable) {
-    err.printStackTrace()
-    throw err
-  }
-  finally {
-    finalization {
-      if (!failed) {
-        sendChannel.close(null)
-      }
-    }
-  }
-}
-
 private suspend inline fun finalization(crossinline body: suspend CoroutineScope.() -> Unit) {
   withContext(NonCancellable) {
     withTimeoutOrNull(3.seconds) {  // This timeout is taken at random.
@@ -344,99 +215,3 @@ private suspend inline fun finalization(crossinline body: suspend CoroutineScope
 }
 
 private val LOG = java.util.logging.Logger.getLogger("com.intellij.platform.eel.EelProxy")
-
-/**
- * Result of [copy]
- */
-@ApiStatus.Internal
-private sealed class CopyError(override val cause: Throwable) : IOException() {
-  class InError(override val cause: Throwable) : CopyError(cause)
-  class OutError(override val cause: Throwable) : CopyError(cause)
-}
-
-@ApiStatus.Internal
-private enum class OnError {
-  /**
-   * Pretend to error happened, and try again after some time (simple backoff algorithm is used)
-   */
-  RETRY,
-
-  /**
-   * Return with error
-   */
-  EXIT
-}
-
-/**
- * TODO It is a copy-paste. After benchmarking, the original should be improved, and the copy-paste should be deleted.
- */
-@Throws(CopyError::class)
-@ApiStatus.Internal
-private suspend fun copy(
-  src: EelReceiveChannel,
-  dst: EelSendChannel,
-  bufferSize: Int = DEFAULT_BUFFER_SIZE,
-  // CPU-bound, but due to the mokk error can't be used in tests. Used default in prod.
-  dispatcher: CoroutineDispatcher = Dispatchers.Default,
-  onReadError: suspend (IOException) -> OnError = { OnError.EXIT },
-  onWriteError: suspend (IOException) -> OnError = { OnError.EXIT },
-): Unit = withContext(dispatcher) {
-  assert(bufferSize > 0)
-  var sendBackoff = backoff()
-  var receiveBackoff = backoff()
-
-  val pool =
-    if (src.prefersDirectBuffers || dst.prefersDirectBuffers) EelLowLevelObjectsPool.directByteBuffers
-    else EelLowLevelObjectsPool.fakeByteBufferPool
-  val buffer = pool.borrow()
-  try {
-    while (true) {
-      buffer.clear()
-      // read data
-      try {
-        val r = src.receive(buffer)
-        if (r == ReadResult.EOF) {
-          break
-        }
-        else {
-          receiveBackoff = backoff()
-        }
-      }
-      catch (error: IOException) {
-        when (onReadError(error)) {
-          OnError.RETRY -> {
-            delay(receiveBackoff.next())
-            continue
-          }
-          OnError.EXIT -> throw CopyError.InError(error)
-        }
-      }
-      buffer.flip()
-      do {
-        // write data
-        try {
-          dst.sendWholeBuffer(buffer)
-          sendBackoff = backoff()
-        }
-        catch (error: IOException) {
-          when (onWriteError(error)) {
-            OnError.RETRY -> {
-              delay(sendBackoff.next())
-              continue
-            }
-            OnError.EXIT -> throw CopyError.OutError(error)
-          }
-        }
-      }
-      while (buffer.hasRemaining())
-      ensureActive()
-    }
-  }
-  finally {
-    pool.returnBack(buffer)
-  }
-}
-
-
-// Slowly increase timeout
-private fun backoff(): Iterator<Duration> = ((200..1000 step 200).asSequence() + generateSequence(1000) { 1000 }).map { it.milliseconds }.iterator()

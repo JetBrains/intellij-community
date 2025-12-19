@@ -33,8 +33,6 @@ class EelTunnelsApiRunProxyOptsBuilder {
 
   private var onConnectionError: ((EelConnectionError) -> Unit)? = null
 
-  private var transferSpeed: EelTunnelsApiRunProxyOpts.TransferSpeed = EelTunnelsApiRunProxyOpts.TransferSpeed.MEMORY_EFFICIENT
-
   /**
    * For internal use inside Eel only.
    */
@@ -123,26 +121,6 @@ class EelTunnelsApiRunProxyOptsBuilder {
     this.onConnectionError = arg
   }
 
-  /**
-   * The variants of this function are likely to change.
-   */
-  @EelDelicateApi
-  fun transferSpeed(arg: EelTunnelsApiRunProxyOpts.TransferSpeed): EelTunnelsApiRunProxyOptsBuilder = apply {
-    this.transferSpeed = arg
-  }
-
-  fun memoryEfficient(): EelTunnelsApiRunProxyOptsBuilder =
-    transferSpeed(EelTunnelsApiRunProxyOpts.TransferSpeed.MEMORY_EFFICIENT)
-
-  /**
-   * This mode was supposed to work faster, but preliminary tests show that there's no significant difference in remote cases.
-   */
-  fun readAhead(): EelTunnelsApiRunProxyOptsBuilder =
-    transferSpeed(EelTunnelsApiRunProxyOpts.TransferSpeed.READ_AHEAD)
-
-  fun tmpCopyMode(): EelTunnelsApiRunProxyOptsBuilder =
-    transferSpeed(EelTunnelsApiRunProxyOpts.TransferSpeed.TMP_COPY_MODE)
-
   fun build(): EelTunnelsApiRunProxyOpts =
     EelTunnelsApiRunProxyOptsImpl(
       _acceptorInfo = _acceptorInfo,
@@ -154,7 +132,6 @@ class EelTunnelsApiRunProxyOptsBuilder {
       onConnection = onConnection,
       onConnectionClosed = onConnectionClosed,
       onConnectionError = onConnectionError,
-      transferSpeed = transferSpeed,
     )
 }
 
@@ -171,5 +148,4 @@ internal class EelTunnelsApiRunProxyOptsImpl(
   override val onConnection: ((Connection) -> Unit)?,
   override val onConnectionClosed: ((Connection) -> Unit)?,
   override val onConnectionError: ((EelConnectionError) -> Unit)?,
-  override val transferSpeed: EelTunnelsApiRunProxyOpts.TransferSpeed,
 ) : EelTunnelsApiRunProxyOpts
