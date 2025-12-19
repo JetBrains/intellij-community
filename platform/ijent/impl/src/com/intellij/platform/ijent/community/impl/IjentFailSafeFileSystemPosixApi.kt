@@ -174,6 +174,10 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     holder.withDelegateRetrying {
       streamingWrite(chunks, targetFileOpenOptions)
     }
+  override suspend fun streamingRead(path: EelPath): Flow<StreamingReadResult> =
+    holder.withDelegateRetrying {
+      streamingRead(path)
+    }
 
   override suspend fun listDirectory(
     path: EelPath,

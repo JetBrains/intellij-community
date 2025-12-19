@@ -37,7 +37,9 @@ object EelFsResultImpl {
     EelOpenedFile.CloseError.Other,
     EelOpenedFile.Writer.TruncateError.Other,
     EelFileSystemApi.WalkDirectoryError.Other,
-    EelFileSystemApi.StreamingWriteError.Other
+    EelFileSystemApi.StreamingWriteError.Other,
+    EelFileSystemApi.StreamingReadError.Other
+
 
   data class DoesNotExist(override val where: EelPath, override val message: String) :
     EelFileSystemApi.ChangeAttributesError.SourceDoesNotExist,
@@ -53,8 +55,9 @@ object EelFsResultImpl {
     EelFileSystemApi.MoveError.SourceDoesNotExist,
     EelFileSystemPosixApi.CreateSymbolicLinkError.DoesNotExist,
     EelFileSystemApi.DeleteError.DoesNotExist,
-    EelFileSystemApi.WalkDirectoryError.Other,
-    EelFileSystemApi.StreamingWriteError.DoesNotExist
+    EelFileSystemApi.WalkDirectoryError.DoesNotExist,
+    EelFileSystemApi.StreamingWriteError.DoesNotExist,
+    EelFileSystemApi.StreamingReadError.DoesNotExist
 
   data class AlreadyExists(override val where: EelPath, override val message: String) :
     EelFileSystemApi.FileReaderError.AlreadyExists,
@@ -78,7 +81,7 @@ object EelFsResultImpl {
     EelFileSystemApi.CopyError.PermissionDenied,
     EelFileSystemApi.MoveError.PermissionDenied,
     EelFileSystemPosixApi.CreateSymbolicLinkError.PermissionDenied,
-    EelFileSystemApi.WalkDirectoryError.Other,
+    EelFileSystemApi.WalkDirectoryError.PermissionDenied,
     EelFileSystemApi.StreamingWriteError.PermissionDenied
 
   data class NotDirectory(override val where: EelPath, override val message: String) :
@@ -104,7 +107,8 @@ object EelFsResultImpl {
     EelFileSystemApi.SameFileError.NotFile,
     EelFileSystemApi.StatError.NotFile,
     EelFileSystemApi.MoveError.TargetIsDirectory,
-    EelFileSystemApi.StreamingWriteError.NotFile
+    EelFileSystemApi.StreamingWriteError.NotFile,
+    EelFileSystemApi.StreamingReadError.NotFile
 
   data class InvalidValue(override val where: EelPath, override val message: String) :
     EelOpenedFile.Reader.ReadError.InvalidValue,

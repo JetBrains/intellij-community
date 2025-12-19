@@ -466,6 +466,21 @@ interface EelFileSystemApi {
   }
 
   /**
+   * Streaming read will read until the end of the file, otherwise there is an error.
+   * It is not guaranteed that each chunk is the same size.
+   * This method is highly preferable over [EelOpenedFile.Reader.read] when reading a lot of data from a remote file.
+   */
+  @CheckReturnValue
+  suspend fun streamingRead(path: EelPath): Flow<StreamingReadResult>
+
+  sealed interface StreamingReadError : EelFsError {
+    interface DoesNotExist : StreamingReadError, EelFsError.DoesNotExist
+    interface PermissionDenied : StreamingReadError, EelFsError.PermissionDenied
+    interface NotFile : StreamingReadError, EelFsError.NotFile
+    interface Other : StreamingReadError, EelFsError.Other
+  }
+
+  /**
    * Opens the file only for writing
    */
   @CheckReturnValue
