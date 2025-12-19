@@ -20,6 +20,7 @@ jvm_library(
     "//platform/core-api:core",
     "//jps/model-api:model",
     "//platform/lang-core",
+    "//libraries/compose-runtime-desktop",
     "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
     "//platform/platform-api:ide",

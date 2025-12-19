@@ -58,6 +58,7 @@ jvm_library(
     "//platform/jewel/foundation:foundation_test_lib",
     "@lib//:platform-jewel-markdown-extensions-autolink-commonmark-ext-autolink",
     "//libraries/compose-foundation-desktop",
+    "//libraries/junit4",
     "//libraries/compose-foundation-desktop-junit",
   ],
   plugins = ["@lib//:compose-plugin"]

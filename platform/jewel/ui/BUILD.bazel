@@ -42,6 +42,7 @@ jvm_library(
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
     "//libraries/compose-foundation-desktop",
+    "//libraries/compose-runtime-desktop",
   ],
   exports = [
     "//platform/jewel/foundation",
@@ -69,6 +70,8 @@ jvm_library(
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
     "//libraries/compose-foundation-desktop",
+    "//libraries/compose-runtime-desktop",
+    "//libraries/junit4",
     "//libraries/compose-foundation-desktop-junit",
   ],
   exports = [

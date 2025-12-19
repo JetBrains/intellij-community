@@ -34,6 +34,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/jewel/ui",
     "//libraries/compose-foundation-desktop",
+    "//libraries/compose-runtime-desktop",
     "//platform/jewel/foundation",
     "//libraries/jbr",
   ],

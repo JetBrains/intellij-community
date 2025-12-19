@@ -42,11 +42,14 @@ jvm_library(
     "//platform/jewel/ui:ui_test_lib",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
     "//libraries/compose-foundation-desktop",
+    "//libraries/junit4",
     "//libraries/compose-foundation-desktop-junit",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-test",
     "@lib//:kotlin-test-assertions-core-jvm",
     "@lib//:kotlin-test-junit",
+    "//libraries/compose-runtime-desktop",
+    "//libraries/kotlinx/coroutines/test",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

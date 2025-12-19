@@ -50,6 +50,7 @@ jvm_library(
     "//platform/lang-impl",
     "//uast/uast-common:uast",
     "//java/openapi:java",
+    "//libraries/skiko",
     "//java/debugger/impl",
     "//platform/ide-core-impl",
   ],

@@ -35,6 +35,7 @@ jvm_library(
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
     "//libraries/compose-foundation-desktop",
+    "//libraries/compose-runtime-desktop",
     "@lib//:platform-jewel-markdown-extensions-gfm_tables-commonmark-ext-gfm-tables",
   ],
   plugins = ["@lib//:compose-plugin"]

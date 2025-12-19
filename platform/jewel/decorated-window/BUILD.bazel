@@ -34,6 +34,7 @@ jvm_library(
     "//platform/jewel/ui",
     "//libraries/compose-foundation-desktop",
     "//platform/jewel/foundation",
+    "//libraries/compose-runtime-desktop",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
     "//libraries/jbr",
     "@lib//:jna",

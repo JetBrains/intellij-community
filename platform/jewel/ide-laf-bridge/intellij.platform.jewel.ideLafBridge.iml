@@ -41,6 +41,7 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" exported="" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="library" name="jna" level="project" />

@@ -37,6 +37,7 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.core" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" />
     <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmAlerts" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmTables" scope="PROVIDED" />

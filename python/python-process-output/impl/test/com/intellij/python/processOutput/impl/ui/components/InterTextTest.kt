@@ -4,11 +4,11 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.text.AnnotatedString
 import com.intellij.python.processOutput.impl.ProcessOutputTest
-import kotlin.test.Test
+import org.junit.Test
 
 internal class InterTextTest : ProcessOutputTest() {
     @Test
-    fun `string text is properly rendered`() = processOutputTest {
+    fun `string text is properly rendered`(): Unit = processOutputTest {
         scaffoldTestContent {
             InterText(text = DEFAULT_TEXT)
         }
@@ -18,7 +18,7 @@ internal class InterTextTest : ProcessOutputTest() {
     }
 
     @Test
-    fun `annotated string text is properly rendered`() = processOutputTest {
+    fun `annotated string text is properly rendered`(): Unit = processOutputTest {
         scaffoldTestContent {
             InterText(text = AnnotatedString(DEFAULT_TEXT))
         }

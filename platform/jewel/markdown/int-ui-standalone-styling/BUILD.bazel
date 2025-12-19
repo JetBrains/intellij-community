@@ -44,6 +44,7 @@ jvm_library(
     "//platform/jewel/markdown/core",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
+    "//libraries/compose-runtime-desktop",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
     "//libraries/compose-foundation-desktop",
     ":platform_jewel_markdown_extensions_gfm-alerts_provided",
