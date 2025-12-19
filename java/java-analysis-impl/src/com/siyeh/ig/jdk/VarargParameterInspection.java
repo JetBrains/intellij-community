@@ -111,7 +111,8 @@ public final class VarargParameterInspection extends BaseInspection {
       }
       PsiTypeElement typeElement = lastParameter.getTypeElement();
       assert typeElement != null;
-      new CommentTracker().replaceAndRestoreComments(typeElement, newTypeElement);
+      PsiElement result = new CommentTracker().replaceAndRestoreComments(typeElement, newTypeElement);
+      JavaCodeStyleManager.getInstance(method.getProject()).shortenClassReferences(result);
     }
 
     private static void modifyJavadoc(int indexOfFirstVarargArgument, @NotNull PsiElement reference) {

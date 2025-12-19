@@ -1,5 +1,7 @@
+import org.jetbrains.annotations.NotNull;
+
 class Test {
-  public void foo(final String[] a<caret>rg) {
+  public void foo(final String @NotNull [] a<caret>rg) {
   }
 
   {
