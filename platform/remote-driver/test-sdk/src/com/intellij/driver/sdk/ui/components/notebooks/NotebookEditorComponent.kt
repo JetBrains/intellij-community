@@ -164,11 +164,6 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     deleteCell.click()
   }
 
-  fun deleteCellByIndex(index: Int) {
-    notebookCellEditors[index].strictClick()
-    deleteCell.click()
-  }
-
   /**
    * Checks if there are exactly [expectedFinalExecutionCount] finished cells with green checkmark
    * in the current notebook editor.
