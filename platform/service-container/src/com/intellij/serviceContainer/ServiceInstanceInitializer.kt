@@ -79,7 +79,7 @@ internal open class ServiceDescriptorInstanceInitializer(
       return keyClass
     }
     else {
-      return doLoadClass(serviceDescriptor.implementation!!, pluginDescriptor)
+      return doLoadClass(serviceDescriptor.implementationClassName!!, pluginDescriptor)
     }
   }
 }
