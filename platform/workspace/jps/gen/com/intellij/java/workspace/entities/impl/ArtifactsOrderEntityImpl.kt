@@ -15,14 +15,12 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEntityData) : ArtifactsOrderEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEntityData) : ArtifactsOrderEntity,
+                                                                                            WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
-
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -43,8 +41,8 @@ internal class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEn
   }
 
 
-  internal class Builder(result: ArtifactsOrderEntityData?) : ModifiableWorkspaceEntityBase<ArtifactsOrderEntity, ArtifactsOrderEntityData>(
-    result), ArtifactsOrderEntity.Builder {
+  internal class Builder(result: ArtifactsOrderEntityData?) :
+    ModifiableWorkspaceEntityBase<ArtifactsOrderEntity, ArtifactsOrderEntityData>(result), ArtifactsOrderEntity.Builder {
     internal constructor() : this(ArtifactsOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -57,15 +55,13 @@ internal class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEn
           error("Entity ArtifactsOrderEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -108,7 +104,6 @@ internal class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEn
         changedProperty.add("entitySource")
 
       }
-
     private val orderOfArtifactsUpdater: (value: List<String>) -> Unit = { value ->
 
       changedProperty.add("orderOfArtifacts")
@@ -133,6 +128,7 @@ internal class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEn
 
     override fun getEntityClass(): Class<ArtifactsOrderEntity> = ArtifactsOrderEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -175,8 +171,7 @@ internal class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEnti
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return ArtifactsOrderEntity(orderOfArtifacts, entitySource) {
-    }
+    return ArtifactsOrderEntity(orderOfArtifacts, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
@@ -187,9 +182,7 @@ internal class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEnti
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ArtifactsOrderEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.orderOfArtifacts != other.orderOfArtifacts) return false
     return true
@@ -198,9 +191,7 @@ internal class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEnti
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ArtifactsOrderEntityData
-
     if (this.orderOfArtifacts != other.orderOfArtifacts) return false
     return true
   }

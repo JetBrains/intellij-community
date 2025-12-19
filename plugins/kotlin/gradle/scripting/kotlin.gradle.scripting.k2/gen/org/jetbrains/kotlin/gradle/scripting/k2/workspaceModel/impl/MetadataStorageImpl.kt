@@ -16,23 +16,35 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
     var typeMetadata: StorageTypeMetadata
 
-    typeMetadata = FinalClassMetadata.ObjectMetadata(
-      fqName = "org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.KotlinGradleScriptEntitySource", properties = listOf(
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl",
-                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true,
-                                                                                typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                  fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                            withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+    typeMetadata =
+      FinalClassMetadata.ObjectMetadata(fqName = "org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.KotlinGradleScriptEntitySource",
+                                        properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                                isKey = false,
+                                                                                isOpen = false,
+                                                                                name = "virtualFileUrl",
+                                                                                valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                  isNullable = true,
+                                                                                  typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                                withDefault = false)),
+                                        supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
 
     addMetadata(typeMetadata)
 
-    typeMetadata = FinalClassMetadata.ClassMetadata(
-      fqName = "org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntityId", properties = listOf(
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "id", valueType = primitiveTypeStringNotNullable,
-                            withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "presentableName",
-                            valueType = primitiveTypeStringNotNullable, withDefault = false)),
-      supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
+    typeMetadata =
+      FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntityId",
+                                       properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                               isKey = false,
+                                                                               isOpen = false,
+                                                                               name = "id",
+                                                                               valueType = primitiveTypeStringNotNullable,
+                                                                               withDefault = false),
+                                                           OwnPropertyMetadata(isComputable = false,
+                                                                               isKey = false,
+                                                                               isOpen = false,
+                                                                               name = "presentableName",
+                                                                               valueType = primitiveTypeStringNotNullable,
+                                                                               withDefault = false)),
+                                       supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
 
     addMetadata(typeMetadata)
 
@@ -40,96 +52,114 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                   entityDataFqName = "org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.impl.GradleScriptDefinitionEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
                                                       "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId"),
-                                  properties = listOf(
-                                    OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource",
-                                                        valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                            typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                              fqName = "com.intellij.platform.workspace.storage.EntitySource")),
-                                                        withDefault = false),
-                                    OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "definitionId",
-                                                        valueType = primitiveTypeStringNotNullable, withDefault = false),
-                                    OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false,
-                                                        name = "compilationConfiguration",
-                                                        valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                            typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                                              fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity",
-                                                                                                              properties = listOf(
-                                                                                                                OwnPropertyMetadata(
-                                                                                                                  isComputable = false,
-                                                                                                                  isKey = false,
-                                                                                                                  isOpen = false,
-                                                                                                                  name = "data",
-                                                                                                                  valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                                                    isNullable = false,
-                                                                                                                    typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                                      fqName = "kotlin.ByteArray")),
-                                                                                                                  withDefault = false)),
-                                                                                                              supertypes = listOf())),
-                                                        withDefault = false),
-                                    OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "hostConfiguration",
-                                                        valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                            typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                                              fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptingHostConfigurationEntity",
-                                                                                                              properties = listOf(
-                                                                                                                OwnPropertyMetadata(
-                                                                                                                  isComputable = false,
-                                                                                                                  isKey = false,
-                                                                                                                  isOpen = false,
-                                                                                                                  name = "data",
-                                                                                                                  valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                                                    isNullable = false,
-                                                                                                                    typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                                      fqName = "kotlin.ByteArray")),
-                                                                                                                  withDefault = false)),
-                                                                                                              supertypes = listOf())),
-                                                        withDefault = false),
-                                    OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false,
-                                                        name = "evaluationConfiguration",
-                                                        valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true,
-                                                                                                            typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                                              fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptEvaluationConfigurationEntity",
-                                                                                                              properties = listOf(
-                                                                                                                OwnPropertyMetadata(
-                                                                                                                  isComputable = false,
-                                                                                                                  isKey = false,
-                                                                                                                  isOpen = false,
-                                                                                                                  name = "data",
-                                                                                                                  valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                                                    isNullable = false,
-                                                                                                                    typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                                      fqName = "kotlin.ByteArray")),
-                                                                                                                  withDefault = false)),
-                                                                                                              supertypes = listOf())),
-                                                        withDefault = false),
-                                    OwnPropertyMetadata(isComputable = true, isKey = false, isOpen = false, name = "symbolicId",
-                                                        valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                            typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                                              fqName = "org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntityId",
-                                                                                                              properties = listOf(
-                                                                                                                OwnPropertyMetadata(
-                                                                                                                  isComputable = false,
-                                                                                                                  isKey = false,
-                                                                                                                  isOpen = false,
-                                                                                                                  name = "id",
-                                                                                                                  valueType = primitiveTypeStringNotNullable,
-                                                                                                                  withDefault = false),
-                                                                                                                OwnPropertyMetadata(
-                                                                                                                  isComputable = false,
-                                                                                                                  isKey = false,
-                                                                                                                  isOpen = false,
-                                                                                                                  name = "presentableName",
-                                                                                                                  valueType = primitiveTypeStringNotNullable,
-                                                                                                                  withDefault = false)),
-                                                                                                              supertypes = listOf(
-                                                                                                                "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
-                                                        withDefault = false)), extProperties = listOf(), isAbstract = false)
+                                  properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "entitySource",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "definitionId",
+                                                                          valueType = primitiveTypeStringNotNullable,
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "compilationConfiguration",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                                fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity",
+                                                                                                                                properties = listOf(
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "data",
+                                                                                                                                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                      isNullable = false,
+                                                                                                                                      typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                        fqName = "kotlin.ByteArray")),
+                                                                                                                                    withDefault = false)),
+                                                                                                                                supertypes = listOf())),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "hostConfiguration",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                                fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptingHostConfigurationEntity",
+                                                                                                                                properties = listOf(
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "data",
+                                                                                                                                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                      isNullable = false,
+                                                                                                                                      typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                        fqName = "kotlin.ByteArray")),
+                                                                                                                                    withDefault = false)),
+                                                                                                                                supertypes = listOf())),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "evaluationConfiguration",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true,
+                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                                fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptEvaluationConfigurationEntity",
+                                                                                                                                properties = listOf(
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "data",
+                                                                                                                                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                      isNullable = false,
+                                                                                                                                      typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                        fqName = "kotlin.ByteArray")),
+                                                                                                                                    withDefault = false)),
+                                                                                                                                supertypes = listOf())),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = true,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "symbolicId",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                                fqName = "org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntityId",
+                                                                                                                                properties = listOf(
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "id",
+                                                                                                                                    valueType = primitiveTypeStringNotNullable,
+                                                                                                                                    withDefault = false),
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "presentableName",
+                                                                                                                                    valueType = primitiveTypeStringNotNullable,
+                                                                                                                                    withDefault = false)),
+                                                                                                                                supertypes = listOf(
+                                                                                                                                  "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
+                                                                          withDefault = false)),
+                                  extProperties = listOf(),
+                                  isAbstract = false)
 
     addMetadata(typeMetadata)
   }
 
   override fun initializeMetadataHash() {
     addMetadataHash(typeFqn = "org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntity",
-                    metadataHash = 603888767)
+                    metadataHash = -493962653)
     addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity",
                     metadataHash = -1162660984)
     addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptingHostConfigurationEntity",
@@ -137,11 +167,10 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptEvaluationConfigurationEntity",
                     metadataHash = -362496579)
     addMetadataHash(typeFqn = "org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntityId",
-                    metadataHash = -1956757513)
+                    metadataHash = -922050183)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1287228111)
     addMetadataHash(typeFqn = "org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.KotlinGradleScriptEntitySource",
                     metadataHash = -532489477)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = 1136338439)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = -769470273)
   }
-
 }

@@ -21,23 +21,20 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class DirectoryCopyPackagingElementEntityImpl(private val dataSource: DirectoryCopyPackagingElementEntityData) : DirectoryCopyPackagingElementEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class DirectoryCopyPackagingElementEntityImpl(private val dataSource: DirectoryCopyPackagingElementEntityData) :
+  DirectoryCopyPackagingElementEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
                                                                                 PackagingElementEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
-
-    private val connections = listOf<ConnectionId>(
-      PARENTENTITY_CONNECTION_ID,
-    )
+                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
+                                                                                true)
+    private val connections = listOf<ConnectionId>(PARENTENTITY_CONNECTION_ID)
 
   }
 
   override val parentEntity: CompositePackagingElementEntity?
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
-
   override val filePath: VirtualFileUrl
     get() {
       readField("filePath")
@@ -55,8 +52,9 @@ internal class DirectoryCopyPackagingElementEntityImpl(private val dataSource: D
   }
 
 
-  internal class Builder(result: DirectoryCopyPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<DirectoryCopyPackagingElementEntity, DirectoryCopyPackagingElementEntityData>(
-    result), DirectoryCopyPackagingElementEntity.Builder {
+  internal class Builder(result: DirectoryCopyPackagingElementEntityData?) :
+    ModifiableWorkspaceEntityBase<DirectoryCopyPackagingElementEntity, DirectoryCopyPackagingElementEntityData>(result),
+    DirectoryCopyPackagingElementEntity.Builder {
     internal constructor() : this(DirectoryCopyPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -69,15 +67,13 @@ internal class DirectoryCopyPackagingElementEntityImpl(private val dataSource: D
           error("Entity DirectoryCopyPackagingElementEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -113,7 +109,6 @@ internal class DirectoryCopyPackagingElementEntityImpl(private val dataSource: D
         changedProperty.add("entitySource")
 
       }
-
     override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
       get() {
         val _diff = diff
@@ -133,25 +128,24 @@ internal class DirectoryCopyPackagingElementEntityImpl(private val dataSource: D
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          // Setting backref of the list
+// Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToAbstractManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
         }
         else {
-          // Setting backref of the list
+// Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
@@ -169,6 +163,7 @@ internal class DirectoryCopyPackagingElementEntityImpl(private val dataSource: D
 
     override fun getEntityClass(): Class<DirectoryCopyPackagingElementEntity> = DirectoryCopyPackagingElementEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -196,8 +191,7 @@ internal class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<Dir
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -206,7 +200,8 @@ internal class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<Dir
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return DirectoryCopyPackagingElementEntity(filePath, entitySource) {
-      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>>().singleOrNull()
+      this.parentEntity =
+        parents.filterIsInstance<CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>>().singleOrNull()
     }
   }
 
@@ -218,9 +213,7 @@ internal class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<Dir
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as DirectoryCopyPackagingElementEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.filePath != other.filePath) return false
     return true
@@ -229,9 +222,7 @@ internal class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<Dir
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as DirectoryCopyPackagingElementEntityData
-
     if (this.filePath != other.filePath) return false
     return true
   }

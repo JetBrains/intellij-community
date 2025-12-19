@@ -6,9 +6,9 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -25,9 +25,7 @@ internal class ExcludeUrlEntityImpl(private val dataSource: ExcludeUrlEntityData
 
   private companion object {
 
-
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -48,8 +46,8 @@ internal class ExcludeUrlEntityImpl(private val dataSource: ExcludeUrlEntityData
   }
 
 
-  internal class Builder(result: ExcludeUrlEntityData?) : ModifiableWorkspaceEntityBase<ExcludeUrlEntity, ExcludeUrlEntityData>(
-    result), ExcludeUrlEntity.Builder {
+  internal class Builder(result: ExcludeUrlEntityData?) : ModifiableWorkspaceEntityBase<ExcludeUrlEntity, ExcludeUrlEntityData>(result),
+                                                          ExcludeUrlEntity.Builder {
     internal constructor() : this(ExcludeUrlEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -62,16 +60,14 @@ internal class ExcludeUrlEntityImpl(private val dataSource: ExcludeUrlEntityData
           error("Entity ExcludeUrlEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
       index(this, "url", this.url)
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -107,7 +103,6 @@ internal class ExcludeUrlEntityImpl(private val dataSource: ExcludeUrlEntityData
         changedProperty.add("entitySource")
 
       }
-
     override var url: VirtualFileUrl
       get() = getEntityData().url
       set(value) {
@@ -120,6 +115,7 @@ internal class ExcludeUrlEntityImpl(private val dataSource: ExcludeUrlEntityData
 
     override fun getEntityClass(): Class<ExcludeUrlEntity> = ExcludeUrlEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -155,8 +151,7 @@ internal class ExcludeUrlEntityData : WorkspaceEntityData<ExcludeUrlEntity>() {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return ExcludeUrlEntity(url, entitySource) {
-    }
+    return ExcludeUrlEntity(url, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
@@ -167,9 +162,7 @@ internal class ExcludeUrlEntityData : WorkspaceEntityData<ExcludeUrlEntity>() {
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ExcludeUrlEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.url != other.url) return false
     return true
@@ -178,9 +171,7 @@ internal class ExcludeUrlEntityData : WorkspaceEntityData<ExcludeUrlEntity>() {
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ExcludeUrlEntityData
-
     if (this.url != other.url) return false
     return true
   }

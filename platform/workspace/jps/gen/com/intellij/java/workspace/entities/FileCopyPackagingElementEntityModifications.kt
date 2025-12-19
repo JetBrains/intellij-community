@@ -7,7 +7,8 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
-interface FileCopyPackagingElementEntityBuilder : WorkspaceEntityBuilder<FileCopyPackagingElementEntity>, FileOrDirectoryPackagingElementEntity.Builder<FileCopyPackagingElementEntity> {
+interface FileCopyPackagingElementEntityBuilder : WorkspaceEntityBuilder<FileCopyPackagingElementEntity>,
+                                                  FileOrDirectoryPackagingElementEntity.Builder<FileCopyPackagingElementEntity> {
   override var entitySource: EntitySource
   override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
   override var filePath: VirtualFileUrl

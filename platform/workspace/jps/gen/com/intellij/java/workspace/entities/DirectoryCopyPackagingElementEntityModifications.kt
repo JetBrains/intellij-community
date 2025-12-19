@@ -7,13 +7,15 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
-interface DirectoryCopyPackagingElementEntityBuilder : WorkspaceEntityBuilder<DirectoryCopyPackagingElementEntity>, FileOrDirectoryPackagingElementEntity.Builder<DirectoryCopyPackagingElementEntity> {
+interface DirectoryCopyPackagingElementEntityBuilder : WorkspaceEntityBuilder<DirectoryCopyPackagingElementEntity>,
+                                                       FileOrDirectoryPackagingElementEntity.Builder<DirectoryCopyPackagingElementEntity> {
   override var entitySource: EntitySource
   override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
   override var filePath: VirtualFileUrl
 }
 
-internal object DirectoryCopyPackagingElementEntityType : EntityType<DirectoryCopyPackagingElementEntity, DirectoryCopyPackagingElementEntityBuilder>() {
+internal object DirectoryCopyPackagingElementEntityType :
+  EntityType<DirectoryCopyPackagingElementEntity, DirectoryCopyPackagingElementEntityBuilder>() {
   override val entityClass: Class<DirectoryCopyPackagingElementEntity> get() = DirectoryCopyPackagingElementEntity::class.java
   operator fun invoke(
     filePath: VirtualFileUrl,

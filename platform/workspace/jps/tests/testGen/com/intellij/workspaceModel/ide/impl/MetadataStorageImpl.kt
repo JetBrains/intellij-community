@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -14,12 +14,17 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
     var typeMetadata: StorageTypeMetadata
 
-    typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.workspaceModel.ide.Source", properties = listOf(
-      OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl",
-                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true,
-                                                                              typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                          withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+    typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.workspaceModel.ide.Source",
+                                                     properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                                             isKey = false,
+                                                                                             isOpen = false,
+                                                                                             name = "virtualFileUrl",
+                                                                                             valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                               isNullable = true,
+                                                                                               typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                 fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                                             withDefault = false)),
+                                                     supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
 
     addMetadata(typeMetadata)
   }
@@ -28,5 +33,4 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -1468425945)
     addMetadataHash(typeFqn = "com.intellij.workspaceModel.ide.Source", metadataHash = 1093972899)
   }
-
 }

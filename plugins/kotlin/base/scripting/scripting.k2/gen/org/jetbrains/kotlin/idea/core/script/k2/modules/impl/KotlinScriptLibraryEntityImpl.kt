@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k2.modules.impl
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -19,14 +18,12 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntit
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScriptLibraryEntityData) : KotlinScriptLibraryEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScriptLibraryEntityData) : KotlinScriptLibraryEntity,
+                                                                                                      WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
-
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -37,7 +34,6 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
       readField("classes")
       return dataSource.classes
     }
-
   override val sources: List<VirtualFileUrl>
     get() {
       readField("sources")
@@ -55,8 +51,8 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
   }
 
 
-  internal class Builder(result: KotlinScriptLibraryEntityData?) : ModifiableWorkspaceEntityBase<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityData>(
-    result), KotlinScriptLibraryEntityBuilder {
+  internal class Builder(result: KotlinScriptLibraryEntityData?) :
+    ModifiableWorkspaceEntityBase<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityData>(result), KotlinScriptLibraryEntityBuilder {
     internal constructor() : this(KotlinScriptLibraryEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -69,17 +65,15 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
           error("Entity KotlinScriptLibraryEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
       index(this, "classes", this.classes)
       index(this, "sources", this.sources)
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -130,7 +124,6 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
         changedProperty.add("entitySource")
 
       }
-
     private val classesUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
       if (_diff != null) index(this, "classes", value)
@@ -153,7 +146,6 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
         getEntityData(true).classes = value
         classesUpdater.invoke(value)
       }
-
     private val sourcesUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
       if (_diff != null) index(this, "sources", value)
@@ -179,6 +171,7 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
 
     override fun getEntityClass(): Class<KotlinScriptLibraryEntity> = KotlinScriptLibraryEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -208,8 +201,7 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn(
-      "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity") as EntityMetadata
   }
 
   override fun clone(): KotlinScriptLibraryEntityData {
@@ -225,8 +217,7 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return KotlinScriptLibraryEntity(classes, sources, entitySource) {
-    }
+    return KotlinScriptLibraryEntity(classes, sources, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
@@ -237,9 +228,7 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as KotlinScriptLibraryEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.classes != other.classes) return false
     if (this.sources != other.sources) return false
@@ -249,9 +238,7 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as KotlinScriptLibraryEntityData
-
     if (this.classes != other.classes) return false
     if (this.sources != other.sources) return false
     return true

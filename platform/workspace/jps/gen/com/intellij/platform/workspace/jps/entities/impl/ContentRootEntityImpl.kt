@@ -31,18 +31,13 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityData) : ContentRootEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val SOURCEROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, SourceRootEntity::class.java,
-                                                                               ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val EXCLUDEDURLS_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, ExcludeUrlEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, true)
-
-    private val connections = listOf<ConnectionId>(
-      MODULE_CONNECTION_ID,
-      SOURCEROOTS_CONNECTION_ID,
-      EXCLUDEDURLS_CONNECTION_ID,
-    )
+    internal val MODULE_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val SOURCEROOTS_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ContentRootEntity::class.java, SourceRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val EXCLUDEDURLS_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ContentRootEntity::class.java, ExcludeUrlEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    private val connections = listOf<ConnectionId>(MODULE_CONNECTION_ID, SOURCEROOTS_CONNECTION_ID, EXCLUDEDURLS_CONNECTION_ID)
 
   }
 
@@ -51,19 +46,15 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
       readField("url")
       return dataSource.url
     }
-
   override val excludedPatterns: List<String>
     get() {
       readField("excludedPatterns")
       return dataSource.excludedPatterns
     }
-
   override val module: ModuleEntity
     get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
-
   override val sourceRoots: List<SourceRootEntity>
     get() = snapshot.extractOneToManyChildren<SourceRootEntity>(SOURCEROOTS_CONNECTION_ID, this)!!.toList()
-
   override val excludedUrls: List<ExcludeUrlEntity>
     get() = snapshot.extractOneToManyChildren<ExcludeUrlEntity>(EXCLUDEDURLS_CONNECTION_ID, this)!!.toList()
 
@@ -78,8 +69,8 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
   }
 
 
-  internal class Builder(result: ContentRootEntityData?) : ModifiableWorkspaceEntityBase<ContentRootEntity, ContentRootEntityData>(
-    result), ContentRootEntity.Builder {
+  internal class Builder(result: ContentRootEntityData?) : ModifiableWorkspaceEntityBase<ContentRootEntity, ContentRootEntityData>(result),
+                                                           ContentRootEntity.Builder {
     internal constructor() : this(ContentRootEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -92,16 +83,14 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
           error("Entity ContentRootEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
       index(this, "url", this.url)
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -127,7 +116,7 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
           error("Field ContentRootEntity#module should be initialized")
         }
       }
-      // Check initialization for list with ref type
+// Check initialization for list with ref type
       if (_diff != null) {
         if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(SOURCEROOTS_CONNECTION_ID, this) == null) {
           error("Field ContentRootEntity#sourceRoots should be initialized")
@@ -138,7 +127,7 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
           error("Field ContentRootEntity#sourceRoots should be initialized")
         }
       }
-      // Check initialization for list with ref type
+// Check initialization for list with ref type
       if (_diff != null) {
         if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(EXCLUDEDURLS_CONNECTION_ID, this) == null) {
           error("Field ContentRootEntity#excludedUrls should be initialized")
@@ -180,7 +169,6 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
         changedProperty.add("entitySource")
 
       }
-
     override var url: VirtualFileUrl
       get() = getEntityData().url
       set(value) {
@@ -190,7 +178,6 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
         val _diff = diff
         if (_diff != null) index(this, "url", value)
       }
-
     private val excludedPatternsUpdater: (value: List<String>) -> Unit = { value ->
 
       changedProperty.add("excludedPatterns")
@@ -212,7 +199,6 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
         getEntityData(true).excludedPatterns = value
         excludedPatternsUpdater.invoke(value)
       }
-
     override var module: ModuleEntityBuilder
       get() {
         val _diff = diff
@@ -229,25 +215,24 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          // Setting backref of the list
+// Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(MODULE_CONNECTION_ID, this, value)
         }
         else {
-          // Setting backref of the list
+// Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
@@ -257,31 +242,31 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
     var _sourceRoots: List<SourceRootEntity>? = emptyList()
     override var sourceRoots: List<SourceRootEntityBuilder>
       get() {
-        // Getter of the list of non-abstract referenced types
+// Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(SOURCEROOTS_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<SourceRootEntityBuilder>) +
-          (this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootEntityBuilder> ?: emptyList())
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(SOURCEROOTS_CONNECTION_ID, this)!!
+            .toList() as List<SourceRootEntityBuilder>) + (this.entityLinks[EntityLink(true,
+                                                                                       SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootEntityBuilder>
+                                                           ?: emptyList())
         }
         else {
           this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
-        // Setter of the list of non-abstract referenced types
+// Setter of the list of non-abstract referenced types
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
-              // Backref setup before adding to store
+// Backref setup before adding to store
               if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, SOURCEROOTS_CONNECTION_ID)] = this
               }
-              // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -292,9 +277,8 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, SOURCEROOTS_CONNECTION_ID)] = this
             }
-            // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           }
-
           this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] = value
         }
         changedProperty.add("sourceRoots")
@@ -304,31 +288,31 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
     var _excludedUrls: List<ExcludeUrlEntity>? = emptyList()
     override var excludedUrls: List<ExcludeUrlEntityBuilder>
       get() {
-        // Getter of the list of non-abstract referenced types
+// Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(EXCLUDEDURLS_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ExcludeUrlEntityBuilder>) +
-          (this.entityLinks[EntityLink(true, EXCLUDEDURLS_CONNECTION_ID)] as? List<ExcludeUrlEntityBuilder> ?: emptyList())
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(EXCLUDEDURLS_CONNECTION_ID, this)!!
+            .toList() as List<ExcludeUrlEntityBuilder>) + (this.entityLinks[EntityLink(true,
+                                                                                       EXCLUDEDURLS_CONNECTION_ID)] as? List<ExcludeUrlEntityBuilder>
+                                                           ?: emptyList())
         }
         else {
           this.entityLinks[EntityLink(true, EXCLUDEDURLS_CONNECTION_ID)] as? List<ExcludeUrlEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
-        // Setter of the list of non-abstract referenced types
+// Setter of the list of non-abstract referenced types
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
-              // Backref setup before adding to store
+// Backref setup before adding to store
               if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, EXCLUDEDURLS_CONNECTION_ID)] = this
               }
-              // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -339,9 +323,8 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, EXCLUDEDURLS_CONNECTION_ID)] = this
             }
-            // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           }
-
           this.entityLinks[EntityLink(true, EXCLUDEDURLS_CONNECTION_ID)] = value
         }
         changedProperty.add("excludedUrls")
@@ -349,6 +332,7 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
 
     override fun getEntityClass(): Class<ContentRootEntity> = ContentRootEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -407,9 +391,7 @@ internal class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ContentRootEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.url != other.url) return false
     if (this.excludedPatterns != other.excludedPatterns) return false
@@ -419,9 +401,7 @@ internal class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ContentRootEntityData
-
     if (this.url != other.url) return false
     if (this.excludedPatterns != other.excludedPatterns) return false
     return true
@@ -444,9 +424,7 @@ internal class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() 
   override fun equalsByKey(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ContentRootEntityData
-
     if (this.url != other.url) return false
     return true
   }

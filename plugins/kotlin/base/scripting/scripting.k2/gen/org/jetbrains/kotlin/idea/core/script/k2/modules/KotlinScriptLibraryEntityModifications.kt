@@ -3,7 +3,6 @@
 
 package org.jetbrains.kotlin.idea.core.script.k2.modules
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl

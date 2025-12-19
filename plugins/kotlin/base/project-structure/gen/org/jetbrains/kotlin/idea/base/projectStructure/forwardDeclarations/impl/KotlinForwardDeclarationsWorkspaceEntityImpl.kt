@@ -8,9 +8,9 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -31,17 +31,15 @@ import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.Kotli
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSource: KotlinForwardDeclarationsWorkspaceEntityData) : KotlinForwardDeclarationsWorkspaceEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSource: KotlinForwardDeclarationsWorkspaceEntityData) :
+  KotlinForwardDeclarationsWorkspaceEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
     internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java,
                                                                            KotlinForwardDeclarationsWorkspaceEntity::class.java,
-                                                                           ConnectionId.ConnectionType.ONE_TO_ONE, false)
-
-    private val connections = listOf<ConnectionId>(
-      LIBRARY_CONNECTION_ID,
-    )
+                                                                           ConnectionId.ConnectionType.ONE_TO_ONE,
+                                                                           false)
+    private val connections = listOf<ConnectionId>(LIBRARY_CONNECTION_ID)
 
   }
 
@@ -50,7 +48,6 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
       readField("forwardDeclarationRoots")
       return dataSource.forwardDeclarationRoots
     }
-
   override val library: LibraryEntity
     get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!
 
@@ -65,8 +62,9 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
   }
 
 
-  internal class Builder(result: KotlinForwardDeclarationsWorkspaceEntityData?) : ModifiableWorkspaceEntityBase<KotlinForwardDeclarationsWorkspaceEntity, KotlinForwardDeclarationsWorkspaceEntityData>(
-    result), KotlinForwardDeclarationsWorkspaceEntityBuilder {
+  internal class Builder(result: KotlinForwardDeclarationsWorkspaceEntityData?) :
+    ModifiableWorkspaceEntityBase<KotlinForwardDeclarationsWorkspaceEntity, KotlinForwardDeclarationsWorkspaceEntityData>(result),
+    KotlinForwardDeclarationsWorkspaceEntityBuilder {
     internal constructor() : this(KotlinForwardDeclarationsWorkspaceEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -79,16 +77,14 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
           error("Entity KotlinForwardDeclarationsWorkspaceEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
       index(this, "forwardDeclarationRoots", this.forwardDeclarationRoots)
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -128,7 +124,8 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as KotlinForwardDeclarationsWorkspaceEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.forwardDeclarationRoots != dataSource.forwardDeclarationRoots) this.forwardDeclarationRoots = dataSource.forwardDeclarationRoots.toMutableSet()
+      if (this.forwardDeclarationRoots != dataSource.forwardDeclarationRoots) this.forwardDeclarationRoots =
+        dataSource.forwardDeclarationRoots.toMutableSet()
       updateChildToParentReferences(parents)
     }
 
@@ -141,7 +138,6 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
         changedProperty.add("entitySource")
 
       }
-
     private val forwardDeclarationRootsUpdater: (value: Set<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
       if (_diff != null) index(this, "forwardDeclarationRoots", value)
@@ -164,7 +160,6 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
         getEntityData(true).forwardDeclarationRoots = value
         forwardDeclarationRootsUpdater.invoke(value)
       }
-
     override var library: LibraryEntityBuilder
       get() {
         val _diff = diff
@@ -184,7 +179,7 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -194,8 +189,7 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] = value
         }
         changedProperty.add("library")
@@ -203,6 +197,7 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
 
     override fun getEntityClass(): Class<KotlinForwardDeclarationsWorkspaceEntity> = KotlinForwardDeclarationsWorkspaceEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -230,8 +225,7 @@ internal class KotlinForwardDeclarationsWorkspaceEntityData : WorkspaceEntityDat
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn(
-      "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity") as EntityMetadata
   }
 
   override fun clone(): KotlinForwardDeclarationsWorkspaceEntityData {
@@ -260,9 +254,7 @@ internal class KotlinForwardDeclarationsWorkspaceEntityData : WorkspaceEntityDat
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as KotlinForwardDeclarationsWorkspaceEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.forwardDeclarationRoots != other.forwardDeclarationRoots) return false
     return true
@@ -271,9 +263,7 @@ internal class KotlinForwardDeclarationsWorkspaceEntityData : WorkspaceEntityDat
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as KotlinForwardDeclarationsWorkspaceEntityData
-
     if (this.forwardDeclarationRoots != other.forwardDeclarationRoots) return false
     return true
   }

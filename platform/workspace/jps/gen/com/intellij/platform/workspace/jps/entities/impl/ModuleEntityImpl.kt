@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:JvmName("ModuleEntityAndExtensions")
-
 package com.intellij.platform.workspace.jps.entities.impl
 
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
@@ -18,7 +16,15 @@ import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.jps.entities.ModuleTypeId
 import com.intellij.platform.workspace.jps.entities.SdkDependency
 import com.intellij.platform.workspace.jps.entities.SdkId
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.ConnectionId
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
@@ -40,15 +46,11 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CONTENTROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val FACETS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, false)
-
-    private val connections = listOf<ConnectionId>(
-      CONTENTROOTS_CONNECTION_ID,
-      FACETS_CONNECTION_ID,
-    )
+    internal val CONTENTROOTS_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val FACETS_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    private val connections = listOf<ConnectionId>(CONTENTROOTS_CONNECTION_ID, FACETS_CONNECTION_ID)
 
   }
 
@@ -59,22 +61,18 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
       readField("name")
       return dataSource.name
     }
-
   override val type: ModuleTypeId?
     get() {
       readField("type")
       return dataSource.type
     }
-
   override val dependencies: List<ModuleDependencyItem>
     get() {
       readField("dependencies")
       return dataSource.dependencies
     }
-
   override val contentRoots: List<ContentRootEntity>
     get() = snapshot.extractOneToManyChildren<ContentRootEntity>(CONTENTROOTS_CONNECTION_ID, this)!!.toList()
-
   override val facets: List<FacetEntity>
     get() = snapshot.extractOneToManyChildren<FacetEntity>(FACETS_CONNECTION_ID, this)!!.toList()
 
@@ -89,8 +87,8 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
   }
 
 
-  internal class Builder(result: ModuleEntityData?) : ModifiableWorkspaceEntityBase<ModuleEntity, ModuleEntityData>(
-    result), ModuleEntity.Builder {
+  internal class Builder(result: ModuleEntityData?) : ModifiableWorkspaceEntityBase<ModuleEntity, ModuleEntityData>(result),
+                                                      ModuleEntity.Builder {
     internal constructor() : this(ModuleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -103,15 +101,13 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
           error("Entity ModuleEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -127,7 +123,7 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
       if (!getEntityData().isDependenciesInitialized()) {
         error("Field ModuleEntity#dependencies should be initialized")
       }
-      // Check initialization for list with ref type
+// Check initialization for list with ref type
       if (_diff != null) {
         if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CONTENTROOTS_CONNECTION_ID, this) == null) {
           error("Field ModuleEntity#contentRoots should be initialized")
@@ -138,7 +134,7 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
           error("Field ModuleEntity#contentRoots should be initialized")
         }
       }
-      // Check initialization for list with ref type
+// Check initialization for list with ref type
       if (_diff != null) {
         if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(FACETS_CONNECTION_ID, this) == null) {
           error("Field ModuleEntity#facets should be initialized")
@@ -181,7 +177,6 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
         changedProperty.add("entitySource")
 
       }
-
     override var name: String
       get() = getEntityData().name
       set(value) {
@@ -189,7 +184,6 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
         getEntityData(true).name = value
         changedProperty.add("name")
       }
-
     override var type: ModuleTypeId?
       get() = getEntityData().type
       set(value) {
@@ -198,7 +192,6 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
         changedProperty.add("type")
 
       }
-
     private val dependenciesUpdater: (value: List<ModuleDependencyItem>) -> Unit = { value ->
 
       changedProperty.add("dependencies")
@@ -225,31 +218,31 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
     var _contentRoots: List<ContentRootEntity>? = emptyList()
     override var contentRoots: List<ContentRootEntityBuilder>
       get() {
-        // Getter of the list of non-abstract referenced types
+// Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CONTENTROOTS_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ContentRootEntityBuilder>) +
-          (this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntityBuilder> ?: emptyList())
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CONTENTROOTS_CONNECTION_ID, this)!!
+            .toList() as List<ContentRootEntityBuilder>) + (this.entityLinks[EntityLink(true,
+                                                                                        CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntityBuilder>
+                                                            ?: emptyList())
         }
         else {
           this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
-        // Setter of the list of non-abstract referenced types
+// Setter of the list of non-abstract referenced types
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
-              // Backref setup before adding to store
+// Backref setup before adding to store
               if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, CONTENTROOTS_CONNECTION_ID)] = this
               }
-              // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -260,9 +253,8 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CONTENTROOTS_CONNECTION_ID)] = this
             }
-            // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           }
-
           this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] = value
         }
         changedProperty.add("contentRoots")
@@ -272,31 +264,30 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
     var _facets: List<FacetEntity>? = emptyList()
     override var facets: List<FacetEntityBuilder>
       get() {
-        // Getter of the list of non-abstract referenced types
+// Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(FACETS_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<FacetEntityBuilder>) +
-          (this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetEntityBuilder> ?: emptyList())
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(FACETS_CONNECTION_ID, this)!!
+            .toList() as List<FacetEntityBuilder>) + (this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetEntityBuilder>
+                                                      ?: emptyList())
         }
         else {
           this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
-        // Setter of the list of non-abstract referenced types
+// Setter of the list of non-abstract referenced types
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
-              // Backref setup before adding to store
+// Backref setup before adding to store
               if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, FACETS_CONNECTION_ID)] = this
               }
-              // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -307,9 +298,8 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, FACETS_CONNECTION_ID)] = this
             }
-            // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           }
-
           this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] = value
         }
         changedProperty.add("facets")
@@ -317,6 +307,7 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
 
     override fun getEntityClass(): Class<ModuleEntity> = ModuleEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -371,7 +362,7 @@ internal class ModuleEntityData : WorkspaceEntityData<ModuleEntity>(), SoftLinka
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-    // TODO verify logic
+// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     for (item in dependencies) {
       when (item) {
@@ -518,9 +509,7 @@ internal class ModuleEntityData : WorkspaceEntityData<ModuleEntity>(), SoftLinka
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ModuleEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.name != other.name) return false
     if (this.type != other.type) return false
@@ -531,9 +520,7 @@ internal class ModuleEntityData : WorkspaceEntityData<ModuleEntity>(), SoftLinka
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ModuleEntityData
-
     if (this.name != other.name) return false
     if (this.type != other.type) return false
     if (this.dependencies != other.dependencies) return false

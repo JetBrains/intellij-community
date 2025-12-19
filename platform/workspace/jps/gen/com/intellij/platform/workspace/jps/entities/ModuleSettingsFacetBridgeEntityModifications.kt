@@ -15,7 +15,8 @@ interface ModuleSettingsFacetBridgeEntityBuilder<T : ModuleSettingsFacetBridgeEn
   var name: String
 }
 
-internal object ModuleSettingsFacetBridgeEntityType : EntityType<ModuleSettingsFacetBridgeEntity, ModuleSettingsFacetBridgeEntityBuilder<ModuleSettingsFacetBridgeEntity>>() {
+internal object ModuleSettingsFacetBridgeEntityType :
+  EntityType<ModuleSettingsFacetBridgeEntity, ModuleSettingsFacetBridgeEntityBuilder<ModuleSettingsFacetBridgeEntity>>() {
   override val entityClass: Class<ModuleSettingsFacetBridgeEntity> get() = ModuleSettingsFacetBridgeEntity::class.java
   operator fun invoke(
     moduleId: ModuleId,

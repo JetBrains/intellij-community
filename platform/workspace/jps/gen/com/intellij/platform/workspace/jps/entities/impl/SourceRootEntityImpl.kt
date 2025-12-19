@@ -24,12 +24,9 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 internal class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : SourceRootEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, SourceRootEntity::class.java,
-                                                                               ConnectionId.ConnectionType.ONE_TO_MANY, false)
-
-    private val connections = listOf<ConnectionId>(
-      CONTENTROOT_CONNECTION_ID,
-    )
+    internal val CONTENTROOT_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ContentRootEntity::class.java, SourceRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    private val connections = listOf<ConnectionId>(CONTENTROOT_CONNECTION_ID)
 
   }
 
@@ -38,13 +35,11 @@ internal class SourceRootEntityImpl(private val dataSource: SourceRootEntityData
       readField("url")
       return dataSource.url
     }
-
   override val rootTypeId: SourceRootTypeId
     get() {
       readField("rootTypeId")
       return dataSource.rootTypeId
     }
-
   override val contentRoot: ContentRootEntity
     get() = snapshot.extractOneToManyParent(CONTENTROOT_CONNECTION_ID, this)!!
 
@@ -59,8 +54,8 @@ internal class SourceRootEntityImpl(private val dataSource: SourceRootEntityData
   }
 
 
-  internal class Builder(result: SourceRootEntityData?) : ModifiableWorkspaceEntityBase<SourceRootEntity, SourceRootEntityData>(
-    result), SourceRootEntity.Builder {
+  internal class Builder(result: SourceRootEntityData?) : ModifiableWorkspaceEntityBase<SourceRootEntity, SourceRootEntityData>(result),
+                                                          SourceRootEntity.Builder {
     internal constructor() : this(SourceRootEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -73,16 +68,14 @@ internal class SourceRootEntityImpl(private val dataSource: SourceRootEntityData
           error("Entity SourceRootEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
       index(this, "url", this.url)
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -132,7 +125,6 @@ internal class SourceRootEntityImpl(private val dataSource: SourceRootEntityData
         changedProperty.add("entitySource")
 
       }
-
     override var url: VirtualFileUrl
       get() = getEntityData().url
       set(value) {
@@ -142,7 +134,6 @@ internal class SourceRootEntityImpl(private val dataSource: SourceRootEntityData
         val _diff = diff
         if (_diff != null) index(this, "url", value)
       }
-
     override var rootTypeId: SourceRootTypeId
       get() = getEntityData().rootTypeId
       set(value) {
@@ -151,7 +142,6 @@ internal class SourceRootEntityImpl(private val dataSource: SourceRootEntityData
         changedProperty.add("rootTypeId")
 
       }
-
     override var contentRoot: ContentRootEntityBuilder
       get() {
         val _diff = diff
@@ -168,25 +158,24 @@ internal class SourceRootEntityImpl(private val dataSource: SourceRootEntityData
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          // Setting backref of the list
+// Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = data
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(CONTENTROOT_CONNECTION_ID, this, value)
         }
         else {
-          // Setting backref of the list
+// Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = data
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = value
         }
         changedProperty.add("contentRoot")
@@ -194,6 +183,7 @@ internal class SourceRootEntityImpl(private val dataSource: SourceRootEntityData
 
     override fun getEntityClass(): Class<SourceRootEntity> = SourceRootEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -245,9 +235,7 @@ internal class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as SourceRootEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.url != other.url) return false
     if (this.rootTypeId != other.rootTypeId) return false
@@ -257,9 +245,7 @@ internal class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as SourceRootEntityData
-
     if (this.url != other.url) return false
     if (this.rootTypeId != other.rootTypeId) return false
     return true

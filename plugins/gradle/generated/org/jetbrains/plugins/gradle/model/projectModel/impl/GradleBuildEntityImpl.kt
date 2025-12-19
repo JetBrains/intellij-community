@@ -5,7 +5,6 @@ import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectE
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityBuilder
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
@@ -21,7 +20,6 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityBuilder
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId
@@ -34,16 +32,11 @@ import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityBuilde
 internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityData) : GradleBuildEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val EXTERNALPROJECT_CONNECTION_ID: ConnectionId = ConnectionId.create(ExternalProjectEntity::class.java,
-                                                                                   GradleBuildEntity::class.java,
-                                                                                   ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val PROJECTS_CONNECTION_ID: ConnectionId = ConnectionId.create(GradleBuildEntity::class.java, GradleProjectEntity::class.java,
-                                                                            ConnectionId.ConnectionType.ONE_TO_MANY, false)
-
-    private val connections = listOf<ConnectionId>(
-      EXTERNALPROJECT_CONNECTION_ID,
-      PROJECTS_CONNECTION_ID,
-    )
+    internal val EXTERNALPROJECT_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ExternalProjectEntity::class.java, GradleBuildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val PROJECTS_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(GradleBuildEntity::class.java, GradleProjectEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    private val connections = listOf<ConnectionId>(EXTERNALPROJECT_CONNECTION_ID, PROJECTS_CONNECTION_ID)
 
   }
 
@@ -51,25 +44,21 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
 
   override val externalProject: ExternalProjectEntity
     get() = snapshot.extractOneToManyParent(EXTERNALPROJECT_CONNECTION_ID, this)!!
-
   override val externalProjectId: ExternalProjectEntityId
     get() {
       readField("externalProjectId")
       return dataSource.externalProjectId
     }
-
   override val name: String
     get() {
       readField("name")
       return dataSource.name
     }
-
   override val url: VirtualFileUrl
     get() {
       readField("url")
       return dataSource.url
     }
-
   override val projects: List<GradleProjectEntity>
     get() = snapshot.extractOneToManyChildren<GradleProjectEntity>(PROJECTS_CONNECTION_ID, this)!!.toList()
 
@@ -84,8 +73,8 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
   }
 
 
-  internal class Builder(result: GradleBuildEntityData?) : ModifiableWorkspaceEntityBase<GradleBuildEntity, GradleBuildEntityData>(
-    result), GradleBuildEntityBuilder {
+  internal class Builder(result: GradleBuildEntityData?) : ModifiableWorkspaceEntityBase<GradleBuildEntity, GradleBuildEntityData>(result),
+                                                           GradleBuildEntityBuilder {
     internal constructor() : this(GradleBuildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -98,16 +87,14 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
           error("Entity GradleBuildEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
       index(this, "url", this.url)
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -136,7 +123,7 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
       if (!getEntityData().isUrlInitialized()) {
         error("Field GradleBuildEntity#url should be initialized")
       }
-      // Check initialization for list with ref type
+// Check initialization for list with ref type
       if (_diff != null) {
         if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(PROJECTS_CONNECTION_ID, this) == null) {
           error("Field GradleBuildEntity#projects should be initialized")
@@ -172,7 +159,6 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
         changedProperty.add("entitySource")
 
       }
-
     override var externalProject: ExternalProjectEntityBuilder
       get() {
         val _diff = diff
@@ -190,25 +176,24 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          // Setting backref of the list
+// Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, EXTERNALPROJECT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, EXTERNALPROJECT_CONNECTION_ID)] = data
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(EXTERNALPROJECT_CONNECTION_ID, this, value)
         }
         else {
-          // Setting backref of the list
+// Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, EXTERNALPROJECT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, EXTERNALPROJECT_CONNECTION_ID)] = data
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, EXTERNALPROJECT_CONNECTION_ID)] = value
         }
         changedProperty.add("externalProject")
@@ -222,7 +207,6 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
         changedProperty.add("externalProjectId")
 
       }
-
     override var name: String
       get() = getEntityData().name
       set(value) {
@@ -230,7 +214,6 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
         getEntityData(true).name = value
         changedProperty.add("name")
       }
-
     override var url: VirtualFileUrl
       get() = getEntityData().url
       set(value) {
@@ -245,31 +228,31 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
     var _projects: List<GradleProjectEntity>? = emptyList()
     override var projects: List<GradleProjectEntityBuilder>
       get() {
-        // Getter of the list of non-abstract referenced types
+// Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(PROJECTS_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<GradleProjectEntityBuilder>) +
-          (this.entityLinks[EntityLink(true, PROJECTS_CONNECTION_ID)] as? List<GradleProjectEntityBuilder> ?: emptyList())
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(PROJECTS_CONNECTION_ID, this)!!
+            .toList() as List<GradleProjectEntityBuilder>) + (this.entityLinks[EntityLink(true,
+                                                                                          PROJECTS_CONNECTION_ID)] as? List<GradleProjectEntityBuilder>
+                                                              ?: emptyList())
         }
         else {
           this.entityLinks[EntityLink(true, PROJECTS_CONNECTION_ID)] as? List<GradleProjectEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
-        // Setter of the list of non-abstract referenced types
+// Setter of the list of non-abstract referenced types
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
-              // Backref setup before adding to store
+// Backref setup before adding to store
               if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, PROJECTS_CONNECTION_ID)] = this
               }
-              // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -280,9 +263,8 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, PROJECTS_CONNECTION_ID)] = this
             }
-            // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           }
-
           this.entityLinks[EntityLink(true, PROJECTS_CONNECTION_ID)] = value
         }
         changedProperty.add("projects")
@@ -290,6 +272,7 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
 
     override fun getEntityClass(): Class<GradleBuildEntity> = GradleBuildEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -313,7 +296,7 @@ internal class GradleBuildEntityData : WorkspaceEntityData<GradleBuildEntity>(),
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-    // TODO verify logic
+// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val removedItem_externalProjectId = mutablePreviousSet.remove(externalProjectId)
     if (!removedItem_externalProjectId) {
@@ -380,9 +363,7 @@ internal class GradleBuildEntityData : WorkspaceEntityData<GradleBuildEntity>(),
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as GradleBuildEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.externalProjectId != other.externalProjectId) return false
     if (this.name != other.name) return false
@@ -393,9 +374,7 @@ internal class GradleBuildEntityData : WorkspaceEntityData<GradleBuildEntity>(),
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as GradleBuildEntityData
-
     if (this.externalProjectId != other.externalProjectId) return false
     if (this.name != other.name) return false
     if (this.url != other.url) return false

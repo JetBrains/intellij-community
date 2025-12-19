@@ -4,9 +4,7 @@
 package org.jetbrains.plugins.gradle.model.projectModel
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.ApiStatus
 
 @GeneratedCodeApiVersion(3)
 interface GradleProjectEntityBuilder : WorkspaceEntityBuilder<GradleProjectEntity> {

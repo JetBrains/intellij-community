@@ -12,159 +12,113 @@ import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal object MetadataStorageImpl : MetadataStorageBase() {
-    override fun initializeMetadata() {
-        val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
-        val primitiveTypeMapNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Map")
+  override fun initializeMetadata() {
+    val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
+    val primitiveTypeMapNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Map")
 
-        var typeMetadata: StorageTypeMetadata
+    var typeMetadata: StorageTypeMetadata
 
-        typeMetadata = FinalClassMetadata.ClassMetadata(
-            fqName = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlEntitySource",
-            properties = listOf(
-                OwnPropertyMetadata(
-                    isComputable = false,
-                    isKey = false,
-                    isOpen = false,
-                    name = "virtualFileUrl",
-                    valueType = ValueTypeMetadata.SimpleType.CustomType(
-                        isNullable = false,
-                        typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")
-                    ),
-                    withDefault = false
-                )
-            ),
-            supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource")
-        )
+    typeMetadata =
+      FinalClassMetadata.ClassMetadata(fqName = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlEntitySource",
+                                       properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                               isKey = false,
+                                                                               isOpen = false,
+                                                                               name = "virtualFileUrl",
+                                                                               valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                 isNullable = false,
+                                                                                 typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                               withDefault = false)),
+                                       supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
 
-        addMetadata(typeMetadata)
+    addMetadata(typeMetadata)
 
-        typeMetadata = EntityMetadata(
-            fqName = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntity",
-            entityDataFqName = "com.intellij.python.pyproject.model.internal.workspaceBridge.impl.PyProjectTomlWorkspaceEntityData",
-            supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
-            properties = listOf(
-                OwnPropertyMetadata(
-                    isComputable = false,
-                    isKey = false,
-                    isOpen = false,
-                    name = "entitySource",
-                    valueType = ValueTypeMetadata.SimpleType.CustomType(
-                        isNullable = false,
-                        typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")
-                    ),
-                    withDefault = false
-                ),
-                OwnPropertyMetadata(
-                    isComputable = false,
-                    isKey = false,
-                    isOpen = false,
-                    name = "participatedTools",
-                    valueType = ValueTypeMetadata.ParameterizedType(
-                        generics = listOf(
-                            ValueTypeMetadata.SimpleType.CustomType(
-                                isNullable = false,
-                                typeMetadata = FinalClassMetadata.ClassMetadata(
-                                    fqName = "com.intellij.python.common.tools.ToolId",
-                                    properties = listOf(
-                                        OwnPropertyMetadata(
-                                            isComputable = false,
-                                            isKey = false,
-                                            isOpen = false,
-                                            name = "id",
-                                            valueType = primitiveTypeStringNotNullable,
-                                            withDefault = false
-                                        )
-                                    ),
-                                    supertypes = listOf()
-                                )
-                            ),
-                            ValueTypeMetadata.SimpleType.CustomType(
-                                isNullable = true,
-                                typeMetadata = FinalClassMetadata.ClassMetadata(
-                                    fqName = "com.intellij.platform.workspace.jps.entities.ModuleId",
-                                    properties = listOf(
-                                        OwnPropertyMetadata(
-                                            isComputable = false,
-                                            isKey = false,
-                                            isOpen = false,
-                                            name = "name",
-                                            valueType = primitiveTypeStringNotNullable,
-                                            withDefault = false
-                                        ),
-                                        OwnPropertyMetadata(
-                                            isComputable = false,
-                                            isKey = false,
-                                            isOpen = false,
-                                            name = "presentableName",
-                                            valueType = primitiveTypeStringNotNullable,
-                                            withDefault = false
-                                        )
-                                    ),
-                                    supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
-                                )
-                            )
-                        ), primitive = primitiveTypeMapNotNullable
-                    ),
-                    withDefault = false
-                ),
-                OwnPropertyMetadata(
-                    isComputable = false,
-                    isKey = false,
-                    isOpen = false,
-                    name = "dirWithToml",
-                    valueType = ValueTypeMetadata.SimpleType.CustomType(
-                        isNullable = false,
-                        typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")
-                    ),
-                    withDefault = false
-                ),
-                OwnPropertyMetadata(
-                    isComputable = false,
-                    isKey = false,
-                    isOpen = false,
-                    name = "module",
-                    valueType = ValueTypeMetadata.EntityReference(
-                        connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
-                        entityFqName = "com.intellij.platform.workspace.jps.entities.ModuleEntity",
-                        isChild = false,
-                        isNullable = false
-                    ),
-                    withDefault = false
-                )
-            ),
-            extProperties = listOf(
-                ExtPropertyMetadata(
-                    isComputable = false,
-                    isOpen = false,
-                    name = "pyProjectTomlEntity",
-                    receiverFqn = "com.intellij.platform.workspace.jps.entities.ModuleEntity",
-                    valueType = ValueTypeMetadata.EntityReference(
-                        connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
-                        entityFqName = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntity",
-                        isChild = true,
-                        isNullable = true
-                    ),
-                    withDefault = false
-                )
-            ),
-            isAbstract = false
-        )
+    typeMetadata = EntityMetadata(fqName = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntity",
+                                  entityDataFqName = "com.intellij.python.pyproject.model.internal.workspaceBridge.impl.PyProjectTomlWorkspaceEntityData",
+                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
+                                  properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "entitySource",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "participatedTools",
+                                                                          valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
+                                                                            ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                    typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                      fqName = "com.intellij.python.common.tools.ToolId",
+                                                                                                                      properties = listOf(
+                                                                                                                        OwnPropertyMetadata(
+                                                                                                                          isComputable = false,
+                                                                                                                          isKey = false,
+                                                                                                                          isOpen = false,
+                                                                                                                          name = "id",
+                                                                                                                          valueType = primitiveTypeStringNotNullable,
+                                                                                                                          withDefault = false)),
+                                                                                                                      supertypes = listOf())),
+                                                                            ValueTypeMetadata.SimpleType.CustomType(isNullable = true,
+                                                                                                                    typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                      fqName = "com.intellij.platform.workspace.jps.entities.ModuleId",
+                                                                                                                      properties = listOf(
+                                                                                                                        OwnPropertyMetadata(
+                                                                                                                          isComputable = false,
+                                                                                                                          isKey = false,
+                                                                                                                          isOpen = false,
+                                                                                                                          name = "name",
+                                                                                                                          valueType = primitiveTypeStringNotNullable,
+                                                                                                                          withDefault = false),
+                                                                                                                        OwnPropertyMetadata(
+                                                                                                                          isComputable = false,
+                                                                                                                          isKey = false,
+                                                                                                                          isOpen = false,
+                                                                                                                          name = "presentableName",
+                                                                                                                          valueType = primitiveTypeStringNotNullable,
+                                                                                                                          withDefault = false)),
+                                                                                                                      supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")))),
+                                                                                                                          primitive = primitiveTypeMapNotNullable),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "dirWithToml",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "module",
+                                                                          valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
+                                                                                                                        entityFqName = "com.intellij.platform.workspace.jps.entities.ModuleEntity",
+                                                                                                                        isChild = false,
+                                                                                                                        isNullable = false),
+                                                                          withDefault = false)),
+                                  extProperties = listOf(ExtPropertyMetadata(isComputable = false,
+                                                                             isOpen = false,
+                                                                             name = "pyProjectTomlEntity",
+                                                                             receiverFqn = "com.intellij.platform.workspace.jps.entities.ModuleEntity",
+                                                                             valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
+                                                                                                                           entityFqName = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntity",
+                                                                                                                           isChild = true,
+                                                                                                                           isNullable = true),
+                                                                             withDefault = false)),
+                                  isAbstract = false)
 
-        addMetadata(typeMetadata)
-    }
+    addMetadata(typeMetadata)
+  }
 
-    override fun initializeMetadataHash() {
-        addMetadataHash(
-            typeFqn = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntity",
-            metadataHash = 86695699
-        )
-        addMetadataHash(typeFqn = "com.intellij.python.common.tools.ToolId", metadataHash = -1193602517)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleId", metadataHash = 369441961)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -298354504)
-        addMetadataHash(
-            typeFqn = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlEntitySource",
-            metadataHash = -732970766
-        )
-    }
-
+  override fun initializeMetadataHash() {
+    addMetadataHash(typeFqn = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntity",
+                    metadataHash = 86695699)
+    addMetadataHash(typeFqn = "com.intellij.python.common.tools.ToolId", metadataHash = -1193602517)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleId", metadataHash = 369441961)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -298354504)
+    addMetadataHash(typeFqn = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlEntitySource",
+                    metadataHash = -732970766)
+  }
 }
