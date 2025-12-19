@@ -31,7 +31,7 @@ import java.util.function.Predicate;
 public final class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, ClassInheritorsSearch.SearchParameters> {
   @Override
   public void processQuery(@NotNull ClassInheritorsSearch.SearchParameters parameters, @NotNull Processor<? super PsiClass> consumer) {
-    final PsiClass baseClass = parameters.getClassToProcess();
+    PsiClass baseClass = parameters.getClassToProcess();
     assert parameters.isCheckDeep();
     assert parameters.isCheckInheritance();
 
@@ -54,12 +54,14 @@ public final class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClas
     }
   }
 
-  private static void processInheritors(final @NotNull ClassInheritorsSearch.SearchParameters parameters,
-                                        final @NotNull Processor<? super PsiClass> consumer) {
-    final @NotNull PsiClass baseClass = parameters.getClassToProcess();
-    if (baseClass instanceof PsiAnonymousClass || isFinal(baseClass)) return;
+  private static void processInheritors(@NotNull ClassInheritorsSearch.SearchParameters parameters,
+                                        @NotNull Processor<? super PsiClass> consumer) {
+    PsiClass baseClass = parameters.getClassToProcess();
+    if (isFinal(baseClass)) {
+      return;
+    }
 
-    final SearchScope searchScope = parameters.getScope();
+    SearchScope searchScope = parameters.getScope();
     Project project = PsiUtilCore.getProjectInReadAction(baseClass);
     if (isJavaLangObject(baseClass)) {
       AllClassesSearch.search(searchScope, project, parameters.getNameCondition()).allowParallelProcessing().forEach(aClass -> {
@@ -68,8 +70,8 @@ public final class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClas
       });
       return;
     }
-    if (searchScope instanceof LocalSearchScope && JavaOverridingMethodsSearcher.isJavaOnlyScope(((LocalSearchScope)searchScope).getVirtualFiles())) {
-      processLocalScope(project, parameters, (LocalSearchScope)searchScope, baseClass, consumer);
+    if (searchScope instanceof LocalSearchScope local && JavaOverridingMethodsSearcher.isJavaOnlyScope(local.getVirtualFiles())) {
+      processLocalScope(project, parameters, local, baseClass, consumer);
       return;
     }
 
@@ -81,7 +83,7 @@ public final class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClas
 
     Iterable<PsiClass> cached = getOrComputeSubClasses(project, baseClass, searchScope, parameters);
 
-    for (final PsiClass subClass : cached) {
+    for (PsiClass subClass : cached) {
       ProgressManager.checkCanceled();
       if (subClass == null) {
         // PsiAnchor failed to retrieve?
@@ -107,8 +109,7 @@ public final class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClas
       // returns lazy collection of subclasses. Each call to next() leads to calculation of next batch of subclasses.
       Function<@NotNull PsiAnchor, @NotNull PsiClass> converter =
         anchor -> ReadAction.compute(() -> (@NotNull PsiClass)anchor.retrieve());
-      Predicate<PsiClass> applicableFilter =
-        candidate -> !(candidate instanceof PsiAnonymousClass) && candidate != null && !candidate.hasModifierProperty(PsiModifier.FINAL);
+      Predicate<PsiClass> applicableFilter = candidate -> candidate != null && !candidate.hasModifierProperty(PsiModifier.FINAL);
       // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
       boolean isPhysical = ReadAction.compute(baseClass::isPhysical);
       SearchScope scopeToUse = isPhysical ? GlobalSearchScope.allScope(project) : searchScopeForNonPhysical;
@@ -141,8 +142,8 @@ public final class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClas
     return cached;
   }
 
-  private static void processLocalScope(final @NotNull Project project,
-                                        final @NotNull ClassInheritorsSearch.SearchParameters parameters,
+  private static void processLocalScope(@NotNull Project project,
+                                        @NotNull ClassInheritorsSearch.SearchParameters parameters,
                                         @NotNull LocalSearchScope searchScope,
                                         @NotNull PsiClass baseClass,
                                         @NotNull Processor<? super PsiClass> consumer) {
@@ -150,10 +151,10 @@ public final class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClas
     // instead of traversing the (potentially huge) class hierarchy and filter out almost everything by scope.
     VirtualFile[] virtualFiles = searchScope.getVirtualFiles();
 
-    final boolean[] success = {true};
+    boolean[] success = {true};
     if (virtualFiles.length == 0) {
       for (PsiElement element : searchScope.getScope()) {
-        processFile(element.getContainingFile(), consumer, parameters, baseClass, success);
+        processFile(element.getContainingFile(), parameters, baseClass, success, consumer);
       }
     }
     for (VirtualFile virtualFile : virtualFiles) {
@@ -161,16 +162,17 @@ public final class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClas
       ApplicationManager.getApplication().runReadAction(() -> {
         PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
         if (psiFile != null) {
-          processFile(psiFile, consumer, parameters, baseClass, success);
+          processFile(psiFile, parameters, baseClass, success, consumer);
         }
       });
     }
   }
 
-  private static void processFile(PsiFile psiFile,
-                                  final Processor<? super PsiClass> consumer,
-                                  final ClassInheritorsSearch.@NotNull SearchParameters parameters,
-                                  final @NotNull PsiClass baseClass, final boolean[] success) {
+  private static void processFile(@NotNull PsiFile psiFile,
+                                  @NotNull ClassInheritorsSearch.SearchParameters parameters,
+                                  @NotNull PsiClass baseClass,
+                                  boolean @NotNull [] success,
+                                  @NotNull Processor<? super PsiClass> consumer) {
     psiFile.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitClass(@NotNull PsiClass candidate) {
@@ -202,11 +204,11 @@ public final class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClas
     return name != null && parameters.getNameCondition().value(name);
   }
 
-  static boolean isJavaLangObject(final @NotNull PsiClass baseClass) {
+  static boolean isJavaLangObject(@NotNull PsiClass baseClass) {
     return ReadAction.compute(() -> baseClass.isValid() && CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName()));
   }
 
-  private static boolean isFinal(final @NotNull PsiClass baseClass) {
+  private static boolean isFinal(@NotNull PsiClass baseClass) {
     return ReadAction.compute(() -> baseClass.hasModifierProperty(PsiModifier.FINAL));
   }
 }
