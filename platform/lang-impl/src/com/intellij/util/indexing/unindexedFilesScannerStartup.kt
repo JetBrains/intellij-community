@@ -110,6 +110,7 @@ internal fun invalidateProjectFilterIfFirstScanningNotRequested(project: Project
       false
     }
     else {
+      LOG.info("First scanning is not yet requested (project=${project.name}), current scanning request will be ignored and full scanning on startup will be performed instead.")
       setProjectFilterIsInvalidated(project, true)
       true
     }

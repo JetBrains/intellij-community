@@ -77,7 +77,6 @@ class ProjectEntityIndexingService(
     if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) return
     if (FileBasedIndex.getInstance() !is FileBasedIndexImpl) return
     if (LightEdit.owns(project)) return
-    if (invalidateProjectFilterIfFirstScanningNotRequested(project)) return
 
     if (ModalityState.defaultModalityState() === ModalityState.any()) {
       LOG.error("Unexpected modality: should not be ANY. Replace with NON_MODAL (130820241337)")
@@ -88,6 +87,8 @@ class ProjectEntityIndexingService(
       val removedIndexableFileSets = event.removedFileSets.filter { it.kind.isIndexable }
 
       if (registeredIndexableFileSets.isNotEmpty() || removedIndexableFileSets.isNotEmpty()) {
+        if (invalidateProjectFilterIfFirstScanningNotRequested(project)) return
+
         val event  = WorkspaceFileIndexChangedEvent(
           removedFileSets = removedIndexableFileSets,
           registeredFileSets = registeredIndexableFileSets,
