@@ -110,12 +110,9 @@ var ModuleEntity.Builder.testProperties: TestModulePropertiesEntity.Builder?
 //endregion
 
 
-@get:Internal
 val ModuleEntity.sdkId: SdkId?
   get() = dependencies.sdk?.sdk
 
-@get:Internal
-@set:Internal
 var ModuleEntityBuilder.sdkId: SdkId?
   get() = dependencies.sdk?.sdk
   set(newSdkId) {

@@ -1156,8 +1156,11 @@ f:com.intellij.platform.workspace.jps.entities.ModuleEntity$Companion
 - f:create(java.lang.String,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder
 - bs:create$default(com.intellij.platform.workspace.jps.entities.ModuleEntity$Companion,java.lang.String,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder
 f:com.intellij.platform.workspace.jps.entities.ModuleEntityAndExtensions
+- sf:getSdkId(com.intellij.platform.workspace.jps.entities.ModuleEntity):com.intellij.platform.workspace.jps.entities.SdkId
+- sf:getSdkId(com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder):com.intellij.platform.workspace.jps.entities.SdkId
 - sf:getSourceRoots(com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder):java.util.List
 - sf:modifyModuleEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ModuleEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ModuleEntity
+- sf:setSdkId(com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder,com.intellij.platform.workspace.jps.entities.SdkId):V
 - sf:setSourceRoots(com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder,java.util.List):V
 com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 - com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
