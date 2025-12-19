@@ -100,14 +100,14 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
         val callableInfos = notEmptyCallableInfos() ?: return ""
         val callableInfo = callableInfos.first()
         val receiverTypeInfo = callableInfo.receiverTypeInfo
-        val renderedCallablesByKind = callableInfos.groupBy({ it.kind }, valueTransform = {
+        val renderedCallablesByKind = callableInfos.groupBy({ it.kind }, valueTransform = { info ->
             buildString {
-                if (it.name.isNotEmpty()) {
+                if (info.name.isNotEmpty()) {
                     val receiverType = if (!receiverTypeInfo.isOfThis) {
                         CallableBuilderConfiguration(callableInfos, element, isExtension = isExtension)
                             .createBuilder()
                             .computeTypeCandidates(receiverTypeInfo)
-                            .firstOrNull { candidate -> if (it.isAbstract) candidate.theType.isAbstract() else true }
+                            .firstOrNull { candidate -> if (info.isAbstract) candidate.theType.isAbstract() else true }
                             ?.theType
                     } else null
 
@@ -128,7 +128,7 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                         }
                     }
 
-                    append(it.name)
+                    append(info.name)
                 }
             }
         })
@@ -294,13 +294,13 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
 
         val popupTitle = KotlinBundle.message("choose.target.class.or.interface")
         val receiverTypeInfo = callableInfo.receiverTypeInfo
-        val receiverTypeCandidates = callableBuilder.computeTypeCandidates(receiverTypeInfo).let {
+        val receiverTypeCandidates = callableBuilder.computeTypeCandidates(receiverTypeInfo).let { typeCandidates ->
             if (callableInfo.isAbstract)
-                it.filter { it.theType.isAbstract() }
+                typeCandidates.filter { it.theType.isAbstract() }
             else if (!isExtension && receiverTypeInfo != TypeInfo.Empty)
-                it.filter { !it.theType.isTypeParameter() }
+                typeCandidates.filter { !it.theType.isTypeParameter() }
             else
-                it
+                typeCandidates
         }
         if (receiverTypeCandidates.isNotEmpty()) {
             val staticContextRequired = receiverTypeInfo.staticContextRequired
