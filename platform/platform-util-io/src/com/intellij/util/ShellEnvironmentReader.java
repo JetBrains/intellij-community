@@ -201,13 +201,6 @@ public final class ShellEnvironmentReader {
     return cp;
   }
 
-  private static String readString(Path path) throws IOException {
-    // this is a workaround for CPP-47852 because `readString` throws exception on
-    // on malformed input, while new String() does not for incomplete UTF-8 sequence
-
-    // noinspection ReadWriteStringCanBeUsed
-    return new String(Files.readAllBytes(path), Charset.defaultCharset());
-  }
   /**
    * Runs the given command.
    * Returns loaded environment and the command output (stdout/stderr combined).
@@ -218,8 +211,10 @@ public final class ShellEnvironmentReader {
   ) throws IOException {
     if (timeoutMillis <= 0) timeoutMillis = DEFAULT_TIMEOUT_MILLIS;
 
-    var dataFile = Files.createTempFile("ij-shell-env-data.", ".tmp");
-    var logFile = Files.createTempFile("ij-shell-env-log.", ".tmp");
+    var tmpDir = Files.createDirectories(Path.of(System.getProperty("java.io.tmpdir")));
+    var mark = ProcessHandle.current().pid() + "." + System.nanoTime();
+    var dataFile = tmpDir.resolve("ij-shell-env-data." + mark + ".tmp");
+    var logFile = tmpDir.resolve("ij-shell-env-log." + mark + ".tmp");
 
     try {
       var args = command.command();
@@ -243,8 +238,8 @@ public final class ShellEnvironmentReader {
         .start();
       int exitCode = waitAndTerminateAfter(process, timeoutMillis);
 
-      var envData = readString(dataFile);
-      var log = Files.exists(logFile) ? readString(logFile) : "(no log file)";
+      var envData = Files.exists(dataFile) ? Files.readString(dataFile) : "";
+      var log = Files.exists(logFile) ? readLogFile(logFile) : "(no log file)";
       if (exitCode != 0 || envData.isEmpty()) {
         if (!log.isEmpty()) {
           LOG.info("stdout/stderr: " + log);
@@ -263,6 +258,17 @@ public final class ShellEnvironmentReader {
     finally {
       deleteTempFile(logFile);
       deleteTempFile(dataFile);
+    }
+  }
+
+  @SuppressWarnings("ReadWriteStringCanBeUsed")
+  private static String readLogFile(Path path) {
+    try {
+      // `new String(...)` better survives malformed UTF-8 input that `Files.readString(...)`
+      return new String(Files.readAllBytes(path), Charset.defaultCharset());
+    }
+    catch (IOException e) {
+      return "(error: " + e.getClass().getName()+ ": " + e.getMessage() + ")";
     }
   }
 
