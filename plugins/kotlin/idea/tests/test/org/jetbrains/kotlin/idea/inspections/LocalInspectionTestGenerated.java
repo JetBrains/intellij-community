@@ -1732,6 +1732,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
                 runTest("testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceDisjointHierarchy.kt");
             }
 
+            @TestMetadata("filterIsInstanceForMapNotNull.kt")
+            public void testFilterIsInstanceForMapNotNull() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceForMapNotNull.kt");
+            }
+
             @TestMetadata("filterIsInstanceReceiver.kt")
             public void testFilterIsInstanceReceiver() throws Exception {
                 runTest("testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceReceiver.kt");

@@ -12727,6 +12727,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceDisjointHierarchy.kt");
         }
 
+        @TestMetadata("filterIsInstanceForMapNotNull.kt")
+        public void testFilterIsInstanceForMapNotNull() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceForMapNotNull.kt");
+        }
+
         @TestMetadata("filterIsInstanceReceiver.kt")
         public void testFilterIsInstanceReceiver() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceReceiver.kt");

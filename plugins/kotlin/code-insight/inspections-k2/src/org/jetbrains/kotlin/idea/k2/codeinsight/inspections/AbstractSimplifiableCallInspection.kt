@@ -101,6 +101,23 @@ internal abstract class AbstractSimplifiableCallInspection : KotlinApplicableIns
         override fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean = !resolvedCall.isCalledOnMapExtensionReceiver
     }
 
+    protected class MapNotNullToFilterIsInstanceConversion(
+        targetFqName: FqName = FqName("kotlin.collections.mapNotNull"),
+        replacementFqName: FqName = StandardKotlinNames.Collections.filterIsInstance,
+    ) : Conversion(targetFqName, replacementFqName) {
+        context(_: KaSession)
+        override fun analyze(callExpression: KtCallExpression): String? {
+            val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
+            val statement = lambdaExpression.singleStatementOrNull() ?: return null
+            if (statement !is KtBinaryExpressionWithTypeRHS) return null
+            val rightTypeReference = statement.right ?: return null
+            return "filterIsInstance<${rightTypeReference.text}>()"
+        }
+
+        context(_: KaSession)
+        override fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean = !resolvedCall.isCalledOnMapExtensionReceiver
+    }
+
     protected class FilterToFilterIsInstanceConversion(
         targetFqName: FqName = StandardKotlinNames.Collections.filter,
         replacementFqName: FqName = StandardKotlinNames.Collections.filterIsInstance,
