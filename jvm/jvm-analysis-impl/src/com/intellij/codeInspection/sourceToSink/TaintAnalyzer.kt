@@ -200,8 +200,12 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         fromExpressionWithoutCollection(uForEachExpression.iteratedValue, analyzeContext)
       }
     }
-    var taintValue: TaintValue = myTaintValueFactory.fromElement(sourceTarget, getClazzFromReceiver(expression)) ?: TaintValue.UNKNOWN
+    val psiType = getTypeFromReceiver(expression)
+    if (psiType != null && skipClass(psiType)) return TaintValue.UNTAINTED
+    var taintValue: TaintValue =
+      myTaintValueFactory.fromElement(sourceTarget, PsiUtil.resolveClassInClassTypeOnly(psiType)) ?: TaintValue.UNKNOWN
     if (taintValue != TaintValue.UNKNOWN) return taintValue
+
     val value = checkAndPrepareVisited(expression)
     if (value != null) return value
     taintValue = fromModifierListOwner(sourceTarget, expression, analyzeContext) ?: TaintValue.UNKNOWN
@@ -209,8 +213,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     return taintValue
   }
 
-  private fun getClazzFromReceiver(expression: UResolvable): PsiClass? {
-    val type = when (expression) {
+  private fun getTypeFromReceiver(expression: UResolvable): PsiType? {
+    return when (expression) {
       is UQualifiedReferenceExpression -> {
         expression.receiver.getExpressionType()
       }
@@ -221,7 +225,6 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         null
       }
     }
-    return PsiUtil.resolveClassInClassTypeOnly(type)
   }
 
   private fun checkAndPrepareVisited(uElement: UElement?, prepare: Boolean = true): TaintValue? {
