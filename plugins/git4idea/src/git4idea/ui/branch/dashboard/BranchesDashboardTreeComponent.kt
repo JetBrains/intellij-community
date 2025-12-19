@@ -15,6 +15,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.ScrollableContentBorder
+import com.intellij.ui.Side
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.ui.components.TextComponentEmptyText
@@ -124,7 +126,9 @@ object BranchesDashboardTreeComponent {
     model: BranchesDashboardTreeModel,
     disposable: Disposable,
   ): ProgressStripe {
-    val progressStripe = ProgressStripe(ScrollPaneFactory.createScrollPane(tree, true), disposable)
+    val scrollpane = ScrollPaneFactory.createScrollPane(tree, true)
+    ScrollableContentBorder.setup(scrollpane, Side.TOP)
+    val progressStripe = ProgressStripe(scrollpane, disposable)
 
     fun doUpdateLoadingState() {
       if (model.isLoading) {
