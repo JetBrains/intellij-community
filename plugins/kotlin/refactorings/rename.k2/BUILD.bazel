@@ -82,7 +82,6 @@ jvm_library(
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "//plugins/kotlin/base/fir/code-insight:kotlin-codeInsight-base",
     "//java/testFramework",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
     "//plugins/kotlin/base/analysis",
@@ -91,6 +90,7 @@ jvm_library(
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//java/java-indexing-api:indexing",
     "//java/java-impl-refactorings:impl-refactorings",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.refactorings.rename` end

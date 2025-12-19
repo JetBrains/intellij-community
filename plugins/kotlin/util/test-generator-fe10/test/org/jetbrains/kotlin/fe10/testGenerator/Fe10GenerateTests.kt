@@ -109,8 +109,8 @@ import org.jetbrains.kotlin.idea.refactoring.move.AbstractMoveTest
 import org.jetbrains.kotlin.idea.refactoring.pullUp.AbstractPullUpTest
 import org.jetbrains.kotlin.idea.refactoring.pushDown.AbstractPushDownTest
 import org.jetbrains.kotlin.idea.refactoring.rename.AbstractInplaceRenameTest
+import org.jetbrains.kotlin.idea.refactoring.rename.AbstractK1RenameTest
 import org.jetbrains.kotlin.idea.refactoring.rename.AbstractMultiModuleRenameTest
-import org.jetbrains.kotlin.idea.refactoring.rename.AbstractRenameTest
 import org.jetbrains.kotlin.idea.refactoring.safeDelete.AbstractMultiModuleSafeDeleteTest
 import org.jetbrains.kotlin.idea.refactoring.safeDelete.AbstractSafeDeleteTest
 import org.jetbrains.kotlin.idea.repl.AbstractIdeReplCompletionTest
@@ -954,7 +954,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     }
 
     testGroup("idea/tests", category = RENAME_REFACTORING) {
-        testClass<AbstractRenameTest> {
+        testClass<AbstractK1RenameTest>(generatedClassName = "org.jetbrains.kotlin.idea.refactoring.rename.RenameTestGenerated") {
             model("refactoring/rename", pattern = TEST, flatten = true)
         }
 
