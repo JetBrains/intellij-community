@@ -222,7 +222,7 @@ class FunctionNameInspection : NamingConventionInspection(
             if (function.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
                 return@namedFunctionVisitor
             }
-            val virtualFile = function.containingFile.virtualFile
+            val virtualFile = function.containingFile.virtualFile ?: return@namedFunctionVisitor
             if (!ProjectFileIndex.getInstance(function.project).isInTestSource(virtualFile)) {
                 verifyName(function, holder) { !function.isFactoryFunction() }
             }
@@ -270,7 +270,7 @@ class TestFunctionNameInspection : NamingConventionInspection(
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return namedFunctionVisitor { function ->
-            val virtualFile = function.containingFile.virtualFile
+            val virtualFile = function.containingFile.virtualFile ?: return@namedFunctionVisitor
             if (!ProjectFileIndex.getInstance(function.project).isInTestSource(virtualFile)) {
                 return@namedFunctionVisitor
             }
