@@ -17,6 +17,7 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//plugins/editorconfig/backend",
     "//plugins/jsonpath",
+    "//platform/vcs-log/impl",
   ]
 )
 ### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` end

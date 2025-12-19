@@ -11,5 +11,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.editorconfig.backend" />
     <orderEntry type="module" module-name="intellij.jsonpath" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
   </component>
 </module>

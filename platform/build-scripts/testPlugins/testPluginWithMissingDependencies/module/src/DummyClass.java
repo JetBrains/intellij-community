@@ -2,6 +2,7 @@
 package com.intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module;
 
 import com.intellij.jsonpath.JsonPathBundle;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcsUtil.VcsUtil;
 import org.editorconfig.core.EditorConfigAutomatonBuilder;
 
@@ -14,5 +15,6 @@ final class DummyClass {
     VcsUtil.class,
     EditorConfigAutomatonBuilder.class,
     JsonPathBundle.class,
+    VcsLogBundle.class,
   };
 }

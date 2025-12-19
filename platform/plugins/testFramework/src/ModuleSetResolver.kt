@@ -35,20 +35,21 @@ fun resolveModuleSetPath(fileName: String, projectRoot: Path): Path {
  * then recursively resolves any nested module sets referenced via x-include.
  *
  * @param moduleSetName the name like "intellij.moduleSets.debugger.streams"
+ * @param embeddedOnly if true, only include modules registered with `loading="embedded"`
  * @param ultimateRoot the root directory of the ultimate repository
  * @return list of actual module names from the module set XML and all nested module sets, or singleton list with original name if not a module set
  */
-fun resolveModuleSet(moduleSetName: String, ultimateRoot: Path): List<String> {
+fun resolveModuleSet(moduleSetName: String, embeddedOnly: Boolean, ultimateRoot: Path): List<String> {
   if (!moduleSetName.startsWith("intellij.moduleSets.")) {
     return listOf(moduleSetName)
   }
 
   val xmlFileName = "$moduleSetName.xml"
   val xmlPath = resolveModuleSetPath(xmlFileName, ultimateRoot)
-  return resolveModuleSetRecursive(xmlPath, ultimateRoot, HashSet())
+  return resolveModuleSetRecursive(xmlPath, ultimateRoot, embeddedOnly, HashSet())
 }
 
-private fun resolveModuleSetRecursive(xmlPath: Path, ultimateRoot: Path, visited: MutableSet<Path>): List<String> {
+private fun resolveModuleSetRecursive(xmlPath: Path, ultimateRoot: Path, embeddedOnly: Boolean, visited: MutableSet<Path>): List<String> {
   // Prevent infinite loops
   if (xmlPath in visited) {
     throw IllegalStateException("Circular x-include reference: $xmlPath")
@@ -63,6 +64,7 @@ private fun resolveModuleSetRecursive(xmlPath: Path, ultimateRoot: Path, visited
   val contentElement = doc.getChild("content")
   if (contentElement != null) {
     contentElement.getChildren("module")
+      .filter { !embeddedOnly || it.getAttributeValue("loading") == "embedded" }
       .mapNotNullTo(result) { it.getAttribute("name")?.value }
   }
 
@@ -73,7 +75,7 @@ private fun resolveModuleSetRecursive(xmlPath: Path, ultimateRoot: Path, visited
       // extract module set name from href like "/META-INF/intellij.moduleSets.essential.xml"
       val includedFileName = href.substringAfterLast('/')
       val includedXmlPath = resolveModuleSetPath(includedFileName, ultimateRoot)
-      result.addAll(resolveModuleSetRecursive(includedXmlPath, ultimateRoot, visited))
+      result.addAll(resolveModuleSetRecursive(includedXmlPath, ultimateRoot, embeddedOnly, visited))
     }
   }
 
