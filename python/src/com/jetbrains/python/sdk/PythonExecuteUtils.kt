@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.console.addDefaultEnvironments
+import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.PythonCommandLineState.getPythonTargetInterpreter
 import com.jetbrains.python.run.PythonModuleExecution
 import com.jetbrains.python.run.buildTargetedCommandLine
@@ -72,6 +73,8 @@ object PythonExecuteUtils {
 
     val modules: Array<Module> = module?.let { arrayOf(it) } ?: project.modules
     request.ensureProjectSdkAndModuleDirsAreOnTarget(project, *modules)
+    PythonCommandLineState.buildPythonPath(project, module, execution, sdk, null, false, true,
+                                           true, false, request)
 
     if (additionalUploadLocalDir != null) {
       val uploadVolume = TargetEnvironment.UploadRoot(localRootPath = additionalUploadLocalDir, targetRootPath = TargetPath.Temporary())
