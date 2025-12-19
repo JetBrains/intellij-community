@@ -101,7 +101,7 @@ public final class ClasspathBootstrap {
   public static final String NETTY_JPS_VERSION = "4.1.117.Final";
   private static final String NETTY_JPS_DISTRIBUTION_JAR_NAME = "netty-jps.jar";
   private static final String[] NETTY_ARTIFACT_NAMES = {
-    "netty-buffer", "netty-codec-http", "netty-codec-http2", "netty-codec", "netty-common", "netty-handler", "netty-resolver", "netty-transport"
+    "netty-buffer", "netty-codec-http", "netty-codec", "netty-common", "netty-handler", "netty-resolver", "netty-transport"
   };
 
   private static void getNettyForJpsClasspath(Consumer<Path> consumer) {
