@@ -45,6 +45,7 @@ import com.intellij.openapi.rd.createNestedDisposable
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SyntaxTraverser
@@ -136,10 +137,6 @@ open class CodeVisionHost(val project: Project) {
   val isInitialised: Boolean get() = _isInitialised
   private var _isInitialised = false
 
-  protected open fun collectAllProviders(): List<Pair<String, CodeVisionProvider<*>>> {
-    return providers.map { it.id to it }
-  }
-
   open fun handleLensClick(editor: Editor, range: TextRange, entry: CodeVisionEntry) {
     //todo intellij statistic
     logger.trace { "Handling click for entry with id: ${entry.providerId}" }
@@ -156,15 +153,15 @@ open class CodeVisionHost(val project: Project) {
       openCodeVisionSettings(provider)
       return
     }
-    firstProviderWithId(entry.providerId)?.handleExtraAction(editor, range, actionId)
+    firstProviderWithId(entry.providerId)?.handleExtraAction(editor, range, entry, actionId)
   }
 
-  open fun getAnchorForEntry(entry: CodeVisionEntry): CodeVisionAnchorKind {
+  fun getAnchorForEntry(entry: CodeVisionEntry): CodeVisionAnchorKind {
     val provider = getProviderById(entry.providerId) ?: return lifeSettingModel.defaultPosition.value
     return getAnchorForProvider(provider)
   }
 
-  open fun getProviderById(id: String): CodeVisionProvider<*>? {
+   fun getProviderById(id: String): CodeVisionProvider<*>? {
     return providers.firstOrNull { it.id == id }
   }
 
@@ -210,6 +207,8 @@ open class CodeVisionHost(val project: Project) {
   }
 
   protected open fun subscribeForDocumentChanges(editor: Editor, editorLifetime: Lifetime, onDocumentChanged: () -> Unit) {
+    if (IdeProductMode.isFrontend) return
+
     editor.document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         onDocumentChanged()
@@ -233,7 +232,7 @@ open class CodeVisionHost(val project: Project) {
   }
 
   protected fun rearrangeProviders() {
-    val allProviders = collectAllProviders()
+    val allProviders = providers.map { it.id to it }
     defaultSortedProvidersList.clear()
     defaultSortedProvidersList.addAll(allProviders.getTopSortedIdList())
   }
@@ -461,11 +460,14 @@ open class CodeVisionHost(val project: Project) {
   // we are only interested in text editors, and BRFE behaves exceptionally bad so ignore them
   private fun isAllowedFileEditor(fileEditor: FileEditor?) = fileEditor is TextEditor && fileEditor !is BaseRemoteFileEditor
 
-  private fun calculateFrontendLenses(calcLifetime: Lifetime,
-                                      editor: Editor,
-                                      groupsToRecalculate: Collection<String> = emptyList(),
-                                      inTestSyncMode: Boolean = false,
-                                      consumer: (List<Pair<TextRange, CodeVisionEntry>>, List<String>) -> Unit) {
+  private fun calculateFrontendLenses(
+    calcLifetime: Lifetime,
+    editor: Editor,
+    groupsToRecalculate: Collection<String> = emptyList(),
+    inTestSyncMode: Boolean = false,
+    consumer: (newLenses: List<Pair<TextRange, CodeVisionEntry>>, providersToUpdate: List<String>) -> Unit,
+  ) {
+    val providers = providers
     val precalculatedUiThings = providers.associate {
       if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.id)) return@associate it.id to null
       it.id to it.precomputeOnUiThread(editor)
@@ -486,7 +488,9 @@ open class CodeVisionHost(val project: Project) {
       val modCount = modificationCount(editor)
 
       var results = mutableListOf<Pair<TextRange, CodeVisionEntry>>()
+
       val providerWhoWantToUpdate = mutableListOf<String>()
+
       var everyProviderReadyToUpdate = true
       for (p in providers) {
         val provider = p as CodeVisionProvider<Any?>
@@ -524,9 +528,9 @@ open class CodeVisionHost(val project: Project) {
             results.addAll(state.result)
           }
           else if (editorOpenTimeNs == null || shouldConsiderProvider(editorOpenTimeNs)) {
-            everyProviderReadyToUpdate = false
-          }
-        }
+                everyProviderReadyToUpdate = false
+              }
+            }
 
         if (modCount != modificationCount(editor)) {
           // psi or document changed, aborting current run as outdated

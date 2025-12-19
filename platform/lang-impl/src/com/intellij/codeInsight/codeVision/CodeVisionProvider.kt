@@ -80,7 +80,13 @@ interface CodeVisionProvider<T> {
   /**
    * Handles click on an extra action on a lens at a given range.
    */
+  @Deprecated("Override handleExtraAction(editor, textRange, entry, actionId) instead")
   fun handleExtraAction(editor: Editor, textRange: TextRange, actionId: String): Unit = Unit
+
+  fun handleExtraAction(editor: Editor, textRange: TextRange, entry: CodeVisionEntry, actionId: String): Unit {
+    @Suppress("DEPRECATION")
+    handleExtraAction(editor, textRange, actionId)
+  }
 
   fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?) : CodeVisionPlaceholderCollector? = null
 
