@@ -159,9 +159,6 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   @Volatile
   private var waitIntolerantThread: Thread? = null
 
-  // should only be accessed from EDT to avoid races between `queueTaskOnEDT` and `enterSmartModeIfDumb` (invoked from `afterLastTask`)
-  private val latestReceipt: AtomicReference<SubmissionReceipt?> = AtomicReference(null)
-
   private inner class DumbTaskListener : ExecutorStateListener {
     /*
      * beforeFirstTask and afterLastTask always follow one after another. Receiving several beforeFirstTask or afterLastTask in row is
@@ -459,7 +456,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     ThreadingAssertions.assertEventDispatchThread()
     incrementDumbCounterBlocking(trace)
 
-    latestReceipt.set(taskQueue.addTask(task))
+    taskQueue.addTask(task)
 
     // we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
     // drain the queue synchronously under modal progress
@@ -486,7 +483,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
       // In prod, both behaviors are bad.
       incrementDumbCounterSuspending(trace)
 
-      latestReceipt.set(taskQueue.addTask(task))
+      taskQueue.addTask(task)
 
       val launcher = DumbTaskLauncher(ModalityState.nonModal())
       dumbTaskLaunchers.add(launcher)
