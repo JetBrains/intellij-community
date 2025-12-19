@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
+import com.intellij.codeInsight.hints.presentation.translateNew
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.IdeEventQueue.Companion.getInstance
 import com.intellij.lang.documentation.ide.ui.PopupUpdateEvent
@@ -17,7 +18,6 @@ import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.util.height
 import com.intellij.ui.util.width
 import com.intellij.util.Alarm
-import com.intellij.util.Range
 import com.intellij.util.asSafely
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.yield
@@ -82,7 +82,18 @@ internal class ComponentAreaPopupContext(
       val position = calculatePosition(myComponentReference.get() ?: return, popup)
 
       alarm!!.addRequest(Runnable {
-        if (hideRequested || !popup.canShow()) {
+        val component = myComponentReference.get() ?: return@Runnable
+        if (hideRequested
+            || !popup.canShow()
+            || !component.isShowing
+            || SwingUtilities.getWindowAncestor(component)
+              ?.let { window ->
+                val windowLocation = window.locationOnScreen
+                val relativeMousePosition = MouseInfo.getPointerInfo().location.translateNew(-windowLocation.x, -windowLocation.y)
+                val componentUnderMouse = window.findComponentAt(relativeMousePosition)
+                return@let window.isFocused && componentUnderMouse == component
+              } != true
+        ) {
           popup.cancel()
           return@Runnable
         }
