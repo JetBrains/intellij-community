@@ -33,7 +33,7 @@ import kotlin.io.path.*
 
 private val logger = logger<ComposeHotReloadCommandLinePatcher>()
 
-private const val COMPOSE_HOT_RELOAD_AGENT_DEFAULT_VERSION = "1.0.0-rc03"
+private const val COMPOSE_HOT_RELOAD_AGENT_DEFAULT_VERSION = "1.1.0-alpha03"
 private const val COMPOSE_HOT_RELOAD_AGENT_FILE_PREFIX = "compose-hot-reload-agent"
 private const val HOT_RELOAD_ENABLED_REGISTRY_KEY = "devkit.compose.hot.reload.enabled"
 private const val HOT_RELOAD_AGENT_VERSION_REGISTRY_KEY = "devkit.compose.hot.reload.agent.version"
@@ -157,6 +157,7 @@ internal class ComposeHotReloadCommandLinePatcher : RunConfigurationExtension() 
     val vmParametersList = params.vmParametersList
     vmParametersList.add("-javaagent:${agentFilePath.pathString}")
     vmParametersList.add("-Dcompose.reload.devToolsEnabled=false")
+    vmParametersList.add("-Dcompose.reload.staticsReinitializeMode=AllDirty")
     vmParametersList.add("-XX:+AllowEnhancedClassRedefinition")
     vmParametersList.add("-Didea.dev.additional.classpath=${agentFilePath.pathString}")
   }
