@@ -32,7 +32,11 @@ class PythonInfoWithUiComparator<T> : Comparator<T> where T : PythonInfoHolder, 
     if (logger.isDebugEnabled) {
       logger.debug("full ${o1.string()} vs ${o2.string()}")
     }
-    return PythonInfoComparator.compare(o1, o2) * 10 + UiComparator.compare(o1, o2)
+    val infoResult = PythonInfoComparator.compare(o1, o2)
+    if (infoResult != 0) {
+      return infoResult
+    }
+    return UiComparator.compare(o1, o2)
   }
 }
 
