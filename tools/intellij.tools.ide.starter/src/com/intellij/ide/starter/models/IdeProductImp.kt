@@ -129,14 +129,6 @@ object IdeProductImp : IdeProduct {
     fullName = "Rider"
   )
 
-  /** Writerside */
-  override val WRS = IdeInfo(
-    productCode = "WRS",
-    platformPrefix = "Writerside",
-    executableFileName = "writerside",
-    fullName = "Writerside"
-  )
-
   /** Gateway */
   override val GW = IdeInfo(
     productCode = "GW",

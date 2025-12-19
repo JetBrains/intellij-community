@@ -46,9 +46,6 @@ interface IdeProduct {
   /** Rider */
   val RD: IdeInfo
 
-  /** Writerside */
-  val WRS: IdeInfo
-
   /** Gateway */
   val GW: IdeInfo
 
