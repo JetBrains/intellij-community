@@ -6,13 +6,13 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogEntrySearcher
 import org.toml.lang.psi.TomlFile
-import org.toml.lang.psi.TomlHeaderOwner
 import org.toml.lang.psi.TomlInlineTable
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlKeyValueOwner
+import org.toml.lang.psi.TomlTable
 
 @ApiStatus.Internal
-class GradleTomlVersionCatalogEntrySearcher: GradleVersionCatalogEntrySearcher {
+class GradleTomlVersionCatalogEntrySearcher : GradleVersionCatalogEntrySearcher {
 
   /**
    * Given a [TomlFile] and a path, returns the corresponding key element.
@@ -23,49 +23,45 @@ class GradleTomlVersionCatalogEntrySearcher: GradleVersionCatalogEntrySearcher {
   override fun findEntryElement(versionCatalog: PsiFile, entryPath: String): PsiElement? {
     if (versionCatalog !is TomlFile) return null
 
-    val prefix = listOf("versions.", "bundles.", "plugins.")
-    val section: String
-    val target: String
-    if (prefix.none { entryPath.startsWith(it) }) {
-      section = "libraries"
-      target = entryPath
-    }
-    else {
-      section = entryPath.substringBefore('.')
-      target = entryPath.substringAfter('.')
-    }
-    // At the root level, look for the right section (versions, libraries, etc)
+    val (section, lookupKey) = getLookupSectionAndKey(entryPath)
+    // At the root level, look for the right section (versions, libraries, plugins, bundles)
     versionCatalog.children.forEach { element ->
       // [table]
       // alias =
-      if (element is TomlHeaderOwner) {
-        val keyText = element.header.key?.text
-        if (keysMatch(keyText, section)) {
-          if (element is TomlKeyValueOwner) {
-            return findAlias(element, target)
-          }
+      if (element is TomlTable) {
+        val tableName = element.header.key?.text
+        if (tableName == section) {
+          return findAlias(element, lookupKey)
         }
       }
-      // for corner cases
+      // for corner cases, the section is not declared as [table]
       if (element is TomlKeyValue) {
         val keyText = element.key.text
         // libraries.alias = ""
-        if (keysMatch(keyText, "$section.$target")) {
+        if (keysMatch(keyText, "$section.$lookupKey")) {
           return element
         }
-        else
         // libraries = { alias = ""
-          if (element.value is TomlInlineTable && keysMatch(keyText, section)) {
-            return findAlias(element.value as TomlInlineTable, target)
-          }
+        else if (element.value is TomlInlineTable && keyText == section) {
+          return findAlias(element.value as TomlInlineTable, lookupKey)
+        }
       }
     }
-    return null as PsiElement?
+    return null
   }
-
 }
 
-private fun findAlias(valueOwner: TomlKeyValueOwner, target:String): PsiElement?{
+private fun getLookupSectionAndKey(entryPath: String): Pair<String, String> {
+  val sectionPrefixes = listOf("versions.", "bundles.", "plugins.")
+  return if (sectionPrefixes.none { entryPath.startsWith(it) }) {
+    "libraries" to entryPath
+  }
+  else {
+    entryPath.substringBefore('.') to entryPath.substringAfter('.')
+  }
+}
+
+private fun findAlias(valueOwner: TomlKeyValueOwner, target: String): PsiElement? {
   for (entry in valueOwner.entries) {
     val entryKeyText = entry.key.text
     if (keysMatch(entryKeyText, target)) {
@@ -82,20 +78,21 @@ private fun keysMatch(keyText: String?, reference: String): Boolean {
     return false
   }
   for (i in keyText.indices) {
-    if(isAfterDelimiter(i, keyText)){
+    if (isAfterDelimiter(i, keyText)) {
       // first character may be capital after `-_.` symbols in TOML
       // it still makes it equal to low case reference - Gradle implementation detail
-      if(keyText[i].normalizeIgnoreCase() != reference[i].normalize())
+      if (keyText[i].normalizeIgnoreCase() != reference[i].normalize())
         return false
-    } else if (keyText[i].normalize() != reference[i].normalize()) {
+    }
+    else if (keyText[i].normalize() != reference[i].normalize()) {
       return false
     }
   }
   return true
 }
 
-private fun isAfterDelimiter(index: Int, s:String):Boolean =
-  index > 0 && s[index-1].normalize() == '.'
+private fun isAfterDelimiter(index: Int, s: String): Boolean =
+  index > 0 && s[index - 1].normalize() == '.'
 
 private fun Char.normalizeIgnoreCase(): Char {
   if (this == '-' || this == '_') {
