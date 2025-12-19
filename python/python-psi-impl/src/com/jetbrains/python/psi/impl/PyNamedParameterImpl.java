@@ -206,7 +206,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         if (context.maySwitchToAST(this)) {
           final PyExpression defaultValue = getDefaultValue();
           if (defaultValue != null) {
-            final PyType type = context.getType(defaultValue);
+            final PyType type = PyLiteralType.upcastLiteralToClass(context.getType(defaultValue));
             if (type != null && !isNoneType(type)) {
               if (type instanceof PyTupleType) {
                 return PyUnionType.createWeakType(type);

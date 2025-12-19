@@ -4399,6 +4399,42 @@ public class Py3TypeTest extends PyTestCase {
     });
   }
 
+  @TestFor(issues = "PY-82717")
+  public void testParameterWithDefaultWidening() {
+    doTest("(param: int) -> None", """
+      from typing import Literal
+      
+      x: Literal[1] = 1
+      
+      def f(param=x): ...
+      expr = f
+      """);
+
+    doTest("(param: int) -> None", """
+      def f(param=1): ...
+      expr = f
+      """);
+
+    doTest("(param: Literal[1]) -> None", """
+      from typing import Literal
+      
+      x: Literal[1] = 1
+      
+      def f(param: Literal[1] = x): ...
+      expr = f
+      """);
+
+    doTest("(param: E) -> None", """
+      from enum import IntEnum
+      
+      class E(IntEnum):
+        A = 1
+      
+      def f(param=E.A): ...
+      expr = f
+      """);
+  }
+
   @TestFor(issues="PY-28130")
   public void testLambdaParameterUsesAssignmentContext() {
     doTest("int", """
