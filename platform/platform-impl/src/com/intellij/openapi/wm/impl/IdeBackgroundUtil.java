@@ -444,7 +444,7 @@ public final class IdeBackgroundUtil {
       if (preserve) {
         myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.TRUE);
       }
-      Graphics2D clipped = (Graphics2D)create();
+      Graphics2D clipped = (Graphics2D)myDelegate.create();
       try {
         clipped.clip(sourceShape != null ? sourceShape : new Rectangle(x, y, width, height));
         helper.runAllPainters(clipped, offsets);
