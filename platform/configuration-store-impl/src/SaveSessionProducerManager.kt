@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
@@ -17,7 +15,7 @@ internal open class SaveSessionProducerManager {
   private val producers = Collections.synchronizedMap(LinkedHashMap<StateStorage, SaveSessionProducer>())
 
   fun getProducer(storage: StateStorage): SaveSessionProducer? {
-    var producer = producers.get(storage)
+    var producer = producers[storage]
     if (producer == null) {
       producer = storage.createSaveSessionProducer() ?: return null
       val prev = producers.put(storage, producer)
@@ -37,7 +35,7 @@ internal open class SaveSessionProducerManager {
       val saveSessions = ArrayList<SaveSession>()
       collectSaveSessions(saveSessions)
       if (saveSessions.isNotEmpty()) {
-        saveSessions(saveSessions = saveSessions, saveResult = saveResult, collectVfsEvents = collectVfsEvents)
+        saveSessions(saveSessions, saveResult, collectVfsEvents)
       }
     }
   }
@@ -56,7 +54,7 @@ internal suspend fun saveSessions(saveSessions: Collection<SaveSession>, saveRes
     }
     catch (e: ReadOnlyModificationException) {
       LOG.warn(e)
-      saveResult.addReadOnlyFile(SaveSessionAndFile(session = e.session ?: saveSession, file = e.file))
+      saveResult.addReadOnlyFile(SaveSessionAndFile(e.session ?: saveSession, e.file))
     }
     catch (e: CancellationException) {
       throw e

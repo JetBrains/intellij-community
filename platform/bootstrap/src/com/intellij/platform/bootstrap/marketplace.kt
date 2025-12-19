@@ -31,8 +31,7 @@ private fun isMarketplacePluginCompatible(homePath: Path, pluginDir: Path, mpBoo
         ideVersion = parseVersion(reader.readLine())
       }
     }
-    catch (_: IOException) {
-    }
+    catch (_: IOException) { }
     if (ideVersion == null && OS.CURRENT == OS.macOS) {
       Files.newBufferedReader(homePath.resolve("Resources/build.txt")).use { reader ->
         ideVersion = parseVersion(reader.readLine())
@@ -47,26 +46,21 @@ private fun isMarketplacePluginCompatible(homePath: Path, pluginDir: Path, mpBoo
           untilVersion = parseVersion(reader.readLine())
         }
       }
-      catch (_: IOException) {
-      }
-      @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-      return ideVersion!!.isCompatible(sinceVersion, untilVersion)
+      catch (_: IOException) { }
+      return ideVersion.isCompatible(sinceVersion, untilVersion)
     }
   }
-  catch (_: Throwable) {
-  }
+  catch (_: Throwable) { }
   return true
 }
 
 /**
  * Initializes the marketplace by adding necessary classloaders and resolving required files.
  * If the marketplace is not compatible, or the required files are not found, the method returns without performing any further action.
- *
- * Currently used in Rider.
  */
 internal fun initMarketplace() {
   val distDir = PathManager.getHomeDir()
-  val preinstalledPluginDir = distDir.resolve("plugins")
+  val preinstalledPluginDir = PathManager.getBundledPluginsDir()
 
   var pluginDir = preinstalledPluginDir
   var marketPlaceBootDir = findMarketplaceBootDir(pluginDir)
@@ -157,17 +151,13 @@ private fun parseMinor(text: String): Int {
     val dot = text.indexOf('.')
     return (if (dot >= 0) text.take(dot) else text).toInt()
   }
-  catch (_: NumberFormatException) {
-  }
+  catch (_: NumberFormatException) { }
   return 0
 }
 
 private class BytecodeTransformerAdapter(private val impl: BytecodeTransformer) : PathClassLoader.BytecodeTransformer {
-  override fun isApplicable(className: String, loader: ClassLoader): Boolean {
-    return impl.isApplicable(className, loader, null)
-  }
+  override fun isApplicable(className: String, loader: ClassLoader): Boolean = impl.isApplicable(className, loader, null)
 
-  override fun transform(loader: ClassLoader, className: String, classBytes: ByteArray): ByteArray? {
-    return impl.transform(loader, className, null, classBytes)
-  }
+  override fun transform(loader: ClassLoader, className: String, classBytes: ByteArray): ByteArray? =
+    impl.transform(loader, className, null, classBytes)
 }
