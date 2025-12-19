@@ -181,6 +181,18 @@ class MavenDownloadSourcesRequest private constructor(
 }
 
 open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineScope) : MavenProjectsManager(project, cs) {
+
+  @ApiStatus.Internal
+  fun getProjectsTreeIfInitialized(): MavenProjectsTree? {
+    val tree = getProjectsTree(false)
+    if (tree == null) {
+      cs.launch(Dispatchers.IO) {
+        getProjectsTree(true)
+      }
+    }
+    return tree
+  }
+
   override suspend fun addManagedFilesWithProfiles(
     files: List<VirtualFile>,
     profiles: MavenExplicitProfiles,
@@ -330,7 +342,12 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   ): List<Module> {
     val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     mavenEmbedderWrappers.use {
-      return doUpdateMavenProjects(spec, null, mavenEmbedderWrappers) { readMavenProjects(spec, filesToUpdate, filesToDelete, mavenEmbedderWrappers) }
+      return doUpdateMavenProjects(spec, null, mavenEmbedderWrappers) {
+        readMavenProjects(spec,
+                          filesToUpdate,
+                          filesToDelete,
+                          mavenEmbedderWrappers)
+      }
     }
   }
 
@@ -564,7 +581,11 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                       !it.hasReadingErrors()
                       && it.hasUnresolvedPlugins()
                     }
-                    val pluginResolutionResult = pluginResolver.resolvePlugins(mavenProjectsToResolvePlugins, forceUpdateSnapshots, mavenEmbedderWrappers, reporter, syncConsole)
+                    val pluginResolutionResult = pluginResolver.resolvePlugins(mavenProjectsToResolvePlugins,
+                                                                               forceUpdateSnapshots,
+                                                                               mavenEmbedderWrappers,
+                                                                               reporter,
+                                                                               syncConsole)
                     for (mavenPluginId in pluginResolutionResult.unresolvedPluginIds) {
                       syncConsole.showArtifactBuildIssue(MavenServerConsoleIndicator.ResolveType.PLUGIN, mavenPluginId.key, null)
                     }
@@ -597,28 +618,29 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   ): MavenProjectResolutionResult {
     logDebug("importModules started: ${projectsToResolve.size}")
     val resolver = MavenProjectResolver(project)
-    val resolutionResult = withBackgroundProgressTraced(myProject, "resolveDependencies", MavenProjectBundle.message("maven.resolving"), true) {
-      reportRawProgress { reporter ->
-        runMavenImportActivity(project, syncActivity, MavenImportStats.ResolvingTask) {
-          project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionStarted(projectsToResolve)
-          val res = tracer.spanBuilder("resolution").useWithScope {
-            val updateSnapshots = forceUpdateSnapshots || generalSettings.isAlwaysUpdateSnapshots
-            resolver.resolve(spec.resolveIncrementally(),
-                             projectsToResolve,
-                             projectsTree,
-                             getWorkspaceMap(),
-                             repositoryPath,
-                             updateSnapshots,
-                             mavenEmbedderWrappers,
-                             reporter,
-                             syncConsole)
+    val resolutionResult =
+      withBackgroundProgressTraced(myProject, "resolveDependencies", MavenProjectBundle.message("maven.resolving"), true) {
+        reportRawProgress { reporter ->
+          runMavenImportActivity(project, syncActivity, MavenImportStats.ResolvingTask) {
+            project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionStarted(projectsToResolve)
+            val res = tracer.spanBuilder("resolution").useWithScope {
+              val updateSnapshots = forceUpdateSnapshots || generalSettings.isAlwaysUpdateSnapshots
+              resolver.resolve(spec.resolveIncrementally(),
+                               projectsToResolve,
+                               projectsTree,
+                               getWorkspaceMap(),
+                               repositoryPath,
+                               updateSnapshots,
+                               mavenEmbedderWrappers,
+                               reporter,
+                               syncConsole)
+            }
+            project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionFinished(
+              res.mavenProjectMap.entries.flatMap { it.value })
+            res
           }
-          project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionFinished(
-            res.mavenProjectMap.entries.flatMap { it.value })
-          res
         }
       }
-    }
     return resolutionResult
   }
 
@@ -646,7 +668,10 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
   }
 
-  protected suspend fun readAllMavenProjects(spec: MavenSyncSpec, mavenEmbedderWrappers: MavenEmbedderWrappers): MavenProjectsTreeUpdateResult {
+  protected suspend fun readAllMavenProjects(
+    spec: MavenSyncSpec,
+    mavenEmbedderWrappers: MavenEmbedderWrappers,
+  ): MavenProjectsTreeUpdateResult {
     return reportRawProgress { reporter ->
       projectsTree.updateAll(spec.forceReading(), generalSettings, mavenEmbedderWrappers, reporter)
     }

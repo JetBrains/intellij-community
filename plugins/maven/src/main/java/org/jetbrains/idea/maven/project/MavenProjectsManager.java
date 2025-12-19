@@ -68,7 +68,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable,
              MavenAsyncProjectsManager {
   private final ReentrantLock initLock = new ReentrantLock();
-  private final AtomicBoolean projectsTreeInitialized = new AtomicBoolean();
   private final AtomicBoolean isInitialized = new AtomicBoolean();
   private final AtomicBoolean isActivated = new AtomicBoolean();
 
@@ -76,7 +75,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private final MavenEmbeddersManager myEmbeddersManager;
 
-  private final @NotNull MavenProjectsTree myProjectsTree = new MavenProjectsTree(getProject());
+  private volatile MavenProjectsTree myProjectsTree = null;
   private final AtomicReference<MavenProjectManagerWatcher> myWatcherRef = new AtomicReference<>(null);
   private volatile Exception myWatcherCreationTrace;
 
@@ -173,7 +172,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @TestOnly
   public void initForTests() {
-    initProjectsTree();
+    initializedProjectsTree();
     doInit();
   }
 
@@ -244,26 +243,30 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
 
   protected void initOnProjectStartup() {
-    initProjectsTree();
+    MavenProjectsTree projectsTree = initializedProjectsTree();
     doInit();
     doActivate();
 
-    if (!myProjectsTree.getManagedFilesPaths().isEmpty() && myProjectsTree.getRootProjects().isEmpty()) {
+    if (!projectsTree.getManagedFilesPaths().isEmpty() && projectsTree.getRootProjects().isEmpty()) {
       MavenLog.LOG.warn("MavenProjectsTree is inconsistent");
       scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.onProjectStartup"));
     }
   }
 
-  private void initProjectsTree() {
-    if (projectsTreeInitialized.get()) return;
-    initLock.lock();
+  private @NotNull MavenProjectsTree initializedProjectsTree() {
+    var existing = myProjectsTree;
+    if (existing != null) return existing;
     try {
-      if (projectsTreeInitialized.get()) return;
+      initLock.lock();
+      existing = myProjectsTree;
+      if (existing != null) return existing;
       Path path = getProjectsTreeFile();
-      myProjectsTree.read(path);
-      applyStateToTree(myProjectsTree, this);
-      myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
-      projectsTreeInitialized.set(true);
+      var newProjectTree = new MavenProjectsTree(getProject());
+      newProjectTree.read(path);
+      applyStateToTree(newProjectTree, this);
+      newProjectTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
+      myProjectsTree = newProjectTree;
+      return newProjectTree;
     }
     finally {
       initLock.unlock();
@@ -303,10 +306,11 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void saveTree() {
     try {
-      if (!projectsTreeInitialized.get()) {
+      MavenProjectsTree tree = myProjectsTree;
+      if (tree == null) {
         return;
       }
-      myProjectsTree.save(getProjectsTreeFile());
+      tree.save(getProjectsTreeFile());
     }
     catch (IOException e) {
       MavenLog.LOG.info(e);
@@ -599,16 +603,23 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @TestOnly
-  public MavenProjectsTree getProjectsTreeForTests() {
+  public @Nullable MavenProjectsTree getProjectsTreeForTests() {
     return myProjectsTree;
   }
 
   @ApiStatus.Internal
   public @NotNull MavenProjectsTree getProjectsTree() {
-    if (!projectsTreeInitialized.get()) {
-      initProjectsTree();
+    return initializedProjectsTree();
+  }
+
+  @ApiStatus.Internal
+  protected @Nullable MavenProjectsTree getProjectsTree(boolean requireInitialization) {
+    if (requireInitialization) {
+      return initializedProjectsTree();
     }
-    return myProjectsTree;
+    else {
+      return myProjectsTree;
+    }
   }
 
   /**
