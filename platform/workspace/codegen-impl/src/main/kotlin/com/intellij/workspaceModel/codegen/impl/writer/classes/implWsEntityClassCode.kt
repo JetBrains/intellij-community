@@ -73,12 +73,12 @@ private fun checkReferences(objClass: ObjClass<*>, reporter: ProblemReporter) {
   for (refField in objClass.allRefsFields) {
     val ref = refField.valueType.getRefType()
     val declaredReferenceFromChild =
-      ref.target.refsFields.filter { it.valueType.getRefType().target == objClass && it != refField } + setOf(ref.target.module,
-                                                                                                              objClass.module).flatMap { it.extensions }
-        .filter { it.valueType.getRefType().target == objClass && it.receiver == ref.target && it != refField }
+      ref.target.refsFields.filter { it.valueType.getRefType().target == refField.receiver && it != refField } + setOf(ref.target.module,
+                                                                                                                       refField.receiver.module).flatMap { it.extensions }
+        .filter { it.valueType.getRefType().target == refField.receiver && it.receiver == ref.target && it != refField }
     if (declaredReferenceFromChild.isEmpty()) {
       reporter.reportProblem(
-        GenerationProblem("Reference should be declared at both entities. It exist at ${objClass.name}#${refField.name}, but is absent from ${ref.target.name}",
+        GenerationProblem("Reference should be declared at both entities. It exist at ${objClass.name}#${refField.name}, but is absent from ${ref.target.name}. Instantiatable: from ${objClass.openness.instantiatable} to ${ref.target.openness.instantiatable}",
                           GenerationProblem.Level.ERROR,
                           ProblemLocation.Property(refField))
       )
@@ -89,8 +89,8 @@ private fun checkReferences(objClass: ObjClass<*>, reporter: ProblemReporter) {
         GenerationProblem("""
         |More then one reference to ${objClass.name} declared at ${declaredReferenceFromChild[0].receiver.name}#${declaredReferenceFromChild[0].name}, 
         |${declaredReferenceFromChild[1].receiver.name}#${declaredReferenceFromChild[1].name}
-        |""".trimMargin(), 
-                          GenerationProblem.Level.ERROR, 
+        |""".trimMargin(),
+                          GenerationProblem.Level.ERROR,
                           ProblemLocation.Property(declaredReferenceFromChild[0]))
       )
       return@checkReferences
