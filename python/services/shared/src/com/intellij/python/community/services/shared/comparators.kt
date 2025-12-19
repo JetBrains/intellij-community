@@ -10,8 +10,8 @@ private val logger = fileLogger()
 
 object UiComparator : Comparator<UiHolder> {
   override fun compare(o1: UiHolder, o2: UiHolder): Int {
-    if (logger.isDebugEnabled) {
-      logger.debug("ui ${o1.ui?.toolName} vs ${o2.ui?.toolName}")
+    if (logger.isTraceEnabled) {
+      logger.trace("ui ${o1.ui?.toolName} vs ${o2.ui?.toolName}")
     }
     return Objects.compare(o1.ui, o2.ui, Comparator.nullsFirst(PyToolUIInfo::compareTo))
   }
@@ -20,8 +20,8 @@ object UiComparator : Comparator<UiHolder> {
 object PythonInfoComparator : Comparator<PythonInfoHolder> {
   override fun compare(o1: PythonInfoHolder, o2: PythonInfoHolder): Int {
     // Backward: first python is the highest
-    if (logger.isDebugEnabled) {
-      logger.debug("pythonInfo ${o1.pythonInfo} vs ${o2.pythonInfo}")
+    if (logger.isTraceEnabled) {
+      logger.trace("pythonInfo ${o1.pythonInfo} vs ${o2.pythonInfo}")
     }
     return o1.pythonInfo.compareTo(o2.pythonInfo)
   }
@@ -29,8 +29,8 @@ object PythonInfoComparator : Comparator<PythonInfoHolder> {
 
 class PythonInfoWithUiComparator<T> : Comparator<T> where T : PythonInfoHolder, T : UiHolder {
   override fun compare(o1: T, o2: T): Int {
-    if (logger.isDebugEnabled) {
-      logger.debug("full ${o1.string()} vs ${o2.string()}")
+    if (logger.isTraceEnabled) {
+      logger.trace("full ${o1.string()} vs ${o2.string()}")
     }
     return PythonInfoComparator.compare(o1, o2) * 10 + UiComparator.compare(o1, o2)
   }
