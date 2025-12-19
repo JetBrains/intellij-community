@@ -12,6 +12,7 @@ import com.intellij.ide.starter.runner.AdditionalModulesForDevBuildServer
 import com.intellij.ide.starter.runner.DevBuildServerRunner
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.tools.ide.util.common.logOutput
@@ -24,6 +25,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.appendLines
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 
@@ -99,16 +101,29 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
         val seed = System.currentTimeMillis()
 
         val argsFile = GlobalPaths.instance.testHomePath.resolve("tmp").resolve("perf-vmOps-$seed-").also {
-          it.createParentDirectories()
-          it.toFile().createNewFile()
+          it.createParentDirectories().findOrCreateFile()
         }
         val finalVMOptions = if (ConfigurationStorage.useDockerContainer()) {
-          vmOptions.copy(data = vmOptions.data().map { value -> value.replace("\$IDE_HOME", "${GlobalPaths.instance.intelliJOutDirectory.toAbsolutePath()}/dev-run/idea") })
+          vmOptions.copy(data = vmOptions.data()
+            .map { value -> value.replace("\$IDE_HOME", "${GlobalPaths.instance.intelliJOutDirectory.toAbsolutePath()}/dev-run/idea") })
         }
         else {
           vmOptions
         }
         finalVMOptions.writeJavaArgsFile(argsFile)
+
+        val openedPackages = GlobalPaths.instance.checkoutDir
+          .resolve("community/platform/platform-impl/resources/META-INF/OpenedPackages.txt")
+          .let { JavaModuleOptions.readOptions(it, if (ConfigurationStorage.useDockerContainer()) OS.Linux else OS.CURRENT) }
+
+        val otherArgs = buildList {
+          addAll(openedPackages)
+          add("-classpath")
+          add(classpathArg)
+          add(getEntryPoint(ideInfo))
+        }.filter { it.isNotBlank() }
+        argsFile.appendLines(otherArgs)
+
         logOutput("IDE run with: $finalVMOptions")
 
         return object : IDEStartConfig, Closeable {
@@ -118,19 +133,10 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
 
           override val workDir = projectRoot
 
-          val openedPackages = GlobalPaths.instance.checkoutDir
-            .resolve("community/platform/platform-impl/resources/META-INF/OpenedPackages.txt")
-            .let { JavaModuleOptions.readOptions(it, if (ConfigurationStorage.useDockerContainer()) OS.Linux else OS.CURRENT) }
-
           val commandArgs = mutableListOf(
             javaBin.toString(),
             "@$argsFile"
-          ).apply {
-            addAll(openedPackages)
-            add("-classpath")
-            add(classpathArg)
-            add(getEntryPoint(ideInfo))
-          }
+          )
 
           val xvfbRunLog = LinuxIdeDistribution.Companion.createXvfbRunLog(logsDir)
 
@@ -200,19 +206,21 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
       error("Dev build is not supported. Add dependency on intellij.tools.ide.starter.build.server module.")
     }
 
-    val ideWithProvidedAdditionalModules = ideInfo.copy(additionalModules = ideInfo.additionalModules + AdditionalModulesForDevBuildServer.getAdditionalModules(ideInfo))
+    val ideWithProvidedAdditionalModules =
+      ideInfo.copy(additionalModules = ideInfo.additionalModules + AdditionalModulesForDevBuildServer.getAdditionalModules(ideInfo))
 
     val existingInstallationPath = cachedInstallationDirectories[ideWithProvidedAdditionalModules]
-    val installationDirectory = if (useInstallationCache && existingInstallationPath != null && existingInstallationPath.exists() && !ConfigurationStorage.isScramblingEnabled()) {
-      logOutput("Using cached installation directory: $existingInstallationPath for $ideWithProvidedAdditionalModules")
-      existingInstallationPath
-    }
-    else {
-      logOutput("startDevBuild IDE: $ideWithProvidedAdditionalModules")
-      DevBuildServerRunner.instance.startDevBuild(ideWithProvidedAdditionalModules).also {
-        cachedInstallationDirectories[ideWithProvidedAdditionalModules] = it
+    val installationDirectory =
+      if (useInstallationCache && existingInstallationPath != null && existingInstallationPath.exists() && !ConfigurationStorage.isScramblingEnabled()) {
+        logOutput("Using cached installation directory: $existingInstallationPath for $ideWithProvidedAdditionalModules")
+        existingInstallationPath
       }
-    }
+      else {
+        logOutput("startDevBuild IDE: $ideWithProvidedAdditionalModules")
+        DevBuildServerRunner.instance.startDevBuild(ideWithProvidedAdditionalModules).also {
+          cachedInstallationDirectories[ideWithProvidedAdditionalModules] = it
+        }
+      }
     val suffix = if (ConfigurationStorage.useDockerContainer()) "-DOCKER" else ""
     return "LOCAL${suffix}" to resolveLocallyBuiltIDE(ideInfo = ideWithProvidedAdditionalModules, installationDirectory)
   }
