@@ -33,7 +33,11 @@ class GradleDaemonToolchainMigrationHelperTest: GradleProjectSdkResolverTestCase
         environment.withVariables(JAVA_HOME to jdk.homePath) {
             withRegisteredSdks(jdk) {
                 loadProject()
-                check(GradleDaemonJvmPropertiesFile.getProperties(Path(projectPath)) == null)
+                GradleDaemonJvmPropertiesFile.getProperties(Path(projectPath))
+                    .let {
+                        assertNull(it.version)
+                        assertNull(it.vendor)
+                    }
 
                 GradleDaemonJvmCriteriaMigrationHelper.migrateToDaemonJvmCriteria(myProject, projectPath)
                     .get(1, TimeUnit.MINUTES)
