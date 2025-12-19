@@ -6,6 +6,7 @@ import com.intellij.execution.junit.JUnitConfiguration
 import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil
 import com.intellij.psi.PsiClassOwner
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.jupiter.api.Assertions
@@ -14,6 +15,7 @@ abstract class KotlinJUnit5AcceptanceTest : LightJavaCodeInsightFixtureTestCase(
   override fun setUp() {
     setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
     JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture)
+    ConfigLibraryUtil.configureKotlinRuntime(module)
   }
 
   fun testCompoundAnnotation() {

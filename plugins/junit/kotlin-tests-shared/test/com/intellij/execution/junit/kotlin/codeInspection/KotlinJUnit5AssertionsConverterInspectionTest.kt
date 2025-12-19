@@ -3,12 +3,14 @@ package com.intellij.execution.junit.kotlin.codeInspection
 
 import com.intellij.junit.testFramework.JUnit5AssertionsConverterInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 abstract class KotlinJUnit5AssertionsConverterInspectionTest : JUnit5AssertionsConverterInspectionTestBase(), ExpectedPluginModeProvider {
   override fun setUp() {
     setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    ConfigLibraryUtil.configureKotlinRuntime(module)
   }
 
   fun `test AssertArrayEquals`() {
