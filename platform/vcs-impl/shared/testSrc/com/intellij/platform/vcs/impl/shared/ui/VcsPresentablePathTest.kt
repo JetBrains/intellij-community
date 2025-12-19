@@ -18,10 +18,16 @@ internal class VcsPresentablePathTest {
     `when`(vcsMappingsHolder.getRootFor(projectBaseDir)).thenReturn(projectBaseDir)
     `when`(vcsMappingsHolder.getAllRoots()).thenReturn(listOf(projectBaseDir))
 
-    val resultAcceptingEmpty = VcsPresentablePath.getRootRelativePath(vcsMappingsHolder, projectBaseDir, projectBaseDir, acceptEmptyPath = true)
+    val resultAcceptingEmpty = VcsPresentablePath.getRelativePathToSingleVcsRootOrProjectDir(vcsMappingsHolder,
+                                                                                             projectBaseDir,
+                                                                                             projectBaseDir,
+                                                                                             acceptEmptyPath = true)
     assertEquals("", resultAcceptingEmpty)
 
-    val result = VcsPresentablePath.getRootRelativePath(vcsMappingsHolder, projectBaseDir, projectBaseDir, acceptEmptyPath = false)
+    val result = VcsPresentablePath.getRelativePathToSingleVcsRootOrProjectDir(vcsMappingsHolder,
+                                                                               projectBaseDir,
+                                                                               projectBaseDir,
+                                                                               acceptEmptyPath = false)
     assertEquals("project", result)
   }
 
@@ -34,7 +40,8 @@ internal class VcsPresentablePathTest {
     `when`(vcsMappingsHolder.getRootFor(filePath)).thenReturn(projectBaseDir)
     `when`(vcsMappingsHolder.getAllRoots()).thenReturn(listOf(projectBaseDir))
 
-    val result = VcsPresentablePath.getRootRelativePath(vcsMappingsHolder, projectBaseDir, filePath, acceptEmptyPath = true)
+    val result =
+      VcsPresentablePath.getRelativePathToSingleVcsRootOrProjectDir(vcsMappingsHolder, projectBaseDir, filePath, acceptEmptyPath = true)
     assertEquals("src/Main.kt", result)
   }
 
@@ -47,7 +54,10 @@ internal class VcsPresentablePathTest {
     `when`(vcsMappingsHolder.getRootFor(projectBaseDir)).thenReturn(projectBaseDir)
     `when`(vcsMappingsHolder.getAllRoots()).thenReturn(listOf(projectBaseDir, root2))
 
-    val result = VcsPresentablePath.getRootRelativePath(vcsMappingsHolder, projectBaseDir, projectBaseDir, acceptEmptyPath = true)
+    val result = VcsPresentablePath.getRelativePathToSingleVcsRootOrProjectDir(vcsMappingsHolder,
+                                                                               projectBaseDir,
+                                                                               projectBaseDir,
+                                                                               acceptEmptyPath = true)
     assertEquals("project", result)
   }
 
@@ -61,7 +71,8 @@ internal class VcsPresentablePathTest {
     `when`(vcsMappingsHolder.getRootFor(filePath)).thenReturn(projectBaseDir)
     `when`(vcsMappingsHolder.getAllRoots()).thenReturn(listOf(projectBaseDir, root2))
 
-    val result = VcsPresentablePath.getRootRelativePath(vcsMappingsHolder, projectBaseDir, filePath, acceptEmptyPath = true)
+    val result =
+      VcsPresentablePath.getRelativePathToSingleVcsRootOrProjectDir(vcsMappingsHolder, projectBaseDir, filePath, acceptEmptyPath = true)
     assertEquals("project/src/Main.kt", result)
   }
 
@@ -75,7 +86,8 @@ internal class VcsPresentablePathTest {
     `when`(vcsMappingsHolder.getRootFor(filePath)).thenReturn(root2)
     `when`(vcsMappingsHolder.getAllRoots()).thenReturn(listOf(projectBaseDir, root2))
 
-    val result = VcsPresentablePath.getRootRelativePath(vcsMappingsHolder, projectBaseDir, filePath, acceptEmptyPath = true)
+    val result =
+      VcsPresentablePath.getRelativePathToSingleVcsRootOrProjectDir(vcsMappingsHolder, projectBaseDir, filePath, acceptEmptyPath = true)
     assertEquals("submodule/src/File.kt", result)
   }
 
@@ -89,21 +101,8 @@ internal class VcsPresentablePathTest {
     `when`(vcsMappingsHolder.getRootFor(filePath)).thenReturn(root2)
     `when`(vcsMappingsHolder.getAllRoots()).thenReturn(listOf(projectBaseDir, root2))
 
-    val result = VcsPresentablePath.getRootRelativePath(vcsMappingsHolder, projectBaseDir, filePath, acceptEmptyPath = true)
-    assertNull(result)
-  }
-
-  @Test
-  fun `test multiple roots - root next to project dir`() {
-    val vcsMappingsHolder = mock<VcsMappingsHolder>()
-    val projectBaseDir = LocalFilePath("/opt/project", true)
-    val root2 = LocalFilePath("/opt/lib", true)
-    val filePath = LocalFilePath("/opt/lib/src/Lib.kt", false)
-
-    `when`(vcsMappingsHolder.getRootFor(filePath)).thenReturn(root2)
-    `when`(vcsMappingsHolder.getAllRoots()).thenReturn(listOf(projectBaseDir, root2))
-
-    val result = VcsPresentablePath.getRootRelativePath(vcsMappingsHolder, projectBaseDir, filePath, acceptEmptyPath = true)
+    val result =
+      VcsPresentablePath.getRelativePathToSingleVcsRootOrProjectDir(vcsMappingsHolder, projectBaseDir, filePath, acceptEmptyPath = true)
     assertNull(result)
   }
 
@@ -115,7 +114,8 @@ internal class VcsPresentablePathTest {
 
     `when`(vcsMappingsHolder.getRootFor(filePath)).thenReturn(null)
 
-    val result = VcsPresentablePath.getRootRelativePath(vcsMappingsHolder, projectBaseDir, filePath, acceptEmptyPath = true)
-    assertNull(result)
+    val result =
+      VcsPresentablePath.getRelativePathToSingleVcsRootOrProjectDir(vcsMappingsHolder, projectBaseDir, filePath, acceptEmptyPath = true)
+    assertEquals("<Project>/src/Main.kt", result)
   }
 }

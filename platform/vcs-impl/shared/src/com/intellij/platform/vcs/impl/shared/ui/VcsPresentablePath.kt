@@ -13,6 +13,7 @@ import com.intellij.platform.vcs.impl.shared.ProjectBasePathHolder
 import com.intellij.platform.vcs.impl.shared.VcsMappingsHolder
 import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.SystemIndependent
+import org.jetbrains.annotations.VisibleForTesting
 
 /**
  * Implementation is identical to [com.intellij.vcsUtil.VcsUtil.getPresentablePath] with support for remote development:
@@ -29,46 +30,55 @@ internal object VcsPresentablePath {
   @JvmStatic
   fun getPresentablePath(project: Project?, filePath: FilePath, forceRelativePath: Boolean = false): @NlsSafe @SystemDependent String =
     if (!forceRelativePath && shouldHandleAsNonLocal(filePath)) filePath.path
-    else doGetPresentablePath(project, filePath, acceptEmptyPath = !forceRelativePath)
+    else getPresentablePathOrEmpty(project, filePath, canBeEmpty = !forceRelativePath)
 
-  private fun doGetPresentablePath(project: Project?, filePath: FilePath, acceptEmptyPath: Boolean): @NlsSafe @SystemDependent String {
+  private fun getPresentablePathOrEmpty(project: Project?, filePath: FilePath, canBeEmpty: Boolean): @NlsSafe @SystemDependent String {
     if (project == null || !project.isDisposed) {
       val projectDir = project?.service<ProjectBasePathHolder>()?.getPresentablePath()
       if (projectDir != null) {
-        val rootRelativePath = getRootRelativePath(VcsMappingsHolder.getInstance(project), projectDir, filePath, acceptEmptyPath)
-        if (rootRelativePath != null) return getSystemDependentPath(rootRelativePath)
-
-        val projectRelativePath = relativizeSystemIndependentPaths(projectDir.path, filePath.path)
-        if (projectRelativePath != null) return getSystemDependentPath(VcsBundle.message("label.relative.project.path.presentation",
-                                                                                         projectRelativePath))
+        val relativePath =
+          getRelativePathToSingleVcsRootOrProjectDir(VcsMappingsHolder.getInstance(project), projectDir, filePath, canBeEmpty)
+        if (relativePath != null) return getSystemDependentPath(relativePath)
       }
     }
 
     return getRelativePathToUserHome(filePath)
   }
 
-  fun getRootRelativePath(
+  @VisibleForTesting
+  internal fun getRelativePathToSingleVcsRootOrProjectDir(
     vcsMappingsHolder: VcsMappingsHolder,
     projectBaseDir: FilePath,
     filePath: FilePath,
     acceptEmptyPath: Boolean,
   ): @SystemIndependent String? {
-    val root = vcsMappingsHolder.getRootFor(filePath) ?: return null
-    val path = filePath.path
-    val roots = vcsMappingsHolder.getAllRoots()
-    if (roots.size == 1) {
-      val rootPath = root.path
-      return if (rootPath == path) {
-        if (acceptEmptyPath) "" else root.getName()
+    val vcsRootForFile = vcsMappingsHolder.getRootFor(filePath)
+    return when {
+      vcsRootForFile == null -> {
+        val relativePathToProjectDir = getRelativePathIfSuccessor(projectBaseDir.path, filePath.path) ?: return null
+        VcsBundle.message("label.relative.project.path.presentation", relativePathToProjectDir)
       }
-      else {
-        relativizeSystemIndependentPaths(rootPath, path)
+      vcsMappingsHolder.getAllRoots().size == 1 -> getRelativePathToSingleRoot(vcsRootForFile, filePath, acceptEmptyPath)
+      // Multiple roots scenarios
+      projectBaseDir == filePath -> vcsRootForFile.name
+      else -> {
+        val relativePathToProjectDir = getRelativePathIfSuccessor(projectBaseDir.path, filePath.path) ?: return null
+        if (projectBaseDir == vcsRootForFile) "${projectBaseDir.name}/$relativePathToProjectDir" else relativePathToProjectDir
       }
     }
+  }
 
-    if (projectBaseDir == filePath) return root.getName()
-    val relativePath = getRelativePathIfSuccessor(projectBaseDir.path, path) ?: return null
-    return if (projectBaseDir == root) "${root.getName()}/$relativePath" else relativePath
+  /**
+   * @return the relative path to [filePath] from [vcsRootForFile] in case if there is only one VCS root registered.
+   */
+  private fun getRelativePathToSingleRoot(
+    vcsRootForFile: FilePath,
+    filePath: FilePath,
+    acceptEmptyPath: Boolean,
+  ): @SystemIndependent String? = when {
+    vcsRootForFile != filePath -> getRelativePathIfSuccessor(vcsRootForFile.path, filePath.path)
+    acceptEmptyPath -> ""
+    else -> vcsRootForFile.name
   }
 
   private fun relativizeSystemIndependentPaths(
@@ -81,10 +91,7 @@ internal object VcsPresentablePath {
     ancestor: @SystemIndependent String,
     path: @SystemIndependent String,
   ): @NlsSafe @SystemIndependent String? =
-    if (FileUtil.isAncestor(ancestor, path, true)) {
-      FileUtil.getRelativePath(ancestor, path, '/', CaseSensitivityInfoHolder.caseSensitive)
-    }
-    else null
+    if (FileUtil.isAncestor(ancestor, path, true)) relativizeSystemIndependentPaths(ancestor, path) else null
 
   /**
    * In split mode we operate [com.intellij.openapi.vcs.RemoteFilePath], so it's always `filePath.isNonLocal == true`.
