@@ -129,7 +129,6 @@ jvm_library(
     "//platform/execution",
     "//platform/lang-impl",
     "//libraries/fastutil",
-    "//platform/structuralsearch:structuralSearch",
     "//platform/duplicates-analysis",
     "//platform/code-style-impl:codeStyle-impl",
     "//libraries/markdown",
