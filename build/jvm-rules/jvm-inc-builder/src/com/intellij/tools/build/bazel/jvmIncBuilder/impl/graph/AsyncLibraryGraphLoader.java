@@ -12,7 +12,7 @@ import org.jetbrains.jps.util.Pair;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -32,56 +32,57 @@ public interface AsyncLibraryGraphLoader {
   }
 
   static List<GraphStateChange> submit(BuildContext context, Iterable<NodeSource> libs, ElementSnapshot<NodeSource> pastSnapshot, ElementSnapshot<NodeSource> presentSnapshot) {
-    List<GraphStateChange> tasks = new ArrayList<>();
-    for (NodeSource presentLib : libs) {
-      Path presentLibPath = context.getPathMapper().toPath(presentLib);
-      Path pastLibPath = DataPaths.getJarBackupStoreFile(context, presentLibPath);
-      CompletableFuture<Pair<NodeSourceSnapshot, Graph>> presentGraph = submitGraphLoadTask(presentLib, presentSnapshot.getDigest(presentLib), presentLibPath);
-      CompletableFuture<Pair<NodeSourceSnapshot, Graph>> pastGraph = submitGraphLoadTask(presentLib, pastSnapshot.getDigest(presentLib), pastLibPath);
-      tasks.add(new GraphStateChange() {
-        @Override
-        public void cancel() {
-          presentGraph.cancel(true);
-          pastGraph.cancel(true);
-        }
+    try (GraphLoaderExecutor executor = GraphLoaderExecutor.create()) {
+      List<GraphStateChange> tasks = new ArrayList<>();
+      for (NodeSource presentLib : libs) {
+        Path presentLibPath = context.getPathMapper().toPath(presentLib);
+        Path pastLibPath = DataPaths.getJarBackupStoreFile(context, presentLibPath);
+        CompletableFuture<Pair<NodeSourceSnapshot, Graph>> presentGraph = submitGraphLoadTask(presentLib, presentSnapshot.getDigest(presentLib), presentLibPath, executor);
+        CompletableFuture<Pair<NodeSourceSnapshot, Graph>> pastGraph = submitGraphLoadTask(presentLib, pastSnapshot.getDigest(presentLib), pastLibPath, executor);
+        tasks.add(new GraphStateChange() {
+          @Override
+          public void cancel() {
+            presentGraph.cancel(true);
+            pastGraph.cancel(true);
+          }
 
-        @Override
-        public @NotNull Pair<NodeSourceSnapshot, Graph> getPast() throws Exception {
-          return pastGraph.get();
-        }
+          @Override
+          public @NotNull Pair<NodeSourceSnapshot, Graph> getPast() throws Exception {
+            return pastGraph.get();
+          }
 
-        @Override
-        public @NotNull Pair<NodeSourceSnapshot, Graph> getPresent() throws Exception {
-          return presentGraph.get();
-        }
-      });
+          @Override
+          public @NotNull Pair<NodeSourceSnapshot, Graph> getPresent() throws Exception {
+            return presentGraph.get();
+          }
+        });
+      }
+      return tasks;
     }
-
-    return tasks;
   }
 
   static List<GraphState> submit(ElementSnapshot<NodeSource> librariesSnapshot, Predicate<NodeSource> libFilter, Function<NodeSource, Path> toLoadPath) {
-    List<GraphState> tasks = new ArrayList<>();
-    for (NodeSource lib : filter(librariesSnapshot.getElements(), libFilter)) {
-      CompletableFuture<Pair<NodeSourceSnapshot, Graph>> result = submitGraphLoadTask(lib, librariesSnapshot.getDigest(lib), toLoadPath.apply(lib));
-      tasks.add(new GraphState() {
-        @Override
-        public void cancel() {
-          result.cancel(true);
-        }
+    try (GraphLoaderExecutor executor = GraphLoaderExecutor.create()) {
+      List<GraphState> tasks = new ArrayList<>();
+      for (NodeSource lib : filter(librariesSnapshot.getElements(), libFilter)) {
+        CompletableFuture<Pair<NodeSourceSnapshot, Graph>> result = submitGraphLoadTask(lib, librariesSnapshot.getDigest(lib), toLoadPath.apply(lib), executor);
+        tasks.add(new GraphState() {
+          @Override
+          public void cancel() {
+            result.cancel(true);
+          }
 
-        @Override
-        public @NotNull Pair<NodeSourceSnapshot, Graph> get() throws Exception {
-          return result.get();
-        }
-      });
+          @Override
+          public @NotNull Pair<NodeSourceSnapshot, Graph> get() throws Exception {
+            return result.get();
+          }
+        });
+      }
+      return tasks;
     }
-    return tasks;
   }
 
-
-  /** @noinspection CompletableFuture.defaultExecutor*/
-  private static CompletableFuture<Pair<NodeSourceSnapshot, Graph>> submitGraphLoadTask(NodeSource lib, @NotNull String digest, @NotNull Path loadPath) {
-    return CompletableFuture.supplyAsync(() -> LibraryGraphLoader.getLibraryGraph(lib, digest, loadPath));
+  private static CompletableFuture<Pair<NodeSourceSnapshot, Graph>> submitGraphLoadTask(NodeSource lib, @NotNull String digest, @NotNull Path loadPath, Executor executor) {
+    return CompletableFuture.supplyAsync(() -> LibraryGraphLoader.getLibraryGraph(lib, digest, loadPath), executor);
   }
 }
