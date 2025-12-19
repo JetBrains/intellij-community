@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "testPluginWithMissingDependencies_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "testPluginWithMissingDependencies",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":testPluginWithMissingDependencies_resources"]
+)
+### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end

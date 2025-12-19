@@ -513,6 +513,8 @@ platform/build-scripts/downloader
 platform/build-scripts/icons
 platform/build-scripts/product-dsl
 platform/build-scripts/testFramework
+platform/build-scripts/testPlugins/testPluginWithMissingDependencies
+platform/build-scripts/testPlugins/testPluginWithMissingDependencies/module
 platform/build-scripts/tests
 platform/build-scripts/usages
 platform/buildData
