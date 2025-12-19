@@ -66,6 +66,7 @@ import com.jetbrains.rd.util.trace
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
 import kotlin.time.Duration.Companion.milliseconds
@@ -226,6 +227,12 @@ open class CodeVisionHost(val project: Project) {
     }
   }
 
+  @ApiStatus.Internal
+  fun recollectAndRearrangeProviders() {
+    providers = CodeVisionProviderFactory.createAllProviders(project)
+    rearrangeProviders()
+  }
+
   protected fun rearrangeProviders() {
     val allProviders = collectAllProviders()
     defaultSortedProvidersList.clear()
@@ -278,22 +285,15 @@ open class CodeVisionHost(val project: Project) {
   }
 
   private fun subscribeDynamicPluginLoaded(enableCodeVisionLifetime: Lifetime) {
-    rearrangeProviders()
+    recollectAndRearrangeProviders()
     project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable())
       .subscribe(DynamicPluginListener.TOPIC,
                  object : DynamicPluginListener {
-                   private fun recollectAndRearrangeProviders() {
-                     providers = CodeVisionProviderFactory.createAllProviders(
-                       project)
-                     rearrangeProviders()
-                   }
-
                    override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
                      recollectAndRearrangeProviders()
                    }
 
-                   override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor,
-                                               isUpdate: Boolean) {
+                   override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
                      recollectAndRearrangeProviders()
                    }
                  })
