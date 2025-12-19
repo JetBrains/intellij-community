@@ -82,8 +82,6 @@ class CombinedDiffViewer(
 
   private val collapsedDiffBlocks: BitSet = BitSet(blockState.blocksCount)
 
-  private var needsInitialBlockSelection = true
-
   private val blocksPanel: CombinedDiffBlocksPanel = CombinedDiffBlocksPanel(blockState) { (blockId, blockHeight) ->
     if (blockId.isCollapsed) blockHeight else maxOf(blockHeight, scrollPane.viewport.height)
   }
@@ -191,11 +189,8 @@ class CombinedDiffViewer(
     }
 
     if (blockState.currentBlock == blockId) {
-      if (needsInitialBlockSelection && newContent.viewer !is CombinedDiffLoadingBlock) {
-        needsInitialBlockSelection = false
+      if (newContent.viewer !is CombinedDiffLoadingBlock) {
         selectDiffBlock(blockId, true)
-      }
-      else {
         scrollToFirstChange(blockId, false, ScrollPolicy.SCROLL_TO_CARET)
       }
     }
@@ -390,16 +385,17 @@ class CombinedDiffViewer(
     hidden: ArrayList<CombinedBlockId>,
   ) {
     val currentBlock = blockState.currentBlock
-    val needsInitialBlockSelection = needsInitialBlockSelection
-    val blocksAroundCurrent: List<CombinedBlockId>? = if (needsInitialBlockSelection) getBlocksAroundCurrent(currentBlock) else null
+    val totalVisible = getBlocksAroundCurrent(currentBlock)
 
-    val blocksToHide = if (blocksAroundCurrent != null) hidden.filter { it !in blocksAroundCurrent } else hidden
+    val blocksToHide =
+      hidden.filter { it !in totalVisible } +
+      inViewport.filter { it !in totalVisible } +
+      beforeViewport.filter { it !in totalVisible } +
+      afterViewport.filter { it !in totalVisible }
 
     if (blocksToHide.isNotEmpty()) {
       blockListeners.multicaster.blocksHidden(blocksToHide)
     }
-
-    val totalVisible = blocksAroundCurrent ?: (inViewport + afterViewport + beforeViewport)
 
     if (totalVisible.isNotEmpty()) {
       blockListeners.multicaster.blocksVisible(totalVisible)
