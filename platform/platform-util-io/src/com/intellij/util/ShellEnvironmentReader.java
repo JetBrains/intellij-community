@@ -148,8 +148,8 @@ public final class ShellEnvironmentReader {
 
   private static String prepareCallArgs(List<String> callArgs) {
     var preparedCallArgs = CommandLineUtil.toCommandLine(callArgs);
-    var firstArg = preparedCallArgs.remove(0);
-    preparedCallArgs.add(0, CommandLineUtil.escapeParameterOnWindows(firstArg, false));
+    var firstArg = preparedCallArgs.removeFirst();
+    preparedCallArgs.addFirst(CommandLineUtil.escapeParameterOnWindows(firstArg, false));
     // for `cmd.exe`, we need to add extra double quotes for the actual command in call
     // to mitigate possible JVM issue when argument contains spaces and the first word
     // starts with double quote and the last ends with double quote and JVM does not
@@ -249,10 +249,10 @@ public final class ShellEnvironmentReader {
 
       var env = EnvironmentUtil.parseEnv(envData.split("\0"));
       env.remove(INTELLIJ_ENVIRONMENT_READER);
-      if ("zsh".equals(Path.of(command.command().get(0)).getFileName().toString())) {
+      if ("zsh".equals(Path.of(command.command().getFirst()).getFileName().toString())) {
         env.remove(DISABLE_OMZ_AUTO_UPDATE);
       }
-      LOG.info("shell environment loaded (" + command.command().get(0) + ", " + env.size() + " vars)");
+      LOG.info("shell environment loaded (" + command.command().getFirst() + ", " + env.size() + " vars)");
       return new Pair<>(env, log);
     }
     finally {
