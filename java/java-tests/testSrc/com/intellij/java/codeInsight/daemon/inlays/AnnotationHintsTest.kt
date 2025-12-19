@@ -13,6 +13,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import org.intellij.lang.annotations.Language
+import java.util.regex.Pattern
 
 class AnnotationHintsTest : DeclarativeInlayHintsProviderTestCase() {
 
@@ -295,19 +296,17 @@ public final class Optional</*<# @NotNull #>*/T> {
   }
   
   private fun convert(text: String): String{
-    var from = 0
-    var to = text.indexOf("/*<# @NotNull #>*/")
+    val matcher = Pattern.compile("/\\*<# @(NotNull|Nullable) #>\\*/").matcher(text)
     val result = StringBuilder()
-    while (to >= 0) {
-      result.append(text.substring(from, to))
-      to += 18
-      while (Character.isAlphabetic(text[to].code)) {
-        result.append(text[to])
-        to++
+    var from = 0
+    while (matcher.find()) {
+      result.append(text.substring(from, matcher.start()))
+      from = matcher.end();
+      while (Character.isAlphabetic(text[from].code)) {
+        result.append(text[from])
+        from++
       }
-      result.append("/*<# ! #>*/")
-      from = to
-      to = text.indexOf("/*<# @NotNull #>*/", from + 1)
+      result.append(if (matcher.group(1).equals("NotNull")) "/*<# ! #>*/" else "/*<# ? #>*/")
     }
     result.append(text.substring(from))
     return result.toString()

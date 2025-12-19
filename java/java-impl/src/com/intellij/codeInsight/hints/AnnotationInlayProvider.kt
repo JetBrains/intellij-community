@@ -53,6 +53,9 @@ public class AnnotationInlayProvider : InlayHintsProvider {
     val project = file.project
     if (project.isDefault) return null
     return object : SharedBypassCollector {
+      val notNulls = HashSet(NullableNotNullManager.getInstance(project).notNulls)
+      val nullables = HashSet(NullableNotNullManager.getInstance(project).nullables)
+
       override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
         if (element is PsiTypeParameterListOwner) {
           sink.whenOptionEnabled(SHOW_EXTERNAL) {
@@ -115,7 +118,7 @@ public class AnnotationInlayProvider : InlayHintsProvider {
                 element.modifierList != null &&
                 (shownAnnotations.add(nameReferenceElement.qualifiedName) || JavaDocInfoGenerator.isRepeatableAnnotationType(annotation))) {
               val hintPos = (if (isTypeAnno(annotation)) typeHintPos else modifierListHintPos) ?: return
-              val suffixText = getTypeSuffixText(annotation)
+              val suffixText = calculateTypeSuffixText(annotation)
               if (suffixText != null && AnnotationInlaySettings.getInstance().shortenNotNull) {
                 if (!shownAnnotations.add(suffixText)) return // to prevent duplicates when external and inferred annotations use different @NotNull classes
                 val suffixOffset = calculateSuffixOffset(element)
@@ -197,26 +200,33 @@ public class AnnotationInlayProvider : InlayHintsProvider {
               }
           }
       }
-    }
-  }
 
-  private fun showAnnotationInlay(
-    sink: InlayTreeSink,
-    annotation: PsiAnnotation,
-    project: Project,
-    anchor: PsiElement,
-  ) {
-    val suffixText = getTypeSuffixText(annotation)
-    if (suffixText != null && AnnotationInlaySettings.getInstance().shortenNotNull) {
-      val offset = calculateSuffixOffset(anchor)
-      sink.addPresentation(InlineInlayPosition(offset, false), TYPE_ANNOTATION_PAYLOADS,
-                           hintFormat = HintFormat.default, tooltip = "@${annotation.nameReferenceElement?.referenceName}") {
-        text(suffixText, annotation.nameReferenceElement?.resolve()?.createSmartPointer(project)?.toNavigateInlayAction())
+      private fun showAnnotationInlay(
+        sink: InlayTreeSink,
+        annotation: PsiAnnotation,
+        project: Project,
+        anchor: PsiElement,
+      ) {
+        val suffixText = calculateTypeSuffixText(annotation)
+        if (suffixText != null && AnnotationInlaySettings.getInstance().shortenNotNull) {
+          val offset = calculateSuffixOffset(anchor)
+          sink.addPresentation(InlineInlayPosition(offset, false), TYPE_ANNOTATION_PAYLOADS,
+                               hintFormat = HintFormat.default, tooltip = "@${annotation.nameReferenceElement?.referenceName}") {
+            text(suffixText, annotation.nameReferenceElement?.resolve()?.createSmartPointer(project)?.toNavigateInlayAction())
+          }
+        }
+        else {
+          val offset = anchor.textRange.startOffset
+          sink.addAnnotationPresentation(annotation, project, InlineInlayPosition(offset, false), HINT_FORMAT, TYPE_ANNOTATION_PAYLOADS)
+        }
       }
-    }
-    else {
-      val offset = anchor.textRange.startOffset
-      sink.addAnnotationPresentation(annotation, project, InlineInlayPosition(offset, false), HINT_FORMAT, TYPE_ANNOTATION_PAYLOADS)
+
+      private fun calculateTypeSuffixText(annotation: PsiAnnotation) : String? {
+        val name = annotation.nameReferenceElement?.qualifiedName;
+        if (notNulls.contains(name)) return "!"
+        if (nullables.contains(name)) return "?"
+        return null;
+      }
     }
   }
 
@@ -232,11 +242,6 @@ public class AnnotationInlayProvider : InlayHintsProvider {
       is PsiTypeParameter -> element.textRange.endOffset
       else -> 0
     }
-  }
-  
-  private fun getTypeSuffixText(annotation: PsiAnnotation) : String? {
-    val notNulls = HashSet(NullableNotNullManager.getInstance(annotation.project).notNulls)
-    return if (notNulls.contains(annotation.nameReferenceElement?.qualifiedName)) "!" else null
   }
 }
 
