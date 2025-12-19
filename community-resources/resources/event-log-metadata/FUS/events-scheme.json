@@ -7035,13 +7035,14 @@
         "build_system" : [ "{enum:GRADLE|MAVEN|MULTIPLE|UNKNOWN|JPS}" ],
         "build_system_version" : [ "{regexp#version}" ],
         "can_auto_configure" : [ "{enum#boolean}" ],
-        "failure_reason" : [ "{enum:BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE|CONFIGURING_OF_TOP_LEVEL_BUILD_SCRIPT_FAILED|CONFIGURING_OF_MODULE_BUILD_SCRIPT_FAILED|ADDING_KOTLIN_VERSION_TO_TOP_LEVEL_BUILD_SCRIPT_FAILED|VIRTUAL_FILE_DOESNT_EXIST_FOR_PSI_FILE|DOM_MODEL_DOESNT_EXIST|WASNT_ABLE_TO_TRANSFORM_XML_TO_POM|OTHER}" ],
+        "chosen_kotlin_version" : [ "{regexp:\\d+\\.\\d+\\.\\d+}" ],
+        "failure_reason" : [ "{enum:BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE|CONFIGURING_OF_TOP_LEVEL_BUILD_SCRIPT_FAILED|CONFIGURING_OF_MODULE_BUILD_SCRIPT_FAILED|ADDING_KOTLIN_VERSION_TO_TOP_LEVEL_BUILD_SCRIPT_FAILED|VIRTUAL_FILE_DOESNT_EXIST_FOR_PSI_FILE|DOM_MODEL_DOESNT_EXIST|WASNT_ABLE_TO_TRANSFORM_XML_TO_POM|OTHER}", "{enum:NO_POM_FILE|POM_IS_NOT_XML|PSI_FOR_POM_IS_NOT_VALID|MAVEN_PROJECT_FOR_MODULE_NOT_FOUND}" ],
         "is_auto_configuration" : [ "{enum#boolean}" ],
         "onboarding_session_id" : [ "{regexp#integer}" ],
         "version" : [ "{regexp#version}" ]
       },
       "enums" : {
-        "__event_id" : [ "project_sync.completed", "configure_kt_notification.clicked", "first_kt_file.created", "configured_kt_notification.shown", "project_sync.started", "configure_kt_window.shown", "project_sync.failed", "configure_kt.started", "first_kt_file.dialog_opened", "configure_kt_panel.shown", "configure_kt_notification.shown", "configure_kt.undone", "auto_config.checked", "configure_kt.failed" ]
+        "__event_id" : [ "project_sync.completed", "configure_kt_notification.clicked", "first_kt_file.created", "configured_kt_notification.shown", "project_sync.started", "configure_kt_window.shown", "project_sync.failed", "configure_kt.started", "first_kt_file.dialog_opened", "configure_kt_panel.shown", "configure_kt_notification.shown", "configure_kt.undone", "auto_config.checked", "configure_kt.failed", "configure_kt.kotlin_version_chosen" ]
       }
     }
   }, {
@@ -15240,5 +15241,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6573"
+  "version" : "6577"
 }
