@@ -835,20 +835,25 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   @Override
   public void prefixUpdated() {
-    final int caretOffset = myEditor.getCaretModel().getOffset();
-    if (caretOffset < myStartCaret) {
+    if (isRestartRequired()) {
+      LOG.debug("prefixUpdated: restarting completion");
       scheduleRestart();
       myRestartingPrefixConditions.clear();
-      return;
+    }
+    else {
+      LOG.debug("prefixUpdated:  no restart needed");
+      hideAutopopupIfMeaningless();
+    }
+  }
+
+  private boolean isRestartRequired() {
+    if (myEditor.getCaretModel().getOffset() < myStartCaret) {
+      // always restart if caret moved before prefix start
+      return true;
     }
 
-    if (shouldRestartCompletion(myEditor, myRestartingPrefixConditions, "")) {
-      scheduleRestart();
-      myRestartingPrefixConditions.clear();
-      return;
-    }
-
-    hideAutopopupIfMeaningless();
+    // restart if myRestartingPrefixConditions say so
+    return shouldRestartCompletion(myEditor, myRestartingPrefixConditions, "");
   }
 
   @ApiStatus.Internal
@@ -876,7 +881,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   @Override
   public void scheduleRestart() {
     ThreadingAssertions.assertEventDispatchThread();
-    LOG.trace("Scheduling restart");
+    LOG.debug("Scheduling restart");
     if (handler.isTestingMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       closeAndFinish(false);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
