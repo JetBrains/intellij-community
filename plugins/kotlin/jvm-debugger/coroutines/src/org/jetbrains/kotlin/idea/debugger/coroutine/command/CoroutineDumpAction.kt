@@ -13,15 +13,13 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.text.DateFormatUtil
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.toCompleteCoroutineInfoData
@@ -42,8 +40,7 @@ class CoroutineDumpAction : AnAction() {
             if (states.isOk()) {
                 // WA: pass complete coroutine info data to CoroutineDumpPanel to avoid computation of stacktraces on the UI thread.
                 val coroutines = states.cache.map { it.toCompleteCoroutineInfoData() }
-                withContext(Dispatchers.EDT) {
-                    val ui = session.xDebugSession?.ui ?: return@withContext
+                (session.xDebugSession as? XDebugSessionImpl)?.runWhenUiReady { ui ->
                     addCoroutineDump(project, coroutines, ui, session.searchScope)
                 }
             } else {

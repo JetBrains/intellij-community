@@ -5,9 +5,9 @@ import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.impl.DebuggerManagerListener
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.XDebugSessionListener
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 
 private class DisableCoroutineViewListener : DebuggerManagerListener {
     override fun sessionAttached(session: DebuggerSession) {
@@ -27,9 +27,10 @@ private class DisableCoroutineViewListener : DebuggerManagerListener {
 
 
 internal fun showOrHideCoroutinePanel(debugProcess: DebugProcessImpl, needShow: Boolean) {
-    val ui = debugProcess.session.xDebugSession?.ui as? RunnerLayoutUiImpl ?: return
-    val contentUi = ui.contentUI
-    runInEdt {
+    val xDebugSession = debugProcess.session.xDebugSession as? XDebugSessionImpl ?: return
+    xDebugSession.runWhenUiReady { ui ->
+        if (ui !is RunnerLayoutUiImpl) return@runWhenUiReady
+        val contentUi = ui.contentUI
         val key = CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT
         if (needShow) {
             contentUi.findOrRestoreContentIfNeeded(key)
