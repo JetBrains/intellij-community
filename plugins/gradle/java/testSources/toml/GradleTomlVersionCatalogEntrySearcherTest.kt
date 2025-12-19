@@ -102,6 +102,19 @@ class GradleTomlVersionCatalogEntrySearcherTest {
   }
 
   @Test
+  fun `test findEntryElement for a version entry`() {
+    testFindEntryElement("versions.my.foo", """
+      [versions]
+      my-foo = ["foo"]
+      my-foo-bar = ["foo-bar"]
+      """.trimIndent()
+    ) {
+      assertNotNull(it)
+      assertEquals("my-foo = [\"foo\"]", it.text)
+    }
+  }
+
+  @Test
   fun `test findEntryElement for a plugin entry`() {
     testFindEntryElement("plugins.plugin", """
       [plugins]
