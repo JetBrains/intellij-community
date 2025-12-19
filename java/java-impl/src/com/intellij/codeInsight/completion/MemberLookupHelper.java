@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +54,10 @@ public final class MemberLookupHelper {
 
   public boolean willBeImported() {
     return myShouldImport;
+  }
+  
+  public boolean isMergedOverloads() {
+    return myMergedOverloads;
   }
 
   public void renderElement(@NotNull LookupElementPresentation presentation,
@@ -113,10 +118,11 @@ public final class MemberLookupHelper {
     return null;
   }
 
-  private static @Nullable PsiType patchGetClass(@NotNull PsiMethod method, @Nullable PsiType type) {
-    if (PsiTypesUtil.isGetClass(method) && type instanceof PsiClassType) {
-      PsiType arg = ContainerUtil.getFirstItem(Arrays.asList(((PsiClassType)type).getParameters()));
-      PsiType bound = arg instanceof PsiWildcardType ? TypeConversionUtil.erasure(((PsiWildcardType)arg).getExtendsBound()) : null;
+  @ApiStatus.Internal
+  public static @Nullable PsiType patchGetClass(@NotNull PsiMethod method, @Nullable PsiType type) {
+    if (PsiTypesUtil.isGetClass(method) && type instanceof PsiClassType classType) {
+      PsiType arg = ContainerUtil.getFirstItem(Arrays.asList(classType.getParameters()));
+      PsiType bound = arg instanceof PsiWildcardType wildcardType ? TypeConversionUtil.erasure(wildcardType.getExtendsBound()) : null;
       if (bound != null) {
         return PsiTypesUtil.createJavaLangClassType(method, bound, false);
       }

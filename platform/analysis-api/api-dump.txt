@@ -9,6 +9,7 @@ com.intellij.codeInsight.completion.BaseCompletionParameters
 - a:getCompletionType():com.intellij.codeInsight.completion.CompletionType
 - a:getOffset():I
 - a:getOriginalFile():com.intellij.psi.PsiFile
+- a:getOriginalPosition():com.intellij.psi.PsiElement
 - a:getPosition():com.intellij.psi.PsiElement
 com.intellij.codeInsight.completion.BatchConsumer
 - com.intellij.util.Consumer

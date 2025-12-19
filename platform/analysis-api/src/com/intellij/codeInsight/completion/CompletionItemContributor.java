@@ -19,7 +19,7 @@ final class CompletionItemContributor extends CompletionContributor implements R
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     ModCompletionItemProvider.CompletionContext context = new ModCompletionItemProvider.CompletionContext(
-      parameters.getOriginalFile(), parameters.getOffset(), parameters.getPosition(), 
+      parameters.getOriginalFile(), parameters.getOffset(), parameters.getOriginalPosition(), parameters.getPosition(), 
       result.getPrefixMatcher(), parameters.getInvocationCount(), parameters.getCompletionType());
     myProvider.provideItems(context, item -> {
       result.addElement(new CompletionItemLookupElement(item));

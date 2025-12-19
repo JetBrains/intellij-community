@@ -5,7 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaConstructorCallElement;
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcompletion.ModCompletionItem;
@@ -22,7 +22,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -125,8 +124,8 @@ final class ConstructorCallCompletionItem extends PsiUpdateCompletionItem<Object
     int caret = updater.getCaretOffset();
     Document document = updater.getDocument();
     PsiFile file = updater.getPsiFile();
-    Language language = PsiUtilCore.getLanguageAtOffset(file, caret);
-    CommonCodeStyleSettings styleSettings = CodeStyle.getLanguageSettings(file, language);
+    boolean needRightParenth = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
+    CommonCodeStyleSettings styleSettings = CodeStyle.getLanguageSettings(file, JavaLanguage.INSTANCE);
     String typeParams = "";
     if (psiClass.hasTypeParameters()) {
       typeParams = "<>";
@@ -138,10 +137,13 @@ final class ConstructorCallCompletionItem extends PsiUpdateCompletionItem<Object
       inparens++;
     }
     if (styleSettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES) {
-      parens += "(  )";
+      parens += "(  ";
       inparens++;
     } else {
-      parens += "()";
+      parens += "(";
+    }
+    if (needRightParenth) {
+      parens += ")";
     }
     document.insertString(caret + typeParams.length(), parens);
     int inParensOffset = caret + inparens + typeParams.length();
@@ -151,7 +153,9 @@ final class ConstructorCallCompletionItem extends PsiUpdateCompletionItem<Object
     } else {
        updater.moveCaretTo(inParensOffset);
     }
-    updater.registerTabOut(TextRange.create(inParensOffset, inParensOffset), caret + typeParams.length() + parens.length());
+    if (needRightParenth) {
+      updater.registerTabOut(TextRange.create(inParensOffset, inParensOffset), caret + typeParams.length() + parens.length());
+    }
   }
 
   @Override

@@ -11,7 +11,7 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandExecutor;
@@ -32,20 +32,21 @@ import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.siyeh.ig.psiutils.JavaDeprecationUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -245,7 +246,7 @@ final class ReferenceItemProvider implements ModCompletionItemProvider {
 
     Set<PsiType> expectedTypes = ObjectUtils.coalesce(JavaCompletionUtil.getExpectedTypes(parameters), Collections.emptySet());
 
-    //Set<PsiMember> mentioned = new HashSet<>();
+    Set<PsiMember> mentioned = new HashSet<>();
     //JavaCompletionUtil.JavaLookupElementHighlighter highlighter = getHighlighterForPlace(element, parameters.getOriginalFile().getVirtualFile());
     for (CompletionElement completionElement : processor.getResults()) {
       for (ModCompletionItem item : createLookupElements(completionElement, javaReference)) {
@@ -261,7 +262,7 @@ final class ReferenceItemProvider implements ModCompletionItemProvider {
           if (honorExcludes && JavaCompletionUtil.isInExcludedPackage(member, true)) {
             continue;
           }
-          //mentioned.add(CompletionUtil.getOriginalOrSelf(member));
+          mentioned.add(CompletionUtil.getOriginalOrSelf(member));
         }
         PsiTypeCompletionItem qualifierCast = null;
         PsiMember member = ObjectUtils.tryCast(item.contextObject(), PsiMember.class);
@@ -278,16 +279,18 @@ final class ReferenceItemProvider implements ModCompletionItemProvider {
       }
     }
     
-
-    //PsiElement refQualifier = javaReference.getQualifier();
-    //if (refQualifier == null && PsiTreeUtil.getParentOfType(element, PsiPackageStatement.class, PsiImportStatementBase.class) == null) {
-    //  StaticMemberProcessor memberProcessor = new JavaStaticMemberProcessor(parameters);
-    //  memberProcessor.processMembersOfRegisteredClasses(nameCondition, (member, psiClass) -> {
-    //    if (!mentioned.contains(member) && processor.satisfies(member, ResolveState.initial())) {
-    //      ContainerUtil.addIfNotNull(set, memberProcessor.createLookupElement(member, psiClass, true));
-    //    }
-    //  });
-    //}
+    PsiElement refQualifier = javaReference.getQualifier();
+    if (refQualifier == null && PsiTreeUtil.getParentOfType(element, PsiPackageStatement.class, PsiImportStatementBase.class) == null) {
+      ModJavaStaticMemberProcessor memberProcessor = new ModJavaStaticMemberProcessor(parameters);
+      memberProcessor.processMembersOfRegisteredClasses(nameCondition, (member, psiClass) -> {
+        if (!mentioned.contains(member) && processor.satisfies(member, ResolveState.initial())) {
+          ModCompletionItem item = memberProcessor.createCompletionItem(member, psiClass, true);
+          if (item != null) {
+            sink.accept(item);
+          }
+        }
+      });
+    }
     //else if (refQualifier instanceof PsiSuperExpression && ((PsiSuperExpression)refQualifier).getQualifier() == null) {
     //  set.addAll(SuperCalls.suggestQualifyingSuperCalls(element, javaReference, elementFilter, options, nameCondition));
     //}
@@ -329,17 +332,19 @@ final class ReferenceItemProvider implements ModCompletionItemProvider {
       return ConstructorCallCompletionItem.tryWrap(new ClassReferenceCompletionItem(cls).withSubstitutor(substitutor), reference.getElement());
     }
     if (completion instanceof PsiMethod method) {
-      if (reference instanceof PsiMethodReferenceExpression) {
+      if (reference instanceof PsiMethodReferenceExpression mr) {
         String lookup = method.isConstructor() ? JavaKeywords.NEW : method.getName();
+        MarkupText text = MarkupText.plainText(lookup).highlightAll(
+          JavaDeprecationUtils.isDeprecated(method, mr) ? MarkupText.Kind.STRIKEOUT : MarkupText.Kind.NORMAL);
         return List.of(new CommonCompletionItem(lookup)
                          .withObject(method)
-                         .withPresentation(new ModCompletionItemPresentation(MarkupText.plainText(lookup))
+                         .withPresentation(new ModCompletionItemPresentation(text)
                                              .withMainIcon(() -> method.getIcon(Iconable.ICON_FLAG_VISIBILITY))));
       }
 
-      //JavaMethodCallElement item = new JavaMethodCallElement((PsiMethod)completion).setQualifierSubstitutor(substitutor);
-      //item.setForcedQualifier(completionElement.getQualifierText());
-      //return Collections.singletonList(item);
+      return List.of(new MethodCallCompletionItem(method)
+        .withQualifierSubstitutor(substitutor)
+        .withForcedQualifier(completionElement.getQualifierText()));
     }
     if (completion instanceof PsiVariable var) {
       if (completion instanceof PsiEnumConstant enumConstant &&
@@ -373,8 +378,7 @@ final class ReferenceItemProvider implements ModCompletionItemProvider {
       if (ref != null) {
         PsiElement qualifier = ref.getQualifier();
         if (qualifier != null) {
-          Language lang = PsiUtilCore.getLanguageAtOffset(file, updater.getCaretOffset());
-          CommonCodeStyleSettings settings = CodeStyle.getLanguageSettings(file, lang);
+          CommonCodeStyleSettings settings = CodeStyle.getLanguageSettings(file, JavaLanguage.INSTANCE);
 
           String parenSpace = settings.SPACE_WITHIN_PARENTHESES ? " " : "";
           document.insertString(qualifier.getTextRange().getEndOffset(), parenSpace + ")");

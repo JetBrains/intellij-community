@@ -162,6 +162,7 @@ public final class CompletionItemLookupElement extends LookupElement implements 
         switch (onlyFragment.kind()) {
           case STRONG -> presentation.setItemTextBold(true);
           case EMPHASIZED -> presentation.setItemTextItalic(true);
+          case STRIKEOUT -> presentation.setStrikeout(true);
         }
       }
     }

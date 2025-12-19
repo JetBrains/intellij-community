@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface BaseCompletionParameters {
   /**
@@ -37,6 +38,11 @@ public interface BaseCompletionParameters {
    * @return the offset (relative to the file) where code completion was invoked.
    */
   int getOffset();
+
+  /**
+   * @return the leaf element in the original physical file where the completion was invoked.
+   */
+  @Nullable PsiElement getOriginalPosition();
 
   /**
    * @return the file being edited, possibly injected, where code completion was invoked.

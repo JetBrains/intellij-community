@@ -4,6 +4,7 @@ package com.intellij.java.completion.modcommand;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.MemberLookupHelper;
 import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ActionContext;
@@ -99,6 +100,11 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
   
   private boolean shouldImport() {
     return myHelper != null && myHelper.willBeImported();
+  }
+  
+  @Override
+  public AutoCompletionPolicy autoCompletionPolicy() {
+    return shouldImport() ? AutoCompletionPolicy.NEVER_AUTOCOMPLETE : super.autoCompletionPolicy();
   }
 
   @Override
