@@ -5,7 +5,6 @@ package com.intellij.grazie.spellcheck.engine
 
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.LanguageISO
-import ai.grazie.nlp.langs.alphabet.Alphabet
 import ai.grazie.nlp.utils.normalization.StripAccentsNormalizer
 import ai.grazie.spell.GrazieSpeller
 import ai.grazie.spell.GrazieSplittingSpeller
@@ -116,7 +115,7 @@ class GrazieSpellCheckerEngine(
       ranker = DiacriticSuggestionRanker(LanguageModel.getRanker(Language.ENGLISH, wordList)),
       filter = RadiusSuggestionFilter(0.05),
       normalizer = StripAccentsNormalizer(),
-      isAlien = { !Alphabet.ENGLISH.matchAny(it) && adapter.isAlien(it) }
+      isAlien = { adapter.isAlien(it) }
     ))
   }
 
