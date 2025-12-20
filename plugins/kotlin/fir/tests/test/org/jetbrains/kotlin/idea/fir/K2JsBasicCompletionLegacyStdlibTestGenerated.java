@@ -3982,6 +3982,11 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 runTest("../../completion/testData/basic/common/PreferExceptionsInCatch.kt");
             }
 
+            @TestMetadata("PreferExceptionsInThrow.kt")
+            public void testPreferExceptionsInThrow() throws Exception {
+                runTest("../../completion/testData/basic/common/PreferExceptionsInThrow.kt");
+            }
+
             @TestMetadata("PreferLessParameters.kt")
             public void testPreferLessParameters() throws Exception {
                 runTest("../../completion/testData/basic/common/PreferLessParameters.kt");
