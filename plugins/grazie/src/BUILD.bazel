@@ -99,7 +99,7 @@ jvm_library(
   ],
   runtime_deps = [
     "@lib//:jna",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:jetbrains-annotations",
     "//libraries/commons/lang3",
   ]

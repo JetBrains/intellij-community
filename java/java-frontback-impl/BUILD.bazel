@@ -35,7 +35,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/threadDumpParser",
     "//platform/code-style-impl:codeStyle-impl",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//platform/execution",
     "//platform/lang-api:lang",
   ],

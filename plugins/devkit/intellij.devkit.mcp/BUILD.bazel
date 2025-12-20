@@ -21,8 +21,8 @@ jvm_library(
     "//platform/lang-core",
     "//platform/util",
     "//java/java-psi-api:psi",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
   ]
 )
 ### auto-generated section `build intellij.devkit.mcp` end

@@ -39,7 +39,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/workspace/jps",
     "//platform/workspace/storage",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/eel-provider",
   ]
 )

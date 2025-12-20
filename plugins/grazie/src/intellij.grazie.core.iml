@@ -34,7 +34,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="library" scope="RUNTIME" name="jna" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module-library" exported="">
       <library name="ai.grazie.api.gateway.client.jvm" type="repository">
