@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 suspend fun EelDescriptor.getEelMachine(): EelMachine {
   if (this === LocalEelDescriptor) return LocalEelMachine
   return EelMachineProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getEelMachine(this) }
-         ?: throw IllegalStateException("No EelMachine found for descriptor: $this")
+         ?: throw IllegalStateException("No EelMachine found for descriptor: $this (${this.name})")
 }
 
 @ApiStatus.Experimental
