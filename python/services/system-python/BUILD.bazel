@@ -62,7 +62,7 @@ jvm_library(
     "@lib//:junit5",
     "//platform/projectModel-api:projectModel",
     "//python/testFramework",
-    "@lib//:hamcrest",
+    "//libraries/hamcrest",
     "//python/services/shared",
     "//python/services/shared:shared_test_lib",
     "//python/services/internal-impl:python-community-services-internal-impl",

@@ -54,7 +54,7 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//python/testFramework",
     "//platform/eel-provider",
-    "@lib//:hamcrest",
+    "//libraries/hamcrest",
     "//python/setup-test-environment:community-testFramework-testEnv",
     "//python/python-venv:community-impl-venv",
     "//python/python-venv:community-impl-venv_test_lib",

@@ -46,7 +46,7 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-    "@lib//:hamcrest",
+    "//libraries/hamcrest",
     "//python/python-exec-service/execService.python",
     "//python/python-exec-service/execService.python:execService.python_test_lib",
     "//platform/diagnostic",

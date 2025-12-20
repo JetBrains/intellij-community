@@ -30,7 +30,7 @@ jvm_library(
     "//platform/util",
     "@lib//:jna",
     "@lib//:junit5",
-    "@lib//:hamcrest",
+    "//libraries/hamcrest",
   ]
 )
 ### auto-generated section `build intellij.community.wintools` end
