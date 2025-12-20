@@ -10,6 +10,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 
+// This test doesn't use ijent, and 9p doesn't support symlinks. `etc` is not a symlink
+private const val DIR_TO_CHECK = "etc"
+
 /**
  * Test various logic for [com.intellij.execution.wsl.ui.WslPathBrowser]
  */
@@ -28,12 +31,12 @@ class WslPathBrowserTest {
 
   @Test
   fun correctPath() {
-    assertEquals("${WSLUtil.getUncPrefix()}${wslRule.wsl.msId}\\bin", getBestWindowsPathFromLinuxPath(wslRule.wsl, "/bin")!!.presentableUrl)
+    assertEquals("${WSLUtil.getUncPrefix()}${wslRule.wsl.msId}\\$DIR_TO_CHECK", getBestWindowsPathFromLinuxPath(wslRule.wsl, "/$DIR_TO_CHECK")!!.presentableUrl)
   }
 
   @Test
   fun bestPath() {
-    assertEquals("${WSLUtil.getUncPrefix()}${wslRule.wsl.msId}\\bin", getBestWindowsPathFromLinuxPath(wslRule.wsl, "/bin/foo/bur/buz")!!.presentableUrl)
+    assertEquals("${WSLUtil.getUncPrefix()}${wslRule.wsl.msId}\\$DIR_TO_CHECK", getBestWindowsPathFromLinuxPath(wslRule.wsl, "/$DIR_TO_CHECK/foo/bur/buz")!!.presentableUrl)
   }
 
   @Test
