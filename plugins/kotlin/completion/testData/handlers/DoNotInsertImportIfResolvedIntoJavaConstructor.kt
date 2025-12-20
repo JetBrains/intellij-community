@@ -4,3 +4,5 @@ fun main(args: Array<String>) {
     throw IllegalAccessExceptio<caret> //Press Ctrl+Space and select it
 }
 // AUTOCOMPLETE_SETTING: true
+// ELEMENT: IllegalAccessException
+// TAIL_TEXT: " (java.lang)"
