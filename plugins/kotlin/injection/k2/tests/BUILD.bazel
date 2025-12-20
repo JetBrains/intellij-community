@@ -33,9 +33,9 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/testFramework",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ],
   runtime_deps = [":tests"]
 )
