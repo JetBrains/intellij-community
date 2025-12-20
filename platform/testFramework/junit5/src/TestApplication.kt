@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5
 
 import com.intellij.testFramework.junit5.fixture.TestFixtures
@@ -14,6 +14,10 @@ import org.junit.jupiter.api.extension.ExtendWith
  * i.e., after all tests were run.
  *
  * @see com.intellij.testFramework.junit5.showcase.JUnit5ApplicationTest
+ * @see RegistryKey for setting registry values in tests
+ * @see TestDisposable for injecting test-scoped disposables
+ * @see RunInEdt for running tests in EDT
+ * @see SystemProperty for setting system properties in tests
  */
 @TestOnly
 @Target(AnnotationTarget.CLASS)

@@ -10,7 +10,11 @@ import org.junit.jupiter.api.extension.ExtendWith
  * Sets the [value] for the [Registry] [key] before an annotated test method (or a class),
  * and reverts to the previous value after an annotated test method (or, respectively, a class).
  *
+ * This annotation is preferred over manual [Registry.get] + [com.intellij.openapi.util.registry.RegistryValue.setValue] calls
+ * as it automatically handles cleanup after test completion.
+ *
  * @see com.intellij.openapi.util.registry.RegistryValue.setValue
+ * @see TestDisposable alternative for manual registry value management
  */
 @TestOnly
 @Repeatable
