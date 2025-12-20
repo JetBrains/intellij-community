@@ -63,7 +63,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "@lib//:kotlin-test",
-    "@lib//:kotlin-test-assertions-core-jvm",
+    "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
     "@lib//:kotlin-test-junit",
     "@lib//:junit5",
     "//java/testFramework",

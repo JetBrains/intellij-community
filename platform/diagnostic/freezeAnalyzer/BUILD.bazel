@@ -36,7 +36,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/threadDumpParser",
     "//platform/threadDumpParser:threadDumpParser_test_lib",
-    "@lib//:kotlin-test-assertions-core-jvm",
+    "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
     "@lib//:junit5",
     "@lib//:jetbrains-annotations",
   ]

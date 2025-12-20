@@ -12,7 +12,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.threadDumpParser" />
-    <orderEntry type="library" scope="TEST" name="kotlin-test-assertions-core-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTestAssertionsCoreJvm" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
   </component>
