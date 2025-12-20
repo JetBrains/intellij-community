@@ -4,9 +4,10 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.KotlinDocumentationProvider
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 
 abstract class AbstractRenderingKDocTest : KotlinLightCodeInsightFixtureTestCase() {
 
@@ -26,7 +27,9 @@ abstract class AbstractRenderingKDocTest : KotlinLightCodeInsightFixtureTestCase
             }
         }
 
-        val expectedRenders = InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, "// RENDER: ")
-        UsefulTestCase.assertOrderedEquals(comments, expectedRenders)
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.of(pluginMode)) {
+            val expectedRenders = InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, "// RENDER: ")
+            UsefulTestCase.assertOrderedEquals(comments, expectedRenders)
+        }
     }
 }

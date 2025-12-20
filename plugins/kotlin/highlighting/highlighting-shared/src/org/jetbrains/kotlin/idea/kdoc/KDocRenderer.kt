@@ -23,6 +23,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
@@ -43,8 +44,7 @@ import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
@@ -56,6 +56,11 @@ object KDocRenderer {
         append(markdownToHtml(docComment, allowSingleParagraph = true))
 
     private fun StringBuilder.appendKDocSections(sections: List<KDocSection>) {
+        val firstSection = sections.firstOrNull() ?: return
+        val namedDeclaration = PsiTreeUtil.getParentOfType(
+            firstSection, KtNamedDeclaration::class.java, /* strict = */false, KtFile::class.java
+        )
+
         fun findTagsByName(name: String) =
             sequence { sections.forEach { yieldAll(it.findTagsByName(name)) } }
 
@@ -63,8 +68,22 @@ object KDocRenderer {
 
         appendTag(findTagByName("receiver"), KotlinBundle.message("kdoc.section.title.receiver"))
 
+        val contextParameterNames =
+            (namedDeclaration as? KtCallableDeclaration)?.contextParameters?.filter { it.isContextParameter }
+                ?.mapNotNull { it.nameAsName?.asString() }
+                ?.toSet() ?: emptySet()
+        val typeParameterNames =
+            (namedDeclaration as? KtTypeParameterListOwner)?.typeParameters
+                ?.mapNotNull { it.nameAsName?.asString() }
+                ?.toSet() ?: emptySet()
+
         val paramTags = findTagsByName("param").filter { it.getSubjectName() != null }
-        appendTagList(paramTags, KotlinBundle.message("kdoc.section.title.parameters"), KotlinHighlightingColors.PARAMETER)
+        appendTagList(paramTags.filter { it.getSubjectName() in contextParameterNames }, KotlinBundle.message("kdoc.section.title.context.parameters"), KotlinHighlightingColors.PARAMETER)
+        appendTagList(paramTags.filter {
+            val subjectName = it.getSubjectName()
+            subjectName !in contextParameterNames && subjectName !in typeParameterNames
+        }, KotlinBundle.message("kdoc.section.title.parameters"), KotlinHighlightingColors.PARAMETER)
+        appendTagList(paramTags.filter { it.getSubjectName() in typeParameterNames }, KotlinBundle.message("kdoc.section.title.type.parameters"), KotlinHighlightingColors.PARAMETER)
 
         val propertyTags = findTagsByName("property").filter { it.getSubjectName() != null }
         appendTagList(
