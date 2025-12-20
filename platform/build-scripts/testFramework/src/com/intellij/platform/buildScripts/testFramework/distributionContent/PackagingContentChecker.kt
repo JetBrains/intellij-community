@@ -29,8 +29,8 @@ import org.jetbrains.intellij.build.SoftwareBillOfMaterials
 import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.impl.createBuildContext
 import org.jetbrains.intellij.build.impl.createCompilationContext
+import org.jetbrains.intellij.build.productLayout.discovery.GenerationResult
 import org.jetbrains.intellij.build.productLayout.validation.FileDiff
-import org.jetbrains.intellij.build.productLayout.validation.ModelValidationResult
 import org.jetbrains.intellij.build.productLayout.validation.XIncludeResolutionError
 import org.jetbrains.intellij.build.productLayout.validation.formatValidationError
 import org.jetbrains.intellij.build.productLayout.validation.getErrorId
@@ -60,7 +60,7 @@ private data class ContentReportList(
  * The function takes the project home path and returns validation result
  * containing file diffs and validation errors.
  */
-typealias GeneratorValidator = suspend (projectHome: Path, outputProvider: ModuleOutputProvider) -> ModelValidationResult
+typealias GeneratorValidator = suspend (projectHome: Path, outputProvider: ModuleOutputProvider) -> GenerationResult
 
 @ApiStatus.Internal
 fun createContentCheckTests(
@@ -91,9 +91,9 @@ fun createContentCheckTests(
   }
 
   // Start both tasks immediately in caller's scope (parallel after context is ready)
-  val validationDeferred: Deferred<ModelValidationResult> = scope.async {
+  val validationDeferred: Deferred<GenerationResult?> = scope.async {
     val context = compilationContextDeferred.await()
-    modelValidator?.invoke(homePath, context.outputProvider) ?: ModelValidationResult(issues = emptyList())
+    modelValidator?.invoke(homePath, context.outputProvider)
   }
 
   val packagingDeferred: Deferred<PackageResult> = scope.async {
@@ -114,11 +114,12 @@ fun createContentCheckTests(
 
     @Suppress("RunBlockingInSuspendFunction")
     val validationResult = runBlocking { validationDeferred.await() }
+    val validationIssues = validationResult?.allIssues ?: emptyList()
 
-    if (validationResult.issues.isNotEmpty()) {
+    if (validationIssues.isNotEmpty()) {
       // Check for xi-include errors first - they may cause cascading failures
-      val xiIncludeErrors = validationResult.issues.filterIsInstance<XIncludeResolutionError>()
-      for (issue in xiIncludeErrors.ifEmpty { validationResult.issues }) {
+      val xiIncludeErrors = validationIssues.filterIsInstance<XIncludeResolutionError>()
+      for (issue in xiIncludeErrors.ifEmpty { validationIssues }) {
         val testId = if (issue is FileDiff) "file-out-of-sync:${homePath.relativize(issue.path)}" else "model-validation:${getErrorId(issue)}"
         yield(DynamicTest.dynamicTest(testId) {
           if (issue is FileDiff) {
@@ -148,22 +149,24 @@ fun createContentCheckTests(
 }
 
 private suspend fun SequenceScope<DynamicTest>.producePackagingTests(
-  validationResult: ModelValidationResult,
+  validationResult: GenerationResult?,
   packagingDeferred: Deferred<PackageResult>,
   contentYamlPath: String,
   suggestedReviewer: String?,
   checkPlugins: Boolean,
 ) {
+  val issues = validationResult?.allIssues ?: emptyList()
+
   // Packaging - awaits inside test to capture timing
   yield(DynamicTest.dynamicTest("packaging") {
-    if (validationResult.issues.isNotEmpty()) {
+    if (issues.isNotEmpty()) {
       throw TestAbortedException("Skipped: model validation failed")
     }
     runBlocking { packagingDeferred.await() }
   })
 
   // Content check tests - use packaging result
-  if (validationResult.issues.isNotEmpty()) {
+  if (issues.isNotEmpty()) {
     return
   }
 

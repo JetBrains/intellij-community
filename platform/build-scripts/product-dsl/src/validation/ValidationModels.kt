@@ -132,14 +132,4 @@ internal data class ProductModuleIndex(
 
 // endregion
 
-// region Structured Output for Tests
 
-/**
- * Result of model generator validation.
- * Contains all validation issues (diffs, missing dependencies, etc.) in a unified list.
- */
-data class ModelValidationResult(
-  @JvmField val issues: List<ValidationError>,
-)
-
-// endregion

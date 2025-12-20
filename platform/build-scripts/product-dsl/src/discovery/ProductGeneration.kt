@@ -228,7 +228,11 @@ data class GenerationResult(
   @JvmField val errors: List<ValidationError>,
   @JvmField val diffs: List<FileDiff>,
   @JvmField val stats: GenerationStats,
-)
+) {
+  /** Combined list of all validation issues (errors + diffs) */
+  val allIssues: List<ValidationError>
+    get() = errors + diffs
+}
 
 /**
  * Generates all module sets and products with validation.

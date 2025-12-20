@@ -10,6 +10,11 @@ interface ModuleOutputProvider {
 
   fun findModule(name: String): JpsModule?
 
+  /**
+   * Returns the path to the module's .iml file.
+   */
+  fun getModuleImlFile(module: JpsModule): Path
+
   fun findRequiredModule(name: String): JpsModule
 
   fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String? = null): List<Path>

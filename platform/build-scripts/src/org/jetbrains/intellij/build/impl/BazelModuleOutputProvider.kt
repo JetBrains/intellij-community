@@ -9,6 +9,7 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
@@ -123,6 +124,13 @@ internal class BazelModuleOutputProvider(
       moduleNamePrefix = moduleNamePrefix,
       processedModules = processedModules,
     )
+  }
+
+  override fun getModuleImlFile(module: JpsModule): Path {
+    val baseDir = requireNotNull(JpsModelSerializationDataService.getBaseDirectoryPath(module)) {
+      "Cannot find base directory for module ${module.name}"
+    }
+    return baseDir.resolve("${module.name}.iml")
   }
 
   override fun toString(): String = "BazelModuleOutputProvider(projectHome=$projectHome, bazelOutputRoot=$bazelOutputRoot)"

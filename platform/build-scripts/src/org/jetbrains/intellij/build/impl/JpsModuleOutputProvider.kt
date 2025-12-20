@@ -8,6 +8,7 @@ import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -78,5 +79,12 @@ internal class JpsModuleOutputProvider(private val project: JpsProject) : Module
       moduleNamePrefix = moduleNamePrefix,
       processedModules = processedModules,
     )
+  }
+
+  override fun getModuleImlFile(module: JpsModule): Path {
+    val baseDir = requireNotNull(JpsModelSerializationDataService.getBaseDirectoryPath(module)) {
+      "Cannot find base directory for module ${module.name}"
+    }
+    return baseDir.resolve("${module.name}.iml")
   }
 }

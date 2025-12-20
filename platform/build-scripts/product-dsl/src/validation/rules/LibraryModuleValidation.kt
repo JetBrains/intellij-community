@@ -13,7 +13,6 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
-import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import java.nio.file.Files
 
 /**
@@ -130,10 +129,7 @@ private fun applyLibraryModuleFix(
   strategy: FileUpdateStrategy,
 ) {
   val module = outputProvider.findModule(moduleName) ?: return
-  val imlDir = requireNotNull(JpsModelSerializationDataService.getBaseDirectoryPath(module)) {
-    "Cannot find base directory for module $moduleName"
-  }
-  val imlFile = imlDir.resolve("${module.name}.iml")
+  val imlFile = outputProvider.getModuleImlFile(module)
   
   val currentContent = Files.readString(imlFile)
   val fixedContent = applyLibraryModuleFixes(currentContent, violations)

@@ -12,6 +12,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaLibraryType
 import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.impl.JpsModuleSerializationDataExtensionImpl
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -239,7 +240,18 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `validateLibraryModuleDependencies detects direct library dependencies`(@TempDir tempDir: Path) {
-    // 1. Create test JPS project with modules
+    // 1. Create test .iml file with direct library dependency
+    val imlContent = """
+      |<?xml version="1.0" encoding="UTF-8"?>
+      |<module type="JAVA_MODULE" version="4">
+      |  <component name="NewModuleRootManager">
+      |    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+      |  </component>
+      |</module>
+    """.trimMargin()
+    Files.writeString(tempDir.resolve("test.plugin.iml"), imlContent)
+
+    // 2. Create test JPS project with modules
     val model = JpsElementFactory.getInstance().createModel()
     val project = model.project
 
@@ -256,15 +268,19 @@ class PluginDependencyGeneratorTest {
 
     // Create plugin module with DIRECT library dependency (the violation!)
     val pluginModule = project.addModule("test.plugin", JpsJavaModuleType.INSTANCE)
+    pluginModule.container.setChild(
+      JpsModuleSerializationDataExtensionImpl.ROLE,
+      JpsModuleSerializationDataExtensionImpl(tempDir),
+    )
     val pluginLibDep = pluginModule.dependenciesList.addLibraryDependency(junit4Library)
     JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(pluginLibDep).apply {
       scope = JpsJavaDependencyScope.TEST
     }
 
-    // 2. Create test ModuleOutputProvider
+    // 3. Create test ModuleOutputProvider
     val outputProvider = createTestModuleOutputProvider(project)
 
-    // 3. Call validateLibraryModuleDependencies with strategy
+    // 4. Call validateLibraryModuleDependencies with strategy
     val strategy = DeferredFileUpdater(tempDir)
     validateLibraryModuleDependencies(
       modulesToCheck = setOf("intellij.libraries.junit4", "test.plugin"),
@@ -272,11 +288,10 @@ class PluginDependencyGeneratorTest {
       strategy = strategy,
     )
 
-    // 4. Verify no diff is returned because mock modules don't have real .iml files on disk
-    // In real usage, diffs contain the .iml changes needed for auto-fix
+    // 5. Verify diff is returned for the library dependency violation
     assertThat(strategy.getDiffs())
-      .describedAs("No diffs returned for mock modules without .iml files")
-      .isEmpty()
+      .describedAs("Diff should be generated for library dependency violation")
+      .hasSize(1)
   }
 
   @Test
@@ -387,6 +402,13 @@ private fun createTestModuleOutputProvider(project: JpsProject): ModuleOutputPro
 
     override suspend fun readFileContentFromModuleOutputAsync(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
       throw UnsupportedOperationException("Not needed for this test")
+    }
+
+    override fun getModuleImlFile(module: JpsModule): Path {
+      val baseDir = requireNotNull(JpsModelSerializationDataService.getBaseDirectoryPath(module)) {
+        "Cannot find base directory for module ${module.name}"
+      }
+      return baseDir.resolve("${module.name}.iml")
     }
   }
 }

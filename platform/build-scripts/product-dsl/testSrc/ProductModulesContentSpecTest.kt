@@ -424,4 +424,8 @@ private class MockModuleOutputProvider : ModuleOutputProvider {
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
     throw UnsupportedOperationException("Not available in mock")
   }
+
+  override fun getModuleImlFile(module: JpsModule): Path {
+    throw UnsupportedOperationException("Not available in mock")
+  }
 }
