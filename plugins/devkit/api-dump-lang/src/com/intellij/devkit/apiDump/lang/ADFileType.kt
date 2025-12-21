@@ -2,6 +2,7 @@
 package com.intellij.devkit.apiDump.lang
 
 import com.intellij.devkit.apiDump.ApiDumpUtil
+import com.intellij.devkit.apiDump.DevkitApiDumpIcons
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile
 import com.intellij.openapi.util.NlsContexts
@@ -17,7 +18,7 @@ internal class ADFileType private constructor(): LanguageFileType(ADLanguage), F
 
   override fun getDefaultExtension(): @NlsSafe String = ""
 
-  override fun getIcon(): Icon? = null
+  override fun getIcon(): Icon = DevkitApiDumpIcons.ApiDump
 
   override fun isMyFileType(file: VirtualFile): Boolean =
     ApiDumpUtil.isApiDumpFile(file) ||
