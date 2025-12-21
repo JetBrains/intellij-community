@@ -12,11 +12,11 @@ import kotlinx.serialization.Serializable
 sealed interface RpcLookupElementEvent {
   @Serializable
   data class SelectedItem(
-    val request: RpcCompletionRequest,
+    val requestId: RpcCompletionRequestId,
     val itemId: RpcCompletionItemId,
   ) : RpcLookupElementEvent {
     override fun toString(): String = buildToString("SelectedItem") {
-      field("request", request)
+      field("requestId", requestId)
       field("itemId", itemId)
     }
   }
@@ -29,7 +29,7 @@ sealed interface RpcLookupElementEvent {
   }
 
   @Serializable
-  class Show(val projectId: ProjectId, val editor: EditorId) : RpcLookupElementEvent {
+  data class Show(val projectId: ProjectId, val editor: EditorId) : RpcLookupElementEvent {
     override fun toString(): String = buildToString("Show") {
       field("projectId", projectId)
       field("editor", editor)

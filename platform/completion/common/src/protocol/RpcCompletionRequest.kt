@@ -3,8 +3,6 @@ package com.intellij.platform.completion.common.protocol
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.editor.impl.EditorId
-import com.intellij.platform.project.ProjectId
-import fleet.util.UID
 import kotlinx.serialization.Serializable
 
 /**
@@ -12,8 +10,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class RpcCompletionRequest(
-  val id: UID = UID.random(),
-  val projectId: ProjectId,
+  val id: RpcCompletionRequestId,
   val editorId: EditorId,
   val startingEditorVersion: Int,
   val completionType: CompletionType = CompletionType.BASIC,
@@ -21,7 +18,6 @@ data class RpcCompletionRequest(
 ) {
   override fun toString(): String = buildToString("RpcCompletionRequest") {
     field("id", id)
-    field("projectId", projectId)
     field("editorId", editorId)
     field("startingEditorVersion", startingEditorVersion)
     fieldWithDefault("completionType", completionType, CompletionType.BASIC)
