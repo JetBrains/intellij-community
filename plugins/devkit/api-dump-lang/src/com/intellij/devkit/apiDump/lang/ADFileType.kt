@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
-internal class ADFileType private constructor(): LanguageFileType(ADLanguage), FileTypeIdentifiableByVirtualFile {
+internal object ADFileType : LanguageFileType(ADLanguage), FileTypeIdentifiableByVirtualFile {
   override fun getName(): @NonNls String = "ADLanguage"
 
   override fun getDescription(): @NlsContexts.Label String = ApiDumpLangBundle.message("label.apidump.language.file")
@@ -24,10 +24,4 @@ internal class ADFileType private constructor(): LanguageFileType(ADLanguage), F
     ApiDumpUtil.isApiDumpFile(file) ||
     ApiDumpUtil.isApiDumpUnreviewedFile(file) ||
     ApiDumpUtil.isApiDumpExperimentalFile(file)
-
-  @Suppress("CompanionObjectInExtension")
-  companion object {
-    @JvmField
-    val INSTANCE: ADFileType = ADFileType()
-  }
 }
