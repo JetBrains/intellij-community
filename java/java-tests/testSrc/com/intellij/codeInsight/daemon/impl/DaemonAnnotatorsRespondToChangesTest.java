@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
@@ -58,8 +58,8 @@ import java.awt.*;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -772,7 +772,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
   static class MyComment1Annotator extends MyRecordingAnnotator {
     static final AtomicBoolean stall1 = new AtomicBoolean();
     static final String comment1Text = "comment1Text";
-    public MyComment1Annotator() {
+    MyComment1Annotator() {
     }
 
     @Override
@@ -793,7 +793,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
   static class MyComment2Annotator extends MyRecordingAnnotator {
     static final AtomicBoolean stall2 = new AtomicBoolean();
     static final String comment2Text = "comment2Text";
-    public MyComment2Annotator() {
+    MyComment2Annotator() {
     }
 
     @Override
