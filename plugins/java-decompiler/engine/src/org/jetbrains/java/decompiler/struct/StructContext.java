@@ -139,8 +139,8 @@ public class StructContext {
         }
 
         String name = entry.getName();
-        File test = new File(file.getAbsolutePath(), name);
-        if (!test.getCanonicalPath().startsWith(file.getCanonicalPath() + File.separator)) { // check for zip slip exploit
+        String normalizedName = name.replace('\\', '/');
+        if (normalizedName.startsWith("/") || normalizedName.startsWith(".." + "/") || normalizedName.contains("/" + ".." + "/")) { // check for zip slip exploit
           throw new RuntimeException("Zip entry '" + entry.getName() + "' tries to escape target directory");
         }
 
