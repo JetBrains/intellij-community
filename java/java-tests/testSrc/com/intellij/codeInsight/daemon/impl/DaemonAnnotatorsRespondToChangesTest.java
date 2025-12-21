@@ -76,11 +76,11 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
 
   @Override
   protected void setUp() throws Exception {
+    PlatformTestUtil.assumeEnoughParallelism();
     super.setUp();
     myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     UndoManager.getInstance(myProject);
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-    PlatformTestUtil.assumeEnoughParallelism();
   }
 
   @Override
