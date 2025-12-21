@@ -5,6 +5,7 @@ import com.intellij.core.CoreBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
@@ -622,7 +623,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       VfsData owningVfsData = segment.owningVfsData();
       Throwable error = owningDiscrepancyError(owningVfsData);
       if (error != null) {
-        Logger.getInstance(VirtualFileSystemEntry.class).warn(error);
+        Logger log = Logger.getInstance(VirtualFileSystemEntry.class);
+        if (error instanceof ControlFlowException) {
+          log.warn(new Exception(error));
+        }
+        else{
+          log.warn(error);
+        }
       }
       return error == null && owningVfsData.isFileValid(id);
     }
