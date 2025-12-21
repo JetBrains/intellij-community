@@ -1489,9 +1489,9 @@ private fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescriptorImpl, 
 
 // Ask Core team approve before changing this set
 @Internal
-@VisibleForTesting
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 @Language("jvm-class-name")
+@JvmField
 val servicePreloadingAllowListForNonCorePlugin: Set<String> = java.util.Set.of(
   "com.intellij.compiler.server.BuildManager",
   "com.intellij.openapi.module.WebModuleTypeRegistrar",

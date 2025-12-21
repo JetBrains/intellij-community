@@ -1,0 +1,11 @@
+<idea-plugin>
+  <extensionPoints>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="applicationService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService <error descr="Plugins may not use preloading, use <postStartupActivity> ProjectActivity, lazy MessageBus topics or specific extensions instead.">preload="true"</error>
+                        serviceImplementation="java.lang.String"/>
+  </extensions>
+</idea-plugin>

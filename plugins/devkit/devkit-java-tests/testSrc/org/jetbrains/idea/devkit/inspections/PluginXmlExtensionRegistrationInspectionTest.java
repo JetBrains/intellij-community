@@ -86,6 +86,10 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
     myFixture.testHighlighting("redundantServiceInterfaceClass.xml");
   }
 
+  public void testPreloadPreloadProhibitedService() {
+    myFixture.testHighlighting("preloadProhibitedService.xml");
+  }
+
   public void testIntentionActionDescriptionDirectoryName() {
     myFixture.addClass("public class MyIntentionAction {}");
     myFixture.testHighlighting("intentionActionDescriptionDirectoryName.xml");
