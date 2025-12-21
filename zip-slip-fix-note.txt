@@ -1,0 +1,1 @@
+Cherry-pick of fix from JetBrains/fernflower#22: normalize ZipEntry name and check for path traversal.
