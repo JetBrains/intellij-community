@@ -76,7 +76,7 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             return null
         }
 
-        if (!ModuleRootManager.getInstance(module).fileIndex.isInSourceContent(file)) {
+        if (!ModuleRootManager.getInstance(module).fileIndex.isInSourceContent(file) && !fileIsUnderKotlinSourceRoot(file)) {
             return null
         }
 
@@ -96,6 +96,10 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
         }
 
         return null
+    }
+
+    fun fileIsUnderKotlinSourceRoot(file: VirtualFile): Boolean {
+        return file.path.contains("src/main/kotlin/") || file.path.contains("src/test/kotlin/")
     }
 
     // We do this check only for JPS projects because for other build systems this problem is not topical
