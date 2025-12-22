@@ -68,14 +68,14 @@ open class RunToolbarResumeAction : RunToolbarXDebuggerAction() {
   }
 }
 
-private class InlineXDebuggerResumeAction(configurationSettings: RunnerAndConfigurationSettings) : XDebuggerResumeAction() {
+internal class InlineXDebuggerResumeAction(configurationSettings: RunnerAndConfigurationSettings) : XDebuggerResumeAction() {
   private val inlineHandler = InlineXDebuggerResumeHandler(configurationSettings)
   override fun getResumeHandler(): InlineXDebuggerResumeHandler {
     return inlineHandler
   }
 }
 
-private class ConfigurationXDebuggerResumeAction : XDebuggerResumeAction(), ActionRemoteBehaviorSpecification.Duplicated {
+internal class ConfigurationXDebuggerResumeAction : XDebuggerResumeAction(), ActionRemoteBehaviorSpecification.Duplicated {
   private val handler = XDebuggerResumeHandler()
   override fun getResumeHandler(): XDebuggerResumeHandler {
     return handler
@@ -132,7 +132,7 @@ internal abstract class XDebuggerResumeAction : XDebuggerActionBase(false), Requ
   }
 }
 
-private class XDebuggerInlineResumeCreator : InlineResumeCreator {
+internal class XDebuggerInlineResumeCreator : InlineResumeCreator {
   override fun getInlineResumeCreator(settings: RunnerAndConfigurationSettings, isWidget: Boolean): AnAction {
     return InlineXDebuggerResumeAction(settings)
   }

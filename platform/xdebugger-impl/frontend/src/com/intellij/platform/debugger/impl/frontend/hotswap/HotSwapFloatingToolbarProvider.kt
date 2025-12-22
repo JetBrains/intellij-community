@@ -86,11 +86,11 @@ internal class HotSwapModifiedFilesAction : AnAction(), DumbAware {
 
 private fun getCurrentStatus(project: Project) = FrontendHotSwapManager.getInstance(project).currentStatus
 
-private enum class HotSwapButtonStatus {
+internal enum class HotSwapButtonStatus {
   READY, IN_PROGRESS, SUCCESS
 }
 
-private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction, DumbAware {
+internal class HotSwapWithRebuildAction : AnAction(), CustomComponentAction, DumbAware {
   var status = HotSwapButtonStatus.READY
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -278,7 +278,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
   }
 }
 
-private class HideAction : AnAction() {
+internal class HideAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     if (logger.isDebugEnabled) {

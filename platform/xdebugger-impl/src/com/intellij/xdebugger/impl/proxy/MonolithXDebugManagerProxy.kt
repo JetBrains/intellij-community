@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
 
-private class MonolithXDebugManagerProxy : XDebugManagerProxy {
+internal class MonolithXDebugManagerProxy : XDebugManagerProxy {
   override fun getCurrentSessionProxy(project: Project): XDebugSessionProxy? {
     val session = XDebuggerManager.getInstance(project)?.currentSession ?: return null
     return session.asProxy()

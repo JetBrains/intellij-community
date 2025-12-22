@@ -6,7 +6,7 @@ import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.rpc.models.findValue
 
-private class XDebuggerMonolithAccessPointImpl : XDebuggerMonolithAccessPoint {
+internal class XDebuggerMonolithAccessPointImpl : XDebuggerMonolithAccessPoint {
   override fun getSession(proxy: XDebugSessionProxy): XDebugSession? {
     return proxy.id.findValue()
   }

@@ -20,7 +20,7 @@ import com.intellij.xdebugger.impl.proxy.withTemporaryXValueId
 import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
 import kotlinx.coroutines.flow.Flow
 
-private class FrontendXDebugManagerProxy : XDebugManagerProxy {
+internal class FrontendXDebugManagerProxy : XDebugManagerProxy {
   override fun isEnabled(): Boolean {
     val frontendType = FrontendApplicationInfo.getFrontendType()
     return SplitDebuggerMode.isSplitDebugger() ||

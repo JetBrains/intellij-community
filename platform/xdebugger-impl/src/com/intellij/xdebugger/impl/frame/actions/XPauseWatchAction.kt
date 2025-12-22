@@ -11,7 +11,7 @@ import com.intellij.xdebugger.impl.frame.XWatchesView
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
 
-private class XPauseWatchAction : XWatchesTreeActionBase(), SplitDebuggerAction {
+internal class XPauseWatchAction : XWatchesTreeActionBase(), SplitDebuggerAction {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun isEnabled(e: AnActionEvent, tree: XDebuggerTree): Boolean {
