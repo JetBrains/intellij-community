@@ -50,6 +50,7 @@ import org.jetbrains.jewel.ui.component.styling.InlineBannerStyles
 import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.component.styling.PopupAdTextStyle
 import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
@@ -263,6 +264,7 @@ public fun ComponentStyling.dark(
     linkStyle: LinkStyle = LinkStyle.dark(),
     menuStyle: MenuStyle = MenuStyle.dark(),
     outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.dark(),
+    popupAdTextStyle: PopupAdTextStyle = PopupAdTextStyle.dark(),
     popupContainerStyle: PopupContainerStyle = PopupContainerStyle.dark(),
     outlinedSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Outlined.dark(),
     radioButtonStyle: RadioButtonStyle = RadioButtonStyle.dark(),
@@ -300,6 +302,7 @@ public fun ComponentStyling.dark(
         linkStyle = linkStyle,
         menuStyle = menuStyle,
         outlinedButtonStyle = outlinedButtonStyle,
+        popupAdTextStyle = popupAdTextStyle,
         popupContainerStyle = popupContainerStyle,
         outlinedSplitButtonStyle = outlinedSplitButtonStyle,
         radioButtonStyle = radioButtonStyle,
@@ -340,6 +343,7 @@ public fun ComponentStyling.dark(
     linkStyle: LinkStyle = LinkStyle.dark(),
     menuStyle: MenuStyle = MenuStyle.dark(),
     outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.dark(),
+    popupAdTextStyle: PopupAdTextStyle = PopupAdTextStyle.dark(),
     popupContainerStyle: PopupContainerStyle = PopupContainerStyle.dark(),
     outlinedSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Outlined.dark(),
     radioButtonStyle: RadioButtonStyle = RadioButtonStyle.dark(),
@@ -375,6 +379,7 @@ public fun ComponentStyling.dark(
         linkStyle = linkStyle,
         menuStyle = menuStyle,
         outlinedButtonStyle = outlinedButtonStyle,
+        popupAdTextStyle = popupAdTextStyle,
         popupContainerStyle = popupContainerStyle,
         outlinedSplitButtonStyle = outlinedSplitButtonStyle,
         radioButtonStyle = radioButtonStyle,
@@ -414,6 +419,7 @@ public fun ComponentStyling.dark(
     linkStyle: LinkStyle = LinkStyle.dark(),
     menuStyle: MenuStyle = MenuStyle.dark(),
     outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.dark(),
+    popupAdTextStyle: PopupAdTextStyle = PopupAdTextStyle.dark(),
     popupContainerStyle: PopupContainerStyle = PopupContainerStyle.dark(),
     outlinedSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Outlined.dark(),
     radioButtonStyle: RadioButtonStyle = RadioButtonStyle.dark(),
@@ -449,6 +455,7 @@ public fun ComponentStyling.dark(
         linkStyle = linkStyle,
         menuStyle = menuStyle,
         outlinedButtonStyle = outlinedButtonStyle,
+        popupAdTextStyle = popupAdTextStyle,
         popupContainerStyle = popupContainerStyle,
         outlinedSplitButtonStyle = outlinedSplitButtonStyle,
         radioButtonStyle = radioButtonStyle,
@@ -487,6 +494,7 @@ public fun ComponentStyling.light(
     lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.light(),
     linkStyle: LinkStyle = LinkStyle.light(),
     menuStyle: MenuStyle = MenuStyle.light(),
+    popupAdTextStyle: PopupAdTextStyle = PopupAdTextStyle.light(),
     popupContainerStyle: PopupContainerStyle = PopupContainerStyle.light(),
     outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.light(),
     outlinedSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Outlined.light(),
@@ -525,6 +533,7 @@ public fun ComponentStyling.light(
         linkStyle = linkStyle,
         menuStyle = menuStyle,
         outlinedButtonStyle = outlinedButtonStyle,
+        popupAdTextStyle = popupAdTextStyle,
         popupContainerStyle = popupContainerStyle,
         outlinedSplitButtonStyle = outlinedSplitButtonStyle,
         radioButtonStyle = radioButtonStyle,
@@ -564,6 +573,7 @@ public fun ComponentStyling.light(
     lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.light(),
     linkStyle: LinkStyle = LinkStyle.light(),
     menuStyle: MenuStyle = MenuStyle.light(),
+    popupAdTextStyle: PopupAdTextStyle = PopupAdTextStyle.light(),
     popupContainerStyle: PopupContainerStyle = PopupContainerStyle.light(),
     outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.light(),
     outlinedSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Outlined.light(),
@@ -600,6 +610,7 @@ public fun ComponentStyling.light(
         linkStyle = linkStyle,
         menuStyle = menuStyle,
         outlinedButtonStyle = outlinedButtonStyle,
+        popupAdTextStyle = popupAdTextStyle,
         popupContainerStyle = popupContainerStyle,
         outlinedSplitButtonStyle = outlinedSplitButtonStyle,
         radioButtonStyle = radioButtonStyle,
@@ -638,6 +649,7 @@ public fun ComponentStyling.light(
     lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.light(),
     linkStyle: LinkStyle = LinkStyle.light(),
     menuStyle: MenuStyle = MenuStyle.light(),
+    popupAdTextStyle: PopupAdTextStyle = PopupAdTextStyle.light(),
     popupContainerStyle: PopupContainerStyle = PopupContainerStyle.light(),
     outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.light(),
     outlinedSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Outlined.light(),
@@ -674,6 +686,7 @@ public fun ComponentStyling.light(
         linkStyle = linkStyle,
         menuStyle = menuStyle,
         outlinedButtonStyle = outlinedButtonStyle,
+        popupAdTextStyle = popupAdTextStyle,
         popupContainerStyle = popupContainerStyle,
         outlinedSplitButtonStyle = outlinedSplitButtonStyle,
         radioButtonStyle = radioButtonStyle,

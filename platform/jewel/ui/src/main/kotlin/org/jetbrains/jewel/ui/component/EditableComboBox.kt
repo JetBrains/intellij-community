@@ -93,6 +93,7 @@ public fun EditableComboBox(
     onEnterPress: () -> Unit = {},
     // TODO(JEWEL-983) Address Metalava suppressions
     @Suppress("HiddenTypeParameter", "ReferencesHidden") popupManager: PopupManager = remember { PopupManager() },
+    adText: String = "",
     popupContent: @Composable () -> Unit,
 ) {
     var chevronHovered by remember { mutableStateOf(false) }
@@ -205,6 +206,7 @@ public fun EditableComboBox(
                         .onClick { popupManager.setPopupVisible(false) },
                 horizontalAlignment = Alignment.Start,
                 popupProperties = PopupProperties(focusable = false),
+                adText = adText,
                 content = popupContent,
             )
         }

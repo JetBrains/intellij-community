@@ -90,6 +90,7 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
         menuStyle = menuStyle,
         outlinedButtonStyle = readOutlinedButtonStyle(),
         outlinedSplitButtonStyle = readOutlinedSplitButtonStyle(),
+        popupAdTextStyle = readPopupAdTextStyle(),
         popupContainerStyle = readPopupContainerStyle(),
         radioButtonStyle = readRadioButtonStyle(),
         scrollbarStyle = readScrollbarStyle(theme.isDark),

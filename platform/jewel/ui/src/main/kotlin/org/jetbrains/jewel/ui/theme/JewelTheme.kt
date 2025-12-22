@@ -51,6 +51,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSplitButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalPopupAdTextStyle
 import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalRadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalScrollbarStyle
@@ -66,6 +67,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTransparentIconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.component.styling.PopupAdTextStyle
 import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
@@ -136,6 +138,9 @@ public val JewelTheme.Companion.menuStyle: MenuStyle
 
 public val JewelTheme.Companion.popupContainerStyle: PopupContainerStyle
     @Composable @ReadOnlyComposable get() = LocalPopupContainerStyle.current
+
+public val JewelTheme.Companion.popupAdTextStyle: PopupAdTextStyle
+    @Composable @ReadOnlyComposable get() = LocalPopupAdTextStyle.current
 
 public val JewelTheme.Companion.horizontalProgressBarStyle: HorizontalProgressBarStyle
     @Composable @ReadOnlyComposable get() = LocalHorizontalProgressBarStyle.current
