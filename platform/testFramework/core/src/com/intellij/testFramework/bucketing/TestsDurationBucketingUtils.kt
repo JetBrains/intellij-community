@@ -242,7 +242,14 @@ internal object TestsDurationBucketingUtils {
                 val split = line.split(',', limit = 3)
                 if (split.size == 2) {
                   val name = split[0]
-                  val duration = split[1].toInt()
+                  var duration = split[1].toInt()
+                  val previous = result[name]
+                  if (previous != null) {
+                    if (previous != duration) {
+                      System.err.println("Conflicting test duration for '$name': $previous vs $duration")
+                      duration = maxOf(previous, duration)
+                    }
+                  }
                   result[name] = duration
                 }
               }
