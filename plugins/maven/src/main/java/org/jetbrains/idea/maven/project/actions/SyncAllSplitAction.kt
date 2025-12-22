@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.project.actions
 
 import com.intellij.openapi.actionSystem.*
 
-private class SyncAllSplitAction : SplitButtonAction(openActionGroup("Maven.SyncAllGroup")) {
+internal class SyncAllSplitAction : SplitButtonAction(openActionGroup("Maven.SyncAllGroup")) {
   override fun useDynamicSplitButton(): Boolean = false
 }
 
