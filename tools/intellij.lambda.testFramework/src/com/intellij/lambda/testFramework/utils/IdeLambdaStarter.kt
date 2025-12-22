@@ -9,6 +9,7 @@ import com.intellij.ide.starter.project.NoProject
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.lambda.testFramework.testApi.waitForProject
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.remoteDev.tests.LambdaTestsConstants
 import com.intellij.remoteDev.tests.impl.LambdaTestHost.Companion.TEST_MODULE_ID_PROPERTY_NAME
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
@@ -85,7 +86,7 @@ internal fun IDERemDevTestContext.runIdeWithLambda(
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking {
         it.runInFrontend("Wait for the project") {
-          waitForProject(20.seconds)
+          waitForProject(if (!ApplicationManager.getApplication().isHeadlessEnvironment) 30.seconds else 20.seconds)
         }
       }
     }
