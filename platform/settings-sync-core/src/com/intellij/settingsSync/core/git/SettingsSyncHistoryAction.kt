@@ -13,7 +13,7 @@ import git4idea.log.showExternalGitLogInToolwindow
 import java.util.function.Supplier
 
 @Deprecated("Please remove me after moving to new Settings Sync toolwindow")
-private class SettingsSyncHistoryAction : DumbAwareAction() {
+internal class SettingsSyncHistoryAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
 

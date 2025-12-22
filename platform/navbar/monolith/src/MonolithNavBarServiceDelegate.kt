@@ -15,7 +15,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 
-private class MonolithNavbarServiceDelegate(private val project: Project) : NavBarServiceDelegate {
+internal class MonolithNavbarServiceDelegate(private val project: Project) : NavBarServiceDelegate {
 
   override fun activityFlow(): Flow<Unit> = channelFlow {
     fireOnIdeActivity(project)

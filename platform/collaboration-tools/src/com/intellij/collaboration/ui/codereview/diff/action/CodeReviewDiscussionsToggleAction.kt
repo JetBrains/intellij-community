@@ -24,8 +24,8 @@ abstract class CodeReviewDiscussionsToggleAction : ActionGroup(), DumbAware {
 
   protected abstract fun findViewModel(ctx: DataContext): CodeReviewDiscussionsViewModel?
 
-  private class ToggleOptionAction(private val vm: CodeReviewDiscussionsViewModel,
-                                   private val viewOption: DiscussionsViewOption) : ToggleAction(viewOption.toActionName()) {
+  internal class ToggleOptionAction(private val vm: CodeReviewDiscussionsViewModel,
+                                    private val viewOption: DiscussionsViewOption) : ToggleAction(viewOption.toActionName()) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun isSelected(e: AnActionEvent): Boolean {

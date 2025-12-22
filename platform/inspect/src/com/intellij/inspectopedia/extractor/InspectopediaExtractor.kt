@@ -27,7 +27,7 @@ import java.nio.file.Path
 import java.util.*
 import kotlin.system.exitProcess
 
-private class InspectopediaExtractor : ModernApplicationStarter() {
+internal class InspectopediaExtractor : ModernApplicationStarter() {
   override suspend fun start(args: List<String>) {
     val size = args.size
     if (size < 2) {

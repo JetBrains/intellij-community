@@ -18,7 +18,7 @@ fun clearCacheStore() {
   serviceIfCreated<InternalAndCacheStorageManager>()?.storeManager?.clear()
 }
 
-private class LocalSettingsController : DelegatedSettingsController {
+internal class LocalSettingsController : DelegatedSettingsController {
   private val storageManager = SynchronizedClearableLazy { service<InternalAndCacheStorageManager>() }
 
   override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
@@ -108,7 +108,7 @@ private class InternalAndCacheStorageManager : SettingsSavingComponent {
 private fun getEffectiveKey(key: SettingDescriptor<*>): String = "${key.pluginId.idString}.${key.key}"
 
 @Suppress("unused")
-private class CacheStateStorageInvalidator : CachesInvalidator() {
+internal class CacheStateStorageInvalidator : CachesInvalidator() {
   override fun invalidateCaches() {
     service<InternalAndCacheStorageManager>().invalidateCaches()
   }

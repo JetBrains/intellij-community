@@ -9,7 +9,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
-private class BackendValueEntityTypesProvider : EntityTypeProvider {
+internal class BackendValueEntityTypesProvider : EntityTypeProvider {
   override fun entityTypes(): List<EntityType<*>> {
     return listOf(
       BackendRhizomeValueEntity

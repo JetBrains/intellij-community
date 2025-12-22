@@ -153,7 +153,7 @@ internal class LocalizationFeedbackDialog(
   }
 }
 
-private class ShowLocalizationFeedbackDialog : AnAction("Test Localization Dialog") { // NON-NLS
+internal class ShowLocalizationFeedbackDialog : AnAction("Test Localization Dialog") { // NON-NLS
   override fun actionPerformed(e: AnActionEvent) {
     LocalizationFeedbackNotificationService.getInstance().showNotification()
   }

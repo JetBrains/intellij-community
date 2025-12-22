@@ -29,7 +29,7 @@ private class IdeLanguageCustomizationApiImpl : IdeLanguageCustomizationApi {
   }
 }
 
-private class IdeLanguageCustomizationApiProvider : RemoteApiProvider {
+internal class IdeLanguageCustomizationApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<IdeLanguageCustomizationApi>()) {
       IdeLanguageCustomizationApiImpl()

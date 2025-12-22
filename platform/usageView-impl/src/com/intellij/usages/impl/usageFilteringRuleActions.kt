@@ -22,7 +22,7 @@ internal fun usageFilteringRuleActions(project: Project, ruleState: UsageFilteri
   return result
 }
 
-private class UsageFilteringRuleAction(
+internal class UsageFilteringRuleAction(
   prototype: EmptyAction,
   private val ruleState: UsageFilteringRuleState,
   private val ruleId: String,

@@ -74,7 +74,7 @@ private class VcsRunConfigurationBeforeCommitConfig : PersistentStateComponent<V
   }
 }
 
-private class RunConfigurationBeforeCommitHandlerFactory : CheckinHandlerFactory() {
+internal class RunConfigurationBeforeCommitHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     if (panel.isNonModalCommit || panel.commitWorkflowHandler is NullCommitWorkflowHandler) {
       return RunConfigurationBeforeCommitHandler(panel.project)

@@ -13,7 +13,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
-private class WorkspaceEntitiesLifecycleActivity : ProjectActivity {
+internal class WorkspaceEntitiesLifecycleActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()
