@@ -7,7 +7,7 @@ import com.intellij.psi.formatter.AbstractWhiteSpaceFormattingStrategy
 import com.intellij.util.SmartList
 import org.jetbrains.yaml.YAMLTokenTypes
 
-private class YamlWhiteSpaceFormattingStrategy : AbstractWhiteSpaceFormattingStrategy() {
+internal class YamlWhiteSpaceFormattingStrategy : AbstractWhiteSpaceFormattingStrategy() {
   override fun check(text: CharSequence, start: Int, end: Int): Int = start
 
   override fun adjustWhiteSpaceIfNecessary(whiteSpaceText: CharSequence,

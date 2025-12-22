@@ -8,7 +8,7 @@ import org.jetbrains.yaml.YAMLElementTypes
 import org.jetbrains.yaml.YAMLTokenTypes
 
 
-private class YamlWordCompletionFilter : WordCompletionElementFilter {
+internal class YamlWordCompletionFilter : WordCompletionElementFilter {
 
   private val tokenSet = TokenSet.create(YAMLTokenTypes.SCALAR_KEY, YAMLTokenTypes.COMMENT, *YAMLElementTypes.SCALAR_VALUES.types)
 
