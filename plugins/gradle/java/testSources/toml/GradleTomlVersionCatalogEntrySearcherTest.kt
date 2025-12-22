@@ -227,7 +227,7 @@ class GradleTomlVersionCatalogEntrySearcherTest {
       val tomPsiFile = PsiFileFactory.getInstance(project)
         .createFileFromText(TomlLanguage, versionCatalogText) as TomlFile
       val entries = entrySearcher.findEntriesMatching(tomPsiFile, searchString)
-      assertEqualsUnordered(expectedEntries, entries.map { it.text }) {
+      assertEqualsUnordered(expectedEntries, entries.map { it.pathForBuildScript }) {
         "The list of version catalog entries for search '$searchString' should match the expected"
       }
     }
@@ -247,9 +247,9 @@ class GradleTomlVersionCatalogEntrySearcherTest {
         my-another-lib = "com.example:lib4:1.0"
         """.trimIndent(),
       expectedEntries = listOf(
-        "my-lib-simple = { module = \"com.example:lib1\", version.ref = \"my-lib\" }",
-        "my-lib_various-delimeters = \"com.example:lib2:1.0\"",
-        "my-lib-Uppercase-Letter = \"com.example:lib3:1.0\"",
+        "my.lib.simple",
+        "my.lib.various.delimeters",
+        "my.lib.uppercase.letter",
       )
     )
 
@@ -261,8 +261,8 @@ class GradleTomlVersionCatalogEntrySearcherTest {
         libraries.my-lib-section-is-key-part = "com.example:lib2:1.0"
         """.trimIndent(),
       expectedEntries = listOf(
-        "my-lib-inline-table = \"com.example:lib1:1.0\"",
-        "libraries.my-lib-section-is-key-part = \"com.example:lib2:1.0\""
+        "my.lib.inline.table",
+        "my.lib.section.is.key.part"
       )
     )
 
@@ -277,9 +277,9 @@ class GradleTomlVersionCatalogEntrySearcherTest {
         my-another-lib = "1.0.0"
         """.trimIndent(),
       expectedEntries = listOf(
-        "my-lib-simple = \"1.0.0\"",
-        "my-lib_various-delimeters = \"1.0.0\"",
-        "my-lib_Uppercase-Letter = \"1.0.0\"",
+        "versions.my.lib.simple",
+        "versions.my.lib.various.delimeters",
+        "versions.my.lib.uppercase.letter",
       )
     )
 
@@ -291,9 +291,10 @@ class GradleTomlVersionCatalogEntrySearcherTest {
         versions.my-lib-section-is-key-part = "2.0.0"
         versions.another = "3.0.0"
         """.trimIndent(),
+
       expectedEntries = listOf(
-        "my-lib-inline-table = \"1.0.0\"",
-        "versions.my-lib-section-is-key-part = \"2.0.0\""
+        "versions.my.lib.inline.table",
+        "versions.my.lib.section.is.key.part"
       )
     )
 
@@ -306,14 +307,14 @@ class GradleTomlVersionCatalogEntrySearcherTest {
         [plugins]
         my-plugin-simple = { id = "my.plugin.id1", version.ref = "my-plugin-version" }
         my-plugin_various-delimeters = "my.plugin.id2:2.0"
-        my-plugin_Uppercase-Letter = "my.plugin.id3:3.0"
+        my-plugin-Uppercase-Letter = "my.plugin.id3:3.0"
         
         my-another-plugin = "1.0.0"
         """.trimIndent(),
       expectedEntries = listOf(
-        "my-plugin-simple = { id = \"my.plugin.id1\", version.ref = \"my-plugin-version\" }",
-        "my-plugin_various-delimeters = \"my.plugin.id2:2.0\"",
-        "my-plugin_Uppercase-Letter = \"my.plugin.id3:3.0\"",
+        "plugins.my.plugin.simple",
+        "plugins.my.plugin.various.delimeters",
+        "plugins.my.plugin.uppercase.letter",
       )
     )
 
@@ -326,8 +327,8 @@ class GradleTomlVersionCatalogEntrySearcherTest {
         plugins.another = "my.plugin.id3:3.0"
         """.trimIndent(),
       expectedEntries = listOf(
-        "my-plugin-inline-table = \"my.plugin.id1:1.0\"",
-        "plugins.my-plugin-section-is-key-part = \"my.plugin.id2:2.0\""
+        "plugins.my.plugin.inline.table",
+        "plugins.my.plugin.section.is.key.part"
       )
     )
 
@@ -342,14 +343,14 @@ class GradleTomlVersionCatalogEntrySearcherTest {
         [bundles]
         my-bundle-simple = ["my-bundle-lib1", "my-bundle-lib2"]
         my-bundle_various-delimeters = ["my-bundle-lib1"]
-        my-bundle_Uppercase-Letter = ["my-bundle-lib2"]
+        my-bundle-Uppercase-Letter = ["my-bundle-lib2"]
         
         my-another-bundle = ["another-lib"]
         """.trimIndent(),
       expectedEntries = listOf(
-        "my-bundle-simple = [\"my-bundle-lib1\", \"my-bundle-lib2\"]",
-        "my-bundle_various-delimeters = [\"my-bundle-lib1\"]",
-        "my-bundle_Uppercase-Letter = [\"my-bundle-lib2\"]",
+        "bundles.my.bundle.simple",
+        "bundles.my.bundle.various.delimeters",
+        "bundles.my.bundle.uppercase.letter",
       )
     )
 
@@ -362,8 +363,8 @@ class GradleTomlVersionCatalogEntrySearcherTest {
         bundles.another = ["lib3"]
         """.trimIndent(),
       expectedEntries = listOf(
-        "my-bundle-inline-table = [\"lib1\"]",
-        "bundles.my-bundle-section-is-key-part = [\"lib2\"]"
+        "bundles.my.bundle.inline.table",
+        "bundles.my.bundle.section.is.key.part"
       )
     )
   }

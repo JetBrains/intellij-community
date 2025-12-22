@@ -15,7 +15,15 @@ interface GradleVersionCatalogEntrySearcher {
    */
   fun findEntryElement(versionCatalog: PsiFile, entryPath: String): PsiElement?
 
-  fun findEntriesMatching(versionCatalog: PsiFile, entrySearchString: String): List<PsiElement>
+  fun findEntriesMatching(versionCatalog: PsiFile, entrySearchString: String): List<VersionCatalogEntry>
+}
+
+interface VersionCatalogEntry {
+  /**
+   * Contains a section (`plugins`, `versions`, `bundles`, but not `libraries`), and key parts separated with dots.
+   * For example: `junit.jupiter` (if it's a library entry), `plugins.foo.bar`, `versions.foo`, `bundles.bar`
+   */
+  val pathForBuildScript: String
 }
 
 
@@ -27,8 +35,8 @@ fun findVersionCatalogEntryElement(versionCatalog: PsiFile, entryPath: String): 
   return null
 }
 
-fun findVersionCatalogEntriesMatching(versionCatalog: PsiFile, entryPath: String): List<PsiElement> {
-  val result = mutableListOf<PsiElement>()
+fun findVersionCatalogEntriesMatching(versionCatalog: PsiFile, entryPath: String): List<VersionCatalogEntry> {
+  val result = mutableListOf<VersionCatalogEntry>()
   for (extension in EP_NAME.extensionList) {
     val elements = extension.findEntriesMatching(versionCatalog, entryPath)
     result.addAll(elements)
