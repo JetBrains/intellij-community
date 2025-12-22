@@ -17,7 +17,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.TestOnly
 
-private class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactoryProvider {
+internal class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactoryProvider {
   override fun create(project: Project, document: Document): NotebookIntervalPointerFactory {
     val provider = NotebookCellLinesProvider.getOrInstall(project, document)
     val notebookCellLines = provider.create(document)
