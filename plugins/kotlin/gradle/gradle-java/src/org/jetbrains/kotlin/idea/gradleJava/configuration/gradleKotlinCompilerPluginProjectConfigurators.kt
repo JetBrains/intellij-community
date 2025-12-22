@@ -39,7 +39,7 @@ abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator(private val
     private fun PsiFile.add(addVersion: Boolean, changedFiles: ChangedConfiguratorFiles) {
         val manipulator = GradleBuildScriptSupport.getManipulator(this)
         val version =
-            manipulator.getKotlinVersionFromBuildScript() ?: defaultKotlinVersion
+            manipulator.getKotlinVersion() ?: defaultKotlinVersion
         manipulator.configureBuildScripts(
             kotlinPluginName,
             getKotlinPluginExpression(this is KtFile),

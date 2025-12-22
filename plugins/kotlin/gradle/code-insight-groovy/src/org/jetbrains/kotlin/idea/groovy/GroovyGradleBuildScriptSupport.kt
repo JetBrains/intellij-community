@@ -191,7 +191,7 @@ class GroovyBuildScriptManipulator(
         return oldText != scriptFile.text
     }
 
-    override fun getKotlinVersionFromBuildScript(): IdeKotlinVersion? {
+    override fun getKotlinVersion(): IdeKotlinVersion? {
         return DifferentKotlinGradleVersionInspection.getKotlinPluginVersion(scriptFile)
     }
 

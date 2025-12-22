@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.buildArgumentString
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.*
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.CompilerOption
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getCompilerOption
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.kotlinVersionIsEqualOrHigher
+import org.jetbrains.kotlin.idea.gradleJava.kotlinGradlePluginVersion
 import org.jetbrains.kotlin.idea.gradleTooling.capitalize
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.psi.*
@@ -80,8 +82,9 @@ class KotlinBuildScriptManipulator(
         return originalText != scriptFile.text
     }
 
-    override fun getKotlinVersionFromBuildScript(): IdeKotlinVersion? {
-        return scriptFile.getKotlinVersion()
+    override fun getKotlinVersion(): IdeKotlinVersion? {
+        val module = scriptFile.module ?: return null
+        return KotlinCompilerVersionProvider.getVersion(module)
     }
 
     override fun hasExplicitlyDefinedKotlinVersion(): Boolean {
@@ -679,15 +682,6 @@ class KotlinBuildScriptManipulator(
         if (calleeExpression?.text == from) {
             calleeExpression.replace(psiFactory.createExpression(to))
         }
-    }
-
-    private fun KtFile.getKotlinVersion(): IdeKotlinVersion? {
-        val pluginsBlock = findScriptInitializer("plugins")?.getBlock()
-        val rawKotlinVersion = pluginsBlock?.findPluginVersionInPluginGroup("kotlin")
-            ?: pluginsBlock?.findPluginVersionInPluginGroup("org.jetbrains.kotlin.jvm")
-            ?: findScriptInitializer("buildscript")?.getBlock()?.findBlock("dependencies")
-                ?.findClassPathDependencyVersion("org.jetbrains.kotlin:kotlin-gradle-plugin")
-        return rawKotlinVersion?.let(IdeKotlinVersion::opt)
     }
 
     private fun KtBlockExpression.addParameterAssignment(
