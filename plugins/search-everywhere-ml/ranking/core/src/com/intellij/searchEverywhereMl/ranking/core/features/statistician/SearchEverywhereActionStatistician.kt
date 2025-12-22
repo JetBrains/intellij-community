@@ -7,7 +7,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.openapi.actionSystem.ActionManager
 
-private class SearchEverywhereActionStatistician : SearchEverywhereStatistician<MatchedValue>(MatchedValue::class.java) {
+internal class SearchEverywhereActionStatistician : SearchEverywhereStatistician<MatchedValue>(MatchedValue::class.java) {
   override fun getValue(element: MatchedValue, location: String) = when (val value = element.value) {
     is ActionWrapper -> getValueForAction(value)
     is OptionDescription -> value.hit ?: value.option

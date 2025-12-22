@@ -5,7 +5,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 
-private class SearchEverywhereSymbolStatistician : SearchEverywhereStatistician<Any>(PsiElement::class.java,
+internal class SearchEverywhereSymbolStatistician : SearchEverywhereStatistician<Any>(PsiElement::class.java,
                                                                                       PsiItemWithPresentation::class.java) {
   override fun getContext(element: Any): String? {
     val contextName = getContextName(element) ?: return null

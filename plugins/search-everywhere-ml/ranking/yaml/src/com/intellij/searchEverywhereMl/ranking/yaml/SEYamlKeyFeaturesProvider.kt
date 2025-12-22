@@ -27,7 +27,7 @@ import com.intellij.util.Time
 import org.jetbrains.yaml.navigation.YAMLKeyNavigationItem
 import org.jetbrains.yaml.navigation.YAMLKeysSearchEverywhereContributor
 
-private class SEYamlKeyFeaturesProvider : SearchEverywhereElementFeaturesProvider(YAMLKeysSearchEverywhereContributor::class.java) {
+internal class SEYamlKeyFeaturesProvider : SearchEverywhereElementFeaturesProvider(YAMLKeysSearchEverywhereContributor::class.java) {
   object Fields {
     val KEY_IS_MOST_RECENTLY_USED = EventFields.Boolean("yaml_key_is_most_recently_used")
     val KEY_IS_IN_TOP_5_RECENTLY_USED = EventFields.Boolean("yaml_key_is_in_top_5_recently_used")

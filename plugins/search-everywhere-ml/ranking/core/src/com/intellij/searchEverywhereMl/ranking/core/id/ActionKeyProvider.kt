@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.searchEverywhereMl.ranking.ext.SearchEverywhereElementKeyProvider
 
-private class ActionKeyProvider: SearchEverywhereElementKeyProvider {
+internal class ActionKeyProvider: SearchEverywhereElementKeyProvider {
   override fun getKeyOrNull(element: Any): Any? {
     if (element is GotoActionModel.MatchedValue) {
       val elementValue = element.value
