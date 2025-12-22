@@ -64,7 +64,7 @@ internal class MergeThreesideLineStatusMarkerRenderer(private val tracker: LineS
   }
 }
 
-private class RollbackLineStatusRangeAction(editor: Editor, private val tracker: LineStatusTrackerBase<*>, range: Range) :
+internal class RollbackLineStatusRangeAction(editor: Editor, private val tracker: LineStatusTrackerBase<*>, range: Range) :
   LineStatusMarkerPopupActions.RangeMarkerAction(editor, tracker, range, IdeActions.SELECTED_CHANGES_ROLLBACK) {
   override fun isEnabled(editor: Editor, range: Range): Boolean {
     return true
