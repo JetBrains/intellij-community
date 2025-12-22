@@ -31,7 +31,7 @@ private val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(S
 /**
  * For cases when the project configuration store resides in the project root directory - the default
  */
-private class NestedProjectStorePathManager : ProjectStorePathManager {
+internal class NestedProjectStorePathManager : ProjectStorePathManager {
   override fun getStoreDescriptor(projectRoot: Path): ProjectStoreDescriptor {
     val suitableDescriptors = ArrayList<ProjectStoreDescriptor>()
     for (descriptor in EP_NAME.filterableLazySequence()) {

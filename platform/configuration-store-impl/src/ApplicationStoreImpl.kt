@@ -123,7 +123,7 @@ class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null,
   }
 }
 
-private class ApplicationPathMacroManager : PathMacroManager(null)
+internal class ApplicationPathMacroManager : PathMacroManager(null)
 
 @Internal
 fun removeMacroIfStartsWith(path: String, macro: String): String = path.removePrefix("$macro/")
