@@ -99,6 +99,9 @@
     <extensionPoint qualifiedName="com.intellij.cce.testRunner"
                     interface="com.intellij.cce.test.TestRunner"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.projectSyncInvoker"
+                interface="com.intellij.cce.project.ProjectSyncInvoker"
+                dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.cce">

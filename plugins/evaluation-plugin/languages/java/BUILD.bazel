@@ -32,6 +32,7 @@ jvm_library(
     "//platform/refactoring",
     "//platform/smRunner",
     "//platform/execution",
+    "//platform/backend/observation",
   ]
 )
 
@@ -65,6 +66,8 @@ jvm_library(
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
     "//platform/execution",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
   ]
 )
 ### auto-generated section `build intellij.evaluationPlugin.languages.java` end
