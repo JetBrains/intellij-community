@@ -116,6 +116,14 @@ common --experimental_platform_in_output_dir
 # Do not depend on external environment
 common --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
 
+# Clear PATH environment variable to enable remote cache hits on Windows
+#
+# rules_java uses use_default_shell_env=True leading to different PATH values in actions:
+# C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32;C:\\Windows\\System32\\WindowsPowerShell\\v1.0
+# C:\\Users\\Ilia.Kirianovskii\\AppData\\Local\\Microsoft\\WindowsApps;C:\\WINDOWS;C:\\WINDOWS\\System32;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0
+# https://github.com/bazelbuild/bazel/blob/93cde47ab3236b3b7124b41824f843f3659064de/src/main/java/com/google/devtools/build/lib/bazel/rules/BazelRuleClassProvider.java#L162
+common:windows --action_env=PATH=C:\\do-not-use-PATH
+
 # Enable compact *.repo_mapping manifest
 build --incompatible_compact_repo_mapping_manifest
 
