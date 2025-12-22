@@ -30,11 +30,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class LookupTypedHandler extends TypedActionHandlerBase {
+  @ApiStatus.Internal
   public static final Key<Character> CANCELLATION_CHAR = Key.create("CANCELLATION_CHAR");
+
   private static final Logger LOG = Logger.getInstance(LookupTypedHandler.class);
 
   public LookupTypedHandler(@Nullable TypedActionHandler originalHandler) {
