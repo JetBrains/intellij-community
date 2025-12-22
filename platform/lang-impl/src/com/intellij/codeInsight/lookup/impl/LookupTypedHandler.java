@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -170,7 +170,7 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
     return false;
   }
 
-  public static CharFilter.Result getLookupAction(final char charTyped, final LookupImpl lookup) {
+  public static @NotNull CharFilter.Result getLookupAction(char charTyped, @NotNull LookupImpl lookup) {
     CharFilter.Result filtersDecision = getFilterDecision(charTyped, lookup);
     if (filtersDecision != null) {
       return filtersDecision;
@@ -178,10 +178,10 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
     return CharFilter.Result.HIDE_LOOKUP;
   }
 
-  private static @Nullable CharFilter.Result getFilterDecision(char charTyped, LookupImpl lookup) {
+  private static @Nullable CharFilter.Result getFilterDecision(char charTyped, @NotNull LookupImpl lookup) {
     lookup.checkValid();
     LookupElement item = lookup.getCurrentItem();
-    int prefixLength = item == null ? lookup.getAdditionalPrefix().length(): lookup.itemPattern(item).length();
+    int prefixLength = item == null ? lookup.getAdditionalPrefix().length() : lookup.itemPattern(item).length();
 
     for (CharFilter extension : CharFilter.EP_NAME.getExtensionList()) {
       CharFilter.Result result = extension.acceptChar(charTyped, prefixLength, lookup);
