@@ -25,7 +25,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
-import com.intellij.psi.PsiConsistencyAssertions;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -149,9 +148,6 @@ public final class CompletionInitializationUtil {
 
     // despite being non-physical, the copy file should only be modified in a write action,
     // because it's reused in multiple completions and it can also escapes uncontrollably into other threads (e.g. quick doc)
-
-    //kskrygan: this check is non-relevant for CWM (quick doc and other features work separately)
-    //and we are trying to avoid useless write locks during completion
     return () -> WriteAction.compute(() -> {
       registerDisposable.accept((Supplier<Disposable>)() -> {
         return new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier);
