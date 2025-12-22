@@ -39,6 +39,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
@@ -108,10 +109,63 @@ import org.jetbrains.skiko.hostOs
  * @param modifier Modifier to be applied to the menu container
  * @param style The visual styling configuration for the menu and its items
  * @param popupProperties Properties controlling the popup window behavior
+ * @param adContent Optional composable content to display ad content at the bottom
  * @param content The menu content builder using [MenuScope]
  * @see javax.swing.JPopupMenu
  */
 @Composable
+public fun PopupMenu(
+    onDismissRequest: (InputMode) -> Boolean,
+    horizontalAlignment: Alignment.Horizontal,
+    modifier: Modifier = Modifier,
+    style: MenuStyle = JewelTheme.menuStyle,
+    popupProperties: PopupProperties = PopupProperties(focusable = true),
+    adContent: (@Composable () -> Unit)? = null,
+    content: MenuScope.() -> Unit,
+) {
+    val density = LocalDensity.current
+
+    val popupPositionProvider =
+        remember(style.metrics.offset, style.metrics.menuMargin, horizontalAlignment, density) {
+            AnchorVerticalMenuPositionProvider(
+                contentOffset = style.metrics.offset,
+                contentMargin = style.metrics.menuMargin,
+                alignment = horizontalAlignment,
+                density = density,
+            )
+        }
+
+    PopupMenuImpl(
+        onDismissRequest = onDismissRequest,
+        popupPositionProvider = popupPositionProvider,
+        modifier = modifier,
+        style = style,
+        popupProperties = popupProperties,
+        adContent = adContent,
+        content = content,
+    )
+}
+
+/**
+ * A popup menu component that follows the standard visual styling with customizable content.
+ *
+ * Provides a floating menu that can be used for context menus, dropdown menus, and other popup menu scenarios. The menu
+ * supports keyboard navigation, icons, keybindings, and nested submenus.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/popups-and-menus.html)
+ *
+ * **Swing equivalent:** [`JPopupMenu`](https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html#popup)
+ *
+ * @param onDismissRequest Called when the menu should be dismissed, returns true if the dismissal was handled
+ * @param horizontalAlignment The horizontal alignment of the menu relative to its anchor point
+ * @param modifier Modifier to be applied to the menu container
+ * @param style The visual styling configuration for the menu and its items
+ * @param popupProperties Properties controlling the popup window behavior
+ * @param content The menu content builder using [MenuScope]
+ * @see javax.swing.JPopupMenu
+ */
+@Composable
+@Deprecated("Use the variant with adContent.", level = DeprecationLevel.HIDDEN)
 public fun PopupMenu(
     onDismissRequest: (InputMode) -> Boolean,
     horizontalAlignment: Alignment.Horizontal,
@@ -132,7 +186,54 @@ public fun PopupMenu(
             )
         }
 
-    PopupMenu(onDismissRequest, popupPositionProvider, modifier, style, popupProperties, content)
+    PopupMenuImpl(
+        onDismissRequest = onDismissRequest,
+        popupPositionProvider = popupPositionProvider,
+        modifier = modifier,
+        style = style,
+        popupProperties = popupProperties,
+        content = content,
+    )
+}
+
+/**
+ * A popup menu component that follows the standard visual styling with customizable content.
+ *
+ * Provides a floating menu that can be used for context menus, dropdown menus, and other popup menu scenarios. The menu
+ * supports keyboard navigation, icons, keybindings, and nested submenus.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/popups-and-menus.html)
+ *
+ * **Swing equivalent:** [`JPopupMenu`](https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html#popup)
+ *
+ * @param onDismissRequest Called when the menu should be dismissed, returns true if the dismissal was handled
+ * @param popupPositionProvider Determines the position of the popup menu on the screen.
+ * @param modifier Modifier to be applied to the menu container
+ * @param style The visual styling configuration for the menu and its items
+ * @param popupProperties Properties controlling the popup window behavior
+ * @param adContent Optional composable content to display ad content at the bottom
+ * @param content The menu content builder using [MenuScope]
+ * @see javax.swing.JPopupMenu
+ */
+@Composable
+public fun PopupMenu(
+    onDismissRequest: (InputMode) -> Boolean,
+    popupPositionProvider: PopupPositionProvider,
+    modifier: Modifier = Modifier,
+    style: MenuStyle = JewelTheme.menuStyle,
+    popupProperties: PopupProperties = PopupProperties(focusable = true),
+    adContent: (@Composable () -> Unit)? = null,
+    content: MenuScope.() -> Unit,
+) {
+    PopupMenuImpl(
+        onDismissRequest = onDismissRequest,
+        popupPositionProvider = popupPositionProvider,
+        modifier = modifier,
+        style = style,
+        popupProperties = popupProperties,
+        adContent = adContent,
+        content = content,
+    )
 }
 
 /**
@@ -154,12 +255,33 @@ public fun PopupMenu(
  * @see javax.swing.JPopupMenu
  */
 @Composable
+@Deprecated("Use the variant with adContent.", level = DeprecationLevel.HIDDEN)
 public fun PopupMenu(
     onDismissRequest: (InputMode) -> Boolean,
     popupPositionProvider: PopupPositionProvider,
     modifier: Modifier = Modifier,
     style: MenuStyle = JewelTheme.menuStyle,
     popupProperties: PopupProperties = PopupProperties(focusable = true),
+    content: MenuScope.() -> Unit,
+) {
+    PopupMenuImpl(
+        onDismissRequest = onDismissRequest,
+        popupPositionProvider = popupPositionProvider,
+        modifier = modifier,
+        style = style,
+        popupProperties = popupProperties,
+        content = content,
+    )
+}
+
+@Composable
+private fun PopupMenuImpl(
+    onDismissRequest: (InputMode) -> Boolean,
+    popupPositionProvider: PopupPositionProvider,
+    modifier: Modifier = Modifier,
+    style: MenuStyle = JewelTheme.menuStyle,
+    popupProperties: PopupProperties = PopupProperties(focusable = true),
+    adContent: (@Composable () -> Unit)? = null,
     content: MenuScope.() -> Unit,
 ) {
     var focusManager: FocusManager? by remember { mutableStateOf(null) }
@@ -186,7 +308,7 @@ public fun PopupMenu(
 
         OverrideDarkMode(style.isDark) {
             CompositionLocalProvider(LocalMenuController provides menuController, LocalMenuStyle provides style) {
-                MenuContent(modifier = modifier, content = content)
+                MenuContent(modifier = modifier, adContent = adContent, content = content)
             }
         }
     }
@@ -199,6 +321,7 @@ public fun PopupMenu(
 public fun MenuContent(
     modifier: Modifier = Modifier,
     style: MenuStyle = JewelTheme.menuStyle,
+    adContent: (@Composable () -> Unit)? = null,
     content: MenuScope.() -> Unit,
 ) {
     val items by remember(content) { derivedStateOf { content.asList() } }
@@ -247,17 +370,21 @@ public fun MenuContent(
                 .width(IntrinsicSize.Max)
                 .onHover { localMenuController.onHoveredChange(it) }
     ) {
-        Column(Modifier.verticalScroll(scrollState).padding(style.metrics.contentPadding)) {
-            var selectedSubMenu by remember { mutableStateOf<SubmenuItem?>(null) }
-            items.forEach { item ->
-                MenuItem(
-                    item = item,
-                    showIcons = anyItemHasIcon,
-                    showKeybindings = anyItemHasKeybinding,
-                    selectedSubMenu = selectedSubMenu,
-                    setSelectedSubMenu = { selectedSubMenu = it },
-                )
+        Column(Modifier.clip(menuShape).verticalScroll(scrollState)) {
+            Column(Modifier.padding(style.metrics.contentPadding)) {
+                var selectedSubMenu by remember { mutableStateOf<SubmenuItem?>(null) }
+                items.forEach { item ->
+                    MenuItem(
+                        item = item,
+                        showIcons = anyItemHasIcon,
+                        showKeybindings = anyItemHasKeybinding,
+                        selectedSubMenu = selectedSubMenu,
+                        setSelectedSubMenu = { selectedSubMenu = it },
+                    )
+                }
             }
+
+            adContent?.let { PopupAd(modifier = Modifier.fillMaxWidth()) { it() } }
         }
 
         Box(modifier = Modifier.matchParentSize()) {
