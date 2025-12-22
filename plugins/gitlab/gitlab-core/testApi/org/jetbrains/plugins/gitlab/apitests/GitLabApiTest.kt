@@ -369,35 +369,12 @@ class GitLabApiTest : GitLabApiTestCase() {
   fun `REST mergeRequestApprove and mergeRequestUnApprove does not error`() = runTest {
     checkMetadata {
       (it.version >= v(10, 6) && it.edition == GitLabEdition.Enterprise) ||
-      (it.version < v(14, 3) && it.edition == GitLabEdition.Community)
+      (it.version >= v(13, 3) && it.edition == GitLabEdition.Community)
     }
 
     requiresAuthentication { api ->
       api.rest.mergeRequestApprove(volatileProjectCoordinates, volatileProjectMr2Iid).body()
       api.rest.mergeRequestUnApprove(volatileProjectCoordinates, volatileProjectMr2Iid).body()
-    }
-  }
-
-  @Test
-  fun `REST mergeRequestApprove and mergeRequestUnApprove works`() = runTest {
-    // The approved field is only available for Enterprise...
-    checkMetadata {
-      (it.version >= v(14, 3) && it.edition == GitLabEdition.Enterprise)
-    }
-
-    requiresAuthentication { api ->
-      api.rest.mergeRequestApprove(volatileProjectCoordinates, volatileProjectMr2Iid).body()
-      var mr = api.graphQL.loadMergeRequest(volatileProjectCoordinates, volatileProjectMr2Iid).body()
-      assertNotNull(mr)
-
-      api.rest.mergeRequestUnApprove(volatileProjectCoordinates, volatileProjectMr2Iid).body()
-      mr = api.graphQL.loadMergeRequest(volatileProjectCoordinates, volatileProjectMr2Iid).body()
-      assertNotNull(mr)
-
-      // Do it one more time to confirm the MR wasn't already approved before the first approval
-      api.rest.mergeRequestApprove(volatileProjectCoordinates, volatileProjectMr2Iid).body()
-      mr = api.graphQL.loadMergeRequest(volatileProjectCoordinates, volatileProjectMr2Iid).body()
-      assertNotNull(mr)
     }
   }
 
