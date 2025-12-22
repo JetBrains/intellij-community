@@ -9,7 +9,6 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -38,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.intellij.reference.SoftReference.dereference;
@@ -118,14 +116,12 @@ public final class CompletionInitializationUtil {
   public static Supplier<OffsetsInFile> insertDummyIdentifier(@NotNull CompletionInitializationContext initContext,
                                                               @NotNull CompletionProcessEx indicator) {
     OffsetsInFile topLevelOffsets = indicator.getHostOffsets();
-    final Consumer<Supplier<Disposable>> registerDisposable = supplier -> indicator.registerChildDisposable(supplier);
-
-    return doInsertDummyIdentifier(initContext, topLevelOffsets, registerDisposable);
+    return doInsertDummyIdentifier(initContext, topLevelOffsets, indicator);
   }
 
   private static Supplier<OffsetsInFile> doInsertDummyIdentifier(@NotNull CompletionInitializationContext initContext,
                                                                  @NotNull OffsetsInFile topLevelOffsets,
-                                                                 @NotNull Consumer<? super Supplier<Disposable>> registerDisposable) {
+                                                                 @NotNull CompletionProcessEx completionProcess) {
 
     CompletionAssertions.checkEditorValid(initContext.getEditor());
     if (initContext.getDummyIdentifier().isEmpty()) {
@@ -150,13 +146,12 @@ public final class CompletionInitializationUtil {
     // because it's reused in multiple completions and it can also escapes uncontrollably into other threads (e.g. quick doc)
     return () -> {
       return WriteAction.compute(() -> {
-        registerDisposable.accept((Supplier<Disposable>)() -> {
-          return new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset,
-                                      dummyIdentifier);
-        });
-        OffsetsInFile copyOffsets = apply.get();
+        completionProcess.registerChildDisposable(
+          () -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier)
+        );
 
-        registerDisposable.accept((Supplier<Disposable>)() -> copyOffsets.getOffsets());
+        OffsetsInFile copyOffsets = apply.get();
+        completionProcess.registerChildDisposable(() -> copyOffsets.getOffsets());
 
         return copyOffsets;
       });
