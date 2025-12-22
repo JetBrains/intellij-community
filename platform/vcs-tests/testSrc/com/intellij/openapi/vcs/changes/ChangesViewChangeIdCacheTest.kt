@@ -5,16 +5,16 @@ import com.intellij.openapi.vcs.BaseChangeListsTest
 import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
-import com.intellij.vcs.changes.ChangesViewChangeIdCache
+import com.intellij.vcs.changes.ChangesViewChangeIdProvider
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.util.VcsUserUtil
 
 internal class ChangesViewChangeIdCacheTest : BaseChangeListsTest() {
-  private lateinit var cache: ChangesViewChangeIdCache
+  private lateinit var cache: ChangesViewChangeIdProvider
 
   override fun setUp() {
     super.setUp()
-    cache = ChangesViewChangeIdCache.getInstance(project)
+    cache = ChangesViewChangeIdProvider.getInstance(project)
   }
 
   fun `test resolve change by id`() {

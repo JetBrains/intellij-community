@@ -52,8 +52,7 @@ internal class ChangeListsApiImpl : ChangeListsApi {
     projectScoped(projectId) { project ->
       val changeListManager = ChangeListManager.getInstance(project)
       val targetChangeList = changeListManager.getChangeList(changeListId) ?: return@projectScoped
-      val changeIdCache = ChangesViewChangeIdCache.getInstance(project)
-      val resolvedChanges = changes.mapNotNull { changeIdCache.getChangeListChange(it) }
+      val resolvedChanges = ChangesViewChangeIdProvider.getInstance(project).getChangeListChanges(changes)
       changeListManager.moveChangesTo(targetChangeList, resolvedChanges)
     }
 

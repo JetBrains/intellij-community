@@ -9,6 +9,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
 
+/**
+ * @see [com.intellij.vcs.changes.ChangesViewChangeIdProvider]
+ */
 @Serializable
 @ApiStatus.Internal
 sealed class ChangeId {
@@ -31,7 +34,6 @@ sealed class ChangeId {
       )
     }
   }
-
 }
 
 @Serializable

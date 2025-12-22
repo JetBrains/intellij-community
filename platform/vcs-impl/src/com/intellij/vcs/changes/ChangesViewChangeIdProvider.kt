@@ -15,23 +15,23 @@ import org.jetbrains.annotations.ApiStatus
  */
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
-class ChangesViewChangeIdCache(private val project: Project) {
+class ChangesViewChangeIdProvider(private val project: Project) {
   @Volatile
   private var changeListsChanges: Map<ChangeId, Change> = emptyMap()
 
-  fun getChangeListChange(id: ChangeId): Change? {
-    return changeListsChanges[id] ?: when (val commitPresentation = ChangesViewWorkflowManager.getInstance(project).editedCommit.value) {
-      is EditedCommitDetails -> commitPresentation.changes.find { ChangeId.getId(it) == id }
-      else -> null
-    }
-  }
+  /**
+   * Resolves change from the state of [com.intellij.openapi.vcs.changes.ChangeListManager]
+   */
+  fun getChangeListChange(id: ChangeId): Change? = changeListsChanges[id]
 
-  fun getEditedCommitDetailsChange(id: ChangeId): Change? {
-    return when (val commitPresentation = ChangesViewWorkflowManager.getInstance(project).editedCommit.value) {
+  /**
+   * Resolves change from the amend commit details node
+   */
+  fun getEditedCommitDetailsChange(id: ChangeId): Change? =
+    when (val commitPresentation = ChangesViewWorkflowManager.getInstance(project).editedCommit.value) {
       is EditedCommitDetails -> commitPresentation.changes.find { ChangeId.getId(it) == id }
       else -> null
     }
-  }
 
   fun updateChangeListsCache(allChanges: Iterable<Set<Change>>) {
     changeListsChanges = allChanges.asSequence().flatten().associateBy { ChangeId.getId(it) }
@@ -39,6 +39,9 @@ class ChangesViewChangeIdCache(private val project: Project) {
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): ChangesViewChangeIdCache = project.service()
+    fun getInstance(project: Project): ChangesViewChangeIdProvider = project.service()
   }
 }
+
+internal fun ChangesViewChangeIdProvider.getChangeListChanges(changeIds: Collection<ChangeId>): List<Change> =
+  changeIds.mapNotNull { getChangeListChange(it) }
