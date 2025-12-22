@@ -72,7 +72,7 @@ class ReaderModeSettingsListener : ReaderModeListener {
   }
 }
 
-private class ReaderModeEditorSettingsListener : ProjectActivity {
+internal class ReaderModeEditorSettingsListener : ProjectActivity {
   override suspend fun execute(project: Project) {
     val propertyChangeListener = PropertyChangeListener { event ->
       when (event.propertyName) {

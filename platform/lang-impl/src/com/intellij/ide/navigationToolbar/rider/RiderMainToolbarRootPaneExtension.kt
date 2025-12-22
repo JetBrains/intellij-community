@@ -181,7 +181,7 @@ open class RiderMainToolbarRootPaneManager(private val project: Project) : Simpl
   }
 }
 
-private class NewToolbarRootPaneExtension : IdeRootPaneNorthExtension {
+internal class NewToolbarRootPaneExtension : IdeRootPaneNorthExtension {
   companion object {
     private val LOG = logger<NewToolbarRootPaneExtension>()
   }

@@ -6,7 +6,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
-private class FacetTypeFeatureCollector : ProjectActivity {
+internal class FacetTypeFeatureCollector : ProjectActivity {
   override suspend fun execute(project: Project) {
     serviceAsync<PluginFeatureService>().collectFeatureMapping(
       FacetManagerBase.FEATURE_TYPE,

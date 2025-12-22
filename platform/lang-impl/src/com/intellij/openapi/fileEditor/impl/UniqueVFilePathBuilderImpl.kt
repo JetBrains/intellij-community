@@ -35,7 +35,7 @@ import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-private class UniqueVFilePathBuilderImpl : UniqueVFilePathBuilder() {
+internal class UniqueVFilePathBuilderImpl : UniqueVFilePathBuilder() {
   override fun getUniqueVirtualFilePath(project: Project, file: VirtualFile, scope: GlobalSearchScope): String {
     return getUniqueVirtualFilePath(project = project, file = file, skipNonOpenedFiles = false, scope = scope)
   }

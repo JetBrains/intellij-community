@@ -9,7 +9,7 @@ import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
 import com.intellij.lang.Language
 
-private class InlayHintsSettingsSearchableContributor : SearchableOptionContributor() {
+internal class InlayHintsSettingsSearchableContributor : SearchableOptionContributor() {
   override fun processOptions(processor: SearchableOptionProcessor) {
     for (inlayGroup in InlayGroup.values()) {
       addOption(processor, inlayGroup.title(), null)

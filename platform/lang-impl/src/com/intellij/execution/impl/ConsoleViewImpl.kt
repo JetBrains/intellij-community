@@ -1082,7 +1082,7 @@ open class ConsoleViewImpl protected constructor(
     return extensions.filter { it.shouldFoldLine(project, lineText) }
   }
 
-  private class ClearThisConsoleAction(private val myConsoleView: ConsoleView) : ClearConsoleAction() {
+  internal class ClearThisConsoleAction(private val myConsoleView: ConsoleView) : ClearConsoleAction() {
     override fun update(e: AnActionEvent) {
       val enabled = myConsoleView.contentSize > 0
       e.presentation.isEnabled = enabled

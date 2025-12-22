@@ -27,7 +27,7 @@ import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
-private class TypingLatencyReportAction : AnAction() {
+internal class TypingLatencyReportAction : AnAction() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 

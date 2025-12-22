@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.UiDataRule
 import com.intellij.usages.UsageView.USAGE_INFO_LIST_KEY
 import com.intellij.usages.UsageView.USAGE_TARGETS_KEY
 
-private class BasicLangUiDataRule: UiDataRule {
+internal class BasicLangUiDataRule: UiDataRule {
   @Suppress("StaticInitializationInExtensions")
   companion object {
     init {

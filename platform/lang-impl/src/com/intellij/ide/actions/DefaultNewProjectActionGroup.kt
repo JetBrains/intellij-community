@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.DirectoryProjectGenerator
 
-private class DefaultNewProjectStep : AbstractNewProjectStep<Any>(DefaultNewProjectStepCustomization()) {
+internal class DefaultNewProjectStep : AbstractNewProjectStep<Any>(DefaultNewProjectStepCustomization()) {
   private class DefaultNewProjectStepCustomization : Customization<Any>() {
     override fun createEmptyProjectGenerator(): DirectoryProjectGenerator<Any> {
       return EmptyWebProjectTemplate()
@@ -33,7 +33,7 @@ private fun getRealAction(): AnAction? {
   return ActionManager.getInstance().getAction("WelcomeScreen.CreateNewProject")
 }
 
-private class DefaultNewProjectActionGroup : DefaultActionGroup(), DumbAware {
+internal class DefaultNewProjectActionGroup : DefaultActionGroup(), DumbAware {
   private fun getActualAction(): AnAction {
     return getRealAction() ?: DefaultNewProjectStep()
   }
@@ -43,7 +43,7 @@ private class DefaultNewProjectActionGroup : DefaultActionGroup(), DumbAware {
   }
 }
 
-private class DefaultNewProjectAction : AnAction(), DumbAware {
+internal class DefaultNewProjectAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = getRealAction() == null
   }

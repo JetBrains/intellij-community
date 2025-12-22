@@ -43,7 +43,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 
-private class JdkAutoHint: BaseState() {
+internal class JdkAutoHint: BaseState() {
   val name by string()
   val path: String? by string()
   val version by string()
@@ -52,12 +52,12 @@ private class JdkAutoHint: BaseState() {
   val includeJars by list<String>()
 }
 
-private class JdkAutoHints : BaseState() {
+internal class JdkAutoHints : BaseState() {
   @get:XCollection
   val jdks by list<JdkAutoHint>()
 }
 
-private class JdkAutoHintService(private val project: Project) : SimplePersistentStateComponent<JdkAutoHints>(JdkAutoHints()) {
+internal class JdkAutoHintService(private val project: Project) : SimplePersistentStateComponent<JdkAutoHints>(JdkAutoHints()) {
   override fun loadState(state: JdkAutoHints) {
     super.loadState(state)
 

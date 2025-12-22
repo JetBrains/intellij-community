@@ -231,7 +231,7 @@ open class CompletionServiceImpl : BaseCompletionService() {
   }
 }
 
-private class ClientCompletionService(private val appSession: ClientAppSession) : Disposable {
+internal class ClientCompletionService(private val appSession: ClientAppSession) : Disposable {
   @Volatile
   var completionPhaseHolder: CompletionPhaseHolder = DEFAULT_PHASE_HOLDER
     private set
@@ -291,8 +291,7 @@ private fun reportPhase(phaseHolder: CompletionPhaseHolder) {
   LOG.error("${phaseHolder.phase}; $current$traceText")
 }
 
-private data class CompletionPhaseHolder(
+internal data class CompletionPhaseHolder(
   @JvmField val phase: CompletionPhase,
   @JvmField val phaseTrace: Throwable?
 )
-

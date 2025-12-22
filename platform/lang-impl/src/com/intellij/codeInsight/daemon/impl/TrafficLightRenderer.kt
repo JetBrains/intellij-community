@@ -579,7 +579,7 @@ open class TrafficLightRenderer private constructor(
   }
 
   // actions shouldn't be anonymous classes for statistics reasons
-  private class ShowImportTooltipAction(private val renderer: TrafficLightRenderer)
+  internal class ShowImportTooltipAction(private val renderer: TrafficLightRenderer)
     : ToggleAction(EditorBundle.message("iw.show.import.tooltip")) {
     override fun isSelected(e: AnActionEvent): Boolean {
       val psiFile = renderer.getPsiFile()

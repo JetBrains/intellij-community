@@ -51,7 +51,7 @@ import java.nio.file.Path
 
 private val LOG = logger<ModuleManagerComponentBridge>()
 
-private class ModuleManagerInitProjectActivity : InitProjectActivity {
+internal class ModuleManagerInitProjectActivity : InitProjectActivity {
   override suspend fun run(project: Project) {
     val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge
     val modules = moduleManager.modules().toList()

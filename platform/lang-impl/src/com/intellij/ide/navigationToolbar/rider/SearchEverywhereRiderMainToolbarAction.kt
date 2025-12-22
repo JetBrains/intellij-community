@@ -47,7 +47,7 @@ import javax.swing.plaf.basic.BasicGraphicsUtils.drawStringUnderlineCharAt
 /**
  * Search Everywhere action's item on the main Rider toolbar for the classic UI.
  */
-private class SearchEverywhereRiderMainToolbarAction : SearchEverywhereAction(), AnActionListener, DumbAware {
+internal class SearchEverywhereRiderMainToolbarAction : SearchEverywhereAction(), AnActionListener, DumbAware {
   companion object {
     const val SHOW_HOT_KEY_TIP: String = "com.intellij.ide.navigationToolbar.rider.showSearchEverywhereHotKeyTip"
   }

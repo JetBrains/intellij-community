@@ -8,7 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 /**
  * Used by IDEs where [attaching modules](https://www.jetbrains.com/help/phpstorm/opening-multiple-projects.html) is supported.
  */
-private class AttachedModuleAwareRecentProjectsManager(coroutineScope: CoroutineScope) : RecentProjectsManagerBase(coroutineScope) {
+internal class AttachedModuleAwareRecentProjectsManager(coroutineScope: CoroutineScope) : RecentProjectsManagerBase(coroutineScope) {
   override fun getProjectDisplayName(project: Project): String? {
     return getMultiProjectDisplayName(project) ?: super.getProjectDisplayName(project)
   }

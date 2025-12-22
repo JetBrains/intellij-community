@@ -86,7 +86,7 @@ class IntentionManagerSettings : PersistentStateComponent<Element> {
   }
 }
 
-private class IntentionSearchableOptionContributor : SearchableOptionContributor() {
+internal class IntentionSearchableOptionContributor : SearchableOptionContributor() {
   private val HTML_PATTERN = Pattern.compile("<[^<>]*>")
 
   override suspend fun contribute(processor: SearchableOptionProcessor) {

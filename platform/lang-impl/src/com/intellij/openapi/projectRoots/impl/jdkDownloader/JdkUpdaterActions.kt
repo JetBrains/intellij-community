@@ -102,7 +102,7 @@ class JdkUpdaterNotifications(private val coroutineScope: CoroutineScope) {
   fun getActions() : List<JdkUpdateNotification.JdkUpdateSuggestionAction> = pendingActionsCopy
 }
 
-private class JdkSettingsActionRegistryActionProvider : SettingsEntryPointAction.ActionProvider {
+internal class JdkSettingsActionRegistryActionProvider : SettingsEntryPointAction.ActionProvider {
   override fun getUpdateActions(context: DataContext): List<JdkUpdateNotification.JdkUpdateSuggestionAction> {
     return serviceIfCreated<JdkUpdaterNotifications>()?.getActions() ?: emptyList()
   }

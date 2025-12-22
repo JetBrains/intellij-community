@@ -64,7 +64,7 @@ import javax.swing.event.HyperlinkListener
 import kotlin.math.max
 import kotlin.math.min
 
-private class InitCtrlMouseHandlerActivity : ProjectActivity {
+internal class InitCtrlMouseHandlerActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     project.serviceAsync<CtrlMouseHandler2>()
   }

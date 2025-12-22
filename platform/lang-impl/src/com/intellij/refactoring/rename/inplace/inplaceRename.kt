@@ -457,7 +457,7 @@ private fun createWarningConfirmationMessage(showWarningConfirmation: Boolean): 
   else ""
 }
 
-private class PreventInvalidTemplateFinishAction(
+internal class PreventInvalidTemplateFinishAction(
   private val update: () -> Boolean?,
   private val action: (Boolean) -> Unit,
 ) : AnAction() {

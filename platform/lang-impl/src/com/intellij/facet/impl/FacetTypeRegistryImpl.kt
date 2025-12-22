@@ -22,7 +22,7 @@ private val FACET_TYPE_COMPARATOR = Comparator { o1: FacetType<*, *>, o2: FacetT
   o1.presentableName.compareTo(o2.presentableName, ignoreCase = true)
 }
 
-private class FacetTypeRegistryImpl : FacetTypeRegistry() {
+internal class FacetTypeRegistryImpl : FacetTypeRegistry() {
   private val typeIds = HashMap<String, FacetTypeId<*>>()
   private val facetTypes = HashMap<FacetTypeId<*>, FacetType<*, *>>()
   @Volatile private var extensionsLoaded = false

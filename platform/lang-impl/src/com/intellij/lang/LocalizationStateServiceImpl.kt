@@ -22,7 +22,7 @@ private const val DEFAULT_LOCALE = "en"
   category = SettingsCategory.SYSTEM,
   storages = [Storage(value = GeneralSettings.IDE_GENERAL_XML, usePathMacroManager = false)]
 )
-private class LocalizationStateServiceImpl : LocalizationStateService, PersistentStateComponent<LocalizationState> {
+internal class LocalizationStateServiceImpl : LocalizationStateService, PersistentStateComponent<LocalizationState> {
   private var localizationState = LocalizationState()
   private var restartRequired: Boolean = false
 
@@ -73,7 +73,7 @@ private class LocalizationStateServiceImpl : LocalizationStateService, Persisten
   }
 }
 
-private data class LocalizationState(
+internal data class LocalizationState(
   @get:ReportValue(possibleValues = ["am", "ar", "as", "az", "bn", "cs", "da", "de", "el", "en", "es", "fa", "fr", "gu",
     "ha", "hi", "hu", "ig", "in", "it", "ja", "kk", "kn", "ko", "ml", "mr", "my", "nb",
     "ne", "nl", "nn", "no", "or", "pa", "pl", "pt", "ro", "ru", "rw", "sd", "si", "so",

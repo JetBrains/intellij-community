@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import java.util.concurrent.atomic.AtomicInteger
 
-private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
+internal class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
   private val providerClassFilter = Registry.stringValue("ide.problems.view.provider.class.filter").split(" ,/|").toSet()
   private val fileProblems = mutableMapOf<VirtualFile, MutableSet<FileProblem>>()
   private val otherProblems = mutableSetOf<Problem>()

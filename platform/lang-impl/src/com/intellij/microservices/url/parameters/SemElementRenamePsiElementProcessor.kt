@@ -26,7 +26,7 @@ import com.intellij.util.Processor
 import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
 
-private class SemElementRenamePsiElementProcessor : RenamePsiElementProcessor() {
+internal class SemElementRenamePsiElementProcessor : RenamePsiElementProcessor() {
 
   override fun canProcessElement(element: PsiElement): Boolean = supportedElement(element)
 
@@ -37,7 +37,7 @@ private class SemElementRenamePsiElementProcessor : RenamePsiElementProcessor() 
   }
 }
 
-private class RenameableSemElementFindUsagesHandlerFactory : FindUsagesHandlerFactory() {
+internal class RenameableSemElementFindUsagesHandlerFactory : FindUsagesHandlerFactory() {
   override fun canFindUsages(element: PsiElement): Boolean = supportedElement(element)
 
   override fun createFindUsagesHandler(element: PsiElement, forHighlightUsages: Boolean): FindUsagesHandler =
@@ -74,7 +74,7 @@ private fun createFakeReferenceForHighlighting(psiElement: PsiElement, target: P
   return PsiReferenceBase.Immediate(navigationElement, identifierRange.shiftLeft(navigationElement.textRange.startOffset), target)
 }
 
-private class SemElementRenamePsiReferenceSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(true) {
+internal class SemElementRenamePsiReferenceSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(true) {
   override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
     forbidExpensiveUrlContext {
       val target = queryParameters.elementToSearch
@@ -116,7 +116,7 @@ private class SemElementRenamePsiReferenceSearcher : QueryExecutorBase<PsiRefere
   }
 }
 
-private class RenameableSemElementUseScopeEnlarger : UseScopeEnlarger() {
+internal class RenameableSemElementUseScopeEnlarger : UseScopeEnlarger() {
   override fun getAdditionalUseScope(element: PsiElement): SearchScope? {
     provide { createPomTargetFromSemElement(element) }?.let {
       return GlobalSearchScope.fileScope(element.containingFile)

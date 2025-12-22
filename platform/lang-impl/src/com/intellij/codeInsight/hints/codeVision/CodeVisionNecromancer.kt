@@ -24,7 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class CodeVisionNecromancerAwaker : NecromancerAwaker<CodeVisionZombie> {
+internal class CodeVisionNecromancerAwaker : NecromancerAwaker<CodeVisionZombie> {
   override fun awake(project: Project, coroutineScope: CoroutineScope): Necromancer<CodeVisionZombie> {
     return CodeVisionNecromancer(project, coroutineScope)
   }

@@ -33,7 +33,7 @@ class ToolManager : BaseToolManager<Tool>(SchemeManagerFactory.getInstance(), "t
   public override fun getGroupIdPrefix(): String = "Tools_"
 }
 
-private class ToolManagerActionTuner : ActionConfigurationCustomizer, LightCustomizeStrategy {
+internal class ToolManagerActionTuner : ActionConfigurationCustomizer, LightCustomizeStrategy {
   override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
     getInstance().registerActions(actionRegistrar)
   }

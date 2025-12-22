@@ -7,7 +7,7 @@ import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.project.Project
 import com.intellij.util.PlatformUtils
 
-private class ReaderModeConfigurableProvider(private val project: Project) : ConfigurableProvider() {
+internal class ReaderModeConfigurableProvider(private val project: Project) : ConfigurableProvider() {
   override fun createConfigurable(): Configurable {
     return ReaderModeConfigurable(project)
   }

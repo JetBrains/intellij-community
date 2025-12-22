@@ -13,7 +13,7 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 /**
  * @author Konstantin Bulenkov
  */
-private class TestIconMappingsAction : DumbAwareAction() {
+internal class TestIconMappingsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val errors = mutableListOf<String>()
     val mappings = runWithModalProgressBlocking(e.project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess(), "") {

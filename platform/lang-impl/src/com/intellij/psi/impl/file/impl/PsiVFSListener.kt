@@ -876,7 +876,7 @@ private fun installGlobalListener() {
   })
 }
 
-private class PsiVfsInitProjectActivity : InitProjectActivity {
+internal class PsiVfsInitProjectActivity : InitProjectActivity {
   override val isParallelExecution: Boolean
     get() = true
 

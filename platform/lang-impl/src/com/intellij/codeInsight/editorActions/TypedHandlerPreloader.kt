@@ -5,7 +5,7 @@ import com.intellij.ide.ApplicationActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 
-private class TypedHandlerPreloader : ApplicationActivity {
+internal class TypedHandlerPreloader : ApplicationActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()

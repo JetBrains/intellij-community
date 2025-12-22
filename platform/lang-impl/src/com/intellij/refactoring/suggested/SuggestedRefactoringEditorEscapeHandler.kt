@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 
-private class SuggestedRefactoringEditorEscapeHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
+internal class SuggestedRefactoringEditorEscapeHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
     val project = editor.project
     return isSuggestedRefactoringHintShown(project, editor) || originalHandler.isEnabled(editor, caret, dataContext)

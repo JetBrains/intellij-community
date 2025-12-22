@@ -18,7 +18,7 @@ import java.io.OutputStreamWriter
 import java.nio.charset.Charset
 import java.nio.file.Path
 
-private class IdeScriptStarter : ApplicationStarterBase() {
+internal class IdeScriptStarter : ApplicationStarterBase() {
   override val commandName: String get() = "ideScript"
   override val usageMessage: String
     get() {

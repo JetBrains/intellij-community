@@ -197,7 +197,7 @@ fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
   return ExtendedInfo(path, split)
 }
 
-private class ExtendedInfoOpenInRightSplitAction(
+internal class ExtendedInfoOpenInRightSplitAction(
   private val originalAction: AnAction,
   private val dataContext: DataContext,
 ) : AnAction() {

@@ -11,7 +11,7 @@ import com.intellij.build.events.EventResult
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.issue.BuildIssue
 
-private class BuildEventsImpl : BuildEvents {
+internal class BuildEventsImpl : BuildEvents {
 
   override fun startBuild(
     message: @Message String,

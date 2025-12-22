@@ -10,7 +10,7 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-private class DocumentationSettingsListener : ProjectActivity {
+internal class DocumentationSettingsListener : ProjectActivity {
   override suspend fun execute(project: Project) {
     ApplicationManager.getApplication().messageBus
       .simpleConnect()

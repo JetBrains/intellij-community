@@ -52,7 +52,7 @@ fun getConfigureHighlightingLevelPopup(context: DataContext): JBPopup? {
 }
 
 
-private class LevelAction(val level: InspectionsLevel, val provider: FileViewProvider, val language: Language)
+internal class LevelAction(val level: InspectionsLevel, val provider: FileViewProvider, val language: Language)
   : ToggleAction(level.toString()), DumbAware {
   override fun isSelected(event: AnActionEvent): Boolean {
     val file = provider.getPsi(language) ?: return false

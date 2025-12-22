@@ -23,7 +23,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val MIN = HighlightSeverity("min", HighlightSeverity.INFORMATION.myVal + 1)
 
-private class DaemonCodeAnalyzerStatusBarUpdater : ProjectActivity {
+internal class DaemonCodeAnalyzerStatusBarUpdater : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()
