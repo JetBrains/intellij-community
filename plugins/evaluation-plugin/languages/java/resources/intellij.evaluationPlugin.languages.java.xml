@@ -23,5 +23,6 @@
     <exposedApiExtractor implementation="com.intellij.cce.java.evaluable.JavaExposedApiExtractor"/>
     <testRunner implementation="com.intellij.cce.java.test.JavaTestRunner"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaSandboxFeatureVisitor"/>
+    <projectSyncInvoker implementation="com.intellij.cce.java.project.JavaProjectSyncInvoker"/>
   </extensions>
 </idea-plugin>
