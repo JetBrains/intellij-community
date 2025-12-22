@@ -3,6 +3,7 @@ package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -70,7 +71,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, UiDataProvid
     Disposer.register(this, usageModelTracker);
     usageModelTracker.addListener(isPropertyChange -> updateLater(), this);
 
-    Disposer.register(processor.getProject(), this);
+    Disposer.register(JavaPluginDisposable.getInstance(processor.getProject()), this);
     Disposer.register(this, myTree);
     Disposer.register(this, myDiffPanel);
   }

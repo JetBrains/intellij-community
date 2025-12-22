@@ -27,6 +27,7 @@ import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.ui.impl.watch.CompilingEvaluatorImpl;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.icons.AllIcons;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -228,7 +229,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         breakpoint.emitBreakpointChanged();
       })
       .coalesceBy(myProject, this)
-      .expireWith(myProject)
+      .expireWith(JavaPluginDisposable.getInstance(myProject))
       .submit(RELOAD_EXECUTOR);
   }
 

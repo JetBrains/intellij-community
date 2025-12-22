@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -99,7 +100,8 @@ public final class GeneralModuleTypeForIdea extends GeneralModuleType {
 
           String shortcutText = KeymapUtil.getShortcutText(IdeActions.ACTION_NEW_ELEMENT);
           GotItTooltip tooltip =
-            new GotItTooltip("empty.project.create.file", IdeBundle.message("to.create.new.file.tooltip", shortcutText), project)
+            new GotItTooltip("empty.project.create.file", IdeBundle.message("to.create.new.file.tooltip", shortcutText),
+                             JavaPluginDisposable.getInstance(project))
               .withPosition(Balloon.Position.atRight);
           ApplicationManager.getApplication().getMessageBus().connect(tooltip).subscribe(AnActionListener.TOPIC, new AnActionListener() {
                                                                                               @Override

@@ -27,6 +27,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -281,7 +282,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       testConsole,
       executor
     );
-    Disposer.register(getConfiguration().getProject(), consoleView);
+    Disposer.register(JavaPluginDisposable.getInstance(getConfiguration().getProject()), consoleView);
 
     OSProcessHandler handler = createHandler(viewer);
 

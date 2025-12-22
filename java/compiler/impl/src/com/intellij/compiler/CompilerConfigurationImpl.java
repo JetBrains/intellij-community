@@ -7,6 +7,7 @@ import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.CompilerConfigurationUtils;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -135,12 +136,12 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     }
     BackendCompiler.EP_NAME.getPoint(project).addChangeListener(() -> {
       myRegisteredCompilers = collectCompilers();
-    }, project);
+    }, JavaPluginDisposable.getInstance(project));
   }
 
   private static @NotNull ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
     final ExcludedEntriesConfiguration cfg = new ExcludedEntriesConfiguration(project.getMessageBus().syncPublisher(ExcludedEntriesListener.TOPIC));
-    Disposer.register(project, cfg);
+    Disposer.register(JavaPluginDisposable.getInstance(project), cfg);
     project.getMessageBus().connect().subscribe(ExcludedEntriesListener.TOPIC, new ExcludedEntriesListener() {
       @Override
       public void onEntryAdded(@NotNull ExcludeEntryDescription description) {

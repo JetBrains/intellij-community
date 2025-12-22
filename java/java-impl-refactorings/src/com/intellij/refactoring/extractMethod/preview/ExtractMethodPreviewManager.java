@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -24,8 +25,12 @@ public final class ExtractMethodPreviewManager {
 
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
       ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.EXTRACT_METHOD,
-                                                                   true, ToolWindowAnchor.BOTTOM, myProject);
+      ToolWindow toolWindow = toolWindowManager.registerToolWindow(
+        ToolWindowId.EXTRACT_METHOD,
+        true,
+        ToolWindowAnchor.BOTTOM,
+        JavaPluginDisposable.getInstance(myProject)
+      );
       myContentManager = toolWindow.getContentManager();
       ContentManagerWatcher.watchContentManager(toolWindow, myContentManager);
     });

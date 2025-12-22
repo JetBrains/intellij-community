@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -60,6 +61,9 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
+      // wait for NBRAs to complete because they might access a temporarily disposed project
+      () -> NonBlockingReadActionImpl.waitForAsyncTaskCompletion(),
+      () -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(), // dispatch events that NBRAs potentially schedule
       () -> {
         if (project != null) {
           CodeStyle.dropTemporarySettings(project);
