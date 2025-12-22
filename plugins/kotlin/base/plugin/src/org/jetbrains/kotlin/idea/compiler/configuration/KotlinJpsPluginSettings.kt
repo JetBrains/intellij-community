@@ -261,8 +261,10 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 }
 
                 is IncompatibleJdkVersion -> {
-                    showNotificationUnsupportedJdkVersion(project, error.message)
-                    return
+                    if (isDelegatedToExtBuild) {
+                        showNotificationUnsupportedJdkVersion(project, error.message)
+                        return
+                    }
                 }
 
                 null, is OutdatedCompilerVersion -> Unit
