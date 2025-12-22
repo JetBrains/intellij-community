@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.copyPaste
 
 import com.intellij.ide.PasteProvider
+import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -63,6 +64,7 @@ class KotlinFilePasteProvider : PasteProvider {
     }
 
     override fun isPasteEnabled(dataContext: DataContext): Boolean {
+        if (FileCopyPasteUtil.isFileListFlavorAvailable()) return false
         val project = CommonDataKeys.PROJECT.getData(dataContext)
         val ideView = LangDataKeys.IDE_VIEW.getData(dataContext)
         if (project == null || ideView == null || ideView.directories.isEmpty()) return false

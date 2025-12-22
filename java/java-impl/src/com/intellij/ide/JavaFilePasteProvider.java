@@ -2,6 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.core.CoreBundle;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -119,6 +120,8 @@ public final class JavaFilePasteProvider implements PasteProvider {
 
   @Override
   public boolean isPasteEnabled(final @NotNull DataContext dataContext) {
+    if (FileCopyPasteUtil.isFileListFlavorAvailable()) return false;
+
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || ideView == null || ideView.getDirectories().length == 0) {
