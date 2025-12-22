@@ -10,6 +10,8 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class JavaExceptionBreakpointProperties extends JavaBreakpointProperties<JavaExceptionBreakpointProperties> {
   public boolean NOTIFY_CAUGHT = true;
   public boolean NOTIFY_UNCAUGHT = true;
@@ -82,5 +84,25 @@ public class JavaExceptionBreakpointProperties extends JavaBreakpointProperties<
     boolean changed = !filtersEqual(myCatchClassExclusionFilters, classExclusionFilters);
     myCatchClassExclusionFilters = classExclusionFilters;
     return changed;
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof JavaExceptionBreakpointProperties that)) return false;
+    if (!super.equals(o)) return false;
+    return NOTIFY_CAUGHT == that.NOTIFY_CAUGHT &&
+           NOTIFY_UNCAUGHT == that.NOTIFY_UNCAUGHT &&
+           myCatchFiltersEnabled == that.myCatchFiltersEnabled &&
+           Objects.equals(myQualifiedName, that.myQualifiedName) &&
+           Objects.equals(myPackageName, that.myPackageName) &&
+           filtersEqual(myCatchClassFilters, that.myCatchClassFilters) &&
+           filtersEqual(myCatchClassExclusionFilters, that.myCatchClassExclusionFilters);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), NOTIFY_CAUGHT, NOTIFY_UNCAUGHT, myQualifiedName, myPackageName, myCatchFiltersEnabled,
+                        filtersHashCode(myCatchClassFilters), filtersHashCode(myCatchClassExclusionFilters));
   }
 }
