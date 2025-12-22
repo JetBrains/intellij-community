@@ -6,7 +6,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.terminal.frontend.view.impl.TerminalInput
 import com.intellij.terminal.frontend.view.impl.TerminalTypeAhead
 
-private class TerminalInlineCompletionEditorInsertHandler : InlineCompletionEditorInsertHandler {
+internal class TerminalInlineCompletionEditorInsertHandler : InlineCompletionEditorInsertHandler {
   override fun insert(editor: Editor, textToInsert: String, offset: Int, file: PsiFile) {
     val terminalTypeAhead = editor.getUserData(TerminalTypeAhead.KEY) ?: return
     val terminalInput = editor.getUserData(TerminalInput.KEY) ?: return

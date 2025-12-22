@@ -248,7 +248,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
   }
 }
 
-private class TerminalToggleAutoShowDocumentationAction : ToggleAction(
+internal class TerminalToggleAutoShowDocumentationAction : ToggleAction(
   ActionsBundle.actionText("Documentation.ToggleAutoShow"),
   ActionsBundle.actionDescription("Documentation.ToggleAutoShow"),
   null
