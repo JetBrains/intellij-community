@@ -124,7 +124,8 @@ Invalid2 = TypeVar("Invalid2", float, str, default=int)  # E: expected one of fl
 T4 = TypeVar("T4", default=int)
 
 
-def func1(x: int | set[T4]) -> T4: ...
+def func1(x: int | set[T4]) -> T4:
+    raise NotImplementedError
 
 
 assert_type(func1(0), int)  # E[optional-default-use]

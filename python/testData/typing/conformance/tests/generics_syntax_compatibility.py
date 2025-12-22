@@ -21,7 +21,7 @@ class ClassB[K, V](dict[K, V]):  # OK
 
 class ClassC[V]:
     def method1(self, a: V, b: K) -> V | K:  # OK
-        ...
+        raise NotImplementedError
 
     def method2[M](self, a: M, b: K) -> M | K:  # E
-        ...
+        raise NotImplementedError
