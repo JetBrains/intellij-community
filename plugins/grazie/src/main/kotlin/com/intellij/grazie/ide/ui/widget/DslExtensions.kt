@@ -79,7 +79,7 @@ private fun Row.buttonWithActionPopup(
   ))
 }
 
-private class PopupActionGroup(private val actions: Array<out AnAction>) : ActionGroup(), DumbAware {
+internal class PopupActionGroup(private val actions: Array<out AnAction>) : ActionGroup(), DumbAware {
   init {
     isPopup = true
     templatePresentation.isPerformGroup = actions.isNotEmpty()

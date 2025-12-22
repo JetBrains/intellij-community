@@ -15,7 +15,7 @@ import org.jetbrains.yaml.YAMLTokenTypes.*
 import org.jetbrains.yaml.psi.YAMLScalar
 import org.jetbrains.yaml.psi.impl.YAMLAnchorImpl
 
-private class YamlTextExtractor : TextExtractor() {
+internal class YamlTextExtractor : TextExtractor() {
   private val commentBuilder = TextContentBuilder.FromPsi.removingIndents(" \t#")
 
   override fun buildTextContent(root: PsiElement, allowedDomains: MutableSet<TextDomain>): TextContent? {

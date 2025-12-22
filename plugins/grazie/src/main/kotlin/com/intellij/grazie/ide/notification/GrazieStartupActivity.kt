@@ -5,7 +5,7 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
-private class GrazieNotificationComponent : ProjectActivity {
+internal class GrazieNotificationComponent : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (GrazieConfig.get().hasMissedLanguages()) {
       GrazieToastNotifications.showMissedLanguages(project)

@@ -9,7 +9,7 @@ import com.intellij.ide.ui.search.SearchableOptionProcessor
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.progress.ProgressManager
 
-private class GrazieSearchableOptionContributor : SearchableOptionContributor() {
+internal class GrazieSearchableOptionContributor : SearchableOptionContributor() {
   private val proofreadId = "proofread"
   private val proofreadName = OptionsBundle.message("configurable.group.proofread.settings.display.name")
 
