@@ -2263,6 +2263,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/ContextParameters_2_2.kt");
         }
 
+        @TestMetadata("ExplicitBackingFields_2_2.kt")
+        public void testExplicitBackingFields_2_2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/ExplicitBackingFields_2_2.kt");
+        }
+
+        @TestMetadata("ExplicitBackingFields_2_3.kt")
+        public void testExplicitBackingFields_2_3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/ExplicitBackingFields_2_3.kt");
+        }
+
         @TestMetadata("MultiDollarInterpolation_2_0.kt")
         public void testMultiDollarInterpolation_2_0() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/MultiDollarInterpolation_2_0.kt");
