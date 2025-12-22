@@ -11,8 +11,8 @@ interface ProjectSyncInvoker {
     private val EP_NAME: ExtensionPointName<ProjectSyncInvoker> =
       ExtensionPointName.create("com.intellij.cce.projectSyncInvoker")
 
-    fun getProjectSyncInvoker(params: ProjectSyncInvokerParams): ProjectSyncInvoker {
-      return EP_NAME.findFirstSafe { it.isApplicable(params) } ?: throw IllegalStateException("No test runner for $params")
+    fun getProjectSyncInvoker(params: ProjectSyncInvokerParams): ProjectSyncInvoker? {
+      return EP_NAME.findFirstSafe { it.isApplicable(params) }
     }
   }
 

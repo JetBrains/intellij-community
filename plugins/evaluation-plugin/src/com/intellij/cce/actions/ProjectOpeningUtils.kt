@@ -72,6 +72,8 @@ object ProjectOpeningUtils {
             if (projectSyncInvoker != null) {
               projectSyncInvoker.syncProject(project)
               awaitProject(project)
+            } else {
+              LOG.info("Project sync is skipped")
             }
             project
           }
