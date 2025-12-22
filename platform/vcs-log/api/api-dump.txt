@@ -144,7 +144,6 @@ f:com.intellij.vcs.log.VcsLogProperties
 - sf:CASE_INSENSITIVE_REGEX:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:HAS_COMMITTER:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:LIGHTWEIGHT_BRANCHES:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
-- sf:SUPPORTS_INCREMENTAL_REFRESH:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:SUPPORTS_INDEXING:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:SUPPORTS_LOG_DIRECTORY_HISTORY:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:SUPPORTS_PARENTS_FILTER:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty

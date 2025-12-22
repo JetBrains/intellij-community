@@ -149,9 +149,7 @@ internal class VcsLogRefresherImpl(
     }
 
     LOG.debug("Refreshing roots: $rootsToRefresh")
-    val providers = providers.filterKeys(rootsToRefresh::contains).values
-    val supportsIncrementalRefresh = providers.all(VcsLogProperties.SUPPORTS_INCREMENTAL_REFRESH::getOrDefault)
-    if (optimize && supportsIncrementalRefresh && isSmallDataPackEnabled) {
+    if (optimize && isSmallDataPackEnabled) {
       val smallDataPack = loadSmallDataPack()
       if (smallDataPack !== DataPack.EMPTY) {
         dataPackUpdateHandler.accept(smallDataPack)
@@ -160,7 +158,7 @@ internal class VcsLogRefresherImpl(
 
     checkCanceled()
     val newDataPack = try {
-      if (!dataPack.isFull || !supportsIncrementalRefresh) {
+      if (!dataPack.isFull) {
         loadFullLog()
       }
       else {
