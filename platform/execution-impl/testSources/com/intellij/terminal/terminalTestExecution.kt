@@ -5,6 +5,7 @@ import com.intellij.execution.process.KillableProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.process.PtyBasedProcess
+import com.intellij.execution.process.SelfKiller
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.util.io.BaseDataReader
@@ -43,7 +44,7 @@ internal fun ProcessHandler.writeToStdinAndHitEnter(input: String) {
   }
 }
 
-internal class MockPtyBasedProcess : Process(), PtyBasedProcess {
+internal class MockPtyBasedProcess(private val withPty: Boolean) : Process(), PtyBasedProcess, SelfKiller {
 
   private val exitCodeFuture: CompletableFuture<Int> = CompletableFuture()
 
@@ -61,7 +62,7 @@ internal class MockPtyBasedProcess : Process(), PtyBasedProcess {
   override fun getErrorStream(): InputStream = InputStream.nullInputStream()
   override fun getInputStream(): InputStream = InputStream.nullInputStream()
 
-  override fun hasPty(): Boolean = true
+  override fun hasPty(): Boolean = withPty
 
   override fun setWindowSize(columns: Int, rows: Int) {}
 
