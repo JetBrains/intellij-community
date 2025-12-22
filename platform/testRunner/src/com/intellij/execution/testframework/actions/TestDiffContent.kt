@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -36,6 +37,10 @@ class TestDiffContent(
   override fun getDocument(): Document = fakeDocument
 
   override fun getContentType(): FileType = FileTypes.PLAIN_TEXT
+
+  override fun getHighlightFile(): VirtualFile? {
+    return elemPtr.virtualFile
+  }
 
   private val fakeDocument = EditorFactory.getInstance().createDocument("", true, false).apply {
     putUserData(UndoManager.ORIGINAL_DOCUMENT, original.document)
@@ -103,6 +108,7 @@ class TestDiffContent(
   }
 
   companion object {
+    @JvmStatic
     fun create(
       project: Project,
       text: String,

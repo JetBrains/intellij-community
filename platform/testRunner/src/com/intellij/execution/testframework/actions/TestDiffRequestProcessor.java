@@ -6,6 +6,7 @@ import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffPlaces;
@@ -29,8 +30,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -75,47 +74,36 @@ public final class TestDiffRequestProcessor {
     @Override
     public @NotNull DiffRequest process(@NotNull UserDataHolder context,
                                         @NotNull ProgressIndicator indicator) {
-      String windowTitle = myHyperlink.getDiffTitle();
-      AbstractTestProxy testProxy = myHyperlink.getTestProxy();
-      String text1 = myHyperlink.getLeft();
-      String text2 = myHyperlink.getRight();
       VirtualFile file1 = findFile(myHyperlink.getFilePath());
       VirtualFile file2 = findFile(myHyperlink.getActualFilePath());
-
-      DiffContent content1 = null;
-      if (file1 == null && testProxy != null) {
-        TestDiffProvider provider = ReadAction.compute(() -> {
+      DiffContent content = null;
+      if (file1 == null && myHyperlink.getTestProxy() != null) {
+        content = ReadAction.nonBlocking(() -> {
+          TestDiffProvider provider = getTestDiffProvider(myHyperlink.getTestProxy());
           ProgressManager.checkCanceled();
-          return getTestDiffProvider(testProxy);
-        });
-        if (provider != null) {
-          PsiElement expected = ReadAction.compute(() -> {
-            ProgressManager.checkCanceled();
-            return getExpected(provider, testProxy);
-          });
-          if (expected != null) {
-            file1 = ReadAction.compute(() -> {
-              ProgressManager.checkCanceled();
-              return PsiUtilCore.getVirtualFile(expected);
-            });
-            content1 = ReadAction.compute(() -> {
-              ProgressManager.checkCanceled();
-              return createPsiDiffContent(expected, text1);
-            });
-          }
-        }
+          if (provider == null) return null;
+          String stackTrace = myHyperlink.getTestProxy().getStacktrace();
+          if (stackTrace == null) return null;
+          PsiElement expected = provider.findExpected(myProject, stackTrace, myHyperlink.getLeft());
+          ProgressManager.checkCanceled();
+          if (expected == null) return null;
+          return TestDiffContent.create(myProject, myHyperlink.getLeft(), SmartPointerManager.createPointer(expected));
+        }).executeSynchronously();
       }
-      if (content1 == null) {
-        content1 = createContentWithTitle(myProject, text1, file1, file2);
+      if (content instanceof DocumentContent documentContent) {
+        file1 = documentContent.getHighlightFile();
       }
-      DiffContent content2 = createContentWithTitle(myProject, text2, file2, file1);
+      if (content == null) {
+        content = createContentWithTitle(myProject, myHyperlink.getLeft(), file1, file2);
+      }
+      DiffContent content2 = createContentWithTitle(myProject, myHyperlink.getRight(), file2, file1);
 
       String title1 = file1 != null ? ExecutionBundle.message("diff.content.expected.title.with.file.url", file1.getPresentableUrl())
                                     : ExecutionBundle.message("diff.content.expected.title");
       String title2 = file2 != null ? ExecutionBundle.message("diff.content.actual.title.with.file.url", file2.getPresentableUrl())
                                     : ExecutionBundle.message("diff.content.actual.title");
 
-      return new SimpleDiffRequest(windowTitle, content1, content2, title1, title2);
+      return new SimpleDiffRequest(myHyperlink.getDiffTitle(), content, content2, title1, title2);
     }
 
     private @Nullable TestDiffProvider getTestDiffProvider(@NotNull AbstractTestProxy testProxy) {
@@ -124,17 +112,6 @@ public final class TestDiffRequestProcessor {
       Location<?> loc = testProxy.getLocation(myProject, testRoot.getTestConsoleProperties().getScope());
       if (loc == null) return null;
       return TestDiffProvider.getProviderByLanguage(loc.getPsiElement().getLanguage());
-    }
-
-    private @Nullable PsiElement getExpected(@NotNull TestDiffProvider provider, @NotNull AbstractTestProxy testProxy) {
-      String stackTrace = testProxy.getStacktrace();
-      if (stackTrace == null) return null;
-      return provider.findExpected(myProject, stackTrace, myHyperlink.getLeft());
-    }
-
-    private @Nullable DiffContent createPsiDiffContent(@NotNull PsiElement element, @NotNull String text) {
-      SmartPsiElementPointer<PsiElement> elemPtr = SmartPointerManager.createPointer(element);
-      return TestDiffContent.Companion.create(myProject, text, elemPtr);
     }
 
     @Override
