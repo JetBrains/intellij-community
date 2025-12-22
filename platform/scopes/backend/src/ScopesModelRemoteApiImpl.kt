@@ -139,7 +139,7 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
   }
 }
 
-private class ScopesStateApiProvider : RemoteApiProvider {
+internal class ScopesStateApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<ScopeModelRemoteApi>()) {
       ScopesModelRemoteApiImpl()
