@@ -63,7 +63,7 @@ internal val promotedActions = listOf(IdeActions.ACTION_SEARCH_EVERYWHERE,
 // The presence of this data means that we need to install onboarding tips on the first editor in the newly created project
 private val onboardingTipsInstallationInfoKey = Key<OnboardingTipsInstallationInfo>("onboardingTipsInstallationInfo")
 
-private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
+internal class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
   @RequiresEdt
   override fun installTips(project: Project, info: OnboardingTipsInstallationInfo) {
     project.putUserData(onboardingTipsInstallationInfoKey, info)
@@ -97,14 +97,14 @@ private fun installTipsInFirstEditor(editor: Editor, project: Project, info: Onb
   onboardingGenerationNumber++
 }
 
-private class InstallOnboardingTooltip : ProjectActivity {
+internal class InstallOnboardingTooltip : ProjectActivity {
   override suspend fun execute(project: Project) {
     val pathToRunningFile = project.filePathWithOnboardingTips ?: return
     installDebugListener(project, pathToRunningFile)
   }
 }
 
-private class InstallOnboardingTipsEditorListener : EditorFactoryListener {
+internal class InstallOnboardingTipsEditorListener : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor
     val project = editor.project ?: return

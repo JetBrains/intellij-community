@@ -91,7 +91,7 @@ internal fun showAltClickGotItPromo(project: Project, evaluateUi: JComponent) {
   job = altClickPromoContent.initAndStartAnimation()
 }
 
-private class ShowDemoAltClickPromoterAction : DumbAwareAction() {
+internal class ShowDemoAltClickPromoterAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val evaluateUi = evaluateBox(project)
