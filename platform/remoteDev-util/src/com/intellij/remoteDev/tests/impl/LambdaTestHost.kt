@@ -330,20 +330,14 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         }
 
         session.closeAllOpenedProjects.setSuspend(sessionBgtDispatcher) { _, _ ->
-          try {
-            leaveAllModals(throwErrorIfModal = true)
+          leaveAllModals(throwErrorIfModal = true)
 
-            ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
-            withContext(Dispatchers.EDT + NonCancellable) {
-              writeIntentReadAction {
-                ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
-              }
+          ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
+          withContext(Dispatchers.EDT + NonCancellable) {
+            writeIntentReadAction {
+              ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
             }
           }
-          catch (ce: CancellationException) {
-            throw ce
-          }
-
         }
 
 
