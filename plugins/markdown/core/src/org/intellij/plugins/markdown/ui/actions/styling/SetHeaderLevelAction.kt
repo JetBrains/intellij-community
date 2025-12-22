@@ -71,7 +71,7 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
     return start != end
   }
 
-  private class SetHeaderLevelGroup: DefaultActionGroup(
+  internal class SetHeaderLevelGroup: DefaultActionGroup(
     SetHeaderLevelImpl.Normal(),
     Separator(),
     SetHeaderLevelImpl.Title(),
