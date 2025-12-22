@@ -457,14 +457,22 @@ public class StringUtil {
               // special string like ~java or _java; keep it as is
               continue;
             }
-            if (!isPreposition(s, start, i - 1, ourOtherNonCapitalizableWords)) {
-              boolean firstWord = start == 0 || isPunctuation(prevPrevChar);
-              boolean lastWord = i >= length - 1|| isPunctuation(s.charAt(i + 1));
-              if (!title || firstWord || lastWord || !isPreposition(s, start, i - 1, wordsToIgnore)) {
-                if (buffer == null) {
-                  buffer = new StringBuilder(s);
-                }
-                buffer.setCharAt(start, title ? toUpperCase(currChar) : toLowerCase(currChar));
+
+            if (!isPreposition(s, start, i - 1, ourOtherNonCapitalizableWords)) {  // keep unchanged special words
+              if (buffer == null) {
+                buffer = new StringBuilder(s);
+              }
+
+              if (!title) {
+                buffer.setCharAt(start, toLowerCase(currChar));
+              }
+              else {
+                boolean firstWord = start == 0 || isPunctuation(prevPrevChar);
+                boolean lastWord = i >= length - 1|| isPunctuation(s.charAt(i + 1));
+                // Prepositions may occur in both upper/lower case in Title capitalization:
+                // Example: Compare with the Latest Repository Version In…
+                buffer.setCharAt(start, firstWord || lastWord || !isPreposition(s, start, i - 1, wordsToIgnore)
+                                        ? toUpperCase(currChar) : toLowerCase(currChar));
               }
             }
           }
@@ -475,7 +483,7 @@ public class StringUtil {
   }
 
   private static boolean isPunctuation(char c) {
-    return c == '.' || c == '!' || c == ':' || c == '?';
+    return c == '.' || c == '!' || c == ':' || c == '?' || c == '…';
   }
 
   private static final String[] ourLowerCaseWords = {
