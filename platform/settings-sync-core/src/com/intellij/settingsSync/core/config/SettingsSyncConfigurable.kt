@@ -165,7 +165,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       rowsRange {
         row {
           text(message("settings.sync.select.provider.message"))
-        }
+        }.visibleIf(hasMultipleProviders)
 
         row {
           val availableProviders = RemoteCommunicatorHolder.getAvailableProviders()

@@ -19,10 +19,12 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.settingsSync.core.*
+import com.intellij.settingsSync.core.SettingsSyncBundle.message
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.nio.file.Path
 
@@ -164,12 +166,50 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
     override val providerName = "JetBrains"
     override val icon = AllIcons.Ultimate.IdeaUltimatePromo
 
+    private suspend fun showErrorMessage(message: @Nls String, title: @Nls String, parentComponent: Component?) {
+      withContext(Dispatchers.EDT) {
+        if (parentComponent != null) {
+          Messages.showInfoMessage(parentComponent, message, title)
+        }
+        else {
+          Messages.showInfoMessage(message, title)
+        }
+      }
+    }
+
+    private suspend fun enableIfDisabled(pluginId: PluginId): Boolean {
+      if (PluginManagerCore.isPluginInstalled(pluginId) && PluginManagerCore.isDisabled(pluginId)) {
+        val descriptor = PluginManagerCore.getPlugin(pluginId) as? IdeaPluginDescriptorImpl
+        return withContext(Dispatchers.EDT) {
+          if (descriptor != null) {
+            if (!PluginEnabler.getInstance().enable(listOf(descriptor))) {
+              logger.error("Cannot enable ${pluginId} plugin")
+              return@withContext false
+            }
+            return@withContext true
+          }
+          else {
+            logger.error("Cannot find ${pluginId} plugin descriptor")
+            return@withContext false
+          }
+        }
+      }
+      return true
+    }
+
     override suspend fun login(parentComponent: Component?): SettingsSyncUserData? {
       val marketplacePluginId = PluginId.getId("com.intellij.marketplace")
       val settingsSyncPluginId = PluginId.getId("com.intellij.settingsSync")
+
+      // TODO load fails now because marketplace plugin requires restart
+      if (!enableIfDisabled(marketplacePluginId) || !enableIfDisabled(settingsSyncPluginId)) {
+        showErrorMessage(message("settings.jba.enable.plugin.required.text"), message("settings.jba.enable.plugin.required.title"), parentComponent)
+        return null
+      }
+
       val downloaders = hashMapOf<PluginId, PluginDownloader>()
       withModalProgress(ModalTaskOwner.guess(),
-                        SettingsSyncBundle.message("settings.jba.plugin.download"),
+                        message("settings.jba.plugin.download"),
                         TaskCancellation.cancellable()) {
         val pluginUpdates = MarketplaceRequests.getLastCompatiblePluginUpdate(setOf(marketplacePluginId, settingsSyncPluginId))
         for (update in pluginUpdates) {
@@ -195,6 +235,7 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
           }
 
           targetDescriptor.jarFiles = getJars(targetFile.parent)
+          // TODO load fails now because marketplace plugin requires restart
           if (!loadPlugin(targetDescriptor)) {
             logger.error("Cannot load marketplace plugin")
             return@withContext false
@@ -221,14 +262,7 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
         return@withContext true
       }
       if (!installSuccessful) {
-        if (parentComponent != null) {
-          Messages.showInfoMessage(parentComponent, SettingsSyncBundle.message("settings.jba.plugin.required.text"),
-                                   SettingsSyncBundle.message("settings.jba.plugin.required.title"))
-        }
-        else {
-          Messages.showInfoMessage(SettingsSyncBundle.message("settings.jba.plugin.required.text"),
-                                   SettingsSyncBundle.message("settings.jba.plugin.required.title"))
-        }
+        showErrorMessage(message("settings.jba.plugin.required.text"), message("settings.jba.plugin.required.title"), parentComponent)
         return null
       }
 
