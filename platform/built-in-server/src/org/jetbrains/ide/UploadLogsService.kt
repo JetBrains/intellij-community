@@ -26,7 +26,7 @@ import java.io.IOException
 
 private const val propertyKeyForTrustedHosts = "idea.api.collectLogs.hosts.trusted"
 
-private class UploadLogsService : RestService() {
+internal class UploadLogsService : RestService() {
   private val trustedPredefinedHosts = setOf("intellij-support.jetbrains.com")
   private val serviceName = "logs"
 
