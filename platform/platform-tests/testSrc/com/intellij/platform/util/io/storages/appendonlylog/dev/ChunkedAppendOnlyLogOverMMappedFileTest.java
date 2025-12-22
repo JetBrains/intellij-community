@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.appendonlylog.dev;
 
 import com.intellij.platform.util.io.storages.StorageFactory;
@@ -23,9 +23,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
+import static com.intellij.platform.util.io.storages.appendonlylog.dev.ChunkedAppendOnlyLog.NULL_ID;
 import static com.intellij.platform.util.io.storages.appendonlylog.dev.ChunkedAppendOnlyLogOverMMappedFile.MAX_PAYLOAD_SIZE_WITHOUT_NEXT_CHUNK;
 import static com.intellij.platform.util.io.storages.appendonlylog.dev.ChunkedAppendOnlyLogOverMMappedFile.MAX_PAYLOAD_SIZE_WITH_NEXT_CHUNK;
-import static com.intellij.platform.util.io.storages.appendonlylog.dev.ChunkedAppendOnlyLog.NULL_ID;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -453,7 +453,7 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
   }
 
   private void reopenLog() throws IOException {
-    log.close();
+    log.closeAndUnsafelyUnmap();
     log = LOG_FACTORY.open(pathToLog);
   }
 }
