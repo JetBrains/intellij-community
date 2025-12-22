@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets
 
-private class GroovyTripleQuoteBackspaceHandlerDelegate : BackspaceHandlerDelegate() {
+internal class GroovyTripleQuoteBackspaceHandlerDelegate : BackspaceHandlerDelegate() {
   private var myWithinTripleQuoted: Boolean = false
 
   override fun beforeCharDeleted(c: Char, file: PsiFile, editor: Editor) {

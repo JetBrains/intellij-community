@@ -14,7 +14,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil
 import java.util.*
 
-private class JavaFxEventHandlerReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<JavaFxEventHandlerReference>() {
+internal class JavaFxEventHandlerReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<JavaFxEventHandlerReference>() {
 
   override fun getReferenceClass(): Class<JavaFxEventHandlerReference> = JavaFxEventHandlerReference::class.java
 

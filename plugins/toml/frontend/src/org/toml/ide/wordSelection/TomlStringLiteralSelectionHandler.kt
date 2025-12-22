@@ -15,7 +15,7 @@ import org.toml.lang.psi.TOML_STRING_LITERALS
 import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.elementType
 
-private class TomlStringLiteralSelectionHandler : ExtendWordSelectionHandlerBase() {
+internal class TomlStringLiteralSelectionHandler : ExtendWordSelectionHandlerBase() {
     override fun canSelect(e: PsiElement): Boolean =
         e.elementType in TOML_STRING_LITERALS
 

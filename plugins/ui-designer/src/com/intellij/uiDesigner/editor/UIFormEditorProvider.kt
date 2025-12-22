@@ -19,7 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 
-private class UIFormEditorProvider : FileEditorProvider, AsyncFileEditorProvider {
+internal class UIFormEditorProvider : FileEditorProvider, AsyncFileEditorProvider {
   override fun accept(project: Project, file: VirtualFile): Boolean {
     SlowOperations.knownIssue("IDEA-307701, EA-762786").use {
       return FileTypeRegistry.getInstance().isFileOfType(file, GuiFormFileType.INSTANCE) &&
