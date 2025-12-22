@@ -408,6 +408,10 @@
                     interface="com.intellij.codeInsight.codeVision.CodeVisionProviderFactory"
                     dynamic="true" />
 
+    <extensionPoint name="codeInsight.codeVisionProviderAnchorProvider"
+                    interface="com.intellij.codeInsight.codeVision.CodeVisionProviderAnchorProvider"
+                    dynamic="true"/>
+
     <extensionPoint name="codeInsight.codeVision.settings.defaults"
                     interface="com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsDefaults"
                     dynamic="true" />

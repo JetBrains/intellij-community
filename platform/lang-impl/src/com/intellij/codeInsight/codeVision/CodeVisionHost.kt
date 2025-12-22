@@ -354,7 +354,7 @@ open class CodeVisionHost(val project: Project) {
 
   private fun getAnchorForProvider(provider: CodeVisionProvider<*>): CodeVisionAnchorKind {
     return lifeSettingModel.codeVisionGroupToPosition[provider.groupId].nullIfDefault()
-           ?: provider.defaultAnchor.nullIfDefault()
+           ?: CodeVisionProviderAnchorProvider.getDefaultAnchor(project, provider).nullIfDefault()
            ?: lifeSettingModel.defaultPosition.value
   }
 
