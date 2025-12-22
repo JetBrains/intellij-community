@@ -95,7 +95,8 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
       return StagedTrackerContent(correctedText, indexDocument)
     }
     catch (e: VcsException) {
-      LOG.warn("Can't load base revision content for ${file.path} with status $status", e)
+      val message = "Can't load base revision content for ${file.path} with status $status"
+      if (status.isNotChanged()) LOG.debug(message, e) else LOG.warnWithDebug(message, e)
       return null
     }
   }
