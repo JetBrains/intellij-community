@@ -87,6 +87,9 @@ public fun ComboBoxes(modifier: Modifier = Modifier) {
         GroupHeader("Editable list combo box")
         EditableListComboBoxes()
 
+        GroupHeader("Editable list combo box with ad text")
+        EditableListComboBoxesWithAdText()
+
         GroupHeader("Custom combo box content")
         CustomComboBoxes()
 
@@ -242,6 +245,25 @@ private fun EditableListComboBoxes() {
                 onSelectedItemChange = { index -> selectedIndex = index },
                 modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
                 enabled = false,
+            )
+        }
+    }
+}
+
+@Composable
+private fun EditableListComboBoxesWithAdText() {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.weight(1f).widthIn(min = 125.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Ad text example")
+            var selectedIndex by remember { mutableIntStateOf(0) }
+            InfoText(text = "Editable combo box with hints")
+
+            EditableListComboBox(
+                items = listOf("Focused", "Balance", "Creative"),
+                adText = "Balance between the number of code suggestions and error filtration",
+                selectedIndex = selectedIndex,
+                onSelectedItemChange = { index -> selectedIndex = index },
+                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
             )
         }
     }

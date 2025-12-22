@@ -1,12 +1,14 @@
 package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -29,6 +31,7 @@ public fun PopupContainer(
             alignment = horizontalAlignment,
             density = LocalDensity.current,
         ),
+    adText: String = "",
     content: @Composable () -> Unit,
 ) {
     Popup(
@@ -41,7 +44,7 @@ public fun PopupContainer(
             val colors = style.colors
             val popupShape = RoundedCornerShape(style.metrics.cornerSize)
 
-            Box(
+            Column(
                 modifier =
                     modifier
                         .popupShadowAndBorder(
@@ -54,7 +57,39 @@ public fun PopupContainer(
                         .background(colors.background, popupShape)
             ) {
                 content()
+
+                if (adText.isNotEmpty()) {
+                    PopupAdText(text = adText, textAlign = TextAlign.Start, modifier = Modifier.fillMaxWidth())
+                }
             }
         }
     }
+}
+
+@Composable
+@Deprecated(message = "Deprecated in favor of the method with 'adText' parameter", level = DeprecationLevel.HIDDEN)
+public fun PopupContainer(
+    onDismissRequest: () -> Unit,
+    horizontalAlignment: Alignment.Horizontal,
+    modifier: Modifier = Modifier,
+    style: PopupContainerStyle = JewelTheme.popupContainerStyle,
+    popupProperties: PopupProperties = PopupProperties(focusable = true),
+    popupPositionProvider: PopupPositionProvider =
+        AnchorVerticalMenuPositionProvider(
+            contentOffset = style.metrics.offset,
+            contentMargin = style.metrics.menuMargin,
+            alignment = horizontalAlignment,
+            density = LocalDensity.current,
+        ),
+    content: @Composable () -> Unit,
+) {
+    PopupContainer(
+        onDismissRequest = onDismissRequest,
+        horizontalAlignment = horizontalAlignment,
+        modifier = modifier,
+        style = style,
+        popupProperties = popupProperties,
+        popupPositionProvider = popupPositionProvider,
+        content = content,
+    )
 }
