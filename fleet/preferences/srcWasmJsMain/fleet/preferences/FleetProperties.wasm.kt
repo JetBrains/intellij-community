@@ -6,10 +6,12 @@ import kotlinx.browser.window
 import org.w3c.dom.Window
 
 @Actual
-fun fleetPropertyWasmJs(name: String, defaultValue: String?): String? = when (name) {
-  "fleet.ai.service.configuration.url" -> url("aiconfig")
-  "fleet.ai.service.url" -> url("ai")
-  else -> getJsConfigProperty(window, name.removePrefix("fleet."))?.toString() ?: defaultValue
+fun fleetPropertyWasmJs(name: String, defaultValue: String?): String? {
+  return getJsConfigProperty(window, name.removePrefix("fleet."))?.toString() ?: when (name) {
+    "fleet.ai.service.configuration.url" -> url("aiconfig")
+    "fleet.ai.service.url" -> url("ai")
+    else -> defaultValue
+  }
 }
 
 private fun getJsConfigProperty(obj: Window, name: String): JsAny? {
