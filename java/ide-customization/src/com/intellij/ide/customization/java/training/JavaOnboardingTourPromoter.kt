@@ -9,7 +9,7 @@ import com.intellij.util.PlatformUtils
 import training.ui.welcomeScreen.OnboardingLessonPromoter
 import javax.swing.Icon
 
-private class JavaOnboardingTourPromoter : OnboardingLessonPromoter(
+internal class JavaOnboardingTourPromoter : OnboardingLessonPromoter(
   ideaOnboardingLessonId, javaLanguageId, JavaLessonsBundle.message("java.onboarding.lesson.name")
 ) {
   override val promoImage: Icon

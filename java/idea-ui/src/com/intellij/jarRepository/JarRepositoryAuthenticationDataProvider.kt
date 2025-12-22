@@ -57,7 +57,7 @@ internal fun obtainAuthenticationData(description: RemoteRepositoryDescription):
   return null
 }
 
-private class MavenSettingsXmlRepositoryAuthenticationDataProvider: JarRepositoryAuthenticationDataProvider {
+internal class MavenSettingsXmlRepositoryAuthenticationDataProvider: JarRepositoryAuthenticationDataProvider {
   override fun provideAuthenticationData(remote: RemoteRepositoryDescription): AuthenticationData? {
     return service<MavenSettingsXmlRepositoryAuthenticationDataService>().provideAuthenticationData(remote)
   }

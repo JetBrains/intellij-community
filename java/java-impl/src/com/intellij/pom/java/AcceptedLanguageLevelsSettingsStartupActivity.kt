@@ -11,7 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
 
-private class AcceptedLanguageLevelsSettingsStartupActivity : ProjectActivity {
+internal class AcceptedLanguageLevelsSettingsStartupActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()

@@ -8,7 +8,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.artifacts.ArtifactType
 
-private class ArtifactTypeFeatureCollector : ProjectActivity {
+internal class ArtifactTypeFeatureCollector : ProjectActivity {
   override suspend fun execute(project: Project) {
     serviceAsync<PluginFeatureService>().collectFeatureMapping(
       ArtifactManager.FEATURE_TYPE,

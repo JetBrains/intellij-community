@@ -63,7 +63,7 @@ data class AdditionalContextElement(val name: String, val jvmSignature: String, 
  * This icon provider works only for elements with [AdditionalContextProvider.ADDITIONAL_CONTEXT_ELEMENT_KEY] set,
  * so it should be only elements suggested in evaluation.
  */
-private class AdditionalContextIconProvider : IconProvider(), DumbAware {
+internal class AdditionalContextIconProvider : IconProvider(), DumbAware {
   override fun getIcon(element: PsiElement, flags: Int): Icon? {
     val contextElement = element.getUserData(AdditionalContextProvider.ADDITIONAL_CONTEXT_ELEMENT_KEY) ?: return null
     return contextElement.icon

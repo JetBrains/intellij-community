@@ -20,7 +20,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.sun.jdi.*
 import java.util.*
 
-private class JavaDfaAssistProvider : DfaAssistProvider {
+internal class JavaDfaAssistProvider : DfaAssistProvider {
   override suspend fun locationMatches(element: PsiElement, location: Location): Boolean {
     val method = location.method()
     val methodName = method.name()

@@ -7,7 +7,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
 import java.awt.event.MouseEvent
 
-private class JavaVcsCodeVisionContext : VcsCodeVisionCurlyBracketLanguageContext() {
+internal class JavaVcsCodeVisionContext : VcsCodeVisionCurlyBracketLanguageContext() {
   override fun isAccepted(element: PsiElement): Boolean {
     return element is PsiMethod || (element is PsiClass && element !is PsiTypeParameter)
   }

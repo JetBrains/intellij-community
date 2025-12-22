@@ -15,7 +15,7 @@ import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension
 import javax.swing.Icon
 
-private class JvmHotSwapUiExtension : HotSwapUiExtension {
+internal class JvmHotSwapUiExtension : HotSwapUiExtension {
   override fun isApplicable(): Boolean = PlatformUtils.isIntelliJ() || PlatformUtils.isJetBrainsClient()
   override fun showFloatingToolbar(project: Project) = DebuggerSettings.getInstance().HOTSWAP_SHOW_FLOATING_BUTTON
 
@@ -25,7 +25,7 @@ private class JvmHotSwapUiExtension : HotSwapUiExtension {
   override fun popupMenuActions() = DefaultActionGroup(ToggleShowButtonAction())
 }
 
-private class ToggleShowButtonAction : DumbAwareToggleAction(XDebuggerBundle.message("label.debugger.hotswap.option.suggest.in.editor")) {
+internal class ToggleShowButtonAction : DumbAwareToggleAction(XDebuggerBundle.message("label.debugger.hotswap.option.suggest.in.editor")) {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
   override fun isSelected(e: AnActionEvent) = DebuggerSettings.getInstance().HOTSWAP_SHOW_FLOATING_BUTTON
   override fun setSelected(e: AnActionEvent, state: Boolean) {
