@@ -347,7 +347,7 @@ private class CommandCompletionHighlightingListener(
  */
 @ApiStatus.Internal
 internal class CommandCompletionCharFilter : CharFilter() {
-  override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup?): Result? {
+  override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup): Result? {
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return null
     if (lookup !is LookupImpl) return null
     val completionService = lookup.project.service<CommandCompletionService>()

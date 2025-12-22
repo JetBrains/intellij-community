@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -64,5 +65,5 @@ public abstract class CharFilter {
    * are invoked for any language. It's highly recommended that implementors check the current language by themselves
    * (e.g., by checking {@code lookup.getPsiFile().getLanguage()}). Otherwise, your filter may affect unrelated languages.
    */
-  public abstract @Nullable Result acceptChar(char c, int prefixLength, Lookup lookup);
+  public abstract @Nullable Result acceptChar(char c, int prefixLength, @NotNull Lookup lookup);
 }

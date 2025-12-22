@@ -1,15 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.completion;
 
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import org.intellij.lang.xpath.XPathFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class XPathCharFilter extends CharFilter {
   @Override
-  public @Nullable CharFilter.Result acceptChar(char c, int prefixLength, Lookup lookup) {
+  public @Nullable CharFilter.Result acceptChar(char c, int prefixLength, @NotNull Lookup lookup) {
     if (c != '.' || !lookup.isCompletion()) {
       return null;
     }
