@@ -54,7 +54,7 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
   override fun getAlignment(): Float = Component.LEFT_ALIGNMENT
 }
 
-private class LightGitStatusBarWidgetFactory : StatusBarWidgetFactory, LightEditCompatible {
+internal class LightGitStatusBarWidgetFactory : StatusBarWidgetFactory, LightEditCompatible {
   override fun getId(): String = ID
 
   override fun getDisplayName(): String = GitBundle.message("git.light.status.bar.display.name")

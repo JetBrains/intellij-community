@@ -194,7 +194,7 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntry>(
     return "reference.VersionControl.Git.RebaseCommits"
   }
 
-  private class AnActionButtonSeparator : DumbAwareAction(), CustomComponentAction {
+  internal class AnActionButtonSeparator : DumbAwareAction(), CustomComponentAction {
     companion object {
       private val SEPARATOR_HEIGHT = JBUI.scale(20)
     }

@@ -24,7 +24,7 @@ import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 /**
  * Collects statistics about the GitHub project in the background.
  */
-private class GHPRProjectMetricsCollector : ProjectUsagesCollector() {
+internal class GHPRProjectMetricsCollector : ProjectUsagesCollector() {
   @Suppress("CompanionObjectInExtension")
   private companion object {
     private val GROUP = EventLogGroup(

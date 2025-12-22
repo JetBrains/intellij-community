@@ -9,7 +9,7 @@ import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.repo.GitRepository
 
 
-private class GitBranchActionWrapperGroup(
+internal class GitBranchActionWrapperGroup(
   actionGroup: ActionGroup,
   private val branch: GitBranch,
   private val selectedRepository: GitRepository,

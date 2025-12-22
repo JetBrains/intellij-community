@@ -9,7 +9,7 @@ import icons.DvcsImplIcons
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
-private class GitActivityPresentationProvider : ActivityPresentationProvider {
+internal class GitActivityPresentationProvider : ActivityPresentationProvider {
   override val id: String get() = ID
 
   override fun getIcon(kind: String): Icon? {

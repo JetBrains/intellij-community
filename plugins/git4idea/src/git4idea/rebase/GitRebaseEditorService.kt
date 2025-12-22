@@ -49,7 +49,7 @@ internal class GitRebaseEditorService(
   }
 }
 
-private class GitRebaseEditorExternalProcessRest : ExternalProcessRest<GitRebaseEditorAppHandler>(
+internal class GitRebaseEditorExternalProcessRest : ExternalProcessRest<GitRebaseEditorAppHandler>(
   GitRebaseEditorAppHandler.ENTRY_POINT_NAME
 ) {
   override val externalProcessHandler: ExternalProcessHandlerService<GitRebaseEditorAppHandler> get() = GitRebaseEditorService.getInstance()
