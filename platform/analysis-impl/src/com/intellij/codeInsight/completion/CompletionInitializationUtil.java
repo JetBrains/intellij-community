@@ -143,7 +143,7 @@ public final class CompletionInitializationUtil {
 
 
     // despite being non-physical, the copy file should only be modified in a write action,
-    // because it's reused in multiple completions and it can also escapes uncontrollably into other threads (e.g. quick doc)
+    // because it's reused in multiple completions, and it can also escape uncontrollably into other threads (e.g., quick doc)
     return () -> {
       return WriteAction.compute(() -> {
         completionProcess.registerChildDisposable(
