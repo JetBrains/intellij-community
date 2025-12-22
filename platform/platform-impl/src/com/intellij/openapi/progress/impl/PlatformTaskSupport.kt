@@ -60,9 +60,6 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
-internal val isRhizomeProgressEnabled
-  get() = Registry.`is`("rhizome.progress")
-
 internal val isRhizomeProgressModelEnabled
   get() = Registry.`is`("rhizome.progress.model")
 
@@ -103,11 +100,6 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     visibleInStatusBar: Boolean,
     action: suspend CoroutineScope.() -> T,
   ): T = coroutineScope {
-    if (!isRhizomeProgressEnabled) {
-      return@coroutineScope withBackgroundProgressInternalOld(project, title, cancellation, suspender,
-                                                              visibleInStatusBar = visibleInStatusBar, action)
-    }
-
     LOG.trace { "Task received: title=$title, project=$project" }
 
     val taskSuspender = retrieveSuspender(suspender)
@@ -277,41 +269,6 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     }
   }
 
-  private suspend fun <T> withBackgroundProgressInternalOld(
-    project: Project,
-    title: @ProgressTitle String,
-    cancellation: TaskCancellation,
-    providedSuspender: TaskSuspender?,
-    visibleInStatusBar: Boolean,
-    action: suspend CoroutineScope.() -> T,
-  ): T = coroutineScope {
-    val taskJob = coroutineContext.job
-    val pipe = cs.createProgressPipe()
-    val progressModel = ProgressIndicatorModel(title, cancellation,
-                                               visibleInStatusBar = visibleInStatusBar,
-                                               onCancel =  {taskJob.cancel()})
-
-    val taskSuspender = retrieveSuspender(providedSuspender)
-    taskSuspender?.attachTask()
-
-    // has to be called before showIndicator to avoid the indicator being stopped by ProgressManager.runProcess
-    val suspenderSynchronizer = progressModel.getProgressIndicator().markSuspendableIfNeeded(taskSuspender)
-
-    val showIndicatorJob = cs.showIndicator(project, progressModel, pipe.progressUpdates())
-
-    try {
-      progressStarted(title, cancellation, pipe.progressUpdates())
-      withContext(taskSuspender?.asContextElement() ?: EmptyCoroutineContext) {
-        pipe.collectProgressUpdates(action)
-      }
-    }
-    finally {
-      showIndicatorJob.cancel()
-      suspenderSynchronizer?.stop()
-      taskSuspender?.detachTask()
-    }
-  }
-
   private fun CoroutineScope.retrieveSuspender(providedSuspender: TaskSuspender?): TaskSuspender? {
     return providedSuspender
            ?: coroutineContext[TaskSuspenderElementKey]?.taskSuspender
@@ -326,15 +283,6 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
   private fun TaskSuspender.detachTask() {
     (this as? TaskSuspenderImpl)?.detachTask()
-  }
-
-  private fun ProgressIndicatorEx.markSuspendableIfNeeded(taskSuspender: TaskSuspender?): TaskToProgressSuspenderSynchronizer? {
-    if (taskSuspender !is TaskSuspenderImpl) return null
-
-    @Suppress("UsagesOfObsoleteApi")
-    val progressSuspender = ProgressManager.getInstance().runProcess<ProgressSuspender>(
-      { ProgressSuspender.markSuspendable(this, taskSuspender.defaultSuspendedReason) }, this)
-    return TaskToProgressSuspenderSynchronizer(cs, taskSuspender, progressSuspender)
   }
 
   override suspend fun <T> withModalProgressInternal(

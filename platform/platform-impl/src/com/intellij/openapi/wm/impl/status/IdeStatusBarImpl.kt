@@ -17,9 +17,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.LoadingOrder.Orderable
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.progress.ProgressIndicatorModel
 import com.intellij.openapi.progress.ProgressModel
 import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.progress.impl.BridgeTaskSupport
 import com.intellij.openapi.progress.impl.PerProjectTaskInfoEntityCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.StatusBarWidget.*
@@ -475,13 +474,8 @@ open class IdeStatusBarImpl @Internal constructor(
 
   @Suppress("UsagesOfObsoleteApi")
   override fun addProgress(indicator: ProgressIndicatorEx, info: TaskInfo) {
-    if (Registry.`is`("rhizome.progress")) {
-      @Suppress("DEPRECATION")
-      com.intellij.openapi.progress.impl.BridgeTaskSupport.getInstance().withBridgeBackgroundProgress(project, indicator, info)
-    }
-    else {
-      addProgressImpl(ProgressIndicatorModel(indicator, info.title, info.isCancellable), info)
-    }
+    @Suppress("DEPRECATION")
+    BridgeTaskSupport.getInstance().withBridgeBackgroundProgress(project, indicator, info)
   }
 
   internal fun addProgressImpl(progressModel: ProgressModel, info: TaskInfo) {
