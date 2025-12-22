@@ -148,16 +148,19 @@ public final class CompletionInitializationUtil {
 
     // despite being non-physical, the copy file should only be modified in a write action,
     // because it's reused in multiple completions and it can also escapes uncontrollably into other threads (e.g. quick doc)
-    return () -> WriteAction.compute(() -> {
-      registerDisposable.accept((Supplier<Disposable>)() -> {
-        return new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier);
+    return () -> {
+      return WriteAction.compute(() -> {
+        registerDisposable.accept((Supplier<Disposable>)() -> {
+          return new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset,
+                                      dummyIdentifier);
+        });
+        OffsetsInFile copyOffsets = apply.get();
+
+        registerDisposable.accept((Supplier<Disposable>)() -> copyOffsets.getOffsets());
+
+        return copyOffsets;
       });
-      OffsetsInFile copyOffsets = apply.get();
-
-      registerDisposable.accept((Supplier<Disposable>)() -> copyOffsets.getOffsets());
-
-      return copyOffsets;
-    });
+    };
   }
 
   public static @NotNull OffsetsInFile toInjectedIfAny(@NotNull PsiFile originalFile, @NotNull OffsetsInFile hostCopyOffsets) {
