@@ -1,5 +1,12 @@
 ### auto-generated section `build intellij.platform.todo` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_todo",
+  api_version = "2.2",
+  language_version = "2.2"
+)
 
 resourcegroup(
   name = "todo_resources",
@@ -13,6 +20,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":todo_resources"],
+  kotlinc_opts = ":custom_todo",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-serialization-core",
