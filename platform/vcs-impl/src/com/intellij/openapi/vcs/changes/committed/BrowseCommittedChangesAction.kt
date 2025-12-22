@@ -25,7 +25,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 
-private class BrowseCommittedChangesAction : DumbAwareAction() {
+internal class BrowseCommittedChangesAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = false
 

@@ -6,7 +6,7 @@ import com.intellij.openapi.vcs.changes.actions.SetChangesGroupingAction
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import com.intellij.platform.vcs.impl.shared.VcsMappingsHolder
 
-private class SetRepositoryChangesGroupingAction : SetChangesGroupingAction() {
+internal class SetRepositoryChangesGroupingAction : SetChangesGroupingAction() {
   override val groupingKey: String get() = REPOSITORY_GROUPING
 
   override fun update(e: AnActionEvent): Unit = super.update(e).also {

@@ -10,7 +10,7 @@ import javax.swing.Icon
 
 private const val ID = "Vcs"
 
-private class VcsActivityPresentationProvider : ActivityPresentationProvider {
+internal class VcsActivityPresentationProvider : ActivityPresentationProvider {
   override val id: String
     get() = ID
 

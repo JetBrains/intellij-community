@@ -35,7 +35,7 @@ import io.opentelemetry.sdk.metrics.export.MetricExporter
 import io.opentelemetry.sdk.trace.data.ExceptionEventData
 import io.opentelemetry.sdk.trace.data.SpanData
 
-private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
+internal class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
   override fun getSpanExporters(): List<AsyncSpanExporter> {
     return listOf(LogHistorySpanExporter, LogFilterSpanExporter)
   }

@@ -382,7 +382,7 @@ internal class CombinedEditorSearchSession(private val project: Project,
     sink[SearchSession.KEY] = this
   }
 
-  private class WiderStatusTextAction : StatusTextAction() {
+  internal class WiderStatusTextAction : StatusTextAction() {
     override fun getTextToCountPreferredSize(): String = "9888 results in 100500 files"
   }
 

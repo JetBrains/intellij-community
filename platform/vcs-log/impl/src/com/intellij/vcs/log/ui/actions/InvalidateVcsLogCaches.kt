@@ -13,7 +13,7 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.util.VcsLogUtil
 import org.jetbrains.annotations.Nls
 
-private class InvalidateVcsLogCaches : DumbAwareAction(actionText(VcsLogBundle.message("vcs"))) {
+internal class InvalidateVcsLogCaches : DumbAwareAction(actionText(VcsLogBundle.message("vcs"))) {
   override fun update(e: AnActionEvent) {
     val project = e.project
     if (project == null) {

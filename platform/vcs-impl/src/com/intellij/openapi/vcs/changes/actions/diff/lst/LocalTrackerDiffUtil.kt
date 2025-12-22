@@ -106,7 +106,7 @@ object LocalTrackerDiffUtil {
       is TrackerData.Invalid -> {
         if (data.affectedChangelist.singleOrNull() == activeChangelistId) {
           if (data.isLoading) {
-            // tracker is waiting for initialisation
+            // tracker is waiting for initialization
             // there are only one changelist, so it's safe to fallback to default logic
             handler.fallbackWithProgress()
           }
@@ -461,7 +461,7 @@ object LocalTrackerDiffUtil {
     return listOf(ExcludeSelectedChangesFromCommitAction(provider))
   }
 
-  private class MoveSelectedChangesToAnotherChangelistAction(provider: LocalTrackerActionProvider)
+  internal class MoveSelectedChangesToAnotherChangelistAction(provider: LocalTrackerActionProvider)
     : MySelectedChangesActionBase(false, provider) {
 
     init {
@@ -495,7 +495,7 @@ object LocalTrackerDiffUtil {
     }
   }
 
-  private class ExcludeSelectedChangesFromCommitAction(provider: LocalTrackerActionProvider)
+  internal class ExcludeSelectedChangesFromCommitAction(provider: LocalTrackerActionProvider)
     : MySelectedChangesActionBase(true, provider) {
 
     init {
@@ -520,8 +520,8 @@ object LocalTrackerDiffUtil {
     }
   }
 
-  private abstract class MySelectedChangesActionBase(private val forActiveChangelistOnly: Boolean,
-                                                     protected val provider: LocalTrackerActionProvider) : DumbAwareAction() {
+  internal abstract class MySelectedChangesActionBase(private val forActiveChangelistOnly: Boolean,
+                                                      protected val provider: LocalTrackerActionProvider) : DumbAwareAction() {
     override fun getActionUpdateThread(): ActionUpdateThread {
       return ActionUpdateThread.EDT
     }
@@ -582,7 +582,7 @@ object LocalTrackerDiffUtil {
                                      changes: List<LocalTrackerChange>)
   }
 
-  private class PartiallyExcludeSelectedLinesFromCommitAction(
+  internal class PartiallyExcludeSelectedLinesFromCommitAction(
     val provider: LocalTrackerActionProvider,
     val isExclude: Boolean
   ) : DumbAwareAction() {

@@ -206,7 +206,7 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     }
   }
 
-  private interface Filter {
+  internal interface Filter {
     fun isAvailable(filterer: ChangesFilterer): Boolean = true
     fun accept(filterer: ChangesFilterer, change: Change): Boolean
 
@@ -333,7 +333,7 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     }
   }
 
-  private class ToggleFilterAction(val filterer: ChangesFilterer, val filter: Filter)
+  internal class ToggleFilterAction(val filterer: ChangesFilterer, val filter: Filter)
     : ToggleAction(filter.getText(), filter.getDescription(), null), DumbAware {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
