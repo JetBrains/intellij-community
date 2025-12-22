@@ -84,12 +84,24 @@ public final class TestDiffRequestProcessor {
 
       DiffContent content1 = null;
       if (file1 == null && testProxy != null) {
-        TestDiffProvider provider = getTestDiffProvider(testProxy);
+        TestDiffProvider provider = ReadAction.compute(() -> {
+          ProgressManager.checkCanceled();
+          return getTestDiffProvider(testProxy);
+        });
         if (provider != null) {
-          PsiElement expected = getExpected(provider, testProxy);
+          PsiElement expected = ReadAction.compute(() -> {
+            ProgressManager.checkCanceled();
+            return getExpected(provider, testProxy);
+          });
           if (expected != null) {
-            file1 = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(expected));
-            content1 = createPsiDiffContent(expected, text1);
+            file1 = ReadAction.compute(() -> {
+              ProgressManager.checkCanceled();
+              return PsiUtilCore.getVirtualFile(expected);
+            });
+            content1 = ReadAction.compute(() -> {
+              ProgressManager.checkCanceled();
+              return createPsiDiffContent(expected, text1);
+            });
           }
         }
       }
@@ -109,10 +121,7 @@ public final class TestDiffRequestProcessor {
     private @Nullable TestDiffProvider getTestDiffProvider(@NotNull AbstractTestProxy testProxy) {
       TestProxyRoot testRoot = AbstractTestProxy.getTestRoot(testProxy);
       if (testRoot == null) return null;
-      Location<?> loc = ReadAction.compute(() -> {
-        ProgressManager.checkCanceled();
-        return testProxy.getLocation(myProject, testRoot.getTestConsoleProperties().getScope());
-      });
+      Location<?> loc = testProxy.getLocation(myProject, testRoot.getTestConsoleProperties().getScope());
       if (loc == null) return null;
       return TestDiffProvider.getProviderByLanguage(loc.getPsiElement().getLanguage());
     }
@@ -124,7 +133,7 @@ public final class TestDiffRequestProcessor {
     }
 
     private @Nullable DiffContent createPsiDiffContent(@NotNull PsiElement element, @NotNull String text) {
-      SmartPsiElementPointer<PsiElement> elemPtr = ReadAction.compute(() -> SmartPointerManager.createPointer(element));
+      SmartPsiElementPointer<PsiElement> elemPtr = SmartPointerManager.createPointer(element);
       return TestDiffContent.Companion.create(myProject, text, elemPtr);
     }
 
