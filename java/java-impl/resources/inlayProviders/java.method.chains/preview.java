@@ -1,9 +1,28 @@
-import java.util.stream.*;
-class Foo {
-  {
-    Stream.of(1, 2, 3).filter(x -> x % 2 == 0)/*<# Stream<Integer> #>*/
-      .map(x -> x * 2)/*<# Stream<Integer> #>*/
-      .map(x -> "item: " + x)/*<# Stream<String> #>*/
-      .forEach(System.out::println);
+class Test {
+  static AccountManager accountManager = new AccountManager();
+
+  public static void main(String[] args) {
+    String id = accountManager
+      .getAccounts()/*<# List<Account> #>*/
+      .get(0)/*<# Account #>*/
+      .getId()/*<# UUID> #>*/
+      .toString();
+  }
+
+}
+
+class AccountManager {
+  List<Account> accounts = new ArrayList<>();
+
+  public List<Account> getAccounts() {
+    return accounts;
+  }
+}
+
+class Account {
+  private UUID id;
+
+  public UUID getId() {
+    return id;
   }
 }

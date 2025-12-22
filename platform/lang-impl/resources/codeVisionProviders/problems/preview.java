@@ -1,5 +1,3 @@
-class Thing {
-  void changedMethod(String s) {
-
-  }
+class Button {
+  void actionPerformed() {}
 }
