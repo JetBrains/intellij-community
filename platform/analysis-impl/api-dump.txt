@@ -90,6 +90,10 @@ com.intellij.codeInsight.completion.CompletionLookupArranger
 - a:addElement(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.completion.CompletionSorter,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.codeInsight.lookup.LookupElementPresentation):V
 - a:arrangeItems():com.intellij.openapi.util.Pair
 - a:itemMatcher(com.intellij.codeInsight.lookup.LookupElement):com.intellij.codeInsight.completion.PrefixMatcher
+com.intellij.codeInsight.completion.CopyFileUpdateTask
+- a:ensureUpdatedAndGetNewOffsets():com.intellij.codeInsight.completion.OffsetsInFile
+f:com.intellij.codeInsight.completion.OffsetsInFile
+- f:replaceInCopy(com.intellij.psi.PsiFile,I,I,java.lang.String):com.intellij.codeInsight.completion.CopyFileUpdateTask
 c:com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 - sf:AUTOREPARSE_DELAY_DEFAULT:I
 com.intellij.codeInsight.daemon.ReferenceImporter

@@ -307,7 +307,7 @@ public class CodeCompletionHandlerBase {
     if (synchronous && isValidContext) {
       OffsetsInFile hostCopyOffsets = withTimeout(calcSyncTimeOut(startingTime), () -> {
         PsiDocumentManager.getInstance(initContext.getProject()).commitAllDocuments();
-        return CompletionInitializationUtil.insertDummyIdentifier(initContext, indicator).get();
+        return CompletionInitializationUtil.insertDummyIdentifier(initContext, indicator).ensureUpdatedAndGetNewOffsets();
       });
       if (hostCopyOffsets != null) {
         trySynchronousCompletion(initContext, hasModifiers, startingTime, indicator, hostCopyOffsets);
@@ -335,7 +335,7 @@ public class CodeCompletionHandlerBase {
       .expireWith(phase)
       .withDocumentsCommitted(indicator.getProject())
       .finishOnUiThread(ModalityState.defaultModalityState(), applyPsiChanges -> {
-        OffsetsInFile hostCopyOffsets = applyPsiChanges.get();
+        OffsetsInFile hostCopyOffsets = applyPsiChanges.ensureUpdatedAndGetNewOffsets();
 
         if (phase instanceof CompletionPhase.CommittingDocuments) {
           ((CompletionPhase.CommittingDocuments)phase).replaced = true;
