@@ -73,10 +73,10 @@ class VcsLogData @ApiStatus.Internal constructor(
   val topCommitsCache: TopCommitsCache
 
   val miniDetailsGetter: MiniDetailsGetter
-  override val fullCommitDetailsCache: VcsLogCommitDataCache<VcsFullCommitDetails> get() = commitDetailsGetter
+  override val commitMetadataCache: VcsLogCommitDataCache<VcsCommitMetadata> get() = miniDetailsGetter
 
   val commitDetailsGetter: CommitDetailsGetter
-  override val commitMetadataCache: VcsLogCommitDataCache<VcsCommitMetadata> get() = miniDetailsGetter
+  override val fullCommitDetailsCache: VcsLogCommitDataCache<VcsFullCommitDetails> get() = commitDetailsGetter
 
   private val refresher: VcsLogRefresherImpl
   val dataPack: DataPack get() = refresher.currentDataPack
