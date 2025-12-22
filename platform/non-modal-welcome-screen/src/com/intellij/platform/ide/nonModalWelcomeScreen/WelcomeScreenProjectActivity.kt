@@ -21,7 +21,7 @@ import com.intellij.util.asSafely
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class WelcomeScreenProjectActivity : ProjectActivity {
+internal class WelcomeScreenProjectActivity : ProjectActivity {
   init {
     val app = ApplicationManager.getApplication()
     val isNotAvailable = app.isCommandLine || app.isHeadlessEnvironment || app.isUnitTestMode

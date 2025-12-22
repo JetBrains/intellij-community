@@ -36,7 +36,7 @@ import java.awt.Component
 import java.lang.reflect.Constructor
 import kotlin.properties.Delegates.notNull
 
-private class CreateAllServicesAndExtensionsAction : DumbAwareAction() {
+internal class CreateAllServicesAndExtensionsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val errors = createAllServicesAndExtensions2()
     if (errors.isNotEmpty()) {

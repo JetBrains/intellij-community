@@ -1009,7 +1009,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
-  private class GetMoreLafAction : DumbAwareAction(IdeBundle.message("link.get.more.themes")) {
+  internal class GetMoreLafAction : DumbAwareAction(IdeBundle.message("link.get.more.themes")) {
     override fun actionPerformed(e: AnActionEvent) {
       val themeTag = "/tag:Theme"
       val settings = Settings.KEY.getData(e.dataContext)

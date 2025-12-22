@@ -222,8 +222,8 @@ class PresentationAssistant(private val coroutineScope: CoroutineScope) : Persis
   }
 }
 
-private class PresentationAssistantListenerRegistrar : ActionConfigurationCustomizer,
-                                                       ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
+internal class PresentationAssistantListenerRegistrar : ActionConfigurationCustomizer,
+                                                        ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
   override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
     serviceAsync<PresentationAssistant>().initialize()
   }

@@ -10,7 +10,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
-private class InternalFlagDetection : ProjectActivity {
+internal class InternalFlagDetection : ProjectActivity {
   private val internalPluginIds = setOf(
     "com.jetbrains.intellij.api.watcher",
     "com.jetbrains.idea.safepush",

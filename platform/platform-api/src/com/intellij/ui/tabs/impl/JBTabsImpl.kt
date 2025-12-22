@@ -2695,7 +2695,7 @@ open class JBTabsImpl internal constructor(
 
   // Useful when you need to always show separator an as first or last component of ActionToolbar
   // Just put it as first or last action and any separator will not be counted as a corner and will be shown
-  private class FakeEmptyAction : DumbAwareAction(), CustomComponentAction {
+  internal class FakeEmptyAction : DumbAwareAction(), CustomComponentAction {
     override fun actionPerformed(e: AnActionEvent) {
       // do nothing
     }
@@ -2863,7 +2863,7 @@ open class JBTabsImpl internal constructor(
     return this
   }
 
-  private abstract class BaseNavigationAction(
+  internal abstract class BaseNavigationAction(
     copyFromId: @NlsSafe String,
     private val tabs: JBTabsImpl,
     parentDisposable: Disposable
@@ -2941,8 +2941,8 @@ open class JBTabsImpl internal constructor(
     protected abstract fun doActionPerformed(e: AnActionEvent?, tabs: JBTabsImpl?, selectedIndex: Int)
   }
 
-  private class SelectNextAction(tabs: JBTabsImpl, parentDisposable: Disposable) : BaseNavigationAction(IdeActions.ACTION_NEXT_TAB, tabs,
-                                                                                                        parentDisposable) {
+  internal class SelectNextAction(tabs: JBTabsImpl, parentDisposable: Disposable) : BaseNavigationAction(IdeActions.ACTION_NEXT_TAB, tabs,
+                                                                                                         parentDisposable) {
     override fun doUpdate(e: AnActionEvent, tabs: JBTabsImpl, selectedIndex: Int) {
       e.presentation.isEnabled = tabs.findEnabledForward(selectedIndex, true) != null
     }
@@ -3011,8 +3011,8 @@ open class JBTabsImpl internal constructor(
     }
   }
 
-  private class SelectPreviousAction(tabs: JBTabsImpl, parentDisposable: Disposable) : BaseNavigationAction(IdeActions.ACTION_PREVIOUS_TAB,
-                                                                                                            tabs, parentDisposable) {
+  internal class SelectPreviousAction(tabs: JBTabsImpl, parentDisposable: Disposable) : BaseNavigationAction(IdeActions.ACTION_PREVIOUS_TAB,
+                                                                                                             tabs, parentDisposable) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun doUpdate(e: AnActionEvent, tabs: JBTabsImpl, selectedIndex: Int) {
@@ -3636,7 +3636,7 @@ private class AccessibleTabPage(
 
 private val DUMMY_COMPONENT by lazy(LazyThreadSafetyMode.PUBLICATION) { JPanel() }
 
-private class TitleAction(
+internal class TitleAction(
   private val tabs: JBTabsImpl,
   private val titleProvider: () -> Pair<Icon, @Nls String>,
 ) : AnAction(), CustomComponentAction {

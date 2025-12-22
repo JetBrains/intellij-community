@@ -37,7 +37,7 @@ class IconDbMaintainer : SettingsSavingComponent {
   }
 }
 
-private class IconCacheInvalidator : CachesInvalidator() {
+internal class IconCacheInvalidator : CachesInvalidator() {
   override fun invalidateCaches() {
     SvgCacheManager.invalidateCache()
   }

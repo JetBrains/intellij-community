@@ -24,7 +24,7 @@ interface LoggingSettingsChangesListener {
   }
 }
 
-private class LoggingSettingsController : DelegatedSettingsController {
+internal class LoggingSettingsController : DelegatedSettingsController {
   private val storage = ConcurrentHashMap<PluginId, ConcurrentHashMap<String, Any>>()
   private val ignoredKeys = setOf("EntryPointsManager", "ProjectPlainTextFileTypeManager")
 

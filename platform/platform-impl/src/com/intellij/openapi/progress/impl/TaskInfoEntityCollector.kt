@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 
 private val LOG = logger<TaskInfoEntityCollector>()
 
-private class TaskInfoEntityCollector(cs: CoroutineScope) {
+internal class TaskInfoEntityCollector(cs: CoroutineScope) {
   init {
     LOG.trace { "TaskInfoEntityCollector started for application"}
     collectActiveTasks(cs, project = null)

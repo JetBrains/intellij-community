@@ -272,10 +272,10 @@ class SegmentedButtonComponent<T>(private val presentation: (T) -> com.intellij.
   }
 }
 
-private class SegmentedButtonAction<T>(val parent: SegmentedButtonComponent<T>, val item: T, @NlsActions.ActionText text: String?,
-                                       @NlsActions.ActionDescription description: String?,
-                                       icon: Icon?,
-                                       private val enabled: Boolean)
+internal class SegmentedButtonAction<T>(val parent: SegmentedButtonComponent<T>, val item: T, @NlsActions.ActionText text: String?,
+                                        @NlsActions.ActionDescription description: String?,
+                                        icon: Icon?,
+                                        private val enabled: Boolean)
   : ToggleAction(text, description, icon), DumbAware {
 
   override fun update(e: AnActionEvent) {

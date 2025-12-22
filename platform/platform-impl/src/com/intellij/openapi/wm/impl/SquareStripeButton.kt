@@ -322,7 +322,7 @@ private fun createPopupGroup(toolWindow: ToolWindowImpl): DefaultActionGroup {
   return group
 }
 
-private class HideAction(private val toolWindow: ToolWindowImpl)
+internal class HideAction(private val toolWindow: ToolWindowImpl)
   : AnAction(UIBundle.messagePointer("tool.window.new.stripe.hide.action.name")), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     toolWindow.toolWindowManager.hideToolWindow(id = toolWindow.id,

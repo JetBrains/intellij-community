@@ -18,7 +18,7 @@ import com.intellij.ui.ExperimentalUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class NewUiOnboardingStartupActivity : ProjectActivity {
+internal class NewUiOnboardingStartupActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()

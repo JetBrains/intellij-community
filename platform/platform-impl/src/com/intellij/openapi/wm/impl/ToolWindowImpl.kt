@@ -941,7 +941,7 @@ import kotlin.math.abs
   }
 }
 
-private class ResizeActionGroup : DefaultActionGroup(
+internal class ResizeActionGroup : DefaultActionGroup(
   ActionsBundle.groupText("ResizeToolWindowGroup"),
   ActionManager.getInstance().let { actionManager ->
     listOf(

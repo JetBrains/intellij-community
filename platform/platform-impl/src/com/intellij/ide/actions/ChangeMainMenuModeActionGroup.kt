@@ -28,7 +28,7 @@ internal class ChangeMainMenuModeActionGroup : DefaultActionGroup(), DumbAware {
   }
 }
 
-private class ChangeMainMenuModeAction(private val mode: MainMenuDisplayMode) : DumbAware, ToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
+internal class ChangeMainMenuModeAction(private val mode: MainMenuDisplayMode) : DumbAware, ToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
   init {
     templatePresentation.text = mode.description
     templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested

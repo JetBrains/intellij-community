@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
-private sealed class TrustedModeAction(val targetState: Boolean) : DumbAwareAction() {
+internal sealed class TrustedModeAction(val targetState: Boolean) : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     TrustedProjects.setProjectTrusted(project, targetState)
@@ -20,6 +20,6 @@ private sealed class TrustedModeAction(val targetState: Boolean) : DumbAwareActi
   }
 }
 
-private class YesTrustAction : TrustedModeAction(true)
-private class NoTrustAction : TrustedModeAction(false)
+internal class YesTrustAction : TrustedModeAction(true)
+internal class NoTrustAction : TrustedModeAction(false)
 

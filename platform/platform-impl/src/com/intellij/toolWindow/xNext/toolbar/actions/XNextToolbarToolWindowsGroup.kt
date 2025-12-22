@@ -49,9 +49,9 @@ internal class XNextToolbarToolWindowsGroup : ActionGroup(), DumbAware {
   }
 }
 
-private class XNextToolWindowAction(val toolWindowAction: ActivateToolWindowAction) : AnActionWrapper(toolWindowAction),
-                                                                                      DumbAware, Toggleable,
-                                                                                      CustomComponentAction {
+internal class XNextToolWindowAction(val toolWindowAction: ActivateToolWindowAction) : AnActionWrapper(toolWindowAction),
+                                                                                       DumbAware, Toggleable,
+                                                                                       CustomComponentAction {
   companion object {
     private val toolWindowKey = Key<ToolWindowImpl>("XNextToolWindowAction.toolWindowKey")
   }
@@ -131,7 +131,7 @@ private class XNextToolWindowAction(val toolWindowAction: ActivateToolWindowActi
     }
   }
 
-  private class MyPinAction(val toolWindowId: String) : AnAction() {
+  internal class MyPinAction(val toolWindowId: String) : AnAction() {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {

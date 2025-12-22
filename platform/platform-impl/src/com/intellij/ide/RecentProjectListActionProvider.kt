@@ -402,7 +402,7 @@ private class ProjectGroupComparator(private val projectPaths: Set<String>) : Co
   }
 }
 
-private class RemoteRecentProjectActionGroup(val projectId: String, val project: RecentProject)
+internal class RemoteRecentProjectActionGroup(val projectId: String, val project: RecentProject)
   : ActionGroup(), DumbAware,
     ProjectToolbarWidgetPresentable by RemoteRecentProjectWidgetActionHelper(projectId, project) {
   init {
@@ -441,7 +441,7 @@ private class RemoteRecentProjectActionGroup(val projectId: String, val project:
   }
 }
 
-private class RemoteRecentProjectAction(val projectId: String, val project: RecentProject)
+internal class RemoteRecentProjectAction(val projectId: String, val project: RecentProject)
   : AnAction(), DumbAware, ProjectToolbarWidgetPresentable by RemoteRecentProjectWidgetActionHelper(projectId, project) {
   init {
     templatePresentation.setText(nameToDisplayAsText, false)

@@ -5,7 +5,7 @@ import com.intellij.openapi.fileEditor.CompositeTabIconHolderCreator
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabInfoIconHolder
 
-private class CompositeTabIconHolderCreatorImpl : CompositeTabIconHolderCreator {
+internal class CompositeTabIconHolderCreatorImpl : CompositeTabIconHolderCreator {
   override fun createTabIconHolder(composite: EditorComposite, owner: TabInfo): TabInfoIconHolder {
     return TabInfoIconHolder.default(owner)
   }

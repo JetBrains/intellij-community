@@ -52,7 +52,7 @@ class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware, ActionRemo
   }
 }
 
-private class ChangeProjectColorAction(
+internal class ChangeProjectColorAction(
   projectPath: Path,
   val name: @NlsSafe String,
   val index: Int,
@@ -88,7 +88,7 @@ private class ChangeProjectColorAction(
   }
 }
 
-private class ChooseCustomProjectColorAction: AnAction(IdeBundle.message("action.ChooseCustomProjectColorAction.title")), DumbAware {
+internal class ChooseCustomProjectColorAction: AnAction(IdeBundle.message("action.ChooseCustomProjectColorAction.title")), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
     val ideFrame = IdeFocusManager.getInstance(project).lastFocusedFrame

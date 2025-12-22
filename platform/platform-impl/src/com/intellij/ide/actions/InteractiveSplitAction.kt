@@ -11,7 +11,7 @@ import com.intellij.openapi.fileEditor.impl.SplitterService
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.registry.Registry
 
-private class InteractiveSplitAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend, DumbAware {
+internal class InteractiveSplitAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project != null
                                          && e.getData(CommonDataKeys.VIRTUAL_FILE) != null

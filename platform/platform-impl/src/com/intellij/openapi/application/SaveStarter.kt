@@ -8,7 +8,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class SaveStarter() : ApplicationStarterBase(0) {
+internal class SaveStarter() : ApplicationStarterBase(0) {
   override val commandName: String get() = "save"
   override val usageMessage: String
     get() = IdeBundle.message("wrong.number.of.arguments.usage.ide.executable.save")

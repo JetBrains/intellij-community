@@ -39,7 +39,7 @@ import java.awt.GraphicsEnvironment
 /**
  * @author Konstantin Bulenkov
  */
-private class UiInfoUsageCollector : ApplicationUsagesCollector() {
+internal class UiInfoUsageCollector : ApplicationUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   override suspend fun getMetricsAsync(): Set<MetricEvent> = getDescriptors()

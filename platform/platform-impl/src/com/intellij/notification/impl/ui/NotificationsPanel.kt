@@ -1034,7 +1034,7 @@ private class NotificationComponent(
     }
   }
 
-  private class MyActionGroup : DefaultActionGroup(), TooltipDescriptionProvider {
+  internal class MyActionGroup : DefaultActionGroup(), TooltipDescriptionProvider {
     init {
       isPopup = true
     }

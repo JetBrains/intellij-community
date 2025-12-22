@@ -494,7 +494,7 @@ private class MyEditorLayeredComponentWrapper(private val editorComponent: JComp
   override fun getPreferredSize(): Dimension = editorComponent.preferredSize
 }
 
-private class ConditionalActionGroup(private val actions: Array<AnAction>, private val condition: () -> Boolean) : ActionGroup() {
+internal class ConditionalActionGroup(private val actions: Array<AnAction>, private val condition: () -> Boolean) : ActionGroup() {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = if (condition()) actions else EMPTY_ARRAY
 }
 

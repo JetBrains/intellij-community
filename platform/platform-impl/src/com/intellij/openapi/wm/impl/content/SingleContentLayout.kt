@@ -566,7 +566,7 @@ internal class SingleContentLayout(
     }
   }
 
-  private class ExtendedTitleActionsGroup(
+  internal class ExtendedTitleActionsGroup(
     val originActions: ActionGroup?,
     vararg extendedActions: AnAction
     ) : DefaultActionGroup() {
@@ -729,7 +729,7 @@ internal class SingleContentLayout(
   /**
    * Workaround action to prevent [Separator] disappearing when [SingleContentSupplier.getContentActions] is empty.
    */
-  private class MyInvisibleAction : DumbAwareAction(), CustomComponentAction {
+  internal class MyInvisibleAction : DumbAwareAction(), CustomComponentAction {
 
     override fun actionPerformed(e: AnActionEvent) {
       error("An operation is not supported")

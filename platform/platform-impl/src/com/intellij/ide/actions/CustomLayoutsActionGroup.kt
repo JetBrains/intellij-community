@@ -34,7 +34,7 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware, ActionRemoteBehaviorS
     e.presentation.isPopupGroup = e.place != ActionPlaces.MAIN_MENU // to be used as a popup, e.g., in toolbars
   }
 
-  private class CustomLayoutActionGroup(
+  internal class CustomLayoutActionGroup(
     @NlsSafe private val layoutName: String
   ) : ActionGroup(ActionsBundle.message("group.CustomLayoutActionsGroup.text"), true), DumbAware, Toggleable {
 
@@ -69,7 +69,7 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware, ActionRemoteBehaviorS
         nonCurrentLayoutChildren
       }
 
-    private class Apply(private val layoutName: String) : DumbAwareAction() {
+    internal class Apply(private val layoutName: String) : DumbAwareAction() {
       init {
         templatePresentation.text = ActionsBundle.message("action.CustomLayoutActionsGroup.Apply.text")
       }
@@ -84,7 +84,7 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware, ActionRemoteBehaviorS
       }
     }
 
-    private class Restore : AnActionWrapper(ActionManager.getInstance().getAction("RestoreDefaultLayout")) {
+    internal class Restore : AnActionWrapper(ActionManager.getInstance().getAction("RestoreDefaultLayout")) {
       override fun update(e: AnActionEvent) {
         super.update(e)
         e.presentation.isVisible = true // overrides RestoreDefaultLayoutAction
@@ -92,13 +92,13 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware, ActionRemoteBehaviorS
       }
     }
 
-    private class Save(layoutName: String) : StoreNamedLayoutAction(layoutName) {
+    internal class Save(layoutName: String) : StoreNamedLayoutAction(layoutName) {
       init {
         templatePresentation.text = ActionsBundle.message("action.CustomLayoutActionsGroup.Save.text")
       }
     }
 
-    private class Delete(layoutName: String) : DeleteNamedLayoutAction(layoutName) {
+    internal class Delete(layoutName: String) : DeleteNamedLayoutAction(layoutName) {
       init {
         templatePresentation.text = ActionsBundle.message("action.CustomLayoutActionsGroup.Delete.text")
       }

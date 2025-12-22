@@ -7,7 +7,7 @@ import com.intellij.openapi.util.BuildNumber
 import java.util.*
 
 @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
-private class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
+internal class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   private val delegate = ApplicationInfoImpl.getShadowInstance()
 
   override fun getBuildDate(): Calendar? = delegate.buildDate

@@ -31,7 +31,7 @@ private var initialRefreshDone = false
 private val LOG: Logger
   get() = logger<DynamicPluginVfsListener>()
 
-private class DynamicPluginVfsListenerInitializer : ApplicationActivity {
+internal class DynamicPluginVfsListenerInitializer : ApplicationActivity {
   init {
     if (!java.lang.Boolean.getBoolean(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY) || ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()
@@ -56,7 +56,7 @@ private class DynamicPluginVfsListenerInitializer : ApplicationActivity {
   }
 }
 
-private class DynamicPluginVfsListener : AsyncFileListener {
+internal class DynamicPluginVfsListener : AsyncFileListener {
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
     if (!java.lang.Boolean.getBoolean(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) {
       return null

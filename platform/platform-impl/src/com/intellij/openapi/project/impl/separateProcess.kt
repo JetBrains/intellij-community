@@ -17,7 +17,7 @@ import java.nio.file.Path
 
 const val PER_PROJECT_INSTANCE_TEST_SCRIPT: String = "test_script.txt"
 
-private class SeparateProcessActionsCustomizer : ActionConfigurationCustomizer, ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
+internal class SeparateProcessActionsCustomizer : ActionConfigurationCustomizer, ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
   override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
     if (!ProjectManagerEx.IS_CHILD_PROCESS) {
       return
@@ -33,7 +33,7 @@ private class SeparateProcessActionsCustomizer : ActionConfigurationCustomizer, 
   }
 }
 
-private class NewProjectActionDisabler : OpenFileAction() {
+internal class NewProjectActionDisabler : OpenFileAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = false
   }

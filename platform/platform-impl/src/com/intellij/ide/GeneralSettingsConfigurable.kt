@@ -59,7 +59,7 @@ internal val allOptionDescriptors: List<BooleanOptionDescription>
  * A new instance of the specified class will be created each time then the Settings dialog is opened.
  */
 @Suppress("unused")
-private class GeneralSettingsConfigurable :
+internal class GeneralSettingsConfigurable :
   BoundCompositeSearchableConfigurable<SearchableConfigurable>(IdeBundle.message("title.general"), "preferences.general"),
   SearchableConfigurable
 {

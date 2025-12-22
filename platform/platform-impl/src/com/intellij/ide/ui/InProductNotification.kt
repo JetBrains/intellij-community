@@ -82,7 +82,7 @@ class InProductNotificationActionProvider : ActionProvider, IconCustomizer {
   }
 }
 
-private class InProductNotificationAction(val days: Int) : LastAction(), CustomComponentAction {
+internal class InProductNotificationAction(val days: Int) : LastAction(), CustomComponentAction {
   private var myFirstActionUnderline = false
   private var mySecondActionUnderline = false
 

@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.JBColor
 
-private class PaintEditorLineStripeHintComponentAction : DumbAwareAction() {
+internal class PaintEditorLineStripeHintComponentAction : DumbAwareAction() {
   @Suppress("HardCodedStringLiteral")
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.dataContext.getData(PlatformCoreDataKeys.EDITOR) ?: return

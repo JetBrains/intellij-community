@@ -5,7 +5,7 @@ import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.util.PerformanceAssertions
 
-private class PerformanceAssertionsImpl: PerformanceAssertions() {
+internal class PerformanceAssertionsImpl: PerformanceAssertions() {
   override fun checkDoesNotAffectHighlighting() {
     GeneralHighlightingPass.assertHighlightingPassNotRunning()
     ReferenceProvidersRegistry.assertNotContributingReferences()

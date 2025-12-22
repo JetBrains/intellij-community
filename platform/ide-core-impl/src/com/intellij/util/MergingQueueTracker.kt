@@ -31,7 +31,7 @@ class MergingUpdateQueueActivityTracker : ActivityTracker {
   }
 }
 
-private class MergingUpdateQueueTrackerImpl : MergingUpdateQueueTracker {
+internal class MergingUpdateQueueTrackerImpl : MergingUpdateQueueTracker {
 
   private val counter = AtomicInteger(0)
 
@@ -54,7 +54,7 @@ private class MergingUpdateQueueTrackerImpl : MergingUpdateQueueTracker {
   }
 }
 
-private class TrackedUpdate(
+internal class TrackedUpdate(
   private val original: Update,
 ) : Update(original) {
 

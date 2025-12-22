@@ -7,7 +7,7 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.util.system.OS
 import com.intellij.util.ui.UnixDesktopEnv
 
-private class ProductTitleInfoProvider : SimpleTitleInfoProvider(VMOOption("ide.ui.version.in.title")) {
+internal class ProductTitleInfoProvider : SimpleTitleInfoProvider(VMOOption("ide.ui.version.in.title")) {
   override fun isEnabled(): Boolean =
     super.isEnabled() &&
     (IdeFrameDecorator.isCustomDecorationActive() || OS.CURRENT != OS.macOS && UnixDesktopEnv.CURRENT != UnixDesktopEnv.GNOME)

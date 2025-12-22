@@ -27,7 +27,7 @@ class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  private class RestoreNamedLayoutAction(@NlsSafe private val layoutName: String) : DumbAwareAction() {
+  internal class RestoreNamedLayoutAction(@NlsSafe private val layoutName: String) : DumbAwareAction() {
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 

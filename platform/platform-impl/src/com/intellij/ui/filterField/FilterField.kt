@@ -208,7 +208,7 @@ private fun showAsyncChooserPopup(component: JComponent,
   popup.showUnderneathOf(component)
 }
 
-private class LoadingActionGroup(val supplier: Supplier<Collection<AnAction>>) : ActionGroup() {
+internal class LoadingActionGroup(val supplier: Supplier<Collection<AnAction>>) : ActionGroup() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {

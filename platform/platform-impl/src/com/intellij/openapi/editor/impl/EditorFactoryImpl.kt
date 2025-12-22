@@ -301,7 +301,7 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
 }
 
 @Suppress("unused")
-private class MyRawTypedHandler(private val delegate: TypedActionHandler) : TypedActionHandlerEx {
+internal class MyRawTypedHandler(private val delegate: TypedActionHandler) : TypedActionHandlerEx {
   override fun execute(editor: Editor, charTyped: Char, dataContext: DataContext) {
     editor.putUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION, true)
     try {

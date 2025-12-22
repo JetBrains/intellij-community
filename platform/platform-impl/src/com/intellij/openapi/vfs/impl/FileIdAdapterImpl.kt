@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.platform.fileEditor.FileEntry
 
-private class FileIdAdapterImpl : FileIdAdapter {
+internal class FileIdAdapterImpl : FileIdAdapter {
 
   override fun getFile(id: Int, fileEntry: FileEntry?): VirtualFile? = VirtualFileManager.getInstance().findFileById(id)
 

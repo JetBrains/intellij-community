@@ -90,7 +90,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
   private fun createAction(activateAction: ActivateToolWindowAction) = MyButtonAction(activateAction)
 
-  private class MyButtonAction(activateAction: ActivateToolWindowAction)
+  internal class MyButtonAction(activateAction: ActivateToolWindowAction)
     : AnActionWrapper(activateAction), DumbAware, Toggleable, CustomComponentAction {
     private var project: Project? = null
 
@@ -167,7 +167,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     }
   }
 
-  private class MyMoreAction: DumbAwareAction("..."), CustomComponentAction {
+  internal class MyMoreAction: DumbAwareAction("..."), CustomComponentAction {
     override fun actionPerformed(e: AnActionEvent) {
     }
 
@@ -248,7 +248,7 @@ private class ButtonsRepaintService(project: Project, coroutineScope: CoroutineS
   }
 }
 
-private open class TogglePinActionBase(val toolWindowId: String)
+internal open class TogglePinActionBase(val toolWindowId: String)
   : DumbAwareAction(ActionsBundle.messagePointer("action.TopStripePinButton.text")) {
   init {
     templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfPreferred
@@ -270,7 +270,7 @@ private open class TogglePinActionBase(val toolWindowId: String)
   }
 }
 
-private class TogglePinAction(toolWindowId: String): TogglePinActionBase(toolWindowId) {
+internal class TogglePinAction(toolWindowId: String): TogglePinActionBase(toolWindowId) {
   override fun update(e: AnActionEvent) {
     super.update(e)
     val pinned = Toggleable.isSelected(e.presentation)

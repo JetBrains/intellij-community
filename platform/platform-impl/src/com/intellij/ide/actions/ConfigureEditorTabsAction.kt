@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 
-private class ConfigureEditorTabsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+internal class ConfigureEditorTabsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
     ShowSettingsUtil.getInstance().showSettingsDialog(e.project, EditorTabsConfigurable::class.java)
   }
