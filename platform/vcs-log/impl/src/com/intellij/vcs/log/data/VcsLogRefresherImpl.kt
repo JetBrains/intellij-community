@@ -361,7 +361,7 @@ internal class VcsLogRefresherImpl(
         }
       }
       LOG.trace("Recent data flushing")
-      commitDataConsumer?.flushData(onFullReload = false)
+      commitDataConsumer?.onAllDataLoaded(onFullReload = false)
       logInfo
     }
 
@@ -389,7 +389,7 @@ internal class VcsLogRefresherImpl(
         }
       }
       LOG.trace("Full data flushing")
-      commitDataConsumer?.flushData(onFullReload = true)
+      commitDataConsumer?.onAllDataLoaded(onFullReload = true)
       logInfo
     }
 

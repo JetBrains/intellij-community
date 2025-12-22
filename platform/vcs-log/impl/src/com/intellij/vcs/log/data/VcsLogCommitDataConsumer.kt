@@ -17,7 +17,7 @@ internal interface VcsLogCommitDataConsumer {
 
   fun storeRecentDetails(details: List<VcsCommitMetadata>)
 
-  suspend fun flushData(onFullReload: Boolean)
+  suspend fun onAllDataLoaded(onFullReload: Boolean)
 }
 
 internal class VcsLogCommitDataConsumerImpl(
@@ -36,7 +36,7 @@ internal class VcsLogCommitDataConsumerImpl(
     topCommitsDetailsCache.storeDetails(details)
   }
 
-  override suspend fun flushData(onFullReload: Boolean) {
+  override suspend fun onAllDataLoaded(onFullReload: Boolean) {
     withContext(Dispatchers.IO) {
       userRegistry.flush()
     }
