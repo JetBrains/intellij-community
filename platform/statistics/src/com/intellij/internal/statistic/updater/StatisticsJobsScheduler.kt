@@ -26,7 +26,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @InternalIgnoreDependencyViolation
-private class StatisticsJobsScheduler : ApplicationActivity {
+internal class StatisticsJobsScheduler : ApplicationActivity {
   private val sendJobs = ConcurrentHashMap<String, Job>()
 
   init {

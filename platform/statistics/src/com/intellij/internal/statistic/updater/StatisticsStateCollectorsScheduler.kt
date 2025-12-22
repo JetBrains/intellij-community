@@ -23,7 +23,7 @@ private val LOG_APPLICATION_STATE_SMART_MODE_DELAY = 1.minutes
 // avoid overlapping logging from periodic scheduler and OneTimeLogger (long indexing case)
 internal val allowExecution = AtomicBoolean(true) // TODO get rid of this
 
-private class StatisticsStateCollectorsScheduler : ApplicationActivity {
+internal class StatisticsStateCollectorsScheduler : ApplicationActivity {
   override suspend fun execute() {
     // init service
     serviceAsync<FUStateUsagesLogger>()
