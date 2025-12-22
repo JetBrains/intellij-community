@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
@@ -146,15 +145,9 @@ class MiniDetailsGetter internal constructor(
   }
 
   private fun createPlaceholderCommit(commit: VcsLogCommitStorageIndex, taskNumber: Long): VcsCommitMetadata {
-    val dataGetter = index.dataGetter
-    return if (dataGetter != null && Registry.`is`("vcs.log.use.indexed.details")) {
-      IndexedDetails(dataGetter, storage, commit, taskNumber)
-    }
-    else {
-      logProviders.keys.singleOrNull()?.let {
-        LoadingDetailsWithRoot(storage, commit, it, taskNumber)
-      } ?: LoadingDetailsImpl(storage, commit, taskNumber)
-    }
+    return logProviders.keys.singleOrNull()?.let {
+      LoadingDetailsWithRoot(storage, commit, it, taskNumber)
+    } ?: LoadingDetailsImpl(storage, commit, taskNumber)
   }
 
   /**
