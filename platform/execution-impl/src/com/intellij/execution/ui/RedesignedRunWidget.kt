@@ -107,7 +107,7 @@ private fun createRunActionToolbar(): ActionToolbar {
 
 private val runToolbarDataKey = Key.create<Boolean>("run-toolbar-data")
 
-private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
+internal class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -305,7 +305,7 @@ abstract class TogglePopupAction : ToggleAction {
   abstract fun getActionGroup(e: AnActionEvent): ActionGroup?
 }
 
-private abstract class WindowHeaderPlaceholder : DecorativeElement(), DumbAware, CustomComponentAction {
+internal abstract class WindowHeaderPlaceholder : DecorativeElement(), DumbAware, CustomComponentAction {
   private val NOT_FIRST_UPDATE = Key.create<Boolean>("notFirstUpdate")
   private val PROJECT = Key.create<Project>("justProject")
 
@@ -327,7 +327,7 @@ private abstract class WindowHeaderPlaceholder : DecorativeElement(), DumbAware,
   }
 }
 
-private class InactiveStopActionPlaceholder : WindowHeaderPlaceholder() {
+internal class InactiveStopActionPlaceholder : WindowHeaderPlaceholder() {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.icon = EmptyIcon.ICON_16
@@ -353,7 +353,7 @@ private class InactiveStopActionPlaceholder : WindowHeaderPlaceholder() {
   }
 }
 
-private class MoreRunToolbarActions : TogglePopupAction(
+internal class MoreRunToolbarActions : TogglePopupAction(
   IdeBundle.message("inline.actions.more.actions.text"), null, AllIcons.Actions.More
 ), DumbAware {
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {

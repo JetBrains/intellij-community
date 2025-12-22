@@ -15,6 +15,6 @@ interface AdditionalRunningOptions {
   }
 }
 
-private class EmptyAdditionalRunningOptions : AdditionalRunningOptions {
+internal class EmptyAdditionalRunningOptions : AdditionalRunningOptions {
   override fun getAdditionalActions(settings: RunnerAndConfigurationSettings?, isWidget: Boolean): ActionGroup = ActionGroup.EMPTY_GROUP
 }

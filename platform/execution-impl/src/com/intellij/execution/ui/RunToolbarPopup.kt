@@ -93,7 +93,7 @@ private const val TAG_REGULAR_SHOW = "regular-show" // shown regularly
 private const val TAG_REGULAR_DUPE = "regular-dupe" // shown regularly until search (pinned/recent duplicate)
 private const val TAG_HIDDEN = "hidden"             // hidden until search
 
-private class RunConfigurationsActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification.BackendOnly {
+internal class RunConfigurationsActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification.BackendOnly {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
     val selectedFile = e.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR)?.file
@@ -562,7 +562,7 @@ fun runCounterToString(e: AnActionEvent, stopCount: Int): String =
     stopCount.toString()
   }
 
-private class PinConfigurationAction(val conf: RunnerAndConfigurationSettings, isPinned: Boolean)
+internal class PinConfigurationAction(val conf: RunnerAndConfigurationSettings, isPinned: Boolean)
   : DumbAwareAction(), RequiresPermissions {
   init {
     templatePresentation.text = getText(isPinned)
@@ -590,7 +590,7 @@ private class PinConfigurationAction(val conf: RunnerAndConfigurationSettings, i
   }
 }
 
-private class StopConfigurationInlineAction(val executor: Executor, val settings: RunnerAndConfigurationSettings)
+internal class StopConfigurationInlineAction(val executor: Executor, val settings: RunnerAndConfigurationSettings)
   : DumbAwareAction(), RequiresPermissions {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -758,7 +758,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
   }
 }
 
-private class ExecutionReasonableHistoryManager : ProjectActivity {
+internal class ExecutionReasonableHistoryManager : ProjectActivity {
   override suspend fun execute(project: Project) {
     project.messageBus.simpleConnect().subscribe(ExecutionManager.EXECUTION_TOPIC, MyExecutionListener { executorId, env, state ->
       getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->

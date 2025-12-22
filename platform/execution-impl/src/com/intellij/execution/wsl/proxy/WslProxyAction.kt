@@ -17,7 +17,7 @@ import kotlinx.coroutines.withContext
 import javax.swing.JComponent
 
 @Suppress("HardCodedStringLiteral") // This is a test, internal only action
-private class WslProxyAction : DumbAwareAction("WslProxyAction") {
+internal class WslProxyAction : DumbAwareAction("WslProxyAction") {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   @RequiresEdt

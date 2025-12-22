@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
 import kotlinx.coroutines.launch
 
-private class ProjectRunConfigurationInitializer : InitProjectActivity {
+internal class ProjectRunConfigurationInitializer : InitProjectActivity {
   override val isEssential: Boolean
     get() = false
 

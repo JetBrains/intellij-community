@@ -33,7 +33,7 @@ private suspend fun beforeRunAsync(project: Project) {
   }
 }
 
-private class ProjectStartupRunner : ProjectActivity {
+internal class ProjectStartupRunner : ProjectActivity {
   override suspend fun execute(project: Project) {
     val projectStartupTaskManager = project.serviceAsync<ProjectStartupTaskManager>()
     if (projectStartupTaskManager.isEmpty) {

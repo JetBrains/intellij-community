@@ -37,12 +37,12 @@ private object RunContentDescriptorIdType : BackendValueIdType<RunContentDescrip
 @JvmField
 val RUN_CONTENT_DESCRIPTOR_ID: DataKey<RunContentDescriptorIdImpl> = DataKey.create("RUN_CONTENT_DESCRIPTOR_ID")
 
-private class RunContentDescriptorIdSerializer() : CustomDataContextSerializer<RunContentDescriptorIdImpl> {
+internal class RunContentDescriptorIdSerializer() : CustomDataContextSerializer<RunContentDescriptorIdImpl> {
   override val key: DataKey<RunContentDescriptorIdImpl> = RUN_CONTENT_DESCRIPTOR_ID
   override val serializer: KSerializer<RunContentDescriptorIdImpl> = RunContentDescriptorIdImpl.serializer()
 }
 
-private class RunContentDescriptorIdDataRule : UiDataRule {
+internal class RunContentDescriptorIdDataRule : UiDataRule {
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
     if (snapshot[RUN_CONTENT_DESCRIPTOR] != null) return
     val descriptor = snapshot[RUN_CONTENT_DESCRIPTOR_ID]?.findContentValue() ?: return
