@@ -38,6 +38,9 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
   @ApiStatus.Internal
   public static final Key<Character> CANCELLATION_CHAR = Key.create("CANCELLATION_CHAR");
 
+  @ApiStatus.Internal
+  public static final Key<Character> COMPLETE_TILL_TYPED_CHAR_OCCURRENCE = Key.create("COMPLETE_TILL_TYPED_CHAR_OCCURRENCE");
+
   private static final Logger LOG = Logger.getInstance(LookupTypedHandler.class);
 
   public LookupTypedHandler(@Nullable TypedActionHandler originalHandler) {
@@ -122,6 +125,7 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
     }
 
     if (completeTillTypedCharOccurrence(charTyped, lookup, item)) {
+      lookup.putUserData(COMPLETE_TILL_TYPED_CHAR_OCCURRENCE, charTyped);
       return true;
     }
 
