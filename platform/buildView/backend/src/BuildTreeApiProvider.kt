@@ -8,7 +8,7 @@ import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
-private class BuildTreeApiProvider : RemoteApiProvider {
+internal class BuildTreeApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<BuildTreeApi>()) {
       BuildTreeApiImpl()
