@@ -12,14 +12,23 @@ import org.jetbrains.annotations.NotNull;
 
 class RemoveTagFix extends PsiUpdateModCommandQuickFix {
   private final String myTagName;
+  private final String myParamName;
 
   RemoveTagFix(String tagName) {
     myTagName = tagName;
+    myParamName = null;
+  }
+
+  RemoveTagFix(String tagName, String paramName) {
+    myTagName = tagName;
+    myParamName = paramName;
   }
 
   @Override
   public @NotNull String getName() {
-    return JavaBundle.message("quickfix.text.remove.javadoc.0", myTagName);
+    return myParamName == null 
+           ? JavaBundle.message("quickfix.text.remove.javadoc.0", myTagName)
+           : JavaBundle.message("quickfix.text.remove.javadoc.0.1", myTagName, myParamName);
   }
 
   @Override

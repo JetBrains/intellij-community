@@ -146,6 +146,11 @@ public final class JavaDocReferenceInspection extends LocalInspectionTool {
         super.visitDocTag(tag);
         visitRefInDocTag(tag, javadocManager, context, holder, isOnTheFly);
       }
+
+      @Override
+      public void visitMarkdownReferenceLink(@NotNull PsiMarkdownReferenceLink referenceLink) {
+        visitMarkdownReference(referenceLink, context, holder, isOnTheFly);
+      }
     });
   }
 
@@ -183,6 +188,31 @@ public final class JavaDocReferenceInspection extends LocalInspectionTool {
       holder.registerProblem(holder.getManager().createProblemDescriptor(
         element, message, fix, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, isOnTheFly));
     }
+  }
+  
+  private void visitMarkdownReference(PsiMarkdownReferenceLink referenceLink, PsiElement context, ProblemsHolder holder, boolean isOnTheFly) {
+    PsiElement linkElement = referenceLink.getLinkElement();
+    if (linkElement == null) return;
+    PsiReference reference = linkElement.getReference();
+    if (reference == null) return;
+    PsiElement element = reference.resolve();
+
+    String linkText = linkElement.getText();
+    String message = element == null && reference instanceof PsiPolyVariantReference ?
+                     getResolveErrorMessage(((PsiPolyVariantReference)reference).multiResolve(false), context, linkText) :
+                     getResolveErrorMessage(element, context, linkText);
+    if (message == null) return;
+
+    List<LocalQuickFix> fixes = new ArrayList<>(2);
+    fixes.add(new RemoveReferenceFix(linkText));
+
+    if (isOnTheFly && element != null && REPORT_INACCESSIBLE) {
+      fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
+        this, "REPORT_INACCESSIBLE", JavaBundle.message("disable.report.inaccessible.symbols.fix"), false)));
+    }
+
+    holder.registerProblem(holder.getManager().createProblemDescriptor(
+      linkElement, reference.getRangeInElement(), message, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, isOnTheFly, fixes.toArray(LocalQuickFix.EMPTY_ARRAY)));
   }
 
   private void visitRefInDocTag(PsiDocTag tag, JavadocManager manager, PsiElement context, ProblemsHolder holder, boolean isOnTheFly) {
@@ -380,31 +410,29 @@ public final class JavaDocReferenceInspection extends LocalInspectionTool {
     }
   }
 
-  private static class RemoveTagFix extends PsiUpdateModCommandQuickFix {
-    private final String myTagName;
-    private final String myParamName;
+  /// *"Fix"* that simply remove the Markdown reference and its label 
+  private static class RemoveReferenceFix extends PsiUpdateModCommandQuickFix {
+    private final String referenceName;
 
-    RemoveTagFix(String tagName, String paramName) {
-      myTagName = tagName;
-      myParamName = paramName;
+    RemoveReferenceFix(String referenceName) {
+      this.referenceName = referenceName;
     }
 
     @Override
     public @NotNull String getName() {
-      return JavaBundle.message("quickfix.text.remove.javadoc.0.1", myTagName, myParamName);
+      return JavaBundle.message("quickfix.text.remove.javadoc.reference", referenceName);
     }
 
     @Override
     public @NotNull String getFamilyName() {
-      return JavaBundle.message("quickfix.family.remove.javadoc.tag");
+      return JavaBundle.message("quickfix.family.remove.javadoc.reference");
     }
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      PsiDocTag myTag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
-      if (myTag != null) {
-        myTag.delete();
-      }
+      PsiMarkdownReferenceLink link = PsiTreeUtil.getParentOfType(element, PsiMarkdownReferenceLink.class);
+      if (link == null) return;
+      link.delete();
     }
   }
 }
