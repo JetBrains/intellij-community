@@ -3094,6 +3094,16 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("PreferExpectedTypeTypeAlias.kt")
+            public void testPreferExpectedTypeTypeAlias() throws Exception {
+                runTest("../testData/basic/common/typeAliasTypes/PreferExpectedTypeTypeAlias.kt");
+            }
+
+            @TestMetadata("PreferExpectedTypeTypeAliasReverse.kt")
+            public void testPreferExpectedTypeTypeAliasReverse() throws Exception {
+                runTest("../testData/basic/common/typeAliasTypes/PreferExpectedTypeTypeAliasReverse.kt");
+            }
+
             @TestMetadata("TypeAliasParameter.kt")
             public void testTypeAliasParameter() throws Exception {
                 runTest("../testData/basic/common/typeAliasTypes/TypeAliasParameter.kt");

@@ -3094,6 +3094,16 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("PreferExpectedTypeTypeAlias.kt")
+            public void testPreferExpectedTypeTypeAlias() throws Exception {
+                runTest("../../completion/testData/basic/common/typeAliasTypes/PreferExpectedTypeTypeAlias.kt");
+            }
+
+            @TestMetadata("PreferExpectedTypeTypeAliasReverse.kt")
+            public void testPreferExpectedTypeTypeAliasReverse() throws Exception {
+                runTest("../../completion/testData/basic/common/typeAliasTypes/PreferExpectedTypeTypeAliasReverse.kt");
+            }
+
             @TestMetadata("TypeAliasParameter.kt")
             public void testTypeAliasParameter() throws Exception {
                 runTest("../../completion/testData/basic/common/typeAliasTypes/TypeAliasParameter.kt");
