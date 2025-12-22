@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.config.isGradleFile
 import org.jetbrains.plugins.gradle.service.resolve.getLinkedGradleProjectPath
 
-private class GradleGroovyTrafficLightRendererContributor : TrafficLightRendererContributor {
+internal class GradleGroovyTrafficLightRendererContributor : TrafficLightRendererContributor {
   override fun createRenderer(editor: Editor, psiFile: PsiFile?): TrafficLightRenderer? {
     if (psiFile == null || !psiFile.isGradleFile()) {
       return null

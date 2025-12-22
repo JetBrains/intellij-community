@@ -14,7 +14,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 
-private class GradleEditorTabTitleProvider : EditorTabTitleProvider {
+internal class GradleEditorTabTitleProvider : EditorTabTitleProvider {
   override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
     if (!GradleConstants.KNOWN_GRADLE_FILES.contains(file.name)) {
       return null
