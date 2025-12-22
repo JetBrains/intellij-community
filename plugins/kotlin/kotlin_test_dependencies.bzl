@@ -5,7 +5,7 @@ _files = []
 def download_file(name, url, sha256):
     _files.append(struct(name = name, url = url, sha256 = sha256))
 
-kotlinCompilerCliVersion = "2.3.20-dev-6797"
+kotlinCompilerCliVersion = "2.3.20-dev-7579"
 kotlincKotlinJpsPluginTestsVersion = "2.3.0"
 
 download_file(
@@ -203,7 +203,7 @@ download_file(
 download_file(
     name = "compose-compiler-plugin-for-ide.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/{0}/compose-compiler-plugin-for-ide-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "f7513619aedf7cf3db63ed1321c6c5efc67b0f1dc42b29745ba8319424686fc1",
+    sha256 = "81d2e6a6de890275e347c294ce512a36ac6dcd0751c990ac258770bf5410b065",
 )
 
 download_file(
@@ -233,19 +233,19 @@ download_file(
 download_file(
     name = "kotlin-compiler-testdata-for-ide.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-testdata-for-ide/{0}/kotlin-compiler-testdata-for-ide-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "bf35a9ef4c95562aa98350d1859583b8877cfbbb18a07cf22a0d69c3f14a7784",
+    sha256 = "7a86251dbbffb128de161d9f6072a5da76c10555b5e5aba1dd227316e8763438",
 )
 
 download_file(
     name = "kotlin-compiler.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler/{0}/kotlin-compiler-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "d5001ce871d38b6a88c08e0eea2b562734aeb81d05f34c1798c54becaf9cba57",
+    sha256 = "f5d1946e15d6e1052a9bfa849b8c9b4cef7520b8458a1d186b580521ee5a5ea8",
 )
 
 download_file(
     name = "kotlin-daemon.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-daemon/{0}/kotlin-daemon-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "095975ebacbc7485eca8a47499344e4fc6392c6c9b1763d0c2c177a18a7572fa",
+    sha256 = "a4a511906efb150362835d2d8ffb88b12e0b165399e05a60b5067d7e5c0cff7c",
 )
 
 download_file(
@@ -263,7 +263,7 @@ download_file(
 download_file(
     name = "kotlin-dom-api-compat.klib",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-dom-api-compat/{0}/kotlin-dom-api-compat-{0}.klib".format(kotlinCompilerCliVersion),
-    sha256 = "0f5ed5f34f0eadf8f9d6be801e2365b6abb3e8cddc02064406c6906c1cfb9247",
+    sha256 = "6e96e49769048387a048ddbb542765da68d8f4533d3e8f7ddaf10515b2f54134",
 )
 
 download_file(
@@ -281,43 +281,43 @@ download_file(
 download_file(
     name = "kotlin-reflect.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-reflect/{0}/kotlin-reflect-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "e31e97630cea05221d70674252ca46b62fcbed41d98f88d6b530e3cc73dacd49",
+    sha256 = "264789b213e0d713bf4568064e1844a35f29cc88c120d3a05072f0cdc5fa3228",
 )
 
 download_file(
     name = "kotlin-reflect-sources.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-reflect/{0}/kotlin-reflect-{0}-sources.jar".format(kotlinCompilerCliVersion),
-    sha256 = "2a230c3f1fe27c366453f180a9670ca8ce6acbc43e0713ebb01071859c06d837",
+    sha256 = "9f47d6292e6ad340b0ab6e4689dba14f496da73a14923c869a3e8d4c7fb22519",
 )
 
 download_file(
     name = "kotlin-script-runtime.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/{0}/kotlin-script-runtime-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "76e875552995a81c02f2b43c9258c3f6b52f6fc53442ad81a160b36c5e97f9b7",
+    sha256 = "d4d681ef417c6f867aa7c9d2f802ad91c7929802ca8b82a12be74e5149aae0e6",
 )
 
 download_file(
     name = "kotlin-scripting-common.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-common/{0}/kotlin-scripting-common-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "48c6f2ba61bb09b48b304e62fb9883669f6f2c4ad5d3aae66194d0db0adef27a",
+    sha256 = "54d1321940e366516275d1ad5a3e3ee7d3142eaa8c5e14759000cad1d029fa64",
 )
 
 download_file(
     name = "kotlin-scripting-compiler.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-compiler/{0}/kotlin-scripting-compiler-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "05eadbd420d1a77d73f3083683fdb541f40608f00c980482a8afaf4dd977efca",
+    sha256 = "ed36e1401b17774b04285982d8c8f1c57186d00b65087860a2a53d200be3375b",
 )
 
 download_file(
     name = "kotlin-scripting-compiler-impl.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/{0}/kotlin-scripting-compiler-impl-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "ac940e9235bd873e9252cdc303a287fd04a7b5320424500ab20e760d56099669",
+    sha256 = "d0b529e0a20de3b8d78641aef3427ece02fcbc78d25da2e8c79541be561ced90",
 )
 
 download_file(
     name = "kotlin-scripting-jvm.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-jvm/{0}/kotlin-scripting-jvm-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "1947ca69fd6d7914bb0872064bc38ae42829621992aac440d7fbb23af367e89d",
+    sha256 = "a324dba76b72b66d86e79df07e30770bf62557e5786cade0026088ea447da9fa",
 )
 
 download_file(
@@ -329,7 +329,7 @@ download_file(
 download_file(
     name = "kotlin-stdlib.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib/{0}/kotlin-stdlib-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "7a3d44b1a6ca740d731f705ba4e087251f4063538f705e7542e4432c39949271",
+    sha256 = "68a5efa4b96c9a990bf61d24f66d8ff75d9f1ebc9e113d839d0cdcefb2258041",
 )
 
 download_file(
@@ -347,7 +347,7 @@ download_file(
 download_file(
     name = "kotlin-stdlib-all.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib/{0}/kotlin-stdlib-{0}-all.jar".format(kotlinCompilerCliVersion),
-    sha256 = "6570f89ee5e52004d06adee8b1c7f3218d0e5740edde3051c277f765a2f5bc94",
+    sha256 = "6f382ededc87c70dea984cdad8d992cc744bc7e34c0af1632ac904679e6b0bb7",
 )
 
 download_file(
@@ -365,13 +365,13 @@ download_file(
 download_file(
     name = "kotlin-stdlib-common-sources.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib/{0}/kotlin-stdlib-{0}-common-sources.jar".format(kotlinCompilerCliVersion),
-    sha256 = "616e61615171d73ca11974a3585b820e41281026ef99c6d56afe9473e30b849d",
+    sha256 = "5828e3d0a51943a8af014bf117fa2862317bdc8df121e9507de30375f4430640",
 )
 
 download_file(
     name = "kotlin-stdlib-jdk7.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-jdk7/{0}/kotlin-stdlib-jdk7-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "bbf59a329744f52b7170f122252e7591e6c71668cba101b62f9dd13f6b3f1b14",
+    sha256 = "d454ba6ee80b71ba9c0f0f8b3433d1f9422db4769b3ede49435fecf789d30db0",
 )
 
 download_file(
@@ -389,7 +389,7 @@ download_file(
 download_file(
     name = "kotlin-stdlib-jdk8.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-jdk8/{0}/kotlin-stdlib-jdk8-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "f51b980aafefefab71d5df2e90c5843c6e9606bf1f911ef911b1d84631e700cd",
+    sha256 = "38115ae5fe54bdc8c0481d7667d4dc8e4253ad7be8ffe4bbc18d739a342f8887",
 )
 
 download_file(
@@ -401,7 +401,7 @@ download_file(
 download_file(
     name = "kotlin-stdlib-js.klib",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-js/{0}/kotlin-stdlib-js-{0}.klib".format(kotlinCompilerCliVersion),
-    sha256 = "64d1204677e7495bc099646d665be4f8b10f3e00148ebc79a309e2752fc78ccc",
+    sha256 = "28d0604136c29b8f3f04c87efd6a7aec13343a863cd2e6264a6cf865361d0ce7",
 )
 
 download_file(
@@ -425,43 +425,43 @@ download_file(
 download_file(
     name = "kotlin-stdlib-sources.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib/{0}/kotlin-stdlib-{0}-sources.jar".format(kotlinCompilerCliVersion),
-    sha256 = "f989ddc20bd37d2bcfe38296055eacafdb6f084591ef467849f1f34e1f878f13",
+    sha256 = "157ecab2801aedd8e7e71d2595430d937f00491543dab1b2dc6a9c7088e2a6c8",
 )
 
 download_file(
     name = "kotlin-stdlib-wasm-js.klib",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-wasm-js/{0}/kotlin-stdlib-wasm-js-{0}.klib".format(kotlinCompilerCliVersion),
-    sha256 = "207b7781389c1fe2b02e9542590fa40ee3a30c237775af46385d99a037882606",
+    sha256 = "95b14d7c91bae5facc4fe2674bc335654345382115a2af0d4e7b3ed3eb511bb4",
 )
 
 download_file(
     name = "kotlin-stdlib-wasm-wasi.klib",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-wasm-wasi/{0}/kotlin-stdlib-wasm-wasi-{0}.klib".format(kotlinCompilerCliVersion),
-    sha256 = "34c0f714772920bfbbf95fd46de365a0fc1d193b2b028b06cf4c8bfdb8fb2fc5",
+    sha256 = "7481ec4eb99704a35d5a7a8ef1a9a72574488c2d75fa9ec38083e3b53b248f4c",
 )
 
 download_file(
     name = "kotlin-test.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-test/{0}/kotlin-test-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "c7a388c478333af225677fbe5dd03c141fce5853685c207744e8329b057f58a8",
+    sha256 = "ac391bc98621ab5c0c69a682adda9955024b736febccd9a2b31c69aa2b5a51ba",
 )
 
 download_file(
     name = "kotlin-test-js.klib",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-test-js/{0}/kotlin-test-js-{0}.klib".format(kotlinCompilerCliVersion),
-    sha256 = "967e52f03fcd8d02d4625582339868ede0289d49dcf059c82db41ff4f8fa4427",
+    sha256 = "f9317369c68a1834b68c4bc6841ed011bd07d26b3faefce5d313c1bc047a7c90",
 )
 
 download_file(
     name = "kotlin-test-junit.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-test-junit/{0}/kotlin-test-junit-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "9fc2adf35bffc37677d061aa3f91f66be90eae152dadee7861a418d4aac3c498",
+    sha256 = "c22e2fe629bb8d050786897aae4442ed4a5d1f537560620b8c803b373944a17c",
 )
 
 download_file(
     name = "parcelize-compiler-plugin-for-ide.jar",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/{0}/parcelize-compiler-plugin-for-ide-{0}.jar".format(kotlinCompilerCliVersion),
-    sha256 = "5c4f8e2e9d0da2d9cd4767aaf8bf590acf318f9e6a3eef36428f90a28505fad2",
+    sha256 = "c397c02c9ce090feb6d3c75edce62b39bd39361587475d8ced6927e28234fdca",
 )
 
 all_test_dep_targets = ["@kotlin_test_deps//:" + t.name for t in _files]
