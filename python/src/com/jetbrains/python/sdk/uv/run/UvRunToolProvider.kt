@@ -16,7 +16,7 @@ import kotlinx.coroutines.sync.withLock
 /**
  * PyRunToolProvider implementation that runs scripts/modules using `uv run`.
  */
-private class UvRunToolProvider : PyRunToolProvider {
+internal class UvRunToolProvider : PyRunToolProvider {
 
   override suspend fun getRunToolParameters(): PyRunToolParameters {
     if (!runToolParameters.isCompleted) {

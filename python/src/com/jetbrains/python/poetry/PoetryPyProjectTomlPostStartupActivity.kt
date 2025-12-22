@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
  * This class represents a post-startup activity for PyProjectToml files in a project.
  * It finds valid python versions in PyProjectToml files and saves them in PyProjectTomlPythonVersionsService.
  */
-private class PoetryPyProjectTomlPostStartupActivity : ProjectActivity {
+internal class PoetryPyProjectTomlPostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val modulesRoots = PythonSdkUpdater.getModuleRoots(project)
     for (module in modulesRoots) {

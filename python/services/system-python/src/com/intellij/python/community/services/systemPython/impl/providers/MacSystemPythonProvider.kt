@@ -13,7 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 
-private class MacSystemPythonProvider : SystemPythonProvider {
+internal class MacSystemPythonProvider : SystemPythonProvider {
   private val LOGGER: Logger = Logger.getInstance(MacSystemPythonProvider::class.java)
 
   private val directories = listOf(

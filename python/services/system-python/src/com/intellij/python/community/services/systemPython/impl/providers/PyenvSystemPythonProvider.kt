@@ -15,7 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 
-private class PyenvSystemPythonProvider : SystemPythonProvider {
+internal class PyenvSystemPythonProvider : SystemPythonProvider {
   private val LOGGER: Logger = Logger.getInstance(PyenvSystemPythonProvider::class.java)
 
   override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> {

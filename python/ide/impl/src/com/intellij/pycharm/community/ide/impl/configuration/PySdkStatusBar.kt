@@ -33,7 +33,7 @@ private const val ID: String = "pythonInterpreterWidget"
 
 fun isDataSpellInterpreterWidgetEnabled(): Boolean = PlatformUtils.isDataSpell() && Registry.`is`("dataspell.interpreter.widget")
 
-private class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
+internal class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
   override fun getId(): String = ID
 
   override fun getDisplayName(): String = PyBundle.message("configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name")
@@ -45,7 +45,7 @@ private class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
   override fun createWidget(project: Project, scope: CoroutineScope): StatusBarWidget = PySdkStatusBar(project, scope)
 }
 
-private class PySwitchSdkAction : DumbAwareAction(PyBundle.message("switch.python.interpreter"), null, null) {
+internal class PySwitchSdkAction : DumbAwareAction(PyBundle.message("switch.python.interpreter"), null, null) {
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = e.getData(CommonDataKeys.VIRTUAL_FILE) != null && e.project != null
   }

@@ -28,7 +28,7 @@ internal class UvPackageRequirementExtractor(private val uvWorkingDirectory: Pat
   }
 }
 
-private class UvPackageRequiresExtractorProvider: PythonPackageRequiresExtractorProvider {
+internal class UvPackageRequiresExtractorProvider: PythonPackageRequiresExtractorProvider {
   override fun createExtractor(sdk: Sdk): PythonPackageRequirementExtractor? {
     val data = sdk.sdkAdditionalData as? UvSdkAdditionalData ?: return null
     return UvPackageRequirementExtractor(data.uvWorkingDirectory)

@@ -98,7 +98,7 @@ private suspend fun <T : PyFlavorData> createInterpreter(provider: InterpreterPr
   }
 }
 
-private class VanillaInterpreterProvider : InterpreterProvider<PyFlavorData.Empty> {
+internal class VanillaInterpreterProvider : InterpreterProvider<PyFlavorData.Empty> {
   override val ui: PyToolUIInfo? = null
   override val flavorDataClass: Class<PyFlavorData.Empty> = PyFlavorData.Empty::class.java
 

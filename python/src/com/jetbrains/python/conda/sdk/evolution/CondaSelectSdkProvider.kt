@@ -27,7 +27,7 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.name
 
-private class CondaSelectSdkProvider() : EvoSelectSdkProvider {
+internal class CondaSelectSdkProvider() : EvoSelectSdkProvider {
   override fun getTreeElement(evoModuleSdk: EvoModuleSdk) = EvoTreeLazyNodeElement("Conda", PythonIcons.Python.Anaconda) {
     val condaExecutablePath = findCondaExecutablePath().getOr {
       return@EvoTreeLazyNodeElement it

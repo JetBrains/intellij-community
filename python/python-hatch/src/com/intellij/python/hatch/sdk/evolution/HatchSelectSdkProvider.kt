@@ -18,7 +18,7 @@ import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLazyNodeElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLeafElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeSection
 
-private class HatchSelectSdkProvider : EvoSelectSdkProvider {
+internal class HatchSelectSdkProvider : EvoSelectSdkProvider {
   override fun getTreeElement(evoModuleSdk: EvoModuleSdk): EvoTreeElement =
     EvoTreeLazyNodeElement("Hatch", PythonHatchIcons.Logo) {
       val hatchExecutablePath = HatchConfiguration.getOrDetectHatchExecutablePath().getOr {

@@ -161,7 +161,7 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
   /**
    * Note that implementing [MasterDetailsComponent.ActionGroupWithPreselection] guarantees that the group action will be handled as popup.
    */
-  private class PopupActionGroup(actions: List<AnAction>) : DefaultActionGroup(actions), ActionGroupWithPreselection {
+  internal class PopupActionGroup(actions: List<AnAction>) : DefaultActionGroup(actions), ActionGroupWithPreselection {
     override fun getActionGroup(): ActionGroup = this
   }
 

@@ -32,7 +32,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * This class is called **only in PyCharm**.
  * It does not work in plugin
  */
-private class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
+internal class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       throw ExtensionNotApplicableException.create()

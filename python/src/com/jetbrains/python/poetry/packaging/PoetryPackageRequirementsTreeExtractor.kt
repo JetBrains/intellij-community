@@ -27,7 +27,7 @@ internal class PoetryPackageRequirementsTreeExtractor(private val sdk: Sdk) : Py
   }
 }
 
-private class PoetryPackageRequirementsTreeExtractorProvider : PythonPackageRequirementsTreeExtractorProvider {
+internal class PoetryPackageRequirementsTreeExtractorProvider : PythonPackageRequirementsTreeExtractorProvider {
   override fun createExtractor(sdk: Sdk): PythonPackageRequirementsTreeExtractor? =
     if (sdk.isPoetry) PoetryPackageRequirementsTreeExtractor(sdk) else null
 }

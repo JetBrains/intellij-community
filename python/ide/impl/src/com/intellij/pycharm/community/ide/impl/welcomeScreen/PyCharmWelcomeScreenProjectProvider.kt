@@ -16,7 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
-private class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvider() {
+internal class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvider() {
   override fun getWelcomeScreenProjectName(): String = MISC_PROJECT_WITH_WELCOME_NAME
 
   override fun getWelcomeScreenProjectPath(): Path = miscProjectDefaultPath

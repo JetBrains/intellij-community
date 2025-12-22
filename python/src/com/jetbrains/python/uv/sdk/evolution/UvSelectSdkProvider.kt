@@ -22,7 +22,7 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 
 
-private class UvSelectSdkProvider() : EvoSelectSdkProvider {
+internal class UvSelectSdkProvider() : EvoSelectSdkProvider {
   override fun getTreeElement(evoModuleSdk: EvoModuleSdk): EvoTreeLazyNodeElement {
     val icon = PythonCommunityImplUVCommonIcons.UV
     return EvoTreeLazyNodeElement("uv", icon) {

@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
 
-private class UnixSystemPythonProvider : SystemPythonProvider {
+internal class UnixSystemPythonProvider : SystemPythonProvider {
   private val LOGGER: Logger = Logger.getInstance(UnixSystemPythonProvider::class.java)
 
   private val directories = listOf(

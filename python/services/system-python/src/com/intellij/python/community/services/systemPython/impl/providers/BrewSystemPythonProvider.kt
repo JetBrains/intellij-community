@@ -14,7 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 
-private class BrewSystemPythonProvider : SystemPythonProvider {
+internal class BrewSystemPythonProvider : SystemPythonProvider {
   private val LOGGER: Logger = Logger.getInstance(BrewSystemPythonProvider::class.java)
   private val binDirectory = Path.of("/opt/homebrew/bin")
 

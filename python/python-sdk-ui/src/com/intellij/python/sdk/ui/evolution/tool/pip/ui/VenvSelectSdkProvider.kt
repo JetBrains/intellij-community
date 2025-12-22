@@ -16,7 +16,7 @@ import com.jetbrains.python.sdk.basePath
 import java.nio.file.Path
 import kotlin.collections.plus
 
-private class VenvSelectSdkProvider() : EvoSelectSdkProvider {
+internal class VenvSelectSdkProvider() : EvoSelectSdkProvider {
   override fun getTreeElement(evoModuleSdk: EvoModuleSdk) = EvoTreeLazyNodeElement("pip", PythonSdkUIIcons.Tools.Pip) {
     val environments = VenvEvoSdkManager.findEnvironments(evoModuleSdk.module).getOr {
       return@EvoTreeLazyNodeElement it

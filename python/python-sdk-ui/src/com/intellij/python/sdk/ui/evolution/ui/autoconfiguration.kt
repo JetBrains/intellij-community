@@ -31,7 +31,7 @@ internal val defaultUvAction = object : AnAction(
 }
 
 
-private class AutoconfigSelectSdkProvider() : EvoSelectSdkProvider {
+internal class AutoconfigSelectSdkProvider() : EvoSelectSdkProvider {
   override fun getTreeElement(evoModuleSdk: EvoModuleSdk) = EvoTreeLazyNodeElement(
     text = PySdkUiBundle.message("evo.sdk.status.bar.popup.shortcuts.best.options"),
     icon = AllIcons.General.Layout
@@ -57,7 +57,7 @@ private val ratingIcons = listOf(
   AllIcons.Ide.Rating1,
 )
 
-private class RunConfiguratorAction(
+internal class RunConfiguratorAction(
   intention: String,
   order: Int,
 ) : AnAction({ intention }, { intention }, ratingIcons.getOrElse(order, { AllIcons.Ide.Rating1 })) {
