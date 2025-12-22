@@ -33,7 +33,7 @@
     <registryKey key="database.grid.show.chart.tab" defaultValue="true" restartRequired="false"
                  description="Adds 'Show Chart' action to DG tables in editor, inlay and services."/>
     <uiDataRule implementation="com.intellij.database.run.ui.TableResultPanelUIDataRule"
-                id="TableResultPanelDataRule" order="before BasicUiDataRule"/>
+                id="TableResultPanelDataRule" order="before BasicUiDataRule, before ServiceViewProvidersDataRule"/>
     <uiDataRule implementation="com.intellij.database.run.ui.InnerEditorsTableResultPanelUIDataRule"
                 id="InnerEditorsTableResultPanelUIDataRule" order="before TableResultPanelDataRule"/>
     <applicationService serviceInterface="com.intellij.database.extensions.ExtensionsService" serviceImplementation="com.intellij.database.extensions.ExtensionsServiceImpl"/>

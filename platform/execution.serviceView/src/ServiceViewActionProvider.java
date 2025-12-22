@@ -42,6 +42,7 @@ public final class ServiceViewActionProvider {
   static final @NonNls String SERVICE_VIEW_ITEM_POPUP = "ServiceViewItemPopup";
   private static final @NonNls String SERVICE_VIEW_TREE_TOOLBAR = "ServiceViewTreeToolbar";
 
+  static final DataKey<ServiceView> SERVICE_VIEW = DataKey.create("service.view");
   static final DataKey<List<ServiceViewItem>> SERVICES_SELECTED_ITEMS = DataKey.create("services.selected.items");
   static final DataKey<List<ServiceViewDescriptorId>> SERVICES_SELECTED_DESCRIPTOR_IDS = DataKey.create("services.selected.descriptor.ids");
 
