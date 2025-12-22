@@ -79,13 +79,13 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
     }
   }
 
-  private static boolean beforeCharTyped(final char charTyped,
-                                         Project project,
-                                         final Editor originalEditor,
-                                         final Editor editor,
-                                         PsiFile file) {
-    final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(originalEditor);
-    if (lookup == null){
+  private static boolean beforeCharTyped(char charTyped,
+                                         @NotNull Project project,
+                                         @NotNull Editor originalEditor,
+                                         @NotNull Editor editor,
+                                         @NotNull PsiFile file) {
+    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(originalEditor);
+    if (lookup == null) {
       return false;
     }
 
@@ -93,53 +93,18 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
       return false;
     }
 
-    final CharFilter.Result result = getLookupAction(charTyped, lookup);
+    CharFilter.Result result = getLookupAction(charTyped, lookup);
     if (lookup.isLookupDisposed()) {
       return false;
     }
 
     if (result == CharFilter.Result.ADD_TO_PREFIX) {
-      Document document = editor.getDocument();
-      long modificationStamp = document.getModificationStamp();
-
-      if (!lookup.performGuardedChange(() -> {
-        lookup.fireBeforeAppendPrefix(charTyped);
-        EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(originalEditor, String.valueOf(charTyped), true);
-      })) {
-        return true;
-      }
-
-      lookup.appendPrefix(charTyped);
-      if (lookup.isStartCompletionWhenNothingMatches() && lookup.getItems().isEmpty()) {
-        final CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
-        if (completion != null) {
-          completion.scheduleRestart();
-        } else {
-          AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor);
-        }
-      }
-
-      originalEditor.getCaretModel().runForEachCaret(caret -> {
-        DataContext context = DataManager.getInstance().getDataContext(originalEditor.getContentComponent());
-        AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor, context, modificationStamp);
-      });
-
-      final CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
-      if (completion != null) {
-        completion.prefixUpdated();
-      }
+      addCharToPrefix(charTyped, originalEditor, editor, lookup, project);
       return true;
     }
 
     if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP && lookup.isFocused()) {
-      LookupElement item = lookup.getCurrentItem();
-      if (item != null) {
-        if (completeTillTypedCharOccurrence(charTyped, lookup, item)) {
-          return true;
-        }
-
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
-        lookup.finishLookupInWritableFile(charTyped, item);
+      if (selectItemAndFinish(charTyped, lookup)) {
         return true;
       }
     }
@@ -148,6 +113,61 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
     lookup.hideLookup(false);
     TypedHandler.autoPopupCompletion(editor, charTyped, project, file);
     return false;
+  }
+
+  private static boolean selectItemAndFinish(char charTyped, @NotNull LookupImpl lookup) {
+    LookupElement item = lookup.getCurrentItem();
+    if (item == null) {
+      return false;
+    }
+
+    if (completeTillTypedCharOccurrence(charTyped, lookup, item)) {
+      return true;
+    }
+
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
+    lookup.finishLookupInWritableFile(charTyped, item);
+    return true;
+  }
+
+  private static void addCharToPrefix(char charTyped,
+                                      @NotNull Editor originalEditor,
+                                      @NotNull Editor editor,
+                                      @NotNull LookupImpl lookup,
+                                      @NotNull Project project) {
+    Document document = editor.getDocument();
+    long modificationStamp = document.getModificationStamp();
+
+    boolean lookupSurvived = lookup.performGuardedChange(() -> {
+      lookup.fireBeforeAppendPrefix(charTyped);
+      EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(originalEditor, String.valueOf(charTyped), true);
+    });
+
+    if (!lookupSurvived) {
+      return;
+    }
+
+    lookup.appendPrefix(charTyped);
+
+    if (lookup.isStartCompletionWhenNothingMatches() && lookup.getItems().isEmpty()) {
+      CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
+      if (completion != null) {
+        completion.scheduleRestart();
+      }
+      else {
+        AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
+      }
+    }
+
+    originalEditor.getCaretModel().runForEachCaret(caret -> {
+      DataContext context = DataManager.getInstance().getDataContext(originalEditor.getContentComponent());
+      AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor, context, modificationStamp);
+    });
+
+    CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
+    if (completion != null) {
+      completion.prefixUpdated();
+    }
   }
 
   private static boolean completeTillTypedCharOccurrence(char charTyped, LookupImpl lookup, LookupElement item) {
