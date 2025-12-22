@@ -25,6 +25,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShort
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.startGitLabRestETagListLoaderIn
+import org.jetbrains.plugins.gitlab.upload.markdownUploadFile
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Disabled
@@ -494,6 +495,26 @@ class GitLabApiTest : GitLabApiTestCase() {
     requiresAuthentication { api ->
       val actualVersion = api.rest.getServerVersion().body()
       assertEquals(version.toString(), actualVersion.version)
+    }
+  }
+
+  @Test
+  fun `REST markdownUploadFile can upload a file`() = runTest {
+    checkVersion(after(v(15, 10)))
+
+    requiresAuthentication { api ->
+      javaClass.getResourceAsStream("/upload/test-png.png").use {
+        assertNotNull(it, "test-png.png resource should exist")
+        val name = "test-image"
+        val filename = "$name.png"
+        val uploadResult = api.rest.markdownUploadFile(glTest1Coordinates, filename, "image/png", it).body()
+        assertNotNull(uploadResult)
+        val markdown = uploadResult.markdown
+        assertTrue(markdown.startsWith("![$name](/uploads/"),
+                   """Markdown should start with "![$name](/uploads/", current markdown: $markdown""")
+        assertTrue(markdown.endsWith("/$filename)"),
+                   """Markdown should end with "/$filename)", current markdown: $markdown""")
+      }
     }
   }
 }
