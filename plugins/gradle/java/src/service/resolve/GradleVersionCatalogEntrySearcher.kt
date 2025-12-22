@@ -14,6 +14,8 @@ interface GradleVersionCatalogEntrySearcher {
    * and parts of a catalog entry key, separated with dots. For example: `junit.jupiter`, `versions.foo.bar`.
    */
   fun findEntryElement(versionCatalog: PsiFile, entryPath: String): PsiElement?
+
+  fun findEntriesMatching(versionCatalog: PsiFile, entrySearchString: String): List<PsiElement>
 }
 
 
@@ -23,6 +25,15 @@ fun findVersionCatalogEntryElement(versionCatalog: PsiFile, entryPath: String): 
     return element
   }
   return null
+}
+
+fun findVersionCatalogEntriesMatching(versionCatalog: PsiFile, entryPath: String): List<PsiElement> {
+  val result = mutableListOf<PsiElement>()
+  for (extension in EP_NAME.extensionList) {
+    val elements = extension.findEntriesMatching(versionCatalog, entryPath)
+    result.addAll(elements)
+  }
+  return result
 }
 
 private val EP_NAME : ExtensionPointName<GradleVersionCatalogEntrySearcher> =
