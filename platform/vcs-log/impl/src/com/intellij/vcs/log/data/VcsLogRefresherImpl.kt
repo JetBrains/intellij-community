@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.vcs.log.TimedVcsCommit
-import com.intellij.vcs.log.VcsLogProperties
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.data.DataPack.ErrorDataPack
@@ -19,6 +18,7 @@ import com.intellij.vcs.log.data.util.trace
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.impl.RequirementsImpl
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.onClosed
@@ -406,8 +406,8 @@ internal class VcsLogRefresherImpl(
     if (fullLog.isEmpty()) return recentCommits
 
     return tracer.trace(JoiningNewAndOldCommits) {
-      val prevRefIndices = previousRefs.values.flatMapTo(mutableSetOf()) { it.getCommits() }
-      val newRefIndices = newRefs.values.flatMapTo(mutableSetOf()) { it.getCommits() }
+      val prevRefIndices = previousRefs.values.flatMapTo(IntOpenHashSet()) { it.getRefsIndexes() }
+      val newRefIndices = newRefs.values.flatMapTo(IntOpenHashSet()) { it.getRefsIndexes() }
 
       try {
         VcsLogJoiner<Int, GraphCommit<Int>>().addCommits(fullLog, prevRefIndices, recentCommits, newRefIndices).first

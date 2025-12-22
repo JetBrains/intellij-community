@@ -1,115 +1,100 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.data;
+package com.intellij.vcs.log.data
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SmartList;
-import com.intellij.vcs.log.VcsRef;
-import it.unimi.dsi.fastutil.ints.*;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import com.google.common.base.Suppliers
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.SmartList
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsRef
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import java.util.stream.Stream
 
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-@ApiStatus.Internal
-public final class CompressedRefs {
-  private static final Logger LOG = Logger.getInstance(CompressedRefs.class);
-
-  private final @NotNull VcsLogStorage myStorage;
-
+internal class CompressedRefs(refs: Set<VcsRef>, private val myStorage: VcsLogStorage) {
   // maps each commit id to the list of tag ids on this commit
-  private final @NotNull Int2ObjectMap<IntArrayList> myTags = new Int2ObjectOpenHashMap<>();
+  private val tags: Int2ObjectMap<IntArrayList> = Int2ObjectOpenHashMap()
+
   // maps each commit id to the list of branches on this commit
-  private final @NotNull Int2ObjectMap<List<VcsRef>> myBranches = new Int2ObjectOpenHashMap<>();
+  private val branches: Int2ObjectMap<MutableCollection<VcsRef>> = Int2ObjectOpenHashMap()
 
-  public CompressedRefs(@NotNull Set<VcsRef> refs, @NotNull VcsLogStorage storage) {
-    myStorage = storage;
-    VirtualFile root = null;
-    for (VcsRef ref : refs) {
-      assert root == null || root.equals(ref.getRoot()) : "All references are supposed to be from the single root";
-      root = ref.getRoot();
+  val refs: Collection<VcsRef>
+    get() = object : AbstractCollection<VcsRef>() {
+      private val myLoadedRefs = Suppliers.memoize { this@CompressedRefs.stream().toList() }
 
-      int index = myStorage.getCommitIndex(ref.getCommitHash(), ref.getRoot());
-      if (ref.getType().isBranch()) {
-        myBranches.computeIfAbsent(index, key -> new SmartList<>()).add(ref);
+      override fun iterator(): Iterator<VcsRef> {
+        return myLoadedRefs.get().iterator()
+      }
+
+      override val size: Int
+        get() = myLoadedRefs.get().size
+    }
+
+  init {
+    var root: VirtualFile? = null
+    for (ref in refs) {
+      assert(root == null || root == ref.root) { "All references are supposed to be from the single root" }
+      root = ref.root
+
+      val index = myStorage.getCommitIndex(ref.commitHash, ref.root)
+      if (ref.type.isBranch) {
+        (branches.computeIfAbsent(index) { SmartList() }).add(ref)
       }
       else {
-        int refIndex = myStorage.getRefIndex(ref);
+        val refIndex = myStorage.getRefIndex(ref)
         if (refIndex != VcsLogStorageImpl.NO_INDEX) {
-          myTags.computeIfAbsent(index, key -> new IntArrayList()).add(refIndex);
+          tags.computeIfAbsent(index) { IntArrayList() }.add(refIndex)
         }
       }
     }
-    //noinspection SSBasedInspection
-    for (IntArrayList list : myTags.values()) {
-      list.trim();
+    for (list in tags.values) {
+      list.trim()
     }
   }
 
-  boolean contains(int index) {
-    return myBranches.containsKey(index) || myTags.containsKey(index);
+  fun contains(index: VcsLogCommitStorageIndex): Boolean {
+    return branches.containsKey(index) || tags.containsKey(index)
   }
 
-  @NotNull
-  SmartList<VcsRef> refsToCommit(int index) {
-    SmartList<VcsRef> result = new SmartList<>();
-    if (myBranches.containsKey(index)) result.addAll(myBranches.get(index));
-    IntList tags = myTags.get(index);
-    if (tags != null) {
-      tags.forEach(tag -> {
-        VcsRef ref = myStorage.getVcsRef(tag);
-        if (ref != null) {
-          result.add(ref);
-        }
-        else {
-          LOG.error("Could not find a tag by id " + tag + " at commit " + myStorage.getCommitId(index));
-        }
-      });
+  fun refsToCommit(index: VcsLogCommitStorageIndex): SmartList<VcsRef> {
+    val result = SmartList<VcsRef>()
+    branches[index]?.let { result.addAll(it) }
+    tags[index]?.forEach { tag ->
+      val ref = myStorage.getVcsRef(tag)
+      if (ref != null) {
+        result.add(ref)
+      }
+      else {
+        LOG.error("Could not find a tag by id $tag at commit ${myStorage.getCommitId(index)}")
+      }
     }
-    return result;
+    return result
   }
 
-  public @NotNull Stream<VcsRef> streamBranches() {
-    return myBranches.values().stream().flatMap(Collection::stream);
+  fun streamBranches(): Stream<VcsRef> {
+    return branches.values.stream().flatMap { it.stream() }
   }
 
-  private @NotNull Stream<VcsRef> streamTags() {
-    return myTags.values().stream().flatMapToInt(IntCollection::intStream).mapToObj(myStorage::getVcsRef);
+  private fun streamTags(): Stream<VcsRef> {
+    return tags.values.stream().flatMapToInt { it.intStream() }.mapToObj(myStorage::getVcsRef)
   }
 
-  public @NotNull Stream<VcsRef> stream() {
-    return Stream.concat(streamBranches(), streamTags());
+  fun stream(): Stream<VcsRef> {
+    return Stream.concat(streamBranches(), streamTags())
   }
 
-  public @NotNull Collection<VcsRef> getRefs() {
-    return new AbstractCollection<>() {
-      private final Supplier<Collection<VcsRef>> myLoadedRefs =
-        Suppliers.memoize(() -> CompressedRefs.this.stream().collect(Collectors.toList()));
-
-      @Override
-      public @NotNull Iterator<VcsRef> iterator() {
-        return myLoadedRefs.get().iterator();
-      }
-
-      @Override
-      public int size() {
-        return myLoadedRefs.get().size();
-      }
-    };
+  fun getRefsIndexes(): IntSet {
+    val result = IntOpenHashSet(branches.keys.size + tags.keys.size)
+    result.addAll(branches.keys)
+    result.addAll(tags.keys)
+    return result
   }
 
-  public @NotNull Collection<Integer> getCommits() {
-    Set<Integer> result = new HashSet<>();
-    myBranches.keySet().intStream().forEach(result::add);
-    myTags.keySet().intStream().forEach(result::add);
-    return result;
-  }
+  fun getBranchIndexes(): IntSet = branches.keys
 
-  @NotNull Int2ObjectMap<List<VcsRef>> getBranches() {
-    return myBranches;
+  companion object {
+    private val LOG = logger<CompressedRefs>()
   }
 }

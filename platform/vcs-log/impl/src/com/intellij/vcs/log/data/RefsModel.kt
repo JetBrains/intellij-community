@@ -77,7 +77,7 @@ class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val
 
       val remainingHeads = IntOpenHashSet(heads)
       refs.forEach { (root, refsForRoot) ->
-        refsForRoot.branches.keys.forEach(IntConsumer { commit ->
+        refsForRoot.getBranchIndexes().forEach(IntConsumer { commit ->
           refsModel.updateCacheForHead(commit, root)
           remainingHeads.remove(commit)
         })

@@ -436,7 +436,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   private fun getMatchingHeads(refsModel: RefsModel, roots: Collection<VirtualFile>): Set<VcsLogCommitStorageIndex> {
-    return mapRefsForRoots(refsModel, roots) { refs -> refs.commits }
+    return mapRefsForRoots(refsModel, roots) { refs -> refs.getRefsIndexes() }
   }
 
   private fun <T> mapRefsForRoots(refsModel: RefsModel, roots: Collection<VirtualFile>, mapping: (CompressedRefs) -> Iterable<T>) =
