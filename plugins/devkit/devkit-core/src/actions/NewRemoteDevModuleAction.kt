@@ -45,7 +45,7 @@ import javax.swing.JComponent
 
 private val LOG = fileLogger()
 
-private class NewRemoteDevModuleAction : DumbAwareAction() {
+internal class NewRemoteDevModuleAction : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT

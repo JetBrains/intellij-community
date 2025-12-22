@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.GeneratedSourceFilterNotification
 import com.intellij.openapi.roots.GeneratedSourcesFilter
 import com.intellij.openapi.vfs.VirtualFile
 
-private class ContentReportGeneratedSourcesFilter : GeneratedSourcesFilter() {
+internal class ContentReportGeneratedSourcesFilter : GeneratedSourcesFilter() {
   override fun isGeneratedSource(file: VirtualFile, project: Project): Boolean {
     return IntelliJProjectUtil.isIntelliJPlatformProject(project) && file.name == "plugin-content.yaml"
   }

@@ -40,7 +40,7 @@ private object PauseListener : DebuggerManagerListener {
   fun getSessionData(session: DebuggerSession): SessionThreadsData? = sessions[session]
 }
 
-private class ResumeListener : SteppingListener {
+internal class ResumeListener : SteppingListener {
   override fun beforeResume(suspendContext: SuspendContextImpl) {
     val sessionData = PauseListener.getSessionData(suspendContext.debugProcess.session) ?: return
     sessionData.resetNonCancellableSection(suspendContext)
