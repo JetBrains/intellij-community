@@ -14,6 +14,7 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.assertNotNull
 import org.opentest4j.TestAbortedException
 import org.testcontainers.containers.DockerComposeContainer
 import org.testcontainers.containers.wait.strategy.Wait
@@ -26,6 +27,23 @@ import kotlin.io.path.writeText
 typealias VersionPredicate = (GitLabVersion) -> Boolean
 typealias MetadataPredicate = (GitLabServerMetadata) -> Boolean
 
+/**
+ * To run the tests, you need to either have a valid GitLab server running locally (the only viable option for Win),
+ * or the test will run the new Gitlab docker container for each test class and shut it down after the test.
+
+ * For both options set the next environment variables:
+ * - [IDEA_TEST_GITLAB_API_VERSION] - version number, e.g. "14.0.0"
+ * - [IDEA_TEST_GITLAB_API_EDITION] - version edition: "ce" or "ee"
+ * - [IDEA_TEST_GITLAB_API_TOKEN] - API token for the access to the GitLab server for "root" user
+ * For reusing the already running Gitlab server:
+ * - [IDEA_TEST_GITLAB_URI] environment variable should contain the Gitlab server URI,
+ * For automatically running a new container for each test:
+ * - [IDEA_TEST_GITLAB_API_DATA_PATH] environment variable should contain the path to the server backup data
+ *
+ * See https://git.jetbrains.team/vcs-collab-tools/gitlab-docker.git for more details on GitLab Docker setup and credentials.
+ *
+ * The server backup data for an old version is available in https://jetbrains.team/p/vcs-collab-tools/packages/files/gitlab-server-data
+ */
 @TestApplication
 abstract class GitLabApiTestCase {
   class GitLabDataConstants {
@@ -55,10 +73,11 @@ abstract class GitLabApiTestCase {
   }
 
   companion object {
-    private const val ENV_GL_DATA_PATH = "idea_test_gitlab_api_data_path"
-    private const val ENV_GL_VERSION = "idea_test_gitlab_api_version"
-    private const val ENV_GL_TOKEN = "idea_test_gitlab_api_token"
-    private const val ENV_GL_EDITION = "idea_test_gitlab_api_edition"
+    private const val IDEA_TEST_GITLAB_URI = "idea_test_gitlab_uri"
+    private const val IDEA_TEST_GITLAB_API_DATA_PATH = "idea_test_gitlab_api_data_path"
+    private const val IDEA_TEST_GITLAB_API_VERSION = "idea_test_gitlab_api_version"
+    private const val IDEA_TEST_GITLAB_API_TOKEN = "idea_test_gitlab_api_token"
+    private const val IDEA_TEST_GITLAB_API_EDITION = "idea_test_gitlab_api_edition"
 
     private var classRootDisposable: Disposable? = null
     private var container: DockerComposeContainer<*>? = null
@@ -94,10 +113,11 @@ abstract class GitLabApiTestCase {
 
     private val foundEnvironmentVariables: String
       get() = """
-      - $ENV_GL_DATA_PATH=${System.getenv(ENV_GL_DATA_PATH)}
-      - $ENV_GL_TOKEN=${System.getenv(ENV_GL_TOKEN)?.replace(".".toRegex(), "*")}
-      - $ENV_GL_VERSION=${System.getenv(ENV_GL_VERSION)}
-      - $ENV_GL_EDITION=${System.getenv(ENV_GL_EDITION)}
+      - $IDEA_TEST_GITLAB_API_DATA_PATH=${System.getenv(IDEA_TEST_GITLAB_API_DATA_PATH)}
+      - $IDEA_TEST_GITLAB_API_TOKEN=${System.getenv(IDEA_TEST_GITLAB_API_TOKEN)?.replace(".".toRegex(), "*")}
+      - $IDEA_TEST_GITLAB_API_VERSION=${System.getenv(IDEA_TEST_GITLAB_API_VERSION)}
+      - $IDEA_TEST_GITLAB_API_EDITION=${System.getenv(IDEA_TEST_GITLAB_API_EDITION)}
+      - (for local run only) $IDEA_TEST_GITLAB_URI=${System.getenv(IDEA_TEST_GITLAB_URI)} 
     """
 
     private val serversManager by lazy {
@@ -147,8 +167,8 @@ abstract class GitLabApiTestCase {
      */
     fun <V> GitLabGraphQLMutationResultDTO<V>?.assertNoErrors() {
       assertNotNull(this)
-      assertEquals(listOf<String>(), this?.errors?.toList() ?: listOf<String>())
-      assertNotNull(this!!.value)
+      this.errors?.let { assertTrue(it.isEmpty()) }
+      assertNotNull(this.value)
     }
 
     /**
@@ -184,15 +204,15 @@ abstract class GitLabApiTestCase {
         $foundEnvironmentVariables
       """.trimIndent())
 
-      _token = System.getenv(ENV_GL_TOKEN)
-      _version = GitLabVersion.fromString(System.getenv(ENV_GL_VERSION) ?: throwExplanation())
-      _edition = when (System.getenv(ENV_GL_EDITION)) {
+      _token = System.getenv(IDEA_TEST_GITLAB_API_TOKEN)
+      _version = GitLabVersion.fromString(System.getenv(IDEA_TEST_GITLAB_API_VERSION) ?: throwExplanation())
+      _edition = when (System.getenv(IDEA_TEST_GITLAB_API_EDITION)) {
         "ce" -> GitLabEdition.Community
         "ee" -> GitLabEdition.Enterprise
         else -> null
       }
 
-      container = startContainer()
+      _server = createProjectPath()
       classRootDisposable = Disposer.newCheckedDisposable()
       ThreadLeakTracker.longRunningThreadCreated(classRootDisposable!!, "ryuk", "testcontainers", "testcontainers-ryuk")
 
@@ -208,10 +228,26 @@ abstract class GitLabApiTestCase {
     }
 
     /**
+     * Creates a GitLab server path from the environment variables or run a new container and use its path
+     */
+    private fun createProjectPath() : GitLabServerPath{
+      System.getenv(IDEA_TEST_GITLAB_URI)?.let {
+        return GitLabServerPath(it)
+      }
+
+      val newContainer = startContainer()
+      container = newContainer
+      return GitLabServerPath("http://" +
+                                 newContainer.getServiceHost("gitlab-server", 80) +
+                                 ":" +
+                                 newContainer.getServicePort("gitlab-server", 80))
+    }
+
+    /**
      * Checks that the container for GitLab server has spun up and sets the server field.
      */
-    private fun startContainer(): DockerComposeContainer<*>? {
-      val dataPath = System.getenv(ENV_GL_DATA_PATH) ?: throwExplanation()
+    private fun startContainer(): DockerComposeContainer<*> {
+      val dataPath = System.getenv(IDEA_TEST_GITLAB_API_DATA_PATH) ?: throwExplanation()
       checkDataPath(dataPath)
 
       val edition = when (metadata.edition) {
@@ -238,11 +274,6 @@ abstract class GitLabApiTestCase {
 
       container.start()
       Thread.sleep(5000) // Sleep just a slight bit longer to allow GitLab time to start up
-
-      _server = GitLabServerPath("http://" +
-                                 container.getServiceHost("gitlab-server", 80) +
-                                 ":" +
-                                 container.getServicePort("gitlab-server", 80))
 
       return container
     }
@@ -271,11 +302,14 @@ abstract class GitLabApiTestCase {
         If you did intend to run these tests, consider the following configurations.
         
         Did you configure the following environment variables:
-        1. '$ENV_GL_DATA_PATH' containing the path to the data for the GL server.
-        2. '$ENV_GL_VERSION' containing the version of the GL server to test against.
-        3. '$ENV_GL_EDITION' containing the edition of the GL server to test against.
-        4. '$ENV_GL_TOKEN' containing the token that can be used to authenticate to
+        1. '$IDEA_TEST_GITLAB_API_DATA_PATH' containing the path to the data for the GL server.
+        2. '$IDEA_TEST_GITLAB_API_VERSION' containing the version of the GL server to test against.
+        3. '$IDEA_TEST_GITLAB_API_EDITION' containing the edition of the GL server to test against.
+        4. '$IDEA_TEST_GITLAB_API_TOKEN' containing the token that can be used to authenticate to
            the GL API.
+           
+        (optionally, for LOCAL run you can use '$IDEA_TEST_GITLAB_URI' instead of '$IDEA_TEST_GITLAB_API_DATA_PATH' 
+        to specify the URI of the existing GL server)
            
         Found:
         $foundEnvironmentVariables
