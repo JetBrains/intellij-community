@@ -38,7 +38,7 @@ internal class OpenFileChooserApiImpl : OpenFileChooserApi {
   }
 }
 
-private class OpenFileChooserApiProvider : RemoteApiProvider {
+internal class OpenFileChooserApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<OpenFileChooserApi>()) {
       OpenFileChooserApiImpl()
