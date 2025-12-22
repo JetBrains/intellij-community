@@ -169,7 +169,6 @@ class VcsLogData @ApiStatus.Internal constructor(
         runCatching {
           val usersByRoot = progress.runWithProgress(DATA_PACK_REFRESH) {
             checkCanceled()
-            topCommitsCache.clear() // TODO: is it thread safe at all?
             readCurrentUser()
           }
           currentUser = usersByRoot
