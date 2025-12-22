@@ -30,7 +30,7 @@ class TerminalExecutionConsoleTest : BasePlatformTestCase() {
   fun `test disposing console should stop emulator thread`(): Unit = timeoutRunBlocking(DEFAULT_TEST_TIMEOUT) {
     val processHandler = NopProcessHandler()
     val console = withContext(Dispatchers.UI) {
-      TerminalExecutionConsole(project, null)
+      TerminalExecutionConsoleBuilder(project).build()
     }
     console.attachToProcess(processHandler)
     processHandler.startNotify()
@@ -54,11 +54,10 @@ class TerminalExecutionConsoleTest : BasePlatformTestCase() {
     return threadInfos.find { it.threadName.startsWith("TerminalEmulator-") }
   }
 
-  fun `test convert LF to CRLF for processes without PTY`(): Unit = timeoutRunBlocking(DEFAULT_TEST_TIMEOUT) {
+  fun `test convert LF to CRLF for processes without PTY`(): Unit = timeoutRunBlockingWithConsole { console ->
     val processHandler = OSProcessHandler(MockPtyBasedProcess(false), "my command", Charsets.UTF_8)
-    val console = withContext(Dispatchers.UI) {
-      TerminalExecutionConsole(project, processHandler)
-    }
+    console.attachToProcess(processHandler)
+    @Suppress("DEPRECATION")
     console.withConvertLfToCrlfForNonPtyProcess(true)
     TestProcessTerminationMessage.attach(processHandler)
     processHandler.startNotify()
@@ -189,7 +188,7 @@ class TerminalExecutionConsoleTest : BasePlatformTestCase() {
     action: suspend CoroutineScope.(TerminalExecutionConsole) -> T,
   ): T = timeoutRunBlocking(timeout) {
     val console = withContext(Dispatchers.UI) {
-      TerminalExecutionConsole(project, null)
+      TerminalExecutionConsoleBuilder(project).build()
     }
     try {
       action(console)
