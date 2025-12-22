@@ -67,13 +67,13 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
       if (seenNonWildcard && isUpperCase) {
         seenUpperCaseNotImmediatelyAfterWildcard = true
       }
-      if (seenNonWildcard) {
-        hasSeparators = hasSeparators || isWordSeparator
-      }
       if (!isWildcard(c)) {
         seenNonWildcard = true
         meaningful.add(toLowerCase)
         meaningful.add(toUpperCase)
+      }
+      if (seenNonWildcard && isWordSeparator) {
+        hasSeparators = true
       }
 
       this.isWordSeparator[k] = isWordSeparator
