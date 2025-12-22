@@ -9,10 +9,16 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.refactoring.util.RefactoringMessageUtil
+import com.intellij.refactoring.util.classMembers.MemberInfo
 import com.intellij.testIntegration.createTest.CreateTestDialog
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoSupport
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
@@ -31,6 +37,26 @@ class KotlinCreateTestDialog(
 
     init {
         suggestTestClassName(targetClass, sourceElement)?.let { className = it }
+    }
+
+    override fun createMemberInfos(targetClass: PsiClass?, includeInherited: Boolean): List<MemberInfo> {
+        return super.createMemberInfos(targetClass, includeInherited).map(::KotlinTestMemberInfo)
+    }
+
+    /**
+     * Workaround to fix display name rendering for Kotlin test members
+     */
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    private class KotlinTestMemberInfo(memberInfo: MemberInfo): MemberInfo(memberInfo.member) {
+        init {
+            val unwrapped = (memberInfo.member as? KtLightMethod)?.unwrapped
+            if (unwrapped is KtNamedFunction) {
+                displayName =
+                    allowAnalysisOnEdt {
+                        KotlinMemberInfoSupport.getInstance().renderMemberInfo(unwrapped)
+                    }
+            }
+        }
     }
 
     override fun getClassName(): String = explicitClassName ?: super.className
