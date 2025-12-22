@@ -101,13 +101,10 @@ f:com.intellij.vcs.log.data.DataPack$ErrorDataPack
 - <init>(java.lang.Throwable):V
 - f:getError():java.lang.Throwable
 c:com.intellij.vcs.log.data.DataPackBase
-- pf:myIsFull:Z
-- pf:myLogProviders:java.util.Map
-- pf:myRefsModel:com.intellij.vcs.log.data.RefsModel
 - <init>(java.util.Map,com.intellij.vcs.log.data.RefsModel,Z):V
-- getLogProviders():java.util.Map
-- getRefsModel():com.intellij.vcs.log.data.RefsModel
-- isFull():Z
+- f:getLogProviders():java.util.Map
+- f:getRefsModel():com.intellij.vcs.log.data.RefsModel
+- f:isFull():Z
 com.intellij.vcs.log.data.DataPackChangeListener
 - a:onDataPackChange(com.intellij.vcs.log.data.DataPack):V
 c:com.intellij.vcs.log.data.EmptyIndex

@@ -23,7 +23,7 @@ open class DataPack internal constructor(
   full: Boolean,
 ) : DataPackBase(providers, refsModel, full) {
   override fun toString(): @NonNls String {
-    return "{DataPack. " + permanentGraph.allCommits.size + " commits in " + myLogProviders.keys.size + " roots}"
+    return "{DataPack. " + permanentGraph.allCommits.size + " commits in " + logProviders.keys.size + " roots}"
   }
 
   class ErrorDataPack(val error: Throwable) : DataPack(RefsModel.createEmptyInstance(EmptyLogStorage.INSTANCE),
