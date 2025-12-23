@@ -263,6 +263,9 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionUpdaterInterceptor" open="true"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionUpdaterInterceptorImpl"/>
 
+    <applicationService serviceInterface="com.intellij.psi.util.PsiVersioningService"
+                        serviceImplementation="com.intellij.psi.impl.source.tree.mvcc.PsiVersioningServiceImpl"/>
+
     <applicationService serviceInterface="com.intellij.openapi.options.ShowSettingsUtil" open="true"
                         serviceImplementation="com.intellij.ide.actions.ShowSettingsUtilImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.help.HelpManager"

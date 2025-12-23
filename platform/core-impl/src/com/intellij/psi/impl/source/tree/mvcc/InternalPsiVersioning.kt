@@ -26,10 +26,22 @@ import kotlin.getValue
 // object is used for namespace qualification
 @Internal
 object InternalPsiVersioning {
+  // a reading operation with the available psi version
+  fun <T> freezePsiVersion(action: () -> T): T {
+    if (ApplicationManager.getApplication().isReadAccessAllowed) {
+      return action()
+    }
+    val registry = PsiVersionRegistry.instance
+    val latestVersion = registry.latestPublishedVersion
+    return initFreezePsiVersionSection(false, latestVersion).use {
+      action()
+    }
+  }
+
   @JvmStatic
   fun assertNotInFreezePsiVersion() {
     if (PsiVersionFreezeMarker.isAvailable()) {
-      error("This function is not allowed inside a frozen PSI snapshot")
+      error("This function is not allowed inside `freezePsiVersion` block")
     }
   }
 
@@ -46,14 +58,6 @@ object InternalPsiVersioning {
     return currentThreadContext()[PsiVersionFreezeMarker.Key]?.version
   }
 
-  /**
-   * Helper function to check invariants of versioned PSI. Should not be used for business logic.
-   */
-  @JvmStatic
-  fun isInsideVersioningButNotLocks(): Boolean {
-    return getCurrentPsiVersionInsideFrozenPsi() != null
-  }
-
   @JvmStatic
   fun getCurrentPsiVersion(): Long {
     val tlValue = threadLocalVersioningTracker.get()
@@ -61,7 +65,7 @@ object InternalPsiVersioning {
       return tlValue
     }
     // Unfortunately, throughout our codebase we have interactions with PSI that are not protected by any lock, especially in tests
-    // Technically, it is possible to wrap all such cases in a read action/versioned snapshot, but we decided to avoid useless assertions for now
+    // Technically, it is possible to wrap all such cases in a read action/freezePsiVersion, but we decided to avoid useless assertions for now
     // also, this is a very hot path, so we'd like to avoid retrieval of service here
     return PsiVersionRegistry.instance.latestPublishedVersion
   }
@@ -182,7 +186,7 @@ object InternalPsiVersioning {
     }
 
     fun getFrozenKeys(): Set<Long> {
-      return setOf(version.get())
+      return setOf(latestPublishedVersion)
     }
   }
 
@@ -248,6 +252,7 @@ object InternalPsiVersioning {
 
   /**
    * Low-level way of running a PSI operation in the versioned environment.
+   * Consider using [com.intellij.psi.util.PsiVersioningService] for public code
    */
   @JvmStatic
   fun <T> inVersionedEnvironment(isVersioned: Boolean, action: Supplier<T>): T {
@@ -369,6 +374,7 @@ object InternalPsiVersioning {
         }
       }
     } else {
+      // there can be a mismatch between a global version and the installed version -- if, for example, someone calls `runReadActionBlocking` inside `freezePsiVersion`
       AccessToken.EMPTY_ACCESS_TOKEN
     }
   }
