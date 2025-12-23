@@ -1719,8 +1719,6 @@
       <add-to-group group-id="Internal"/>
     </group>
 
-    <action id="AnalyzePluginStartupPerformance" class="com.intellij.diagnostic.AnalyzePluginStartupPerformanceAction" internal="true"/>
-
     <action id="TriggerLowMemoryNotification" class="com.intellij.diagnostic.TriggerLowMemoryNotificationAction" internal="true"/>
 
     <action id="NextWindow" class="com.intellij.openapi.wm.impl.NextWindow"/>
