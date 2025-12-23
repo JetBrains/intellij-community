@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ForeignLeafType;
 import com.intellij.lang.TokenWrapper;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +71,11 @@ public class ForeignLeafPsiElement extends LeafPsiElement {
   @Override
   public int getStartOffset() {
     return 0;
+  }
+
+  @Override
+  public TextRange getTextRange() {
+    return new TextRange(0, 0);
   }
 
   public @NotNull ForeignLeafType getForeignType() {

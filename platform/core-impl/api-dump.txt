@@ -266,10 +266,16 @@ com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner
 - a:getLastFileReference():com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference
 com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference
 - com.intellij.psi.PsiPolyVariantReference
+c:com.intellij.psi.impl.source.tree.ForeignLeafPsiElement
+- getTextRange():com.intellij.openapi.util.TextRange
+c:com.intellij.psi.impl.source.tree.LazyParseableElement
+- clone():com.intellij.psi.impl.source.tree.CompositeElement
 com.intellij.psi.impl.source.tree.TreeCopyHandler
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:decodeInformation(com.intellij.psi.impl.source.tree.TreeElement,java.util.Map):com.intellij.psi.impl.source.tree.TreeElement
 - a:encodeInformation(com.intellij.psi.impl.source.tree.TreeElement,com.intellij.lang.ASTNode,java.util.Map):V
+a:com.intellij.psi.impl.source.tree.TreeElement
+- getUserData(com.intellij.openapi.util.Key):java.lang.Object
 com.intellij.psi.impl.source.tree.TreeGenerator
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:generateTreeFor(com.intellij.psi.PsiElement,com.intellij.util.CharTable,com.intellij.psi.PsiManager):com.intellij.psi.impl.source.tree.TreeElement

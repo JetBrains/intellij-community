@@ -25,11 +25,13 @@ import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.containers.VarHandleWrapper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,13 +42,33 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 public class CompositeElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance(CompositeElement.class);
   private static final Key<Integer> OUR_HC_KEY = Key.create("OUR_HC_KEY");
+  private static final VarHandleWrapper firstChildGetter = VarHandleWrapper.getFactory().create(CompositeElement.class, "firstChild", Object.class);
+  private static final VarHandleWrapper lastChildGetter = VarHandleWrapper.getFactory().create(CompositeElement.class, "lastChild", Object.class);
+  private static final VarHandleWrapper myCachedLengthGetter = VarHandleWrapper.getFactory().create(CompositeElement.class, "myCachedLength", Object.class);
+
 
   public static final CompositeElement[] EMPTY_ARRAY = new CompositeElement[0];
 
-  private TreeElement firstChild;
-  private TreeElement lastChild;
+  /**
+   * A versioned reference to {@link TreeElement}.
+   * @see doSetFirstChild
+   * @see doGetFirstChild
+   */
+  private volatile @Nullable Object firstChild = null;
 
-  private volatile int myCachedLength = -1;
+  /**
+   * A versioned reference to {@link TreeElement}.
+   * @see doSetLastChild
+   * @see doGetLastChild
+   */
+  private volatile @Nullable Object lastChild = null;
+
+  /**
+   * A versioned reference to {@link Integer}.
+   * @see doSetMyCachedLength
+   * @see doGetMyCachedLength
+   */
+  private volatile @Nullable Object myCachedLength = null;
 
   private volatile PsiElement myWrapper;
   private static final AtomicReferenceFieldUpdater<CompositeElement, PsiElement>
@@ -72,10 +94,18 @@ public class CompositeElement extends TreeElement {
   protected final @NotNull CompositeElement cloneWithoutCopyingChildren() {
     CompositeElement clone = (CompositeElement)super.clone();
 
-    clone.firstChild = null;
-    clone.lastChild = null;
+    firstChildGetter.setVolatile(clone, null);
+    lastChildGetter.setVolatile(clone, null);
+    myCachedLengthGetter.setVolatile(clone, null);
     clone.myWrapper = null;
-    clone.clearCaches();
+
+    clone.postClone(this);
+
+    if (!(this instanceof LazyParseableElement)) {
+      // caches will be cleared in impl of `clone` for `LazyParseableElement`
+      // otherwise we could accidentally clear caches of the origin, as sharing was not yet decoupled
+      clone.clearCaches();
+    }
     return clone;
   }
 
@@ -83,6 +113,62 @@ public class CompositeElement extends TreeElement {
     for (ASTNode child = rawFirstChild(); child != null; child = child.getTreeNext()) {
       TreeElement childClone = (TreeElement)child.clone();
       clone.rawAddChildrenWithoutNotifications(childClone);
+    }
+  }
+
+  @ApiStatus.Internal
+  protected void postClone(CompositeElement origin) {
+  }
+
+
+  private void doSetFirstChild(long version, TreeElement firstChild) {
+    if (version == -1) {
+      this.firstChild = firstChild;
+    } else {
+      setVersionedField(firstChildGetter, version, firstChild);
+    }
+  }
+
+  private TreeElement doGetFirstChild(long version) {
+    if (version == -1) {
+      return (TreeElement)this.firstChild;
+    } else {
+      Object result = getVersionedField(this.firstChild, version);
+      return (TreeElement)result;
+    }
+  }
+
+  private void doSetLastChild(long version, TreeElement lastChild) {
+    if (version == -1) {
+      this.lastChild = lastChild;
+    } else {
+      setVersionedField(lastChildGetter, version, lastChild);
+    }
+  }
+
+  private TreeElement doGetLastChild(long version) {
+    if (version == -1) {
+      return (TreeElement)this.lastChild;
+    } else {
+      Object result = getVersionedField(this.lastChild, version);
+      return (TreeElement)result;
+    }
+  }
+
+  private void doSetMyCachedLength(long version, Integer cachedLength) {
+    if (version == -1) {
+      this.myCachedLength = cachedLength;
+    } else {
+      setVersionedField(myCachedLengthGetter, version, cachedLength);
+    }
+  }
+
+  private Integer doGetMyCachedLength(long version) {
+    if (version == -1) {
+      return (Integer)this.myCachedLength;
+    } else {
+      Object result = getVersionedField(this.myCachedLength, version);
+      return (Integer)result;
     }
   }
 
@@ -107,11 +193,11 @@ public class CompositeElement extends TreeElement {
 
   @Override
   public void clearCaches() {
-    myCachedLength = -1;
-
+    long version = getVersionForReading();
+    doSetMyCachedLength(version, null);
     this.putUserData(OUR_HC_KEY, null);
 
-    clearRelativeOffsets(rawFirstChild());
+    clearRelativeOffsets(version, rawFirstChild());
   }
 
   private static void assertThreading(@NotNull PsiFile file) {
@@ -501,7 +587,9 @@ public class CompositeElement extends TreeElement {
 
   @Override
   public int getTextLength() {
-    int cachedLength = myCachedLength;
+    long version = getVersionForReading();
+    Integer cachedLengthBoxed = doGetMyCachedLength(version);
+    int cachedLength = cachedLengthBoxed == null ? -1 : cachedLengthBoxed;
     if (cachedLength >= 0) {
       return cachedLength;
     }
@@ -511,7 +599,7 @@ public class CompositeElement extends TreeElement {
       return walkCachingLength();
     }
     catch (AssertionError e) {
-      myCachedLength = -1;
+      doSetMyCachedLength(version, null);
       String assertion = StringUtil.getThrowableText(e);
       throw new AssertionError("Walking failure: ===\n"+assertion+"\n=== Thread dump:\n"+ ThreadDumper.dumpThreadsToString()+"\n===\n");
     }
@@ -519,13 +607,16 @@ public class CompositeElement extends TreeElement {
 
   @Override
   public int hc() {
+    InternalPsiVersioning.assertNotInFreezePsiVersion();
+    // todo: we need to store hc in versionedlazyfield
+    long version = getVersionForReading();
     Integer cached = getUserData(OUR_HC_KEY);
     if (cached != null) {
       return cached;
     }
 
     int hc = 0;
-    TreeElement child = firstChild;
+    TreeElement child = doGetFirstChild(version);
     while (child != null) {
       hc += child.hc();
       child = child.getTreeNext();
@@ -537,7 +628,13 @@ public class CompositeElement extends TreeElement {
 
   @Override
   public int getCachedLength() {
-    return myCachedLength;
+    long version = getVersionForReading();
+    Integer cachedLength = doGetMyCachedLength(version);
+    if (cachedLength != null) {
+      return cachedLength;
+    } else {
+      return -1;
+    }
   }
 
   private static @NotNull TreeElement drillDown(@NotNull TreeElement start) {
@@ -592,26 +689,41 @@ public class CompositeElement extends TreeElement {
   }
 
   void setCachedLength(int cachedLength) {
-    myCachedLength = cachedLength;
+    long version = getVersionForReading();
+    doSetMyCachedLength(version, cachedLength);
   }
 
   @Override
   public TreeElement getFirstChildNode() {
-    return firstChild;
+    long version = getVersionForReading();
+    return doGetFirstChild(version);
   }
 
   @Override
   public TreeElement getLastChildNode() {
-    return lastChild;
+    long version = getVersionForReading();
+    return doGetLastChild(version);
   }
 
   void setFirstChildNode(TreeElement firstChild) {
-    this.firstChild = firstChild;
-    clearRelativeOffsets(firstChild);
+    long version = getVersionForWriting();
+    setFirstChildNode(version, firstChild);
+  }
+
+  void setFirstChildNode(long version, TreeElement firstChild) {
+    assertElementCompatibility(this, firstChild);
+    doSetFirstChild(version, firstChild);
+    clearRelativeOffsets(version, firstChild);
   }
 
   void setLastChildNode(TreeElement lastChild) {
-    this.lastChild = lastChild;
+    long version = getVersionForWriting();
+    setLastChildNode(version, lastChild);
+  }
+
+  void setLastChildNode(long version, TreeElement lastChild) {
+    assertElementCompatibility(this, lastChild);
+    doSetLastChild(version, lastChild);
   }
 
   @Override
@@ -636,12 +748,14 @@ public class CompositeElement extends TreeElement {
 
   @Override
   public void addLeaf(@NotNull IElementType leafType, @NotNull CharSequence leafText, ASTNode anchorBefore) {
-    FileElement holder = new DummyHolder(getManager(), null).getTreeElement();
-    LeafElement leaf = ASTFactory.leaf(leafType, holder.getCharTable().intern(leafText));
-    CodeEditUtil.setNodeGenerated(leaf, true);
-    holder.rawAddChildren(leaf);
-
-    addChild(leaf, anchorBefore);
+    InternalPsiVersioning.inVersionedEnvironment(this.isVersioned(), () -> {
+      FileElement holder = new DummyHolder(getManager(), null).getTreeElement();
+      LeafElement leaf = ASTFactory.leaf(leafType, holder.getCharTable().intern(leafText));
+      CodeEditUtil.setNodeGenerated(leaf, true);
+      holder.rawAddChildren(leaf);
+      addChild(leaf, anchorBefore);
+      return null;
+    });
   }
 
   @Override
@@ -728,6 +842,7 @@ public class CompositeElement extends TreeElement {
    * Don't call this method, it's here for implementation reasons.
    */
   final @Nullable PsiElement getCachedPsi() {
+    //PsiVersioning.assertNotInFreezePsiVersion();
     return myWrapper;
   }
 
@@ -815,23 +930,24 @@ public class CompositeElement extends TreeElement {
   }
 
   public void rawAddChildrenWithoutNotifications(@NotNull TreeElement first) {
+    long version = getVersionForWriting();
     TreeElement last = getLastChildNode();
     if (last == null){
-      TreeElement chainLast = rawSetParents(first, this);
-      setFirstChildNode(first);
-      setLastChildNode(chainLast);
+      TreeElement chainLast = rawSetParents(version, first, this);
+      setFirstChildNode(version, first);
+      setLastChildNode(version, chainLast);
     }
     else {
-      last.rawInsertAfterMeWithoutNotifications(first);
+      last.rawInsertAfterMeWithoutNotifications(version, first);
     }
 
     DebugUtil.checkTreeStructure(this);
   }
 
-  static @NotNull TreeElement rawSetParents(@NotNull TreeElement child, @NotNull CompositeElement parent) {
-    child.rawRemoveUpToWithoutNotifications(null, false);
+  static @NotNull TreeElement rawSetParents(long version, @NotNull TreeElement child, @NotNull CompositeElement parent) {
+    child.rawRemoveUpToWithoutNotifications(version, null, false);
     while (true) {
-      child.setTreeParent(parent);
+      child.setTreeParent(version, parent);
       TreeElement treeNext = child.getTreeNext();
       if (treeNext == null) {
         return child;
@@ -851,7 +967,9 @@ public class CompositeElement extends TreeElement {
     if (oldChild == null) {
       return;
     }
-    FileElement treeElement = DummyHolderFactory.createHolder(oldParent.getManager(), null, false).getTreeElement();
+    FileElement treeElement = InternalPsiVersioning.inVersionedEnvironment(oldChild.isVersioned(), () -> {
+      return DummyHolderFactory.createHolder(oldParent.getManager(), null, false).getTreeElement();
+    });
     treeElement.rawAddChildren(oldChild);
   }
 
@@ -896,10 +1014,12 @@ public class CompositeElement extends TreeElement {
 
 
   public TreeElement rawFirstChild() {
-    return firstChild;
+    long version = getVersionForReading();
+    return doGetFirstChild(version);
   }
 
   public TreeElement rawLastChild() {
-    return lastChild;
+    long version = getVersionForReading();
+    return doGetLastChild(version);
   }
 }

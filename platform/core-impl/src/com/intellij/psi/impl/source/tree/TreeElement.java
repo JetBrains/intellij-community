@@ -6,9 +6,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.EditorLockFreeTyping;
+import com.intellij.openapi.application.ThreadingRuntimeFlagsKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.AbstractFileViewProvider;
 import com.intellij.psi.FileViewProvider;
@@ -20,9 +23,10 @@ import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.ReparseableASTNode;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.mvcc.VersionedPayloadMap;
+import com.intellij.psi.impl.source.tree.mvcc.VersionedPsiConsistencyException;
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning.PsiVersionRegistry;
-import com.intellij.psi.impl.source.tree.mvcc.VersionedPayloadMap;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.ReadOnlyLightVirtualFile;
@@ -41,12 +45,13 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
    */
   private static final int GARBAGE_COLLECTION_LIMIT = 4;
 
-  private TreeElement myNextSibling;
-  private TreeElement myPrevSibling;
-  private CompositeElement myParent;
 
-  private final IElementType myType;
-  private volatile int myStartOffsetInParent = -1;
+  // We need to perform atomic operations on fields of this class.
+  // AtomicReference takes more space than a plain reference (since it is a wrapper over `VarHandle`), so we use `VarHandle`s directly.
+  private static final VarHandleWrapper myNextSiblingAccessor = VarHandleWrapper.getFactory().create(TreeElement.class, "myNextSibling", Object.class);
+  private static final VarHandleWrapper myPrevSiblingAccessor = VarHandleWrapper.getFactory().create(TreeElement.class, "myPrevSibling", Object.class);
+  private static final VarHandleWrapper myParentAccessor = VarHandleWrapper.getFactory().create(TreeElement.class, "myParent", Object.class);
+  private static final VarHandleWrapper myStartOffsetInParentAccessor = VarHandleWrapper.getFactory().create(TreeElement.class, "myStartOffsetInParent", Object.class);
 
   /**
    * The version (of versioned PSI feature) when this element is created.
@@ -61,6 +66,44 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
    */
   // not final because of `clone`
   private volatile long creationVersion = InternalPsiVersioning.getCreationPsiVersionForElement();
+
+  /*
+    The following fields represent edges in the syntax tree graph.
+    They are either a direct reference to object (like `TreeElement`), or a reference to `VersionedPayloadMap`.
+
+    In the first case, these fields represent a direct reference associated with `creationVersion`.
+    If a field is a map, then it acts as a sorted map from long to `TreeElement`. In this case, the payloads in this map are ordered by versions.
+   */
+
+   /**
+   * A versioned reference to {@link CompositeElement}.
+   * @see doSetMyParent
+   * @see doGetMyParent
+   */
+  private volatile @Nullable Object myParent = null;
+
+  /**
+   * A versioned reference to {@link TreeElement}.
+   * @see doSetMyNextSibling
+   * @see doGetMyNextSibling
+   */
+  private volatile @Nullable Object myNextSibling = null;
+
+  /**
+   * A versioned reference to {@link TreeElement}.
+   * @see doSetMyPrevSibling
+   * @see doGetMyPrevSibling
+   */
+  private volatile @Nullable Object myPrevSibling = null;
+
+  private final IElementType myType;
+
+  /**
+   * A versioned reference to {@link Integer}.
+   * @see doGetMyStartOffsetInParent
+   * @see doSetMyStartOffsetInParent
+   */
+  private volatile @Nullable Object myStartOffsetInParent = null;
 
   public TreeElement(@NotNull IElementType type) {
     myType = type;
@@ -150,13 +193,83 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     }
   }
 
+  private void doSetMyNextSibling(long version, TreeElement nextSibling) {
+    if (version == -1) {
+      this.myNextSibling = nextSibling;
+    } else {
+      setVersionedField(myNextSiblingAccessor, version, nextSibling);
+    }
+  }
+
+  private TreeElement doGetMyNextSibling(long version) {
+    if (version == -1) {
+      return (TreeElement)this.myNextSibling;
+    } else {
+      Object result = getVersionedField(this.myNextSibling,  version);
+      return (TreeElement)result;
+    }
+  }
+
+  private void doSetMyPrevSibling(long version, TreeElement prevSibling) {
+    if (version == -1) {
+      this.myPrevSibling = prevSibling;
+    } else {
+      setVersionedField(myPrevSiblingAccessor, version, prevSibling);
+    }
+  }
+
+  private TreeElement doGetMyPrevSibling(long version) {
+    if (version == -1) {
+      return (TreeElement)this.myPrevSibling;
+    } else {
+      Object result = getVersionedField(this.myPrevSibling, version);
+      return (TreeElement)result;
+    }
+  }
+
+  private void doSetMyParent(long version, CompositeElement parent) {
+    if (version == -1) {
+      this.myParent = parent;
+    } else {
+      setVersionedField(myParentAccessor, version, parent);
+    }
+  }
+
+  private CompositeElement doGetMyParent(long version) {
+    if (version == -1) {
+      return (CompositeElement)this.myParent;
+    } else {
+      Object result = getVersionedField(this.myParent, version);
+      return (CompositeElement)result;
+    }
+  }
+
+  private void doSetMyStartOffsetInParent(long version, Integer startOffsetInParent) {
+    if (version == -1) {
+      this.myStartOffsetInParent = startOffsetInParent;
+    } else {
+      setVersionedField(myStartOffsetInParentAccessor, version, startOffsetInParent);
+    }
+  }
+
+  private Integer doGetMyStartOffsetInParent(long version) {
+    if (version == -1) {
+      return (Integer)this.myStartOffsetInParent;
+    } else {
+      Object result = getVersionedField(this.myStartOffsetInParent, version);
+      return (Integer)result;
+    }
+  }
+
   @Override
   public @NotNull Object clone() {
+    long version = Registry.is("psi.enable.persistent.syntax.tree", false) ? InternalPsiVersioning.getCurrentPsiVersion() : -1;
     TreeElement clone = (TreeElement)super.clone();
-    clone.myNextSibling = null;
-    clone.myPrevSibling = null;
-    clone.myParent = null;
-    clone.myStartOffsetInParent = -1;
+    clone.creationVersion = InternalPsiVersioning.isVersionedComputation() ? version : -1L;
+    myNextSiblingAccessor.setVolatile(clone, null);
+    myPrevSiblingAccessor.setVolatile(clone, null);
+    myParentAccessor.setVolatile(clone, null);
+    myStartOffsetInParentAccessor.setVolatile(clone, null);
     return clone;
   }
 
@@ -208,19 +321,20 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   public int getStartOffset() {
     int result = 0;
     TreeElement current = this;
-    while(current.myParent != null) {
+    while (current.getTreeParent() != null) {
       result += current.getStartOffsetInParent();
-      current = current.myParent;
+      current = current.getTreeParent();
     }
-    
+
     return result;
   }
 
   @Override
   public final int getStartOffsetInParent() {
-    if (myParent == null) return -1;
-    int offsetInParent = myStartOffsetInParent;
-    if (offsetInParent != -1) return offsetInParent;
+    long version = getVersionForReading();
+    if (doGetMyParent(version) == null) return -1;
+    Integer offsetInParent = doGetMyStartOffsetInParent(version);
+    if (offsetInParent != null) return offsetInParent;
 
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED) {
       assertReadAccessAllowed();
@@ -231,18 +345,19 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
       TreeElement prev = cur.getTreePrev();
       if (prev == null) break;
       cur = prev;
-      offsetInParent = cur.myStartOffsetInParent;
-      if (offsetInParent != -1) break;
+      offsetInParent = cur.doGetMyStartOffsetInParent(version);
+      if (offsetInParent != null) break;
     }
 
-    if (offsetInParent == -1) {
-      cur.myStartOffsetInParent = offsetInParent = 0;
+    if (offsetInParent == null) {
+      offsetInParent = 0;
+      cur.doSetMyStartOffsetInParent(version, offsetInParent);
     }
 
     while (cur != this) {
       TreeElement next = cur.getTreeNext();
       offsetInParent += cur.getTextLength();
-      next.myStartOffsetInParent = offsetInParent;
+      next.doSetMyStartOffsetInParent(version, offsetInParent);
       cur = next;
     }
     return offsetInParent;
@@ -286,54 +401,156 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
 
   @Override
   public final CompositeElement getTreeParent() {
-    return myParent;
+    long version = getVersionForReading();
+    return doGetMyParent(version);
   }
 
   @Override
   public final TreeElement getTreePrev() {
-    return myPrevSibling;
+    long version = getVersionForReading();
+    return doGetMyPrevSibling(version);
   }
 
-  final void setTreeParent(CompositeElement parent) {
-    if (parent == myParent) return;
+  final void setTreeParent(long version, CompositeElement parent) {
+    assertElementCompatibility(this, parent);
+    CompositeElement myActualParent = doGetMyParent(version);
+    if (parent == myActualParent) return;
 
-    if (myParent != null) {
+    if (myActualParent != null) {
       PsiFileImpl file = getCachedFile(this);
       if (file != null) {
         file.beforeAstChange();
       }
     }
 
-    myParent = parent;
+    doSetMyParent(version, parent);
     if (parent != null && parent.getElementType() != TokenType.DUMMY_HOLDER) {
       DebugUtil.revalidateNode(this);
     }
   }
 
+  final void setTreeParent(CompositeElement parent) {
+    long writeVersion = getVersionForWriting();
+    setTreeParent(writeVersion, parent);
+  }
+
+  /**
+   * We permit only interactions between elements that are either simultaneously versioned or simultaneously non-versioned.
+   */
+  @ApiStatus.Internal
+  protected static void assertElementCompatibility(@NotNull TreeElement first, @Nullable TreeElement second) {
+    if (!ThreadingRuntimeFlagsKt.getAssertTreeElementVersioningCompatibility()) {
+      return;
+    }
+    if (second == null) {
+      return;
+    }
+    boolean firstIsVersioned = first.isVersioned();
+    boolean secondIsVersioned = second.isVersioned();
+    if (firstIsVersioned != secondIsVersioned) {
+      throw new VersionedPsiConsistencyException.TreeElement(
+        "Tree elements " + first + " (versioned: " + firstIsVersioned + ") and " + second + " (versioned: "+ secondIsVersioned + ") are not compatible from versioning point of view.\n" +
+        "Most likely you created or copied some PSI element and then tried to attach it to a physical PSI tree.\n" +
+        "The solution is to create or copy elements in the same environment (i.e., inside / outside of write actions),\n" +
+        "or to use `com.intellij.psi.util.PsiVersioningService.inVersionedEnvironment` before creating or copying an element.");
+    }
+  }
+
+  @ApiStatus.Internal
+  public boolean isVersioned() {
+    return creationVersion != -1L;
+  }
+
+  @ApiStatus.Internal
+  protected long getVersionForWriting() {
+    if (isVersioned()) {
+      return InternalPsiVersioning.getCurrentPsiVersionForWrite();
+    } else {
+      return -1; // will be ignored
+    }
+  }
+
+  @ApiStatus.Internal
+  protected long getVersionForReading() {
+    if (isVersioned()) {
+      return InternalPsiVersioning.getCurrentPsiVersion();
+    } else {
+      return -1; // will be ignored
+    }
+  }
+
   final void setTreePrev(TreeElement prev) {
-    myPrevSibling = prev;
-    clearRelativeOffsets(this);
+    long version = getVersionForWriting();
+    setTreePrev(version, prev);
+  }
+
+  final void setTreePrev(long version, TreeElement prev) {
+    assertElementCompatibility(this, prev);
+    doSetMyPrevSibling(version, prev);
+    clearRelativeOffsets(version, this);
   }
 
   @Override
   public final TreeElement getTreeNext() {
-    return myNextSibling;
+    long version = getVersionForReading();
+    return doGetMyNextSibling(version);
   }
 
   final void setTreeNext(TreeElement next) {
-    myNextSibling = next;
-    clearRelativeOffsets(next);
+    long version = getVersionForWriting();
+    setTreeNext(version, next);
   }
 
-  static void clearRelativeOffsets(TreeElement element) {
+  final void setTreeNext(long version, TreeElement next) {
+    assertElementCompatibility(this, next);
+    doSetMyNextSibling(version, next);
+    clearRelativeOffsets(version, next);
+  }
+
+  static void clearRelativeOffsets(long version, TreeElement element) {
+    if (element == null) {
+      return;
+    }
     TreeElement cur = element;
-    while (cur != null && cur.myStartOffsetInParent != -1) {
-      cur.myStartOffsetInParent = -1;
-      cur = cur.getTreeNext();
+    while (cur != null) {
+      // Before the introduction of persistent PSI changes, we had a special exit condition in this loop:
+      // if offsetInParent was already removed, we did not we proceed with dropping this cache.
+      // With persistent PSI, this heuristic no longer works: the cache can be erased in two versions, and initialization in the earlier version
+      // must not influence the later version.
+      //
+      // So here we are trying to retain this logic, but we need to be careful: this iteration can be a very hot path,
+      // as shown in the test `XmlPerformanceTest.testPerformance5` -- we can accidentally start running O(n^2) offset cleanups for wide enough trees.
+      //
+      // So here we go unusually low-level and adapt the heuristic described above. Mainly, we are checking for explicitly erased values for a particular version.
+      if (cur.creationVersion == -1 && cur.myStartOffsetInParent == null) {
+        // a non-versioned tree element already has erased offsetInParent; we can safely abort the loop
+        break;
+      } else if (cur.creationVersion != -1) {
+        Object offset = myStartOffsetInParentAccessor.getVolatile(cur);
+        if (version == cur.creationVersion && offset == null) {
+          // a versioned tree element is not expanded, has erased offsetInParent, and we are trying to erase it for its creation version.
+          // thus it is safe to abort here also.
+          break;
+        }
+        if (offset instanceof VersionedPayloadMap && ((VersionedPayloadMap)offset).explicitlyRemoved(version)) {
+          // a versioned tree element is expanded, and the version was explicitly removed earlier.
+          // so we can also abort here, as all elements further are also removed.
+          break;
+        }
+      }
+      cur.doSetMyStartOffsetInParent(version, null);
+      cur = cur.doGetMyNextSibling(version);
     }
   }
 
   public void clearCaches() {
+  }
+
+  @Override
+  public <T> T getUserData(@NotNull Key<T> key) {
+    // userdata retrieval is not yet supported in versioned mode
+    InternalPsiVersioning.assertNotInFreezePsiVersion();
+    return super.getUserData(key);
   }
 
   @Override
@@ -386,37 +603,38 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   }
 
   public void rawInsertAfterMe(@NotNull TreeElement firstNew) {
-    rawInsertAfterMeWithoutNotifications(firstNew);
+    long version = getVersionForWriting();
+    rawInsertAfterMeWithoutNotifications(version, firstNew);
 
-    CompositeElement parent = getTreeParent();
+    CompositeElement parent = doGetMyParent(version);
     if (parent != null) {
       parent.subtreeChanged();
     }
   }
 
-  final void rawInsertAfterMeWithoutNotifications(@NotNull TreeElement firstNew) {
-    firstNew.rawRemoveUpToWithoutNotifications(null, false);
-    CompositeElement p = getTreeParent();
-    TreeElement treeNext = getTreeNext();
-    firstNew.setTreePrev(this);
-    setTreeNext(firstNew);
+  final void rawInsertAfterMeWithoutNotifications(long version, @NotNull TreeElement firstNew) {
+    firstNew.rawRemoveUpToWithoutNotifications(version, null, false);
+    CompositeElement p = doGetMyParent(version);
+    TreeElement treeNext = doGetMyNextSibling(version);
+    firstNew.setTreePrev(version, this);
+    setTreeNext(version, firstNew);
     while(true){
-      TreeElement n = firstNew.getTreeNext();
+      TreeElement n = firstNew.doGetMyNextSibling(version);
       assert n != this : "Attempt to create cycle";
-      firstNew.setTreeParent(p);
+      firstNew.setTreeParent(version, p);
       if(n == null) break;
       firstNew = n;
     }
 
     if(treeNext == null){
       if(p != null){
-        firstNew.setTreeParent(p);
-        p.setLastChildNode(firstNew);
+        firstNew.setTreeParent(version, p);
+        p.setLastChildNode(version, firstNew);
       }
     }
     else{
-      firstNew.setTreeNext(treeNext);
-      treeNext.setTreePrev(firstNew);
+      firstNew.setTreeNext(version, treeNext);
+      treeNext.setTreePrev(version, firstNew);
     }
     DebugUtil.checkTreeStructure(this);
   }
@@ -449,7 +667,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
 
   public void rawReplaceWithList(@Nullable TreeElement firstNew) {
     if (firstNew != null){
-      rawInsertAfterMeWithoutNotifications(firstNew);
+      rawInsertAfterMeWithoutNotifications(getVersionForWriting(), firstNew);
     }
     rawRemove();
   }
@@ -472,9 +690,10 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
 
   // remove nodes from this[including] to end[excluding] from the parent
   public void rawRemoveUpTo(@Nullable TreeElement end) {
-    CompositeElement parent = getTreeParent();
+    long version = getVersionForWriting();
+    CompositeElement parent = doGetMyParent(version);
 
-    rawRemoveUpToWithoutNotifications(end, true);
+    rawRemoveUpToWithoutNotifications(version, end, true);
 
     if (parent != null) {
       parent.subtreeChanged();
@@ -482,45 +701,45 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   }
 
   // remove nodes from this[including] to end[excluding] from the parent
-  final void rawRemoveUpToWithoutNotifications(@Nullable TreeElement end, boolean invalidate) {
+  final void rawRemoveUpToWithoutNotifications(long version, @Nullable TreeElement end, boolean invalidate) {
     if (this == end) return;
 
-    CompositeElement parent = getTreeParent();
-    TreeElement startPrev = getTreePrev();
-    TreeElement endPrev = end != null ? end.getTreePrev() : null;
+    CompositeElement parent = doGetMyParent(version);
+    TreeElement startPrev = doGetMyPrevSibling(version);
+    TreeElement endPrev = end != null ? end.doGetMyPrevSibling(version) : null;
 
-    assert end == null || end.getTreeParent() == parent : "Trying to remove non-child";
+    assert end == null || end.doGetMyParent(version) == parent : "Trying to remove non-child";
 
     if (end != null) {
       TreeElement element = this;
       while (element != end && element != null) {
-        element = element.getTreeNext();
+        element = element.doGetMyNextSibling(version);
       }
       assert element == end : end + " is not successor of " + this + " in the .getTreeNext() chain";
     }
     if (parent != null) {
-      if (getTreePrev() == null) {
-        parent.setFirstChildNode(end);
+      if (doGetMyPrevSibling(version) == null) {
+        parent.setFirstChildNode(version, end);
       }
       if (end == null) {
-        parent.setLastChildNode(startPrev);
+        parent.setLastChildNode(version, startPrev);
       }
     }
     if (startPrev != null) {
-      startPrev.setTreeNext(end);
+      startPrev.setTreeNext(version, end);
     }
     if (end != null) {
-      end.setTreePrev(startPrev);
+      end.setTreePrev(version, startPrev);
     }
 
-    setTreePrev(null);
+    setTreePrev(version, null);
     if (endPrev != null) {
-      endPrev.setTreeNext(null);
+      endPrev.setTreeNext(version, null);
     }
 
     if (parent != null) {
-      for (TreeElement element = this; element != null; element = element.getTreeNext()) {
-        element.setTreeParent(null);
+      for (TreeElement element = this; element != null; element = element.doGetMyNextSibling(version)) {
+        element.setTreeParent(version, null);
         if (invalidate) {
           element.onInvalidated();
         }
@@ -538,6 +757,9 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
 
   void assertReadAccessAllowed() {
     if (ApplicationManager.getApplication().isReadAccessAllowed()) return;
+    if (InternalPsiVersioning.getCurrentPsiVersionInsideFrozenPsi() != null) {
+      return;
+    }
     FileElement fileElement = TreeUtil.getFileElement(this);
     PsiElement psi = fileElement == null ? null : fileElement.getCachedPsi();
     if (psi == null) return;
