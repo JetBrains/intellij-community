@@ -5,20 +5,19 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.vcs.log.VcsLogCommitStorageIndex
-import com.intellij.vcs.log.VcsLogProvider
-import com.intellij.vcs.log.VcsLogRefs
-import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.*
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.jetbrains.annotations.ApiStatus
-import java.util.function.IntConsumer
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
-class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val storage: VcsLogStorage,
-                private val providers: Map<VirtualFile, VcsLogProvider>) : VcsLogRefs {
+class RefsModel private constructor(
+  val allRefsByRoot: Map<VirtualFile, VcsLogRefsOfSingleRoot>,
+  private val storage: VcsLogStorage,
+  private val providers: Map<VirtualFile, VcsLogProvider>,
+) : VcsLogRefs {
   private val bestRefForHead: Int2ObjectMap<VcsRef> = Int2ObjectOpenHashMap()
   private val rootForHead: Int2ObjectMap<VirtualFile> = Int2ObjectOpenHashMap()
 
@@ -58,7 +57,7 @@ class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val
 
   @RequiresBackgroundThread
   override fun stream(): Stream<VcsRef> {
-    return allRefsByRoot.values.asSequence().flatMap(CompressedRefs::getRefs).asStream()
+    return allRefsByRoot.values.asSequence().flatMap(VcsLogRefsOfSingleRoot::getRefs).asStream()
   }
 
   companion object {
@@ -72,16 +71,20 @@ class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val
 
     @ApiStatus.Internal
     @JvmStatic
-    fun create(refs: Map<VirtualFile, CompressedRefs>, heads: Set<VcsLogCommitStorageIndex>, storage: VcsLogStorage,
-               providers: Map<VirtualFile, VcsLogProvider>): RefsModel {
+    fun create(
+      refs: Map<VirtualFile, VcsLogRefsOfSingleRoot>,
+      heads: Set<VcsLogCommitStorageIndex>,
+      storage: VcsLogStorage,
+      providers: Map<VirtualFile, VcsLogProvider>,
+    ): RefsModel {
       val refsModel = RefsModel(refs, storage, providers)
 
       val remainingHeads = IntOpenHashSet(heads)
       refs.forEach { (root, refsForRoot) ->
-        refsForRoot.getBranchIndexes().forEach(IntConsumer { commit ->
+        refsForRoot.forEachBranchIndex { commit ->
           refsModel.updateCacheForHead(commit, root)
           remainingHeads.remove(commit)
-        })
+        }
       }
       storage.getCommitIds(remainingHeads).forEach { (head, commitId) -> refsModel.updateCacheForHead(head, commitId.root) }
 

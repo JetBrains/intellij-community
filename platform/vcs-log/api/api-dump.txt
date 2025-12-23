@@ -211,6 +211,14 @@ com.intellij.vcs.log.VcsLogRefresher
 com.intellij.vcs.log.VcsLogRefs
 - a:getBranches():java.util.Collection
 - a:stream():java.util.stream.Stream
+com.intellij.vcs.log.VcsLogRefsOfSingleRoot
+- a:contains(I):Z
+- a:forEachBranchIndex(java.util.function.IntConsumer):V
+- a:getBranches():kotlin.sequences.Sequence
+- getRefs():kotlin.sequences.Sequence
+- a:getRefsIndexes():java.util.Collection
+- a:getTags():kotlin.sequences.Sequence
+- a:refsToCommit(I):java.util.List
 com.intellij.vcs.log.VcsLogRevisionFilter
 - com.intellij.vcs.log.VcsLogBranchLikeFilter
 - getDisplayText():java.lang.String

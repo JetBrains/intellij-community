@@ -18,7 +18,9 @@ package com.intellij.vcs.log
 import java.util.stream.Stream
 
 /**
- * Collection of [branches &amp; tags references][VcsRef] which are in the log.
+ *  Represents a set of references for **all** VCS roots present in the VCS log.
+ *
+ *  @see VcsLogRefsOfSingleRoot
  */
 interface VcsLogRefs {
   /**

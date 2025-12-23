@@ -5,12 +5,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogRefsOfSingleRoot
 import com.intellij.vcs.log.VcsRef
-import it.unimi.dsi.fastutil.ints.*
-import org.jetbrains.annotations.ApiStatus
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import java.util.function.IntConsumer
 
-@ApiStatus.Internal
-class CompressedRefs(refs: Set<VcsRef>, private val myStorage: VcsLogStorage) {
+internal class CompressedRefs(refs: Set<VcsRef>, private val myStorage: VcsLogStorage) : VcsLogRefsOfSingleRoot {
   // maps each commit id to the list of tag ids on this commit
   private val tags: Int2ObjectMap<IntArrayList> = Int2ObjectOpenHashMap()
 
@@ -39,11 +42,11 @@ class CompressedRefs(refs: Set<VcsRef>, private val myStorage: VcsLogStorage) {
     }
   }
 
-  fun contains(index: VcsLogCommitStorageIndex): Boolean {
+  override fun contains(index: VcsLogCommitStorageIndex): Boolean {
     return branches.containsKey(index) || tags.containsKey(index)
   }
 
-  fun refsToCommit(index: VcsLogCommitStorageIndex): SmartList<VcsRef> {
+  override fun refsToCommit(index: VcsLogCommitStorageIndex): SmartList<VcsRef> {
     val result = SmartList<VcsRef>()
     branches[index]?.let { result.addAll(it) }
     tags[index]?.forEach { tag ->
@@ -58,22 +61,22 @@ class CompressedRefs(refs: Set<VcsRef>, private val myStorage: VcsLogStorage) {
     return result
   }
 
-  fun getBranches(): Sequence<VcsRef> = branches.values.asSequence().flatMap { it.asSequence() }
+  override fun getBranches(): Sequence<VcsRef> = branches.values.asSequence().flatMap { it.asSequence() }
 
-  private fun getTags(): Sequence<VcsRef> = tags.values.asSequence().flatMap { tagsCollection: IntArrayList ->
+  override fun getTags(): Sequence<VcsRef> = tags.values.asSequence().flatMap { tagsCollection: IntArrayList ->
     tagsCollection.asSequence().mapNotNull { myStorage.getVcsRef(it) }
   }
 
-  fun getRefs(): Sequence<VcsRef> = getBranches() + getTags()
-
-  fun getRefsIndexes(): IntSet {
+  override fun getRefsIndexes(): Collection<VcsLogCommitStorageIndex> {
     val result = IntOpenHashSet(branches.keys.size + tags.keys.size)
     result.addAll(branches.keys)
     result.addAll(tags.keys)
     return result
   }
 
-  fun getBranchIndexes(): IntSet = branches.keys
+  override fun forEachBranchIndex(consumer: IntConsumer) {
+    branches.keys.forEach(consumer)
+  }
 
   companion object {
     private val LOG = logger<CompressedRefs>()

@@ -21,7 +21,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.CompressedRefs;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
@@ -217,9 +216,9 @@ public final class VcsLogUtil {
   }
 
   public static @Nullable VcsRef findBranch(@NotNull RefsModel refs, @NotNull VirtualFile root, @NotNull String branchName) {
-    CompressedRefs compressedRefs = refs.getAllRefsByRoot().get(root);
-    if (compressedRefs == null) return null;
-    return ContainerUtil.find(compressedRefs.getBranches().iterator(), (ref) -> ref.getName().equals(branchName));
+    VcsLogRefsOfSingleRoot rootRefs = refs.getAllRefsByRoot().get(root);
+    if (rootRefs == null) return null;
+    return ContainerUtil.find(rootRefs.getBranches().iterator(), (ref) -> ref.getName().equals(branchName));
   }
 
   public static @NotNull List<Change> collectChanges(@NotNull List<? extends VcsFullCommitDetails> detailsList) {

@@ -134,7 +134,6 @@ f:com.intellij.vcs.log.data.MiniDetailsGetter$Companion
 f:com.intellij.vcs.log.data.RefsModel
 - com.intellij.vcs.log.VcsLogRefs
 - sf:Companion:com.intellij.vcs.log.data.RefsModel$Companion
-- <init>(java.util.Map,com.intellij.vcs.log.data.VcsLogStorage,java.util.Map):V
 - f:bestRefToHead(I):com.intellij.vcs.log.VcsRef
 - f:getAllRefsByRoot():java.util.Map
 - getBranches():java.util.Collection

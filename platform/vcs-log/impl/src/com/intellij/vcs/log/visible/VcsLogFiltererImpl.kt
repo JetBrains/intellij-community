@@ -438,7 +438,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     return mapRefsForRoots(refsModel, roots) { refs -> refs.getRefsIndexes() }
   }
 
-  private fun <T> mapRefsForRoots(refsModel: RefsModel, roots: Collection<VirtualFile>, mapping: (CompressedRefs) -> Iterable<T>) =
+  private fun <T> mapRefsForRoots(refsModel: RefsModel, roots: Collection<VirtualFile>, mapping: (VcsLogRefsOfSingleRoot) -> Iterable<T>) =
     refsModel.allRefsByRoot.filterKeys { roots.contains(it) }.values.flatMapTo(mutableSetOf(), mapping)
 
   private fun filterDetailsInMemory(permanentGraph: PermanentGraph<VcsLogCommitStorageIndex>,

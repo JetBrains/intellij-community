@@ -8,6 +8,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsLogRefsOfSingleRoot
 import com.intellij.vcs.log.graph.GraphColorManagerImpl
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.HeadCommitsComparator
@@ -36,7 +37,9 @@ open class DataPack internal constructor(
 
     @JvmStatic
     fun build(
-      commits: List<GraphCommit<VcsLogCommitStorageIndex>>, refs: Map<VirtualFile, CompressedRefs>, providers: Map<VirtualFile, VcsLogProvider>,
+      commits: List<GraphCommit<VcsLogCommitStorageIndex>>,
+      refs: Map<VirtualFile, VcsLogRefsOfSingleRoot>,
+      providers: Map<VirtualFile, VcsLogProvider>,
       storage: VcsLogStorage, full: Boolean,
     ): DataPack {
       val refsModel = RefsModel.create(refs, getHeads(commits), storage, providers)
@@ -57,7 +60,7 @@ class SmallDataPack private constructor(
     @JvmStatic
     fun build(
       commits: List<GraphCommit<VcsLogCommitStorageIndex>>,
-      refs: Map<VirtualFile, CompressedRefs>,
+      refs: Map<VirtualFile, VcsLogRefsOfSingleRoot>,
       providers: Map<VirtualFile, VcsLogProvider>,
       storage: VcsLogStorage,
     ): DataPack {

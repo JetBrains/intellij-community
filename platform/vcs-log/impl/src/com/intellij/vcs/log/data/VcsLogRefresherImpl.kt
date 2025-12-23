@@ -12,6 +12,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.vcs.log.TimedVcsCommit
 import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsLogRefsOfSingleRoot
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.data.DataPack.ErrorDataPack
 import com.intellij.vcs.log.data.util.trace
@@ -310,7 +311,7 @@ internal class VcsLogRefresherImpl(
       DataPack.EMPTY
     }
 
-  private fun prepareRequirements(roots: Collection<VirtualFile>, commitCount: Int, prevRefs: Map<VirtualFile, CompressedRefs>?) =
+  private fun prepareRequirements(roots: Collection<VirtualFile>, commitCount: Int, prevRefs: Map<VirtualFile, VcsLogRefsOfSingleRoot>?) =
     roots.associateWith { root ->
       val refs = prevRefs?.get(root)?.getRefs()?.toList()
       if (refs == null) {
@@ -400,8 +401,8 @@ internal class VcsLogRefresherImpl(
   private fun join(
     fullLog: List<GraphCommit<Int>>,
     recentCommits: List<GraphCommit<Int>>,
-    previousRefs: Map<VirtualFile, CompressedRefs>,
-    newRefs: Map<VirtualFile, CompressedRefs>,
+    previousRefs: Map<VirtualFile, VcsLogRefsOfSingleRoot>,
+    newRefs: Map<VirtualFile, VcsLogRefsOfSingleRoot>,
   ): List<GraphCommit<Int>>? {
     if (fullLog.isEmpty()) return recentCommits
 
@@ -452,14 +453,14 @@ private data class CommitCountRequirements(private val commitCount: Int) : VcsLo
 }
 
 private class LogInfo {
-  private val refsByRoot = HashMap<VirtualFile, CompressedRefs>()
+  private val refsByRoot = HashMap<VirtualFile, VcsLogRefsOfSingleRoot>()
   private val commitsByRoot = HashMap<VirtualFile, List<GraphCommit<Int>>>()
 
   fun put(root: VirtualFile, commits: List<GraphCommit<Int>>) {
     commitsByRoot[root] = commits
   }
 
-  fun put(root: VirtualFile, refs: CompressedRefs) {
+  fun put(root: VirtualFile, refs: VcsLogRefsOfSingleRoot) {
     refsByRoot[root] = refs
   }
 
@@ -467,9 +468,9 @@ private class LogInfo {
 
   fun getCommits(root: VirtualFile): List<GraphCommit<Int>>? = commitsByRoot[root]
 
-  fun getRefs(): Map<VirtualFile, CompressedRefs> = refsByRoot.toMap()
+  fun getRefs(): Map<VirtualFile, VcsLogRefsOfSingleRoot> = refsByRoot.toMap()
 
-  fun getRefs(root: VirtualFile): CompressedRefs? = refsByRoot[root]
+  fun getRefs(root: VirtualFile): VcsLogRefsOfSingleRoot? = refsByRoot[root]
 
   fun clear() {
     refsByRoot.clear()
