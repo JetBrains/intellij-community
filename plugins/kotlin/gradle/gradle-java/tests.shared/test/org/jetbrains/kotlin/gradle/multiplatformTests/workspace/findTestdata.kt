@@ -23,9 +23,20 @@ internal fun findMostSpecificExistingFileOrNewDefault(
     testDataDir: File,
     kotlinTestProperties: KotlinTestProperties,
     testConfiguration: TestConfiguration
-): File {
-    val testClassifier: String? = testConfiguration.getConfiguration(GeneralWorkspaceChecks).testClassifier
+) = findMostSpecificExistingFileOrNewDefault(
+    checkerClassifier, testDataDir,
+    kotlinTestProperties.getTestDataClassifiersFromMostSpecific(),
+    testConfiguration.getConfiguration(GeneralWorkspaceChecks).testClassifier,
+    fileExists = { this.exists() }
+)
 
+internal fun findMostSpecificExistingFileOrNewDefault(
+    checkerClassifier: String,
+    testDataDir: File,
+    testDataClassifiersFromMostSpecific: Sequence<List<String>>,
+    testClassifier: String?,
+    fileExists: File.() -> Boolean,
+): File {
     val hostType = when {
         HostManager.hostIsMac -> "macos"
         HostManager.hostIsLinux -> "linux"
@@ -36,20 +47,24 @@ internal fun findMostSpecificExistingFileOrNewDefault(
     val hostName = HostManager.host.name
 
     val classifiersFromTestProperties: Sequence<List<String>> =
-        kotlinTestProperties.getTestDataClassifiersFromMostSpecific() + emptyList() // Ensure that we check "no classifiers" case
+        // get classifiers such
+        testDataClassifiersFromMostSpecific + listOf(emptyList()) // Ensure that we check "no classifiers" case
 
     val prioritisedClassifyingParts: Sequence<List<String>> = classifiersFromTestProperties.map {
-        // NB: test classifier always come first and always present (if it is passed)
+        // NB: test classifier, e.g. "legacy": source-roots -> source-roots-legacy
         listOfNotNull(testClassifier) + it
     }.flatMap { parts ->
-        sequenceOf(parts, parts + listOfNotNull(hostType), parts + hostName)
+        sequenceOf(parts + hostName, parts + listOfNotNull(hostType), parts)
     }
 
-    return prioritisedClassifyingParts
-        .filter { it.isNotEmpty() }
-        .map { classifierParts -> fileWithClassifyingParts(testDataDir, checkerClassifier, classifierParts) }
-        .firstNotNullOfOrNull { it.takeIf(File::exists) }
-        ?: fileWithClassifyingParts(testDataDir, checkerClassifier, additionalClassifiers = emptyList()) // Non-existent file
+    val prioritizedTestData = prioritisedClassifyingParts
+        .map { classifierParts ->
+            fileWithClassifyingParts(testDataDir, checkerClassifier, classifierParts)
+        }
+
+    return prioritizedTestData.firstOrNull { it.fileExists() }
+        // return the least classified test data for test data generation
+        ?: prioritizedTestData.last()
 }
 
 private fun fileWithClassifyingParts(testDataDir: File, checkerClassifier: String, additionalClassifiers: List<String>): File {
