@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.source.getPsi
 
 @Suppress("DataClassPrivateConstructor") // we have modifier data to get equals&hashCode only
+@ConsistentCopyVisibility
 data class ArgumentSliceProducer private constructor(
     private val parameterIndex: Int,
     private val isExtension: Boolean

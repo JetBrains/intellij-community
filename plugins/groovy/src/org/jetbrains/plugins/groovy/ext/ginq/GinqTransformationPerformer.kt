@@ -126,7 +126,7 @@ class GinqTransformationPerformer(private val root: GinqRootPsiElement) : Groovy
     return true
   }
 
-  override fun computeCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) = with(GinqCompletionUtils) {
+  override fun computeCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet): Unit = with(GinqCompletionUtils) {
     val position = parameters.position
     val tree = position.getClosestGinqTree(root)
     if (tree == null) {

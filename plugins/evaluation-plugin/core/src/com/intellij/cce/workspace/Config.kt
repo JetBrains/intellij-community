@@ -23,6 +23,7 @@ import java.nio.file.Paths
  * @property reorder The configuration for element reordering step.
  * @property reports The configuration for report generation step.
  */
+@ConsistentCopyVisibility
 data class Config private constructor(
   val outputDir: String,
   val strategy: EvaluationStrategy,
@@ -67,6 +68,7 @@ data class Config private constructor(
     val sourceFile: String?
   }
 
+  @ConsistentCopyVisibility
   data class ActionsGenerationIml internal constructor(
     override var projectPath: String,
     override val projectName: String,
@@ -87,6 +89,7 @@ data class Config private constructor(
     val chunkSize: Int?
   }
   
+  @ConsistentCopyVisibility
   data class FileDatasetImpl internal constructor(
     override val url: String,
     override val chunkSize: Int?,
@@ -109,6 +112,7 @@ data class Config private constructor(
    * @property trainTestSplit The train test split for detailed ranking logs.
    * @property registry List of registry values to be updated before the evaluation in the format "key1=value1,key2=value2"
    */
+  @ConsistentCopyVisibility
   data class ActionsInterpretation internal constructor(
     val experimentGroup: Int?,
     val sessionsLimit: Int?,
@@ -134,6 +138,7 @@ data class Config private constructor(
    * @property title The title of the reordering in reports.
    * @property features The list of ML features to be used for reordering.
    */
+  @ConsistentCopyVisibility
   data class ReorderElements internal constructor(
     val useReordering: Boolean,
     val title: String,
@@ -149,6 +154,7 @@ data class Config private constructor(
    * @property comparisonFilters The list of comparison filters. These filters allow subsetting sessions based on multiple evaluations.
    * @property lookupFilters The list of lookup filters. These filters allow filtering out certain lookups from the session.
    */
+  @ConsistentCopyVisibility
   data class ReportGeneration internal constructor(
     val evaluationTitle: String,
     val defaultMetrics: List<String>?,

@@ -18,6 +18,7 @@ import java.awt.Image
 import java.util.function.Supplier
 
 @Internal
+@ConsistentCopyVisibility
 internal data class DocumentationContentData internal constructor(
   val html: @Nls String,
   val imageResolver: DocumentationImageResolver?,

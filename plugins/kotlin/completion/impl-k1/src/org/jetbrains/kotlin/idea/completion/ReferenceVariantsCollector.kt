@@ -78,6 +78,7 @@ class ReferenceVariantsCollector(
         }
     }
 
+    @ConsistentCopyVisibility
     private data class FilterConfiguration internal constructor(
         val descriptorKindFilter: DescriptorKindFilter,
         val additionalPropertyNameFilter: ((String) -> Boolean)?,

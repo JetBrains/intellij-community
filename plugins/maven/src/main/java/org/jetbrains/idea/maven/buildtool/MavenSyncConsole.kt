@@ -102,7 +102,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler, Mave
   }
 
   @Synchronized
-  private fun addText(parentId: Any, @Nls text: String, stdout: Boolean) = doIfImportInProcess {
+  private fun addText(parentId: Any, @Nls text: String, stdout: Boolean): Unit = doIfImportInProcess {
     if (StringUtil.isEmpty(text)) {
       return
     }
@@ -132,7 +132,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler, Mave
   }
 
   @Synchronized
-  fun addWarning(@Nls text: String, @Nls description: String, filePosition: FilePosition?) = doIfImportInProcess {
+  fun addWarning(@Nls text: String, @Nls description: String, filePosition: FilePosition?): Unit = doIfImportInProcess {
     if (!newIssue(text + description + filePosition)) return
     if (filePosition == null) {
       mySyncView.onEvent(mySyncId,

@@ -162,6 +162,7 @@ class XDebuggerThreadsList(
   }
 }
 
+@ConsistentCopyVisibility
 data class StackInfo internal constructor(
   @Nls val displayText: String,
   val icon: Icon?,

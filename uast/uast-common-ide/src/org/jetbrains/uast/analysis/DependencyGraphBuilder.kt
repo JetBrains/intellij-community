@@ -310,7 +310,7 @@ internal class DependencyGraphBuilder private constructor(
     return@checkedDepthCall true
   }
 
-  override fun visitExpressionList(node: UExpressionList) = checkedDepthCall(node) {
+  override fun visitExpressionList(node: UExpressionList): Boolean = checkedDepthCall(node) {
     ProgressManager.checkCanceled()
     if (node.kind.name != UAST_KT_ELVIS_NAME) {
       return super.visitExpressionList(node)

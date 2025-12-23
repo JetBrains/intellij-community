@@ -37,6 +37,7 @@ object PrefixMatchingUtil {
     features.addFeature("matched_last_word", prefixMatchingScores.exactFinal, false)
   }
 
+  @ConsistentCopyVisibility
   data class PrefixMatchingScores internal constructor(
     val exact: Boolean,
     val exactFinal: Boolean,

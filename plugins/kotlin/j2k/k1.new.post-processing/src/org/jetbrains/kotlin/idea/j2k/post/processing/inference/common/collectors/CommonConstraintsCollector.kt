@@ -26,7 +26,7 @@ class CommonConstraintsCollector : ConstraintsCollector() {
         boundTypeCalculator: BoundTypeCalculator,
         inferenceContext: InferenceContext,
         resolutionFacade: ResolutionFacade
-    ) = with(boundTypeCalculator) {
+    ): Unit = with(boundTypeCalculator) {
         when {
             element is KtBinaryExpressionWithTypeRHS && KtPsiUtil.isUnsafeCast(element) -> {
                 element.right?.typeElement?.let { inferenceContext.typeElementToTypeVariable[it] }?.also { typeVariable ->

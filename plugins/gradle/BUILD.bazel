@@ -46,6 +46,7 @@ jvm_library(
     "@lib//:slf4j-jdk14",
     "//platform/ide-core-impl",
     "@lib//:gradle",
+    "@lib//:jspecify",
     "//libraries/gson",
     "//platform/object-serializer:objectSerializer-annotations",
     "//libraries/ion",

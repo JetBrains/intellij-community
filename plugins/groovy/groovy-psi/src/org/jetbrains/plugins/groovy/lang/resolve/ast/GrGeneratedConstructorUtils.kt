@@ -59,6 +59,7 @@ private fun inferStringArrayValueShallow(anno: PsiAnnotation, attributeName: Str
 /**
  * For specific annotation (@MapConstructor/@TupleConstructor) this class computes all actually affected members
  */
+@ConsistentCopyVisibility
 data class AffectedMembersCache internal constructor(private val order: List<PsiNamedElement>,
                                                      private val hasPropertyOptions: Boolean,
                                                      private val referencedFromExcludes: List<PsiNamedElement>) {

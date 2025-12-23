@@ -8,9 +8,9 @@ import org.jetbrains.kotlin.idea.gradleTooling.model.noarg.NoArgModel
 
 class NoArgProjectResolverExtension : AnnotationBasedPluginProjectResolverExtension<NoArgModel>() {
     companion object {
-        val KEY = Key.create(NoArgModel::class.java, 1)
+        val KEY: Key<NoArgModel> = Key.create(NoArgModel::class.java, 1)
     }
 
     override val modelClass get() = NoArgModel::class.java
-    override val userDataKey get() = KEY
+    override val userDataKey: Key<NoArgModel> get() = KEY
 }

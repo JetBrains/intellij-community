@@ -8,6 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = [
+    "@lib//:jspecify",
     "@lib//:gradle",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",

@@ -8,9 +8,9 @@ import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AnnotationBasedPlugin
 
 class AllOpenProjectResolverExtension : AnnotationBasedPluginProjectResolverExtension<AllOpenModel>() {
     companion object {
-        val KEY = Key.create(AllOpenModel::class.java, 1)
+        val KEY: Key<AllOpenModel> = Key.create(AllOpenModel::class.java, 1)
     }
 
     override val modelClass get() = AllOpenModel::class.java
-    override val userDataKey get() = KEY
+    override val userDataKey: Key<AllOpenModel> get() = KEY
 }

@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport
 import org.jetbrains.plugins.groovy.transformations.TransformationContext
 
 class RecordTransformationSupport : AstTransformationSupport {
-  override fun applyTransformation(context: TransformationContext) = with(context) {
+  override fun applyTransformation(context: TransformationContext): Unit = with(context) {
     if (codeClass is GrRecordDefinition) {
       prepareSyntacticRecord(codeClass as GrRecordDefinition)
     }

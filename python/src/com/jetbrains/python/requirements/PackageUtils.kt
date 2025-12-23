@@ -29,10 +29,10 @@ operator fun PyPackageVersion?.compareTo(other: PyPackageVersion?): Int {
   if (diff != 0) {
     val tail = Array(kotlin.math.abs(diff)) { "0" }
     if (diff > 0) {
-      b = other.copy(release = (partsOther + tail).joinToString("."))
+      b = other.withRelease((partsOther + tail).joinToString("."))
     }
     else {
-      a = this.copy(release = (partsThis + tail).joinToString("."))
+      a = this.withRelease((partsThis + tail).joinToString("."))
     }
   }
   return PyPackageVersionComparator.compare(a, b)
@@ -58,7 +58,7 @@ fun compareVersions(actual: PyPackageVersion?, operation: String, required: PyPa
     val partsAsInt = parts.subList(0, parts.size - 2).map { it.toInt() }
     val lastGroup = parts[parts.size - 2].toInt() + 1
 
-    val maxRequired = required.copy(release = (partsAsInt + listOf(lastGroup)).joinToString("."))
+    val maxRequired = required.withRelease((partsAsInt + listOf(lastGroup)).joinToString("."))
     return compareVersions(actual, ">=", required) && compareVersions(actual, "<", maxRequired)
   }
 

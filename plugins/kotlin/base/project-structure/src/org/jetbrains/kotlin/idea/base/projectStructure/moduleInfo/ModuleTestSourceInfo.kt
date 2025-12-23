@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.utils.closure
 
 //TODO: (module refactoring) do not create ModuleTestSourceInfo when there are no test roots for module
 @K1ModeProjectStructureApi
+@ConsistentCopyVisibility
 data class ModuleTestSourceInfo internal constructor(
     override val module: Module
 ) : ModuleSourceInfoWithExpectedBy(forProduction = false), IdeaModuleInfo {

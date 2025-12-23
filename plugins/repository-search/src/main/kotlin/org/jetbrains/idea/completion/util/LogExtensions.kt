@@ -129,13 +129,13 @@ private inline fun catchAndSuppress(action: () -> Unit) {
   runCatching { action() }
 }
 
-internal fun logTrace(message: String) = catchAndSuppress {
+internal fun logTrace(message: String): Unit = catchAndSuppress {
   if (!Registry.`is`("org.jetbrains.idea.reposearch.log.debug", false)) return
   if (!logger.isDebugEnabled && !notificationShown.getAndSet(true)) warnNotLoggable()
   logger.trace(message)
 }
 
-internal fun logTrace(throwable: Throwable) = catchAndSuppress {
+internal fun logTrace(throwable: Throwable): Unit = catchAndSuppress {
   if (!Registry.`is`("org.jetbrains.idea.reposearch.log.debug", false)) return
   if (!logger.isDebugEnabled && !notificationShown.getAndSet(true)) warnNotLoggable()
   logger.trace(throwable)

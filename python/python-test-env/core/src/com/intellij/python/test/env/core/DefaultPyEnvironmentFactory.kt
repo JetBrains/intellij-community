@@ -24,7 +24,8 @@ class DefaultPyEnvironmentFactory(
           override val cacheDir: Path = PyEnvDownloadCache.cacheDirectory()
         }
         @Suppress("UNCHECKED_CAST")
-        return (provider as PyEnvironmentProvider<PyEnvironmentSpec<*>>).setupEnvironment(context, spec)
+        val setupEnv = provider::setupEnvironment as suspend (PyEnvironmentProvider.Context, PyEnvironmentSpec<*>) -> PyEnvironment
+        return setupEnv(context, spec)
       }
     }
     error("No provider found for environment specification: $spec")

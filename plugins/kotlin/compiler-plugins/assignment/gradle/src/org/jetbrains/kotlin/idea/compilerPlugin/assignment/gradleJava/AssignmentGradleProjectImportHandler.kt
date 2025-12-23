@@ -16,6 +16,6 @@ class AssignmentGradleProjectImportHandler : AbstractAnnotationBasedCompilerPlug
     override val compilerPluginId = PLUGIN_ID
     override val pluginName = "assignment"
     override val annotationOptionName = ANNOTATION_OPTION_NAME
-    override val pluginJarFileFromIdea = KotlinArtifacts.assignmentCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+    override val pluginJarFileFromIdea: String = KotlinArtifacts.assignmentCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
     override val modelKey = AssignmentProjectResolverExtension.KEY
 }

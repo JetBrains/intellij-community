@@ -1342,7 +1342,7 @@ class JavaToJKTreeBuilder(
             this@withLineBreaksFrom
         }
 
-    private fun <O : JKFormattingOwner> O.withCommentsAfterWithParent(psi: PsiElement?) = with(formattingCollector) {
+    private fun <O : JKFormattingOwner> O.withCommentsAfterWithParent(psi: PsiElement?): O = with(formattingCollector) {
         if (psi == null) return@with this@withCommentsAfterWithParent
         this@withCommentsAfterWithParent.commentsAfter += psi.commentsAfterWithParent()
         return this@withCommentsAfterWithParent

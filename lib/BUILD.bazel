@@ -8136,6 +8136,20 @@ jvm_import(
 )
 
 jvm_import(
+  name = "jspecify",
+  jar = "@org_jspecify-jspecify-1_0_0_http//file",
+  source_jar = "@org_jspecify-jspecify-1_0_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "jspecify-provided",
+  exports = [":jspecify"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "jsr305",
   jar = "@com_google_code_findbugs-jsr305-3_0_2_http//file",
   source_jar = "@com_google_code_findbugs-jsr305-3_0_2-sources_http//file",
@@ -10896,7 +10910,6 @@ java_library(
     ":androidx_lifecycle-lifecycle-runtime-compose-desktop-2_9_4_http_import",
     ":androidx_lifecycle-lifecycle-runtime-desktop-2_9_4_http_import",
     ":androidx_lifecycle-lifecycle-common-jvm-2_9_4_http_import",
-    ":org_jspecify-jspecify-1_0_0_http_import",
     ":androidx_arch_core-core-common-2_2_0_http_import",
     ":androidx_annotation-annotation-1_1_0_http_import",
   ],

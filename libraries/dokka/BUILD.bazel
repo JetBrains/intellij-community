@@ -4,6 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "dokka",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:libraries-dokka-jetbrains-dokka-analysis-kotlin-descriptors-provided"]
 )
 ### auto-generated section `build intellij.libraries.dokka` end

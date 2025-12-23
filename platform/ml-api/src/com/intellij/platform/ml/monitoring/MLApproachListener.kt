@@ -32,6 +32,7 @@ interface MLTaskGroupListener {
    *
    * A proper way to create it is to use [monitoredBy]
    */
+  @ConsistentCopyVisibility
   data class ApproachToListener<M : MLModel<P>, P : Any> internal constructor(
     val taskApproachBuilder: Class<out MLTaskApproachBuilder<P>>,
     val approachListener: Collection<MLApproachInitializationListener<M, P>>

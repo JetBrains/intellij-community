@@ -21,7 +21,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
 
   @Volatile var enabled = true
 
-  suspend fun waitAutoSync() = reportRawProgress { reporter ->
+  suspend fun waitAutoSync(): Unit = reportRawProgress { reporter ->
     val autoFuture = autoSyncFuture ?: return
     if (autoFuture.isCompleted) {
       autoSyncFuture = null
@@ -128,7 +128,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
   }
 }
 
-internal inline fun catchAndLog(asWarning: Boolean = false, runnable: () -> Unit) {
+internal inline fun catchAndLog(asWarning: Boolean = false, runnable: () -> Unit): Unit {
   try {
     runnable()
   }

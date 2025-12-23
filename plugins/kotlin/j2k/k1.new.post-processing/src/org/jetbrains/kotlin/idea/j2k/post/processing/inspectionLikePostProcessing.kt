@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -54,7 +55,7 @@ internal inline fun <reified E : PsiElement, I : PsiBasedModCommandAction<E>> mo
     override val writeActionNeeded = writeActionNeeded
 }
 
-internal inline fun <reified E : PsiElement, I : AbstractApplicabilityBasedInspection<E>> inspectionBasedProcessing(
+internal inline fun <reified E : KtElement, I : AbstractApplicabilityBasedInspection<E>> inspectionBasedProcessing(
     inspection: I,
     writeActionNeeded: Boolean = true,
     checkInspectionIsEnabled: Boolean = true,

@@ -129,7 +129,7 @@ open class ModuleDependencyIndexImpl(private val project: Project): ModuleDepend
     return jdkChangeListener.hasDependencyOn(sdk)
   }
 
-  fun workspaceModelChanged(event: VersionedStorageChange) = changedListenerTimeMs.addMeasuredTime {
+  fun workspaceModelChanged(event: VersionedStorageChange): Unit = changedListenerTimeMs.addMeasuredTime {
     if (project.isDisposed) return
 
     // By using set we make sure that we won't add the same library multiple times

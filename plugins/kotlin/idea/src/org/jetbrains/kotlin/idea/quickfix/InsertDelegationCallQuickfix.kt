@@ -51,7 +51,7 @@ class InsertDelegationCallQuickfix(val isThis: Boolean, element: KtSecondaryCons
     }
 
     object InsertThisDelegationCallFactory : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic) =
+        override fun createAction(diagnostic: Diagnostic): IntentionAction? =
             diagnostic.createIntentionForFirstParentOfType<KtSecondaryConstructor> { secondaryConstructor ->
                 return if (secondaryConstructor.getContainingClassOrObject().getConstructorsCount() <= 1 ||
                     !secondaryConstructor.hasImplicitDelegationCall()

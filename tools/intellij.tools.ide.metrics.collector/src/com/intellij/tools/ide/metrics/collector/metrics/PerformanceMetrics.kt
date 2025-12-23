@@ -20,11 +20,13 @@ data class PerformanceMetrics(
     /**
      * Metric used to measure duration of events in ms
      */
+    @ConsistentCopyVisibility
     data class Duration internal constructor(override val name: String) : MetricId()
 
     /**
      * Metric used to count the number of times an event has occurred
      */
+    @ConsistentCopyVisibility
     data class Counter internal constructor(override val name: String) : MetricId()
   }
 

@@ -32,5 +32,6 @@
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="fleet:jetbrains.intellij.platform.util.zip.squashed" level="project" />
     <orderEntry type="library" name="fleet:jetbrains.intellij.idea.community.build.zip" level="project" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
   </component>
 </module>

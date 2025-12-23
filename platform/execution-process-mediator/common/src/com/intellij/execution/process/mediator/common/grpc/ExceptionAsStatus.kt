@@ -13,10 +13,11 @@ import java.io.IOException
 import java.util.concurrent.CancellationException
 import kotlin.reflect.KClass
 
-@Suppress("DataClassPrivateConstructor")
+@ConsistentCopyVisibility
 data class ExceptionAsStatus private constructor(val status: Status,
                                                  val exceptionDescriptor: ExceptionDescriptor<*>) {
 
+  @ConsistentCopyVisibility
   data class ExceptionDescriptor<T : Throwable> internal constructor(
     val type: KClass<out T>,
     val constructor: (String?, Throwable?) -> T

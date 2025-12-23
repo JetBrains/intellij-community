@@ -31,7 +31,7 @@ private typealias CompilationDependencies = Set<KotlinDependency>
 
 private fun KotlinMppGradleProjectResolver.Companion.populateModuleDependenciesByPlatformPropagation(
     context: KotlinMppPopulateModuleDependenciesContext, sourceSet: KotlinSourceSet
-) = with(context) {
+): Unit = with(context) {
     val sourceSetDataNode = getSiblingKotlinModuleData(sourceSet, gradleIdeaModule, ideModule, resolverCtx)?.cast<GradleSourceSetData>()
         ?: return
 

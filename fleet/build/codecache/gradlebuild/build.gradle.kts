@@ -61,6 +61,7 @@ kotlin {
     implementation(jps.com.jetbrains.intellij.idea.idea.community.build.zip464377771.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
+    implementation(jps.org.jetbrains.annotations1504825916.get())
     implementation(project(":fleet.bundles"))
     implementation(project(":fleet.codecache"))
     implementation(project(":fleet.build.platform"))

@@ -74,6 +74,7 @@ interface NavigationOptions {
   }
 
   @Internal
+  @ConsistentCopyVisibility
   data class Impl internal constructor(
     val requestFocus: Boolean,
     val preserveCaret: Boolean,

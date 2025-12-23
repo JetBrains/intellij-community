@@ -29,6 +29,7 @@ jvm_library(
     "@lib//:slf4j-api",
     "@lib//:fleet-jetbrains-intellij-platform-util-zip-squashed",
     "@lib//:fleet-jetbrains-intellij-idea-community-build-zip",
+    "@lib//:jetbrains-annotations",
   ]
 )
 ### auto-generated section `build fleet.build.codecache` end

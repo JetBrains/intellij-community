@@ -142,6 +142,7 @@ class NotRoamableUiSettings @Internal constructor(): SerializablePersistentState
   }
 }
 
+@ConsistentCopyVisibility
 data class NotRoamableUiOptions internal constructor(
   @JvmField @OptionTag val ideAAType: AntialiasingType = if (AntialiasingType.canUseSubpixelAAForIDE()) AntialiasingType.SUBPIXEL else AntialiasingType.GREYSCALE,
   @JvmField @OptionTag val editorAAType: AntialiasingType = if (AntialiasingType.canUseSubpixelAAForEditor()) AntialiasingType.SUBPIXEL else AntialiasingType.GREYSCALE,

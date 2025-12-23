@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 
 // todo merge into PluginSetState?
 @ApiStatus.Internal
+@ConsistentCopyVisibility
 data class PluginManagerState internal constructor(
   @JvmField val pluginSet: PluginSet,
   @JvmField val pluginIdsToDisable: Set<PluginId>,

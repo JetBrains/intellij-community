@@ -359,8 +359,8 @@ private fun Element.findClassMemberElementDescriptionFromAnchor(doIncludeSignatu
 private fun Element.findElementDescriptionFromUlBlockList(doIncludeSignature: Boolean = false): String? {
     val infoHolder = selectFirst("li.blockList") ?: return null
     val description = infoHolder.getElementsByClass("block").first() ?: return null
-    val signature = description.previousElementSibling()?.takeIf { it.tag().normalName() == "pre" }
-    val tagsDictionary = description.nextElementSibling()?.takeIf { it.tag().normalName() == "dl" }
+    val signature: Element? = (description.previousElementSibling() as Element?)?.takeIf { it.tag().normalName() == "pre" }
+    val tagsDictionary: Element? = (description.nextElementSibling() as Element?)?.takeIf { it.tag().normalName() == "dl" }
 
     return buildString {
         if (doIncludeSignature && signature != null) {

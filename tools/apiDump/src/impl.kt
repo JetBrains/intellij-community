@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UnusedReceiverParameter", "DATA_CLASS_INVISIBLE_COPY_USAGE_WARNING")
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UnusedReceiverParameter", "DATA_CLASS_INVISIBLE_COPY_USAGE_WARNING", "DATA_CLASS_INVISIBLE_COPY_USAGE_ERROR")
 
 package com.intellij.tools.apiDump
 

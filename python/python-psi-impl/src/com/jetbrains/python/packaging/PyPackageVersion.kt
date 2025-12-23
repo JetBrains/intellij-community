@@ -6,6 +6,7 @@ package com.jetbrains.python.packaging
  *
  * Instances of this class MUST be obtained from [PyPackageVersionNormalizer.normalize].
  */
+@ConsistentCopyVisibility
 data class PyPackageVersion internal constructor(
   val epoch: String? = null,
   val release: String,
@@ -28,4 +29,6 @@ data class PyPackageVersion internal constructor(
   private fun postPresentable() = post?.let { ".$it" }
   private fun devPresentable() = dev?.let { ".$it" }
   private fun localPresentable() = local?.let { "+$it" }
+
+  fun withRelease(newRelease: String): PyPackageVersion = PyPackageVersion(epoch, newRelease, pre, post, dev, local)
 }

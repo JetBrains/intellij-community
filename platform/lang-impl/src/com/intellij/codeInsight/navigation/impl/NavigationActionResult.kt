@@ -29,6 +29,7 @@ sealed class NavigationActionResult {
 }
 
 @Internal
+@ConsistentCopyVisibility
 data class LazyTargetWithPresentation internal constructor(
   val requestor: NavigationRequestor,
   val presentation: TargetPresentation,

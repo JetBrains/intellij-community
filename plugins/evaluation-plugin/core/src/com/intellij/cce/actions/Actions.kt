@@ -40,58 +40,68 @@ sealed interface Action {
 
 data class FileActions(val path: String, val checksum: String?, val sessionsCount: Int, val actions: List<Action>)
 
+@ConsistentCopyVisibility
 data class MoveCaret internal constructor(override val sessionId: SessionId, val offset: Int) : Action {
   override val type = Action.ActionType.MOVE_CARET
 
   internal constructor(sessionId: UUID, offset: Int) : this(UUIDBasedSessionId(sessionId), offset)
 }
 
+@ConsistentCopyVisibility
 data class Rename internal constructor(override val sessionId: SessionId, val offset: Int, val newName: String) : Action {
   override val type = Action.ActionType.RENAME
 
   internal constructor(sessionId: UUID, offset: Int, newName: String) : this(UUIDBasedSessionId(sessionId), offset, newName)
 }
 
+@ConsistentCopyVisibility
 data class CallFeature internal constructor(override val sessionId: SessionId, val expectedText: String, val offset: Int, val nodeProperties: TokenProperties) : Action {
   override val type: Action.ActionType = Action.ActionType.CALL_FEATURE
 
   internal constructor(sessionId: UUID, expectedText: String, offset: Int, nodeProperties: TokenProperties) : this(UUIDBasedSessionId(sessionId), expectedText, offset, nodeProperties)
 }
 
+@ConsistentCopyVisibility
 data class PrintText internal constructor(override val sessionId: SessionId, val text: String) : Action {
   override val type: Action.ActionType = Action.ActionType.PRINT_TEXT
 
   internal constructor(sessionId: UUID, text: String) : this(UUIDBasedSessionId(sessionId), text)
 }
 
+@ConsistentCopyVisibility
 data class DeleteRange internal constructor(override val sessionId: SessionId, val begin: Int, val end: Int) : Action {
   override val type: Action.ActionType = Action.ActionType.DELETE_RANGE
 
   internal constructor(sessionId: UUID, begin: Int, end: Int) : this(UUIDBasedSessionId(sessionId), begin, end)
 }
 
+@ConsistentCopyVisibility
 data class SelectRange internal constructor(override val sessionId: SessionId, val begin: Int, val end: Int) : Action {
   override val type: Action.ActionType = Action.ActionType.SELECT_RANGE
 
   internal constructor(sessionId: UUID, begin: Int, end: Int) : this(UUIDBasedSessionId(sessionId), begin, end)
 }
 
+@ConsistentCopyVisibility
 data class Delay internal constructor(override val sessionId: SessionId, val seconds: Int) : Action {
   override val type: Action.ActionType = Action.ActionType.DELAY
 
   internal constructor(sessionId: UUID, seconds: Int) : this(UUIDBasedSessionId(sessionId), seconds)
 }
 
+@ConsistentCopyVisibility
 data class OpenFileInBackground internal constructor(override val sessionId: SessionId, val file: String) : Action {
   override val type: Action.ActionType = Action.ActionType.OPEN_FILE_IN_BACKGROUND
 
   internal constructor(sessionId: UUID, file: String) : this(UUIDBasedSessionId(sessionId), file)
 }
 
+@ConsistentCopyVisibility
 data class OptimiseImports internal constructor(override val sessionId: SessionId, val file: String) : Action {
   override val type: Action.ActionType = Action.ActionType.OPTIMISE_IMPORTS
 }
 
+@ConsistentCopyVisibility
 data class Rollback internal constructor(override val sessionId: SessionId, val file: String) : Action {
   override val type: Action.ActionType = Action.ActionType.ROLLBACK
 }

@@ -593,7 +593,7 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
 
     internal fun sortLater(): CancellablePromise<*> = invoker.invokeLater { sort() }
 
-    private fun sort() = synchronized(notifier) {
+    private fun sort(): Unit = synchronized(notifier) {
       if (groupBookmarks.isEmpty()) return
       if (!contains(this)) return
       val list = groupBookmarks.sortedWith(this::compare)

@@ -16,7 +16,7 @@ class NoArgGradleProjectImportHandler : AbstractAnnotationBasedCompilerPluginGra
     override val compilerPluginId = PLUGIN_ID
     override val pluginName = "noarg"
     override val annotationOptionName = ANNOTATION_OPTION_NAME
-    override val pluginJarFileFromIdea = KotlinArtifacts.noargCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+    override val pluginJarFileFromIdea: String = KotlinArtifacts.noargCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
     override val modelKey = NoArgProjectResolverExtension.KEY
 
     override fun getOptions(model: NoArgModel): List<PluginOption> {

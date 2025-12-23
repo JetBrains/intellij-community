@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiUtil
 import com.siyeh.ig.psiutils.ClassUtils
 import java.util.*
 
+@ConsistentCopyVisibility
 public data class ExpressionRange internal constructor (val startOffset: Int, val endOffset: Int) {
 
   public companion object {
