@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.textCompletion.TextCompletionValueDescriptor;
 import com.intellij.vcs.log.VcsLogRefs;
+import com.intellij.vcs.log.VcsLogRefsKt;
 import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,12 +28,12 @@ public class VcsRefCompletionProvider extends TwoStepCompletionProvider<VcsRef> 
 
   @Override
   protected @NotNull Stream<? extends VcsRef> collectSync(@NotNull CompletionResultSet result) {
-    return filterAndSort(result, myRefs.getBranches().stream());
+    return filterAndSort(result, VcsLogRefsKt.getBranches(myRefs).stream());
   }
 
   @Override
   protected @NotNull Stream<? extends VcsRef> collectAsync(@NotNull CompletionResultSet result) {
-    return filterAndSort(result, myRefs.stream().filter(ref -> !ref.getType().isBranch()));
+    return filterAndSort(result, VcsLogRefsKt.allRefsStream(myRefs).filter(ref -> !ref.getType().isBranch()));
   }
 
   private @NotNull Stream<VcsRef> filterAndSort(@NotNull CompletionResultSet result, @NotNull Stream<VcsRef> stream) {

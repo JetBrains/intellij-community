@@ -21,7 +21,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
@@ -157,7 +156,7 @@ public final class VcsLogUtil {
 
     String branchName = null;
     Set<VirtualFile> checkedRoots = new HashSet<>();
-    for (VcsRef branch : refs.getBranches()) {
+    for (VcsRef branch : VcsLogRefsKt.getBranches(refs)) {
       if (!filter.matches(branch.getName())) continue;
 
       if (branchName == null) {
@@ -215,8 +214,8 @@ public final class VcsLogUtil {
     return s.length() == FULL_HASH_LENGTH && HASH_REGEX.matcher(s).matches();
   }
 
-  public static @Nullable VcsRef findBranch(@NotNull RefsModel refs, @NotNull VirtualFile root, @NotNull String branchName) {
-    VcsLogRefsOfSingleRoot rootRefs = refs.getAllRefsByRoot().get(root);
+  public static @Nullable VcsRef findBranch(@NotNull VcsLogRefs refs, @NotNull VirtualFile root, @NotNull String branchName) {
+    VcsLogRefsOfSingleRoot rootRefs = refs.getRefsByRoot().get(root);
     if (rootRefs == null) return null;
     return ContainerUtil.find(rootRefs.getBranches().iterator(), (ref) -> ref.getName().equals(branchName));
   }

@@ -15,18 +15,45 @@
  */
 package com.intellij.vcs.log
 
+import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import java.util.stream.Stream
+import kotlin.streams.asStream
 
 /**
  *  Represents a set of references for **all** VCS roots present in the VCS log.
  *
  *  @see VcsLogRefsOfSingleRoot
  */
+@ApiStatus.NonExtendable
 interface VcsLogRefs {
-  /**
-   * Returns all branches.
-   */
-  val branches: Collection<VcsRef>
+  val refsByRoot: Map<VirtualFile, VcsLogRefsOfSingleRoot>
 
-  fun stream(): Stream<VcsRef>
+  /**
+   * @return reference that should be displayed for the given "head" (or "tip") commit,
+   * representing the branch endpoint
+   */
+  fun getRefForHeadCommit(headIndex: VcsLogCommitStorageIndex): VcsRef?
+
+  fun getRootForHeadCommit(headIndex: VcsLogCommitStorageIndex): VirtualFile?
+
+  /**
+   * @see [VcsLogRefsOfSingleRoot.refsToCommit]
+   */
+  fun refsToCommit(index: VcsLogCommitStorageIndex): List<VcsRef>
 }
+
+val VcsLogRefs.allRefs: Sequence<VcsRef>
+  get() = refsByRoot.values.asSequence().flatMap(VcsLogRefsOfSingleRoot::getRefs)
+
+val VcsLogRefs.branches: List<VcsRef>
+  get() = refsByRoot.values.flatMapTo(mutableListOf()) {
+    it.getBranches()
+  }
+
+@ApiStatus.Obsolete
+fun VcsLogRefs.allRefsStream(): Stream<VcsRef> =
+  refsByRoot.values.asSequence().flatMap(VcsLogRefsOfSingleRoot::getRefs).asStream()
+
+fun VcsLogRefs.refsToCommit(root: VirtualFile, index: VcsLogCommitStorageIndex): List<VcsRef> =
+  refsByRoot[root]?.refsToCommit(index) ?: emptyList()

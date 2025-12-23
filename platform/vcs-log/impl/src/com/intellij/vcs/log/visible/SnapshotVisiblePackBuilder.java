@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.graph.GraphColorManagerImpl;
@@ -62,7 +63,7 @@ final class SnapshotVisiblePackBuilder {
     Set<Integer> heads = ContainerUtil.map2Set(info.getPermanentGraphLayout().getHeadNodeIndex(),
                                                integer -> info.getPermanentCommitsInfo().getCommitId(integer));
 
-    RefsModel newRefsModel = createRefsModel(oldPack.getRefsModel(), heads, oldGraph, oldPack.getLogProviders(), visibleRow, visibleRange);
+    VcsLogRefs newRefsModel = createRefsModel(oldPack.getRefsModel(), heads, oldGraph, oldPack.getLogProviders(), visibleRow, visibleRange);
     DataPackBase newPack = new DataPackBase(oldPack.getLogProviders(), newRefsModel, false);
     GraphColorGetter colorGetter = new GraphColorGetterByHeadFactory<>(new GraphColorManagerImpl(newRefsModel)).createColorGetter(info);
 
@@ -72,10 +73,10 @@ final class SnapshotVisiblePackBuilder {
     return new VisiblePack(newPack, newGraph, true, filters, data);
   }
 
-  private RefsModel createRefsModel(@NotNull RefsModel refsModel,
-                                    @NotNull Set<Integer> heads,
-                                    @NotNull VisibleGraphImpl<Integer> visibleGraph,
-                                    @NotNull Map<VirtualFile, VcsLogProvider> providers, int visibleRow, int visibleRange) {
+  private VcsLogRefs createRefsModel(@NotNull VcsLogRefs refsModel,
+                                     @NotNull Set<Integer> heads,
+                                     @NotNull VisibleGraphImpl<Integer> visibleGraph,
+                                     @NotNull Map<VirtualFile, VcsLogProvider> providers, int visibleRow, int visibleRange) {
     Set<VcsRef> branchesAndHeads = new HashSet<>();
 
     for (int row = Math.max(0, visibleRow - visibleRange);

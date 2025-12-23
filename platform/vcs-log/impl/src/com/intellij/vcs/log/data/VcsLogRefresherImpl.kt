@@ -241,7 +241,7 @@ internal class VcsLogRefresherImpl(
     tracer.trace(Refreshing) {
       LOG.debug("Loading the recent data for roots $roots")
       val permanentGraph = dataPack.permanentGraph
-      val currentRefs = dataPack.refsModel.allRefsByRoot
+      val currentRefs = dataPack.refsModel.refsByRoot
       var commitCount = recentCommitCount
       repeat(2) {
         val requirements = prepareRequirements(roots, commitCount, currentRefs)

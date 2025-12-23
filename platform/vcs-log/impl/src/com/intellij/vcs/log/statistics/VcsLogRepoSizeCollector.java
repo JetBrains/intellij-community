@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsLogRefsKt;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsProjectLog;
@@ -56,7 +57,7 @@ public @NonNls class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
       DataPack dataPack = logData.getDataPack();
       if (dataPack.isFull()) {
         int commitCount = dataPack.getPermanentGraph().getAllCommits().size();
-        int branchesCount = dataPack.getRefsModel().getBranches().size();
+        int branchesCount = VcsLogRefsKt.getBranches(dataPack.getRefsModel()).size();
         int usersCount = logData.getAllUsers().size();
         Set<MetricEvent> usages = ContainerUtil.newHashSet(DATA_INITIALIZED.metric());
         usages.add(COMMIT_COUNT.metric(StatisticsUtil.roundToPowerOfTwo(commitCount)));

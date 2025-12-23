@@ -13,10 +13,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.CommitId
-import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.CommitIdByStringCondition
 import com.intellij.vcs.log.data.DataPack.ErrorDataPack
 import com.intellij.vcs.log.data.VcsLogData
@@ -118,8 +115,10 @@ object VcsLogNavigationUtil {
     val future = SettableFuture.create<Boolean>()
     val refs = dataPack.refs
     ApplicationManager.getApplication().executeOnPooledThread {
-      val matchingRefs = refs.stream().filter { ref -> ref.name.startsWith(reference)
-                                                       && (repositoryRoot == null || ref.root == repositoryRoot) }.toList()
+      val matchingRefs = refs.allRefs.filter { ref ->
+        ref.name.startsWith(reference)
+        && (repositoryRoot == null || ref.root == repositoryRoot)
+      }.toList()
       ApplicationManager.getApplication().invokeLater {
         if (matchingRefs.isNotEmpty()) {
           val ref = matchingRefs.minWith(VcsGoToRefComparator(dataPack.logProviders))

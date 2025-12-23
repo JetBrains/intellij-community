@@ -4,27 +4,32 @@ package com.intellij.vcs.log.data
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.log.*
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.jetbrains.annotations.ApiStatus
-import java.util.stream.Stream
-import kotlin.streams.asStream
 
-class RefsModel private constructor(
-  val allRefsByRoot: Map<VirtualFile, VcsLogRefsOfSingleRoot>,
+internal class RefsModel private constructor(
+  override val refsByRoot: Map<VirtualFile, VcsLogRefsOfSingleRoot>,
   private val storage: VcsLogStorage,
   private val providers: Map<VirtualFile, VcsLogProvider>,
 ) : VcsLogRefs {
   private val bestRefForHead: Int2ObjectMap<VcsRef> = Int2ObjectOpenHashMap()
   private val rootForHead: Int2ObjectMap<VirtualFile> = Int2ObjectOpenHashMap()
 
-  override val branches: Collection<VcsRef>
-    get() = allRefsByRoot.values.flatMapTo(mutableListOf()) {
-      it.getBranches()
+  override fun getRefForHeadCommit(headIndex: VcsLogCommitStorageIndex): VcsRef? = bestRefForHead[headIndex]
+
+  override fun getRootForHeadCommit(headIndex: VcsLogCommitStorageIndex): VirtualFile? = rootForHead[headIndex]
+
+  override fun refsToCommit(index: VcsLogCommitStorageIndex): List<VcsRef> {
+    if (refsByRoot.size <= 10) {
+      val refs = refsByRoot.values.firstOrNull { it.contains(index) }
+      return refs?.refsToCommit(index) ?: emptyList()
     }
+    val id = storage.getCommitId(index) ?: return emptyList()
+    return refsToCommit(id.root, index)
+  }
 
   private fun updateCacheForHead(head: VcsLogCommitStorageIndex, root: VirtualFile) {
     rootForHead.put(head, root)
@@ -36,28 +41,6 @@ class RefsModel private constructor(
     else {
       LOG.debug { "No references at head ${storage.getCommitId(head)}" }
     }
-  }
-
-  fun bestRefToHead(headIndex: VcsLogCommitStorageIndex): VcsRef? = bestRefForHead[headIndex]
-
-  fun rootAtHead(headIndex: VcsLogCommitStorageIndex): VirtualFile? = rootForHead[headIndex]
-
-  fun refsToCommit(index: VcsLogCommitStorageIndex): List<VcsRef> {
-    if (allRefsByRoot.size <= 10) {
-      val refs = allRefsByRoot.values.firstOrNull { it.contains(index) }
-      return refs?.refsToCommit(index) ?: emptyList()
-    }
-    val id = storage.getCommitId(index) ?: return emptyList()
-    return refsToCommit(id.root, index)
-  }
-
-  fun refsToCommit(root: VirtualFile, index: VcsLogCommitStorageIndex): List<VcsRef> {
-    return allRefsByRoot[root]?.refsToCommit(index) ?: emptyList()
-  }
-
-  @RequiresBackgroundThread
-  override fun stream(): Stream<VcsRef> {
-    return allRefsByRoot.values.asSequence().flatMap(VcsLogRefsOfSingleRoot::getRefs).asStream()
   }
 
   companion object {

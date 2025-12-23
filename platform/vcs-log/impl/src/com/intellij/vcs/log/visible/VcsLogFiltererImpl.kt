@@ -387,9 +387,11 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     return result
   }
 
-  fun getMatchingHeads(refs: RefsModel,
-                       roots: Collection<VirtualFile>,
-                       filters: VcsLogFilterCollection): Set<VcsLogCommitStorageIndex>? {
+  fun getMatchingHeads(
+    refs: VcsLogRefs,
+    roots: Collection<VirtualFile>,
+    filters: VcsLogFilterCollection,
+  ): Set<VcsLogCommitStorageIndex>? {
     val branchFilter = filters.get(VcsLogFilterCollection.BRANCH_FILTER)
     val revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER)
 
@@ -412,17 +414,23 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     return getMatchingHeads(refs, roots, branchFilter)
   }
 
-  private fun getMatchingHeads(refs: RefsModel,
-                               roots: Collection<VirtualFile>,
-                               branchFilter: VcsLogBranchFilter?,
-                               revisionFilter: VcsLogRevisionFilter?): Set<VcsLogCommitStorageIndex>? {
+  private fun getMatchingHeads(
+    refs: VcsLogRefs,
+    roots: Collection<VirtualFile>,
+    branchFilter: VcsLogBranchFilter?,
+    revisionFilter: VcsLogRevisionFilter?,
+  ): Set<VcsLogCommitStorageIndex>? {
     if (branchFilter == null && revisionFilter == null) return null
     val branchMatchingHeads = if (branchFilter != null) getMatchingHeads(refs, roots, branchFilter) else emptySet()
     val revisionMatchingHeads = if (revisionFilter != null) getMatchingHeads(roots, revisionFilter) else emptySet()
     return branchMatchingHeads.union(revisionMatchingHeads)
   }
 
-  private fun getMatchingHeads(refsModel: RefsModel, roots: Collection<VirtualFile>, filter: VcsLogBranchFilter): Set<VcsLogCommitStorageIndex> {
+  private fun getMatchingHeads(
+    refsModel: VcsLogRefs,
+    roots: Collection<VirtualFile>,
+    filter: VcsLogBranchFilter,
+  ): Set<VcsLogCommitStorageIndex> {
     return mapRefsForRoots(refsModel, roots) { refs ->
       refs.getBranches().filter { filter.matches(it.name) }.toList()
     }.toReferencedCommitIndexes()
@@ -434,12 +442,12 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     }
   }
 
-  private fun getMatchingHeads(refsModel: RefsModel, roots: Collection<VirtualFile>): Set<VcsLogCommitStorageIndex> {
+  private fun getMatchingHeads(refsModel: VcsLogRefs, roots: Collection<VirtualFile>): Set<VcsLogCommitStorageIndex> {
     return mapRefsForRoots(refsModel, roots) { refs -> refs.getRefsIndexes() }
   }
 
-  private fun <T> mapRefsForRoots(refsModel: RefsModel, roots: Collection<VirtualFile>, mapping: (VcsLogRefsOfSingleRoot) -> Iterable<T>) =
-    refsModel.allRefsByRoot.filterKeys { roots.contains(it) }.values.flatMapTo(mutableSetOf(), mapping)
+  private fun <T> mapRefsForRoots(refsModel: VcsLogRefs, roots: Collection<VirtualFile>, mapping: (VcsLogRefsOfSingleRoot) -> Iterable<T>) =
+    refsModel.refsByRoot.filterKeys { roots.contains(it) }.values.flatMapTo(mutableSetOf(), mapping)
 
   private fun filterDetailsInMemory(permanentGraph: PermanentGraph<VcsLogCommitStorageIndex>,
                                     detailsFilters: List<VcsLogDetailsFilter>,

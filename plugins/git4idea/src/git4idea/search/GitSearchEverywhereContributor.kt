@@ -24,6 +24,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.allRefs
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -78,7 +79,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
       .typoTolerant()
       .build()
 
-    dataPack.refsModel.stream().forEach {
+    dataPack.refsModel.allRefs.forEach {
       progressIndicator.checkCanceled()
       when (it.type) {
         GitRefManager.LOCAL_BRANCH, GitRefManager.HEAD -> processRefOfType(it, LOCAL_BRANCH, matcher, consumer)

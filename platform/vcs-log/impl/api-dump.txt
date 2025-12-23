@@ -101,9 +101,9 @@ f:com.intellij.vcs.log.data.DataPack$ErrorDataPack
 - <init>(java.lang.Throwable):V
 - f:getError():java.lang.Throwable
 c:com.intellij.vcs.log.data.DataPackBase
-- <init>(java.util.Map,com.intellij.vcs.log.data.RefsModel,Z):V
+- <init>(java.util.Map,com.intellij.vcs.log.VcsLogRefs,Z):V
 - f:getLogProviders():java.util.Map
-- f:getRefsModel():com.intellij.vcs.log.data.RefsModel
+- f:getRefsModel():com.intellij.vcs.log.VcsLogRefs
 - f:isFull():Z
 com.intellij.vcs.log.data.DataPackChangeListener
 - a:onDataPackChange(com.intellij.vcs.log.data.DataPack):V
@@ -131,17 +131,6 @@ f:com.intellij.vcs.log.data.MiniDetailsGetter
 - f:getCachedDataOrPlaceholder(I):com.intellij.vcs.log.VcsCommitMetadata
 - f:removeDetailsLoadedListener(java.lang.Runnable):V
 f:com.intellij.vcs.log.data.MiniDetailsGetter$Companion
-f:com.intellij.vcs.log.data.RefsModel
-- com.intellij.vcs.log.VcsLogRefs
-- sf:Companion:com.intellij.vcs.log.data.RefsModel$Companion
-- f:bestRefToHead(I):com.intellij.vcs.log.VcsRef
-- f:getAllRefsByRoot():java.util.Map
-- getBranches():java.util.Collection
-- f:refsToCommit(I):java.util.List
-- f:refsToCommit(com.intellij.openapi.vfs.VirtualFile,I):java.util.List
-- f:rootAtHead(I):com.intellij.openapi.vfs.VirtualFile
-- stream():java.util.stream.Stream
-f:com.intellij.vcs.log.data.RefsModel$Companion
 a:com.intellij.vcs.log.data.SingleTaskController
 - com.intellij.openapi.Disposable
 - psf:LOG:com.intellij.openapi.diagnostic.Logger
@@ -1123,9 +1112,9 @@ a:com.intellij.vcs.log.ui.table.column.util.VcsLogExternalStatusColumnService
 f:com.intellij.vcs.log.ui.table.column.util.VcsLogExternalStatusColumnService$Companion
 f:com.intellij.vcs.log.util.DataPackUtilKt
 - sf:containsAll(com.intellij.vcs.log.data.DataPack,java.util.Collection,com.intellij.vcs.log.data.VcsLogStorage):Z
-- sf:exclusiveCommits(com.intellij.vcs.log.data.DataPack,com.intellij.vcs.log.VcsRef,com.intellij.vcs.log.data.RefsModel,com.intellij.vcs.log.data.VcsLogStorage):it.unimi.dsi.fastutil.ints.IntSet
+- sf:exclusiveCommits(com.intellij.vcs.log.data.DataPack,com.intellij.vcs.log.VcsRef,com.intellij.vcs.log.VcsLogRefs,com.intellij.vcs.log.data.VcsLogStorage):it.unimi.dsi.fastutil.ints.IntSet
+- sf:findBranch(com.intellij.vcs.log.VcsLogRefs,java.lang.String,com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsRef
 - sf:findBranch(com.intellij.vcs.log.data.DataPack,java.lang.String,com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsRef
-- sf:findBranch(com.intellij.vcs.log.data.RefsModel,java.lang.String,com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsRef
 - sf:subgraphDifference(com.intellij.vcs.log.data.DataPack,I,I):it.unimi.dsi.fastutil.ints.IntSet
 - sf:subgraphDifference(com.intellij.vcs.log.data.DataPack,com.intellij.vcs.log.VcsRef,com.intellij.vcs.log.VcsRef,com.intellij.vcs.log.data.VcsLogStorage):it.unimi.dsi.fastutil.ints.IntSet
 f:com.intellij.vcs.log.util.IntCollectionUtil
@@ -1188,7 +1177,7 @@ f:com.intellij.vcs.log.util.VcsLogUtil
 - s:convertToRevisionNumber(com.intellij.vcs.log.Hash):com.intellij.openapi.vcs.changes.TextRevisionNumber
 - s:createCommittedChangeList(com.intellij.vcs.log.VcsFullCommitDetails):com.intellij.vcs.CommittedChangeListForRevision
 - s:createCommittedChangeList(com.intellij.vcs.log.VcsFullCommitDetails,Z):com.intellij.vcs.CommittedChangeListForRevision
-- s:findBranch(com.intellij.vcs.log.data.RefsModel,com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.vcs.log.VcsRef
+- s:findBranch(com.intellij.vcs.log.VcsLogRefs,com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.vcs.log.VcsRef
 - s:getActualRoot(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vfs.VirtualFile
 - s:getActualRoot(com.intellij.openapi.project.Project,java.util.Map,com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vfs.VirtualFile
 - s:getAffectedPaths(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.actionSystem.AnActionEvent):java.util.Collection
@@ -1243,7 +1232,7 @@ f:com.intellij.vcs.log.visible.VcsLogFiltererImpl
 - <init>(com.intellij.vcs.log.data.VcsLogData):V
 - <init>(java.util.Map,com.intellij.vcs.log.data.VcsLogStorage,com.intellij.vcs.log.data.TopCommitsCache,com.intellij.vcs.log.VcsLogCommitDataCache,com.intellij.vcs.log.data.index.VcsLogIndex):V
 - filter(com.intellij.vcs.log.data.DataPack,com.intellij.vcs.log.visible.VisiblePack,com.intellij.vcs.log.graph.PermanentGraph$Options,com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.visible.CommitCountStage):kotlin.Pair
-- f:getMatchingHeads(com.intellij.vcs.log.data.RefsModel,java.util.Collection,com.intellij.vcs.log.VcsLogFilterCollection):java.util.Set
+- f:getMatchingHeads(com.intellij.vcs.log.VcsLogRefs,java.util.Collection,com.intellij.vcs.log.VcsLogFilterCollection):java.util.Set
 c:com.intellij.vcs.log.visible.VisiblePack
 - com.intellij.openapi.util.UserDataHolder
 - com.intellij.vcs.log.VcsLogDataPack

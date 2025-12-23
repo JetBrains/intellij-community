@@ -209,8 +209,15 @@ com.intellij.vcs.log.VcsLogRefManager
 com.intellij.vcs.log.VcsLogRefresher
 - a:refresh(com.intellij.openapi.vfs.VirtualFile):V
 com.intellij.vcs.log.VcsLogRefs
-- a:getBranches():java.util.Collection
-- a:stream():java.util.stream.Stream
+- a:getRefForHeadCommit(I):com.intellij.vcs.log.VcsRef
+- a:getRefsByRoot():java.util.Map
+- a:getRootForHeadCommit(I):com.intellij.openapi.vfs.VirtualFile
+- a:refsToCommit(I):java.util.List
+f:com.intellij.vcs.log.VcsLogRefsKt
+- sf:allRefsStream(com.intellij.vcs.log.VcsLogRefs):java.util.stream.Stream
+- sf:getAllRefs(com.intellij.vcs.log.VcsLogRefs):kotlin.sequences.Sequence
+- sf:getBranches(com.intellij.vcs.log.VcsLogRefs):java.util.List
+- sf:refsToCommit(com.intellij.vcs.log.VcsLogRefs,com.intellij.openapi.vfs.VirtualFile,I):java.util.List
 com.intellij.vcs.log.VcsLogRefsOfSingleRoot
 - a:contains(I):Z
 - a:forEachBranchIndex(java.util.function.IntConsumer):V

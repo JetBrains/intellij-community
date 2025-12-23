@@ -41,7 +41,7 @@ open class VisiblePack @JvmOverloads constructor(
   }
 
   open fun getRootAtHead(headCommitIndex: VcsLogCommitStorageIndex): VirtualFile? {
-    return dataPack.refsModel.rootAtHead(headCommitIndex)
+    return dataPack.refsModel.getRootForHeadCommit(headCommitIndex)
   }
 
   override fun <T> getUserData(key: Key<T>): T? {

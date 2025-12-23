@@ -3,9 +3,10 @@ package com.intellij.vcs.log.data
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsLogRefs
 
 open class DataPackBase(
   val logProviders: Map<VirtualFile, VcsLogProvider>,
-  val refsModel: RefsModel,
+  val refsModel: VcsLogRefs,
   val isFull: Boolean,
 )
