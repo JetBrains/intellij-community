@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
+import com.intellij.build.console.BuildConsoleViewHandler;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.DerivedResult;
 import com.intellij.build.events.DuplicateMessageAware;
@@ -170,7 +171,7 @@ public final class BuildTreeConsoleView
   private final @NotNull Project myProject;
   private final @NotNull DefaultBuildDescriptor myBuildDescriptor;
   private final @NotNull String myWorkingDir;
-  private final ConsoleViewHandler myConsoleViewHandler;
+  private final BuildConsoleViewHandler myConsoleViewHandler;
   private final AtomicBoolean myFinishedBuildEventReceived = new AtomicBoolean();
   private final AtomicBoolean myDisposed = new AtomicBoolean();
   private final AtomicBoolean myShownFirstError = new AtomicBoolean();
@@ -256,8 +257,7 @@ public final class BuildTreeConsoleView
     OnePixelSplitter myThreeComponentsSplitter = new OnePixelSplitter(SPLITTER_PROPERTY, SPLITTER_DEFAULT_PROPORTION);
     myThreeComponentsSplitter.setFirstComponent(treeComponent);
     List<Filter> filters = myBuildDescriptor.getExecutionFilters();
-    myConsoleViewHandler = new ConsoleViewHandler(myProject, myTree, myBuildProgressRootNode, this,
-                                                  executionConsole, filters);
+    myConsoleViewHandler = new BuildConsoleViewHandler(myProject, myTree, myBuildProgressRootNode, this, executionConsole, filters);
     myThreeComponentsSplitter.setSecondComponent(myConsoleViewHandler.getComponent());
     myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
     BuildTreeFilters.install(this);
@@ -522,8 +522,8 @@ public final class BuildTreeConsoleView
     if (event instanceof FinishBuildEvent) {
       myFinishedBuildEventReceived.set(true);
       myDeferredEvents.forEach(buildEvent -> onEventInternal(buildEvent));
-      if (myConsoleViewHandler.myExecutionNode == null) {
-        invokeLater(() -> myConsoleViewHandler.setNode(getBuildProgressRootNode()));
+      if (myConsoleViewHandler.getExecutionNode() == null) {
+        invokeLater(() -> myConsoleViewHandler.setExecutionNode(getBuildProgressRootNode()));
       }
       myConsoleViewHandler.stopProgressBar();
     }
@@ -1227,280 +1227,6 @@ public final class BuildTreeConsoleView
   @NotNull
   JComponent getConsoleComponent() {
     return myConsoleViewHandler.getComponent();
-  }
-
-  private static final class ConsoleViewHandler implements Disposable {
-    private static final String EMPTY_CONSOLE_NAME = "empty";
-    private final Project myProject;
-    private final JPanel myPanel;
-    private final CompositeView<ExecutionConsole> myView;
-    private final AtomicReference<String> myNodeConsoleViewName = new AtomicReference<>();
-    private final Map<String, List<Consumer<? super BuildTextConsoleView>>> deferredNodeOutput = new ConcurrentHashMap<>();
-    private @Nullable ExecutionNode myExecutionNode;
-    private final @NotNull List<? extends Filter> myExecutionConsoleFilters;
-    private final BuildProgressStripe myPanelWithProgress;
-    private final DefaultActionGroup myConsoleToolbarActionGroup;
-    private final ActionToolbar myToolbar;
-
-    ConsoleViewHandler(@NotNull Project project,
-                       @Nullable Tree tree,
-                       @NotNull ExecutionNode buildProgressRootNode,
-                       @NotNull Disposable parentDisposable,
-                       @Nullable ExecutionConsole executionConsole,
-                       @NotNull List<? extends Filter> executionConsoleFilters) {
-      myProject = project;
-      myPanel = new NonOpaquePanel(new BorderLayout());
-      myPanelWithProgress = new BuildProgressStripe(myPanel, parentDisposable, (int)ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS);
-      myExecutionConsoleFilters = executionConsoleFilters;
-      Disposer.register(parentDisposable, this);
-      myView = new CompositeView<>(null) {
-        @Override
-        public void addView(@NotNull ExecutionConsole view, @NotNull String viewName) {
-          super.addView(view, viewName);
-          UIUtil.removeScrollBorder(view.getComponent());
-        }
-      };
-      Disposer.register(this, myView);
-      if (executionConsole != null) {
-        String nodeConsoleViewName = getNodeConsoleViewName(buildProgressRootNode);
-        myView.addViewAndShowIfNeeded(executionConsole, nodeConsoleViewName, true, false);
-        myNodeConsoleViewName.set(nodeConsoleViewName);
-      }
-      ConsoleView emptyConsole = new ConsoleViewImpl(project, GlobalSearchScope.EMPTY_SCOPE, true, false);
-      myView.addView(emptyConsole, EMPTY_CONSOLE_NAME);
-      JComponent consoleComponent = emptyConsole.getComponent();
-      consoleComponent.setFocusable(true);
-      myPanel.add(myView.getComponent(), BorderLayout.CENTER);
-      myConsoleToolbarActionGroup = new DefaultActionGroup();
-      myConsoleToolbarActionGroup.copyFromGroup(createDefaultTextConsoleToolbar());
-      myToolbar = ActionManager.getInstance().createActionToolbar("BuildConsole", myConsoleToolbarActionGroup, false);
-      myToolbar.setTargetComponent(myView);
-      myPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
-
-      if (ExperimentalUI.isNewUI()) {
-        UIUtil.setBackgroundRecursively(myPanel, JBUI.CurrentTheme.ToolWindow.background());
-      }
-
-      if (tree != null) {
-        tree.addTreeSelectionListener(e -> {
-          if (Disposer.isDisposed(myView)) return;
-          TreePath path = e.getPath();
-          if (path == null) {
-            return;
-          }
-          TreePath selectionPath = tree.getSelectionPath();
-          setNode(selectionPath != null ? (DefaultMutableTreeNode)selectionPath.getLastPathComponent() : null);
-        });
-      }
-    }
-
-    private void showTextConsoleToolbarActions() {
-      myConsoleToolbarActionGroup.copyFromGroup(createDefaultTextConsoleToolbar());
-      updateToolbarActionsImmediately();
-    }
-
-    private void showCustomConsoleToolbarActions(@Nullable ActionGroup actionGroup) {
-      if (actionGroup instanceof DefaultActionGroup) {
-        myConsoleToolbarActionGroup.copyFromGroup((DefaultActionGroup)actionGroup);
-      }
-      else if (actionGroup != null) {
-        myConsoleToolbarActionGroup.copyFrom(actionGroup);
-      }
-      else {
-        myConsoleToolbarActionGroup.removeAll();
-      }
-      updateToolbarActionsImmediately();
-    }
-
-    private void updateToolbarActionsImmediately() {
-      UIUtil.invokeLaterIfNeeded(() -> myToolbar.updateActionsImmediately());
-    }
-
-    private @NotNull DefaultActionGroup createDefaultTextConsoleToolbar() {
-      DefaultActionGroup textConsoleToolbarActionGroup = new DefaultActionGroup();
-      textConsoleToolbarActionGroup.add(new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
-        @Override
-        protected @Nullable Editor getEditor(@NotNull AnActionEvent e) {
-          var editor = ConsoleViewHandler.this.getEditor();
-          if (editor == null) return null;
-          return ClientEditorManager.getClientEditor(editor, ClientId.getCurrentOrNull());
-        }
-      });
-      textConsoleToolbarActionGroup.add(new ScrollToTheEndToolbarAction(getEditor()));
-      textConsoleToolbarActionGroup.add(new ClearConsoleAction());
-      return textConsoleToolbarActionGroup;
-    }
-
-    private void updateProgressBar(long total, long progress) {
-      myPanelWithProgress.updateProgress(total, progress);
-    }
-
-    @TestOnly
-    private @NotNull ExecutionConsole getEmptyConsole() {
-      return myView.getView(EMPTY_CONSOLE_NAME);
-    }
-
-    private @Nullable ExecutionConsole getCurrentConsole() {
-      String nodeConsoleViewName = myNodeConsoleViewName.get();
-      if (nodeConsoleViewName == null) return null;
-      var console = myView.getView(nodeConsoleViewName);
-      if (console == null) return null;
-      return ConsoleViewWithDelegateKt.unwrapDelegate(console);
-    }
-
-    private @Nullable Editor getEditor() {
-      ExecutionConsole console = getCurrentConsole();
-      if (console instanceof ConsoleViewImpl) {
-        return ((ConsoleViewImpl)console).getEditor();
-      }
-      return null;
-    }
-
-    private void setNodeIfChanged(@NotNull ExecutionNode node) {
-      if (myProject.isDisposed() || node == myExecutionNode) return;
-      myExecutionNode = node;
-      setNode(node);
-    }
-
-    private boolean setNode(@NotNull ExecutionNode node) {
-      String nodeConsoleViewName = getNodeConsoleViewName(node);
-      myNodeConsoleViewName.set(nodeConsoleViewName);
-      ExecutionConsole view = myView.getView(nodeConsoleViewName);
-      if (view != null) {
-        List<Consumer<? super BuildTextConsoleView>> deferredOutput = deferredNodeOutput.get(nodeConsoleViewName);
-        if (view instanceof BuildTextConsoleView && deferredOutput != null && !deferredOutput.isEmpty()) {
-          deferredNodeOutput.remove(nodeConsoleViewName);
-          deferredOutput.forEach(consumer -> consumer.accept((BuildTextConsoleView)view));
-        }
-        else {
-          deferredNodeOutput.remove(nodeConsoleViewName);
-        }
-        myView.showView(nodeConsoleViewName, false);
-        if (view instanceof PresentableBuildEventExecutionConsole) {
-          showCustomConsoleToolbarActions(((PresentableBuildEventExecutionConsole)view).myActions);
-        }
-        else {
-          showTextConsoleToolbarActions();
-        }
-        myPanel.setVisible(true);
-        return true;
-      }
-
-      List<Consumer<? super BuildTextConsoleView>> deferredOutput = deferredNodeOutput.get(nodeConsoleViewName);
-      if (deferredOutput != null && !deferredOutput.isEmpty()) {
-        BuildTextConsoleView textConsoleView = new BuildTextConsoleView(myProject, true, myExecutionConsoleFilters);
-        deferredNodeOutput.remove(nodeConsoleViewName);
-        deferredOutput.forEach(consumer -> consumer.accept(textConsoleView));
-        myView.addView(textConsoleView, nodeConsoleViewName);
-        myView.showView(nodeConsoleViewName, false);
-      }
-      else {
-        myView.showView(EMPTY_CONSOLE_NAME, false);
-        return true;
-      }
-      return true;
-    }
-
-    public void maybeAddExecutionConsole(@NotNull ExecutionNode node, @NotNull BuildEventPresentationData presentationData) {
-      UIUtil.invokeLaterIfNeeded(() -> {
-        ExecutionConsole executionConsole = presentationData.getExecutionConsole();
-        if (executionConsole == null) return;
-        String nodeConsoleViewName = getNodeConsoleViewName(node);
-        PresentableBuildEventExecutionConsole presentableEventView =
-          new PresentableBuildEventExecutionConsole(executionConsole, presentationData.consoleToolbarActions());
-        myView.addView(presentableEventView, nodeConsoleViewName);
-      });
-    }
-
-    private void addOutput(@NotNull ExecutionNode node) {
-      addOutput(node, view -> view.print("\n", ProcessOutputType.STDOUT));
-    }
-
-    private void addOutput(@NotNull ExecutionNode node, BuildEvent event) {
-      addOutput(node, view -> view.onEvent(event));
-    }
-
-    private void addOutput(@NotNull ExecutionNode node, Failure failure) {
-      addOutput(node, view -> view.printFailure(failure));
-    }
-
-    private void addOutput(@NotNull ExecutionNode node, Consumer<? super BuildTextConsoleView> consumer) {
-      String nodeConsoleViewName = getNodeConsoleViewName(node);
-      ExecutionConsole viewView = myView.getView(nodeConsoleViewName);
-      if (viewView instanceof BuildTextConsoleView) {
-        consumer.accept((BuildTextConsoleView)viewView);
-      }
-      if (viewView == null) {
-        deferredNodeOutput.computeIfAbsent(nodeConsoleViewName, s -> new ArrayList<>()).add(consumer);
-      }
-    }
-
-    @Override
-    public void dispose() {
-      deferredNodeOutput.clear();
-    }
-
-    private void stopProgressBar() {
-      myPanelWithProgress.stopLoading();
-    }
-
-    private static @NotNull String getNodeConsoleViewName(@NotNull ExecutionNode node) {
-      return String.valueOf(System.identityHashCode(node));
-    }
-
-    private void setNode(@Nullable DefaultMutableTreeNode node) {
-      if (myProject.isDisposed()) return;
-      if (node == null || node.getUserObject() == myExecutionNode) return;
-      if (node.getUserObject() instanceof ExecutionNode) {
-        myExecutionNode = (ExecutionNode)node.getUserObject();
-        if (setNode((ExecutionNode)node.getUserObject())) {
-          return;
-        }
-      }
-
-      myExecutionNode = null;
-      if (myView.getView(BuildView.CONSOLE_VIEW_NAME) != null/* && myViewSettingsProvider.isSideBySideView()*/) {
-        myView.showView(BuildView.CONSOLE_VIEW_NAME, false);
-        myPanel.setVisible(true);
-      }
-      else {
-        myPanel.setVisible(false);
-      }
-    }
-
-    public JComponent getComponent() {
-      return myPanelWithProgress;
-    }
-
-    public void clear() {
-      myPanel.setVisible(false);
-    }
-
-    private static final class PresentableBuildEventExecutionConsole implements ExecutionConsole {
-      private final ExecutionConsole myExecutionConsole;
-      private final @Nullable ActionGroup myActions;
-
-      private PresentableBuildEventExecutionConsole(@NotNull ExecutionConsole executionConsole,
-                                                    @Nullable ActionGroup toolbarActions) {
-        myExecutionConsole = executionConsole;
-        myActions = toolbarActions;
-      }
-
-      @Override
-      public @NotNull JComponent getComponent() {
-        return myExecutionConsole.getComponent();
-      }
-
-      @Override
-      public JComponent getPreferredFocusableComponent() {
-        return myExecutionConsole.getPreferredFocusableComponent();
-      }
-
-      @Override
-      public void dispose() {
-        Disposer.dispose(myExecutionConsole);
-      }
-    }
   }
 
   private static final class ProblemOccurrenceNavigatorSupport extends OccurenceNavigatorSupport {
