@@ -1590,9 +1590,29 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
                     runTest("testData/editor/enterHandler/multilineString/spaces/NoTrimIndentInAnnotations.after.kt");
                 }
 
+                @TestMetadata("NoTrimIndentInAnnotationsInterpolationPrefix.after.kt")
+                public void testNoTrimIndentInAnnotationsInterpolationPrefix() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/NoTrimIndentInAnnotationsInterpolationPrefix.after.kt");
+                }
+
+                @TestMetadata("NoTrimIndentInAnnotationsInterpolationPrefix2.after.kt")
+                public void testNoTrimIndentInAnnotationsInterpolationPrefix2() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/NoTrimIndentInAnnotationsInterpolationPrefix2.after.kt");
+                }
+
                 @TestMetadata("NoTrimIndentInConst.after.kt")
                 public void testNoTrimIndentInConst() throws Exception {
                     runTest("testData/editor/enterHandler/multilineString/spaces/NoTrimIndentInConst.after.kt");
+                }
+
+                @TestMetadata("NoTrimIndentInConstInterpolationPrefix.after.kt")
+                public void testNoTrimIndentInConstInterpolationPrefix() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/NoTrimIndentInConstInterpolationPrefix.after.kt");
+                }
+
+                @TestMetadata("NoTrimIndentInConstInterpolationPrefix2.after.kt")
+                public void testNoTrimIndentInConstInterpolationPrefix2() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/NoTrimIndentInConstInterpolationPrefix2.after.kt");
                 }
 
                 @TestMetadata("RestoreIndentFromEmptyLine.after.kt")

@@ -138,7 +138,7 @@ class KotlinMultilineStringEnterHandler : EnterHandlerDelegate {
 
             val literalOffset = literal.textRange.startOffset
             if (wasSingleLine || (lines.size == 3 && isInBrace)) {
-                val shouldUseTrimIndent = hasTrimIndentCallInChain || (marginChar == null && lines.first().trim() == MULTILINE_QUOTE)
+                val shouldUseTrimIndent = hasTrimIndentCallInChain || (marginChar == null && lines.first().isStartOfMultilineString())
                 val newMarginChar: Char? = if (shouldUseTrimIndent) null else (marginChar ?: DEFAULT_TRIM_MARGIN_CHAR)
 
                 insertTrimCall(document, literal, if (shouldUseTrimIndent) null else newMarginChar)
@@ -341,6 +341,15 @@ class KotlinMultilineStringEnterHandler : EnterHandlerDelegate {
         }
 
         fun String.prefixLength(f: (Char) -> Boolean) = takeWhile(f).count()
+
+        /**
+         * Note: this returns if the string is _exactly_ the start of a multiline string (except for trimming spaces).
+         */
+        private fun String.isStartOfMultilineString(): Boolean {
+            // Since Kotlin 2.1, it has been legal to start a multiline string with the interpolation prefix
+            // of some number of '$' characters.
+            return trim().trimStart('$') == MULTILINE_QUOTE
+        }
 
         fun insertTrimCall(document: Document, literal: KtStringTemplateExpression, marginChar: Char?) {
             if (hasTrimIndentCallInChain(literal) || getMarginCharFromTrimMarginCallsInChain(literal) != null) return
