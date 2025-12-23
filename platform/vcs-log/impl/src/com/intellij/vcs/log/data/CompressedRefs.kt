@@ -13,12 +13,16 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import java.util.function.IntConsumer
 
-internal class CompressedRefs(refs: Set<VcsRef>, private val myStorage: VcsLogStorage) : VcsLogRefsOfSingleRoot {
+internal class CompressedRefs(refs: Set<VcsRef>, private val storage: VcsLogStorage) : VcsLogRefsOfSingleRoot {
   // maps each commit id to the list of tag ids on this commit
-  private val tags: Int2ObjectMap<IntArrayList> = Int2ObjectOpenHashMap()
+  private val tagsMapping: Int2ObjectMap<IntArrayList> = Int2ObjectOpenHashMap()
+  override val tags: Sequence<VcsRef> = tagsMapping.values.asSequence().flatMap { tagsCollection: IntArrayList ->
+    tagsCollection.asSequence().mapNotNull { storage.getVcsRef(it) }
+  }
 
   // maps each commit id to the list of branches on this commit
-  private val branches: Int2ObjectMap<MutableCollection<VcsRef>> = Int2ObjectOpenHashMap()
+  private val branchesMapping: Int2ObjectMap<MutableCollection<VcsRef>> = Int2ObjectOpenHashMap()
+  override val branches: Sequence<VcsRef> = branchesMapping.values.asSequence().flatMap { it.asSequence() }
 
   init {
     var root: VirtualFile? = null
@@ -26,56 +30,50 @@ internal class CompressedRefs(refs: Set<VcsRef>, private val myStorage: VcsLogSt
       assert(root == null || root == ref.root) { "All references are supposed to be from the single root" }
       root = ref.root
 
-      val index = myStorage.getCommitIndex(ref.commitHash, ref.root)
+      val index = storage.getCommitIndex(ref.commitHash, ref.root)
       if (ref.type.isBranch) {
-        (branches.computeIfAbsent(index) { SmartList() }).add(ref)
+        (branchesMapping.computeIfAbsent(index) { SmartList() }).add(ref)
       }
       else {
-        val refIndex = myStorage.getRefIndex(ref)
+        val refIndex = storage.getRefIndex(ref)
         if (refIndex != VcsLogStorageImpl.NO_INDEX) {
-          tags.computeIfAbsent(index) { IntArrayList() }.add(refIndex)
+          tagsMapping.computeIfAbsent(index) { IntArrayList() }.add(refIndex)
         }
       }
     }
-    for (list in tags.values) {
+    for (list in tagsMapping.values) {
       list.trim()
     }
   }
 
   override fun contains(index: VcsLogCommitStorageIndex): Boolean {
-    return branches.containsKey(index) || tags.containsKey(index)
+    return branchesMapping.containsKey(index) || tagsMapping.containsKey(index)
   }
 
   override fun refsToCommit(index: VcsLogCommitStorageIndex): SmartList<VcsRef> {
     val result = SmartList<VcsRef>()
-    branches[index]?.let { result.addAll(it) }
-    tags[index]?.forEach { tag ->
-      val ref = myStorage.getVcsRef(tag)
+    branchesMapping[index]?.let { result.addAll(it) }
+    tagsMapping[index]?.forEach { tag ->
+      val ref = storage.getVcsRef(tag)
       if (ref != null) {
         result.add(ref)
       }
       else {
-        LOG.error("Could not find a tag by id $tag at commit ${myStorage.getCommitId(index)}")
+        LOG.error("Could not find a tag by id $tag at commit ${storage.getCommitId(index)}")
       }
     }
     return result
   }
 
-  override fun getBranches(): Sequence<VcsRef> = branches.values.asSequence().flatMap { it.asSequence() }
-
-  override fun getTags(): Sequence<VcsRef> = tags.values.asSequence().flatMap { tagsCollection: IntArrayList ->
-    tagsCollection.asSequence().mapNotNull { myStorage.getVcsRef(it) }
-  }
-
   override fun getRefsIndexes(): Collection<VcsLogCommitStorageIndex> {
-    val result = IntOpenHashSet(branches.keys.size + tags.keys.size)
-    result.addAll(branches.keys)
-    result.addAll(tags.keys)
+    val result = IntOpenHashSet(branchesMapping.keys.size + tagsMapping.keys.size)
+    result.addAll(branchesMapping.keys)
+    result.addAll(tagsMapping.keys)
     return result
   }
 
   override fun forEachBranchIndex(consumer: IntConsumer) {
-    branches.keys.forEach(consumer)
+    branchesMapping.keys.forEach(consumer)
   }
 
   companion object {
