@@ -83,7 +83,7 @@ internal suspend fun compileCode(fileToCompile: VirtualFile, project: Project): 
     .toTypedArray()
 
   val pluginByClass = PluginManager.getPluginByClass(ComposePreviewToolWindowFactory::class.java)
-  val filteringClassLoader = FilteringClassLoader(pluginByClass!!.classLoader)
+  val filteringClassLoader = FilteringClassLoader(pluginByClass!!.pluginClassLoader!!)
 
   val loader = ComposeUIPreviewClassLoader(diskPaths, filteringClassLoader)
   val functions = ComposableFunctionFinder(loader).findPreviewFunctions(analysis.targetClassName, analysis.composableMethodNames)

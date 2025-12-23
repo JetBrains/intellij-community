@@ -5,6 +5,7 @@ package com.intellij.ui
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.DevTimeClassLoader
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
@@ -54,7 +55,12 @@ abstract class ExperimentalUI {
     fun getInstance(): ExperimentalUI = ApplicationManager.getApplication().service<ExperimentalUI>()
 
     @JvmStatic
-    fun isNewUI(): Boolean = NewUiValue.isEnabled()
+    fun isNewUI(): Boolean {
+      // always true for development time tools, e.g., in Compose UI Preview
+      if (Thread.currentThread().contextClassLoader is DevTimeClassLoader) return true
+
+      return NewUiValue.isEnabled()
+    }
 
     val isNewNavbar: Boolean
       get() = NewUiValue.isEnabled() && Registry.`is`("ide.experimental.ui.navbar.scroll", true)

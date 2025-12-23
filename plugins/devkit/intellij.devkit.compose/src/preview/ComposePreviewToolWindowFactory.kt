@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.getUserData
@@ -26,6 +26,8 @@ import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import javax.swing.JComponent
 
 internal const val TOOLWINDOW_ID = "ComposeUIPreview"
+
+private val LOG = fileLogger()
 
 internal class ComposePreviewToolWindowFactory : ToolWindowFactory, DumbAware {
 
@@ -47,6 +49,8 @@ internal class ComposePreviewToolWindowFactory : ToolWindowFactory, DumbAware {
     toolWindow.setTitleActions(titleActionsGroup.getChildren(actionManager).toList())
 
     project.service<ComposePreviewChangesTracker>().startTracking(project, toolWindowContent) { virtualFile ->
+      LOG.debug("New incoming change for preview $virtualFile")
+
       val oldContent = withContext(Dispatchers.UI) {
         val current = wrapperPanel.components.firstOrNull()
         wrapperPanel.setPaintBusy(true)
@@ -58,7 +62,7 @@ internal class ComposePreviewToolWindowFactory : ToolWindowFactory, DumbAware {
         compileCode(virtualFile, project)
       }
       catch (e: Throwable) {
-        thisLogger().warn("Unable to compile code for preview", e)
+        LOG.warn("Unable to compile code for preview of $virtualFile", e)
         return@startTracking
       }
       finally {
@@ -78,19 +82,26 @@ internal class ComposePreviewToolWindowFactory : ToolWindowFactory, DumbAware {
       }
 
       withContext(Dispatchers.UI) {
+        LOG.debug("Apply new UI preview for $virtualFile")
+
         // free up the previous content JVM classes, register new
         try {
           wrapperPanel.getUserData(PROVIDER_KEY)?.classLoader?.close()
         }
         catch (e: Exception) {
-          thisLogger().warn("Unable to release classloader for UI preview", e)
+          LOG.warn("Unable to release classloader for UI preview", e)
         }
         wrapperPanel.putUserData(PROVIDER_KEY, provider)
-
         wrapperPanel.setPaintBusy(false)
-        wrapperPanel.setContent(compose(focusOnClickInside = true) {
-          provider.build(currentComposer, currentCompositeKeyHashCode)
-        })
+
+        try {
+          wrapperPanel.setContent(compose(focusOnClickInside = true) {
+            provider.build(currentComposer, currentCompositeKeyHashCode)
+          })
+        }
+        catch (e: Exception) {
+          LOG.error("Unable to apply content for UI preview of $virtualFile", e)
+        }
       }
     }
   }

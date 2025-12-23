@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -80,7 +81,12 @@ internal class ComposePreviewChangesTracker(val project: Project, val coroutineS
             FileDocumentManager.getInstance().saveAllDocuments()
           }
 
-          processor(virtualFile)
+          try {
+            processor(virtualFile)
+          }
+          catch (e: Throwable) {
+            thisLogger().error("Error during Compose UI Preview refresh chain", e)
+          }
         }
     }
   }
