@@ -106,7 +106,10 @@ fun visitChildrenInVfsRecursively(file: VirtualFile, action: (VirtualFile) -> Bo
     }
 
     override fun visitFile(file: VirtualFile): Boolean {
-      return action(file)
+      return if (file.name != ".DS_Store") {
+        action(file)
+      }
+      else false
     }
   })
 }
