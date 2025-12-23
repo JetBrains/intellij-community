@@ -81,6 +81,7 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/polySymbols",
     "//platform/execution",
+    "//platform/eel",
   ]
 )
 
@@ -168,6 +169,7 @@ jvm_library(
     "//platform/diff-impl/tests:tests_test_lib",
     "//platform/polySymbols",
     "//platform/execution",
+    "//platform/eel",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl` end
