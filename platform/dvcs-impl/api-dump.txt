@@ -242,6 +242,7 @@ e:com.intellij.dvcs.push.PrePushHandler$Result
 f:com.intellij.dvcs.push.PushController
 - com.intellij.openapi.Disposable
 - <init>(com.intellij.openapi.project.Project,com.intellij.dvcs.push.ui.VcsPushDialog,java.util.Collection,java.util.List,com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushSource):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.dvcs.push.ui.VcsPushDialog,java.util.Collection,java.util.List,com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushSource,com.intellij.dvcs.push.PushTarget):V
 - createAdditionalPanels():java.util.Map
 - createTopPanel():javax.swing.JComponent
 - dispose():V
@@ -351,6 +352,7 @@ c:com.intellij.dvcs.push.ui.VcsPushDialog
 - pf:myController:com.intellij.dvcs.push.PushController
 - pf:myProject:com.intellij.openapi.project.Project
 - <init>(com.intellij.openapi.project.Project,java.util.Collection,java.util.List,com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushSource):V
+- <init>(com.intellij.openapi.project.Project,java.util.Collection,java.util.List,com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushSource,com.intellij.dvcs.push.PushTarget):V
 - <init>(com.intellij.openapi.project.Project,java.util.List,com.intellij.dvcs.repo.Repository):V
 - canPush():Z
 - p:createActions():javax.swing.Action[]

@@ -153,6 +153,8 @@ jvm_library(
     "//platform/lvcs-api:lvcs",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
     "//platform/platform-api:ide",
     "//libraries/guava",
     "//platform/lang-impl",

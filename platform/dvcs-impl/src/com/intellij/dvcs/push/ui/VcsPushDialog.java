@@ -72,12 +72,22 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
   public VcsPushDialog(@NotNull Project project,
                        @NotNull Collection<? extends Repository> allRepos,
                        @NotNull List<? extends Repository> selectedRepositories,
-                       @Nullable Repository currentRepo, @Nullable PushSource pushSource) {
+                       @Nullable Repository currentRepo,
+                       @Nullable PushSource pushSource) {
+    this(project, allRepos, selectedRepositories, currentRepo, pushSource, /* pushTarget */ null);
+  }
+
+  public VcsPushDialog(@NotNull Project project,
+                       @NotNull Collection<? extends Repository> allRepos,
+                       @NotNull List<? extends Repository> selectedRepositories,
+                       @Nullable Repository currentRepo,
+                       @Nullable PushSource pushSource,
+                       @Nullable PushTarget pushTarget) {
     super(project, true, IdeModalityType.IDE);
     myProject = project;
     myController =
       new PushController(project, this, allRepos, selectedRepositories, currentRepo,
-                         pushSource);
+                         pushSource, pushTarget);
     myAdditionalPanels = myController.createAdditionalPanels();
     myCustomPanels = myController.createCustomPanels(allRepos);
     myListPanel = myController.getPushPanelLog();

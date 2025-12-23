@@ -5,6 +5,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.*;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -45,6 +46,7 @@ public final class PushController implements Disposable {
 
   private final @NotNull Project myProject;
   private final @Nullable PushSource myPushSource;
+  private final @Nullable PushTarget myPushTarget;
   private final @NotNull Collection<? extends Repository> myAllRepos;
   private final @NotNull List<? extends Repository> myPreselectedRepositories;
   private final @NotNull List<PushSupport<Repository, PushSource, PushTarget>> myPushSupports;
@@ -66,16 +68,28 @@ public final class PushController implements Disposable {
                         @NotNull VcsPushDialog dialog,
                         @NotNull Collection<? extends Repository> allRepos,
                         @NotNull List<? extends Repository> preselectedRepositories,
-                        @Nullable Repository currentRepo, @Nullable PushSource pushSource) {
+                        @Nullable Repository currentRepo,
+                        @Nullable PushSource pushSource) {
+    this(project, dialog, allRepos, preselectedRepositories, currentRepo, pushSource, /* target */ null);
+  }
+
+  public PushController(@NotNull Project project,
+                        @NotNull VcsPushDialog dialog,
+                        @NotNull Collection<? extends Repository> allRepos,
+                        @NotNull List<? extends Repository> preselectedRepositories,
+                        @Nullable Repository currentRepo,
+                        @Nullable PushSource pushSource,
+                        @Nullable PushTarget target) {
     myProject = project;
     myAllRepos = allRepos;
     myPreselectedRepositories = preselectedRepositories;
     myCurrentlyOpenedRepository = currentRepo;
     myPushSource = pushSource;
+    myPushTarget = target;
     myPushSupports = getAffectedSupports();
     mySingleRepoProject = isSingleRepoProject();
     myDialog = dialog;
-    myModalityState = ModalityState.stateForComponent(myDialog.getRootPane());
+    myModalityState = AppMode.isHeadless() ? ModalityState.defaultModalityState() : ModalityState.stateForComponent(myDialog.getRootPane());
     CheckedTreeNode rootNode = new CheckedTreeNode(null);
     createTreeModel(rootNode);
     myPushLog = new PushLog(myProject, rootNode, myModalityState, isSyncStrategiesAllowed());
@@ -175,7 +189,8 @@ public final class PushController implements Disposable {
       if (support != null) {
         PushSource source = myPushSource != null ? myPushSource : support.getSource(repository);
         if (source != null) {
-          createRepoNode(repository, rootNode, source, support);
+          PushTarget target = myPushTarget != null ? myPushTarget : support.getDefaultTarget(repository, source);
+          createRepoNode(repository, rootNode, source, target, support);
         }
       }
     }
@@ -189,8 +204,8 @@ public final class PushController implements Disposable {
   private <R extends Repository, S extends PushSource, T extends PushTarget> void createRepoNode(@NotNull R repository,
                                                                                                  @NotNull CheckedTreeNode rootNode,
                                                                                                  @NotNull S source,
+                                                                                                 @Nullable T target,
                                                                                                  @NotNull PushSupport<R, S, T> pushSupport) {
-    T target = pushSupport.getDefaultTarget(repository, source);
     String repoName = getDisplayedRepoName(repository);
     MyRepoModel<R, S, T> model = new MyRepoModel<>(repository, pushSupport, mySingleRepoProject, source, target);
     if (target == null) {

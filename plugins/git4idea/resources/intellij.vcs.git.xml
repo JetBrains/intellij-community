@@ -334,6 +334,9 @@
       <reference ref="Git.Squash.Commits"/>
       <reference ref="Git.Interactive.Rebase"/>
       <reference ref="Git.PushUpToCommit"/>
+      <action id="Git.AddCommitToRemoteBranch"
+              class="git4idea.actions.addCommit.GitAddCommitToRemoteBranchAction"
+              internal="true"/>
       <separator/>
       <reference ref="Git.BranchOperationGroup"/>
       <action id="Git.CreateNewBranch.FromCommit"

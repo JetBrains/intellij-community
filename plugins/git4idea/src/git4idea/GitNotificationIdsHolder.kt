@@ -133,6 +133,8 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       WORKTREE_COULD_NOT_CREATE_TARGET_DIR,
       WORKING_TREE_DELETED,
       WORKING_TREE_COULD_NOT_DELETE,
+      ADD_COMMIT_TO_REMOTE_BRANCH_CONFLICT,
+      ADD_COMMIT_TO_REMOTE_BRANCH_FAILED,
     )
   }
 
@@ -265,5 +267,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val WORKTREE_COULD_NOT_CREATE_TARGET_DIR: String = "git.worktree.could.not.create.target.dir"
     const val WORKING_TREE_DELETED: String = "git.working.tree.deleted"
     const val WORKING_TREE_COULD_NOT_DELETE: String = "git.working.tree.not.deleted"
+    const val ADD_COMMIT_TO_REMOTE_BRANCH_CONFLICT: String = "git.add.commit.to.remote.branch.conflict"
+    const val ADD_COMMIT_TO_REMOTE_BRANCH_FAILED: String = "git.add.commit.to.remote.branch.failed"
   }
 }
