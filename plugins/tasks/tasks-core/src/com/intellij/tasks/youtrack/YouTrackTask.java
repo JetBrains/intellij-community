@@ -2,6 +2,7 @@
 package com.intellij.tasks.youtrack;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.LocalTaskImpl;
@@ -79,12 +80,28 @@ public class YouTrackTask extends Task {
     YouTrackIssue.CustomField stateField = ContainerUtil.find(myIssue.getCustomFields(), cf -> cf.getName().equals(fieldName));
     if (stateField != null) {
       JsonElement fieldValueElem = stateField.getValue();
-      if (fieldValueElem != null && fieldValueElem.isJsonObject()) {
-        JsonElement stateNameElem = fieldValueElem.getAsJsonObject().get("name");
-        if (stateNameElem != null && stateNameElem.isJsonPrimitive() && stateNameElem.getAsJsonPrimitive().isString()) {
-          return stateNameElem.getAsString();
-        }
+      if (fieldValueElem == null) {
+        return null;
       }
+      List<JsonObject> elements;
+      if (fieldValueElem.isJsonArray()) {
+        elements = ContainerUtil.filterIsInstance(fieldValueElem.getAsJsonArray().asList(), JsonObject.class);
+      }
+      else if (fieldValueElem.isJsonObject()) {
+        elements = Collections.singletonList(fieldValueElem.getAsJsonObject());
+      }
+      else {
+        return null;
+      }
+
+      var result = elements.stream().map(it -> it.get("name"))
+        .filter(it -> it != null && it.isJsonPrimitive() && it.getAsJsonPrimitive().isString())
+        .map(JsonElement::getAsString)
+        .toList();
+      if (result.isEmpty()) {
+        return null;
+      }
+      return StringUtil.join(result, ", ");
     }
     return null;
   }
@@ -163,7 +180,10 @@ public class YouTrackTask extends Task {
     return Collections.unmodifiableMap(properties);
   }
 
-  private void addCustomField(HashMap<String, CustomTaskProperty> properties, String propertyName, String fieldName, @Nls String displayName) {
+  private void addCustomField(HashMap<String, CustomTaskProperty> properties,
+                              String propertyName,
+                              String fieldName,
+                              @Nls String displayName) {
     String value = getCustomFieldStringValue(fieldName);
     if (value != null) {
       properties.put(propertyName, new CustomTaskProperty(displayName, value, null));
