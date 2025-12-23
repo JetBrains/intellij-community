@@ -41,6 +41,7 @@ internal data class ContentProvider(val function: Method, val classLoader: URLCl
     Thread.currentThread().contextClassLoader = classLoader
 
     try {
+      function.isAccessible = true // handle private/protected visibility
       function.invoke(null, currentComposer, currentCompositeKeyHashCode.toInt())
     }
     catch (t: Throwable) {
