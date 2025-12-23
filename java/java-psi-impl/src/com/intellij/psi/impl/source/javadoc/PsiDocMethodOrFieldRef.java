@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.javadoc;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -34,6 +35,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDocTagValue, Constants {
+  private static final List<String> SIGNATURE_TO_REPLACE = Arrays.asList("\\[", "\\]");
+  private static final List<String> SIGNATURE_REPLACEMENT = Arrays.asList("[", "]");
+  
   public PsiDocMethodOrFieldRef() {
     super(DOC_METHOD_OR_FIELD_REF);
   }
@@ -144,7 +148,8 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     List<String> types = new ArrayList<>();
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child.getNode().getElementType() == DOC_TYPE_HOLDER) {
-        types.add(child.getText());
+        // JEP-467: Markdown comments have escaped brackets for array types 
+        types.add(Strings.replace(child.getText(), SIGNATURE_TO_REPLACE, SIGNATURE_REPLACEMENT));
       }
     }
 

@@ -12,12 +12,12 @@ java.FILE
             IDENTIFIER
             REFERENCE_PARAMETER_LIST
               <empty list>
-          WHITE_SPACE
-          IDENTIFIER
-          WHITE_SPACE
-          IDENTIFIER
-          WHITE_SPACE
-          IDENTIFIER
+        WHITE_SPACE
+        DOC_COMMENT_DATA
+        WHITE_SPACE
+        DOC_COMMENT_DATA
+        WHITE_SPACE
+        DOC_COMMENT_DATA
         DOC_RBRACKET
       DOC_RBRACKET
       DOC_REFERENCE_LINK

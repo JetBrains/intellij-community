@@ -9,9 +9,11 @@ import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
+import com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 import com.intellij.platform.syntax.parser.WhitespacesBinders.greedyLeftBinder
 import com.intellij.platform.syntax.parser.WhitespacesBinders.greedyRightBinder
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
+import com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil.rawTokenText
 import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.annotations.Contract
 
@@ -19,6 +21,22 @@ class JavaDocParser(
   val builder: SyntaxTreeBuilder,
   val languageLevel: LanguageLevel,
 ) {
+  companion object {
+    /** Binder taking the next space if it isn't an EOL */
+    private val fakeCollapseRightBinder = object : WhitespacesAndCommentsBinder {
+      override fun getEdgePosition(
+        tokens: List<SyntaxElementType>,
+        atStreamEdge: Boolean,
+        getter: WhitespacesAndCommentsBinder.TokenTextGetter,
+      ): Int {
+        if (tokens.isNotEmpty() && !isEolToken(tokens.first(), getter.get(0))) {
+          return 1
+        }
+        return 0
+      }
+    }
+  }
+
   private var braceScope: Int = 0
   private var closingStatusList: MutableList<Boolean> = mutableListOf() // true for all '{' opening an inline tag
 
@@ -153,7 +171,7 @@ class JavaDocParser(
     else if (tokenType === JavaDocSyntaxTokenType.DOC_LBRACKET) {
       parseMarkdownReferenceChecked()
     }
-    else if (tokenType === JavaDocSyntaxTokenType.DOC_COMMENT_DATA) {
+    else if (tokenType === JavaDocSyntaxTokenType.DOC_COMMENT_DATA || (isWhiteSpace(tokenType) && !isEolToken(tokenType, builder.tokenText))) {
       parseCommentData()
     }
     else {
@@ -164,44 +182,49 @@ class JavaDocParser(
   private fun parseCommentData() {
     val commentData = builder.mark()
     val offset = builder.currentOffset
+    
+    var aheadType: SyntaxElementType? = null
+    while (builder.rawLookup(1).also { aheadType = it } != null) {
+      val hasCommentTokenNext = COMMENT_DATA_TOKENS.contains(aheadType)
+      val hasWhiteSpaceTokenNext = isWhiteSpace(aheadType) && !isEolToken(aheadType, builder.rawTokenText(1))
 
-    while (COMMENT_DATA_TOKENS.contains(builder.rawLookup(1))) {
-      builder.advanceLexer()
+      if (hasCommentTokenNext || hasWhiteSpaceTokenNext) {
+        builder.rawAdvanceLexer(1)
+      } else {
+        break
+      }
     }
 
     if (builder.currentOffset != offset) {
       builder.advanceLexer()
       commentData.collapse(JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
-    } else {
+    }
+    else {
       commentData.drop()
       builder.advanceLexer()
     }
   }
 
   private fun parseInlineCodeBlock() {
-    var tag = builder.mark()
+    val blockMarker = builder.mark()
+    builder.rawAdvanceLexer(1)
+    val contentMarker = builder.mark()
     val stopElementType = findInlineToken(JavaDocSyntaxTokenType.DOC_INLINE_CODE_FENCE)
-    val endOffset = builder.currentOffset
-    tag.rollbackTo()
-
 
     if (stopElementType !== JavaDocSyntaxTokenType.DOC_INLINE_CODE_FENCE) {
       // Bail out, no end
+      contentMarker.drop()
+      blockMarker.rollbackTo()
       builder.advanceLexer()
       return
     }
 
-    tag = builder.mark()
-    builder.advanceLexer()
-    while (builder.currentOffset < endOffset && !builder.eof()) {
-      builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
-      builder.advanceLexer()
-    }
+    fakeCollapse(contentMarker, JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
     if (!builder.eof()) {
       builder.advanceLexer()
     }
 
-    tag.done(JavaDocSyntaxElementType.DOC_MARKDOWN_CODE_BLOCK)
+    blockMarker.done(JavaDocSyntaxElementType.DOC_MARKDOWN_CODE_BLOCK)
   }
 
   private fun parseCodeBlock() {
@@ -294,18 +317,31 @@ class JavaDocParser(
     if (hasLabel) {
       builder.advanceLexer()
       val label = builder.mark()
+      /* Collapses comment data within a label */
+      var commentDataMarker: SyntaxTreeBuilder.Marker? = null
       // Label range already known, mark it as comment data
       while (!builder.eof()) {
         if (builder.tokenType === JavaDocSyntaxTokenType.DOC_INLINE_CODE_FENCE) {
+          commentDataMarker?.let {
+            fakeCollapse(it, JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
+            commentDataMarker = null
+          }
           parseInlineCodeBlock()
           continue
         }
+
         if (builder.currentOffset < endLabelOffset) {
-          builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
+          if(commentDataMarker == null) {
+            commentDataMarker = builder.mark()
+          }
           builder.advanceLexer()
           continue
         }
         break
+      }
+
+      commentDataMarker?.let {
+        fakeCollapse(it, JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
       }
       label.done(JavaDocSyntaxElementType.DOC_MARKDOWN_REFERENCE_LABEL)
       builder.advanceLexer()
@@ -347,19 +383,27 @@ class JavaDocParser(
       builder.advanceLexer()
       builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN)
 
-      // A method only has parenthesis and a few comment data, separated by commas
+      // A method only has parenthesis, comment data which may be the type, the optional argument name and commas  
       builder.advanceLexer()
       if (builder.tokenType === JavaDocSyntaxTokenType.DOC_LPAREN) {
         builder.advanceLexer()
         val subValue = builder.mark()
 
+        // Only the first data element count as a type in links like [#foo(int arg1, int arg2)]
+        var dataSinceComma = false
+        
         while (!builder.eof()) {
           val type = getTokenType()
           if (type === JavaDocSyntaxTokenType.DOC_COMMENT_DATA) {
-            builder.remapCurrentToken(JavaDocSyntaxElementType.DOC_TYPE_HOLDER)
+            if(!dataSinceComma) {
+              dataSinceComma = true
+              builder.remapCurrentToken(JavaDocSyntaxElementType.DOC_TYPE_HOLDER)
+            }
           }
           else if (type !== JavaDocSyntaxTokenType.DOC_COMMA) {
             break
+          } else {
+            dataSinceComma = false;
           }
           builder.advanceLexer()
         }
@@ -401,6 +445,10 @@ class JavaDocParser(
       }
     } else {
       refStart.drop()
+    }
+    // This method is guaranteed the existence of an end bracket
+    if (getTokenType() !== JavaDocSyntaxTokenType.DOC_RBRACKET) {
+      findInlineToken(JavaDocSyntaxTokenType.DOC_RBRACKET)
     }
   }
 
@@ -679,11 +727,48 @@ class JavaDocParser(
     tagData.done(JavaDocSyntaxElementType.DOC_TAG_VALUE_ELEMENT)
   }
 
-  private fun getTokenType(): SyntaxElementType? {
-    return getTokenType(true)
+  /**
+   * Behaves like-ish [SyntaxTreeBuilder.Marker.collapse] but skips over eol and leading asterisks.
+   * This means it cannot merge everything in a single node.
+   * 
+   * Note that [marker] will be dropped.
+   */
+  private fun fakeCollapse(marker: SyntaxTreeBuilder.Marker, tokenType: SyntaxElementType) {
+    /** Whether a token should be ignored during the fake collapse */
+    fun shouldIgnore(type: SyntaxElementType?) = (type != null &&
+       (type === JavaDocSyntaxTokenType.DOC_COMMENT_LEADING_ASTERISKS || isEolToken(type, builder.tokenText)))
+
+    val endOffset = builder.currentOffset
+    marker.rollbackTo()
+    val currentTokenType = getTokenType(false)
+    var fuseMarker: SyntaxTreeBuilder.Marker? = if (shouldIgnore(currentTokenType)) null else builder.mark()
+
+    while (!builder.eof() && builder.currentOffset < endOffset) {
+      if (shouldIgnore(currentTokenType)) {
+        fuseMarker?.collapse(tokenType)
+        fuseMarker?.setCustomEdgeTokenBinders(null, fakeCollapseRightBinder)
+        fuseMarker = null
+
+        builder.advanceLexer()
+        continue
+      }
+      if (fuseMarker == null) {
+        fuseMarker = builder.mark()
+      }
+      if (isWhiteSpace(builder.rawLookup(1)) && builder.rawLookup(2) == JavaDocSyntaxTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
+        builder.advanceLexer()
+        fuseMarker.collapse(tokenType)
+        fuseMarker.setCustomEdgeTokenBinders(null, fakeCollapseRightBinder)
+        fuseMarker = null
+      } else {
+        builder.advanceLexer()
+      }
+    }
+    fuseMarker?.collapse(tokenType)
+    fuseMarker?.setCustomEdgeTokenBinders(null, fakeCollapseRightBinder)
   }
 
-  private fun getTokenType(skipWhitespace: Boolean): SyntaxElementType? {
+  private fun getTokenType(skipWhitespace: Boolean = true): SyntaxElementType? {
     var tokenType: SyntaxElementType?
     while ((builder.tokenType.also { tokenType = it }) === JavaDocSyntaxTokenType.DOC_SPACE) {
       builder.remapCurrentToken(SyntaxTokenTypes.WHITE_SPACE)
@@ -706,6 +791,16 @@ class JavaDocParser(
     }
     builder.advanceLexer()
   }
+}
+
+/** @return Whether the token is eol */
+private fun isEolToken(type: SyntaxElementType?, text: CharSequence?): Boolean {
+  return isWhiteSpace(type) && text != null && text.contains('\n')
+}
+
+/** @return Whether the token is a whitespace */
+private fun isWhiteSpace(type: SyntaxElementType?): Boolean {
+  return type != null && (type == JavaDocSyntaxTokenType.DOC_SPACE || type == SyntaxTokenTypes.WHITE_SPACE)
 }
 
 private val TAG_VALUES_SET: SyntaxElementTypeSet = syntaxElementTypeSetOf(

@@ -14,6 +14,8 @@ import kotlin.jvm.JvmStatic
   private var mySnippetBracesLevel = 0;
   /* Enable markdown support for java 23 */
   private var myMarkdownMode = false;
+  /** Whether comment data should take into account spaces, on used with [myMarkdownMode] */
+  private var commentDataWithSpaces = false;
 
   constructor(isJdk15Enabled: Boolean) {
     myJdk15Enabled = isJdk15Enabled;
@@ -22,6 +24,7 @@ import kotlin.jvm.JvmStatic
   /** Should be called right after a reset */
   public fun setMarkdownMode(isEnabled: Boolean) {
     myMarkdownMode = isEnabled;
+    if (!myMarkdownMode) commentDataWithSpaces = false;
   }
 
   public fun checkAhead(c: Char): Boolean {
@@ -94,7 +97,11 @@ LEADING_TOKEN_MARKDOWN="///"
 }
 
 <COMMENT_DATA_START> {WHITE_DOC_SPACE_CHAR}+ { return JavaDocSyntaxTokenType.DOC_SPACE; }
-<COMMENT_DATA> {WHITE_DOC_SPACE_NO_LR}+ { return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
+<COMMENT_DATA> {WHITE_DOC_SPACE_NO_LR}+ { return when(commentDataWithSpaces) {
+          true -> JavaDocSyntaxTokenType.DOC_SPACE
+          false -> JavaDocSyntaxTokenType.DOC_COMMENT_DATA
+        }
+      }
 <COMMENT_DATA> [\n\r]+{WHITE_DOC_SPACE_CHAR}* { return JavaDocSyntaxTokenType.DOC_SPACE; }
 
 <DOC_TAG_VALUE> {WHITE_DOC_SPACE_CHAR}+ { yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_SPACE; }
@@ -183,6 +190,7 @@ LEADING_TOKEN_MARKDOWN="///"
       \[ {
         yybegin(COMMENT_DATA);
         if(myMarkdownMode) {
+          commentDataWithSpaces = true;
           return JavaDocSyntaxTokenType.DOC_LBRACKET;
         }
         return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
@@ -190,6 +198,7 @@ LEADING_TOKEN_MARKDOWN="///"
       \] {
         yybegin(COMMENT_DATA);
         if(myMarkdownMode) {
+          commentDataWithSpaces = false;
           return JavaDocSyntaxTokenType.DOC_RBRACKET;
         }
         return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;

@@ -1,0 +1,76 @@
+PsiJavaFile:ReferenceLinkMarkdown14.java
+  PsiImportList
+    <empty list>
+  PsiClass:C
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace(' ')
+      PsiDocToken:DOC_LBRACKET('[')
+      PsiReferenceLink:
+        PsiDocToken:DOC_LBRACKET('[')
+        PsiElement(DOC_REFERENCE_HOLDER)
+          PsiJavaCodeReferenceElement:unbalanced
+            PsiIdentifier:unbalanced('unbalanced')
+            PsiReferenceParameterList
+              <empty list>
+        PsiDocToken:DOC_RBRACKET(']')
+      PsiDocToken:DOC_COMMENT_DATA(' Hey hey people')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace(' \n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiReferenceLink:
+        PsiDocToken:DOC_LBRACKET('[')
+        PsiWhiteSpace(' ')
+        PsiReferenceLabel:
+          PsiDocToken:DOC_COMMENT_DATA('balanced with spaces ')
+        PsiDocToken:DOC_RBRACKET(']')
+        PsiDocToken:DOC_LBRACKET('[')
+        PsiElement(DOC_REFERENCE_HOLDER)
+          PsiJavaCodeReferenceElement:java.lang.String
+            PsiJavaCodeReferenceElement:java.lang
+              PsiJavaCodeReferenceElement:java
+                PsiIdentifier:java('java')
+                PsiReferenceParameterList
+                  <empty list>
+              PsiJavaToken:DOT('.')
+              PsiIdentifier:lang('lang')
+              PsiReferenceParameterList
+                <empty list>
+            PsiJavaToken:DOT('.')
+            PsiIdentifier:String('String')
+            PsiReferenceParameterList
+              <empty list>
+        PsiDocToken:DOC_RBRACKET(']')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace(' \n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiDocToken:DOC_LBRACKET('[')
+      PsiWhiteSpace(' ')
+      PsiDocToken:DOC_COMMENT_DATA('Beep Boop all of you are forced to have')
+      PsiWhiteSpace(' \n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' space')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace(' \n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' but not you ofc')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:C('C')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

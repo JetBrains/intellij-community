@@ -34,13 +34,13 @@ PsiJavaFile:ReferenceLinkMarkdown11.java
                 PsiJavaToken:LBRACKET('\[')
                 PsiJavaToken:RBRACKET('\]')
             PsiDocToken:DOC_COMMA(',')
+            PsiWhiteSpace(' ')
             PsiElement(DOC_TYPE_HOLDER)
-              PsiWhiteSpace(' ')
               PsiTypeElement:int
                 PsiKeyword:int('int')
             PsiDocToken:DOC_COMMA(',')
+            PsiWhiteSpace(' ')
             PsiElement(DOC_TYPE_HOLDER)
-              PsiWhiteSpace(' ')
               PsiTypeElement:int
                 PsiKeyword:int('int')
           PsiDocToken:DOC_RPAREN(')')

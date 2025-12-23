@@ -322,13 +322,13 @@ companion object {
     "\u0001\u000d\u0001\u0002\u0001\u000e\u0001\u000f\u0001\u0010\u0001\u0011\u0001\u0012\u0001\u0013"+
     "\u0001\u0014\u0001\u0015\u0001\u0016\u0001\u0017\u0001\u0018\u0001\u0013\u0001\u0019\u0001\u0001"+
     "\u0002\u001a\u0001\u001b\u0001\u001a\u0001\u001c\u0001\u001d\u0001\u0013\u0001\u001e\u0001\u001f"+
-    "\u0001\u001c\u0001\u0020\u0001\u0013\u0001\u000e\u0001\u0003\u0001\u0021\u0001\u0022\u0001\u0013"+
-    "\u0001\u0003\u0001\u0023\u0001\u000d\u0001\u0013\u0001\u0003\u0001\u000d\u0001\u0000\u0001\u0024"+
-    "\u0002\u0000\u0001\u0025\u0008\u0026\u0002\u0000\u0001\u0027\u0006\u0026\u0001\u0000\u0001\u0028"+
-    "\u0001\u0029\u0008\u0026\u0002\u002a\u0006\u0026\u0001\u002b\u0008\u0026\u0002\u002a\u000e\u0026"+
-    "\u0002\u002a\u0001\u002c\u0009\u0026\u0001\u002d\u0001\u002e\u0001\u0026\u0002\u002a\u0001\u0026"+
-    "\u0001\u002e\u0005\u0026\u0002\u002a\u0001\u0026\u0001\u002d\u0004\u0026\u0002\u002a\u0001\u002f"+
-    "\u0001\u0026\u0002\u002a\u0001\u0026\u0015\u002a"
+    "\u0001\u001c\u0001\u0020\u0001\u0013\u0001\u0021\u0001\u0003\u0001\u0022\u0001\u0023\u0001\u0013"+
+    "\u0001\u0003\u0001\u0024\u0001\u000d\u0001\u0013\u0001\u0003\u0001\u000d\u0001\u0000\u0001\u0025"+
+    "\u0002\u0000\u0001\u0026\u0008\u0027\u0002\u0000\u0001\u0028\u0006\u0027\u0001\u0000\u0001\u0029"+
+    "\u0001\u002a\u0008\u0027\u0002\u002b\u0006\u0027\u0001\u002c\u0008\u0027\u0002\u002b\u000e\u0027"+
+    "\u0002\u002b\u0001\u002d\u0009\u0027\u0001\u002e\u0001\u002f\u0001\u0027\u0002\u002b\u0001\u0027"+
+    "\u0001\u002f\u0005\u0027\u0002\u002b\u0001\u0027\u0001\u002e\u0004\u0027\u0002\u002b\u0001\u0030"+
+    "\u0001\u0027\u0002\u002b\u0001\u0027\u0015\u002b"
 
   @JvmStatic
   private fun zzUnpackAction(): IntArray {
@@ -665,6 +665,8 @@ companion object {
   private var mySnippetBracesLevel = 0;
   /* Enable markdown support for java 23 */
   private var myMarkdownMode = false;
+  /** Whether comment data should take into account spaces, on used with [myMarkdownMode] */
+  private var commentDataWithSpaces = false;
 
   constructor(isJdk15Enabled: Boolean) {
     myJdk15Enabled = isJdk15Enabled;
@@ -673,6 +675,7 @@ companion object {
   /** Should be called right after a reset */
   public fun setMarkdownMode(isEnabled: Boolean) {
     myMarkdownMode = isEnabled;
+    if (!myMarkdownMode) commentDataWithSpaces = false;
   }
 
   public fun checkAhead(c: Char): Boolean {
@@ -995,15 +998,15 @@ companion object {
           1 -> {
             return JavaDocSyntaxTokenType.DOC_COMMENT_BAD_CHARACTER;
             }
-          48 -> { /* do nothing */ }
+          49 -> { /* do nothing */ }
           2 -> {
             yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
             }
-          49 -> { /* do nothing */ }
+          50 -> { /* do nothing */ }
           3 -> {
             return JavaDocSyntaxTokenType.DOC_SPACE;
             }
-          50 -> { /* do nothing */ }
+          51 -> { /* do nothing */ }
           4 -> {
             yybegin(COMMENT_DATA);
          if(myMarkdownMode) {
@@ -1011,7 +1014,7 @@ companion object {
          }
          return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
             }
-          51 -> { /* do nothing */ }
+          52 -> { /* do nothing */ }
           5 -> {
             yybegin(COMMENT_DATA);
         if(myMarkdownMode) {
@@ -1019,7 +1022,7 @@ companion object {
         }
         return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
             }
-          52 -> { /* do nothing */ }
+          53 -> { /* do nothing */ }
           6 -> {
             yybegin(COMMENT_DATA);
         if(myMarkdownMode) {
@@ -1027,7 +1030,7 @@ companion object {
         }
         return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
             }
-          53 -> { /* do nothing */ }
+          54 -> { /* do nothing */ }
           7 -> {
             yybegin(COMMENT_DATA);
           if(myMarkdownMode) {
@@ -1035,7 +1038,7 @@ companion object {
           }
           return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
             }
-          54 -> { /* do nothing */ }
+          55 -> { /* do nothing */ }
           8 -> {
             yybegin(COMMENT_DATA);
         if(myMarkdownMode) {
@@ -1043,23 +1046,25 @@ companion object {
         }
         return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
             }
-          55 -> { /* do nothing */ }
+          56 -> { /* do nothing */ }
           9 -> {
             yybegin(COMMENT_DATA);
         if(myMarkdownMode) {
+          commentDataWithSpaces = true;
           return JavaDocSyntaxTokenType.DOC_LBRACKET;
         }
         return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
             }
-          56 -> { /* do nothing */ }
+          57 -> { /* do nothing */ }
           10 -> {
             yybegin(COMMENT_DATA);
         if(myMarkdownMode) {
+          commentDataWithSpaces = false;
           return JavaDocSyntaxTokenType.DOC_RBRACKET;
         }
         return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
             }
-          57 -> { /* do nothing */ }
+          58 -> { /* do nothing */ }
           11 -> {
             yybegin(COMMENT_DATA);
           if(myMarkdownMode) {
@@ -1067,7 +1072,7 @@ companion object {
           }
           return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
             }
-          58 -> { /* do nothing */ }
+          59 -> { /* do nothing */ }
           12 -> {
             if (checkAhead('@')) {
     yybegin(INLINE_TAG_NAME);
@@ -1078,50 +1083,53 @@ companion object {
     return JavaDocSyntaxTokenType.DOC_INLINE_TAG_START;
   }
             }
-          59 -> { /* do nothing */ }
+          60 -> { /* do nothing */ }
           13 -> {
             yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_INLINE_TAG_END;
             }
-          60 -> { /* do nothing */ }
-          14 -> {
-            return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
-            }
           61 -> { /* do nothing */ }
+          14 -> {
+            return when(commentDataWithSpaces) {
+          true -> JavaDocSyntaxTokenType.DOC_SPACE
+          false -> JavaDocSyntaxTokenType.DOC_COMMENT_DATA
+        }
+            }
+          62 -> { /* do nothing */ }
           15 -> {
             if (checkAhead('<') || checkAhead('\"')) yybegin(COMMENT_DATA);
   else if (checkAhead('\u007b')) yybegin(COMMENT_DATA);  // lbrace - there's a error in JLex when typing lbrace directly
   else yybegin(DOC_TAG_VALUE);
   return JavaDocSyntaxTokenType.DOC_SPACE;
             }
-          62 -> { /* do nothing */ }
+          63 -> { /* do nothing */ }
           16 -> {
             yybegin(DOC_TAG_VALUE); return JavaDocSyntaxTokenType.DOC_SPACE;
             }
-          63 -> { /* do nothing */ }
+          64 -> { /* do nothing */ }
           17 -> {
             yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_SPACE;
             }
-          64 -> { /* do nothing */ }
+          65 -> { /* do nothing */ }
           18 -> {
             return JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN;
             }
-          65 -> { /* do nothing */ }
+          66 -> { /* do nothing */ }
           19 -> {
             return JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN;
             }
-          66 -> { /* do nothing */ }
+          67 -> { /* do nothing */ }
           20 -> {
             yybegin(DOC_TAG_VALUE_IN_PAREN); return JavaDocSyntaxTokenType.DOC_TAG_VALUE_LPAREN;
             }
-          67 -> { /* do nothing */ }
+          68 -> { /* do nothing */ }
           21 -> {
             return JavaDocSyntaxTokenType.DOC_TAG_VALUE_COMMA;
             }
-          68 -> { /* do nothing */ }
+          69 -> { /* do nothing */ }
           22 -> {
             return JavaDocSyntaxTokenType.DOC_TAG_VALUE_SLASH;
             }
-          69 -> { /* do nothing */ }
+          70 -> { /* do nothing */ }
           23 -> {
             if (myJdk15Enabled) {
     yybegin(DOC_TAG_VALUE_IN_LTGT);
@@ -1132,51 +1140,55 @@ companion object {
     return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
   }
             }
-          70 -> { /* do nothing */ }
+          71 -> { /* do nothing */ }
           24 -> {
             yybegin(DOC_TAG_VALUE); return JavaDocSyntaxTokenType.DOC_TAG_VALUE_RPAREN;
             }
-          71 -> { /* do nothing */ }
+          72 -> { /* do nothing */ }
           25 -> {
             yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_TAG_VALUE_GT;
             }
-          72 -> { /* do nothing */ }
+          73 -> { /* do nothing */ }
           26 -> {
             yybegin(CODE_TAG); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
             }
-          73 -> { /* do nothing */ }
+          74 -> { /* do nothing */ }
           27 -> {
             yybegin(CODE_TAG); return JavaDocSyntaxTokenType.DOC_SPACE;
             }
-          74 -> { /* do nothing */ }
+          75 -> { /* do nothing */ }
           28 -> {
             yybegin(SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
             }
-          75 -> { /* do nothing */ }
+          76 -> { /* do nothing */ }
           29 -> {
             yybegin(SNIPPET_ATTRIBUTE_VALUE_DOUBLE_QUOTES); return JavaDocSyntaxTokenType.DOC_TAG_VALUE_QUOTE;
             }
-          76 -> { /* do nothing */ }
+          77 -> { /* do nothing */ }
           30 -> {
             yybegin(SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES); return JavaDocSyntaxTokenType.DOC_TAG_VALUE_QUOTE;
             }
-          77 -> { /* do nothing */ }
+          78 -> { /* do nothing */ }
           31 -> {
             if (myMarkdownMode) {
           return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
         }
         return JavaDocSyntaxTokenType.DOC_COMMENT_LEADING_ASTERISKS;
             }
-          78 -> { /* do nothing */ }
+          79 -> { /* do nothing */ }
           32 -> {
             yybegin(SNIPPET_TAG_BODY_DATA); return JavaDocSyntaxTokenType.DOC_TAG_VALUE_COLON;
             }
-          79 -> { /* do nothing */ }
+          80 -> { /* do nothing */ }
           33 -> {
+            return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
+            }
+          81 -> { /* do nothing */ }
+          34 -> {
             mySnippetBracesLevel++; return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
             }
-          80 -> { /* do nothing */ }
-          34 -> {
+          82 -> { /* do nothing */ }
+          35 -> {
             if (mySnippetBracesLevel > 0) {
           mySnippetBracesLevel--;
           return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
@@ -1185,81 +1197,81 @@ companion object {
           return JavaDocSyntaxTokenType.DOC_INLINE_TAG_END;
         }
             }
-          81 -> { /* do nothing */ }
-          35 -> {
+          83 -> { /* do nothing */ }
+          36 -> {
             yybegin(SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON); return JavaDocSyntaxTokenType.DOC_TAG_VALUE_QUOTE;
             }
-          82 -> { /* do nothing */ }
-          36 -> {
+          84 -> { /* do nothing */ }
+          37 -> {
             if(myMarkdownMode) {
       return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
     }
     return JavaDocSyntaxTokenType.DOC_COMMENT_END;
             }
-          83 -> { /* do nothing */ }
-          37 -> {
+          85 -> { /* do nothing */ }
+          38 -> {
             yybegin(COMMENT_DATA);
          if(myMarkdownMode) {
            return JavaDocSyntaxTokenType.DOC_DOUBLE_SHARP;
          }
          return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
             }
-          84 -> { /* do nothing */ }
-          38 -> {
+          86 -> { /* do nothing */ }
+          39 -> {
             yybegin(TAG_DOC_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME;
             }
-          85 -> { /* do nothing */ }
-          39 -> {
+          87 -> { /* do nothing */ }
+          40 -> {
             return JavaDocSyntaxTokenType.DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN;
             }
-          86 -> { /* do nothing */ }
-          40 -> {
+          88 -> { /* do nothing */ }
+          41 -> {
             if (myMarkdownMode) {
           return JavaDocSyntaxTokenType.DOC_COMMENT_BAD_CHARACTER;
         }
         yybegin(COMMENT_DATA_START);
         return JavaDocSyntaxTokenType.DOC_COMMENT_START;
             }
-          87 -> { /* do nothing */ }
-          41 -> {
+          89 -> { /* do nothing */ }
+          42 -> {
             if(myMarkdownMode) {
           yybegin(COMMENT_DATA_START);
           return JavaDocSyntaxTokenType.DOC_COMMENT_LEADING_ASTERISKS;
         }
         return JavaDocSyntaxTokenType.DOC_COMMENT_BAD_CHARACTER;
             }
-          88 -> { /* do nothing */ }
-          42 -> {
+          90 -> { /* do nothing */ }
+          43 -> {
             yybegin(COMMENT_DATA);
         if(myMarkdownMode) {
           return JavaDocSyntaxTokenType.DOC_CODE_FENCE;
         }
         return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
             }
-          89 -> { /* do nothing */ }
-          43 -> {
+          91 -> { /* do nothing */ }
+          44 -> {
             if (myMarkdownMode) {
           return JavaDocSyntaxTokenType.DOC_COMMENT_LEADING_ASTERISKS;
         }
         return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
             }
-          90 -> { /* do nothing */ }
-          44 -> {
+          92 -> { /* do nothing */ }
+          45 -> {
             yybegin(CODE_TAG_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME;
             }
-          91 -> { /* do nothing */ }
-          45 -> {
+          93 -> { /* do nothing */ }
+          46 -> {
             yybegin(DOC_TAG_VALUE); return JavaDocSyntaxTokenType.DOC_TAG_NAME;
             }
-          92 -> { /* do nothing */ }
-          46 -> {
+          94 -> { /* do nothing */ }
+          47 -> {
             yybegin(PARAM_TAG_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME;
             }
-          93 -> { /* do nothing */ }
-          47 -> {
+          95 -> { /* do nothing */ }
+          48 -> {
             yybegin(SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON); return JavaDocSyntaxTokenType.DOC_TAG_NAME;
             }
-          94 -> { /* do nothing */ }
+          96 -> { /* do nothing */ }
           else ->
             zzScanError(ZZ_NO_MATCH)
         }

@@ -2126,7 +2126,7 @@ public class Test {
 
   fun testBracketsInReferenceLink(){
     doTextTest("""
-      /// [String#copyValueOf(char \[ \], int, int)]
+      /// [String#copyValueOf(char\[\], int, int)]
       public class Main {
         void test(char[] foo) {}
       }
