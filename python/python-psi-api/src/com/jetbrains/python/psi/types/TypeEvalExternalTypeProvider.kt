@@ -11,6 +11,8 @@ import com.jetbrains.python.psi.PyTypedElement
  * Implementations may return `null` if they cannot provide a type for the given element.
  */
 interface TypeEvalExternalTypeProvider {
+  fun isAvailable(): Boolean
+
   fun provideType(element: PyTypedElement, context: TypeEvalContext): Ref<PyType?>?
 
   companion object {
