@@ -190,10 +190,36 @@ class KotlinMppTestProperties(
             }
             if (kotlinVersion.version < KotlinGradlePluginVersions.V_2_1_0) {
                 put("androidTargetPlaceholder", "android()")
-                put("iosTargetPlaceholder", "ios()")
+                put("iosTargetPlaceholder", """
+                    ios()
+                    val iosMain by sourceSets.getting
+                    """)
             } else {
                 put("androidTargetPlaceholder", "androidTarget()")
-                put("iosTargetPlaceholder", "iosX64()\niosArm64()\niosSimulatorArm64()")
+                put("iosTargetPlaceholder", """
+                    iosX64()
+                    iosArm64()
+                    
+                    val iosMain = sourceSets.create("iosMain") {
+                      dependsOn(sourceSets.getByName("commonMain"))
+                    }
+                    val iosTest = sourceSets.create("iosTest") {
+                      dependsOn(sourceSets.getByName("commonTest"))
+                    }
+                    sourceSets.getByName("iosX64Main") { dependsOn(iosMain) }
+                    sourceSets.getByName("iosX64Test") { dependsOn(iosTest) }
+                    sourceSets.getByName("iosArm64Main") { dependsOn(iosMain) }
+                    sourceSets.getByName("iosArm64Test") { dependsOn(iosTest) }
+                    
+                """.trimIndent())
+            }
+
+            if (kotlinVersion.version < KotlinGradlePluginVersions.V_2_2_0) {
+                put("minimalSupportedKotlinLanguageVersion", "1.7")
+                put("minimalSupportedKotlinVersion", "org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_7")
+            } else {
+                put("minimalSupportedKotlinLanguageVersion", "1.8")
+                put("minimalSupportedKotlinVersion", "org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_8")
             }
         }
     }
