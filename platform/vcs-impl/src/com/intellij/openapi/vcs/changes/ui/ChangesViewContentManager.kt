@@ -388,7 +388,7 @@ private object CloseWindowedFloatingTwOnCommit {
   }
 }
 
-private class CloseWindowedFloatingTwOnCommitAction : ToggleAction(), DumbAware {
+internal class CloseWindowedFloatingTwOnCommitAction : ToggleAction(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

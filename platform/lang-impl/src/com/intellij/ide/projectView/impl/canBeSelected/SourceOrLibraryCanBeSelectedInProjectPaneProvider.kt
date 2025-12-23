@@ -6,7 +6,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 
-private class SourceOrLibraryCanBeSelectedInProjectPaneProvider : CanBeSelectedInProjectPaneProvider {
+internal class SourceOrLibraryCanBeSelectedInProjectPaneProvider : CanBeSelectedInProjectPaneProvider {
   override fun isSupported(project: Project, virtualFile: VirtualFile): Boolean {
     val baseDir = project.getBaseDir()
     val index = ProjectRootManager.getInstance(project).getFileIndex()

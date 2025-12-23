@@ -7,7 +7,7 @@ import com.intellij.platform.execution.serviceView.ServiceViewActionProvider.SER
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.ListSerializer
 
-private class ServiceViewDescriptorIdsSerializer() : CustomDataContextSerializer<List<ServiceViewDescriptorId>> {
+internal class ServiceViewDescriptorIdsSerializer() : CustomDataContextSerializer<List<ServiceViewDescriptorId>> {
   override val key: DataKey<List<ServiceViewDescriptorId>> = SERVICES_SELECTED_DESCRIPTOR_IDS
   override val serializer: KSerializer<List<ServiceViewDescriptorId>> = ListSerializer(ServiceViewDescriptorId.serializer())
 }

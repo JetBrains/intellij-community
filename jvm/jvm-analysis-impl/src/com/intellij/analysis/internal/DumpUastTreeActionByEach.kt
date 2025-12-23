@@ -7,7 +7,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.util.IndentedPrintingVisitor
 
-private class DumpUastTreeActionByEach : DumpUastTreeAction() {
+internal class DumpUastTreeActionByEach : DumpUastTreeAction() {
   override fun buildDump(file: PsiFile): String = object : IndentedPrintingVisitor({true}){
     override fun render(element: PsiElement): CharSequence? = element.toUElement()?.asLogString()
   }.also { file.accept(it) }.result

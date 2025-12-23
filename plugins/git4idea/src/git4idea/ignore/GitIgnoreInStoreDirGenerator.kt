@@ -45,7 +45,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG = logger<GitIgnoreInStoreDirGenerator>()
 
-private class GitIgnoreInStoreDirGeneratorActivity : ProjectActivity {
+internal class GitIgnoreInStoreDirGeneratorActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (!project.isDirectoryBased) {
       return
@@ -56,7 +56,7 @@ private class GitIgnoreInStoreDirGeneratorActivity : ProjectActivity {
   }
 }
 
-private class GitIgnoreInStoreDirSharedChecker : VcsSharedChecker {
+internal class GitIgnoreInStoreDirSharedChecker : VcsSharedChecker {
 
   override fun getSupportedVcs(): VcsKey = GitVcs.getKey()
 

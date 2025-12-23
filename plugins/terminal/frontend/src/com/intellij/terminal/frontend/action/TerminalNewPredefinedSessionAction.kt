@@ -109,7 +109,7 @@ internal class TerminalNewPredefinedSessionAction : DumbAwareAction() {
     return OpenShellAction(presentableName, shellCommand, icon)
   }
 
-  private class OpenShellAction(
+  internal class OpenShellAction(
     presentableName: @NlsActions.ActionText String,
     private val myCommand: List<String>,
     icon: Icon?,

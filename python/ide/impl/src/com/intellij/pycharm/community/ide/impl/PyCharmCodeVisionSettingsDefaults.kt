@@ -4,6 +4,6 @@ package com.intellij.pycharm.community.ide.impl
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsDefaults
 
-private class PyCharmCodeVisionSettingsDefaults : CodeVisionSettingsDefaults {
+internal class PyCharmCodeVisionSettingsDefaults : CodeVisionSettingsDefaults {
   override val defaultPosition: CodeVisionAnchorKind get() = CodeVisionAnchorKind.Right
 }

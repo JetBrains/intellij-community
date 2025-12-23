@@ -127,7 +127,7 @@ private val DEPENDENCY_COLLECTOR_EP_NAME: ExtensionPointName<DependencySupportBe
 internal val DependencySupportBean.displayNameOrId: @NlsSafe String
   get() = displayName.ifEmpty { id }
 
-private class DependencyFeatureCollector : ProjectActivity {
+internal class DependencyFeatureCollector : ProjectActivity {
   override suspend fun execute(project: Project) {
     serviceAsync<PluginFeatureService>().collectFeatureMapping(
       featureType = DEPENDENCY_SUPPORT_FEATURE,

@@ -23,7 +23,7 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? = Collector()
 
   private class Collector : SharedBypassCollector {
-    val hintFormat = HintFormat.Companion.default
+    val hintFormat = HintFormat.default
       .withFontSize(HintFontSize.ABitSmallerThanInEditor)
       .withHorizontalMargin(HintMarginPadding.MarginAndSmallerPadding)
 

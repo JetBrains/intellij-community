@@ -24,7 +24,7 @@ import org.jetbrains.yaml.psi.impl.YAMLBlockSequenceImpl
 import org.jetbrains.yaml.psi.impl.YAMLKeyValueImpl
 import kotlin.math.min
 
-private class YAMLInvalidBlockChildrenErrorAnnotator : Annotator, DumbAware {
+internal class YAMLInvalidBlockChildrenErrorAnnotator : Annotator, DumbAware {
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     if (PsiTreeUtil.findChildrenOfType(element, OuterLanguageElement::class.java).isNotEmpty()) return
 

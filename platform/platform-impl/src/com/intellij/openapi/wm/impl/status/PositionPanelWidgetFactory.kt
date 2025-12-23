@@ -5,7 +5,7 @@ import com.intellij.openapi.wm.*
 import com.intellij.ui.UIBundle
 import kotlinx.coroutines.CoroutineScope
 
-private class PositionPanelWidgetFactory : StatusBarWidgetFactory, WidgetPresentationFactory {
+internal class PositionPanelWidgetFactory : StatusBarWidgetFactory, WidgetPresentationFactory {
   override fun getId(): String = StatusBar.StandardWidgets.POSITION_PANEL
 
   override fun getDisplayName(): String = UIBundle.message("status.bar.position.widget.name")

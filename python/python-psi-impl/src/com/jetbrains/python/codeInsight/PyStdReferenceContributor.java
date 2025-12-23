@@ -57,6 +57,14 @@ public final class PyStdReferenceContributor extends PsiReferenceContributor {
         return new PsiReference[]{new PyDunderSlotsReference((PyStringLiteralExpression)element)};
       }
     });
+
+    registerClassAttributeReference(registrar, PyNames.MATCH_ARGS, new PsiReferenceProvider() {
+      @Override
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
+                                                             @NotNull ProcessingContext context) {
+        return new PsiReference[]{new PyDunderMatchArgsReference((PyStringLiteralExpression)element)};
+      }
+    });
   }
 
   private static void registerClassAttributeReference(PsiReferenceRegistrar registrar,

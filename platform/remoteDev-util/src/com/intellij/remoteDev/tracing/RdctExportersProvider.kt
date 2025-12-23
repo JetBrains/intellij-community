@@ -11,7 +11,7 @@ import io.opentelemetry.sdk.metrics.export.MetricExporter
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
 
-private class RdctExportersProvider : OpenTelemetryExporterProvider {
+internal class RdctExportersProvider : OpenTelemetryExporterProvider {
   override fun getSpanExporters(): List<AsyncSpanExporter> {
     if (System.getProperty(OpenTelemetryUtils.RDCT_TRACING_DIAGNOSTIC_FLAG) != null && OtlpConfiguration.isTraceEnabled()) {
       return listOf(MessageBusSpanExporter())

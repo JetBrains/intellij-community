@@ -66,7 +66,7 @@ private const val PRODUCT_DATA_TTL_MIN = 5L
 private val shownNotifications = MultiMap<NotificationKind, Notification>()
 
 
-private class UpdateCheckerFacadeImpl() : UpdateCheckerFacade {
+internal class UpdateCheckerFacadeImpl() : UpdateCheckerFacade {
   override val disabledToUpdate: Set<PluginId>
     get() = UpdateChecker.disabledToUpdate
 

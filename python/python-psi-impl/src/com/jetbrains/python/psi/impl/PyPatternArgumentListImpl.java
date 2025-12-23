@@ -23,4 +23,12 @@ public class PyPatternArgumentListImpl extends PyElementImpl implements PyPatter
   public @NotNull List<? extends PsiElement> getComponents() {
     return getPatterns();
   }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    if (getPatterns().contains(child.getPsi())) {
+      PyPsiUtils.deleteAdjacentCommaWithWhitespaces(this, child.getPsi());
+    }
+    super.deleteChildInternal(child);
+  }
 }

@@ -9,7 +9,7 @@ import com.intellij.util.PathUtil
 
 private fun isFileWithRunConfigs(path: String) = !path.contains("/.idea/") && PathUtil.getFileName(path).endsWith(".run.xml")
 
-private class RCInArbitraryFileListener : AsyncFileListener {
+internal class RCInArbitraryFileListener : AsyncFileListener {
   override fun prepareChange(events: List<VFileEvent>): @org.jetbrains.annotations.Nullable AsyncFileListener.ChangeApplier? {
     val deletedRCFilePaths = mutableSetOf<String>()
     val updatedRCFilePaths = mutableSetOf<String>()

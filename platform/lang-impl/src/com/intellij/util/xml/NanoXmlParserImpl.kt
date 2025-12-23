@@ -4,7 +4,7 @@ package com.intellij.util.xml
 import com.intellij.framework.detection.FileContentPattern
 import java.io.Reader
 
-private class NanoXmlParserImpl : FileContentPattern.ParseXml {
+internal class NanoXmlParserImpl : FileContentPattern.ParseXml {
   override fun parseHeaderWithException(reader: Reader): XmlFileHeader {
     return NanoXmlUtil.parseHeaderWithException(reader)
   }

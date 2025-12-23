@@ -139,8 +139,7 @@ sealed class SchemeManagerFactoryBase(
   }
 }
 
-@Suppress("unused")
-private class ApplicationSchemeManagerFactory(coroutineScope: CoroutineScope) : SchemeManagerFactoryBase(ApplicationManager.getApplication(), coroutineScope) {
+internal class ApplicationSchemeManagerFactory(coroutineScope: CoroutineScope) : SchemeManagerFactoryBase(ApplicationManager.getApplication(), coroutineScope) {
   override fun checkPath(originalPath: String): String {
     var path = super.checkPath(originalPath)
     if (path.startsWith(ROOT_CONFIG)) {
@@ -160,7 +159,7 @@ private class ApplicationSchemeManagerFactory(coroutineScope: CoroutineScope) : 
 }
 
 @Suppress("unused")
-private class ProjectSchemeManagerFactory(override val project: Project, coroutineScope: CoroutineScope) : SchemeManagerFactoryBase(project, coroutineScope) {
+internal class ProjectSchemeManagerFactory(override val project: Project, coroutineScope: CoroutineScope) : SchemeManagerFactoryBase(project, coroutineScope) {
   override fun createFileChangeSubscriber(): FileChangeSubscriber = { schemeManager ->
     if (!ApplicationManager.getApplication().isUnitTestMode || project.getUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE) == true) {
       project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))

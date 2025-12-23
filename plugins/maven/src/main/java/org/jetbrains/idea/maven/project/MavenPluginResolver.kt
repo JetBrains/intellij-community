@@ -26,7 +26,7 @@ interface MavenPluginResolver {
     eventHandler: MavenEventHandler): PluginResolutionResult
 }
 
-private class MavenPluginResolverImpl : MavenPluginResolver {
+internal class MavenPluginResolverImpl : MavenPluginResolver {
   override suspend fun resolvePlugins(
     mavenProjects: Collection<MavenProject>,
     forceUpdateSnapshots: Boolean,

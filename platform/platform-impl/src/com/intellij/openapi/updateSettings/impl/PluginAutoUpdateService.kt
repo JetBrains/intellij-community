@@ -261,7 +261,7 @@ fun findUnsatisfiedDependencies(
   }
 }
 
-private class PluginAutoUpdateOptionsProvider : OptionsSearchTopHitProvider.ApplicationLevelProvider {
+internal class PluginAutoUpdateOptionsProvider : OptionsSearchTopHitProvider.ApplicationLevelProvider {
   override fun getId() = "PluginAutoUpdate"
 
   override fun getOptions(): List<BooleanOptionDescription> {

@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener
 
-private class ArchiveCachesCleaner : PersistentFsConnectionListener {
+internal class ArchiveCachesCleaner : PersistentFsConnectionListener {
   override fun beforeConnectionClosed() {
     for (root in (ManagingFS.getInstanceOrNull() ?: return).roots) {
       val fs = root.fileSystem

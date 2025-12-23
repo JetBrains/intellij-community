@@ -41,8 +41,22 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import javax.swing.JComponent
+import kotlin.Boolean
 import kotlin.Result
+import kotlin.String
+import kotlin.Suppress
+import kotlin.collections.Map
+import kotlin.collections.emptyMap
+import kotlin.collections.joinToString
+import kotlin.collections.map
+import kotlin.collections.mapKeys
+import kotlin.collections.mapOf
+import kotlin.collections.plus
 import kotlin.io.path.*
+import kotlin.runCatching
+import kotlin.synchronized
+import kotlin.takeIf
+import kotlin.to
 
 @ApiStatus.Internal
 object PluginAutoUpdateRepository {
@@ -122,7 +136,7 @@ object PluginAutoUpdateRepository {
 /**
  * Internal action for debugging purposes
  */
-private class PluginsAutoUpdateRepositoryViewAction : AnAction() {
+internal class PluginsAutoUpdateRepositoryViewAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     ApplicationManager.getApplication().invokeLater({ Viewer(e.project).showAndGet() }, ModalityState.nonModal())
   }

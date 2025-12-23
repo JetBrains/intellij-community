@@ -11,7 +11,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 
 @OptIn(ExperimentalJewelApi::class)
-private class ComposePanelProvider : MarkdownHtmlPanelProvider() {
+internal class ComposePanelProvider : MarkdownHtmlPanelProvider() {
   override fun createHtmlPanel(): MarkdownHtmlPanel {
     return MarkdownComposePanel()
   }

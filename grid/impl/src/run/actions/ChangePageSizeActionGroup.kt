@@ -231,7 +231,7 @@ private class ChangePageSizeActionState(
   }
 }
 
-private class MyCountRowsAction : DumbAwareAction(
+internal class MyCountRowsAction : DumbAwareAction(
   DataGridBundle.message("action.CountRows.text"),
   DataGridBundle.message("action.CountRows.description"),
   null

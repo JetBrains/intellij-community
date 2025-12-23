@@ -8,7 +8,7 @@ import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.ex.getWelcomeScreenProjectProvider
 import com.intellij.util.PlatformUtils
 
-private class WelcomeScreenNoProjectStateHandler : NoProjectStateHandler {
+internal class WelcomeScreenNoProjectStateHandler : NoProjectStateHandler {
   override fun createHandler(): (suspend () -> Project)? {
     if (PlatformUtils.isJetBrainsClient()) {
       // JetBrains Client doesn't have its own non-modal welcome screen.

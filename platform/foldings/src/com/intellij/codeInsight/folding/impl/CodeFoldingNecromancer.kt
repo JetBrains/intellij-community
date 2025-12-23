@@ -30,7 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 
-private class CodeFoldingNecromancerAwaker : NecromancerAwaker<CodeFoldingZombie> {
+internal class CodeFoldingNecromancerAwaker : NecromancerAwaker<CodeFoldingZombie> {
   override fun awake(project: Project, coroutineScope: CoroutineScope): Necromancer<CodeFoldingZombie> {
     return CodeFoldingNecromancer(project, coroutineScope)
   }

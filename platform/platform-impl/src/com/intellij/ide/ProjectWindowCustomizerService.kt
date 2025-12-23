@@ -551,7 +551,7 @@ internal class ProjectWidgetGradientLocationService(private val project: Project
 
 private const val DEFAULT_GRADIENT_OFFSET = 150.0f
 
-private class ProjectWindowCustomizerListener : ProjectActivity, UISettingsListener {
+internal class ProjectWindowCustomizerListener : ProjectActivity, UISettingsListener {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()

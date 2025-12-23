@@ -15,7 +15,7 @@ import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.switchToSdk
 
 
-private class AdvancedSelectSdkProvider() : EvoSelectSdkProvider {
+internal class AdvancedSelectSdkProvider() : EvoSelectSdkProvider {
   override fun getTreeElement(evoModuleSdk: EvoModuleSdk) = EvoTreeLazyNodeElement(
     text = PySdkUiBundle.message("evo.sdk.status.bar.popup.select.advanced"),
     icon = AllIcons.Toolwindows.ToolWindowInternal

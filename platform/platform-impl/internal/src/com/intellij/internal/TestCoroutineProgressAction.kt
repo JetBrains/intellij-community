@@ -31,7 +31,7 @@ import kotlinx.coroutines.*
 import java.lang.ref.WeakReference
 import javax.swing.JComponent
 
-private class TestCoroutineProgressAction : AnAction() {
+internal class TestCoroutineProgressAction : AnAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {

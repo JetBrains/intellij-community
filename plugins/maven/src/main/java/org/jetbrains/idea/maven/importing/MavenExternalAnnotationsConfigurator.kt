@@ -17,7 +17,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.tasks.TasksBundle
 
 @ApiStatus.Internal
-private class MavenExternalAnnotationsConfigurator : MavenWorkspaceConfigurator {
+internal class MavenExternalAnnotationsConfigurator : MavenWorkspaceConfigurator {
 
   private val myProcessedLibraries = hashSetOf<MavenArtifact>()
 

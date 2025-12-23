@@ -237,7 +237,7 @@ private fun closeActivePopup() {
   LineStatusMarkerPopupService.instance.closeActivePopup()
 }
 
-private class LineStatusMakerEscEditorHandler(private val delegate: EditorActionHandler) : EditorActionHandler() {
+internal class LineStatusMakerEscEditorHandler(private val delegate: EditorActionHandler) : EditorActionHandler() {
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
     return delegate.isEnabled(editor, caret, dataContext)
   }

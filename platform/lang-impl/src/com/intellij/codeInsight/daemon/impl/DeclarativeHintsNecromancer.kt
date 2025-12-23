@@ -23,7 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class DeclarativeHintsNecromancerAwaker : NecromancerAwaker<DeclarativeHintsZombie> {
+internal class DeclarativeHintsNecromancerAwaker : NecromancerAwaker<DeclarativeHintsZombie> {
   override fun awake(project: Project, coroutineScope: CoroutineScope): Necromancer<DeclarativeHintsZombie> {
     return DeclarativeHintsNecromancer(project, coroutineScope)
   }

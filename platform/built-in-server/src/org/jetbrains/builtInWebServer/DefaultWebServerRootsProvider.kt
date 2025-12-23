@@ -21,7 +21,7 @@ import com.intellij.util.PlatformUtils
 
 internal data class SuitableRoot(val file: VirtualFile, val moduleQualifier: String?)
 
-private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
+internal class DefaultWebServerRootsProvider : WebServerRootsProvider() {
   override fun resolve(path: String, project: Project, pathQuery: PathQuery): PathInfo? {
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
 

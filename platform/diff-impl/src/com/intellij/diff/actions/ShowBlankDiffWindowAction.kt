@@ -138,7 +138,7 @@ internal class SwitchToRecentEditorActionGroup : ActionGroup(), DumbAware {
     return ActionUpdateThread.EDT
   }
 
-  private class MySwitchAction(val content: RecentBlankContent) : BlankSwitchContentActionBase() {
+  internal class MySwitchAction(val content: RecentBlankContent) : BlankSwitchContentActionBase() {
     init {
       templatePresentation.setTextWithMnemonic {
         val text = content.text

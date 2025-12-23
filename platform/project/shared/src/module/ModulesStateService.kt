@@ -66,7 +66,7 @@ private class ModulesState() {
   }
 }
 
-private class ModuleStateInitializer : ProjectActivity {
+internal class ModuleStateInitializer : ProjectActivity {
   override suspend fun execute(project: Project) {
     ModulesStateService.getInstance(project)
   }

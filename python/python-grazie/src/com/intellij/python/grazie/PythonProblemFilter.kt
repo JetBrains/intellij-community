@@ -10,7 +10,7 @@ import java.util.regex.Pattern
 
 private val PY_DOC_PARAM = Pattern.compile("[a-z0-9_]+\\s*:\\s+\\p{L}+( or \\p{L}+)*")
 
-private class PythonProblemFilter : ProblemFilter() {
+internal class PythonProblemFilter : ProblemFilter() {
   override fun shouldIgnore(problem: TextProblem): Boolean {
     val domain = problem.text.domain
     return domain == TextContent.TextDomain.DOCUMENTATION &&

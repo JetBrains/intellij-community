@@ -3,7 +3,7 @@ package com.intellij.openapi.updateSettings.base
 
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 
-private class ShowWhatIsNewPageAfterUpdateCustomization : UpdateStrategyCustomization() {
+internal class ShowWhatIsNewPageAfterUpdateCustomization : UpdateStrategyCustomization() {
   override val showWhatIsNewPageAfterUpdate: Boolean
     get() = true
 }

@@ -35,7 +35,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.readText
 
-private class GitRecentProjectsBranchesProvider : RecentProjectsBranchesProvider {
+internal class GitRecentProjectsBranchesProvider : RecentProjectsBranchesProvider {
   override fun getCurrentBranch(projectPath: String, nameIsDistinct: Boolean): String? {
     return application.service<GitRecentProjectsBranchesService>().getCurrentBranch(projectPath, nameIsDistinct)
   }

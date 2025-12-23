@@ -54,7 +54,7 @@ private val NOTIFICATION_GROUP: NotificationGroup
 private const val SCAN_DEPTH_LIMIT = 5
 private const val MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE = 3
 
-private class SetupJavaProjectFromSourcesActivity : ProjectActivity {
+internal class SetupJavaProjectFromSourcesActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()

@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService
 
-private class FeedbackSurveysStateCollector : ApplicationUsagesCollector() {
+internal class FeedbackSurveysStateCollector : ApplicationUsagesCollector() {
   private val GROUP = EventLogGroup("feedback.surveys.state", 1)
   private val NUMBER_FEEDBACK_SURVEY_SHOWS = GROUP.registerEvent(
     "number.of.notifications.shown",

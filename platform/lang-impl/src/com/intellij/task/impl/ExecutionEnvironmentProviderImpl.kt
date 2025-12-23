@@ -17,7 +17,7 @@ import com.intellij.task.ProjectTaskRunner
 /**
  * @author Vladislav.Soroka
  */
-private class ExecutionEnvironmentProviderImpl : ExecutionEnvironmentProvider {
+internal class ExecutionEnvironmentProviderImpl : ExecutionEnvironmentProvider {
   override fun createExecutionEnvironment(project: Project,
                                           runProfile: RunProfile,
                                           executor: Executor,

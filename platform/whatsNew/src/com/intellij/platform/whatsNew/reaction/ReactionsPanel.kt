@@ -57,9 +57,9 @@ class ReactionsPanel {
 }
 
 
-private class LikeReactionAction : ReactionAction(CommonBundle.message("button.without.mnemonic.yes"), AllIcons.Ide.LikeDimmed,
-                                                  AllIcons.Ide.Like,
-                                                  AllIcons.Ide.LikeSelected) {
+internal class LikeReactionAction : ReactionAction(CommonBundle.message("button.without.mnemonic.yes"), AllIcons.Ide.LikeDimmed,
+                                                   AllIcons.Ide.Like,
+                                                   AllIcons.Ide.LikeSelected) {
   override fun isSelected(e: AnActionEvent): Boolean {
     return getReactionStateChecker(e)?.checkState(ReactionChecker.State.Liked) == true
   }
@@ -69,8 +69,8 @@ private class LikeReactionAction : ReactionAction(CommonBundle.message("button.w
   }
 }
 
-private class DislikeReactionAction : ReactionAction(CommonBundle.message("button.without.mnemonic.no"), AllIcons.Ide.DislikeDimmed,
-                                                     AllIcons.Ide.Dislike, AllIcons.Ide.DislikeSelected) {
+internal class DislikeReactionAction : ReactionAction(CommonBundle.message("button.without.mnemonic.no"), AllIcons.Ide.DislikeDimmed,
+                                                      AllIcons.Ide.Dislike, AllIcons.Ide.DislikeSelected) {
   override fun isSelected(e: AnActionEvent): Boolean {
     return getReactionStateChecker(e)?.checkState(ReactionChecker.State.Disliked) == true
   }
@@ -80,7 +80,7 @@ private class DislikeReactionAction : ReactionAction(CommonBundle.message("butto
   }
 }
 
-private abstract class ReactionAction(
+internal abstract class ReactionAction(
   text: @NlsActions.ActionText String,
   val icon: Icon,
   val hoveredIcon: Icon,

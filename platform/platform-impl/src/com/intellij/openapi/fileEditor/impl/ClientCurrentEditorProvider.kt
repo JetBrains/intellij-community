@@ -9,7 +9,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.UIUtil
 
-private class ClientCurrentEditorProvider : CurrentEditorProvider {
+internal class ClientCurrentEditorProvider : CurrentEditorProvider {
   override fun getCurrentEditor(project: Project?): FileEditor? {
     if (project == null) {
       // fallback to search by focus

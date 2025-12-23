@@ -7,7 +7,7 @@ import com.intellij.ide.ui.ThemeListProvider
 import com.intellij.openapi.editor.colors.Groups
 import com.intellij.ui.ExperimentalUI
 
-private class ThemeListProviderImpl : ThemeListProvider {
+internal class ThemeListProviderImpl : ThemeListProvider {
   override fun getShownThemes(): Groups<UIThemeLookAndFeelInfo> {
     val uiThemeProviderListManager = UiThemeProviderListManager.getInstance()
 

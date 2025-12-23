@@ -7,7 +7,7 @@ import com.intellij.platform.debugger.impl.rpc.XDebuggerNavigationApi
 import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 
-private class XJumpToTypeSourceAction : XJumpToSourceActionBase() {
+internal class XJumpToTypeSourceAction : XJumpToSourceActionBase() {
   override suspend fun navigateToSource(xValueId: XValueId): Boolean =
     XDebuggerNavigationApi.getInstance().navigateToXValueType(xValueId).await()
 

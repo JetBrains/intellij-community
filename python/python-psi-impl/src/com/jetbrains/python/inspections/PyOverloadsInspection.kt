@@ -18,7 +18,7 @@ import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
-import java.util.EnumSet
+import java.util.*
 
 class PyOverloadsInspection : PyInspection() {
 
@@ -66,7 +66,7 @@ class PyOverloadsInspection : PyInspection() {
         requiresImplementation = false
       }
       else if (owner is PyClass) {
-        if (isProtocol(owner, myTypeEvalContext)) {
+        if (owner.isProtocol(myTypeEvalContext)) {
           requiresImplementation = false
         }
         else {

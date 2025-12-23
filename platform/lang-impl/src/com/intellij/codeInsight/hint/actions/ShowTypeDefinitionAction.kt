@@ -112,7 +112,7 @@ open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
       return showTypeDefinitionAction.definitions.get().map { element -> (element as PsiImplementationViewElement).getPsiElement()!! }
     }
 
-    private class ShowTypeDefinitionActionForTest(val definitions: Ref<List<ImplementationViewElement>> = Ref()) : ShowTypeDefinitionAction() {
+    internal class ShowTypeDefinitionActionForTest(val definitions: Ref<List<ImplementationViewElement>> = Ref()) : ShowTypeDefinitionAction() {
       override fun showImplementations(session: ImplementationViewSession, invokedFromEditor: Boolean, invokedByShortcut: Boolean) =
         definitions.set(session.implementationElements)
     }

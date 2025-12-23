@@ -6,7 +6,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointsGroupingPriorities
 
-private class XBreakpointGroupingByTypeRule<B : Any>
+internal class XBreakpointGroupingByTypeRule<B : Any>
   : XBreakpointGroupingRule<B, XBreakpointTypeGroup>("XBreakpointGroupingByTypeRule", XDebuggerBundle.message("breakpoints.group.by.type.label")) {
   override fun isAlwaysEnabled(): Boolean {
     return true

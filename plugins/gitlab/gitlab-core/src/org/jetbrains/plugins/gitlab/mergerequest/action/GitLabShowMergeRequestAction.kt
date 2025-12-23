@@ -7,7 +7,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
-private class GitLabShowMergeRequestAction : DumbAwareAction() {
+internal class GitLabShowMergeRequestAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

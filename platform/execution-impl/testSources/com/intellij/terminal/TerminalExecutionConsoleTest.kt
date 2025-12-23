@@ -54,14 +54,37 @@ class TerminalExecutionConsoleTest : BasePlatformTestCase() {
     return threadInfos.find { it.threadName.startsWith("TerminalEmulator-") }
   }
 
+  fun `test convert LF to CRLF for processes without PTY`(): Unit = timeoutRunBlocking(DEFAULT_TEST_TIMEOUT) {
+    val processHandler = OSProcessHandler(MockPtyBasedProcess(false), "my command", Charsets.UTF_8)
+    val console = withContext(Dispatchers.UI) {
+      TerminalExecutionConsole(project, processHandler)
+    }
+    console.withConvertLfToCrlfForNonPtyProcess(true)
+    TestProcessTerminationMessage.attach(processHandler)
+    processHandler.startNotify()
+    processHandler.notifyTextAvailable("Foo\nBar\nBaz", ProcessOutputTypes.STDOUT)
+    processHandler.destroyProcess()
+    console.awaitOutputContainsSubstring(substringToFind = TestProcessTerminationMessage.getMessage(MockPtyBasedProcess.EXIT_CODE))
+    val output = TerminalOutput.collect(console.terminalWidget)
+    output.assertLinesAre(listOf(
+      "my command",
+      "Foo",
+      "Bar",
+      "Baz",
+      TestProcessTerminationMessage.getMessage(MockPtyBasedProcess.EXIT_CODE)
+    ))
+    withContext(Dispatchers.UI) {
+      Disposer.dispose(console)
+    }
+  }
+
   fun `test support ColoredProcessHandler`(): Unit = timeoutRunBlockingWithConsole { console ->
-    val processHandler = ColoredProcessHandler(MockPtyBasedProcess(), "my command line", Charsets.UTF_8)
+    val processHandler = ColoredProcessHandler(MockPtyBasedProcess(true), "my command line", Charsets.UTF_8)
     assertTrue(TerminalExecutionConsole.isAcceptable(processHandler))
     console.attachToProcess(processHandler)
     processHandler.startNotify()
     processHandler.notifyTextAvailable("\u001b[0m", ProcessOutputTypes.STDOUT)
     processHandler.notifyTextAvailable("\u001b[32mFoo\u001b[0m", ProcessOutputTypes.STDOUT)
-    processHandler.setShouldDestroyProcessRecursively(false)
     TestProcessTerminationMessage.attach(processHandler)
     processHandler.destroyProcess()
     console.awaitOutputContainsSubstring(substringToFind = TestProcessTerminationMessage.getMessage(MockPtyBasedProcess.EXIT_CODE))
@@ -75,7 +98,7 @@ class TerminalExecutionConsoleTest : BasePlatformTestCase() {
   }
 
   fun `test support OSProcessHandler`(): Unit = timeoutRunBlockingWithConsole { console ->
-    val processHandler = OSProcessHandler(MockPtyBasedProcess(), "command line", Charsets.UTF_8)
+    val processHandler = OSProcessHandler(MockPtyBasedProcess(true), "command line", Charsets.UTF_8)
     assertTrue(TerminalExecutionConsole.isAcceptable(processHandler))
     console.attachToProcess(processHandler)
     processHandler.startNotify()

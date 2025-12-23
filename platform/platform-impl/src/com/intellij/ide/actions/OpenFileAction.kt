@@ -114,7 +114,7 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
   }
 
   @Suppress("unused")
-  private class OnWelcomeScreen : OpenFileAction() {
+  internal class OnWelcomeScreen : OpenFileAction() {
     override fun update(e: AnActionEvent) {
       val presentation = e.presentation
       if (!NewWelcomeScreen.isNewWelcomeScreen(e)) {

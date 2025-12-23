@@ -56,7 +56,7 @@ private class TraceDebuggerStateListener(cs: CoroutineScope, sessionId: XDebugSe
 }
 
 
-private class TraceDebuggerInitializationProjectActivity : ProjectActivity {
+internal class TraceDebuggerInitializationProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     StreamDebuggerManager.getInstance(project)
   }

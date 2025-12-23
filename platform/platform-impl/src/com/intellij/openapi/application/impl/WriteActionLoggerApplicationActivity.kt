@@ -6,7 +6,7 @@ import com.intellij.openapi.application.WriteActionListener
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 
-private class WriteActionLoggerApplicationActivity : ApplicationActivity {
+internal class WriteActionLoggerApplicationActivity : ApplicationActivity {
   override suspend fun execute() {
     if (System.getProperty("enable.write.action.logger").toBoolean()) {
       val application = ApplicationManagerEx.getApplicationEx()

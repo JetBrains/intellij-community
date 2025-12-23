@@ -80,7 +80,7 @@ private object VFSHealthCheckerConstants {
   val MAX_SINGLE_ERROR_LOGS_BEFORE_THROTTLE = getIntProperty("vfs.health-check.max-single-error-logs", 128)
 }
 
-private class VFSHealthCheckServiceStarter : ApplicationActivity {
+internal class VFSHealthCheckServiceStarter : ApplicationActivity {
   init {
     if (!HEALTH_CHECKING_ENABLED) {
       LOG.info("VFS health-check disabled")

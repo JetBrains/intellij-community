@@ -7,7 +7,7 @@ import com.intellij.platform.debugger.impl.rpc.LOOKUP_HINTS_EVENTS_REMOTE_TOPIC
 import com.intellij.platform.debugger.impl.rpc.ValueHintEvent
 import com.intellij.platform.rpc.topics.ProjectRemoteTopicListener
 
-private class ValueLookupManagerEventsListener : ProjectRemoteTopicListener<ValueHintEvent> {
+internal class ValueLookupManagerEventsListener : ProjectRemoteTopicListener<ValueHintEvent> {
   override val topic = LOOKUP_HINTS_EVENTS_REMOTE_TOPIC
 
   override fun handleEvent(project: Project, event: ValueHintEvent) {

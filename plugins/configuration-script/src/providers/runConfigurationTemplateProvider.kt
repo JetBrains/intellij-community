@@ -21,7 +21,7 @@ private class FactoryEntry(state: Any) {
   var settings: RunnerAndConfigurationSettingsImpl? = null
 }
 
-private class MyRunConfigurationTemplateProvider(private val project: Project) : RunConfigurationTemplateProvider {
+internal class MyRunConfigurationTemplateProvider(private val project: Project) : RunConfigurationTemplateProvider {
   private val map = SynchronizedClearableLazy<Map<ConfigurationFactory, FactoryEntry>> {
     val node = project.service<ConfigurationFileManager>().getConfigurationNode()
                ?: return@SynchronizedClearableLazy emptyMap()

@@ -17,7 +17,7 @@ import com.intellij.toolWindow.RegisterToolWindowTaskProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class FacetDependentToolWindowManager : RegisterToolWindowTaskProvider {
+internal class FacetDependentToolWindowManager : RegisterToolWindowTaskProvider {
   override suspend fun getTasks(project: Project): Collection<ToolWindowEP> {
     val facetDependentToolWindows = FacetDependentToolWindow.EXTENSION_POINT_NAME.extensionList
     if (facetDependentToolWindows.isEmpty()) {

@@ -23,6 +23,7 @@ import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.PyCustomMember;
+import com.jetbrains.python.codeInsight.PyDunderMatchArgsReference;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.codeInsight.controlflow.PyDataFlowKt;
 import com.jetbrains.python.codeInsight.controlflow.Reachability;
@@ -251,6 +252,15 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       return;
     }
     List<LocalQuickFix> fixes = new ArrayList<>();
+    if (reference instanceof PsiReferenceEx refEx) {
+      fixes.addAll(refEx.getQuickFixes(myTypeEvalContext));
+    }
+    if (element instanceof PyKeywordPattern pattern) {
+      PyClassPattern classPattern = pattern.getContainingClassPattern();
+      if (classPattern != null && myTypeEvalContext.getType(classPattern) instanceof PyClassType classType) {
+        if (classType.getMemberNames(true, myTypeEvalContext).contains(refName)) return;
+      }
+    }
     if (element instanceof PyReferenceExpression expr) {
       if (PyNames.COMPARISON_OPERATORS.contains(refName)) {
         return;
@@ -344,6 +354,9 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
             rangeInElement = TextRange.create(0, qualifier.getTextRange().getLength());
             markedQualified = true;
           }
+          else if (reference instanceof PyDunderMatchArgsReference) {
+            markedQualified = true;
+          }
         }
       }
       if (!markedQualified) {
@@ -357,7 +370,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     if (severity == HighlightSeverity.WARNING) {
       hlType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
     }
-    if (severity == HighlightSeverity.WEAK_WARNING) {
+    else if (severity == HighlightSeverity.WEAK_WARNING) {
       hlType = ProblemHighlightType.WEAK_WARNING;
     }
     else if (severity == HighlightSeverity.ERROR) {

@@ -131,7 +131,7 @@ internal class StorageVirtualFileTracker {
   }
 }
 
-private class StorageVfsListener : AsyncFileListener {
+internal class StorageVfsListener : AsyncFileListener {
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
     service<StorageVirtualFileTracker>().schedule(events)
     return null

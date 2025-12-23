@@ -101,13 +101,13 @@ internal class McpClientDetectionActivity : ProjectActivity {
     }
   }
 
-  private class ShowSettingsAction(private val project: Project, @NlsActions.ActionText text: String = McpServerBundle.message("mcp.unconfigured.clients.detected.configure.settings.json")) : AnAction(text) {
+  internal class ShowSettingsAction(private val project: Project, @NlsActions.ActionText text: String = McpServerBundle.message("mcp.unconfigured.clients.detected.configure.settings.json")) : AnAction(text) {
     override fun actionPerformed(e: AnActionEvent) {
       ShowSettingsUtil.getInstance().showSettingsDialog(project, McpServerSettingsConfigurable::class.java)
     }
   }
 
-  private class AutoconfigureAction(private val project: Project, private val unconfiguredClients: List<McpClient>, private val notification: Notification) : AnAction(McpServerBundle.message("mcp.unconfigured.clients.detected.configure.json")) {
+  internal class AutoconfigureAction(private val project: Project, private val unconfiguredClients: List<McpClient>, private val notification: Notification) : AnAction(McpServerBundle.message("mcp.unconfigured.clients.detected.configure.json")) {
     override fun actionPerformed(e: AnActionEvent) {
       val clientsWithErrorDuringConfiguration = mutableSetOf<McpClient>()
       for (client in unconfiguredClients) {

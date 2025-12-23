@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 
-private class CombinedDiffSearchEditorActionHandler(original: EditorActionHandler) : CombinedDiffBaseEditorWithSelectionHandler(original) {
+internal class CombinedDiffSearchEditorActionHandler(original: EditorActionHandler) : CombinedDiffBaseEditorWithSelectionHandler(original) {
 
   override fun doExecute(combined: CombinedDiffViewer, editor: Editor, caret: Caret?, dc: DataContext?) {
     val project = dc?.getData(CommonDataKeys.PROJECT) ?: return
@@ -21,7 +21,7 @@ private class CombinedDiffSearchEditorActionHandler(original: EditorActionHandle
   }
 }
 
-private class CombinedDiffReplaceEditorActionHandler(private val original: EditorActionHandler) : CombinedDiffBaseEditorWithSelectionHandler(original) {
+internal class CombinedDiffReplaceEditorActionHandler(private val original: EditorActionHandler) : CombinedDiffBaseEditorWithSelectionHandler(original) {
 
   override fun doExecute(combined: CombinedDiffViewer, editor: Editor, caret: Caret?, dc: DataContext?) {
     if (DiffUtil.isEditable(editor)) {
@@ -35,7 +35,7 @@ private class CombinedDiffReplaceEditorActionHandler(private val original: Edito
   }
 }
 
-private class SearchNextHandler(original: EditorActionHandler) : CombinedDiffBaseEditorWithSelectionHandler(original) {
+internal class SearchNextHandler(original: EditorActionHandler) : CombinedDiffBaseEditorWithSelectionHandler(original) {
   override fun doExecute(combined: CombinedDiffViewer, editor: Editor, caret: Caret?, dc: DataContext?) {
     if (dc == null) return
 
@@ -43,7 +43,7 @@ private class SearchNextHandler(original: EditorActionHandler) : CombinedDiffBas
   }
 }
 
-private class SearchPreviousHandler(original: EditorActionHandler) : CombinedDiffBaseEditorWithSelectionHandler(original) {
+internal class SearchPreviousHandler(original: EditorActionHandler) : CombinedDiffBaseEditorWithSelectionHandler(original) {
   override fun doExecute(combined: CombinedDiffViewer, editor: Editor, caret: Caret?, dc: DataContext?) {
     if (dc == null) return
 

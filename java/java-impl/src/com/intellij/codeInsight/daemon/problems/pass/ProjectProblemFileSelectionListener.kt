@@ -177,7 +177,7 @@ private class ProjectPsiChangesProcessor(scope: CoroutineScope) {
   }
 }
 
-private class ProjectProblemFileSelectionListenerStartupActivity : ProjectActivity {
+internal class ProjectProblemFileSelectionListenerStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment && !TestModeFlags.`is`(ProjectProblemUtils.ourTestingProjectProblems)) {
       return

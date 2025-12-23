@@ -68,7 +68,7 @@ private class CodeInsightScopeHolder(val scope: CoroutineScope) {
 /**
  * Expandable Combobox representing the context switcher
  */
-private class CodeInsightContextSwitcher(
+internal class CodeInsightContextSwitcher(
   private val editor: Editor,
   private val project: Project,
   private val file: VirtualFile,
@@ -159,7 +159,7 @@ private class CodeInsightContextSwitcher(
    * Dummy button that is used if the contexts are not yet loaded.
    * In general, should never be shown.
    */
-  private class DummyLoadingButton : AnAction() {
+  internal class DummyLoadingButton : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {}
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

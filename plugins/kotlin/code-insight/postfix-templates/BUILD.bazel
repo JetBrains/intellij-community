@@ -81,7 +81,6 @@ jvm_library(
     "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared_test_lib",
     "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates",
     "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates_test_lib",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/testFramework",
@@ -92,6 +91,7 @@ jvm_library(
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.postfixTemplates` end

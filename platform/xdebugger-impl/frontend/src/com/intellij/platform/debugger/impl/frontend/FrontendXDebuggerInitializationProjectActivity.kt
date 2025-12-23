@@ -9,7 +9,7 @@ import com.intellij.xdebugger.SplitDebuggerMode
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-private class FrontendXDebuggerInitializationProjectActivity : ProjectActivity {
+internal class FrontendXDebuggerInitializationProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     // initialize the debugger manager to start listening for backend state
     FrontendXDebuggerManager.getInstance(project)

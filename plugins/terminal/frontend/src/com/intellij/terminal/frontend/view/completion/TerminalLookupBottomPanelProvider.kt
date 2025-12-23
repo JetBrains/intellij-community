@@ -168,7 +168,7 @@ internal class TerminalLookupBottomPanelProvider : LookupBottomPanelProvider {
   private data class ShortcutPreset(val shortcut: Shortcut, val text: String)
 }
 
-private class TerminalCommandCompletionSettingsAction : DumbAwareAction(
+internal class TerminalCommandCompletionSettingsAction : DumbAwareAction(
   TerminalBundle.message("action.Terminal.CommandCompletionSettings.text"),
   null,
   AllIcons.General.Settings,

@@ -24,7 +24,7 @@ import kotlinx.coroutines.withContext
 import java.io.DataInput
 import java.io.DataOutput
 
-private class DocRenderNecromancerAwaker : NecromancerAwaker<DocRenderZombie> {
+internal class DocRenderNecromancerAwaker : NecromancerAwaker<DocRenderZombie> {
   override fun awake(project: Project, coroutineScope: CoroutineScope): Necromancer<DocRenderZombie> {
     return DocRenderNecromancer(project, coroutineScope)
   }
@@ -111,9 +111,9 @@ private class DocRenderNecromancer(
   }
 }
 
-private class DocRenderZombie(limbs: List<DocRenderLimb>) : LimbedZombie<DocRenderLimb>(limbs)
+internal class DocRenderZombie(limbs: List<DocRenderLimb>) : LimbedZombie<DocRenderLimb>(limbs)
 
-private data class DocRenderLimb(
+internal data class DocRenderLimb(
   val startOffset: Int,
   val endOffset: Int,
   val text: String,

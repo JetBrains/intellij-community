@@ -9,7 +9,6 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -25,7 +24,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
-import com.intellij.psi.PsiConsistencyAssertions;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -39,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.intellij.reference.SoftReference.dereference;
@@ -119,14 +116,12 @@ public final class CompletionInitializationUtil {
   public static Supplier<OffsetsInFile> insertDummyIdentifier(@NotNull CompletionInitializationContext initContext,
                                                               @NotNull CompletionProcessEx indicator) {
     OffsetsInFile topLevelOffsets = indicator.getHostOffsets();
-    final Consumer<Supplier<Disposable>> registerDisposable = supplier -> indicator.registerChildDisposable(supplier);
-
-    return doInsertDummyIdentifier(initContext, topLevelOffsets, registerDisposable);
+    return doInsertDummyIdentifier(initContext, topLevelOffsets, indicator);
   }
 
   private static Supplier<OffsetsInFile> doInsertDummyIdentifier(@NotNull CompletionInitializationContext initContext,
                                                                  @NotNull OffsetsInFile topLevelOffsets,
-                                                                 @NotNull Consumer<? super Supplier<Disposable>> registerDisposable) {
+                                                                 @NotNull CompletionProcessEx completionProcess) {
 
     CompletionAssertions.checkEditorValid(initContext.getEditor());
     if (initContext.getDummyIdentifier().isEmpty()) {
@@ -148,20 +143,19 @@ public final class CompletionInitializationUtil {
 
 
     // despite being non-physical, the copy file should only be modified in a write action,
-    // because it's reused in multiple completions and it can also escapes uncontrollably into other threads (e.g. quick doc)
+    // because it's reused in multiple completions, and it can also escape uncontrollably into other threads (e.g., quick doc)
+    return () -> {
+      return WriteAction.compute(() -> {
+        completionProcess.registerChildDisposable(
+          () -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier)
+        );
 
-    //kskrygan: this check is non-relevant for CWM (quick doc and other features work separately)
-    //and we are trying to avoid useless write locks during completion
-    return () -> WriteAction.compute(() -> {
-      registerDisposable.accept((Supplier<Disposable>)() -> {
-        return new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier);
+        OffsetsInFile copyOffsets = apply.get();
+        completionProcess.registerChildDisposable(() -> copyOffsets.getOffsets());
+
+        return copyOffsets;
       });
-      OffsetsInFile copyOffsets = apply.get();
-
-      registerDisposable.accept((Supplier<Disposable>)() -> copyOffsets.getOffsets());
-
-      return copyOffsets;
-    });
+    };
   }
 
   public static @NotNull OffsetsInFile toInjectedIfAny(@NotNull PsiFile originalFile, @NotNull OffsetsInFile hostCopyOffsets) {

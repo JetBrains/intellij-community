@@ -49,7 +49,7 @@ fun Row.tabbedPaneHeader(items: Collection<String> = emptyList()): Cell<JBTabbed
   return cell(tabbedPaneHeader)
 }
 
-private class PopupActionGroup(private val actions: Array<AnAction>) : ActionGroup(), DumbAware {
+internal class PopupActionGroup(private val actions: Array<AnAction>) : ActionGroup(), DumbAware {
   init {
     isPopup = true
     templatePresentation.isPerformGroup = actions.isNotEmpty()

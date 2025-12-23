@@ -3,7 +3,7 @@ package com.intellij.model.psi.impl
 
 import com.intellij.openapi.actionSystem.*
 
-private class TargetSymbolsDataRule : UiDataRule {
+internal class TargetSymbolsDataRule : UiDataRule {
   @Suppress("StaticInitializationInExtensions")
   companion object {
     init {

@@ -26,8 +26,6 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.tabs.impl.TabLabel
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
-import java.awt.event.KeyEvent
-import javax.swing.KeyStroke
 
 
 @ApiStatus.Internal
@@ -104,7 +102,7 @@ class SettingsFileEditorProvider : FileEditorProvider, FileStatusProvider, Edito
     return CommonBundle.settingsTitle()
   }
 
-  private class GotItAwareCloseTab(
+  internal class GotItAwareCloseTab(
     private val closeTabAction: CloseTab,
     private val currentTabLabelComponent: TabLabel,
     private val gotItTooltip: GotItTooltip,

@@ -10,7 +10,7 @@ import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 
 /** Starts [JVMResponsivenessMonitor] on app start */
-private class JVMResponsivenessMonitorStarter : ApplicationActivity {
+internal class JVMResponsivenessMonitorStarter : ApplicationActivity {
   init {
     val app = ApplicationManager.getApplication()
     // We're interested in responsiveness for a regular user-facing IDE app.

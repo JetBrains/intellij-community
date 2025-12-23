@@ -26,7 +26,7 @@ private val taskAnnotations = listOf("org.gradle.api.tasks.Input",
                                      "org.gradle.api.tasks.Classpath",
                                      "org.gradle.api.tasks.Console")
 
-private class GradleImplicitUsageProvider : ImplicitUsageProvider {
+internal class GradleImplicitUsageProvider : ImplicitUsageProvider {
   override fun isImplicitUsage(element: PsiElement): Boolean {
     var modifierList: PsiModifierList? = null
     if (element is GrField) {

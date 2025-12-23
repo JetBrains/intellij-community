@@ -23,7 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 @ApiStatus.Experimental
-private class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartialAcceptHandler {
+internal class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartialAcceptHandler {
 
   override fun insertNextWord(
     editor: Editor,

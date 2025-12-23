@@ -120,7 +120,7 @@ abstract class EditorTabDiffPreview(val project: Project) : CheckedDisposable, D
     }
   }
 
-  private class DiffEditorPreviewEscapeAction(preview: EditorTabDiffPreview) : DumbAwareAction(), DiffEditorEscapeAction {
+  internal class DiffEditorPreviewEscapeAction(preview: EditorTabDiffPreview) : DumbAwareAction(), DiffEditorEscapeAction {
     private val previewRef: WeakReference<EditorTabDiffPreview> = WeakReference(preview)
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

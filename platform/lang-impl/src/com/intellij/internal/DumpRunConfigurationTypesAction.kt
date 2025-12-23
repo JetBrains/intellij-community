@@ -28,7 +28,7 @@ import com.intellij.util.containers.mapSmartSet
 
 private const val UNSPECIFIED = "---"
 
-private class DumpRunConfigurationTypesAction : DumbAwareAction() {
+internal class DumpRunConfigurationTypesAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

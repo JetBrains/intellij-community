@@ -9,7 +9,7 @@ import com.intellij.ui.split.SplitComponentProvider
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.JComponent
 
-private class BuildTreeComponentProvider : SplitComponentProvider<BuildViewId> {
+internal class BuildTreeComponentProvider : SplitComponentProvider<BuildViewId> {
   override val binding: SplitComponentBinding<BuildViewId> = BuildTreeSplitComponentBinding
 
   override fun createComponent(project: Project, scope: CoroutineScope, modelId: BuildViewId): JComponent {

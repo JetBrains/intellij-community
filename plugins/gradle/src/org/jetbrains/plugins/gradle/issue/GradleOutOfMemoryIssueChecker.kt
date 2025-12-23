@@ -20,7 +20,7 @@ import java.util.function.BiPredicate
 import kotlin.io.path.isRegularFile
 
 @ApiStatus.Experimental
-private class GradleOutOfMemoryIssueChecker : GradleIssueChecker {
+internal class GradleOutOfMemoryIssueChecker : GradleIssueChecker {
   override fun check(issueData: GradleIssueData): BuildIssue? {
     // do not report OOM errors not related to Gradle tooling
     if (issueData.error !is org.gradle.tooling.GradleConnectionException) return null

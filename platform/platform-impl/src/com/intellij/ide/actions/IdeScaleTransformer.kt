@@ -177,7 +177,7 @@ internal class IdeScaleTransformer {
   }
 }
 
-private class IdeScalePostStartupActivity : ProjectActivity {
+internal class IdeScalePostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     IdeScaleTransformer.getInstance().setupLastSetScale()
     IdeScaleIndicatorManager.getInstance(project)

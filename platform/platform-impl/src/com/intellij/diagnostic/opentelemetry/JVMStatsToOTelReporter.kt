@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit.NANOSECONDS
  * Currently reported: heap & direct memory usage, threads count, GC times, JVM/OS CPU consumption.
  * Feel free to add more.
  */
-private class JVMStatsToOTelReporter : ProjectActivity {
+internal class JVMStatsToOTelReporter : ProjectActivity {
   override suspend fun execute(project: Project) {
     serviceAsync<ReportingService>()
   }

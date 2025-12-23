@@ -15,7 +15,7 @@ import org.jdom.Element
 import java.awt.KeyboardFocusManager
 import java.awt.Window
 
-private class OpenEditorsContextProvider : WorkingContextProvider() {
+internal class OpenEditorsContextProvider : WorkingContextProvider() {
   override fun getId(): String = "editors"
 
   override fun getDescription(): String = TaskBundle.message("open.editors.and.positions")

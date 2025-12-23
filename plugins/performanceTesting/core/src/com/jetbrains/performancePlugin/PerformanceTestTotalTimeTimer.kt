@@ -8,7 +8,7 @@ import com.intellij.openapi.startup.ProjectActivity
 
 private const val TOTAL_TEST_TIMER_NAME: String = "test"
 
-private class PerformanceTestTotalTimeTimer : ProjectActivity {
+internal class PerformanceTestTotalTimeTimer : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (ProjectLoaded.TEST_SCRIPT_FILE_PATH == null) {
       return

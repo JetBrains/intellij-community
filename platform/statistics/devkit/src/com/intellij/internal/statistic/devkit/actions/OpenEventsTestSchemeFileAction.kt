@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
-private class OpenEventsTestSchemeFileAction() : DumbAwareAction() {
+internal class OpenEventsTestSchemeFileAction() : DumbAwareAction() {
   private val myRecorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT

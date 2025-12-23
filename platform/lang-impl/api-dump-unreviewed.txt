@@ -4416,7 +4416,6 @@ f:com.intellij.codeInsight.lookup.impl.LookupOffsets
 - truncatePrefix():Z
 f:com.intellij.codeInsight.lookup.impl.LookupTypedHandler
 - com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase
-- sf:CANCELLATION_CHAR:com.intellij.openapi.util.Key
 - <init>(com.intellij.openapi.editor.actionSystem.TypedActionHandler):V
 - execute(com.intellij.openapi.editor.Editor,C,com.intellij.openapi.actionSystem.DataContext):V
 - s:getLookupAction(C,com.intellij.codeInsight.lookup.impl.LookupImpl):com.intellij.codeInsight.lookup.CharFilter$Result

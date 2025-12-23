@@ -8,7 +8,7 @@ import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
 import com.intellij.openapi.application.ApplicationManager
 
-private class GutterIconsSearchableOptionContributor : SearchableOptionContributor() {
+internal class GutterIconsSearchableOptionContributor : SearchableOptionContributor() {
   override fun processOptions(processor: SearchableOptionProcessor) {
     val gutterIconsDisplayName = IdeBundle.message("configurable.GutterIconsConfigurable.display.name")
     val app = ApplicationManager.getApplication()

@@ -110,7 +110,8 @@ assert_type(Class7(1), Class7)
 
 
 class Class8(Generic[T]):
-    def __new__(cls, *args, **kwargs) -> "Class8[list[T]]": ...
+    def __new__(cls, *args, **kwargs) -> "Class8[list[T]]":
+        raise NotImplementedError
 
 
 assert_type(Class8[int](), Class8[list[int]])
@@ -122,7 +123,8 @@ assert_type(Class8[str](), Class8[list[str]])
 
 
 class Class9(Generic[T]):
-    def __new__(cls, *args, **kwargs) -> Self: ...
+    def __new__(cls, *args, **kwargs) -> Self:
+        raise NotImplementedError
 
 
 class Class10(Class9[int]):
@@ -137,7 +139,8 @@ c10: Class9[int] = Class10()
 
 
 class Class11(Generic[T]):
-    def __new__(cls: "type[Class11[int]]") -> "Class11[int]": ...
+    def __new__(cls: "type[Class11[int]]") -> "Class11[int]":
+        raise NotImplementedError
 
 
 Class11()  # OK

@@ -26,7 +26,7 @@ internal class ViewAsGroup : ActionGroup(Presentation.NULL_STRING, true), DumbAw
     return ActionUpdateThread.BGT
   }
 
-  private class RendererAction(private val nodeRenderer: NodeRendererDto) : ToggleAction(nodeRenderer.name) {
+  internal class RendererAction(private val nodeRenderer: NodeRendererDto) : ToggleAction(nodeRenderer.name) {
     init {
       getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested)
     }

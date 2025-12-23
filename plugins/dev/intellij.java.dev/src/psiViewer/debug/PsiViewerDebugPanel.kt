@@ -20,6 +20,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
@@ -295,7 +296,9 @@ internal class PsiViewerDebugPanel(
       val selectedNode = path.lastPathComponent as DefaultMutableTreeNode
       val nodeDescriptor = selectedNode.userObject as? ViewerNodeDescriptor ?: return
       val element = nodeDescriptor.element as? PsiElement ?: return
-      val elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, element.getTextRange())
+      val elementRange = ReadAction.compute<TextRange, RuntimeException> {
+        InjectedLanguageManager.getInstance(project).injectedToHost(element, element.getTextRange())
+      }
       editor.selectAndScroll(elementRange)
     }
   }

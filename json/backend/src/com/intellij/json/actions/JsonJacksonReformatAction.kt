@@ -25,7 +25,7 @@ import com.intellij.testFramework.LightVirtualFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class JsonJacksonReformatAction : AnAction(), LargeFileWriteRequestor {
+internal class JsonJacksonReformatAction : AnAction(), LargeFileWriteRequestor {
   override fun update(e: AnActionEvent) {
     val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
     e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal

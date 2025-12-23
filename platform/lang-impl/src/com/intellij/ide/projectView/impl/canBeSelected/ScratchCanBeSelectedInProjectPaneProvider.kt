@@ -7,7 +7,7 @@ import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
-private class ScratchCanBeSelectedInProjectPaneProvider : CanBeSelectedInProjectPaneProvider {
+internal class ScratchCanBeSelectedInProjectPaneProvider : CanBeSelectedInProjectPaneProvider {
   override fun isSupported(project: Project, virtualFile: VirtualFile): Boolean {
     return ScratchUtil.isScratch(virtualFile) &&
            ProjectView.getInstance(project).isShowScratchesAndConsoles(ProjectViewPane.ID)

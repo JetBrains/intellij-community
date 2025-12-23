@@ -137,8 +137,8 @@ private class CombinedSimpleDiffHeader(project: Project,
   override fun getSelectionBackground(state: State): Color = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
   override fun changeBackgroundOnHover(state: State): Boolean = true
 
-  private class SelectableFilePathLabel(private val project: Project,
-                                        private val path: FilePath) : DumbAwareAction(), CustomComponentAction {
+  internal class SelectableFilePathLabel(private val project: Project,
+                                         private val path: FilePath) : DumbAwareAction(), CustomComponentAction {
 
     private val checkBox = CheckBox("").apply { background = UIUtil.getListBackground() }
 

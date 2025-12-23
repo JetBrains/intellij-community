@@ -700,15 +700,16 @@ open class IdeStatusBarImpl @Internal constructor(
   override val project: Project?
     get() = getProject()
 
-  private val defaultEditorFlow: StateFlow<FileEditor?> by lazy {
-    val project = project ?: return@lazy MutableStateFlow(null)
-    project.service<StatusBarWidgetsManager>().dataContext.currentFileEditor
-  }
-
   @get:Internal
-  override val currentEditor: StateFlow<FileEditor?> = customCurrentFileEditorFlow
-    .flatMapLatest { it ?: defaultEditorFlow }
-    .stateIn(coroutineScope, SharingStarted.Eagerly, null)
+  override val currentEditor: StateFlow<FileEditor?> by lazy {
+    customCurrentFileEditorFlow
+      .flatMapLatest { customFlow ->
+        customFlow
+        ?: project?.serviceAsync<StatusBarWidgetsManager>()?.dataContext?.currentFileEditor
+        ?: emptyFlow()
+      }
+      .stateIn(coroutineScope, SharingStarted.Eagerly, null)
+  }
 
   @Internal
   fun setCurrentFileEditorFlow(flow: StateFlow<FileEditor?>?) {

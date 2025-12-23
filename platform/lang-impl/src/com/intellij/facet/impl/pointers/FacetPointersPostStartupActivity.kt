@@ -7,7 +7,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
-private class FacetPointersPostStartupActivity : ProjectActivity {
+internal class FacetPointersPostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val manager = project.serviceAsync<FacetPointersManager>()
     if (manager is FacetPointersManagerImpl) {

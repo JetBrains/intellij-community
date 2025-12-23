@@ -22,7 +22,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readBytes
 import kotlin.time.Duration.Companion.minutes
 
-private class P3SharedConfigFolderApplicationLoadListener : ApplicationLoadListener {
+internal class P3SharedConfigFolderApplicationLoadListener : ApplicationLoadListener {
   override suspend fun beforeApplicationLoaded(application: Application, configPath: Path) {
     if (application.isUnitTestMode || !processPerProjectSupport().isEnabled()) {
       return
@@ -33,7 +33,7 @@ private class P3SharedConfigFolderApplicationLoadListener : ApplicationLoadListe
 }
 
 @OptIn(FlowPreview::class)
-private class ProcessPerProjectSharedConfigFolderApplicationInitializedListener : ApplicationActivity {
+internal class ProcessPerProjectSharedConfigFolderApplicationInitializedListener : ApplicationActivity {
   override suspend fun execute() = coroutineScope {
     if (!processPerProjectSupport().isEnabled()) {
       return@coroutineScope

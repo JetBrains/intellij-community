@@ -57,7 +57,7 @@ internal class ModuleStateApiImpl : ModuleStateApi {
 }
 
 
-private class ModuleStateApiProvider : RemoteApiProvider {
+internal class ModuleStateApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<ModuleStateApi>()) {
       ModuleStateApiImpl()

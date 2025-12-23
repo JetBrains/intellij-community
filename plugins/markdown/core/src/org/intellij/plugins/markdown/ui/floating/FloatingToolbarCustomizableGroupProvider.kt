@@ -3,7 +3,7 @@ package org.intellij.plugins.markdown.ui.floating
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider
 import org.intellij.plugins.markdown.MarkdownBundle
 
-private class FloatingToolbarCustomizableGroupProvider: CustomizableActionGroupProvider() {
+internal class FloatingToolbarCustomizableGroupProvider: CustomizableActionGroupProvider() {
   override fun registerGroups(registrar: CustomizableActionGroupRegistrar) {
     registrar.addCustomizableActionGroup(
       "Markdown.Toolbar.Floating",

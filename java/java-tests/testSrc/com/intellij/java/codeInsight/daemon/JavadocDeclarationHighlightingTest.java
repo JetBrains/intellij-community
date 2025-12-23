@@ -79,6 +79,7 @@ public class JavadocDeclarationHighlightingTest extends LightDaemonAnalyzerTestC
   public void testInheritJavaDoc() { setLanguageLevel(LanguageLevel.JDK_1_3); doTest(); }
   public void testLink0() { doTest(); }
   public void testLink1() { doTest(); }
+  public void testLink2() { doTest(); }
   public void testLinkFromInnerClassToSelfMethod() { doTest(); }
   public void testValueBadReference() { doTest(); }
   public void testValueGoodReference() { doTest(); }

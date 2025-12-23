@@ -11,7 +11,7 @@ import org.jetbrains.idea.svn.NestedCopyType
 import org.jetbrains.idea.svn.SvnVcs
 import java.util.*
 
-private class SvnStatisticsCollector : ProjectUsagesCollector() {
+internal class SvnStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {

@@ -9,7 +9,7 @@ import javax.swing.Icon
 /**
  * @author Egor
  */
-private class XBreakpointCustomGroupingRule<B : Any>
+internal class XBreakpointCustomGroupingRule<B : Any>
   : XBreakpointGroupingRule<B, XBreakpointCustomGroup>("by-group", XDebuggerBundle.message("breakpoints.show.user.groups")) {
   override fun getPriority(): Int {
     return 1200

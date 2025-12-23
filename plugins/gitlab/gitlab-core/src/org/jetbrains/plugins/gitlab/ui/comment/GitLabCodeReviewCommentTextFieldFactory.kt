@@ -143,7 +143,7 @@ object GitLabEditableComponentFactory {
     }
 }
 
-private class CommitFilePasteProvider : PasteProvider {
+internal class CommitFilePasteProvider : PasteProvider {
   override fun performPaste(dataContext: DataContext) {
     dataContext.getData(COMMIT_FILE_PASTE_PROVIDER)?.performPaste(dataContext)
   }

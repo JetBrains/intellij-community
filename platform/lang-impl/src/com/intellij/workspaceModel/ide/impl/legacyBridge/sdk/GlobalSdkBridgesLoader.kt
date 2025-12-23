@@ -71,7 +71,7 @@ private fun EelMachine.ownsSdkEntry(sdkEntity: SdkEntity): Boolean {
   }
 }
 
-private class GlobalSdkBridgeInitializer : BridgeInitializer {
+internal class GlobalSdkBridgeInitializer : BridgeInitializer {
   override fun isEnabled(): Boolean = true
 
   override fun initializeBridges(project: Project, changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
@@ -187,7 +187,7 @@ private class GlobalSdkBridgesLoader(private val eelMachine: EelMachine) : Globa
 
 private val LOG = logger<GlobalSdkBridgesLoader>()
 
-private class GlobalSdkTableBridgeRegistryImpl : GlobalSdkTableBridgeRegistry {
+internal class GlobalSdkTableBridgeRegistryImpl : GlobalSdkTableBridgeRegistry {
   private val registry = ConcurrentHashMap<EelMachine, GlobalSdkTableBridge>()
 
   override fun getTableBridge(eelMachine: EelMachine): GlobalSdkTableBridge {

@@ -356,7 +356,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
   }
 }
 
-private class RefactoringListenerProvider : RefactoringElementListenerProvider {
+internal class RefactoringListenerProvider : RefactoringElementListenerProvider {
   override fun getListener(element: PsiElement): RefactoringElementListener? {
     if (element !is PsiFile) {
       return null

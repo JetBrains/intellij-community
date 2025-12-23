@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.event.InputEvent
 import javax.swing.Icon
 
-private class ThreadDumpAction : DumbAwareAction(), SplitDebuggerAction {
+internal class ThreadDumpAction : DumbAwareAction(), SplitDebuggerAction {
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun actionPerformed(e: AnActionEvent) {

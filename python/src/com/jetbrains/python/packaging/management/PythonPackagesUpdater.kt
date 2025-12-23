@@ -14,7 +14,7 @@ import com.jetbrains.python.packaging.pip.PypiPackageCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class PythonPackagesUpdater : ProjectActivity {
+internal class PythonPackagesUpdater : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("disable.python.cache.update")) {
       throw ExtensionNotApplicableException.create()

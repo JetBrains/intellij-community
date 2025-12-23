@@ -29,7 +29,7 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinJvmLightProjectDescriptor.DEFAULT
+        return KotlinJvmLightProjectDescriptor.Companion.DEFAULT
     }
 
     protected fun performTest() {
@@ -48,7 +48,7 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
         val postfixTemplate: PostfixTemplate? =
             LanguagePostfixTemplate.LANG_EP.forLanguage(KotlinLanguage.INSTANCE)
                 .templates.firstOrNull { it.key == ".$templateKey" }
-        val postfixTemplateDumbAware = DumbService.isDumbAware(postfixTemplate)
+        val postfixTemplateDumbAware = DumbService.Companion.isDumbAware(postfixTemplate)
         try {
             IgnoreTests.runTestIfNotDisabledByFileDirective(testRootPath.resolve(testMethodPath), disableDirective, "after") {
                 check(postfixTemplate != null) { "Unable to find PostfixTemplate for `$templateKey`" }

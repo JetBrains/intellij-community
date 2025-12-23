@@ -330,31 +330,31 @@ abstract class SmartStepEditorActionHandler(protected val myOriginalHandler: Edi
   }
 }
 
-private class UpHandler(original: EditorActionHandler) : SmartStepEditorActionHandler(original) {
+internal class UpHandler(original: EditorActionHandler) : SmartStepEditorActionHandler(original) {
   override fun myPerform(editor: Editor, caret: Caret?, dataContext: DataContext, stepData: SmartStepData) {
     stepData.selectNext(SmartStepData.Direction.UP)
   }
 }
 
-private class DownHandler(original: EditorActionHandler) : SmartStepEditorActionHandler(original) {
+internal class DownHandler(original: EditorActionHandler) : SmartStepEditorActionHandler(original) {
   override fun myPerform(editor: Editor, caret: Caret?, dataContext: DataContext, stepData: SmartStepData) {
     stepData.selectNext(SmartStepData.Direction.DOWN)
   }
 }
 
-private class LeftHandler(original: EditorActionHandler) : SmartStepEditorActionHandler(original) {
+internal class LeftHandler(original: EditorActionHandler) : SmartStepEditorActionHandler(original) {
   override fun myPerform(editor: Editor, caret: Caret?, dataContext: DataContext, stepData: SmartStepData) {
     stepData.selectNext(SmartStepData.Direction.LEFT)
   }
 }
 
-private class RightHandler(original: EditorActionHandler) : SmartStepEditorActionHandler(original) {
+internal class RightHandler(original: EditorActionHandler) : SmartStepEditorActionHandler(original) {
   override fun myPerform(editor: Editor, caret: Caret?, dataContext: DataContext, stepData: SmartStepData) {
     stepData.selectNext(SmartStepData.Direction.RIGHT)
   }
 }
 
-private class EscHandler(original: EditorActionHandler) : SmartStepEditorActionHandler(original) {
+internal class EscHandler(original: EditorActionHandler) : SmartStepEditorActionHandler(original) {
   override fun myPerform(editor: Editor, caret: Caret?, dataContext: DataContext, stepData: SmartStepData) {
     editor.getUserData(SMART_STEP_INPLACE_DATA)?.clear()
     if (myOriginalHandler.isEnabled(editor, caret, dataContext)) {

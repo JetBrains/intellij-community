@@ -167,4 +167,4 @@ interface PythonHelpersLocator {
   }
 }
 
-private class PythonHelpersLocatorDefault : PythonHelpersLocator
+internal class PythonHelpersLocatorDefault : PythonHelpersLocator

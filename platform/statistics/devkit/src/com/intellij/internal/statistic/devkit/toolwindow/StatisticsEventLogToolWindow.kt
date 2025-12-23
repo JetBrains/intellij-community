@@ -122,7 +122,7 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
   }
 }
 
-private class StatisticsMultilineLogToggleAction(private val consoleLog: StatisticsEventLogConsole) :
+internal class StatisticsMultilineLogToggleAction(private val consoleLog: StatisticsEventLogConsole) :
   ToggleAction("Multiline Event Log Presentation", "Show event log in multiline presentation", PrettyPrint) {
   private var isMultilineLog = false
 

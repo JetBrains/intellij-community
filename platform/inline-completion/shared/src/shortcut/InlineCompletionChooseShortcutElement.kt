@@ -255,7 +255,7 @@ private fun showChooseShortcutPopup(editor: Editor, relativePoint: RelativePoint
   popup.show(relativePoint)
 }
 
-private class ChangeShortcutAction(
+internal class ChangeShortcutAction(
   @NlsActions.ActionText text: String,
   shortcut: Shortcut,
   private val editor: Editor,

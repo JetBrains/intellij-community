@@ -32,7 +32,7 @@ import java.nio.file.Path
 
 private val logger = fileLogger()
 
-private class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
+internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
   private val existingSdks by lazy { PythonSdkUtil.getAllSdks() }
   private val context = UserDataHolderBase()
 

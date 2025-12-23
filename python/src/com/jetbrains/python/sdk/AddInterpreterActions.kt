@@ -115,7 +115,7 @@ internal class AddLocalInterpreterAction(
 fun addLocalInterpreter(moduleOrProject: ModuleOrProject, onSdkCreated: (Sdk) -> Unit): Unit =
   createAddLocalInterpreterAction(moduleOrProject, onSdkCreated).createDialog().show()
 
-private class AddInterpreterOnTargetAction(
+internal class AddInterpreterOnTargetAction(
   private val project: Project,
   private val targetType: TargetEnvironmentType<*>,
   private val onSdkCreated: (Sdk) -> Unit,

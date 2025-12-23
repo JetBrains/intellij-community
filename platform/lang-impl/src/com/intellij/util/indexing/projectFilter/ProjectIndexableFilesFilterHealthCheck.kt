@@ -44,7 +44,7 @@ private val LOG = Logger.getInstance(ProjectIndexableFilesFilterHealthCheck::cla
 internal typealias FileId = Int
 private fun FileId.fileInfo(): String = "file id=$this path=${ManagingFS.getInstance().findFileById(this)?.path}"
 
-private class ProjectIndexableFilesFilterHealthCheckStarter : ProjectActivity {
+internal class ProjectIndexableFilesFilterHealthCheckStarter : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()

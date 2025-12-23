@@ -107,7 +107,7 @@ internal class ToggleWidgetAction(val widgetFactory: StatusBarWidgetFactory) : D
   }
 }
 
-private class HideCurrentWidgetAction : DumbAwareAction() {
+internal class HideCurrentWidgetAction : DumbAwareAction() {
   companion object {
     private fun getFactory(e: AnActionEvent): StatusBarWidgetFactory? {
       val project = e.project ?: return null

@@ -80,7 +80,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//platform/editor-ui-api:editor-ui",
     "@lib//:kotlin-test",
-    "@lib//:kotlin-test-assertions-core-jvm",
+    "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
     "@lib//:kotlin-test-junit",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
     "//platform/projectModel-api:projectModel",

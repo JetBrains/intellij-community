@@ -12,7 +12,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.jetbrains.rd.util.reactive.fire
 import kotlinx.coroutines.coroutineScope
 
-private class IdeStartupWizardImpl : IdeStartupWizard {
+internal class IdeStartupWizardImpl : IdeStartupWizard {
   override suspend fun run() {
     logger.info("Initial startup wizard is enabled. Will start the wizard.")
     ThreadingAssertions.assertEventDispatchThread()

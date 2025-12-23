@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -30,11 +30,17 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class LookupTypedHandler extends TypedActionHandlerBase {
+  @ApiStatus.Internal
   public static final Key<Character> CANCELLATION_CHAR = Key.create("CANCELLATION_CHAR");
+
+  @ApiStatus.Internal
+  public static final Key<Character> COMPLETE_TILL_TYPED_CHAR_OCCURRENCE = Key.create("COMPLETE_TILL_TYPED_CHAR_OCCURRENCE");
+
   private static final Logger LOG = Logger.getInstance(LookupTypedHandler.class);
 
   public LookupTypedHandler(@Nullable TypedActionHandler originalHandler) {
@@ -76,13 +82,13 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
     }
   }
 
-  private static boolean beforeCharTyped(final char charTyped,
-                                         Project project,
-                                         final Editor originalEditor,
-                                         final Editor editor,
-                                         PsiFile file) {
-    final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(originalEditor);
-    if (lookup == null){
+  private static boolean beforeCharTyped(char charTyped,
+                                         @NotNull Project project,
+                                         @NotNull Editor originalEditor,
+                                         @NotNull Editor editor,
+                                         @NotNull PsiFile file) {
+    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(originalEditor);
+    if (lookup == null) {
       return false;
     }
 
@@ -90,53 +96,18 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
       return false;
     }
 
-    final CharFilter.Result result = getLookupAction(charTyped, lookup);
+    CharFilter.Result result = getLookupAction(charTyped, lookup);
     if (lookup.isLookupDisposed()) {
       return false;
     }
 
     if (result == CharFilter.Result.ADD_TO_PREFIX) {
-      Document document = editor.getDocument();
-      long modificationStamp = document.getModificationStamp();
-
-      if (!lookup.performGuardedChange(() -> {
-        lookup.fireBeforeAppendPrefix(charTyped);
-        EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(originalEditor, String.valueOf(charTyped), true);
-      })) {
-        return true;
-      }
-
-      lookup.appendPrefix(charTyped);
-      if (lookup.isStartCompletionWhenNothingMatches() && lookup.getItems().isEmpty()) {
-        final CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
-        if (completion != null) {
-          completion.scheduleRestart();
-        } else {
-          AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor);
-        }
-      }
-
-      originalEditor.getCaretModel().runForEachCaret(caret -> {
-        DataContext context = DataManager.getInstance().getDataContext(originalEditor.getContentComponent());
-        AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor, context, modificationStamp);
-      });
-
-      final CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
-      if (completion != null) {
-        completion.prefixUpdated();
-      }
+      addCharToPrefix(charTyped, originalEditor, editor, lookup, project);
       return true;
     }
 
     if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP && lookup.isFocused()) {
-      LookupElement item = lookup.getCurrentItem();
-      if (item != null) {
-        if (completeTillTypedCharOccurrence(charTyped, lookup, item)) {
-          return true;
-        }
-
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
-        lookup.finishLookupInWritableFile(charTyped, item);
+      if (selectItemAndFinish(charTyped, lookup)) {
         return true;
       }
     }
@@ -145,6 +116,62 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
     lookup.hideLookup(false);
     TypedHandler.autoPopupCompletion(editor, charTyped, project, file);
     return false;
+  }
+
+  private static boolean selectItemAndFinish(char charTyped, @NotNull LookupImpl lookup) {
+    LookupElement item = lookup.getCurrentItem();
+    if (item == null) {
+      return false;
+    }
+
+    if (completeTillTypedCharOccurrence(charTyped, lookup, item)) {
+      lookup.putUserData(COMPLETE_TILL_TYPED_CHAR_OCCURRENCE, charTyped);
+      return true;
+    }
+
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
+    lookup.finishLookupInWritableFile(charTyped, item);
+    return true;
+  }
+
+  private static void addCharToPrefix(char charTyped,
+                                      @NotNull Editor originalEditor,
+                                      @NotNull Editor editor,
+                                      @NotNull LookupImpl lookup,
+                                      @NotNull Project project) {
+    Document document = editor.getDocument();
+    long modificationStamp = document.getModificationStamp();
+
+    boolean lookupSurvived = lookup.performGuardedChange(() -> {
+      lookup.fireBeforeAppendPrefix(charTyped);
+      EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(originalEditor, String.valueOf(charTyped), true);
+    });
+
+    if (!lookupSurvived) {
+      return;
+    }
+
+    lookup.appendPrefix(charTyped);
+
+    if (lookup.isStartCompletionWhenNothingMatches() && lookup.getItems().isEmpty()) {
+      CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
+      if (completion != null) {
+        completion.scheduleRestart();
+      }
+      else {
+        AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
+      }
+    }
+
+    originalEditor.getCaretModel().runForEachCaret(caret -> {
+      DataContext context = DataManager.getInstance().getDataContext(originalEditor.getContentComponent());
+      AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor, context, modificationStamp);
+    });
+
+    CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
+    if (completion != null) {
+      completion.prefixUpdated();
+    }
   }
 
   private static boolean completeTillTypedCharOccurrence(char charTyped, LookupImpl lookup, LookupElement item) {
@@ -170,7 +197,7 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
     return false;
   }
 
-  public static CharFilter.Result getLookupAction(final char charTyped, final LookupImpl lookup) {
+  public static @NotNull CharFilter.Result getLookupAction(char charTyped, @NotNull LookupImpl lookup) {
     CharFilter.Result filtersDecision = getFilterDecision(charTyped, lookup);
     if (filtersDecision != null) {
       return filtersDecision;
@@ -178,10 +205,10 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
     return CharFilter.Result.HIDE_LOOKUP;
   }
 
-  private static @Nullable CharFilter.Result getFilterDecision(char charTyped, LookupImpl lookup) {
+  private static @Nullable CharFilter.Result getFilterDecision(char charTyped, @NotNull LookupImpl lookup) {
     lookup.checkValid();
     LookupElement item = lookup.getCurrentItem();
-    int prefixLength = item == null ? lookup.getAdditionalPrefix().length(): lookup.itemPattern(item).length();
+    int prefixLength = item == null ? lookup.getAdditionalPrefix().length() : lookup.itemPattern(item).length();
 
     for (CharFilter extension : CharFilter.EP_NAME.getExtensionList()) {
       CharFilter.Result result = extension.acceptChar(charTyped, prefixLength, lookup);

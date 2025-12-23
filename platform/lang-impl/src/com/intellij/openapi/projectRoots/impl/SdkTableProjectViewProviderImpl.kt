@@ -40,7 +40,7 @@ private fun EelMachine.ownsSdk(sdk: Sdk): Boolean {
   }
 }
 
-private class SdkTableProjectViewProviderImpl(private val project: Project) : SdkTableProjectViewProvider, Disposable {
+internal class SdkTableProjectViewProviderImpl(private val project: Project) : SdkTableProjectViewProvider, Disposable {
   @Suppress("SimpleRedundantLet")
   private val descriptor = (project as? ProjectStoreOwner)
                              ?.let { it.componentStore.storeDescriptor.historicalProjectBasePath.getEelDescriptor() }

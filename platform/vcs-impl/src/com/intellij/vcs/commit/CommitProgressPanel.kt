@@ -469,7 +469,7 @@ private fun createCommitChecksToolbar(target: JComponent): ActionToolbar =
     component.border = null
   }
 
-private class RerunCommitChecksAction : DumbAwareAction(), TooltipDescriptionProvider {
+internal class RerunCommitChecksAction : DumbAwareAction(), TooltipDescriptionProvider {
   init {
     templatePresentation.apply {
       setText(Presentation.NULL_STRING)

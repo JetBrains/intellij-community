@@ -22,16 +22,12 @@ import com.intellij.util.ui.SwingUndoUtil
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import java.nio.file.Path
-import javax.swing.AbstractAction
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.JTextArea
+import javax.swing.*
 
 /**
  * @author gregsh
  */
-private class ShowUpdateInfoDialogAction : DumbAwareAction() {
+internal class ShowUpdateInfoDialogAction : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

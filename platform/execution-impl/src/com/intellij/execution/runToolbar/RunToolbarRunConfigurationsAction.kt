@@ -303,7 +303,7 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
     protected open fun doShiftClick() {}
   }
 
-  private class RunToolbarSelectConfigAction(
+  internal class RunToolbarSelectConfigAction(
     val project: Project,
     val configuration: RunnerAndConfigurationSettings,
   ) : DumbAwareAction() {

@@ -252,10 +252,9 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       qualifierType: PyClassLikeType,
       context: TypeEvalContext,
     ): PyCallableType? {
-      val call = anchor as? PyCallExpression ?: return null
       val parameters = mutableListOf<PyCallableParameter>()
       val resultType = qualifierType.toInstance()
-      val elementGenerator = PyElementGenerator.getInstance(call.project)
+      val elementGenerator = PyElementGenerator.getInstance(anchor.project)
 
       if (qualifierType.isDefinition) {
         parameters.add(PyCallableParameterImpl.nonPsi(PyNames.CANONICAL_SELF, resultType))
@@ -266,8 +265,9 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
 
       fields.keys.mapTo(parameters) { PyCallableParameterImpl.nonPsi(it, null, ellipsis) }
 
-      return if (resultType is PyNamedTupleType) {
+      return if (resultType is PyNamedTupleType && anchor is PyCallExpression) {
         val newFields = mutableMapOf<String?, PyType?>()
+        val call = anchor
 
         for (argument in call.arguments) {
           if (argument is PyKeywordArgument) {

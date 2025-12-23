@@ -19,7 +19,7 @@ import java.util.*
 private const val IGNORE_LANGUAGE_DETECTOR_PROPERTY_NAME = "LANGUAGE_DETECTOR_ASKED_BEFORE"
 private const val SWITCH_BACK_LANGUAGE_DETECTOR_PROPERTY_NAME = "LANGUAGE_DETECTOR_ASKED_AFTER"
 
-private class LanguagePluginDetectionStartupActivity : ProjectActivity {
+internal class LanguagePluginDetectionStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val application = ApplicationManagerEx.getApplicationEx()
     val propertiesComponent = PropertiesComponent.getInstance()

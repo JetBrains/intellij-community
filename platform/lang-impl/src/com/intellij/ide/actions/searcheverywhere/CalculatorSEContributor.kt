@@ -32,7 +32,7 @@ import javax.swing.KeyStroke
 import javax.swing.ListCellRenderer
 import kotlin.math.*
 
-private class CalculatorSEContributorFactory : SearchEverywhereContributorFactory<EvaluationResult> {
+internal class CalculatorSEContributorFactory : SearchEverywhereContributorFactory<EvaluationResult> {
   override fun createContributor(initEvent: AnActionEvent): SearchEverywhereContributor<EvaluationResult> {
     return CalculatorSEContributor()
   }

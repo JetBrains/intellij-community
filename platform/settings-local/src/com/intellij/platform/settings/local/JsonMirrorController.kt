@@ -26,7 +26,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-private class JsonMirrorController @JvmOverloads constructor(private val isProjectLevel: Boolean = false) : DelegatedSettingsController {
+internal class JsonMirrorController @JvmOverloads constructor(private val isProjectLevel: Boolean = false) : DelegatedSettingsController {
   init {
     if (!System.getProperty("idea.settings.json.mirror", "false").toBoolean()) {
       throw ExtensionNotApplicableException.create()

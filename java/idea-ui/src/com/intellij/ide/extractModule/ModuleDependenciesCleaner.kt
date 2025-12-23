@@ -154,7 +154,7 @@ class ModuleDependenciesCleaner(
     notification.notify(project)
   }
 
-  private class ShowDependenciesAction(private val module: Module, private val builder: ForwardDependenciesBuilder)
+  internal class ShowDependenciesAction(private val module: Module, private val builder: ForwardDependenciesBuilder)
     : NotificationAction(JavaUiBundle.message("notification.action.text.show.dependencies")) {
     private val project = module.project
 

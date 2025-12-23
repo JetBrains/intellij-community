@@ -37,13 +37,13 @@ import kotlin.io.path.relativeTo
 
 private const val DUMP_DESCRIPTORS_PROPERTY = "idea.dump.plugin.descriptors"
 
-private class DumpPluginDescriptorsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Duplicated {
+internal class DumpPluginDescriptorsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Duplicated {
   override fun actionPerformed(e: AnActionEvent) {
     service<PluginDescriptionDumper>().dump(getDumpFileLocation(), e.project)
   }
 }
 
-private class DumpPluginDescriptorsOnAppStartTrigger : ApplicationActivity {
+internal class DumpPluginDescriptorsOnAppStartTrigger : ApplicationActivity {
   override suspend fun execute() {
     if (System.getProperty(DUMP_DESCRIPTORS_PROPERTY, "false") == "true") {
       val dumpPath = getDumpFileLocation()

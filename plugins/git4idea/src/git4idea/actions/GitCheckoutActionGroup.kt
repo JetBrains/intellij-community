@@ -59,10 +59,10 @@ private fun checkout(project: Project, repository: GitRepository, hashOrRefName:
   GitBrancher.getInstance(project).checkout(hashOrRefName, false, listOf(repository), null)
 }
 
-private class GitCheckoutAction(private val project: Project,
-                                private val repository: GitRepository,
-                                private val hashOrRefName: String,
-                                @ActionText actionText: String) : DumbAwareAction() {
+internal class GitCheckoutAction(private val project: Project,
+                                 private val repository: GitRepository,
+                                 private val hashOrRefName: String,
+                                 @ActionText actionText: String) : DumbAwareAction() {
 
   init {
     templatePresentation.setText(actionText, false)

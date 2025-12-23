@@ -11,7 +11,7 @@ import org.jetbrains.idea.maven.importing.MavenImportUtil.MAIN_SUFFIX
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.jps.model.serialization.SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
 
-private class MavenMultiReleaseSupport : JavaMultiReleaseModuleSupport {
+internal class MavenMultiReleaseSupport : JavaMultiReleaseModuleSupport {
   override fun getMainMultiReleaseModule(additionalModule: Module): Module? {
     // Maven
     val project = additionalModule.project

@@ -82,7 +82,7 @@ private class WelcomeScreenVerticalToolbar(place: String, actionGroup: ActionGro
   }
 }
 
-private class WelcomeScreenActionGroupWrapper(
+internal class WelcomeScreenActionGroupWrapper(
   group: ActionGroup,
   val type: WelcomeScreenToolbarType,
   val sliderDisposable: Disposable?,
@@ -233,6 +233,6 @@ private class WelcomeScreenDisclosureButtonAction(
   }
 }
 
-private enum class WelcomeScreenToolbarType {
+internal enum class WelcomeScreenToolbarType {
   FRAME, TOOLWINDOW
 }

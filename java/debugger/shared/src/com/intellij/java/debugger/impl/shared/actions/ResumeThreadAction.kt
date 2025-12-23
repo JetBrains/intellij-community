@@ -12,7 +12,7 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSplitActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import kotlinx.coroutines.launch
 
-private class ResumeThreadAction : XDebuggerTreeSplitActionBase() {
+internal class ResumeThreadAction : XDebuggerTreeSplitActionBase() {
   override fun perform(node: XValueNodeImpl, nodeName: String, e: AnActionEvent) {
     val project = e.project
     if (project == null) {

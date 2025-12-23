@@ -515,7 +515,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       messages.info("Starting tests from groups '${testGroups}' from classpath of module '${mainModule}'")
     }
     if (options.bucketsCount > 1) {
-      messages.info("Tests from bucket ${options.bucketIndex} of ${options.bucketsCount} will be executed")
+      messages.info("Tests from bucket ${options.bucketIndex + 1} of ${options.bucketsCount} will be executed")
     }
     spanBuilder("test classpath and runtime info").use {
       withContext(Dispatchers.IO) {

@@ -36,7 +36,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 
-private class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
+internal class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return TodoCheckinHandler(panel.project)
   }

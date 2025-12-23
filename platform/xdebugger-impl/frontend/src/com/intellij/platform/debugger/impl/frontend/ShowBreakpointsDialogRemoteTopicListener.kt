@@ -9,7 +9,7 @@ import com.intellij.xdebugger.impl.breakpoints.SHOW_BREAKPOINT_DIALOG_REMOTE_TOP
 import com.intellij.xdebugger.impl.breakpoints.ShowBreakpointDialogRequest
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory
 
-private class ShowBreakpointsDialogRemoteTopicListener : ProjectRemoteTopicListener<ShowBreakpointDialogRequest> {
+internal class ShowBreakpointsDialogRemoteTopicListener : ProjectRemoteTopicListener<ShowBreakpointDialogRequest> {
   override val topic: ProjectRemoteTopic<ShowBreakpointDialogRequest> = SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC
 
   override fun handleEvent(project: Project, event: ShowBreakpointDialogRequest) {

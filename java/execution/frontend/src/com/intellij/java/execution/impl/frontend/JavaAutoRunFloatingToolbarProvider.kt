@@ -72,7 +72,7 @@ class JavaAutoRunFloatingToolbarProvider : FloatingToolbarProvider {
   }
 }
 
-private class DisableAutoTestAction : AnAction(), CustomComponentAction, DumbAware {
+internal class DisableAutoTestAction : AnAction(), CustomComponentAction, DumbAware {
   override fun actionPerformed(e: AnActionEvent) {}
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent  {
@@ -90,7 +90,7 @@ private class DisableAutoTestAction : AnAction(), CustomComponentAction, DumbAwa
   }
 }
 
-private class DisableAction : AnAction(IdeBundle.message("button.disable"), JavaFrontbackBundle.message("auto.run.floating.toolbar.disable.action"), AllIcons.Actions.RerunAutomatically) {
+internal class DisableAction : AnAction(IdeBundle.message("button.disable"), JavaFrontbackBundle.message("auto.run.floating.toolbar.disable.action"), AllIcons.Actions.RerunAutomatically) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     project.service<AutoRunFloatingToolbarService>().scope.launch {
@@ -99,7 +99,7 @@ private class DisableAction : AnAction(IdeBundle.message("button.disable"), Java
   }
 }
 
-private class HideAction : AnAction() {
+internal class HideAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     project.service<AutoRunFloatingToolbarService>().scope.launch {

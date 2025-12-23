@@ -11,7 +11,7 @@ import com.intellij.platform.execution.dashboard.BackendLuxedRunDashboardContent
 import com.intellij.platform.execution.serviceView.isShowLuxedRunToolwindowInServicesView
 import com.intellij.platform.util.coroutines.childScope
 
-private class BackendDashboardListenerInstaller : ProjectActivity {
+internal class BackendDashboardListenerInstaller : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (!isShowLuxedRunToolwindowInServicesView()) return
 

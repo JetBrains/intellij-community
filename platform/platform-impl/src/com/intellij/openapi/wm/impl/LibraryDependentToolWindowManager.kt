@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlin.time.Duration.Companion.milliseconds
 
-private class LibraryDependentToolWindowManager : ProjectActivity {
+internal class LibraryDependentToolWindowManager : ProjectActivity {
   init {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || app.isHeadlessEnvironment) {

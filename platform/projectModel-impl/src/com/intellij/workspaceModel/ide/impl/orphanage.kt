@@ -31,7 +31,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.system.measureTimeMillis
 
-private class OrphanageActivity : ProjectActivity {
+internal class OrphanageActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (useReactiveWorkspaceModelApi()) {
       setupOpenTelemetryReporting(jpsMetrics.meter)

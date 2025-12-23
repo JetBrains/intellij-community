@@ -180,7 +180,7 @@ class SearchEverywhereSpellerImpl : SearchEverywhereSpellingCorrector {
   }
 }
 
-private class GrazieSpellingCorrectorFactoryImpl : SearchEverywhereSpellingCorrectorFactory {
+internal class GrazieSpellingCorrectorFactoryImpl : SearchEverywhereSpellingCorrectorFactory {
   override fun isAvailable(): Boolean {
     // Some logic to verify if typo-fixing is enabled.
     return isTypoFixingEnabled

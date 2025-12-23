@@ -42,7 +42,7 @@ import static com.intellij.codeInsight.lookup.impl.LookupTypedHandler.CANCELLATI
 public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 38);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 39);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
@@ -70,6 +70,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
   private static final BooleanEventField QUICK_DOC_SHOWN = EventFields.Boolean("quick_doc_shown");
   private static final BooleanEventField QUICK_DOC_AUTO_SHOW = EventFields.Boolean("quick_doc_auto_show");
   private static final BooleanEventField QUICK_DOC_SCROLLED = EventFields.Boolean("quick_doc_scrolled");
+  private static final BooleanEventField COMPLETE_TILL_TYPED_CHAR_OCCURRENCE = EventFields.Boolean("complete_till_typed_char_occurrence");
   public static final ObjectEventField ADDITIONAL = EventFields.createAdditionalDataField(GROUP.getId(), FINISHED_EVENT_ID);
   public static final VarargEventId FINISHED = GROUP.registerVarargEvent(FINISHED_EVENT_ID,
                                                                          EventFields.Language,
@@ -101,6 +102,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
                                                                          QUICK_DOC_SHOWN,
                                                                          QUICK_DOC_AUTO_SHOW,
                                                                          QUICK_DOC_SCROLLED,
+                                                                         COMPLETE_TILL_TYPED_CHAR_OCCURRENCE,
                                                                          ADDITIONAL);
 
   private LookupUsageTracker() {
@@ -314,6 +316,8 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       data.add(QUICK_DOC_SHOWN.with(myIsQuickDocShown));
       data.add(QUICK_DOC_AUTO_SHOW.with(myIsQuickDocAutoShow));
       data.add(QUICK_DOC_SCROLLED.with(myIsQuickDocScrolled));
+
+      data.add(COMPLETE_TILL_TYPED_CHAR_OCCURRENCE.with(myLookup.getUserData(LookupTypedHandler.COMPLETE_TILL_TYPED_CHAR_OCCURRENCE) != null));
 
       return data;
     }

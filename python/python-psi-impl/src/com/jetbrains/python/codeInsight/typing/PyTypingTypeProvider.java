@@ -2291,18 +2291,23 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
    * It can be done either with a variable annotation or a type comment.
    */
   public static boolean isExplicitTypeAlias(@NotNull PyAssignmentStatement assignment, @NotNull TypeEvalContext context) {
-    PyExpression annotationValue = getAnnotationValue(assignment, context);
+    PyTargetExpression target = as(ArrayUtil.getFirstElement(assignment.getTargets()), PyTargetExpression.class);
+    if (target == null) {
+      return false;
+    }
+    return isExplicitTypeAlias(target, context);
+  }
+
+  public static boolean isExplicitTypeAlias(@NotNull PyTargetExpression targetExpression, @NotNull TypeEvalContext context) {
+    PyExpression annotationValue = getAnnotationValue(targetExpression, context);
     if (annotationValue instanceof PyReferenceExpression) {
       return resolvesToQualifiedNames(annotationValue, context, TYPE_ALIAS, TYPE_ALIAS_EXT);
     }
-    PyTargetExpression target = as(ArrayUtil.getFirstElement(assignment.getTargets()), PyTargetExpression.class);
-    if (target != null) {
-      String typeCommentAnnotation = target.getTypeCommentAnnotation();
-      if (typeCommentAnnotation != null) {
-        PyExpression commentValue = toExpression(typeCommentAnnotation, assignment);
-        if (commentValue instanceof PyReferenceExpression) {
-          return resolvesToQualifiedNames(commentValue, context, TYPE_ALIAS, TYPE_ALIAS_EXT);
-        }
+    String typeCommentAnnotation = targetExpression.getTypeCommentAnnotation();
+    if (typeCommentAnnotation != null) {
+      PyExpression commentValue = toExpression(typeCommentAnnotation, targetExpression);
+      if (commentValue instanceof PyReferenceExpression) {
+        return resolvesToQualifiedNames(commentValue, context, TYPE_ALIAS, TYPE_ALIAS_EXT);
       }
     }
     return false;

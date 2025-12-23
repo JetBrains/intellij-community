@@ -337,7 +337,7 @@ internal class DaemonTooltipWithActionRenderer(
 
   private fun isOwnAction(action: AnAction?): Boolean = action is ShowDocAction || action is ShowActionsAction || action is SettingsActionGroup
 
-  private class SettingsActionGroup(actions: List<AnAction>) : DefaultActionGroup(actions), HintManagerImpl.ActionToIgnore, DumbAware {
+  internal class SettingsActionGroup(actions: List<AnAction>) : DefaultActionGroup(actions), HintManagerImpl.ActionToIgnore, DumbAware {
     init {
       templatePresentation.isPopupGroup = true
       templatePresentation.icon = AllIcons.Actions.More

@@ -75,7 +75,7 @@ internal fun setRoamableComponentSaveThreshold(thresholdInSeconds: Int) {
   NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD = thresholdInSeconds
 }
 
-private class ComponentStoreImplReloadListener : ConfigFolderChangedListener {
+internal class ComponentStoreImplReloadListener : ConfigFolderChangedListener {
   override suspend fun onChange(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>, componentStore: IComponentStore) {
     (componentStore as ComponentStoreImpl).reloadComponents(changedFileSpecs, deletedFileSpecs)
   }

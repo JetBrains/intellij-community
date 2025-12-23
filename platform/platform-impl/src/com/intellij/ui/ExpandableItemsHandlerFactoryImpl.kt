@@ -7,7 +7,7 @@ import javax.swing.JTable
 import javax.swing.JTree
 import javax.swing.table.JTableHeader
 
-private class ExpandableItemsHandlerFactoryImpl : ExpandableItemsHandlerFactory() {
+internal class ExpandableItemsHandlerFactoryImpl : ExpandableItemsHandlerFactory() {
   override fun doInstall(component: JComponent) = when (component) {
     is JList<*> -> ListExpandableItemsHandler(component)
     is JTree -> TreeExpandableItemsHandler(component)

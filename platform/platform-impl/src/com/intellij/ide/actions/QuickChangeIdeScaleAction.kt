@@ -26,7 +26,7 @@ import javax.swing.JList
 import javax.swing.event.ListSelectionEvent
 import kotlin.math.roundToInt
 
-private class QuickChangeIdeScaleAction : QuickSwitchSchemeAction(), ActionRemoteBehaviorSpecification.Frontend {
+internal class QuickChangeIdeScaleAction : QuickSwitchSchemeAction(), ActionRemoteBehaviorSpecification.Frontend {
   private var job: Job? = null
   private var popupSession: PopupSession? = null
 
@@ -111,7 +111,7 @@ private class QuickChangeIdeScaleAction : QuickSwitchSchemeAction(), ActionRemot
     return Condition { a: AnAction? -> a is ChangeScaleAction && a.scale.percentValue == UISettingsUtils.getInstance().currentIdeScale.percentValue }
   }
 
-  private class ChangeScaleAction(val scale: Float) : DumbAwareAction(scale.percentStringValue) {
+  internal class ChangeScaleAction(val scale: Float) : DumbAwareAction(scale.percentStringValue) {
     override fun getActionUpdateThread() = ActionUpdateThread.EDT
     override fun actionPerformed(e: AnActionEvent) {
       applyUserScale(scale, true)

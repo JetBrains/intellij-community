@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import org.jetbrains.annotations.ApiStatus
 
-private class CombinedDiffManagerImpl(private val project: Project) : CombinedDiffManager {
+internal class CombinedDiffManagerImpl(private val project: Project) : CombinedDiffManager {
   override fun createProcessor(diffPlace: String?): CombinedDiffComponentProcessor {
     val model = CombinedDiffModel(project)
     model.context.putUserData(DiffUserDataKeys.PLACE, diffPlace)
@@ -20,7 +20,7 @@ private class CombinedDiffManagerImpl(private val project: Project) : CombinedDi
   }
 }
 
-private class MyGoToChangePopupAction(val model: CombinedDiffModel) : PresentableGoToChangePopupAction.Default<PresentableChange>() {
+internal class MyGoToChangePopupAction(val model: CombinedDiffModel) : PresentableGoToChangePopupAction.Default<PresentableChange>() {
   private val viewer get() = model.context.getUserData(COMBINED_DIFF_VIEWER_KEY)
 
   override fun getChanges(): ListSelection<out PresentableChange> {

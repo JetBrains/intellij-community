@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import ru.adelf.idea.dotenv.psi.DotEnvFile
 
-private class NestedVariableTypedHandlerDelegate: TypedHandlerDelegate() {
+internal class NestedVariableTypedHandlerDelegate: TypedHandlerDelegate() {
     override fun checkAutoPopup(charTyped: Char, project: Project, editor: Editor, file: PsiFile): Result {
         if (file !is DotEnvFile) {
             return super.checkAutoPopup(charTyped, project, editor, file)

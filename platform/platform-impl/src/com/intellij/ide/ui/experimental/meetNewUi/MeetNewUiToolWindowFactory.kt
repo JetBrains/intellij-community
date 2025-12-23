@@ -13,7 +13,7 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ExperimentalUI
 
-private class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
+internal class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
   override suspend fun isApplicableAsync(project: Project): Boolean {
     return ExperimentalUI.isNewUI() &&
            Registry.`is`("ide.experimental.ui.meetNewUi", true) &&

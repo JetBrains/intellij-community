@@ -268,8 +268,9 @@ object SuvorovProgress {
       }
     }
 
-    val edtTrace = "EDT stacktrace:\n" + EDT.getEventDispatchThread().stackTrace.joinToString("\n")
-    logger<SuvorovProgress>().error("Probable deadlock detected in SuvorovProgress:\n$stealerInfo\n$eternalStealerInfo\n$ideEventQueueInfo\n$edtTrace", Throwable())
+    val exception = Throwable("Probable deadlock detected in SuvorovProgress:\n$stealerInfo\n$eternalStealerInfo\n$ideEventQueueInfo")
+    exception.stackTrace = EDT.getEventDispatchThread().stackTrace
+    logger<SuvorovProgress>().error(exception)
   }
 
   private fun showPotemkinProgress(awaitedValue: Deferred<*>, isBar: Boolean) {

@@ -43,7 +43,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlin.coroutines.cancellation.CancellationException
 
 @Service(Service.Level.PROJECT)
-private class IdeNavigationService(private val project: Project) : NavigationService {
+internal class IdeNavigationService(private val project: Project) : NavigationService {
   /**
    * - `permits = 1` means at any given time only one request is being handled.
    * - [BufferOverflow.DROP_OLDEST] makes each new navigation request cancel the previous one.

@@ -235,7 +235,7 @@ class PyTypedDictType @JvmOverloads constructor(
                && (elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name)
       }
 
-      if (expected is PyClassLikeType && isProtocol(expected, context)) {
+      if (expected is PyClassLikeType && expected.isProtocol(context)) {
         return null
       }
 

@@ -222,7 +222,7 @@ internal class SettingsVirtualFileHolder private constructor(private val project
   }
 }
 
-private class SettingModifiedExternallyNotificationProvider : EditorNotificationProvider {
+internal class SettingModifiedExternallyNotificationProvider : EditorNotificationProvider {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (file !is SettingsVirtualFile)
       return null
@@ -251,7 +251,7 @@ private fun settingsFileName(project: Project): String {
   return "${project.locationHash}/$SETTINGS_KEY"
 }
 
-private class SettingsFileSystem : DummyFileSystem() {
+internal class SettingsFileSystem : DummyFileSystem() {
 
   companion object{
     const val PROTOCOL = SETTINGS_KEY
@@ -275,7 +275,7 @@ private class SettingsFileSystem : DummyFileSystem() {
   }
 }
 
-private class SettingsNavBarModelExtension: AbstractNavBarModelExtension() {
+internal class SettingsNavBarModelExtension: AbstractNavBarModelExtension() {
   override fun getPresentableText(obj: Any?): String? {
     val virtualFile = PsiUtilCore.getVirtualFile(obj as? PsiElement ?: return null) ?: return null
     if (virtualFile is SettingsVirtualFile)

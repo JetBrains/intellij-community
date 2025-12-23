@@ -30,7 +30,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.io.IOException
 import javax.swing.JComponent
 
-private class MoveFileToAnotherModuleAction : DumbAwareAction() {
+internal class MoveFileToAnotherModuleAction : DumbAwareAction() {
   private val sourceRootTypes: List<JpsModuleSourceRootType<*>> = listOf(
     JavaSourceRootType.SOURCE,
     JavaSourceRootType.TEST_SOURCE,

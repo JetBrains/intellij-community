@@ -22,7 +22,7 @@ import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class UpdateCopyrightCheckinHandlerFactory : CheckinHandlerFactory() {
+internal class UpdateCopyrightCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return UpdateCopyrightCheckinHandler(panel.project)
   }

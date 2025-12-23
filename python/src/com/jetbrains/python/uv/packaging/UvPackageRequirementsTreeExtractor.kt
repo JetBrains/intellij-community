@@ -36,7 +36,7 @@ internal class UvPackageRequirementsTreeExtractor(private val uvWorkingDirectory
 }
 
 
-private class UvPackageRequirementsTreeExtractorProvider : PythonPackageRequirementsTreeExtractorProvider {
+internal class UvPackageRequirementsTreeExtractorProvider : PythonPackageRequirementsTreeExtractorProvider {
   override fun createExtractor(sdk: Sdk): PythonPackageRequirementsTreeExtractor? {
     if (!sdk.isUv) return null
     val data = sdk.sdkAdditionalData as? UvSdkAdditionalData ?: return null

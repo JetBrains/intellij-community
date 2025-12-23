@@ -58,8 +58,11 @@ internal class FrontendXValueContainer(
 
   override fun computeChildren(node: XCompositeNode) {
     val childrenManager = getOrCreteChildrenManager(node)
-    val scope = node.childCoroutineScope(parentScope = cs, "FrontendXValueContainer#computeChildren", childrenManager)
-    scope.launch(Dispatchers.EDT) {
+    // Children of this container should be tied to the container scope,
+    // not the node scope. The XValue may be reused in other nodes, e.g. inline debugger.
+    val containerScope = cs
+    val nodeScope = node.childCoroutineScope(containerScope, "FrontendXValueContainer#computeChildren", childrenManager)
+    nodeScope.launch(Dispatchers.EDT) {
       val flow = childrenManager.getChildrenEventsFlow(id)
       val builder = XValuesPresentationBuilder()
       flow.collect { event ->
@@ -68,12 +71,12 @@ internal class FrontendXValueContainer(
             val childrenList = XValueChildrenList()
             for ((name, xValue) in event.names zip event.children) {
               val flows = builder.createFlows(xValue.id)
-              val value = FrontendXValue.create(project, scope, xValue, flows, hasParentValue)
+              val value = FrontendXValue.create(project, containerScope, xValue, flows, hasParentValue)
               childrenList.add(name, value)
             }
 
             fun List<XValueGroupDto>.toFrontendXValueGroups() = map {
-              FrontendXValueGroup(project, scope, it, hasParentValue)
+              FrontendXValueGroup(project, containerScope, it, hasParentValue)
             }
 
             for (group in event.topGroups.toFrontendXValueGroups()) {
@@ -86,7 +89,7 @@ internal class FrontendXValueContainer(
 
             for (topValue in event.topValues) {
               val flows = builder.createFlows(topValue.id)
-              val xValue = FrontendXValue.create(project, scope, topValue, flows, hasParentValue)
+              val xValue = FrontendXValue.create(project, containerScope, topValue, flows, hasParentValue)
               childrenList.addTopValue(xValue as XNamedValue)
             }
 
@@ -96,14 +99,14 @@ internal class FrontendXValueContainer(
             node.setAlreadySorted(event.value)
           }
           is XValueComputeChildrenEvent.SetErrorMessage -> {
-            node.setErrorMessage(event.message, event.link?.hyperlink(scope))
+            node.setErrorMessage(event.message, event.link?.hyperlink(nodeScope))
           }
           is XValueComputeChildrenEvent.SetMessage -> {
             node.setMessage(
               event.message,
               event.icon?.icon(),
               event.attributes.toSimpleTextAttributes(),
-              event.link?.hyperlink(scope)
+              event.link?.hyperlink(nodeScope)
             )
           }
           is XValueComputeChildrenEvent.TooManyChildren -> {

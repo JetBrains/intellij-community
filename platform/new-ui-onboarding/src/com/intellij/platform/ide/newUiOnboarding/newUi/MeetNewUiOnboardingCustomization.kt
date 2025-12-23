@@ -11,7 +11,7 @@ import com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingStatistics
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 
-private class MeetNewUiOnboardingCustomization : MeetNewUiCustomization {
+internal class MeetNewUiOnboardingCustomization : MeetNewUiCustomization {
   override fun addButtons(project: Project, row: Row) {
     if (NewUiOnboardingUtil.isOnboardingEnabled) {
       @Suppress("DialogTitleCapitalization")

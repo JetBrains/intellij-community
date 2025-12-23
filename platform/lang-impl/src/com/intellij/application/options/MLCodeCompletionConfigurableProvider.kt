@@ -16,7 +16,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
 
-private class MLCodeCompletionConfigurableProvider : ConfigurableProvider() {
+internal class MLCodeCompletionConfigurableProvider : ConfigurableProvider() {
   override fun createConfigurable(): Configurable? {
     val configurable = MLCodeCompletionConfigurable()
     if (configurable.configurables.isNotEmpty()) {

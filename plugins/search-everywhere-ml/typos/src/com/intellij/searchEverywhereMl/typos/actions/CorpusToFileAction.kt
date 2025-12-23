@@ -14,7 +14,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.DocumentUtil
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-private class CorpusToFileAction : AnAction() {
+internal class CorpusToFileAction : AnAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = CorpusBuilder.getInstance()?.deferredCorpus?.isCompleted ?: false

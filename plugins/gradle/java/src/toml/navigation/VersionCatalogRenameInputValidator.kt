@@ -10,7 +10,7 @@ import com.intellij.util.ProcessingContext
 import org.jetbrains.plugins.gradle.service.resolve.getVersionCatalogFiles
 import org.toml.lang.psi.TomlKeySegment
 
-private class VersionCatalogRenameInputValidator : RenameInputValidator {
+internal class VersionCatalogRenameInputValidator : RenameInputValidator {
   override fun getPattern(): ElementPattern<out PsiElement> {
     return psiElement(TomlKeySegment::class.java)
       .with(object : PatternCondition<TomlKeySegment>("version ref descriptor") {

@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 
-private class SuperUserSuffixTitleInfoProvider : SimpleTitleInfoProvider(TitleInfoOption.ALWAYS_ACTIVE) {
+internal class SuperUserSuffixTitleInfoProvider : SimpleTitleInfoProvider(TitleInfoOption.ALWAYS_ACTIVE) {
   override fun getValue(project: Project): String {
     val result = ProjectFrameHelper.superUserSuffix ?: return ""
     return if (IdeFrameDecorator.isCustomDecorationActive()) result else "($result)"

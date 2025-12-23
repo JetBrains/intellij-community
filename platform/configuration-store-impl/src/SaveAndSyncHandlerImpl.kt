@@ -44,7 +44,7 @@ private val EP_NAME = ExtensionPointName<SaveAndSyncHandlerListener>("com.intell
 private val LISTEN_DELAY = 15.seconds
 
 @OptIn(FlowPreview::class)
-private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope) : SaveAndSyncHandler() {
+internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope) : SaveAndSyncHandler() {
   private val refreshKnownLocalRootsRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val refreshOpenedFilesRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val saveRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)

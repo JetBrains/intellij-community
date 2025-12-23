@@ -24,7 +24,7 @@ import java.util.function.Supplier
 import javax.swing.BoxLayout
 import kotlin.math.max
 
-private class DecompilerInEditorListener : EditorFactoryListener {
+internal class DecompilerInEditorListener : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor as? EditorImpl ?: return
     val virtualFile = FileDocumentManager.getInstance().getFile(editor.document) ?: return

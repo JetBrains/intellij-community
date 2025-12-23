@@ -21,7 +21,7 @@ import com.intellij.util.ui.StatusText
 import java.util.function.Supplier
 import javax.swing.UIManager
 
-private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
+internal class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
   private val shouldShowWithoutActiveVcs = Registry.get("vcs.empty.toolwindow.show")
 
   override fun init(window: ToolWindow) {
@@ -66,7 +66,7 @@ private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
   }
 }
 
-private class CommitToolWindowFactory : VcsToolWindowFactory() {
+internal class CommitToolWindowFactory : VcsToolWindowFactory() {
   override fun init(window: ToolWindow) {
     super.init(window)
 

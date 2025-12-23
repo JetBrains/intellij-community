@@ -47,7 +47,7 @@ import org.jetbrains.annotations.PropertyKey
 
 abstract class GitCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey())
 
-private class GitUserNameCheckinHandlerFactory : GitCheckinHandlerFactory() {
+internal class GitUserNameCheckinHandlerFactory : GitCheckinHandlerFactory() {
   override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return GitUserNameCheckinHandler(panel.project)
   }
@@ -65,13 +65,13 @@ class GitLargeFileCheckinHandlerFactory : GitCheckinHandlerFactory() {
   }
 }
 
-private class GitDetachedRootCheckinHandlerFactory : GitCheckinHandlerFactory() {
+internal class GitDetachedRootCheckinHandlerFactory : GitCheckinHandlerFactory() {
   override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return GitDetachedRootCheckinHandler(panel.project)
   }
 }
 
-private class GitFileNameCheckinHandlerFactory : GitCheckinHandlerFactory() {
+internal class GitFileNameCheckinHandlerFactory : GitCheckinHandlerFactory() {
   override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return GitFileNameCheckinHandler(panel.project)
   }

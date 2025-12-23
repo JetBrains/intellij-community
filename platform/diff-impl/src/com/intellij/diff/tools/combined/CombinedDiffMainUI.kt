@@ -187,7 +187,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
     }
   }
 
-  private class MyDiffToolChooser(
+  internal class MyDiffToolChooser(
     val context: DiffContext,
     val model: CombinedDiffModel,
     val settings: DiffSettings,
@@ -291,7 +291,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
   }
 }
 
-private class ShowActionGroupPopupAction(
+internal class ShowActionGroupPopupAction(
   private val parentComponent: JComponent,
   private val popupActionGroup: DefaultActionGroup
 ) : DumbAwareAction() {

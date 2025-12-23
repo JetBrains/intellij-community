@@ -10,7 +10,7 @@ import training.learn.course.Lesson
 import training.util.trainerPluginConfigName
 
 @State(name = "LessonStateBase", storages = [Storage(value = trainerPluginConfigName)], category = SettingsCategory.TOOLS)
-private class LessonStateBase : PersistentStateComponent<LessonStateBase> {
+internal class LessonStateBase : PersistentStateComponent<LessonStateBase> {
 
   override fun getState(): LessonStateBase = this
 

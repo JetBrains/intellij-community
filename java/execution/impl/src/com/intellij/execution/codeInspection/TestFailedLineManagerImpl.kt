@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.uast.*
 import javax.swing.Icon
 
-private class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileEditorManagerListener {
+internal class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileEditorManagerListener {
   private val testStorage = TestStateStorage.getInstance(project)
 
   private val cache = FactoryMap.create<VirtualFile, MutableMap<String, TestInfoCache>> { hashMapOf() }

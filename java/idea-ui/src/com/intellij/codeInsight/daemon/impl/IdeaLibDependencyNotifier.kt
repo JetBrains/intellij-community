@@ -35,7 +35,7 @@ import kotlin.io.path.name
  * If the library contains only jars from one of the known library, a fix will be suggested.
  * Fix will replace the library with its repository equivalent.
  */
-private class IdeaLibDependencyNotifier : ProjectActivity {
+internal class IdeaLibDependencyNotifier : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()

@@ -6,7 +6,7 @@ import com.intellij.execution.rpc.RunSessionsApi
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 
-private class BackendExecutionRemoteApiProvider : RemoteApiProvider {
+internal class BackendExecutionRemoteApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<ProcessHandlerApi>()) {
       BackendProcessHandlerApi()

@@ -5,7 +5,7 @@ import com.intellij.platform.bookmarks.rpc.BookmarksApi
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 
-private class BookmarksServiceProvider : RemoteApiProvider{
+internal class BookmarksServiceProvider : RemoteApiProvider{
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<BookmarksApi>()){
       BookmarksApiImpl()

@@ -18,7 +18,7 @@ internal val IS_DIFF_FILE_EDITOR: Key<Boolean> = Key.create("IS_DEFAULT_DIFF_EDI
 @ApiStatus.Internal
 val CUSTOM_DIFF_ESCAPE_HANDLER: Key<AnAction> = Key.create("CUSTOM_DIFF_ESCAPE_HANDLER")
 
-private class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustomizer {
+internal class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustomizer {
   override fun customize(file: VirtualFile, editor: FileEditor, context: DiffContext) {
     registerEscapeAction(editor)
 
@@ -44,9 +44,9 @@ private class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustom
   }
 }
 
-private class DiffEditorEscapeDelegatingAction(delegate: AnAction) : AnActionWrapper(delegate), DiffEditorEscapeAction
+internal class DiffEditorEscapeDelegatingAction(delegate: AnAction) : AnActionWrapper(delegate), DiffEditorEscapeAction
 
-private class CloseDiffEditorAction : DumbAwareAction(), DiffEditorEscapeAction, ActionRemoteBehaviorSpecification.Frontend {
+internal class CloseDiffEditorAction : DumbAwareAction(), DiffEditorEscapeAction, ActionRemoteBehaviorSpecification.Frontend {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {

@@ -6,7 +6,7 @@ import com.intellij.util.net.ssl.CertificateWarningDialogProvider
 import com.intellij.util.net.ssl.ConfirmingTrustManager
 import java.security.cert.X509Certificate
 
-private class CertificateWarningDialogProviderImpl : CertificateWarningDialogProvider {
+internal class CertificateWarningDialogProviderImpl : CertificateWarningDialogProvider {
 
   override fun createCertificateWarningDialog(
     certificates: List<X509Certificate>,

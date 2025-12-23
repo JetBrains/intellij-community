@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 
-private class BuildTreeContextMenuActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification {
+internal class BuildTreeContextMenuActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification {
   override fun getBehavior(): ActionRemoteBehavior {
     val frontendType = FrontendApplicationInfo.getFrontendType()
     return if (frontendType is FrontendType.Remote && frontendType.isGuest())

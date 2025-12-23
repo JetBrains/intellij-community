@@ -14,7 +14,7 @@ import kotlin.time.Duration.Companion.nanoseconds
  * <p/>
  * 'Initialization conditions' are: VFS version, init attempts, and cause for VFS rebuild, if any
  */
-private class VFSInitializationConditionsToFusReporter : ProjectActivity {
+internal class VFSInitializationConditionsToFusReporter : ProjectActivity {
   override suspend fun execute(project: Project) {
     RunOnceUtil.runOnceForApp(VFSInitializationConditionsToFusReporter::class.java.simpleName) {
       reportToFUS()

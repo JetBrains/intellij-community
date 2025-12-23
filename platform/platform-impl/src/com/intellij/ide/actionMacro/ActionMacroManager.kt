@@ -451,7 +451,7 @@ class ActionMacroManager internal constructor(private val coroutineScope: Corout
     }
   }
 
-  private class InvokeMacroAction(private val macro: ActionMacro) : AnAction() {
+  internal class InvokeMacroAction(private val macro: ActionMacro) : AnAction() {
     init {
       templatePresentation.setText(getActionName(), false)
     }

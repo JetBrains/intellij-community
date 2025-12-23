@@ -55,7 +55,7 @@ internal class ReaderModeActionProvider : InspectionWidgetActionProvider {
     }
   }
 
-  private class ReaderModeAction(private val editor: Editor) : DumbAwareToggleAction(
+  internal class ReaderModeAction(private val editor: Editor) : DumbAwareToggleAction(
     LangBundle.messagePointer("action.ReaderModeProvider.text"),
     LangBundle.messagePointer("action.ReaderModeProvider.description"),
     null), CustomComponentAction {

@@ -3243,6 +3243,15 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-86310
+  public void testTargetExpressionWithReassignmentNotProcessedAsImplicitTypeAlias() {
+    doTestByText("""
+                   b = []
+                   a = b
+                   _ = a[0] # No error expected
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

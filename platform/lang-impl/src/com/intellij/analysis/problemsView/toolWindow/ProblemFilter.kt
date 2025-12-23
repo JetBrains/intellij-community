@@ -41,7 +41,7 @@ internal class SeverityFiltersActionGroup : DumbAware, ActionGroup() {
   }
 }
 
-private abstract class SeverityFilterActionBase(name: @Nls String, val panel: HighlightingPanel): DumbAwareToggleAction(name) {
+internal abstract class SeverityFilterActionBase(name: @Nls String, val panel: HighlightingPanel): DumbAwareToggleAction(name) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   abstract fun updateState(selected: Boolean): Boolean
@@ -61,7 +61,7 @@ private abstract class SeverityFilterActionBase(name: @Nls String, val panel: Hi
   }
 }
 
-private class OtherSeveritiesFilterAction(
+internal class OtherSeveritiesFilterAction(
   private val severities: Collection<Int>,
   panel: HighlightingPanel
 ): SeverityFilterActionBase(ProblemsViewBundle.message("problems.view.highlighting.other.problems.show"), panel) {
@@ -76,7 +76,7 @@ private class OtherSeveritiesFilterAction(
   }
 }
 
-private class SeverityFilterAction(@Nls name: String, val severity: Int, panel: HighlightingPanel): SeverityFilterActionBase(name, panel) {
+internal class SeverityFilterAction(@Nls name: String, val severity: Int, panel: HighlightingPanel): SeverityFilterActionBase(name, panel) {
   override fun isSelected(event: AnActionEvent) = !panel.state.hideBySeverity.contains(severity)
 
   override fun updateState(selected: Boolean): Boolean {

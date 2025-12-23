@@ -181,7 +181,7 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
 /**
  * Instead of preloading too early, we explicitly start the server at the end of the application boot sequence.
  */
-private class BuiltInServerManagerLauncher : ApplicationActivity {
+internal class BuiltInServerManagerLauncher : ApplicationActivity {
   override suspend fun execute() {
     serviceAsync<BuiltInServerManager>()
   }

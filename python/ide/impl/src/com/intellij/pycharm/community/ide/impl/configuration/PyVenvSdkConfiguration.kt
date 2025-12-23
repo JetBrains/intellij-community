@@ -20,7 +20,7 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
+internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
   private val existingSdks by lazy { PythonSdkUtil.getAllSdks() }
   private val context = UserDataHolderBase()
 

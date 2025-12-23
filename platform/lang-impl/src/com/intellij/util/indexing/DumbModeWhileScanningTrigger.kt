@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 
-private class DumbModeWhileScanningSubscriber : StartupActivity.RequiredForSmartMode {
+internal class DumbModeWhileScanningSubscriber : StartupActivity.RequiredForSmartMode {
   override fun runActivity(project: Project) {
     project.service<DumbModeWhileScanningTrigger>().subscribe()
   }

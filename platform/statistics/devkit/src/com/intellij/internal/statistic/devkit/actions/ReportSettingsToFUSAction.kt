@@ -9,7 +9,7 @@ import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.project.DumbAwareAction
 import kotlinx.coroutines.launch
 
-private class ReportSettingsToFUSAction : DumbAwareAction() {
+internal class ReportSettingsToFUSAction : DumbAwareAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {

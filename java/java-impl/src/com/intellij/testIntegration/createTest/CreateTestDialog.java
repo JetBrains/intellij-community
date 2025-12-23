@@ -165,8 +165,7 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   private void updateMethodsTable() {
-    List<MemberInfo> methods = TestIntegrationUtils.extractClassMethods(
-      myTargetClass, myShowInheritedMethodsBox.isSelected());
+    List<MemberInfo> methods = createMemberInfos(myTargetClass, myShowInheritedMethodsBox.isSelected());
 
     Set<PsiMember> selectedMethods = new HashSet<>();
     for (MemberInfo each : myMethodsTable.getSelectedMemberInfos()) {
@@ -177,6 +176,10 @@ public class CreateTestDialog extends DialogWrapper {
     }
 
     myMethodsTable.setMemberInfos(methods);
+  }
+
+  protected @NotNull List<@NotNull MemberInfo> createMemberInfos(PsiClass targetClass, boolean includeInherited) {
+    return TestIntegrationUtils.extractClassMethods(targetClass, includeInherited);
   }
 
   private String getDefaultLibraryName() {

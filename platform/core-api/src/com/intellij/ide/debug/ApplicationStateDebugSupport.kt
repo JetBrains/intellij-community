@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 /**
  * This class is used for IDE debugging to extract the required information about the IDE state in a single method.
  */
-private class ApplicationStateDebugSupport {
+internal class ApplicationStateDebugSupport {
   companion object {
     @Suppress("unused")
     @JvmStatic
@@ -18,4 +18,4 @@ private class ApplicationStateDebugSupport {
 }
 
 @Suppress("unused")
-private class ApplicationDebugState(@JvmField val readActionAllowed: Boolean, @JvmField val writeActionAllowed: Boolean)
+internal class ApplicationDebugState(@JvmField val readActionAllowed: Boolean, @JvmField val writeActionAllowed: Boolean)

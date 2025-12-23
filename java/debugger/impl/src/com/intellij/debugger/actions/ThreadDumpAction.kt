@@ -539,7 +539,7 @@ private fun splitFirstTwoAndRemainingLines(text: String): Triple<String, String,
   return Triple(first, second, remaining)
 }
 
-private class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
+internal class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
   override fun getProvider(context: DebuggerContextImpl) = object : ThreadDumpItemsProvider {
     val vm = context.debugProcess!!.virtualMachineProxy
 

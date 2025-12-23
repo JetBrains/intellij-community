@@ -294,7 +294,7 @@ class BlockTerminalSearchSession(
     }
   }
 
-  private class SearchInBlockAction : Embeddable, TooltipDescriptionProvider,
+  internal class SearchInBlockAction : Embeddable, TooltipDescriptionProvider,
                                       EditorHeaderToggleAction(TerminalBundle.message("search.in.block"),
                                                                TerminalIcons.SearchInBlock,
                                                                TerminalIcons.SearchInBlock,

@@ -12,7 +12,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.minutes
 
-private class RunConfigurationFeatureCollector : ProjectActivity {
+internal class RunConfigurationFeatureCollector : ProjectActivity {
   init {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || app.isHeadlessEnvironment) {

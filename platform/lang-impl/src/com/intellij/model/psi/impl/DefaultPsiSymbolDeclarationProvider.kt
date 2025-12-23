@@ -9,7 +9,7 @@ import com.intellij.pom.PomTarget
 import com.intellij.psi.PsiElement
 import com.intellij.util.SmartList
 
-private class DefaultPsiSymbolDeclarationProvider : PsiSymbolDeclarationProvider {
+internal class DefaultPsiSymbolDeclarationProvider : PsiSymbolDeclarationProvider {
   override fun getDeclarations(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolDeclaration> {
     for (searcher in PomDeclarationSearcher.EP_NAME.extensionList) {
       ProgressManager.checkCanceled()

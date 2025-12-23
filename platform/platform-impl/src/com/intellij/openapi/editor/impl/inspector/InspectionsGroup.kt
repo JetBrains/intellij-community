@@ -107,7 +107,7 @@ class InspectionsGroup(
     return arr.toTypedArray()
   }
 
-  private class InspectionsSettingAction(val analyzerGetter: () -> AnalyzerStatus, val fusTabId: Int) : DumbAwareAction(), CustomComponentAction {
+  internal class InspectionsSettingAction(val analyzerGetter: () -> AnalyzerStatus, val fusTabId: Int) : DumbAwareAction(), CustomComponentAction {
     override fun getActionUpdateThread(): ActionUpdateThread {
       return ActionUpdateThread.BGT
     }
@@ -150,7 +150,7 @@ class InspectionsGroup(
     }
   }
 
-  private open class InspectionsBaseAction(item: StatusItem, val editor: EditorImpl, var title: @Nls String? = null, var description: @Nls String? = null, var actionLink: Link? = null, protected val fusTabId: Int) : DumbAwareAction(), CustomComponentAction {
+  internal open class InspectionsBaseAction(item: StatusItem, val editor: EditorImpl, var title: @Nls String? = null, var description: @Nls String? = null, var actionLink: Link? = null, protected val fusTabId: Int) : DumbAwareAction(), CustomComponentAction {
     var item = item
       set(value) {
         if(field == value) return
@@ -222,9 +222,9 @@ class InspectionsGroup(
     }
   }
 
-  private data class Link(val text: @Nls String, val action: () -> Unit)
+  internal data class Link(val text: @Nls String, val action: () -> Unit)
 
-  private class InspectionAction(item: StatusItem, editor: EditorImpl, actionLink: Link? = null, fusTabId: Int) : InspectionsBaseAction(item, editor, actionLink = actionLink, fusTabId = fusTabId) {
+  internal class InspectionAction(item: StatusItem, editor: EditorImpl, actionLink: Link? = null, fusTabId: Int) : InspectionsBaseAction(item, editor, actionLink = actionLink, fusTabId = fusTabId) {
     companion object {
       private val leftRight = DaemonBundle.message("iw.inspection.next.previous", convertSC("Left Click"), convertSC("Right Click"))
       private val url: String = "https://surveys.jetbrains.com/s3/inspection-widget-feedback-form"

@@ -11,7 +11,7 @@ import com.jetbrains.python.run.configuration.PyPathMappingsEditorFragment
 import javax.swing.JPanel
 import kotlin.io.path.Path
 
-private class PyPluginCommonFragmentsBuilder: PyCommonFragmentsBuilder() {
+internal class PyPluginCommonFragmentsBuilder: PyCommonFragmentsBuilder() {
   override fun <T : AbstractPythonRunConfiguration<*>> createEnvironmentFragments(fragments: MutableList<SettingsEditorFragment<T, *>>,
                                                                                   config: T) {
     val sdkFragment: SettingsEditorFragment<T, JPanel> = PyPluginSdkFragment()

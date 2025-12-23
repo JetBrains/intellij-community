@@ -13,7 +13,7 @@ import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.launch
 
-private class CustomizeContextViewAction : AnAction(), DumbAware, SplitDebuggerAction {
+internal class CustomizeContextViewAction : AnAction(), DumbAware, SplitDebuggerAction {
   override fun actionPerformed(e: AnActionEvent) {
     val session = DebuggerUIUtil.getSessionProxy(e) ?: return
     session.coroutineScope.launch {

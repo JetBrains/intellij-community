@@ -98,13 +98,13 @@ jvm_library(
     "//plugins/gradle:gradle-tests_test_lib",
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/base/platforms",
     "@lib//:kotlinc-kotlin-jps-common",
     "//libraries/fastutil",
     "//java/openapi:java",
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.projectStructure` end

@@ -6,7 +6,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 
-private class ArchiveCanBeSelectedInProjectPaneProvider : CanBeSelectedInProjectPaneProvider {
+internal class ArchiveCanBeSelectedInProjectPaneProvider : CanBeSelectedInProjectPaneProvider {
   override fun isSupported(project: Project, virtualFile: VirtualFile): Boolean {
     val archiveFile = (virtualFile.getFileSystem() as? ArchiveFileSystem)?.getLocalByEntry(virtualFile) ?: return false
     val index = ProjectRootManager.getInstance(project).getFileIndex()

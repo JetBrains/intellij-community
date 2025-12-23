@@ -53,7 +53,7 @@ private val isEnabled = System.getProperty("ide.tooltip.callout", "true").toBool
 
 private val LOG = logger<IdeTooltipManager>()
 
-private class SwingTooltipManagerCustomizer : ApplicationActivity {
+internal class SwingTooltipManagerCustomizer : ApplicationActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()

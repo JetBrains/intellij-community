@@ -30,7 +30,7 @@ private fun isEssentialHighlightingRestarterDisabledForProject(project: Project)
  * Tells [DaemonCodeAnalyzerImpl] to run a full set of passes after "Save all" action was invoked, to show all diagnostics
  * if the current selected file configured as "Highlight: Essential only"
  */
-private class EssentialHighlightingRestarter() : SaveAndSyncHandlerListener {
+internal class EssentialHighlightingRestarter() : SaveAndSyncHandlerListener {
   @Suppress("IncorrectCancellationExceptionHandling")
   override suspend fun beforeSave(task: SaveAndSyncHandler.SaveTask, forceExecuteImmediately: Boolean) {
     val requestedProject = task.project

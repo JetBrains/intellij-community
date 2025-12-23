@@ -11,7 +11,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions.TOOL_WINDOW_TOP_TOOL
 
 private val insertStrategy = GroupEnd(TOOL_WINDOW_TOP_TOOLBAR_3_GROUP)
 
-private class DebuggerToolbarQuickActionsGroup : ActionGroup(), ActionRemoteBehaviorSpecification.Frontend {
+internal class DebuggerToolbarQuickActionsGroup : ActionGroup(), ActionRemoteBehaviorSpecification.Frontend {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val actionManager = ActionManager.getInstance()
     val mainGroup = actionManager.getAction(TOOL_WINDOW_TOP_TOOLBAR_3_GROUP) as ActionGroup

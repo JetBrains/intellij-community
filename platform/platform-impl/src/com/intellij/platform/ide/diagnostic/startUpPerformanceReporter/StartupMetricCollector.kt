@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 // todo `com.intellij.internal.statistic` package should be moved out of platform-impl module to own,
 // and then this will be class moved to corresponding `intellij.platform.diagnostic` module
-private class StartupMetricCollector : ProjectActivity {
+internal class StartupMetricCollector : ProjectActivity {
   private var wasReported = AtomicBoolean(false)
 
   init {

@@ -38,6 +38,10 @@ public interface CompletionProcessEx extends CompletionProcessBase, UserDataHold
   @Nullable
   Lookup getLookup();
 
+  /**
+   * Allows registering a child disposable that will be disposed of when the completion process finishes.
+   * {@code child} is called only if the completion process is not already finished and disposed.
+   */
   void registerChildDisposable(@NotNull Supplier<? extends Disposable> child);
 
   /**

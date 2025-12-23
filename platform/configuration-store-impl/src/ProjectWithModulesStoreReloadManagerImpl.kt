@@ -12,7 +12,7 @@ import kotlinx.coroutines.withContext
 /**
  * An extended version of [StoreReloadManagerImpl] which also reloads the JPS model
  */
-private class ProjectWithModulesStoreReloadManagerImpl(project: Project, coroutineScope: CoroutineScope)
+internal class ProjectWithModulesStoreReloadManagerImpl(project: Project, coroutineScope: CoroutineScope)
   : StoreReloadManagerImpl(project, coroutineScope) {
   override suspend fun doReloadChangedStorages(): Set<Project> {
     val projectsToReload = super.doReloadChangedStorages()

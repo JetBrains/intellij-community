@@ -14,7 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class FocusZoneNecromancerAwaker : NecromancerAwaker<Nothing> {
+internal class FocusZoneNecromancerAwaker : NecromancerAwaker<Nothing> {
   override fun awake(project: Project, coroutineScope: CoroutineScope): WeakNecromancer {
     return FocusZoneNecromancer()
   }

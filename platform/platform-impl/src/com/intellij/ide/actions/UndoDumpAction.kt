@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 
 
 @Experimental
-private class UndoDumpAction : DumbAwareAction() {
+internal class UndoDumpAction : DumbAwareAction() {
 
   companion object {
     private val LOG: Logger = logger<UndoDumpAction>()

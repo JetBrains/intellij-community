@@ -47,7 +47,7 @@ private class OsDataLoggerApplicationInitializedListener : AppLifecycleListener 
   }
 }
 
-private class OsDataLoggerAboutPopupDescriptionProvider : AboutPopupDescriptionProvider {
+internal class OsDataLoggerAboutPopupDescriptionProvider : AboutPopupDescriptionProvider {
   override fun getDescription(): @DetailedDescription String? = null
 
   override fun getExtendedDescription(): @DetailedDescription String? =

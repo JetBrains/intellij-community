@@ -27,7 +27,7 @@ import kotlin.properties.Delegates.observable
 
 private val LOG = logger<IncomingChangesIndicator>()
 
-private class IncomingChangesIndicatorFactory : StatusBarWidgetFactory {
+internal class IncomingChangesIndicatorFactory : StatusBarWidgetFactory {
   companion object {
     const val ID = "IncomingChanges"
   }

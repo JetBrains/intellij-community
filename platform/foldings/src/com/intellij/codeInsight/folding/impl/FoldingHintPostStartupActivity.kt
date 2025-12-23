@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
-private class FoldingHintPostStartupActivity : ProjectActivity {
+internal class FoldingHintPostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     serviceAsync<EditorFactory>().eventMulticaster.addEditorMouseMotionListener(FoldingHintMouseMotionListener(project), project)
   }

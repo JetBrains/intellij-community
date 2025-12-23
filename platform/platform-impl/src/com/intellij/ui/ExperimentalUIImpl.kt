@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 private val LOG: Logger
   get() = logger<ExperimentalUI>()
 
-private class ExperimentalUIImpl : ExperimentalUI() {
+internal class ExperimentalUIImpl : ExperimentalUI() {
   private val epIconMapperSuppressor = ExtensionPointName<Any>("com.intellij.iconMapperSuppressor")
   private var shouldUnsetNewUiSwitchKey: Boolean = true
   private val isIconPatcherSet = AtomicBoolean()
