@@ -31,6 +31,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.RunnableCallable;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -339,6 +340,23 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         myExpirationDisposables = new AtomicReferenceArray<>(disposables.length);
         expireWithDisposables(disposables);
       }
+    }
+
+    @Nullable
+    @Override
+    public T get() {
+      SlowOperations.assertSlowOperationsAreAllowed();
+      return super.get();
+    }
+
+    @Nullable
+    @Override
+    public T get(long timeout, @NotNull TimeUnit unit) {
+      // allow the 'get-if-finished-fast' pattern
+      if (unit.toMillis(timeout) > 50) {
+        SlowOperations.assertSlowOperationsAreAllowed();
+      }
+      return super.get(timeout, unit);
     }
 
     private void expireWithDisposables(Disposable @NotNull [] disposables) {
