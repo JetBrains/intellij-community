@@ -343,4 +343,9 @@ public final class PyCustomType implements PyClassLikeType {
       return myFilter.process(pyElement);
     }
   }
+
+  @Override
+  public String toString() {
+    return "PyCustomType: " + getName();
+  }
 }

@@ -5,6 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 /**
- * Does not require [com.jetbrains.python.psi.types.TypeEvalContext] for resolving the type
+ * Fast wrapper for another element type.
+ * These elements can be easily calculated if a type of wrapped element is known.
  */
-interface PyInstantTypeProvider : PyTypedElement
+interface PyWrapperTypeProvider : PyTypedElement

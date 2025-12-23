@@ -3,17 +3,14 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.util.SmartList;
-import com.jetbrains.python.psi.PyDictCompExpression;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyDictCompExpressionImpl extends PyComprehensionElementImpl implements PyDictCompExpression {
+public class PyDictCompExpressionImpl extends PyComprehensionElementImpl implements PyDictCompExpression, PyWrapperTypeProvider {
   public PyDictCompExpressionImpl(ASTNode astNode) {
     super(astNode);
   }

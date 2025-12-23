@@ -16,7 +16,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasStatementStub> implements PyTypeAliasStatement {
+public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasStatementStub>
+  implements PyTypeAliasStatement, PyInstantTypeProvider {
   public PyTypeAliasStatementImpl(ASTNode astNode) {
     super(astNode);
   }

@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.PyWrapperTypeProvider;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 
 
-public class PyKeyValueExpressionImpl extends PyElementImpl implements PyKeyValueExpression {
+public class PyKeyValueExpressionImpl extends PyElementImpl implements PyKeyValueExpression, PyWrapperTypeProvider {
   public PyKeyValueExpressionImpl(ASTNode astNode) {
     super(astNode);
   }
