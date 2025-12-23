@@ -55,7 +55,7 @@ class LambdaTestModel private constructor(
         
         private val __LambdaRdTestSessionNullableSerializer = LambdaRdTestSession.nullable()
         
-        const val serializationHash = -8206345383668396419L
+        const val serializationHash = 5004275015155801491L
         
     }
     override val serializersOwner: ISerializersOwner get() = LambdaTestModel
@@ -289,7 +289,10 @@ class LambdaRdTestSession private constructor(
     private val _closeAllOpenedProjects: RdCall<Unit, Boolean>,
     private val _runLambda: RdCall<LambdaRdTestActionParameters, Unit>,
     private val _runSerializedLambda: RdCall<LambdaRdSerialized, String>,
-    private val _cleanUp: RdCall<Unit, Unit>,
+    private val _beforeEach: RdCall<String, Unit>,
+    private val _beforeAll: RdCall<String, Unit>,
+    private val _afterEach: RdCall<String, Unit>,
+    private val _afterAll: RdCall<String, Unit>,
     private val _projectsNames: RdCall<Unit, List<String>>,
     private val _isResponding: RdCall<Unit, Boolean>,
     private val _projectsAreInitialised: RdCall<Unit, Boolean>
@@ -309,11 +312,14 @@ class LambdaRdTestSession private constructor(
             val _closeAllOpenedProjects = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _runLambda = RdCall.read(ctx, buffer, LambdaRdTestActionParameters, FrameworkMarshallers.Void)
             val _runSerializedLambda = RdCall.read(ctx, buffer, LambdaRdSerialized, FrameworkMarshallers.String)
-            val _cleanUp = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Void)
+            val _beforeEach = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Void)
+            val _beforeAll = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Void)
+            val _afterEach = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Void)
+            val _afterAll = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Void)
             val _projectsNames = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, __StringListSerializer)
             val _isResponding = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _projectsAreInitialised = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            return LambdaRdTestSession(rdIdeType, _ready, _sendException, _closeAllOpenedProjects, _runLambda, _runSerializedLambda, _cleanUp, _projectsNames, _isResponding, _projectsAreInitialised).withId(_id)
+            return LambdaRdTestSession(rdIdeType, _ready, _sendException, _closeAllOpenedProjects, _runLambda, _runSerializedLambda, _beforeEach, _beforeAll, _afterEach, _afterAll, _projectsNames, _isResponding, _projectsAreInitialised).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdTestSession)  {
@@ -324,7 +330,10 @@ class LambdaRdTestSession private constructor(
             RdCall.write(ctx, buffer, value._closeAllOpenedProjects)
             RdCall.write(ctx, buffer, value._runLambda)
             RdCall.write(ctx, buffer, value._runSerializedLambda)
-            RdCall.write(ctx, buffer, value._cleanUp)
+            RdCall.write(ctx, buffer, value._beforeEach)
+            RdCall.write(ctx, buffer, value._beforeAll)
+            RdCall.write(ctx, buffer, value._afterEach)
+            RdCall.write(ctx, buffer, value._afterAll)
             RdCall.write(ctx, buffer, value._projectsNames)
             RdCall.write(ctx, buffer, value._isResponding)
             RdCall.write(ctx, buffer, value._projectsAreInitialised)
@@ -340,7 +349,10 @@ class LambdaRdTestSession private constructor(
     val closeAllOpenedProjects: RdCall<Unit, Boolean> get() = _closeAllOpenedProjects
     val runLambda: RdCall<LambdaRdTestActionParameters, Unit> get() = _runLambda
     val runSerializedLambda: RdCall<LambdaRdSerialized, String> get() = _runSerializedLambda
-    val cleanUp: RdCall<Unit, Unit> get() = _cleanUp
+    val beforeEach: RdCall<String, Unit> get() = _beforeEach
+    val beforeAll: RdCall<String, Unit> get() = _beforeAll
+    val afterEach: RdCall<String, Unit> get() = _afterEach
+    val afterAll: RdCall<String, Unit> get() = _afterAll
     val projectsNames: RdCall<Unit, List<String>> get() = _projectsNames
     val isResponding: RdCall<Unit, Boolean> get() = _isResponding
     val projectsAreInitialised: RdCall<Unit, Boolean> get() = _projectsAreInitialised
@@ -355,7 +367,10 @@ class LambdaRdTestSession private constructor(
         _closeAllOpenedProjects.async = true
         _runLambda.async = true
         _runSerializedLambda.async = true
-        _cleanUp.async = true
+        _beforeEach.async = true
+        _beforeAll.async = true
+        _afterEach.async = true
+        _afterAll.async = true
         _projectsNames.async = true
         _isResponding.async = true
         _projectsAreInitialised.async = true
@@ -367,7 +382,10 @@ class LambdaRdTestSession private constructor(
         bindableChildren.add("closeAllOpenedProjects" to _closeAllOpenedProjects)
         bindableChildren.add("runLambda" to _runLambda)
         bindableChildren.add("runSerializedLambda" to _runSerializedLambda)
-        bindableChildren.add("cleanUp" to _cleanUp)
+        bindableChildren.add("beforeEach" to _beforeEach)
+        bindableChildren.add("beforeAll" to _beforeAll)
+        bindableChildren.add("afterEach" to _afterEach)
+        bindableChildren.add("afterAll" to _afterAll)
         bindableChildren.add("projectsNames" to _projectsNames)
         bindableChildren.add("isResponding" to _isResponding)
         bindableChildren.add("projectsAreInitialised" to _projectsAreInitialised)
@@ -383,7 +401,10 @@ class LambdaRdTestSession private constructor(
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<LambdaRdTestActionParameters, Unit>(LambdaRdTestActionParameters, FrameworkMarshallers.Void),
         RdCall<LambdaRdSerialized, String>(LambdaRdSerialized, FrameworkMarshallers.String),
-        RdCall<Unit, Unit>(FrameworkMarshallers.Void, FrameworkMarshallers.Void),
+        RdCall<String, Unit>(FrameworkMarshallers.String, FrameworkMarshallers.Void),
+        RdCall<String, Unit>(FrameworkMarshallers.String, FrameworkMarshallers.Void),
+        RdCall<String, Unit>(FrameworkMarshallers.String, FrameworkMarshallers.Void),
+        RdCall<String, Unit>(FrameworkMarshallers.String, FrameworkMarshallers.Void),
         RdCall<Unit, List<String>>(FrameworkMarshallers.Void, __StringListSerializer),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
@@ -401,7 +422,10 @@ class LambdaRdTestSession private constructor(
             print("closeAllOpenedProjects = "); _closeAllOpenedProjects.print(printer); println()
             print("runLambda = "); _runLambda.print(printer); println()
             print("runSerializedLambda = "); _runSerializedLambda.print(printer); println()
-            print("cleanUp = "); _cleanUp.print(printer); println()
+            print("beforeEach = "); _beforeEach.print(printer); println()
+            print("beforeAll = "); _beforeAll.print(printer); println()
+            print("afterEach = "); _afterEach.print(printer); println()
+            print("afterAll = "); _afterAll.print(printer); println()
             print("projectsNames = "); _projectsNames.print(printer); println()
             print("isResponding = "); _isResponding.print(printer); println()
             print("projectsAreInitialised = "); _projectsAreInitialised.print(printer); println()
@@ -417,7 +441,10 @@ class LambdaRdTestSession private constructor(
             _closeAllOpenedProjects.deepClonePolymorphic(),
             _runLambda.deepClonePolymorphic(),
             _runSerializedLambda.deepClonePolymorphic(),
-            _cleanUp.deepClonePolymorphic(),
+            _beforeEach.deepClonePolymorphic(),
+            _beforeAll.deepClonePolymorphic(),
+            _afterEach.deepClonePolymorphic(),
+            _afterAll.deepClonePolymorphic(),
             _projectsNames.deepClonePolymorphic(),
             _isResponding.deepClonePolymorphic(),
             _projectsAreInitialised.deepClonePolymorphic()
