@@ -2,6 +2,7 @@ package com.intellij.python.sdkConfigurator.backend.impl
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessModuleDir
@@ -31,9 +32,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
- * Configures SDK for modules in [project].
+ * Configures SDK for modules in [project] in [ModuleConfigurationMode.INTERACTIVE] mode.
  *
  * 1. Create instance with [create]
  * 2. Ask use to choose from [modulesDTO]
@@ -83,13 +85,15 @@ internal class ModulesSdkConfigurator private constructor(
       .toList()
   }
 
-  companion object {
+  internal companion object {
+
     /**
-     * Create instance and save in [project]
+     * Create instance and save in [project], see class doc
      */
-    suspend fun create(project: Project): ModulesSdkConfigurator = ModulesSdkConfigurator(project, getModulesWithoutSDKCreateInfo(project), PathShortener.create(project)).also {
-      project.putUserData(key, it)
-    }
+    suspend fun create(project: Project): ModulesSdkConfigurator =
+      ModulesSdkConfigurator(project, getModulesWithoutSDKCreateInfo(project), PathShortener.create(project)).also {
+        project.putUserData(key, it)
+      }
 
     /**
      * Get instance from project and **clear it**
@@ -101,49 +105,22 @@ internal class ModulesSdkConfigurator private constructor(
       return instance
     }
 
-    private suspend fun getModulesWithoutSDKCreateInfo(project: Project): Map<ModuleName, ModuleCreateInfo> = withBackgroundProgress(project, PySdkConfiguratorBundle.message("intellij.python.sdk.looking")) {
-      val tools = PyProjectSdkConfigurationExtension.createMap()
-      val now = System.currentTimeMillis()
-      val resultDef = project.modules.filter { PythonSdkUtil.findPythonSdk(it) == null }.map { module ->
-        async {
-          val moduleInfo = getModuleInfo(module, tools) ?: return@async null
-          Pair(module, moduleInfo)
-        }
-      }
-      val result = resultDef.awaitAll().filterNotNull()
-      logger.debug { "SDKs calculated in ${System.currentTimeMillis() - now}ms" }
-      result.associate { (module, createInfoAndDTO) ->
-        Pair(module.name, createInfoAndDTO)
-      }
-    }
-
-    private val logger = fileLogger()
-
-    private sealed interface ModuleCreateInfo {
-      data class CreateSdkInfoWrapper(val createSdkInfo: CreateSdkInfo, val toolId: ToolId, val moduleDir: Directory?) : ModuleCreateInfo
-      data class SameAs(val parentModuleName: ModuleName) : ModuleCreateInfo
-    }
-
-
-    private suspend fun getModuleInfo(module: Module, configuratorsByTool: Map<ToolId, PyProjectSdkConfigurationExtension>): ModuleCreateInfo? = // Save on module level
-      when (val r = module.suggestSdk()) {
-        is SuggestedSdk.PyProjectIndependent -> {
-          val tools = r.preferTools.map { configuratorsByTool[it]!! }
-          tools.firstNotNullOfOrNull { tool ->
-            val createInfo = (tool.asPyProjectTomlSdkConfigurationExtension()?.createSdkWithoutPyProjectTomlChecks(module)
-                              ?: tool.checkEnvironmentAndPrepareSdkCreator(module)) ?: return@firstNotNullOfOrNull null
-            CreateSdkInfoWithTool(createInfo, tool.toolId).asDTO(r.moduleDir)
+    private suspend fun getModulesWithoutSDKCreateInfo(project: Project): Map<ModuleName, ModuleCreateInfo> =
+      withBackgroundProgress(project, PySdkConfiguratorBundle.message("intellij.python.sdk.looking")) {
+        val tools = PyProjectSdkConfigurationExtension.createMap()
+        val now = System.currentTimeMillis()
+        val resultDef = project.modules.filter { PythonSdkUtil.findPythonSdk(it) == null }.map { module ->
+          async {
+            val moduleInfo = getModuleInfo(module, tools) ?: return@async null
+            Pair(module, moduleInfo)
           }
         }
-        is SuggestedSdk.SameAs -> {
-          ModuleCreateInfo.SameAs(r.parentModule.name)
+        val result = resultDef.awaitAll().filterNotNull()
+        logger.debug { "SDKs calculated in ${System.currentTimeMillis() - now}ms" }
+        result.associate { (module, createInfoAndDTO) ->
+          Pair(module.name, createInfoAndDTO)
         }
-        null -> null
-      } // No tools or not pyproject.toml at all? Use EP as a fallback
-      ?: PyProjectSdkConfigurationExtension.findAllSortedForModule(module).firstOrNull()?.let { CreateSdkInfoWithTool(it.createSdkInfo, it.toolId).asDTO(module.guessModuleDir()?.toNioPath()) }
-
-
-    private fun CreateSdkInfoWithTool.asDTO(moduleDir: Directory?): ModuleCreateInfo = ModuleCreateInfo.CreateSdkInfoWrapper(createSdkInfo, toolId, moduleDir)
+      }
 
 
     /**
@@ -204,3 +181,90 @@ internal class ModulesSdkConfigurator private constructor(
   }
 }
 
+/**
+ * See [ModuleConfigurationMode.AUTOMATIC]
+ */
+@ApiStatus.Internal // Opened for tests only: we can't put tests here because configurators are in communuty.impl
+suspend fun configureSdkAutomatically(project: Project): Unit = withContext(Dispatchers.Default) {
+  val modules = project.modules
+
+  when (modules.size) {
+    0 -> return@withContext
+    1 -> { // Single-module project, associate first module only
+      val module = modules.first()
+      if (PythonSdkUtil.findPythonSdk(module) != null) return@withContext // Already has SDK
+      when (val moduleInfo = getModuleInfo(module)) {
+        is ModuleCreateInfo.CreateSdkInfoWrapper -> {
+          when (val info = moduleInfo.createSdkInfo) {
+            is CreateSdkInfo.ExistingEnv -> {
+              when (val r = info.sdkCreator(false)) {
+                is Result.Failure -> {
+                  logger.trace { "Failed to create sdk for ${module.name} : ${r.error}" }
+                }
+                is Result.Success -> {
+                  val sdk = r.result!! // It can't be null: this is an old buggy API that will be fixed soon
+                  ModuleRootModificationUtil.setModuleSdk(module, sdk)
+                  logger.trace { "SDK creation result for  ${module.name} : $sdk" }
+                }
+              }
+            }
+            is CreateSdkInfo.WillCreateEnv -> {
+              logger.trace { "${module.name} can't be configured automatically: no venv for ${info.intentionName}" }
+            }
+          }
+        }
+        is ModuleCreateInfo.SameAs, null -> Unit
+      }
+    }
+    else -> { // Multi-module project, only associate workspace members
+      val modulesToSdk = modules.filter { PythonSdkUtil.findPythonSdk(it) == null }.associateWith { it.suggestSdk() }
+      for ((module, sdkSuggestion) in modulesToSdk) {
+        when (sdkSuggestion) {
+          is SuggestedSdk.PyProjectIndependent, null -> {
+            logger.trace { "${module.name} skipped in multimodule project autoconfig" }
+          }
+          is SuggestedSdk.SameAs -> {
+            val parentSdk = PythonSdkUtil.findPythonSdk(sdkSuggestion.parentModule) ?: continue
+            logger.trace { "${module.name} seeds the same sdk as ${sdkSuggestion.parentModule} : ${parentSdk}" }
+            ModuleRootModificationUtil.setModuleSdk(module, parentSdk)
+          }
+        }
+      }
+    }
+  }
+}
+
+
+private sealed interface ModuleCreateInfo {
+  data class CreateSdkInfoWrapper(val createSdkInfo: CreateSdkInfo, val toolId: ToolId, val moduleDir: Directory?) : ModuleCreateInfo
+  data class SameAs(val parentModuleName: ModuleName) : ModuleCreateInfo
+}
+
+private val logger = fileLogger()
+
+/**
+ * For multiple calls, pull [configuratorsByTool] up not to create it each time
+ */
+private suspend fun getModuleInfo(
+  module: Module,
+  configuratorsByTool: Map<ToolId, PyProjectSdkConfigurationExtension> = PyProjectSdkConfigurationExtension.createMap(),
+): ModuleCreateInfo? = // Save on module level
+  when (val r = module.suggestSdk()) {
+    is SuggestedSdk.PyProjectIndependent -> {
+      val tools = r.preferTools.map { configuratorsByTool[it]!! }
+      tools.firstNotNullOfOrNull { tool ->
+        val createInfo = (tool.asPyProjectTomlSdkConfigurationExtension()?.createSdkWithoutPyProjectTomlChecks(module)
+                          ?: tool.checkEnvironmentAndPrepareSdkCreator(module)) ?: return@firstNotNullOfOrNull null
+        CreateSdkInfoWithTool(createInfo, tool.toolId).asDTO(r.moduleDir)
+      }
+    }
+    is SuggestedSdk.SameAs -> {
+      ModuleCreateInfo.SameAs(r.parentModule.name)
+    }
+    null -> null
+  } // No tools or not pyproject.toml at all? Use EP as a fallback
+  ?: PyProjectSdkConfigurationExtension.findAllSortedForModule(module).firstOrNull()
+    ?.let { CreateSdkInfoWithTool(it.createSdkInfo, it.toolId).asDTO(module.guessModuleDir()?.toNioPath()) }
+
+private fun CreateSdkInfoWithTool.asDTO(moduleDir: Directory?): ModuleCreateInfo =
+  ModuleCreateInfo.CreateSdkInfoWrapper(createSdkInfo, toolId, moduleDir)

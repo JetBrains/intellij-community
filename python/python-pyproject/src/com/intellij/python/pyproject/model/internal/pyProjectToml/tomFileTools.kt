@@ -1,6 +1,7 @@
 package com.intellij.python.pyproject.model.internal.pyProjectToml
 
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.spi.ProjectName
@@ -24,20 +25,33 @@ import kotlin.io.path.visitFileTree
 
 // Tools to walk FS and parse pyproject.toml
 
-internal suspend fun walkFileSystem(root: Directory): FSWalkInfo {
-  val files = ArrayList<Path>(10)
-  val excludeDir = ArrayList<Directory>(10)
+internal suspend fun walkFileSystemWithTomlContent(root: Directory): FSWalkInfoWithToml {
+  val (rawTomlFiles, excludedDirs) = walkFileSystemNoTomlContent(root)
+
+  // TODO: with a big number of files, use `chunk` to parse them concurrently
+  val tomlFiles = rawTomlFiles.map { file ->
+    val toml = readFile(file) ?: return@map null
+    file to toml
+  }.filterNotNull().toMap()
+  return FSWalkInfoWithToml(tomlFiles = tomlFiles, excludedDirs.toSet())
+}
+
+internal suspend fun walkFileSystemNoTomlContent(
+  root: Directory,
+): FsWalkInfoNoToml {
+  val excludedDirs = ArrayList<Directory>(10)
+  val rawTomlFiles = ArrayList<Path>(10)
   withContext(Dispatchers.IO) {
     root.visitFileTree {
       onVisitFile { file, _ ->
         if (file.name == PY_PROJECT_TOML) {
-          files.add(file)
+          rawTomlFiles.add(file)
         }
         return@onVisitFile FileVisitResult.CONTINUE
       }
       onPostVisitDirectory { directory, _ ->
         return@onPostVisitDirectory if (directory.name.startsWith(".")) {
-          excludeDir.add(directory)
+          excludedDirs.add(directory)
           FileVisitResult.SKIP_SUBTREE
         }
         else {
@@ -46,15 +60,11 @@ internal suspend fun walkFileSystem(root: Directory): FSWalkInfo {
       }
     }
   }
-  // TODO: with a big number of files, use `chunk` to parse them concurrently
-  val tomlFiles = files.map { file ->
-    val toml = readFile(file) ?: return@map null
-    file to toml
-  }.filterNotNull().toMap()
-  return FSWalkInfo(tomlFiles = tomlFiles, excludeDir.toSet())
+  return FsWalkInfoNoToml(rawTomlFiles = rawTomlFiles, excludedDirs = excludedDirs)
 }
 
- suspend fun getProjectStructureDefault(
+
+suspend fun getProjectStructureDefault(
   entries: Map<ProjectName, PyProjectTomlProject>,
   rootIndex: Map<Directory, ProjectName>,
 ): ProjectStructureInfo = withContext(Dispatchers.Default) {

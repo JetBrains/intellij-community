@@ -1,4 +1,4 @@
-<idea-plugin visibility="private">
+<idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.platform.rpc"/>
     <module name="intellij.python.pyproject"/>
@@ -11,7 +11,7 @@
   </dependencies>
   <resource-bundle>messages.PySdkConfiguratorBundle</resource-bundle>
   <projectListeners>
-    <listener class="com.intellij.python.sdkConfigurator.backend.impl.platformBridge.ModelRebuiltListenerImpl"
+    <listener class="com.intellij.python.sdkConfigurator.backend.impl.platformBridge.ModelRebuiltListenerImplToConfigureSdk"
               topic="com.intellij.python.pyproject.model.api.ModelRebuiltListener"/>
   </projectListeners>
   <extensions defaultExtensionNs="com.intellij.platform">

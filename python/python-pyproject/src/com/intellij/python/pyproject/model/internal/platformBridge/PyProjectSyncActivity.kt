@@ -15,6 +15,7 @@ internal class PyProjectSyncActivity : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
+    if (project.isDefault) return // Service doesn't support default project
     project.service<PyProjectAutoImportService>().start()
   }
 }

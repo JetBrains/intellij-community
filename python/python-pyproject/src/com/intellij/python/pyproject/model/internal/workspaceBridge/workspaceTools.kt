@@ -13,7 +13,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.internal.PyProjectTomlBundle
-import com.intellij.python.pyproject.model.internal.pyProjectToml.FSWalkInfo
+import com.intellij.python.pyproject.model.internal.pyProjectToml.FSWalkInfoWithToml
 import com.intellij.python.pyproject.model.internal.pyProjectToml.getProjectStructureDefault
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
@@ -21,6 +21,7 @@ import com.intellij.python.pyproject.model.spi.Tool
 import com.intellij.python.pyproject.model.spi.WorkspaceName
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.findFacet
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.findSdkEntity
+import com.intellij.workspaceModel.ide.isEqualOrParentOf
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.facet.PythonFacetSettings
 import com.jetbrains.python.venvReader.Directory
@@ -36,19 +37,41 @@ import kotlin.io.path.name
 // Workspace adapter functions
 
 
-internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfo) {
+internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWithToml) {
   changeWorkspaceMutex.withLock {
-    val entries = generatePyProjectTomlEntries(files)
+    val (entries, excludeDirs) = generatePyProjectTomlEntries(files)
     val newStorage = createEntityStorage(entries, project.workspaceModel.getVirtualFileUrlManager())
 
-    project.workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { currentStorage -> // Fake module entity is added by default if nothing was discovered
+    val workspaceModel = project.workspaceModel
+    workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { currentStorage -> // Fake module entity is added by default if nothing was discovered
       removeFakeModuleEntity(currentStorage, entries.map { it.name.name }.toSet())
+      // TODO: Store old module->SDK, so we can restoe it even when modules are destroyed
       relocateUserDefinedModuleSdk(currentStorage) {
         currentStorage.replaceBySource({ it is PyProjectTomlEntitySource }, newStorage)
+
+        // Exclude dirs
+        if (excludeDirs.isEmpty()) return@relocateUserDefinedModuleSdk
+        val modules = currentStorage.entities(ModuleEntity::class.java).toList()
+        for (excludedRoot in excludeDirs.map { it.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager()) }) {
+          currentStorage.excludeRoot(excludedRoot, modules)
+        }
       }
     }
   }
+}
 
+private fun MutableEntityStorage.excludeRoot(rootToExclude: VirtualFileUrl, modules: List<ModuleEntity>) {
+  for (moduleEntry in modules) {
+    for (rootEntity in moduleEntry.contentRoots) {
+      if (rootEntity.url.isEqualOrParentOf(rootToExclude) && rootToExclude !in rootEntity.excludedUrls.map { it.url }) {
+        modifyContentRootEntity(rootEntity) {
+          excludedUrls = excludedUrls + listOf(
+            ExcludeUrlEntity(rootToExclude, entitySource))
+        }
+        return
+      }
+    }
+  }
 }
 
 /**
@@ -89,9 +112,10 @@ internal fun relocateUserDefinedModuleSdk(storage: MutableEntityStorage, transfe
   }
 }
 
+// TODO: DOC
 private suspend fun generatePyProjectTomlEntries(
-  fsInfo: FSWalkInfo,
-): Set<PyProjectTomlBasedEntryImpl> = withContext(Dispatchers.Default) {
+  fsInfo: FSWalkInfoWithToml,
+): Pair<Set<PyProjectTomlBasedEntryImpl>, Set<Directory>> = withContext(Dispatchers.Default) {
   val (files, allExcludeDirs) = fsInfo
   val entries = ArrayList<PyProjectTomlBasedEntryImpl>()
   val usedNamed = mutableSetOf<String>()
@@ -148,7 +172,7 @@ private suspend fun generatePyProjectTomlEntries(
       entriesByName[member]!!.relationsWithTools.add(PyProjectTomlToolRelation.WorkspaceMember(tool.id, workspace))
     }
   }
-  return@withContext entries.toSet()
+  return@withContext Pair(entries.toSet(), allExcludeDirs)
 }
 
 private suspend fun getNameFromEP(projectToml: PyProjectToml): Pair<Tool, @NlsSafe String>? = withContext(Dispatchers.Default) {

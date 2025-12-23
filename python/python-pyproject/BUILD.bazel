@@ -85,6 +85,8 @@ jvm_library(
     "//platform/testFramework/junit5/projectStructure",
     "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
     "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
   ],
   exports = ["@lib//:tuweni-toml"]
 )

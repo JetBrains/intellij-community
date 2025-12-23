@@ -5,10 +5,16 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.CoroutineScope
 
+/**
+ * [project] can't be default, check for it
+ */
 @Service(Service.Level.PROJECT)
-internal class PyProjectAutoImportService(private val project: Project, internal val scope: CoroutineScope) : Disposable {
+internal class PyProjectAutoImportService(private val project: Project) : Disposable {
+  init {
+    assert(!project.isDefault) { "Default project not supported" }
+  }
+
   @Volatile
   private lateinit var projectId: ExternalSystemProjectId
 

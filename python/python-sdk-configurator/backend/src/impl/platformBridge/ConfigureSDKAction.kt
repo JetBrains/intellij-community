@@ -3,8 +3,8 @@ package com.intellij.python.sdkConfigurator.backend.impl.platformBridge
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.python.sdkConfigurator.backend.impl.configureSdkAskingUser
-import com.intellij.python.sdkConfigurator.backend.impl.configureSdkAskingUserBg
+import com.intellij.python.sdkConfigurator.backend.impl.ModuleConfigurationMode
+import com.intellij.python.sdkConfigurator.backend.impl.configureSdkBg
 import com.intellij.python.sdkConfigurator.common.enableSDKAutoConfigurator
 
 internal class ConfigureSDKAction : AnAction() {
@@ -14,7 +14,7 @@ internal class ConfigureSDKAction : AnAction() {
     if (!enableSDKAutoConfigurator) {
       return
     }
-    configureSdkAskingUserBg(project)
+    configureSdkBg(project, ModuleConfigurationMode.INTERACTIVE)
   }
 
   override fun update(e: AnActionEvent) {
