@@ -270,8 +270,6 @@ f:com.intellij.ide.ui.NotRoamableUiOptions
 - f:component7():F
 - f:component8():Z
 - f:component9():Z
-- f:copy(com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z,Z):com.intellij.ide.ui.NotRoamableUiOptions
-- bs:copy$default(com.intellij.ide.ui.NotRoamableUiOptions,com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z,Z,I,java.lang.Object):com.intellij.ide.ui.NotRoamableUiOptions
 - equals(java.lang.Object):Z
 - hashCode():I
 f:com.intellij.ide.ui.NotRoamableUiSettings

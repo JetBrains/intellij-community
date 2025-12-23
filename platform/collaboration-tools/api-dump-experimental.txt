@@ -1068,8 +1068,6 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - *sf:Companion:com.intellij.collaboration.ui.codereview.list.NamedCollection$Companion
 - f:component1():java.lang.String
 - f:component2():java.util.List
-- f:copy(java.lang.String,java.util.List):com.intellij.collaboration.ui.codereview.list.NamedCollection
-- bs:copy$default(com.intellij.collaboration.ui.codereview.list.NamedCollection,java.lang.String,java.util.List,I,java.lang.Object):com.intellij.collaboration.ui.codereview.list.NamedCollection
 - equals(java.lang.Object):Z
 - f:getItems():java.util.List
 - f:getNamePlural():java.lang.String

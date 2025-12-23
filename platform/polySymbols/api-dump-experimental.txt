@@ -424,8 +424,6 @@
 *f:com.intellij.polySymbols.context.PolyContextSourceProximityProvider$SourceKind$PackageManagerDependency
 - com.intellij.polySymbols.context.PolyContextSourceProximityProvider$SourceKind
 - f:component1():java.lang.String
-- f:copy(java.lang.String):com.intellij.polySymbols.context.PolyContextSourceProximityProvider$SourceKind$PackageManagerDependency
-- bs:copy$default(com.intellij.polySymbols.context.PolyContextSourceProximityProvider$SourceKind$PackageManagerDependency,java.lang.String,I,java.lang.Object):com.intellij.polySymbols.context.PolyContextSourceProximityProvider$SourceKind$PackageManagerDependency
 - equals(java.lang.Object):Z
 - f:getName():java.lang.String
 - hashCode():I

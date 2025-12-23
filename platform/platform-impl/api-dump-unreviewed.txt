@@ -1207,8 +1207,6 @@ f:com.intellij.execution.wsl.WslPath
 - <init>(java.lang.String,java.lang.String):V
 - f:component2():java.lang.String
 - f:component3():java.lang.String
-- f:copy(java.lang.String,java.lang.String,java.lang.String):com.intellij.execution.wsl.WslPath
-- bs:copy$default(com.intellij.execution.wsl.WslPath,java.lang.String,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.execution.wsl.WslPath
 - equals(java.lang.Object):Z
 - f:getDistribution():com.intellij.execution.wsl.WSLDistribution
 - sf:getDistributionByWindowsUncPath(java.lang.String):com.intellij.execution.wsl.WSLDistribution

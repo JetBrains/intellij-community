@@ -365,8 +365,6 @@ f:com.intellij.xdebugger.impl.frame.StackInfo
 - f:component2():javax.swing.Icon
 - f:component3():com.intellij.xdebugger.frame.XExecutionStack$AdditionalDisplayInfo
 - f:component4():com.intellij.xdebugger.frame.XExecutionStack
-- f:copy(java.lang.String,javax.swing.Icon,com.intellij.xdebugger.frame.XExecutionStack$AdditionalDisplayInfo,com.intellij.xdebugger.frame.XExecutionStack):com.intellij.xdebugger.impl.frame.StackInfo
-- bs:copy$default(com.intellij.xdebugger.impl.frame.StackInfo,java.lang.String,javax.swing.Icon,com.intellij.xdebugger.frame.XExecutionStack$AdditionalDisplayInfo,com.intellij.xdebugger.frame.XExecutionStack,I,java.lang.Object):com.intellij.xdebugger.impl.frame.StackInfo
 - equals(java.lang.Object):Z
 - f:getAdditionalDisplayText():com.intellij.xdebugger.frame.XExecutionStack$AdditionalDisplayInfo
 - f:getDisplayText():java.lang.String
