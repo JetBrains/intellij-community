@@ -22,6 +22,11 @@ class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val
   private val bestRefForHead: Int2ObjectMap<VcsRef> = Int2ObjectOpenHashMap()
   private val rootForHead: Int2ObjectMap<VirtualFile> = Int2ObjectOpenHashMap()
 
+  override val branches: Collection<VcsRef>
+    get() = allRefsByRoot.values.flatMapTo(mutableListOf()) {
+      it.getBranches()
+    }
+
   private fun updateCacheForHead(head: VcsLogCommitStorageIndex, root: VirtualFile) {
     rootForHead.put(head, root)
 
@@ -49,12 +54,6 @@ class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val
 
   fun refsToCommit(root: VirtualFile, index: VcsLogCommitStorageIndex): List<VcsRef> {
     return allRefsByRoot[root]?.refsToCommit(index) ?: emptyList()
-  }
-
-  override fun getBranches(): Collection<VcsRef> {
-    return allRefsByRoot.values.flatMapTo(mutableListOf()) {
-      it.getBranches()
-    }
   }
 
   @RequiresBackgroundThread

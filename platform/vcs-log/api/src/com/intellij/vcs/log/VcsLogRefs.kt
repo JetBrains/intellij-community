@@ -13,24 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log;
+package com.intellij.vcs.log
 
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
-import java.util.stream.Stream;
+import java.util.stream.Stream
 
 /**
- * Collection of {@link VcsRef branches & tags references} which are in the log.
+ * Collection of [branches &amp; tags references][VcsRef] which are in the log.
  */
-public interface VcsLogRefs {
-
+interface VcsLogRefs {
   /**
    * Returns all branches.
    */
-  @NotNull
-  Collection<VcsRef> getBranches();
+  val branches: Collection<VcsRef>
 
-  @NotNull
-  Stream<VcsRef> stream();
+  fun stream(): Stream<VcsRef>
 }
