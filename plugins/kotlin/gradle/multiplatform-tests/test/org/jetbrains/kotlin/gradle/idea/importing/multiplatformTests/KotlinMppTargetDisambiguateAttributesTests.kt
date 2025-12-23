@@ -22,7 +22,13 @@ class KotlinMppTargetDisambiguateAttributesTests : AbstractKotlinMppGradleImport
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+") // applyHierarchyTemplate used
+    @PluginTargetVersions(
+        /**
+         * - applyHierarchyTemplate became available in 1.9.20
+         * - since 2.1.0 we don't support having multiple jvm targets
+         */
+        pluginVersion = "1.9.20-dev-6845 <=> 2.0.99"
+    )
     fun testJvmSimilarTargets() {
         doTest()
     }

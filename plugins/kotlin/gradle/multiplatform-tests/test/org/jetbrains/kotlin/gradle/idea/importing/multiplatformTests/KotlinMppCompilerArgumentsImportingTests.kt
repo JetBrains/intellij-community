@@ -47,13 +47,7 @@ class KotlinMppCompilerArgumentsImportingTests : AbstractKotlinMppGradleImportin
 
     @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
     @Test
-    fun testFreeCompilerArgsInKotlinOptions() {
-        doTest()
-    }
-
-    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
-    @Test
-    fun testKotlinOptions() {
+    fun testApiVersionAndLanguageVersionAreInferencedFromFreeCompilerArgs() {
         doTest()
     }
 

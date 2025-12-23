@@ -19,14 +19,12 @@ kotlin {
     jvm() 
     js(IR)
 
+    val jvmMain by sourceSets.getting
+
     sourceSets {
         val pseudoOrphan by creating {
         }
 
-        val includedIntoJvm by creating {
-            dependsOn(pseudoOrphan)
-        }
-
-        jvm().compilations["main"].source(includedIntoJvm)
+        jvmMain.dependsOn(pseudoOrphan)
     }
 }

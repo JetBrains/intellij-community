@@ -107,13 +107,12 @@ class KotlinMppCustomImportingTests : AbstractKotlinMppGradleImportingTest() {
     }
 
     @Test
-    fun `testPrepareKotlinIdeaImport-compositeBuild`() = doTest(runImport = false) {
-        runBeforeImport {
+    fun `testPrepareKotlinIdeaImport-compositeBuild`() = doTest(runImport = true) {
+        runAfterImport {
             /* Only run against a single configuration */
             Assume.assumeTrue(kotlinPluginVersion == KotlinGradlePluginVersions.latest)
 
-            GradleProjectsLinker.linkGradleProject("consumerBuild", myProjectRoot.toNioPath().toFile(), myProject)
-            val consumerStateFile = myProjectRoot.toNioPath().resolve("consumerBuild/consumerA/prepareKotlinIdeaImport.executed").toFile()
+            val consumerStateFile = myProjectRoot.toNioPath().resolve("consumerA/prepareKotlinIdeaImport.executed").toFile()
             if (!consumerStateFile.exists()) fail("consumerA: prepareKotlinIdeaImport not executed")
             if (consumerStateFile.readText() != "OK") fail("Unexpected content in consumerStateFile: ${consumerStateFile.readText()}")
 

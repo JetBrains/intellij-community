@@ -6,7 +6,7 @@ plugins {
 
 kotlin {
     jvm()
-    ios()
+    {{iosTargetPlaceholder}}
     linuxX64()
     linuxArm64()
 

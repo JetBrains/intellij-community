@@ -2,13 +2,13 @@ MODULES
 project
 
 project.main
-    languageLevel = 1.7
-    apiLevel = 1.7
+    languageLevel = 1.8
+    apiLevel = 1.8
     compilerSettings = -opt-in OptInAnnotation
 
 project.test
-    languageLevel = 1.7
-    apiLevel = 1.7
+    languageLevel = 1.8
+    apiLevel = 1.8
     compilerSettings = -opt-in OptInAnnotation
 
 

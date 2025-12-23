@@ -13,5 +13,5 @@ kotlin {
     }
 
     jvm()
-    ios()
+    {{iosTargetPlaceholder}}
 }

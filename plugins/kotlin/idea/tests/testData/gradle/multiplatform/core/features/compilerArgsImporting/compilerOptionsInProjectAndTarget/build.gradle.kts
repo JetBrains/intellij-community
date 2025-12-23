@@ -15,8 +15,8 @@ repositories {
 kotlin {
 
     compilerOptions {
-        apiVersion.set(KotlinVersion.KOTLIN_1_7)
-        languageVersion.set(KotlinVersion.KOTLIN_1_7)
+        apiVersion.set({{minimalSupportedKotlinVersion}})
+        languageVersion.set({{minimalSupportedKotlinVersion}})
         optIn.add("project.Foo")
     }
 
@@ -44,7 +44,7 @@ kotlin {
     applyHierarchyTemplate(KotlinHierarchyTemplate.default) {
         common {
             group("jvmAndroid") {
-                withAndroid()
+                withAndroidTarget()
                 withJvm()
             }
         }

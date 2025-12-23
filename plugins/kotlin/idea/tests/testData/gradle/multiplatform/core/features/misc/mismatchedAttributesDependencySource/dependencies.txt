@@ -4,13 +4,9 @@ project
 project.consumer
 
 project.consumer.commonMain
-    org.jetbrains.kotlin:kotlin-stdlib:commonNonJvmMain:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib:webMain:{{KGP_VERSION}} (COMPILE)
     producer.commonMain (COMPILE)
 
 project.consumer.commonTest
-    org.jetbrains.kotlin:kotlin-stdlib:commonNonJvmMain:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib:webMain:{{KGP_VERSION}} (TEST)
     producer.commonMain (TEST)
 
 project.consumer.jsMain

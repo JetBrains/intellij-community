@@ -16,15 +16,15 @@ repositories {
 kotlin {
     jvm()
     {{androidTargetPlaceholder}}
-    ios()
+    {{iosTargetPlaceholder}}
     js(IR) { nodejs() }
 
     targets.all {
         compilations.all {
             compilerOptions.options.apply {
                 freeCompilerArgs.add("-opt-in=CompilationOptInAnnotation")
-                languageVersion.set(KotlinVersion.KOTLIN_1_7)
-                apiVersion.set(KotlinVersion.KOTLIN_1_7)
+                languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9)
+                apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9)
             }
         }
     }
@@ -32,17 +32,18 @@ kotlin {
     applyHierarchyTemplate(KotlinHierarchyTemplate.default) {
         common {
             group("jvmAndroid") {
-                withAndroid()
+                withAndroidTarget()
                 withJvm()
             }
         }
     }
 }
 
+// How is this test any different from previous tests??
 tasks.withType<KotlinJvmCompile>().configureEach {
-    kotlinOptions.languageVersion = "1.7"
-    kotlinOptions.freeCompilerArgs += "-opt-in=JvmCompileOptInAnnotation"
     compilerOptions {
-        apiVersion.set(KotlinVersion.KOTLIN_1_7)
+        languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0
+        apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_8
+        freeCompilerArgs.add("-opt-in=JvmCompileOptInAnnotation")
     }
 }

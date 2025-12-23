@@ -7,7 +7,7 @@ plugins {
 
 kotlin {
     {{androidTargetPlaceholder}}
-    ios()
+    {{iosTargetPlaceholder}}
 
     sourceSets {
         val androidMain by getting {

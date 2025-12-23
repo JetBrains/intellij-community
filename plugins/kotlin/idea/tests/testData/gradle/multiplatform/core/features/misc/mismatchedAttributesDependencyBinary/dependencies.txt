@@ -6,14 +6,10 @@ project.consumer
 project.consumer.commonMain
     org.jetbrains.kotlin.mpp.tests:producer:1.0 (COMPILE)
     org.jetbrains.kotlin.mpp.tests:producer:commonMain:1.0 (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib:commonNonJvmMain:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib:webMain:{{KGP_VERSION}} (COMPILE)
 
 project.consumer.commonTest
     org.jetbrains.kotlin.mpp.tests:producer:1.0 (TEST)
     org.jetbrains.kotlin.mpp.tests:producer:commonMain:1.0 (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib:commonNonJvmMain:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib:webMain:{{KGP_VERSION}} (TEST)
 
 project.consumer.jsMain
     org.jetbrains.kotlin.mpp.tests:producer-js:1.0 (COMPILE)

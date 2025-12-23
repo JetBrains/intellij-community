@@ -9,4 +9,4 @@ pluginManagement {
 }
 
 include(":consumerA")
-includeBuild("../producerBuild")
+includeBuild("producerBuild")

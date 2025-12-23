@@ -15,8 +15,8 @@ kotlin {
             compileTaskProvider.configure {
                 compilerOptions.apply {
                     freeCompilerArgs.add("-opt-in=JvmMainOptInAnnotation")
-                    languageVersion.set(KotlinVersion.KOTLIN_1_9)
-                    apiVersion.set(KotlinVersion.KOTLIN_1_9)
+                    languageVersion.set(KotlinVersion.KOTLIN_2_0)
+                    apiVersion.set(KotlinVersion.KOTLIN_2_0)
                 }
             }
         }
@@ -28,8 +28,8 @@ kotlin {
             compileTaskProvider.configure {
                 compilerOptions.apply {
                     freeCompilerArgs.add("-opt-in=IosAllOptInAnnotation")
-                    languageVersion.set(KotlinVersion.KOTLIN_1_8)
-                    apiVersion.set(KotlinVersion.KOTLIN_1_8)
+                    languageVersion.set(KotlinVersion.KOTLIN_1_9)
+                    apiVersion.set(KotlinVersion.KOTLIN_1_9)
                 }
             }
         }
@@ -42,8 +42,8 @@ kotlin {
     metadata().compilations.all {
         compileTaskProvider.configure {
             compilerOptions {
-                languageVersion.set(KotlinVersion.KOTLIN_1_7)
-                apiVersion.set(KotlinVersion.KOTLIN_1_7)
+                languageVersion.set(KotlinVersion.KOTLIN_1_8)
+                apiVersion.set(KotlinVersion.KOTLIN_1_8)
             }
         }
     }

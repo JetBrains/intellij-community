@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orde
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
+import org.junit.AssumptionViolatedException
 import org.junit.Test
 
 @TestMetadata("multiplatform/core/experimentalTier")
@@ -149,6 +150,9 @@ class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImpor
     @Test
     @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+") // applyHierarchyTemplate used
     fun testSimilarTargetsBamboo() {
+        if (flakyKgpImportKT82895()) {
+            throw AssumptionViolatedException("KT-82895")
+        }
         doTest {
             onlyCheckers(KotlinFacetSettingsChecker, OrderEntriesChecker)
             onlyFacetFields(IKotlinFacetSettings::targetPlatform)

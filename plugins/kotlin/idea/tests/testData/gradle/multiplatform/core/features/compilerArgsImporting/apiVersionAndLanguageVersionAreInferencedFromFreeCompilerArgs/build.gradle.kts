@@ -14,13 +14,13 @@ repositories {
 kotlin {
     jvm()
     {{androidTargetPlaceholder}}
-    ios()
+    {{iosTargetPlaceholder}}
     js(IR) { nodejs() }
 
     applyHierarchyTemplate(KotlinHierarchyTemplate.default) {
         common {
             group("jvmAndroid") {
-                withAndroid()
+                withAndroidTarget()
                 withJvm()
             }
         }
@@ -28,9 +28,13 @@ kotlin {
 
     targets.all {
         compilations.all {
-            kotlinOptions.freeCompilerArgs += "-language-version=1.7"
-            kotlinOptions.freeCompilerArgs += "-api-version=1.7"
-            kotlinOptions.freeCompilerArgs += "-opt-in=OptInAnnotation"
+            compileTaskProvider.configure {
+                compilerOptions {
+                    freeCompilerArgs.add("-language-version={{minimalSupportedKotlinLanguageVersion}}")
+                    freeCompilerArgs.add("-api-version={{minimalSupportedKotlinLanguageVersion}}")
+                    freeCompilerArgs.add("-opt-in=OptInAnnotation")
+                }
+            }
         }
     }
 }
