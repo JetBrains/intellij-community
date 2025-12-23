@@ -47,16 +47,16 @@ class KotlinMppCustomImportingTests : AbstractKotlinMppGradleImportingTest() {
                 val builtGradleModel = buildKotlinMPPGradleModel()
                 val model = builtGradleModel.getNotNullByProjectPathOrThrow(":")
 
-                assertEquals(kotlinPluginVersion, model.kotlinGradlePluginVersion?.toKotlinToolingVersion())
+                assertEquals(kotlinPluginVersion.version, model.kotlinGradlePluginVersion?.toKotlinToolingVersion())
                 val kotlinGradlePluginVersion = model.kotlinGradlePluginVersion!!
 
                 /* Just check if those calls make it through classLoader boundaries */
-                assertEquals(0, kotlinGradlePluginVersion.compareTo(kotlinPluginVersion))
-                assertEquals(0, kotlinGradlePluginVersion.compareTo(kotlinPluginVersion.toString()))
+                assertEquals(0, kotlinGradlePluginVersion.compareTo(kotlinPluginVersion.version))
+                assertEquals(0, kotlinGradlePluginVersion.compareTo(kotlinPluginVersion.version.toString()))
                 assertEquals(0, kotlinGradlePluginVersion.compareTo(KotlinGradlePluginVersion.parse(kotlinGradlePluginVersion.versionString)!!))
 
-                assertNotNull(kotlinGradlePluginVersion.invokeWhenAtLeast(kotlinPluginVersion) { })
-                assertNotNull(kotlinGradlePluginVersion.invokeWhenAtLeast(kotlinPluginVersion.toString()) {})
+                assertNotNull(kotlinGradlePluginVersion.invokeWhenAtLeast(kotlinPluginVersion.version) { })
+                assertNotNull(kotlinGradlePluginVersion.invokeWhenAtLeast(kotlinPluginVersion.version.toString()) {})
                 assertNotNull(
                     kotlinGradlePluginVersion.invokeWhenAtLeast(KotlinGradlePluginVersion.parse(kotlinGradlePluginVersion.versionString)!!) {}
                 )

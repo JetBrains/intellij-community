@@ -6,12 +6,29 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.DevModeTestFe
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.DevModeTweaks
 import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.AndroidGradlePluginVersionTestsProperty
 import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.GradleVersionTestsProperty
-import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.KotlinGradlePluginVersionTestsProperty
+import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.KotlinVersionTestsProperty
 import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.SimpleProperties
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.kotlin.tooling.core.toKotlinVersion
 import java.io.File
+
+class TestVersion<T : Any>(
+    val version: T,
+    val alias: String?,
+) {
+    override fun toString(): String {
+        return version.toString()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        val versionType = version.javaClass
+        if (versionType.isInstance(other)) {
+            return version == other
+        }
+        return super.equals(other)
+    }
+}
 
 abstract class KotlinTestProperties {
     /**
@@ -21,7 +38,7 @@ abstract class KotlinTestProperties {
      *
      * For Gradle-sync, it's the version of KGP (for now), see [KotlinMppTestProperties]
      */
-    abstract val kotlinVersion: KotlinToolingVersion
+    abstract val kotlinVersion: TestVersion<KotlinToolingVersion>
 
     /**
      * Allows providing test properties. If a pair { key, value } is provided,
@@ -106,46 +123,72 @@ abstract class KotlinTestProperties {
     }
 }
 
-class KotlinMppTestProperties private constructor(
-    private val kotlinGradlePluginVersionFromEnv: KotlinToolingVersion,
-    private val gradleVersionFromEnv: GradleVersion,
-    private val agpVersionFromEnv: String?,
+class KotlinMppTestProperties(
+    private val kotlinVersionFromEnv: TestVersion<KotlinToolingVersion>,
+    private val gradleVersionFromEnv: TestVersion<GradleVersion>,
+    private val agpVersionFromEnv: TestVersion<String>?,
     private val devModeTweaks: DevModeTweaks?,
 ) : KotlinTestProperties() {
-    override val kotlinVersion: KotlinToolingVersion
-        get() = devModeTweaks?.overrideKgpVersion?.let { KotlinToolingVersion(it) } ?: kotlinGradlePluginVersionFromEnv
+    override val kotlinVersion: TestVersion<KotlinToolingVersion>
+        get() = devModeTweaks?.overrideKotlinVersion?.let {
+            TestVersion(
+                KotlinToolingVersion(it),
+                null,
+            )
+        } ?: kotlinVersionFromEnv
 
-    val gradleVersion: GradleVersion
-        get() = devModeTweaks?.overrideGradleVersion?.let { GradleVersion.version(it) } ?: gradleVersionFromEnv
+    val gradleVersion: TestVersion<GradleVersion>
+        get() = devModeTweaks?.overrideGradleVersion?.let {
+            TestVersion(
+                GradleVersion.version(it),
+                null,
+            )
+        } ?: gradleVersionFromEnv
 
-    val agpVersion: String?
-        get() = devModeTweaks?.overrideAgpVersion ?: agpVersionFromEnv
+    val agpVersion: TestVersion<String>?
+        get() = devModeTweaks?.overrideAgpVersion?.let {
+            TestVersion(
+                it,
+                null,
+            )
+        } ?: agpVersionFromEnv
+
 
     override fun getTestDataClassifiersFromMostSpecific(): Sequence<List<String>> {
-        val kotlinClassifier = with(kotlinVersion) { "$major.$minor.$patch" }
-        val gradleClassifier = gradleVersion.version
-        val agpClassifier = agpVersion
-
+        val kotlinVersionClassifier = with(kotlinVersion.version) { "$major.$minor.$patch" }
+        val kotlinAliasClassifier = kotlinVersion.alias
+        val gradleClassifier = gradleVersion.version.version
+        val agpClassifier = agpVersion?.version
         return sequenceOf(
-            listOfNotNull(kotlinClassifier, gradleClassifier, agpClassifier),
-            listOfNotNull(kotlinClassifier, gradleClassifier),
-            listOfNotNull(kotlinClassifier, agpClassifier),
+            *(kotlinAliasClassifier?.let {
+                arrayOf(
+                    listOfNotNull(kotlinAliasClassifier, gradleClassifier, agpClassifier),
+                    listOfNotNull(kotlinAliasClassifier, gradleClassifier),
+                    listOfNotNull(kotlinAliasClassifier, agpClassifier),
+                    listOfNotNull(kotlinAliasClassifier),
+                )
+            } ?: emptyArray()),
+            listOfNotNull(kotlinVersionClassifier, gradleClassifier, agpClassifier),
+            listOfNotNull(kotlinVersionClassifier, gradleClassifier),
+            listOfNotNull(kotlinVersionClassifier, agpClassifier),
             listOfNotNull(gradleClassifier, agpClassifier),
-            listOfNotNull(kotlinClassifier),
+            listOfNotNull(kotlinVersionClassifier),
             listOfNotNull(gradleClassifier),
-            listOfNotNull(agpClassifier)
+            listOfNotNull(agpClassifier),
         )
     }
 
     override fun collectAllProperties(): Map<String, String> {
-        val simpleProperties = SimpleProperties(gradleVersion, kotlinVersion)
+        val simpleProperties =  SimpleProperties(gradleVersion.version, kotlinVersion.version)
 
         // Important! Collect final properties exactly here to get versions with devModeTweaks applied
         return simpleProperties.toMutableMap().apply {
-            put(KotlinGradlePluginVersionTestsProperty.id, kotlinVersion.toString())
-            put(GradleVersionTestsProperty.id, gradleVersion.version)
-            if (agpVersion != null) put(AndroidGradlePluginVersionTestsProperty.id, agpVersion!!)
-            if (kotlinVersion < KotlinGradlePluginVersions.V_2_1_0) {
+            put(KotlinVersionTestsProperty.id, kotlinVersion.toString())
+            put(GradleVersionTestsProperty.id, gradleVersion.version.version)
+            agpVersion?.version?.let {
+                put(AndroidGradlePluginVersionTestsProperty.id, it)
+            }
+            if (kotlinVersion.version < KotlinGradlePluginVersions.V_2_1_0) {
                 put("androidTargetPlaceholder", "android()")
                 put("iosTargetPlaceholder", "ios()")
             } else {
@@ -157,27 +200,32 @@ class KotlinMppTestProperties private constructor(
 
     companion object {
         fun construct(testConfiguration: TestConfiguration? = null): KotlinMppTestProperties {
+            val kotlinVersion = KotlinVersionTestsProperty.resolveFromEnvironment()
+            val gradleVersion = GradleVersionTestsProperty.resolveFromEnvironment()
             val agpVersion = AndroidGradlePluginVersionTestsProperty.resolveFromEnvironment()
 
-            val gradleVersionRaw = GradleVersionTestsProperty.resolveFromEnvironment()
-            val gradleVersion = GradleVersion.version(gradleVersionRaw)
-
-            val kgpVersionRaw = KotlinGradlePluginVersionTestsProperty.resolveFromEnvironment()
-            val kgpVersion = KotlinToolingVersion(kgpVersionRaw)
-
             return KotlinMppTestProperties(
-                kgpVersion,
-                gradleVersion,
-                agpVersion,
+                TestVersion(
+                    KotlinToolingVersion(kotlinVersion.version),
+                    kotlinVersion.versionAlias,
+                ),
+                TestVersion(
+                    GradleVersion.version(gradleVersion.version),
+                    gradleVersion.versionAlias,
+                ),
+                TestVersion(
+                    agpVersion.version,
+                    agpVersion.versionAlias,
+                ),
                 testConfiguration?.getConfiguration(DevModeTestFeature),
             )
         }
 
-        fun constructRaw(kotlinVersion: KotlinToolingVersion, gradleVersion: GradleVersion, agpVersion: String? = null) =
+        fun constructRaw(kotlinVersion: TestVersion<KotlinToolingVersion>, gradleVersion: TestVersion<GradleVersion>) =
             KotlinMppTestProperties(
                 kotlinVersion,
                 gradleVersion,
-                agpVersion,
+                null,
                 null,
             )
     }
@@ -186,4 +234,4 @@ class KotlinMppTestProperties private constructor(
 /**
  * Just MAJOR.MINOR.PATCH, e.g. "1.9.21" (no `-dev`, no build numbers, etc.)
  */
-val KotlinTestProperties.kotlinSimpleVersionString: String get() = kotlinVersion.toKotlinVersion().toString()
+val KotlinTestProperties.kotlinSimpleVersionString: String get() = kotlinVersion.version.toKotlinVersion().toString()

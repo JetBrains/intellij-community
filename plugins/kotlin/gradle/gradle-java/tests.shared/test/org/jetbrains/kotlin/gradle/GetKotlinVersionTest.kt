@@ -47,7 +47,7 @@ class GetKotlinVersionTest : MultiplePluginVersionGradleImportingTestCase() {
 
         importProject(true)
 
-        assertKotlinPluginVersion(kotlinPluginVersion.toKotlinVersion(), getTopLevelBuildScriptPsiFile())
+        assertKotlinPluginVersion(kotlinPluginVersion.version.toKotlinVersion(), getTopLevelBuildScriptPsiFile())
     }
 
     @Test
@@ -121,7 +121,7 @@ class GetKotlinVersionTest : MultiplePluginVersionGradleImportingTestCase() {
 
         importProject(true)
 
-        assertKotlinPluginVersion(kotlinPluginVersion.toKotlinVersion(), getTopLevelBuildScriptPsiFile())
+        assertKotlinPluginVersion(kotlinPluginVersion.version.toKotlinVersion(), getTopLevelBuildScriptPsiFile())
     }
 
     private fun getTopLevelBuildScriptPsiFile(): PsiFile {

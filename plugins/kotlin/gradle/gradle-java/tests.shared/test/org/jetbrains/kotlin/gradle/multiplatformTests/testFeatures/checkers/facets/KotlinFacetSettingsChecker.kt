@@ -66,7 +66,7 @@ object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChe
     }
 
     private fun PrinterContext.languageVersionSanitized(fieldValue: LanguageVersion): String {
-        val languageVersion = LanguageVersion.fromFullVersionString(testProperties.kotlinVersion.toString())
+        val languageVersion = LanguageVersion.fromFullVersionString(testProperties.kotlinVersion.version.toString())
         return if (fieldValue == languageVersion) CURRENT_LANGUAGE_VERSION_PLACEHOLDER else fieldValue.versionString
     }
 

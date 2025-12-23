@@ -74,6 +74,7 @@ private fun PrinterContext.expectedKonanDistForHostAndTarget(target: TargetPlatf
 
 private fun PrinterContext.expectedKonanDistForFamily(family: Family): Set<String> {
     val versionClassifier = testProperties.kotlinVersion.toKotlinVersion().toString()
+    val versionClassifier = testProperties.kotlinVersion.version.toKotlinVersion().toString()
     val newImportFlag = testConfiguration.getConfiguration(CustomGradlePropertiesTestFeature)
         .testProperties[enableKgpDependencyResolutionParam]
 

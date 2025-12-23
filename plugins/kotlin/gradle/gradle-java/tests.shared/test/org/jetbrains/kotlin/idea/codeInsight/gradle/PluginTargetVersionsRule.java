@@ -60,7 +60,7 @@ public class PluginTargetVersionsRule implements MethodRule {
             String mark = IS_UNDER_TEAMCITY ? "passed" : "ignored";
             String message = "Test is marked " + mark + " due to unmet requirements\n" +
                              "Gradle version: " +
-                             testCase.getGradleVersion() +
+                             testCase.getTestGradleVersion().getVersion() +
                              " | Requirement: " +
                              targetVersions.gradleVersion() +
                              "\n" +
@@ -90,13 +90,13 @@ public class PluginTargetVersionsRule implements MethodRule {
     }
 
     private static boolean shouldRun(PluginTargetVersions targetVersions, TestWithKotlinPluginAndGradleVersions testCase) {
-        var gradleVersion = testCase.getGradleVersion();
-        var pluginVersion = testCase.getKotlinPluginVersion();
+        var gradleVersion = testCase.getTestGradleVersion().getVersion();
+        var pluginVersion = testCase.getKotlinPluginVersion().getVersion();
 
         var gradleVersionMatcher = createMatcher("Gradle", targetVersions.gradleVersion());
         var kotlinVersionRequirement = KotlinVersionUtils.parseKotlinVersionRequirement(targetVersions.pluginVersion());
 
-        boolean matchGradleVersion = gradleVersionMatcher == null || gradleVersionMatcher.matches(gradleVersion);
+        boolean matchGradleVersion = gradleVersionMatcher == null || gradleVersionMatcher.matches(gradleVersion.getVersion());
         return matchGradleVersion && KotlinVersionUtils.matches(kotlinVersionRequirement, pluginVersion);
     }
 

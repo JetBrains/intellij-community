@@ -25,7 +25,7 @@ class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImpor
     fun testCommonMainIsNativeShared() {
         doTest {
             /* Code Highlighting requires 1.9, because of native opt-in annotation in source files */
-            if (kotlinPluginVersion < KotlinToolingVersion("1.9.20-dev-6845")) {
+            if (kotlinPluginVersion.version < KotlinToolingVersion("1.9.20-dev-6845")) {
                 disableCheckers(HighlightingChecker)
             }
         }
@@ -42,7 +42,7 @@ class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImpor
     fun testJvmAndAndroidSource() {
         doTest {
             // highlighting for the 1.8.0 is different
-            if (kotlinPluginVersion < KotlinToolingVersion("1.9.0")) {
+            if (kotlinPluginVersion.version < KotlinToolingVersion("1.9.0")) {
                 disableCheckers(HighlightingChecker)
             }
         }
