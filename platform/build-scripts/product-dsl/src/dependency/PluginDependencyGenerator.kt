@@ -17,6 +17,7 @@ import org.jetbrains.intellij.build.productLayout.util.getProductionModuleDepend
 import org.jetbrains.intellij.build.productLayout.validation.PluginDependencyError
 import org.jetbrains.intellij.build.productLayout.validation.ProductModuleIndex
 import org.jetbrains.intellij.build.productLayout.validation.ValidationError
+import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
 
 /**
@@ -114,6 +115,11 @@ internal suspend fun generatePluginDependencies(
   // Compute union of ALL product modules - used for global validation
   val crossProductModules = productIndices.values.flatMapTo(HashSet()) { it.allModules }
 
+  // Cache content module results - same module can be declared as <content> in multiple plugins,
+  // process each once and reuse the result
+  val contentModuleCache = AsyncCache<String, DependencyFileResult?>(this)
+  val testContentModuleCache = AsyncCache<String, DependencyFileResult?>(this)
+
   // Generate deps and validate in parallel
   val generationResults = plugins.map { pluginModuleName ->
     async {
@@ -123,6 +129,8 @@ internal suspend fun generatePluginDependencies(
         descriptorCache = descriptorCache,
         dependencyFilter = dependencyFilter,
         strategy = strategy,
+        contentModuleCache = contentModuleCache,
+        testContentModuleCache = testContentModuleCache,
       )
     }
   }.awaitAll().filterNotNull()
@@ -200,6 +208,8 @@ private suspend fun filterPluginDependencies(
  * Generates dependencies for a single plugin module.
  *
  * @param pluginContentJobs Pre-launched async jobs containing all plugin info.
+ * @param contentModuleCache Cache for production content module results (shared across plugins)
+ * @param testContentModuleCache Cache for test content module results (shared across plugins)
  * @return PluginDependencyFileResult or null if plugin.xml not found or has module refs with '/'
  */
 private suspend fun generatePluginDependency(
@@ -208,6 +218,8 @@ private suspend fun generatePluginDependency(
   descriptorCache: ModuleDescriptorCache,
   dependencyFilter: (moduleName: String, depName: String, isTest: Boolean) -> Boolean,
   strategy: FileUpdateStrategy,
+  contentModuleCache: AsyncCache<String, DependencyFileResult?>,
+  testContentModuleCache: AsyncCache<String, DependencyFileResult?>,
 ): PluginDependencyFileResult? {
   // All data from shared jobs - NO additional lookups needed
   val info = pluginContentJobs.get(pluginModuleName)?.await() ?: return null
@@ -222,39 +234,41 @@ private suspend fun generatePluginDependency(
     strategy = strategy,
   )
 
-  // Process content modules in parallel - generate dependencies for their module descriptors
-  val contentModuleResults = coroutineScope {
-    info.contentModules.flatMap { contentModuleName ->
-      // Content modules ending with ._test are test modules themselves - their descriptor IS the test descriptor
-      val isTestModule = contentModuleName.endsWith("._test")
+  // Process content modules - use cache to avoid duplicate processing
+  // (same module can be declared as <content> in multiple plugins)
+  val contentModuleResults = mutableListOf<DependencyFileResult>()
+  for (contentModuleName in info.contentModules) {
+    // Content modules ending with ._test are test modules themselves - their descriptor IS the test descriptor
+    val isTestModule = contentModuleName.endsWith("._test")
 
-      val jobs = mutableListOf<Deferred<DependencyFileResult?>>()
+    // Production descriptor - cached to avoid duplicate processing across plugins
+    val prodResult = contentModuleCache.getOrPut(contentModuleName) {
+      generateContentModuleDependencies(
+        contentModuleName = contentModuleName,
+        descriptorCache = descriptorCache,
+        // For ._test content modules, use test filter since their .xml IS the test descriptor
+        dependencyFilter = { dependencyFilter(contentModuleName, it, isTestModule) },
+        strategy = strategy,
+      )
+    }
+    if (prodResult != null) {
+      contentModuleResults.add(prodResult)
+    }
 
-      // Production descriptor
-      jobs.add(async {
-        generateContentModuleDependencies(
+    // For non-test content modules, also process their test descriptor if it exists
+    if (!isTestModule) {
+      val testResult = testContentModuleCache.getOrPut(contentModuleName) {
+        generateTestContentModuleDependencies(
           contentModuleName = contentModuleName,
           descriptorCache = descriptorCache,
-          // For ._test content modules, use test filter since their .xml IS the test descriptor
-          dependencyFilter = { dependencyFilter(contentModuleName, it, isTestModule) },
+          dependencyFilter = { dependencyFilter(contentModuleName, it, true) },
           strategy = strategy,
         )
-      })
-
-      // For non-test content modules, also process their test descriptor if it exists
-      if (!isTestModule) {
-        jobs.add(async {
-          generateTestContentModuleDependencies(
-            contentModuleName = contentModuleName,
-            descriptorCache = descriptorCache,
-            dependencyFilter = { dependencyFilter(contentModuleName, it, true) },
-            strategy = strategy,
-          )
-        })
       }
-
-      jobs
-    }.awaitAll().filterNotNull()
+      if (testResult != null) {
+        contentModuleResults.add(testResult)
+      }
+    }
   }
 
   return PluginDependencyFileResult(
