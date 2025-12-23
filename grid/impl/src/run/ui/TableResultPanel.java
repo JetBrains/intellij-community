@@ -11,7 +11,6 @@ import com.intellij.database.editor.DataGridColors;
 import com.intellij.database.extractors.*;
 import com.intellij.database.extractors.DatabaseObjectFormatterConfig.DatabaseDisplayObjectFormatterConfig;
 import com.intellij.database.remote.jdbc.LobInfo;
-import com.intellij.database.run.actions.DeleteRowsAction;
 import com.intellij.database.run.ui.grid.*;
 import com.intellij.database.run.ui.table.FormatterConfigCache;
 import com.intellij.database.run.ui.table.LocalFilterState;
@@ -28,6 +27,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -1828,7 +1828,9 @@ public class TableResultPanel extends UserDataHolderBase
     @Override
     public void mouseClicked(MouseEvent e) {
       if (DataGridStartupActivity.DataEditorConfigurator.isLoadingDelayed(myGrid)) {
-        myGrid.getDataHookup().getLoader().reloadCurrentPage(new GridRequestSource(new DataGridRequestPlace(myGrid)));
+        WriteIntentReadAction.run(() -> {
+          myGrid.getDataHookup().getLoader().reloadCurrentPage(new GridRequestSource(new DataGridRequestPlace(myGrid)));
+        });
       }
     }
 
