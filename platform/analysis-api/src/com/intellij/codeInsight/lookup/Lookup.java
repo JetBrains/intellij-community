@@ -28,6 +28,8 @@ public interface Lookup {
   /**
    * @return the offset in {@link #getTopLevelEditor()} which this lookup's left side should be aligned with. Note that if the lookup doesn't fit
    * the screen due to its dimensions, the actual position might differ from this editor offset.
+   *
+   * @implNote this method does not play well with {@link #getPsiFile()} and {@link #getPsiElement()} if completion is called in injected editor.
    */
   int getLookupStart();
 
@@ -73,6 +75,7 @@ public interface Lookup {
   /**
    * @return PSI file, possibly injected, associated with this lookup's editor
    * @see #getEditor()
+   * @implNote this method does not play well with {@link #getLookupStart()} if completion is called in injected editor.
    */
   @Nullable
   PsiFile getPsiFile();
