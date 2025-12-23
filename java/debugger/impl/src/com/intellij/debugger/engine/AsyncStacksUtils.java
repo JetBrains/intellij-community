@@ -3,13 +3,12 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
-import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.testFramework.TestDebuggerAgentArtifactsProvider;
@@ -33,6 +32,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
@@ -42,6 +42,7 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.sun.jdi.*;
+import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -193,6 +194,8 @@ public final class AsyncStacksUtils {
       enableAgentDebug(process);
     }
 
+    initializeOverheadDetector(process);
+
     // add points
     if (DebuggerUtilsImpl.isRemote(process)) {
       Properties properties = CaptureSettingsProvider.getPointsProperties(process.getProject());
@@ -229,29 +232,8 @@ public final class AsyncStacksUtils {
   }
 
   private static void enableAgentDebug(DebugProcessImpl process) {
-    final RequestManagerImpl requestsManager = process.getRequestsManager();
-    ClassPrepareRequestor requestor = new ClassPrepareRequestor() {
-      @Override
-      public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
-        try {
-          requestsManager.deleteRequest(this);
-          ((ClassType)referenceType).setValue(DebuggerUtils.findField(referenceType, "DEBUG"), referenceType.virtualMachine().mirrorOf(true));
-        }
-        catch (Exception e) {
-          LOG.warn("Error setting agent debug mode", e);
-        }
-      }
-    };
-    requestsManager.callbackOnPrepareClasses(requestor, CAPTURE_STORAGE_CLASS_NAME);
-    try {
-      ClassType captureClass = (ClassType)process.findClass(null, CAPTURE_STORAGE_CLASS_NAME, null);
-      if (captureClass != null) {
-        requestor.processClassPrepare(process, captureClass);
-      }
-    }
-    catch (Exception e) {
-      LOG.warn("Error setting agent debug mode", e);
-    }
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    DebuggerUtilsEx.setStaticBooleanField(process, CAPTURE_STORAGE_CLASS_NAME, "DEBUG", true);
   }
 
   public static void addAgentCapturePoints(EvaluationContextImpl evalContext, Properties properties) {
@@ -367,6 +349,10 @@ public final class AsyncStacksUtils {
     }
     if (Registry.is("debugger.async.stack.trace.for.all.threads")) {
       parametersList.addProperty("debugger.async.stack.trace.for.all.threads", "true");
+    }
+    RegistryValue percentRegistry = Registry.get("debugger.async.stack.trace.overhead.percent");
+    if (percentRegistry.isChangedFromDefault()) {
+      parametersList.addProperty("debugger.agent.overhead.percent", percentRegistry.asString());
     }
   }
 
@@ -503,5 +489,31 @@ public final class AsyncStacksUtils {
       }
     }
     return "";
+  }
+
+  private static void initializeOverheadDetector(DebugProcessImpl process) {
+    AsyncStackTracesOverheadUtilsKt.initializeLastSessionPauseListener(process);
+
+    String className = "com.intellij.rt.debugger.agent.OverheadDetector";
+    String methodName = "overheadDetected";
+    var breakpoint = new SyntheticMethodBreakpoint(className, methodName, null, process.getProject()) {
+      @Override
+      public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) {
+        if (event == null) return false;
+        try {
+          List<Value> args = DebuggerUtilsEx.getArgumentValues(event.thread().frame(0));
+          Value overheadValue = ContainerUtil.getFirstItem(args);
+          if (overheadValue instanceof ObjectReference overhead) {
+            AsyncStackTracesOverheadUtilsKt.showOverheadNotification(process, overhead);
+          }
+        }
+        catch (IncompatibleThreadStateException e) {
+          LOG.error(e);
+        }
+        return false;
+      }
+    };
+    breakpoint.setSuspendPolicy(DebuggerSettings.SUSPEND_THREAD);
+    breakpoint.createRequest(process);
   }
 }

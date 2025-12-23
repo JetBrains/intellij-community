@@ -167,6 +167,8 @@
 
     <notificationGroup id="HotSwap" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.JavaDebuggerBundle"
                        key="notification.group.hotswap"/>
+    <notificationGroup id="AsyncStackTraces" displayType="BALLOON" bundle="messages.JavaDebuggerBundle"
+                       key="async.stack.traces.notification.group"/>
 
     <debugger.dfaAssistProvider language="JAVA" implementationClass="com.intellij.debugger.engine.dfaassist.java.JavaDfaAssistProvider"/>
 
@@ -248,6 +250,8 @@
                  description="Use memory agent to estimate retained sizes in the Instances Window"/>
     <registryKey key="debugger.async.stack.trace.for.all.threads" defaultValue="true"
                  description="Get async stack trace for any thread using the same evaluationContext. By default debugger-agent only returns async stack trace for the current suspended thread."/>
+    <registryKey key="debugger.async.stack.trace.overhead.percent" defaultValue="20.0"
+                 description="The allowed overhead of the async stacktraces collection in percents. When exceeded, a user will be suggested to disable or throttle."/>
     <registryKey key="debugger.stepping.current.thread.check.timeout.ms" defaultValue="100"
                  description="In the 'Resume only the current thread mode': Check timeout (in ms) for the stepping thread is running."/>
     <registryKey key="debugger.evaluation.runtime.type" defaultValue="500"
