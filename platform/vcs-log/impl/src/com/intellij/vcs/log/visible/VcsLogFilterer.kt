@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.visible
 
 import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.data.DataPack
+import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.graph.PermanentGraph
 
 interface VcsLogFilterer {
@@ -11,9 +11,11 @@ interface VcsLogFilterer {
 
   fun canFilterEmptyPack(filters: VcsLogFilterCollection): Boolean = false
 
-  fun filter(dataPack: DataPack,
-             oldVisiblePack: VisiblePack,
-             graphOptions: PermanentGraph.Options,
-             filters: VcsLogFilterCollection,
-             commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>
+  fun filter(
+    dataPack: VcsLogGraphData,
+    oldVisiblePack: VisiblePack,
+    graphOptions: PermanentGraph.Options,
+    filters: VcsLogFilterCollection,
+    commitCount: CommitCountStage,
+  ): Pair<VisiblePack, CommitCountStage>
 }

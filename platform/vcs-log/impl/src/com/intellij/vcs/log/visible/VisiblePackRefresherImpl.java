@@ -16,7 +16,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.data.SingleTaskController;
+import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogGraphData;
+import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import kotlin.Pair;
@@ -41,7 +44,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   private final @NotNull List<VisiblePackChangeListener> myVisiblePackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private volatile @NotNull State myState;
-  private volatile @NotNull DataPack myDataPack;
+  private volatile @NotNull VcsLogGraphData myDataPack;
 
   public VisiblePackRefresherImpl(@NotNull Project project,
                                   @NotNull VcsLogData logData,
@@ -50,7 +53,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
                                   @NotNull VcsLogFilterer filterer,
                                   @NotNull String logId) {
     myLogData = logData;
-    myDataPack = logData.getDataPack();
+    myDataPack = logData.getGraphData();
     myVcsLogFilterer = filterer;
     myLogId = logId;
     myState = new State(filters, options, myVcsLogFilterer.getInitialCommitCount());
@@ -109,7 +112,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   }
 
   @Override
-  public void setDataPack(boolean validate, @NotNull DataPack dataPack) {
+  public void setDataPack(boolean validate, @NotNull VcsLogGraphData dataPack) {
     myDataPack = dataPack;
     setValid(validate, true);
   }
@@ -267,11 +270,11 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     }
 
     private @NotNull State refresh(@NotNull State state, @NotNull CommitCountUpdate commitCountUpdate) {
-      DataPack dataPack = myDataPack;
+      VcsLogGraphData dataPack = myDataPack;
 
       VcsLogFilterCollection filters = state.getFilters();
 
-      if (dataPack == DataPack.EMPTY && !myVcsLogFilterer.canFilterEmptyPack(filters)) {
+      if (dataPack instanceof VcsLogGraphData.Empty && !myVcsLogFilterer.canFilterEmptyPack(filters)) {
         // when filter is set during initialization, just remember filters
         // unless our builder can do something with an empty pack, for example in file history
         return state;
@@ -292,7 +295,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
                                                                            filters, state.getCommitCount());
         VisiblePack visiblePack = pair.getFirst();
         CommitCountStage commitCount = pair.getSecond();
-        if (dataPack instanceof SmallDataPack) {
+        if (dataPack instanceof VcsLogGraphData.OverlayData) {
           visiblePack = CompoundVisiblePack.build(visiblePack, state.getVisiblePack());
         }
         return state.withVisiblePack(visiblePack).withCommitCount(commitCount);

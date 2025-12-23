@@ -3,7 +3,7 @@ package com.intellij.vcs.log.visible;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.data.VcsLogGraphData;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +20,7 @@ public interface VisiblePackRefresher extends Disposable {
 
   void setValid(boolean validate, boolean refresh);
 
-  void setDataPack(boolean validate, @NotNull DataPack dataPack);
+  void setDataPack(boolean validate, @NotNull VcsLogGraphData dataPack);
 
   void onFiltersChange(@NotNull VcsLogFilterCollection filters);
 

@@ -424,7 +424,7 @@ internal object BranchesDashboardActions {
         VcsLogProperties.SUPPORTS_INDEXING.getOrDefault(it.value)
       } ?: false
 
-      val isGraphReady = log.dataManager?.dataPack?.isFull ?: false
+      val isGraphReady = log.dataManager?.graphData?.isFull ?: false
 
       val allRootsIndexed = GitRepositoryManager.getInstance(project).repositories.all {
         log.dataManager?.index?.isIndexed(it.root) ?: false

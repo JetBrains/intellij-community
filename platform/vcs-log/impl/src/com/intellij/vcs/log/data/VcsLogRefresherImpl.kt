@@ -1,11 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
@@ -14,7 +12,6 @@ import com.intellij.vcs.log.TimedVcsCommit
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsLogRefsOfSingleRoot
 import com.intellij.vcs.log.VcsRef
-import com.intellij.vcs.log.data.DataPack.ErrorDataPack
 import com.intellij.vcs.log.data.util.trace
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
@@ -41,14 +38,14 @@ internal class VcsLogRefresherImpl(
   private val providers: Map<VirtualFile, VcsLogProvider>,
   private val progress: VcsLogProgress,
   private val commitDataConsumer: VcsLogCommitDataConsumer?,
-  private val dataPackUpdateHandler: Consumer<DataPack>,
+  private val dataPackUpdateHandler: Consumer<VcsLogGraphData>,
   private val recentCommitCount: Int,
 ) : VcsLogRefresher {
   private val refreshRequests = Channel<RefreshRequest>(Channel.UNLIMITED)
   private val refresherJob: Job
 
   @Volatile
-  override var currentDataPack: DataPack = DataPack.EMPTY
+  override var currentDataPack: VcsLogGraphData = VcsLogGraphData.Empty
     private set(value) {
       field = value
       LOG.debug("New data pack received: $value")
@@ -76,7 +73,7 @@ internal class VcsLogRefresherImpl(
     }
   }
 
-  private suspend fun runInitialRefresh(): DataPack {
+  private suspend fun runInitialRefresh(): VcsLogGraphData {
     return try {
       loadFirstBlock()
     }
@@ -85,7 +82,7 @@ internal class VcsLogRefresherImpl(
     }
     catch (e: Exception) {
       LOG.info("Failed to load initial data", e)
-      ErrorDataPack(e)
+      VcsLogGraphData.Error(e)
     }
   }
 
@@ -126,10 +123,10 @@ internal class VcsLogRefresherImpl(
     }
   }
 
-  private suspend fun handleRequest(currentDataPack: DataPack, logInfo: LogInfo, request: RefreshRequest): DataPack {
+  private suspend fun handleRequest(currentDataPack: VcsLogGraphData, logInfo: LogInfo, request: RefreshRequest): VcsLogGraphData {
     val rootsToRefresh: Set<VirtualFile>
     val optimize: Boolean
-    val dataPack: DataPack
+    val dataPack: VcsLogGraphData
     when (request) {
       is RefreshRequest.RefreshRoots -> {
         if (request.rootsToRefresh.isEmpty()) {
@@ -144,15 +141,15 @@ internal class VcsLogRefresherImpl(
       RefreshRequest.ReloadAll -> {
         rootsToRefresh = providers.keys
         optimize = false
-        dataPack = DataPack.EMPTY
+        dataPack = VcsLogGraphData.Empty
         logInfo.clear()
       }
     }
 
     LOG.debug("Refreshing roots: $rootsToRefresh")
-    if (optimize && isSmallDataPackEnabled) {
+    if (optimize && VcsLogGraphData.OverlayData.isEnabled) {
       val smallDataPack = loadSmallDataPack()
-      if (smallDataPack !== DataPack.EMPTY) {
+      if (smallDataPack !== VcsLogGraphData.Empty) {
         dataPackUpdateHandler.accept(smallDataPack)
       }
     }
@@ -172,7 +169,7 @@ internal class VcsLogRefresherImpl(
     }
     catch (e: Exception) {
       LOG.info(e)
-      ErrorDataPack(e)
+      VcsLogGraphData.Error(e)
     }
     return newDataPack
   }
@@ -222,7 +219,7 @@ internal class VcsLogRefresherImpl(
     _isBusy.first { !it }
   }
 
-  private suspend fun loadFirstBlock(): DataPack =
+  private suspend fun loadFirstBlock(): VcsLogGraphData =
     tracer.trace(Initializing) {
       LOG.debug("Loading the first block")
       val commitCountRequirements = CommitCountRequirements(recentCommitCount)
@@ -232,12 +229,16 @@ internal class VcsLogRefresherImpl(
       val compoundList = multiRepoJoin(data.getCommits()).take(recentCommitCount)
       LOG.trace("First block joined")
       checkCanceled()
-      DataPack.build(compoundList, data.getRefs(), providers, storage, false).also {
+      VcsLogGraphDataFactory.buildData(compoundList, data.getRefs(), providers, storage, false).also {
         LOG.trace("First block built")
       }
     }
 
-  private suspend fun loadUpdatedDataPack(dataPack: DataPack, loadedInfo: LogInfo, roots: Collection<VirtualFile>): DataPack? =
+  private suspend fun loadUpdatedDataPack(
+    dataPack: VcsLogGraphData,
+    loadedInfo: LogInfo,
+    roots: Collection<VirtualFile>,
+  ): VcsLogGraphData? =
     tracer.trace(Refreshing) {
       LOG.debug("Loading the recent data for roots $roots")
       val permanentGraph = dataPack.permanentGraph
@@ -263,7 +264,7 @@ internal class VcsLogRefresherImpl(
         val joinedFullLog = join(permanentGraph.allCommits.toList(), compoundLog, currentRefs, allNewRefs)
         LOG.trace("Recent log joined")
         if (joinedFullLog != null) {
-          return@trace DataPack.build(joinedFullLog, allNewRefs, providers, storage, true).also {
+          return@trace VcsLogGraphDataFactory.buildData(joinedFullLog, allNewRefs, providers, storage, true).also {
             LOG.trace("Recent log built")
           }
         }
@@ -274,7 +275,7 @@ internal class VcsLogRefresherImpl(
       return@trace null
     }
 
-  private suspend fun loadFullLog(): DataPack =
+  private suspend fun loadFullLog(): VcsLogGraphData =
     tracer.trace(LoadingFullLog) {
       LOG.debug("Loading the full log")
       val logInfo = readFullLogFromVcs()
@@ -283,22 +284,22 @@ internal class VcsLogRefresherImpl(
       val graphCommits = multiRepoJoin(logInfo.getCommits())
       LOG.trace("Full log joined")
       checkCanceled()
-      DataPack.build(graphCommits, logInfo.getRefs(), providers, storage, true).also {
+      VcsLogGraphDataFactory.buildData(graphCommits, logInfo.getRefs(), providers, storage, true).also {
         LOG.trace("Full log built")
       }
     }
 
-  private suspend fun loadSmallDataPack(): DataPack =
+  private suspend fun loadSmallDataPack(): VcsLogGraphData =
     tracer.trace(PartialRefreshing) {
-      LOG.debug("Loading a small datapack for $smallDataPackCommitsCount commits")
+      val commitCount = VcsLogGraphData.OverlayData.commitsCount
+      LOG.debug("Loading a small datapack for $commitCount commits")
       try {
-        val commitCount = smallDataPackCommitsCount
         val requirements = prepareRequirements(providers.keys, commitCount, null)
         val data = loadRecentData(requirements)
         LOG.trace("Small pack loaded")
         val compoundList = multiRepoJoin(data.getCommits()).take(commitCount)
         LOG.trace("Small pack joined")
-        SmallDataPack.build(compoundList, data.getRefs(), providers, storage).also {
+        VcsLogGraphDataFactory.buildOverlayData(compoundList, data.getRefs(), providers, storage).also {
           LOG.trace("Small pack built")
         }
       }
@@ -308,7 +309,7 @@ internal class VcsLogRefresherImpl(
       catch (e: Exception) {
         LOG.info(e)
       }
-      DataPack.EMPTY
+      VcsLogGraphData.Empty
     }
 
   private fun prepareRequirements(roots: Collection<VirtualFile>, commitCount: Int, prevRefs: Map<VirtualFile, VcsLogRefsOfSingleRoot>?) =
@@ -431,12 +432,6 @@ internal class VcsLogRefresherImpl(
       VcsLogMultiRepoJoiner<Int, T>().join(commits)
     }
 }
-
-private val smallDataPackCommitsCount: Int
-  get() = Registry.intValue("vcs.log.small.data.pack.commits.count")
-
-private val isSmallDataPackEnabled: Boolean
-  get() = smallDataPackCommitsCount > 0 && !ApplicationManager.getApplication().isUnitTestMode()
 
 private sealed interface RefreshRequest {
   data class RefreshRoots(

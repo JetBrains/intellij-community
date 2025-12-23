@@ -13,8 +13,8 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogCommitSelection
-import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDiagnostic.getDiffFor
@@ -112,7 +112,7 @@ internal class CheckOldCommits : IndexDiagnosticActionBase(VcsLogBundle.messageP
       return
     }
     e.presentation.isVisible = true
-    e.presentation.isEnabled = logManager.dataManager.dataPack.isFull &&
+    e.presentation.isEnabled = logManager.dataManager.graphData.isFull &&
                                rootsForIndexing.any { logManager.dataManager.index.isIndexed(it) }
   }
 
@@ -121,7 +121,7 @@ internal class CheckOldCommits : IndexDiagnosticActionBase(VcsLogBundle.messageP
       logManager.dataManager.index.isIndexed(it)
     }
     if (indexedRoots.isEmpty()) return emptyList()
-    val dataPack = logManager.dataManager.dataPack
+    val dataPack = logManager.dataManager.graphData
     if (!dataPack.isFull) return emptyList()
 
     return dataPack.pickCommits(logManager.dataManager.storage, indexedRoots, true).toList()

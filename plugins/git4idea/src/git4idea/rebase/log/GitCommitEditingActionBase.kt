@@ -69,7 +69,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       val project = commitEditingData.project
       val root = commitEditingData.repository.root
       val logData = commitEditingData.logData
-      val dataPack = logData.dataPack
+      val dataPack = logData.graphData
       val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<VcsLogCommitStorageIndex>
       val commitsInfo = permanentGraph.permanentCommitsInfo
       val commitIndices = commitEditingData.selection.ids
@@ -191,7 +191,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
 
   private fun checkIsHeadBranch(commitEditingData: T): @Nls String? {
     val repository = commitEditingData.repository
-    if (VcsLogUtil.findBranch(commitEditingData.logData.dataPack.refsModel, repository.root, GitUtil.HEAD) == null) {
+    if (VcsLogUtil.findBranch(commitEditingData.logData.graphData.refsModel, repository.root, GitUtil.HEAD) == null) {
       return GitBundle.message("rebase.log.multiple.commit.editing.action.cant.find.head", commitEditingData.selection.size)
     }
     return null

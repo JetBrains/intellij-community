@@ -363,7 +363,7 @@ internal class CleanupBranchesDialog(private val project: Project) : DialogWrapp
           val tasks = rows.map { row ->
             completion.submit(Callable {
               indicator.checkCanceled()
-              val comparator = DeepComparator(project, dataProvider, dataProvider.dataPack, reposWithTarget, row.branch.name)
+              val comparator = DeepComparator(project, dataProvider, dataProvider.graphData, reposWithTarget, row.branch.name)
               val result = comparator.compare()
               indicator.checkCanceled()
               val merged = result.exception == null && result.nonPickedCommits.isEmpty()

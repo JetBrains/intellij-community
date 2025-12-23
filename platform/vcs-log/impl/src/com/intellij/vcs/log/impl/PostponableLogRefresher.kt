@@ -6,9 +6,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogGraphData
 import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<PostponableLogRefresher>()
@@ -78,7 +78,7 @@ class PostponableLogRefresher internal constructor(private val logData: VcsLogDa
   }
 
   interface Refresher {
-    fun setDataPack(dataPack: DataPack)
+    fun setDataPack(dataPack: VcsLogGraphData)
     fun validate(refresh: Boolean)
   }
 }

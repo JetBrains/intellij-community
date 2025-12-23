@@ -27,7 +27,7 @@ internal class IndexDiagnosticRunner(
   private val index: VcsLogModifiableIndex,
   private val storage: VcsLogStorage,
   private val roots: Collection<VirtualFile>,
-  private val dataPackGetter: () -> DataPack,
+  private val dataPackGetter: () -> VcsLogGraphData,
   private val commitDetailsGetter: CommitDetailsGetter,
   private val errorHandler: VcsLogErrorHandler,
   vcsLogData: VcsLogData,

@@ -14,11 +14,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
-import com.intellij.vcs.log.data.CommitIdByStringCondition
-import com.intellij.vcs.log.data.DataPack.ErrorDataPack
-import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.data.VcsLogStorage
-import com.intellij.vcs.log.data.roots
+import com.intellij.vcs.log.data.*
 import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder
@@ -205,7 +201,7 @@ object VcsLogNavigationUtil {
   fun VcsLogUiEx.jumpToCommit(commitIndex: VcsLogCommitStorageIndex, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
     val future = SettableFuture.create<JumpResult>()
     jumpTo(commitIndex, { visiblePack, id ->
-      if (visiblePack.dataPack is ErrorDataPack) return@jumpTo VcsLogUiEx.COMMIT_NOT_FOUND
+      if (visiblePack.dataPack is VcsLogGraphData.Empty) return@jumpTo VcsLogUiEx.COMMIT_NOT_FOUND
       if (visiblePack is ErrorVisiblePack) return@jumpTo VcsLogUiEx.COMMIT_DOES_NOT_MATCH
       visiblePack.getCommitRow(id)
     }, future, silently, focus)
@@ -251,7 +247,7 @@ object VcsLogNavigationUtil {
   }
 
   private fun getCommitRow(storage: VcsLogStorage, visiblePack: VisiblePack, hash: Hash, root: VirtualFile): VcsLogVisibleGraphIndex {
-    if (visiblePack.dataPack is ErrorDataPack) return VcsLogUiEx.COMMIT_NOT_FOUND
+    if (visiblePack.dataPack is VcsLogGraphData.Error) return VcsLogUiEx.COMMIT_NOT_FOUND
     if (visiblePack is ErrorVisiblePack) return VcsLogUiEx.COMMIT_DOES_NOT_MATCH
 
     return visiblePack.getCommitRow(storage.getCommitIndex(hash, root))

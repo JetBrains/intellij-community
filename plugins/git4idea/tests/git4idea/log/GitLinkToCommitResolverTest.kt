@@ -102,7 +102,7 @@ class GitLinkToCommitResolverTest : GitSingleRepoTest() {
 
   private fun refreshVisibleGraph() {
     logData.refreshAndWait(repo, false)
-    val dataPack = logData.dataPack
+    val dataPack = logData.graphData
 
     val visibleGraph = dataPack.permanentGraph.createVisibleGraph(PermanentGraph.Options.Default, null, null)
     visiblePack = VisiblePack(dataPack, visibleGraph, false, VcsLogFilterObject.collection())

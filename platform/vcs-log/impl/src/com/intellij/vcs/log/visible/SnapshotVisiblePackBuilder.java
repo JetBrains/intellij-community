@@ -34,14 +34,16 @@ final class SnapshotVisiblePackBuilder {
   }
 
   public @NotNull VisiblePack build(@NotNull VisiblePack visiblePack) {
-    DataPackBase dataPack = visiblePack.getDataPack();
-    if (dataPack instanceof DataPack.ErrorDataPack) {
+    VcsLogGraphData dataPack = visiblePack.getDataPack();
+    if (dataPack instanceof VcsLogGraphData.Error) {
       return visiblePack;
     }
 
     if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0 || !(visiblePack.getVisibleGraph() instanceof VisibleGraphImpl)) {
-      DataPackBase newDataPack = new DataPackBase(dataPack.getLogProviders(),
-                                                  RefsModel.createEmptyInstance(myStorage), false);
+      VcsLogGraphData newDataPack = VcsLogGraphDataFactory.buildData(RefsModel.createEmptyInstance(myStorage),
+                                                                     EmptyPermanentGraph.getInstance(),
+                                                                     dataPack.getLogProviders(),
+                                                                     false);
       if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
         return new VisiblePack.ErrorVisiblePack(newDataPack, visiblePack.getFilters(),
                                                 ((VisiblePack.ErrorVisiblePack)visiblePack).getError());
@@ -53,7 +55,7 @@ final class SnapshotVisiblePackBuilder {
                  visiblePack.getAdditionalData());
   }
 
-  private @NotNull VisiblePack build(@NotNull DataPackBase oldPack,
+  private @NotNull VisiblePack build(@NotNull VcsLogGraphData oldPack,
                                      @NotNull VisibleGraphImpl<Integer> oldGraph,
                                      @NotNull VcsLogFilterCollection filters,
                                      @NotNull Map<Key<?>, Object> data) {
@@ -64,7 +66,8 @@ final class SnapshotVisiblePackBuilder {
                                                integer -> info.getPermanentCommitsInfo().getCommitId(integer));
 
     VcsLogRefs newRefsModel = createRefsModel(oldPack.getRefsModel(), heads, oldGraph, oldPack.getLogProviders(), visibleRow, visibleRange);
-    DataPackBase newPack = new DataPackBase(oldPack.getLogProviders(), newRefsModel, false);
+    VcsLogGraphData newPack =
+      VcsLogGraphDataFactory.buildData(newRefsModel, EmptyPermanentGraph.getInstance(), oldPack.getLogProviders(), false);
     GraphColorGetter colorGetter = new GraphColorGetterByHeadFactory<>(new GraphColorManagerImpl(newRefsModel)).createColorGetter(info);
 
     VisibleGraph<Integer> newGraph = new VisibleGraphImpl<>(new CollapsedController(new BaseController(info), info, null),

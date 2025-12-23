@@ -17,8 +17,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefsKt;
-import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogGraphData;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -54,7 +54,7 @@ public @NonNls class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
 
     VcsLogData logData = projectLog.getDataManager();
     if (logData != null) {
-      DataPack dataPack = logData.getDataPack();
+      VcsLogGraphData dataPack = logData.getGraphData();
       if (dataPack.isFull()) {
         int commitCount = dataPack.getPermanentGraph().getAllCommits().size();
         int branchesCount = VcsLogRefsKt.getBranches(dataPack.getRefsModel()).size();

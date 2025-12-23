@@ -279,8 +279,8 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
 
   private fun VcsLogData.findFirstCommitInBranch(branchName: String): Hash? {
     val root = roots.single()
-    val mainCommitHash = dataPack.findBranch("main", root)?.commitHash
-    val lastCommitHash = dataPack.findBranch(branchName, root)?.commitHash
+    val mainCommitHash = graphData.findBranch("main", root)?.commitHash
+    val lastCommitHash = graphData.findBranch(branchName, root)?.commitHash
     return if (mainCommitHash != null && lastCommitHash != null) {
       var metadata = getCommitMetadata(lastCommitHash)
       while (metadata.parents.single() != mainCommitHash) {

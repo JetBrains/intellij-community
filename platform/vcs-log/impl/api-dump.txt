@@ -89,24 +89,12 @@ com.intellij.vcs.log.data.DataGetter
 - com.intellij.vcs.log.VcsLogCommitDataCache
 - a:loadCommitsData(java.util.List,com.intellij.util.Consumer,com.intellij.util.Consumer,com.intellij.openapi.progress.ProgressIndicator):V
 c:com.intellij.vcs.log.data.DataPack
-- com.intellij.vcs.log.data.DataPackBase
-- sf:Companion:com.intellij.vcs.log.data.DataPack$Companion
-- sf:EMPTY:com.intellij.vcs.log.data.DataPack
-- sf:build(java.util.List,java.util.Map,java.util.Map,com.intellij.vcs.log.data.VcsLogStorage,Z):com.intellij.vcs.log.data.DataPack
-- f:getPermanentGraph():com.intellij.vcs.log.graph.PermanentGraph
-f:com.intellij.vcs.log.data.DataPack$Companion
-- f:build(java.util.List,java.util.Map,java.util.Map,com.intellij.vcs.log.data.VcsLogStorage,Z):com.intellij.vcs.log.data.DataPack
-f:com.intellij.vcs.log.data.DataPack$ErrorDataPack
-- com.intellij.vcs.log.data.DataPack
-- <init>(java.lang.Throwable):V
-- f:getError():java.lang.Throwable
-c:com.intellij.vcs.log.data.DataPackBase
-- <init>(java.util.Map,com.intellij.vcs.log.VcsLogRefs,Z):V
 - f:getLogProviders():java.util.Map
+- f:getPermanentGraph():com.intellij.vcs.log.graph.PermanentGraph
 - f:getRefsModel():com.intellij.vcs.log.VcsLogRefs
 - f:isFull():Z
 com.intellij.vcs.log.data.DataPackChangeListener
-- a:onDataPackChange(com.intellij.vcs.log.data.DataPack):V
+- a:onDataPackChange(com.intellij.vcs.log.data.VcsLogGraphData):V
 c:com.intellij.vcs.log.data.EmptyIndex
 - com.intellij.vcs.log.data.index.VcsLogIndex
 - <init>():V
@@ -158,12 +146,6 @@ c:com.intellij.vcs.log.data.SingleTaskController$SingleTaskImpl
 - cancel():V
 - isRunning():Z
 - waitFor(J,java.util.concurrent.TimeUnit):V
-f:com.intellij.vcs.log.data.SmallDataPack
-- com.intellij.vcs.log.data.DataPack
-- sf:Companion:com.intellij.vcs.log.data.SmallDataPack$Companion
-- sf:build(java.util.List,java.util.Map,java.util.Map,com.intellij.vcs.log.data.VcsLogStorage):com.intellij.vcs.log.data.DataPack
-f:com.intellij.vcs.log.data.SmallDataPack$Companion
-- f:build(java.util.List,java.util.Map,java.util.Map,com.intellij.vcs.log.data.VcsLogStorage):com.intellij.vcs.log.data.DataPack
 c:com.intellij.vcs.log.data.TopCommitsCache
 - <init>(com.intellij.vcs.log.data.VcsLogStorage):V
 - clear():V
@@ -183,6 +165,7 @@ f:com.intellij.vcs.log.data.VcsLogData
 - f:getCurrentUser():java.util.Map
 - f:getDataPack():com.intellij.vcs.log.data.DataPack
 - getFullCommitDetailsCache():com.intellij.vcs.log.VcsLogCommitDataCache
+- f:getGraphData():com.intellij.vcs.log.data.VcsLogGraphData
 - f:getIndex():com.intellij.vcs.log.data.index.VcsLogIndex
 - sf:getIndexingRegistryValue():com.intellij.openapi.util.registry.RegistryValue
 - f:getLogProviders():java.util.Map
@@ -207,6 +190,28 @@ f:com.intellij.vcs.log.data.VcsLogData$Companion
 f:com.intellij.vcs.log.data.VcsLogDataKt
 - sf:getLogProvider(com.intellij.vcs.log.data.VcsLogData,com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsLogProvider
 - sf:getRoots(com.intellij.vcs.log.data.VcsLogData):java.util.Collection
+com.intellij.vcs.log.data.VcsLogGraphData
+- a:getLogProviders():java.util.Map
+- a:getPermanentGraph():com.intellij.vcs.log.graph.PermanentGraph
+- a:getRefsModel():com.intellij.vcs.log.VcsLogRefs
+- a:isFull():Z
+f:com.intellij.vcs.log.data.VcsLogGraphData$Empty
+- com.intellij.vcs.log.data.VcsLogGraphData
+- sf:INSTANCE:com.intellij.vcs.log.data.VcsLogGraphData$Empty
+- getLogProviders():java.util.Map
+- getPermanentGraph():com.intellij.vcs.log.graph.PermanentGraph
+- getRefsModel():com.intellij.vcs.log.VcsLogRefs
+- isFull():Z
+f:com.intellij.vcs.log.data.VcsLogGraphData$Error
+- com.intellij.vcs.log.data.VcsLogGraphData
+- <init>(java.lang.Throwable):V
+- f:getError():java.lang.Throwable
+- getLogProviders():java.util.Map
+- getPermanentGraph():com.intellij.vcs.log.graph.PermanentGraph
+- getRefsModel():com.intellij.vcs.log.VcsLogRefs
+- isFull():Z
+com.intellij.vcs.log.data.VcsLogGraphData$OverlayData
+- com.intellij.vcs.log.data.VcsLogGraphData
 f:com.intellij.vcs.log.data.VcsLogSorter
 - <init>():V
 - s:sortByDateTopoOrder(java.util.Collection):java.util.List
@@ -1111,12 +1116,12 @@ a:com.intellij.vcs.log.ui.table.column.util.VcsLogExternalStatusColumnService
 - f:initialize(com.intellij.vcs.log.ui.table.VcsLogGraphTable,com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn):V
 f:com.intellij.vcs.log.ui.table.column.util.VcsLogExternalStatusColumnService$Companion
 f:com.intellij.vcs.log.util.DataPackUtilKt
-- sf:containsAll(com.intellij.vcs.log.data.DataPack,java.util.Collection,com.intellij.vcs.log.data.VcsLogStorage):Z
-- sf:exclusiveCommits(com.intellij.vcs.log.data.DataPack,com.intellij.vcs.log.VcsRef,com.intellij.vcs.log.VcsLogRefs,com.intellij.vcs.log.data.VcsLogStorage):it.unimi.dsi.fastutil.ints.IntSet
+- sf:containsAll(com.intellij.vcs.log.data.VcsLogGraphData,java.util.Collection,com.intellij.vcs.log.data.VcsLogStorage):Z
+- sf:exclusiveCommits(com.intellij.vcs.log.data.VcsLogGraphData,com.intellij.vcs.log.VcsRef,com.intellij.vcs.log.VcsLogRefs,com.intellij.vcs.log.data.VcsLogStorage):it.unimi.dsi.fastutil.ints.IntSet
 - sf:findBranch(com.intellij.vcs.log.VcsLogRefs,java.lang.String,com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsRef
-- sf:findBranch(com.intellij.vcs.log.data.DataPack,java.lang.String,com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsRef
-- sf:subgraphDifference(com.intellij.vcs.log.data.DataPack,I,I):it.unimi.dsi.fastutil.ints.IntSet
-- sf:subgraphDifference(com.intellij.vcs.log.data.DataPack,com.intellij.vcs.log.VcsRef,com.intellij.vcs.log.VcsRef,com.intellij.vcs.log.data.VcsLogStorage):it.unimi.dsi.fastutil.ints.IntSet
+- sf:findBranch(com.intellij.vcs.log.data.VcsLogGraphData,java.lang.String,com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsRef
+- sf:subgraphDifference(com.intellij.vcs.log.data.VcsLogGraphData,I,I):it.unimi.dsi.fastutil.ints.IntSet
+- sf:subgraphDifference(com.intellij.vcs.log.data.VcsLogGraphData,com.intellij.vcs.log.VcsRef,com.intellij.vcs.log.VcsRef,com.intellij.vcs.log.data.VcsLogStorage):it.unimi.dsi.fastutil.ints.IntSet
 f:com.intellij.vcs.log.util.IntCollectionUtil
 - <init>():V
 - s:add(java.util.Map,java.lang.Object,I):V
@@ -1225,13 +1230,13 @@ f:com.intellij.vcs.log.visible.CommitCountStageKt
 f:com.intellij.vcs.log.visible.VcsLogFilterUtilKt
 com.intellij.vcs.log.visible.VcsLogFilterer
 - canFilterEmptyPack(com.intellij.vcs.log.VcsLogFilterCollection):Z
-- a:filter(com.intellij.vcs.log.data.DataPack,com.intellij.vcs.log.visible.VisiblePack,com.intellij.vcs.log.graph.PermanentGraph$Options,com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.visible.CommitCountStage):kotlin.Pair
+- a:filter(com.intellij.vcs.log.data.VcsLogGraphData,com.intellij.vcs.log.visible.VisiblePack,com.intellij.vcs.log.graph.PermanentGraph$Options,com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.visible.CommitCountStage):kotlin.Pair
 - getInitialCommitCount():com.intellij.vcs.log.visible.CommitCountStage
 f:com.intellij.vcs.log.visible.VcsLogFiltererImpl
 - com.intellij.vcs.log.visible.VcsLogFilterer
 - <init>(com.intellij.vcs.log.data.VcsLogData):V
 - <init>(java.util.Map,com.intellij.vcs.log.data.VcsLogStorage,com.intellij.vcs.log.data.TopCommitsCache,com.intellij.vcs.log.VcsLogCommitDataCache,com.intellij.vcs.log.data.index.VcsLogIndex):V
-- filter(com.intellij.vcs.log.data.DataPack,com.intellij.vcs.log.visible.VisiblePack,com.intellij.vcs.log.graph.PermanentGraph$Options,com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.visible.CommitCountStage):kotlin.Pair
+- filter(com.intellij.vcs.log.data.VcsLogGraphData,com.intellij.vcs.log.visible.VisiblePack,com.intellij.vcs.log.graph.PermanentGraph$Options,com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.visible.CommitCountStage):kotlin.Pair
 - f:getMatchingHeads(com.intellij.vcs.log.VcsLogRefs,java.util.Collection,com.intellij.vcs.log.VcsLogFilterCollection):java.util.Set
 c:com.intellij.vcs.log.visible.VisiblePack
 - com.intellij.openapi.util.UserDataHolder
@@ -1239,12 +1244,12 @@ c:com.intellij.vcs.log.visible.VisiblePack
 - sf:Companion:com.intellij.vcs.log.visible.VisiblePack$Companion
 - sf:EMPTY:com.intellij.vcs.log.visible.VisiblePack
 - sf:NO_GRAPH_INFORMATION:com.intellij.openapi.util.Key
-- <init>(com.intellij.vcs.log.data.DataPackBase,com.intellij.vcs.log.graph.VisibleGraph,Z,com.intellij.vcs.log.VcsLogFilterCollection):V
-- <init>(com.intellij.vcs.log.data.DataPackBase,com.intellij.vcs.log.graph.VisibleGraph,Z,com.intellij.vcs.log.VcsLogFilterCollection,java.util.Map):V
-- b:<init>(com.intellij.vcs.log.data.DataPackBase,com.intellij.vcs.log.graph.VisibleGraph,Z,com.intellij.vcs.log.VcsLogFilterCollection,java.util.Map,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.vcs.log.data.VcsLogGraphData,com.intellij.vcs.log.graph.VisibleGraph,Z,com.intellij.vcs.log.VcsLogFilterCollection):V
+- <init>(com.intellij.vcs.log.data.VcsLogGraphData,com.intellij.vcs.log.graph.VisibleGraph,Z,com.intellij.vcs.log.VcsLogFilterCollection,java.util.Map):V
+- b:<init>(com.intellij.vcs.log.data.VcsLogGraphData,com.intellij.vcs.log.graph.VisibleGraph,Z,com.intellij.vcs.log.VcsLogFilterCollection,java.util.Map,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getAdditionalData():java.util.Map
 - f:getCanRequestMore():Z
-- f:getDataPack():com.intellij.vcs.log.data.DataPackBase
+- f:getDataPack():com.intellij.vcs.log.data.VcsLogGraphData
 - getFilters():com.intellij.vcs.log.VcsLogFilterCollection
 - getLogProviders():java.util.Map
 - getRefs():com.intellij.vcs.log.VcsLogRefs
@@ -1257,7 +1262,7 @@ c:com.intellij.vcs.log.visible.VisiblePack
 f:com.intellij.vcs.log.visible.VisiblePack$Companion
 f:com.intellij.vcs.log.visible.VisiblePack$ErrorVisiblePack
 - com.intellij.vcs.log.visible.VisiblePack
-- <init>(com.intellij.vcs.log.data.DataPackBase,com.intellij.vcs.log.VcsLogFilterCollection,java.lang.Throwable):V
+- <init>(com.intellij.vcs.log.data.VcsLogGraphData,com.intellij.vcs.log.VcsLogFilterCollection,java.lang.Throwable):V
 - f:getError():java.lang.Throwable
 com.intellij.vcs.log.visible.VisiblePackChangeListener
 - a:onVisiblePackChange(com.intellij.vcs.log.visible.VisiblePack):V
@@ -1270,7 +1275,7 @@ com.intellij.vcs.log.visible.VisiblePackRefresher
 - a:onGraphOptionsChange(com.intellij.vcs.log.graph.PermanentGraph$Options):V
 - a:onRefresh():V
 - a:removeVisiblePackChangeListener(com.intellij.vcs.log.visible.VisiblePackChangeListener):V
-- a:setDataPack(Z,com.intellij.vcs.log.data.DataPack):V
+- a:setDataPack(Z,com.intellij.vcs.log.data.VcsLogGraphData):V
 - a:setValid(Z,Z):V
 c:com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 - com.intellij.openapi.Disposable
@@ -1284,7 +1289,7 @@ c:com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 - onGraphOptionsChange(com.intellij.vcs.log.graph.PermanentGraph$Options):V
 - onRefresh():V
 - removeVisiblePackChangeListener(com.intellij.vcs.log.visible.VisiblePackChangeListener):V
-- setDataPack(Z,com.intellij.vcs.log.data.DataPack):V
+- setDataPack(Z,com.intellij.vcs.log.data.VcsLogGraphData):V
 - setValid(Z,Z):V
 f:com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 - sf:EMPTY_COLLECTION:com.intellij.vcs.log.VcsLogFilterCollection

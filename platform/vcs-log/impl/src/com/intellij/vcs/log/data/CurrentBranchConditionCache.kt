@@ -44,8 +44,8 @@ class CurrentBranchConditionCache(private val logData: VcsLogData, parent: Dispo
   }
 
   private fun doGetContainedInCurrentBranchCondition(root: VirtualFile): Predicate<Int> {
-    val dataPack = logData.dataPack
-    if (dataPack === DataPack.EMPTY) return Predicates.alwaysFalse()
+    val dataPack = logData.graphData
+    if (dataPack === VcsLogGraphData.Empty) return Predicates.alwaysFalse()
 
     try {
       val branchName = logData.getLogProvider(root).getCurrentBranch(root) ?: return Predicates.alwaysFalse()

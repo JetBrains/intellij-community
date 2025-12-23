@@ -13,8 +13,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogBundle;
-import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogGraphData;
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -151,11 +151,11 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
     else if (VcsLogUtil.canRequestMore(myVisiblePack)) {
       VcsLogUtil.requestToLoadMore(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
     }
-    else if (myLogData.getDataPack() != myVisiblePack.getDataPack() ||
+    else if (myLogData.getGraphData() != myVisiblePack.getDataPack() ||
              (myVisiblePack.getCanRequestMore() && VcsLogUtil.isMoreRequested(myVisiblePack))) {
       VcsLogUtil.invokeOnChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
     }
-    else if (myVisiblePack.getDataPack() instanceof DataPack.ErrorDataPack ||
+    else if (myVisiblePack.getDataPack() instanceof VcsLogGraphData.Error ||
              myVisiblePack instanceof VisiblePack.ErrorVisiblePack) {
       future.set(JumpResult.fromInt(result));
     }
