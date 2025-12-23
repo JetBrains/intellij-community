@@ -354,7 +354,7 @@ class NotebookCellInlayManager private constructor(
       return CELL_INLAY_MANAGER_KEY.get(editor)
     }
 
-    val FOLDING_MARKER_KEY: Key<Boolean> = Key<Boolean>("jupyter.folding.paragraph")
+    val FOLDING_MARKER_KEY: Key<Boolean> = Key("jupyter.folding.paragraph")
     private val CELL_INLAY_MANAGER_KEY = Key.create<NotebookCellInlayManager>(NotebookCellInlayManager::class.java.name)
   }
 
@@ -381,10 +381,16 @@ class NotebookCellInlayManager private constructor(
             change.subsequentPointers.forEach {
               addCell(it.pointer)
             }
+
             //After insert, we need fix ranges of previous cell
             change.subsequentPointers.forEach {
-              val prevCell = getCellOrNull(it.interval.ordinal - 1)
-              prevCell?.checkAndRebuildInlays()
+              getCellOrNull(it.interval.ordinal - 1)?.checkAndRebuildInlays()
+            }
+
+            // When we are inserting a new 'first cell', we need to update AboveCellDelimiterPanel
+            // for the old 'first' cell.
+            if (change.ordinals.contains(0)) {
+              getCellOrNull(change.ordinals.last + 1)?.checkAndRebuildInlays()
             }
           }
           is NotebookIntervalPointersEvent.OnRemoved -> {
