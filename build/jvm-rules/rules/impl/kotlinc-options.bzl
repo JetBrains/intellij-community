@@ -267,6 +267,17 @@ _KOPTS = {
             True: ["-Xno-param-assertions"],
         },
     ),
+    "progressive": struct(
+        flag = "-progressive",
+        args = dict(
+            default = False,
+            doc = "Enable the progressive mode for the compiler",
+        ),
+        type = attr.bool,
+        value_to_flag = {
+            True: ["-progressive"],
+        },
+    ),
     "x_sam_conversions": struct(
         flag = "-Xsam-conversions",
         args = dict(

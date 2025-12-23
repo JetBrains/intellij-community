@@ -21,6 +21,7 @@ public enum CLFlags {
   PLUGIN_ID,
   PLUGIN_CLASSPATH,
   PLUGIN_OPTIONS,
+  PROGRESSIVE,
 
   OUT,
   ABI_OUT,

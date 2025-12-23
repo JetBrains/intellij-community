@@ -385,6 +385,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
     if (languageVersion != null) {
       arguments.setLanguageVersion(languageVersion);
     }
+    arguments.setProgressiveMode(CLFlags.PROGRESSIVE.isFlagSet(flags));
     String explicitApiMode = CLFlags.X_EXPLICIT_API_MODE.getOptionalScalarValue(flags);
     if (explicitApiMode != null) {
       arguments.setExplicitApi(explicitApiMode);
