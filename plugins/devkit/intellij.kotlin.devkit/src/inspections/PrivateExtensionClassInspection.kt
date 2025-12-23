@@ -7,6 +7,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex
 import org.jetbrains.idea.devkit.inspections.ExtensionUtil
 import org.jetbrains.idea.devkit.inspections.ExtensionUtil.isExtensionPointImplementationCandidate
 import org.jetbrains.idea.devkit.inspections.isServiceImplementationRegisteredInPluginXml
@@ -26,9 +27,12 @@ internal class PrivateExtensionClassInspection : LocalInspectionTool() {
     return object : KtVisitorVoid() {
       override fun visitClass(klass: KtClass) {
         if (!klass.isPrivate()) return
-
         val ktLightClass = klass.toLightClass() ?: return
-        if (isExtensionOrAction(ktLightClass)
+
+        if (!isExtensionPointImplementationCandidate(ktLightClass)) return
+
+        if (isExtension(ktLightClass)
+            || isRegisteredAction(ktLightClass)
             || isServiceImplementationRegisteredInPluginXml(ktLightClass)) {
           holder.registerProblem(klass.modifierList ?: klass, DevKitKotlinBundle.message("inspection.private.extension.class.text"),
                                  InternalVisibilityFix())
@@ -39,11 +43,13 @@ internal class PrivateExtensionClassInspection : LocalInspectionTool() {
     }
   }
 
-  private fun isExtensionOrAction(psiClass: PsiClass): Boolean {
-    if (!isExtensionPointImplementationCandidate(psiClass)) return false
-
+  private fun isExtension(psiClass: PsiClass): Boolean {
     return ExtensionUtil.isInstantiatedExtension(psiClass) { ExtensionUtil.hasServiceBeanFqn(it) }
-           || InheritanceUtil.isInheritor(psiClass, "com.intellij.openapi.actionSystem.AnAction")
+  }
+
+  private fun isRegisteredAction(psiClass: PsiClass): Boolean {
+    return InheritanceUtil.isInheritor(psiClass, "com.intellij.openapi.actionSystem.AnAction")
+           && IdeaPluginRegistrationIndex.isRegisteredActionOrGroup(psiClass, psiClass.resolveScope)
   }
 
   private class InternalVisibilityFix : LocalQuickFix {

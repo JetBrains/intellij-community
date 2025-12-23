@@ -7,3 +7,5 @@ import com.intellij.openapi.actionSystem.*
 class MyPublicActionImpl : AnAction() {
 
 }
+
+private class MyLocallyDeclaredActionImpl : AnAction() { }
