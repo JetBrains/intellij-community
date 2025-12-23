@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.cli.extensionsStorage
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
+import org.jetbrains.kotlin.compiler.plugin.registerInProject
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.doNotClearBindingContext
 import org.jetbrains.kotlin.config.languageVersionSettings
@@ -72,11 +73,13 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         val fragmentCompilerBackend = IRFragmentCompilerCodegen()
 
+        @OptIn(ExperimentalCompilerApi::class)
+        val extensionStorage = CompilerPluginRegistrar.ExtensionStorage()
         val compilerConfiguration = CompilerConfiguration().apply {
             languageVersionSettings = codeFragment.languageVersionSettings
             doNotClearBindingContext = true
             @OptIn(ExperimentalCompilerApi::class)
-            extensionsStorage = CompilerPluginRegistrar.ExtensionStorage()
+            extensionsStorage = extensionStorage
         }
 
         val parameterInfo = fragmentCompilerBackend.computeFragmentParameters(executionContext, codeFragment, bindingContext)
@@ -96,7 +99,11 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         try {
             if (filesToCompile.any { it.isScript() }) {
-                IrGenerationExtension.registerExtension(project, ScriptLoweringExtension())
+                @OptIn(ExperimentalCompilerApi::class)
+                with(extensionStorage) {
+                    IrGenerationExtension.registerExtension(ScriptLoweringExtension())
+                    registerInProject(project)
+                }
             }
 
             codegenFactory.convertAndGenerate(filesToCompile, generationState, bindingContext)
