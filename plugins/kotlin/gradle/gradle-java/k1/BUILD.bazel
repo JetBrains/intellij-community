@@ -81,7 +81,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//libraries/guava",
     "@lib//:junit4",
-    "@lib//:kotlin-test",
+    "//libraries/kotlin/test:libraries-kotlinTest",
     "//plugins/kotlin/plugin/k1",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",

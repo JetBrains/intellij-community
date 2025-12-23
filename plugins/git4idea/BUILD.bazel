@@ -169,7 +169,7 @@ jvm_library(
     "//platform/built-in-server:builtInServer-impl",
     "//platform/built-in-server-api:builtInServer",
     "//libraries/mockito",
-    "@lib//:kotlin-test",
+    "//libraries/kotlin/test:libraries-kotlinTest",
     "//platform/vcs-tests:vcs-tests_test_lib",
     "//platform/util",
     "@lib//:cucumber-testing",

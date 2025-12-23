@@ -95,7 +95,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-test",
+    "//libraries/kotlin/test:libraries-kotlinTest",
     "//platform/vcs-tests:vcs-testFramework",
     "//platform/util",
     "@lib//:assert_j",

@@ -1,0 +1,16 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<!-- Source: see moduleSet("libraries.testFrameworks") function in CommunityModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <module name="intellij.libraries.assertj.core"/>
+    <module name="intellij.libraries.hamcrest"/>
+    <module name="intellij.libraries.junit4"/>
+    <module name="intellij.libraries.kotlinTest"/>
+    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.junit5.jupiter"/>
+    <module name="intellij.libraries.junit5.launcher"/>
+    <module name="intellij.libraries.junit5.vintage"/>
+  </content>
+</idea-plugin>

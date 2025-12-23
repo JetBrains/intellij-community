@@ -15,7 +15,7 @@ jvm_library(
   resources = [":testFramework_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-test",
+    "//libraries/kotlin/test:libraries-kotlinTest",
     "//libraries/stream",
     "//plugins/stream-debugger-core:debugger-streams-core",
     "//platform/core-api:core",

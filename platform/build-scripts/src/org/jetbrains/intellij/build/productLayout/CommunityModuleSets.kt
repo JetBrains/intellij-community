@@ -332,6 +332,40 @@ object CommunityModuleSets {
   }
 
   /**
+   * Test framework libraries (JUnit 4, JUnit 5, Hamcrest).
+   * Standalone module set for test dependencies.
+   */
+  @Suppress("unused")
+  fun librariesTestFrameworks(): ModuleSet = moduleSet("libraries.testFrameworks") {
+    module("intellij.libraries.assertj.core")
+
+    module("intellij.libraries.hamcrest")
+
+    module("intellij.libraries.junit4")
+    module("intellij.libraries.kotlinTest")
+
+    module("intellij.libraries.junit5")
+    module("intellij.libraries.junit5.jupiter")
+    module("intellij.libraries.junit5.launcher")
+    module("intellij.libraries.junit5.vintage")
+  }
+
+  /**
+   * Platform test framework modules (Java test framework, JUnit 5 support, IDE starter).
+   * Standalone module set for platform test dependencies.
+   */
+  @Suppress("unused")
+  fun platformTestFrameworks(): ModuleSet = moduleSet("platform.testFrameworks") {
+    module("intellij.java.testFramework")
+    module("intellij.java.testFramework.backend")
+    module("intellij.java.testFramework.shared")
+    module("intellij.platform.testFramework.junit5")
+    module("intellij.platform.testFramework.junit5.codeInsight")
+    module("intellij.tools.ide.starter")
+    module("intellij.tools.ide.util.common")
+  }
+
+  /**
    * Remote development common modules.
    */
   fun rdCommon(): ModuleSet = moduleSet("rd.common") {

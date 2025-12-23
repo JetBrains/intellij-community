@@ -41,7 +41,7 @@ jvm_library(
     "//libraries/guava",
     "//libraries/fastutil",
     "@lib//:assert_j",
-    "@lib//:kotlin-test",
+    "//libraries/kotlin/test:libraries-kotlinTest",
   ],
   exports = [
     "//platform/util",

@@ -44,7 +44,7 @@ jvm_library(
     "//platform/ml-logs",
     "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
-    "@lib//:kotlin-test",
+    "//libraries/kotlin/test:libraries-kotlinTest",
     "@lib//:junit5",
     "//platform/core-impl",
   ]
