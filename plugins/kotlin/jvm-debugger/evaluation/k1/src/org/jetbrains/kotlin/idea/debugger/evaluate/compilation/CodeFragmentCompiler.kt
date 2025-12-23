@@ -5,7 +5,10 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
+import org.jetbrains.kotlin.cli.extensionsStorage
 import org.jetbrains.kotlin.codegen.state.GenerationState
+import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.doNotClearBindingContext
 import org.jetbrains.kotlin.config.languageVersionSettings
@@ -72,6 +75,8 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         val compilerConfiguration = CompilerConfiguration().apply {
             languageVersionSettings = codeFragment.languageVersionSettings
             doNotClearBindingContext = true
+            @OptIn(ExperimentalCompilerApi::class)
+            extensionsStorage = CompilerPluginRegistrar.ExtensionStorage()
         }
 
         val parameterInfo = fragmentCompilerBackend.computeFragmentParameters(executionContext, codeFragment, bindingContext)

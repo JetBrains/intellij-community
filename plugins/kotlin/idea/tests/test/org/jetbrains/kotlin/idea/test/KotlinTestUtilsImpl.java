@@ -12,15 +12,14 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector;
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
 import org.jetbrains.kotlin.cli.jvm.config.JvmContentRootsKt;
+import org.jetbrains.kotlin.cli.pipeline.AbstractConfigurationPhaseKt;
 import org.jetbrains.kotlin.config.CommonConfigurationKeys;
 import org.jetbrains.kotlin.config.CompilerConfiguration;
 import org.jetbrains.kotlin.config.JVMConfigurationKeys;
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts;
 import org.jetbrains.kotlin.test.TestJdkKind;
-import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 import static org.jetbrains.kotlin.idea.test.KotlinTestUtils.getCurrentProcessJdkHome;
@@ -110,6 +109,7 @@ public final class KotlinTestUtilsImpl {
         );
 
         setupIdeaStandaloneExecution();
+        AbstractConfigurationPhaseKt.registerExtensionStorage(configuration);
 
         return configuration;
     }
