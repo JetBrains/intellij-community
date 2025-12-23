@@ -23,7 +23,6 @@ import com.intellij.build.events.impl.SkippedResultImpl;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -480,6 +479,7 @@ public final class BuildTreeConsoleView
     runUpdateAction(event, updatedNodes -> {
       if (event instanceof StartBuildEvent) {
         var node = getBuildProgressRootNode();
+        addNode(event, node, updatedNodes);
         node.setTitle(myBuildDescriptor.getTitle());
         installContextMenu();
       }
@@ -586,28 +586,13 @@ public final class BuildTreeConsoleView
       setEndTime(node, event.getEventTime(), updatedNodes);
 
       if (parentNode != null && !isBuildProgressRootNode(parentNode)) {
-        myConsoleViewHandler.addOutput(parentNode, event);
-        myConsoleViewHandler.addOutput(parentNode);
+        myConsoleViewHandler.withConsoleView(parentNode, consoleView ->
+          consoleView.onEvent(event)
+        );
       }
-      myConsoleViewHandler.addOutput(node, event);
-    });
-  }
-
-  private void onOutputEvent(@NotNull OutputBuildEvent event) {
-    var existingNode = findNode(event);
-    if (existingNode != null) {
-      LOG.debug("Output event id collision found:" + event.getId() + ", was also in node: " + existingNode.getTitle());
-      return;
-    }
-
-    runUpdateAction(event, updatedNodes -> {
-      var node = findNode(event);
-      if (node == null) {
-        var parentNode = findParentNode(event);
-        if (parentNode != null) {
-          myConsoleViewHandler.addOutput(parentNode, event);
-        }
-      }
+      myConsoleViewHandler.withConsoleView(node, consoleView ->
+        consoleView.onEvent(event)
+      );
     });
 
     var node = findNode(event);
@@ -627,9 +612,9 @@ public final class BuildTreeConsoleView
       LOG.debug("Presentable event id collision found:" + event.getId() + ", was also in node: " + existingNode.getTitle());
       return;
     }
+    var parentNode = findParentNode(event);
 
     runUpdateAction(event, updatedNodes -> {
-      var parentNode = findParentNode(event);
       var node = new ExecutionNode(myProject, parentNode, isBuildProgressRootNode(parentNode), this::isCorrectThread);
       addNode(event, node, updatedNodes);
 
@@ -639,8 +624,32 @@ public final class BuildTreeConsoleView
     });
   }
 
+  private void onOutputEvent(@NotNull OutputBuildEvent event) {
+    var existingNode = findNode(event);
+    if (existingNode != null) {
+      LOG.debug("Output event id collision found:" + event.getId() + ", was also in node: " + existingNode.getTitle());
+      return;
+    }
+    var parentNode = getParentNode(event);
+
+    myConsoleViewHandler.withConsoleView(parentNode, consoleView ->
+      consoleView.onEvent(event)
+    );
+  }
+
   private void onBuildEvent(@NotNull BuildEvent event) {
+    var existingNode = findNode(event);
+    if (existingNode != null) {
+      LOG.debug("Build event id collision found:" + event.getId() + ", was also in node: " + existingNode.getTitle());
+      return;
+    }
+    var parentNode = getParentNode(event);
+
     runUpdateAction(event, __ -> {});
+
+    myConsoleViewHandler.withConsoleView(parentNode, consoleView ->
+      consoleView.onEvent(event)
+    );
   }
 
   private static void setDefaultData(
@@ -711,21 +720,18 @@ public final class BuildTreeConsoleView
     return ObjectUtils.doIfNotNull(event.getParentId(), it -> nodesMap.get(it));
   }
 
+  private @NotNull ExecutionNode getParentNode(@NotNull BuildEvent event) {
+    return ObjectUtils.notNull(findParentNode(event), getBuildProgressRootNode());
+  }
+
   private boolean isBuildProgressRootNode(@Nullable ExecutionNode node) {
     return node == getBuildProgressRootNode();
   }
 
-  @ApiStatus.Internal
   @TestOnly
-  public @Nullable ExecutionConsole getSelectedNodeConsole() {
-    ExecutionConsole console = ObjectUtils.notNull(
-      myConsoleViewHandler.getCurrentConsole(),
-      () -> myConsoleViewHandler.getEmptyConsole()
-    );
-    if (console instanceof ConsoleViewImpl) {
-      ((ConsoleViewImpl)console).flushDeferredText();
-    }
-    return console;
+  @ApiStatus.Internal
+  public @NotNull ExecutionConsole getSelectedNodeConsole() {
+    return myConsoleViewHandler.getCurrentConsoleOrEmpty();
   }
 
   private static @NotNull EventResult calculateFinishResult(
@@ -900,7 +906,9 @@ public final class BuildTreeConsoleView
 
     updatedNodes.add(failureNode);
 
-    myConsoleViewHandler.addOutput(failureNode, failure);
+    myConsoleViewHandler.withConsoleView(failureNode, consoleView ->
+      consoleView.onFailure(failure)
+    );
     return failureNode;
   }
 

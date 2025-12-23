@@ -5,14 +5,11 @@ import com.intellij.build.BuildTextConsoleView;
 import com.intellij.build.BuildView;
 import com.intellij.build.CompositeView;
 import com.intellij.build.ExecutionNode;
-import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.BuildEventPresentationData;
-import com.intellij.build.events.Failure;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.execution.actions.ClearConsoleAction;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.impl.ConsoleViewImpl;
-import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.Disposable;
@@ -33,6 +30,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -45,21 +43,16 @@ import javax.swing.JPanel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.BorderLayout;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
-public final class BuildConsoleViewHandler implements Disposable {
-  private static final String EMPTY_CONSOLE_NAME = "empty";
+public final class BuildConsoleViewHandler implements Disposable.Default {
   private final Project myProject;
   private final JPanel myPanel;
   private final CompositeView<ExecutionConsole> myView;
   private final AtomicReference<String> myNodeConsoleViewName = new AtomicReference<>();
-  private final Map<String, List<Consumer<? super BuildTextConsoleView>>> deferredNodeOutput = new ConcurrentHashMap<>();
   private @Nullable ExecutionNode myExecutionNode;
   private final @NotNull List<? extends Filter> myExecutionConsoleFilters;
   private final BuildProgressStripe myPanelWithProgress;
@@ -86,14 +79,13 @@ public final class BuildConsoleViewHandler implements Disposable {
     };
     Disposer.register(this, myView);
     if (executionConsole != null) {
-      String nodeConsoleViewName = getNodeConsoleViewName(buildProgressRootNode);
-      myView.addViewAndShowIfNeeded(executionConsole, nodeConsoleViewName, true, false);
+      var nodeConsoleViewName = getNodeConsoleViewName(buildProgressRootNode);
+      var console = executionConsole instanceof ConsoleView consoleView ?
+                    new BuildConsoleViewImpl(project, consoleView) :
+                    executionConsole;
+      myView.addViewAndShowIfNeeded(console, nodeConsoleViewName, true, false);
       myNodeConsoleViewName.set(nodeConsoleViewName);
     }
-    ConsoleView emptyConsole = new ConsoleViewImpl(project, GlobalSearchScope.EMPTY_SCOPE, true, false);
-    myView.addView(emptyConsole, EMPTY_CONSOLE_NAME);
-    JComponent consoleComponent = emptyConsole.getComponent();
-    consoleComponent.setFocusable(true);
     myPanel.add(myView.getComponent(), BorderLayout.CENTER);
     myConsoleToolbarActionGroup = new DefaultActionGroup();
     myConsoleToolbarActionGroup.copyFromGroup(createDefaultTextConsoleToolbar());
@@ -156,15 +148,23 @@ public final class BuildConsoleViewHandler implements Disposable {
     return textConsoleToolbarActionGroup;
   }
 
-  @TestOnly
-  public @NotNull ExecutionConsole getEmptyConsole() {
-    return myView.getView(EMPTY_CONSOLE_NAME);
-  }
-
   public @Nullable ExecutionConsole getCurrentConsole() {
     String nodeConsoleViewName = myNodeConsoleViewName.get();
     if (nodeConsoleViewName == null) return null;
     return myView.getView(nodeConsoleViewName);
+  }
+
+  @TestOnly
+  public @NotNull ExecutionConsole getCurrentConsoleOrEmpty() {
+    var console = ObjectUtils.notNull(getCurrentConsole(),
+                                      () -> new ConsoleViewImpl(myProject, GlobalSearchScope.EMPTY_SCOPE, true, false));
+    if (console instanceof BuildConsoleView buildConsole) {
+      console = buildConsole.getConsoleView();
+    }
+    if (console instanceof ConsoleViewImpl consoleImpl) {
+      consoleImpl.flushDeferredText();
+    }
+    return console;
   }
 
   private @Nullable Editor getEditor() {
@@ -189,20 +189,11 @@ public final class BuildConsoleViewHandler implements Disposable {
     var nodeConsoleViewName = getNodeConsoleViewName(node);
     myNodeConsoleViewName.set(nodeConsoleViewName);
 
-    var deferredOutput = deferredNodeOutput.get(nodeConsoleViewName);
-    deferredNodeOutput.remove(nodeConsoleViewName);
-
     var console = myView.getView(nodeConsoleViewName);
-    if (console == null && (deferredOutput == null || deferredOutput.isEmpty())) {
-      myView.showView(EMPTY_CONSOLE_NAME, false);
-      return;
-    }
     if (console == null) {
-      console = new BuildTextConsoleView(myProject, true, myExecutionConsoleFilters);
+      var consoleImpl = new BuildTextConsoleView(myProject, true, myExecutionConsoleFilters);
+      console = new BuildConsoleViewImpl(myProject, consoleImpl);
       myView.addView(console, nodeConsoleViewName);
-    }
-    if (console instanceof BuildTextConsoleView consoleView) {
-      deferredOutput.forEach(consumer -> consumer.accept(consoleView));
     }
     myView.showView(nodeConsoleViewName, false);
 
@@ -213,40 +204,19 @@ public final class BuildConsoleViewHandler implements Disposable {
 
   public void maybeAddExecutionConsole(@NotNull ExecutionNode node, @NotNull BuildEventPresentationData presentationData) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      var executionConsole = presentationData.getExecutionConsole();
-      if (executionConsole == null) return;
-      var nodeConsoleViewName = getNodeConsoleViewName(node);
-      var customView = new CustomExecutionConsole(executionConsole, presentationData.consoleToolbarActions());
-      myView.addView(customView, nodeConsoleViewName);
+      var customConsole = presentationData.getExecutionConsole();
+      if (customConsole == null) return;
+      var customView = new CustomExecutionConsole(customConsole, presentationData.consoleToolbarActions());
+      myView.addView(customView, getNodeConsoleViewName(node));
     });
   }
 
-  public void addOutput(@NotNull ExecutionNode node) {
-    addOutput(node, view -> view.print("\n", ProcessOutputType.STDOUT));
-  }
-
-  public void addOutput(@NotNull ExecutionNode node, BuildEvent event) {
-    addOutput(node, view -> view.onEvent(event));
-  }
-
-  public void addOutput(@NotNull ExecutionNode node, Failure failure) {
-    addOutput(node, view -> view.printFailure(failure));
-  }
-
-  private void addOutput(@NotNull ExecutionNode node, Consumer<? super BuildTextConsoleView> consumer) {
-    String nodeConsoleViewName = getNodeConsoleViewName(node);
-    ExecutionConsole viewView = myView.getView(nodeConsoleViewName);
-    if (viewView instanceof BuildTextConsoleView) {
-      consumer.accept((BuildTextConsoleView)viewView);
-    }
-    if (viewView == null) {
-      deferredNodeOutput.computeIfAbsent(nodeConsoleViewName, s -> new ArrayList<>()).add(consumer);
-    }
-  }
-
-  @Override
-  public void dispose() {
-    deferredNodeOutput.clear();
+  public void withConsoleView(@NotNull ExecutionNode node, Consumer<? super BuildConsoleView> consumer) {
+    myView.withView(getNodeConsoleViewName(node), console -> {
+      if (console instanceof BuildConsoleView consoleView) {
+        consumer.accept(consoleView);
+      }
+    });
   }
 
   public JComponent getComponent() {

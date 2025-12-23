@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,9 +39,10 @@ public final class BuildConsoleUtils {
   }
 
   @ApiStatus.Internal
-  public static @NotNull DataContext getDataContext(@NotNull BuildTextConsoleView consoleView) {
-    var buildView = findBuildView(consoleView);
-    var component = ObjectUtils.notNull(buildView, consoleView);
+  public static @NotNull DataContext getDataContext(@NotNull ConsoleView consoleView) {
+    var consoleComponent = consoleView.getComponent();
+    var buildView = findBuildView(consoleComponent);
+    var component = ObjectUtils.notNull(buildView, consoleComponent);
     return DataManager.getInstance().getDataContext(component);
   }
 
