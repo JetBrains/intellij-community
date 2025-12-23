@@ -40,7 +40,9 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SingleRootFileViewProvider
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning
 import com.intellij.psi.text.BlockSupport
+import com.intellij.psi.util.PsiVersioningService
 import com.intellij.util.SmartList
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.SequentialTaskExecutor
@@ -236,21 +238,23 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
       // Store new providers to retain them from GC
       task.cachedViewProviders = viewProviders
 
-      for (psiFile in viewProviders.flatMap { it.getAllFiles() }) {
-        val oldFileNode = psiFile.getNode()
-            ?: throw AssertionError("No node for " + psiFile.javaClass + " in " + psiFile.getViewProvider().javaClass +
-                                    " of size " + StringUtil.formatFileSize(document.textLength.toLong()) +
-                                    " (is too large = " + SingleRootFileViewProvider
-                                      .isTooLargeForIntelligence(psiFile.viewProvider.getVirtualFile(), document.textLength.toLong()) + ")")
-        val changedPsiRange = ChangedPsiRangeUtil.getChangedPsiRange(
-          psiFile,
-          document,
-          task.myLastCommittedText,
-          document.getImmutableCharSequence(),
-        )
-        if (changedPsiRange != null) {
-          val finishProcessor = doCommit(task, synchronously, document, psiFile, oldFileNode, changedPsiRange, reparseInjectedProcessors, documentManager)
-          finishProcessors.add(finishProcessor)
+      InternalPsiVersioning.inVersionedEnvironment(true) {
+        for (psiFile in viewProviders.flatMap { it.getAllFiles() }) {
+          val oldFileNode = psiFile.getNode()
+                            ?: throw AssertionError("No node for " + psiFile.javaClass + " in " + psiFile.getViewProvider().javaClass +
+                                                    " of size " + StringUtil.formatFileSize(document.textLength.toLong()) +
+                                                    " (is too large = " + SingleRootFileViewProvider
+                                                      .isTooLargeForIntelligence(psiFile.viewProvider.getVirtualFile(), document.textLength.toLong()) + ")")
+          val changedPsiRange = ChangedPsiRangeUtil.getChangedPsiRange(
+            psiFile,
+            document,
+            task.myLastCommittedText,
+            document.getImmutableCharSequence(),
+          )
+          if (changedPsiRange != null) {
+            val finishProcessor = doCommit(task, synchronously, document, psiFile, oldFileNode, changedPsiRange, reparseInjectedProcessors, documentManager)
+            finishProcessors.add(finishProcessor)
+          }
         }
       }
     }
@@ -270,7 +274,9 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
         return@task
       }
 
-      val success = documentManager.finishCommit(document, finishProcessors, reparseInjectedProcessors, synchronously, task.myReason)
+      val success = InternalPsiVersioning.inVersionedEnvironment(true) {
+        documentManager.finishCommit(document, finishProcessors, reparseInjectedProcessors, synchronously, task.myReason)
+      }
       if (synchronously) {
         assert(success)
       }
@@ -451,7 +457,9 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     val diffLog: DiffLog
     val indicator = ProgressIndicatorProvider.getGlobalProgressIndicator() ?: EmptyProgressIndicator()
     try {
-      val result = BlockSupportImpl.reparse(psiFile, oldFileNode, changedPsiRange, newDocumentText, indicator, task.myLastCommittedText)
+      val result = PsiVersioningService.inVersionedEnvironment(oldFileNode) {
+        BlockSupportImpl.reparse(psiFile, oldFileNode, changedPsiRange, newDocumentText, indicator, task.myLastCommittedText)
+      }
       diffLog = result.log
 
       val injectedRunnables = documentManager.reparseChangedInjectedFragments(

@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -60,6 +61,8 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
+import com.intellij.psi.impl.source.tree.mvcc.VersionedPsiConsistencyException;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -262,10 +265,30 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       synchronized (myPsiLock) {
         FileElement treeElement = derefTreeElement();
         if (treeElement != null) {
+          if (Registry.is("psi.enable.persistent.syntax.tree", false) && viewProvider.isPhysical() && !treeElement.isVersioned()) {
+            VersionedPsiConsistencyException exception = new VersionedPsiConsistencyException.ViewProvider("Illegal state: attempted to attach a versioned=" + treeElement.isVersioned() + " tree to a physical=" + viewProvider.isPhysical() + " file.");
+            LOG.error(exception);
+          }
           return treeElement;
         }
 
-        treeElement = createFileElement(viewProvider.getContents());
+        // We create persistent trees for real physical files.
+        // also, if we are operating in a versioned environment, the created tree should also be versioned,
+        // because they will likely be used for real physical files later, like in document commit.
+        // This is the case for write action for example
+        // but if there is an explicit non-versioned environment, then we create a collapsed tree no matter what.
+        boolean canUseVersioned =
+          InternalPsiVersioning.isVersionedComputation() ||
+          (viewProvider.isPhysical());
+
+        treeElement = InternalPsiVersioning.inVersionedEnvironment(canUseVersioned, () -> {
+          if (canUseVersioned) {
+            FileElement fileElement = InternalPsiVersioning.runWriteModification(() -> createFileElement(viewProvider.getContents()));
+            return fileElement;
+          } else {
+            return createFileElement(viewProvider.getContents());
+          }
+        });
         treeElement.setPsi(this);
 
         myLoadingAst = true;
@@ -448,8 +471,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     copyCopyableDataTo(clone);
 
     if (getTreeElement() != null) {
+      // this is basically always collapsed environment, as by contract `providerCopy` is not physical
+      // alternatively, for a non-physical view provider, we could have a persistent tree
+      boolean runInVersionedEnv = providerCopy.isPhysical() || InternalPsiVersioning.isVersionedComputation();
+      FileElement treeClone = InternalPsiVersioning.inVersionedEnvironment(runInVersionedEnv, () -> (FileElement)calcTreeElement().clone());
       // not set by provider in clone
-      FileElement treeClone = (FileElement)calcTreeElement().clone();
       clone.setTreeElementPointer(treeClone); // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
       treeClone.setPsi(clone);
     }
@@ -843,12 +869,23 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private void updateTrees(@NotNull FileTrees trees) {
+    TreeElement treeElement = trees.derefTreeElement();
+    if (Registry.is("psi.enable.persistent.syntax.tree", false) && treeElement != null && getViewProvider().isPhysical() && !treeElement.isVersioned()) {
+      VersionedPsiConsistencyException exception = new VersionedPsiConsistencyException.ViewProvider("Attempt to set non-versioned tree to a physical view provider");
+      LOG.error(exception);
+    }
+    updateTreesDirectly(trees);
+  }
+
+  // this function exists only for cloneImpl
+  private void updateTreesDirectly(@NotNull FileTrees trees) {
     myTrees = trees;
   }
 
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {
     PsiFileImpl clone = (PsiFileImpl)super.clone();
-    clone.setTreeElementPointer(treeElementClone); // should not use setTreeElement here because the cloned file still has VirtualFile (SCR17963)
+    // we need to update trees without assertion about collapsed tree in a physical FileViewProvider, as clients usually clone PsiFile and only then set the cloned viewProvider there.
+    clone.updateTreesDirectly(FileTrees.noStub(treeElementClone, clone)); // should not use setTreeElement here because the cloned file still has VirtualFile (SCR17963)
     treeElementClone.setPsi(clone);
     return clone;
   }
