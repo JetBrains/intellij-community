@@ -214,3 +214,28 @@ public fun ButtonMetrics.Companion.outlined(
     borderWidth: Dp = 1.dp,
     focusOutlineExpand: Dp = Dp.Unspecified,
 ): ButtonMetrics = ButtonMetrics(cornerSize, padding, minSize, borderWidth, focusOutlineExpand)
+
+public fun ButtonMetrics.Companion.slim(
+    cornerSize: CornerSize = CornerSize(4.dp),
+    padding: PaddingValues = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+    minSize: DpSize = DpSize(60.dp, 24.dp),
+    borderWidth: Dp = 1.dp,
+    focusOutlineExpand: Dp = 1.5.dp,
+): ButtonMetrics = ButtonMetrics(cornerSize, padding, minSize, borderWidth, focusOutlineExpand)
+
+public val ButtonStyle.Companion.Slim: IntUiSlimButtonStyleFactory
+    get() = IntUiSlimButtonStyleFactory
+
+public object IntUiSlimButtonStyleFactory {
+    public fun light(
+        colors: ButtonColors = ButtonColors.Default.light(),
+        metrics: ButtonMetrics = ButtonMetrics.slim(),
+        focusOutlineAlignment: Stroke.Alignment = Stroke.Alignment.Center,
+    ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
+
+    public fun dark(
+        colors: ButtonColors = ButtonColors.Default.dark(),
+        metrics: ButtonMetrics = ButtonMetrics.slim(),
+        focusOutlineAlignment: Stroke.Alignment = Stroke.Alignment.Center,
+    ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
+}
