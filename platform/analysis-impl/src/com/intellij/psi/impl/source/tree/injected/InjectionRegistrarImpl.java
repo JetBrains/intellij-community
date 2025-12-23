@@ -60,11 +60,13 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.PsiVersioningService;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
@@ -308,9 +310,10 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     String fileName = PathUtil.makeFileName(myHostVirtualFile.getName(), fileExtension);
 
     ASTNode[] parsedNodes =
-      parseFile(myLanguage, forcedLanguage, documentWindow, myHostVirtualFile, myHostDocument, myHostPsiFile, myProject,
-                documentWindow.getText(),
-                placeInfos, decodedChars, fileName, myDocumentManagerBase);
+      PsiVersioningService.inVersionedEnvironment(myHostPsiFile, () ->
+        parseFile(myLanguage, forcedLanguage, documentWindow, myHostVirtualFile, myHostDocument, myHostPsiFile, myProject,
+                  documentWindow.getText(),
+                  placeInfos, decodedChars, fileName, myDocumentManagerBase));
     for (ASTNode node : parsedNodes) {
       PsiFile psiFile = (PsiFile)node.getPsi();
       InjectedFileViewProvider viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
@@ -578,9 +581,12 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     if (!oldFile.textMatches(injectedPsi)) {
       InjectedFileViewProvider oldViewProvider = (InjectedFileViewProvider)oldFile.getViewProvider();
       oldViewProvider.performNonPhysically(() -> DebugUtil.performPsiModification("injected tree diff", () -> {
-        DiffLog diffLog = BlockSupportImpl.mergeTrees((PsiFileImpl)oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
-                                                      oldFileNode.getText());
-        diffLog.doActualPsiChange(oldFile);
+        InternalPsiVersioning.runWriteModification(() -> {
+          DiffLog diffLog = BlockSupportImpl.mergeTrees((PsiFileImpl)oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
+                                                        oldFileNode.getText());
+          diffLog.doActualPsiChange(oldFile);
+          return null;
+        });
       }));
     }
   }
@@ -684,9 +690,9 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
 
     assert documentManager.isUncommited(hostDocument);
     String fileName = ((VirtualFileWindowImpl)oldInjectedVirtualFile).getName();
-    ASTNode[] parsedNodes = parseFile(language, language, oldDocumentWindow,
-                                      hostVirtualFile, hostDocument, hostPsiFile, project, newDocumentText, placeInfos, chars,
-                                      fileName, documentManager);
+    ASTNode[] parsedNodes = PsiVersioningService.inVersionedEnvironment(oldNode, () -> parseFile(language, language, oldDocumentWindow,
+                                                                                                               hostVirtualFile, hostDocument, hostPsiFile, project, newDocumentText, placeInfos, chars,
+                                                                                                               fileName, documentManager));
     List<PsiFile> oldFiles = ((AbstractFileViewProvider)oldInjectedPsiViewProvider).getCachedPsiFiles();
     synchronized (InjectedLanguageManagerImpl.ourInjectionPsiLock) {
       DiffLog[] diffLogs = new DiffLog[parsedNodes.length];
@@ -760,7 +766,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
           psiFile.setContentElementType(elementType);
         }
       }
-      ASTNode parsedNode = keepTreeFromChameleoningBack(psiFile);
+      ASTNode parsedNode = InternalPsiVersioning.runWriteModification(() -> keepTreeFromChameleoningBack(psiFile));
 
       assert parsedNode instanceof FileElement : "Parsed to " + parsedNode + " instead of FileElement";
 
@@ -770,7 +776,24 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
         finalLanguage, hostPsiFile, hostVirtualFile,
         hostDocument, placeInfos, documentManager);
       try {
-        patchLeaves(placeInfos, viewProvider, parsedNode, documentText);
+        try {
+          // todo: tricky to remove write modification
+          InternalPsiVersioning.runWriteModification(() -> {
+            try {
+              patchLeaves(placeInfos, viewProvider, parsedNode, documentText);
+              return null;
+            }
+            catch (PatchException e) {
+              throw new RuntimeException(e);
+            }
+          });
+        } catch (RuntimeException e) {
+          if (e.getCause() instanceof PatchException) {
+            throw (PatchException)e.getCause();
+          } else {
+            throw e;
+          }
+        }
       }
       catch (PatchException e) {
         throw new RuntimeException(

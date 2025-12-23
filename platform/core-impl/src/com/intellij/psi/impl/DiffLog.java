@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -21,7 +22,9 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.mvcc.VersionedPsiConsistencyException;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -104,6 +107,9 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     private final ASTNode myNewChild;
 
     private ReplaceEntry(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
+      if (Registry.is("psi.enable.persistent.syntax.tree", false) && oldNode instanceof TreeElement && newNode instanceof TreeElement && ((TreeElement)oldNode).isVersioned() != ((TreeElement)newNode).isVersioned()) {
+        throw new VersionedPsiConsistencyException.DiffLog("Operation between incompatible elements: oldNode=" + oldNode + " (versioned=" + ((TreeElement)oldNode).isVersioned() + "), newNode=" + newNode + " (versioned=" + ((TreeElement)newNode).isVersioned() + ")");
+      }
       myOldChild = oldNode;
       myNewChild = newNode;
       ensureOldParent();
@@ -147,6 +153,9 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     private final @NotNull ASTNode myOldNode;
 
     private DeleteEntry(@NotNull ASTNode oldParent, @NotNull ASTNode oldNode) {
+      if (oldParent instanceof TreeElement && oldNode instanceof TreeElement && ((TreeElement)oldParent).isVersioned() != ((TreeElement)oldNode).isVersioned()) {
+        throw new IllegalStateException("Operation between incompatible elements");
+      }
       myOldParent = oldParent;
       myOldNode = oldNode;
     }
@@ -178,6 +187,9 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
 
     private InsertEntry(@NotNull ASTNode oldParent, @NotNull ASTNode newNode, int pos) {
       assert pos>=0 : pos;
+      if (Registry.is("psi.enable.persistent.syntax.tree", false) && oldParent instanceof TreeElement && newNode instanceof TreeElement && ((TreeElement)oldParent).isVersioned() != ((TreeElement)newNode).isVersioned()) {
+        throw new VersionedPsiConsistencyException.DiffLog("Operation between incompatible elements");
+      }
       myOldParent = oldParent;
       myNewNode = newNode;
       myPos = pos;
@@ -221,6 +233,9 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     private final @NotNull FileASTNode myNewNode;
 
     private ReplaceFileElement(@NotNull FileASTNode oldNode, @NotNull FileASTNode newNode) {
+      if (Registry.is("psi.enable.persistent.syntax.tree", false) && oldNode instanceof TreeElement && newNode instanceof TreeElement && ((TreeElement)oldNode).isVersioned() != ((TreeElement)newNode).isVersioned()) {
+        throw new VersionedPsiConsistencyException.DiffLog("Operation between incompatible elements");
+      }
       myOldNode = oldNode;
       myNewNode = newNode;
     }
@@ -237,6 +252,8 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     private final @NotNull CompositeElement myNewRoot;
 
     private ReplaceElementWithEvents(@NotNull CompositeElement oldRoot, @NotNull CompositeElement newRoot) {
+      // here we can allow having a different versioning relations -- this is a preparatory phase of document commit which gathers the nodes that need to be replaced
+      // later in the write part we will versionize `newRoot` and insert it into `oldRoot`
       myOldRoot = oldRoot;
       myNewRoot = newRoot;
       // parse in background to reduce time spent in EDT and to ensure the newRoot light containing file is still valid

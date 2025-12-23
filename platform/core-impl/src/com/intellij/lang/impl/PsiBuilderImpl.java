@@ -57,6 +57,7 @@ import com.intellij.psi.tree.ILazyParseableElementTypeBase;
 import com.intellij.psi.tree.ILeafElementType;
 import com.intellij.psi.tree.ILightLazyParseableElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiVersioningService;
 import com.intellij.util.CharTable;
 import com.intellij.util.ThreeState;
 import com.intellij.util.TripleFunction;
@@ -1116,12 +1117,12 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     @Override
     public void nodeInserted(@NotNull ASTNode oldParent, @NotNull LighterASTNode newNode, int pos) {
-      myDelegate.nodeInserted(oldParent, myConverter.convert((Node)newNode), pos);
+      myDelegate.nodeInserted(oldParent, PsiVersioningService.inVersionedEnvironment(oldParent, () -> myConverter.convert((Node)newNode)), pos);
     }
 
     @Override
     public void nodeReplaced(@NotNull ASTNode oldChild, @NotNull LighterASTNode newChild) {
-      ASTNode converted = myConverter.convert((Node)newChild);
+      ASTNode converted = PsiVersioningService.inVersionedEnvironment(oldChild, () -> myConverter.convert((Node)newChild));
       myDelegate.nodeReplaced(oldChild, converted);
     }
   }

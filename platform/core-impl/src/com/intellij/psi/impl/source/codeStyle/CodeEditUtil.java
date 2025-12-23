@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.PsiVersioningService;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -242,7 +243,7 @@ public final class CodeEditUtil {
         text = left.getText();
       }
       if (leaveRightText || forceReformat) {
-        LeafElement merged = ASTFactory.whitespace(text);
+        LeafElement merged = PsiVersioningService.inVersionedEnvironment(left, () -> ASTFactory.whitespace(text));
         if (!leaveRightText) {
           left.getTreeParent().replaceChild(left, merged);
           right.getTreeParent().removeChild(right);
@@ -273,7 +274,7 @@ public final class CodeEditUtil {
 
   private static void markWhitespaceForReformat(ASTNode right) {
     String text = right.getText();
-    LeafElement merged = ASTFactory.whitespace(text);
+    LeafElement merged = PsiVersioningService.inVersionedEnvironment(right, () -> ASTFactory.whitespace(text));
     right.getTreeParent().replaceChild(right, merged);
   }
 
@@ -283,10 +284,10 @@ public final class CodeEditUtil {
 
     ASTNode generatedWhitespace = null;
     if (leftLang != null && leftLang.isKindOf(rightLang)) {
-      generatedWhitespace = LanguageTokenSeparatorGenerators.INSTANCE.forLanguage(leftLang).generateWhitespaceBetweenTokens(left, right);
+      generatedWhitespace = PsiVersioningService.inVersionedEnvironment(left, () -> LanguageTokenSeparatorGenerators.INSTANCE.forLanguage(leftLang).generateWhitespaceBetweenTokens(left, right));
     }
     else if (rightLang.isKindOf(leftLang)) {
-      generatedWhitespace = LanguageTokenSeparatorGenerators.INSTANCE.forLanguage(rightLang).generateWhitespaceBetweenTokens(left, right);
+      generatedWhitespace =  PsiVersioningService.inVersionedEnvironment(right, () -> LanguageTokenSeparatorGenerators.INSTANCE.forLanguage(rightLang).generateWhitespaceBetweenTokens(left, right));
     }
 
     if (generatedWhitespace != null) {
