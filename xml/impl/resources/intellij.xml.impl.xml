@@ -218,7 +218,7 @@
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownBooleanAttributeInspection"/>
 
-    <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.XmlCodeFoldingOptionsProvider"/>
+    <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.XmlCodeFoldingOptionsProvider" id="XML" order="after Android,after C++,after Dart,after General,after Go,after Handlebars,after JAVA,after JavaScript,after JPAQL,after JSON,after Kubernetes,after LinkerScript,after Markdown,after ObjectiveC,after PHP,after Python,after Ruby,after Rust,after SQL,after Swift"/>
 
     <multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlScriptLanguageInjector"/>
 

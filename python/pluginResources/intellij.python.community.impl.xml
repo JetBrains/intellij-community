@@ -512,7 +512,7 @@
                                implementationClass="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanDelegate"/>
 
     <!--folding-->
-    <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider"/>
+    <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider" id="Python" order="after Android,after C++,after Dart,after General,after Go,after Handlebars,after JAVA,after JavaScript,after JPAQL,after JSON,after Kubernetes,after LinkerScript,after Markdown,after ObjectiveC,after PHP"/>
 
     <!-- postfix templates!-->
     <codeInsight.template.postfixTemplateProvider language="Python"

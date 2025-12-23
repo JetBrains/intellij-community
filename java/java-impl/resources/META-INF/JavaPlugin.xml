@@ -1504,7 +1504,7 @@
     <codeInsight.createFieldFromUsageHelper language="JAVA"
                                             implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.JavaCreateFieldFromUsageHelper"/>
     <expressionConverter implementationClass="com.intellij.refactoring.introduceParameter.JavaExpressionConverter" language="JAVA"/>
-    <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.JavaCodeFoldingOptionsProvider"/>
+    <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.JavaCodeFoldingOptionsProvider" id="JAVA" order="after Android,after C++,after Dart,after General,after Go,after Handlebars, after ObjectiveC"/>
     <consoleOptionsProvider instance="com.intellij.execution.filters.StackTraceFoldingConfigurable"/>
     <autoImportOptionsProvider instance="com.intellij.application.options.editor.JavaAutoImportOptions"/>
     <errorOptionsProvider instance="com.intellij.java.codeInspection.ui.JavaErrorOptionsProvider"/>

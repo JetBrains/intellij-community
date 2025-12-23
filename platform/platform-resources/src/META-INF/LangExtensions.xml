@@ -770,7 +770,7 @@
     <codeInsight.linkHandler prefix="#element/" handlerClass="com.intellij.codeInsight.hint.ElementLinkHandler"/>
     <codeInsight.lineMarkerProvider order="last" language="" implementationClass="com.intellij.ui.ColorLineMarkerProvider"/>
 
-    <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.BaseCodeFoldingOptionsProvider" order="first"/>
+    <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.BaseCodeFoldingOptionsProvider" id="General" order="first"/>
     <search.topHitProvider implementation="com.intellij.application.options.editor.EditorSmartKeysOptionsTopHitProvider"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.EditorSmartKeysConfigurable" id="editor.preferences.smartKeys"
                            dynamic="true"/>
