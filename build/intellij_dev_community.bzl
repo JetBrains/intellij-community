@@ -12,7 +12,7 @@ intellij_dev_binary_community = macro(
     """,
     implementation = intellij_dev_binary,
     attrs = {
-        "data": attr.label_list(default = ALL_PRODUCTION_COMMUNITY_TARGETS, doc = "Data dependencies. Defaults to ALL_PRODUCTION_TARGETS."),
+        "data": attr.label_list(default = ALL_PRODUCTION_COMMUNITY_TARGETS + ["@lib//:debugger-agent.jar"], doc = "Data dependencies. Defaults to ALL_PRODUCTION_TARGETS."),
         "jvm_flags": attr.string_list(default = [], configurable = False, doc = "Additional JVM flags."),
         "env": attr.string_dict(default = {}, configurable = False, doc = "Environment variables to set when running the binary."),
         "platform_prefix": attr.string(configurable = False, doc = "Value for -Didea.platform.prefix (e.g., 'idea', 'GoLand')."),

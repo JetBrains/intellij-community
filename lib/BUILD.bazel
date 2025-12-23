@@ -3,6 +3,14 @@ load("@rules_kotlin//kotlin:kotlin.bzl", "kt_compiler_plugin")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import", "kt_jvm_library")
 
 load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+
+copy_file(
+  name = "debugger-agent.jar",
+  src = "@org_jetbrains_intellij_deps-debugger-agent-1_79_http//file",
+  out = "debugger-agent.jar",
+  visibility = ["//visibility:public"],
+)
 
 kt_compiler_plugin(
   name = "kotlin-serialization-plugin",
