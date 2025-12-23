@@ -19,7 +19,6 @@ import org.assertj.swing.edt.GuiQuery
 import org.assertj.swing.timing.Pause.pause
 import org.assertj.swing.util.Modifiers
 import java.awt.*
-import java.awt.event.AWTEventListener
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -243,45 +242,46 @@ internal class SmoothRobot @JvmOverloads constructor(
     basicRobot.moveMouse(x, y)
   }
 
-  private fun clickWithRetry(component: Component, where: Point?, mouseButton: MouseButton, clickCount: Int) {
+  private fun clickWithRetry(component: Component, where: Point?, mouseButton: MouseButton, counts: Int) {
     if (useInputEvents()) {
-      postClickEvent(component, mouseButton, clickCount)
+      postClickEvent(component, mouseButton, counts)
+      return
+    }
+    //we don't want to register mouse listener to component that doesn't have mouse listeners
+    //this will break event propagation to a parent component
+    if (component.mouseListeners.isEmpty()) {
+      moveMouseAndClick(component, where, mouseButton, counts)
       return
     }
 
     var attempt = 0
     while (attempt < 3) {
       val clickLatch = CountDownLatch(1)
+      val mouseListener = object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent?) {
+          clickLatch.countDown()
+          logger.info("Mouse clicked on $component")
+        }
 
-      val listener: AWTEventListener = object : AWTEventListener {
-        private var pressedAtComponent: Component? = null
+        override fun mouseReleased(e: MouseEvent?) {
+          clickLatch.countDown()
+          logger.info("Mouse released on $component")
+        }
 
-        override fun eventDispatched(event: AWTEvent) {
-          if (event !is MouseEvent) return
-          if (event.id == MouseEvent.MOUSE_PRESSED) {
-            pressedAtComponent = event.component
-          }
-          else if (event.id == MouseEvent.MOUSE_RELEASED || event.id == MouseEvent.MOUSE_CLICKED) {
-            if (event.clickCount == clickCount && event.button == mouseButton.button && event.component === pressedAtComponent
-                && (SwingUtilities.isDescendingFrom(event.component, component) || SwingUtilities.isDescendingFrom(component, event.component))) {
-              clickLatch.countDown()
-            }
-            pressedAtComponent = null
-          }
+        //on some components, mouse clicked/released are not registered on click
+        override fun mousePressed(e: MouseEvent?) {
+          clickLatch.countDown()
+          logger.info("Mouse pressed on $component")
         }
       }
 
-      Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_EVENT_MASK)
-      try {
-        moveMouseAndClick(component, where, mouseButton, clickCount)
+      component.addMouseListener(mouseListener)
+      moveMouseAndClick(component, where, mouseButton, counts)
+      val clicked = clickLatch.await(3, TimeUnit.SECONDS)
+      component.removeMouseListener(mouseListener)
 
-        val clicked = clickLatch.await(3, TimeUnit.SECONDS)
-        if (clicked) {
-          break
-        }
-      }
-      finally {
-        Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
+      if (clicked) {
+        break
       }
 
       logger.warn("Repeating click. Click was unsuccessful on $component")
@@ -444,12 +444,5 @@ internal class SmoothRobot @JvmOverloads constructor(
       execute(object : GuiQuery<T>() {
         override fun executeInEDT() = body.invoke()
       })
-
-    private val MouseButton.button
-      get() = when (this) {
-        MouseButton.LEFT_BUTTON -> MouseEvent.BUTTON1
-        MouseButton.MIDDLE_BUTTON -> MouseEvent.BUTTON2
-        MouseButton.RIGHT_BUTTON -> MouseEvent.BUTTON3
-      }
   }
 }
