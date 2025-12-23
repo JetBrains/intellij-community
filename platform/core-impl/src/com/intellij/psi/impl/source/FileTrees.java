@@ -5,6 +5,7 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -129,6 +130,12 @@ final class FileTrees {
     });
 
     return new FileTrees(myFile, myStub, myTreeElementPointer, null);
+  }
+
+  void assertConsistency(PsiFile other) {
+    if (this.myFile != other) {
+      LOG.error("Attempt to attach FileTree to an alien PsiFile: expected " + myFile + ", got " + other);
+    }
   }
 
   private void forEachCachedPsi(@NotNull Consumer<? super StubBasedPsiElementBase<?>> consumer) {

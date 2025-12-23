@@ -879,6 +879,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   // this function exists only for cloneImpl
   private void updateTreesDirectly(@NotNull FileTrees trees) {
+    trees.assertConsistency(this);
     myTrees = trees;
   }
 
