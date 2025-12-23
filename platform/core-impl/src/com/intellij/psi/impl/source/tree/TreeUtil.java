@@ -13,6 +13,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -160,6 +161,31 @@ public final class TreeUtil {
       two = two.getTreeParent();
     }
     return null;
+  }
+
+  /**
+   * Efficient way of traversing the syntax tree up to its root.
+   * Efficiency comes from the removal of repeated querying of versions.
+   */
+  @ApiStatus.Internal
+  public static @NotNull ASTNode findTopmostParent(@NotNull ASTNode element) {
+    if (element instanceof TreeElement) {
+      TreeElement treeElement = (TreeElement)element;
+      long readingVersion = treeElement.getVersionForReading();
+      TreeElement parent = treeElement.getTreeParentVersioned(readingVersion);
+      while (parent != null) {
+        treeElement = parent;
+        parent = treeElement.getTreeParentVersioned(readingVersion);
+      }
+      return treeElement;
+    } else {
+      ASTNode parent = element.getTreeParent();
+      while (parent != null) {
+        element = parent;
+        parent = parent.getTreeParent();
+      }
+      return element;
+    }
   }
 
   public static @NotNull Couple<ASTNode> findTopmostSiblingParents(ASTNode one, ASTNode two) {
