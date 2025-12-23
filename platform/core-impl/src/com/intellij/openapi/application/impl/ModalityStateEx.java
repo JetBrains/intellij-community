@@ -94,7 +94,9 @@ public final class ModalityStateEx extends ModalityState {
       }
     }
     */
-    if (requestedModality == any()) {
+
+    // do not use ModalityState.any(), in case Application was already disposed
+    if (requestedModality == AnyModalityState.ANY) {
       // Tasks with any modality can be run during this modality regardless of entities in this modality.
       return true;
     }
