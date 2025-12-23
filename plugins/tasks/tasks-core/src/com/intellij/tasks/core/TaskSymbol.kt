@@ -2,7 +2,7 @@
 package com.intellij.tasks.core
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.lang.documentation.DocumentationMarkup.CLASS_GRAYED
+import com.intellij.lang.documentation.DocumentationMarkup.*
 import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
@@ -29,6 +29,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.tasks.Task
 import com.intellij.tasks.TaskBundle
 import com.intellij.tasks.TaskState
+import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -88,12 +89,17 @@ sealed class AbstractTaskSymbol : PolySymbol, DocumentationSymbol {
       else {
         definition.append(symbol.id)
       }
+      val propertiesToShowInPreview = task?.propertiesToShowInPreview
+      val additionalProperties = task?.customProperties ?: emptyMap()
+      val propsToShow = propertiesToShowInPreview?.mapNotNull { additionalProperties[it] }
+                        ?: emptyList()
+
       if (task?.isClosed == true) {
         definition = HtmlBuilder().append(definition.wrapWith("s"))
       }
       definition.append(" ").append(task?.summary ?: TaskBundle.message("task.symbol.not.found"))
       task?.state
-        ?.takeIf { it != TaskState.OTHER }
+        ?.takeIf { it != TaskState.OTHER && propsToShow.isEmpty() }
         ?.let {
           @Suppress("HardCodedStringLiteral")
           definition.append(
@@ -106,10 +112,27 @@ sealed class AbstractTaskSymbol : PolySymbol, DocumentationSymbol {
       if (task == null) return@create
       @Nls
       val description = HtmlBuilder()
+
+      @Suppress("HardCodedStringLiteral")
+      if (propsToShow.isNotEmpty()) {
+        description.appendRaw("<table colspan=0 style='width:100%'><tr>")
+        propsToShow.forEach { property ->
+          val columnTitle = property.displayName.let { StringUtil.capitalizeWords(it, true) }
+            .let { if (!it.endsWith(":")) "$it:" else it }
+          description.appendRaw("<td>${GRAYED_START}$columnTitle${GRAYED_END}")
+        }
+        description.appendRaw("<tr>")
+        propsToShow.forEach {
+          description.appendRaw("<td>${it.iconUrl?.let { url -> "<icon src='$url'></icon>&nbsp;" } ?: ""}${it.value}")
+        }
+        description.appendRaw("</table>")
+      }
+
       // TODO add support for fetching images through the Task implementation
       val taskDescription = task.description?.removeImages()
       if (!taskDescription.isNullOrBlank()) {
-
+        if (propsToShow.isNotEmpty())
+          description.append(HtmlChunk.hr())
         if (taskDescription.length > 1500)
           description
             .appendRaw(DocMarkdownToHtmlConverter.convert(
@@ -126,6 +149,10 @@ sealed class AbstractTaskSymbol : PolySymbol, DocumentationSymbol {
             DocMarkdownToHtmlConverter.convert(DefaultProjectFactory.getInstance().defaultProject, taskDescription)
           )
       }
+
+      task.created?.let { descriptionSection(TaskBundle.message("task.preview.created"), DateFormatUtil.formatDateTime(it)) }
+      task.updated?.let { descriptionSection(TaskBundle.message("task.preview.updated"), DateFormatUtil.formatDateTime(it)) }
+
       icon(task.icon)
       description(description.toString())
     }

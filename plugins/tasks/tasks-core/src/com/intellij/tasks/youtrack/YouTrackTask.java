@@ -12,19 +12,28 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Date;
+import java.util.*;
 
 public class YouTrackTask extends Task {
   private final YouTrackRepository myRepository;
   private final YouTrackIssue myIssue;
   private final TaskType myType;
   private final TaskState myIssueState;
+  private final Map<String, CustomTaskProperty> myProperties;
+
+  public static final String PROP_PRIORITY = "priority";
+  public static final String PROP_TYPE = "type";
+  public static final String PROP_STATE = "state";
+  public static final String PROP_ASSIGNEE = "assignee";
+
+  private static final List<String> PROPERTIES_TO_SHOW_IN_PREVIEW = List.of(PROP_PRIORITY, PROP_TYPE, PROP_STATE, PROP_ASSIGNEE);
 
   public YouTrackTask(@NotNull YouTrackRepository repository, @NotNull YouTrackIssue issue) {
     myRepository = repository;
     myIssue = issue;
     myIssueState = mapIssueStateToPredefinedValue();
     myType = mapIssueTypeToPredefinedValue();
+    myProperties = buildProperties();
   }
 
   @Override
@@ -101,6 +110,16 @@ public class YouTrackTask extends Task {
   }
 
   @Override
+  public @NotNull Map<@NotNull String, @NotNull CustomTaskProperty> getCustomProperties() {
+    return myProperties;
+  }
+
+  @Override
+  public @NotNull List<@NotNull String> getPropertiesToShowInPreview() {
+    return PROPERTIES_TO_SHOW_IN_PREVIEW;
+  }
+
+  @Override
   public Comment @NotNull [] getComments() {
     return Comment.EMPTY_ARRAY;
   }
@@ -133,5 +152,21 @@ public class YouTrackTask extends Task {
   @Override
   public @NotNull String getIssueUrl() {
     return myRepository.getUrl() + "/issue/" + getId();
+  }
+
+  private Map<String, CustomTaskProperty> buildProperties() {
+    HashMap<String, CustomTaskProperty> properties = new LinkedHashMap<>();
+    addCustomField(properties, PROP_STATE, "State", TaskBundle.message("task.preview.state"));
+    addCustomField(properties, PROP_TYPE, "Type", TaskBundle.message("task.preview.type"));
+    addCustomField(properties, PROP_PRIORITY, "Priority", TaskBundle.message("task.preview.priority"));
+    addCustomField(properties, PROP_ASSIGNEE, "Assignee", TaskBundle.message("task.preview.assignee"));
+    return Collections.unmodifiableMap(properties);
+  }
+
+  private void addCustomField(HashMap<String, CustomTaskProperty> properties, String propertyName, String fieldName, @Nls String displayName) {
+    String value = getCustomFieldStringValue(fieldName);
+    if (value != null) {
+      properties.put(propertyName, new CustomTaskProperty(displayName, value, null));
+    }
   }
 }

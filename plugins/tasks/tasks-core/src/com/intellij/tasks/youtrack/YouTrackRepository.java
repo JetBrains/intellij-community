@@ -17,6 +17,7 @@ import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.tasks.impl.httpclient.TaskResponseUtil;
 import com.intellij.tasks.impl.httpclient.TaskResponseUtil.JsonResponseHandlerBuilder;
 import com.intellij.tasks.youtrack.model.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.http.HttpRequestInterceptor;
@@ -87,9 +88,8 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
 
   private @NotNull List<YouTrackIssue> fetchIssues(@Nullable String query, int offset, int limit) throws URISyntaxException, IOException {
     String searchQuery = getDefaultSearch() + (StringUtil.isNotEmpty(query) ? " " + query : "");
-    URI endpoint = new URIBuilder(getRestApiUrl("api", "issues"))
+    URI endpoint = createIssuesApiQueryUriBuilder()
       .addParameter("query", searchQuery)
-      .addParameter("fields", YouTrackIssue.DEFAULT_FIELDS)
       .addParameter("$skip", String.valueOf(offset))
       .addParameter("$top", String.valueOf(limit))
       .build();
@@ -120,9 +120,8 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
     return new HttpTestConnection(new HttpGet()) {
       @Override
       protected void test() throws Exception {
-        URI endpoint = new URIBuilder(getRestApiUrl("api", "issues"))
+        URI endpoint = createIssuesApiQueryUriBuilder()
           .addParameter("query", myDefaultSearch)
-          .addParameter("fields", YouTrackIssue.DEFAULT_FIELDS)
           .addParameter("$top", String.valueOf(10))
           .build();
         myCurrentRequest.setURI(endpoint);
@@ -141,8 +140,7 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
   }
 
   private @Nullable YouTrackIssue fetchIssue(@NotNull String issueId) throws URISyntaxException, IOException {
-    URI endpoint = new URIBuilder(getRestApiUrl("api", "issues", issueId))
-      .addParameter("fields", YouTrackIssue.DEFAULT_FIELDS)
+    URI endpoint = createIssuesApiQueryUriBuilder(issueId)
       .build();
     return getHttpClient().execute(new HttpGet(endpoint),
                                    JsonResponseHandlerBuilder.fromGson(GSON)
@@ -196,7 +194,7 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
                               @NotNull String timeSpent,
                               @NotNull String comment) throws Exception {
     YouTrackPluginAdvertiserService.getInstance().showTimeTrackingNotification();
-    
+
     Matcher matcher = TIME_SPENT_PATTERN.matcher(timeSpent);
     if (matcher.find()) {
       int hours = Integer.parseInt(matcher.group(1));
@@ -257,6 +255,17 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
   @Override
   public boolean isUseHttpAuthentication() {
     return true;
+  }
+
+  private static final Object[] ISSUES_QUERY_PATH = new Object[]{"api", "issues"};
+
+  private URIBuilder createIssuesApiQueryUriBuilder(Object @NotNull ... parts) throws URISyntaxException {
+    return new URIBuilder(getRestApiUrl(ArrayUtil.mergeArrays(ISSUES_QUERY_PATH, parts)))
+      .addParameter("fields", YouTrackIssue.DEFAULT_FIELDS)
+      .addParameter("customFields", "priority")
+      .addParameter("customFields", "state")
+      .addParameter("customFields", "type")
+      .addParameter("customFields", "assignee");
   }
 
   private static class YouTrackRequestFailedException extends RequestFailedException {

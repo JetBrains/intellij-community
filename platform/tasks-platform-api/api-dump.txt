@@ -1,3 +1,12 @@
+c:com.intellij.tasks.CustomTaskProperty
+- <init>():V
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- getDisplayName():java.lang.String
+- getIconUrl():java.lang.String
+- getValue():java.lang.String
+a:com.intellij.tasks.Task
+- getCustomProperties():java.util.Map
+- getPropertiesToShowInPreview():java.util.List
 com.intellij.tasks.TaskListener
 - java.util.EventListener
 - a:taskActivated(com.intellij.tasks.LocalTask):V
