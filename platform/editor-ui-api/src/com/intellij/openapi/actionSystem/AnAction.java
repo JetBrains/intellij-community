@@ -390,7 +390,11 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
         presentation.putClientProperty("USE_SMALL_FONT_IN_TOOLBAR", true);
       }
     }
-    boolean canRunEdtActionWithoutRwLock = Registry.is("actions.update.edt.actions.without.rw.lock", false) && getActionUpdateThread() == ActionUpdateThread.EDT;
+    boolean canRunEdtActionWithoutRwLock =
+      // BackendActionManager gets preloaded, and it retrieves template presentation of some actions
+      LoadingState.APP_STARTED.isOccurred()
+      && Registry.is("actions.update.edt.actions.without.rw.lock", false)
+      && getActionUpdateThread() == ActionUpdateThread.EDT;
     presentation.setRWLockRequired(!canRunEdtActionWithoutRwLock);
     return presentation;
   }
