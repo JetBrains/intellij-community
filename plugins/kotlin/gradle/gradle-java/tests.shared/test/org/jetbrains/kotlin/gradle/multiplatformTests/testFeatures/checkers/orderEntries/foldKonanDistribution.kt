@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.konan.target.Family
 import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatformWithTarget
 import org.jetbrains.kotlin.platform.konan.isNative
@@ -64,7 +65,7 @@ private fun PrinterContext.expectedKonanDistForHostAndTarget(target: TargetPlatf
         .filter { it in ENABLED_TARGETS }
 
     val families = konanTargets.map { it.family }.distinct()
-    val distributionsToCommonize = families.map { expectedKonanDistForFamily(it) }
+    val distributionsToCommonize = families.map { expectedKonanDistForFamily(it, konanTargets) }
 
     return if (distributionsToCommonize.isEmpty())
         emptySet()
@@ -72,8 +73,7 @@ private fun PrinterContext.expectedKonanDistForHostAndTarget(target: TargetPlatf
         distributionsToCommonize.reduce { result, next -> result intersect next }
 }
 
-private fun PrinterContext.expectedKonanDistForFamily(family: Family): Set<String> {
-    val versionClassifier = testProperties.kotlinVersion.toKotlinVersion().toString()
+private fun PrinterContext.expectedKonanDistForFamily(family: Family, konanTargets: List<KonanTarget>): Set<String> {
     val versionClassifier = testProperties.kotlinVersion.version.toKotlinVersion().toString()
     val newImportFlag = testConfiguration.getConfiguration(CustomGradlePropertiesTestFeature)
         .testProperties[enableKgpDependencyResolutionParam]
@@ -88,8 +88,14 @@ private fun PrinterContext.expectedKonanDistForFamily(family: Family): Set<Strin
 
     val chosenDist = moreSpecificDist ?: defaultDist
     check(chosenDist.exists()) {
-        "Can't find file with serialized expected Kotlin/Native Distribution content for $family, " +
-                "looked at: ${chosenDist.canonicalPath}"
+        val anyTargetFromFamily = konanTargets.first { it.family == family }
+        buildString {
+            appendLine("Can't find file with serialized expected Kotlin/Native Distribution content for $family")
+            appendLine("looked at: ${chosenDist.canonicalPath}")
+            appendLine("Try regenerating using:")
+            val platformPrefix = "org.jetbrains.kotlin.native.platform."
+            appendLine("ls ~/.konan/kotlin-native-prebuilt-*-${versionClassifier}/klib/platform/${anyTargetFromFamily.name}/ | fgrep ${platformPrefix} | cut -c ${platformPrefix.length}- | sort | xargs -n1 echo 'Kotlin/Native:' > '${chosenDist.canonicalPath}'")
+        }
     }
 
     return chosenDist.readLines().toSet()
