@@ -30,6 +30,7 @@ kotlin {
     "-Xconsistent-data-class-copy-visibility",
     "-Xcontext-parameters",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
+    "-progressive",
   )
   jvm {}
   wasmJs {

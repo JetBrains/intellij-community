@@ -32,6 +32,7 @@ kotlin {
     "-Xconsistent-data-class-copy-visibility",
     "-Xwasm-kclass-fqn",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
+    "-progressive",
   )
   jvm {}
   wasmJs {

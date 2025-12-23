@@ -33,6 +33,7 @@ kotlin {
     "-Xjvm-default=all",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
     "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
+    "-progressive",
   )
   jvm {}
   wasmJs {

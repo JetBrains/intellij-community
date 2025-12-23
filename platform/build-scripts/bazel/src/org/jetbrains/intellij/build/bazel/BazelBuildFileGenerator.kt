@@ -1048,6 +1048,12 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
       })
     }
   }
+  // progressive
+  handleArgument(K2JVMCompilerArguments::progressiveMode) {
+    if (!it) {
+      options.put("progressive", false)
+    }
+  }
   //x_allow_kotlin_package
   handleArgument(K2JVMCompilerArguments::allowKotlinPackage) {
     if (it) {

@@ -37,6 +37,7 @@ kotlin {
     "-Xcontext-parameters",
     "-Xwasm-kclass-fqn",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
+    "-progressive",
   )
   jvm {}
   wasmJs {

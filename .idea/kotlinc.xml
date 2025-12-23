@@ -11,7 +11,7 @@
     <option name="languageVersion" value="2.3" />
   </component>
   <component name="KotlinCompilerSettings">
-    <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+    <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
   </component>
   <component name="KotlinJpsPluginSettings">
     <option name="version" value="2.3.0" />

@@ -31,6 +31,7 @@ kotlin {
     "-Xconsistent-data-class-copy-visibility",
     "-Xcontext-parameters",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
+    "-progressive",
   )
   jvm {}
   sourceSets.jvmTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../src")) }
