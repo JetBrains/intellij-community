@@ -284,14 +284,15 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     if (project != null) {
       return PsiManagerEx.getInstanceEx(project);
     }
+    long version = getVersionForReading();
     TreeElement element;
     CompositeElement parent;
-    for (element = this; (parent = element.getTreeParent()) != null; element = parent) {
+    for (element = this; (parent = element.getTreeParentVersioned(version)) != null; element = parent) {
     }
     if (element instanceof FileElement) { //TODO!!
       return element.getManager();
     }
-    parent = getTreeParent();
+    parent = getTreeParentVersioned(version);
     if (parent != null) {
       return parent.getManager();
     }
@@ -311,19 +312,55 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
 
   public abstract int getCachedLength();
 
+  /**
+   * An optimized version of {@link #getCachedLength()} that allows skipping querying the thread-local version.
+   */
+  @ApiStatus.Internal
+  protected int getCachedLengthVersioned(long version) {
+    return getCachedLength();
+  }
+
+  /**
+   * An optimized version of {@link #getFirstChildNode()} that allows skipping querying the thread-local version.
+   */
+  @ApiStatus.Internal
+  protected TreeElement getFirstChildNodeVersioned(long version) {
+    return getFirstChildNode();
+  }
+
+  /**
+   * An optimized version of {@link #getLastChildNode()} that allows skipping querying the thread-local version.
+   */
+  @ApiStatus.Internal
+  protected TreeElement getLastChildNodeVersioned(long version) {
+    return getLastChildNode();
+  }
+
   @Override
   public TextRange getTextRange() {
-    int start = getStartOffset();
-    return new TextRange(start, start + getTextLength());
+    long version = getVersionForReading();
+    return getTextRangeVersioned(version);
+  }
+
+  private TextRange getTextRangeVersioned(long version) {
+    int start = getStartOffsetVersioned(version);
+    return new TextRange(start, start + getTextLengthVersioned(version));
   }
 
   @Override
   public int getStartOffset() {
+    long version = getVersionForReading();
+    return getStartOffsetVersioned(version);
+  }
+
+  private int getStartOffsetVersioned(long version) {
     int result = 0;
     TreeElement current = this;
-    while (current.getTreeParent() != null) {
-      result += current.getStartOffsetInParent();
-      current = current.getTreeParent();
+    CompositeElement parent = current.doGetMyParent(version);
+    while (parent != null) {
+      result += current.getStartOffsetInParentVersioned(version);
+      current = parent;
+      parent = current.doGetMyParent(version);
     }
 
     return result;
@@ -332,6 +369,10 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   @Override
   public final int getStartOffsetInParent() {
     long version = getVersionForReading();
+    return getStartOffsetInParentVersioned(version);
+  }
+
+  private int getStartOffsetInParentVersioned(long version) {
     if (doGetMyParent(version) == null) return -1;
     Integer offsetInParent = doGetMyStartOffsetInParent(version);
     if (offsetInParent != null) return offsetInParent;
@@ -342,7 +383,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
 
     TreeElement cur = this;
     while (true) {
-      TreeElement prev = cur.getTreePrev();
+      TreeElement prev = cur.getTreePrevVersioned(version);
       if (prev == null) break;
       cur = prev;
       offsetInParent = cur.doGetMyStartOffsetInParent(version);
@@ -355,8 +396,8 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     }
 
     while (cur != this) {
-      TreeElement next = cur.getTreeNext();
-      offsetInParent += cur.getTextLength();
+      TreeElement next = cur.getTreeNextVersioned(version);
+      offsetInParent += cur.getTextLengthVersioned(version);
       next.doSetMyStartOffsetInParent(version, offsetInParent);
       cur = next;
     }
@@ -365,6 +406,12 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
 
   @Override
   public abstract int getTextLength();
+
+
+  @ApiStatus.Internal
+  public int getTextLengthVersioned(long version) {
+    return getTextLength();
+  }
 
   @Override
   public IElementType getTokenType() {
@@ -405,9 +452,21 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     return doGetMyParent(version);
   }
 
+  @ApiStatus.Internal
+  public final CompositeElement getTreeParentVersioned(long version) {
+    return doGetMyParent(version);
+  }
+
   @Override
   public final TreeElement getTreePrev() {
     long version = getVersionForReading();
+    return getTreePrevVersioned(version);
+  }
+  /**
+   * An optimized version of {@link #getTreePrev()} that allows skipping querying the thread-local version.
+   */
+  @ApiStatus.Internal
+  protected TreeElement getTreePrevVersioned(long version) {
     return doGetMyPrevSibling(version);
   }
 
@@ -496,6 +555,11 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     return doGetMyNextSibling(version);
   }
 
+  @ApiStatus.Internal
+  public final TreeElement getTreeNextVersioned(long version) {
+    return doGetMyNextSibling(version);
+  }
+
   final void setTreeNext(TreeElement next) {
     long version = getVersionForWriting();
     setTreeNext(version, next);
@@ -539,7 +603,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
         }
       }
       cur.doSetMyStartOffsetInParent(version, null);
-      cur = cur.doGetMyNextSibling(version);
+      cur = cur.getTreeNextVersioned(version);
     }
   }
 
@@ -606,7 +670,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     long version = getVersionForWriting();
     rawInsertAfterMeWithoutNotifications(version, firstNew);
 
-    CompositeElement parent = doGetMyParent(version);
+    CompositeElement parent = getTreeParentVersioned(version);
     if (parent != null) {
       parent.subtreeChanged();
     }
@@ -614,12 +678,12 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
 
   final void rawInsertAfterMeWithoutNotifications(long version, @NotNull TreeElement firstNew) {
     firstNew.rawRemoveUpToWithoutNotifications(version, null, false);
-    CompositeElement p = doGetMyParent(version);
-    TreeElement treeNext = doGetMyNextSibling(version);
+    CompositeElement p = getTreeParentVersioned(version);
+    TreeElement treeNext = getTreeNextVersioned(version);
     firstNew.setTreePrev(version, this);
     setTreeNext(version, firstNew);
     while(true){
-      TreeElement n = firstNew.doGetMyNextSibling(version);
+      TreeElement n = firstNew.getTreeNextVersioned(version);
       assert n != this : "Attempt to create cycle";
       firstNew.setTreeParent(version, p);
       if(n == null) break;
@@ -691,7 +755,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   // remove nodes from this[including] to end[excluding] from the parent
   public void rawRemoveUpTo(@Nullable TreeElement end) {
     long version = getVersionForWriting();
-    CompositeElement parent = doGetMyParent(version);
+    CompositeElement parent = getTreeParentVersioned(version);
 
     rawRemoveUpToWithoutNotifications(version, end, true);
 
@@ -704,21 +768,21 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   final void rawRemoveUpToWithoutNotifications(long version, @Nullable TreeElement end, boolean invalidate) {
     if (this == end) return;
 
-    CompositeElement parent = doGetMyParent(version);
-    TreeElement startPrev = doGetMyPrevSibling(version);
-    TreeElement endPrev = end != null ? end.doGetMyPrevSibling(version) : null;
+    CompositeElement parent = getTreeParentVersioned(version);
+    TreeElement startPrev = getTreePrevVersioned(version);
+    TreeElement endPrev = end != null ? end.getTreePrevVersioned(version) : null;
 
-    assert end == null || end.doGetMyParent(version) == parent : "Trying to remove non-child";
+    assert end == null || end.getTreeParentVersioned(version) == parent : "Trying to remove non-child";
 
     if (end != null) {
       TreeElement element = this;
       while (element != end && element != null) {
-        element = element.doGetMyNextSibling(version);
+        element = element.getTreeNextVersioned(version);
       }
       assert element == end : end + " is not successor of " + this + " in the .getTreeNext() chain";
     }
     if (parent != null) {
-      if (doGetMyPrevSibling(version) == null) {
+      if (getTreePrev() == null) {
         parent.setFirstChildNode(version, end);
       }
       if (end == null) {
@@ -738,7 +802,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     }
 
     if (parent != null) {
-      for (TreeElement element = this; element != null; element = element.doGetMyNextSibling(version)) {
+      for (TreeElement element = this; element != null; element = element.getTreeNextVersioned(version)) {
         element.setTreeParent(version, null);
         if (invalidate) {
           element.onInvalidated();
@@ -795,3 +859,4 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     return false;
   }
 }
+

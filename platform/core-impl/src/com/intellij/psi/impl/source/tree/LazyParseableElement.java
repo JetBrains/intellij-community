@@ -335,9 +335,23 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   @Override
+  @ApiStatus.Internal
+  protected TreeElement getFirstChildNodeVersioned(long version) {
+    ensureParsed();
+    return super.getFirstChildNodeVersioned(version);
+  }
+
+  @Override
   public TreeElement getLastChildNode() {
     ensureParsed();
     return super.getLastChildNode();
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public TreeElement getLastChildNodeVersioned(long version) {
+    ensureParsed();
+    return super.getLastChildNodeVersioned(version);
   }
 
   public int copyTo(char @Nullable [] buffer, int start) {
