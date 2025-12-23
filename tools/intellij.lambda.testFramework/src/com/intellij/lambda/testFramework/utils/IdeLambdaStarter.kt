@@ -8,6 +8,7 @@ import com.intellij.ide.starter.ide.onRemDevContext
 import com.intellij.ide.starter.project.NoProject
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
+import com.intellij.lambda.testFramework.starter.IdeInstance.runContext
 import com.intellij.lambda.testFramework.testApi.waitForProject
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.remoteDev.tests.LambdaTestsConstants
@@ -80,7 +81,8 @@ internal fun IDERemDevTestContext.runIdeWithLambda(
                                                     expectedExitCode,
                                                     collectNativeThreads,
                                                     configure)
-  listOf(backendRdSession, frontendRdSession).forEach { it.awaitSessionReady() }
+  listOf(backendRdSession, frontendRdSession)
+    .forEach { it.awaitSessionReady(if (this.frontendIDEContext.ide.vmOptions.hasHeadlessMode()) 15.seconds else 30.seconds) }
   return IdeWithLambda(backgroundRun, rdSession = frontendRdSession, backendRdSession = backendRdSession).also {
     if (testCase.projectInfo != NoProject) {
       @Suppress("RAW_RUN_BLOCKING")
@@ -93,9 +95,8 @@ internal fun IDERemDevTestContext.runIdeWithLambda(
   }
 }
 
-private fun LambdaRdTestSession.awaitSessionReady() {
+private fun LambdaRdTestSession.awaitSessionReady(timeout: Duration = 15.seconds) {
   val timeStarted = System.currentTimeMillis()
-  val timeout = 15.seconds
   while (ready.value != true && timeStarted + timeout.inWholeMilliseconds > System.currentTimeMillis()) {
     Thread.sleep(500)
   }
