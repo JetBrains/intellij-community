@@ -4,17 +4,36 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.codeInsight.template.impl.MacroCallNode
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeIterated
+import org.jetbrains.kotlin.idea.codeinsight.utils.canBeIteratedOrIterator
 import org.jetbrains.kotlin.idea.liveTemplates.k2.macro.SymbolBasedSuggestVariableNameMacro
 import org.jetbrains.kotlin.name.StandardClassIds
 
-internal class KotlinForPostfixTemplate(provider: KotlinPostfixTemplateProvider) : AbstractKotlinForPostfixTemplate("for", provider)
+internal class KotlinForPostfixTemplate(provider: KotlinPostfixTemplateProvider) :
+    AbstractKotlinForPostfixTemplate(
+        name = "for",
+        example = "for (item in expr) {}",
+        template = "for (\$name$ in \$expr$) {\n    \$END$\n}",
+        selector = allExpressions(
+            ValuedFilter,
+            StatementFilter,
+            ExpressionTypeFilter { canBeIteratedOrIterator(it) }
+        ),
+        provider = provider
+    )
 
-internal class KotlinIterPostfixTemplate(provider: KotlinPostfixTemplateProvider) : AbstractKotlinForPostfixTemplate("iter", provider)
+internal class KotlinIterPostfixTemplate(provider: KotlinPostfixTemplateProvider) :
+    AbstractKotlinForPostfixTemplate(
+        name = "iter",
+        example = "for (item in expr) {}",
+        template = "for (\$name$ in \$expr$) {\n    \$END$\n}",
+        provider = provider
+    )
 
 @Suppress("SpellCheckingInspection")
 internal class KotlinItorPostfixTemplate(
@@ -64,27 +83,26 @@ internal class KotlinForReversedPostfixTemplate(
     "forr",
     "for (item in expr.reversed())",
     "for (\$name$ in \$expr$.reversed()) {\n    \$END$\n}",
-    provider
+    provider = provider
 )
 
 internal abstract class AbstractKotlinForPostfixTemplate(
     name: String,
     example: String,
     private val template: String,
+    selector: PostfixTemplateExpressionSelector =
+        allExpressions(
+            ValuedFilter,
+            StatementFilter,
+            ExpressionTypeFilter { canBeIterated(it) }
+        ),
     provider: KotlinPostfixTemplateProvider
 ) : StringBasedPostfixTemplate(
     /* name = */ name,
     /* example = */ example,
-    /* selector = */ allExpressions(ValuedFilter, StatementFilter, ExpressionTypeFilter { canBeIterated(it) }),
+    /* selector = */ selector,
     /* provider = */ provider
 ) {
-
-    constructor(name: String, provider: KotlinPostfixTemplateProvider) : this(
-        name,
-        "for (item in expr) {}",
-        "for (\$name$ in \$expr$) {\n    \$END$\n}",
-        provider
-    )
 
     override fun getTemplateString(element: PsiElement): String = template
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr

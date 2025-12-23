@@ -8,12 +8,7 @@ import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.allSupertypes
 import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
-import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
-import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
 
@@ -30,15 +25,27 @@ private val ITERABLE_CLASS_IDS: Set<ClassId> = buildSet {
 @OptIn(KaContextParameterApi::class)
 context(_: KaSession)
 @ApiStatus.Internal
-fun canBeIterated(type: KaType, checkNullability: Boolean = true): Boolean {
-    return when (type) {
-        is KaFlexibleType -> canBeIterated(type.lowerBoundIfFlexible())
-        is KaIntersectionType -> type.conjuncts.all { canBeIterated(it) }
-        is KaDefinitelyNotNullType -> canBeIterated(type.original, checkNullability = false)
-        is KaTypeParameterType -> type.symbol.upperBounds.any { canBeIterated(it) }
+fun canBeIterated(type: KaType, checkNullability: Boolean = true): Boolean =
+    type.isInheritorOf(ITERABLE_CLASS_IDS, checkNullability)
+
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
+@ApiStatus.Internal
+fun canBeIteratedOrIterator(type: KaType, checkNullability: Boolean = true): Boolean =
+    type.isInheritorOf(ITERABLE_CLASS_IDS + StandardClassIds.Iterator, checkNullability)
+
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
+@ApiStatus.Internal
+private fun KaType.isInheritorOf(classIds: Set<ClassId>, checkNullability: Boolean = true): Boolean {
+    return when (this) {
+        is KaFlexibleType -> this.lowerBoundIfFlexible().isInheritorOf(classIds)
+        is KaIntersectionType -> this.conjuncts.all { it.isInheritorOf(classIds) }
+        is KaDefinitelyNotNullType -> this.original.isInheritorOf(classIds, checkNullability = false)
+        is KaTypeParameterType -> symbol.upperBounds.any { it.isInheritorOf(classIds) }
         is KaClassType -> {
-            (!checkNullability || !type.isMarkedNullable)
-                    && (type.classId in ITERABLE_CLASS_IDS || type.allSupertypes(shouldApproximate = true).any { canBeIterated(it) })
+            (!checkNullability || !isMarkedNullable)
+                    && (classId in classIds || allSupertypes(shouldApproximate = true).any { it.isInheritorOf(classIds) })
         }
         else -> false
     }
