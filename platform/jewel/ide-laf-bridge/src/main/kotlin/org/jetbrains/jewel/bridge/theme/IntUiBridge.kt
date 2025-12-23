@@ -89,6 +89,8 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
         linkStyle = readLinkStyle(),
         menuStyle = menuStyle,
         outlinedButtonStyle = readOutlinedButtonStyle(),
+        defaultSlimButtonStyle = readDefaultSlimButtonStyle(),
+        outlinedSlimButtonStyle = readOutlinedSlimButtonStyle(),
         outlinedSplitButtonStyle = readOutlinedSplitButtonStyle(),
         popupContainerStyle = readPopupContainerStyle(),
         radioButtonStyle = readRadioButtonStyle(),

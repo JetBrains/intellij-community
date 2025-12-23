@@ -29,6 +29,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalDefaultBannerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultComboBoxStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultDropdownStyle
+import org.jetbrains.jewel.ui.component.styling.LocalDefaultSlimButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultSplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultTabStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDividerStyle
@@ -41,6 +42,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalLazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSlimButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalRadioButtonStyle
@@ -99,6 +101,8 @@ public class DefaultComponentStyling(
     public val linkStyle: LinkStyle,
     public val menuStyle: MenuStyle,
     public val outlinedButtonStyle: ButtonStyle,
+    public val defaultSlimButtonStyle: ButtonStyle,
+    public val outlinedSlimButtonStyle: ButtonStyle,
     public val popupContainerStyle: PopupContainerStyle,
     public val outlinedSplitButtonStyle: SplitButtonStyle,
     public val radioButtonStyle: RadioButtonStyle,
@@ -137,6 +141,8 @@ public class DefaultComponentStyling(
         linkStyle: LinkStyle,
         menuStyle: MenuStyle,
         outlinedButtonStyle: ButtonStyle,
+        defaultSlimButtonStyle: ButtonStyle,
+        outlinedSlimButtonStyle: ButtonStyle,
         popupContainerStyle: PopupContainerStyle,
         outlinedSplitButtonStyle: SplitButtonStyle,
         radioButtonStyle: RadioButtonStyle,
@@ -171,6 +177,8 @@ public class DefaultComponentStyling(
         linkStyle,
         menuStyle,
         outlinedButtonStyle,
+        defaultSlimButtonStyle,
+        outlinedSlimButtonStyle,
         popupContainerStyle,
         outlinedSplitButtonStyle,
         radioButtonStyle,
@@ -209,6 +217,8 @@ public class DefaultComponentStyling(
         linkStyle: LinkStyle,
         menuStyle: MenuStyle,
         outlinedButtonStyle: ButtonStyle,
+        defaultSlimButtonStyle: ButtonStyle,
+        outlinedSlimButtonStyle: ButtonStyle,
         popupContainerStyle: PopupContainerStyle,
         outlinedSplitButtonStyle: SplitButtonStyle,
         radioButtonStyle: RadioButtonStyle,
@@ -243,6 +253,8 @@ public class DefaultComponentStyling(
         linkStyle,
         menuStyle,
         outlinedButtonStyle,
+        defaultSlimButtonStyle,
+        outlinedSlimButtonStyle,
         popupContainerStyle,
         outlinedSplitButtonStyle,
         radioButtonStyle,
@@ -285,6 +297,8 @@ public class DefaultComponentStyling(
             LocalLinkStyle provides linkStyle,
             LocalMenuStyle provides menuStyle,
             LocalOutlinedButtonStyle provides outlinedButtonStyle,
+            LocalDefaultSlimButtonStyle provides defaultSlimButtonStyle,
+            LocalOutlinedSlimButtonStyle provides outlinedSlimButtonStyle,
             LocalPopupContainerStyle provides popupContainerStyle,
             LocalOutlinedSplitButtonStyle provides outlinedSplitButtonStyle,
             LocalRadioButtonStyle provides radioButtonStyle,
@@ -328,6 +342,8 @@ public class DefaultComponentStyling(
         if (linkStyle != other.linkStyle) return false
         if (menuStyle != other.menuStyle) return false
         if (outlinedButtonStyle != other.outlinedButtonStyle) return false
+        if (defaultSlimButtonStyle != other.defaultSlimButtonStyle) return false
+        if (outlinedSlimButtonStyle != other.outlinedSlimButtonStyle) return false
         if (popupContainerStyle != other.popupContainerStyle) return false
         if (outlinedSplitButtonStyle != other.outlinedSplitButtonStyle) return false
         if (radioButtonStyle != other.radioButtonStyle) return false
@@ -368,6 +384,8 @@ public class DefaultComponentStyling(
         result = 31 * result + linkStyle.hashCode()
         result = 31 * result + menuStyle.hashCode()
         result = 31 * result + outlinedButtonStyle.hashCode()
+        result = 31 * result + defaultSlimButtonStyle.hashCode()
+        result = 31 * result + outlinedSlimButtonStyle.hashCode()
         result = 31 * result + popupContainerStyle.hashCode()
         result = 31 * result + outlinedSplitButtonStyle.hashCode()
         result = 31 * result + radioButtonStyle.hashCode()
@@ -408,6 +426,8 @@ public class DefaultComponentStyling(
             "linkStyle=$linkStyle, " +
             "menuStyle=$menuStyle, " +
             "outlinedButtonStyle=$outlinedButtonStyle, " +
+            "defaultSlimButtonStyle=$defaultSlimButtonStyle, " +
+            "outlinedSlimButtonStyle=$outlinedSlimButtonStyle, " +
             "popupContainerStyle=$popupContainerStyle, " +
             "outlinedSplitButtonStyle=$outlinedSplitButtonStyle, " +
             "radioButtonStyle=$radioButtonStyle, " +

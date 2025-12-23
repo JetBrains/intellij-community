@@ -123,4 +123,29 @@ internal fun readOutlinedButtonStyle(): ButtonStyle {
     )
 }
 
+internal fun readDefaultSlimButtonStyle(): ButtonStyle {
+    val defaultButtonStyle = readDefaultButtonStyle()
+    return createSlimButtonStyle(colors = defaultButtonStyle.colors)
+}
+
+internal fun readOutlinedSlimButtonStyle(): ButtonStyle {
+    val outlinedButtonStyle = readOutlinedButtonStyle()
+    return createSlimButtonStyle(colors = outlinedButtonStyle.colors)
+}
+
 private fun buttonCornerSize(): CornerSize = CornerSize(DarculaUIUtil.BUTTON_ARC.dp.safeValue() / 2)
+
+private fun createSlimButtonStyle(colors: ButtonColors): ButtonStyle {
+    return ButtonStyle(
+        colors = colors,
+        metrics =
+            ButtonMetrics(
+                cornerSize = buttonCornerSize(),
+                padding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                minSize = DpSize(60.dp, 24.dp),
+                borderWidth = borderWidth,
+                focusOutlineExpand = 1.5.dp,
+            ),
+        focusOutlineAlignment = Stroke.Alignment.Center,
+    )
+}
