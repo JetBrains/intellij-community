@@ -14,8 +14,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.IntConsumer
-import java.util.stream.Collectors
 import java.util.stream.Stream
+import kotlin.streams.asStream
 
 class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val storage: VcsLogStorage,
                 private val providers: Map<VirtualFile, VcsLogProvider>) : VcsLogRefs {
@@ -52,12 +52,14 @@ class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val
   }
 
   override fun getBranches(): Collection<VcsRef> {
-    return allRefsByRoot.values.stream().flatMap(CompressedRefs::streamBranches).collect(Collectors.toList())
+    return allRefsByRoot.values.flatMapTo(mutableListOf()) {
+      it.getBranches()
+    }
   }
 
   @RequiresBackgroundThread
   override fun stream(): Stream<VcsRef> {
-    return allRefsByRoot.values.stream().flatMap(CompressedRefs::stream)
+    return allRefsByRoot.values.asSequence().flatMap(CompressedRefs::getRefs).asStream()
   }
 
   companion object {

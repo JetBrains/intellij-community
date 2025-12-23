@@ -1,36 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
-import com.google.common.base.Suppliers
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.VcsRef
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import java.util.stream.Stream
+import it.unimi.dsi.fastutil.ints.*
+import org.jetbrains.annotations.ApiStatus
 
-internal class CompressedRefs(refs: Set<VcsRef>, private val myStorage: VcsLogStorage) {
+@ApiStatus.Internal
+class CompressedRefs(refs: Set<VcsRef>, private val myStorage: VcsLogStorage) {
   // maps each commit id to the list of tag ids on this commit
   private val tags: Int2ObjectMap<IntArrayList> = Int2ObjectOpenHashMap()
 
   // maps each commit id to the list of branches on this commit
   private val branches: Int2ObjectMap<MutableCollection<VcsRef>> = Int2ObjectOpenHashMap()
-
-  val refs: Collection<VcsRef>
-    get() = object : AbstractCollection<VcsRef>() {
-      private val myLoadedRefs = Suppliers.memoize { this@CompressedRefs.stream().toList() }
-
-      override fun iterator(): Iterator<VcsRef> {
-        return myLoadedRefs.get().iterator()
-      }
-
-      override val size: Int
-        get() = myLoadedRefs.get().size
-    }
 
   init {
     var root: VirtualFile? = null
@@ -73,17 +58,13 @@ internal class CompressedRefs(refs: Set<VcsRef>, private val myStorage: VcsLogSt
     return result
   }
 
-  fun streamBranches(): Stream<VcsRef> {
-    return branches.values.stream().flatMap { it.stream() }
+  fun getBranches(): Sequence<VcsRef> = branches.values.asSequence().flatMap { it.asSequence() }
+
+  private fun getTags(): Sequence<VcsRef> = tags.values.asSequence().flatMap { tagsCollection: IntArrayList ->
+    tagsCollection.asSequence().mapNotNull { myStorage.getVcsRef(it) }
   }
 
-  private fun streamTags(): Stream<VcsRef> {
-    return tags.values.stream().flatMapToInt { it.intStream() }.mapToObj(myStorage::getVcsRef)
-  }
-
-  fun stream(): Stream<VcsRef> {
-    return Stream.concat(streamBranches(), streamTags())
-  }
+  fun getRefs(): Sequence<VcsRef> = getBranches() + getTags()
 
   fun getRefsIndexes(): IntSet {
     val result = IntOpenHashSet(branches.keys.size + tags.keys.size)

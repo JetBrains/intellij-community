@@ -41,7 +41,6 @@ import it.unimi.dsi.fastutil.ints.IntConsumer
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.function.BiConsumer
-import java.util.stream.Collectors
 import kotlin.math.min
 
 class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvider>,
@@ -425,7 +424,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
   private fun getMatchingHeads(refsModel: RefsModel, roots: Collection<VirtualFile>, filter: VcsLogBranchFilter): Set<VcsLogCommitStorageIndex> {
     return mapRefsForRoots(refsModel, roots) { refs ->
-      refs.streamBranches().filter { filter.matches(it.name) }.collect(Collectors.toList())
+      refs.getBranches().filter { filter.matches(it.name) }.toList()
     }.toReferencedCommitIndexes()
   }
 

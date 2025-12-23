@@ -312,7 +312,7 @@ internal class VcsLogRefresherImpl(
 
   private fun prepareRequirements(roots: Collection<VirtualFile>, commitCount: Int, prevRefs: Map<VirtualFile, CompressedRefs>?) =
     roots.associateWith { root ->
-      val refs = prevRefs?.get(root)?.refs
+      val refs = prevRefs?.get(root)?.getRefs()?.toList()
       if (refs == null) {
         RequirementsImpl(commitCount, true, listOf<VcsRef>(), false)
       }

@@ -36,7 +36,6 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.VcsLogManager.findLogProviders;
@@ -220,8 +219,7 @@ public final class VcsLogUtil {
   public static @Nullable VcsRef findBranch(@NotNull RefsModel refs, @NotNull VirtualFile root, @NotNull String branchName) {
     CompressedRefs compressedRefs = refs.getAllRefsByRoot().get(root);
     if (compressedRefs == null) return null;
-    Stream<VcsRef> branches = compressedRefs.streamBranches();
-    return branches.filter(vcsRef -> vcsRef.getName().equals(branchName)).findFirst().orElse(null);
+    return ContainerUtil.find(compressedRefs.getBranches().iterator(), (ref) -> ref.getName().equals(branchName));
   }
 
   public static @NotNull List<Change> collectChanges(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
