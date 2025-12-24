@@ -1415,7 +1415,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     myFixture.addClass("package bar; public final class Util { public static void bar() {} }");
     myFixture.configureByText("a.java", "class Foo { static { Util<caret> }}");
     type(".");
-    assertEquals(Set.copyOf(myFixture.getLookupElementStrings()), Set.of("Util.bar", "Util.CONSTANT", "Util.foo"));
+    assertEquals(Set.of("Util.bar", "Util.CONSTANT", "Util.foo"), Set.copyOf(myFixture.getLookupElementStrings()));
 
     LookupElement constant = ContainerUtil.find(myFixture.getLookupElements(), it -> it.getLookupString().equals("Util.CONSTANT"));
     LookupElementPresentation p = NormalCompletionTestCase.renderElement(constant);
@@ -1478,6 +1478,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(true);
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
   }
 
   @Override
