@@ -128,6 +128,6 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="jspecify" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jspecify" />
   </component>
 </module>

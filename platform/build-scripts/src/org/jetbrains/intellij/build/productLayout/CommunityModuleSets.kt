@@ -414,6 +414,7 @@ object CommunityModuleSets {
     module("intellij.platform.langInjection.backend")
     module("intellij.libraries.grpc")
     module("intellij.libraries.grpc.netty.shaded")
+    module("intellij.libraries.jspecify")
 
     moduleSet(gridCore())
     moduleSet(vcs())

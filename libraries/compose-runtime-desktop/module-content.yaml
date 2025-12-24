@@ -14,7 +14,6 @@
       - name: $MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-compose-desktop/2/lifecycle-runtime-compose-desktop-2.jar
       - name: $MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-desktop/2/lifecycle-runtime-desktop-2.jar
       - name: $MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2/lifecycle-common-jvm-2.jar
-      - name: $MAVEN_REPOSITORY$/org/jspecify/jspecify/1/jspecify-1.jar
       - name: $MAVEN_REPOSITORY$/androidx/arch/core/core-common/2/core-common-2.jar
       - name: $MAVEN_REPOSITORY$/androidx/annotation/annotation/1/annotation-1.jar
       androidx.compose.runtime.retain.desktop:

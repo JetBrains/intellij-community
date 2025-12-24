@@ -385,6 +385,7 @@
     <module name="intellij.platform.langInjection.backend"/>
     <module name="intellij.libraries.grpc"/>
     <module name="intellij.libraries.grpc.netty.shaded"/>
+    <module name="intellij.libraries.jspecify"/>
     <module name="intellij.platform.structuralSearch"/>
     <!-- endregion -->
   </content>

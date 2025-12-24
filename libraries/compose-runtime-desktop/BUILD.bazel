@@ -21,7 +21,7 @@ jvm_library(
     "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-desktop",
     "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop",
     "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-retain-desktop",
-    "@lib//:jspecify",
+    "//libraries/jspecify",
   ]
 )
 ### auto-generated section `build intellij.libraries.compose.runtime.desktop` end

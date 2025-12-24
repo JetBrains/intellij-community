@@ -420,6 +420,7 @@ libraries/jgoodies/common
 libraries/jgoodies/forms
 libraries/jsonpath
 libraries/jsoup
+libraries/jspecify
 libraries/jsvg
 libraries/junit4
 libraries/junit5

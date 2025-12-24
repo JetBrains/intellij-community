@@ -46,7 +46,6 @@ jvm_library(
     "@lib//:slf4j-jdk14",
     "//platform/ide-core-impl",
     "@lib//:gradle",
-    "@lib//:jspecify",
     "//libraries/gson",
     "//platform/object-serializer:objectSerializer-annotations",
     "//libraries/ion",
@@ -79,6 +78,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/jspecify",
   ],
   exports = [
     "//platform/external-system-api:externalSystem",
