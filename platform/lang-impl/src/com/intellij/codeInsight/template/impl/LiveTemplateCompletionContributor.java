@@ -46,10 +46,7 @@ public final class LiveTemplateCompletionContributor extends CompletionContribut
   }
 
   public static boolean shouldShowAllTemplates() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return TestModeFlags.is(ourShowTemplatesInTests);
-    }
-    return Registry.is("show.live.templates.in.completion");
+    return !ApplicationManager.getApplication().isUnitTestMode() || TestModeFlags.is(ourShowTemplatesInTests);
   }
 
   public LiveTemplateCompletionContributor() {
@@ -58,6 +55,10 @@ public final class LiveTemplateCompletionContributor extends CompletionContribut
       protected void addCompletions(final @NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
+        if (!shouldShowAllTemplates()) {
+          return;
+        }
+
         ProgressManager.checkCanceled();
         final PsiFile file = parameters.getPosition().getContainingFile();
         if (file instanceof PsiPlainTextFile && EditorTextField.managesEditor(parameters.getEditor())) {
@@ -76,46 +77,24 @@ public final class LiveTemplateCompletionContributor extends CompletionContribut
         List<TemplateImpl> availableTemplates = TemplateManagerImpl.listApplicableTemplates(TemplateActionContext.expanding(file, editor));
         Map<TemplateImpl, String> templates = filterTemplatesByPrefix(availableTemplates, editor, offset, false, false);
         boolean isAutopopup = parameters.getInvocationCount() == 0;
-        if (shouldShowAllTemplates()) {
-          final AtomicBoolean templatesShown = new AtomicBoolean(false);
-          boolean showLiveTemplatesOnTop = Registry.is("ide.completion.show.live.templates.on.top");
-          if (showLiveTemplatesOnTop) {
-            ensureTemplatesShown(templatesShown, templates, availableTemplates, result, isAutopopup);
-            showCustomLiveTemplates(parameters, result);
-          }
 
-          result.runRemainingContributors(parameters, completionResult -> {
-            result.passResult(completionResult);
-            if (completionResult.isStartMatch()) {
-              ensureTemplatesShown(templatesShown, templates, availableTemplates, result, isAutopopup);
-            }
-          });
-
+        AtomicBoolean templatesShown = new AtomicBoolean(false);
+        boolean showLiveTemplatesOnTop = Registry.is("ide.completion.show.live.templates.on.top");
+        if (showLiveTemplatesOnTop) {
           ensureTemplatesShown(templatesShown, templates, availableTemplates, result, isAutopopup);
-          if (!showLiveTemplatesOnTop) {
-            showCustomLiveTemplates(parameters, result);
-          }
-          return;
+          showCustomLiveTemplates(parameters, result);
         }
 
-        if (!isAutopopup) return;
-
-        // custom templates should handle this situation by itself (return true from hasCompletionItems() and provide lookup element)
-        // regular templates won't be shown in this case
-        if (!customTemplateAvailableAndHasCompletionItem(null, editor, file, offset)) {
-          TemplateImpl template = findFullMatchedApplicableTemplate(editor, offset, availableTemplates);
-          if (template != null) {
-            result.withPrefixMatcher(template.getKey())
-              .addElement(new LiveTemplateLookupElementImpl(template, true));
+        result.runRemainingContributors(parameters, completionResult -> {
+          result.passResult(completionResult);
+          if (completionResult.isStartMatch()) {
+            ensureTemplatesShown(templatesShown, templates, availableTemplates, result, isAutopopup);
           }
-        }
+        });
 
-        for (Map.Entry<TemplateImpl, String> possible : templates.entrySet()) {
-          ProgressManager.checkCanceled();
-          String templateKey = possible.getKey().getKey();
-          String currentPrefix = possible.getValue();
-          result.withPrefixMatcher(currentPrefix)
-            .restartCompletionOnPrefixChange(templateKey);
+        ensureTemplatesShown(templatesShown, templates, availableTemplates, result, isAutopopup);
+        if (!showLiveTemplatesOnTop) {
+          showCustomLiveTemplates(parameters, result);
         }
       }
     });

@@ -332,7 +332,11 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     });
     myFixture.checkResult("""
                            class A { Iterable<?> iterable;
-                             { iterable<caret> }
+                             {
+                                 for (Object o : iterable) {
+                                    \s
+                                 }
+                             }
                            }""");
   }
 
@@ -352,7 +356,11 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     });
     myFixture.checkResult("""
                              class A { Iterable<?> iterable;
-                               { iterable<caret> }
+                               {
+                                   for (Object o : iterable) {
+                                      \s
+                                   }
+                               }
                              }""");
   }
 
@@ -821,10 +829,10 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     assertNull(getLookup());
   }
 
-  public void testNoSingleTemplateLookup() {
+  public void testLookupWithTemplates() {
     myFixture.configureByText("a.java", "class Foo { psv<caret> }");
     type("m");
-    assertNull(String.valueOf(myFixture.getLookupElementStrings()), getLookup());
+    assertEquals(List.of("psvm", "psvma"), myFixture.getLookupElementStrings());
   }
 
   public void testTemplatesWithNonImportedClasses() {
@@ -853,7 +861,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
           }
       }""");
     type("er ");
-    assertFalse(myFixture.getEditor().getDocument().getText().contains("for "));
+    assertTrue(myFixture.getEditor().getDocument().getText().contains("for "));
   }
 
   public void testNewClassParenthesis() {
@@ -903,7 +911,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
 
     myFixture.configureByText("a.java", " class Foo { { int iteraaa; <caret> } } ");
     type("ite");
-    assertFalse(myFixture.getLookupElementStrings().contains("iter"));
+    assertTrue(myFixture.getLookupElementStrings().contains("iter"));
     myFixture.type("r");
     joinCommit();
     myFixture.type("a");
@@ -919,7 +927,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
 
     myFixture.configureByText("a.java", " class Foo { { int iteraaa; <caret> } } ");
     type("ite");
-    assertFalse(myFixture.getLookupElementStrings().contains("iter"));
+    assertTrue(myFixture.getLookupElementStrings().contains("iter"));
     assertTrue(myFixture.getLookupElementStrings().contains("iteraaa"));
     myFixture.type("r");
     joinCommit();
@@ -1413,7 +1421,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     myFixture.addClass("package bar; public final class Util { public static void bar() {} }");
     myFixture.configureByText("a.java", "class Foo { static { Util<caret> }}");
     type(".");
-    assertEquals(Set.of("Util.bar", "Util.CONSTANT", "Util.foo"), Set.copyOf(myFixture.getLookupElementStrings()));
+    assertEquals(Set.of(".new", ".lambda", "Util.bar", "Util.CONSTANT", "Util.foo"), Set.copyOf(myFixture.getLookupElementStrings()));
 
     LookupElement constant = ContainerUtil.find(myFixture.getLookupElements(), it -> it.getLookupString().equals("Util.CONSTANT"));
     LookupElementPresentation p = NormalCompletionTestCase.renderElement(constant);
@@ -1715,7 +1723,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     joinAutopopup();
     joinCompletion();
     assertNotNull(getLookup());
-    assertEquals(myFixture.getLookupElementStrings(), List.of("goo"));
+    assertEquals(myFixture.getLookupElementStrings(), List.of("goo", ".lambda"));
   }
 
   public void test_in_column_selection_mode() {
