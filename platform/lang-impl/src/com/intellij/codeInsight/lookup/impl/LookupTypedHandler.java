@@ -14,7 +14,6 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
@@ -92,7 +91,7 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
       return false;
     }
 
-    if (charTyped == ' ' && ChooseItemAction.hasTemplatePrefix(lookup, TemplateSettings.SPACE_CHAR)) {
+    if (charTyped == ' ' && ChooseItemAction.hasTemplatePrefix(lookup, ' ')) {
       return false;
     }
 
