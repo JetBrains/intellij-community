@@ -39,8 +39,18 @@ interface ThreadingSupport {
   @ApiStatus.Internal
   fun isWriteIntentReadAccessAllowed(): Boolean
 
+  /**
+   * Runs the specified computation synchronously with a _Read_ lock.
+   * - If no _Write_ action is currently running, [computation] runs immediately
+   * - If a _Write_ action is currently running, this thread gets **blocked** until [computation] can run.
+   *
+   * See also [ReadAction.compute] for a more java-friendly version.
+   *
+   * @param computation the computation to perform.
+   * @return the result returned by the computation.
+   */
   @RequiresBlockingContext
-  fun <T> runReadAction(clazz: Class<*>, action: () -> T): T
+  fun <T> runReadAction(computation: () -> T): T
 
   /**
    * Tries to acquire the read lock and run the `action`.

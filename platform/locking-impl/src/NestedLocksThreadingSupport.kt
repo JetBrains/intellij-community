@@ -3,7 +3,6 @@ package com.intellij.platform.locking.impl
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
-import com.intellij.concurrency.withThreadLocal
 import com.intellij.core.rwmutex.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
@@ -808,11 +807,11 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
-  override fun <T> runReadAction(clazz: Class<*>, action: () -> T): T {
+  override fun <T> runReadAction(computation: () -> T): T {
     handleLockAccess("read lock")
 
     val frozenListeners = readActionListeners.doClone()
-    fireBeforeReadActionStart(frozenListeners, clazz)
+    fireBeforeReadActionStart(frozenListeners, Any::class.java)
 
     val currentReadState = myTopmostReadAction.get()
     myTopmostReadAction.set(true)
@@ -833,12 +832,12 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       myReadActionsInThread.set(myReadActionsInThread.get() + 1)
 
       try {
-        fireReadActionStarted(frozenListeners, clazz)
-        val rv = action()
+        fireReadActionStarted(frozenListeners, Any::class.java)
+        val rv = computation()
         return rv
       }
       finally {
-        fireReadActionFinished(frozenListeners, clazz)
+        fireReadActionFinished(frozenListeners, Any::class.java)
 
         myReadActionsInThread.set(myReadActionsInThread.get() - 1)
         if (readPermitToRelease != null) {
@@ -848,7 +847,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
     finally {
       myTopmostReadAction.set(currentReadState)
-      fireAfterReadActionFinished(frozenListeners, clazz)
+      fireAfterReadActionFinished(frozenListeners, Any::class.java)
     }
 
   }

@@ -25,7 +25,7 @@ class AnyThreadWriteThreadingSupportTest {
       val rt = Thread({
         try {
           readThreadStarted.release()
-          lock.runReadAction(javaClass) {
+          lock.runReadAction {
             readRun.set(true)
           }
         } catch (_: InterruptedException) {
