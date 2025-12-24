@@ -739,6 +739,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "jsoup", url = "https://jsoup.org")
       .mit("https://jsoup.org/license"),
 
+    LibraryLicense("jspecify", libraryName = "jspecify", url = "https://github.com/jspecify/jspecify")
+      .apache("https://github.com/jspecify/jspecify/blob/main/LICENSE"),
+
     LibraryLicense(libraryName = "jsr305", url = "https://github.com/amaembo/jsr-305")
       .newBsd("https://github.com/amaembo/jsr-305/blob/master/ri/LICENSE")
       .suppliedByOrganizations("JSR305 expert group"),
