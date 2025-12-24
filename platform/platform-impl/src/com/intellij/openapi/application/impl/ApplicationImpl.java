@@ -1267,19 +1267,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  @SuppressWarnings("deprecation")
-  public @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> clazz) {
-    PluginException.reportDeprecatedUsage("Application#acquireWriteActionLock", "Use `runWriteAction()` instead");
-    var cleanup = getThreadingSupport().acquireWriteActionLock(clazz);
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        cleanup.invoke();
-      }
-    };
-  }
-
-  @Override
   public void assertWriteAccessAllowed() {
     ThreadingAssertions.assertWriteAccess();
   }

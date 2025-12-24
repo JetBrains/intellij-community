@@ -168,10 +168,6 @@ open class MockApplication(parentDisposable: Disposable) : MockComponentManager(
     return computation.compute()
   }
 
-  override fun acquireReadActionLock(): AccessToken = AccessToken.EMPTY_ACCESS_TOKEN
-
-  override fun acquireWriteActionLock(marker: Class<*>): AccessToken = AccessToken.EMPTY_ACCESS_TOKEN
-
   override fun hasWriteAction(actionClass: Class<*>): Boolean = false
 
   override fun addApplicationListener(listener: ApplicationListener) {

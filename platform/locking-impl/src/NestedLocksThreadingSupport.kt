@@ -1378,13 +1378,6 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     return false
   }
 
-  @Deprecated("Use `runWriteAction`, `WriteAction.run`, or `WriteAction.compute` instead")
-  override fun acquireWriteActionLock(marker: Class<*>): () -> Unit {
-    logger.error("`ThreadingSupport.acquireWriteActionLock` is deprecated and going to be removed soon. Use `runWriteAction()` instead")
-    val token = WriteAccessToken(marker)
-    return token::finish
-  }
-
   override fun prohibitWriteActionsInside(): () -> Unit {
     myNoWriteActionCounter.set(myNoWriteActionCounter.get() + 1)
     return {
@@ -1516,60 +1509,6 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   private fun afterWriteIntentReadActionFinished(listeners: List<WriteIntentReadActionListener>, clazz: Class<*>) {
     listeners.traverseBackwards {
       it.afterWriteIntentReadActionFinished(clazz)
-    }
-  }
-
-  @Deprecated("")
-  private inner class WriteAccessToken(private val clazz: Class<*>) : AccessToken() {
-    val compState = getComputationState()
-    val writeIntentPreparatoryData: PreparatoryWriteIntent
-    val writeLockInitResult: AccessToken
-
-    init {
-      markThreadNameInStackTrace()
-      writeIntentPreparatoryData = prepareWriteIntentAcquiredBeforeWriteBlocking(compState, clazz)
-      writeLockInitResult = try {
-        prepareWriteFromWriteIntentBlocking(compState, clazz, writeIntentPreparatoryData).applyThreadLocalActions()
-      }
-      catch (e: Throwable) {
-        // this code can be cancelled during the acquisition of a write lock
-        // we need to not forget to release the acquired write-intent lock
-        writeIntentPreparatoryData.release()
-        throw e
-      }
-    }
-
-    override fun finish() {
-      try {
-        try {
-          writeLockInitResult.finish()
-        } finally {
-          writeIntentPreparatoryData.release()
-        }
-      }
-      finally {
-        unmarkThreadNameInStackTrace()
-      }
-    }
-
-    private fun markThreadNameInStackTrace() {
-      val id = id()
-
-      val thread = Thread.currentThread()
-      thread.name = thread.name + id
-    }
-
-    private fun unmarkThreadNameInStackTrace() {
-      val id = id()
-
-      val thread = Thread.currentThread()
-      var name = thread.name
-      name = StringUtil.replace(name!!, id, "")
-      thread.name = name
-    }
-
-    private fun id(): String {
-      return " [WriteAccessToken]"
     }
   }
 
