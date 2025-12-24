@@ -19,7 +19,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @ApiStatus.Internal
-public abstract class MainMethodSearcherBase {
+public abstract class JvmMainMethodSearcher {
   public static final Condition<@NotNull PsiClass> MAIN_CLASS = psiClass -> {
     if (PsiUtil.isLocalOrAnonymousClass(psiClass)) return false;
     if (psiClass.isAnnotationType()) return false;

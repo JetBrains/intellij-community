@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaMainMethodSearcher;
-import com.intellij.psi.util.MainMethodSearcherBase;
+import com.intellij.psi.util.JvmMainMethodSearcher;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     }
 
     PsiElement parent = element.getParent();
-    MainMethodSearcherBase mainMethodUtil = getMainMethodUtil();
+    JvmMainMethodSearcher mainMethodUtil = getMainMethodUtil();
     if (parent instanceof PsiClass aClass) {
       if (!mainMethodUtil.hasMainInClass(aClass)) return null;
       if (PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class) != null) return null;
@@ -47,7 +47,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
       if (!(containingClass instanceof PsiImplicitClass) && PsiTreeUtil.getParentOfType(containingClass, PsiImplicitClass.class) != null) {
         return null;
       }
-      if (!MainMethodSearcherBase.MAIN_CLASS.value(containingClass)) return null;
+      if (!JvmMainMethodSearcher.MAIN_CLASS.value(containingClass)) return null;
       PsiMethod candidateMainMethod = mainMethodUtil.findMainMethodInClassOrParent(containingClass);
       if (candidateMainMethod != method) return null;
     }
@@ -66,7 +66,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     return e instanceof PsiIdentifier;
   }
 
-  protected MainMethodSearcherBase getMainMethodUtil() {
+  protected JvmMainMethodSearcher getMainMethodUtil() {
     return JavaMainMethodSearcher.INSTANCE;
   }
 }
