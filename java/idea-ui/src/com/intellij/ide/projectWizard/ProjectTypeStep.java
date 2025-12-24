@@ -654,6 +654,9 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     if (isFrameworksMode() && !myFrameworksPanel.validate()) {
       return false;
     }
+    if (myCustomSteps.get(myCurrentCard) instanceof ModuleWizardStep wizardStep) {
+      if (!wizardStep.validate()) return false;
+    }
     return super.validate();
   }
 
