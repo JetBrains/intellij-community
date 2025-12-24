@@ -156,10 +156,6 @@ interface ThreadingSupport {
   @ApiStatus.Internal
   fun getLockingProhibitedAdvice(): String?
 
-  /** DO NOT USE */
-  @ApiStatus.Internal
-  fun isInsideUnlockedWriteIntentLock(): Boolean
-
   @ApiStatus.Internal
   fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): Pair<CoroutineContext, CleanupAction>
 

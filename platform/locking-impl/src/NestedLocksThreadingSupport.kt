@@ -1395,10 +1395,6 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
 
-  override fun isInsideUnlockedWriteIntentLock(): Boolean {
-    return false
-  }
-
   private fun <T> processWriteLockAcquisition(acquisitor: () -> T): T {
     val prevResult = myLockAcquisitionListener?.beforeWriteLockAcquired()
     try {
