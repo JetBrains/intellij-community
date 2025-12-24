@@ -852,7 +852,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
 
   }
 
-  override fun tryRunReadAction(action: Runnable): Boolean {
+  override fun tryRunReadAction(action: () -> Unit): Boolean {
     handleLockAccess("fail-fast read lock")
 
     val frozenListeners = readActionListeners.doClone()
@@ -879,7 +879,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
 
       try {
         fireReadActionStarted(frozenListeners, action.javaClass)
-        action.run()
+        action()
         return true
       }
       finally {

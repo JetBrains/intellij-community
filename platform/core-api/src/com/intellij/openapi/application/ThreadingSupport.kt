@@ -36,7 +36,6 @@ interface ThreadingSupport {
   /**
    * Checks if the current thread holds _Write-Intent-Read_ or _Write_ lock.
    */
-  @ApiStatus.Internal
   fun isWriteIntentReadAccessAllowed(): Boolean
 
   /**
@@ -53,11 +52,14 @@ interface ThreadingSupport {
   fun <T> runReadAction(computation: () -> T): T
 
   /**
-   * Tries to acquire the read lock and run the `action`.
+   * Runs the specified computation synchronously with a _Read_ lock.
+   * - If no _Write_ action is currently running, [action] runs immediately, and this method returns `true`
+   * - If a _Write_ action is currently running, [action] does not run, and this method returns `false` immediately.
    *
-   * @return true if action was run while holding the lock, false if was unable to get the lock and action was not run
+   * @param action the computation to perform.
+   * @return `true` if the action was executed, `false` if _Read_ lock could not be acquired.
    */
-  fun tryRunReadAction(action: Runnable): Boolean
+  fun tryRunReadAction(action: () -> Unit): Boolean
 
   /**
    * Check, if read lock is acquired by current thread already.
