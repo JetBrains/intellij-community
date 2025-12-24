@@ -111,6 +111,8 @@ data class DependencyFileResult(
   override val status: FileChangeStatus,
   /** Number of dependencies added */
   @JvmField val dependencyCount: Int,
+  /** The actual dependencies (used for validation without re-fetching from cache) */
+  @JvmField val dependencies: Set<String> = emptySet(),
 ) : HasFileChangeStatus
 
 /**
