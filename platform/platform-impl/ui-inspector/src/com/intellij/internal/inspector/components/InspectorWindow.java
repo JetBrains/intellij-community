@@ -319,6 +319,9 @@ public final class InspectorWindow extends JDialog implements Disposable {
     if (selected != null) {
       myHierarchyTree.selectPath(selected, myIsAccessibleEnabled);
     }
+    if (myShowAccessibilityIssuesAction.showAccessibilityIssues) {
+      myShowAccessibilityIssuesAction.updateTreeWithAccessibilityAuditStatus();
+    }
   }
 
   @Override
@@ -796,9 +799,6 @@ public final class InspectorWindow extends JDialog implements Disposable {
       myIsAccessibleEnabled = !myIsAccessibleEnabled;
       myNavBarPanel.setAccessibleEnabled(myIsAccessibleEnabled);
       resetTree(false);
-      if (myShowAccessibilityIssuesAction.showAccessibilityIssues) {
-        myShowAccessibilityIssuesAction.updateTreeWithAccessibilityAuditStatus();
-      }
     }
   }
 
