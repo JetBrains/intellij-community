@@ -98,19 +98,19 @@ interface ThreadingSupport {
   suspend fun <T> runWriteAction(computation: () -> T): T
 
   /**
-   * This function allows to conditionally execute [computation] under write lock
+   * This function allows to conditionally execute [computation] under _Write_ lock
    * while atomically checking a condition provided by [shouldProceedWithWriteAction].
    *
    * The function works in the following steps:
-   * 1. Acquire write-intent lock;
+   * 1. Acquire _Write-Intent-Read_ lock;
    * 2. Execute [shouldProceedWithWriteAction];
-   * 3. If `true`, proceed with [computation] under write lock which was atomically upgraded from the previously acquired write-intent;
+   * 3. If `true`, proceed with [computation] under _Write_ lock which was atomically upgraded from the previously acquired _Write-Intent-Read_;
    * 4. If `false`, return without executing [computation];
    * 5. Release all acquired locks.
    *
-   * Normally, write actions are heavy -- they need to terminate all existing read actions and cancel pending ones.
+   * Normally, write actions are heavy -- they need to terminate all existing _Read_ actions and cancel pending ones.
    * Also, the Platform usually drops caches on write actions.
-   * Sometimes it is possible to avoid the execution of write action, but the decision needs to be taken with a consistent view of the world.
+   * Sometimes it is possible to avoid the execution of _Write_ action, but the decision needs to be taken with a consistent view of the world.
    * This function can be useful when the client is able to take this decision, for example, in `readAndWriteAction` group of functions.
    *
    * @return the result of the [computation] if it was executed, or `null` if [shouldProceedWithWriteAction] returned `false` .
@@ -118,31 +118,17 @@ interface ThreadingSupport {
   suspend fun <T : Any> runWriteActionWithCheckInWriteIntent(shouldProceedWithWriteAction: () -> Boolean, computation: () -> T): T?
 
   /**
-   * Returns `true` if there is currently executing write action of the specified class.
-   *
-   * @param actionClass the class of the write action to return.
-   * @return `true` if the action is running, or `false` if no action of the specified class is currently executing.
-   */
-  fun hasWriteAction(actionClass: Class<*>): Boolean
-
-  /**
-   * @return true if some thread is performing write action right now.
-   * @see runWriteAction
+   * @return true if some thread is performing _Write_ action right now
    */
   fun isWriteActionInProgress(): Boolean
 
   /**
-   * @return true if the EDT started to acquire write action but has not acquired it yet.
-   * @see runWriteAction
+   * @return true if someone is blocked or suspended on the acquisition of _Write_ lock
    */
   fun isWriteActionPending(): Boolean
 
   /**
-   * Checks if the write access is currently allowed.
-   *
-   * @return `true` if the write access is currently allowed, `false` otherwise.
-   * @see .assertWriteAccessAllowed
-   * @see .runWriteAction
+   * Checks if the current thread runs with _Write_ lock
    */
   @Contract(pure = true)
   fun isWriteAccessAllowed(): Boolean
@@ -292,6 +278,15 @@ interface ThreadingSupport {
    */
   @Deprecated("Do not use: this is a severe violation of IJ Platform contracts")
   fun executeSuspendingWriteAction(action: () -> Unit)
+
+  /**
+   * Returns `true` if there is a currently executing write action of the specified class.
+   *
+   * @param actionClass the class of the write action to return.
+   * @return `true` if the action is running, or `false` if no action of the specified class is currently executing.
+   */
+  @Deprecated("Use `ExternalChangeAction` or custom logic for detecting such actions")
+  fun hasWriteAction(actionClass: Class<*>): Boolean
 
   /**
    * A marker class that helps others to identify that the runnable needs to run quickly
