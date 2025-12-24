@@ -643,7 +643,7 @@ platform/lang-impl
 platform/lang-impl/backend
 platform/lang-impl/testEntities
 platform/libraries/cglib
-platform/locking.impl
+platform/locking-impl
 platform/lvcs-api
 platform/lvcs-impl
 platform/macro

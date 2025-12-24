@@ -2,17 +2,17 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
-  name = "locking.impl_resources",
+  name = "locking-impl_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "locking.impl",
+  name = "locking-impl",
   module_name = "intellij.platform.locking.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":locking.impl_resources"],
+  resources = [":locking-impl_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
