@@ -49,6 +49,32 @@ import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.theme.comboBoxStyle
 import org.jetbrains.jewel.ui.theme.popupContainerStyle
 
+/**
+ * A convenience overload of [SpeedSearchableComboBox] for plain [String] items.
+ *
+ * Renders a combo box whose popup list supports speed search: as the user types, items are matched against the query,
+ * the list scrolls to the best match, and matched characters are highlighted. It must be used within a
+ * [SpeedSearchScope] (typically provided by [org.jetbrains.jewel.ui.component.SpeedSearchArea]).
+ *
+ * Item rendering uses [SimpleListItem] with automatic search-match highlighting. For custom item rendering or
+ * non-string item types, use the generic [SpeedSearchableComboBox] overload instead.
+ *
+ * @param items The list of strings to display in the combo box popup.
+ * @param selectedIndex The index of the currently selected item.
+ * @param onSelectedItemChange Called with the new index when the user selects a different item.
+ * @param modifier The [Modifier] to apply to the combo box.
+ * @param popupModifier The [Modifier] to apply to the popup container.
+ * @param itemKeys A function that returns a stable, unique key for each item. Defaults to the item value itself.
+ * @param enabled Whether the combo box is interactive.
+ * @param outline The [Outline] to draw around the combo box.
+ * @param maxPopupHeight The maximum height of the popup. Defaults to [Dp.Unspecified] (unconstrained).
+ * @param maxPopupWidth The maximum width of the popup. Defaults to [Dp.Unspecified] (unconstrained).
+ * @param style The visual style configuration for the combo box.
+ * @param textStyle The text style used for both the label and popup items.
+ * @param onPopupVisibleChange Called when the popup is shown or hidden.
+ * @param listState The state object controlling selection and scroll position in the popup list.
+ * @param dispatcher The coroutine dispatcher used for background search operations. Defaults to [Dispatchers.Default].
+ */
 @Composable
 @ExperimentalJewelApi
 @ApiStatus.Experimental
@@ -97,14 +123,68 @@ public fun SpeedSearchScope.SpeedSearchableComboBox(
             selected = isSelected,
             active = isActive,
             iconContentDescription = item,
-            onTextLayout = {
-                @Suppress("AssignedValueIsNeverRead")
-                textLayoutResult = it
-            },
+            onTextLayout = { textLayoutResult = it },
         )
     }
 }
 
+/**
+ * Renders a combo box whose popup list supports speed search functionality.
+ *
+ * This composable combines a [org.jetbrains.jewel.ui.component.ListComboBoxImpl] with speed search capabilities,
+ * providing automatic text matching, navigation between matches, and intelligent scrolling behavior. It must be used
+ * within a [SpeedSearchScope] (typically provided by [org.jetbrains.jewel.ui.component.SpeedSearchArea]).
+ *
+ * **Key features:**
+ * - **Automatic matching**: Items are automatically matched against the search query via [itemText]
+ * - **Smart navigation**: Arrow keys navigate between matching items when speed search is active
+ * - **Auto-scrolling**: Automatically scrolls to keep the best matching item visible
+ * - **Highlight integration**: Use [ProvideSearchMatchState] (via [itemContent]) to highlight matched characters
+ * - **Performance optimized**: Uses a background dispatcher for search operations
+ *
+ * Example usage:
+ * ```kotlin
+ * SpeedSearchArea {
+ *     SpeedSearchableComboBox(
+ *         items = myItems,
+ *         selectedIndex = selectedIndex,
+ *         onSelectedItemChange = { selectedIndex = it },
+ *         itemKeys = { _, item -> item.id },
+ *         itemText = { _, item -> item.name },
+ *     ) { item, isSelected, isActive ->
+ *         var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+ *         SimpleListItem(
+ *             text = item.name.highlightTextSearch(),
+ *             selected = isSelected,
+ *             active = isActive,
+ *             onTextLayout = { textLayoutResult = it },
+ *             textModifier = Modifier.highlightSpeedSearchMatches(textLayoutResult),
+ *         )
+ *     }
+ * }
+ * ```
+ *
+ * @param items The list of items to display in the combo box popup.
+ * @param selectedIndex The index of the currently selected item.
+ * @param onSelectedItemChange Called with the new index when the user selects a different item.
+ * @param itemKeys A function that returns a stable, unique key for each item given its index and value.
+ * @param itemText A function that returns the searchable text for each item, or `null` if the item should not be
+ *   matched.
+ * @param modifier The [Modifier] to apply to the combo box.
+ * @param popupModifier The [Modifier] to apply to the popup container.
+ * @param enabled Whether the combo box is interactive.
+ * @param outline The [Outline] to draw around the combo box.
+ * @param maxPopupHeight The maximum height of the popup. Defaults to [Dp.Unspecified] (unconstrained).
+ * @param maxPopupWidth The maximum width of the popup. Defaults to [Dp.Unspecified] (unconstrained).
+ * @param style The visual style configuration for the combo box.
+ * @param onPopupVisibleChange Called when the popup is shown or hidden.
+ * @param listState The state object controlling selection and scroll position in the popup list.
+ * @param dispatcher The coroutine dispatcher used for background search operations. Defaults to [Dispatchers.Default].
+ * @param itemContent The composable used to render each popup item.
+ * @see org.jetbrains.jewel.ui.component.SpeedSearchArea for the search container
+ * @see highlightTextSearch for highlighting search matches in text
+ * @see highlightSpeedSearchMatches for applying match highlight styles
+ */
 @Composable
 @ExperimentalJewelApi
 @ApiStatus.Experimental
