@@ -195,12 +195,10 @@ object InternalThreading {
     val exceptionRef = Ref.create<Throwable?>()
     val capturedRunnable = AppScheduledExecutorService.captureContextCancellationForRunnableThatDoesNotOutliveContextScope {
       try {
-        lock.allowTakingLocksInsideAndRun {
-          // we can appear here if someone tries to acquire a read action in a forced slow-op section
-          // the users have no control over computations that run inside transferred write action, hence we reset the slow-op section
-          SlowOperations.startSection(SlowOperations.RESET).use {
-            (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(runnable)
-          }
+        // we can appear here if someone tries to acquire a read action in a forced slow-op section
+        // the users have no control over computations that run inside transferred write action, hence we reset the slow-op section
+        SlowOperations.startSection(SlowOperations.RESET).use {
+          (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(runnable)
         }
       }
       catch (e: Throwable) {

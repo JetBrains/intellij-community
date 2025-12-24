@@ -134,31 +134,17 @@ interface ThreadingSupport {
   fun isWriteAccessAllowed(): Boolean
 
   /**
-   * Disable write actions till token will be released.
+   * Disable _Write_ actions on the current thread until [CleanupAction] will be executed.
    */
+  @ApiStatus.Internal
   fun prohibitWriteActionsInside(): CleanupAction
-
-  @ApiStatus.Internal
-  fun setWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener)
-
-  @ApiStatus.Internal
-  fun removeWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener)
 
   /**
    * Prevents any attempt to use R/W locks inside [action].
    */
   @ApiStatus.Internal
   @Throws(LockAccessDisallowed::class)
-  fun prohibitTakingLocksInsideAndRun(action: Runnable, failSoftly: Boolean, advice: String)
-
-  /**
-   * Allows using R/W locks inside [action].
-   * This is mostly needed for incremental transition from previous approach with unconditional lock acquisiton:
-   * we cannot afford prohibiting taking locks for large regions of the platform
-   */
-  @ApiStatus.Internal
-  @Throws(LockAccessDisallowed::class)
-  fun allowTakingLocksInsideAndRun(action: Runnable)
+  fun prohibitTakingLocksInsideAndRun(action: Runnable, advice: String)
 
   /**
    * If locking is prohibited for this thread (via [prohibitTakingLocksInsideAndRun]),
@@ -262,7 +248,6 @@ interface ThreadingSupport {
    */
   fun removeReadActionListener(listener: ReadActionListener)
 
-
   /**
    * If called inside a write-action, executes the given [action] with write-lock released
    * (e.g., to allow for write-intent-read-action parallelization).
@@ -272,6 +257,12 @@ interface ThreadingSupport {
    */
   @Deprecated("Do not use: this is a severe violation of IJ Platform contracts")
   fun executeSuspendingWriteAction(action: () -> Unit)
+
+  @ApiStatus.Internal
+  fun setWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener)
+
+  @ApiStatus.Internal
+  fun removeWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener)
 
   /**
    * Returns `true` if there is a currently executing write action of the specified class.

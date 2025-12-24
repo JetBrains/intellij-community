@@ -8,7 +8,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.locking.impl.listeners.ErrorHandler
 import com.intellij.platform.locking.impl.listeners.LegacyProgressIndicatorProvider
 import com.intellij.platform.locking.impl.listeners.LockAcquisitionListener
@@ -232,7 +231,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   private val myNoWriteActionCounter = ThreadLocal<Int>.withInitial { 0 }
 
   private val myReadActionsInThread = ThreadLocal.withInitial { 0 }
-  private val myLockingProhibited: ThreadLocal<Pair<Boolean, String>?> = ThreadLocal.withInitial { null }
+  private val myLockingProhibited: ThreadLocal<String?> = ThreadLocal.withInitial { null }
 
   // todo: reimplement with listeners in IJPL-177760
   private val myTopmostReadAction = ThreadLocal.withInitial { false }
@@ -797,13 +796,8 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   private fun handleLockAccess(culprit: String) {
     val lockProhibition = myLockingProhibited.get()
     if (lockProhibition != null) {
-      val exception = ThreadingSupport.LockAccessDisallowed("Attempt to take $culprit was prevented\n${lockProhibition.second}")
-      if (lockProhibition.first) {
-        logger.error(exception)
-      }
-      else {
-        throw exception
-      }
+      val exception = ThreadingSupport.LockAccessDisallowed("Attempt to take $culprit was prevented\n${lockProhibition}")
+      throw exception
     }
   }
 
@@ -1385,20 +1379,9 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
-  override fun prohibitTakingLocksInsideAndRun(action: Runnable, failSoftly: Boolean, advice: String) {
+  override fun prohibitTakingLocksInsideAndRun(action: Runnable, advice: String) {
     val currentValue = myLockingProhibited.get()
-    myLockingProhibited.set(failSoftly to advice)
-    try {
-      action.run()
-    }
-    finally {
-      myLockingProhibited.set(currentValue)
-    }
-  }
-
-  override fun allowTakingLocksInsideAndRun(action: Runnable) {
-    val currentValue = myLockingProhibited.get()
-    myLockingProhibited.set(null)
+    myLockingProhibited.set(advice)
     try {
       action.run()
     }
@@ -1408,7 +1391,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   override fun getLockingProhibitedAdvice(): String? {
-    return myLockingProhibited.get()?.second
+    return myLockingProhibited.get()
   }
 
 
