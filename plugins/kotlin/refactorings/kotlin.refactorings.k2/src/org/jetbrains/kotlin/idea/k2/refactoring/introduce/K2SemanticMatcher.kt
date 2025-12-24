@@ -9,24 +9,14 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
-import org.jetbrains.kotlin.analysis.api.components.targetSymbol
-import org.jetbrains.kotlin.analysis.api.components.type
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
-import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
-import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider.getArgumentOrIndexExpressions
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider.mapArgumentsToParameterIndices
 import org.jetbrains.kotlin.idea.base.psi.isInsideKtTypeReference
@@ -233,7 +223,7 @@ object K2SemanticMatcher {
         fun areSymbolsEqualOrAssociated(targetSymbol: KaSymbol?, patternSymbol: KaSymbol?): Boolean {
             if (targetSymbol == null || patternSymbol == null) return targetSymbol == null && patternSymbol == null
 
-            if (patternSymbol is KaNamedSymbol) {
+            if (patternSymbol is KaNamedSymbol && targetSymbol is KaNamedSymbol) {
                 val patternElement = patternSymbol.psi as? PsiNamedElement
                 if (patternElement != null && parameterSubstitution.containsKey(patternElement)) {
                     if (patternSymbol is KaCallableSymbol && targetSymbol is KaCallableSymbol) {
@@ -242,8 +232,7 @@ object K2SemanticMatcher {
                     if (patternSymbol is KaReceiverParameterSymbol && targetSymbol is KaReceiverParameterSymbol) {
                         return true
                     }
-                    val expression =
-                        KtPsiFactory(patternElement.project).createExpression((targetSymbol as KaNamedSymbol).name.asString())
+                    val expression = KtPsiFactory(patternElement.project).createExpression(targetSymbol.name.asString())
                     val oldElement = parameterSubstitution.put(patternElement, expression)
                     return oldElement !is KtElement || oldElement.text == expression.text
                 }
@@ -802,7 +791,14 @@ object K2SemanticMatcher {
         val targetCall = targetCallInfo.calls.singleOrNull()
         val patternCall = patternCallInfo.calls.singleOrNull()
 
-        if (targetCall?.javaClass != patternCall?.javaClass) return false
+        // Note: a combination of a compound call and a regular call is not supported
+        if (
+            targetCall?.javaClass != patternCall?.javaClass &&
+            // Different function calls are supported
+            (targetCall !is KaFunctionCall<*> || patternCall !is KaFunctionCall<*>)
+        ) {
+            return false
+        }
 
         if (targetCall is KaCallableMemberCall<*, *> && patternCall is KaCallableMemberCall<*, *>) {
             val targetAppliedSymbol = targetCall.partiallyAppliedSymbol
