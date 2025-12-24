@@ -140,11 +140,14 @@ interface ThreadingSupport {
   fun prohibitWriteActionsInside(): CleanupAction
 
   /**
-   * Prevents any attempt to use R/W locks inside [action].
+   * Prevents any attempt to use R/W locks on this thread inside [action].
+   * An attempt to take a lock results in [LockAccessDisallowed] exception with [advice] message.
+   *
+   * @throws LockAccessDisallowed on attempt to take a lock inside [action].
    */
   @ApiStatus.Internal
   @Throws(LockAccessDisallowed::class)
-  fun prohibitTakingLocksInsideAndRun(action: Runnable, advice: String)
+  fun prohibitTakingLocksInsideAndRun(action: () -> Unit, advice: String)
 
   /**
    * If locking is prohibited for this thread (via [prohibitTakingLocksInsideAndRun]),

@@ -1464,11 +1464,11 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, @NlsSafe String advice) {
-    getThreadingSupport().prohibitTakingLocksInsideAndRun(runnable, advice);
+    getThreadingSupport().prohibitTakingLocksInsideAndRun(runnableUnitFunction(runnable), advice);
   }
 
   @Override
-  public String isLockingProhibited() {
+  public String getLockProhibitedAdvice() {
     return getThreadingSupport().getLockingProhibitedAdvice();
   }
 

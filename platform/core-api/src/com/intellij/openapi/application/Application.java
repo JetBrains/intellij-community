@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.*;
 import com.intellij.util.messages.MessageBus;
@@ -709,7 +708,7 @@ public interface Application extends ComponentManager {
   }
 
   @ApiStatus.Internal
-  default @NonNls @Nullable String isLockingProhibited() {
+  default @NonNls @Nullable String getLockProhibitedAdvice() {
     return null;
   }
 
