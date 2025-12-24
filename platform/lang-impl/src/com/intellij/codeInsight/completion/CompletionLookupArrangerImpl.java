@@ -62,6 +62,6 @@ public class CompletionLookupArrangerImpl extends BaseCompletionLookupArranger {
   }
 
   private static boolean isSuddenLiveTemplate(@NotNull LookupElement element) {
-    return element instanceof LiveTemplateLookupElement && ((LiveTemplateLookupElement)element).sudden;
+    return element instanceof LiveTemplateLookupElement && ((LiveTemplateLookupElement)element).isSudden();
   }
 }

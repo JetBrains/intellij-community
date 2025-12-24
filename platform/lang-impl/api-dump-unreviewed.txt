@@ -4856,7 +4856,6 @@ f:com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 - s:shouldShowAllTemplates():Z
 a:com.intellij.codeInsight.template.impl.LiveTemplateLookupElement
 - com.intellij.codeInsight.lookup.LookupElement
-- f:sudden:Z
 - getAutoCompletionPolicy():com.intellij.codeInsight.lookup.AutoCompletionPolicy
 - p:getItemText():java.lang.String
 - getLookupString():java.lang.String

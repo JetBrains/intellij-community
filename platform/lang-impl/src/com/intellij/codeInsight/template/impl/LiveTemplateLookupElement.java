@@ -6,18 +6,19 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class LiveTemplateLookupElement extends LookupElement {
   private final @NlsSafe String myLookupString;
-  public final boolean sudden;
+  private final boolean mySudden;
   private final boolean myWorthShowingInAutoPopup;
   private final @NlsSafe String myDescription;
 
   LiveTemplateLookupElement(@NotNull @NlsSafe String lookupString, @Nullable @NlsSafe String description, boolean sudden, boolean worthShowingInAutoPopup) {
     myDescription = description;
-    this.sudden = sudden;
+    mySudden = sudden;
     myLookupString = lookupString;
     myWorthShowingInAutoPopup = worthShowingInAutoPopup;
   }
@@ -46,6 +47,11 @@ public abstract class LiveTemplateLookupElement extends LookupElement {
   @Override
   public boolean isWorthShowingInAutoPopup() {
     return myWorthShowingInAutoPopup;
+  }
+
+  @ApiStatus.Internal
+  public boolean isSudden() {
+    return mySudden;
   }
 
   public abstract char getTemplateShortcut();

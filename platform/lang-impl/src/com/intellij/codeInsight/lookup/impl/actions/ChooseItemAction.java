@@ -105,7 +105,7 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
 
     final LiveTemplateLookupElement liveTemplateLookup = ContainerUtil.findInstance(lookup.getItems(), LiveTemplateLookupElement.class);
-    if (liveTemplateLookup == null || !liveTemplateLookup.sudden) {
+    if (liveTemplateLookup == null || !liveTemplateLookup.isSudden()) {
       // Lookup doesn't contain sudden live templates. It means that
       // - there are no live template with given key:
       //    in this case we should find live template with appropriate prefix (custom live templates doesn't participate in this action).
