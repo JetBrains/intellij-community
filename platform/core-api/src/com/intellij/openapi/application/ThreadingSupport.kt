@@ -34,13 +34,6 @@ interface ThreadingSupport {
   fun tryRunWriteIntentReadAction(action: () -> Unit): Boolean
 
   /**
-   * Executes a runnable with a write-intent lock only if locking is permitted on this thread
-   * We hope that if locking is forbidden, then preventive acquisition of write-intent lock in top-level places (such as event dispatch)
-   * may be not needed.
-   */
-  fun <T> runPreventiveWriteIntentReadAction(computation: () -> T): T
-
-  /**
    * Checks, if Write Intent lock acquired by the current thread.
    *
    * As Write Intent Lock has very special status, this method doesn't check for "inherited" lock, it returns `true` if and only if

@@ -176,7 +176,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
         boolean expired = runnable instanceof ExpirableRunnable && ((ExpirableRunnable)runnable).isExpired();
         if (!expired) {
           // Even immediate code need explicit write-safe context, not implicit one
-          IntelliJLockingUtil.getGlobalThreadingSupport().runPreventiveWriteIntentReadAction(() -> {
+          IntelliJLockingUtil.getGlobalThreadingSupport().runWriteIntentReadAction(() -> {
             runnable.run();
             return null;
           });

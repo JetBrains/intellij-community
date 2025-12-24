@@ -506,29 +506,6 @@ class EdtCoroutineDispatcherTest {
   }
 
   @Test
-  fun `exception messages in preventive locking for Dispatchers UI`(): Unit = timeoutRunBlocking {
-    withContext(Dispatchers.UI) {
-      IdeEventQueue.getInstance().threadingSupport.runPreventiveWriteIntentReadAction {
-        val error = assertErrorLogged<RuntimeException> {
-          ThreadingAssertions.assertReadAccess()
-        }
-        assertThat(error.message)
-          .contains("read access")
-          .contains("Dispatchers.UI")
-          .doesNotContain("Dispatchers.Main")
-
-        val error2 = assertErrorLogged<RuntimeException> {
-          ThreadingAssertions.assertWriteIntentReadAccess()
-        }
-        assertThat(error2.message)
-          .contains("write-intent access")
-          .contains("Dispatchers.UI")
-          .doesNotContain("Dispatchers.Main")
-      }
-    }
-  }
-
-  @Test
   fun `UI coroutine can be executed earlier then EDT coroutine`(): Unit = timeoutRunBlocking {
     Assumptions.assumeTrue { useNonBlockingFlushQueue }
     val uiExecuted = AtomicBoolean()
