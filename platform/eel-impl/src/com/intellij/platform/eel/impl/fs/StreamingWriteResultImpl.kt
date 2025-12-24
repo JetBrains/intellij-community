@@ -5,6 +5,6 @@ import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.StreamingWriteResult
 
 object StreamingWriteResultImpl {
-  class Ok(override val bytesWritten: Int) : StreamingWriteResult.Ok
+  class Ok(override val bytesWritten: Long) : StreamingWriteResult.Ok
   class Error(override val error: EelFileSystemApi.StreamingWriteError) : StreamingWriteResult.Error
 }

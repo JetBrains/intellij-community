@@ -466,7 +466,7 @@ interface EelFileSystemApi {
   }
 
   /**
-   * Streaming read will read until the end of the file, otherwise there is an error.
+   * Streaming read will read from the beginning until the end of the file, otherwise there is an error.
    * It is not guaranteed that each chunk is the same size.
    * This method is highly preferable over [EelOpenedFile.Reader.read] when reading a lot of data from a remote file.
    */

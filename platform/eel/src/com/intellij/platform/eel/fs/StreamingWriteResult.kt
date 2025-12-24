@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 sealed interface StreamingWriteResult {
   interface Ok : StreamingWriteResult {
-    val bytesWritten: Int
+    val bytesWritten: Long
   }
 
   interface Error : StreamingWriteResult {

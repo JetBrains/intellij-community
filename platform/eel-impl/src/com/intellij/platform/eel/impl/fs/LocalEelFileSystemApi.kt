@@ -20,6 +20,7 @@ import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
@@ -1021,7 +1022,7 @@ private fun convertPermissionsToMask(permissions: Set<PosixFilePermission>): Int
 }
 
 private suspend fun doStreamingWrite(chunks: Flow<ByteBuffer>, targetFileOpenOptions: EelFileSystemApi.WriteOptions): StreamingWriteResult {
-  var totalBytesWritten = 0
+  var totalBytesWritten: Long = 0
   val path = targetFileOpenOptions.path
   val nioOptions = writeOptionsToNioOptions(targetFileOpenOptions)
 
@@ -1056,24 +1057,18 @@ private fun doStreamingRead(path: EelPath): Flow<StreamingReadResult> =
   flow {
     try {
       Files.newByteChannel(path.asNioPath(), StandardOpenOption.READ).use { channel ->
-        // Buffer size chosen randomly
-        val buffer = ByteBuffer.allocateDirect(64 * 1024)
         while (true) {
-          buffer.clear()
+          // Buffer size chosen randomly
+          val buffer = ByteBuffer.allocate(64 * 1024)
           val bytesRead = channel.read(buffer)
           if (bytesRead == -1) break
           buffer.flip()
-
-          val chunk = ByteBuffer.allocate(buffer.remaining())
-          chunk.put(buffer)
-          chunk.flip()
-
-          emit(StreamingReadResultImpl.Ok(chunk))
+          emit(StreamingReadResultImpl.Ok(buffer))
         }
       }
     }
-    // Exception instead of FileSystemException because opening a directory for reading returns IOException
-    catch (e: Exception) {
+    // IOException instead of FileSystemException because opening a directory for reading returns IOException
+    catch (e: IOException) {
       val err = when (e) {
         is NoSuchFileException -> EelFsResultImpl.DoesNotExist(path, e.message ?: "Target path does not exist")
         is AccessDeniedException -> EelFsResultImpl.NotFile(path, e.message ?: "Target path is not a file or no permissions to read")
@@ -1081,7 +1076,7 @@ private fun doStreamingRead(path: EelPath): Flow<StreamingReadResult> =
       }
       emit(StreamingReadResultImpl.Error(err))
     }
-  }
+  }.flowOn(Dispatchers.IO)
 
 private fun writeOptionsToNioOptions(options: EelFileSystemApi.WriteOptions): MutableSet<StandardOpenOption> {
   val nioOptions = mutableSetOf<StandardOpenOption>(StandardOpenOption.WRITE)
