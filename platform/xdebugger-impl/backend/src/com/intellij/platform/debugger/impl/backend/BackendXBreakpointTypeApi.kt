@@ -304,7 +304,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
 
   @RequiresReadLock
   private fun computeBreakpointsLineRawInfo(project: Project, position: XSourcePosition): BreakpointsLineRawInfo {
-    val lineBreakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, position, true, null)
+    val lineBreakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, position, selectTypeByPositionColumn = true)
     val variantsPromise = if (lineBreakpointTypes.isNotEmpty()) {
       XDebuggerUtilImpl.getLineBreakpointVariants(project, lineBreakpointTypes, position).asDeferred()
     }

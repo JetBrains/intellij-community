@@ -182,8 +182,6 @@ f:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 - sf:INSTANCE:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 - sf:findSelectedBreakpoint(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):com.intellij.openapi.util.Pair
 - sf:findType(java.lang.String):com.intellij.xdebugger.breakpoints.XBreakpointType
-- sf:getAvailableLineBreakpointTypes(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition,com.intellij.openapi.editor.Editor):java.util.List
-- sf:getAvailableLineBreakpointTypes(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition,Z,com.intellij.openapi.editor.Editor):java.util.List
 - sf:getDisplayText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
 - sf:getGeneralDescription(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
 - sf:getPropertyXMLDescriptions(com.intellij.xdebugger.breakpoints.XBreakpoint):java.util.List

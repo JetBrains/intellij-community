@@ -22,6 +22,7 @@ import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.util.SmartList
@@ -32,7 +33,6 @@ import com.intellij.xdebugger.breakpoints.*
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxy
 import com.intellij.xdebugger.impl.proxy.MonolithLineBreakpointProxy
 import kotlinx.coroutines.CoroutineScope
@@ -278,20 +278,12 @@ object XBreakpointUtil {
     return properties
   }
 
-  @JvmStatic
-  fun getAvailableLineBreakpointTypes(
-    project: Project,
-    linePosition: XSourcePosition,
-    editor: Editor?,
-  ): List<XLineBreakpointType<*>> =
-    getAvailableLineBreakpointTypes(project, linePosition, false, editor)
-
-  @JvmStatic
+  @ApiStatus.Internal
   fun getAvailableLineBreakpointTypes(
     project: Project,
     position: XSourcePosition,
-    selectTypeByPositionColumn: Boolean,
-    editor: Editor?,
+    editor: Editor? = null,
+    selectTypeByPositionColumn: Boolean = false,
   ): List<XLineBreakpointType<*>> {
     val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
     val breakpointInfo = getAvailableLineBreakpointInfo(position, selectTypeByPositionColumn, editor,
