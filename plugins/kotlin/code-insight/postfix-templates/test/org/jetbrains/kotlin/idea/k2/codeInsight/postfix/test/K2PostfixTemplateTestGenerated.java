@@ -152,6 +152,11 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             performTest();
         }
 
+        @TestMetadata("conjunctionType.kt")
+        public void testConjunctionType() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("forOnMap.kt")
         public void testForOnMap() throws Exception {
             performTest();

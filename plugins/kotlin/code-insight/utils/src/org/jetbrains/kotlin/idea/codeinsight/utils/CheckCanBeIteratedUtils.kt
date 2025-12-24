@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
+import org.jetbrains.kotlin.analysis.api.components.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.allSupertypes
 import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
@@ -17,9 +17,9 @@ private val ITERABLE_CLASS_IDS: Set<ClassId> = buildSet {
     this += StandardClassIds.primitiveArrayTypeByElementType.values // What about elementTypeByUnsignedArrayType?
     this += StandardClassIds.Iterable
     this += StandardClassIds.Map
-    this += ClassId.fromString("kotlin/sequences/Sequence")
+    this += StandardClassIds.Sequence
     this += ClassId.fromString("java/util/stream/Stream")
-    this += DefaultTypeClassIds.CHAR_SEQUENCE
+    this += KaStandardTypeClassIds.CHAR_SEQUENCE
 }
 
 @OptIn(KaContextParameterApi::class)
@@ -40,7 +40,7 @@ context(_: KaSession)
 private fun KaType.isInheritorOf(classIds: Set<ClassId>, checkNullability: Boolean = true): Boolean {
     return when (this) {
         is KaFlexibleType -> this.lowerBoundIfFlexible().isInheritorOf(classIds)
-        is KaIntersectionType -> this.conjuncts.all { it.isInheritorOf(classIds) }
+        is KaIntersectionType -> this.conjuncts.any { it.isInheritorOf(classIds) }
         is KaDefinitelyNotNullType -> this.original.isInheritorOf(classIds, checkNullability = false)
         is KaTypeParameterType -> symbol.upperBounds.any { it.isInheritorOf(classIds) }
         is KaClassType -> {
