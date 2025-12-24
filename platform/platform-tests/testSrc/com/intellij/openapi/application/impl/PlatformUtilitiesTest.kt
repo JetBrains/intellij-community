@@ -345,7 +345,7 @@ class PlatformUtilitiesTest {
 
   @Test
   fun `parallelization of write-intent lock removes write-intent access`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val (lockContext, lockCleanup) = getGlobalThreadingSupport().getPermitAsContextElement(currentThreadContext(), true)
+    val (lockContext, lockCleanup) = getGlobalThreadingSupport().parallelizeLock()
     installThreadContext(lockContext).use {
       try {
         assertThat(application.isWriteIntentLockAcquired).isFalse

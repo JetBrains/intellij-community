@@ -527,16 +527,13 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
-  override fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): Pair<CoroutineContext, () -> Unit> {
+  override fun parallelizeLock(): Pair<CoroutineContext, CleanupAction> {
+    val baseContext = currentThreadContext()
     val currentComputationStateElement = baseContext[ComputationStateContextElement]
     // we suppose that the caller passes `baseContext` that is actually correct
     val currentComputationState = currentComputationStateElement?.computationState
                                   ?: statesOfWIThread.get()?.lastOrNull()
                                   ?: zeroLevelComputationState
-
-    if (!shared) {
-      return (currentComputationStateElement ?: ComputationStateContextElement(currentComputationState)) to { }
-    }
 
     // now we need to parallelize the existing permit
     val currentPermit = currentComputationState.getThisThreadPermit()
@@ -623,6 +620,17 @@ class NestedLocksThreadingSupport : ThreadingSupport {
         }
       }
     }
+  }
+
+  override fun getLockContextElement(): CoroutineContext {
+    val baseContext = currentThreadContext()
+    val currentComputationStateElement = baseContext[ComputationStateContextElement]
+    // we suppose that the caller passes `baseContext` that is actually correct
+    val currentComputationState = currentComputationStateElement?.computationState
+                                  ?: statesOfWIThread.get()?.lastOrNull()
+                                  ?: zeroLevelComputationState
+
+    return currentComputationStateElement ?: ComputationStateContextElement(currentComputationState)
   }
 
   override fun isParallelizedReadAction(context: CoroutineContext): Boolean {

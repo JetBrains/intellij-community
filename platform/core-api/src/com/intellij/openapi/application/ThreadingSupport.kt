@@ -156,8 +156,23 @@ interface ThreadingSupport {
   @ApiStatus.Internal
   fun getLockingProhibitedAdvice(): String?
 
+  /**
+   * For an existing [com.intellij.concurrency.currentThreadContext], parallelizes lock and allows to clean it up in [CleanupAction]
+   *
+   * - If the current thread holds no lock, then nothing happens
+   * - If the current thread holds _Read_ lock, a parallelized read action begins:
+   *   all coroutines started with the returned [CoroutineContext] will have read access
+   * - If the current thread holds _Write-Intent-Read_ lock, then a new instance of a lock is created,
+   *   and all coroutines with the returned [CoroutineContext] operate with this new instance of a lock.
+   * - If the current thread holds _Write_ lock, then this Write lock is downgraded to _Write-Intent-Read_. **This is a dangerous operation!**
+   */
   @ApiStatus.Internal
-  fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): Pair<CoroutineContext, CleanupAction>
+  fun parallelizeLock(): Pair<CoroutineContext, CleanupAction>
+
+  /**
+   * Returns current coroutine context element that corresponds to the read-write lock.
+   */
+  fun getLockContextElement(): CoroutineContext
 
   @ApiStatus.Internal
   fun isParallelizedReadAction(context: CoroutineContext): Boolean

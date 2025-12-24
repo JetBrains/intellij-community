@@ -2512,7 +2512,7 @@ fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
 @Suppress("RAW_RUN_BLOCKING")
 @RequiresEdt
 private fun Job.waitBlockingAndPumpEdt() {
-  val (parallelizedLockContext, cleanup) = getGlobalThreadingSupport().getPermitAsContextElement(currentThreadContext(), true)
+  val (parallelizedLockContext, cleanup) = getGlobalThreadingSupport().parallelizeLock()
   try {
     runBlocking(parallelizedLockContext) {
       invokeOnCompletion {

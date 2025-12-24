@@ -688,12 +688,6 @@ public interface Application extends ComponentManager {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  default Pair<CoroutineContext, AccessToken> getLockStateAsCoroutineContext(CoroutineContext context, boolean shared) {
-    return new Pair<>(EmptyCoroutineContext.INSTANCE, AccessToken.EMPTY_ACCESS_TOKEN);
-  }
-
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
   default boolean isParallelizedReadAction(CoroutineContext context) {
     return false;
   }

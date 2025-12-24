@@ -6,7 +6,6 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.ActivityCategory;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
@@ -1481,17 +1480,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   public void addSuspendingWriteActionListener(@NotNull WriteLockReacquisitionListener listener, @NotNull Disposable parentDisposable) {
     lock.setWriteLockReacquisitionListener(listener);
     Disposer.register(parentDisposable, () -> lock.removeWriteLockReacquisitionListener(listener));
-  }
-
-  @Override
-  public Pair<CoroutineContext, AccessToken> getLockStateAsCoroutineContext(CoroutineContext baseContext, boolean shared) {
-    var pair = getThreadingSupport().getPermitAsContextElement(baseContext, shared);
-    return new Pair<>(pair.getFirst(), new AccessToken() {
-      @Override
-      public void finish() {
-        pair.getSecond().invoke();
-      }
-    });
   }
 
   @Override
