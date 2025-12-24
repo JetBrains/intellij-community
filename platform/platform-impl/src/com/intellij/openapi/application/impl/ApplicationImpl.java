@@ -385,7 +385,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public boolean isWriteIntentLockAcquired() {
-    return getThreadingSupport().isWriteIntentLocked();
+    return getThreadingSupport().isWriteIntentReadAccessAllowed();
   }
 
   @Override

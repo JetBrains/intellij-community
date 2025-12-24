@@ -34,17 +34,10 @@ interface ThreadingSupport {
   fun tryRunWriteIntentReadAction(action: () -> Unit): Boolean
 
   /**
-   * Checks, if Write Intent lock acquired by the current thread.
-   *
-   * As Write Intent Lock has very special status, this method doesn't check for "inherited" lock, it returns `true` if and only if
-   * current thread is the owner of Write Intent Lock.
-   *
-   * This is low-level API, please use [WriteIntentReadAction].
-   *
-   * @return `true` if lock is acquired, `false` otherwise.
+   * Checks if the current thread holds _Write-Intent-Read_ or _Write_ lock.
    */
   @ApiStatus.Internal
-  fun isWriteIntentLocked(): Boolean
+  fun isWriteIntentReadAccessAllowed(): Boolean
 
   /**
    * Runs the specified action, releasing the write-intent lock if it is acquired at the moment of the call.

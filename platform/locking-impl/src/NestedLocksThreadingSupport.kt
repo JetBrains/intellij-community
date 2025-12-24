@@ -739,7 +739,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
-  override fun isWriteIntentLocked(): Boolean {
+  override fun isWriteIntentReadAccessAllowed(): Boolean {
     if (myWriteAcquired == Thread.currentThread()) {
       return true
     }

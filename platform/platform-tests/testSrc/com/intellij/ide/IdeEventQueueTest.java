@@ -28,7 +28,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.InvocationEvent;
 import java.awt.event.KeyEvent;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -240,7 +239,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       IdeEventQueue.NonLockedEventDispatcher dispatcher = e -> {
         dispatcherCalled.set(true);
         // This should not have write intent access
-        hasWriteIntentAccess.set(threadingSupport.isWriteIntentLocked());
+        hasWriteIntentAccess.set(threadingSupport.isWriteIntentReadAccessAllowed());
         return false;
       };
 
@@ -271,7 +270,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       IdeEventQueue.EventDispatcher dispatcher = e -> {
         dispatcherCalled.set(true);
         // Regular dispatchers should have write intent access
-        hasWriteIntentAccess.set(threadingSupport.isWriteIntentLocked());
+        hasWriteIntentAccess.set(threadingSupport.isWriteIntentReadAccessAllowed());
         return false;
       };
 
