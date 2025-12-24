@@ -387,8 +387,6 @@ com.intellij.openapi.application.AppUIExecutor
 - s:onWriteThread(com.intellij.openapi.application.ModalityState):com.intellij.openapi.application.AppUIExecutor
 com.intellij.openapi.application.Application
 - com.intellij.openapi.components.ComponentManager
-- a:acquireReadActionLock():com.intellij.openapi.application.AccessToken
-- a:acquireWriteActionLock(java.lang.Class):com.intellij.openapi.application.AccessToken
 - a:addApplicationListener(com.intellij.openapi.application.ApplicationListener):V
 - a:addApplicationListener(com.intellij.openapi.application.ApplicationListener,com.intellij.openapi.Disposable):V
 - a:assertIsDispatchThread():V
