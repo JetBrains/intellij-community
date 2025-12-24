@@ -12,11 +12,11 @@ import kotlin.coroutines.CoroutineContext
 interface ThreadingSupport {
 
   /**
-   * Runs the specified computation in a write intent. Must be called from the Swing dispatch thread. The action is executed
-   * immediately if no write action is currently running, or blocked until the currently running write action
-   * completes.
+   * Runs the specified computation synchronously with a _Write-Intent-Read_ lock.
+   * - If no _Write_ or _Write-Intent-Read_ action is currently running, [computation] runs immediately
+   * - If a _Write_ or _Write-Intent-Read_ action is currently running, this thread gets **blocked** until [computation] can run.
    *
-   * See also [WriteIntentReadAction.compute] for a more lambda-friendly version.
+   * See also [WriteIntentReadAction.compute] for a more java-friendly version.
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
@@ -24,8 +24,9 @@ interface ThreadingSupport {
   fun <T> runWriteIntentReadAction(computation: () -> T): T
 
   /**
-   * Runs the specified [action] synchronously with a write-intent lock. The action is executed
-   * immediately if no write action is currently running.
+   * Runs the specified computation synchronously with a _Write-Intent-Read_ lock.
+   * - If no _Write_ or _Write-Intent-Read_ action is currently running, [action] runs immediately, and this method returns `true`
+   * - If a _Write_ or _Write-Intent-Read_ action is currently running, [action] does not run, and this method returns `false` immediately.
    *
    * @param action the computation to perform.
    * @return `true` if the action was executed, `false` if another write-intent lock could not be acquired.
