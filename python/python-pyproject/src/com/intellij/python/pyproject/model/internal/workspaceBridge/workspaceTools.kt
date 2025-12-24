@@ -112,20 +112,23 @@ internal fun relocateUserDefinedModuleSdk(storage: MutableEntityStorage, transfe
   }
 }
 
-// TODO: DOC
+/**
+ * Return [entires_to_create_modules_from, dirs_to_exclude]
+ */
 private suspend fun generatePyProjectTomlEntries(
   fsInfo: FSWalkInfoWithToml,
 ): Pair<Set<PyProjectTomlBasedEntryImpl>, Set<Directory>> = withContext(Dispatchers.Default) {
   val (files, allExcludeDirs) = fsInfo
   val entries = ArrayList<PyProjectTomlBasedEntryImpl>()
   val usedNamed = mutableSetOf<String>()
+  val tools = Tool.EP.extensionList
   // Any tool that helped us somehow must be tracked here
   for ((tomlFile, toml) in files.entries) {
     val participatedTools = mutableSetOf<ToolId>()
     val root = tomlFile.parent
     var projectNameAsString = toml.project?.name
     if (projectNameAsString == null) {
-      val toolAndName = getNameFromEP(toml)
+      val toolAndName = tools.getNameFromEP(toml)
       if (toolAndName != null) {
         projectNameAsString = toolAndName.second
         participatedTools.add(toolAndName.first.id)
@@ -142,6 +145,15 @@ private suspend fun generatePyProjectTomlEntries(
     val sourceRoots = sourceRootsAndTools.map { it.second }.toSet() + findSrc(root)
     participatedTools.addAll(sourceRootsAndTools.map { it.first.id })
     val excludedDirs = allExcludeDirs.filter { it.startsWith(root) }
+    if (participatedTools.isEmpty()) {
+      // Try to use build-tool as last resort
+      toml.toml.getString("build-system.build-backend")?.let { buildBackend ->
+        tools.firstOrNull { it.id.id in buildBackend }?.let { buildTool ->
+          participatedTools.add(buildTool.id)
+        }
+      }
+    }
+
     val relationsWithTools: List<PyProjectTomlToolRelation> = participatedTools.map { PyProjectTomlToolRelation.SimpleRelation(it) }
     val entry = PyProjectTomlBasedEntryImpl(tomlFile,
                                             HashSet(relationsWithTools),
@@ -175,9 +187,10 @@ private suspend fun generatePyProjectTomlEntries(
   return@withContext Pair(entries.toSet(), allExcludeDirs)
 }
 
-private suspend fun getNameFromEP(projectToml: PyProjectToml): Pair<Tool, @NlsSafe String>? = withContext(Dispatchers.Default) {
-  Tool.EP.extensionList.firstNotNullOfOrNull { tool -> tool.getProjectName(projectToml.toml)?.let { Pair(tool, it) } }
-}
+private suspend fun Iterable<Tool>.getNameFromEP(projectToml: PyProjectToml): Pair<Tool, @NlsSafe String>? =
+  withContext(Dispatchers.Default) {
+    firstNotNullOfOrNull { tool -> tool.getProjectName(projectToml.toml)?.let { Pair(tool, it) } }
+  }
 
 private suspend fun createEntityStorage(
   graph: Set<PyProjectTomlBasedEntryImpl>,

@@ -20,8 +20,8 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.python.sdkConfigurator.common.detectSdkForModulesIn
-import com.intellij.python.sdkConfigurator.common.enableSDKAutoConfigurator
+import com.intellij.python.pyproject.model.api.ModuleCreateInfo
+import com.intellij.python.pyproject.model.api.getModuleInfo
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonIdeLanguageCustomization
@@ -37,7 +37,6 @@ import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration
-import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.ui.PyUiUtil
 import kotlinx.coroutines.CoroutineScope
@@ -109,8 +108,9 @@ private suspend fun getSuitableSdkFix(name: String?, module: Module): LocalQuick
   if (associatedSdk != null) return@withContext UseExistingInterpreterFix(associatedSdk, module)
 
   val context = UserDataHolderBase()
-  val createSdkInfo = PyProjectSdkConfigurationExtension.findAllSortedForModule(module).firstOrNull()
-  if (createSdkInfo != null) return@withContext UseProvidedInterpreterFix(module, createSdkInfo)
+
+  val quickFixBySdkSuggestion = module.getQuickFixBySdkSuggestion()
+  if (quickFixBySdkSuggestion != null) return@withContext quickFixBySdkSuggestion
 
   if (name != null) {
     val matcher = NAME.matcher(name)
@@ -204,13 +204,8 @@ private class UseProvidedInterpreterFix(private val myModule: Module, private va
   override fun getName(): String = myCreateSdkInfo.createSdkInfo.intentionName
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    if (!enableSDKAutoConfigurator) {
-      return PyProjectSdkConfiguration.configureSdkUsingCreateSdkInfo(myModule, myCreateSdkInfo)
-    }
-
-    project.service<MyService>().scope.launch {
-      detectSdkForModulesIn(project)
-    }
+    PyProjectSdkConfiguration.configureSdkUsingCreateSdkInfo(myModule, myCreateSdkInfo)
+    PyUiUtil.clearFileLevelInspectionResults(descriptor.psiElement.containingFile)
   }
 
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
@@ -254,3 +249,22 @@ private class UseDetectedInterpreterFix(
 
 @Service(Service.Level.PROJECT)
 private class MyService(val scope: CoroutineScope)
+
+private suspend fun Module.getQuickFixBySdkSuggestion(): LocalQuickFix? = when (val i = getModuleInfo()) {
+  is ModuleCreateInfo.CreateSdkInfoWrapper -> {
+    val tool = CreateSdkInfoWithTool(i.createSdkInfo, i.toolId)
+    UseProvidedInterpreterFix(this, tool)
+  }
+  is ModuleCreateInfo.SameAs -> {
+    val parentModuleSdk = i.parentModule.pythonSdk
+    if (parentModuleSdk != null) {
+      UseExistingInterpreterFix(parentModuleSdk, this)
+    }
+    else {
+      // Parent has no SDK, configure it first
+      // TODO: Check for SO
+      i.parentModule.getQuickFixBySdkSuggestion()
+    }
+  }
+  null -> null
+}
