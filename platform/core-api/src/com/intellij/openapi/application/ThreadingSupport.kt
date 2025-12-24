@@ -133,9 +133,6 @@ interface ThreadingSupport {
   @Contract(pure = true)
   fun isWriteAccessAllowed(): Boolean
 
-  @Deprecated("Use `runReadAction` instead")
-  fun acquireReadActionLock(): CleanupAction
-
   @Deprecated("Use `runWriteAction`, `WriteAction.run`, or `WriteAction.compute` instead")
   fun acquireWriteActionLock(marker: Class<*>): CleanupAction
 

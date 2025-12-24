@@ -1252,19 +1252,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  @SuppressWarnings("deprecation")
-  public @NotNull AccessToken acquireReadActionLock() {
-    PluginException.reportDeprecatedUsage("Application.acquireReadActionLock", "Use `runReadAction()` instead");
-    var cleanup = getThreadingSupport().acquireReadActionLock();
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        cleanup.invoke();
-      }
-    };
-  }
-
-  @Override
   public boolean isWriteActionPending() {
     return getThreadingSupport().isWriteActionPending();
   }

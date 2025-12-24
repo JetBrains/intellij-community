@@ -1378,31 +1378,6 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     return false
   }
 
-  @Deprecated("Use `runReadAction` instead")
-  override fun acquireReadActionLock(): CleanupAction {
-    logger.error("`ThreadingSupport.acquireReadActionLock` is deprecated and going to be removed soon. Use `runReadAction()` instead")
-    val computationState = getComputationState()
-    val currentPermit = computationState.getThisThreadPermit()
-    if (currentPermit is ParallelizablePermit.Write) {
-      throw IllegalStateException("Write Action can not request Read Access Token")
-    }
-    if (currentPermit is ReadPermit || currentPermit is WriteIntentPermit) {
-      return { }
-    }
-    val capturedListener = readActionListeners
-    val capturedPermit = run {
-      fireBeforeReadActionStart(capturedListener, javaClass)
-      val p = computationState.acquireReadPermit()
-      fireReadActionStarted(capturedListener, javaClass)
-      p
-    }
-    return {
-      fireReadActionFinished(capturedListener, javaClass)
-      computationState.releaseReadPermit(capturedPermit)
-      fireAfterReadActionFinished(capturedListener, javaClass)
-    }
-  }
-
   @Deprecated("Use `runWriteAction`, `WriteAction.run`, or `WriteAction.compute` instead")
   override fun acquireWriteActionLock(marker: Class<*>): () -> Unit {
     logger.error("`ThreadingSupport.acquireWriteActionLock` is deprecated and going to be removed soon. Use `runWriteAction()` instead")

@@ -670,10 +670,6 @@ public interface Application extends ComponentManager {
     return isDisposed();
   }
 
-  /** @deprecated use {@link #runReadAction(Runnable)} instead */
-  @Deprecated
-  @NotNull AccessToken acquireReadActionLock();
-
   /** @deprecated use {@link #runWriteAction}, {@link WriteAction#run(ThrowableRunnable)}, or {@link WriteAction#compute} instead */
   @Deprecated
   @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
