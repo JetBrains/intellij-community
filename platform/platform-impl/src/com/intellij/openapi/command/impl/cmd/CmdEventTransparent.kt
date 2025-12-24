@@ -18,11 +18,21 @@ internal class CmdEventTransparent(
     return CmdEventTransparent(project, id(), meta())
   }
 
+  override fun groupId(): Any {
+    return TransparentGroupId
+  }
+
   override fun project(): Project? {
     return project
   }
 
   override fun isTransparent(): Boolean {
     return true
+  }
+}
+
+private object TransparentGroupId {
+  override fun toString(): String {
+    return "TRANSPARENT_GROUP_ID"
   }
 }
