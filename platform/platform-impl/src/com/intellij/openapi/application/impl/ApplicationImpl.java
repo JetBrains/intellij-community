@@ -1092,7 +1092,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     @Nls(capitalization = Nls.Capitalization.Title) @Nullable String cancelText,
     @NotNull Consumer<? super @Nullable ProgressIndicator> action
   ) {
-    return lock.runWriteAction(action.getClass(), () -> {
+    return lock.runWriteActionBlocking(() -> {
       if (JBUIScale.isInitialized()) {
         @SuppressWarnings("DialogTitleCapitalization") var indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
         indicator.runInSwingThread(() -> action.accept(indicator));
@@ -1123,7 +1123,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     checkWriteActionAllowedOnCurrentThread();
     incrementBackgroundWriteActionCounter();
     try {
-      getThreadingSupport().runWriteAction(action.getClass(), runnableUnitFunction(action));
+      getThreadingSupport().runWriteActionBlocking(runnableUnitFunction(action));
     }
     finally {
       decrementBackgroundWriteActionCounter();
@@ -1135,7 +1135,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     checkWriteActionAllowedOnCurrentThread();
     incrementBackgroundWriteActionCounter();
     try {
-      return getThreadingSupport().runWriteAction(computation.getClass(), computation::compute);
+      return getThreadingSupport().runWriteActionBlocking(computation::compute);
     }
     finally {
       decrementBackgroundWriteActionCounter();
@@ -1147,7 +1147,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     checkWriteActionAllowedOnCurrentThread();
     incrementBackgroundWriteActionCounter();
     try {
-      return getThreadingSupport().runWriteAction(computation.getClass(), rethrowCheckedExceptions(computation));
+      return getThreadingSupport().runWriteActionBlocking(rethrowCheckedExceptions(computation));
     }
     finally {
       decrementBackgroundWriteActionCounter();

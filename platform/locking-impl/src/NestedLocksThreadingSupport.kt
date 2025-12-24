@@ -970,13 +970,13 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     myLockAcquisitionListener = null
   }
 
-  override fun <T> runWriteAction(clazz: Class<*>, action: () -> T): T {
+  override fun <T> runWriteActionBlocking(computation: () -> T): T {
     val computationState = getComputationState()
-    val writeIntentInitResult = prepareWriteIntentAcquiredBeforeWriteBlocking(computationState, clazz)
+    val writeIntentInitResult = prepareWriteIntentAcquiredBeforeWriteBlocking(computationState, Any::class.java)
     try {
-      val writeInitResult = prepareWriteFromWriteIntentBlocking(computationState, clazz, writeIntentInitResult)
+      val writeInitResult = prepareWriteFromWriteIntentBlocking(computationState, Any::class.java, writeIntentInitResult)
       return writeInitResult.applyThreadLocalActions().use {
-        action()
+        computation()
       }
     }
     catch (e: CancellationException) {

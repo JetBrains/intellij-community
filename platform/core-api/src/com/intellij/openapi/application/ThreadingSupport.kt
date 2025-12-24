@@ -109,8 +109,18 @@ interface ThreadingSupport {
    */
   fun removeReadActionListener(listener: ReadActionListener)
 
+  /**
+   * Runs the specified computation synchronously with a _Write_ lock.
+   * - If no _Write_, _Write-Intent-Read_, or _Read_ action is currently running, [computation] runs immediately
+   * - If a _Write_, _Write-Intent-Read_, or _Read_ action is currently running, this thread gets **blocked** until [computation] can run.
+   *
+   * See also [WriteAction.compute] for a more java-friendly version.
+   *
+   * @param computation the computation to perform.
+   * @return the result returned by the computation.
+   */
   @RequiresBlockingContext
-  fun <T> runWriteAction(clazz: Class<*>, action: () -> T): T
+  fun <T> runWriteActionBlocking(computation: () -> T): T
 
   /**
    * If called inside a write-action, executes the given [action] with write-lock released

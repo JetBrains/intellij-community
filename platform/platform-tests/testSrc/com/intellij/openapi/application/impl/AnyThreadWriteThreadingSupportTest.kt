@@ -20,7 +20,7 @@ class AnyThreadWriteThreadingSupportTest {
     val readInterrupted = AtomicBoolean(false)
     val readThreadStarted = Semaphore(1, 1)
     val readThreadEnded = Semaphore(1, 1)
-    lock.runWriteAction(javaClass) {
+    lock.runWriteAction {
       // Run background read action, it should block as we are in write action
       val rt = Thread({
         try {
@@ -46,7 +46,7 @@ class AnyThreadWriteThreadingSupportTest {
 
     // Test that write action is Ok now, no lock leaked
     val secondWriteRun = AtomicBoolean(false)
-    lock.runWriteAction(javaClass) {
+    lock.runWriteAction {
       secondWriteRun.set(true)
     }
     assertTrue(readRun.get() != readInterrupted.get())
