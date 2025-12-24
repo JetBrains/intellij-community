@@ -51,23 +51,6 @@ import kotlin.time.Duration.Companion.seconds
 class PlatformUtilitiesTest {
 
   @Test
-  fun `relaxing preventive actions leads to absence of lock`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
-    withContext(Dispatchers.UiWithModelAccess) {
-      assertThat(application.isWriteIntentLockAcquired).isFalse
-      getGlobalThreadingSupport().runPreventiveWriteIntentReadAction {
-        assertThat(application.isWriteIntentLockAcquired).isTrue
-      }
-      getGlobalThreadingSupport().relaxPreventiveLockingActions {
-        getGlobalThreadingSupport().runPreventiveWriteIntentReadAction {
-          assertThat(application.isWriteIntentLockAcquired).isFalse
-        }
-      }
-
-    }
-
-  }
-
-  @Test
   fun `invokeAndWaitRelaxed does not take lock`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     ApplicationManagerEx.getApplicationEx().invokeAndWaitRelaxed(
       {

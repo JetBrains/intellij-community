@@ -254,13 +254,6 @@ interface ThreadingSupport {
   @TestOnly
   fun <T> releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action: () -> T): T = action()
 
-  /**
-   * Makes [runPreventiveWriteIntentReadAction] no-op inside [action].
-   * This is needed for platform code that is sure that the called action would not abuse locks
-   */
-  @ApiStatus.Internal
-  fun <T> relaxPreventiveLockingActions(action: () -> T) : T
-
   class LockAccessDisallowed(override val message: String) : IllegalStateException(message)
 
   /**

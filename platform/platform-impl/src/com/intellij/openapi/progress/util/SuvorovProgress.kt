@@ -263,44 +263,40 @@ object SuvorovProgress {
   }
 
   private fun showPotemkinProgress(awaitedValue: Deferred<*>, isBar: Boolean) {
-    // some focus machinery may require Write-Intent read action
-    // we need to remove it from there
-    getGlobalThreadingSupport().relaxPreventiveLockingActions {
-      @Suppress("HardCodedStringLiteral") val title = this.title.get()
-      val progress = if (title != null || isBar) {
-        PotemkinProgress(title ?: CommonBundle.message("title.long.non.interactive.progress"), null, null, null)
-      }
-      else {
-        val window = SwingUtilities.getRootPane(KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner)
-        PotemkinOverlayProgress(window, false)
-      }.apply {
-        setDelayInMillis(0)
-        repostAllEvents()
-      }
-      progress.start()
-      try {
-        do {
-          if (progress is PotemkinProgress) {
-            progress.dispatchAllInvocationEvents()
-          }
-          else if (progress is PotemkinOverlayProgress) {
-            progress.dispatchAllInvocationEvents()
-          }
-          progress.interact()
-          sleep() // avoid touching the progress too much
-        }
-        while (!awaitedValue.isCompleted)
-      }
-      finally {
-        // we cannot acquire WI on closing
+    @Suppress("HardCodedStringLiteral") val title = this.title.get()
+    val progress = if (title != null || isBar) {
+      PotemkinProgress(title ?: CommonBundle.message("title.long.non.interactive.progress"), null, null, null)
+    }
+    else {
+      val window = SwingUtilities.getRootPane(KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner)
+      PotemkinOverlayProgress(window, false)
+    }.apply {
+      setDelayInMillis(0)
+      repostAllEvents()
+    }
+    progress.start()
+    try {
+      do {
         if (progress is PotemkinProgress) {
-          progress.dialog.getPopup()?.setShouldUseWriteIntentReadAction(false)
-          progress.progressFinished()
-          progress.processFinish()
-          Disposer.dispose(progress)
+          progress.dispatchAllInvocationEvents()
         }
-        progress.stop()
+        else if (progress is PotemkinOverlayProgress) {
+          progress.dispatchAllInvocationEvents()
+        }
+        progress.interact()
+        sleep() // avoid touching the progress too much
       }
+      while (!awaitedValue.isCompleted)
+    }
+    finally {
+      // we cannot acquire WI on closing
+      if (progress is PotemkinProgress) {
+        progress.dialog.getPopup()?.setShouldUseWriteIntentReadAction(false)
+        progress.progressFinished()
+        progress.processFinish()
+        Disposer.dispose(progress)
+      }
+      progress.stop()
     }
   }
 
@@ -366,9 +362,7 @@ private class EternalEventStealer(disposable: Disposable) {
               return
             }
           }
-          is TransferredWriteActionWrapper -> getGlobalThreadingSupport().relaxPreventiveLockingActions {
-            event.event.execute()
-          }
+          is TransferredWriteActionWrapper -> event.event.execute()
           null -> Unit
         }
       } catch (_ : InterruptedException) {

@@ -238,8 +238,6 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   // todo: reimplement with listeners in IJPL-177760
   private val myTopmostReadAction = ThreadLocal.withInitial { false }
 
-  private val ignorePreventiveActions: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
-
   @Volatile
   private var myWriteAcquired: Thread? = null
 
@@ -704,11 +702,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   override fun <T> runPreventiveWriteIntentReadAction(computation: () -> T): T {
-    return if (ignorePreventiveActions.get() == true) {
-      computation()
-    } else {
-      doRunWriteIntentReadAction(computation)
-    }
+    return doRunWriteIntentReadAction(computation)
   }
 
   fun <T> doRunWriteIntentReadAction(computation: () -> T): T {
@@ -1628,12 +1622,6 @@ class NestedLocksThreadingSupport : ThreadingSupport {
 
   private fun throwCannotWriteException() {
     throw java.lang.IllegalStateException("Write actions are prohibited")
-  }
-
-  override fun <T> relaxPreventiveLockingActions(action: () -> T): T {
-    return withThreadLocal(ignorePreventiveActions, {true}).use {
-      action()
-    }
   }
 
   override fun <T> releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action: () -> T): T {
