@@ -17,8 +17,6 @@ import org.jetbrains.kotlin.name.StandardClassIds
 internal class KotlinForPostfixTemplate(provider: KotlinPostfixTemplateProvider) :
     AbstractKotlinForPostfixTemplate(
         name = "for",
-        example = "for (item in expr) {}",
-        template = "for (\$name$ in \$expr$) {\n    \$END$\n}",
         selector = allExpressions(
             ValuedFilter,
             StatementFilter,
@@ -28,12 +26,7 @@ internal class KotlinForPostfixTemplate(provider: KotlinPostfixTemplateProvider)
     )
 
 internal class KotlinIterPostfixTemplate(provider: KotlinPostfixTemplateProvider) :
-    AbstractKotlinForPostfixTemplate(
-        name = "iter",
-        example = "for (item in expr) {}",
-        template = "for (\$name$ in \$expr$) {\n    \$END$\n}",
-        provider = provider
-    )
+    AbstractKotlinForPostfixTemplate(name = "iter", provider = provider)
 
 @Suppress("SpellCheckingInspection")
 internal class KotlinItorPostfixTemplate(
@@ -81,15 +74,15 @@ internal class KotlinForReversedPostfixTemplate(
     provider: KotlinPostfixTemplateProvider
 ) : AbstractKotlinForPostfixTemplate(
     "forr",
-    "for (item in expr.reversed())",
-    "for (\$name$ in \$expr$.reversed()) {\n    \$END$\n}",
+    example = "for (item in expr.reversed())",
+    template = "for (\$name$ in \$expr$.reversed()) {\n    \$END$\n}",
     provider = provider
 )
 
 internal abstract class AbstractKotlinForPostfixTemplate(
     name: String,
-    example: String,
-    private val template: String,
+    example: String = "for (item in expr) {}",
+    private val template: String = "for (\$name$ in \$expr$) {\n    \$END$\n}",
     selector: PostfixTemplateExpressionSelector =
         allExpressions(
             ValuedFilter,
