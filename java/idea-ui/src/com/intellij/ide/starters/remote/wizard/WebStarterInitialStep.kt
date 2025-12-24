@@ -139,6 +139,10 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : C
     moduleBuilder.moduleJdk = wizardContext.projectJdk
   }
 
+  override fun onStepLeaving() {
+    contentPanel.apply()
+  }
+
   private fun suggestPackageName(): String {
     return StarterModuleBuilder.suggestPackageName(groupId, artifactId)
   }

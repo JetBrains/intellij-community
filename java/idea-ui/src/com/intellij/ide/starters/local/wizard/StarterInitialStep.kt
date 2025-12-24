@@ -155,6 +155,10 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonS
     return true
   }
 
+  override fun onStepLeaving() {
+    contentPanel.apply()
+  }
+
   private fun updateStartersDependencies(starterPack: StarterPack) {
     val starters = starterPack.starters
     AppExecutorUtil.getAppExecutorService().submit {
