@@ -171,6 +171,8 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     }
 
     if (currentCommand != null) {
+      LOG.debug("startCommand failed: name = " + name + ", groupId = " + groupId +
+                ". Another command is already running: name = " + currentCommand.getName() + ", groupId = " + currentCommand.getGroupId());
       return null;
     }
 
