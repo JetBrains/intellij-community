@@ -1049,12 +1049,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  @SuppressWarnings("RedundantThrows")
-  public <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
-    return getThreadingSupport().runUnlockingIntendedWrite(rethrowCheckedExceptions(action));
-  }
-
-  @Override
   public void runReadAction(@NotNull Runnable action) {
     getThreadingSupport().runReadAction(action.getClass(), runnableUnitFunction(action));
   }

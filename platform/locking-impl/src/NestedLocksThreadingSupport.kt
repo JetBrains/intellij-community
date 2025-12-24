@@ -750,10 +750,6 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     return getComputationState().isReadAcquired()
   }
 
-  override fun <T> runUnlockingIntendedWrite(action: () -> T): T {
-    return action()
-  }
-
   @ApiStatus.Internal
   override fun addReadActionListener(listener: ReadActionListener) {
     readActionListeners.add(listener)

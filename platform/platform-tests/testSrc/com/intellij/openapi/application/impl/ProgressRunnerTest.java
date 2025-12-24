@@ -127,14 +127,11 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     task.release();
 
     if (EDT.isCurrentThreadEdt()) {
-      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
-        // Waiting rationale: a task to write thread might have not been submitted yet
-        TimeoutUtil.sleep(100);
-        // Dispatching rationale: a task might be submitted to write thread. Hence, we need to ensure flush queue
-        // has finished processing pending events.
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-        return null;
-      });
+      // Waiting rationale: a task to write thread might have not been submitted yet
+      TimeoutUtil.sleep(100);
+      // Dispatching rationale: a task might be submitted to write thread. Hence, we need to ensure flush queue
+      // has finished processing pending events.
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     }
 
     ProgressResult<?> result = future.get(1000, TimeUnit.MILLISECONDS);
@@ -408,21 +405,6 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     assertSame(t, result.getThrowable());
   }
 
-  @Override
-  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    super.runTestRunnable(() -> {
-      if (runInDispatchThread() && myReleaseIWLockOnRun) {
-        ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
-          testRunnable.run();
-          return null;
-        });
-      }
-      else {
-        testRunnable.run();
-      }
-    });
-  }
-
   private static <T> T computeAssertingExceptionConditionally(boolean shouldFail, @NotNull Supplier<T> computation) {
     try {
       T result = computation.get();
@@ -455,18 +437,12 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
 
   private static void dispatchEverything() {
     if (EDT.isCurrentThreadEdt()) {
-      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-        return null;
-      });
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     }
     else if (ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
       LaterInvocator.pollWriteThreadEventsOnce();
-      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
-        ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance(), ModalityState.any());
-        return null;
-      });
+      ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance(), ModalityState.any());
     }
     else {
       Semaphore semaphore = new Semaphore(1);

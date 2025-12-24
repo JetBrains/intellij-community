@@ -39,14 +39,6 @@ interface ThreadingSupport {
   @ApiStatus.Internal
   fun isWriteIntentReadAccessAllowed(): Boolean
 
-  /**
-   * Runs the specified action, releasing the write-intent lock if it is acquired at the moment of the call.
-   *
-   * This method is used to implement higher-level API. Please do not use it directly.
-   */
-  @ApiStatus.Internal
-  fun <T> runUnlockingIntendedWrite(action: () -> T): T
-
   @RequiresBlockingContext
   fun <T> runReadAction(clazz: Class<*>, action: () -> T): T
 

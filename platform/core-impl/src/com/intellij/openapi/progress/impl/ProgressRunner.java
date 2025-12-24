@@ -432,21 +432,18 @@ public final class ProgressRunner<R> {
   }
 
   private static void pollLaterInvocatorActively(@NotNull CompletableFuture<?> resultFuture, @NotNull Runnable pollAction) {
-    ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
-      while (true) {
-        try {
-          resultFuture.get(10, TimeUnit.MILLISECONDS);
-        }
-        catch (TimeoutException ignore) {
-          ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(pollAction);
-          continue;
-        }
-        catch (Throwable ignored) {
-        }
-        break;
+    while (true) {
+      try {
+        resultFuture.get(10, TimeUnit.MILLISECONDS);
       }
-      return null;
-    });
+      catch (TimeoutException ignore) {
+        ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(pollAction);
+        continue;
+      }
+      catch (Throwable ignored) {
+      }
+      break;
+    }
   }
 
   public static boolean isCanceled(@NotNull Future<? extends ProgressIndicator> progressFuture) {
