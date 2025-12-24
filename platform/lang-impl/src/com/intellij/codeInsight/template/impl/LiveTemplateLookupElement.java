@@ -16,7 +16,16 @@ public abstract class LiveTemplateLookupElement extends LookupElement {
   private final boolean myWorthShowingInAutoPopup;
   private final @NlsSafe String myDescription;
 
-  LiveTemplateLookupElement(@NotNull @NlsSafe String lookupString, @Nullable @NlsSafe String description, boolean sudden, boolean worthShowingInAutoPopup) {
+  /**
+   * @param lookupString            the text to show in lookup
+   * @param description             the description to show in lookup
+   * @param sudden                  see doc for {@link #isSudden()}
+   * @param worthShowingInAutoPopup see doc for {@link LookupElement#isWorthShowingInAutoPopup()}
+   */
+  LiveTemplateLookupElement(@NotNull @NlsSafe String lookupString,
+                            @Nullable @NlsSafe String description,
+                            boolean sudden,
+                            boolean worthShowingInAutoPopup) {
     myDescription = description;
     mySudden = sudden;
     myLookupString = lookupString;
@@ -49,6 +58,9 @@ public abstract class LiveTemplateLookupElement extends LookupElement {
     return myWorthShowingInAutoPopup;
   }
 
+  /**
+   * @return true if this template is "sudden" meaning that this template is shown for the fully matching prefix only
+   */
   @ApiStatus.Internal
   public boolean isSudden() {
     return mySudden;
