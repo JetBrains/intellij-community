@@ -998,11 +998,11 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
-  override suspend fun <T> runWriteAction(action: () -> T): T {
+  override suspend fun <T> runWriteAction(computation: () -> T): T {
     val computationState = getComputationState()
     val writeIntentInitResult = prepareWriteIntentAcquiredBeforeWriteSuspending(computationState)
     try {
-      return proceedWithSuspendWriteLockAcquisitionFromWriteIntent(computationState, writeIntentInitResult, action)
+      return proceedWithSuspendWriteLockAcquisitionFromWriteIntent(computationState, writeIntentInitResult, computation)
     }
     finally {
       if (myWriteActionsStack.isEmpty()) {
@@ -1031,7 +1031,10 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
-  override suspend fun <T : Any> runWriteActionWithCheckInWriteIntent(shouldProceedWithWriteAction: () -> Boolean, action: () -> T): T? {
+  override suspend fun <T : Any> runWriteActionWithCheckInWriteIntent(
+    shouldProceedWithWriteAction: () -> Boolean,
+    computation: () -> T,
+  ): T? {
     val computationState = getComputationState()
     val existingPermit = computationState.getThisThreadPermit()
 
@@ -1069,7 +1072,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     val frozenListeners = prepareWriteIntentForWriteLockAcquisition(computationState, Any::class.java)
     try {
       val writeIntentInitResult = PreparatoryWriteIntent(actualPermit, false, computationState, frozenListeners)
-      return proceedWithSuspendWriteLockAcquisitionFromWriteIntent(computationState, writeIntentInitResult, action)
+      return proceedWithSuspendWriteLockAcquisitionFromWriteIntent(computationState, writeIntentInitResult, computation)
     }
     finally {
       cleanup()
