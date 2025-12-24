@@ -1331,6 +1331,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
+  @Deprecated("Do not use: this is a severe violation of IJ Platform contracts")
   override fun executeSuspendingWriteAction(action: () -> Unit) {
     val state = getComputationState()
     val permit = state.getThisThreadPermit()
@@ -1370,6 +1371,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
 
   override fun isWriteAccessAllowed(): Boolean = myWriteAcquired == Thread.currentThread()
 
+  @Deprecated("Use `ExternalChangeAction` or custom logic for detecting such actions")
   override fun hasWriteAction(actionClass: Class<*>): Boolean {
     for (i in myWriteActionsStack.size - 1 downTo 0) {
       val action = myWriteActionsStack[i]
@@ -1420,7 +1422,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       return acquisitor()
     }
     finally {
-      @Suppress("MEMBER_PROJECTED_OUT")
+      @Suppress("ERROR_SUPPRESSION", "MEMBER_PROJECTED_OUT")
       myLockAcquisitionListener?.afterWriteLockAcquired(prevResult)
     }
   }
