@@ -62,65 +62,51 @@ interface ThreadingSupport {
   fun tryRunReadAction(action: () -> Unit): Boolean
 
   /**
-   * Check, if read lock is acquired by current thread already.
+   * Checks that this thread holds exactly _Read_ lock.
    *
-   * @return `true` if read lock has been acquired, `false` otherwise.
+   * @return `true` if this thread holds _Read_ lock, returns `false` if this thread holds _Write_, _Write-Intent-Read_ or no lock.
    */
   fun isReadLockedByThisThread(): Boolean
 
   /**
-   * Check, if read access is allowed for current thread.
-   *
-   * @return `true` if read is allowed, `false` otherwise.
+   * Checks if the current thread holds _Read_, _Write-Intent-Read_, or _Write_ lock.
    */
   fun isReadAccessAllowed(): Boolean
 
   /**
    * Adds a [WriteActionListener].
-   *
-   * @param listener the listener to set
    */
   fun addWriteActionListener(listener: WriteActionListener)
 
   /**
    * Removes a [WriteActionListener].
    *
-   * It is error to remove listener which was not added early.
-   *
-   * @param listener the listener to remove
+   * It is an error to remove a listener that was not added early.
    */
-  @ApiStatus.Internal
   fun removeWriteActionListener(listener: WriteActionListener)
 
   /**
    * Adds a [WriteIntentReadActionListener].
-   *
-   * @param listener the listener to set
    */
   fun addWriteIntentReadActionListener(listener: WriteIntentReadActionListener)
 
   /**
    * Removes a [WriteIntentReadActionListener].
    *
-   * It is an error to remove the listener which was not added early.
-   *
-   * @param listener the listener to remove
+   * It is an error to remove a listener that was not added early.
    */
   fun removeWriteIntentReadActionListener(listener: WriteIntentReadActionListener)
 
   /**
-   * Set a [ReadActionListener].
-   *
-   * @param listener the listener to set
+   * Add a [ReadActionListener].
    */
   fun addReadActionListener(listener: ReadActionListener)
 
   /**
    * Removes a [ReadActionListener].
    *
-   * @param listener the listener to remove
+   * It is an error to remove a listener that was not added early.
    */
-  @ApiStatus.Internal
   fun removeReadActionListener(listener: ReadActionListener)
 
   @RequiresBlockingContext
