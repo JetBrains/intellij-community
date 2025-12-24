@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
@@ -24,10 +25,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.onEach
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.lazy.DefaultMacOsSelectableColumnKeybindings.Companion.isSelectAll
@@ -94,7 +94,12 @@ public fun SpeedSearchScope.SpeedSearchableLazyColumn(
         content = { SpeedSearchableLazyColumnScopeImpl(speedSearchState, this, searchMatchStyle).content() },
     )
 
-    SpeedSearchableLazyColumnScrollEffect(state, speedSearchState, currentStateToList.value.second, dispatcher)
+    SpeedSearchableLazyColumnScrollEffect(
+        selectableLazyListState = state,
+        speedSearchState = speedSearchState,
+        keys = currentStateToList.value.second,
+        dispatcher = dispatcher,
+    )
 
     LaunchedEffect(state, dispatcher) {
         val entriesState = MutableStateFlow(emptyList<String?>())
@@ -223,15 +228,29 @@ internal fun SpeedSearchableLazyColumnScrollEffect(
     dispatcher: CoroutineDispatcher,
 ) {
     val currentKeys = rememberUpdatedState(keys)
+
     LaunchedEffect(selectableLazyListState, speedSearchState, dispatcher) {
+        val currentSelection = snapshotFlow { selectableLazyListState.selectedKeys }
+        val currentKeysValue = snapshotFlow { currentKeys.value }
+        val indicesForKeys =
+            currentSelection
+                .combine(currentKeysValue) { selectedKeys, keys -> keys.indicesForKeys(selectedKeys) to keys }
+                .distinctUntilChanged()
+
         snapshotFlow { speedSearchState.matchingIndexes }
             .distinctUntilChanged()
-            .filter { it.isNotEmpty() }
             .flowOn(dispatcher)
-            .onEach { indexesMatchingSearchText ->
-                val keyValues = currentKeys.value
+            .combine(indicesForKeys) { indexesMatchingSearchText, (indexesForSelectedKeys, keyValues) ->
+                // When search is dismissed or cleared, sync lastActiveItemIndex with selected key position
+                if (indexesMatchingSearchText.isEmpty()) {
+                    if (indexesForSelectedKeys.isNotEmpty()) {
+                        val selectedIndex = indexesForSelectedKeys.first()
+                        selectableLazyListState.lastActiveItemIndex = selectedIndex
+                    }
+                    return@combine
+                }
+
                 val visibleItemIndexes = selectableLazyListState.visibleItemsRange
-                val indexesForSelectedKeys = keyValues.indicesForKeys(selectableLazyListState.selectedKeys)
 
                 val matchingSelectionIndex =
                     indexesForSelectedKeys.firstOrNull { indexesMatchingSearchText.binarySearch(it) >= 0 }
@@ -243,7 +262,7 @@ internal fun SpeedSearchableLazyColumnScrollEffect(
                         selectableLazyListState.scrollToItem(matchingSelectionIndex)
                     }
 
-                    return@onEach
+                    return@combine
                 }
 
                 // If any of the visible items match the filter, just select the one closest to any of the selected
@@ -264,7 +283,7 @@ internal fun SpeedSearchableLazyColumnScrollEffect(
                 if (bestVisibleMatch != null) {
                     selectableLazyListState.selectedKeys = setOfNotNull(keyValues.getOrNull(bestVisibleMatch))
                     selectableLazyListState.lastActiveItemIndex = bestVisibleMatch
-                    return@onEach
+                    return@combine
                 }
 
                 // If no items are visible or selected, scroll to the best match after the last visible item
