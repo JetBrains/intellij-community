@@ -24,12 +24,9 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalConten
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.produceIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Semaphore
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -1221,6 +1218,7 @@ object EelPathUtils {
       val remoteDescriptor = targetRootEel.descriptor
       val remoteEelApi = remoteDescriptor.toEelApi()
       val localPathEel = sourceRoot.asEelPath()
+      val sourceDescriptor = localPathEel.descriptor
       val localOsFamily = localPathEel.descriptor.osFamily
       val remoteOsFamily = targetRoot.getEelDescriptor().osFamily
 
@@ -1274,10 +1272,6 @@ object EelPathUtils {
 
       val semaphore = Semaphore(4) // TODO: fine tune
 
-      // NOTE: The buffer size was chosen based on benchmark results, which showed that performance improvements leveled off at 64 KiB
-      // TODO: different buffer size for larger files
-      val bufferSize = 64 * 1024
-
       mergeHashByPath(this, sourceRoot, targetRoot, localHashes.await(), remoteHashes.await(), fileAttributesStrategy, false).collect { diffOp ->
         // semaphore is used to limit how many files are being synced at any given moment
         semaphore.acquire()
@@ -1306,9 +1300,37 @@ object EelPathUtils {
                   is WalkDirectoryEntry.Type.Regular -> {
                     val remoteAbsoluteTempPath = remoteAbsolutePath.resolveSibling(remoteAbsolutePath.fileName.toString() + ".part")
                     try {
-                      Files.newInputStream(localFileNioPath, READ).use { localFile ->
-                        Files.newOutputStream(remoteAbsoluteTempPath, WRITE, CREATE, TRUNCATE_EXISTING).use { remoteFile ->
-                          localFile.copyTo(remoteFile, bufferSize)
+                      if (sourceDescriptor === remoteDescriptor) {
+                        Files.newInputStream(localFileNioPath, READ).use { localFile ->
+                          Files.newOutputStream(remoteAbsoluteTempPath, WRITE, CREATE, TRUNCATE_EXISTING).use { remoteFile ->
+                            // this buffer size gave the best overall performance when benchmarking
+                            localFile.copyTo(remoteFile, 64 * 1024)
+                          }
+                        }
+                      }
+                      else {
+                        val opts = WriteOptionsBuilder(remoteAbsoluteTempPath.asEelPath())
+                          .allowCreate()
+                          .truncateExisting(true)
+                          .build()
+
+                        val chunks = flow {
+                          FileChannel.open(localFileNioPath, READ).use { chan ->
+                            while (true) {
+                              // this buffer size gave the best overall performance when benchmarking
+                              val buffer = ByteBuffer.allocate(256 * 1024)
+                              val bytesRead = chan.read(buffer)
+                              if (bytesRead <= 0) break
+                              buffer.flip()
+                              emit(buffer)
+                            }
+                          }
+                          // buffer size chosen randomly, but intentionally a higher number to have chunks ready at all times
+                        }.flowOn(Dispatchers.IO).buffer(5)
+                        val writeRes = remoteEelApi.fs.streamingWrite(chunks, opts)
+                        when (writeRes) {
+                          is StreamingWriteResult.Error -> error("Streaming write failed writing file a remote machine: ${writeRes.error}")
+                          is StreamingWriteResult.Ok -> {}
                         }
                       }
                       Files.move(remoteAbsoluteTempPath, remoteAbsolutePath, StandardCopyOption.REPLACE_EXISTING)
@@ -1347,12 +1369,41 @@ object EelPathUtils {
                 Files.delete(diffOp.remoteFile.path.asNioPath())
               }
               is DiffOperation.UpdateContents -> {
+                val sourcePathNio = diffOp.localFile.path.asNioPath()
                 val remotePathNio = diffOp.remoteFile.path.asNioPath()
                 val tempRemotePath = remotePathNio.resolveSibling(remotePathNio.fileName.toString() + ".part")
                 try {
-                  Files.newInputStream(diffOp.localFile.path.asNioPath(), READ).use { localFile ->
-                    Files.newOutputStream(tempRemotePath, WRITE, TRUNCATE_EXISTING, CREATE).use { remoteFile ->
-                      localFile.copyToAsync(remoteFile, bufferSize)
+                  if (sourceDescriptor === remoteDescriptor) {
+                    Files.newInputStream(sourcePathNio, READ).use { localFile ->
+                      Files.newOutputStream(tempRemotePath, WRITE, TRUNCATE_EXISTING, CREATE).use { remoteFile ->
+                        // this buffer size gave the best overall performance when benchmarking
+                        localFile.copyTo(remoteFile, 64 * 1024)
+                      }
+                    }
+                  }
+                  else {
+                    val opts = WriteOptionsBuilder(tempRemotePath.asEelPath())
+                      .allowCreate()
+                      .truncateExisting(true)
+                      .build()
+
+                    val chunks = flow {
+                      FileChannel.open(sourcePathNio, READ).use { chan ->
+                        while (true) {
+                          // this buffer size gave the best overall performance when benchmarking
+                          val buffer = ByteBuffer.allocate(256 * 1024)
+                          val bytesRead = chan.read(buffer)
+                          if (bytesRead <= 0) break
+                          buffer.flip()
+                          emit(buffer)
+                        }
+                      }
+                      // buffer size chosen randomly, but intentionally a higher number to have chunks ready at all times
+                    }.flowOn(Dispatchers.IO).buffer(5)
+                    val writeRes = remoteEelApi.fs.streamingWrite(chunks, opts)
+                    when (writeRes) {
+                      is StreamingWriteResult.Error -> error("Streaming write failed writing file a remote machine: ${writeRes.error}")
+                      is StreamingWriteResult.Ok -> {}
                     }
                   }
                   Files.move(tempRemotePath, remotePathNio, StandardCopyOption.REPLACE_EXISTING)
