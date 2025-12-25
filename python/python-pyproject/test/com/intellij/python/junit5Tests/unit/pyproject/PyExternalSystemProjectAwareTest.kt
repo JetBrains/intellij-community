@@ -11,6 +11,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -42,9 +43,15 @@ class PyExternalSystemProjectAwareTest {
     }
   }
 
+  @Test
+  fun testBuildProjectRainyDay(): Unit = timeoutRunBlocking {
+    val sut = PyExternalSystemProjectAware.create(projectFixture.get())
+    pathFixture.get().deleteRecursively()
+    sut.reloadProjectImpl()
+  }
 
   @Test
-  fun testBuildProject(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(TIMEOUT_MIN.minutes) {
+  fun testBuildProjectSunnyDay(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(TIMEOUT_MIN.minutes) {
     val sut = PyExternalSystemProjectAware.create(projectFixture.get())
     val files = withContext(Dispatchers.IO) {
       sut.settingsFiles

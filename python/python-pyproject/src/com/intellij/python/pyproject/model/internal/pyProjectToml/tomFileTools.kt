@@ -1,7 +1,6 @@
 package com.intellij.python.pyproject.model.internal.pyProjectToml
 
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.spi.ProjectName
@@ -24,43 +23,54 @@ import kotlin.io.path.toPath
 import kotlin.io.path.visitFileTree
 
 // Tools to walk FS and parse pyproject.toml
-
-internal suspend fun walkFileSystemWithTomlContent(root: Directory): FSWalkInfoWithToml {
-  val (rawTomlFiles, excludedDirs) = walkFileSystemNoTomlContent(root)
+/**
+ * Walks down the [root]. Like [walkFileSystemNoTomlContent] but with TOML files content
+ */
+internal suspend fun walkFileSystemWithTomlContent(root: Directory): Result<FSWalkInfoWithToml, IOException> {
+  val (rawTomlFiles, excludedDirs) = walkFileSystemNoTomlContent(root).getOr { return it }
 
   // TODO: with a big number of files, use `chunk` to parse them concurrently
   val tomlFiles = rawTomlFiles.map { file ->
     val toml = readFile(file) ?: return@map null
     file to toml
   }.filterNotNull().toMap()
-  return FSWalkInfoWithToml(tomlFiles = tomlFiles, excludedDirs.toSet())
+  return Result.success(FSWalkInfoWithToml(tomlFiles = tomlFiles, excludedDirs.toSet()))
 }
 
+/**
+ * Walks down [root], returns all [PY_PROJECT_TOML] and [FsWalkInfoNoToml.excludedDirs] (started with dot).
+ * [IOException] is returned if [root] is inaccessible
+ */
 internal suspend fun walkFileSystemNoTomlContent(
   root: Directory,
-): FsWalkInfoNoToml {
+): Result<FsWalkInfoNoToml, IOException> {
   val excludedDirs = ArrayList<Directory>(10)
   val rawTomlFiles = ArrayList<Path>(10)
-  withContext(Dispatchers.IO) {
-    root.visitFileTree {
-      onVisitFile { file, _ ->
-        if (file.name == PY_PROJECT_TOML) {
-          rawTomlFiles.add(file)
+  try {
+    withContext(Dispatchers.IO) {
+      root.visitFileTree {
+        onVisitFile { file, _ ->
+          if (file.name == PY_PROJECT_TOML) {
+            rawTomlFiles.add(file)
+          }
+          return@onVisitFile FileVisitResult.CONTINUE
         }
-        return@onVisitFile FileVisitResult.CONTINUE
-      }
-      onPostVisitDirectory { directory, _ ->
-        return@onPostVisitDirectory if (directory.name.startsWith(".")) {
-          excludedDirs.add(directory)
-          FileVisitResult.SKIP_SUBTREE
-        }
-        else {
-          FileVisitResult.CONTINUE
+        onPostVisitDirectory { directory, _ ->
+          return@onPostVisitDirectory if (directory.name.startsWith(".")) {
+            excludedDirs.add(directory)
+            FileVisitResult.SKIP_SUBTREE
+          }
+          else {
+            FileVisitResult.CONTINUE
+          }
         }
       }
     }
+    return Result.success(FsWalkInfoNoToml(rawTomlFiles = rawTomlFiles, excludedDirs = excludedDirs))
   }
-  return FsWalkInfoNoToml(rawTomlFiles = rawTomlFiles, excludedDirs = excludedDirs)
+  catch (e: IOException) {
+    return Result.failure(e)
+  }
 }
 
 
