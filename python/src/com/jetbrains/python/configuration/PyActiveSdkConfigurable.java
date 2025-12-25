@@ -10,7 +10,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
@@ -42,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import static com.jetbrains.python.sdk.ModuleExKt.setPythonSdk;
 import static com.jetbrains.python.sdk.PySdkRenderingKt.groupModuleSdksByTypes;
 import static com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote;
 
@@ -311,7 +311,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     if (myModule != null) {
       PyTransferredSdkRootsKt.removeTransferredRoots(myModule, currentSdk);
-      PySdkExtKt.setPythonSdk(myModule, item);
+      setPythonSdk(myModule, item);
       PyTransferredSdkRootsKt.transferRoots(myModule, item);
     }
   }

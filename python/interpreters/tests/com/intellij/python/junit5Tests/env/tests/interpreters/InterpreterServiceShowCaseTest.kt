@@ -15,6 +15,7 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToPath
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
@@ -63,7 +64,7 @@ class InterpreterServiceShowCaseTest {
       Assertions.assertTrue(sdk != null, "Unexpected interpreter: $i")
       Assertions.assertEquals(sdk, i.sdk, "Wrong sdk")
 
-      ModuleRootModificationUtil.setModuleSdk(module, sdk!!)
+      module.pythonSdk = sdk!!
       Assertions.assertEquals(sdk.getOrCreateAdditionalData().uuid, interpreterService.getForModule(module)!!.id, "No module set")
 
       when (i) {

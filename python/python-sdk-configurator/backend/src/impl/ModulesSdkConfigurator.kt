@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -24,6 +23,7 @@ import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToPath
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
@@ -147,7 +147,7 @@ internal class ModulesSdkConfigurator private constructor(
                 }
                 is Result.Success -> {
                   val sdk = r.result
-                  ModuleRootModificationUtil.setModuleSdk(module, sdk)
+                  module.pythonSdk = sdk
                 }
               }
             }
@@ -162,7 +162,7 @@ internal class ModulesSdkConfigurator private constructor(
         for ((module, parentModule) in modulesWithSameSdk) {
           val parentSdk = PythonSdkUtil.findPythonSdk(module)
           if (parentSdk != null) {
-            ModuleRootModificationUtil.setModuleSdk(module, parentSdk) // This SDK is shared, no need to associate it
+            module.pythonSdk = parentSdk // This SDK is shared, no need to associate it
             // TODO: Support association with multiple modules
             if (parentSdk.getOrCreateAdditionalData().associatedModulePath != null) {
               parentSdk.setAssociationToPath(null)
@@ -242,7 +242,7 @@ private suspend fun CreateSdkInfo.createAndSetToModule(module: Module) {
     }
     is Result.Success -> {
       val sdk = r.result!! // It can't be null: this is an old buggy API that will be fixed soon
-      ModuleRootModificationUtil.setModuleSdk(module, sdk)
+      module.pythonSdk = sdk
       logger.trace { "SDK creation result for  ${module.name} : $sdk" }
     }
   }
@@ -254,7 +254,7 @@ private fun setModuleSdkAsParent(
 ) {
   val parentSdk = PythonSdkUtil.findPythonSdk(parentModule) ?: return
   logger.trace { "${module.name} seeds the same sdk as ${parentModule} : ${parentSdk}" }
-  ModuleRootModificationUtil.setModuleSdk(module, parentSdk)
+  module.pythonSdk = parentSdk
 }
 
 

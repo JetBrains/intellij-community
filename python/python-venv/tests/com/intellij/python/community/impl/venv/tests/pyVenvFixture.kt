@@ -15,6 +15,7 @@ import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.persist
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -38,7 +39,7 @@ fun TestFixture<SdkFixture<PythonBinary>>.pyVenvFixture(
     if (addToSdkTable) {
       venvSdk.persist()
       if (module != null) {
-        ModuleRootModificationUtil.setModuleSdk(module, venvSdk)
+        module.pythonSdk = venvSdk
         venvSdk.setAssociationToModule(module)
       }
     }

@@ -9,6 +9,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.interpreter.PyInterpreterInspection
+import com.jetbrains.python.sdk.pythonSdk
 
 class PyInterpreterInspectionTest : PyTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor? = ourPyLatestDescriptor
@@ -31,7 +32,7 @@ class PyInterpreterInspectionTest : PyTestCase() {
 
     try {
       runWriteAction {
-        ModuleRootModificationUtil.setModuleSdk(module, null)
+        module.pythonSdk = null
         projectRootManager.projectSdk = null
       }
 
@@ -49,7 +50,7 @@ class PyInterpreterInspectionTest : PyTestCase() {
     }
     finally {
       runWriteAction {
-        ModuleRootModificationUtil.setModuleSdk(module, originalModuleSdk)
+        module.pythonSdk = originalModuleSdk
         projectRootManager.projectSdk = originalProjectSdk
       }
     }
