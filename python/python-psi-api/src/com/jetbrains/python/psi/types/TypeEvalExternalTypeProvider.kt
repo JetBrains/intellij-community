@@ -4,11 +4,13 @@ package com.jetbrains.python.psi.types
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Ref
 import com.jetbrains.python.psi.PyTypedElement
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * An external type provider invoked by [TypeEvalContext] to obtain a type from a separate engine.
  * Implementations may return `null` if they cannot provide a type for the given element.
  */
+@ApiStatus.Internal
 interface TypeEvalExternalTypeProvider {
   fun isAvailable(): Boolean
 
