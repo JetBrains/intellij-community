@@ -6,11 +6,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.autoimport.*
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.project.stateStore
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.python.pyproject.model.api.ModelRebuiltListener
 import com.intellij.python.pyproject.model.internal.PyProjectTomlBundle
 import com.intellij.python.pyproject.model.internal.pyProjectToml.walkFileSystemNoTomlContent
@@ -52,7 +52,7 @@ internal class PyExternalSystemProjectAware private constructor(
     project.service<PyExternalSystemProjectAwareService>().scope.launchTracked {
       writeAction {
         // We might get stale files otherwise
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
+        FileDocumentManager.getInstance().saveAllDocuments()
       }
       project.messageBus.syncAndPreloadPublisher(PROJECT_AWARE_TOPIC).apply {
         try {
