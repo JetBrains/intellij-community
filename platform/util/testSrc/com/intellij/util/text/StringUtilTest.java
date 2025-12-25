@@ -963,8 +963,9 @@ public class StringUtilTest {
   @Test
   public void testEscapeToRegexp() {
     assertEquals("a\\nb", StringUtil.escapeToRegexp("a\nb"));
-    assertEquals("a\\&\\%\\$b", StringUtil.escapeToRegexp("a&%$b"));
+    assertEquals("a&%\\$b", StringUtil.escapeToRegexp("a&%$b"));
     assertEquals("\uD83D\uDE80", StringUtil.escapeToRegexp("\uD83D\uDE80"));
+    assertEquals(",'%=", StringUtil.escapeToRegexp(",'%="));
   }
 
   @Test
