@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
@@ -14,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.key.KeyEvent
@@ -31,6 +33,7 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.rememberWindowState
 import com.jetbrains.JBR
+import com.jetbrains.WindowDecorations
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
 import java.awt.event.WindowAdapter
@@ -156,11 +159,11 @@ public fun DecoratedWindow(
             }
 
         val currentComponent = remember(window) { window.contentPane.components.filterIsInstance<JComponent>().first() }
+        val titleBarInfo = remember { TitleBarInfo(title, icon) }
+        LaunchedEffect(title) { titleBarInfo.title = title }
+        LaunchedEffect(icon) { titleBarInfo.icon = icon }
 
-        CompositionLocalProvider(
-            LocalComponent provides currentComponent,
-            LocalTitleBarInfo provides TitleBarInfo(title, icon),
-        ) {
+        CompositionLocalProvider(LocalComponent provides currentComponent, LocalTitleBarInfo provides titleBarInfo) {
             Layout(
                 content = {
                     val scope =
@@ -279,8 +282,20 @@ public value class DecoratedWindowState(public val state: ULong) {
     }
 }
 
-internal data class TitleBarInfo(val title: String, val icon: Painter?)
+@Stable
+internal class TitleBarInfo(title: String, icon: Painter?) {
+    var title by mutableStateOf(title)
+    var icon by mutableStateOf(icon)
+    val clientRegions: MutableMap<String, Rect> = mutableMapOf()
+}
 
 internal val LocalTitleBarInfo: ProvidableCompositionLocal<TitleBarInfo> = compositionLocalOf {
-    error("LocalTitleBarInfo not provided, TitleBar must be used in DecoratedWindow")
+    error("LocalTitleBarInfo not provided")
+}
+
+internal val LocalWindowDecorations: ProvidableCompositionLocal<WindowDecorations> = compositionLocalOf {
+    when {
+        JBR.isAvailable() -> JBR.getWindowDecorations()
+        else -> error("LocalWindowDecorations not provided")
+    }
 }

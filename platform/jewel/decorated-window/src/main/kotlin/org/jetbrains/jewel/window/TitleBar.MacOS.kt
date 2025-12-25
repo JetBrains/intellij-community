@@ -10,9 +10,9 @@ import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.dp
-import com.jetbrains.JBR
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.window.styling.TitleBarStyle
+import org.jetbrains.jewel.window.utils.WindowMouseEventEffect
 import org.jetbrains.jewel.window.utils.macos.MacUtil
 
 public fun Modifier.newFullscreenControls(newControls: Boolean = true): Modifier =
@@ -76,10 +76,13 @@ internal fun DecoratedWindowScope.TitleBarOnMacOs(
         System.clearProperty("apple.awt.newFullScreenControls.background")
     }
 
-    val titleBar = remember { JBR.getWindowDecorations().createCustomTitleBar() }
+    val decorations = LocalWindowDecorations.current
+    val titleBar = remember { decorations.createCustomTitleBar() }
+
+    WindowMouseEventEffect(titleBar)
 
     TitleBarImpl(
-        modifier = modifier.customTitleBarMouseEventHandler(titleBar),
+        modifier = modifier,
         gradientStartColor = gradientStartColor,
         style = style,
         applyTitleBar = { height, state ->
@@ -87,7 +90,7 @@ internal fun DecoratedWindowScope.TitleBarOnMacOs(
                 MacUtil.updateFullScreenButtons(window)
             }
             titleBar.height = height.value
-            JBR.getWindowDecorations().setCustomTitleBar(window, titleBar)
+            decorations.setCustomTitleBar(window, titleBar)
 
             if (state.isFullscreen && newFullscreenControls) {
                 PaddingValues(start = 80.dp)
