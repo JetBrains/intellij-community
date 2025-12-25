@@ -12,9 +12,6 @@
     <registryKey defaultValue="false" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model" restartRequired="true"/>
     <postStartupActivity implementation="com.intellij.python.pyproject.model.internal.platformBridge.PyProjectSyncActivity"/>
   </extensions>
-  <actions>
-    <action class="com.intellij.python.pyproject.model.internal.platformBridge.PyProjectTomlSyncAction" id="PyProjectTomlSyncAction"/>
-  </actions>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.python.pyproject.model.tool" interface="com.intellij.python.pyproject.model.spi.Tool"
                     dynamic="true"/>

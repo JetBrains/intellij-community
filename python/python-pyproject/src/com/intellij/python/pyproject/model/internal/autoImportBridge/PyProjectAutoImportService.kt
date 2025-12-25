@@ -16,26 +16,26 @@ internal class PyProjectAutoImportService(private val project: Project) : Dispos
   }
 
   @Volatile
-  private lateinit var projectId: ExternalSystemProjectId
+  private var projectId: ExternalSystemProjectId? = null
 
 
   suspend fun start() {
     val tracker = getTracker()
     val projectAware = PyExternalSystemProjectAware.create(project)
-    projectId = projectAware.projectId
+    val projectId = projectAware.projectId
+    this.projectId = projectId
     tracker.register(projectAware)
     tracker.activate(projectId)
-    refresh()
-  }
-
-  fun refresh() {
-    val tracker = getTracker()
     tracker.markDirty(projectId)
     tracker.scheduleProjectRefresh()
   }
 
+
   override fun dispose() {
-    getTracker().remove(projectId)
+    projectId?.let {
+      getTracker().remove(it)
+      projectId = null
+    }
   }
 
 
