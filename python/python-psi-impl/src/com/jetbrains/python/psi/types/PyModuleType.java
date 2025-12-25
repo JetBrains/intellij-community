@@ -52,10 +52,6 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     myQualifiedName = LazyInitializer.create(() -> QualifiedNameFinder.findShortestImportableQName(myModule));
   }
 
-  @Override
-  public String toString() {
-    return "PyModuleType(" + myModule.getName() + ")";
-  }
 
   public @NotNull PyFile getModule() {
     return myModule;
@@ -587,7 +583,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   @Override
   public void assertValid(String message) {
     if (!myModule.isValid()) {
-      throw new PsiInvalidElementAccessException(myModule, myModule.getClass() + ": " + message);
+      throw new PsiInvalidElementAccessException(myModule, myModule.getClass().toString() + ": " + message);
     }
   }
 

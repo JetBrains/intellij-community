@@ -22,7 +22,10 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.PyImportedModuleType;
@@ -35,7 +38,7 @@ import java.util.List;
 import java.util.Objects;
 
 
-public class PyImportedModule extends LightElement implements PyTypedElement, PyInstantTypeProvider {
+public class PyImportedModule extends LightElement implements PyTypedElement {
   private final @Nullable PyImportElement myImportElement;
   private final @NotNull PyFile myContainingFile;
   private final @NotNull QualifiedName myImportedPrefix;

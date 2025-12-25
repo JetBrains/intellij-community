@@ -120,11 +120,6 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
     return PyUnionType.unionOrNever(unpackedTypes);
   }
 
-  @Override
-  public String toString() {
-    return "PyTupleType: " + getName();
-  }
-
   public @NotNull PyUnpackedTupleType asUnpackedTupleType() {
     return myUnpackedTupleType;
   }

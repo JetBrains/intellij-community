@@ -65,7 +65,7 @@ import static com.jetbrains.python.psi.impl.PyDeprecationUtilKt.extractDeprecati
 import static java.util.Collections.emptySet;
 
 
-public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyClass, PyInstantTypeProvider {
+public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyClass {
   public static class MROException extends Exception {
     public MROException(String s) {
       super(s);

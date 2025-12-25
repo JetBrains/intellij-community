@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyKeywordArgumentImpl extends PyElementImpl implements PyKeywordArgument, PyWrapperTypeProvider {
+public class PyKeywordArgumentImpl extends PyElementImpl implements PyKeywordArgument {
   public PyKeywordArgumentImpl(ASTNode astNode) {
     super(astNode);
   }

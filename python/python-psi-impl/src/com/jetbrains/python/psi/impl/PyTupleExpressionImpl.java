@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyTupleExpressionImpl extends PySequenceExpressionImpl implements PyTupleExpression, PyWrapperTypeProvider {
+public class PyTupleExpressionImpl extends PySequenceExpressionImpl implements PyTupleExpression {
   public PyTupleExpressionImpl(ASTNode astNode) {
     super(astNode);
   }

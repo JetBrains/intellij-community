@@ -4,7 +4,4 @@ package com.jetbrains.python.psi
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-/**
- * Does not require [com.jetbrains.python.psi.types.TypeEvalContext] for resolving the type
- */
 interface PyInstantTypeProvider : PyTypedElement
