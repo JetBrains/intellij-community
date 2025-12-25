@@ -9,6 +9,7 @@ import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
 import com.jetbrains.python.venvReader.Directory
+import com.jetbrains.python.venvReader.VirtualEnvReader.Companion.DEFAULT_VIRTUALENV_DIRNAME
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -55,13 +56,17 @@ internal suspend fun walkFileSystemNoTomlContent(
           }
           return@onVisitFile FileVisitResult.CONTINUE
         }
-        onPostVisitDirectory { directory, _ ->
-          return@onPostVisitDirectory if (directory.name.startsWith(".")) {
-            excludedDirs.add(directory)
-            FileVisitResult.SKIP_SUBTREE
+        onPreVisitDirectory  { directory, _ ->
+          val dirName = directory.name
+          val hidden = dirName.startsWith('.')
+          if (!hidden) {
+            FileVisitResult.CONTINUE
           }
           else {
-            FileVisitResult.CONTINUE
+            if (dirName == DEFAULT_VIRTUALENV_DIRNAME) {
+              excludedDirs.add(directory)
+            }
+            FileVisitResult.SKIP_SUBTREE
           }
         }
       }

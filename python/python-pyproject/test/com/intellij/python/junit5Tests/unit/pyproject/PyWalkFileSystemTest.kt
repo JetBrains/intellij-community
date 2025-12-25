@@ -5,7 +5,9 @@ import com.intellij.python.pyproject.model.internal.pyProjectToml.walkFileSystem
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.utils.io.createFile
+import com.intellij.util.io.createDirectories
 import com.jetbrains.python.Result
+import com.jetbrains.python.venvReader.VirtualEnvReader.Companion.DEFAULT_VIRTUALENV_DIRNAME
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeAll
@@ -29,7 +31,8 @@ class PyWalkFileSystemTest {
         root.resolve(PY_PROJECT_TOML).createFile(),
         root.resolve("dir").createDirectory().resolve(PY_PROJECT_TOML).createFile()
       )
-      expectedExcludedDir = root.resolve(".foo").createDirectory()
+      root.resolve(".abc").createDirectories().resolve(PY_PROJECT_TOML).createFile()
+      expectedExcludedDir = root.resolve(DEFAULT_VIRTUALENV_DIRNAME).createDirectory()
     }
   }
 
