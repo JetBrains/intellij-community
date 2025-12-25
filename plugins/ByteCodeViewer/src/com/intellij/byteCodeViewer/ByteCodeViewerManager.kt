@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.resolveFromRootOrRelative
@@ -50,7 +51,10 @@ public object ByteCodeViewerManager {
       val fileIndex = ProjectFileIndex.getInstance(psiClass.project)
       val module = fileIndex.getModuleForFile(file) ?: return null
       for (compilerOutputPath in CompilerPaths.getOutputPaths(arrayOf(module))) {
-        val classRoot = VirtualFileManager.getInstance().findFileByNioPath(Path.of(compilerOutputPath)) ?: continue
+        val classRoot = VirtualFileManager.getInstance().findFileByNioPath(Path.of(compilerOutputPath))?.let {
+          val jarRoot = if (it.isDirectory) null else JarFileSystem.getInstance().getJarRootForLocalFile(it)
+          jarRoot ?: it  // fallback to local
+        } ?: continue
         val relativeClassFilePath = jvmClassName.replace('.', '/') + ".class"
         val classFile = classRoot.resolveFromRootOrRelative(relativeClassFilePath)
         if (classFile != null) {
