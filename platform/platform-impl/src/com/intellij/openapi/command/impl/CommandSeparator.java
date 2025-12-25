@@ -6,6 +6,7 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.impl.cmd.CmdEvent;
 import com.intellij.openapi.command.impl.cmd.CmdEventTransform;
+import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,7 +117,9 @@ public final class CommandSeparator implements CommandListener {
   }
 
   private void notifyCommand(@Nullable CommandEvent event, boolean isStart) {
-    CmdEvent cmdEvent = CmdEventTransform.getInstance().create(event, isStart);
+    CmdEvent cmdEvent = ProgressManager.getInstance().computeInNonCancelableSection(
+      () -> CmdEventTransform.getInstance().create(event, isStart)
+    );
     if (isStart) {
       publisher.onCommandStarted(cmdEvent);
     } else {

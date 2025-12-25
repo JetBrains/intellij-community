@@ -6,14 +6,16 @@ import com.intellij.openapi.command.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
+
 public final class CmdEventTransform {
+
   private static final @NotNull CmdEventTransform INSTANCE = new CmdEventTransform();
 
   public static @NotNull CmdEventTransform getInstance() {
     return INSTANCE;
   }
-
-  private final @NotNull CmdIdGenerator idGenerator = new CmdIdGenerator();
 
   public @NotNull CmdEvent create(@Nullable CommandEvent event, boolean isStart) {
     CmdEvent foreignCommand = ForeignCommandProcessor.getInstance().currentCommand();
@@ -31,13 +33,14 @@ public final class CmdEventTransform {
   }
 
   public @NotNull CmdEvent createNonUndoable() {
-    return CmdEvent.createNonUndoable(idGenerator.nextCommandId(), NoCmdMeta.INSTANCE);
+    CommandId commandId = CmdIdService.getInstance().nextCommandId(false);
+    return CmdEvent.createNonUndoable(commandId, NoCmdMeta.INSTANCE);
   }
 
-  private @NotNull CommandId getCommandId(boolean isTransparent, boolean isStart) {
-    if (isTransparent) {
-      return isStart ? idGenerator.nextTransparentId() : idGenerator.currentId();
-    }
-    return isStart ? idGenerator.nextCommandId() : idGenerator.currentId();
+  private static @NotNull CommandId getCommandId(boolean isTransparent, boolean isStart) {
+    CmdIdService idService = CmdIdService.getInstance();
+    return isStart
+      ? idService.nextCommandId(isTransparent)
+      : Objects.requireNonNull(idService.currentCommandId(), "Command finished without start");
   }
 }
