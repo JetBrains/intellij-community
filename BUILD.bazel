@@ -946,6 +946,8 @@ jvm_library(
     "//platform/inspect:inspect-tests_test_lib",
     "//platform/jewel/detekt-plugin:detektPlugin-tests",
     "//platform/jewel/detekt-plugin:detektPlugin-tests_test_lib",
+    "//platform/jewel/decorated-window:decoratedWindow-tests",
+    "//platform/jewel/decorated-window:decoratedWindow-tests_test_lib",
     "//platform/jewel/foundation:foundation-tests",
     "//platform/jewel/foundation:foundation-tests_test_lib",
     "//platform/jewel/ide-laf-bridge:ideLafBridge-tests",
