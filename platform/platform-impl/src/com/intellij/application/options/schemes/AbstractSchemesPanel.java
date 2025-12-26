@@ -114,6 +114,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     }
     myActions = createSchemeActions();
     mySchemesCombo = new EditableSchemesCombo<>(this);
+    mySchemesCombo.setComboBoxAccessibleName(label != null ? label : getSchemeTypeName());
     controlsPanel.add(mySchemesCombo.getComponent());
     ActionToolbar toolbar = createToolbar();
     toolbar.setTargetComponent(mySchemesCombo.getComponent());
