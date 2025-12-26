@@ -1,42 +1,54 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.venvReader
 
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.util.SystemProperties
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.environmentVariables
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
+import com.jetbrains.python.venvReader.VirtualEnvReader.Companion.Instance
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.*
 
 typealias Directory = Path
 
+/**
+ * Use [Instance]. Provide "forced" vars to ctor for tests only.
+ */
 @ApiStatus.Internal
-class VirtualEnvReader(
-  private val envs: Map<@NonNls String, @NonNls String> = System.getenv(),
-  isWindows: Boolean = SystemInfoRt.isWindows,
+class VirtualEnvReader private constructor(
+  private val forcedVars: Map<@NonNls String, @NonNls String>?,
+  private val forcedOs: EelOsFamily? = null,
 ) {
-  private val pythonNames = if (isWindows)
-    setOf("pypy.exe", "python.exe")
-  else
-    setOf("pypy", "python")
 
-  private val binFolderName = if (isWindows) {
-    "Scripts"
-  } else {
-    "bin"
-  }
+  @TestOnly
+  constructor(
+    forcedVars: Map<@NonNls String, @NonNls String>? = null,
+    isWindows: Boolean? = null,
+  ) : this(forcedVars, when (isWindows) {
+    true -> EelOsFamily.Windows
+    false -> EelOsFamily.Posix
+    null -> null
+  })
+
+  private constructor() : this(forcedVars = null, forcedOs = null)
 
   /**
    * Dir with virtual envs
    */
   @RequiresBackgroundThread
-  fun getVEnvRootDir(): Directory {
-    return resolveDirFromEnvOrElseGetDirInHomePath("WORKON_HOME", DEFAULT_VIRTUALENVS_DIR)
+  fun getVEnvRootDir(eel: EelApi = localEel): Directory {
+    return resolveDirFromEnvOrElseGetDirInHomePath(eel, "WORKON_HOME", DEFAULT_VIRTUALENVS_DIR)
   }
 
   /**
@@ -47,8 +59,8 @@ class VirtualEnvReader(
     findLocalInterpreters(getVEnvRootDir())
 
   @RequiresBackgroundThread
-  fun getPyenvRootDir(): Directory {
-    return resolveDirFromEnvOrElseGetDirInHomePath("PYENV_ROOT", ".pyenv")
+  fun getPyenvRootDir(eel: EelApi = localEel): Directory {
+    return resolveDirFromEnvOrElseGetDirInHomePath(eel, "PYENV_ROOT", ".pyenv")
   }
 
   @RequiresBackgroundThread
@@ -127,6 +139,11 @@ class VirtualEnvReader(
   fun getVenvRootPath(path: Path): Path? {
     val bin = path.parent
 
+    val binFolderName = when (forcedOs ?: path.getEelDescriptor().osFamily) {
+      EelOsFamily.Posix -> "bin"
+      EelOsFamily.Windows -> "Scripts"
+    }
+
     if (bin == null || bin.fileName.pathString != binFolderName) {
       return null
     }
@@ -150,13 +167,20 @@ class VirtualEnvReader(
    * Looks for python binary among directory entries
    */
   @RequiresBackgroundThread
-  private fun findInterpreter(dir: Path): PythonBinary? =
-    dir.listDirectoryEntries().firstOrNull { it.isRegularFile() && it.name.lowercase() in pythonNames }
+  private fun findInterpreter(dir: Path): PythonBinary? {
+    val pythonNames = when (forcedOs ?: dir.getEelDescriptor().osFamily) {
+      EelOsFamily.Posix -> setOf("pypy", "python")
+      EelOsFamily.Windows -> setOf("pypy.exe", "python.exe")
+    }
+    return dir.listDirectoryEntries().firstOrNull { it.isRegularFile() && it.name.lowercase() in pythonNames }
+  }
 
   @RequiresBackgroundThread
-  private fun resolveDirFromEnvOrElseGetDirInHomePath(env: String, dirName: String): Path =
-    envs[env]?.let { tryResolvePath(it) }
-    ?: Path.of(SystemProperties.getUserHome(), dirName)
+  private fun resolveDirFromEnvOrElseGetDirInHomePath(eel: EelApi, env: String, dirName: String): Path {
+    val envs = forcedVars ?: runBlockingMaybeCancellable { eel.exec.environmentVariables().eelIt().await() }
+    return envs[env]?.let { tryResolvePath(it, eel.descriptor) }
+           ?: eel.userInfo.home.asNioPath().resolve(dirName)
+  }
 
 
   companion object {

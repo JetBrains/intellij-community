@@ -3,6 +3,7 @@ package com.intellij.python.community.impl.venv
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
@@ -40,7 +41,7 @@ suspend fun createVenv(
   inheritSitePackages: Boolean = false,
   envReader: VirtualEnvReader = VirtualEnvReader.Instance,
 ): PyResult<PythonBinary> {
-  createVenv(python.asBinToExec(), venvDir.pathString, inheritSitePackages).getOr { return it }
+  createVenv(python.asBinToExec(), venvDir.asEelPath().toString(), inheritSitePackages).getOr { return it }
 
   val venvPython = withContext(Dispatchers.IO) {
     envReader.findPythonInPythonRoot(venvDir)

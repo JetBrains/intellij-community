@@ -2,12 +2,14 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.grazie.grammar.assertIsEmpty
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.io.deleteRecursively
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.venvReader.tryResolvePath
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -16,6 +18,7 @@ import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 
+@TestApplication
 class VirtualEnvReaderTest {
   inner class Bootstrap {
     val PYENV_ROOT = "PYENV_ROOT"
@@ -24,7 +27,7 @@ class VirtualEnvReaderTest {
     val pyenv = cwd.resolve(".pyenv")
 
     val env = HashMap<String, String>()
-    val virtualEnvReader = VirtualEnvReader(env, isWindows = false)
+    val virtualEnvReader = VirtualEnvReader(env)
 
     fun setupPyenv(versions: List<String>, binary: String) {
       for (version in versions) {
@@ -99,62 +102,69 @@ class VirtualEnvReaderTest {
     val bootstrap = Bootstrap()
 
     // just version
-    bootstrap.setupPyenv(listOf("3.1.1"), "python")
+    val binary = if (SystemInfoRt.isWindows) "python.exe" else "python"
+    bootstrap.setupPyenv(listOf("3.1.1"), binary)
     var interpreters = bootstrap.virtualEnvReader.findPyenvInterpreters()
-    Assert.assertEquals(1, interpreters.size)
+    Assertions.assertEquals(1, interpreters.size)
     assert(interpreters[0].absolutePathString().startsWith(bootstrap.pyenv.absolutePathString()))
-    assert(interpreters[0].absolutePathString().endsWith("python"))
+    assert(interpreters[0].absolutePathString().endsWith(binary))
 
     // another version w/o match
     bootstrap.setupPyenv(listOf("3.2.1"), "xxx")
     interpreters = bootstrap.virtualEnvReader.findPyenvInterpreters()
-    Assert.assertEquals(1, interpreters.size)
+    Assertions.assertEquals(1, interpreters.size)
 
     // both in names
-    bootstrap.setupPyenv(listOf("3.2.2"), "pypy")
+    val pypyBinary = if (SystemInfoRt.isWindows) "pypy.exe" else "pypy"
+    bootstrap.setupPyenv(listOf("3.2.2"), pypyBinary)
     interpreters = bootstrap.virtualEnvReader.findPyenvInterpreters()
-    Assert.assertEquals(2, interpreters.size)
+    Assertions.assertEquals(2, interpreters.size)
     assert(interpreters[0] != interpreters[1])
 
     bootstrap.removeVersion(bootstrap.pyenv, "3.2.2")
     interpreters = bootstrap.virtualEnvReader.findPyenvInterpreters()
-    Assert.assertEquals(1, interpreters.size)
-    assert(interpreters[0].absolutePathString().endsWith("python"))
+    Assertions.assertEquals(1, interpreters.size)
+    assert(interpreters[0].absolutePathString().endsWith(binary))
   }
 
   @Test
   fun testIsPyenvSdk() {
     val bootstrap = Bootstrap()
 
-    Assert.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(null as String?))
-    Assert.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(""))
-    Assert.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk("aa\u0000bb"))
-    Assert.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk("a/b/c/d"))
-    Assert.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(bootstrap.cwd))
-    Assert.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(bootstrap.cwd.resolve("smthg")))
+    Assertions.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(null as String?))
+    Assertions.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(""))
+    Assertions.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk("aa\u0000bb"))
+    Assertions.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk("a/b/c/d"))
+    Assertions.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(bootstrap.cwd))
+    Assertions.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(bootstrap.cwd.resolve("smthg")))
 
     bootstrap.setupPyenv(listOf("3.2.1"), "xxxx")
 
-    Assert.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(null as String?))
-    Assert.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(""))
-    Assert.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk("aa\u0000bb"))
-    Assert.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk("a/b/c/d"))
-    Assert.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(bootstrap.cwd))
-    Assert.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(bootstrap.cwd.resolve("smthg")))
+    Assertions.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(null as String?))
+    Assertions.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(""))
+    Assertions.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk("aa\u0000bb"))
+    Assertions.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk("a/b/c/d"))
+    Assertions.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(bootstrap.cwd))
+    Assertions.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(bootstrap.cwd.resolve("smthg")))
 
     // particularly any path inside pyenv root will work
-    Assert.assertTrue(bootstrap.virtualEnvReader.isPyenvSdk(bootstrap.pyenv.resolve("xxx")))
+    Assertions.assertTrue(bootstrap.virtualEnvReader.isPyenvSdk(bootstrap.pyenv.resolve("xxx")))
 
     // should resolve symlinks
     val link = bootstrap.cwd.resolve("smthg")
     val target = bootstrap.pyenv.resolve("xxx")
 
     // hanging links, should not resolve it
-    Files.createSymbolicLink(link, target)
-    Assert.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(link))
+    if (!SystemInfoRt.isWindows) {
+      // links require UAC on Windows
+      Files.createSymbolicLink(link, target)
+    }
+    Assertions.assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(link))
 
-    Files.createFile(target)
-    Assert.assertTrue(bootstrap.virtualEnvReader.isPyenvSdk(link))
+    if (!SystemInfoRt.isWindows) {
+      Files.createFile(target)
+      Assertions.assertTrue(bootstrap.virtualEnvReader.isPyenvSdk(link))
+    }
   }
 
   @ParameterizedTest(name = "{0}")
@@ -162,7 +172,7 @@ class VirtualEnvReaderTest {
   fun getVenvRootPathTests(name: String, isWindows: Boolean, path: Path, expectedReturnValue: Path?) {
     val result = VirtualEnvReader(isWindows = isWindows).getVenvRootPath(path)
 
-    Assert.assertEquals(expectedReturnValue, result)
+    Assertions.assertEquals(expectedReturnValue, result)
   }
 
   companion object {
@@ -231,7 +241,7 @@ class VirtualEnvReaderTest {
       val name: String,
       val isWindows: Boolean,
       val path: String,
-      val expectedReturnValue: String?
+      val expectedReturnValue: String?,
     )
   }
 }

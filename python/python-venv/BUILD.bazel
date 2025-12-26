@@ -30,6 +30,7 @@ jvm_library(
     "//platform/util",
     "//platform/core-api:core",
     "//python/python-exec-service/execService.python",
+    "//platform/eel-provider",
   ]
 )
 
@@ -61,6 +62,7 @@ jvm_library(
     "//platform/core-api:core",
     "//python/python-exec-service/execService.python",
     "//python/python-exec-service/execService.python:execService.python_test_lib",
+    "//platform/eel-provider",
   ]
 )
 ### auto-generated section `build intellij.python.community.impl.venv` end
