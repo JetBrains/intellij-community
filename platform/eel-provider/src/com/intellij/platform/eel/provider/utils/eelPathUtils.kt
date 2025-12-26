@@ -407,7 +407,6 @@ object EelPathUtils {
   }
 
   @RequiresBackgroundThread
-  @VisibleForTesting
   fun walkingTransfer(
     sourceRoot: Path,
     targetRoot: Path,
@@ -415,9 +414,14 @@ object EelPathUtils {
     fileAttributesStrategy: FileTransferAttributesStrategy,
     absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler? = null,
   ) {
-    if (Registry.`is`("ijent.incremental.walking.transfer") && !removeSource) {
+    if (Registry.`is`("ijent.incremental.walking.transfer")) {
       runBlockingMaybeCancellable {
         incrementalWalkingTransfer(sourceRoot, targetRoot, fileAttributesStrategy, absoluteSymlinkHandler)
+        if (removeSource) {
+          val sourceEel = sourceRoot.asEelPath()
+          val sourceEelApi = sourceEel.descriptor.toEelApi()
+          sourceEelApi.fs.delete(sourceEel, true).getOrThrow()
+        }
       }
       return
     }
