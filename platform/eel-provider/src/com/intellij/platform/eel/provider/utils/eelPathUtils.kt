@@ -22,7 +22,6 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils.UnixFilePermissionB
 import com.intellij.platform.eel.provider.utils.EelPathUtils.incrementalWalkingTransfer
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
@@ -408,7 +407,6 @@ object EelPathUtils {
   }
 
   @RequiresBackgroundThread
-  @RequiresBlockingContext
   @VisibleForTesting
   fun walkingTransfer(
     sourceRoot: Path,
@@ -959,7 +957,6 @@ object EelPathUtils {
    * @param sourceRoot Has to be a valid path to a directory
    * @param targetRoot Has to be a valid path to a directory
    */
-  @RequiresBackgroundThread
   @VisibleForTesting
   suspend fun directoryOnlySync(
     sourceRoot: EelPath,
@@ -1051,7 +1048,6 @@ object EelPathUtils {
    * using [FileTransferAttributesStrategy]. Relative symlinks are transferred as is, and the target path does not have to be valid.
    * Permissions on symlinks are not transferred as they are ignored by on Unix-like systems.
    */
-  @RequiresBackgroundThread
   private suspend fun incrementalWalkingTransfer(
     sourceRoot: Path,
     targetRoot: Path,
