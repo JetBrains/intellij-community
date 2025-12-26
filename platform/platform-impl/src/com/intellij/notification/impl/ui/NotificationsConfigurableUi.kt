@@ -127,6 +127,7 @@ internal class NotificationsConfigurableUi(settings: NotificationsConfigurationI
           }
         }
         selectionMode = ListSelectionModel.SINGLE_SELECTION
+        accessibleContext.accessibleName = IdeBundle.message("notifications.configurable.notifications.list.accessible.name")
       }
   }
 
