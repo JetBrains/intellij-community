@@ -13,8 +13,6 @@ import com.intellij.mcpserver.McpToolsProvider
 import com.intellij.mcpserver.McpToolset
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.extensions.ExtensionPointListener
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.resettableLazy
 import kotlinx.coroutines.CoroutineScope
 
@@ -28,25 +26,8 @@ internal object McpServerCounterUsagesCollector : CounterUsagesCollector() {
   fun reportMcpCall(mcpToolDescriptor: McpToolDescriptor) = MCP_CALL.log(mcpToolDescriptor.name)
 
   internal class McpToolNameValidator : CustomValidationRule() {
-    private val valueMap = resettableLazy { McpToolsProvider.EP.extensionList.associateWith { ext -> ext.getTools().map { it.descriptor.name } } }
-
-    @Service(Service.Level.APP)
-    private class ScopeHolder(val cs: CoroutineScope)
-
-    init {
-      McpToolsProvider.EP.addExtensionPointListener(service<ScopeHolder>().cs, object : ExtensionPointListener<McpToolsProvider> {
-        override fun extensionAdded(extension: McpToolsProvider, pluginDescriptor: PluginDescriptor) = valueMap.reset()
-        override fun extensionRemoved(extension: McpToolsProvider, pluginDescriptor: PluginDescriptor) = valueMap.reset()
-      })
-
-      McpToolset.EP.addExtensionPointListener(service<ScopeHolder>().cs, object : ExtensionPointListener<McpToolset> {
-        override fun extensionAdded(extension: McpToolset, pluginDescriptor: PluginDescriptor) = valueMap.reset()
-        override fun extensionRemoved(extension: McpToolset, pluginDescriptor: PluginDescriptor) = valueMap.reset()
-      })
-    }
-
     override fun doValidate(data: String, context: EventContext): ValidationResultType {
-      for ((ext, tools) in valueMap.value) {
+      for ((ext, tools) in service<ScopeHolder>().valueMap.value) {
         if (tools.contains(data))  {
           return if (getPluginInfo(ext.javaClass).isSafeToReport()) ValidationResultType.ACCEPTED else ValidationResultType.THIRD_PARTY
         }
@@ -55,5 +36,17 @@ internal object McpServerCounterUsagesCollector : CounterUsagesCollector() {
     }
 
     override fun getRuleId(): String = "tool_name_validator_id"
+  }
+}
+
+@Service(Service.Level.APP)
+private class ScopeHolder(coroutineScope: CoroutineScope) {
+  @JvmField val valueMap = resettableLazy {
+    McpToolsProvider.EP.extensionList.associateWith { ext -> ext.getTools().asSequence().map { it.descriptor.name } }
+  }
+
+  init {
+    McpToolsProvider.EP.addChangeListener(coroutineScope) { valueMap.reset() }
+    McpToolset.EP.addChangeListener(coroutineScope) { valueMap.reset() }
   }
 }
