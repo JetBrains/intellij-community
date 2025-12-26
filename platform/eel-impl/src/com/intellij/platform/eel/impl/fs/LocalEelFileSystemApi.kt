@@ -869,7 +869,7 @@ abstract class WindowsNioBasedEelFileSystemApi(
     }
     else if (sourceAttrs.isRegularFile) {
       if (options.yieldRegularFiles) {
-        val hash = if (options.fileContentsHash) {
+        val hash = if (!options.fileContentsHash) {
           null
         }
         else if (sourceAttrs.size() > 0) {
