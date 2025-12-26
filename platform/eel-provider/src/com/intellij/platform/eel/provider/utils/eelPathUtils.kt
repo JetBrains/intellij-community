@@ -512,22 +512,33 @@ object EelPathUtils {
 
 
   /**
+   * Get individual parts of a relative path.
+   * Example: "a/b" -> ["a", "b"]
+   */
+  private fun getRelativePathParts(path: Path): List<String> {
+    val parts = mutableListOf<String>()
+    var current: Path? = path
+
+    while (current != null) {
+      val fileName = current.fileName
+      if (fileName != null) {
+        parts.add(fileName.toString())
+      }
+      current = current.parent
+    }
+
+    return parts.reversed()
+  }
+
+  /**
    * Compare individual parts of two relative paths lexicographically.
    * Case-sensitive by default.
    * A shorter component is considered lower compared to a longer component.
    * Example: "a/b" < "ab/b" == True
    */
   private fun compareRelativePathComponents(left: Path, right: Path, ignoreCase: Boolean = false): Int {
-    val left = left
-      .toString()
-      .replace("\\", "/")
-      .split("/")
-
-    val right = right
-      .toString()
-      .replace("\\", "/")
-      .split("/")
-
+    val left = getRelativePathParts(left)
+    val right = getRelativePathParts(right)
     for (i in 0 until min(left.size, right.size)) {
       val result = left[i].compareTo(right[i], ignoreCase)
       if (result != 0) {
