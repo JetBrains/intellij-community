@@ -57,11 +57,11 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
 
       var reader = VirtualEnvReader.getInstance();
       if (baseDirFromModule != null) {
-        candidates.addAll(reader.findLocalInterpreters(baseDirFromModule.toNioPath()));
+        candidates.addAll(reader.findVenvsInDir(baseDirFromModule.toNioPath()));
       } else if (baseDirFromContext != null) {
         final VirtualFile dir = VfsUtil.findFile(baseDirFromContext, false);
         if (dir != null) {
-          candidates.addAll(reader.findLocalInterpreters(dir.toNioPath()));
+          candidates.addAll(reader.findVenvsInDir(dir.toNioPath()));
         }
       }
 
