@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.venvReader
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.eel.EelApi
@@ -47,7 +48,7 @@ class VirtualEnvReader private constructor(
    * Dir with virtual envs
    */
   @RequiresBackgroundThread
-  fun getVEnvRootDir(eel: EelApi = localEel): Directory {
+  fun getVEnvRootDir(eel: EelApi? = getLocalEelIfApp()): Directory {
     return resolveDirFromEnvOrElseGetDirInHomePath(eel, "WORKON_HOME", DEFAULT_VIRTUALENVS_DIR)
   }
 
@@ -59,7 +60,7 @@ class VirtualEnvReader private constructor(
     findLocalInterpreters(getVEnvRootDir())
 
   @RequiresBackgroundThread
-  fun getPyenvRootDir(eel: EelApi = localEel): Directory {
+  fun getPyenvRootDir(eel: EelApi? = getLocalEelIfApp()): Directory {
     return resolveDirFromEnvOrElseGetDirInHomePath(eel, "PYENV_ROOT", ".pyenv")
   }
 
@@ -176,10 +177,13 @@ class VirtualEnvReader private constructor(
   }
 
   @RequiresBackgroundThread
-  private fun resolveDirFromEnvOrElseGetDirInHomePath(eel: EelApi, env: String, dirName: String): Path {
-    val envs = forcedVars ?: runBlockingMaybeCancellable { eel.exec.environmentVariables().eelIt().await() }
-    return envs[env]?.let { tryResolvePath(it, eel.descriptor) }
-           ?: eel.userInfo.home.asNioPath().resolve(dirName)
+  private fun resolveDirFromEnvOrElseGetDirInHomePath(eel: EelApi?, env: String, dirName: String): Path {
+    val envs = forcedVars
+               ?: eel?.let { eel -> runBlockingMaybeCancellable { eel.exec.environmentVariables().eelIt().await() } }
+               ?: System.getenv()
+    return envs[env]?.let { tryResolvePath(it, eel?.descriptor) }
+           ?: (eel?.userInfo?.home?.asNioPath()
+               ?: Path(System.getProperty("user.home"))).resolve(dirName)
   }
 
 
@@ -197,5 +201,6 @@ class VirtualEnvReader private constructor(
     const val DEFAULT_VIRTUALENVS_DIR: String = ".virtualenvs"
     const val DEFAULT_VIRTUALENV_DIRNAME: String = ".venv"
 
+    private fun getLocalEelIfApp(): EelApi? = if (ApplicationManager.getApplication() != null) localEel else null
   }
 }
