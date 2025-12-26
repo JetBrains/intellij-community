@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.concurrency.JobScheduler;
@@ -81,20 +81,37 @@ public final class FUCounterUsageLogger {
     }
   }
 
-  /**
-   * Event log counter-system collectors aren't registered in EP,
-   * so we log 'registered' event for every StatisticsEventLoggerProvider event log collector.
-   *
-   * @see StatisticsEventLoggerProvider#getEventLogSystemLogger$intellij_platform_statistics()
-   */
-  private static List<CompletableFuture<Void>> eventLogSystemCollectorsRegisteredEvents() {
-    List<CompletableFuture<Void>> futures = new ArrayList<>();
-    for (StatisticsEventLoggerProvider statisticsEventLoggerProvider: StatisticsEventLogProviderUtil.getEventLogProviders()) {
-      EventLogGroup group = statisticsEventLoggerProvider.getEventLogSystemLogger$intellij_platform_statistics().getGroup();
-      StatisticsEventLogger logger = StatisticsEventLogProviderUtil.getEventLogProvider(group.getRecorder()).getLogger();
-      futures.add(logger.logAsync(group, EventLogSystemEvents.COLLECTOR_REGISTERED, false));
+  public CompletableFuture<?> logRegisteredGroups() {
+    List<CompletableFuture<?>> futures = new ArrayList<>();
+    for (EventLogGroup group : myGroups.values()) {
+      futures.add(FeatureUsageLogger.getInstance().log(group, EventLogSystemEvents.COLLECTOR_REGISTERED));
     }
-    return futures;
+    futures.addAll(eventLogSystemCollectorsRegisteredEvents());
+    Map<String, StatisticsEventLogger> recorderLoggers = new HashMap<>();
+    for (FeatureUsagesCollector collector : instantiateCounterCollectors()) {
+      EventLogGroup group = collector.getGroup();
+      if (group != null) {
+        String recorder = group.getRecorder();
+        StatisticsEventLogger logger = recorderLoggers.get(recorder);
+        if (logger == null) {
+          logger = StatisticsEventLogProviderUtil.getEventLogProvider(recorder).getLogger();
+          recorderLoggers.put(recorder, logger);
+        }
+        futures.add(logger.logAsync(group, EventLogSystemEvents.COLLECTOR_REGISTERED, false));
+      }
+      else {
+        try {
+          // get group id to check that either group or group id is overridden
+          if (StringUtil.isEmpty(collector.getGroupId())) {
+            LOG.error("Please override either getGroupId() or getGroup() with not empty string in " + collector.getClass().getName());
+          }
+        }
+        catch (IllegalStateException e) {
+          LOG.error(e.getMessage() + " in " + collector.getClass().getName());
+        }
+      }
+    }
+    return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
   }
 
   public static @NotNull List<FeatureUsagesCollector> instantiateCounterCollectors() {
@@ -141,37 +158,20 @@ public final class FUCounterUsageLogger {
     myGroups.put(group.getId(), group);
   }
 
-  public CompletableFuture<Void> logRegisteredGroups() {
-    List<CompletableFuture<Void>> futures = new ArrayList<>();
-    for (EventLogGroup group : myGroups.values()) {
-      futures.add(FeatureUsageLogger.getInstance().log(group, EventLogSystemEvents.COLLECTOR_REGISTERED));
+  /**
+   * Event log counter-system collectors aren't registered in EP,
+   * so we log 'registered' event for every StatisticsEventLoggerProvider event log collector.
+   *
+   * @see StatisticsEventLoggerProvider#getEventLogSystemLogger$intellij_platform_statistics()
+   */
+  private static List<CompletableFuture<?>> eventLogSystemCollectorsRegisteredEvents() {
+    List<CompletableFuture<?>> futures = new ArrayList<>();
+    for (StatisticsEventLoggerProvider statisticsEventLoggerProvider: StatisticsEventLogProviderUtil.getEventLogProviders()) {
+      EventLogGroup group = statisticsEventLoggerProvider.getEventLogSystemLogger$intellij_platform_statistics().getGroup();
+      StatisticsEventLogger logger = StatisticsEventLogProviderUtil.getEventLogProvider(group.getRecorder()).getLogger();
+      futures.add(logger.logAsync(group, EventLogSystemEvents.COLLECTOR_REGISTERED, false));
     }
-    futures.addAll(eventLogSystemCollectorsRegisteredEvents());
-    Map<String, StatisticsEventLogger> recorderLoggers = new HashMap<>();
-    for (FeatureUsagesCollector collector : instantiateCounterCollectors()) {
-      EventLogGroup group = collector.getGroup();
-      if (group != null) {
-        String recorder = group.getRecorder();
-        StatisticsEventLogger logger = recorderLoggers.get(recorder);
-        if (logger == null) {
-          logger = StatisticsEventLogProviderUtil.getEventLogProvider(recorder).getLogger();
-          recorderLoggers.put(recorder, logger);
-        }
-        futures.add(logger.logAsync(group, EventLogSystemEvents.COLLECTOR_REGISTERED, false));
-      }
-      else {
-        try {
-          // get group id to check that either group or group id is overridden
-          if (StringUtil.isEmpty(collector.getGroupId())) {
-            LOG.error("Please override either getGroupId() or getGroup() with not empty string in " + collector.getClass().getName());
-          }
-        }
-        catch (IllegalStateException e) {
-          LOG.error(e.getMessage() + " in " + collector.getClass().getName());
-        }
-      }
-    }
-    return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+    return futures;
   }
 
   /**

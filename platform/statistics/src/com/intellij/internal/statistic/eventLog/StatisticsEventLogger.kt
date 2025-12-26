@@ -22,13 +22,13 @@ import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 
 interface StatisticsEventLogger {
-  fun logAsync(group: EventLogGroup, eventId: String, isState: Boolean): CompletableFuture<Void> {
+  fun logAsync(group: EventLogGroup, eventId: String, isState: Boolean): CompletableFuture<*> {
     return logAsync(group = group, eventId = eventId, data = Collections.emptyMap(), isState = isState)
   }
 
-  fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void>
+  fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<*>
 
-  fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<Void>
+  fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<*>
 
   fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit)
 
@@ -223,6 +223,7 @@ abstract class StatisticsEventLoggerProvider(
       build = eventLogConfiguration.build,
       recorderVersion = version.toString(),
       mergeStrategy = createEventsMergeStrategy(),
+      coroutineScope = coroutineScope,
     )
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger

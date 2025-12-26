@@ -6,23 +6,17 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRuleFactory
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.RecorderDataValidationRule
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.*
 import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
 import com.intellij.internal.statistic.eventLog.validator.storage.IntellijValidationRulesStorage
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.fus.reporting.MessageBus
 import com.jetbrains.fus.reporting.MetadataStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -120,12 +114,13 @@ open class IntellijSensitiveDataValidator protected constructor(
       override suspend fun update(scope: CoroutineScope): Job = Job()
       override fun update(): Boolean = false
       override fun reload() {}
-      override fun getFieldsToAnonymize(s: String, s1: String): Set<String> = emptySet()
+      override fun getFieldsToAnonymize(groupId: String, eventId: String): Set<String> = emptySet()
       override fun getSkipAnonymizationIds(): Set<String> = emptySet()
-      override fun getGroupValidators(s: String): IGroupValidators<EventLogBuild> = object : IGroupValidators<EventLogBuild> {
+      override fun getGroupValidators(groupId: String): IGroupValidators<EventLogBuild> = object : IGroupValidators<EventLogBuild> {
         override val eventGroupRules: IEventGroupRules? = null
         override val versionFilter: IEventGroupsFilterRules<EventLogBuild>? = null
       }
+
       override fun isUnreachable(): Boolean = false
       override fun getSystemDataRulesRevisions(): RecorderDataValidationRule = throw NotImplementedError()
       override fun getClientDataRulesRevisions(): RecorderDataValidationRule = throw NotImplementedError()
@@ -143,7 +138,7 @@ open class IntellijSensitiveDataValidator protected constructor(
   val messageBus: MessageBus
     get() = fusComponents!!.messageBus
 
-  open fun isGroupAllowed(group: EventLogGroup): Boolean {
+  open suspend fun isGroupAllowed(group: EventLogGroup): Boolean {
     if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {
       return true
     }
@@ -160,8 +155,9 @@ open class IntellijSensitiveDataValidator protected constructor(
    *
    * @deprecated If you really must, override the same methods using IEventContext and IEventGroupRules as parameters
    */
-  @Deprecated("If you really must, override the same methods using IEventContext and IEventGroupRules as parameters", ReplaceWith("guaranteeCorrectEventId(context as IEventContext, groupRules as IEventGroupRules)"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2026.1")
+  @Deprecated("If you really must, override the same methods using IEventContext and IEventGroupRules as parameters",
+              ReplaceWith("guaranteeCorrectEventId(context as IEventContext, groupRules as IEventGroupRules)"))
+  @ScheduledForRemoval(inVersion = "2026.1")
   open fun guaranteeCorrectEventId(context: EventContext, groupRules: EventGroupRules?): String? {
     return null
   }
@@ -182,11 +178,10 @@ open class IntellijSensitiveDataValidator protected constructor(
    *
    * @deprecated If you really must, override the same methods using IEventContext and IEventGroupRules as parameters
    */
-  @Deprecated("If you really must, override the same methods using IEventContext and IEventGroupRules as parameters", ReplaceWith("guaranteeCorrectEventData(context as IEventContext, groupRules as IEventGroupRules)"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2026.1")
-  open fun guaranteeCorrectEventData(context: EventContext, groupRules: EventGroupRules?): Map<String, Any>? {
-    return null
-  }
+  @Deprecated("If you really must, override the same methods using IEventContext and IEventGroupRules as parameters",
+              ReplaceWith("guaranteeCorrectEventData(context as IEventContext, groupRules as IEventGroupRules)"))
+  @ScheduledForRemoval
+  open fun guaranteeCorrectEventData(context: EventContext, groupRules: EventGroupRules?): Map<String, Any>? = null
 
   override fun guaranteeCorrectEventData(context: IEventContext, groupRules: IEventGroupRules?): MutableMap<String, Any> {
     if (context is EventContext && groupRules is EventGroupRules?) {
@@ -217,28 +212,24 @@ open class IntellijSensitiveDataValidator protected constructor(
 
   private fun isTestModeEnabled(rule: IEventGroupRules?): Boolean {
     return StatisticsRecorderUtil.isTestModeEnabled(recorderId) && rule != null &&
-           ContainerUtil.exists(rule.getEventIdRules()) { it is TestModeValidationRule }
+           rule.getEventIdRules().any { it is TestModeValidationRule }
   }
 
   fun update() {
     validationRulesStorage.update()
   }
+}
 
-  private class BlindSensitiveDataValidator(
-    fusComponents: FusComponentProvider.FusComponents,
-    recorderId: String,
-  ) : IntellijSensitiveDataValidator(fusComponents, recorderId) {
-    override fun guaranteeCorrectEventId(context: IEventContext, groupRules: IEventGroupRules?): String {
-      return context.eventId
-    }
+private class BlindSensitiveDataValidator(
+  fusComponents: FusComponentProvider.FusComponents,
+  recorderId: String,
+) : IntellijSensitiveDataValidator(fusComponents, recorderId) {
+  override fun guaranteeCorrectEventId(context: IEventContext, groupRules: IEventGroupRules?): String = context.eventId
 
-    override fun guaranteeCorrectEventData(context: IEventContext, groupRules: IEventGroupRules?): MutableMap<String, Any> {
-      @Suppress("UNCHECKED_CAST")
-      return context.eventData as MutableMap<String, Any>
-    }
-
-    override fun isGroupAllowed(group: EventLogGroup): Boolean {
-      return true
-    }
+  override fun guaranteeCorrectEventData(context: IEventContext, groupRules: IEventGroupRules?): MutableMap<String, Any> {
+    @Suppress("UNCHECKED_CAST")
+    return context.eventData as MutableMap<String, Any>
   }
+
+  override suspend fun isGroupAllowed(group: EventLogGroup): Boolean = true
 }

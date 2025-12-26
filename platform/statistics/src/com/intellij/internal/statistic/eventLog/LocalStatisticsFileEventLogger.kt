@@ -4,14 +4,17 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.ScheduledFuture
 
 /**
  * Event logger that only notifies subscribers listed in [com.intellij.internal.statistic.eventLog.EventLogListenersManager.isLocalAllowed]
@@ -20,44 +23,52 @@ class LocalStatisticsFileEventLogger internal constructor(
   private val recorderId: String,
   private val build: String,
   private val recorderVersion: String,
-  private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(emptySet())
+  private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(emptySet()),
+  private val coroutineScope: CoroutineScope,
 ) : StatisticsEventLogger, Disposable {
-  private val logExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("LocalStatisticsFileEventLogger", 1)
+  private val semaphore = Semaphore(1)
 
   private val eventMergeTimeoutMs: Long = 3000L
 
   private var lastEvent: FusEvent? = null
   private var lastEventTime: Long = 0
   private var lastEventCreatedTime: Long = 0
-  private var lastEventFlushFuture: ScheduledFuture<CompletableFuture<Void>>? = null
 
-  override fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<Void> {
+  override fun logAsync(
+    group: EventLogGroup,
+    eventId: String,
+    dataProvider: () -> Map<String, Any>?,
+    isState: Boolean,
+  ): CompletableFuture<*> {
     val eventTime = System.currentTimeMillis()
     group.validateEventId(eventId)
     try {
-      return CompletableFuture.runAsync({
-        val validator = IntellijSensitiveDataValidator.getInstance(recorderId)
-        if (!validator.isGroupAllowed(group)) {
-          return@runAsync
-        }
+      return coroutineScope.launch {
+        semaphore.withPermit {
+          IntellijSensitiveDataValidator.getInstance(recorderId)
+          val validator = IntellijSensitiveDataValidator.getInstance(recorderId)
+          if (!validator.isGroupAllowed(group)) {
+            return@withPermit
+          }
 
-        val data = dataProvider() ?: return@runAsync
-        val logEventGroup = LogEventGroup(group.id, group.version.toString())
-        val logEventAction = LogEventAction(eventId, isState, HashMap(data))
-        val event = LogEvent(
-          session = "local",
-          build = build,
-          bucket = "",
-          time = eventTime,
-          group = logEventGroup,
-          recorderVersion = recorderVersion,
-          event = logEventAction,
-        ).escapeExceptData()
-        val validatedEvent = validator.validateEvent(event)
-        if (validatedEvent != null) {
-          log(validatedEvent, System.currentTimeMillis())
+          val data = dataProvider() ?: return@withPermit
+          val logEventGroup = LogEventGroup(group.id, group.version.toString())
+          val logEventAction = LogEventAction(eventId, isState, HashMap(data))
+          val event = LogEvent(
+            session = "local",
+            build = build,
+            bucket = "",
+            time = eventTime,
+            group = logEventGroup,
+            recorderVersion = recorderVersion,
+            event = logEventAction,
+          ).escapeExceptData()
+          val validatedEvent = validator.validateEvent(event)
+          if (validatedEvent != null) {
+            log(validatedEvent, System.currentTimeMillis())
+          }
         }
-      }, logExecutor)
+      }.asCompletableFuture()
     }
     catch (e: RejectedExecutionException) {
       //executor is shutdown
@@ -68,7 +79,7 @@ class LocalStatisticsFileEventLogger internal constructor(
   override fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit) {
   }
 
-  override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> {
+  override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<*> {
     return logAsync(group = group, eventId = eventId, dataProvider = { data }, isState = isState)
   }
 
@@ -110,12 +121,12 @@ class LocalStatisticsFileEventLogger internal constructor(
   }
 
   override fun dispose() {
-    lastEventFlushFuture?.cancel(false)
     flush()
-    logExecutor.shutdown()
   }
 
-  fun flush(): CompletableFuture<Void> = CompletableFuture.runAsync({ logLastEvent() }, logExecutor)
+  fun flush(): CompletableFuture<*> {
+    return coroutineScope.launch { semaphore.withPermit { logLastEvent() } }.asCompletableFuture()
+  }
 }
 
 private data class FusEvent(val validatedEvent: LogEvent, val rawEventId: String?, val rawData: Map<String, Any>?)
