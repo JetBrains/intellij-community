@@ -199,6 +199,8 @@ class VirtualEnvReader private constructor(
      * @see com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.getDefaultLocation
      */
     const val DEFAULT_VIRTUALENVS_DIR: String = ".virtualenvs"
+
+    @Suppress("VENV_IS_OK") // The only place it should be used in prod
     const val DEFAULT_VIRTUALENV_DIRNAME: String = ".venv"
 
     private fun getLocalEelIfApp(): EelApi? = if (ApplicationManager.getApplication() != null) localEel else null
