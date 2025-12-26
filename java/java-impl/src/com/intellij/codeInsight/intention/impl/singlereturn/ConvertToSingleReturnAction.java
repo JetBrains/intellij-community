@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.singlereturn;
 
 import com.intellij.java.JavaBundle;
@@ -88,6 +88,7 @@ public final class ConvertToSingleReturnAction extends PsiUpdateModCommandAction
     if (!(owner.getBody() instanceof PsiCodeBlock block)) return null;
     PsiType returnType = PsiTypesUtil.getMethodReturnType(block);
     if (returnType == null || getNonTerminalReturn(block) == null) return null;
+    if (block.getRBrace() == null) return null;
     return Presentation.of(getFamilyName());
   }
 
