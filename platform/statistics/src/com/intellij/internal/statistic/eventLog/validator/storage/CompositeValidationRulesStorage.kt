@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild
@@ -17,8 +17,8 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 class CompositeValidationRulesStorage internal constructor(
-  private val myMetadataStorage: MetadataStorage<EventLogBuild>,
-  private val myTestRulesStorage: ValidationTestRulesPersistedStorage
+  private val metadataStorage: MetadataStorage<EventLogBuild>,
+  private val testRulesStorage: ValidationTestRulesPersistedStorage
 ) : MetadataStorage<EventLogBuild>, ValidationTestRulesStorageHolder {
 
   private class TestGroupValidators(
@@ -36,35 +36,35 @@ class CompositeValidationRulesStorage internal constructor(
   }
 
   override fun getGroupValidators(groupId: String): IGroupValidators<EventLogBuild> {
-    val testGroupRules = myTestRulesStorage.getGroupRules(groupId)
+    val testGroupRules = testRulesStorage.getGroupRules(groupId)
     if (testGroupRules != null) {
       return TestGroupValidators(testGroupRules)
     }
 
     // if custom metadata is used in statistics tool window, we don't go to regular metadata storage
-    if (myTestRulesStorage.hasCustomPathMetadata()) {
+    if (testRulesStorage.hasCustomPathMetadata()) {
       return EmptyGroupValidators()
     }
 
-    return myMetadataStorage.getGroupValidators(groupId)
+    return metadataStorage.getGroupValidators(groupId)
   }
 
   override fun isUnreachable(): Boolean {
-    return myMetadataStorage.isUnreachable() && myTestRulesStorage.isUnreachable()
+    return metadataStorage.isUnreachable() && testRulesStorage.isUnreachable()
   }
 
   override fun update(): Boolean {
-    return myMetadataStorage.update() && myTestRulesStorage.update()
+    return metadataStorage.update() && testRulesStorage.update()
   }
 
-  override suspend fun update(scope: CoroutineScope): Job = myMetadataStorage.update(scope)
+  override suspend fun update(scope: CoroutineScope): Job = metadataStorage.update(scope)
 
   override fun reload() {
-    myMetadataStorage.reload()
-    myTestRulesStorage.reload()
+    metadataStorage.reload()
+    testRulesStorage.reload()
   }
 
-  override fun getTestGroupStorage(): ValidationTestRulesPersistedStorage = myTestRulesStorage
+  override fun getTestGroupStorage(): ValidationTestRulesPersistedStorage = testRulesStorage
 
   override fun getClientDataRulesRevisions(): RecorderDataValidationRule = throw NotImplementedError()
   override fun getFieldsToAnonymize(groupId: String, eventId: String): Set<String> = throw NotImplementedError()

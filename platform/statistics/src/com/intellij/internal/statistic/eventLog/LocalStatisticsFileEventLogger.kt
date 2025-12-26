@@ -16,7 +16,7 @@ import java.util.concurrent.ScheduledFuture
 /**
  * Event logger that only notifies subscribers listed in [com.intellij.internal.statistic.eventLog.EventLogListenersManager.isLocalAllowed]
  */
-class LocalStatisticsFileEventLogger(
+class LocalStatisticsFileEventLogger internal constructor(
   private val recorderId: String,
   private val build: String,
   private val recorderVersion: String,
@@ -34,14 +34,25 @@ class LocalStatisticsFileEventLogger(
   override fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
     group.validateEventId(eventId)
-    return try {
-      CompletableFuture.runAsync(Runnable {
+    try {
+      return CompletableFuture.runAsync({
         val validator = IntellijSensitiveDataValidator.getInstance(recorderId)
-        if (!validator.isGroupAllowed(group)) return@Runnable
-        val data = dataProvider() ?: return@Runnable
+        if (!validator.isGroupAllowed(group)) {
+          return@runAsync
+        }
+
+        val data = dataProvider() ?: return@runAsync
         val logEventGroup = LogEventGroup(group.id, group.version.toString())
         val logEventAction = LogEventAction(eventId, isState, HashMap(data))
-        val event = LogEvent("local", build, "", eventTime, logEventGroup, recorderVersion, logEventAction).escapeExceptData()
+        val event = LogEvent(
+          session = "local",
+          build = build,
+          bucket = "",
+          time = eventTime,
+          group = logEventGroup,
+          recorderVersion = recorderVersion,
+          event = logEventAction,
+        ).escapeExceptData()
         val validatedEvent = validator.validateEvent(event)
         if (validatedEvent != null) {
           log(validatedEvent, System.currentTimeMillis())
@@ -50,14 +61,16 @@ class LocalStatisticsFileEventLogger(
     }
     catch (e: RejectedExecutionException) {
       //executor is shutdown
-      CompletableFuture<Void>().also { it.completeExceptionally(e) }
+      return CompletableFuture<Void>().also { it.completeExceptionally(e) }
     }
   }
 
-  override fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit): Unit = Unit
+  override fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit) {
+  }
 
-  override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> =
-    logAsync(group, eventId, { data }, isState)
+  override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> {
+    return logAsync(group = group, eventId = eventId, dataProvider = { data }, isState = isState)
+  }
 
   private fun log(event: LogEvent, createdTime: Long) {
     if (lastEvent != null && event.time - lastEventTime <= eventMergeTimeoutMs && mergeStrategy.shouldMerge(lastEvent!!.validatedEvent, event)) {
@@ -90,9 +103,11 @@ class LocalStatisticsFileEventLogger(
 
   override fun getLogFilesProvider(): EmptyEventLogFilesProvider = EmptyEventLogFilesProvider
 
-  override fun cleanup(): Unit = Unit
+  override fun cleanup() {
+  }
 
-  override fun rollOver(): Unit = Unit
+  override fun rollOver() {
+  }
 
   override fun dispose() {
     lastEventFlushFuture?.cancel(false)
@@ -101,6 +116,6 @@ class LocalStatisticsFileEventLogger(
   }
 
   fun flush(): CompletableFuture<Void> = CompletableFuture.runAsync({ logLastEvent() }, logExecutor)
-
-  private data class FusEvent(val validatedEvent: LogEvent, val rawEventId: String?, val rawData: Map<String, Any>?)
 }
+
+private data class FusEvent(val validatedEvent: LogEvent, val rawEventId: String?, val rawData: Map<String, Any>?)
