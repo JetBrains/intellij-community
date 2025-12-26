@@ -569,7 +569,7 @@ abstract class PosixNioBasedEelFileSystemApi(
         }
       }
     }
-  }
+  }.flowOn(Dispatchers.IO)
 
   private fun walkDirectoryProcessFilePosix(
     currentItem: Path,
@@ -801,7 +801,7 @@ abstract class WindowsNioBasedEelFileSystemApi(
         }
       }
     }
-  }
+  }.flowOn(Dispatchers.IO)
 
   private fun walkDirectoryProcessFileWindows(
     currentItem: Path,
