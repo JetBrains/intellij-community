@@ -161,3 +161,6 @@ test --test_timeout=60,300,900,14400
 
 # A workaround for https://github.com/bazelbuild/rules_kotlin/issues/1352
 common --repo_env=ANDROID_HOME=
+
+# https://github.com/bazelbuild/bazel-central-registry/issues/6955
+common --registry=https://raw.githubusercontent.com/bazelbuild/bazel-central-registry/main/
