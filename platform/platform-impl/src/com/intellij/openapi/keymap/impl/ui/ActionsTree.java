@@ -150,6 +150,7 @@ public final class ActionsTree {
     });
 
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    myTree.getAccessibleContext().setAccessibleName(KeyMapBundle.message("keymap.actions.tree.accessible.name"));
     myComponent = ScrollPaneFactory.createScrollPane(myTree,
                                                      ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
