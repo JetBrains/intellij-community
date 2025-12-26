@@ -709,6 +709,8 @@ public final class ActionsTree {
       public String getAccessibleName() {
         String name = super.getAccessibleName();
 
+        if (myIsSeparator && StringUtil.isEmpty(name)) return KeyMapBundle.message("keymap.actions.tree.separator.row.accessible.name");
+
         // Add shortcuts labels if available
         @NlsSafe String shortcutName = null;
         TreePath path = myTree.getPathForRow(myRow);
