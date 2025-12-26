@@ -29,7 +29,7 @@ fun KotlinScriptEntity.toConfigurationResult(): ScriptCompilationConfigurationRe
         ResultWithDiagnostics.Success(
             ScriptCompilationConfigurationWrapper(
                 VirtualFileScriptSource(virtualFile), configuration?.deserialize()
-            ), reports.map { report -> report.toScriptDiagnostic() })
+            ), reports.map { report -> report.map() })
     }
 
     return result

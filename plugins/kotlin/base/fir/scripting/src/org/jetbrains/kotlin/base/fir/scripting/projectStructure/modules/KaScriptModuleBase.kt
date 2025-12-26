@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.base.fir.scripting.projectStructure.modules
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaModuleBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.v1.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.core.script.v1.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.core.script.v1.getPlatform
@@ -33,6 +35,11 @@ abstract class KaScriptModuleBase(
     private val scriptDefinition: ScriptDefinition by lazy {
         findScriptDefinition(project, KtFileScriptSource(file))
     }
+
+    protected val kotlinScriptEntity: KotlinScriptEntity?
+        get() = currentSnapshot.getVirtualFileUrlIndex()
+            .findEntitiesByUrl(virtualFile.toVirtualFileUrl(virtualFileUrlManager))
+            .filterIsInstance<KotlinScriptEntity>().firstOrNull()
 
     override val directDependsOnDependencies: List<KaModule> get() = emptyList()
 

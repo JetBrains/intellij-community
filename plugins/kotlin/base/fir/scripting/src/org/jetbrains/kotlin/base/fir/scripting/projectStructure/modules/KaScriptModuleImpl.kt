@@ -3,11 +3,9 @@ package org.jetbrains.kotlin.base.fir.scripting.projectStructure.modules
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.core.script.k2.modules.K2IdeScriptAdditionalIdeaDependenciesProvider
-import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -35,9 +33,23 @@ internal class KaScriptModuleImpl(
         }
 
     override val directFriendDependencies: List<KaModule> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        K2IdeScriptAdditionalIdeaDependenciesProvider.getRelatedScripts(virtualFile, project)
-            .map { KaScriptModuleImpl(project, it) } + ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(virtualFile, project)
-            .mapNotNull { it.toKaSourceModuleForProduction() }
+        buildList {
+            kotlinScriptEntity?.relatedModuleIds?.forEach {
+                addIfNotNull(it.toKaSourceModuleForProduction(project))
+            }
+
+            addAll(
+                K2IdeScriptAdditionalIdeaDependenciesProvider.getRelatedScripts(virtualFile, project)
+                    .map { KaScriptModuleImpl(project, it) }
+            )
+
+            addAll(
+                ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(virtualFile, project)
+                    .mapNotNull {
+                        it.toKaSourceModuleForProduction()
+                    }
+            )
+        }
     }
 
     override val directRegularDependencies: List<KaModule> by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -62,17 +74,13 @@ internal class KaScriptModuleImpl(
         }.toList()
     }
 
-    fun MutableCollection<KaModule>.addRegularDependencies() {
-        val entity = currentSnapshot.getVirtualFileUrlIndex()
-            .findEntitiesByUrl(virtualFile.toVirtualFileUrl(virtualFileUrlManager))
-            .filterIsInstance<KotlinScriptEntity>().firstOrNull()
-
-        val libraryDependencies = entity?.dependencies?.mapNotNull { currentSnapshot.resolve(it) }?.flatMap {
+    private fun MutableCollection<KaModule>.addRegularDependencies() {
+        val libraryDependencies = kotlinScriptEntity?.dependencies?.mapNotNull { currentSnapshot.resolve(it) }?.flatMap {
             project.ideProjectStructureProvider.getKaScriptLibraryModules(it)
         } ?: emptyList()
 
         addAll(libraryDependencies)
 
-        addIfNotNull(entity?.sdkId?.toKaLibraryModule(project))
+        addIfNotNull(kotlinScriptEntity?.sdkId?.toKaLibraryModule(project))
     }
 }

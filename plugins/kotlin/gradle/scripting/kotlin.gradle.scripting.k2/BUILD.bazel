@@ -75,6 +75,7 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-tooling/impl",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//platform/eel-provider",
+    "//platform/projectModel-impl",
   ]
 )
 
@@ -145,7 +146,6 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
-    "//platform/projectModel-impl",
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//java/openapi:java",
     "//platform/platform-impl:ide-impl",
@@ -153,6 +153,7 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//platform/eel-provider",
+    "//platform/projectModel-impl",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting` end

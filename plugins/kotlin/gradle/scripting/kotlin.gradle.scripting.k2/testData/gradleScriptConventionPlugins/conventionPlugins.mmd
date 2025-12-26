@@ -1,0 +1,604 @@
+graph TD
+  KaScriptModule_102{{"KaScriptModule(build.gradle.kts)"}}
+  KaSourceModule_106["KaSourceModule(GradleKotlinFixture)<br />production<br />JVM (1.8)"]
+  KaLibraryModule_97(["KaLibraryModule(SDK)"])
+  KaSourceModule_107["KaSourceModule(GradleKotlinFixture)<br />test<br />JVM (1.8)"]
+  KaLibraryModule_70(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar)<br />scriptDependency"])
+  KaLibraryModule_98(["KaLibraryModule(classes=[file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/2ac517f035e8a76801f7813951be75df-PS/classes, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/797c346affe597ba7f0ad9af8628821d/classes, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/88fa5e6991c4c025d570d05cef09e7d6/classes], sources=[file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/2ac517f035e8a76801f7813951be75df-PS/sources, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/88fa5e6991c4c025d570d05cef09e7d6/sources])<br />scriptDependency"])
+  KaLibraryModule_25(["KaLibraryModule(GRADLE_REPOSITORY/caches/8.11/generated-gradle-jars/gradle-api-8.11.jar)<br />scriptDependency"])
+  KaLibraryModule_27(["KaLibraryModule(GRADLE_REPOSITORY/caches/8.11/transforms/d5b2b0a6e0ed18810fca91956dccbfc8/transformed/original/not-build-src.jar)<br />scriptDependency"])
+  KaLibraryModule_46(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-base-services-8.11.jar)<br />scriptDependency"])
+  KaLibraryModule_47(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-base-services-groovy-8.11.jar)<br />scriptDependency"])
+  KaLibraryModule_48(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-core-8.11.jar)<br />scriptDependency"])
+  KaLibraryModule_49(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-core-api-8.11.jar)<br />scriptDependency"])
+  KaLibraryModule_50(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-installation-beacon-8.11.jar)<br />scriptDependency"])
+  KaLibraryModule_51(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-8.11.jar)<br />scriptDependency"])
+  KaLibraryModule_52(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-extensions-8.11.jar)<br />scriptDependency"])
+  KaLibraryModule_53(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-shared-runtime-8.11.jar)<br />scriptDependency"])
+  KaLibraryModule_54(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/gradle-kotlin-dsl-tooling-models-8.11.jar)<br />scriptDependency"])
+  KaLibraryModule_55(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-3.0.22.jar)<br />scriptDependency"])
+  KaLibraryModule_56(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-ant-3.0.22.jar)<br />scriptDependency"])
+  KaLibraryModule_57(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-astbuilder-3.0.22.jar)<br />scriptDependency"])
+  KaLibraryModule_58(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-console-3.0.22.jar)<br />scriptDependency"])
+  KaLibraryModule_59(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-datetime-3.0.22.jar)<br />scriptDependency"])
+  KaLibraryModule_60(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-dateutil-3.0.22.jar)<br />scriptDependency"])
+  KaLibraryModule_61(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-groovydoc-3.0.22.jar)<br />scriptDependency"])
+  KaLibraryModule_62(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-json-3.0.22.jar)<br />scriptDependency"])
+  KaLibraryModule_63(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-nio-3.0.22.jar)<br />scriptDependency"])
+  KaLibraryModule_64(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-sql-3.0.22.jar)<br />scriptDependency"])
+  KaLibraryModule_65(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-templates-3.0.22.jar)<br />scriptDependency"])
+  KaLibraryModule_66(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-test-3.0.22.jar)<br />scriptDependency"])
+  KaLibraryModule_67(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/groovy-xml-3.0.22.jar)<br />scriptDependency"])
+  KaLibraryModule_68(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/javaparser-core-3.17.0.jar)<br />scriptDependency"])
+  KaLibraryModule_69(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-reflect-2.0.20.jar)<br />scriptDependency"])
+  KaSourceModule_110["KaSourceModule(not-build-src.main)<br />production<br />JVM (1.8)"]
+  KaLibraryModule_72(["KaLibraryModule(Gradle: gradle-api-8.11.jar)"])
+  KaLibraryFallbackDependenciesModule_72[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_78(["KaLibraryModule(Gradle: groovy-3.0.22.jar)"])
+  KaLibraryFallbackDependenciesModule_78[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_79(["KaLibraryModule(Gradle: groovy-ant-3.0.22.jar)"])
+  KaLibraryFallbackDependenciesModule_79[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_80(["KaLibraryModule(Gradle: groovy-astbuilder-3.0.22.jar)"])
+  KaLibraryFallbackDependenciesModule_80[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_81(["KaLibraryModule(Gradle: groovy-console-3.0.22.jar)"])
+  KaLibraryFallbackDependenciesModule_81[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_82(["KaLibraryModule(Gradle: groovy-datetime-3.0.22.jar)"])
+  KaLibraryFallbackDependenciesModule_82[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_83(["KaLibraryModule(Gradle: groovy-dateutil-3.0.22.jar)"])
+  KaLibraryFallbackDependenciesModule_83[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_84(["KaLibraryModule(Gradle: groovy-groovydoc-3.0.22.jar)"])
+  KaLibraryFallbackDependenciesModule_84[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_85(["KaLibraryModule(Gradle: groovy-json-3.0.22.jar)"])
+  KaLibraryFallbackDependenciesModule_85[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_86(["KaLibraryModule(Gradle: groovy-nio-3.0.22.jar)"])
+  KaLibraryFallbackDependenciesModule_86[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_87(["KaLibraryModule(Gradle: groovy-sql-3.0.22.jar)"])
+  KaLibraryFallbackDependenciesModule_87[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_88(["KaLibraryModule(Gradle: groovy-templates-3.0.22.jar)"])
+  KaLibraryFallbackDependenciesModule_88[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_89(["KaLibraryModule(Gradle: groovy-test-3.0.22.jar)"])
+  KaLibraryFallbackDependenciesModule_89[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_90(["KaLibraryModule(Gradle: groovy-xml-3.0.22.jar)"])
+  KaLibraryFallbackDependenciesModule_90[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_91(["KaLibraryModule(Gradle: javaparser-core-3.17.0.jar)"])
+  KaLibraryFallbackDependenciesModule_91[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_93(["KaLibraryModule(Gradle: kotlin-stdlib-2.0.20.jar)"])
+  KaLibraryFallbackDependenciesModule_93[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_92(["KaLibraryModule(Gradle: kotlin-reflect-2.0.20.jar)"])
+  KaLibraryFallbackDependenciesModule_92[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_73(["KaLibraryModule(Gradle: gradle-installation-beacon-8.11.jar)"])
+  KaLibraryFallbackDependenciesModule_73[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_75(["KaLibraryModule(Gradle: gradle-kotlin-dsl-extensions-8.11.jar)"])
+  KaLibraryFallbackDependenciesModule_75[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_74(["KaLibraryModule(Gradle: gradle-kotlin-dsl-8.11.jar)"])
+  KaLibraryFallbackDependenciesModule_74[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_76(["KaLibraryModule(Gradle: gradle-kotlin-dsl-shared-runtime-8.11.jar)"])
+  KaLibraryFallbackDependenciesModule_76[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_77(["KaLibraryModule(Gradle: gradle-kotlin-dsl-tooling-models-8.11.jar)"])
+  KaLibraryFallbackDependenciesModule_77[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_94(["KaLibraryModule(Gradle: org.jetbrains.kotlin:kotlin-reflect:2.0.20)"])
+  KaLibraryFallbackDependenciesModule_94[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_95(["KaLibraryModule(Gradle: org.jetbrains.kotlin:kotlin-stdlib:2.0.20)"])
+  KaLibraryFallbackDependenciesModule_95[/"KaLibraryFallbackDependenciesModule"/]
+  KaLibraryModule_96(["KaLibraryModule(Gradle: org.jetbrains:annotations:13.0)"])
+  KaLibraryFallbackDependenciesModule_96[/"KaLibraryFallbackDependenciesModule"/]
+  KaScriptModule_104{{"KaScriptModule(settings.gradle.kts)"}}
+  KaLibraryModule_71(["KaLibraryModule(GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar)<br />scriptDependency"])
+  KaLibraryModule_26(["KaLibraryModule(GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/045fae15c156631da085875c7a614413/classes)<br />scriptDependency"])
+  KaScriptModule_103{{"KaScriptModule(build.gradle.kts)"}}
+  KaSourceModule_108["KaSourceModule(not-build-src)<br />production<br />JVM (1.8)"]
+  KaSourceModule_109["KaSourceModule(not-build-src)<br />test<br />JVM (1.8)"]
+  KaLibraryModule_101(["KaLibraryModule(classes=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.20/7388d355f7cceb002cd387ccb7ab3850e4e0a07f/kotlin-stdlib-2.0.20.jar!/, jar://GRADLE_REPOSITORY/wrapper/dists/gradle-8.11-bin/c4te04g51qsyw1bxcb929u7br/gradle-8.11/lib/kotlin-stdlib-2.0.20.jar!/], sources=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.20/a6abf4122d686e67c307f45a1d056cd2d6ae57b5/kotlin-stdlib-2.0.20-sources.jar!/])<br />scriptDependency"])
+  KaLibraryModule_99(["KaLibraryModule(classes=[file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/2ac517f035e8a76801f7813951be75df-PS/classes, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/b93b493be2df37ad93a1f4ea15b8ba1e/classes], sources=[file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/2ac517f035e8a76801f7813951be75df-PS/sources, file://GRADLE_REPOSITORY/caches/8.11/kotlin-dsl/accessors/b93b493be2df37ad93a1f4ea15b8ba1e/sources])<br />scriptDependency"])
+  KaLibraryModule_100(["KaLibraryModule(classes=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-annotations/2.0.20/a68df0dc58b9bf664e96de49d673f30f24148224/kotlin-gradle-plugin-annotations-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20-gradle85.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d2bb3020f72504d0455fcb9cef3af4bdf6564de5/kotlin-gradle-plugin-api-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto/2.0.20/71e7e908bab748c5b035e551c8efd19a5215c0ca/kotlin-gradle-plugin-idea-proto-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea/2.0.20/dc54973fe68b0bb9b816bd04ef39648ca29526a6/kotlin-gradle-plugin-idea-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-model/2.0.20/a23be6a5119ded89279f2bf9a095cddec6145614/kotlin-gradle-plugin-model-2.0.20.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin/2.0.20/5ca90c0173fffe0f4e9b73aca425fd99213cc43a/kotlin-gradle-plugin-2.0.20-gradle85.jar!/], sources=[jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-annotations/2.0.20/3f6f45573f006285b4e59d162c7f410855b8bef6/kotlin-gradle-plugin-annotations-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-api/2.0.20/d15196031072ecf00993e203149376d79e34a66e/kotlin-gradle-plugin-api-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto/2.0.20/caa8b3be9bb97c22df14139749f646a69af8c057/kotlin-gradle-plugin-idea-proto-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-idea/2.0.20/703b885378c1e2c6a4ceddbac037850cde77ecf8/kotlin-gradle-plugin-idea-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin-model/2.0.20/727acf04a3f280604db07a1c6d2374369eeb7b88/kotlin-gradle-plugin-model-2.0.20-sources.jar!/, jar://GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-gradle-plugin/2.0.20/f65f4fd987dd80f9cd192ba9f9e1ba82f36d39a4/kotlin-gradle-plugin-2.0.20-sources.jar!/])<br />scriptDependency"])
+  KaLibraryModule_28(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/com.google.code.gson/gson/2.8.9/8a432c1d6825781e21a02db2e2c33c5fde2833b9/gson-2.8.9.jar)<br />scriptDependency"])
+  KaLibraryModule_29(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.gradle.kotlin/gradle-kotlin-dsl-plugins/5.1.1/3df489c5ed7c79591eaef488ac4462a685a2c3de/gradle-kotlin-dsl-plugins-5.1.1.jar)<br />scriptDependency"])
+  KaLibraryModule_30(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.intellij.deps/trove4j/1.0.20200330/3afb14d5f9ceb459d724e907a21145e8ff394f02/trove4j-1.0.20200330.jar)<br />scriptDependency"])
+  KaLibraryModule_31(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-assignment/2.0.20/b4f2e732fe09103b173377194c41ef14ef698c5c/kotlin-assignment-2.0.20-gradle85.jar)<br />scriptDependency"])
+  KaLibraryModule_32(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-build-statistics/2.0.20/fa1c73206997fe6ea912319041e105e6438accdf/kotlin-build-statistics-2.0.20.jar)<br />scriptDependency"])
+  KaLibraryModule_33(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-build-tools-api/2.0.20/7898f46131274ac85569ef30f965e3758e217551/kotlin-build-tools-api-2.0.20.jar)<br />scriptDependency"])
+  KaLibraryModule_34(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.0.20/244b603e8c729f98baaf9088d90b5b9350c68af8/kotlin-compiler-embeddable-2.0.20.jar)<br />scriptDependency"])
+  KaLibraryModule_35(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-runner/2.0.20/b7298471a2af50b32b7c460775c23759edb5bb70/kotlin-compiler-runner-2.0.20.jar)<br />scriptDependency"])
+  KaLibraryModule_36(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-daemon-client/2.0.20/910b2107f6a7cc02366687b6e835ae0beaadb59b/kotlin-daemon-client-2.0.20.jar)<br />scriptDependency"])
+  KaLibraryModule_37(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-daemon-embeddable/2.0.20/9eb02dce62f058efe6a121cf00cf5da9779e2746/kotlin-daemon-embeddable-2.0.20.jar)<br />scriptDependency"])
+  KaLibraryModule_38(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-klib-commonizer-api/2.0.20/c3f877ed653b2d5afc74e9ed8b44bee8856807b1/kotlin-klib-commonizer-api-2.0.20.jar)<br />scriptDependency"])
+  KaLibraryModule_39(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-native-utils/2.0.20/9041e552da8fe20f7835123822f9ee273655e34b/kotlin-native-utils-2.0.20.jar)<br />scriptDependency"])
+  KaLibraryModule_40(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-sam-with-receiver/2.0.20/f53a1b6144691b0fc3c47032e8aa4695a5f59a01/kotlin-sam-with-receiver-2.0.20-gradle85.jar)<br />scriptDependency"])
+  KaLibraryModule_41(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-tooling-core/2.0.20/952179e9b7f114e78274ca73cea6df8fce3c8b3b/kotlin-tooling-core-2.0.20.jar)<br />scriptDependency"])
+  KaLibraryModule_42(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-util-io/2.0.20/b74831be580aa621e8158231fbd7904ab634ab7d/kotlin-util-io-2.0.20.jar)<br />scriptDependency"])
+  KaLibraryModule_43(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-util-klib/2.0.20/8f1da03af6d8cc1230daa83fabb150891533fb50/kotlin-util-klib-2.0.20.jar)<br />scriptDependency"])
+  KaLibraryModule_44(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm/1.6.4/2c997cd1c0ef33f3e751d3831929aeff1390cb30/kotlinx-coroutines-core-jvm-1.6.4.jar)<br />scriptDependency"])
+  KaLibraryModule_45(["KaLibraryModule(GRADLE_REPOSITORY/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar)<br />scriptDependency"])
+  KaScriptModule_105{{"KaScriptModule(settings.gradle.kts)"}}
+  style KaSourceModule_106 fill:#608BC1
+  style KaLibraryModule_97 fill:#CC2B52
+  style KaSourceModule_107 fill:#31511E
+  style KaLibraryModule_70 fill:#CB6040
+  style KaLibraryModule_98 fill:#CB6040
+  style KaLibraryModule_25 fill:#CB6040
+  style KaLibraryModule_27 fill:#CB6040
+  style KaLibraryModule_46 fill:#CB6040
+  style KaLibraryModule_47 fill:#CB6040
+  style KaLibraryModule_48 fill:#CB6040
+  style KaLibraryModule_49 fill:#CB6040
+  style KaLibraryModule_50 fill:#CB6040
+  style KaLibraryModule_51 fill:#CB6040
+  style KaLibraryModule_52 fill:#CB6040
+  style KaLibraryModule_53 fill:#CB6040
+  style KaLibraryModule_54 fill:#CB6040
+  style KaLibraryModule_55 fill:#CB6040
+  style KaLibraryModule_56 fill:#CB6040
+  style KaLibraryModule_57 fill:#CB6040
+  style KaLibraryModule_58 fill:#CB6040
+  style KaLibraryModule_59 fill:#CB6040
+  style KaLibraryModule_60 fill:#CB6040
+  style KaLibraryModule_61 fill:#CB6040
+  style KaLibraryModule_62 fill:#CB6040
+  style KaLibraryModule_63 fill:#CB6040
+  style KaLibraryModule_64 fill:#CB6040
+  style KaLibraryModule_65 fill:#CB6040
+  style KaLibraryModule_66 fill:#CB6040
+  style KaLibraryModule_67 fill:#CB6040
+  style KaLibraryModule_68 fill:#CB6040
+  style KaLibraryModule_69 fill:#CB6040
+  style KaSourceModule_110 fill:#608BC1
+  style KaLibraryModule_72 fill:#CB6040
+  style KaLibraryModule_78 fill:#CB6040
+  style KaLibraryModule_79 fill:#CB6040
+  style KaLibraryModule_80 fill:#CB6040
+  style KaLibraryModule_81 fill:#CB6040
+  style KaLibraryModule_82 fill:#CB6040
+  style KaLibraryModule_83 fill:#CB6040
+  style KaLibraryModule_84 fill:#CB6040
+  style KaLibraryModule_85 fill:#CB6040
+  style KaLibraryModule_86 fill:#CB6040
+  style KaLibraryModule_87 fill:#CB6040
+  style KaLibraryModule_88 fill:#CB6040
+  style KaLibraryModule_89 fill:#CB6040
+  style KaLibraryModule_90 fill:#CB6040
+  style KaLibraryModule_91 fill:#CB6040
+  style KaLibraryModule_93 fill:#CB6040
+  style KaLibraryModule_92 fill:#CB6040
+  style KaLibraryModule_73 fill:#CB6040
+  style KaLibraryModule_75 fill:#CB6040
+  style KaLibraryModule_74 fill:#CB6040
+  style KaLibraryModule_76 fill:#CB6040
+  style KaLibraryModule_77 fill:#CB6040
+  style KaLibraryModule_94 fill:#CB6040
+  style KaLibraryModule_95 fill:#CB6040
+  style KaLibraryModule_96 fill:#CB6040
+  style KaLibraryModule_71 fill:#CB6040
+  style KaLibraryModule_26 fill:#CB6040
+  style KaSourceModule_108 fill:#608BC1
+  style KaSourceModule_109 fill:#31511E
+  style KaLibraryModule_101 fill:#CB6040
+  style KaLibraryModule_99 fill:#CB6040
+  style KaLibraryModule_100 fill:#CB6040
+  style KaLibraryModule_28 fill:#CB6040
+  style KaLibraryModule_29 fill:#CB6040
+  style KaLibraryModule_30 fill:#CB6040
+  style KaLibraryModule_31 fill:#CB6040
+  style KaLibraryModule_32 fill:#CB6040
+  style KaLibraryModule_33 fill:#CB6040
+  style KaLibraryModule_34 fill:#CB6040
+  style KaLibraryModule_35 fill:#CB6040
+  style KaLibraryModule_36 fill:#CB6040
+  style KaLibraryModule_37 fill:#CB6040
+  style KaLibraryModule_38 fill:#CB6040
+  style KaLibraryModule_39 fill:#CB6040
+  style KaLibraryModule_40 fill:#CB6040
+  style KaLibraryModule_41 fill:#CB6040
+  style KaLibraryModule_42 fill:#CB6040
+  style KaLibraryModule_43 fill:#CB6040
+  style KaLibraryModule_44 fill:#CB6040
+  style KaLibraryModule_45 fill:#CB6040
+  KaLibraryModule_72 --> KaLibraryFallbackDependenciesModule_72
+  KaLibraryModule_73 --> KaLibraryFallbackDependenciesModule_73
+  KaLibraryModule_74 --> KaLibraryFallbackDependenciesModule_74
+  KaLibraryModule_75 --> KaLibraryFallbackDependenciesModule_75
+  KaLibraryModule_76 --> KaLibraryFallbackDependenciesModule_76
+  KaLibraryModule_77 --> KaLibraryFallbackDependenciesModule_77
+  KaLibraryModule_78 --> KaLibraryFallbackDependenciesModule_78
+  KaLibraryModule_79 --> KaLibraryFallbackDependenciesModule_79
+  KaLibraryModule_80 --> KaLibraryFallbackDependenciesModule_80
+  KaLibraryModule_81 --> KaLibraryFallbackDependenciesModule_81
+  KaLibraryModule_82 --> KaLibraryFallbackDependenciesModule_82
+  KaLibraryModule_83 --> KaLibraryFallbackDependenciesModule_83
+  KaLibraryModule_84 --> KaLibraryFallbackDependenciesModule_84
+  KaLibraryModule_85 --> KaLibraryFallbackDependenciesModule_85
+  KaLibraryModule_86 --> KaLibraryFallbackDependenciesModule_86
+  KaLibraryModule_87 --> KaLibraryFallbackDependenciesModule_87
+  KaLibraryModule_88 --> KaLibraryFallbackDependenciesModule_88
+  KaLibraryModule_89 --> KaLibraryFallbackDependenciesModule_89
+  KaLibraryModule_90 --> KaLibraryFallbackDependenciesModule_90
+  KaLibraryModule_91 --> KaLibraryFallbackDependenciesModule_91
+  KaLibraryModule_92 --> KaLibraryFallbackDependenciesModule_92
+  KaLibraryModule_93 --> KaLibraryFallbackDependenciesModule_93
+  KaLibraryModule_94 --> KaLibraryFallbackDependenciesModule_94
+  KaLibraryModule_95 --> KaLibraryFallbackDependenciesModule_95
+  KaLibraryModule_96 --> KaLibraryFallbackDependenciesModule_96
+  KaScriptModule_102 --> KaLibraryModule_25
+  KaScriptModule_102 --> KaLibraryModule_27
+  KaScriptModule_102 --> KaLibraryModule_46
+  KaScriptModule_102 --> KaLibraryModule_47
+  KaScriptModule_102 --> KaLibraryModule_48
+  KaScriptModule_102 --> KaLibraryModule_49
+  KaScriptModule_102 --> KaLibraryModule_50
+  KaScriptModule_102 --> KaLibraryModule_51
+  KaScriptModule_102 --> KaLibraryModule_52
+  KaScriptModule_102 --> KaLibraryModule_53
+  KaScriptModule_102 --> KaLibraryModule_54
+  KaScriptModule_102 --> KaLibraryModule_55
+  KaScriptModule_102 --> KaLibraryModule_56
+  KaScriptModule_102 --> KaLibraryModule_57
+  KaScriptModule_102 --> KaLibraryModule_58
+  KaScriptModule_102 --> KaLibraryModule_59
+  KaScriptModule_102 --> KaLibraryModule_60
+  KaScriptModule_102 --> KaLibraryModule_61
+  KaScriptModule_102 --> KaLibraryModule_62
+  KaScriptModule_102 --> KaLibraryModule_63
+  KaScriptModule_102 --> KaLibraryModule_64
+  KaScriptModule_102 --> KaLibraryModule_65
+  KaScriptModule_102 --> KaLibraryModule_66
+  KaScriptModule_102 --> KaLibraryModule_67
+  KaScriptModule_102 --> KaLibraryModule_68
+  KaScriptModule_102 --> KaLibraryModule_69
+  KaScriptModule_102 --> KaLibraryModule_70
+  KaScriptModule_102 --> KaLibraryModule_97
+  KaScriptModule_102 --> KaLibraryModule_98
+  KaScriptModule_102 --> KaSourceModule_106
+  KaScriptModule_102 --> KaSourceModule_107
+  KaScriptModule_103 --> KaLibraryModule_100
+  KaScriptModule_103 --> KaLibraryModule_101
+  KaScriptModule_103 --> KaLibraryModule_25
+  KaScriptModule_103 --> KaLibraryModule_28
+  KaScriptModule_103 --> KaLibraryModule_29
+  KaScriptModule_103 --> KaLibraryModule_30
+  KaScriptModule_103 --> KaLibraryModule_31
+  KaScriptModule_103 --> KaLibraryModule_32
+  KaScriptModule_103 --> KaLibraryModule_33
+  KaScriptModule_103 --> KaLibraryModule_34
+  KaScriptModule_103 --> KaLibraryModule_35
+  KaScriptModule_103 --> KaLibraryModule_36
+  KaScriptModule_103 --> KaLibraryModule_37
+  KaScriptModule_103 --> KaLibraryModule_38
+  KaScriptModule_103 --> KaLibraryModule_39
+  KaScriptModule_103 --> KaLibraryModule_40
+  KaScriptModule_103 --> KaLibraryModule_41
+  KaScriptModule_103 --> KaLibraryModule_42
+  KaScriptModule_103 --> KaLibraryModule_43
+  KaScriptModule_103 --> KaLibraryModule_44
+  KaScriptModule_103 --> KaLibraryModule_45
+  KaScriptModule_103 --> KaLibraryModule_46
+  KaScriptModule_103 --> KaLibraryModule_47
+  KaScriptModule_103 --> KaLibraryModule_48
+  KaScriptModule_103 --> KaLibraryModule_49
+  KaScriptModule_103 --> KaLibraryModule_50
+  KaScriptModule_103 --> KaLibraryModule_51
+  KaScriptModule_103 --> KaLibraryModule_52
+  KaScriptModule_103 --> KaLibraryModule_53
+  KaScriptModule_103 --> KaLibraryModule_54
+  KaScriptModule_103 --> KaLibraryModule_55
+  KaScriptModule_103 --> KaLibraryModule_56
+  KaScriptModule_103 --> KaLibraryModule_57
+  KaScriptModule_103 --> KaLibraryModule_58
+  KaScriptModule_103 --> KaLibraryModule_59
+  KaScriptModule_103 --> KaLibraryModule_60
+  KaScriptModule_103 --> KaLibraryModule_61
+  KaScriptModule_103 --> KaLibraryModule_62
+  KaScriptModule_103 --> KaLibraryModule_63
+  KaScriptModule_103 --> KaLibraryModule_64
+  KaScriptModule_103 --> KaLibraryModule_65
+  KaScriptModule_103 --> KaLibraryModule_66
+  KaScriptModule_103 --> KaLibraryModule_67
+  KaScriptModule_103 --> KaLibraryModule_68
+  KaScriptModule_103 --> KaLibraryModule_69
+  KaScriptModule_103 --> KaLibraryModule_97
+  KaScriptModule_103 --> KaLibraryModule_99
+  KaScriptModule_103 --> KaSourceModule_108
+  KaScriptModule_103 --> KaSourceModule_109
+  KaScriptModule_104 --> KaLibraryModule_25
+  KaScriptModule_104 --> KaLibraryModule_26
+  KaScriptModule_104 --> KaLibraryModule_46
+  KaScriptModule_104 --> KaLibraryModule_47
+  KaScriptModule_104 --> KaLibraryModule_48
+  KaScriptModule_104 --> KaLibraryModule_49
+  KaScriptModule_104 --> KaLibraryModule_50
+  KaScriptModule_104 --> KaLibraryModule_51
+  KaScriptModule_104 --> KaLibraryModule_52
+  KaScriptModule_104 --> KaLibraryModule_53
+  KaScriptModule_104 --> KaLibraryModule_54
+  KaScriptModule_104 --> KaLibraryModule_55
+  KaScriptModule_104 --> KaLibraryModule_56
+  KaScriptModule_104 --> KaLibraryModule_57
+  KaScriptModule_104 --> KaLibraryModule_58
+  KaScriptModule_104 --> KaLibraryModule_59
+  KaScriptModule_104 --> KaLibraryModule_60
+  KaScriptModule_104 --> KaLibraryModule_61
+  KaScriptModule_104 --> KaLibraryModule_62
+  KaScriptModule_104 --> KaLibraryModule_63
+  KaScriptModule_104 --> KaLibraryModule_64
+  KaScriptModule_104 --> KaLibraryModule_65
+  KaScriptModule_104 --> KaLibraryModule_66
+  KaScriptModule_104 --> KaLibraryModule_67
+  KaScriptModule_104 --> KaLibraryModule_68
+  KaScriptModule_104 --> KaLibraryModule_69
+  KaScriptModule_104 --> KaLibraryModule_71
+  KaScriptModule_104 --> KaLibraryModule_97
+  KaScriptModule_104 --> KaSourceModule_106
+  KaScriptModule_104 --> KaSourceModule_107
+  KaScriptModule_105 --> KaLibraryModule_25
+  KaScriptModule_105 --> KaLibraryModule_26
+  KaScriptModule_105 --> KaLibraryModule_46
+  KaScriptModule_105 --> KaLibraryModule_47
+  KaScriptModule_105 --> KaLibraryModule_48
+  KaScriptModule_105 --> KaLibraryModule_49
+  KaScriptModule_105 --> KaLibraryModule_50
+  KaScriptModule_105 --> KaLibraryModule_51
+  KaScriptModule_105 --> KaLibraryModule_52
+  KaScriptModule_105 --> KaLibraryModule_53
+  KaScriptModule_105 --> KaLibraryModule_54
+  KaScriptModule_105 --> KaLibraryModule_55
+  KaScriptModule_105 --> KaLibraryModule_56
+  KaScriptModule_105 --> KaLibraryModule_57
+  KaScriptModule_105 --> KaLibraryModule_58
+  KaScriptModule_105 --> KaLibraryModule_59
+  KaScriptModule_105 --> KaLibraryModule_60
+  KaScriptModule_105 --> KaLibraryModule_61
+  KaScriptModule_105 --> KaLibraryModule_62
+  KaScriptModule_105 --> KaLibraryModule_63
+  KaScriptModule_105 --> KaLibraryModule_64
+  KaScriptModule_105 --> KaLibraryModule_65
+  KaScriptModule_105 --> KaLibraryModule_66
+  KaScriptModule_105 --> KaLibraryModule_67
+  KaScriptModule_105 --> KaLibraryModule_68
+  KaScriptModule_105 --> KaLibraryModule_69
+  KaScriptModule_105 --> KaLibraryModule_71
+  KaScriptModule_105 --> KaLibraryModule_97
+  KaScriptModule_105 --> KaSourceModule_108
+  KaScriptModule_105 --> KaSourceModule_109
+  KaSourceModule_106 --> KaLibraryModule_97
+  KaSourceModule_107 --> KaLibraryModule_97
+  KaSourceModule_107 --> KaSourceModule_106
+  KaSourceModule_108 --> KaLibraryModule_97
+  KaSourceModule_109 --> KaLibraryModule_97
+  KaSourceModule_109 --> KaSourceModule_108
+  KaSourceModule_110 --> KaLibraryModule_72
+  KaSourceModule_110 --> KaLibraryModule_73
+  KaSourceModule_110 --> KaLibraryModule_74
+  KaSourceModule_110 --> KaLibraryModule_75
+  KaSourceModule_110 --> KaLibraryModule_76
+  KaSourceModule_110 --> KaLibraryModule_77
+  KaSourceModule_110 --> KaLibraryModule_78
+  KaSourceModule_110 --> KaLibraryModule_79
+  KaSourceModule_110 --> KaLibraryModule_80
+  KaSourceModule_110 --> KaLibraryModule_81
+  KaSourceModule_110 --> KaLibraryModule_82
+  KaSourceModule_110 --> KaLibraryModule_83
+  KaSourceModule_110 --> KaLibraryModule_84
+  KaSourceModule_110 --> KaLibraryModule_85
+  KaSourceModule_110 --> KaLibraryModule_86
+  KaSourceModule_110 --> KaLibraryModule_87
+  KaSourceModule_110 --> KaLibraryModule_88
+  KaSourceModule_110 --> KaLibraryModule_89
+  KaSourceModule_110 --> KaLibraryModule_90
+  KaSourceModule_110 --> KaLibraryModule_91
+  KaSourceModule_110 --> KaLibraryModule_92
+  KaSourceModule_110 --> KaLibraryModule_93
+  KaSourceModule_110 --> KaLibraryModule_94
+  KaSourceModule_110 --> KaLibraryModule_95
+  KaSourceModule_110 --> KaLibraryModule_96
+  KaSourceModule_110 --> KaLibraryModule_97
+  KaScriptModule_102 --friend--> KaSourceModule_106
+  KaScriptModule_102 --friend--> KaSourceModule_110
+  KaScriptModule_103 --friend--> KaSourceModule_108
+  KaScriptModule_104 --friend--> KaSourceModule_106
+  KaScriptModule_104 --friend--> KaSourceModule_110
+  KaScriptModule_105 --friend--> KaSourceModule_108
+  KaSourceModule_107 --friend--> KaSourceModule_106
+  KaSourceModule_109 --friend--> KaSourceModule_108
+  linkStyle 0 stroke:black
+  linkStyle 1 stroke:black
+  linkStyle 2 stroke:black
+  linkStyle 3 stroke:black
+  linkStyle 4 stroke:black
+  linkStyle 5 stroke:black
+  linkStyle 6 stroke:black
+  linkStyle 7 stroke:black
+  linkStyle 8 stroke:black
+  linkStyle 9 stroke:black
+  linkStyle 10 stroke:black
+  linkStyle 11 stroke:black
+  linkStyle 12 stroke:black
+  linkStyle 13 stroke:black
+  linkStyle 14 stroke:black
+  linkStyle 15 stroke:black
+  linkStyle 16 stroke:black
+  linkStyle 17 stroke:black
+  linkStyle 18 stroke:black
+  linkStyle 19 stroke:black
+  linkStyle 20 stroke:black
+  linkStyle 21 stroke:black
+  linkStyle 22 stroke:black
+  linkStyle 23 stroke:black
+  linkStyle 24 stroke:black
+  linkStyle 25 stroke:black
+  linkStyle 26 stroke:black
+  linkStyle 27 stroke:black
+  linkStyle 28 stroke:black
+  linkStyle 29 stroke:black
+  linkStyle 30 stroke:black
+  linkStyle 31 stroke:black
+  linkStyle 32 stroke:black
+  linkStyle 33 stroke:black
+  linkStyle 34 stroke:black
+  linkStyle 35 stroke:black
+  linkStyle 36 stroke:black
+  linkStyle 37 stroke:black
+  linkStyle 38 stroke:black
+  linkStyle 39 stroke:black
+  linkStyle 40 stroke:black
+  linkStyle 41 stroke:black
+  linkStyle 42 stroke:black
+  linkStyle 43 stroke:black
+  linkStyle 44 stroke:black
+  linkStyle 45 stroke:black
+  linkStyle 46 stroke:black
+  linkStyle 47 stroke:black
+  linkStyle 48 stroke:black
+  linkStyle 49 stroke:black
+  linkStyle 50 stroke:black
+  linkStyle 51 stroke:black
+  linkStyle 52 stroke:black
+  linkStyle 53 stroke:black
+  linkStyle 54 stroke:black
+  linkStyle 55 stroke:black
+  linkStyle 56 stroke:black
+  linkStyle 57 stroke:black
+  linkStyle 58 stroke:black
+  linkStyle 59 stroke:black
+  linkStyle 60 stroke:black
+  linkStyle 61 stroke:black
+  linkStyle 62 stroke:black
+  linkStyle 63 stroke:black
+  linkStyle 64 stroke:black
+  linkStyle 65 stroke:black
+  linkStyle 66 stroke:black
+  linkStyle 67 stroke:black
+  linkStyle 68 stroke:black
+  linkStyle 69 stroke:black
+  linkStyle 70 stroke:black
+  linkStyle 71 stroke:black
+  linkStyle 72 stroke:black
+  linkStyle 73 stroke:black
+  linkStyle 74 stroke:black
+  linkStyle 75 stroke:black
+  linkStyle 76 stroke:black
+  linkStyle 77 stroke:black
+  linkStyle 78 stroke:black
+  linkStyle 79 stroke:black
+  linkStyle 80 stroke:black
+  linkStyle 81 stroke:black
+  linkStyle 82 stroke:black
+  linkStyle 83 stroke:black
+  linkStyle 84 stroke:black
+  linkStyle 85 stroke:black
+  linkStyle 86 stroke:black
+  linkStyle 87 stroke:black
+  linkStyle 88 stroke:black
+  linkStyle 89 stroke:black
+  linkStyle 90 stroke:black
+  linkStyle 91 stroke:black
+  linkStyle 92 stroke:black
+  linkStyle 93 stroke:black
+  linkStyle 94 stroke:black
+  linkStyle 95 stroke:black
+  linkStyle 96 stroke:black
+  linkStyle 97 stroke:black
+  linkStyle 98 stroke:black
+  linkStyle 99 stroke:black
+  linkStyle 100 stroke:black
+  linkStyle 101 stroke:black
+  linkStyle 102 stroke:black
+  linkStyle 103 stroke:black
+  linkStyle 104 stroke:black
+  linkStyle 105 stroke:black
+  linkStyle 106 stroke:black
+  linkStyle 107 stroke:black
+  linkStyle 108 stroke:black
+  linkStyle 109 stroke:black
+  linkStyle 110 stroke:black
+  linkStyle 111 stroke:black
+  linkStyle 112 stroke:black
+  linkStyle 113 stroke:black
+  linkStyle 114 stroke:black
+  linkStyle 115 stroke:black
+  linkStyle 116 stroke:black
+  linkStyle 117 stroke:black
+  linkStyle 118 stroke:black
+  linkStyle 119 stroke:black
+  linkStyle 120 stroke:black
+  linkStyle 121 stroke:black
+  linkStyle 122 stroke:black
+  linkStyle 123 stroke:black
+  linkStyle 124 stroke:black
+  linkStyle 125 stroke:black
+  linkStyle 126 stroke:black
+  linkStyle 127 stroke:black
+  linkStyle 128 stroke:black
+  linkStyle 129 stroke:black
+  linkStyle 130 stroke:black
+  linkStyle 131 stroke:black
+  linkStyle 132 stroke:black
+  linkStyle 133 stroke:black
+  linkStyle 134 stroke:black
+  linkStyle 135 stroke:black
+  linkStyle 136 stroke:black
+  linkStyle 137 stroke:black
+  linkStyle 138 stroke:black
+  linkStyle 139 stroke:black
+  linkStyle 140 stroke:black
+  linkStyle 141 stroke:black
+  linkStyle 142 stroke:black
+  linkStyle 143 stroke:black
+  linkStyle 144 stroke:black
+  linkStyle 145 stroke:black
+  linkStyle 146 stroke:black
+  linkStyle 147 stroke:black
+  linkStyle 148 stroke:black
+  linkStyle 149 stroke:black
+  linkStyle 150 stroke:black
+  linkStyle 151 stroke:black
+  linkStyle 152 stroke:black
+  linkStyle 153 stroke:black
+  linkStyle 154 stroke:black
+  linkStyle 155 stroke:black
+  linkStyle 156 stroke:black
+  linkStyle 157 stroke:black
+  linkStyle 158 stroke:black
+  linkStyle 159 stroke:black
+  linkStyle 160 stroke:black
+  linkStyle 161 stroke:black
+  linkStyle 162 stroke:black
+  linkStyle 163 stroke:black
+  linkStyle 164 stroke:black
+  linkStyle 165 stroke:black
+  linkStyle 166 stroke:black
+  linkStyle 167 stroke:black
+  linkStyle 168 stroke:black
+  linkStyle 169 stroke:black
+  linkStyle 170 stroke:black
+  linkStyle 171 stroke:black
+  linkStyle 172 stroke:black
+  linkStyle 173 stroke:black
+  linkStyle 174 stroke:black
+  linkStyle 175 stroke:black
+  linkStyle 176 stroke:black
+  linkStyle 177 stroke:black
+  linkStyle 178 stroke:black
+  linkStyle 179 stroke:black
+  linkStyle 180 stroke:black
+  linkStyle 181 stroke:black
+  linkStyle 182 stroke:black
+  linkStyle 183 stroke:black
+  linkStyle 184 stroke:black
+  linkStyle 185 stroke:black
+  linkStyle 186 stroke:black
+  linkStyle 187 stroke:black
+  linkStyle 188 stroke:black
+  linkStyle 189 stroke:black
+  linkStyle 190 stroke:black
+  linkStyle 191 stroke:black
+  linkStyle 192 stroke:black
+  linkStyle 193 stroke:black
+  linkStyle 194 stroke:black
+  linkStyle 195 stroke:black
+  linkStyle 196 stroke:black
+  linkStyle 197 stroke:#E6C767
+  linkStyle 198 stroke:#E6C767
+  linkStyle 199 stroke:#E6C767
+  linkStyle 200 stroke:#E6C767
+  linkStyle 201 stroke:#E6C767
+  linkStyle 202 stroke:#E6C767
+  linkStyle 203 stroke:#E6C767
+  linkStyle 204 stroke:#E6C767

@@ -10,8 +10,6 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <scriptDiagnosticFixProvider implementation="org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptDiagnosticFixProvider"/>
-    <scriptAdditionalIdeaDependenciesProvider
-            implementation="org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptAdditionalIdeaDependenciesProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
