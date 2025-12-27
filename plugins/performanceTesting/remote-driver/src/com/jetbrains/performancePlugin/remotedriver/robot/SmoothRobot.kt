@@ -18,6 +18,7 @@ import org.assertj.swing.edt.GuiActionRunner.execute
 import org.assertj.swing.edt.GuiQuery
 import org.assertj.swing.timing.Pause.pause
 import org.assertj.swing.util.Modifiers
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
@@ -32,7 +33,8 @@ import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 import kotlin.math.ln
 
-internal class SmoothRobot @JvmOverloads constructor(
+@ApiStatus.Internal
+class SmoothRobot @JvmOverloads constructor(
   private val basicRobot: Robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock(),
   private val awtRobot: java.awt.Robot = Robot(),
 ) : Robot by basicRobot {
