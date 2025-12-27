@@ -10,6 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 
@@ -19,6 +20,15 @@ class ForeignCommandProcessor {
 
   private val currentCommand = AtomicReference<CmdEvent>()
   private val tokenToFinish = AtomicReference<AutoCloseable>()
+  private val isUndoDisabled = AtomicBoolean()
+
+  fun isUndoDisabled(): Boolean {
+    return isUndoDisabled.get()
+  }
+
+  fun setUndoDisabled(value: Boolean) {
+    isUndoDisabled.set(value)
+  }
 
   fun currentCommand(): CmdEvent? {
     return currentCommand.get()

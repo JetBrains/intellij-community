@@ -35,12 +35,13 @@ public final class UndoUtil {
   }
 
   public static void disableUndoIn(@NotNull Document document, @NotNull Runnable runnable) {
+    Boolean oldVal = document.getUserData(DONT_RECORD_UNDO);
     document.putUserData(DONT_RECORD_UNDO, Boolean.TRUE);
     try {
       runnable.run();
     }
     finally {
-      document.putUserData(DONT_RECORD_UNDO, null);
+      document.putUserData(DONT_RECORD_UNDO, oldVal);
     }
   }
 
