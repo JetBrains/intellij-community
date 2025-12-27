@@ -18,6 +18,7 @@ record UndoCommandFlushReason(
   static UndoCommandFlushReason GET_LAST_GROUP = new UndoCommandFlushReason("GET_LAST_GROUP");
   static UndoCommandFlushReason MANAGER_FORCE = new UndoCommandFlushReason("MANAGER_FORCE");
   static UndoCommandFlushReason UNDO = new UndoCommandFlushReason("UNDO");
+  static UndoCommandFlushReason BE_UNDO = new UndoCommandFlushReason("BE_UNDO");
   static UndoCommandFlushReason REDO = new UndoCommandFlushReason("REDO");
 
   static @NotNull UndoCommandFlushReason cannotMergeCommands(
