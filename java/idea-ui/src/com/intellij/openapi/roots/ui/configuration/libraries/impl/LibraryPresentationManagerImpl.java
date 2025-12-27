@@ -82,9 +82,9 @@ final class LibraryPresentationManagerImpl extends LibraryPresentationManager im
     if (kind != null) {
       return LibraryType.findByKind(kind).getIcon(libraryEx.getProperties());
     }
-    final List<Icon> icons = getCustomIcons(library, context);
+    final Collection<Icon> icons = new HashSet<>(getCustomIcons(library, context));
     if (icons.size() == 1) {
-      return icons.get(0);
+      return icons.iterator().next();
     }
     return null;
   }

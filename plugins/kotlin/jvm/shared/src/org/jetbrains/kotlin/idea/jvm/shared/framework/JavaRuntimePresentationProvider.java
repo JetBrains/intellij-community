@@ -31,6 +31,8 @@ public class JavaRuntimePresentationProvider extends LibraryPresentationProvider
 
     @Override
     public @Nullable LibraryVersionProperties detect(@NotNull List<VirtualFile> classesRoots) {
+        if (classesRoots.size() > 10) return null;
+
         IdeKotlinVersion version = KotlinJvmStdlibDetectorFacility.INSTANCE.getStdlibVersion(classesRoots);
         return version == null ? null : new LibraryVersionProperties(version.getArtifactVersion());
     }
