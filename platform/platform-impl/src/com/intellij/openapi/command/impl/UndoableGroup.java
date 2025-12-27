@@ -254,9 +254,6 @@ final class UndoableGroup implements Dumpable {
       action = LocalHistoryAction.NULL;
     }
     try {
-      if (flushReason == UndoCommandFlushReason.BE_UNDO) {
-        isUndo = !isUndo; // TODO remove this hack (:
-      }
       doUndoOrRedo(isUndo);
     } finally {
       action.finish();

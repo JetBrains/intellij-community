@@ -383,14 +383,6 @@ final class UndoClientState implements Disposable {
     }
   }
 
-  void flushCommandMergerIntoRedo() {
-    UndoableGroup group = commandMerger.formGroup(UndoCommandFlushReason.BE_UNDO, nextCommandTimestamp());
-    if (group != null) {
-      composeStartFinishGroup(group);
-      redoStacksHolder.addToStacks(group);
-    }
-  }
-
   private void compactIfNeeded() {
     if (isCompactSupported && !isUndoOrRedoInProgress() && commandTimestamp % COMMAND_TO_RUN_COMPACT == 0) {
       Set<DocumentReference> docsOnStacks = collectReferencesWithoutMergers();
