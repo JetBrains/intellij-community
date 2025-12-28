@@ -14,8 +14,11 @@ import org.jetbrains.kotlin.idea.projectConfiguration.JavaRuntimeLibraryDescript
 
 import javax.swing.*;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class JavaRuntimePresentationProvider extends LibraryPresentationProvider<LibraryVersionProperties> {
+    private static final Pattern KOTLIN_LIBRARY_JAR_PATTERN = Pattern.compile("kotlinx?-(reflect|stdlib-jdk.|test|atomicfu|coroutines|datetime|serialization)-.*\\.jar");
+
     public static JavaRuntimePresentationProvider getInstance() {
         return LibraryPresentationProvider.EP_NAME.findExtension(JavaRuntimePresentationProvider.class);
     }
@@ -31,9 +34,26 @@ public class JavaRuntimePresentationProvider extends LibraryPresentationProvider
 
     @Override
     public @Nullable LibraryVersionProperties detect(@NotNull List<VirtualFile> classesRoots) {
-        if (classesRoots.size() > 10) return null;
+        if (classesRoots.size() > 5) return null;
 
         IdeKotlinVersion version = KotlinJvmStdlibDetectorFacility.INSTANCE.getStdlibVersion(classesRoots);
-        return version == null ? null : new LibraryVersionProperties(version.getArtifactVersion());
+        if (version != null) return new LibraryVersionProperties(version.getArtifactVersion());
+
+        IdeKotlinVersion kotlinLibraryVersion = getKotlinLibraryVersion(classesRoots);
+        if (kotlinLibraryVersion != null) {
+            return new LibraryVersionProperties(kotlinLibraryVersion.getArtifactVersion());
+        }
+        return null;
+    }
+
+    private static IdeKotlinVersion getKotlinLibraryVersion(@NotNull List<VirtualFile> roots) {
+        for (VirtualFile root : roots) {
+            String name = root.getName();
+            if (KOTLIN_LIBRARY_JAR_PATTERN.matcher(name).matches()) {
+                IdeKotlinVersion kotlinVersion = IdeKotlinVersion.fromManifest(root);
+                return kotlinVersion;
+            }
+        }
+        return null;
     }
 }
