@@ -778,10 +778,6 @@
       language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.threadingModelHelper.java.JavaLockReqPsiOps"/>
   </extensions>
-  <applicationListeners>
-    <listener class="com.intellij.devkit.compose.hotreload.ComposeHotReloadCommandLinePatcher$ComposeHotReloadRegistryListener"
-              topic="com.intellij.openapi.util.registry.RegistryValueListener" />
-  </applicationListeners>
 
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.inspections.metaInformation.MetaInformationJsonSchemaProviderFactory"/>

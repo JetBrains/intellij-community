@@ -16,7 +16,7 @@ import java.util.function.Consumer
 private const val tipPrefix: String = "//TIP"
 private const val MAGIC_SANDBOX_FILENAME = "ComposeSandbox.kt"
 
-internal class ComposeHotReloadTips : com.intellij.lang.documentation.DocumentationProvider {
+internal class DevkitHotReloadTips : com.intellij.lang.documentation.DocumentationProvider {
 
   private val commentTokenType: IElementType = KtTokens.EOL_COMMENT
 

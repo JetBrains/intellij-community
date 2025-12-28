@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.intellij.devkit.compose.DevkitComposeBundle
+import com.intellij.devkit.compose.icons.DevkitComposeIcons
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.editor.colors.EditorFontType
@@ -212,7 +213,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
 
   private fun Panel.iconsRow() {
     row(DevkitComposeBundle.message("jewel.swing.icons")) {
-      cell(JBLabel(JewelIcons.ToolWindowIcon).apply { border = JBUI.Borders.customLine(JBColor.RED) })
+      cell(JBLabel(DevkitComposeIcons.JewelToolWindow).apply { border = JBUI.Borders.customLine(JBColor.RED) })
         .align(AlignY.CENTER)
 
       compose {

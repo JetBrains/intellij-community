@@ -3,15 +3,14 @@ package com.intellij.devkit.compose.hotreload
 
 import com.intellij.devkit.compose.DevkitComposeBundle
 import com.intellij.devkit.compose.hasCompose
+import com.intellij.devkit.compose.icons.DevkitComposeIcons
 import com.intellij.facet.FacetManager
-import com.intellij.icons.AllIcons
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.IntelliJProjectUtil.isIntelliJPlatformProject
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
@@ -24,23 +23,26 @@ import java.util.function.Function
 import javax.swing.JComponent
 
 private const val COMPOSE_HOT_RELOAD_ENABLED_MARKER = "plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations"
-private const val REGISTRY_KEY = "devkit.compose.hot.reload.enabled"
 
-internal class ComposeHotReloadSuggester : EditorNotificationProvider, DumbAware {
-  private val SUGGESTION_DISMISSED_KEY = Key.create<Boolean>("HOT_RELOAD_SUGGESTION_DISMISSED")
+internal class DevkitHotReloadSuggester : EditorNotificationProvider, DumbAware {
+  private val SUGGESTION_DISMISSED_KEY = "COMPOSE_HOT_RELOAD_GOT_IT"
 
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-    if (Registry.`is`(REGISTRY_KEY)) return null
+    if (!isIntelliJPlatformProject(project)) return null
     if (!hasCompose(project)) return null
 
-    if (isSuggestionDismissed(file)) return null
+    if (isSuggestionDismissed(project)) return null
     if (!isComposeUiFile(project, file)) return null
 
-    return Function { editor -> Banner(project, editor.file) }
+    return Function { _ -> Banner(project) }
   }
 
-  private fun isSuggestionDismissed(file: VirtualFile): Boolean {
-    return file.getUserData(SUGGESTION_DISMISSED_KEY) != null
+  private fun isSuggestionDismissed(project: Project): Boolean {
+    return PropertiesComponent.getInstance(project).getBoolean(SUGGESTION_DISMISSED_KEY)
+  }
+
+  private fun dismissSuggestion(project: Project) {
+    PropertiesComponent.getInstance(project).setValue(SUGGESTION_DISMISSED_KEY, true)
   }
 
   private fun isComposeUiFile(project: Project, file: VirtualFile): Boolean {
@@ -67,21 +69,13 @@ internal class ComposeHotReloadSuggester : EditorNotificationProvider, DumbAware
            && segments[2].identifier == "runtime"
   }
 
-  private inner class Banner(val project: Project, val file: VirtualFile) : EditorNotificationPanel(Status.Success) {
+  private inner class Banner(val project: Project) : EditorNotificationPanel(Status.Success) {
     init {
-      @Suppress("DialogTitleCapitalization")
       text = DevkitComposeBundle.message("label.compose.hot.reload.available.banner")
-      icon(AllIcons.Debugger.DebuggerSync)
-
-      @Suppress("DialogTitleCapitalization")
-      createActionLabel(DevkitComposeBundle.message("link.label.enable.hot.reload")) {
-        RegistryManager.getInstance().get(REGISTRY_KEY).setValue(true)
-
-        EditorNotifications.getInstance(project).updateAllNotifications()
-      }
+      icon(DevkitComposeIcons.ComposeHotReload)
 
       createActionLabel(DevkitComposeBundle.message("link.label.dismiss")) {
-        file.putCopyableUserData(SUGGESTION_DISMISSED_KEY, true)
+        dismissSuggestion(project)
 
         EditorNotifications.getInstance(project).updateAllNotifications()
       }
