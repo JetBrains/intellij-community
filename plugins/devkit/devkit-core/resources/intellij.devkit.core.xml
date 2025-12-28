@@ -742,10 +742,6 @@
 
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.references.DomTargetUseScopeEnlarger"/>
 
-    <registryKey key="devkit.compose.hot.reload.enabled" defaultValue="false" description="Enable 'Compose Hot Reload' agent for run configurations"/>
-    <registryKey key="devkit.compose.hot.reload.agent.version" defaultValue="" description="'Compose Hot Reload' agent version override"/>
-    <runConfigurationExtension implementation="org.jetbrains.idea.devkit.composeHotReload.ComposeHotReloadCommandLinePatcher" />
-
     <postStartupActivity implementation="org.jetbrains.idea.devkit.templates.UpdateFileTemplatesSchemeToProjectActivity"/>
   </extensions>
 
@@ -783,7 +779,7 @@
       implementationClass="org.jetbrains.idea.devkit.threadingModelHelper.java.JavaLockReqPsiOps"/>
   </extensions>
   <applicationListeners>
-    <listener class="org.jetbrains.idea.devkit.composeHotReload.ComposeHotReloadCommandLinePatcher$ComposeHotReloadRegistryListener"
+    <listener class="com.intellij.devkit.compose.hotreload.ComposeHotReloadCommandLinePatcher$ComposeHotReloadRegistryListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener" />
   </applicationListeners>
 

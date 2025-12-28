@@ -53,6 +53,10 @@ jvm_library(
     "//libraries/skiko",
     "//java/debugger/impl",
     "//platform/ide-core-impl",
+    "//java/execution/impl",
+    "//platform/execution",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/execution-impl",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

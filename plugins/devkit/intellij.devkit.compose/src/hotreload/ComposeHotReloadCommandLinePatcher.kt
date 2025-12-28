@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.composeHotReload
+package com.intellij.devkit.compose.hotreload
 
 import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.RunConfigurationExtension
@@ -47,7 +47,7 @@ private val COMPOSE_HOT_RELOAD_AGENT_VERSION: String get() {
   }
   return versionFromRegistry.ifEmpty { COMPOSE_HOT_RELOAD_AGENT_DEFAULT_VERSION }
 }
-                                                //https://repo1.maven.org/maven2/org/jetbrains/compose/hot-reload/hot-reload-agent/1.0.0-beta04/hot-reload-agent-1.0.0-beta04-standalone.jar
+//https://repo1.maven.org/maven2/org/jetbrains/compose/hot-reload/hot-reload-agent/1.0.0-beta04/hot-reload-agent-1.0.0-beta04-standalone.jar
 private val COMPOSE_HOT_RELOAD_AGENT_URL get() = "https://repo1.maven.org/maven2/org/jetbrains/compose/hot-reload/hot-reload-agent/$COMPOSE_HOT_RELOAD_AGENT_VERSION/hot-reload-agent-$COMPOSE_HOT_RELOAD_AGENT_VERSION-standalone.jar"
 private val COMPOSE_HOT_RELOAD_AGENT_FILE_NAME get() = "$COMPOSE_HOT_RELOAD_AGENT_FILE_PREFIX-$COMPOSE_HOT_RELOAD_AGENT_VERSION.jar"
 

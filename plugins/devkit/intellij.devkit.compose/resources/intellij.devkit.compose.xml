@@ -39,6 +39,9 @@
                         librarySearchClass="com.intellij.devkit.compose.preview.ComposePreviewSearcher"/>
     <implicitUsageProvider implementation="com.intellij.devkit.compose.preview.ComposePreviewImplicitUsageProvider"/>
 
+    <registryKey key="devkit.compose.hot.reload.enabled" defaultValue="false" description="Enable 'Compose Hot Reload' agent for run configurations"/>
+    <registryKey key="devkit.compose.hot.reload.agent.version" defaultValue="" description="'Compose Hot Reload' agent version override"/>
+    <runConfigurationExtension implementation="com.intellij.devkit.compose.hotreload.ComposeHotReloadCommandLinePatcher" />
   </extensions>
 
   <actions>
