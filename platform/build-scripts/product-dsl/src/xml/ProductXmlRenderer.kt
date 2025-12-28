@@ -15,9 +15,9 @@ import org.jetbrains.intellij.build.productLayout.withEditorFold
  * Appends XML header comments.
  */
 internal fun StringBuilder.appendXmlHeader(generatorCommand: String, productPropertiesClass: String) {
-  append("  <!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->\n")
-  append("  <!-- To regenerate, run 'Generate Product Layouts' or directly $generatorCommand -->\n")
-  append("  <!-- Source: $productPropertiesClass.getProductContentDescriptor() -->\n")
+  append("<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->\n")
+  append("<!-- To regenerate, run 'Generate Product Layouts' or directly $generatorCommand -->\n")
+  append("<!-- Source: $productPropertiesClass.getProductContentDescriptor() -->\n")
 }
 
 /**
