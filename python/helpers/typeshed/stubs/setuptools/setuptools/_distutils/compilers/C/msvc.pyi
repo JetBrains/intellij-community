@@ -1,3 +1,5 @@
+from _typeshed import StrPath
+from collections.abc import Sequence
 from typing import ClassVar, Final
 
 from . import base
@@ -17,3 +19,4 @@ class Compiler(base.Compiler):
     def initialize(self, plat_name: str | None = None) -> None: ...
     @property
     def out_extensions(self) -> dict[str, str]: ...
+    def spawn(self, cmd: Sequence[bytes | StrPath]): ...  # type: ignore[override] # Less params

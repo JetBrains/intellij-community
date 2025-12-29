@@ -1,11 +1,21 @@
-from _typeshed import StrPath
-from collections.abc import MutableSequence
+from _typeshed import StrOrBytesPath, StrPath, Unused
+from collections.abc import MutableSequence, Sequence
 from subprocess import _ENV
+from typing import Literal, overload
 
+@overload
+def spawn(
+    cmd: Sequence[StrOrBytesPath],
+    search_path: Literal[False],
+    verbose: Unused = False,
+    dry_run: bool = False,
+    env: _ENV | None = None,
+) -> None: ...
+@overload
 def spawn(
     cmd: MutableSequence[bytes | StrPath],
-    search_path: bool = True,
-    verbose: bool = False,
+    search_path: Literal[True] = True,
+    verbose: Unused = False,
     dry_run: bool = False,
     env: _ENV | None = None,
 ) -> None: ...

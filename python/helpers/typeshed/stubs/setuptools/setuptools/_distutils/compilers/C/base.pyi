@@ -1,5 +1,6 @@
-from _typeshed import BytesPath, Incomplete, StrPath, Unused
+from _typeshed import BytesPath, Incomplete, StrOrBytesPath, StrPath, Unused
 from collections.abc import Callable, Iterable, MutableSequence, Sequence
+from subprocess import _ENV
 from typing import ClassVar, Final, Literal, TypeVar, overload
 from typing_extensions import TypeAlias, TypeVarTuple, Unpack
 
@@ -172,7 +173,12 @@ class Compiler:
     def execute(
         self, func: Callable[[Unpack[_Ts]], Unused], args: tuple[Unpack[_Ts]], msg: str | None = None, level: int = 1
     ) -> None: ...
-    def spawn(self, cmd: MutableSequence[bytes | StrPath]) -> None: ...
+    @overload
+    def spawn(self, cmd: Sequence[StrOrBytesPath], *, search_path: Literal[False], env: _ENV | None = None) -> None: ...
+    @overload
+    def spawn(
+        self, cmd: MutableSequence[bytes | StrPath], *, search_path: Literal[True] = True, env: _ENV | None = None
+    ) -> None: ...
     def mkpath(self, name: str, mode: int = 0o777) -> None: ...
     @overload
     def move_file(self, src: StrPath, dst: _StrPathT) -> _StrPathT | str: ...

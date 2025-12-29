@@ -1,4 +1,4 @@
-from _typeshed import Incomplete, SupportsGetItem
+from _typeshed import Incomplete, SupportsItemAccess
 from collections.abc import Callable, Generator
 
 from networkx.classes.graph import Graph, _Node
@@ -117,7 +117,7 @@ def generate_random_paths(
     G: Graph[_Node],
     sample_size: int,
     path_length: int = 5,
-    index_map: SupportsGetItem[Incomplete, Incomplete] | None = None,
+    index_map: SupportsItemAccess[Incomplete, Incomplete] | None = None,
     weight: str | None = "weight",
     seed: int | RandomState | None = None,
     *,

@@ -1,4 +1,5 @@
 from typing import ClassVar
+from typing_extensions import Self
 
 from authlib.jose.rfc7517 import AsymmetricKey
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
@@ -18,6 +19,6 @@ class RSAKey(AsymmetricKey):
     @classmethod
     def generate_key(cls, key_size: int = 2048, options=None, is_private: bool = False) -> RSAKey: ...
     @classmethod
-    def import_dict_key(cls, raw, options=None): ...
+    def import_dict_key(cls, raw, options=None) -> Self: ...
 
 def has_all_prime_factors(obj) -> bool: ...

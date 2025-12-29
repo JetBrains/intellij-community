@@ -1,6 +1,6 @@
 version = "25.9.*"
 upstream_repository = "https://github.com/gevent/gevent"
-requires = ["types-greenlet", "types-psutil"]
+requires = ["types-greenlet", "types-psutil>=7.2.0"]
 
 [tool.stubtest]
 # Run stubtest on all platforms, since there is some platform specific stuff

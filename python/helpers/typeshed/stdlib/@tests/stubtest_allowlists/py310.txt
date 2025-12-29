@@ -1,15 +1,3 @@
-# =========
-# Temporary
-# =========
-
-
-# Will be added in 3.10.20
-pyexpat.XMLParserType.SetAllocTrackerActivationThreshold
-pyexpat.XMLParserType.SetAllocTrackerMaximumAmplification
-xml.parsers.expat.XMLParserType.SetAllocTrackerActivationThreshold
-xml.parsers.expat.XMLParserType.SetAllocTrackerMaximumAmplification
-
-
 # =========================
 # New errors in Python 3.10
 # =========================
@@ -268,11 +256,6 @@ typing_extensions\.TypeAliasType\.__(parameters|type_params|name|module|value)__
 unittest.test  # Modules that exist at runtime, but shouldn't be added to typeshed
 unittest\.test\..+  # Modules that exist at runtime, but shouldn't be added to typeshed
 
-# Incompatible changes introduced in Python 3.10.17
-# (Remove once 3.10.17 becomes available for all platforms)
-(email._header_value_parser.get_encoded_word)?
-(email._header_value_parser.make_quoted_pairs)?
-
 
 # =============================================================
 # Allowlist entries that cannot or should not be fixed; <= 3.12
@@ -324,19 +307,3 @@ _pickle.Pickler.persistent_id
 _pickle.Unpickler.persistent_load
 pickle.Pickler.persistent_id
 pickle.Unpickler.persistent_load
-
-# Incompatible changes introduced in Python 3.10.18
-# (Remove once 3.10.18 becomes available for all platforms)
-(genericpath.__all__)?
-(genericpath.ALLOW_MISSING)?
-(ntpath.__all__)?
-(ntpath.ALLOW_MISSING)?
-(os.path.__all__)?
-(os.path.ALLOW_MISSING)?
-(os.path.realpath)?
-(posixpath.__all__)?
-(posixpath.ALLOW_MISSING)?
-(posixpath.realpath)?
-(tarfile.LinkFallbackError)?
-(tarfile.TarFile._extract_member)?
-(tarfile.TarFile.makelink_with_filter)?

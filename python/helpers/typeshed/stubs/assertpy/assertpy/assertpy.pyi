@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Callable, Generator
-from typing import Any
+from typing import Any, TypeVar
 from typing_extensions import Self
 
 from .base import BaseMixin
@@ -17,11 +17,14 @@ from .numeric import NumericMixin
 from .snapshot import SnapshotMixin
 from .string import StringMixin
 
+_T = TypeVar("_T")
+_V = TypeVar("_V", default=Any)
+
 __version__: str
 __tracebackhide__: bool
 
 class WarningLoggingAdapter(logging.LoggerAdapter[logging.Logger]):
-    def process(self, msg: str, kwargs: Any) -> tuple[str, Any]: ...
+    def process(self, msg: str, kwargs: _T) -> tuple[str, _T]: ...
 
 class AssertionBuilder(
     StringMixin,
@@ -34,18 +37,18 @@ class AssertionBuilder(
     DynamicMixin,
     DictMixin,
     DateMixin,
-    ContainsMixin,
-    CollectionMixin,
+    ContainsMixin[_V],
+    CollectionMixin[_V],
     BaseMixin,
 ):
-    val: Any
+    val: _V
     description: str
     kind: str | None
     expected: BaseException | None
     logger: logging.Logger
     def __init__(
         self,
-        val: Any,
+        val: _V,
         description: str = "",
         kind: str | None = None,
         expected: BaseException | None = None,
@@ -53,7 +56,7 @@ class AssertionBuilder(
     ) -> None: ...
     def builder(
         self,
-        val: Any,
+        val: _V,
         description: str = "",
         kind: str | None = None,
         expected: BaseException | None = None,
@@ -61,9 +64,9 @@ class AssertionBuilder(
     ) -> Self: ...
     def error(self, msg: str) -> Self: ...
 
-def soft_assertions() -> Generator[None, None, None]: ...
-def assert_that(val: Any, description: str = "") -> AssertionBuilder: ...
-def assert_warn(val: Any, description: str = "", logger: logging.Logger | None = None) -> AssertionBuilder: ...
+def soft_assertions() -> Generator[None]: ...
+def assert_that(val: _V, description: str = "") -> AssertionBuilder[_V]: ...
+def assert_warn(val: _V, description: str = "", logger: logging.Logger | None = None) -> AssertionBuilder: ...
 def fail(msg: str = "") -> None: ...
 def soft_fail(msg: str = "") -> None: ...
 def add_extension(func: Callable[[AssertionBuilder], AssertionBuilder]) -> None: ...

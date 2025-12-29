@@ -6,8 +6,10 @@ from _typeshed import ConvertibleToFloat, FileDescriptorOrPath, Incomplete, StrO
 from collections import defaultdict
 from collections.abc import Callable
 from socket import AF_INET6 as AF_INET6, AddressFamily, SocketKind
-from typing import BinaryIO, Final, NamedTuple, SupportsIndex, TypeVar, overload
+from typing import BinaryIO, Final, SupportsIndex, TypeVar, overload
 from typing_extensions import ParamSpec
+
+from . import _ntuples as ntp
 
 POSIX: Final[bool]
 WINDOWS: Final[bool]
@@ -68,151 +70,6 @@ POWER_TIME_UNLIMITED: Final = BatteryTime.POWER_TIME_UNLIMITED
 ENCODING: Final[str]
 ENCODING_ERRS: Final[str]
 
-class sswap(NamedTuple):
-    total: int
-    used: int
-    free: int
-    percent: float
-    sin: int
-    sout: int
-
-class sdiskusage(NamedTuple):
-    total: int
-    used: int
-    free: int
-    percent: float
-
-class sdiskio(NamedTuple):
-    read_count: int
-    write_count: int
-    read_bytes: int
-    write_bytes: int
-    read_time: int
-    write_time: int
-
-class sdiskpart(NamedTuple):
-    device: str
-    mountpoint: str
-    fstype: str
-    opts: str
-
-class snetio(NamedTuple):
-    bytes_sent: int
-    bytes_recv: int
-    packets_sent: int
-    packets_recv: int
-    errin: int
-    errout: int
-    dropin: int
-    dropout: int
-
-class suser(NamedTuple):
-    name: str
-    terminal: str | None
-    host: str | None
-    started: float
-    pid: str
-
-class sconn(NamedTuple):
-    fd: int
-    family: AddressFamily
-    type: SocketKind
-    laddr: addr | tuple[()]
-    raddr: addr | tuple[()]
-    status: str
-    pid: int | None
-
-class snicaddr(NamedTuple):
-    family: AddressFamily
-    address: str
-    netmask: str | None
-    broadcast: str | None
-    ptp: str | None
-
-class snicstats(NamedTuple):
-    isup: bool
-    duplex: int
-    speed: int
-    mtu: int
-    flags: str
-
-class scpustats(NamedTuple):
-    ctx_switches: int
-    interrupts: int
-    soft_interrupts: int
-    syscalls: int
-
-class scpufreq(NamedTuple):
-    current: float
-    min: float
-    max: float
-
-class shwtemp(NamedTuple):
-    label: str
-    current: float
-    high: float | None
-    critical: float | None
-
-class sbattery(NamedTuple):
-    percent: int
-    secsleft: int
-    power_plugged: bool
-
-class sfan(NamedTuple):
-    label: str
-    current: int
-
-class pcputimes(NamedTuple):
-    user: float
-    system: float
-    children_user: float
-    children_system: float
-
-class popenfile(NamedTuple):
-    path: str
-    fd: int
-
-class pthread(NamedTuple):
-    id: int
-    user_time: float
-    system_time: float
-
-class puids(NamedTuple):
-    real: int
-    effective: int
-    saved: int
-
-class pgids(NamedTuple):
-    real: int
-    effective: int
-    saved: int
-
-class pio(NamedTuple):
-    read_count: int
-    write_count: int
-    read_bytes: int
-    write_bytes: int
-
-class pionice(NamedTuple):
-    ioclass: int
-    value: int
-
-class pctxsw(NamedTuple):
-    voluntary: int
-    involuntary: int
-
-class pconn(NamedTuple):
-    fd: int
-    family: AddressFamily
-    type: SocketKind
-    laddr: addr
-    raddr: addr
-    status: str
-
-class addr(NamedTuple):
-    ip: str
-    port: int
-
 conn_tmap: dict[str, tuple[list[AddressFamily], list[SocketKind]]]
 
 class Error(Exception): ...
@@ -262,23 +119,23 @@ def conn_to_ntuple(
     fd: int,
     fam: int,
     type_: int,
-    laddr: addr | tuple[str, int] | tuple[()],
-    raddr: addr | tuple[str, int] | tuple[()],
+    laddr: ntp.addr | tuple[str, int] | tuple[()],
+    raddr: ntp.addr | tuple[str, int] | tuple[()],
     status: int | str,
     status_map: dict[int, str] | dict[str, str],
     pid: int,
-) -> sconn: ...
+) -> ntp.sconn: ...
 @overload
 def conn_to_ntuple(
     fd: int,
     fam: int,
     type_: int,
-    laddr: addr | tuple[str, int] | tuple[()],
-    raddr: addr | tuple[str, int] | tuple[()],
+    laddr: ntp.addr | tuple[str, int] | tuple[()],
+    raddr: ntp.addr | tuple[str, int] | tuple[()],
     status: int | str,
     status_map: dict[int, str] | dict[str, str],
     pid: None = None,
-) -> pconn: ...
+) -> ntp.pconn: ...
 def deprecated_method(replacement: str) -> Callable[[Callable[_P, _R]], Callable[_P, _R]]: ...
 
 class _WrapNumbers:
@@ -366,26 +223,6 @@ __all__ = [
     "ENCODING",
     "ENCODING_ERRS",
     "AF_INET6",
-    # named tuples
-    "pconn",
-    "pcputimes",
-    "pctxsw",
-    "pgids",
-    "pio",
-    "pionice",
-    "popenfile",
-    "pthread",
-    "puids",
-    "sconn",
-    "scpustats",
-    "sdiskio",
-    "sdiskpart",
-    "sdiskusage",
-    "snetio",
-    "snicaddr",
-    "snicstats",
-    "sswap",
-    "suser",
     # utility functions
     "conn_tmap",
     "deprecated_method",
