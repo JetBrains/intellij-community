@@ -314,6 +314,7 @@ java/java-impl-inspections
 java/java-impl-refactorings
 java/java-indexing-api
 java/java-indexing-impl
+java/java-promo
 java/java-psi-api
 java/java-psi-impl
 java/java-runtime

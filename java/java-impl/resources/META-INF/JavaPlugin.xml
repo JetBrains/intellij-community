@@ -2,8 +2,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.java"/>
 
-  <depends optional="true" config-file="community-integration.xml">com.intellij.modules.idea.community</depends>
-
   <xi:include href="/META-INF/RegistryKeys.xml"/>
 
   <xi:include href="/idea/JavaActions.xml"/>

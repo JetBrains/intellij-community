@@ -1,0 +1,17 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <dependencies>
+    <module name="intellij.platform.lang.core"/>
+    <plugin id="com.intellij.java"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.platform.analysis"/>
+    <plugin id="com.intellij.modules.idea.community"/>
+
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+
+  <xi:include href="/META-INF/community-integration.xml"/>
+</idea-plugin>

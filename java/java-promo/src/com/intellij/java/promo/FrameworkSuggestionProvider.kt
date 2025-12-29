@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.ultimatepromo
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.promo
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
@@ -52,7 +52,7 @@ internal class FrameworkPluginSuggestion(val project: Project, val framework: Fr
     val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Promo)
     panel.text = IdeBundle.message("plugins.advertiser.framework.supported.in.ultimate", framework.name, ideaUltimate.name)
     panel.createTryUltimateActionLabel(ideaUltimate, project, PluginId.getId(framework.pluginId))
-    
+
     panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
       FUSEventSource.EDITOR.logIgnoreExtension(project)
       dismissPluginSuggestion(framework)

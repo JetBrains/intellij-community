@@ -1,40 +1,40 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <pluginSuggestionProvider implementation="com.intellij.ide.ultimatepromo.FrameworkSuggestionProvider"/>
-    <pluginSuggestionProvider implementation="com.intellij.ide.ultimatepromo.LiquibaseSuggestionProvider"/>
+    <pluginSuggestionProvider implementation="com.intellij.java.promo.FrameworkSuggestionProvider"/>
+    <pluginSuggestionProvider implementation="com.intellij.java.promo.LiquibaseSuggestionProvider"/>
 
     <applicationConfigurable id="promo.database"
                              groupId="tools"
-                             provider="com.intellij.ide.ultimatepromo.PromoDatabaseConfigurableProvider"
+                             provider="com.intellij.java.promo.PromoDatabaseConfigurableProvider"
                              bundle="messages.FeaturePromoBundle"
                              key="promo.configurable.database"/>
     <applicationConfigurable id="promo.kubernetes"
                              groupId="build"
-                             provider="com.intellij.ide.ultimatepromo.PromoKubernetesConfigurableProvider"
+                             provider="com.intellij.java.promo.PromoKubernetesConfigurableProvider"
                              bundle="messages.FeaturePromoBundle"
                              key="promo.configurable.kubernetes"/>
     <applicationConfigurable id="promo.javascript"
                              groupId="language"
-                             provider="com.intellij.ide.ultimatepromo.PromoJSConfigurableProvider"
+                             provider="com.intellij.java.promo.PromoJSConfigurableProvider"
                              bundle="messages.FeaturePromoBundle"
                              key="promo.configurable.javascript"/>
     <applicationConfigurable id="promo.typescript"
                              groupId="language"
-                             provider="com.intellij.ide.ultimatepromo.PromoTSConfigurableProvider"
+                             provider="com.intellij.java.promo.PromoTSConfigurableProvider"
                              bundle="messages.FeaturePromoBundle"
                              key="promo.configurable.typescript"/>
     <applicationConfigurable id="promo.swagger"
                              groupId="language"
-                             provider="com.intellij.ide.ultimatepromo.PromoSwaggerConfigurableProvider"
+                             provider="com.intellij.java.promo.PromoSwaggerConfigurableProvider"
                              bundle="messages.FeaturePromoBundle"
                              key="promo.configurable.swagger"/>
     <applicationConfigurable id="promo.profiler"
                              groupId="build"
-                             provider="com.intellij.ide.ultimatepromo.PromoProfilerConfigurableProvider"
+                             provider="com.intellij.java.promo.PromoProfilerConfigurableProvider"
                              bundle="messages.JavaUiBundle"
                              key="promo.configurable.profiler"/>
 
-    <moduleBuilder builderClass="com.intellij.ide.ultimatepromo.PromoSpringModuleBuilder"/>
+    <moduleBuilder builderClass="com.intellij.java.promo.PromoSpringModuleBuilder"/>
 
     <registryKey key="idea.ultimate.features.hints.enabled"
                  defaultValue="true"
@@ -43,35 +43,35 @@
 
   <actions resource-bundle="messages.JavaUiBundle">
     <action id="PromoSpring"
-            class="com.intellij.ide.ultimatepromo.PromoSpringAction"
+            class="com.intellij.java.promo.PromoSpringAction"
             icon="AllIcons.Ultimate.Lock"/>
 
     <action id="PromoBeans"
-            class="com.intellij.ide.ultimatepromo.PromoBeansAction"
+            class="com.intellij.java.promo.PromoBeansAction"
             icon="AllIcons.Ultimate.Lock"/>
 
     <action id="PromoPersistence"
-            class="com.intellij.ide.ultimatepromo.PromoPersistenceAction"
+            class="com.intellij.java.promo.PromoPersistenceAction"
             icon="AllIcons.Ultimate.Lock"/>
 
     <action id="PromoEndpoints"
-            class="com.intellij.ide.ultimatepromo.PromoEndpointsAction"
+            class="com.intellij.java.promo.PromoEndpointsAction"
             icon="AllIcons.Ultimate.Lock"/>
 
     <action id="PromoDatabase"
-            class="com.intellij.ide.ultimatepromo.PromoDatabaseAction"
+            class="com.intellij.java.promo.PromoDatabaseAction"
             icon="AllIcons.Ultimate.Lock"/>
 
     <action id="PromoKubernetes"
-            class="com.intellij.ide.ultimatepromo.PromoKubernetesAction"
+            class="com.intellij.java.promo.PromoKubernetesAction"
             icon="AllIcons.Ultimate.Lock"/>
 
     <action id="PromoOpenAPI"
-            class="com.intellij.ide.ultimatepromo.PromoOpenAPIAction"
+            class="com.intellij.java.promo.PromoOpenAPIAction"
             icon="AllIcons.Ultimate.Lock"/>
 
     <action id="PromoProfiler"
-            class="com.intellij.ide.ultimatepromo.PromoProfilerAction"
+            class="com.intellij.java.promo.PromoProfilerAction"
             icon="AllIcons.Ultimate.Lock"/>
   </actions>
 </idea-plugin>
