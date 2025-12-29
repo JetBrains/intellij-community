@@ -18,5 +18,4 @@ public final class DevkitComposeIcons {
   /** 16x16 */ public static final @NotNull Icon ComposeToolWindow = load("icons/composeToolWindow.svg", 542147654, 2);
   /** 16x16 */ public static final @NotNull Icon Github = load("icons/github.svg", 2052536327, 2);
   /** 16x16 */ public static final @NotNull Icon JewelToolWindow = load("icons/jewelToolWindow.svg", -219486260, 2);
-  /** 16x16 */ public static final @NotNull Icon LockReqs = load("icons/lock-reqs.svg", 1816243125, 2);
 }

@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.devkit.compose.threadingModelHelper.ui
+package com.intellij.devkit.threading.threadingModelHelper.ui
 
 import androidx.compose.runtime.Immutable
-import org.jetbrains.idea.devkit.threadingModelHelper.ExecutionPath
 import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
+import org.jetbrains.idea.devkit.threadingModelHelper.ExecutionPath
 
 @Immutable
 internal data class LockReqsViewState(

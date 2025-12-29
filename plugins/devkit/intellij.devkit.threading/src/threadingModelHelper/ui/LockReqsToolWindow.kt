@@ -1,20 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.devkit.compose.threadingModelHelper.ui
+package com.intellij.devkit.threading.threadingModelHelper.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.intellij.devkit.compose.threadingModelHelper.LockReqsService
+import com.intellij.devkit.threading.threadingModelHelper.LockReqsService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisResult

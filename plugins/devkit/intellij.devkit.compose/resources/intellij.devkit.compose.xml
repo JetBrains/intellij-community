@@ -68,8 +68,6 @@
     <action id="ComposeShowcase" class="com.intellij.devkit.compose.showcase.ComposeShowcaseAction"/>
     <action id="JewelActionSystemTest" class="com.intellij.devkit.compose.demo.ActionSystemTestAction"/>
 
-    <action id="LockReqAnalysis" internal="true" class="com.intellij.devkit.compose.threadingModelHelper.LockReqAction"/>
-
     <group id="ComposePreviewActions.Title" searchable="false">
       <action id="ComposePreviewRefresh"
               class="com.intellij.devkit.compose.preview.ComposePreviewRefreshAction"

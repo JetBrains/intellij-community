@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.devkit.compose.threadingModelHelper.ui
+package com.intellij.devkit.threading.threadingModelHelper.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,8 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import org.jetbrains.idea.devkit.threadingModelHelper.LockRequirement
 import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
+import org.jetbrains.idea.devkit.threadingModelHelper.LockRequirement
 import org.jetbrains.idea.devkit.threadingModelHelper.RequirementReason
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Icon
