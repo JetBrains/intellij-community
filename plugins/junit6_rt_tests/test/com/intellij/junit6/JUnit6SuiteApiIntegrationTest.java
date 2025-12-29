@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit6;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
@@ -20,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.intellij.junit6.ServiceMessageUtil.replaceAttributes;
 
 public class JUnit6SuiteApiIntegrationTest extends AbstractTestFrameworkCompilingIntegrationTest {
   @Override
@@ -133,5 +136,57 @@ public class JUnit6SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
 
     assertEquals(failedHints, rerunHints);
     assertEquals(rerunStarted.keySet(), getTestIds(rerunOutput.messages, TestFinished.class));
+  }
+
+  public void testInitSuiteFailed() throws ExecutionException {
+    ProcessOutput output = doStartTestsProcess(createRunClassConfiguration("org.example.failed.SuiteFailed"));
+    assertEmpty(output.err);
+
+    String tests = output.messages.stream().filter(m -> m instanceof MessageWithAttributes)
+      .map(m -> replaceAttributes(m, Map.of(
+        "timestamp", "##timestamp##",
+        "duration", "##duration##",
+        "message", "##message##",
+        "details", "##details##"
+      )))
+      .map(m -> m.replaceAll("##teamcity\\[", "##TC["))
+      .map(s -> s.replaceAll("timestamp = [0-9\\-:.T]+", "timestamp = ##timestamp##"))
+      .collect(Collectors.joining("\n"));
+
+    assertEquals("""
+                   ##TC[testStarted id='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteFailed|]/|[synthetic:method:configuration()|]' name='Class Configuration' nodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteFailed|]/|[synthetic:method:configuration()|]' parentNodeId='0' locationHint='java:suite://org.example.failed.SuiteFailed']
+                   ##TC[testFailed id='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteFailed|]/|[synthetic:method:configuration()|]' name='Class Configuration' nodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteFailed|]/|[synthetic:method:configuration()|]' parentNodeId='0' error='true' message='##message##' details='##details##']
+                   ##TC[testFinished id='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteFailed|]/|[synthetic:method:configuration()|]' name='Class Configuration' nodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteFailed|]/|[synthetic:method:configuration()|]' parentNodeId='0']
+                   ##TC[testStarted id='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteFailed|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[method:test()|]' name='test()' nodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteFailed|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[method:test()|]' parentNodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteFailed|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]' locationHint='java:test://org.example.failed.FailedTest/test' metainfo='']
+                   ##TC[testIgnored id='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteFailed|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[method:test()|]' name='test()' nodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteFailed|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[method:test()|]' parentNodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteFailed|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]']
+                   ##TC[testFinished id='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteFailed|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[method:test()|]' name='test()' nodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteFailed|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[method:test()|]' parentNodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteFailed|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]']""",
+                 tests);
+  }
+
+  public void testInitSubSuiteFailed() throws ExecutionException {
+    ProcessOutput output = doStartTestsProcess(createRunClassConfiguration("org.example.failed.SuiteOk"));
+    assertEmpty(output.err);
+
+    String tests = output.messages.stream().filter(m -> m instanceof MessageWithAttributes)
+      .map(m -> replaceAttributes(m, Map.of(
+        "timestamp", "##timestamp##",
+        "duration", "##duration##",
+        "message", "##message##",
+        "details", "##details##"
+      )))
+      .map(m -> m.replaceAll("##teamcity\\[", "##TC["))
+      .map(s -> s.replaceAll("timestamp = [0-9\\-:.T]+", "timestamp = ##timestamp##"))
+      .collect(Collectors.joining("\n"));
+
+    assertEquals("""
+                   ##TC[testSuiteStarted id='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]' name='FailedTest' nodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]' parentNodeId='0' locationHint='java:suite://org.example.failed.FailedTest']
+                   ##TC[testStarted id='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[synthetic:method:configuration()|]' name='Class Configuration' nodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[synthetic:method:configuration()|]' parentNodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]' locationHint='java:suite://org.example.failed.FailedTest']
+                   ##TC[testFailed id='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[synthetic:method:configuration()|]' name='Class Configuration' nodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[synthetic:method:configuration()|]' parentNodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]' error='true' message='##message##' details='##details##']
+                   ##TC[testFinished id='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[synthetic:method:configuration()|]' name='Class Configuration' nodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[synthetic:method:configuration()|]' parentNodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]']
+                   ##TC[testStarted id='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[method:test()|]' name='test()' nodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[method:test()|]' parentNodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]' locationHint='java:test://org.example.failed.FailedTest/test' metainfo='']
+                   ##TC[testIgnored id='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[method:test()|]' name='test()' nodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[method:test()|]' parentNodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]']
+                   ##TC[testFinished id='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[method:test()|]' name='test()' nodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]/|[method:test()|]' parentNodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]']
+                   ##TC[testSuiteFinished id='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]' name='FailedTest' nodeId='|[engine:junit-platform-suite|]/|[suite:org.example.failed.SuiteOk|]/|[engine:junit-jupiter|]/|[class:org.example.failed.FailedTest|]' parentNodeId='0']""",
+                 tests);
   }
 }
