@@ -24,6 +24,7 @@
     <notificationGroup id="Services Tool Window" displayType="BALLOON" isLogByDefault="true" bundle="messages.ExecutionBundle"
                        key="notification.group.services"
                        notificationIds="run.dashboard.multiple.run.configurations"/>
+    <backendServiceViewSelectedItemProvider implementation="com.intellij.platform.execution.dashboard.backend.BackendRunDashboardSelectedItemProvider"/>
   </extensions>
 
   <projectListeners>
