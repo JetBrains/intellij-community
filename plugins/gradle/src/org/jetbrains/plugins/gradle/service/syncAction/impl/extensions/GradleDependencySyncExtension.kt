@@ -3,11 +3,13 @@ package org.jetbrains.plugins.gradle.service.syncAction.impl.extensions
 
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SdkDependency
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.createEntityTreeCopy
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncExtension
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
@@ -55,6 +57,15 @@ class GradleDependencySyncExtension : GradleSyncExtension {
         // No need to add existing dependencies
         dependenciesToAdd.removeAll(dependencies.toSet())
         dependencies.addAll(dependenciesToAdd)
+
+        // Add the corresponding library entities from project storage to sync storage as well.
+        dependenciesToAdd
+          .filterIsInstance<LibraryDependency>()
+          .filterNot { syncStorage.contains(it.library) }
+          .forEach {
+            val existingProjectEntity = projectStorage.resolve(it.library)
+            existingProjectEntity?.let { syncStorage.addEntity(it.createEntityTreeCopy()) }
+          }
       }
     }
   }
