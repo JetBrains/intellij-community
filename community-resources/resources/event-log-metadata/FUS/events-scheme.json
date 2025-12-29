@@ -13486,6 +13486,7 @@
         "mode" : [ "{enum:ALWAYS|ONLY_PARAMETERS|NEVER}" ],
         "option_name" : [ "{enum:enable_audible_bell|close_on_session_end|report_mouse|copy_on_selection|paste_on_middle_mouse_button|override_ide_shortcuts|enable_shell_integration|highlight_hyperlinks|use_option_as_meta|run_commands_using_ide}", "{enum:show_separators_between_commands}" ],
         "shape" : [ "{enum:BLOCK|UNDERLINE|VERTICAL}" ],
+        "shell" : [ "{enum:unspecified|other|activate|anaconda3|ash|bash|bbsh|cexec|cmd|cmder|cmder_shell|csh|cygwin|dash|es|eshell|fish|fsh|git|git-bash|git-cmd|hamilton|init|ion|ksh|miniconda3|mksh|msys2_shell|nushell|powershell|pwsh|rc|scsh|sh|tcsh|ubuntu|ubuntu1804|wsl|xonsh|zsh}" ],
         "style" : [ "{enum:SINGLE_LINE|DOUBLE_LINE|SHELL}" ]
       },
       "enums" : {
@@ -15242,5 +15243,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6592"
+  "version" : "6593"
 }
