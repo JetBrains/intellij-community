@@ -101,13 +101,11 @@ public final class AppMode {
     isLightEdit = Boolean.parseBoolean(System.getProperty("idea.force.light.edit.mode")) ||
                   (knownCommand == null && !isHeadless && mayHappenToBeAFile(args));
 
-    for (String arg : args) {
-      if (ApplicationStartArguments.DISABLE_NON_BUNDLED_PLUGINS.isSet(args)) {
-        disableNonBundledPlugins = true;
-      }
-      else if (ApplicationStartArguments.DONT_REOPEN_PROJECTS.isSet(args)) {
-        dontReopenProjects = true;
-      }
+    if (ApplicationStartArguments.DISABLE_NON_BUNDLED_PLUGINS.isSet(args)) {
+      disableNonBundledPlugins = true;
+    }
+    if (ApplicationStartArguments.DONT_REOPEN_PROJECTS.isSet(args)) {
+      dontReopenProjects = true;
     }
   }
 
