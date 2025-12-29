@@ -26,6 +26,7 @@
   - name: intellij.java.syntax
   - name: intellij.java.psi.impl
   - name: intellij.java.psi
+  - name: intellij.uiDesigner
 - name: lib/java-impl.jar
   modules:
   - name: intellij.java.compiler
@@ -49,7 +50,6 @@
   - name: intellij.java.structureView
   - name: intellij.java.manifest
   - name: intellij.java.remoteServers.impl
-  - name: intellij.uiDesigner
   - name: intellij.java.analysis.impl
   - name: intellij.jvm.analysis.quickFix
   - name: intellij.jvm.analysis.refactoring
@@ -60,7 +60,6 @@
   - name: intellij.jsp.spi
   - name: intellij.java.uast
   - name: intellij.java.typeMigration
-  - name: intellij.java.ultimate.icons
   - name: intellij.java.jam
   - name: intellij.java.duplicates
   - name: intellij.java.plugin
@@ -138,9 +137,15 @@
 - name: lib/modules/intellij.java.langInjection.jps.jar
   contentModules:
   - name: intellij.java.langInjection.jps
+- name: lib/modules/intellij.java.promo.jar
+  contentModules:
+  - name: intellij.java.promo
 - name: lib/modules/intellij.java.structuralSearch.jar
   contentModules:
   - name: intellij.java.structuralSearch
+- name: lib/modules/intellij.java.ultimate.icons.jar
+  contentModules:
+  - name: intellij.java.ultimate.icons
 - name: lib/modules/intellij.java.unscramble.jar
   contentModules:
   - name: intellij.java.unscramble
