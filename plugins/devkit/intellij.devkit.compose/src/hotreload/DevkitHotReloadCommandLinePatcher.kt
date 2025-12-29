@@ -52,44 +52,16 @@ private val COMPOSE_HOT_RELOAD_AGENT_VERSION: String
     return versionFromRegistry.ifEmpty { COMPOSE_HOT_RELOAD_AGENT_DEFAULT_VERSION }
   }
 
+private fun getAgentTempPath(): Path {
+  return PathManager.getTempDir().resolve("devkit-hot-reload")
+}
+
 private val COMPOSE_HOT_RELOAD_AGENT_URL: String
   get() = "https://repo1.maven.org/maven2/org/jetbrains/compose/hot-reload/hot-reload-agent/$COMPOSE_HOT_RELOAD_AGENT_VERSION/hot-reload-agent-$COMPOSE_HOT_RELOAD_AGENT_VERSION-standalone.jar"
 private val COMPOSE_HOT_RELOAD_AGENT_FILE_NAME: String
   get() = "$COMPOSE_HOT_RELOAD_AGENT_FILE_PREFIX-$COMPOSE_HOT_RELOAD_AGENT_VERSION.jar"
 private val agentFilePath: Path
   get() = getAgentTempPath().resolve(COMPOSE_HOT_RELOAD_AGENT_FILE_NAME)
-
-@Throws(ExecutionException::class)
-internal fun ensureAgentDownloaded(project: Project?) {
-  val currentAgentFilePath = agentFilePath
-  if (!currentAgentFilePath.exists()) {
-    LOG.info("Compose Hot Reload agent not found at '$currentAgentFilePath'. Downloading it from '$COMPOSE_HOT_RELOAD_AGENT_URL'...")
-
-    try {
-      downloadAgentFile(project)
-    }
-    catch (t: Throwable) {
-      throw ExecutionException(DevkitComposeBundle.message("compose.hot.reload.failed.to.download.compose.hot.reload.agent"), t)
-    }
-  }
-  else {
-    LOG.debug("Compose Hot Reload agent already downloaded to '$currentAgentFilePath'")
-  }
-}
-
-private fun downloadAgentFile(project: Project?): Path? {
-  val fileService = DownloadableFileService.getInstance()
-  val fileDescription = fileService.createFileDescription(COMPOSE_HOT_RELOAD_AGENT_URL, COMPOSE_HOT_RELOAD_AGENT_FILE_NAME)
-  val downloader = fileService.createDownloader(listOf(fileDescription), "Compose Hot Reload Agent")
-
-  Files.createDirectories(getAgentTempPath())
-  downloader.downloadFilesWithProgress(getAgentTempPath().absolutePathString(), project, null)
-
-  cleanOldAgents()
-
-  return getAgentTempPath().resolve(COMPOSE_HOT_RELOAD_AGENT_FILE_NAME)
-    .takeIf { it.exists() }
-}
 
 private const val DEVKIT_HOT_RELOAD_EXECUTOR_ID = "DevkitComposeHotReloadExecutor"
 private const val DEVKIT_HOT_RELOAD_RUNNER_ID = "DevkitHotReloadRunner"
@@ -139,6 +111,60 @@ internal class DevkitHotReloadRunner : GenericDebuggerRunner() {
     ensureAgentDownloaded(environment.project)
 
     super.execute(environment)
+  }
+
+  @Throws(ExecutionException::class)
+  internal fun ensureAgentDownloaded(project: Project) {
+    val currentAgentFilePath = agentFilePath
+    if (!currentAgentFilePath.exists()) {
+      LOG.info("Compose Hot Reload agent not found at '$currentAgentFilePath'. Downloading it from '$COMPOSE_HOT_RELOAD_AGENT_URL'...")
+
+      try {
+        downloadAgentFile(project)
+      }
+      catch (t: Throwable) {
+        throw ExecutionException(DevkitComposeBundle.message("compose.hot.reload.failed.to.download.compose.hot.reload.agent"), t)
+      }
+    }
+    else {
+      LOG.debug("Compose Hot Reload agent already downloaded to '$currentAgentFilePath'")
+    }
+  }
+
+  private fun downloadAgentFile(project: Project): Path? {
+    val fileService = DownloadableFileService.getInstance()
+    val fileDescription = fileService.createFileDescription(COMPOSE_HOT_RELOAD_AGENT_URL, COMPOSE_HOT_RELOAD_AGENT_FILE_NAME)
+    val downloader = fileService.createDownloader(listOf(fileDescription), "Compose Hot Reload Agent")
+
+    Files.createDirectories(getAgentTempPath())
+    downloader.downloadFilesWithProgress(getAgentTempPath().absolutePathString(), project, null)
+
+    cleanOldAgents()
+
+    return getAgentTempPath().resolve(COMPOSE_HOT_RELOAD_AGENT_FILE_NAME)
+      .takeIf { it.exists() }
+  }
+
+  private fun cleanOldAgents() {
+    val agentTempPath = getAgentTempPath()
+    if (!agentTempPath.exists()) return
+
+    try {
+      for (it in agentTempPath.listDirectoryEntries("$COMPOSE_HOT_RELOAD_AGENT_FILE_PREFIX-*.jar")) {
+        if (it.fileName.toString() == COMPOSE_HOT_RELOAD_AGENT_FILE_NAME) continue // skip the actual version
+
+        try {
+          Files.delete(it)
+        }
+        catch (t: Throwable) {
+          // ignore
+          LOG.warn("Failed to delete old Compose Hot Reload agent file", t)
+        }
+      }
+    }
+    catch (_: Throwable) {
+      // ignore
+    }
   }
 }
 
@@ -215,31 +241,5 @@ internal class DevkitHotReloadCommandLinePatcher : RunConfigurationExtension() {
     //use this instead of 'is KotlinRunConfiguration' to avoid having dependency on Kotlin plugin here
     return configuration is ApplicationConfiguration
            || configuration.factory?.id == "JetRunConfigurationType"
-  }
-}
-
-private fun getAgentTempPath(): Path {
-  return PathManager.getTempDir().resolve("devkit-hot-reload")
-}
-
-private fun cleanOldAgents() {
-  val agentTempPath = getAgentTempPath()
-  if (!agentTempPath.exists()) return
-
-  try {
-    for (it in agentTempPath.listDirectoryEntries("$COMPOSE_HOT_RELOAD_AGENT_FILE_PREFIX-*.jar")) {
-      if (it.fileName.toString() == COMPOSE_HOT_RELOAD_AGENT_FILE_NAME) continue // skip the actual version
-
-      try {
-        Files.delete(it)
-      }
-      catch (t: Throwable) {
-        // ignore
-        LOG.warn("Failed to delete old Compose Hot Reload agent file", t)
-      }
-    }
-  }
-  catch (_: Throwable) {
-    // ignore
   }
 }
