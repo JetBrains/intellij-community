@@ -10,7 +10,10 @@ import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.*;
+import com.intellij.execution.runners.BackendExecutionEnvironmentProxy;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentProxy;
+import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
@@ -237,7 +240,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   @Override
   public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     // DebugExecutor ID  - com.intellij.execution.executors.DefaultDebugExecutor.EXECUTOR_ID
-    var isStateForDebug = ToolWindowId.DEBUG.equals(executor.getId());
+    var isStateForDebug = ToolWindowId.DEBUG.equals(executor.getId())
+                          || ToolWindowId.DEBUG.equals(executor.getToolWindowId()); // there can be another debug executor with non-standard ID
     var runnableState = new ExternalSystemRunnableState(mySettings, getProject(), isStateForDebug, this, env);
     copyUserDataTo(runnableState);
     return runnableState;

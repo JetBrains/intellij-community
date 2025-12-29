@@ -99,6 +99,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   private final int myDebugPort;
   private ServerSocket myForkSocket = null;
 
+  private String myAdditionalArguments;
+
   public ExternalSystemRunnableState(@NotNull ExternalSystemTaskExecutionSettings settings,
                                      @NotNull Project project,
                                      boolean debug,
@@ -180,6 +182,19 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     return myConfiguration.isDebugServerProcess();
   }
 
+  @ApiStatus.Experimental
+  public String getAdditionalArguments() {
+    return myAdditionalArguments;
+  }
+
+  /**
+   * {@link ProgramRunner} may supply additional program arguments.
+   */
+  @ApiStatus.Experimental
+  public void setAdditionalArguments(String additionalArguments) {
+    myAdditionalArguments = additionalArguments;
+  }
+
   @Override
   public @Nullable ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     if (myProject.isDisposed()) return null;
@@ -198,6 +213,10 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(myProject, mySettings, jvmParametersSetup, myConfiguration);
     copyUserDataTo(task);
     addDebugUserDataTo(task);
+    if (myAdditionalArguments != null) {
+      task.appendArguments(myAdditionalArguments);
+    }
+
     ExternalSystemTaskNotificationListener listener = myEnv.getUserData(TASK_NOTIFICATION_LISTENER_KEY);
     if (listener != null) {
       ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(task.getId(), listener);

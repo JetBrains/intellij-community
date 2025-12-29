@@ -3,19 +3,23 @@ package com.intellij.devkit.compose.hotreload
 
 import com.intellij.debugger.impl.GenericDebuggerRunner
 import com.intellij.devkit.compose.DevkitComposeBundle
+import com.intellij.devkit.compose.hasCompose
 import com.intellij.devkit.compose.icons.DevkitComposeIcons
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Executor
 import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.application.ApplicationConfiguration
-import com.intellij.execution.configurations.JavaParameters
-import com.intellij.execution.configurations.RunConfigurationBase
-import com.intellij.execution.configurations.RunProfile
-import com.intellij.execution.configurations.RunnerSettings
+import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
+import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner
 import com.intellij.openapi.project.IntelliJProjectUtil.isIntelliJPlatformProject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions.ActionDescription
@@ -26,6 +30,8 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.util.download.DownloadableFileService
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.idea.devkit.util.PsiUtil.isPluginProject
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.Icon
@@ -86,13 +92,15 @@ private fun downloadAgentFile(project: Project?): Path? {
 }
 
 private const val DEVKIT_HOT_RELOAD_EXECUTOR_ID = "DevkitComposeHotReloadExecutor"
+private const val DEVKIT_HOT_RELOAD_RUNNER_ID = "DevkitHotReloadRunner"
+private const val DEVKIT_GRADLE_HOT_RELOAD_RUNNER_ID = "DevkitGradleHotReloadRunner"
 
 internal class DevkitHotReloadExecutor : Executor() {
   override fun getId(): @NonNls String = DEVKIT_HOT_RELOAD_EXECUTOR_ID
   override fun getContextActionId(): @NonNls String = id
   override fun getToolWindowId(): String = ToolWindowId.DEBUG
 
-  override fun getToolWindowIcon(): Icon = DevkitComposeIcons.ComposeHotReload
+  override fun getToolWindowIcon(): Icon = AllIcons.Toolwindows.ToolWindowDebugger
   override fun getIcon(): Icon = DevkitComposeIcons.ComposeHotReload
   override fun getDisabledIcon(): Icon? = null
 
@@ -114,14 +122,16 @@ internal class DevkitHotReloadExecutor : Executor() {
 
   override fun isApplicable(project: Project): Boolean {
     return isIntelliJPlatformProject(project)
+           || isPluginProject(project) && hasCompose(project)
   }
 }
 
 internal class DevkitHotReloadRunner : GenericDebuggerRunner() {
-  override fun getRunnerId(): String = "DevkitHotReloadRunner"
+  override fun getRunnerId(): String = DEVKIT_HOT_RELOAD_RUNNER_ID
 
   override fun canRun(executorId: String, profile: RunProfile): Boolean {
     return executorId == DEVKIT_HOT_RELOAD_EXECUTOR_ID
+           && profile !is ExternalSystemRunConfiguration
   }
 
   @Throws(ExecutionException::class)
@@ -132,6 +142,33 @@ internal class DevkitHotReloadRunner : GenericDebuggerRunner() {
   }
 }
 
+// applied for Gradle-based plugins
+internal class DevkitGradleHotReloadRunner : ExternalSystemTaskDebugRunner() {
+  override fun getRunnerId(): String = DEVKIT_GRADLE_HOT_RELOAD_RUNNER_ID
+
+  override fun canRun(executorId: String, profile: RunProfile): Boolean {
+    return executorId == DEVKIT_HOT_RELOAD_EXECUTOR_ID
+           && profile is ExternalSystemRunConfiguration
+  }
+
+  override fun doExecute(state: RunProfileState, env: ExecutionEnvironment): RunContentDescriptor? {
+    patchCommandLine(state)
+    return super.doExecute(state, env)
+  }
+
+  override fun doExecuteAsync(state: TargetEnvironmentAwareRunProfileState, env: ExecutionEnvironment): Promise<RunContentDescriptor?> {
+    patchCommandLine(state)
+    return super.doExecuteAsync(state, env)
+  }
+
+  private fun patchCommandLine(state: RunProfileState) {
+    if (state is ExternalSystemRunnableState) {
+      state.additionalArguments = "--compose-hot-reload"
+    }
+  }
+}
+
+// applied for IntelliJ IDEs development
 internal class DevkitHotReloadCommandLinePatcher : RunConfigurationExtension() {
 
   override fun <T : RunConfigurationBase<*>?> updateJavaParameters(

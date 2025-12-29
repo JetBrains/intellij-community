@@ -58,6 +58,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/execution-impl",
     "//platform/util/jdom",
+    "//platform/external-system-impl:externalSystem-impl",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

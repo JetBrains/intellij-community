@@ -43,6 +43,7 @@
     <runConfigurationExtension implementation="com.intellij.devkit.compose.hotreload.DevkitHotReloadCommandLinePatcher" />
     <executor implementation="com.intellij.devkit.compose.hotreload.DevkitHotReloadExecutor"/>
     <programRunner implementation="com.intellij.devkit.compose.hotreload.DevkitHotReloadRunner"/>
+    <programRunner implementation="com.intellij.devkit.compose.hotreload.DevkitGradleHotReloadRunner"/>
   </extensions>
 
   <actions>
