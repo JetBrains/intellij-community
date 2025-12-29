@@ -146,7 +146,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
       @Override
       public String getLocationString() {
         PyElement elt = PsiTreeUtil.getParentOfType(PyImportElementImpl.this, PyImportStatement.class, PyFromImportStatement.class);
-        final StringBuilder buf = new StringBuilder("| ");
+        final StringBuilder buf = new StringBuilder();
         if (elt != null) { // always? who knows :)
           if (elt instanceof PyFromImportStatement) { // from ... import ...
             buf.append("from ");
