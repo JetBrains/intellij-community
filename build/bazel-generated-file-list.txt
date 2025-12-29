@@ -303,6 +303,7 @@ java/ide-resources
 java/idea-ui
 java/java-analysis-api
 java/java-analysis-impl
+java/java-copyright
 java/java-features-trainer
 java/java-frontback-impl
 java/java-frontback-psi-api
@@ -1001,6 +1002,7 @@ plugins/groovy/byteCodeViewer
 plugins/groovy/git
 plugins/groovy/groovy-psi
 plugins/groovy/groovy-uast-tests
+plugins/groovy/intellij.groovy.copyright
 plugins/groovy/jps-plugin
 plugins/groovy/rt
 plugins/groovy/rt-constants

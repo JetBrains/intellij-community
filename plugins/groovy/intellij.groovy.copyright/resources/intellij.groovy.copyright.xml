@@ -1,0 +1,12 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.java.copyright"/>
+    <plugin id="com.intellij.copyright"/>
+    <plugin id="org.intellij.groovy"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij.copyright">
+    <updater filetype="Groovy" implementationClass="org.intellij.groovy.copyright.UpdateGroovyCopyrightsProvider"/>
+    <variablesProvider filetype="Groovy" implementationClass="org.intellij.groovy.copyright.GroovyCopyrightVariablesProvider"/>
+  </extensions>
+</idea-plugin>

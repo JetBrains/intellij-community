@@ -22,8 +22,6 @@
     <module name="intellij.regexp"/>
   </dependencies>
 
-  <depends optional="true" config-file="java-copyright.xml">com.intellij.copyright</depends>
-
   <xi:include href="/META-INF/JavaPlugin.xml"/>
 
   <content namespace="jetbrains">
@@ -55,6 +53,8 @@
     <module name="intellij.java.jam.impl"/>
     <module name="intellij.profiler.ultimate"/>
     <module name="intellij.jvm.dfa.analysis.ui"/>
+
+    <module name="intellij.java.copyright"/>
   </content>
 
   <depends optional="true" config-file="intellij.java.remoteServers.impl.xml">com.intellij.modules.remoteServers</depends>

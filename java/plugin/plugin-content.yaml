@@ -108,6 +108,9 @@
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2/kotlin-metadata-jvm-2.jar
   reason: withProjectLibrary
+- name: lib/modules/intellij.java.copyright.jar
+  contentModules:
+  - name: intellij.java.copyright
 - name: lib/modules/intellij.java.debugger.impl.frontend.jar
   contentModules:
   - name: intellij.java.debugger.impl.frontend

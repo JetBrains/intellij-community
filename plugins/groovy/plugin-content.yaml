@@ -22,6 +22,9 @@
 - name: lib/groovy-spock-rt.jar
   modules:
   - name: intellij.groovy.spock.rt
+- name: lib/modules/intellij.groovy.copyright.jar
+  contentModules:
+  - name: intellij.groovy.copyright
 - name: lib/modules/intellij.groovy.ant.jar
   contentModules:
   - name: intellij.groovy.ant
