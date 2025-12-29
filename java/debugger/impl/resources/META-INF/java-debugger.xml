@@ -118,7 +118,7 @@
     <xdebugger.attachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaSAAttachDebuggerProvider"/>
     <xdebugger.dialog.item.presentation.provider implementation="com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider$JavaAttachDialogItemPresentationProvider"/>
 
-    <consoleFilterProvider implementation="com.intellij.execution.impl.JavaDebuggerConsoleFilterProvider"/>
+    <consoleFilterProvider implementation="com.intellij.debugger.impl.attach.JavaDebuggerConsoleFilterProvider"/>
     <jvm.exceptionFilter implementation="com.intellij.debugger.impl.attach.JavaDebuggerAddExceptionBreakpointFilter"/>
 
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaCollectionBreakpointType"/>
@@ -462,12 +462,12 @@
     <group id="ToggleBreakpointAction">
       <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction">
         <override-text place="MainMenu"/>
-        <add-to-group group-id="JavaCompileGroup" anchor="first"/>
+        <!--<add-to-group group-id="JavaCompileGroup" anchor="first"/>-->
       </action>
       <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction">
         <override-text place="MainMenu"/>
         <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.AddToWatch"/>
-        <add-to-group group-id="JavaCompileGroup" anchor="after" relative-to-action="ToggleMethodBreakpoint"/>
+        <!--<add-to-group group-id="JavaCompileGroup" anchor="after" relative-to-action="ToggleMethodBreakpoint"/>-->
       </action>
       <add-to-group group-id="BreakpointActionsGroup" anchor="after" relative-to-action="ToggleLineBreakpoint"/>
     </group>
