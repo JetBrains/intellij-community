@@ -9,6 +9,7 @@ import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.syncOrToggleAll
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
+import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
@@ -156,14 +157,6 @@ internal class GHPRReviewFileEditorModel internal constructor(
     fileVm.requestThreadFocus(threadId)
   }
 
-  private fun StateFlow<Int?>.shiftLine(): StateFlow<Int?> =
-    combineState(postReviewRanges) { line, ranges ->
-      if (ranges != null && line != null) {
-        ReviewInEditorUtil.transferLineToAfter(ranges, line).takeIf { it >= 0 }
-      }
-      else null
-    }
-
   private fun Int.shiftLineToAfter(): Int {
     val ranges = postReviewRanges.value ?: return this
     return ReviewInEditorUtil.transferLineToAfter(ranges, this)
@@ -190,24 +183,23 @@ internal class GHPRReviewFileEditorModel internal constructor(
   private inner class ShiftedThread(vm: GHPRReviewFileEditorThreadViewModel)
     : GHPREditorMappedComponentModel.Thread<GHPRReviewFileEditorThreadViewModel>(vm) {
     override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hiddenState) { visible, hidden -> visible && !hidden }
-    override val line: StateFlow<Int?> = vm.line.shiftLine()
     override val range: StateFlow<LineRange?> = postReviewRanges.combineState(vm.commentRange) { ranges, commentRange ->
       if (ranges == null || commentRange == null) return@combineState null
       val start = ReviewInEditorUtil.transferLineToAfter(ranges, commentRange.first)
       val end = ReviewInEditorUtil.transferLineToAfter(ranges, commentRange.last)
       LineRange(start, end)
     }
+    override val line: StateFlow<Int?> = range.mapState { it?.end }
   }
 
   private inner class ShiftedNewComment(parentCs: CoroutineScope, vm: GHPRReviewFileEditorNewCommentViewModel)
     : GHPREditorMappedComponentModel.NewComment<GHPRReviewNewCommentEditorViewModel>(vm) {
     private val cs = parentCs.childScope("${this::class.simpleName}")
     override val key: Any = "NEW_${UUID.randomUUID()}"
-
     override val range: StateFlow<LineRange?> =
       combineState(cs, vm.position, postReviewRanges) { position, postReviewRanges ->
         if (postReviewRanges == null) return@combineState null
-        position.location.toLineRange().transferToAfter(postReviewRanges)
+        position.location.toLineRange()?.transferToAfter(postReviewRanges)
       }
     override val line: StateFlow<Int?> = range.mapState { it?.end }
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
@@ -216,10 +208,12 @@ internal class GHPRReviewFileEditorModel internal constructor(
       if (newStart == null && newEnd == null) return
       val ranges = postReviewRanges.value ?: emptyList()
       val transferredStart = newStart?.let {
-         ReviewInEditorUtil.transferLineFromAfter(ranges, it)?.takeIf { it >= 0 }
+        val startLine = ReviewInEditorUtil.transferLineFromAfter(ranges, it)?.takeIf { it >= 0 } ?: return@let null
+        Side.RIGHT to startLine
       }
       val transferredEnd = newEnd?.let {
-         ReviewInEditorUtil.transferLineFromAfter(ranges, it)?.takeIf { it >= 0 }
+        val endLine = ReviewInEditorUtil.transferLineFromAfter(ranges, it)?.takeIf { it >= 0 } ?: return@let null
+        Side.RIGHT to endLine
       }
       vm.updateLineRange(transferredStart, transferredEnd)
       vm.requestFocus()
@@ -231,13 +225,13 @@ internal class GHPRReviewFileEditorModel internal constructor(
   }
 }
 
-private fun GHPRReviewCommentLocation.toLineRange(): LineRange =
-  when (this) {
+private fun GHPRReviewCommentLocation.toLineRange(): LineRange? =
+  when (val loc = this) {
     is GHPRReviewCommentLocation.SingleLine -> {
-      LineRange(lineIdx, lineIdx)
+      if (loc.side == Side.RIGHT) LineRange(lineIdx, lineIdx) else null
     }
     is GHPRReviewCommentLocation.MultiLine -> {
-      LineRange(startLineIdx, lineIdx)
+      if (loc.startSide == loc.side) LineRange(startLineIdx, lineIdx) else null
     }
   }
 

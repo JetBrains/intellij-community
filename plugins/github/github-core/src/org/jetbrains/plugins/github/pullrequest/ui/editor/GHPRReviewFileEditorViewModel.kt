@@ -195,7 +195,7 @@ internal class GHPRReviewFileEditorViewModelImpl(
   }
 
   override fun requestNewComment(lineRange: LineRange, focus: Boolean) {
-    val position = GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.MultiLine(Side.RIGHT, lineRange.start, lineRange.end))
+    val position = GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.MultiLine(Side.RIGHT, lineRange.start, Side.RIGHT, lineRange.end))
     val sharedVm = threadsVm.requestNewComment(position)
     if (focus) {
       cs.launchNow {

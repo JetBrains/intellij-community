@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.diff.DiffLineRange
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.Logger
@@ -99,37 +100,21 @@ private fun GHPullRequestReviewThread.mapToSidedLine(
 fun GHPullRequestReviewThread.mapToRange(
   diffData: GitTextFilePatchWithHistory,
   sideBias: Side = Side.LEFT,
-): Pair<Side, IntRange>? {
+): DiffLineRange? {
   val (initialEndSide, initialEndLine) = mapToLocation(diffData, StartOrEnd.END, sideBias) ?: return null
 
   // there is no startLine, we are done mapping
   if (startLine == null && originalStartLine == null) {
-    return initialEndSide to initialEndLine..initialEndLine
+    return (initialEndSide to initialEndLine).let { it to it }
   }
 
   val (initialStartSide, initialStartLine) = mapToLocation(diffData, StartOrEnd.START, initialEndSide) ?: return null
-  val (side, startLine, endLine) =
-    if (initialStartSide == initialEndSide) {
-      Triple(initialStartSide, initialStartLine, initialEndLine)
-    }
-    else {
-      // cannot map startLine to the same side as endLine
-      if (initialEndSide != sideBias) return null
-
-      // otherwise, try to map the endLine to the same side as startLine
-      val end = mapToLocation(diffData, StartOrEnd.END, initialStartSide)
-                  ?.takeIf { (endSide, _) -> endSide == initialStartSide }?.second ?: return null
-
-      Triple(initialStartSide, initialStartLine, end)
-    }
-
-  return side to if (startLine <= endLine) {
-    startLine..endLine
+  if (initialStartSide == initialEndSide && initialStartLine > initialEndLine) {
+    LOG.warn("Invalid comment range lines: $startLine..$initialEndLine")
+    return null
   }
-  else {
-    LOG.warn("Invalid comment range lines: $startLine..$endLine")
-    endLine..startLine
-  }
+
+  return (initialStartSide to initialStartLine) to (initialEndSide to initialEndLine)
 }
 
 private fun GHPullRequestReviewThread.mapToLocation(
@@ -147,6 +132,7 @@ fun GHPullRequestReviewThread.mapToInEditorRange(diffData: GitTextFilePatchWithH
 
   // already on latest and there's a mapped line, then use that one
   if (
+    threadData.startSide == Side.RIGHT &&
     threadData.side == Side.RIGHT &&
     diffData.patch.afterVersionId == threadData.commit?.oid &&
     threadData.line != null
@@ -157,8 +143,12 @@ fun GHPullRequestReviewThread.mapToInEditorRange(diffData: GitTextFilePatchWithH
     return startLineIndex..endLineIndex
   }
 
-  return threadData.mapToRange(diffData, sideBias = Side.RIGHT)
-    ?.takeIf { (side, _) -> side == Side.RIGHT }?.second
+  return threadData.mapToRange(diffData, sideBias = Side.RIGHT)?.let {
+    val startSide = it.first.first
+    val endSide = it.second.first
+    if (startSide == Side.RIGHT && endSide == Side.RIGHT) return@let it.first.second..it.second.second
+    else null
+  }
 }
 
 /**
@@ -170,16 +160,16 @@ private fun GHPullRequestReviewThread.lineOnCommit(
   startOrEnd: StartOrEnd,
   sideBias: Side,
 ): LineOnCommit? {
-  val (unmappedLine, unmappedOriginalLine) = when (startOrEnd) {
-    StartOrEnd.END -> line to originalLine
-    StartOrEnd.START -> startLine to originalStartLine
+  val (unmappedLine, unmappedOriginalLine, threadSide) = when (startOrEnd) {
+    StartOrEnd.END -> Triple(line, originalLine, side)
+    StartOrEnd.START -> Triple(startLine, originalStartLine, startSide ?: side)
   }
 
   fun mapOriginalLine() =
-    toLineOnCommit(path, diffData, side, originalCommit?.oid, unmappedOriginalLine)
+    toLineOnCommit(path, diffData, threadSide, originalCommit?.oid, unmappedOriginalLine)
 
   fun mapLine() =
-    toLineOnCommit(path, diffData, side, commit?.oid, unmappedLine)
+    toLineOnCommit(path, diffData, threadSide, commit?.oid, unmappedLine)
 
   return when (sideBias) {
     Side.LEFT -> mapOriginalLine() ?: mapLine()

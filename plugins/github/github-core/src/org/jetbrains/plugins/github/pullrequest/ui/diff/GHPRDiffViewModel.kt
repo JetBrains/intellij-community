@@ -250,11 +250,14 @@ private fun mapThreadToChange(
   val isVisible = threadData.isVisible(viewOption)
   val diffData = changeVm.diffData ?: return GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, null)
   val sideToRange = threadData.mapToRange(diffData) ?: return GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, null)
-  val location = if (sideToRange.second.let { it.first == it.last }) {
-    GHPRReviewCommentLocation.SingleLine(sideToRange.first, sideToRange.second.first)
+  val startLineLocation = sideToRange.first
+  val endLineLocation = sideToRange.second
+  val location = if (sideToRange.let { startLineLocation.second == endLineLocation.second }) {
+    GHPRReviewCommentLocation.SingleLine(endLineLocation.first, startLineLocation.second)
   }
   else {
-    GHPRReviewCommentLocation.MultiLine(sideToRange.first, sideToRange.second.first, sideToRange.second.last)
+    GHPRReviewCommentLocation.MultiLine(startLineLocation.first, startLineLocation.second,
+                                        endLineLocation.first, endLineLocation.second)
   }
   return GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, location)
 }

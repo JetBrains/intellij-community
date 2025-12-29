@@ -179,8 +179,7 @@ private class DiffEditorModel(
   override fun requestNewComment(lineRange: LineRange) {
     val loc1 = lineToLocation(lineRange.start) ?: return
     val loc2 = lineToLocation(lineRange.end) ?: return
-    if (loc1.first != loc2.first) return
-    val loc = GHPRReviewCommentLocation.MultiLine(loc1.first, loc1.second, loc2.second)
+    val loc = GHPRReviewCommentLocation.MultiLine(loc1.first, loc1.second, loc2.first, loc2.second)
     diffVm.requestNewComment(loc, true)
   }
 
@@ -255,8 +254,8 @@ private class DiffEditorModel(
       if (!(newStart == null && newEnd == null)) {
         val range = range.value ?: return
         val newRange = LineRange(newStart ?: range.start, newEnd ?: range.end)
-        val startLoc = lineToLocation(newRange.start)?.second ?: return
-        val endLoc = lineToLocation(newRange.end)?.second ?: return
+        val startLoc = lineToLocation(newRange.start) ?: return
+        val endLoc = lineToLocation(newRange.end) ?: return
 
         vm.updateLineRange(startLoc, endLoc)
         vm.requestFocus()
@@ -278,7 +277,7 @@ private fun GHPRReviewCommentLocation.toLineRange(locationToLine: (DiffLineLocat
       locationToLine(loc.side to loc.lineIdx)?.let { LineRange(it, it) }
     }
     is GHPRReviewCommentLocation.MultiLine -> {
-      val start = locationToLine(loc.side to loc.startLineIdx) ?: return null
+      val start = locationToLine(loc.startSide to loc.startLineIdx) ?: return null
       val end = locationToLine(loc.side to loc.lineIdx) ?: return null
       LineRange(start, end)
     }

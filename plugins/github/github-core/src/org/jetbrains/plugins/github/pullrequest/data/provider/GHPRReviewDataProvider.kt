@@ -60,12 +60,15 @@ interface GHPRReviewDataProvider {
 
   suspend fun updateComment(commentId: String, newText: String): GHPullRequestReviewComment
 
-  suspend fun createThread(reviewId: String,
-                           body: String,
-                           line: Int,
-                           side: Side,
-                           startLine: Int,
-                           fileName: String): GHPullRequestReviewThread
+  suspend fun createThread(
+    reviewId: String,
+    body: String,
+    line: Int,
+    side: Side,
+    startLine: Int,
+    startSide: Side,
+    fileName: String,
+  ): GHPullRequestReviewThread
 
   suspend fun resolveThread(id: String): GHPullRequestReviewThread
 
