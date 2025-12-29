@@ -26,16 +26,29 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.LibraryId;
+import com.intellij.platform.workspace.jps.entities.LibraryTableId;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
 import com.intellij.testFramework.RunAll;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl;
+
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator;
+import org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource;
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase;
+import org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeFinalizerDataService;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetJavaVersion;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
@@ -506,6 +519,112 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  public void testLocalFileDepsImportedAsModuleLibraries_existingPath() throws Exception {
+    Registry.get("gradle.phased.sync.bridge.disabled").setValue(true, getTestRootDisposable());
+
+    var jarPath = "deps/dep.jar";
+    createProjectJarSubFile(jarPath);
+    var expectedPath = JpsPathUtil.getLibraryRootUrl(getProjectPath(jarPath));
+
+    String config = createBuildScriptBuilder()
+      .allprojects(p -> {
+        p
+          .withJavaPlugin()
+          .addImplementationDependency(p.code("files('" + jarPath + "')"));
+      })
+      .generate();
+
+    importProject(config);
+
+    assertModules("project", "project.main", "project.test");
+
+    var moduleLibDeps = getModuleLibDeps("project.main", "Gradle: dep.jar");
+    assertEquals("Should have a single module level dependency", 1, moduleLibDeps.size());
+
+    var libDep = moduleLibDeps.getFirst();
+    assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
+    assertEquals("URLs must be in the correct format", expectedPath, libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
+
+    // Try another import attempt and make sure it doesn't throw anything
+    importProject();
+    assertModules("project", "project.main", "project.test");
+
+    moduleLibDeps = getModuleLibDeps("project.main", "Gradle: dep.jar");
+    assertEquals("Should have a single module level dependency", 1, moduleLibDeps.size());
+
+    libDep = moduleLibDeps.getFirst();
+    assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
+    assertEquals("URLs must be in the correct format", expectedPath, libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
+    ((LibraryBridgeImpl) libDep.getLibrary()).getLibrarySnapshot$intellij_platform_projectModel_impl().getLibraryEntity().getEntitySource();
+
+    // Try another import attempt and make sure it doesn't throw anything
+    importProject();
+    assertModules("project", "project.main", "project.test");
+
+    moduleLibDeps = getModuleLibDeps("project.main", "Gradle: dep.jar");
+    assertEquals("Should have a single module level dependency", 1, moduleLibDeps.size());
+
+    libDep = moduleLibDeps.getFirst();
+    assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
+    assertEquals("URLs must be in the correct format", expectedPath, libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
+  }
+
+  @Test
+  public void testLocalFileDepsImportedAsModuleLibraries_nonExistentPath() throws Exception {
+    Registry.get("gradle.phased.sync.bridge.disabled").setValue(true, getTestRootDisposable());
+
+    var jarPath = "deps/dep.jar";
+    var expectedPath = JpsPathUtil.getLibraryRootUrl(getProjectPath(jarPath));
+    var expectedLibraryId = new LibraryId("Gradle: dep.jar",
+                                          new LibraryTableId.ModuleLibraryTableId(new ModuleId("project.main")));
+
+
+    String config = createBuildScriptBuilder()
+      .allprojects(p -> {
+        p
+          .withJavaPlugin()
+          .addImplementationDependency(p.code("files('" + jarPath + "')"));
+      })
+      .generate();
+
+      importProject(config);
+
+      assertModules("project", "project.main", "project.test");
+
+      var moduleLibDeps = getModuleLibDeps("project.main", "Gradle: dep.jar");
+      assertEquals("Should have a single module level dependency", 1, moduleLibDeps.size());
+
+      var libDep = moduleLibDeps.getFirst();
+      assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
+      assertEquals("URLs must be in the correct format", expectedPath, libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
+
+      var libraryEntity = WorkspaceModel.getInstance(getMyProject()).getCurrentSnapshot().resolve(expectedLibraryId);
+      assertNotNull("Library entity must exists", libraryEntity);
+      assertTrue("Library entity source must be from data services",
+                 (libraryEntity.getEntitySource()) instanceof GradleEntitySource
+                 && ((GradleEntitySource) libraryEntity.getEntitySource()).getPhase() == GradleSyncPhase.DATA_SERVICES_PHASE
+      );
+
+      // Try another import attempt and make sure it doesn't throw anything
+      importProject();
+      assertModules("project", "project.main", "project.test");
+
+      moduleLibDeps = getModuleLibDeps("project.main", "Gradle: dep.jar");
+      assertEquals("Should have a single module level dependency", 1, moduleLibDeps.size());
+
+      libDep = moduleLibDeps.getFirst();
+      assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
+      assertEquals("URLs must be in the correct format", expectedPath, libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
+
+      libraryEntity = WorkspaceModel.getInstance(getMyProject()).getCurrentSnapshot().resolve(expectedLibraryId);
+      assertNotNull("Library entity must exists", libraryEntity);
+      assertTrue("Library entity source must be from data services",
+                 (libraryEntity.getEntitySource()) instanceof GradleEntitySource
+                 && ((GradleEntitySource) libraryEntity.getEntitySource()).getPhase() == GradleSyncPhase.DATA_SERVICES_PHASE
+      );
+  }
+
+  @Test
   public void testProjectWithUnresolvedDependency() throws Exception {
     final VirtualFile depJar = createProjectJarSubFile("lib/dep/dep/1.0/dep-1.0.jar");
     createProjectSubFile("lib/dep/dep/1.0/dep-1.0.pom", """
@@ -786,8 +905,10 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
               task.code("from sourceSets.test.output");
               return null;
             })
-            .addPostfix("artifacts { tests testJar }")
-            .addPostfix("assemble.dependsOn(testJar)")
+            .addPostfix("artifacts {",
+                        "    tests testJar",
+                        "    archives testJar",
+                        "}")
             .addTestImplementationDependency("junit:junit:4.11");
         })
         .project(":impl", it -> {
@@ -1198,8 +1319,10 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
               task.code("from project.sourceSets.test.output");
               return null;
             })
-            .addPostfix("artifacts { tests testJar }")
-            .addPostfix("assemble.dependsOn(testJar)")
+            .addPostfix("artifacts {",
+                        "    tests testJar",
+                        "    archives testJar",
+                        "}")
             .addTestImplementationDependency("junit:junit:4.11");
         })
         .project(":project2", it -> {
@@ -2017,6 +2140,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  @TargetVersions("4.6+")
   public void testAnnotationProcessorDependencies() throws Exception {
     var lombok = "org.projectlombok:lombok:1.16.2";
     importProject(script(it -> {
