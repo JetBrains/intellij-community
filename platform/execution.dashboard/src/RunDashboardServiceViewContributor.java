@@ -193,6 +193,11 @@ public final class RunDashboardServiceViewContributor
     }
 
     @Override
+    public String getUniqueId() {
+      return String.valueOf(myNode.getService().getUuid().getUid());
+    }
+
+    @Override
     public JComponent getContentComponent() {
       Project project = myNode.getProject();
 
