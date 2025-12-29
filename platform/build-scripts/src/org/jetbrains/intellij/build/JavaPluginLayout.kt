@@ -61,7 +61,7 @@ object JavaPluginLayout {
         "intellij.java.structureView",
         "intellij.java.manifest",
         "intellij.java.remoteServers.impl",
-        "intellij.uiDesigner",
+        //"intellij.uiDesigner",
         "intellij.java.analysis.impl",
         "intellij.jvm.analysis.impl",
         "intellij.jvm.analysis.quickFix",

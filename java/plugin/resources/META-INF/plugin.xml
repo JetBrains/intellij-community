@@ -56,6 +56,7 @@
 
     <module name="intellij.java.copyright"/>
     <module name="intellij.java.promo"/>
+    <module name="intellij.uiDesigner" loading="embedded"/>
   </content>
 
   <depends optional="true" config-file="intellij.java.remoteServers.impl.xml">com.intellij.modules.remoteServers</depends>
