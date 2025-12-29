@@ -1,4 +1,4 @@
-// "EXPECTED-SUGGESTION": libs.my.library.aaa, libs.my.library.bbb
+// "EXPECTED-SUGGESTION": my.library.aaa, my.library.bbb
 // "SUGGESTION-INDEX-TO-APPLY": 0
 // "COMPLETION-RESULT-PATH": build.gradle.after.kts
 // FILE: build.gradle.kts

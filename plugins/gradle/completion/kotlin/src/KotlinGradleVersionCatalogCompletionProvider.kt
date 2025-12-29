@@ -20,17 +20,18 @@ internal class KotlinGradleVersionCatalogCompletionProvider : CompletionProvider
         if (input.isBlank()) return
         val module = findModuleForPsiElement(element) ?: return
         val versionCatalogs = getVersionCatalogFiles(module)
+        val unmodifiableInput = input.substringBeforeLastOrNull(".")
 
         if (input.contains('.')) {
             // libs.juni<caret>
             val (catalogName, entryPath) = input.split('.', limit = 2)
             val virtualFile = versionCatalogs[catalogName] ?: return
-            addLookupForCatalogEntries(result, catalogName, virtualFile, entryPath, element)
+            addLookupForCatalogEntries(result, catalogName, virtualFile, entryPath, unmodifiableInput, element)
         } else {
             // lib<caret>, junit<caret>, versions.juni<caret>
             addLookupForCatalogNames(versionCatalogs, input, result)
             versionCatalogs.entries.forEach { (catalogName, catalogFile) ->
-                addLookupForCatalogEntries(result, catalogName, catalogFile, input, element)
+                addLookupForCatalogEntries(result, catalogName, catalogFile, input, unmodifiableInput, element)
             }
         }
     }
@@ -64,15 +65,25 @@ private fun addLookupForCatalogEntries(
     catalogName: String,
     catalogVirtualFile: VirtualFile,
     entryPath: String,
+    unmodifiableInput: String?,
     element: PsiElement
 ) {
     val catalogPsiFile = element.manager.findFile(catalogVirtualFile) ?: return
     val entries = findVersionCatalogEntriesMatching(catalogPsiFile, entryPath)
     val lookup = entries.map {
         val fullReference = "$catalogName.${it.pathForBuildScript}"
-        LookupElementBuilder.create(fullReference)
+        val toReplaceInput = when (unmodifiableInput) {
+            null -> fullReference
+            else -> fullReference.substringAfter("$unmodifiableInput.")
+        }
+        LookupElementBuilder.create(toReplaceInput)
             .withIcon(GradleIcons.GradleFile)
-            .withInsertHandler(DotQualifiedExpressionInsertHandler)
+            .withTypeText("Entry in `$catalogName` version catalog")
     }
     result.addAllElements(lookup)
+}
+
+private fun String.substringBeforeLastOrNull(delimiter: String): String? {
+    val index = lastIndexOf(delimiter)
+    return if (index == -1) null else substring(0, index)
 }
