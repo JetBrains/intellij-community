@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
@@ -9,15 +9,10 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
-
-import static com.intellij.workspaceModel.ide.legacyBridge.impl.java.JavaModuleTypeUtils.JAVA_MODULE_ENTITY_TYPE_ID_NAME;
 
 public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   public static ModuleType<?> getModuleType() {
@@ -27,10 +22,14 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   public static final String JAVA_GROUP = "Java";
   public static final String BUILD_TOOLS_GROUP = "Build Tools";
 
+  public static final String JAVA_MODULE_ENTITY_TYPE_ID_NAME = "JAVA_MODULE";
+
+  @ApiStatus.Internal
   public JavaModuleType() {
     this(JAVA_MODULE_ENTITY_TYPE_ID_NAME);
   }
 
+  @ApiStatus.Internal
   protected JavaModuleType(@NonNls String id) {
     super(id);
   }

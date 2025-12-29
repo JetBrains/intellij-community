@@ -51,7 +51,7 @@
     <orderEntry type="module" module-name="intellij.platform.structureView.impl" />
     <orderEntry type="module" module-name="intellij.platform.usageView.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.oro.matcher" />
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module" module-name="intellij.java.rt" />

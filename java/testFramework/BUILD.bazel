@@ -67,6 +67,7 @@ jvm_library(
     "//java/testFramework/backend",
   ],
   exports = [
+    "//java/openapi:java",
     "//java/testFramework/shared",
     "//platform/util",
     "//platform/lang-api:lang",

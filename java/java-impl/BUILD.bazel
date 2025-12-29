@@ -112,6 +112,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
   ],
   exports = [
+    "//java/openapi:java",
     "//platform/lang-impl",
     "//java/java-psi-impl:psi-impl",
     "//java/java-frontback-impl:frontback-impl",
@@ -226,6 +227,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
   ],
   exports = [
+    "//java/openapi:java",
     "//platform/lang-impl",
     "//java/java-psi-impl:psi-impl",
     "//java/java-frontback-impl:frontback-impl",
