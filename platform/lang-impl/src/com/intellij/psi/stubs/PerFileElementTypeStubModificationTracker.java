@@ -111,7 +111,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
 
   // TODO optimization: if nobody asked for a modification tracker of fileElementType, we don't have to count stub changes for it then.
   //    Hence precise check for such fileElementTypes can be omitted.
-  public Long getModificationStamp(@NotNull IFileElementType fileElementType) {
+  public long getModificationStamp(@NotNull IFileElementType fileElementType) {
     return myModCounts.getOrDefault(fileElementType, 0L);
   }
 
