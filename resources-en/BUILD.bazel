@@ -2,6 +2,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
+  name = "java-resources-en_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
   name = "java-resources-en_test_resources",
   srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
@@ -11,6 +17,7 @@ jvm_library(
   name = "java-resources-en",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  resources = [":java-resources-en_resources"],
   runtime_deps = ["//platform/backend"]
 )
 

@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <extensions defaultExtensionNs="com.intellij">
     <javaModuleSystem implementation="com.intellij.java.codeserver.core.JavaPlatformModuleSystem"/>
     <applicationService serviceInterface="com.intellij.psi.JavaModuleGraphHelper"

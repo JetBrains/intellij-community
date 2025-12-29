@@ -293,6 +293,7 @@ jvm_library(
   runtime_deps = [
     ":main",
     "//java/java-tests:tests_test_lib",
+    "//java/idea-ui:ui-tests_test_lib",
     "//plugins/junit/java-tests:java-tests_test_lib",
     "//jvm/jvm-analysis-java-tests:analysis-java-tests_test_lib",
     "//plugins/svn4idea:vcs-svn-tests_test_lib",

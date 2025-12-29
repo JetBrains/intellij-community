@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<idea-plugin  visibility="public">
+  <dependencies>
+    <module name="intellij.java.compiler"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.java"/>
+    <module name="intellij.platform.ide.impl"/>
+    <!--<module name="intellij.java.rt"/>-->
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.jsp"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.analysis.impl"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.xml.psi"/>
+    <!--<plugin id="com.intellij.java"/>-->
+
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+
+  </dependencies>
+</idea-plugin>

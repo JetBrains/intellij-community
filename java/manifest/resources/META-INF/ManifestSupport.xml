@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.manifest.parser.provider" interface="org.jetbrains.lang.manifest.header.HeaderParserProvider" dynamic="true"/>
   </extensionPoints>

@@ -27,6 +27,7 @@ jvm_library(
     "//java/java-indexing-api:indexing",
     "//java/codeserver/core",
     "//java/java-frontback-impl:frontback-impl",
-  ]
+  ],
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.java.codeserver.highlighting` end

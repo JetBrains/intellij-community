@@ -38,6 +38,9 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt",
     ":plugins_IntelliLang_backend_provided",
   ],
-  runtime_deps = ["//java/langInjection/jps"]
+  runtime_deps = [
+    "//java/langInjection/jps",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.java.langInjection` end

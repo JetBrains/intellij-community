@@ -1,7 +1,8 @@
 <idea-plugin>
   <dependencies>
     <module name="intellij.platform.langInjection"/>
-    <module name="intellij.platform.backend"/>
+    <!--todo temporary disabled-->
+    <!--<module name="intellij.platform.backend"/>-->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <jps.plugin/>

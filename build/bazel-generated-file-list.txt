@@ -303,6 +303,7 @@ java/ide-resources
 java/idea-ui
 java/java-analysis-api
 java/java-analysis-impl
+java/java-backend
 java/java-copyright
 java/java-features-trainer
 java/java-frontback-impl

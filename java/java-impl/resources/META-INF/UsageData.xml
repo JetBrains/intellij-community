@@ -25,6 +25,8 @@
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
   </projectListeners>
 
+
+  <resource-bundle>messages.ActionsBundle</resource-bundle>
   <actions>
     <action internal="true" id="LibraryUsageStatistics" class="com.intellij.internal.statistic.libraryUsage.LibraryUsageStatisticsAction"/>
     <action internal="true"

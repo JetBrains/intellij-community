@@ -1,23 +1,30 @@
 <!--suppress PluginXmlRegistrationCheck -->
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <module value="com.intellij.modules.java"/>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="public">
 
   <xi:include href="/META-INF/RegistryKeys.xml"/>
 
-  <xi:include href="/idea/JavaActions.xml"/>
+  <xi:include href="/META-INF/Intentions.xml"/>
 
-  <xi:include href="/META-INF/JavaIndexingPlugin.xml"/>
-  <xi:include href="/META-INF/JavaCodeServerCore.xml"/>
-  <xi:include href="/META-INF/JavaCodeServerHighlighting.xml"/>
+  <xi:include href="/META-INF/JavaActions.xml"/>
+
+
+  <!--<xi:include href="/META-INF/JavaIndexingPlugin.xml"/>-->
+  <!--<xi:include href="/META-INF/JavaCodeServerCore.xml"/>-->
+  <!--<xi:include href="/META-INF/JavaCodeServerHighlighting.xml"/>-->
   <xi:include href="/META-INF/JavaAnalysisPlugin.xml"/>
   <xi:include href="/META-INF/IntentionPowerPack.xml"/>
-  <xi:include href="/META-INF/Intentions.xml"/>
   <xi:include href="/META-INF/InspectionGadgets.xml"/>
   <xi:include href="/META-INF/Inspections.xml"/>
-  <xi:include href="/META-INF/ManifestSupport.xml"/>
-  <xi:include href="/META-INF/TypeMigration.xml"/>
-  <xi:include href="/META-INF/UsageData.xml"/>
-  <xi:include href="/META-INF/java-debugger.xml"/>
+  <!--<xi:include href="/META-INF/ManifestSupport.xml">-->
+    <!--<xi:fallback/>-->
+  <!--</xi:include>-->
+  <!--<xi:include href="/META-INF/TypeMigration.xml">-->
+    <!--<xi:fallback/>-->
+  <!--</xi:include>-->
+  <!--<xi:include href="/META-INF/UsageData.xml">-->
+  <!--  <xi:fallback/>-->
+  <!--</xi:include>-->
+  <!--<xi:include href="/META-INF/java-debugger.xml"/>-->
 
   <projectListeners>
     <listener class="com.intellij.lang.java.JavaModuleRenameListener" topic="com.intellij.openapi.project.ModuleListener"/>
@@ -288,6 +295,16 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+
+    <indexingFlavor filetype="JAVA" implementationClass="com.intellij.index.JavaFileIndexingFlavor"/>
+    <indexingFlavor filetype="CLASS" implementationClass="com.intellij.index.ClassFileIndexingFlavor"/>
+    <indexingFlavor filetype="kotlin_builtins" implementationClass="com.intellij.index.KtBuiltInFileIndexingFlavorProvider"/>
+
+    <moduleService serviceInterface="com.intellij.openapi.roots.ModulePackageIndex"
+                   serviceImplementation="com.intellij.openapi.roots.impl.ModulePackageIndexImpl"/>
+
+    <implicitToStringSearch implementation="com.intellij.psi.impl.search.ImplicitToStringSearcher"/>
+
     <filetype.stubBuilder filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>
     <filetype.decompiler filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileDecompiler"/>
     <fileType.fileViewProviderFactory filetype="CLASS" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
@@ -987,9 +1004,9 @@
     <dom.customAnnotationChecker implementation="com.intellij.util.xml.impl.ExtendsClassChecker"/>
     <codeInsight.surroundWithRangeAdjuster implementation="com.intellij.codeInsight.generation.surroundWith.XmlSurroundWithRangeAdjuster"/>
     <liveTemplateSubstitutor implementation="com.intellij.codeInsight.template.impl.JavaTemplateSubstitutor"/>
-    <defaultLiveTemplates file="liveTemplates/Java"/>
-    <defaultLiveTemplates file="liveTemplates/JavaImplicitClass"/>
-    <defaultLiveTemplates file="liveTemplates/JavaNormalClassesWithInstanceMain"/>
+    <defaultLiveTemplates file="liveTemplates/Java" useParentLoader="true"/>
+    <defaultLiveTemplates file="liveTemplates/JavaImplicitClass" useParentLoader="true"/>
+    <defaultLiveTemplates file="liveTemplates/JavaNormalClassesWithInstanceMain" useParentLoader="true"/>
     <treeStructureProvider id="ClassesTreeStructureProvider" implementation="com.intellij.ide.projectView.impl.ClassesTreeStructureProvider"
                            order="last, after NestingTreeStructureProvider"/>
     <importFilteringRule implementation="com.intellij.usages.impl.rules.ImportFilteringRule"/>

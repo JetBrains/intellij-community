@@ -31,6 +31,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/execution",
   ],
-  exports = ["//platform/xdebugger-api:debugger"]
+  exports = ["//platform/xdebugger-api:debugger"],
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.java.debugger` end

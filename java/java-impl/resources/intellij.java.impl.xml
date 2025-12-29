@@ -1,0 +1,51 @@
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <dependencies>
+
+    <plugin id="com.intellij.modules.xml"/>
+
+
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.java"/>
+    <module name="intellij.xml.impl"/>
+    <!--todo check, looks suspicious-->
+    <!--<module name="intellij.java.rt"/>-->
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.jsp"/>
+    <module name="intellij.jsp.spi"/>
+    <module name="intellij.java.execution"/>
+    <module name="intellij.xml.dom.impl"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.java.frontback.impl"/>
+    <module name="intellij.regexp"/>
+    <module name="intellij.java.indexing.impl"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.analysis.impl"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.java.structureView"/>
+    <module name="intellij.spellchecker"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.java.compiler"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.bookmarks.backend"/>
+    <module name="intellij.platform.todo.backend"/>
+    <module name="intellij.java.codeserver.highlighting"/>
+    <module name="intellij.java.codeserver.core"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.java.psi"/>
+
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+  </dependencies>
+
+  <xi:include href="/META-INF/UsageData.xml"/>
+
+
+</idea-plugin>

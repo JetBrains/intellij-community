@@ -1,11 +1,18 @@
 ### auto-generated section `build intellij.platform.uast.ide` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "ide_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "ide",
   module_name = "intellij.platform.uast.ide",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide_resources"],
   deps = [
     "//platform/core-api:core",
     "//platform/core-impl",
@@ -16,6 +23,7 @@ jvm_library(
     "//uast/uast-common:uast",
     "@lib//:kotlin-stdlib",
     "//libraries/stream",
-  ]
+  ],
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.platform.uast.ide` end

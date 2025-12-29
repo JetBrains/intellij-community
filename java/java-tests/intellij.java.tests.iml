@@ -83,6 +83,7 @@
     <orderEntry type="module" module-name="intellij.jvm.analysis.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.coverage" exported="" />
+    <orderEntry type="module" module-name="intellij.java.backend" exported="" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.databind" scope="TEST" />
@@ -137,5 +138,6 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.java.testFramework.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.live.templates" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.copyright" scope="TEST" />
   </component>
 </module>

@@ -93,6 +93,8 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "//plugins/kotlin/base/scripting/scripting.shared",
+    "//java/debugger/shared",
+    "//java/debugger/backend",
   ],
   runtime_deps = [":kotlin-jvm-debugger-test"]
 )

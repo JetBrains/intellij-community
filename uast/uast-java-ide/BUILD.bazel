@@ -1,11 +1,18 @@
 ### auto-generated section `build intellij.java.uast.ide` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "java-uast-ide_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "java-uast-ide",
   module_name = "intellij.java.uast.ide",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":java-uast-ide_resources"],
   deps = [
     "//java/java-impl:impl",
     "//platform/analysis-api:analysis",

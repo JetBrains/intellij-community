@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="public">
+  <dependencies>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.java"/>
+    <module name="intellij.platform.structuralSearch"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.impl.refactorings"/>
+    <module name="intellij.java.codeserver.highlighting"/>
+
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+
+  </dependencies>
+
+  <xi:include href="/META-INF/TypeMigration.xml"/>
+</idea-plugin>

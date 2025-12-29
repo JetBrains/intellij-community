@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="com.intellij.java.backend" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.java.syntax" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.psi" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.psi.impl" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.frontback.impl" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.indexing" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.uast" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.uast.ide" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.uast" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.compiler" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.analysis" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.resources" exported="" />
+    <orderEntry type="module" module-name="intellij.java.execution" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jsp" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.resources.en" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.debugger" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.codeserver.core" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.codeserver.highlighting" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jsp.spi" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.indexing.impl" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.analysis.impl" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.structureView" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.impl" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.impl.refactorings" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.compiler.impl" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.impl.inspections" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis.refactoring" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis.quickFix" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.uiDesigner" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.ui" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl.backend" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.debugger.memory.agent" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.uast.ide" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
+  </component>
+</module>

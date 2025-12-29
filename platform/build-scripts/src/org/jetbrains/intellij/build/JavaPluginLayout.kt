@@ -31,50 +31,6 @@ object JavaPluginLayout {
         spec.withModule(moduleName, "javac2.jar")
       }
 
-      // api modules
-      spec.withModules(listOf(
-        "intellij.java.compiler",
-        "intellij.java.debugger",
-        "intellij.java.execution",
-        "intellij.java.execution.impl.shared",
-        "intellij.java.remoteServers",
-        "intellij.java.analysis",
-        "intellij.jvm.analysis",
-        "intellij.java.indexing",
-        "intellij.java",
-        "intellij.jsp",
-        "intellij.platform.uast",
-        "intellij.platform.uast.ide",
-        "intellij.java.uast.ide",
-      ))
-
-      spec.withModules(listOf(
-        "intellij.java.codeserver.core",
-        "intellij.java.codeserver.highlighting",
-        "intellij.java.compiler.impl",
-        "intellij.java.debugger.impl",
-        "intellij.java.terminal",
-        "intellij.java.debugger.memory.agent",
-        "intellij.java.execution.impl",
-        "intellij.java.execution.impl.backend",
-        "intellij.java.execution.impl.frontend",
-        "intellij.java.structureView",
-        "intellij.java.manifest",
-        "intellij.java.remoteServers.impl",
-        //"intellij.uiDesigner",
-        "intellij.java.analysis.impl",
-        "intellij.jvm.analysis.impl",
-        "intellij.jvm.analysis.quickFix",
-        "intellij.jvm.analysis.refactoring",
-        "intellij.java.indexing.impl",
-        "intellij.java.impl",
-        "intellij.java.impl.inspections",
-        "intellij.java.impl.refactorings",
-        "intellij.jsp.spi",
-        "intellij.java.uast",
-        "intellij.java.typeMigration",
-      ))
-
       spec.withModuleLibrary("debugger-agent", "intellij.java.debugger.agent.holder", "rt")
 
       spec.withProjectLibrary("Eclipse", "ecj")

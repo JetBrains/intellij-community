@@ -27,7 +27,10 @@
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="intellij.java.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java.backend" exported="" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java" exported="" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.debugger.streams.core.testFramework" scope="TEST" />

@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+<idea-plugin allow-bundled-update="true">
   <id>com.intellij.java</id>
   <name>Java</name>
   <description><![CDATA[
@@ -22,49 +22,82 @@
     <module name="intellij.regexp"/>
   </dependencies>
 
-  <xi:include href="/META-INF/JavaPlugin.xml"/>
+  <module value="com.intellij.modules.java"/>
 
   <content namespace="jetbrains">
-    <module name="intellij.java.ui" loading="embedded"/>
-
-    <module name="intellij.java.structuralSearch"/>
-    <module name="intellij.java.featuresTrainer"/>
-    <module name="intellij.java.performancePlugin"/>
-    <module name="intellij.java.unscramble"/>
-    <module name="intellij.java.vcs"/>
-    <module name="intellij.java.terminal"/>
-    <module name="intellij.jvm.analysis.impl"/>
-    <module name="intellij.java.debugger.impl.frontend"/>
-    <module name="intellij.java.debugger.impl.backend"/>
-    <module name="intellij.java.execution.impl.frontend"/>
-    <module name="intellij.java.execution.impl.backend"/>
+    <module name="intellij.java.syntax" loading="embedded"/>
     <module name="intellij.java.frontback.psi" loading="embedded"/>
     <module name="intellij.java.frontback.psi.impl" loading="embedded"/>
+    <module name="intellij.java.psi" loading="embedded"/>
+    <module name="intellij.java.psi.impl" loading="embedded"/>
     <module name="intellij.java.frontback.impl" loading="embedded"/>
+
+    <module name="intellij.java.indexing" loading="embedded"/>
+    <module name="intellij.platform.uast" loading="embedded"/>
+    <module name="intellij.platform.uast.ide" loading="embedded"/>
+    <module name="intellij.java.uast" loading="embedded"/>
+    <module name="intellij.java.compiler" loading="embedded"/>
+    <module name="intellij.java.analysis" loading="embedded"/>
+    <module name="intellij.java" loading="embedded"/>
+    <module name="intellij.java.resources" loading="embedded"/>
+    <module name="intellij.java.execution" loading="embedded"/>
+    <module name="intellij.java.remoteServers"  loading="embedded"/>
+    <module name="intellij.jvm.analysis" loading="embedded"/>
+    <module name="intellij.jsp" loading="embedded"/>
+    <module name="intellij.java.resources.en" loading="embedded"/>
+    <module name="intellij.java.debugger" loading="embedded"/>
+    <module name="intellij.java.codeserver.core" loading="embedded"/>
+    <module name="intellij.java.codeserver.highlighting" loading="embedded"/>
+
+    <module name="intellij.jsp.spi" loading="embedded"/>
+    <module name="intellij.java.indexing.impl" loading="embedded"/>
+    <module name="intellij.java.analysis.impl" loading="embedded"/>
+    <module name="intellij.java.structureView" loading="embedded"/>
+
+    <module name="intellij.java.impl" loading="embedded"/>
+    <module name="intellij.java.impl.refactorings" loading="embedded"/>
+    <module name="intellij.java.compiler.impl" loading="embedded"/>
+    <module name="intellij.java.typeMigration" loading="embedded"/>
+    <module name="intellij.java.impl.inspections" loading="embedded"/>
+    <module name="intellij.jvm.analysis.refactoring" loading="embedded"/>
+    <module name="intellij.jvm.analysis.quickFix" loading="embedded"/>
+    <module name="intellij.uiDesigner" loading="embedded"/>
+    <module name="intellij.java.manifest" loading="embedded"/>
+    <module name="intellij.java.ui" loading="embedded"/>
+    <module name="intellij.java.execution.impl" loading="embedded"/>
+    <module name="intellij.java.debugger.impl" loading="embedded"/>
+    <module name="intellij.java.debugger.memory.agent" loading="embedded"/>
+    <module name="intellij.java.remoteServers.impl" loading="embedded"/>
+    <module name="intellij.java.uast.ide"  loading="embedded"/>
+    <module name="intellij.java.backend" loading="embedded"/>
+
+
+    <!--todo check dependencies-->
     <module name="intellij.java.debugger.impl.shared" loading="embedded"/>
     <module name="intellij.java.execution.impl.shared" loading="embedded"/>
-    <module name="intellij.java.syntax" loading="embedded"/>
-    <module name="intellij.java.psi.impl" loading="embedded"/>
-    <module name="intellij.java.psi" loading="embedded"/>
+    <module name="intellij.java.structuralSearch"/>
+    <module name="intellij.java.featuresTrainer"/>
+    <module name="intellij.java.performancePlugin" loading="optional"/>
+    <module name="intellij.java.unscramble"/>
+    <module name="intellij.java.vcs"/>
+    <module name="intellij.java.terminal" loading="optional"/>
+    <module name="intellij.jvm.analysis.impl" loading="embedded"/>
+    <module name="intellij.java.debugger.impl.frontend" loading="embedded"/>
+    <module name="intellij.java.debugger.impl.backend" loading="embedded"/>
+    <module name="intellij.java.execution.impl.frontend" loading="embedded"/>
+    <module name="intellij.java.execution.impl.backend" loading="embedded"/>
+    <module name="intellij.java.ultimate.icons" loading="optional"/>
     <module name="intellij.java.langInjection"/>
     <module name="intellij.java.langInjection.jps"/>
+    <module name="intellij.java.duplicates"/>
     <module name="intellij.java.duplicates.analysis"/>
     <module name="intellij.java.duplicatesDetection"/>
     <module name="intellij.java.jam.impl"/>
+    <module name="intellij.java.jam"/>
     <module name="intellij.profiler.ultimate"/>
     <module name="intellij.jvm.dfa.analysis.ui"/>
-
     <module name="intellij.java.copyright"/>
     <module name="intellij.java.promo"/>
-    <module name="intellij.uiDesigner" loading="embedded"/>
-    <module name="intellij.java.ultimate.icons" loading="optional"/>
+    <module name="intellij.debugger.streams.shared" loading="required"/>
   </content>
-
-  <depends optional="true" config-file="intellij.java.remoteServers.impl.xml">com.intellij.modules.remoteServers</depends>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <moduleType id="JAVA_MODULE" classpathProvider="true" implementationClass="com.intellij.openapi.module.JavaModuleType"/>
-    <moduleType id="GENERAL_MODULE" implementationClass="com.intellij.ide.projectWizard.GeneralModuleTypeForIdea"/>
-    <newProjectWizard.generator implementation="com.intellij.ide.wizard.language.EmptyProjectGeneratorNewProjectWizard"/>
-  </extensions>
 </idea-plugin>

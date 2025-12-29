@@ -26,9 +26,18 @@ jvm_library(
     "//libraries/stream",
     "//java/debugger/impl",
     "//platform/xdebugger-impl:debugger-impl",
+    "//java/java-backend:backend",
     "//java/openapi:java",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
+  ],
+  exports = [
+    "//java/java-backend:backend",
+    "//java/openapi:java",
+  ],
+  runtime_deps = [
+    "//java/debugger/frontend",
+    "//java/debugger/backend",
   ]
 )
 
@@ -60,11 +69,16 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl_test_lib",
     "//java/execution/openapi:java-execution",
     "//java/testFramework",
+    "//java/java-backend:backend",
     "//java/openapi:java",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//plugins/stream-debugger-core/testFramework",
     "//platform/util/coroutines",
+  ],
+  exports = [
+    "//java/java-backend:backend",
+    "//java/openapi:java",
   ]
 )
 ### auto-generated section `build intellij.java.debugger.streams` end

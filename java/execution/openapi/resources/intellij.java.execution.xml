@@ -1,0 +1,17 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.resources"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.core.ui"/>
+
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+
+  </dependencies>
+</idea-plugin>

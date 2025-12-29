@@ -1,4 +1,11 @@
-<idea-plugin>
+<!--todo preserve just for compatibility-->
+<!--DON'T EDIT-->
+<!--PLANNED TO REMOVE-->
+<!--suppress ModuleNotRegisteredAsPluginContent -->
+<idea-plugin visibility="public">
+
+
+  <resource-bundle>messages.ActionsBundle</resource-bundle>
   <actions>
     <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirAction"
             icon="AllIcons.Actions.ModuleDirectory">
@@ -384,6 +391,9 @@
 
     <group id="JavaCompileGroup">
       <separator/>
+      <reference ref="ToggleMethodBreakpoint"/>
+      <reference ref="ToggleFieldBreakpoint"/>
+
       <add-to-group group-id="ProjectViewCompileGroup" anchor="first"/>
       <add-to-group group-id="StructureViewCompileGroup" anchor="first"/>
     </group>
@@ -408,7 +418,8 @@
       <add-to-group group-id="UsageGroupingActionGroup"/>
     </action>
 
-    <action id="DevKit.Bootstrap" class="com.intellij.java.devkit.CreatePluginAction" icon="AllIcons.Nodes.Plugin">
+    <action id="DevKit.Bootstrap" class="com.intellij.java.devkit.CreatePluginAction"
+            icon="AllIcons.Nodes.Plugin">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
       <synonym key="action.DevKit.Bootstrap.synonym"/>
     </action>

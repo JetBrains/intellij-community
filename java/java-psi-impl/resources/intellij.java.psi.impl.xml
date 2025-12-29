@@ -1,4 +1,3 @@
-<!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
 <!--
   ~ Copyright 2000-2017 JetBrains s.r.o.
   ~
@@ -15,6 +14,14 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
+
+  <!--<dependencies>-->
+  <!--  <module name="intellij.java.syntax"/>-->
+  <!--  <module name="intellij.java.frontback.psi"/>-->
+  <!--  <module name="intellij.java.frontback.psi.impl"/>-->
+  <!--  <module name="intellij.java.psi"/>-->
+  <!--</dependencies>-->
+
   <extensionPoints>
     <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.codeStyle.ReferenceAdjuster" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
@@ -55,16 +62,6 @@
       <with attribute="implementationClass" implements="com.intellij.lang.jvm.JvmLanguageDumbAware"/>
     </extensionPoint>
 
-    <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin" interface="org.jetbrains.uast.UastLanguagePlugin" dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.uast.analysis.uastAnalysisPlugin"
-                    interface="org.jetbrains.uast.analysis.UastAnalysisPlugin"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.uast.generate.uastCodeGenerationPlugin"
-                    interface="org.jetbrains.uast.generate.UastCodeGenerationPlugin"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.uast.evaluation.uastEvaluatorExtension"
-                    interface="org.jetbrains.uast.evaluation.UEvaluatorExtension"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jvm.declarationSearcher" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.jvm.source.JvmDeclarationSearcher"/>
     </extensionPoint>
@@ -162,12 +159,6 @@
     <registryKey key="JDK8042508.bug.fixed" defaultValue="false"
                  description="Disable check for type variable until javac bug is fixed" />
 
-    <registryKey key="uast.evaluator.depth.limit" defaultValue="15"
-                 description="Maximal allowed depth for UAST TreeBasedEvaluator visitor"/>
-    <registryKey key="uast.evaluator.loop.iteration.limit" defaultValue="20"
-                 description="Maximal allowed iteration count for loop evaluation in the UAST TreeBasedEvaluator visitor"/>
-    <registryKey key="uast.references.by.usage" defaultValue="true"
-                 description="Enables UAST reference contributors that search for usages of variables in the opened file"/>
     <registryKey key="java.folding.icons.for.control.flow"
                  defaultValue="true"
                  description="Add folding icons to the gutter for control flow statements"/>
@@ -175,16 +166,6 @@
                  description="Capture in method reference return type is unsound, and the spec would be changed, see https://bugs.openjdk.org/browse/JDK-8170887"/>
     <registryKey key="ide.goto.implementation.show.interfaces" defaultValue="true"
                  description="Whether to show sub-interfaces when invoking the 'Go to Implementation' action (Ctrl+Alt+B) on an interface."/>
-  </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains.uast">
-    <uastLanguagePlugin implementation="org.jetbrains.uast.java.JavaUastLanguagePlugin"/>
-    <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.java.analysis.JavaUastAnalysisPlugin"/>
-    <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.java.generate.JavaUastCodeGenerationPlugin"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <registryKey defaultValue="30" description="UAST usages graph building depth limit" key="uast.usage.graph.default.recursion.depth.limit"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.jvm">

@@ -1,17 +1,25 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <dependencies>
+    <module name="intellij.java.remoteServers"/>
+    <module name="intellij.java.compiler.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.execution"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.java.debugger"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.platform.core.ui"/>
 
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.remoteServer.moduleBuilderContribution"
-                    interface="com.intellij.remoteServer.impl.module.CloudModuleBuilderContributionFactory"/>
-  </extensionPoints>
+    <plugin id="com.intellij.modules.remoteServers"/>
+    <plugin id="com.intellij.modules.java-capable"/>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher"
-                        serviceImplementation="com.intellij.remoteServer.impl.runtime.deployment.debug.JavaDebuggerLauncherImpl"/>
+  </dependencies>
 
-    <applicationService serviceInterface="com.intellij.remoteServer.configuration.deployment.JavaDeploymentSourceUtil"
-                        serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.JavaDeploymentSourceUtilImpl"/>
-    <remoteServer.deploymentSource.type implementation="com.intellij.remoteServer.impl.configuration.deployment.ArtifactDeploymentSourceType"/>
-    <moduleBuilder builderClass="com.intellij.remoteServer.impl.module.CloudModuleBuilder"/>
-  </extensions>
+  <xi:include href="/META-INF/Java-RemoteServer.xml"/>
+
 </idea-plugin>

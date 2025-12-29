@@ -1,11 +1,18 @@
 ### auto-generated section `build intellij.platform.uast` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "uast_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "uast",
   module_name = "intellij.platform.uast",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":uast_resources"],
   kotlinc_opts = "@community//:k11",
   deps = [
     "//java/java-psi-api:psi",

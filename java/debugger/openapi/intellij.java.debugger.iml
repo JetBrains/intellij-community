@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
   </component>
   <component name="copyright">
     <Base>

@@ -1,0 +1,8 @@
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <dependencies>
+    <module name="intellij.regexp"/>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+
+  <!--<xi:include href="/META-INF/JavaActions.xml"/>-->
+</idea-plugin>

@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <extensionPoints>
     <extensionPoint dynamic="true" qualifiedName="com.intellij.lang.java.javaErrorFilter" 
                     interface="com.intellij.java.codeserver.highlighting.JavaErrorFilter"/>

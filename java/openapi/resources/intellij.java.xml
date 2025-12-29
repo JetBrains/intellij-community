@@ -1,0 +1,22 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.xml.dom"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.analysis"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.xml.psi"/>
+
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+  </dependencies>
+</idea-plugin>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<idea-plugin visibility="public">
+  <dependencies>
+    <!--  <plugin id="com.intellij.java"/>-->
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+  </dependencies>
+</idea-plugin>

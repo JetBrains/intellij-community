@@ -63,6 +63,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
     "//java/java-analysis-api:analysis",
-  ]
+  ],
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.java` end

@@ -20,6 +20,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/util",
     "//platform/util/concurrency",
-  ]
+  ],
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.java.indexing` end

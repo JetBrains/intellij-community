@@ -35,6 +35,7 @@ jvm_library(
     "//java/compiler/impl",
     "//java/debugger/openapi:java-debugger",
     "//java/java-impl:impl",
+    "//java/java-backend:backend",
     "//platform/ide-core-impl",
     "//java/execution/impl",
     "//platform/editor-ui-ex:editor-ex",
@@ -72,6 +73,7 @@ jvm_library(
     "//platform/util",
     "//platform/lang-api:lang",
     "//java/java-impl:impl",
+    "//java/java-backend:backend",
   ],
   runtime_deps = [
     "//java/plugin",

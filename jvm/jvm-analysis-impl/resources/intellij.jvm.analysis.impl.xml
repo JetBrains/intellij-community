@@ -1,4 +1,20 @@
 <idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.jvm.analysis"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.jvm.analysis.refactoring"/>
+    <module name="intellij.java.impl.refactorings"/>
+    <module name="intellij.jvm.analysis.quickFix"/>
+    <module name="intellij.java.codeserver.core"/>
+
+    <module name="intellij.platform.backend"/>
+
+    <module name="intellij.platform.analysis" />
+
+  </dependencies>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.codeInsight.blockingMethodChecker"
                     interface="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodChecker" dynamic="true"/>
@@ -176,8 +192,6 @@
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"
                       key="inspection.empty.method.display.name" bundle="messages.JvmAnalysisBundle"/>
     <notificationGroup id="UAST" displayType="BALLOON" hideFromSettings="true"/>
-    <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
-                    serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>
 
     <inspectionCustomComponent implementation="com.intellij.codeInsight.options.JavaInspectionButtons"/>
 

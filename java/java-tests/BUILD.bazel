@@ -14,6 +14,7 @@ jvm_library(
   exports = [
     "//plugins/java-i18n",
     "//plugins/coverage",
+    "//java/java-backend:backend",
   ],
   runtime_deps = [
     "//platform/testFramework",
@@ -41,6 +42,7 @@ jvm_library(
     "//xml/xml-analysis-impl:analysis-impl",
     "//xml/xml-psi-impl:psi-impl",
     "//plugins/coverage",
+    "//java/java-backend:backend",
     "//libraries/stream",
     "//libraries/fastutil",
     "//platform/platform-impl:ide-impl",
@@ -148,6 +150,7 @@ jvm_library(
     "//platform/lvcs-impl:lvcs-impl_test_lib",
     "//plugins/coverage",
     "//plugins/coverage:coverage_test_lib",
+    "//java/java-backend:backend",
     "//platform/workspace/jps",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
@@ -207,12 +210,14 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt",
     "//java/testFramework/backend",
     "//plugins/groovy-live-templates",
+    "//java/java-copyright:copyright",
   ],
   exports = [
     "//plugins/java-i18n",
     "//plugins/java-i18n:java-i18n_test_lib",
     "//plugins/coverage",
     "//plugins/coverage:coverage_test_lib",
+    "//java/java-backend:backend",
   ],
   runtime_deps = [":tests"]
 )
