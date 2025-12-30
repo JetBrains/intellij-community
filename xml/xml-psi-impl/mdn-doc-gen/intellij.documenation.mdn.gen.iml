@@ -26,7 +26,7 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.javascript.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.angular" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.angular.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vuejs.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.javascript.web.tests" scope="TEST" />
