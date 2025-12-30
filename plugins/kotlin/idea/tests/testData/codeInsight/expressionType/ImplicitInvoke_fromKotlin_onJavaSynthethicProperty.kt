@@ -12,7 +12,7 @@ fun usage(fromJava: JavaClass<Foo>) {
 
 // K1_TYPE: value -> <html>Type is unknown</html>
 
-// K2_TYPE: value -> Foo!
+// K2_TYPE: value -> <b>Foo!</b>
 
 // FILE: dependency/JavaClass.java
 package dependency;
