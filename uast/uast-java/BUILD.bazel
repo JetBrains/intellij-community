@@ -20,6 +20,7 @@ jvm_library(
     "//uast/uast-common:uast",
     "@lib//:kotlin-stdlib",
     "//java/java-psi-impl:psi-impl",
+    "//platform/backend",
     "//platform/util",
   ],
   exports = ["//uast/uast-common:uast"]

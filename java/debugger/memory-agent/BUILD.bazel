@@ -15,6 +15,7 @@ jvm_library(
   resources = [":java-debugger-memory-agent_resources"],
   deps = [
     "//platform/util",
+    "//platform/backend",
     "@lib//:java-debugger-memory-agent-debugger-memory-agent",
     "@lib//:kotlin-stdlib",
   ]

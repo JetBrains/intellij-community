@@ -9,6 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.backend" />
     <orderEntry type="module-library">
       <library name="debugger-memory-agent" type="repository">
         <properties maven-id="org.jetbrains.intellij.deps:debugger-memory-agent:1.0.51">

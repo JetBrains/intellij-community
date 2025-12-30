@@ -16,9 +16,7 @@
 - name: lib/frontend-split/java-frontend.jar
   modules:
   - name: intellij.java.frontend.split
-- name: lib/java-impl.jar
-  modules:
-  - name: intellij.java.plugin
+- name: lib/java-impl-frontend.jar
   contentModules:
   - name: intellij.java.syntax
   - name: intellij.java.frontback.psi
@@ -26,6 +24,12 @@
   - name: intellij.java.psi
   - name: intellij.java.psi.impl
   - name: intellij.java.frontback.impl
+  - name: intellij.java.debugger.impl.shared
+  - name: intellij.java.execution.impl.shared
+- name: lib/java-impl.jar
+  modules:
+  - name: intellij.java.plugin
+  contentModules:
   - name: intellij.java.indexing
   - name: intellij.platform.uast
   - name: intellij.platform.uast.ide
@@ -62,8 +66,6 @@
   - name: intellij.java.remoteServers.impl
   - name: intellij.java.uast.ide
   - name: intellij.java.backend
-  - name: intellij.java.debugger.impl.shared
-  - name: intellij.java.execution.impl.shared
   - name: intellij.jvm.analysis.impl
   - name: intellij.java.debugger.impl.backend
   - name: intellij.java.execution.impl.backend

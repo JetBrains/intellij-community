@@ -21,6 +21,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/util",
+    "//platform/backend",
   ],
   exports = ["//java/java-psi-api:psi"]
 )
