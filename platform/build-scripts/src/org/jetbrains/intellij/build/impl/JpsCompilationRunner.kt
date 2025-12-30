@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.logging.jps.withJpsLogging
+import org.jetbrains.intellij.build.org.jetbrains.intellij.bazelEnvironment.BazelRunfiles
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -122,6 +123,10 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     resolveProjectDependencies: Boolean = false,
     canceledStatus: CanceledStatus = CanceledStatus.NULL,
   ) = context.withCompilationLock {
+    require(!BazelRunfiles.isRunningFromBazel) {
+      "Running JPS compiler is not supported when running from Bazel."
+    }
+
     val compilationData = context.compilationData
 
     val forceBuild = !context.options.incrementalCompilation || !context.compilationData.isIncrementalCompilationDataAvailable()

@@ -102,14 +102,12 @@ If IntelliJ IDEA displays a message about a missing or out-of-date required plug
 Options to build installers are passed as system properties to `installers.cmd` command.
 You may find the list of available properties in [BuildOptions.kt](platform/build-scripts/src/org/jetbrains/intellij/build/BuildOptions.kt)
 
+Pass --debug to suspend and wait for debugger at port 5005
+
 Installer build examples:
 ```bash
 # Build installers only for current operating system:
 ./installers.cmd -Dintellij.build.target.os=current
-```
-```bash
-# Build source code _incrementally_ (do not build what was already built before):
-./installers.cmd -Dintellij.build.incremental.compilation=true
 ```
 
 > [!TIP]
@@ -126,10 +124,7 @@ docker run --rm -it --user "$(id -u)" --volume "${PWD}:/community" "$(docker bui
 > [!NOTE]
 > 
 > Please remember to specify the `--user "$(id -u)"` argument for the container's user to match the host's user.
-> This prevents issues with permissions for the checked-out repository, the build output, and the mounted Maven cache, if any.
-> 
-To reuse the existing Maven cache from the host system, add the following option to `docker run` command:
-`--volume "$HOME/.m2:/home/ide_builder/.m2"`
+> This prevents issues with permissions for the checked-out repository, the build output, if any.
 
 ---
 ## Running IntelliJ IDEA
@@ -147,13 +142,15 @@ Options to run tests are passed as system properties to `tests.cmd` command.
 You may find the list of available properties in [TestingOptions.kt](platform/build-scripts/src/org/jetbrains/intellij/build/TestingOptions.kt)
 
 ```bash
-# Build source code _incrementally_ (do not build what was already built before): `
-./tests.cmd -Dintellij.build.incremental.compilation=true
+# Run specific run configuration:
+./tests.cmd -Dintellij.build.test.configurations=ApiCheckTest
 ```
 ```bash
-#Run a specific test: 
+# Run a specific test: 
 ./tests.cmd -Dintellij.build.test.patterns=com.intellij.util.ArrayUtilTest
 ```
+
+to debug tests use: `-Dintellij.build.test.debug.suspend=true -Dintellij.build.test.debug.port=5005`
 
 `tests.cmd` is used just to run [CommunityRunTestsBuildTarget](build/src/CommunityRunTestsBuildTarget.kt) from the command line.
 You can also call it directly from IDEA, see run configuration `tests` for an example.

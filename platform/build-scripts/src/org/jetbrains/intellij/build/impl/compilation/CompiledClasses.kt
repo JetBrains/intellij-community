@@ -105,6 +105,11 @@ internal fun checkCompilationOptions(context: CompilationContext) {
 }
 
 internal fun isCompilationRequired(options: BuildOptions): Boolean {
+  // Compilation is never required with Bazel
+  if (isRunningFromBazelOut()) {
+    return false
+  }
+
   return options.forceRebuild ||
          !options.useCompiledClassesFromProjectOutput &&
          options.pathToCompiledClassesArchive == null &&
@@ -112,6 +117,11 @@ internal fun isCompilationRequired(options: BuildOptions): Boolean {
 }
 
 internal fun keepCompilationState(options: BuildOptions): Boolean {
+  if (isRunningFromBazelOut()) {
+    // Do not clean JPS output, we do not know exactly what classes directory is
+    return true
+  }
+
   return !options.forceRebuild &&
          (isPortableCompilationCacheEnabled ||
           options.useCompiledClassesFromProjectOutput ||
