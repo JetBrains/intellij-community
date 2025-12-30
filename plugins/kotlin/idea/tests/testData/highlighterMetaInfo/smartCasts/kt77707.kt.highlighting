@@ -14,8 +14,8 @@ fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesK
     if (<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>f<!> is <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TRAIT'")!>Bar<!>) {
         <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>f<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_CALL'")!>foo<!>()
         <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>f<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>bar<!>
-        <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; descr='Smart cast to Bar'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>f<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_CALL'")!>newFoo<!>()
-        <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; descr='Smart cast to Bar'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>f<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>newBar<!>
+        <!HIGHLIGHTING("descr='Smart cast to Bar'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>f<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_CALL'")!>newFoo<!>()
+        <!HIGHLIGHTING("descr='Smart cast to Bar'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>f<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>newBar<!>
     }
 }
 
