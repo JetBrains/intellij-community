@@ -82,9 +82,9 @@
     <module name="intellij.java.vcs"/>
     <module name="intellij.java.terminal" loading="optional"/>
     <module name="intellij.jvm.analysis.impl" loading="embedded"/>
-    <module name="intellij.java.debugger.impl.frontend" loading="embedded"/>
+    <module name="intellij.java.debugger.impl.frontend"/>
     <module name="intellij.java.debugger.impl.backend" loading="embedded"/>
-    <module name="intellij.java.execution.impl.frontend" loading="embedded"/>
+    <module name="intellij.java.execution.impl.frontend"/>
     <module name="intellij.java.execution.impl.backend" loading="embedded"/>
     <module name="intellij.java.ultimate.icons" loading="optional"/>
     <module name="intellij.java.langInjection"/>

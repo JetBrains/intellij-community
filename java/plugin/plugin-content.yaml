@@ -65,9 +65,7 @@
   - name: intellij.java.debugger.impl.shared
   - name: intellij.java.execution.impl.shared
   - name: intellij.jvm.analysis.impl
-  - name: intellij.java.debugger.impl.frontend
   - name: intellij.java.debugger.impl.backend
-  - name: intellij.java.execution.impl.frontend
   - name: intellij.java.execution.impl.backend
 - name: lib/javac2.jar
   modules:
@@ -109,6 +107,9 @@
 - name: lib/modules/intellij.java.copyright.jar
   contentModules:
   - name: intellij.java.copyright
+- name: lib/modules/intellij.java.debugger.impl.frontend.jar
+  contentModules:
+  - name: intellij.java.debugger.impl.frontend
 - name: lib/modules/intellij.java.duplicates.analysis.jar
   contentModules:
   - name: intellij.java.duplicates.analysis
@@ -118,6 +119,9 @@
 - name: lib/modules/intellij.java.duplicatesDetection.jar
   contentModules:
   - name: intellij.java.duplicatesDetection
+- name: lib/modules/intellij.java.execution.impl.frontend.jar
+  contentModules:
+  - name: intellij.java.execution.impl.frontend
 - name: lib/modules/intellij.java.featuresTrainer.jar
   contentModules:
   - name: intellij.java.featuresTrainer
