@@ -6,4 +6,8 @@ java_import(
   jars = ["rmi-stubs.jar"],
   visibility = ["//visibility:public"]
 )
+
+exports_files([
+  "rmi-stubs.jar",
+], visibility = ["//visibility:public"])
 ### auto-generated section `local-libs` end

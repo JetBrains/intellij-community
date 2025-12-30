@@ -6,4 +6,8 @@ java_import(
   jars = ["libwebp.jar"],
   visibility = ["//visibility:public"]
 )
+
+exports_files([
+  "libwebp.jar",
+], visibility = ["//visibility:public"])
 ### auto-generated section `local-libs` end

@@ -12,4 +12,9 @@ java_import(
   jars = ["saxon9he.jar"],
   visibility = ["//visibility:public"]
 )
+
+exports_files([
+  "saxon.jar",
+  "saxon9he.jar",
+], visibility = ["//visibility:public"])
 ### auto-generated section `local-libs` end

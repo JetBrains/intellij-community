@@ -6,6 +6,10 @@ java_import(
   jars = ["jshell-frontend.jar"],
   visibility = ["//visibility:public"]
 )
+
+exports_files([
+  "jshell-frontend.jar",
+], visibility = ["//visibility:public"])
 ### auto-generated section `local-libs` end
 
 ### auto-generated section `build intellij.java.jshell.execution` start

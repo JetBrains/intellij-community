@@ -12,4 +12,9 @@ java_import(
   jars = ["trang-core.jar"],
   visibility = ["//visibility:public"]
 )
+
+exports_files([
+  "rngom-20051226-patched.jar",
+  "trang-core.jar",
+], visibility = ["//visibility:public"])
 ### auto-generated section `local-libs` end
