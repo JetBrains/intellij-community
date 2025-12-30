@@ -7,13 +7,35 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.java.syntax" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.frontback.psi" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.psi" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.psi.impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.frontback.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.compiler.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.debugger.memory.agent" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.execution.impl.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.ui" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.manifest" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.remoteServers.impl" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.uiDesigner" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.java.impl.inspections" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.analysis.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.indexing.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jsp.spi" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.uast.ide" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.structuralSearch" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.typeMigration" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.resources" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.resources.en" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.ui.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.performancePlugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.vcs" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.syntax" scope="RUNTIME" />
   </component>
 </module>
