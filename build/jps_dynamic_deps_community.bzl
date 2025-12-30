@@ -1,5 +1,3 @@
-# TODO A temporary solution which will be replaced by directly parsing .idea/modules.xml
-
 """
 Dynamic Dependencies Bridge for JPS-to-Bazel target generation (community version)
 
@@ -49,12 +47,13 @@ def _format_target_list(name, targets):
     lines.append("]\n")
     return "\n".join(lines)
 
-def _generate_targets_bzl(production_targets, test_targets):
+def _generate_targets_bzl(production_targets, test_targets, library_targets):
     """Generate the content for targets.bzl file."""
     content = []
     content.append(_format_target_list("ALL_PRODUCTION_COMMUNITY_TARGETS", production_targets))
     content.append(_format_target_list("ALL_TEST_COMMUNITY_TARGETS", test_targets))
-    content.append("ALL_COMMUNITY_TARGETS = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_TEST_COMMUNITY_TARGETS")
+    content.append(_format_target_list("ALL_LIBRARY_COMMUNITY_TARGETS", library_targets))
+    content.append("ALL_COMMUNITY_TARGETS = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_TEST_COMMUNITY_TARGETS + ALL_LIBRARY_COMMUNITY_TARGETS")
     return "\n".join(content)
 
 def _targets_repo_impl(ctx):
@@ -93,6 +92,7 @@ def _targets_repo_impl(ctx):
 
     all_production_targets = []
     all_test_targets = []
+    all_library_targets = set()
 
     modules = targets_data.get("modules", {})
     for module_name in modules:
@@ -108,7 +108,20 @@ def _targets_repo_impl(ctx):
             if target not in all_test_targets:
                 all_test_targets.append(target)
 
-    content = _generate_targets_bzl(all_production_targets, all_test_targets)
+        module_libraries = module.get("moduleLibraries", {})
+        for module_library_name in module_libraries:
+            module_library = module_libraries[module_library_name]
+
+            for jarTarget in module_library.get("jarTargets", []):
+                all_library_targets.add(jarTarget)
+
+    projectLibraries = targets_data.get("projectLibraries", {})
+    for projectLibraryName in projectLibraries:
+        projectLibrary = projectLibraries[projectLibraryName]
+        for jarTarget in projectLibrary.get("jarTargets", []):
+            all_library_targets.add(jarTarget)
+
+    content = _generate_targets_bzl(all_production_targets, all_test_targets, all_library_targets)
     ctx.file("targets.bzl", content)
 
     # Expose it

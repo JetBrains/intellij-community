@@ -161,6 +161,7 @@ internal class BazelTargetsInfo {
   data class LibraryDescription(
     val target: String,
     val jars: List<String>,
+    val jarTargets: List<String>,
     val sourceJars: List<String>,
   )
 
