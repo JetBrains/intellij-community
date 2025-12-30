@@ -35,6 +35,7 @@ import org.jetbrains.jewel.ui.DefaultComponentStyling
 import org.jetbrains.jewel.ui.LocalMenuItemShortcutHintProvider
 import org.jetbrains.jewel.ui.LocalMenuItemShortcutProvider
 import org.jetbrains.jewel.ui.LocalTypography
+import org.jetbrains.jewel.ui.component.styling.BadgeStyle
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
@@ -243,6 +244,7 @@ public fun ComponentStyling.default(): ComponentStyling = with {
 
 @Suppress("UnusedReceiverParameter")
 public fun ComponentStyling.dark(
+    badgeStyle: BadgeStyle = BadgeStyle.dark(),
     checkboxStyle: CheckboxStyle = CheckboxStyle.dark(),
     chipStyle: ChipStyle = ChipStyle.dark(),
     circularProgressStyle: CircularProgressStyle = CircularProgressStyle.dark(),
@@ -280,6 +282,7 @@ public fun ComponentStyling.dark(
     searchMatchStyle: SearchMatchStyle = SearchMatchStyle.dark(),
 ): ComponentStyling =
     DefaultComponentStyling(
+        badgeStyle = badgeStyle,
         checkboxStyle = checkboxStyle,
         chipStyle = chipStyle,
         circularProgressStyle = circularProgressStyle,
@@ -320,6 +323,7 @@ public fun ComponentStyling.dark(
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
 @Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.HIDDEN)
 public fun ComponentStyling.dark(
+    badgeStyle: BadgeStyle = BadgeStyle.dark(),
     checkboxStyle: CheckboxStyle = CheckboxStyle.dark(),
     chipStyle: ChipStyle = ChipStyle.dark(),
     circularProgressStyle: CircularProgressStyle = CircularProgressStyle.dark(),
@@ -355,6 +359,7 @@ public fun ComponentStyling.dark(
     undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.dark(),
 ): ComponentStyling =
     DefaultComponentStyling(
+        badgeStyle = badgeStyle,
         checkboxStyle = checkboxStyle,
         chipStyle = chipStyle,
         circularProgressStyle = circularProgressStyle,
@@ -395,6 +400,7 @@ public fun ComponentStyling.dark(
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
 @Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.HIDDEN)
 public fun ComponentStyling.dark(
+    badgeStyle: BadgeStyle = BadgeStyle.dark(),
     checkboxStyle: CheckboxStyle = CheckboxStyle.dark(),
     chipStyle: ChipStyle = ChipStyle.dark(),
     circularProgressStyle: CircularProgressStyle = CircularProgressStyle.dark(),
@@ -429,6 +435,7 @@ public fun ComponentStyling.dark(
     undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.dark(),
 ): ComponentStyling =
     DefaultComponentStyling(
+        badgeStyle = badgeStyle,
         checkboxStyle = checkboxStyle,
         chipStyle = chipStyle,
         circularProgressStyle = circularProgressStyle,
@@ -468,6 +475,7 @@ public fun ComponentStyling.dark(
 
 @Suppress("UnusedReceiverParameter")
 public fun ComponentStyling.light(
+    badgeStyle: BadgeStyle = BadgeStyle.light(),
     checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
     chipStyle: ChipStyle = ChipStyle.light(),
     circularProgressStyle: CircularProgressStyle = CircularProgressStyle.light(),
@@ -505,6 +513,7 @@ public fun ComponentStyling.light(
     searchMatchStyle: SearchMatchStyle = SearchMatchStyle.light(),
 ): ComponentStyling =
     DefaultComponentStyling(
+        badgeStyle = badgeStyle,
         checkboxStyle = checkboxStyle,
         chipStyle = chipStyle,
         circularProgressStyle = circularProgressStyle,
@@ -545,6 +554,7 @@ public fun ComponentStyling.light(
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
 @Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.HIDDEN)
 public fun ComponentStyling.light(
+    badgeStyle: BadgeStyle = BadgeStyle.light(),
     checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
     chipStyle: ChipStyle = ChipStyle.light(),
     circularProgressStyle: CircularProgressStyle = CircularProgressStyle.light(),
@@ -580,6 +590,7 @@ public fun ComponentStyling.light(
     undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.light(),
 ): ComponentStyling =
     DefaultComponentStyling(
+        badgeStyle = badgeStyle,
         checkboxStyle = checkboxStyle,
         chipStyle = chipStyle,
         circularProgressStyle = circularProgressStyle,
@@ -620,6 +631,7 @@ public fun ComponentStyling.light(
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
 @Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.HIDDEN)
 public fun ComponentStyling.light(
+    badgeStyle: BadgeStyle = BadgeStyle.light(),
     checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
     chipStyle: ChipStyle = ChipStyle.light(),
     circularProgressStyle: CircularProgressStyle = CircularProgressStyle.light(),
@@ -654,6 +666,7 @@ public fun ComponentStyling.light(
     undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.light(),
 ): ComponentStyling =
     DefaultComponentStyling(
+        badgeStyle = badgeStyle,
         checkboxStyle = checkboxStyle,
         chipStyle = chipStyle,
         circularProgressStyle = circularProgressStyle,
