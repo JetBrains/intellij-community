@@ -3,14 +3,11 @@ package com.intellij.testFramework.common.bazel
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.common.BazelTestUtil
-import com.intellij.util.ThreeState
-import com.intellij.util.io.zip.JBZipFile
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFileToCacheLocation
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.extractZip
-import java.nio.charset.StandardCharsets
+import org.jetbrains.intellij.build.org.jetbrains.intellij.bazelEnvironment.BazelLabel
 import java.nio.file.Path
-import kotlin.io.path.div
 
 data class BazelLabelArchiveProjectInfo(
   val bazelLabel: String,
