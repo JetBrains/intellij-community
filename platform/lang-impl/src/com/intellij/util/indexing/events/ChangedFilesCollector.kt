@@ -186,7 +186,6 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
         LOG.debug("Processing ", info)
         val fileId = info.fileId
         try {
-          val fileId = info.getFileId()
           val file = info.file
           val dirtyQueueProjects = dirtyFiles.getProjects(fileId)
           if (info.isTransientStateChanged) {

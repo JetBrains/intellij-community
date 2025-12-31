@@ -121,7 +121,7 @@ class PerProjectIndexingQueue(private val project: Project) {
       true
     }
     else {
-      LOG.info("Finished for " + project.name + ". No files to index with loading content.")
+      LOG.info("Finished for [" + project.name + "]. No files to index with loading content.")
       false
     }
   }

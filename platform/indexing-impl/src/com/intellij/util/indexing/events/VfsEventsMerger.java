@@ -70,10 +70,10 @@ public final class VfsEventsMerger {
   }
 
   // NB: this code is executed not only during vfs events dispatch (in write action) but also during requestReindex (in read action)
-  private void updateChange(int fileId, @NotNull VirtualFile file, @ChangeInfo.EventMask int mask) {
+  private void updateChange(int fileId, @NotNull VirtualFile file, @EventMask int mask) {
     while (true) {// CAS-like loop:
       ChangeInfo existingChangeInfo = changePerFileId.get(fileId);
-      if (existingChangeInfo != null && existingChangeInfo.changeMask == mask) {
+      if (existingChangeInfo != null && existingChangeInfo.changeMask() == mask) {
         return;//nothing to update
       }
 
@@ -214,7 +214,7 @@ public final class VfsEventsMerger {
       return (changeMask & FILE_TRANSIENT_STATE_CHANGED) != 0;
     }
 
-    public int changeMask(){
+    public @EventMask int changeMask(){
       return changeMask;
     }
 
