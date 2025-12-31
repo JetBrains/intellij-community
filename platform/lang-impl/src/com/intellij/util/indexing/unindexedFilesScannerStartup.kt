@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
@@ -32,16 +32,18 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.max
 
+/** Key in [Project]: `null` before first scanning => [FirstScanningState.REQUESTED] => [FirstScanningState.PERFORMED] */
 @JvmField
 internal val FIRST_SCANNING_REQUESTED: Key<FirstScanningState> = Key.create("FIRST_SCANNING_REQUESTED")
-private val dumbModeThreshold: Int
-  get() = Registry.intValue("scanning.dumb.mode.threshold", 20)
 
 internal enum class FirstScanningState {
   REQUESTED, PERFORMED
 }
 
 private val initialScanningLock = ReentrantLock()
+
+private val dumbModeThreshold: Int get() = Registry.intValue("scanning.dumb.mode.threshold", 20)
+
 private val PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED = Key<Boolean>("PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED")
 
 internal fun scanAndIndexProjectAfterOpen(project: Project,
@@ -57,12 +59,12 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
                                           partialScanningType: ScanningType,
                                           registeredIndexesWereCorrupted: Boolean,
                                           sourceOfScanning: SourceOfScanning): Job {
-  FileBasedIndex.getInstance().loadIndexes()
+  val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+  fileBasedIndex.loadIndexes()
   val isFilterInvalidated = initialScanningLock.withLock {
     ConcurrencyUtil.computeIfAbsent(project, FIRST_SCANNING_REQUESTED) { FirstScanningState.REQUESTED }
     project.getUserData(PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED) == true
   }
-  val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
 
   val filterHolder = fileBasedIndex.indexableFilesFilterHolder
   val appCurrent = ApplicationManager.getApplication().getService(AppIndexingDependenciesService::class.java).getCurrent()
@@ -73,13 +75,13 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
   val scanningCheckState = SkippingScanningCheckState(allowSkippingFullScanning, filterUpToDateUnsatisfiedConditions, notSeenIds)
   val skippingScanningUnsatisfiedConditions = SkippingFullScanningCondition.entries.filter { !it.canSkipFullScanning(scanningCheckState) }
   return if (skippingScanningUnsatisfiedConditions.isEmpty()) {
-    LOG.info("Full scanning on startup will be skipped for project ${project.name}")
+    LOG.info("Full scanning on startup will be skipped for project [${project.name}]")
     val allNotSeenIds = (notSeenIds as AllNotSeenDirtyFileIds).result.plus(additionalOrphanDirtyFiles)
     InitialScanningSkipReporter.reportPartialInitialScanningScheduled(project, sourceOfScanning, projectDirtyFilesQueue, allNotSeenIds.size)
     scheduleDirtyFilesScanning(project, allNotSeenIds, projectDirtyFilesQueue, coroutineScope, indexingReason, partialScanningType)
   }
   else {
-    LOG.info("Full scanning on startup will NOT be skipped for project ${project.name} because of following unsatisfied conditions:\n" +
+    LOG.info("Full scanning on startup will NOT be skipped for project [${project.name}] because of following unsatisfied conditions:\n" +
              skippingScanningUnsatisfiedConditions.joinToString("\n") { "${it.name}: ${it.explain(scanningCheckState)}" })
     val reasonsForFullScanning = skippingScanningUnsatisfiedConditions.flatMap { it.getFullScanningReasons(scanningCheckState) }
     val allNotSeenIds = if (notSeenIds is AllNotSeenDirtyFileIds) notSeenIds.result.plus(additionalOrphanDirtyFiles) else additionalOrphanDirtyFiles
@@ -175,8 +177,10 @@ private fun scheduleDirtyFilesScanning(
                          DirtyFilesIndexableFilesIterator(projectDirtyFilesFromOrphanQueue, true))
 
   val scanningIterators = CompletableDeferred(ScanningIterators(indexingReason, iterators, null, partialScanningType))
-  UnindexedFilesScanner(project, true, true,
-                        projectDirtyFiles.asCompletableFuture(),
+  UnindexedFilesScanner(project,
+                        onProjectOpen = true,
+                        isIndexingFilesFilterUpToDate = true,
+                        startCondition = projectDirtyFiles.asCompletableFuture(),
                         scanningParameters = scanningIterators)
     .queue()
   return projectDirtyFiles

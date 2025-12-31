@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -19,7 +19,11 @@ public abstract class UpdateTask<Type> {
   private final Semaphore myUpdateSemaphore = new Semaphore();
   private final Set<Type> myItemsBeingIndexed = ConcurrentCollectionFactory.createConcurrentSet();
 
-  /** @param project must be !=null, but marked nullable for backward compatibility -- please, remove all the usages there project is null */
+  /**
+   * @param project must be !=null, but marked nullable for backward compatibility -- please, remove all the usages there `project=null`
+   * @return true if all itemsToProcess were processed, false, if some items were skipped, because they were processed by parallel
+   *         invocation of the same method from another thread
+   */
   public final boolean processAll(@NotNull Collection<? extends Type> itemsToProcess,
                                   @Nullable Project project) {
     if (DEBUG_TO_STDOUT) trace("enter processAll");

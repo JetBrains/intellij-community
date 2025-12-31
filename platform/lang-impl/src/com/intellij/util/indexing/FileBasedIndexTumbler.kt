@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.impl.ProjectUtil
@@ -67,7 +67,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
 
               val dumbService = DumbService.getInstance(project)
               dumbService.cancelAllTasksAndWait()
-              MyDumbModeTask(dumbModeSemaphore).queue(project)
+              WaitForSemaphoreInDumbModeTask(dumbModeSemaphore, reason).queue(project)
             }
           }
 
@@ -80,11 +80,11 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
         RebuildStatus.reset()
         IndexingStamp.dropTimestampMemoryCaches()
         LOG.assertTrue(snapshot == null)
-        if (indexesAreOk) {
-          snapshot = FbiSnapshot.Impl.capture()
+        snapshot = if (indexesAreOk) {
+          FbiSnapshot.Impl.capture()
         }
         else {
-          snapshot = FbiSnapshot.RebuildRequired
+          FbiSnapshot.RebuildRequired
         }
       }
     }
@@ -162,7 +162,8 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
   companion object {
     private val LOG = logger<FileBasedIndexTumbler>()
 
-    private class MyDumbModeTask(val semaphore: Semaphore) : DumbModeTask() {
+    private class WaitForSemaphoreInDumbModeTask(val semaphore: Semaphore,
+                                                 val reason: String) : DumbModeTask() {
       override fun performInDumbMode(indicator: ProgressIndicator) {
         if (DumbServiceImpl.isSynchronousTaskExecution) {
           return // TODO: this will be a deadlock otherwise (IJPL-578)
@@ -172,11 +173,11 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
       }
 
       override fun toString(): String {
-        return "Plugin loading/unloading"
+        return "$reason (re-load indexes)"
       }
 
       override fun tryMergeWith(taskFromQueue: DumbModeTask): DumbModeTask? =
-        if (taskFromQueue is MyDumbModeTask && taskFromQueue.semaphore === semaphore) this else null
+        if (taskFromQueue is WaitForSemaphoreInDumbModeTask && taskFromQueue.semaphore === semaphore) this else null
     }
   }
 }
