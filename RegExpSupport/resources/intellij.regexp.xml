@@ -42,7 +42,7 @@
     </intentionAction>
     <intentionAction>
       <language>RegExp</language>
-      <className>org.intellij.lang.regexp.intention.FlipAlternationIntention</className>
+      <className>org.intellij.lang.regexp.intention.FlipElementsIntention</className>
       <bundleName>messages.RegExpBundle</bundleName>
       <categoryKey>inspection.group.name.regexp</categoryKey>
     </intentionAction>
