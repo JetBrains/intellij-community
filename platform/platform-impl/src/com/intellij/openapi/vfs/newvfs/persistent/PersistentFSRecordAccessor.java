@@ -118,14 +118,12 @@ public final class PersistentFSRecordAccessor {
     if (parentId != NULL_FILE_ID || nameId != NULL_NAME_ID || contentId != NULL_ID || attributeRecordId != NULL_ID ||
         flags != 0 || length != 0 || timestamp != 0) {// modCount _should_ be !=0: it is set in .allocateRecord()
 
-      IOException exception = new IOException(
-        "new record (id: " + newRecordId + ") has non-empty fields: " +
-        "parentId=" + parentId + ", flags=" + flags + ", nameId= " + nameId + ", " +
-        "attributeId=" + attributeRecordId + ", contentId=" + contentId + ", " +
-        "length=" + length + ", timestamp=" + timestamp + ", " +
-        "modCount=" + modCount + " (globalModCount: " + records.getGlobalModCount() + "), " +
-        "status={" + connection.describeConsistencyStatus() + "}"
-      );
+      String message = "new record (id: " + newRecordId + ") has non-empty fields: " +
+                       "parentId=" + parentId + ", flags=" + flags + ", nameId= " + nameId + ", " +
+                       "attributeId=" + attributeRecordId + ", contentId=" + contentId + ", " +
+                       "length=" + length + ", timestamp=" + timestamp + ", " +
+                       "modCount=" + modCount + " (globalModCount: " + records.getGlobalModCount() + "), " +
+                       "status={" + connection.describeConsistencyStatus() + "}";
 
       //IJPL-1016: statistical analysis shows that it is quite likely an OS crash is responsible for most (if not all) of
       //           those 'non-zero records in un-allocated area' errors. So our current approach to that issue:
@@ -136,13 +134,14 @@ public final class PersistentFSRecordAccessor {
       //              already used somewhere (i.e. in a children list), so we mark VFS as corrupted anyway, because
       //              these cases are definitely a failure of VFS recovery procedure.
 
+      //Throttle log because this kind of error tends to happen in packs
       if (records.wasAlwaysClosedProperly()) {
-        FSRecords.LOG.error(exception);
+        FSRecords.THROTTLED_LOG.error(message);
       }
       else {
-        FSRecords.LOG.warn(exception);
+        FSRecords.THROTTLED_LOG.warn(message);
       }
-      connection.markAsCorruptedAndScheduleRebuild(exception);
+      connection.markAsCorruptedAndScheduleRebuild(new IOException(message));
 
       records.cleanRecord(newRecordId);
     }
