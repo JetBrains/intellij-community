@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.gist.storage;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -188,19 +188,18 @@ public abstract class GistStorage {
     }
 
 
-    static <Data> GistData<Data> empty() {
+    public static <Data> GistData<Data> empty() {
       return new GistData<>(null, NULL_STAMP, false);
     }
 
-    static <Data> GistData<Data> outdated(int gistStamp) {
+    public static <Data> GistData<Data> outdated(int gistStamp) {
       if (gistStamp == NULL_STAMP) {
         throw new IllegalArgumentException("gistStamp(=" + gistStamp + ") must be valid (!=" + NULL_STAMP + ")");
       }
       return new GistData<>(null, gistStamp, false);
     }
 
-    static <Data> GistData<Data> valid(@Nullable Data gistData,
-                                       int gistStamp) {
+    public static <Data> GistData<Data> valid(@Nullable Data gistData, int gistStamp) {
       if (gistStamp == NULL_STAMP) {
         throw new IllegalArgumentException("gistStamp(=" + gistStamp + ") must be valid (!=" + NULL_STAMP + ")");
       }

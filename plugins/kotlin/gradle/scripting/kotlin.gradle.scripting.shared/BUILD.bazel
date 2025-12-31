@@ -51,6 +51,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//java/java-psi-api:psi",
     "//platform/lang-api:lang",
+    "//platform/indexing-api:indexing",
   ]
 )
 ### auto-generated section `build kotlin.gradle.scripting.shared` end
