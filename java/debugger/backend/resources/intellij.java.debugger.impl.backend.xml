@@ -2,11 +2,13 @@
   <dependencies>
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.backend"/>
-    <module name="intellij.java.debugger.impl.shared"/>
-    <module name="intellij.java.debugger.impl"/>
-    <module name="intellij.java.debugger"/>
-    <module name="intellij.java.impl"/>
-    <module name="intellij.java.execution"/>
+    <!--todo temporary disabled until it will be a backend module-->
+
+    <!--  <module name="intellij.java.debugger.impl.shared"/>-->
+  <!--  <module name="intellij.java.debugger.impl"/>-->
+  <!--  <module name="intellij.java.debugger"/>-->
+  <!--  <module name="intellij.java.impl"/>-->
+  <!--  <module name="intellij.java.execution"/>-->
     <module name="intellij.platform.core" />
     <module name="intellij.platform.kernel" />
     <module name="intellij.platform.debugger" />
@@ -16,7 +18,7 @@
     <module name="intellij.libraries.kotlinx.serialization.json" />
     <module name="intellij.platform.rpc.backend" />
     <module name="intellij.platform.core.ui" />
-    <module name="intellij.platform.debugger.impl.shared" />
+  <!--  <module name="intellij.platform.debugger.impl.shared" />-->
     <module name="intellij.platform.projectModel" />
 
   </dependencies>

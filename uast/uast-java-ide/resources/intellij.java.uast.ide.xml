@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <idea-plugin>
   <dependencies>
-    <module name="intellij.java.impl"/>
-    <module name="intellij.java.psi"/>
-    <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.core"/>
-    <module name="intellij.java.uast"/>
+    <!--todo temporary disabled until it will be a backend module-->
+
+    <!--<module name="intellij.java.impl"/>-->
+    <!--<module name="intellij.java.psi"/>-->
+    <!--<module name="intellij.platform.analysis"/>-->
+    <!--<module name="intellij.platform.core"/>-->
+    <!--<module name="intellij.java.uast"/>-->
 
     <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>
   </dependencies>
 
+  <!--from intellij.java.psi.impl.xml-->
   <extensions defaultExtensionNs="org.jetbrains.uast">
     <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.java.analysis.JavaUastAnalysisPlugin"/>
     <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.java.generate.JavaUastCodeGenerationPlugin"/>

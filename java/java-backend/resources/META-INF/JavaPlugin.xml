@@ -8,23 +8,10 @@
   <xi:include href="/META-INF/JavaActions.xml"/>
 
 
-  <!--<xi:include href="/META-INF/JavaIndexingPlugin.xml"/>-->
-  <!--<xi:include href="/META-INF/JavaCodeServerCore.xml"/>-->
-  <!--<xi:include href="/META-INF/JavaCodeServerHighlighting.xml"/>-->
   <xi:include href="/META-INF/JavaAnalysisPlugin.xml"/>
   <xi:include href="/META-INF/IntentionPowerPack.xml"/>
   <xi:include href="/META-INF/InspectionGadgets.xml"/>
   <xi:include href="/META-INF/Inspections.xml"/>
-  <!--<xi:include href="/META-INF/ManifestSupport.xml">-->
-    <!--<xi:fallback/>-->
-  <!--</xi:include>-->
-  <!--<xi:include href="/META-INF/TypeMigration.xml">-->
-    <!--<xi:fallback/>-->
-  <!--</xi:include>-->
-  <!--<xi:include href="/META-INF/UsageData.xml">-->
-  <!--  <xi:fallback/>-->
-  <!--</xi:include>-->
-  <!--<xi:include href="/META-INF/java-debugger.xml"/>-->
 
   <projectListeners>
     <listener class="com.intellij.lang.java.JavaModuleRenameListener" topic="com.intellij.openapi.project.ModuleListener"/>
@@ -296,6 +283,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
 
+    <!--moved from JavaIndexingPlugin.xml, because it is inside java-impl-->
     <indexingFlavor filetype="JAVA" implementationClass="com.intellij.index.JavaFileIndexingFlavor"/>
     <indexingFlavor filetype="CLASS" implementationClass="com.intellij.index.ClassFileIndexingFlavor"/>
     <indexingFlavor filetype="kotlin_builtins" implementationClass="com.intellij.index.KtBuiltInFileIndexingFlavorProvider"/>

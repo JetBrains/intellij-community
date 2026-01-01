@@ -1,13 +1,14 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="public">
   <dependencies>
     <module name="intellij.platform.core"/>
-    <module name="intellij.platform.projectModel"/>
-    <module name="intellij.java.frontback.psi"/>
-    <module name="intellij.java.psi"/>
-    <module name="intellij.java.psi.impl"/>
-    <module name="intellij.java.indexing"/>
-    <module name="intellij.java.codeserver.core"/>
-    <module name="intellij.java.frontback.impl"/>
+
+    <!--todo temporary disabled until it will be a backend module-->
+    <!--<module name="intellij.java.frontback.psi"/>-->
+    <!--<module name="intellij.java.psi"/>-->
+    <!--<module name="intellij.java.psi.impl"/>-->
+    <!--<module name="intellij.java.indexing"/>-->
+    <!--<module name="intellij.java.codeserver.core"/>-->
+    <!--<module name="intellij.java.frontback.impl"/>-->
 
     <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>

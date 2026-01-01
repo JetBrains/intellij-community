@@ -15,13 +15,6 @@
   -->
 <idea-plugin>
 
-  <!--<dependencies>-->
-  <!--  <module name="intellij.java.syntax"/>-->
-  <!--  <module name="intellij.java.frontback.psi"/>-->
-  <!--  <module name="intellij.java.frontback.psi.impl"/>-->
-  <!--  <module name="intellij.java.psi"/>-->
-  <!--</dependencies>-->
-
   <extensionPoints>
     <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.codeStyle.ReferenceAdjuster" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

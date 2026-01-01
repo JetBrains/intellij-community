@@ -1,6 +1,8 @@
 <idea-plugin  visibility="public">
   <dependencies>
-    <module name="intellij.java"/>
+    <!--todo temporary disabled until it will be a backend module-->
+
+    <!--  &lt;!&ndash;<module name="intellij.java"/>&ndash;&gt;-->
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.lang.core"/>

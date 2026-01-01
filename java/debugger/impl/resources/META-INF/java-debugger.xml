@@ -462,11 +462,13 @@
     <group id="ToggleBreakpointAction">
       <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction">
         <override-text place="MainMenu"/>
+        <!--todo changed in JavaActions.xml-->
         <!--<add-to-group group-id="JavaCompileGroup" anchor="first"/>-->
       </action>
       <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction">
         <override-text place="MainMenu"/>
         <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.AddToWatch"/>
+        <!--todo changed in JavaActions.xml-->
         <!--<add-to-group group-id="JavaCompileGroup" anchor="after" relative-to-action="ToggleMethodBreakpoint"/>-->
       </action>
       <add-to-group group-id="BreakpointActionsGroup" anchor="after" relative-to-action="ToggleLineBreakpoint"/>

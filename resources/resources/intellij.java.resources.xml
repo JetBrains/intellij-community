@@ -4,5 +4,4 @@
     <module name="intellij.platform.backend"/>
   </dependencies>
 
-  <!--<xi:include href="/META-INF/JavaActions.xml"/>-->
 </idea-plugin>

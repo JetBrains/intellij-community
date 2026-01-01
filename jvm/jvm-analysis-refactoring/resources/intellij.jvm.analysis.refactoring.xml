@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <idea-plugin visibility="public">
   <dependencies>
-    <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.uast"/>
-    <module name="intellij.jvm.analysis"/>
-    <module name="intellij.platform.core"/>
+    <!--todo temporary disabled until it will be a backend module-->
 
+  <!--  <module name="intellij.platform.analysis"/>-->
+    <!--<module name="intellij.platform.uast"/>-->
+    <!--<module name="intellij.jvm.analysis"/>-->
+    <!--<module name="intellij.platform.core"/>-->
+    <!---->
     <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>
   </dependencies>

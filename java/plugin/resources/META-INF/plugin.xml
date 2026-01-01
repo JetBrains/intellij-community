@@ -41,7 +41,7 @@
     <module name="intellij.java" loading="embedded"/>
     <module name="intellij.java.resources" loading="embedded"/>
     <module name="intellij.java.execution" loading="embedded"/>
-    <module name="intellij.java.remoteServers"  loading="embedded"/>
+    <module name="intellij.java.remoteServers" loading="optional"/>
     <module name="intellij.jvm.analysis" loading="embedded"/>
     <module name="intellij.jsp" loading="embedded"/>
     <module name="intellij.java.resources.en" loading="embedded"/>
@@ -67,12 +67,11 @@
     <module name="intellij.java.execution.impl" loading="embedded"/>
     <module name="intellij.java.debugger.impl" loading="embedded"/>
     <module name="intellij.java.debugger.memory.agent" loading="embedded"/>
-    <module name="intellij.java.remoteServers.impl" loading="embedded"/>
+    <module name="intellij.java.remoteServers.impl" loading="optional"/>
     <module name="intellij.java.uast.ide"  loading="embedded"/>
-    <module name="intellij.java.backend" loading="embedded"/>
+    <module name="intellij.java.backend" required-if-available="intellij.platform.backend" />
 
 
-    <!--todo check dependencies-->
     <module name="intellij.java.debugger.impl.shared" loading="embedded"/>
     <module name="intellij.java.execution.impl.shared" loading="embedded"/>
     <module name="intellij.java.structuralSearch"/>
@@ -81,11 +80,11 @@
     <module name="intellij.java.unscramble"/>
     <module name="intellij.java.vcs"/>
     <module name="intellij.java.terminal" loading="optional"/>
-    <module name="intellij.jvm.analysis.impl" loading="embedded"/>
+    <module name="intellij.jvm.analysis.impl" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.debugger.impl.frontend"/>
     <module name="intellij.java.debugger.impl.backend" loading="embedded"/>
     <module name="intellij.java.execution.impl.frontend"/>
-    <module name="intellij.java.execution.impl.backend" loading="embedded"/>
+    <module name="intellij.java.execution.impl.backend" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.ultimate.icons" loading="optional"/>
     <module name="intellij.java.langInjection"/>
     <module name="intellij.java.langInjection.jps"/>

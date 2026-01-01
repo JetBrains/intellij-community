@@ -3,43 +3,44 @@
 
     <plugin id="com.intellij.modules.xml"/>
 
+    <!--todo temporary disabled until it will be a backend module-->
 
-    <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.core"/>
-    <module name="intellij.platform.lang.core"/>
-    <module name="intellij.platform.projectModel"/>
-    <module name="intellij.java"/>
+  <!--  <module name="intellij.platform.analysis"/>-->
+  <!--  <module name="intellij.platform.core"/>-->
+  <!--  <module name="intellij.platform.lang.core"/>-->
+  <!--  <module name="intellij.platform.projectModel"/>-->
+  <!--  &lt;!&ndash;<module name="intellij.java"/>&ndash;&gt;-->
     <module name="intellij.xml.impl"/>
-    <!--todo check, looks suspicious-->
-    <!--<module name="intellij.java.rt"/>-->
+  <!--  &lt;!&ndash;todo check, looks suspicious&ndash;&gt;-->
+  <!--  &lt;!&ndash;<module name="intellij.java.rt"/>&ndash;&gt;-->
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.vcs"/>
-    <module name="intellij.jsp"/>
-    <module name="intellij.jsp.spi"/>
-    <module name="intellij.java.execution"/>
+  <!--  &lt;!&ndash;<module name="intellij.jsp"/>&ndash;&gt;-->
+  <!--  &lt;!&ndash;<module name="intellij.jsp.spi"/>&ndash;&gt;-->
+  <!--  &lt;!&ndash;<module name="intellij.java.execution"/>&ndash;&gt;-->
     <module name="intellij.xml.dom.impl"/>
-    <module name="intellij.java.psi.impl"/>
-    <module name="intellij.java.frontback.impl"/>
+  <!--  &lt;!&ndash;<module name="intellij.java.psi.impl"/>&ndash;&gt;-->
+  <!--  &lt;!&ndash;<module name="intellij.java.frontback.impl"/>&ndash;&gt;-->
     <module name="intellij.regexp"/>
-    <module name="intellij.java.indexing.impl"/>
-    <module name="intellij.java.indexing"/>
-    <module name="intellij.java.analysis.impl"/>
+  <!--  &lt;!&ndash;<module name="intellij.java.indexing.impl"/>&ndash;&gt;-->
+  <!--  &lt;!&ndash;<module name="intellij.java.indexing"/>&ndash;&gt;-->
+  <!--  &lt;!&ndash;<module name="intellij.java.analysis.impl"/>&ndash;&gt;-->
     <module name="intellij.platform.externalSystem"/>
-    <module name="intellij.java.structureView"/>
+  <!--  &lt;!&ndash;<module name="intellij.java.structureView"/>&ndash;&gt;-->
     <module name="intellij.spellchecker"/>
     <module name="intellij.platform.builtInServer.impl"/>
     <module name="intellij.libraries.gson"/>
-    <module name="intellij.java.compiler"/>
+  <!--  &lt;!&ndash;<module name="intellij.java.compiler"/>&ndash;&gt;-->
     <module name="intellij.platform.externalSystem.impl"/>
-    <module name="intellij.platform.core.ui"/>
-    <module name="intellij.platform.ide.impl"/>
+  <!--  <module name="intellij.platform.core.ui"/>-->
+  <!--  <module name="intellij.platform.ide.impl"/>-->
     <module name="intellij.platform.bookmarks.backend"/>
     <module name="intellij.platform.todo.backend"/>
-    <module name="intellij.java.codeserver.highlighting"/>
-    <module name="intellij.java.codeserver.core"/>
+  <!--  &lt;!&ndash;<module name="intellij.java.codeserver.highlighting"/>&ndash;&gt;-->
+  <!--  &lt;!&ndash;<module name="intellij.java.codeserver.core"/>&ndash;&gt;-->
     <module name="intellij.xml.psi"/>
-    <module name="intellij.java.syntax"/>
-    <module name="intellij.java.psi"/>
+  <!--  &lt;!&ndash;<module name="intellij.java.syntax"/>&ndash;&gt;-->
+  <!--  &lt;!&ndash;<module name="intellij.java.psi"/>&ndash;&gt;-->
 
     <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>

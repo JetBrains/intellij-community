@@ -1,13 +1,15 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <module name="intellij.java.indexing"/>
-    <module name="intellij.jvm.analysis"/>
-    <module name="intellij.java"/>
-    <module name="intellij.java.impl"/>
-    <module name="intellij.jvm.analysis.refactoring"/>
-    <module name="intellij.java.impl.refactorings"/>
-    <module name="intellij.jvm.analysis.quickFix"/>
-    <module name="intellij.java.codeserver.core"/>
+    <!--todo temporary disabled until it will be a backend module-->
+
+    <!--<module name="intellij.java.indexing"/>-->
+    <!--<module name="intellij.jvm.analysis"/>-->
+    <!--<module name="intellij.java"/>-->
+    <!--<module name="intellij.java.impl"/>-->
+    <!--<module name="intellij.jvm.analysis.refactoring"/>-->
+    <!--<module name="intellij.java.impl.refactorings"/>-->
+    <!--<module name="intellij.jvm.analysis.quickFix"/>-->
+    <!--<module name="intellij.java.codeserver.core"/>-->
 
     <module name="intellij.platform.backend"/>
 

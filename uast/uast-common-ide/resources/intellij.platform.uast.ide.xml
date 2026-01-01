@@ -4,12 +4,14 @@
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.projectModel"/>
-    <module name="intellij.platform.uast"/>
-    <module name="intellij.java.syntax"/>
-    <module name="intellij.java.frontback.psi.impl"/>
-    <module name="intellij.java.frontback.psi"/>
-    <module name="intellij.java.psi"/>
-    <module name="intellij.java.psi.impl"/>
+    <!--todo temporary disabled until it will be a backend module-->
+
+    <!--<module name="intellij.platform.uast"/>-->
+    <!--<module name="intellij.java.syntax"/>-->
+    <!--<module name="intellij.java.frontback.psi.impl"/>-->
+    <!--<module name="intellij.java.frontback.psi"/>-->
+    <!--<module name="intellij.java.psi"/>-->
+    <!--<module name="intellij.java.psi.impl"/>-->
     <module name="intellij.libraries.stream"/>
     <module name="intellij.platform.core"/>
 

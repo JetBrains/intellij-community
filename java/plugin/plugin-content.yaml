@@ -39,7 +39,6 @@
   - name: intellij.java
   - name: intellij.java.resources
   - name: intellij.java.execution
-  - name: intellij.java.remoteServers
   - name: intellij.jvm.analysis
   - name: intellij.jsp
   - name: intellij.java.resources.en
@@ -63,12 +62,8 @@
   - name: intellij.java.execution.impl
   - name: intellij.java.debugger.impl
   - name: intellij.java.debugger.memory.agent
-  - name: intellij.java.remoteServers.impl
   - name: intellij.java.uast.ide
-  - name: intellij.java.backend
-  - name: intellij.jvm.analysis.impl
   - name: intellij.java.debugger.impl.backend
-  - name: intellij.java.execution.impl.backend
 - name: lib/javac2.jar
   modules:
   - name: intellij.java.compiler.antTasks
@@ -106,6 +101,9 @@
 - name: lib/modules/intellij.debugger.streams.shared.jar
   contentModules:
   - name: intellij.debugger.streams.shared
+- name: lib/modules/intellij.java.backend.jar
+  contentModules:
+  - name: intellij.java.backend
 - name: lib/modules/intellij.java.copyright.jar
   contentModules:
   - name: intellij.java.copyright
@@ -121,6 +119,9 @@
 - name: lib/modules/intellij.java.duplicatesDetection.jar
   contentModules:
   - name: intellij.java.duplicatesDetection
+- name: lib/modules/intellij.java.execution.impl.backend.jar
+  contentModules:
+  - name: intellij.java.execution.impl.backend
 - name: lib/modules/intellij.java.execution.impl.frontend.jar
   contentModules:
   - name: intellij.java.execution.impl.frontend
@@ -145,6 +146,12 @@
 - name: lib/modules/intellij.java.promo.jar
   contentModules:
   - name: intellij.java.promo
+- name: lib/modules/intellij.java.remoteServers.impl.jar
+  contentModules:
+  - name: intellij.java.remoteServers.impl
+- name: lib/modules/intellij.java.remoteServers.jar
+  contentModules:
+  - name: intellij.java.remoteServers
 - name: lib/modules/intellij.java.structuralSearch.jar
   contentModules:
   - name: intellij.java.structuralSearch
@@ -160,6 +167,9 @@
 - name: lib/modules/intellij.java.vcs.jar
   contentModules:
   - name: intellij.java.vcs
+- name: lib/modules/intellij.jvm.analysis.impl.jar
+  contentModules:
+  - name: intellij.jvm.analysis.impl
 - name: lib/modules/intellij.jvm.dfa.analysis.ui.jar
   contentModules:
   - name: intellij.jvm.dfa.analysis.ui
