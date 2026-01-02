@@ -85,4 +85,8 @@ class ProjectInspectionToolRegistrar(project: Project, scope: CoroutineScope) : 
     fileLogger().debug("Creating tools: ${dynamicTools.size} dynamic tools")
     return InspectionToolRegistrar.getInstance().createTools() + dynamicTools
   }
+
+  fun getDynamicInspectionDescriptor(toolId:String): DynamicInspectionDescriptor? {
+    return dynamicInspectionsFlow.value?.firstOrNull { it.toolWrapper.shortName == toolId }
+  }
 }
