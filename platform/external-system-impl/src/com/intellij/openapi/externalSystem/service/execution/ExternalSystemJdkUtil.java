@@ -233,7 +233,7 @@ public final class ExternalSystemJdkUtil {
     }
     try {
       Path path = Path.of(homePath);
-      return JdkUtil.checkForJdk(path) && JdkUtil.checkForJre(homePath);
+      return JdkUtil.checkForJdk(path) && JdkUtil.checkForJre(path);
     }
     catch (InvalidPathException exception) {
       return false;
