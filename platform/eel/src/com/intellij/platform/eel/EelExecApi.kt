@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
@@ -203,7 +203,13 @@ sealed interface EelExecApi {
   ) {
     @ApiStatus.Experimental
     @ThrowsChecked(EnvironmentVariablesException::class)
-    suspend fun await(): Map<String, String> = deferred.await()
+    suspend fun await(): Map<String, String> = try {
+      deferred.await()
+    }
+    catch (e: CancellationException) {
+      currentCoroutineContext().ensureActive()
+      throw RuntimeException("Environment variables fetching was cancelled", e)
+    }
   }
 
   interface EnvironmentVariablesOptions {

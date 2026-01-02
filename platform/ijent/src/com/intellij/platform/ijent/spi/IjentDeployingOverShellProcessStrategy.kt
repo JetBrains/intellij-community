@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
 import com.intellij.execution.CommandLineUtil.posixQuote
@@ -72,17 +72,23 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope, cur
   }
 
   private val myTargetPlatform = scope.async(currentDispatcher, start = CoroutineStart.LAZY) {
-    myContext.await().execCommand {
+    getMyContext().execCommand {
       getTargetPlatform()
     }
   }
 
   override suspend fun getTargetPlatform(): EelPlatform.Posix {
-    return myTargetPlatform.await()
+    return try {
+      myTargetPlatform.await()
+    }
+    catch (e: CancellationException) {
+      currentCoroutineContext().ensureActive()
+      throw RuntimeException("Cancellation during target platform retrieval", e)
+    }
   }
 
   final override suspend fun createProcess(binaryPath: String): IjentSessionProcessMediator {
-    return myContext.await().execCommand {
+    return getMyContext().execCommand {
       when (val strategy = executionStrategy) {
         is ExecutionStrategy.Tcp -> execIjentWithTcp(binaryPath, strategy.deployInfo)
         else -> execIjent(binaryPath)
@@ -91,10 +97,19 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope, cur
   }
 
   final override suspend fun copyFile(file: Path): String {
-    return myContext.await().execCommand {
+    return getMyContext().execCommand {
       uploadIjentBinary(file, ::mapPath)
     }
   }
+
+  private suspend fun getMyContext(): DeployingContextAndShell =
+    try {
+      myContext.await()
+    }
+    catch (e: CancellationException) {
+      currentCoroutineContext().ensureActive()
+      throw RuntimeException("Cancellation during context retrieval", e)
+    }
 
   final override fun close() {
     if (myContext.isActive) {
