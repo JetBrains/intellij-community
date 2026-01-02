@@ -1,15 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal
 
-import com.intellij.execution.process.KillableProcessHandler
-import com.intellij.execution.process.ProcessHandler
-import com.intellij.execution.process.ProcessTerminatedListener
-import com.intellij.execution.process.PtyBasedProcess
-import com.intellij.execution.process.SelfKiller
+import com.intellij.execution.process.*
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.util.io.BaseDataReader
 import com.intellij.util.io.BaseOutputReader
+import com.pty4j.windows.conpty.WinConPtyProcess
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.CompletableFuture
@@ -23,7 +24,23 @@ internal suspend fun createTerminalProcessHandler(javaCommand: TestJavaMainClass
   catch (err: ExecuteProcessException) {
     throw IllegalStateException("Failed to start ${javaCommand.commandLine}", err)
   }
-  return createTerminalProcessHandler(eelProcess.convertToJavaProcess(), javaCommand.commandLine)
+  val javaProcess = eelProcess.convertToJavaProcess()
+  assumeTestableProcess(javaProcess)
+  return createTerminalProcessHandler(javaProcess, javaCommand.commandLine)
+}
+
+/**
+ * To have stable tests, we need a reliable VT/ANSI sequences supplier.
+ * For Windows, we enforce the use of the bundled ConPTY to maintain predictability.
+ */
+private fun assumeTestableProcess(localProcess: Process) {
+  if (LocalEelDescriptor.osFamily.isWindows) {
+    Assertions.assertInstanceOf(WinConPtyProcess::class.java, localProcess)
+    Assumptions.assumeTrue(
+      (localProcess as WinConPtyProcess).isBundledConPtyLibrary,
+      "Tests require bundled ConPTY to have stable PTY emulation on Windows"
+    )
+  }
 }
 
 private fun createTerminalProcessHandler(process: Process, commandLine: String): KillableProcessHandler {

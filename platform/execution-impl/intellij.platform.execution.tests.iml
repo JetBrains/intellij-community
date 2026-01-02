@@ -22,5 +22,6 @@
     <orderEntry type="module" module-name="intellij.platform.eel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
+    <orderEntry type="module" module-name="intellij.libraries.pty4j" />
   </component>
 </module>
