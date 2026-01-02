@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Comparing;
@@ -204,7 +205,9 @@ public final class PropertyInspector extends JPanel{
   private final class MyComponentSelectionListener implements ComponentSelectionListener{
     @Override
     public void selectedComponentChanged(final @NotNull GuiEditor source){
-      synchWithTree(false);
+      WriteIntentReadAction.run(() -> {
+        synchWithTree(false);
+      });
     }
   }
 }
