@@ -207,7 +207,7 @@ public class GitMergeProvider implements MergeProvider2 {
             String path = VcsFileUtil.relativePath(root, f);
             Conflict c = cs.get(path);
             if (c == null) {
-              LOG.error(String.format("The conflict not found for file: %s(%s)%nFull ls-files output: %n%s%nAll files: %n%s",
+              LOG.warn(String.format("The conflict not found for file: %s(%s)%nFull ls-files output: %n%s%nAll files: %n%s",
                                       f.getPath(), path, output, files));
               continue;
             }
@@ -290,7 +290,7 @@ public class GitMergeProvider implements MergeProvider2 {
       for (VirtualFile file: files) {
         GitConflict c = myConflicts.get(file);
         if (c == null) {
-          LOG.error("Conflict was not loaded for the file: " + file.getPath());
+          LOG.warn("Conflict was not loaded for the file: " + file.getPath());
           continue;
         }
 
