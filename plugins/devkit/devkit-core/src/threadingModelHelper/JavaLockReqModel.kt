@@ -13,6 +13,8 @@ enum class ConstraintType { READ, WRITE, WRITE_INTENT, EDT, BGT, NO_READ }
 
 val LOCK_REQUIREMENTS: EnumSet<ConstraintType> = EnumSet.of(ConstraintType.READ, ConstraintType.WRITE, ConstraintType.WRITE_INTENT, ConstraintType.NO_READ)
 
+val THREAD_REQUIREMENTS: EnumSet<ConstraintType> = EnumSet.of(ConstraintType.EDT, ConstraintType.BGT)
+
 enum class RequirementReason { ANNOTATION, ASSERTION, SWING_COMPONENT, MESSAGE_BUS, IMPLICIT }
 
 data class LockRequirement(val source: PsiElement, val constraintType: ConstraintType, val requirementReason: RequirementReason)

@@ -2,10 +2,9 @@
 package com.intellij.devkit.threading.threadingModelHelper
 
 import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
-import org.jetbrains.idea.devkit.threadingModelHelper.LOCK_REQUIREMENTS
+import org.jetbrains.idea.devkit.threadingModelHelper.THREAD_REQUIREMENTS
 import java.util.*
 
-
-internal class LockReqAction : BaseReqSearchAction() {
-  override val requirements: EnumSet<ConstraintType> = LOCK_REQUIREMENTS
+internal class ThreadingReqAction: BaseReqSearchAction() {
+  override val requirements: EnumSet<ConstraintType> = THREAD_REQUIREMENTS
 }

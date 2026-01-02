@@ -1,21 +1,18 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.threading.threadingModelHelper
 
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiMethod
-import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.psi.SmartPsiElementPointer
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.intellij.devkit.threading.DevkitThreadingBundle
 import com.intellij.openapi.application.ApplicationManager
-import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisConfig
-import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisResult
-import org.jetbrains.idea.devkit.threadingModelHelper.DefaultLockReqConsumer
-import org.jetbrains.idea.devkit.threadingModelHelper.LOCK_REQUIREMENTS
-import org.jetbrains.idea.devkit.threadingModelHelper.LockReqAnalyzerParallelBFS
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.idea.devkit.threadingModelHelper.*
+import java.util.*
 
 @Service(Service.Level.PROJECT)
 internal class LockReqsService(private val project: Project) {
@@ -24,10 +21,11 @@ internal class LockReqsService(private val project: Project) {
   val currentResults: List<AnalysisResult?>
     get() = _currentResults
 
-  suspend fun analyzeMethod(methodPtr: SmartPsiElementPointer<PsiMethod>) {
+  suspend fun analyzeMethod(methodPtr: SmartPsiElementPointer<PsiMethod>, requirements: EnumSet<ConstraintType>) {
     val analyzer = LockReqAnalyzerParallelBFS()
-    val config = AnalysisConfig.forProject(project, LOCK_REQUIREMENTS)
-    withBackgroundProgress(project, DevkitThreadingBundle.message("progress.title.analyzing.lock.requirements"), true) {
+    val config = AnalysisConfig.forProject(project, requirements)
+    val title = if (requirements == LOCK_REQUIREMENTS) "locking" else "threading"
+    withBackgroundProgress(project, DevkitThreadingBundle.message("progress.title.analyzing.lock.requirements", title), true) {
       val consumer = DefaultLockReqConsumer(methodPtr) { snapshot ->
         ApplicationManager.getApplication().invokeLater {
           _currentResults = listOf(snapshot)

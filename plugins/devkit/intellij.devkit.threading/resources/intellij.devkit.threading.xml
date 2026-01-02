@@ -10,5 +10,8 @@
     <action id="LockReqAnalysis"
             class="com.intellij.devkit.threading.threadingModelHelper.LockReqAction"
             icon="com.intellij.devkit.threading.icons.DevkitThreadingIcons.LockRequirements"/>
+    <action id="ThreadingReqAnalysis"
+            class="com.intellij.devkit.threading.threadingModelHelper.ThreadingReqAction"
+            icon="com.intellij.devkit.threading.icons.DevkitThreadingIcons.LockRequirements"/>
   </actions>
 </idea-plugin>
