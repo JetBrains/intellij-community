@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -7,7 +7,6 @@ import com.intellij.openapi.command.CommandProcessorEx
 import com.intellij.openapi.command.impl.cmd.CmdEvent
 import com.intellij.openapi.command.impl.cmd.CmdIdService
 import com.intellij.openapi.components.service
-import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
@@ -17,7 +16,6 @@ import java.util.concurrent.atomic.AtomicReference
 @ApiStatus.Experimental
 @ApiStatus.Internal
 class ForeignCommandProcessor {
-
   private val currentCommand = AtomicReference<CmdEvent>()
   private val tokenToFinish = AtomicReference<AutoCloseable>()
   private val isUndoDisabled = AtomicBoolean()
@@ -50,8 +48,8 @@ class ForeignCommandProcessor {
     assertFinishAllowed()
     val token = tokenToFinish.getAndSet(null)
     try {
-      checkNotNull(token) {
-        "unexpected state: no token to finish"
+      if (token == null) {
+        throw ForeignCommandException("unexpected state: no command token to finish")
       }
       token.close()
     } finally {
@@ -69,7 +67,10 @@ class ForeignCommandProcessor {
     )
     if (commandToken == null) {
       currentCommand.set(null)
-      error("failed to start foreign command with platform CommandProcessor")
+      throw ForeignCommandException(
+        "failed to start foreign command with platform CommandProcessor, " +
+        "probably domestic command is already in progress ${commandProcessor.currentCommand}"
+      )
     }
     return AutoCloseable {
       commandProcessor.finishCommand(commandToken, null)
@@ -84,24 +85,26 @@ class ForeignCommandProcessor {
     ThreadingAssertions.assertEventDispatchThread()
     val project = cmdEvent.project()
     if (project != null && project.isDisposed()) {
-      throw AlreadyDisposedException("cannot perform command in disposed project: $project")
+      throw ForeignCommandException("cannot perform command in disposed project: $project")
     }
-    require(currentCommand() == null) {
-      "cannot perform foreign command during another foreign command"
+    if (currentCommand() != null) {
+      throw ForeignCommandException(
+        "cannot perform foreign command during another foreign command ${currentCommand()}"
+      )
     }
     val commandProcessor = commandProcessor()
-    require(!commandProcessor.isCommandInProgress) {
-      "cannot perform foreign command during domestic command"
+    if (commandProcessor.isCommandInProgress) {
+      throw ForeignCommandException("cannot perform foreign command during domestic command ${commandProcessor.currentCommand}")
     }
-    require(!commandProcessor.isUndoTransparentActionInProgress()) {
-      "cannot perform foreign command during domestic transparent action"
+    if (commandProcessor.isUndoTransparentActionInProgress()) {
+      throw ForeignCommandException("cannot perform foreign command during domestic transparent action")
     }
   }
 
   private fun assertFinishAllowed() {
     ThreadingAssertions.assertEventDispatchThread()
-    requireNotNull(currentCommand()) {
-      "cannot finish foreign command without starting it"
+    if (currentCommand() == null) {
+      throw ForeignCommandException("cannot finish foreign command without starting it")
     }
   }
 
@@ -117,3 +120,5 @@ class ForeignCommandProcessor {
     }
   }
 }
+
+private class ForeignCommandException(message: String) : RuntimeException(message)
