@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.conversion.ConversionService
@@ -466,17 +466,16 @@ private suspend fun doRefreshOpenedFiles(refreshQueue: RefreshQueue) {
     return
   }
 
-  withContext(Dispatchers.EDT) {
-    writeIntentReadAction {
-      val session = refreshQueue.createSession(
-        /* async = */ false,
-        /* recursive = */ false,
-        /* finishRunnable = */ null,
-        /* state = */ ModalityState.nonModal(),
-      )
-      session.addAllFiles(files)
-      session.launch()
-    }
+  // The reason for open files refresh to be performed synchronously is delivering updates to the user as soon as possibly.
+  backgroundWriteAction {
+    val session = refreshQueue.createSession(
+      /* async = */ false,
+      /* recursive = */ false,
+      /* finishRunnable = */ null,
+      /* state = */ ModalityState.nonModal(),
+    )
+    session.addAllFiles(files)
+    session.launch()
   }
 }
 
