@@ -1,12 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.threadingModelHelper
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
@@ -16,19 +11,10 @@ import org.jetbrains.idea.devkit.threadingModelHelper.BaseLockReqRules
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqRules
 import org.jetbrains.idea.devkit.threadingModelHelper.MethodSignature
-import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
-import org.jetbrains.kotlin.psi.KtAnnotated
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UCallableReferenceExpression
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UMethod
-import org.jetbrains.uast.getUastParentOfType
-import org.jetbrains.uast.toUElement
-import org.jetbrains.uast.tryResolve
+import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
+import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -42,9 +28,9 @@ class KtLockReqPsiOps : LockReqPsiOps {
   override fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImpl: Int, handler: (PsiMethod) -> Unit) {
     handler(method)
     val counter = AtomicInteger(1)
-    val list = mutableListOf<PsiMethod>()
+    val list = Collections.synchronizedList(mutableListOf<PsiMethod>())
     val abruptEnd: AtomicBoolean = AtomicBoolean(false)
-    OverridingMethodsSearch.search(method, scope, true)
+    OverridingMethodsSearch.search(method, scope, true).allowParallelProcessing()
       .forEach(Processor { overridden ->
         if (counter.incrementAndGet() >= maxImpl) {
           //println("Too many inheritors for ${method.name}, stopping")
@@ -55,6 +41,7 @@ class KtLockReqPsiOps : LockReqPsiOps {
         true
       })
     if (!abruptEnd.get()) {
+      list.sortBy { it.name }
       for (method in list) {
         handler(method)
       }
@@ -63,7 +50,7 @@ class KtLockReqPsiOps : LockReqPsiOps {
 
   override fun findImplementations(interfaceClass: PsiClass, scope: GlobalSearchScope, maxImpl: Int, handler: (PsiClass) -> Unit) {
     val counter = AtomicInteger(1)
-    val list = mutableListOf<PsiClass>()
+    val list = Collections.synchronizedList(mutableListOf<PsiClass>())
     val abruptEnd: AtomicBoolean = AtomicBoolean(false)
     ClassInheritorsSearch.search(interfaceClass, scope, true)
       .forEach(Processor { implementor ->
@@ -76,6 +63,7 @@ class KtLockReqPsiOps : LockReqPsiOps {
         true
       })
     if (!abruptEnd.get()) {
+      list.sortBy { it.qualifiedName }
       for (clazz in list) {
         handler(clazz)
       }
