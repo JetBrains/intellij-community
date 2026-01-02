@@ -1,6 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -95,9 +96,11 @@ public final class TypeFilter extends FilterAction {
 
       {
         myRegexCheckBox.addActionListener(e -> {
-          final FileType fileType = myRegexCheckBox.isSelected() ? RegExpFileType.INSTANCE : PlainTextFileType.INSTANCE;
-          final Document document = UIUtil.createDocument(fileType, myTextField.getText(), myTable.getProject());
-          myTextField.setDocument(document);
+          WriteIntentReadAction.run(() -> {
+            final FileType fileType = myRegexCheckBox.isSelected() ? RegExpFileType.INSTANCE : PlainTextFileType.INSTANCE;
+            final Document document = UIUtil.createDocument(fileType, myTextField.getText(), myTable.getProject());
+            myTextField.setDocument(document);
+          });
         });
       }
 
