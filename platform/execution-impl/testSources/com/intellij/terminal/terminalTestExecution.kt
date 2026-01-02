@@ -11,14 +11,19 @@ import com.intellij.util.io.BaseOutputReader
 import com.pty4j.windows.conpty.WinConPtyProcess
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
+import kotlinx.coroutines.CoroutineScope
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.CompletableFuture
 
-internal suspend fun createTerminalProcessHandler(javaCommand: TestJavaMainClassCommand): ProcessHandler {
+internal suspend fun createTerminalProcessHandler(
+  coroutineScope: CoroutineScope,
+  javaCommand: TestJavaMainClassCommand,
+): ProcessHandler {
   val eelProcess = try {
     javaCommand.createLocalProcessBuilder()
       .interactionOptions(Pty(80, 25, true))
+      .scope(coroutineScope)
       .eelIt()
   }
   catch (err: ExecuteProcessException) {

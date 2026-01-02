@@ -136,7 +136,7 @@ class TerminalExecutionConsoleTest : BasePlatformTestCase() {
     val javaCommand = SimpleCliApp.NonRuntime.createCommand(SimpleCliApp.Options(
       textToPrint, 0, null
     ))
-    val processHandler = createTerminalProcessHandler(javaCommand)
+    val processHandler = createTerminalProcessHandler(this, javaCommand)
     console.attachToProcess(processHandler)
     TestProcessTerminationMessage.attach(processHandler)
     processHandler.startNotify()
@@ -152,7 +152,7 @@ class TerminalExecutionConsoleTest : BasePlatformTestCase() {
     val javaCommand = SimpleCliApp.NonRuntime.createCommand(SimpleCliApp.Options(
       textToPrint, 42, null
     ))
-    val processHandler = createTerminalProcessHandler(javaCommand)
+    val processHandler = createTerminalProcessHandler(this, javaCommand)
     console.attachToProcess(processHandler)
     TestProcessTerminationMessage.attach(processHandler)
     processHandler.startNotify()
@@ -168,7 +168,7 @@ class TerminalExecutionConsoleTest : BasePlatformTestCase() {
     val javaCommand = SimpleCliApp.NonRuntime.createCommand(SimpleCliApp.Options(
       textToPrint, 0, "exit"
     ))
-    val processHandler = createTerminalProcessHandler(javaCommand)
+    val processHandler = createTerminalProcessHandler(this, javaCommand)
     console.attachToProcess(processHandler)
     TestProcessTerminationMessage.attach(processHandler)
     processHandler.startNotify()
