@@ -23,6 +23,7 @@
     <!-- otherwise plugin will be not loaded in tests -->
     <plugin id="com.intellij.modules.xml"/>
     <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.impl"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
