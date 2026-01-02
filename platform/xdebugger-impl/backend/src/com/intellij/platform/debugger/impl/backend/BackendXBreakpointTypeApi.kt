@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.rpc.DocumentPatchVersion
@@ -339,6 +339,6 @@ private suspend fun XLineBreakpointType<*>.XLineBreakpointVariant.toRpc(project:
     InlineBreakpointsIdManager.getInstance(project).createId(this, document),
     highlightRange = readAction { highlightRange?.toRpc() },
     icon = type.enabledIcon.rpcId(),
-    tooltipDescription = tooltipDescription,
+    tooltipDescription = readAction { tooltipDescription },
   )
 }
