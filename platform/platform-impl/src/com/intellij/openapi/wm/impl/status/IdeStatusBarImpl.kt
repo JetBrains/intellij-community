@@ -302,7 +302,7 @@ open class IdeStatusBarImpl @Internal constructor(
    * @param widget widget to add
    */
   internal suspend fun addWidgetToLeft(widget: StatusBarWidget) {
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.UiWithModelAccess) {
       addWidget(widget, Position.LEFT, LoadingOrder.ANY)
     }
   }
@@ -330,7 +330,7 @@ open class IdeStatusBarImpl @Internal constructor(
     // Create components in parallel (performance optimization)
     val beans: List<WidgetBean> = span("status bar widget creating") {
       widgets.map { (widget, anchor) ->
-        val component = span(widget.ID(), Dispatchers.EDT + anyModality) {
+        val component = span(widget.ID(), Dispatchers.UiWithModelAccess + anyModality) {
           val c = wrap(widget)
           if (c is StatusBarWidgetWrapper) {
             c.beforeUpdate()
@@ -341,7 +341,7 @@ open class IdeStatusBarImpl @Internal constructor(
       }
     }
 
-    withContext(Dispatchers.EDT + anyModality + CoroutineName("status bar widget adding")) {
+    withContext(Dispatchers.UiWithModelAccess + anyModality + CoroutineName("status bar widget adding")) {
       // Add all to self
       for (bean in beans) {
         addWidgetToSelf(bean, parentDisposable)
@@ -358,14 +358,14 @@ open class IdeStatusBarImpl @Internal constructor(
 
     // Fire events
     if (listeners.hasListeners()) {
-      withContext(Dispatchers.EDT + anyModality) {
+      withContext(Dispatchers.UiWithModelAccess + anyModality) {
         for (bean in beans) {
           fireWidgetAdded(bean.widget, bean.anchor)
         }
       }
     }
 
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.UiWithModelAccess) {
       PopupHandler.installPopupMenu(this@IdeStatusBarImpl, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
     }
   }
