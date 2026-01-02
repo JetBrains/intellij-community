@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.tree;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.SmartList;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -51,26 +50,12 @@ public abstract class Operation {
       return;
     }
 
-    // lets do that to make the returned object smaller
-    myAnyOfGroup.forEach(Operation::clearVariants);
-    myOneOfGroup.forEach(list -> list.forEach(Operation::clearVariants));
-
     for (Operation myChildOperation : myChildOperations) {
       ProgressManager.checkCanceled();
       myChildOperation.doReduce();
     }
     reduce();
     myChildOperations.clear();
-  }
-
-  private static void clearVariants(@NotNull JsonSchemaObject object) {
-    Logger.getInstance(Operation.class).info("Clearing variants for object not supported anymore");
-    //if (!(object instanceof JsonSchemaObjectImpl cst)) {
-    //  return;
-    //}
-    //cst.setAllOf(null);
-    //cst.setAnyOf(null);
-    //cst.setOneOf(null);
   }
 
   protected @Nullable Operation createExpandOperation(@NotNull JsonSchemaObject schema,
