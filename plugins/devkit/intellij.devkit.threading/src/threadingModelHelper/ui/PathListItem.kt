@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.threading.threadingModelHelper.ui
 
 import androidx.compose.foundation.background
@@ -44,8 +44,14 @@ internal fun PathListItem(
           )
         }
 
-        val cls = call.containingClassName ?: "Unknown"
-        val methodName = call.methodName
+        val cls = call.containingClassName?.substringAfterLast('.') ?: "Unknown"
+        val methodName = call.methodName.let {
+          if (it == cls) {
+            "<constructor>"
+          } else {
+            it
+          }
+        }
 
         Text(
           text = "$cls.$methodName",

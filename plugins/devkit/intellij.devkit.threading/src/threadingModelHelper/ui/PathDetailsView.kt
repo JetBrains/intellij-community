@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.threading.threadingModelHelper.ui
 
 import androidx.compose.foundation.background
@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
@@ -89,7 +90,7 @@ internal fun PathDetailsView(
               )
               val cls = call.containingClassName ?: "Unknown"
               Text(
-                text = "$cls.${call.methodName}",
+                text = "$cls.${call.methodName}(${call.sourceLocation})",
                 fontFamily = FontFamily.Monospace,
                 style = JewelTheme.defaultTextStyle
               )
@@ -128,7 +129,9 @@ internal fun PathDetailsView(
           val psiFile = element.containingFile
           val vFile = psiFile?.virtualFile
           if (vFile != null) {
-            OpenFileDescriptor(project, vFile, element.textOffset).navigate(true)
+            WriteIntentReadAction.run {
+              OpenFileDescriptor(project, vFile, element.textOffset).navigate(true)
+            }
           }
         }
       ) {
@@ -143,9 +146,9 @@ internal fun PathDetailsView(
 
       OutlinedButton(
         onClick = {
-          val chain = selectedPath.methodChain.joinToString(" -> ") { call ->
+          val chain = selectedPath.methodChain.joinToString("\n") { call ->
             val cls = call.containingClassName ?: "Unknown"
-            "$cls.${call.methodName}"
+            "$cls.${call.methodName}(${call.sourceLocation})"
           }
           val requirement = when (selectedPath.lockRequirement.constraintType) {
             ConstraintType.READ -> "RequiresReadLock"
@@ -155,7 +158,7 @@ internal fun PathDetailsView(
             ConstraintType.EDT -> "RequiresEdt"
             ConstraintType.BGT -> "RequiresBackgroundThread"
           }
-          val text = "$chain -> $requirement"
+          val text = "$chain\n-> $requirement"
           CopyPasteManager.getInstance().setContents(StringSelection(text))
         }
       ) {

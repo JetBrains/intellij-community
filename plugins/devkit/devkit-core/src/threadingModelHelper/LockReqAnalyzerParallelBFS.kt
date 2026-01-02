@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
 import com.intellij.concurrency.virtualThreads.inVirtualThread
@@ -18,7 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.DevKitBundle
-import java.util.Collections
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.PriorityBlockingQueue
 import java.util.concurrent.TimeUnit
@@ -84,7 +84,7 @@ class LockReqAnalyzerParallelBFS {
     smartReadAction(project) {
       val method = root.element ?: return@smartReadAction
       val sig = LockReqPsiOps.forLanguage(method.language).extractSignature(method)
-      queue.put(QueueEntry(root, sig, listOf(MethodCall(sig.methodName, sig.containingClassName))))
+      queue.put(QueueEntry(root, sig, listOf(MethodCall(sig.methodName, sig.containingClassName, method.location()))))
       sig
     }
 

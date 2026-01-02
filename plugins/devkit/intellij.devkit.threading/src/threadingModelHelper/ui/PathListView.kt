@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.threading.threadingModelHelper.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,7 +50,7 @@ internal fun PathListView(
         items = filteredPaths,
         key = { path ->
           val chain = path.methodChain.joinToString("->") { it.methodName }
-          "${chain}|${path.lockRequirement.constraintType}|${path.lockRequirement.requirementReason}|${path.isSpeculative}"
+          "${chain}|${path.lockRequirement.constraintType}|${path.lockRequirement.requirementReason}|${path.isSpeculative}|${path.hashCode()}"
         }
       ) { path ->
         PathListItem(

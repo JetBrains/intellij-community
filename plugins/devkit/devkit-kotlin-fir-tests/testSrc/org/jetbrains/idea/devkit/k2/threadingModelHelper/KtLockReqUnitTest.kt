@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.threadingModelHelper
 
 import com.intellij.openapi.application.PluginPathManager
@@ -8,12 +8,11 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisConfig
 import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisResult
 import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqAnalyzerParallelBFS
-import java.util.EnumSet
+import java.util.*
 
 @TestDataPath($$"$CONTENT_ROOT/testData/threadingModelHelper/")
 class KtLockReqUnitTest : BasePlatformTestCase() {
@@ -174,7 +173,7 @@ class KtLockReqUnitTest : BasePlatformTestCase() {
   fun testCompanionDefaultArgsKt() {
     val result = doKotlinTest("CompanionDefaultArgs.kt")
     val expected = listOf(
-      "CompanionDefaultArgs.testMethod -> Companion.annoFun => READ.ANNOTATION",
+      "CompanionDefaultArgs.testMethod -> CompanionDefaultArgs.Companion.annoFun => READ.ANNOTATION",
       "CompanionDefaultArgs.testMethod -> CompanionDefaultArgs.defaultArgFun => READ.ASSERTION"
     )
     assertEquals(expected.sorted(), formatResult(result).sorted())

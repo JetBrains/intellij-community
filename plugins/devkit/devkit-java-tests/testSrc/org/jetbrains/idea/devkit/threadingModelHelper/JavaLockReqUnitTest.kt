@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
 import com.intellij.psi.PsiJavaFile
@@ -7,7 +7,7 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
-import java.util.EnumSet
+import java.util.*
 
 
 @TestDataPath($$"$CONTENT_ROOT/testData/threadingModelHelper/")
@@ -83,8 +83,8 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
 
   fun testDifferentClassesMethods() {
     val result = doTest("DifferentClassesMethods")
-    val expectedPaths = listOf("DifferentClassesMethods.testMethod -> Helper.helperMethod -> Service.serviceMethod => EDT.ANNOTATION",
-                               "DifferentClassesMethods.testMethod -> Helper.helperMethod => WRITE.ASSERTION")
+    val expectedPaths = listOf("DifferentClassesMethods.testMethod -> DifferentClassesMethods.Helper.helperMethod -> DifferentClassesMethods.Service.serviceMethod => EDT.ANNOTATION",
+                               "DifferentClassesMethods.testMethod -> DifferentClassesMethods.Helper.helperMethod => WRITE.ASSERTION")
     val actualPathsBFS = formatResult(result)
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }

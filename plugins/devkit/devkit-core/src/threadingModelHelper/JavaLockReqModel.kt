@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
 import com.intellij.openapi.project.Project
@@ -29,12 +29,28 @@ data class MethodSignature(val containingClassName: String, val methodName: Stri
   }
 }
 
-data class MethodCall(val methodName: String, val containingClassName: String?, val isPolymorphic: Boolean= false, val isMessageBusCall: Boolean = false) {
+data class MethodCall(
+  val methodName: String,
+  val containingClassName: String?,
+  /**
+   * Navigatable coordinates of this call
+   */
+  val sourceLocation: String,
+  val isPolymorphic: Boolean = false,
+  val isMessageBusCall: Boolean = false,
+) {
   companion object {
     fun fromMethod(method: PsiMethod): MethodCall {
-      return MethodCall(method.name, method.containingClass?.name ?: "<anon>")
+      return MethodCall(method.name, method.containingClass?.qualifiedName ?: "<anon>", method.location())
     }
   }
+}
+
+internal fun PsiMethod.location(): String {
+  val containingDocument = containingFile.fileDocument
+  val containingFile = containingFile.virtualFile.name
+  val methodLocation = textRange?.startOffset?.let { containingDocument.getLineNumber(it) } ?: -1
+  return "$containingFile:$methodLocation"
 }
 
 data class ExecutionPath(val methodChain: List<MethodCall>, val lockRequirement: LockRequirement, val isSpeculative: Boolean = false)
