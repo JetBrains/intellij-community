@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.currentThreadContext
@@ -510,6 +510,23 @@ class PlatformUtilitiesTest {
     job.start()
     finalization.asCompletableFuture().join()
     ref.get()?.let { throw it }
+  }
+
+  @Test
+  fun `NBRA is cancellable in its busy wait`(): Unit = timeoutRunBlocking {
+    val currentJob = Job(coroutineContext.job)
+    launch(Dispatchers.Default) {
+      backgroundWriteAction {
+        currentJob.asCompletableFuture().join()
+      }
+    }
+    delay(10)
+    val raJob = launch(Dispatchers.Default) {
+      ReadAction.nonBlocking(Callable { true }).executeSynchronously()
+    }
+    delay(100)
+    raJob.cancelAndJoin()
+    currentJob.complete()
   }
 
 }
