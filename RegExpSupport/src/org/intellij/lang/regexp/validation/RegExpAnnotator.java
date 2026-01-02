@@ -100,11 +100,11 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
     final int fromCodePoint = from.getValue();
     final int toCodePoint = to.getValue();
-    if (fromCodePoint == -1 || toCodePoint == -1) {
-      return;
-    }
-    if (toCodePoint < fromCodePoint) {
-      myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.illegal.character.range.to.from")).range(range).create();
+    if (fromCodePoint != -1 && toCodePoint != -1 && toCodePoint < fromCodePoint) {
+      myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.illegal.character.range.to.from"))
+        .range(range)
+        .withFix(new CharRangeFix(range))
+        .create();
     }
   }
 
@@ -399,7 +399,9 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       if (minValue != null && maxValue != null) {
         if (minValue.longValue() > maxValue.longValue() || minValue.doubleValue() > maxValue.doubleValue()) {
           final TextRange range = new TextRange(minElement.getTextOffset(), maxElement.getTextOffset() + maxElement.getTextLength());
-          myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.illegal.repetition.range.min.max")).range(range)
+          myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.illegal.repetition.range.min.max"))
+            .range(range)
+            .withFix(new RepetitionRangeFix(quantifier))
             .create();
         }
       }
