@@ -5,6 +5,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
 import com.intellij.mock.Mock;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.ex.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.impl.*;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
@@ -398,6 +400,28 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals(expectedFile, actualFile);
   }
 
+  public void testFileEditorOpenRequestOptions() {
+    FileEditorManagerEx exManager = this.manager;
+
+    VirtualFile file = getFile("/src/1.txt");
+    VirtualFile file2 = getFile("/src/2.txt");
+
+    exManager.openFile(file, false);
+    EditorWindow primaryWindow = exManager.getCurrentWindow();
+    assertNotNull(primaryWindow);
+    exManager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
+
+    EditorWindow secondaryWindow = exManager.getNextWindow(primaryWindow);
+    exManager.openFile(file2,
+                     new FileEditorOpenRequest()
+                       .withTargetWindow(secondaryWindow)
+                       .withSelectAsCurrent(true)
+                       .withPin(true)
+                       .withRequestFocus(true)
+    );
+    exManager.closeFile(file, secondaryWindow);
+  }
+
   @Language("XML")
   private static final String STRING = """
     <component name="FileEditorManager">
@@ -450,7 +474,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     List<String> expectedNames = Arrays.asList(allNames);
     List<String> actualNames = ContainerUtil.map(editors, FileEditor::getName);
     if (!actualNames.containsAll(expectedNames)) {
-      fail("Expected file editors names:\n"+expectedNames+ "\nActual names:\n"+actualNames);
+      fail("Expected file editors names:\n" + expectedNames + "\nActual names:\n" + actualNames);
     }
   }
 
