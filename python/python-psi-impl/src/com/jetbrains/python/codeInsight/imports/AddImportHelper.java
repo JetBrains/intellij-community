@@ -847,7 +847,10 @@ public final class AddImportHelper {
       element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(target), path));
     }
     else {
-      addOrUpdateFromImportStatement(file, importPath.removeLastComponent().toString(), target.getName(), null, priority, element);
+      String importedName = importPath.getLastComponent();
+      assert importedName != null;
+      String importSource = importPath.removeLastComponent().toString();
+      addOrUpdateFromImportStatement(file, importSource, importedName, null, priority, element);
     }
   }
 }
