@@ -29,29 +29,29 @@ PsiJavaFile:LinkTag9Markdown.java
           PsiDocToken:DOC_COMMENT_DATA('text for the link')
         PsiDocToken:DOC_RBRACKET(']')
         PsiDocToken:DOC_LBRACKET('[')
+        PsiElement(DOC_TAG_VALUE_ELEMENT)
+          PsiJavaModuleReference
+            PsiDocToken:DOC_COMMENT_DATA('java.base')
+          PsiDocToken:DOC_TAG_VALUE_SLASH('/')
         PsiElement(DOC_FRAGMENT_REF)
-          PsiElement(DOC_TAG_VALUE_ELEMENT)
-            PsiJavaModuleReference
-              PsiDocToken:DOC_COMMENT_DATA('java.base')
-            PsiDocToken:DOC_TAG_VALUE_SLASH('/')
-            PsiElement(DOC_REFERENCE_HOLDER)
-              PsiJavaCodeReferenceElement:java.lang.String
-                PsiJavaCodeReferenceElement:java.lang
-                  PsiJavaCodeReferenceElement:java
-                    PsiIdentifier:java('java')
-                    PsiReferenceParameterList
-                      <empty list>
-                  PsiJavaToken:DOT('.')
-                  PsiIdentifier:lang('lang')
+          PsiElement(DOC_REFERENCE_HOLDER)
+            PsiJavaCodeReferenceElement:java.lang.String
+              PsiJavaCodeReferenceElement:java.lang
+                PsiJavaCodeReferenceElement:java
+                  PsiIdentifier:java('java')
                   PsiReferenceParameterList
                     <empty list>
                 PsiJavaToken:DOT('.')
-                PsiIdentifier:String('String')
+                PsiIdentifier:lang('lang')
                 PsiReferenceParameterList
                   <empty list>
-            PsiDocToken:DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN('##')
-            PsiElement(DOC_FRAGMENT_NAME)
-              PsiDocToken:DOC_COMMENT_DATA('fragment-name')
+              PsiJavaToken:DOT('.')
+              PsiIdentifier:String('String')
+              PsiReferenceParameterList
+                <empty list>
+          PsiDocToken:DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN('##')
+          PsiElement(DOC_FRAGMENT_NAME)
+            PsiDocToken:DOC_COMMENT_DATA('fragment-name')
         PsiDocToken:DOC_RBRACKET(']')
     PsiWhiteSpace('\n')
     PsiModifierList:public

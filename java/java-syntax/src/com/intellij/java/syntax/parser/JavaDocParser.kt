@@ -320,7 +320,6 @@ class JavaDocParser(
   }
 
   private fun parseMarkdownReference() {
-    val refStart = builder.mark()
     val moduleMarker = parseModuleRef(builder.mark())
     var referenceParsed = false
     var referenceEnded = false
@@ -328,12 +327,12 @@ class JavaDocParser(
 
     if (getTokenType() === JavaDocSyntaxTokenType.DOC_RBRACKET) {
       if (moduleMarker == null) {
-        refStart.drop()
         return
-      } else {
-        referenceEnded = true
       }
+      referenceEnded = true
     }
+    moduleMarker?.done(JavaDocSyntaxElementType.DOC_TAG_VALUE_ELEMENT)
+    val refStart = builder.mark()
 
     if (!referenceEnded && getTokenType() !== JavaDocSyntaxTokenType.DOC_SHARP && getTokenType() !== JavaDocSyntaxTokenType.DOC_DOUBLE_SHARP) {
       builder.remapCurrentToken(JavaDocSyntaxElementType.DOC_REFERENCE_HOLDER)
@@ -395,8 +394,7 @@ class JavaDocParser(
       }
     }
 
-    if (referenceParsed || moduleMarker != null) {
-      moduleMarker?.done(JavaDocSyntaxElementType.DOC_TAG_VALUE_ELEMENT)
+    if (referenceParsed) {
       when (fragmentReference) {
         true -> refStart.done(JavaDocSyntaxElementType.DOC_FRAGMENT_REF)
         false -> refStart.done(JavaDocSyntaxElementType.DOC_METHOD_OR_FIELD_REF)
