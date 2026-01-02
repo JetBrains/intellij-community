@@ -21,6 +21,8 @@ import static java.util.Objects.hash;
  * Utilities related to the computation of pattern exhaustiveness
  */
 public final class JavaPatternExhaustivenessUtil {
+  private JavaPatternExhaustivenessUtil() { }
+
   private static final Logger LOG = Logger.getInstance(JavaPatternExhaustivenessUtil.class);
   //it is approximately equals max method size * 10
   private static final int MAX_ITERATION_COVERAGE = 5_000;

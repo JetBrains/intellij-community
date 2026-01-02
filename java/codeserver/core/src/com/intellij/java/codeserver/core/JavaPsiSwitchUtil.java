@@ -23,7 +23,7 @@ import static java.util.Objects.requireNonNull;
  * Utility methods to support switch
  */
 public final class JavaPsiSwitchUtil {
-
+  private JavaPsiSwitchUtil() { }
 
   /**
    * Returns the selector kind based on the type.

@@ -17,6 +17,8 @@ import static com.intellij.psi.PsiModifier.SEALED;
  * Utility methods related to sealed types
  */
 public final class JavaPsiSealedUtil {
+  private JavaPsiSealedUtil() { }
+
   /**
    * @param psiClass class to check
    * @return true if the class is abstract and sealed

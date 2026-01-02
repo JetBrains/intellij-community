@@ -20,6 +20,8 @@ import static java.util.Objects.requireNonNull;
  * Utilities related to Java methods
  */
 public final class JavaPsiMethodUtil {
+  private JavaPsiMethodUtil() { }
+
   /**
    * @param aClass class to analyze
    * @param overrideEquivalentSuperMethods collection of override-equivalent super methods
