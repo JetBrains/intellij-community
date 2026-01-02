@@ -22,5 +22,5 @@ internal fun getAnnotationFromCache(project: Project, file: VirtualFile): FileAn
   val lastRevision = cache.getLastRevision(filePath, GitVcs.getKey(), GitRevisionNumber(currentRevision)) ?: return null
   val annotationData = cache.getAnnotation(filePath, GitVcs.getKey(), lastRevision) as? GitAnnotationProvider.CachedData ?: return null
 
-  return GitFileAnnotation(project, file, filePath, lastRevision, annotationData.lines)
+  return GitFileAnnotation(project, file, filePath, repository.root, lastRevision, annotationData.lines)
 }
