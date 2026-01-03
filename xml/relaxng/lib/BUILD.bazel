@@ -2,13 +2,13 @@
 load("@rules_java//java:defs.bzl", "java_import")
 
 java_import(
-  name = "rngom-20051226-patched",
+  name = "relaxng-rngom-20051226-patched",
   jars = ["rngom-20051226-patched.jar"],
   visibility = ["//visibility:public"]
 )
 
 java_import(
-  name = "trang-core",
+  name = "relaxng-trang-core",
   jars = ["trang-core.jar"],
   visibility = ["//visibility:public"]
 )

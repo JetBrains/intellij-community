@@ -177,7 +177,7 @@ jvm_library(
   resources = [":util-ui_resources"],
   javac_opts = ":custom-javac-options",
   deps = [
-    "@lib//:eawtstub-provided",
+    "@lib//:mac-provided",
     "//platform/util",
     "//libraries/imgscalr",
     "@lib//:jna",

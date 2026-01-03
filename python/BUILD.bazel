@@ -243,7 +243,7 @@ jvm_library(
     "//libraries/netty/codec-http:libraries-netty-codec-http",
     "//libraries/jsoup",
     "//libraries/javax/annotation",
-    "@lib//ant/lib:ant-antlr-provided",
+    "@lib//ant/lib:ant-provided",
     "//python/python-psi-impl:psi-impl",
     "//python/python-sdk:sdk",
     "//python/python-sdk-ui:sdk-ui",
@@ -607,7 +607,7 @@ jvm_library(
   runtime_deps = [
     ":python-helpers-tests",
     "//python:python-helpers",
-    "@lib//ant/lib:ant-antlr",
+    "@lib//ant/lib:ant",
     "@lib//:kotlin-stdlib",
   ]
 )

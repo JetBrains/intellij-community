@@ -2,7 +2,7 @@
 load("@rules_java//java:defs.bzl", "java_import", "java_library")
 
 java_import(
-  name = "ant-antlr",
+  name = "ant",
   jars = [
     "ant-antlr.jar",
     "ant-apache-bcel.jar",
@@ -35,8 +35,8 @@ java_import(
 )
 
 java_library(
-  name = "ant-antlr-provided",
-  exports = [":ant-antlr"],
+  name = "ant-provided",
+  exports = [":ant"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )

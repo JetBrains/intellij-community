@@ -23,7 +23,7 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//platform/lang-impl",
     "//platform/vcs-impl",
-    "//plugins/tasks/tasks-core/lib:axis-1-4",
+    "//plugins/tasks/tasks-core/lib:tasks-core-axis-1-4",
     "//libraries/gson",
     "//xml/impl",
     "//platform/core-api:core",
@@ -47,6 +47,6 @@ jvm_library(
     "//platform/polySymbols",
     "//platform/forms_rt:java-guiForms-rt",
   ],
-  exports = ["//plugins/tasks/tasks-core/lib:axis-1-4"]
+  exports = ["//plugins/tasks/tasks-core/lib:tasks-core-axis-1-4"]
 )
 ### auto-generated section `build intellij.tasks.core` end

@@ -79,7 +79,7 @@ jvm_library(
     "//platform/execution",
   ],
   exports = ["//plugins/gradle:gradle-common"],
-  runtime_deps = ["@lib//ant/lib:ant-antlr"]
+  runtime_deps = ["@lib//ant/lib:ant"]
 )
 ### auto-generated section `build intellij.gradle.java` end
 

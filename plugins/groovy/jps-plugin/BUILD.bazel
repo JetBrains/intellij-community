@@ -23,7 +23,7 @@ jvm_library(
     "//jps/model-serialization",
     "//jps/model-impl",
     "//java/compiler/instrumentation-util",
-    "@lib//:ecj-4-25-provided",
+    "@lib//:eclipse-provided",
     "//platform/util-class-loader:util-classLoader",
     "//libraries/asm",
     "//platform/util/jdom",

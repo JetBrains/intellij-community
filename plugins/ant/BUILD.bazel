@@ -15,7 +15,7 @@ jvm_library(
   resources = [":ant_resources"],
   deps = [
     "//java/openapi:java",
-    "@lib//ant/lib:ant-antlr",
+    "@lib//ant/lib:ant",
     "//platform/analysis-api:analysis",
     "//xml/xml-analysis-api:analysis",
     "//platform/core-api:core",
@@ -70,7 +70,7 @@ jvm_library(
     "//java/openapi:java",
     "//java/testFramework",
     "@lib//:junit4",
-    "@lib//ant/lib:ant-antlr",
+    "@lib//ant/lib:ant",
     "//platform/analysis-api:analysis",
     "//xml/xml-analysis-api:analysis",
     "//platform/core-api:core",

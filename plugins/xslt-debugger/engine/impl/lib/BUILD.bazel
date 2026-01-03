@@ -2,13 +2,13 @@
 load("@rules_java//java:defs.bzl", "java_import")
 
 java_import(
-  name = "saxon",
+  name = "xslt-debugger-impl-rt-_saxon-6-5-5",
   jars = ["saxon.jar"],
   visibility = ["//visibility:public"]
 )
 
 java_import(
-  name = "saxon9he",
+  name = "xslt-debugger-impl-rt-_saxon-9_h_e",
   jars = ["saxon9he.jar"],
   visibility = ["//visibility:public"]
 )

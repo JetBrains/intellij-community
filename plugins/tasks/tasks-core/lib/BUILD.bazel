@@ -2,7 +2,7 @@
 load("@rules_java//java:defs.bzl", "java_import")
 
 java_import(
-  name = "axis-1-4",
+  name = "tasks-core-axis-1-4",
   jars = [
     "axis-1.4.jar",
     "axis-jaxrpc-1.4.jar",

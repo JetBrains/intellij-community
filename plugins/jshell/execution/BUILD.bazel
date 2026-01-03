@@ -2,7 +2,7 @@
 load("@rules_java//java:defs.bzl", "java_import")
 
 java_import(
-  name = "jshell-frontend",
+  name = "java-jshell-execution-jshell-frontend",
   jars = ["jshell-frontend.jar"],
   visibility = ["//visibility:public"]
 )
@@ -15,6 +15,6 @@ jvm_library(
   name = "execution",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = ["//plugins/jshell/execution:jshell-frontend"]
+  runtime_deps = ["//plugins/jshell/execution:java-jshell-execution-jshell-frontend"]
 )
 ### auto-generated section `build intellij.java.jshell.execution` end

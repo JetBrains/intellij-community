@@ -50,34 +50,34 @@ kt_compiler_plugin(
 load("@rules_java//java:defs.bzl", "java_import", "java_library")
 
 java_import(
-  name = "commons-httpclient-3-1-patched",
-  jars = ["commons-httpclient-3.1-patched.jar"],
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "eawtstub",
-  jars = ["eawtstub.jar"],
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "eawtstub-provided",
-  exports = [":eawtstub"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "ecj-4-25",
+  name = "eclipse",
   jars = ["ecj-4.25.jar"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
-  name = "ecj-4-25-provided",
-  exports = [":ecj-4-25"],
+  name = "eclipse-provided",
+  exports = [":eclipse"],
   neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "mac",
+  jars = ["eawtstub.jar"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "mac-provided",
+  exports = [":mac"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "tasks-compatibility-http-client-3-1",
+  jars = ["commons-httpclient-3.1-patched.jar"],
   visibility = ["//visibility:public"]
 )
 ### auto-generated section `local-libs` end

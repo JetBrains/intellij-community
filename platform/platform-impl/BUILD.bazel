@@ -32,7 +32,7 @@ jvm_library(
   resources = [":ide-impl_resources"],
   javac_opts = ":custom-javac-options",
   deps = [
-    "@lib//:eawtstub-provided",
+    "@lib//:mac-provided",
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
@@ -194,7 +194,7 @@ jvm_library(
   javac_opts = ":custom-javac-options",
   associates = [":ide-impl"],
   deps = [
-    "@lib//:eawtstub-provided",
+    "@lib//:mac-provided",
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",

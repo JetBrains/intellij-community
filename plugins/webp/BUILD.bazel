@@ -18,7 +18,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
-    "//plugins/webp/lib:libwebp",
+    "//plugins/webp/lib:webp-libwebp",
   ]
 )
 ### auto-generated section `build intellij.webp` end
