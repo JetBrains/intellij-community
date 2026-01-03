@@ -36,6 +36,8 @@ STALENESS & WATCHING:
 This repository is invalidated on changes to `.idea/modules.xml` via ctx.watch().
 """
 
+load(":jps_model.bzl", "watch_project_model_files")
+
 def _format_target_list(name, targets):
     """Format a list of targets as a Starlark list assignment."""
     if not targets:
@@ -60,11 +62,8 @@ def _targets_repo_impl(ctx):
     # SETUP CONTEXT AND WATCHER
     root = ctx.path(Label("@community//:MODULE.bazel")).dirname
 
-    # we set watcher on .idea/modules.xml, because we only need to regenerate targets' list if a new module was added
-    # otherwise the list get populated on import and bazel clean invalidates it anyway
-    idea_dir = root.get_child(".idea")
-    modules_xml = idea_dir.get_child("modules.xml")
-    ctx.watch(modules_xml)
+    # Watch the entire model to re-run generator on changes
+    watch_project_model_files(ctx, root)
 
     script = (
         root
