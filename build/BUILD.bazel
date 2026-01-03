@@ -5,8 +5,9 @@ load("//build:intellij_dev_community.bzl", "intellij_dev_binary_community")
 load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
 
+# Can't name the target 'installers' since it triggers elevation in Windows
 java_binary(
-  name = "installers_build_target",
+  name = "i_build_target",
   runtime_deps = [":build"],
   main_class = "OpenSourceCommunityInstallersBuildTarget",
   add_opens = INTELLIJ_ADD_OPENS,

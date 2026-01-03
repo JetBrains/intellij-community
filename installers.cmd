@@ -15,39 +15,16 @@ GOTO :CMDSCRIPT
 set -eu
 root="$(cd "$(dirname "$0")"; pwd)"
 
-cd "$root"
-
-# See java_stub_template.txt for available arguments
-args=()
-for arg in "$@"; do
-  if [ "$arg" == "--debug" ]; then
-    args+=("--debug")
-  else
-    args+=("--jvm_flag=$arg")
-  fi
-done
-
-exec /bin/bash "$root/bazel.cmd" run @community//build:installers_build_target -- "${args[@]}"
+exec "$root/build/run_build_target.sh" "$root" //build:i_build_target "$@"
 
 :CMDSCRIPT
 
-setlocal enabledelayedexpansion
+set "ROOT=%~dp0"
+set "ROOT=%ROOT:~0,-1%"
 
-set "ARGS="
-:loop
-if "%~1"=="" goto run
-if "%~1"=="--debug" (
-  set "ARGS=!ARGS! "--debug""
-) else (
-  set "ARGS=!ARGS! "--jvm-arg=%~1""
-)
-shift
-goto loop
-
-:run
-
-pushd "%~dp0"
-call "%~dp0\bazel.cmd" run @community//build:installers_build_target -- %ARGS%
-set _exit_code=%ERRORLEVEL%
-popd
-EXIT /B %_exit_code%
+"%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe" ^
+  -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass ^
+  -File "%~dp0build\run_build_target.ps1" ^
+  "%ROOT%" ^
+  "@community//build:i_build_target" ^
+  %*
