@@ -9,12 +9,15 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.util.suspendingLazy
 import kotlinx.coroutines.CoroutineScope
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.SystemInfoProvider() {
@@ -30,8 +33,23 @@ private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.Sy
   }
 
   override fun getEnvironmentVariable(name: String): String? = runBlockingMaybeCancellable {
-    environmentVariables.getValue()[name]
+    // Variable exists on eel
+    val eelVar = environmentVariables.getValue()[name]
+    if (eelVar != null) return@runBlockingMaybeCancellable eelVar
+
+    // Variable on host might be used if it is a path that points to the same eel, i.e.: JAVA_HOME points to \\wsl$\...
+    val hostVar = System.getenv(name) ?: return@runBlockingMaybeCancellable null
+    try {
+      val path = Path.of(hostVar)
+      if (path.getEelDescriptor() == eel.descriptor) { // Same descriptor
+        return@runBlockingMaybeCancellable path.asEelPath().toString() // Path on eel (i.e /home/..)
+      }
+    }
+    catch (_: InvalidPathException) { // Not a path
+    }
+    return@runBlockingMaybeCancellable null
   }
+
 
   override fun getPath(path: String, vararg more: String): Path =
     more.fold(EelPath.parse(path, eel.descriptor), EelPath::resolve).asNioPath()
@@ -95,7 +113,8 @@ internal fun javaHomeFinderEel(descriptor: EelDescriptor): JavaHomeFinderBasic {
             // TODO Introduce Windows Registry access in EelApi
             val process = try {
               eel.exec.spawnProcess(cmd.first()).args(cmd.drop(1)).eelIt()
-            } catch (_ : ExecuteProcessException) {
+            }
+            catch (_: ExecuteProcessException) {
               // registry reading can fail, in this case we return no output just like `com.intellij.openapi.util.io.WindowsRegistryUtil.readRegistry`
               return@runBlockingMaybeCancellable ""
             }
