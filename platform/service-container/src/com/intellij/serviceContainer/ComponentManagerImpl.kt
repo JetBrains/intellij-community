@@ -652,18 +652,19 @@ abstract class ComponentManagerImpl(
     return getOrCreateInstanceBlocking(holder = adapter.holder, debugString = key.name, keyClass = key) as T
   }
 
-  private fun isDevelopmentTime(): Boolean {
-    return Thread.currentThread().contextClassLoader is DevTimeClassLoader
+  private fun isDevTimeService(serviceClass: Class<*>): Boolean {
+    // this class is loaded in isolated class loader, do not try to find service in our context
+    return serviceClass.classLoader is DevTimeClassLoader
   }
 
   final override fun <T : Any> getService(serviceClass: Class<T>): T? {
-    if (isDevelopmentTime()) return null
+    if (isDevTimeService(serviceClass)) return null
 
     return doGetService(serviceClass, true) ?: return postGetService(serviceClass, createIfNeeded = true)
   }
 
   final override suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
-    if (isDevelopmentTime()) {
+    if (isDevTimeService(keyClass)) {
       throw IllegalStateException("Getting services is not allowed from development tools threads")
     }
 
@@ -679,7 +680,7 @@ abstract class ComponentManagerImpl(
   protected open fun <T : Any> postGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? = null
 
   final override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>): T? {
-    if (isDevelopmentTime()) return null
+    if (isDevTimeService(serviceClass)) return null
 
     return doGetService(serviceClass, createIfNeeded = false) ?: postGetService(serviceClass, createIfNeeded = false)
   }
