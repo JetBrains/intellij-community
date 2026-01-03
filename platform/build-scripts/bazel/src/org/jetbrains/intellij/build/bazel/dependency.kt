@@ -185,13 +185,21 @@ internal fun generateDeps(
           val isCommunityLib = firstFile.startsWith(context.communityRoot)
           val libraryContainer = context.getLibraryContainer(isCommunityLib)
 
+          val isModuleLibrary = element.libraryReference.parentReference is JpsModuleReference
           val targetName = if (underKotlinSnapshotLibRoot(firstFile, communityRoot = context.communityRoot)) {
             // name the same way as a maven library, so there will be minimal changes
             // migrating from kotlin from maven to kotlin from a snapshot
             escapeBazelLabel(jpsLibrary.name)
           }
+          else if (isModuleLibrary) {
+            val moduleRef = element.libraryReference.parentReference as JpsModuleReference
+            val name = jpsLibrary.name.takeIf { !it.startsWith("#") && it.isNotEmpty() } ?: firstFile.nameWithoutExtension
+            camelToSnakeCase(escapeBazelLabel("${moduleRef.moduleName.removePrefix("intellij.")}-${name}"))
+          }
           else {
-            camelToSnakeCase(escapeBazelLabel(firstFile.nameWithoutExtension))
+            // name the same way as the project library,
+            // otherwise hibernate-3.6.10 and hibernate-4.1.3 will use the same identity dom4j-1-6-1 thus only one of them will be added to projectLibraries
+            camelToSnakeCase(escapeBazelLabel(jpsLibrary.name))
           }
 
           val libraryTarget = LibraryTarget(
