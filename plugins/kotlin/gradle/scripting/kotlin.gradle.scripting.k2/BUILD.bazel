@@ -154,6 +154,7 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//platform/eel-provider",
     "//platform/projectModel-impl",
+    "//java/testFramework",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting` end
