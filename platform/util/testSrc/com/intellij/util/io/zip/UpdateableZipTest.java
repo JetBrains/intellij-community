@@ -38,7 +38,7 @@ public class UpdateableZipTest extends TestCase {
     @NotNull
     @Override
     protected JBZipFile createZip() throws IOException {
-      return new JBZipFile(zipFile, StandardCharsets.UTF_8, false, ThreeState.YES);
+      return new JBZipFile(zipFile.toPath(), StandardCharsets.UTF_8, false, ThreeState.YES);
     }
 
     @Override
@@ -47,14 +47,14 @@ public class UpdateableZipTest extends TestCase {
     }
 
     public void testBigZip() throws Exception {
-      File zipFile = FileUtil.createTempFile("big-test", ".zip");
+      var zipFile = FileUtil.createTempFile("big-test", ".zip").toPath();
       String expectedEntryText = "first";
 
       // add entries up to 6 GB (more than 4 GB - 1 byte)
       int i = 0;
-      try (ZipArchiveOutputStream zos = new ZipArchiveOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)))) {
+      try (ZipArchiveOutputStream zos = new ZipArchiveOutputStream(new BufferedOutputStream(Files.newOutputStream(zipFile)))) {
         modifyArchive(zos);
-        while (Files.size(zipFile.toPath()) <= 6 * 1024 * 1024) {
+        while (Files.size(zipFile) <= 6 * 1024 * 1024) {
           appendEntry(zos, "/entry" + i++, expectedEntryText.getBytes(StandardCharsets.UTF_8));
         }
       }
@@ -108,7 +108,7 @@ public class UpdateableZipTest extends TestCase {
 
   @NotNull
   protected JBZipFile createZip() throws IOException {
-    return new JBZipFile(zipFile);
+    return new JBZipFile(zipFile.toPath(), false);
   }
 
   public void testRead() throws Exception {

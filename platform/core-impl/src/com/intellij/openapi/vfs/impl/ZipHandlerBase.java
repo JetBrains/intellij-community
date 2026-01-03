@@ -30,7 +30,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
 
   @ApiStatus.Internal
   public static @NotNull GenericZipFile getZipFileWrapper(@NotNull Path file) throws IOException {
-    GenericZipFile wrapper = isFileLocal(file) ? new JavaZipFileWrapper(file.toFile()) : new JBZipFileWrapper(file.toFile());
+    GenericZipFile wrapper = isFileLocal(file) ? new JavaZipFileWrapper(file.toFile()) : new JBZipFileWrapper(file);
     if (LOG.isTraceEnabled()) {
       LOG.trace("Using " + wrapper.getClass().getName() + " to open " + file);
     }

@@ -325,25 +325,25 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
       var jar = IoTestUtil.createTestJar(
         tempDir.newFile("p.jar"),
         "file1.txt", "my_content", "file2.dat", "my_content"
-      );
-      var jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar));
+      ).toPath();
+      var jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(jar));
 
       var file1Txt = jarRoot.findChild("file1.txt");
       var file2Dat = jarRoot.findChild("file2.dat");
       assertEquals(file1Txt.getTimeStamp(), file2Dat.getTimeStamp());
 
-      try (var it = new JBZipFile(jar)) {
+      try (var it = new JBZipFile(jar, false)) {
         it.getOrCreateEntry(file1Txt.getName()).setData("my_new_content".getBytes(StandardCharsets.UTF_8));
       }
       // LFS invalidates JarFS caches
-      LocalFileSystem.getInstance().refreshNioFiles(List.of(jar.toPath()), false, true, null);
+      LocalFileSystem.getInstance().refreshNioFiles(List.of(jar), false, true, null);
       assertNotEquals(file1Txt.getTimeStamp(), file2Dat.getTimeStamp());
 
-      try (var it = new JBZipFile(jar)) {
+      try (var it = new JBZipFile(jar, false)) {
         it.getOrCreateEntry(file2Dat.getName()).setData("my_new_content".getBytes(StandardCharsets.UTF_8));
       }
       // LFS invalidates JarFS caches
-      LocalFileSystem.getInstance().refreshNioFiles(List.of(jar.toPath()), false, true, null);
+      LocalFileSystem.getInstance().refreshNioFiles(List.of(jar), false, true, null);
       assertEquals(file1Txt.getTimeStamp(), file2Dat.getTimeStamp());
     });
   }

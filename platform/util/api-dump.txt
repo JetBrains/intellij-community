@@ -544,12 +544,22 @@ com.intellij.util.io.storage.RecordIdIterator
 - a:hasNextId():Z
 - a:nextId():I
 - a:validId():Z
-c:com.intellij.util.io.zip.JBZipFile
+f:com.intellij.util.io.zip.JBZipFile
+- java.io.Closeable
+- <init>(java.io.File):V
+- <init>(java.nio.channels.SeekableByteChannel,java.nio.charset.Charset,Z,com.intellij.util.ThreeState):V
 - <init>(java.nio.file.Path):V
 - <init>(java.nio.file.Path,java.nio.charset.Charset):V
 - <init>(java.nio.file.Path,java.nio.charset.Charset,Z):V
 - <init>(java.nio.file.Path,java.nio.charset.Charset,Z,com.intellij.util.ThreeState):V
 - <init>(java.nio.file.Path,Z):V
+- close():V
+- eraseEntry(com.intellij.util.io.zip.JBZipEntry):V
+- gc():V
+- getEncoding():java.nio.charset.Charset
+- getEntries():java.util.List
+- getEntry(java.lang.String):com.intellij.util.io.zip.JBZipEntry
+- getOrCreateEntry(java.lang.String):com.intellij.util.io.zip.JBZipEntry
 com.intellij.util.keyFMap.KeyFMap
 - sf:EMPTY_MAP:com.intellij.util.keyFMap.KeyFMap
 - a:equalsByReference(com.intellij.util.keyFMap.KeyFMap):Z

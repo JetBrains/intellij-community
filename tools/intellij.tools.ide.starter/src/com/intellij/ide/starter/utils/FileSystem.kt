@@ -84,7 +84,7 @@ object FileSystem {
 
       val symlinks = mutableListOf<SymlinkInfo>()
 
-      JBZipFile(zipFile.toFile(), StandardCharsets.UTF_8, false, ThreeState.UNSURE).use { zip ->
+      JBZipFile(zipFile, StandardCharsets.UTF_8, false, ThreeState.UNSURE).use { zip ->
         for (entry in zip.entries) {
           if (entry.isDirectory) {
             val dir = targetDir.resolve(entry.name)

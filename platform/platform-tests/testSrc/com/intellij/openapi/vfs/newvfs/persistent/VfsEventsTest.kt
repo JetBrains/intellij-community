@@ -229,7 +229,7 @@ class VfsEventsTest : BareTestFixtureTestCase() {
 
   private fun createJar(directory: Path): Path {
     val jarPath = directory.resolve("Test.jar")
-    JBZipFile(jarPath.toFile()).use {
+    JBZipFile(jarPath, false).use {
       it.getOrCreateEntry("awesome.txt").setData("Hello!".toByteArray(Charsets.UTF_8), 666L)
       it.getOrCreateEntry("readme.txt").setData("Read it!".toByteArray(Charsets.UTF_8), 777L)
     }
@@ -251,7 +251,7 @@ class VfsEventsTest : BareTestFixtureTestCase() {
 
   private fun modifyJar(jarPath: Path) {
     assertTrue { Files.exists(jarPath) }
-    JBZipFile(jarPath.toFile()).use {
+    JBZipFile(jarPath, false).use {
       // modify
       it.getOrCreateEntry("awesome.txt").setData("Hello_modified!".toByteArray(Charsets.UTF_8), 666L)
       // add

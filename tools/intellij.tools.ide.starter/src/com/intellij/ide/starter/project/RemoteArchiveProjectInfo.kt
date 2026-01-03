@@ -12,7 +12,6 @@ import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.ThreeState
 import com.intellij.util.io.zip.JBZipFile
 import org.kodein.di.instance
-import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -34,7 +33,7 @@ data class RemoteArchiveProjectInfo(
   private val description: String = "",
 ) : ProjectInfoSpec {
 
-  private fun getTopMostFolderFromZip(zipFile: File): String = JBZipFile(zipFile, StandardCharsets.UTF_8, false, ThreeState.UNSURE).entries.first().name.split("/").first()
+  private fun getTopMostFolderFromZip(zipFile: Path): String = JBZipFile(zipFile, StandardCharsets.UTF_8, false, ThreeState.UNSURE).entries.first().name.split("/").first()
 
   @OptIn(ExperimentalPathApi::class)
   override fun downloadAndUnpackProject(): Path {
@@ -51,7 +50,7 @@ data class RemoteArchiveProjectInfo(
       throw SetupException("Failed to download the project")
     }
 
-    val projectHome = (projectsUnpacked / getTopMostFolderFromZip(zipFile.toFile())).let(projectHomeRelativePath)
+    val projectHome = (projectsUnpacked / getTopMostFolderFromZip(zipFile)).let(projectHomeRelativePath)
 
     if (!isReusable) {
       val isDeleted = projectHome.deleteRecursivelyQuietly()
