@@ -2,8 +2,8 @@
 package com.intellij.testFramework.common
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.build.org.jetbrains.intellij.bazelEnvironment.BazelLabel
-import org.jetbrains.intellij.build.org.jetbrains.intellij.bazelEnvironment.BazelRunfiles
+import org.jetbrains.intellij.bazelEnvironment.BazelLabel
+import org.jetbrains.intellij.bazelEnvironment.BazelRunfiles
 import java.nio.file.Path
 import kotlin.io.path.*
 

@@ -6,7 +6,7 @@ import com.intellij.testFramework.common.BazelTestUtil
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFileToCacheLocation
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.extractZip
-import org.jetbrains.intellij.build.org.jetbrains.intellij.bazelEnvironment.BazelLabel
+import org.jetbrains.intellij.bazelEnvironment.BazelLabel
 import java.nio.file.Path
 
 data class BazelLabelArchiveProjectInfo(

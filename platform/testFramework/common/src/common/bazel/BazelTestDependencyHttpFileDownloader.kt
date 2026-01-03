@@ -8,7 +8,7 @@ import com.intellij.testFramework.common.BazelTestUtil.getFileFromBazelRuntime
 import com.intellij.util.io.DigestUtil
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
-import org.jetbrains.intellij.build.org.jetbrains.intellij.bazelEnvironment.BazelLabel
+import org.jetbrains.intellij.bazelEnvironment.BazelLabel
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
