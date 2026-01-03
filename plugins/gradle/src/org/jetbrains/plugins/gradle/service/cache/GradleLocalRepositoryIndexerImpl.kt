@@ -170,20 +170,22 @@ open class GradleLocalRepositoryIndexerImpl : GradleLocalRepositoryIndexer {
 
 @ApiStatus.Internal
 @TestOnly
-class GradleLocalRepositoryIndexerTestImpl(eelDescriptor: EelDescriptor, vararg gav: String) : GradleLocalRepositoryIndexerImpl() {
+class GradleLocalRepositoryIndexerTestImpl(eelDescriptor: EelDescriptor, gavList: List<String>) : GradleLocalRepositoryIndexerImpl() {
+
+  constructor(eelDescriptor: EelDescriptor, vararg gavArgs: String) : this(eelDescriptor, gavArgs.toList())
+
   /**
-   * Vararg constructor:
-   * expects arguments in triples: groupId, artifactId, version
+   * Constructor expects arguments in gav format with colons: `<group>:<artifact>:<version>`
    */
   init {
-    require(gav.size % 3 == 0) {
-      "GradleLocalRepositoryIndexerTestImpl requires arguments in triples: (group, artifact, version)"
+    gavList.forEach { gav ->
+      val parts = gav.split(":")
+      require(parts.size == 3 && parts.all(String::isNotBlank)) {
+        "Invalid GAV format: $gav, GradleLocalRepositoryIndexerTestImpl requires arguments in gav format: `<group>:<artifact>:<version>`"
+      }
     }
 
-    val entries = mutableListOf<Triple<String, String, String>>()
-    for (i in gav.indices step 3) {
-      entries += Triple(gav[i], gav[i + 1], gav[i + 2])
-    }
+    val entries = gavList.map { it.split(":") }.map { Triple(it[0], it[1], it[2]) }
 
     val group2Artifacts = entries
       .groupBy { it.first }

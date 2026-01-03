@@ -33,7 +33,7 @@ class GradleDependencyCompletionContributorTest {
     "artifact",
   ])
   fun `test search single result`(searchString: String) = runBlocking {
-    configureLocalIndex("group", "artifact", "version")
+    configureLocalIndex("group:artifact:version")
 
     val expected = listOf(DependencyCompletionResult("group", "artifact", "version"))
 
