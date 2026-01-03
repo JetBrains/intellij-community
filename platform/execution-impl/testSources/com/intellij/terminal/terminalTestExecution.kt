@@ -2,6 +2,7 @@
 package com.intellij.terminal
 
 import com.intellij.execution.process.*
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.isWindows
@@ -9,12 +10,17 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.util.io.BaseDataReader
 import com.intellij.util.io.BaseOutputReader
 import com.pty4j.windows.conpty.WinConPtyProcess
-import org.junit.jupiter.api.Assertions
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.jupiter.api.Assumptions
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
+import org.assertj.core.api.Assertions
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.CompletableFuture
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 internal suspend fun createTerminalProcessHandler(
   coroutineScope: CoroutineScope,
@@ -40,7 +46,7 @@ internal suspend fun createTerminalProcessHandler(
  */
 private fun assumeTestableProcess(localProcess: Process) {
   if (LocalEelDescriptor.osFamily.isWindows) {
-    Assertions.assertInstanceOf(WinConPtyProcess::class.java, localProcess)
+    Assertions.assertThat(localProcess).isInstanceOf(WinConPtyProcess::class.java)
     Assumptions.assumeTrue(
       (localProcess as WinConPtyProcess).isBundledConPtyLibrary,
       "Tests require bundled ConPTY to have stable PTY emulation on Windows"
@@ -64,6 +70,39 @@ internal fun ProcessHandler.writeToStdinAndHitEnter(input: String) {
     it.write((input + "\r").toByteArray(Charsets.UTF_8))
     it.flush()
   }
+}
+
+internal fun ProcessHandler.assertTerminated() {
+  Assertions.assertThat(this.isProcessTerminated).isTrue
+}
+
+internal suspend fun ProcessHandler.awaitTerminated(timeout: Duration = 20.seconds) {
+  try {
+    withTimeout(timeout) {
+      doAwaitProcessTerminated(this@awaitTerminated)
+    }
+    this@awaitTerminated.assertTerminated()
+  }
+  catch (e: TimeoutCancellationException) {
+    System.err.println(e.message)
+    this@awaitTerminated.assertTerminated()
+    Assertions.fail(e)
+  }
+}
+
+private suspend fun doAwaitProcessTerminated(processHandler: ProcessHandler) {
+  val terminatedDeferred = CompletableDeferred<Unit>()
+  val disposable = Disposer.newDisposable()
+  terminatedDeferred.invokeOnCompletion { Disposer.dispose(disposable) }
+  processHandler.addProcessListener(object : ProcessListener {
+    override fun processTerminated(event: ProcessEvent) {
+      terminatedDeferred.complete(Unit)
+    }
+  }, disposable)
+  if (processHandler.isProcessTerminated) {
+    terminatedDeferred.complete(Unit)
+  }
+  terminatedDeferred.await()
 }
 
 internal class MockPtyBasedProcess(private val withPty: Boolean) : Process(), PtyBasedProcess, SelfKiller {
