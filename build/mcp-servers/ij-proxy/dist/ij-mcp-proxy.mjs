@@ -5638,8 +5638,8 @@ var require_utils2 = __commonJS((exports) => {
       output = `(?:^(?!${output}).*$)`;
     return output;
   };
-  exports.basename = (path6, { windows } = {}) => {
-    let segs = path6.split(windows ? /[\\/]/ : "/"), last = segs[segs.length - 1];
+  exports.basename = (path7, { windows } = {}) => {
+    let segs = path7.split(windows ? /[\\/]/ : "/"), last = segs[segs.length - 1];
     if (last === "")
       return segs[segs.length - 2];
     return last;
@@ -22249,7 +22249,7 @@ function compareVersionParts(left, right) {
 
 // proxy-tools/handlers/apply-patch.ts
 import { copyFile, mkdir, rename, rm } from "fs/promises";
-import path2 from "path";
+import path3 from "path";
 
 // proxy-tools/git-utils.ts
 import { spawn } from "child_process";
@@ -22457,6 +22457,57 @@ function splitLines2(text) {
   return lines;
 }
 
+// proxy-tools/search-fallback.ts
+import path2 from "path";
+
+// proxy-tools/search-in-files.ts
+async function searchInFiles(args, callUpstreamTool) {
+  let toolName = typeof args.regexPattern === "string" ? "search_in_files_by_regex" : "search_in_files_by_text", result = await callUpstreamTool(toolName, args), entries = extractEntries(result), structured = extractStructuredContent(result), structuredRecord = structured && typeof structured === "object" ? structured : null;
+  return {
+    entries,
+    probablyHasMoreMatchingEntries: structuredRecord?.probablyHasMoreMatchingEntries === !0,
+    timedOut: structuredRecord?.timedOut === !0
+  };
+}
+
+// proxy-tools/search-fallback.ts
+var SEARCH_FALLBACK_REGEX = "(?m)^.*$", SEARCH_FALLBACK_MAX_LINES = 200000, SEARCH_FALLBACK_MAX_LINE_TEXT_CHARS = 1000;
+async function readLinesViaSearch(projectPath, relativePath, absolutePath, maxLine, callUpstreamTool) {
+  let cappedMaxLine = Math.min(Math.max(1, maxLine), SEARCH_FALLBACK_MAX_LINES), directory = path2.dirname(relativePath), directoryToSearch = directory === "." ? void 0 : directory, { entries, probablyHasMoreMatchingEntries, timedOut } = await searchInFiles({
+    regexPattern: SEARCH_FALLBACK_REGEX,
+    directoryToSearch,
+    fileMask: path2.basename(relativePath),
+    caseSensitive: !0,
+    maxUsageCount: cappedMaxLine
+  }, callUpstreamTool), hasMore = probablyHasMoreMatchingEntries || maxLine > cappedMaxLine || timedOut, lineMap = /* @__PURE__ */ new Map, maxLineNumber = 0, hasTruncatedLine = !1;
+  for (let entry of entries) {
+    if (!entry || typeof entry.lineNumber !== "number")
+      continue;
+    if (normalizeEntryPath(projectPath, entry.filePath) !== absolutePath)
+      continue;
+    let lineNumber = entry.lineNumber;
+    if (lineNumber > maxLineNumber)
+      maxLineNumber = lineNumber;
+    if (!lineMap.has(lineNumber)) {
+      let normalizedLine = normalizeUsageLine(entry.lineText);
+      if (normalizedLine.length >= SEARCH_FALLBACK_MAX_LINE_TEXT_CHARS)
+        hasTruncatedLine = !0;
+      lineMap.set(lineNumber, normalizedLine);
+    }
+  }
+  return { lineMap, maxLineNumber, hasMore, hasTruncatedLine };
+}
+function normalizeUsageLine(lineText) {
+  if (typeof lineText !== "string")
+    return "";
+  if (!lineText.startsWith("||"))
+    return lineText;
+  let tailIndex = lineText.lastIndexOf("||");
+  if (tailIndex <= 1)
+    return "";
+  return lineText.slice(2, tailIndex);
+}
+
 // proxy-tools/truncation.ts
 function isTruncatedText(text) {
   return findTruncationMarkerSuffix(text) >= 0 || findTruncationMarkerLine(text) >= 0;
@@ -22487,7 +22538,7 @@ function isLineBreakChar(code) {
 }
 
 // proxy-tools/handlers/apply-patch.ts
-var BEGIN_MARKER = "*** Begin Patch", END_MARKER = "*** End Patch", ADD_PREFIX = "*** Add File: ", UPDATE_PREFIX = "*** Update File: ", DELETE_PREFIX = "*** Delete File: ", MOVE_PREFIX = "*** Move to: ", END_OF_FILE = "*** End of File", HEREDOC_PREFIXES = /* @__PURE__ */ new Set(["<<EOF", "<<'EOF'", '<<"EOF"']);
+var BEGIN_MARKER = "*** Begin Patch", END_MARKER = "*** End Patch", ADD_PREFIX = "*** Add File: ", UPDATE_PREFIX = "*** Update File: ", DELETE_PREFIX = "*** Delete File: ", MOVE_PREFIX = "*** Move to: ", END_OF_FILE = "*** End of File", HEREDOC_PREFIXES = /* @__PURE__ */ new Set(["<<EOF", "<<'EOF'", '<<"EOF"']), TRUNCATION_ERROR = "file content truncated while reading";
 async function handleApplyPatchTool(args, projectPath, callUpstreamTool) {
   let patchText = extractPatchText(args), operations = parsePatch(patchText), touched = 0;
   for (let op of operations) {
@@ -22500,16 +22551,13 @@ async function handleApplyPatchTool(args, projectPath, callUpstreamTool) {
       }), touched += 1;
       continue;
     }
-    let { relative } = resolvePathInProject(projectPath, op.path, "path");
+    let { relative, absolute } = resolvePathInProject(projectPath, op.path, "path");
     if (op.type === "delete") {
       await runGitRm(relative, projectPath), touched += 1;
       continue;
     }
     if (op.type === "update") {
-      let original = await readFileText(relative, { truncateMode: "NONE" }, callUpstreamTool);
-      if (isTruncatedText(original))
-        throw Error("file content truncated while reading");
-      let updated = applyHunks(original, op.hunks), resolvedTarget = op.moveTo ? resolvePathInProject(projectPath, op.moveTo, "path") : null, moveTarget = resolvedTarget && resolvedTarget.relative !== relative ? resolvedTarget : null;
+      let original = await readFileTextForPatch(relative, absolute, projectPath, callUpstreamTool), updated = applyHunks(original, op.hunks), resolvedTarget = op.moveTo ? resolvePathInProject(projectPath, op.moveTo, "path") : null, moveTarget = resolvedTarget && resolvedTarget.relative !== relative ? resolvedTarget : null;
       if (moveTarget)
         await ensureParentDir(moveTarget.absolute), await runGitMv(relative, moveTarget.relative, projectPath), await callUpstreamTool("create_new_file", {
           pathInProject: moveTarget.relative,
@@ -22526,6 +22574,28 @@ async function handleApplyPatchTool(args, projectPath, callUpstreamTool) {
     }
   }
   return `Applied patch to ${touched} file${touched === 1 ? "" : "s"}.`;
+}
+async function readFileTextForPatch(relativePath, absolutePath, projectPath, callUpstreamTool) {
+  let original = await readFileText(relativePath, { truncateMode: "NONE" }, callUpstreamTool);
+  if (!isTruncatedText(original))
+    return original;
+  try {
+    return await readFileTextViaSearch(projectPath, relativePath, absolutePath, callUpstreamTool);
+  } catch (error48) {
+    if (error48 instanceof Error && error48.message === TRUNCATION_ERROR)
+      throw error48;
+    throw Error(TRUNCATION_ERROR);
+  }
+}
+async function readFileTextViaSearch(projectPath, relativePath, absolutePath, callUpstreamTool) {
+  let { lineMap, maxLineNumber, hasMore, hasTruncatedLine } = await readLinesViaSearch(projectPath, relativePath, absolutePath, SEARCH_FALLBACK_MAX_LINES, callUpstreamTool);
+  if (hasMore || maxLineNumber === 0 || hasTruncatedLine)
+    throw Error(TRUNCATION_ERROR);
+  let lines = [];
+  for (let lineNumber = 1;lineNumber <= maxLineNumber; lineNumber += 1)
+    lines.push(lineMap.get(lineNumber) ?? "");
+  return lines.join(`
+`);
 }
 function extractPatchText(args) {
   if (typeof args === "string")
@@ -22573,10 +22643,10 @@ function parsePatch(text) {
   while (i < endIndex) {
     let line = lines[i], headerLine = line.trimStart();
     if (headerLine.startsWith(ADD_PREFIX)) {
-      let path3 = headerLine.slice(ADD_PREFIX.length).trim();
-      if (!path3)
+      let path4 = headerLine.slice(ADD_PREFIX.length).trim();
+      if (!path4)
         throw Error("Add File requires a path");
-      ensureSafePatchPath(path3, "Add File"), i += 1;
+      ensureSafePatchPath(path4, "Add File"), i += 1;
       let contentLines = [];
       while (i < endIndex && !isPatchHeaderLine(lines[i])) {
         if (!lines[i].startsWith("+"))
@@ -22586,21 +22656,21 @@ function parsePatch(text) {
       let content = contentLines.length === 0 ? "" : `${contentLines.join(`
 `)}
 `;
-      operations.push({ type: "add", path: path3, content });
+      operations.push({ type: "add", path: path4, content });
       continue;
     }
     if (headerLine.startsWith(DELETE_PREFIX)) {
-      let path3 = headerLine.slice(DELETE_PREFIX.length).trim();
-      if (!path3)
+      let path4 = headerLine.slice(DELETE_PREFIX.length).trim();
+      if (!path4)
         throw Error("Delete File requires a path");
-      ensureSafePatchPath(path3, "Delete File"), operations.push({ type: "delete", path: path3 }), i += 1;
+      ensureSafePatchPath(path4, "Delete File"), operations.push({ type: "delete", path: path4 }), i += 1;
       continue;
     }
     if (headerLine.startsWith(UPDATE_PREFIX)) {
-      let path3 = headerLine.slice(UPDATE_PREFIX.length).trim();
-      if (!path3)
+      let path4 = headerLine.slice(UPDATE_PREFIX.length).trim();
+      if (!path4)
         throw Error("Update File requires a path");
-      ensureSafePatchPath(path3, "Update File"), i += 1;
+      ensureSafePatchPath(path4, "Update File"), i += 1;
       let moveTo = null;
       if (i < endIndex && isPatchHeaderLine(lines[i])) {
         let moveLine = lines[i].trimStart();
@@ -22652,7 +22722,7 @@ function parsePatch(text) {
       }
       if (hunks.length === 0)
         throw Error("Update File requires at least one hunk");
-      operations.push({ type: "update", path: path3, moveTo, hunks });
+      operations.push({ type: "update", path: path4, moveTo, hunks });
       continue;
     }
     if (line.trim() === "") {
@@ -22672,19 +22742,19 @@ function ensureSafePatchPath(rawPath, label) {
     throw Error(`${label} path contains control characters or escape sequences`);
 }
 async function ensureParentDir(absolutePath) {
-  let parentDir = path2.dirname(absolutePath);
+  let parentDir = path3.dirname(absolutePath);
   await mkdir(parentDir, { recursive: !0 });
 }
 async function runGitRm(relativePath, projectPath) {
   if (!await isTrackedPath(relativePath, projectPath)) {
-    await rm(path2.resolve(projectPath, relativePath));
+    await rm(path3.resolve(projectPath, relativePath));
     return;
   }
   await runGitCommand(["rm", "--", toGitPath(relativePath)], projectPath);
 }
 async function runGitMv(fromRelative, toRelative, projectPath) {
   if (!await isTrackedPath(fromRelative, projectPath)) {
-    let fromAbsolute = path2.resolve(projectPath, fromRelative), toAbsolute = path2.resolve(projectPath, toRelative);
+    let fromAbsolute = path3.resolve(projectPath, fromRelative), toAbsolute = path3.resolve(projectPath, toRelative);
     await moveFile(fromAbsolute, toAbsolute);
     return;
   }
@@ -22808,7 +22878,7 @@ function findSequence(haystack, needle, startIndex = 0, preferEnd = !1) {
 }
 
 // proxy-tools/handlers/edit.ts
-import path3 from "path";
+import path4 from "path";
 async function handleEditTool(args, projectPath, callUpstreamTool) {
   let filePath = requireString(args.file_path, "file_path"), oldString = normalizeLineEndings(requireString(args.old_string, "old_string")), newString = typeof args.new_string === "string" ? normalizeLineEndings(args.new_string) : null;
   if (newString === null)
@@ -22836,11 +22906,11 @@ async function handleEditTool(args, projectPath, callUpstreamTool) {
     pathInProject: relative,
     text: updated,
     overwrite: !0
-  }), `Updated ${path3.resolve(projectPath, relative)}`;
+  }), `Updated ${path4.resolve(projectPath, relative)}`;
 }
 
 // proxy-tools/handlers/find.ts
-import path4 from "path";
+import path5 from "path";
 var DEFAULT_LIMIT = 1000, NAME_SEARCH_MAX_LIMIT = 1e4, GLOB_CHARS_RE = /[*?\[\]{}]/;
 function resolvePattern(args) {
   if (args && typeof args.pattern === "string")
@@ -22871,14 +22941,14 @@ function shouldUseGlob(pattern, mode) {
 function filterByBasePath(files, projectPath, baseRelative) {
   if (!baseRelative)
     return files;
-  let normalizedBase = path4.normalize(baseRelative), prefix = normalizedBase.endsWith(path4.sep) ? normalizedBase : `${normalizedBase}${path4.sep}`;
+  let normalizedBase = path5.normalize(baseRelative), prefix = normalizedBase.endsWith(path5.sep) ? normalizedBase : `${normalizedBase}${path5.sep}`;
   return files.filter((file2) => {
-    let relative = path4.isAbsolute(file2) ? path4.relative(projectPath, file2) : file2;
+    let relative = path5.isAbsolute(file2) ? path5.relative(projectPath, file2) : file2;
     return relative === normalizedBase || relative.startsWith(prefix);
   });
 }
 function toAbsolutePaths(files, projectPath) {
-  return files.map((file2) => path4.resolve(projectPath, file2));
+  return files.map((file2) => path5.resolve(projectPath, file2));
 }
 async function findByNameKeyword(pattern, projectPath, baseRelative, limit, callUpstreamTool) {
   let shouldFilter = Boolean(baseRelative), requestLimit = shouldFilter ? Math.max(limit, DEFAULT_LIMIT) : limit, maxLimit = shouldFilter ? Math.max(limit, NAME_SEARCH_MAX_LIMIT) : limit;
@@ -22914,7 +22984,7 @@ async function handleFindTool(args, projectPath, callUpstreamTool) {
 }
 
 // proxy-tools/handlers/glob.ts
-import path5 from "path";
+import path6 from "path";
 async function handleGlobTool(args, projectPath, callUpstreamTool) {
   let pattern = requireString(args.pattern, "pattern"), basePath = args.path, { relative } = resolveSearchPath(projectPath, basePath), toolArgs = { globPattern: pattern };
   if (relative)
@@ -22922,13 +22992,13 @@ async function handleGlobTool(args, projectPath, callUpstreamTool) {
   let result = await callUpstreamTool("find_files_by_glob", toolArgs), files = extractFileList(result);
   if (files.length === 0)
     return "No matches found.";
-  return files.map((file2) => path5.resolve(projectPath, file2)).join(`
+  return files.map((file2) => path6.resolve(projectPath, file2)).join(`
 `);
 }
 
 // proxy-tools/handlers/grep.ts
 var import_picomatch = __toESM(require_picomatch2(), 1);
-import path6 from "path";
+import path7 from "path";
 
 // node_modules/@eslint-community/regexpp/index.mjs
 var latestEcmaVersion = 2025, largeIdStartRanges = void 0, largeIdContinueRanges = void 0;
@@ -24902,14 +24972,14 @@ async function handleGrepTool(args, projectPath, callUpstreamTool, isCodexStyle)
   else if (relative && basePath && !hasExplicitFileMask && !endsWithSeparator(basePath))
     treatAsFile = await isExistingFilePath(relative, callUpstreamTool);
   if (treatAsFile)
-    directoryToSearch = path6.dirname(relative), resolvedMask = resolvedMask ?? path6.basename(relative);
+    directoryToSearch = path7.dirname(relative), resolvedMask = resolvedMask ?? path7.basename(relative);
   let literalSearchText = getLiteralSearchText(pattern), useRegex = literalSearchText === null, toolArgs = {
     directoryToSearch,
     fileMask: resolvedMask,
     caseSensitive,
     maxUsageCount: FULL_SCAN_USAGE_COUNT,
     ...useRegex ? { regexPattern: pattern } : { searchText: literalSearchText }
-  }, result = await callUpstreamTool(useRegex ? "search_in_files_by_regex" : "search_in_files_by_text", toolArgs), entries = extractEntries(result), filteredEntries = !useRegex || !directoryToSearch || shouldApplyWorkaround("search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */) ? filterEntriesByPath(entries, projectPath, relative, treatAsFile) : entries, finalEntries = pathGlob ? filterEntriesByPathGlob(filteredEntries, projectPath, pathGlob) : filteredEntries;
+  }, { entries } = await searchInFiles(toolArgs, callUpstreamTool), filteredEntries = !useRegex || !directoryToSearch || shouldApplyWorkaround("search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */) ? filterEntriesByPath(entries, projectPath, relative, treatAsFile) : entries, finalEntries = pathGlob ? filterEntriesByPathGlob(filteredEntries, projectPath, pathGlob) : filteredEntries;
   if (finalEntries.length === 0 && useRegex) {
     let fallbackEntries = await searchAlternativesWhenRegexEmpty(pattern, { directoryToSearch, fileMask: resolvedMask, caseSensitive, maxUsageCount: FULL_SCAN_USAGE_COUNT }, projectPath, relative, treatAsFile, pathGlob, callUpstreamTool, {
       maxResults: outputMode === "count" ? null : limit
@@ -24960,8 +25030,8 @@ function createFallbackEntryFilter(projectPath, relativePath, treatAsFile, pathG
     let entryPath = resolveEntryPath(projectPath, entry);
     if (!entryPath)
       return !1;
-    let relative = path6.relative(projectPath, entryPath);
-    if (relative.startsWith("..") || path6.isAbsolute(relative))
+    let relative = path7.relative(projectPath, entryPath);
+    if (relative.startsWith("..") || path7.isAbsolute(relative))
       return !1;
     return matcher(normalizePathForGlob(relative));
   };
@@ -24969,7 +25039,7 @@ function createFallbackEntryFilter(projectPath, relativePath, treatAsFile, pathG
 function createEntryPathFilter(projectPath, relativePath, treatAsFile) {
   if (!relativePath)
     return null;
-  let targetPath = path6.normalize(path6.resolve(projectPath, relativePath));
+  let targetPath = path7.normalize(path7.resolve(projectPath, relativePath));
   if (treatAsFile)
     return (entry) => resolveEntryPath(projectPath, entry) === targetPath;
   return (entry) => {
@@ -24981,13 +25051,13 @@ function resolveEntryPath(projectPath, entry) {
   let filePath = normalizeEntryPath(projectPath, entry.filePath);
   if (typeof filePath !== "string" || filePath === "")
     return null;
-  return path6.normalize(filePath);
+  return path7.normalize(filePath);
 }
 function isWithinDirectory(filePath, directoryPath) {
-  let relative = path6.relative(directoryPath, filePath);
+  let relative = path7.relative(directoryPath, filePath);
   if (relative === "")
     return !0;
-  return !relative.startsWith("..") && !path6.isAbsolute(relative);
+  return !relative.startsWith("..") && !path7.isAbsolute(relative);
 }
 function entryKey(entry) {
   let filePath = typeof entry?.filePath === "string" ? entry.filePath : "", lineNumber = typeof entry?.lineNumber === "number" ? entry.lineNumber : "", lineText = typeof entry?.lineText === "string" ? entry.lineText : "";
@@ -25001,8 +25071,8 @@ function filterEntriesByPathGlob(entries, projectPath, pathGlob) {
     let entryPath = resolveEntryPath(projectPath, entry);
     if (!entryPath)
       return !1;
-    let relativePath = path6.relative(projectPath, entryPath);
-    if (relativePath.startsWith("..") || path6.isAbsolute(relativePath))
+    let relativePath = path7.relative(projectPath, entryPath);
+    if (relativePath.startsWith("..") || path7.isAbsolute(relativePath))
       return !1;
     return matcher(normalizePathForGlob(relativePath));
   });
@@ -25016,11 +25086,11 @@ async function searchAlternativesWhenRegexEmpty(pattern, toolArgs, projectPath, 
     let trimmed = alternative.trim();
     if (!trimmed)
       continue;
-    let result = await callUpstreamTool("search_in_files_by_regex", {
+    let { entries } = await searchInFiles({
       ...toolArgs,
       regexPattern: trimmed
-    });
-    for (let entry of extractEntries(result)) {
+    }, callUpstreamTool);
+    for (let entry of entries) {
       if (!entryFilter(entry))
         continue;
       let key = entryKey(entry);
@@ -25087,7 +25157,7 @@ function extractLiteralFromPattern(patternAst) {
   return chars.join("");
 }
 function endsWithSeparator(input) {
-  return input.endsWith(path6.sep) || input.endsWith("/") || input.endsWith("\\");
+  return input.endsWith(path7.sep) || input.endsWith("/") || input.endsWith("\\");
 }
 function isPathAwareGlob(pattern) {
   return pattern.includes("/") || pattern.includes("\\");
@@ -25117,7 +25187,7 @@ function createPathGlobMatcher(pattern) {
   let patterns = normalizeGlobPattern(pattern).split(";").map((entry) => entry.trim()).filter(Boolean);
   if (patterns.length === 0)
     return null;
-  let nocase = path6.sep === "\\", matchers = patterns.map((entry) => import_picomatch.default(entry, { dot: !0, nocase }));
+  let nocase = path7.sep === "\\", matchers = patterns.map((entry) => import_picomatch.default(entry, { dot: !0, nocase }));
   return (candidate) => matchers.some((matcher) => matcher(candidate));
 }
 async function isExistingFilePath(relativePath, callUpstreamTool) {
@@ -25215,8 +25285,7 @@ function formatEntry(entry) {
 }
 
 // proxy-tools/handlers/read.ts
-import path7 from "path";
-var DEFAULT_READ_LIMIT = 2000, MAX_LINE_LENGTH = 500, TAB_WIDTH = 4, COMMENT_PREFIXES = ["#", "//", "--"], BLOCK_COMMENT_START = "/*", BLOCK_COMMENT_END = "*/", ANNOTATION_PREFIX = "@", TRUNCATION_ERROR = "file content truncated while reading", SEARCH_FALLBACK_REGEX = "(?m)^.*$", SEARCH_FALLBACK_MAX_LINES = 200000;
+var DEFAULT_READ_LIMIT = 2000, MAX_LINE_LENGTH = 500, TAB_WIDTH = 4, COMMENT_PREFIXES = ["#", "//", "--"], BLOCK_COMMENT_START = "/*", BLOCK_COMMENT_END = "*/", ANNOTATION_PREFIX = "@", TRUNCATION_ERROR2 = "file content truncated while reading";
 async function handleReadTool(args, projectPath, callUpstreamTool, { format = "numbered" } = {}) {
   let filePath = requireString(args.file_path, "file_path"), offset = toPositiveInt(args.offset, 1, "offset"), limit = toPositiveInt(args.limit, DEFAULT_READ_LIMIT, "limit"), mode = (args.mode ? String(args.mode).toLowerCase() : "slice") === "indentation" ? "indentation" : "slice", includeLineNumbers = format !== "raw", indentation = args.indentation ?? {}, anchorLine = indentation.anchor_line === void 0 || indentation.anchor_line === null ? null : toPositiveInt(indentation.anchor_line, void 0, "anchor_line"), maxLevels = toNonNegativeInt(indentation.max_levels, 0, "max_levels"), includeSiblings = Boolean(indentation.include_siblings ?? !1), includeHeader = indentation.include_header === void 0 ? !0 : Boolean(indentation.include_header), maxLines = indentation.max_lines === void 0 || indentation.max_lines === null ? null : toPositiveInt(indentation.max_lines, void 0, "max_lines"), { relative, absolute } = resolvePathInProject(projectPath, filePath, "file_path");
   if (mode === "indentation")
@@ -25284,7 +25353,7 @@ async function readSliceMode(relativePath, offset, limit, includeLineNumbers, ca
     lines = splitLines2(refreshedText), truncated = refreshedTruncated;
   }
   if (truncated && requestedLines > lines.length)
-    throw Error(TRUNCATION_ERROR);
+    throw Error(TRUNCATION_ERROR2);
   if (offset > lines.length)
     throw Error("offset exceeds file length");
   return sliceLines(lines, offset, limit, includeLineNumbers);
@@ -25296,7 +25365,7 @@ async function readSliceModeFromSearch(projectPath, relativePath, absolutePath, 
   let { lineMap, maxLineNumber, hasMore } = await readLinesViaSearch(projectPath, relativePath, absolutePath, requestedLines, callUpstreamTool);
   if (maxLineNumber < offset) {
     if (hasMore)
-      throw Error(TRUNCATION_ERROR);
+      throw Error(TRUNCATION_ERROR2);
     throw Error("offset exceeds file length");
   }
   let endLine = Math.min(offset + limit - 1, maxLineNumber), output = [];
@@ -25362,7 +25431,7 @@ async function readIndentationMode(relativePath, offset, limit, options, include
         return readIndentationFromText(refreshedText, offset, limit, options, includeLineNumbers);
       } catch (refreshedError) {
         if (refreshedTruncated && isAnchorLineError(refreshedError))
-          throw Error(TRUNCATION_ERROR);
+          throw Error(TRUNCATION_ERROR2);
         throw refreshedError;
       }
     }
@@ -25379,7 +25448,7 @@ async function readIndentationModeFromSearch(projectPath, relativePath, absolute
   let requestedLines = anchorLine + guardLimit, { lineMap, maxLineNumber, hasMore } = await readLinesViaSearch(projectPath, relativePath, absolutePath, requestedLines, callUpstreamTool);
   if (maxLineNumber < anchorLine) {
     if (hasMore)
-      throw Error(TRUNCATION_ERROR);
+      throw Error(TRUNCATION_ERROR2);
     throw Error("anchor_line exceeds file length");
   }
   let cappedMaxLine = Math.min(requestedLines, maxLineNumber), lines = [];
@@ -25536,38 +25605,7 @@ function isAnchorLineError(error48) {
   return error48 instanceof Error && error48.message === "anchor_line exceeds file length";
 }
 function isTruncationError(error48) {
-  return error48 instanceof Error && error48.message === TRUNCATION_ERROR;
-}
-async function readLinesViaSearch(projectPath, relativePath, absolutePath, maxLine, callUpstreamTool) {
-  let cappedMaxLine = Math.min(Math.max(1, maxLine), SEARCH_FALLBACK_MAX_LINES), directory = path7.dirname(relativePath), result = await callUpstreamTool("search_in_files_by_regex", {
-    regexPattern: SEARCH_FALLBACK_REGEX,
-    directoryToSearch: directory === "." ? void 0 : directory,
-    fileMask: path7.basename(relativePath),
-    caseSensitive: !0,
-    maxUsageCount: cappedMaxLine
-  }), entries = extractEntries(result), structured = extractStructuredContent(result), hasMore = (structured && typeof structured === "object" ? structured : null)?.probablyHasMoreMatchingEntries === !0 || maxLine > cappedMaxLine, lineMap = /* @__PURE__ */ new Map, maxLineNumber = 0;
-  for (let entry of entries) {
-    if (!entry || typeof entry.lineNumber !== "number")
-      continue;
-    if (normalizeEntryPath(projectPath, entry.filePath) !== absolutePath)
-      continue;
-    let lineNumber = entry.lineNumber;
-    if (lineNumber > maxLineNumber)
-      maxLineNumber = lineNumber;
-    if (!lineMap.has(lineNumber))
-      lineMap.set(lineNumber, normalizeUsageLine(entry.lineText));
-  }
-  return { lineMap, maxLineNumber, hasMore };
-}
-function normalizeUsageLine(lineText) {
-  if (typeof lineText !== "string")
-    return "";
-  if (!lineText.startsWith("||"))
-    return lineText;
-  let tailIndex = lineText.lastIndexOf("||");
-  if (tailIndex <= 1)
-    return "";
-  return lineText.slice(2, tailIndex);
+  return error48 instanceof Error && error48.message === TRUNCATION_ERROR2;
 }
 
 // proxy-tools/handlers/rename.ts
@@ -25693,58 +25731,6 @@ function createGlobSchema() {
     }
   }, ["pattern"]);
 }
-function createGrepSchema() {
-  return objectSchema({
-    pattern: {
-      type: "string",
-      description: "Regular expression to search for."
-    },
-    path: {
-      type: "string",
-      description: "Optional base directory (absolute or project-relative)."
-    },
-    glob: {
-      type: "string",
-      description: "Optional glob filter for matched files."
-    },
-    type: {
-      type: "string",
-      description: 'Optional file extension filter (for example, "ts" for TypeScript files).'
-    },
-    output_mode: {
-      type: "string",
-      description: 'Output mode: "files_with_matches", "content", or "count".'
-    },
-    "-i": {
-      type: "boolean",
-      description: "Case-insensitive search."
-    },
-    "-n": {
-      type: "boolean",
-      description: "Include line numbers in output when in content mode."
-    },
-    "-A": {
-      type: "number",
-      description: "Lines of context after each match (not currently supported)."
-    },
-    "-B": {
-      type: "number",
-      description: "Lines of context before each match (not currently supported)."
-    },
-    "-C": {
-      type: "number",
-      description: "Lines of context around each match (not currently supported)."
-    },
-    head_limit: {
-      type: "number",
-      description: "Maximum number of results to return."
-    },
-    multiline: {
-      type: "boolean",
-      description: "Whether to search across line boundaries (not currently supported)."
-    }
-  }, ["pattern"]);
-}
 function createGrepSchemaCodex() {
   return objectSchema({
     pattern: {
@@ -25858,6 +25844,9 @@ function createRenameSchema() {
 var TOOL_MODES = {
   CODEX: "codex",
   CC: "cc"
+}, SEARCH_TOOL_MODES = {
+  GREP: "grep",
+  SEARCH: "search"
 }, BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set(["create_new_file", "execute_terminal_command"]), EXTRA_REPLACED_TOOL_NAMES = ["search_in_files_by_text", "execute_terminal_command"], RENAME_TOOL_DESCRIPTION = "Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use edit/apply_patch for renames.";
 function buildToolSpec(name, description, inputSchema) {
   return {
@@ -25895,7 +25884,7 @@ var TOOL_VARIANTS = [
     mode: TOOL_MODES.CC,
     name: "grep",
     description: "Search files for a regex pattern and return matching file paths.",
-    schemaFactory: () => createGrepSchema(),
+    schemaFactory: () => createGrepSchemaCodex(),
     handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleGrepTool(args, projectPath, callUpstreamTool, !1),
     upstreamNames: ["search_in_files_by_regex"]
   },
@@ -25977,6 +25966,9 @@ function buildProxyToolingData(mode, context) {
     handlers
   };
 }
+function getSearchToolBlockedNames(mode) {
+  return /* @__PURE__ */ new Set([mode === SEARCH_TOOL_MODES.SEARCH ? "grep" : "search"]);
+}
 function getReplacedToolNames() {
   let replaced = new Set(EXTRA_REPLACED_TOOL_NAMES);
   for (let tool of TOOL_VARIANTS) {
@@ -26000,6 +25992,19 @@ function resolveToolMode(rawValue) {
   return {
     mode: TOOL_MODES.CODEX,
     warning: `Unknown JETBRAINS_MCP_TOOL_MODE '${rawValue}', defaulting to codex.`
+  };
+}
+function resolveSearchToolMode(rawValue) {
+  if (rawValue === void 0 || rawValue === null || rawValue === "")
+    return { mode: SEARCH_TOOL_MODES.GREP };
+  let normalized = String(rawValue).trim().toLowerCase();
+  if (normalized === "" || normalized === SEARCH_TOOL_MODES.GREP || normalized === "false" || normalized === "0")
+    return { mode: SEARCH_TOOL_MODES.GREP };
+  if (normalized === SEARCH_TOOL_MODES.SEARCH || normalized === "true" || normalized === "1" || normalized === "semantic")
+    return { mode: SEARCH_TOOL_MODES.SEARCH };
+  return {
+    mode: SEARCH_TOOL_MODES.GREP,
+    warning: `Unknown JETBRAINS_MCP_SEARCH_TOOL '${rawValue}', defaulting to grep.`
   };
 }
 function createProxyTooling({
@@ -26046,13 +26051,32 @@ function parseEnvSeconds(name, fallbackSeconds) {
 function buildStreamUrl(port) {
   return `http://${defaultHost}:${port}${defaultPath}`;
 }
-var explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH, projectPath = explicitProjectPath && explicitProjectPath.length > 0 ? path10.resolve(explicitProjectPath) : path10.resolve(cwd()), defaultProjectPathKey = "project_path", projectPathManager = createProjectPathManager({ projectPath, defaultProjectPathKey }), toolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE), REPLACED_TOOL_NAMES = getReplacedToolNames();
+var explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH, projectPath = explicitProjectPath && explicitProjectPath.length > 0 ? path10.resolve(explicitProjectPath) : path10.resolve(cwd()), defaultProjectPathKey = "project_path", projectPathManager = createProjectPathManager({ projectPath, defaultProjectPathKey }), toolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE), REPLACED_TOOL_NAMES = getReplacedToolNames(), BASE_BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]), cachedSearchToolModeInfo = null;
+function resolveSearchToolModeInfo() {
+  if (cachedSearchToolModeInfo)
+    return cachedSearchToolModeInfo;
+  let resolved = resolveSearchToolMode(env.JETBRAINS_MCP_SEARCH_TOOL);
+  if (cachedSearchToolModeInfo = resolved, resolved.warning)
+    warn(resolved.warning);
+  return resolved;
+}
+function buildBlockedToolNames() {
+  let blocked = new Set(BASE_BLOCKED_TOOL_NAMES), searchToolModeInfo = resolveSearchToolModeInfo();
+  for (let name of getSearchToolBlockedNames(searchToolModeInfo.mode))
+    blocked.add(name);
+  return blocked;
+}
 function blockedToolMessage(toolName) {
+  let searchToolModeInfo = resolveSearchToolModeInfo();
   if (toolName === "create_new_file") {
     if (toolModeInfo.mode === TOOL_MODES.CC)
       return `Tool '${toolName}' is not exposed by ij-proxy. Use 'write' instead.`;
     return `Tool '${toolName}' is not exposed by ij-proxy. Use 'apply_patch' instead.`;
   }
+  if (toolName === "grep" && searchToolModeInfo.mode === SEARCH_TOOL_MODES.SEARCH)
+    return `Tool '${toolName}' is not exposed by ij-proxy. Use 'search' instead.`;
+  if (toolName === "search" && searchToolModeInfo.mode === SEARCH_TOOL_MODES.GREP)
+    return `Tool '${toolName}' is not exposed by ij-proxy. Use 'grep' instead.`;
   return `Tool '${toolName}' is not exposed by ij-proxy.`;
 }
 var { proxyToolSpecs, proxyToolNames, runProxyToolCall } = createProxyTooling({
@@ -26096,7 +26120,7 @@ var proxyServer = new Server({ name: "ij-mcp-proxy", version: "1.0.0" }, {
   }
 });
 proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
-  let upstreamTools = await getUpstreamTools(), blocked = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]);
+  let upstreamTools = await getUpstreamTools(), blocked = buildBlockedToolNames();
   return {
     tools: mergeToolLists(proxyToolSpecs, upstreamTools, blocked)
   };
@@ -26105,7 +26129,7 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
   let toolName = typeof request.params?.name === "string" ? request.params.name : "", rawArgs = request.params?.arguments, args = rawArgs && typeof rawArgs === "object" ? { ...rawArgs } : {};
   if (!toolName)
     return makeToolError("Tool name is required");
-  if (BLOCKED_TOOL_NAMES.has(toolName))
+  if (buildBlockedToolNames().has(toolName))
     return makeToolError(blockedToolMessage(toolName));
   if (proxyToolNames.has(toolName))
     try {
@@ -26223,6 +26247,8 @@ function mergeToolLists(proxyTools, upstreamTools2, blockedNames) {
   let blocked = new Set(blockedNames || []), result = [], seen = /* @__PURE__ */ new Set;
   for (let tool of proxyTools || []) {
     if (!tool || typeof tool.name !== "string")
+      continue;
+    if (blocked.has(tool.name))
       continue;
     if (seen.has(tool.name))
       continue;

@@ -4,6 +4,7 @@ import {copyFile, mkdir, rename, rm} from 'node:fs/promises'
 import path from 'node:path'
 import {isTrackedPath, runGitCommand, toGitPath} from '../git-utils'
 import {readFileText, resolvePathInProject, splitLines} from '../shared'
+import {readLinesViaSearch, SEARCH_FALLBACK_MAX_LINES} from '../search-fallback'
 import {isTruncatedText} from '../truncation'
 import type {UpstreamToolCaller} from '../types'
 
@@ -15,6 +16,7 @@ const DELETE_PREFIX = '*** Delete File: '
 const MOVE_PREFIX = '*** Move to: '
 const END_OF_FILE = '*** End of File'
 const HEREDOC_PREFIXES = new Set(["<<EOF", "<<'EOF'", '<<"EOF"'])
+const TRUNCATION_ERROR = 'file content truncated while reading'
 
 interface ApplyPatchArgsObject {
   input?: unknown
@@ -75,7 +77,7 @@ export async function handleApplyPatchTool(
       continue
     }
 
-    const {relative} = resolvePathInProject(projectPath, op.path, 'path')
+    const {relative, absolute} = resolvePathInProject(projectPath, op.path, 'path')
 
     if (op.type === 'delete') {
       await runGitRm(relative, projectPath)
@@ -84,10 +86,7 @@ export async function handleApplyPatchTool(
     }
 
     if (op.type === 'update') {
-      const original = await readFileText(relative, {truncateMode: 'NONE'}, callUpstreamTool)
-      if (isTruncatedText(original)) {
-        throw new Error('file content truncated while reading')
-      }
+      const original = await readFileTextForPatch(relative, absolute, projectPath, callUpstreamTool)
       const updated = applyHunks(original, op.hunks)
       const resolvedTarget = op.moveTo ? resolvePathInProject(projectPath, op.moveTo, 'path') : null
       const moveTarget = resolvedTarget && resolvedTarget.relative !== relative ? resolvedTarget : null
@@ -115,6 +114,48 @@ export async function handleApplyPatchTool(
   const suffix = touched === 1 ? '' : 's'
   return `Applied patch to ${touched} file${suffix}.`
 }
+
+async function readFileTextForPatch(
+  relativePath: string,
+  absolutePath: string,
+  projectPath: string,
+  callUpstreamTool: UpstreamToolCaller
+): Promise<string> {
+  const original = await readFileText(relativePath, {truncateMode: 'NONE'}, callUpstreamTool)
+  if (!isTruncatedText(original)) return original
+  try {
+    return await readFileTextViaSearch(projectPath, relativePath, absolutePath, callUpstreamTool)
+  } catch (error) {
+    if (error instanceof Error && error.message === TRUNCATION_ERROR) throw error
+    throw new Error(TRUNCATION_ERROR)
+  }
+}
+
+async function readFileTextViaSearch(
+  projectPath: string,
+  relativePath: string,
+  absolutePath: string,
+  callUpstreamTool: UpstreamToolCaller
+): Promise<string> {
+  const {lineMap, maxLineNumber, hasMore, hasTruncatedLine} = await readLinesViaSearch(
+    projectPath,
+    relativePath,
+    absolutePath,
+    SEARCH_FALLBACK_MAX_LINES,
+    callUpstreamTool
+  )
+
+  if (hasMore || maxLineNumber === 0 || hasTruncatedLine) {
+    throw new Error(TRUNCATION_ERROR)
+  }
+
+  const lines = []
+  for (let lineNumber = 1; lineNumber <= maxLineNumber; lineNumber += 1) {
+    lines.push(lineMap.get(lineNumber) ?? '')
+  }
+  return lines.join('\n')
+}
+
 
 function extractPatchText(args: ApplyPatchArgs): string {
   if (typeof args === 'string') return args

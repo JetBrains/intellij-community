@@ -4,6 +4,7 @@ import {deepStrictEqual, rejects, strictEqual} from 'node:assert/strict'
 import {describe, it} from 'bun:test'
 import {handleApplyPatchTool} from './apply-patch'
 import {TRUNCATION_MARKER} from '../shared'
+import {SEARCH_FALLBACK_MAX_LINE_TEXT_CHARS} from '../search-fallback'
 import {createMockToolCaller, createSeededRng, randInt, randString} from './test-helpers'
 
 function buildPatch(lines) {
@@ -23,6 +24,26 @@ function buildMultiHunkPatch(filePath, updates) {
 
 describe('apply_patch handler (edge cases)', () => {
   const projectPath = '/project/root'
+  const truncationPatch = buildPatch([
+    '*** Begin Patch',
+    '*** Update File: sample.txt',
+    '@@',
+    '-alpha',
+    '+beta',
+    '*** End Patch'
+  ])
+
+  async function expectTruncatedFallback(structuredContent) {
+    const {callUpstreamTool} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: `alpha\n${TRUNCATION_MARKER}\n`}),
+      search_in_files_by_regex: () => ({structuredContent})
+    })
+
+    await rejects(
+      () => handleApplyPatchTool({patch: truncationPatch}, projectPath, callUpstreamTool),
+      /file content truncated while reading/
+    )
+  }
 
   it('errors when patch has no operations', async () => {
     const {callUpstreamTool} = createMockToolCaller()
@@ -225,23 +246,63 @@ describe('apply_patch handler (edge cases)', () => {
     strictEqual(writeCall.args.text, 'alpha\nbeta\ngamma\n')
   })
 
-  it('errors when file content is truncated', async () => {
-    const {callUpstreamTool} = createMockToolCaller({
-      get_file_text_by_path: () => ({text: `alpha\n${TRUNCATION_MARKER}\n`})
+  it('errors when file content is truncated and search fallback is incomplete', async () => {
+    await expectTruncatedFallback({
+      entries: [
+        {filePath: 'sample.txt', lineNumber: 1, lineText: '||alpha||'}
+      ],
+      probablyHasMoreMatchingEntries: true
+    })
+  })
+
+  it('errors when search fallback times out', async () => {
+    await expectTruncatedFallback({
+      entries: [
+        {filePath: 'sample.txt', lineNumber: 1, lineText: '||alpha||'}
+      ],
+      timedOut: true
+    })
+  })
+
+  it('errors when search fallback detects truncated line text', async () => {
+    const longLine = 'a'.repeat(SEARCH_FALLBACK_MAX_LINE_TEXT_CHARS)
+    await expectTruncatedFallback({
+      entries: [
+        {filePath: 'sample.txt', lineNumber: 1, lineText: `||${longLine}||`}
+      ],
+      probablyHasMoreMatchingEntries: false
+    })
+  })
+
+  it('falls back to search when file content is truncated', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: `alpha\n${TRUNCATION_MARKER}\n`}),
+      search_in_files_by_regex: () => ({
+        structuredContent: {
+          entries: [
+            {filePath: 'sample.txt', lineNumber: 1, lineText: '||alpha||'},
+            {filePath: 'sample.txt', lineNumber: 2, lineText: '||beta||'}
+          ],
+          probablyHasMoreMatchingEntries: false
+        }
+      }),
+      create_new_file: () => ({text: 'ok'})
     })
     const patch = buildPatch([
       '*** Begin Patch',
       '*** Update File: sample.txt',
       '@@',
       '-alpha',
-      '+beta',
+      '+gamma',
       '*** End Patch'
     ])
 
-    await rejects(
-      () => handleApplyPatchTool({patch}, projectPath, callUpstreamTool),
-      /file content truncated while reading/
-    )
+    const result = await handleApplyPatchTool({patch}, projectPath, callUpstreamTool)
+
+    strictEqual(result, 'Applied patch to 1 file.')
+    strictEqual(calls.some((call) => call.name === 'search_in_files_by_regex'), true)
+    const writeCall = calls.find((call) => call.name === 'create_new_file')
+    strictEqual(writeCall.args.text, 'gamma\nbeta\n')
   })
 
   it('requests full content to avoid truncation on update', async () => {

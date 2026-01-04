@@ -3,15 +3,8 @@
 import path from 'node:path'
 import picomatch from 'picomatch'
 import {RegExpParser} from '@eslint-community/regexpp'
-import {
-  extractEntries,
-  extractFileList,
-  looksLikeFilePath,
-  normalizeEntryPath,
-  requireString,
-  resolveSearchPath,
-  toPositiveInt
-} from '../shared'
+import {extractFileList, looksLikeFilePath, normalizeEntryPath, requireString, resolveSearchPath, toPositiveInt} from '../shared'
+import {searchInFiles, type SearchInFilesArgs} from '../search-in-files'
 import {shouldApplyWorkaround, WorkaroundKey} from '../../workarounds'
 import type {SearchEntry, UpstreamToolCaller} from '../types'
 
@@ -33,15 +26,6 @@ interface GrepToolArgs {
   '-n'?: unknown
   head_limit?: unknown
   limit?: unknown
-}
-
-interface SearchToolArgs {
-  directoryToSearch?: string
-  fileMask?: string
-  caseSensitive: boolean
-  maxUsageCount: number
-  regexPattern?: string
-  searchText?: string
 }
 
 interface PatternAst {
@@ -116,19 +100,14 @@ export async function handleGrepTool(
 
   const literalSearchText = getLiteralSearchText(pattern)
   const useRegex = literalSearchText === null
-  const toolArgs: SearchToolArgs = {
+  const toolArgs: SearchInFilesArgs = {
     directoryToSearch,
     fileMask: resolvedMask,
     caseSensitive,
     maxUsageCount: FULL_SCAN_USAGE_COUNT,
     ...(useRegex ? {regexPattern: pattern} : {searchText: literalSearchText})
   }
-
-  const result = await callUpstreamTool(
-    useRegex ? 'search_in_files_by_regex' : 'search_in_files_by_text',
-    toolArgs
-  )
-  const entries = extractEntries(result)
+  const {entries} = await searchInFiles(toolArgs, callUpstreamTool)
   const shouldFilterByPath = !useRegex
     || !directoryToSearch
     || shouldApplyWorkaround(WorkaroundKey.SearchInFilesByRegexDirectoryScopeIgnored)
@@ -284,7 +263,7 @@ function filterEntriesByPathGlob(entries: SearchEntry[], projectPath: string, pa
 
 async function searchAlternativesWhenRegexEmpty(
   pattern: string,
-  toolArgs: SearchToolArgs,
+  toolArgs: SearchInFilesArgs,
   projectPath: string,
   relative: string,
   treatAsFile: boolean,
@@ -306,11 +285,11 @@ async function searchAlternativesWhenRegexEmpty(
   for (const alternative of cappedAlternatives) {
     const trimmed = alternative.trim()
     if (!trimmed) continue
-    const result = await callUpstreamTool('search_in_files_by_regex', {
+    const {entries} = await searchInFiles({
       ...toolArgs,
       regexPattern: trimmed
-    })
-    for (const entry of extractEntries(result)) {
+    }, callUpstreamTool)
+    for (const entry of entries) {
       if (!entryFilter(entry)) continue
       const key = entryKey(entry)
       if (seen.has(key)) continue

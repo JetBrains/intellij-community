@@ -49,6 +49,10 @@ Environment variables (optional):
 - `JETBRAINS_MCP_PROJECT_PATH`: override the injected project path (defaults to `process.cwd()`, relative paths resolve from the current working directory).
 - `MCP_LOG`: path to a log file for proxy progress (cleared on startup).
 - `JETBRAINS_MCP_TOOL_MODE`: tool API shape to expose. `codex` (default) uses `read_file`, `grep`, `find`, `list_dir`, `apply_patch`. `cc` uses `read`, `edit`, `write`, `glob`, `grep`.
+- `JETBRAINS_MCP_SEARCH_TOOL`: which search tool to expose. `grep` (default) hides upstream `search` and exposes the proxy `grep`. `search` hides proxy `grep` and exposes upstream `search` instead.
+- `JETBRAINS_MCP_PROXY_DISABLE_WORKAROUNDS`: disable all version-gated workarounds (set to any non-empty value except `0` or `false`).
+- `JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS`: comma-separated list of workaround keys to disable (see `workarounds.ts`).
+- `JETBRAINS_MCP_PROXY_WORKAROUND_DEBUG`: emit debug logs when workarounds are skipped or disabled (set to any non-empty value except `0` or `false`).
 
 ## Tool variants
 
@@ -61,6 +65,7 @@ The proxy is not a pure pass-through: it always exposes a mode-specific proxy to
 
 Notes:
 - Upstream JetBrains file tools that are replaced by proxy tools (for example `get_file_text_by_path`, `replace_text_in_file`, `find_files_by_name_keyword`, `find_files_by_glob`, `search_in_files_*`, `list_directory_tree`) are hidden.
+- Upstream `search` is hidden unless `JETBRAINS_MCP_SEARCH_TOOL=search`.
 - Use `apply_patch` (codex) or `write` (cc) to create files.
 
 ## Custom tool commands (name + behavior mapping)

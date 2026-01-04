@@ -1,20 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import path from 'node:path'
-import {
-  extractEntries,
-  extractStructuredContent,
-  normalizeEntryPath,
-  readFileText,
-  requireString,
-  resolvePathInProject,
-  splitLines,
-  toNonNegativeInt,
-  toPositiveInt,
-  TRUNCATION_MARKER
-} from '../shared'
+import {readFileText, requireString, resolvePathInProject, splitLines, toNonNegativeInt, toPositiveInt, TRUNCATION_MARKER} from '../shared'
+import {readLinesViaSearch} from '../search-fallback'
 import {findTruncationMarkerLine, findTruncationMarkerSuffix} from '../truncation'
-import type {SearchEntry, UpstreamToolCaller} from '../types'
+import type {UpstreamToolCaller} from '../types'
 
 const DEFAULT_READ_LIMIT = 2000
 const MAX_LINE_LENGTH = 500
@@ -24,8 +13,6 @@ const BLOCK_COMMENT_START = '/*'
 const BLOCK_COMMENT_END = '*/'
 const ANNOTATION_PREFIX = '@'
 const TRUNCATION_ERROR = 'file content truncated while reading'
-const SEARCH_FALLBACK_REGEX = '(?m)^.*$'
-const SEARCH_FALLBACK_MAX_LINES = 200_000
 
 type ReadFormat = 'numbered' | 'raw'
 
@@ -63,12 +50,6 @@ interface LineRecord {
 interface TrimResult {
   text: string
   wasTruncated: boolean
-}
-
-interface SearchLinesResult {
-  lineMap: Map<number, string>
-  maxLineNumber: number
-  hasMore: boolean
 }
 
 export async function handleReadTool(
@@ -622,55 +603,4 @@ function isAnchorLineError(error: unknown): boolean {
 
 function isTruncationError(error: unknown): boolean {
   return error instanceof Error && error.message === TRUNCATION_ERROR
-}
-
-async function readLinesViaSearch(
-  projectPath: string,
-  relativePath: string,
-  absolutePath: string,
-  maxLine: number,
-  callUpstreamTool: UpstreamToolCaller
-): Promise<SearchLinesResult> {
-  const cappedMaxLine = Math.min(Math.max(1, maxLine), SEARCH_FALLBACK_MAX_LINES)
-  const directory = path.dirname(relativePath)
-  const directoryToSearch = directory === '.' ? undefined : directory
-  const result = await callUpstreamTool('search_in_files_by_regex', {
-    regexPattern: SEARCH_FALLBACK_REGEX,
-    directoryToSearch,
-    fileMask: path.basename(relativePath),
-    caseSensitive: true,
-    maxUsageCount: cappedMaxLine
-  })
-
-  const entries = extractEntries(result)
-  const structured = extractStructuredContent(result)
-  const structuredRecord = structured && typeof structured === 'object'
-    ? structured as Record<string, unknown>
-    : null
-  const hasMore = structuredRecord?.probablyHasMoreMatchingEntries === true || maxLine > cappedMaxLine
-  const lineMap = new Map<number, string>()
-  let maxLineNumber = 0
-
-  for (const entry of entries as SearchEntry[]) {
-    if (!entry || typeof entry.lineNumber !== 'number') continue
-    const entryPath = normalizeEntryPath(projectPath, entry.filePath)
-    if (entryPath !== absolutePath) continue
-    const lineNumber = entry.lineNumber
-    if (lineNumber > maxLineNumber) {
-      maxLineNumber = lineNumber
-    }
-    if (!lineMap.has(lineNumber)) {
-      lineMap.set(lineNumber, normalizeUsageLine(entry.lineText))
-    }
-  }
-
-  return {lineMap, maxLineNumber, hasMore}
-}
-
-function normalizeUsageLine(lineText: unknown): string {
-  if (typeof lineText !== 'string') return ''
-  if (!lineText.startsWith('||')) return lineText
-  const tailIndex = lineText.lastIndexOf('||')
-  if (tailIndex <= 1) return ''
-  return lineText.slice(2, tailIndex)
 }

@@ -3,7 +3,7 @@
 import {ok} from 'node:assert/strict'
 import {describe, it} from 'bun:test'
 import {BLOCKED_TOOL_NAMES, getProxyToolNames, getReplacedToolNames, TOOL_MODES} from '../proxy-tools/registry'
-import {debug, SUITE_TIMEOUT_MS, withProxy} from '../test-utils'
+import {buildUpstreamTool, debug, defaultUpstreamTools, SUITE_TIMEOUT_MS, withProxy} from '../test-utils'
 
 function assertContainsAll(names, expected) {
   for (const name of expected) {
@@ -25,6 +25,11 @@ function getOtherModeOnlyNames(mode) {
 }
 
 describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
+  const upstreamToolsWithSearch = [
+    ...defaultUpstreamTools,
+    buildUpstreamTool('search', {query: {type: 'string'}}, ['query'])
+  ]
+
   it('exposes proxy tools and hides replaced/blocked upstream tools', async () => {
     await withProxy({}, async ({proxyClient}) => {
       debug('test: sending tools/list')
@@ -37,6 +42,28 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
       assertExcludesAll(names, BLOCKED_TOOL_NAMES)
       assertExcludesAll(names, getReplacedToolNames())
       ok(!names.includes('grep_files'))
+    })
+  })
+
+  it('hides search tool by default', async () => {
+    await withProxy({tools: upstreamToolsWithSearch}, async ({proxyClient}) => {
+      const listResponse = await proxyClient.send('tools/list')
+      const names = listResponse.result.tools.map((tool) => tool.name)
+
+      ok(!names.includes('search'))
+    })
+  })
+
+  it('exposes search tool and hides grep when search mode is enabled', async () => {
+    await withProxy({
+      tools: upstreamToolsWithSearch,
+      proxyEnv: {JETBRAINS_MCP_SEARCH_TOOL: 'search'}
+    }, async ({proxyClient}) => {
+      const listResponse = await proxyClient.send('tools/list')
+      const names = listResponse.result.tools.map((tool) => tool.name)
+
+      ok(names.includes('search'))
+      ok(!names.includes('grep'))
     })
   })
 

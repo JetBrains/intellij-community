@@ -120,62 +120,6 @@ export function createGlobSchema(): ToolInputSchema {
   )
 }
 
-export function createGrepSchema(): ToolInputSchema {
-  return objectSchema(
-    {
-      pattern: {
-        type: 'string',
-        description: 'Regular expression to search for.'
-      },
-      path: {
-        type: 'string',
-        description: 'Optional base directory (absolute or project-relative).'
-      },
-      glob: {
-        type: 'string',
-        description: 'Optional glob filter for matched files.'
-      },
-      type: {
-        type: 'string',
-        description: 'Optional file extension filter (for example, "ts" for TypeScript files).'
-      },
-      output_mode: {
-        type: 'string',
-        description: 'Output mode: "files_with_matches", "content", or "count".'
-      },
-      '-i': {
-        type: 'boolean',
-        description: 'Case-insensitive search.'
-      },
-      '-n': {
-        type: 'boolean',
-        description: 'Include line numbers in output when in content mode.'
-      },
-      '-A': {
-        type: 'number',
-        description: 'Lines of context after each match (not currently supported).'
-      },
-      '-B': {
-        type: 'number',
-        description: 'Lines of context before each match (not currently supported).'
-      },
-      '-C': {
-        type: 'number',
-        description: 'Lines of context around each match (not currently supported).'
-      },
-      head_limit: {
-        type: 'number',
-        description: 'Maximum number of results to return.'
-      },
-      multiline: {
-        type: 'boolean',
-        description: 'Whether to search across line boundaries (not currently supported).'
-      }
-    },
-    ['pattern']
-  )
-}
-
 export function createGrepSchemaCodex(): ToolInputSchema {
   return objectSchema(
     {

@@ -14,7 +14,6 @@ import {
   createEditSchema,
   createFindSchema,
   createGlobSchema,
-  createGrepSchema,
   createGrepSchemaCodex,
   createListDirSchema,
   createReadSchema,
@@ -28,7 +27,13 @@ export const TOOL_MODES = {
   CC: 'cc'
 } as const
 
+export const SEARCH_TOOL_MODES = {
+  GREP: 'grep',
+  SEARCH: 'search'
+} as const
+
 type ToolMode = typeof TOOL_MODES[keyof typeof TOOL_MODES]
+export type SearchToolMode = typeof SEARCH_TOOL_MODES[keyof typeof SEARCH_TOOL_MODES]
 
 interface ToolContext {
   projectPath: string
@@ -91,7 +96,7 @@ const TOOL_VARIANTS: ToolVariant[] = [
     mode: TOOL_MODES.CC,
     name: 'grep',
     description: 'Search files for a regex pattern and return matching file paths.',
-    schemaFactory: () => createGrepSchema(),
+    schemaFactory: () => createGrepSchemaCodex(),
     handlerFactory: ({projectPath, callUpstreamTool}) => (args) =>
       handleGrepTool(args, projectPath, callUpstreamTool, false),
     upstreamNames: ['search_in_files_by_regex']
@@ -201,6 +206,10 @@ export function buildProxyToolingData(mode: ToolMode, context: ToolContext): {
 
 export function getProxyToolNames(mode: ToolMode): Set<string> {
   return new Set(getProxyToolVariants(mode).map((tool) => tool.name))
+}
+
+export function getSearchToolBlockedNames(mode: SearchToolMode): Set<string> {
+  return new Set([mode === SEARCH_TOOL_MODES.SEARCH ? 'grep' : 'search'])
 }
 
 export function getReplacedToolNames() {

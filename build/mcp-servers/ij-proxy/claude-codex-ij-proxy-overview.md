@@ -10,6 +10,7 @@ This note compares the file read/search/edit tool surfaces for:
 
 Note: The Claude Code tool list was captured on January 21, 2026 (see cc-tools.json). It can drift from current Claude Code builds.
 Note: The proxy tool list is mode-specific (`JETBRAINS_MCP_TOOL_MODE`, default: `codex`).
+Note: The proxy search tool is configurable (`JETBRAINS_MCP_SEARCH_TOOL`, default: `grep`).
 
 ## Comparison table
 
@@ -20,7 +21,7 @@ Note: The proxy tool list is mode-specific (`JETBRAINS_MCP_TOOL_MODE`, default: 
 | Indentation     | No                                   | Yes                                    | No                                        | codex only                                                                     |
 | Dir listing     | None in capture                      | list_dir                               | list_directory_tree                       | codex: list_dir; cc: none                                                      |
 | File discovery  | Glob                                 | None (use list_dir)                    | find_files_by_glob/name                   | cc: glob; codex: find                                                          |
-| Search output   | Grep (content/paths)                 | grep (paths)                           | search_in_files_* (entries)               | codex: grep; cc: grep                                                          |
+| Search output   | Grep (content/paths)                 | grep (paths)                           | search_in_files_* (entries)               | codex/cc: grep (default) or search (`JETBRAINS_MCP_SEARCH_TOOL=search`)         |
 | Edit/write      | Edit/Write (no MultiEdit in capture) | apply_patch                            | replace_text_in_file + create_new_file    | codex: apply_patch; cc: edit/write                                             |
 | Path model      | Absolute paths                       | Abs for read/list; cwd for apply_patch | Project-relative                          | Abs or project-relative                                                        |
 | apply_patch     | No                                   | Yes                                    | No                                        | codex: yes; cc: no                                                             |

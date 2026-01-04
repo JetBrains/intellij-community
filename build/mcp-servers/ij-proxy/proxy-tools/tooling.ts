@@ -1,14 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import {buildProxyToolingData, TOOL_MODES} from './registry'
+import {buildProxyToolingData, SEARCH_TOOL_MODES, TOOL_MODES} from './registry'
 import type {ToolArgs, ToolSpecLike, UpstreamToolCaller} from './types'
 
 export {TOOL_MODES} from './registry'
 
 type ToolMode = typeof TOOL_MODES[keyof typeof TOOL_MODES]
+type SearchToolMode = typeof SEARCH_TOOL_MODES[keyof typeof SEARCH_TOOL_MODES]
 
 export interface ToolModeInfo {
   mode: ToolMode
+  warning?: string
+}
+
+export interface SearchToolModeInfo {
+  mode: SearchToolMode
   warning?: string
 }
 
@@ -26,6 +32,23 @@ export function resolveToolMode(rawValue: unknown): ToolModeInfo {
   return {
     mode: TOOL_MODES.CODEX,
     warning: `Unknown JETBRAINS_MCP_TOOL_MODE '${rawValue}', defaulting to codex.`
+  }
+}
+
+export function resolveSearchToolMode(rawValue: unknown): SearchToolModeInfo {
+  if (rawValue === undefined || rawValue === null || rawValue === '') {
+    return {mode: SEARCH_TOOL_MODES.GREP}
+  }
+  const normalized = String(rawValue).trim().toLowerCase()
+  if (normalized === '' || normalized === SEARCH_TOOL_MODES.GREP || normalized === 'false' || normalized === '0') {
+    return {mode: SEARCH_TOOL_MODES.GREP}
+  }
+  if (normalized === SEARCH_TOOL_MODES.SEARCH || normalized === 'true' || normalized === '1' || normalized === 'semantic') {
+    return {mode: SEARCH_TOOL_MODES.SEARCH}
+  }
+  return {
+    mode: SEARCH_TOOL_MODES.GREP,
+    warning: `Unknown JETBRAINS_MCP_SEARCH_TOOL '${rawValue}', defaulting to grep.`
   }
 }
 

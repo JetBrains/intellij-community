@@ -14,9 +14,9 @@ import {clearLogFile, logProgress, logToFile} from '../shared/mcp-rpc.mjs'
 import {createProjectPathManager} from './project-path'
 import {createStreamTransport} from './stream-transport'
 import {setIdeVersion} from './workarounds'
-import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
-import type {ToolModeInfo} from './proxy-tools/tooling'
-import {createProxyTooling, resolveToolMode, TOOL_MODES} from './proxy-tools/tooling'
+import {BLOCKED_TOOL_NAMES, getReplacedToolNames, getSearchToolBlockedNames, SEARCH_TOOL_MODES} from './proxy-tools/registry'
+import type {SearchToolModeInfo, ToolModeInfo} from './proxy-tools/tooling'
+import {createProxyTooling, resolveSearchToolMode, resolveToolMode, TOOL_MODES} from './proxy-tools/tooling'
 import {extractTextFromResult} from './proxy-tools/shared'
 import type {ToolArgs, ToolResultLike, ToolSpecLike} from './proxy-tools/types'
 
@@ -83,15 +83,43 @@ const defaultProjectPathKey = 'project_path'
 const projectPathManager = createProjectPathManager({projectPath, defaultProjectPathKey})
 
 const toolModeInfo: ToolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE)
-
 const REPLACED_TOOL_NAMES = getReplacedToolNames()
+const BASE_BLOCKED_TOOL_NAMES = new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES])
+
+let cachedSearchToolModeInfo: SearchToolModeInfo | null = null
+
+function resolveSearchToolModeInfo(): SearchToolModeInfo {
+  if (cachedSearchToolModeInfo) return cachedSearchToolModeInfo
+  const resolved = resolveSearchToolMode(env.JETBRAINS_MCP_SEARCH_TOOL)
+  cachedSearchToolModeInfo = resolved
+  if (resolved.warning) {
+    warn(resolved.warning)
+  }
+  return resolved
+}
+
+function buildBlockedToolNames(): Set<string> {
+  const blocked = new Set(BASE_BLOCKED_TOOL_NAMES)
+  const searchToolModeInfo = resolveSearchToolModeInfo()
+  for (const name of getSearchToolBlockedNames(searchToolModeInfo.mode)) {
+    blocked.add(name)
+  }
+  return blocked
+}
 
 function blockedToolMessage(toolName: string): string {
+  const searchToolModeInfo = resolveSearchToolModeInfo()
   if (toolName === 'create_new_file') {
     if (toolModeInfo.mode === TOOL_MODES.CC) {
       return `Tool '${toolName}' is not exposed by ij-proxy. Use 'write' instead.`
     }
     return `Tool '${toolName}' is not exposed by ij-proxy. Use 'apply_patch' instead.`
+  }
+  if (toolName === 'grep' && searchToolModeInfo.mode === SEARCH_TOOL_MODES.SEARCH) {
+    return `Tool '${toolName}' is not exposed by ij-proxy. Use 'search' instead.`
+  }
+  if (toolName === 'search' && searchToolModeInfo.mode === SEARCH_TOOL_MODES.GREP) {
+    return `Tool '${toolName}' is not exposed by ij-proxy. Use 'grep' instead.`
   }
   return `Tool '${toolName}' is not exposed by ij-proxy.`
 }
@@ -117,6 +145,7 @@ void clearLogFile()
 if (toolModeInfo.warning) {
   warn(toolModeInfo.warning)
 }
+
 
 const streamTransport = createStreamTransport({
   explicitUrl: explicitMcpUrl,
@@ -153,7 +182,7 @@ const proxyServer = new Server(
 
 proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
   const upstreamTools = await getUpstreamTools()
-  const blocked = new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES])
+  const blocked = buildBlockedToolNames()
   return {
     tools: mergeToolLists(proxyToolSpecs, upstreamTools, blocked)
   }
@@ -170,7 +199,7 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     return makeToolError('Tool name is required')
   }
 
-  if (BLOCKED_TOOL_NAMES.has(toolName)) {
+  if (buildBlockedToolNames().has(toolName)) {
     return makeToolError(blockedToolMessage(toolName))
   }
 
@@ -338,6 +367,7 @@ function mergeToolLists(
 
   for (const tool of proxyTools || []) {
     if (!tool || typeof tool.name !== 'string') continue
+    if (blocked.has(tool.name)) continue
     if (seen.has(tool.name)) continue
     seen.add(tool.name)
     result.push(tool)
