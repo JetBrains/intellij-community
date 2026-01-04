@@ -69,6 +69,10 @@ f:org.jetbrains.jewel.foundation.OutlineColors
 - f:getWarning-0d7_KjU():J
 - hashCode():I
 f:org.jetbrains.jewel.foundation.OutlineColors$Companion
+f:org.jetbrains.jewel.foundation.OverflowBoxKt
+org.jetbrains.jewel.foundation.OverflowBoxScope
+- androidx.compose.foundation.layout.BoxScope
+- a:isOverflowing():Z
 a:org.jetbrains.jewel.foundation.Stroke
 - sf:$stable:I
 e:org.jetbrains.jewel.foundation.Stroke$Alignment
@@ -344,6 +348,352 @@ e:org.jetbrains.jewel.foundation.lazy.SelectionMode
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):org.jetbrains.jewel.foundation.lazy.SelectionMode
 - s:values():org.jetbrains.jewel.foundation.lazy.SelectionMode[]
+a:org.jetbrains.jewel.foundation.lazy.draggable.LazyLayoutDraggingState
+- sf:$stable:I
+- <init>():V
+- a:canMove(java.lang.Object):Z
+- f:getDraggingItemKey():java.lang.Object
+- f:getDraggingItemOffsetTransformX():F
+- f:getDraggingItemOffsetTransformY():F
+- f:getDraggingOffset-F1C5BW0():J
+- a:getIndex(java.lang.Object):I
+- f:getInitialOffset-F1C5BW0():J
+- a:getItemWithKey(java.lang.Object):java.lang.Object
+- a:getKey(java.lang.Object):java.lang.Object
+- a:getOffset-tuRUvjQ(java.lang.Object):J
+- a:getReplacingItem(java.lang.Object):java.lang.Object
+- a:getSize-7Ah8Wj8(java.lang.Object):J
+- a:moveItem(java.lang.Object,java.lang.Object):Z
+- f:onDrag-k-4lQ0M(J):V
+- f:onDragInterrupted():V
+- f:onDragStart-Uv8p0NA(java.lang.Object,J):V
+- f:setDraggingItemKey(java.lang.Object):V
+- f:setDraggingItemOffsetTransformX(F):V
+- f:setDraggingItemOffsetTransformY(F):V
+- f:setDraggingOffset-k-4lQ0M(J):V
+- f:setInitialOffset-k-4lQ0M(J):V
+org.jetbrains.jewel.foundation.lazy.selectable.SelectionEvent
+org.jetbrains.jewel.foundation.lazy.selectable.SelectionManager
+- a:clearSelection():V
+- a:getInteractionSource():androidx.compose.foundation.interaction.MutableInteractionSource
+- a:getSelectedItems():java.util.Set
+- a:handleEvent(org.jetbrains.jewel.foundation.lazy.selectable.SelectionEvent):V
+- a:isSelectable(java.lang.Object):Z
+- a:isSelected(java.lang.Object):Z
+f:org.jetbrains.jewel.foundation.lazy.selectable.SelectionManagerKt
+- sf:selectionManager(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.selectable.SelectionManager):androidx.compose.ui.Modifier
+- sf:selectionManagerConsumer(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function3):androidx.compose.ui.Modifier
+e:org.jetbrains.jewel.foundation.lazy.selectable.SelectionMode
+- java.lang.Enum
+- sf:Multiple:org.jetbrains.jewel.foundation.lazy.selectable.SelectionMode
+- sf:None:org.jetbrains.jewel.foundation.lazy.selectable.SelectionMode
+- sf:Single:org.jetbrains.jewel.foundation.lazy.selectable.SelectionMode
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.foundation.lazy.selectable.SelectionMode
+- s:values():org.jetbrains.jewel.foundation.lazy.selectable.SelectionMode[]
+e:org.jetbrains.jewel.foundation.lazy.selectable.SelectionType
+- java.lang.Enum
+- sf:Contiguous:org.jetbrains.jewel.foundation.lazy.selectable.SelectionType
+- sf:Multi:org.jetbrains.jewel.foundation.lazy.selectable.SelectionType
+- sf:Normal:org.jetbrains.jewel.foundation.lazy.selectable.SelectionType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.foundation.lazy.selectable.SelectionType
+- s:values():org.jetbrains.jewel.foundation.lazy.selectable.SelectionType[]
+org.jetbrains.jewel.foundation.lazy.table.LazyTableCellScope
+- org.jetbrains.jewel.foundation.lazy.table.LazyTableItemScope
+- a:getKey():kotlin.Pair
+- a:getPosition-nOcc-ac():J
+- a:getTableState():org.jetbrains.jewel.foundation.lazy.table.LazyTableState
+org.jetbrains.jewel.foundation.lazy.table.LazyTableContent
+- a:Item(org.jetbrains.jewel.foundation.lazy.table.LazyTableItemScope,I,androidx.compose.runtime.Composer,I):V
+- a:getColumnConstraints(org.jetbrains.jewel.foundation.lazy.table.LazyTableLayoutScope,I):org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$ColumnSize
+- a:getColumnCount():I
+- a:getContentType(I):java.lang.Object
+- a:getContentType--gyyYBs(J):java.lang.Object
+- a:getIndex--gyyYBs(J):I
+- a:getKey(I):kotlin.Pair
+- a:getKey--gyyYBs(J):kotlin.Pair
+- a:getPosition-Bjo55l4(I):J
+- a:getRowConstraints(org.jetbrains.jewel.foundation.lazy.table.LazyTableLayoutScope,I):org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$RowSize
+- a:getRowCount():I
+f:org.jetbrains.jewel.foundation.lazy.table.LazyTableInfo
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.lazy.table.LazyTableInfo$Companion
+- <init>():V
+- <init>(I,I,I,I):V
+- b:<init>(I,I,I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- equals(java.lang.Object):Z
+- f:getColumns():I
+- f:getPinnedColumns():I
+- f:getPinnedRows():I
+- f:getRows():I
+- hashCode():I
+f:org.jetbrains.jewel.foundation.lazy.table.LazyTableInfo$Companion
+- f:getEmpty():org.jetbrains.jewel.foundation.lazy.table.LazyTableInfo
+org.jetbrains.jewel.foundation.lazy.table.LazyTableItemInfo
+- a:getColumn():I
+- getContentType():java.lang.Object
+- a:getIndex():I
+- a:getKey():java.lang.Object
+- a:getOffset-nOcc-ac():J
+- a:getRow():I
+- a:getSize-YbymL2g():J
+org.jetbrains.jewel.foundation.lazy.table.LazyTableItemScope
+- a:animateItemPlacement(androidx.compose.ui.Modifier,androidx.compose.animation.core.FiniteAnimationSpec):androidx.compose.ui.Modifier
+- bs:animateItemPlacement$default(org.jetbrains.jewel.foundation.lazy.table.LazyTableItemScope,androidx.compose.ui.Modifier,androidx.compose.animation.core.FiniteAnimationSpec,I,java.lang.Object):androidx.compose.ui.Modifier
+f:org.jetbrains.jewel.foundation.lazy.table.LazyTableKt
+- sf:LazyTable(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.table.LazyTableState,I,I,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.gestures.FlingBehavior,androidx.compose.foundation.OverscrollEffect,Z,I,androidx.compose.foundation.layout.Arrangement$Horizontal,androidx.compose.foundation.layout.Arrangement$Vertical,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I):V
+org.jetbrains.jewel.foundation.lazy.table.LazyTableLayoutInfo
+- a:getColumns():I
+- a:getDensity():androidx.compose.ui.unit.Density
+- a:getFloatingItemsInfo():java.util.List
+- getHorizontalSpacing():I
+- a:getPinnedColumns():I
+- a:getPinnedColumnsInfo():java.util.List
+- a:getPinnedColumnsWidth():I
+- a:getPinnedItemsInfo():java.util.List
+- a:getPinnedRows():I
+- a:getPinnedRowsHeight():I
+- a:getPinnedRowsInfo():java.util.List
+- a:getRows():I
+- getTotalItemsCount():I
+- getVerticalSpacing():I
+- getViewportCellSize-YbymL2g():J
+- a:getViewportEndOffset-nOcc-ac():J
+- getViewportSize-YbymL2g():J
+- a:getViewportStartOffset-nOcc-ac():J
+org.jetbrains.jewel.foundation.lazy.table.LazyTableLayoutScope
+- androidx.compose.ui.unit.Density
+- a:getAvailableSize-YbymL2g():J
+- a:getColumns():I
+- a:getHorizontalSpacing():I
+- a:getRows():I
+- a:getVerticalSpacing():I
+org.jetbrains.jewel.foundation.lazy.table.LazyTablePrefetchScope
+- a:scheduleCellPrefetch(I,I):androidx.compose.foundation.lazy.layout.LazyLayoutPrefetchState$PrefetchHandle
+- a:scheduleColumnPrefetch(I):java.util.List
+- a:scheduleRowPrefetch(I):java.util.List
+org.jetbrains.jewel.foundation.lazy.table.LazyTablePrefetchStrategy
+- a:onNestedPrefetch-70tqf50(androidx.compose.foundation.lazy.layout.NestedPrefetchScope,J,org.jetbrains.jewel.foundation.lazy.table.LazyTableLayoutInfo):V
+- a:onScroll-d-4ec7I(org.jetbrains.jewel.foundation.lazy.table.LazyTablePrefetchScope,J,org.jetbrains.jewel.foundation.lazy.table.LazyTableLayoutInfo):V
+- a:onVisibleItemsUpdated(org.jetbrains.jewel.foundation.lazy.table.LazyTablePrefetchScope,org.jetbrains.jewel.foundation.lazy.table.LazyTableLayoutInfo):V
+f:org.jetbrains.jewel.foundation.lazy.table.LazyTablePrefetchStrategyKt
+- sf:LazyTablePrefetchStrategy(I):org.jetbrains.jewel.foundation.lazy.table.LazyTablePrefetchStrategy
+- bs:LazyTablePrefetchStrategy$default(I,I,java.lang.Object):org.jetbrains.jewel.foundation.lazy.table.LazyTablePrefetchStrategy
+org.jetbrains.jewel.foundation.lazy.table.LazyTableRowScope
+- a:cell(java.lang.Object,java.lang.Object,kotlin.jvm.functions.Function3):V
+- bs:cell$default(org.jetbrains.jewel.foundation.lazy.table.LazyTableRowScope,java.lang.Object,java.lang.Object,kotlin.jvm.functions.Function3,I,java.lang.Object):V
+- a:cells(I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function4):V
+- bs:cells$default(org.jetbrains.jewel.foundation.lazy.table.LazyTableRowScope,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function4,I,java.lang.Object):V
+org.jetbrains.jewel.foundation.lazy.table.LazyTableScope
+- a:column(java.lang.Object,java.lang.Object,org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$ColumnSize):V
+- bs:column$default(org.jetbrains.jewel.foundation.lazy.table.LazyTableScope,java.lang.Object,java.lang.Object,org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$ColumnSize,I,java.lang.Object):V
+- a:columns(I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):V
+- bs:columns$default(org.jetbrains.jewel.foundation.lazy.table.LazyTableScope,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- a:row(java.lang.Object,java.lang.Object,org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$RowSize,kotlin.jvm.functions.Function1):V
+- bs:row$default(org.jetbrains.jewel.foundation.lazy.table.LazyTableScope,java.lang.Object,java.lang.Object,org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$RowSize,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- a:rows(I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):V
+- bs:rows$default(org.jetbrains.jewel.foundation.lazy.table.LazyTableScope,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):V
+a:org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$ColumnSize
+- sf:$stable:I
+- a:maxWidth-viCIZxY(J,androidx.compose.ui.unit.Density):I
+- a:minWidth-viCIZxY(J,androidx.compose.ui.unit.Density):I
+f:org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$ColumnSize$Constrained
+- org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$ColumnSize
+- sf:$stable:I
+- b:<init>(F,F,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- maxWidth-viCIZxY(J,androidx.compose.ui.unit.Density):I
+- minWidth-viCIZxY(J,androidx.compose.ui.unit.Density):I
+f:org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$ColumnSize$Fixed
+- org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$ColumnSize
+- sf:$stable:I
+- maxWidth-viCIZxY(J,androidx.compose.ui.unit.Density):I
+- minWidth-viCIZxY(J,androidx.compose.ui.unit.Density):I
+f:org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$ColumnSize$Percent
+- org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$ColumnSize
+- sf:$stable:I
+- <init>(F):V
+- maxWidth-viCIZxY(J,androidx.compose.ui.unit.Density):I
+- minWidth-viCIZxY(J,androidx.compose.ui.unit.Density):I
+a:org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$RowSize
+- sf:$stable:I
+- a:maxHeight-viCIZxY(J,androidx.compose.ui.unit.Density):I
+- a:minHeight-viCIZxY(J,androidx.compose.ui.unit.Density):I
+f:org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$RowSize$Constrained
+- org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$RowSize
+- sf:$stable:I
+- b:<init>(F,F,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- maxHeight-viCIZxY(J,androidx.compose.ui.unit.Density):I
+- minHeight-viCIZxY(J,androidx.compose.ui.unit.Density):I
+f:org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$RowSize$Fixed
+- org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$RowSize
+- sf:$stable:I
+- maxHeight-viCIZxY(J,androidx.compose.ui.unit.Density):I
+- minHeight-viCIZxY(J,androidx.compose.ui.unit.Density):I
+f:org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$RowSize$Percent
+- org.jetbrains.jewel.foundation.lazy.table.LazyTableScope$RowSize
+- sf:$stable:I
+- <init>(F):V
+- f:getPercent():F
+- maxHeight-viCIZxY(J,androidx.compose.ui.unit.Density):I
+- minHeight-viCIZxY(J,androidx.compose.ui.unit.Density):I
+f:org.jetbrains.jewel.foundation.lazy.table.LazyTableScrollbarAdapterKt
+- sf:rememberTableHorizontalScrollbarAdapter(org.jetbrains.jewel.foundation.lazy.table.LazyTableState,androidx.compose.runtime.Composer,I):androidx.compose.foundation.v2.ScrollbarAdapter
+- sf:rememberTableVerticalScrollbarAdapter(org.jetbrains.jewel.foundation.lazy.table.LazyTableState,androidx.compose.runtime.Composer,I):androidx.compose.foundation.v2.ScrollbarAdapter
+- sf:tableHorizontalScrollbarAdapter(org.jetbrains.jewel.foundation.lazy.table.LazyTableState):androidx.compose.foundation.v2.ScrollbarAdapter
+- sf:tableVerticalScrollbarAdapter(org.jetbrains.jewel.foundation.lazy.table.LazyTableState):androidx.compose.foundation.v2.ScrollbarAdapter
+f:org.jetbrains.jewel.foundation.lazy.table.LazyTableState
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.foundation.lazy.table.LazyTableState$Companion
+- <init>():V
+- <init>(I,I,I,I,org.jetbrains.jewel.foundation.lazy.table.LazyTablePrefetchStrategy):V
+- b:<init>(I,I,I,I,org.jetbrains.jewel.foundation.lazy.table.LazyTablePrefetchStrategy,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:animateScrollToColumn(I,I,kotlin.coroutines.Continuation):java.lang.Object
+- bs:animateScrollToColumn$default(org.jetbrains.jewel.foundation.lazy.table.LazyTableState,I,I,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:animateScrollToRow(I,I,kotlin.coroutines.Continuation):java.lang.Object
+- bs:animateScrollToRow$default(org.jetbrains.jewel.foundation.lazy.table.LazyTableState,I,I,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:getCanHorizontalScrollBackward():Z
+- f:getCanHorizontalScrollForward():Z
+- f:getCanVerticalScrollBackward():Z
+- f:getCanVerticalScrollForward():Z
+- f:getFirstVisibleColumnIndex():I
+- f:getFirstVisibleItemHorizontalScrollOffset():I
+- f:getFirstVisibleItemVerticalScrollOffset():I
+- f:getFirstVisibleRowIndex():I
+- f:getHorizontalScrollableState():androidx.compose.foundation.gestures.ScrollableState
+- f:getLayoutInfo():org.jetbrains.jewel.foundation.lazy.table.LazyTableLayoutInfo
+- f:getTableInfo():org.jetbrains.jewel.foundation.lazy.table.LazyTableInfo
+- f:getVerticalScrollableState():androidx.compose.foundation.gestures.ScrollableState
+- f:horizontalScroll(androidx.compose.foundation.MutatePriority,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- bs:horizontalScroll$default(org.jetbrains.jewel.foundation.lazy.table.LazyTableState,androidx.compose.foundation.MutatePriority,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:isScrollInProgress():Z
+- f:requestScrollToItem(I,I):V
+- bs:requestScrollToItem$default(org.jetbrains.jewel.foundation.lazy.table.LazyTableState,I,I,I,java.lang.Object):V
+- f:requestScrollToRow(I,I):V
+- bs:requestScrollToRow$default(org.jetbrains.jewel.foundation.lazy.table.LazyTableState,I,I,I,java.lang.Object):V
+- f:scrollToColumn(I,I,kotlin.coroutines.Continuation):java.lang.Object
+- bs:scrollToColumn$default(org.jetbrains.jewel.foundation.lazy.table.LazyTableState,I,I,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:scrollToRow(I,I,kotlin.coroutines.Continuation):java.lang.Object
+- bs:scrollToRow$default(org.jetbrains.jewel.foundation.lazy.table.LazyTableState,I,I,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:verticalScroll(androidx.compose.foundation.MutatePriority,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- bs:verticalScroll$default(org.jetbrains.jewel.foundation.lazy.table.LazyTableState,androidx.compose.foundation.MutatePriority,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+f:org.jetbrains.jewel.foundation.lazy.table.LazyTableState$Companion
+- f:getSaver():androidx.compose.runtime.saveable.Saver
+f:org.jetbrains.jewel.foundation.lazy.table.LazyTableStateKt
+- sf:rememberLazyTableState(I,I,I,I,org.jetbrains.jewel.foundation.lazy.table.LazyTablePrefetchStrategy,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.lazy.table.LazyTableState
+- sf:rememberLazyTableState(androidx.compose.foundation.lazy.layout.LazyLayoutCacheWindow,I,I,I,I,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.lazy.table.LazyTableState
+org.jetbrains.jewel.foundation.lazy.table.TableScrollScope
+- a:scrollBy-E7KxVPU(J):J
+f:org.jetbrains.jewel.foundation.lazy.table.draggable.DraggableKt
+- sf:lazyTableCellDraggingOffset(androidx.compose.ui.Modifier,java.lang.Object,java.lang.Object):androidx.compose.ui.Modifier
+- sf:lazyTableCellDraggingOffset(androidx.compose.ui.Modifier,kotlin.Pair):androidx.compose.ui.Modifier
+- sf:lazyTableDraggable(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.table.draggable.LazyTableRowDraggingState,org.jetbrains.jewel.foundation.lazy.table.draggable.LazyTableColumnDraggingState):androidx.compose.ui.Modifier
+- bs:lazyTableDraggable$default(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.table.draggable.LazyTableRowDraggingState,org.jetbrains.jewel.foundation.lazy.table.draggable.LazyTableColumnDraggingState,I,java.lang.Object):androidx.compose.ui.Modifier
+- sf:lazyTableDraggableColumnCell(androidx.compose.ui.Modifier,java.lang.Object):androidx.compose.ui.Modifier
+- sf:lazyTableDraggableColumnCell(androidx.compose.ui.Modifier,kotlin.Pair):androidx.compose.ui.Modifier
+- sf:lazyTableDraggableRowCell(androidx.compose.ui.Modifier,java.lang.Object):androidx.compose.ui.Modifier
+- sf:lazyTableDraggableRowCell(androidx.compose.ui.Modifier,kotlin.Pair):androidx.compose.ui.Modifier
+f:org.jetbrains.jewel.foundation.lazy.table.draggable.LazyTableColumnDraggingState
+- org.jetbrains.jewel.foundation.lazy.table.draggable.LazyTableDraggableState
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.foundation.lazy.table.LazyTableState,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):V
+- getIndex(org.jetbrains.jewel.foundation.lazy.table.LazyTableItemInfo):I
+- getItemWithKey(java.lang.Object):org.jetbrains.jewel.foundation.lazy.table.LazyTableItemInfo
+- getKey(org.jetbrains.jewel.foundation.lazy.table.LazyTableItemInfo):java.lang.Object
+- getReplacingItem(org.jetbrains.jewel.foundation.lazy.table.LazyTableItemInfo):org.jetbrains.jewel.foundation.lazy.table.LazyTableItemInfo
+a:org.jetbrains.jewel.foundation.lazy.table.draggable.LazyTableDraggableState
+- org.jetbrains.jewel.foundation.lazy.draggable.LazyLayoutDraggingState
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.foundation.lazy.table.LazyTableState,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):V
+- canMove(java.lang.Object):Z
+- pf:getItemAt-k-4lQ0M(J):org.jetbrains.jewel.foundation.lazy.table.LazyTableItemInfo
+- f:getItemCanMove():kotlin.jvm.functions.Function1
+- getOffset-tuRUvjQ(org.jetbrains.jewel.foundation.lazy.table.LazyTableItemInfo):J
+- f:getOnMove():kotlin.jvm.functions.Function2
+- getSize-7Ah8Wj8(org.jetbrains.jewel.foundation.lazy.table.LazyTableItemInfo):J
+- f:getTableState():org.jetbrains.jewel.foundation.lazy.table.LazyTableState
+- moveItem(java.lang.Object,java.lang.Object):Z
+f:org.jetbrains.jewel.foundation.lazy.table.draggable.LazyTableDraggableStateKt
+- sf:rememberLazyTableColumnDraggingState(org.jetbrains.jewel.foundation.lazy.table.LazyTableState,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.foundation.lazy.table.draggable.LazyTableColumnDraggingState
+- sf:rememberLazyTableRowDraggingState(org.jetbrains.jewel.foundation.lazy.table.LazyTableState,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.foundation.lazy.table.draggable.LazyTableRowDraggingState
+f:org.jetbrains.jewel.foundation.lazy.table.draggable.LazyTableRowDraggingState
+- org.jetbrains.jewel.foundation.lazy.table.draggable.LazyTableDraggableState
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.foundation.lazy.table.LazyTableState,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):V
+- getIndex(org.jetbrains.jewel.foundation.lazy.table.LazyTableItemInfo):I
+- getItemWithKey(java.lang.Object):org.jetbrains.jewel.foundation.lazy.table.LazyTableItemInfo
+- getKey(org.jetbrains.jewel.foundation.lazy.table.LazyTableItemInfo):java.lang.Object
+- getReplacingItem(org.jetbrains.jewel.foundation.lazy.table.LazyTableItemInfo):org.jetbrains.jewel.foundation.lazy.table.LazyTableItemInfo
+f:org.jetbrains.jewel.foundation.lazy.table.selectable.SelectChangedElementKt
+- sf:onSelectChanged(androidx.compose.ui.Modifier,java.lang.Object,java.lang.Object,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
+- sf:onSelectChanged(androidx.compose.ui.Modifier,kotlin.Pair,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
+f:org.jetbrains.jewel.foundation.lazy.table.selectable.SelectableCellElementKt
+- sf:selectableCell(androidx.compose.ui.Modifier,java.lang.Object,java.lang.Object,org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionUnit):androidx.compose.ui.Modifier
+- sf:selectableCell(androidx.compose.ui.Modifier,kotlin.Pair,org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionUnit):androidx.compose.ui.Modifier
+- bs:selectableCell$default(androidx.compose.ui.Modifier,java.lang.Object,java.lang.Object,org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionUnit,I,java.lang.Object):androidx.compose.ui.Modifier
+- bs:selectableCell$default(androidx.compose.ui.Modifier,kotlin.Pair,org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionUnit,I,java.lang.Object):androidx.compose.ui.Modifier
+c:org.jetbrains.jewel.foundation.lazy.table.selectable.SingleCellSelectionManager
+- org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionManager
+- sf:$stable:I
+- <init>(java.lang.Object,java.lang.Object):V
+- clearSelection():V
+- getInteractionSource():androidx.compose.foundation.interaction.MutableInteractionSource
+- getSelectedItems():java.util.Set
+- handleEvent(org.jetbrains.jewel.foundation.lazy.selectable.SelectionEvent):V
+- isSelectable(java.lang.Object,java.lang.Object):Z
+- isSelected(java.lang.Object,java.lang.Object):Z
+f:org.jetbrains.jewel.foundation.lazy.table.selectable.SingleColumnSelectionManager
+- org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionManager
+- sf:$stable:I
+- <init>(java.lang.Object):V
+- clearSelection():V
+- getInteractionSource():androidx.compose.foundation.interaction.MutableInteractionSource
+- getSelectedItems():java.util.Set
+- handleEvent(org.jetbrains.jewel.foundation.lazy.selectable.SelectionEvent):V
+- isSelectable(java.lang.Object,java.lang.Object):Z
+- isSelected(java.lang.Object,java.lang.Object):Z
+f:org.jetbrains.jewel.foundation.lazy.table.selectable.SingleRowSelectionManager
+- org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionManager
+- sf:$stable:I
+- <init>(java.lang.Object):V
+- clearSelection():V
+- getInteractionSource():androidx.compose.foundation.interaction.MutableInteractionSource
+- getSelectedItems():java.util.Set
+- handleEvent(org.jetbrains.jewel.foundation.lazy.selectable.SelectionEvent):V
+- isSelectable(java.lang.Object,java.lang.Object):Z
+- isSelected(java.lang.Object,java.lang.Object):Z
+f:org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionEvent
+- org.jetbrains.jewel.foundation.lazy.selectable.SelectionEvent
+- sf:$stable:I
+- <init>():V
+- <init>(java.lang.Object,java.lang.Object,org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionUnit,org.jetbrains.jewel.foundation.lazy.selectable.SelectionType):V
+- b:<init>(java.lang.Object,java.lang.Object,org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionUnit,org.jetbrains.jewel.foundation.lazy.selectable.SelectionType,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- equals(java.lang.Object):Z
+- f:getColumnKey():java.lang.Object
+- f:getRowKey():java.lang.Object
+- f:getSelectionUnit():org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionUnit
+- f:getType():org.jetbrains.jewel.foundation.lazy.selectable.SelectionType
+- hashCode():I
+org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionManager
+- org.jetbrains.jewel.foundation.lazy.selectable.SelectionManager
+- a:getSelectedItems():java.util.Set
+- isSelectable(java.lang.Object):Z
+- a:isSelectable(java.lang.Object,java.lang.Object):Z
+- isSelected(java.lang.Object):Z
+- a:isSelected(java.lang.Object,java.lang.Object):Z
+f:org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionManagerKt
+- sf:rememberSingleCellSelectionManager(java.lang.Object,java.lang.Object,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionManager
+- sf:rememberSingleColumnSelectionManager(java.lang.Object,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionManager
+- sf:rememberSingleRowSelectionManager(java.lang.Object,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionManager
+e:org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionUnit
+- java.lang.Enum
+- sf:All:org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionUnit
+- sf:Cell:org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionUnit
+- sf:Column:org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionUnit
+- sf:Row:org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionUnit
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionUnit
+- s:values():org.jetbrains.jewel.foundation.lazy.table.selectable.TableSelectionUnit[]
 f:org.jetbrains.jewel.foundation.lazy.tree.BasicLazyTreeKt
 - sf:BasicLazyTree-X48TzrA(org.jetbrains.jewel.foundation.lazy.tree.Tree,J,J,J,F,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,F,F,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3,androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SelectionMode,org.jetbrains.jewel.foundation.lazy.tree.TreeState,J,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I,I,I):V
 - bsf:BasicLazyTree-orM9XXQ(org.jetbrains.jewel.foundation.lazy.tree.Tree,org.jetbrains.jewel.foundation.lazy.SelectionMode,kotlin.jvm.functions.Function1,J,J,J,F,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,F,F,org.jetbrains.jewel.foundation.lazy.tree.TreeState,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,J,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I,I,I):V

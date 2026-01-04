@@ -5,6 +5,8 @@ f:org.jetbrains.jewel.foundation.JewelFlags
 - *f:setUseCustomPopupRenderer(Z):V
 f:org.jetbrains.jewel.foundation.LocalComponentKt
 - *sf:getLocalComponent():androidx.compose.runtime.ProvidableCompositionLocal
+f:org.jetbrains.jewel.foundation.OverflowBoxKt
+- *sf:OverflowBox(androidx.compose.ui.Modifier,Z,androidx.compose.ui.Alignment,F,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
 *:org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
 - a:highlight-zTGadEY(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
 f:org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighterKt
