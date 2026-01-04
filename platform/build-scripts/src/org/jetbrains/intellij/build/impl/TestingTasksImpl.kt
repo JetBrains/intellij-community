@@ -1322,6 +1322,15 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     args.add("-classpath")
     args.add(classpath.joinToString(separator = File.pathSeparator))
 
+    /*
+    TODO it's better to load byte buddy beforehand and prohibit dynamic agent loading
+    WARNING: A Java agent has been loaded dynamically (/var/folders/y2/wzcbjbb16rz5l119wsct9vwc0000gn/T/byteBuddyAgent3573542851707188859.jar)
+    WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+    WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+    WARNING: Dynamic loading of agents will be disallowed by default in a future release
+     */
+    args.add("-XX:+EnableDynamicAgentLoading")
+
     if (modulePath != null) {
       args.add("--module-path")
       val mp = ArrayList<String>(modulePath)
