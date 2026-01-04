@@ -18,6 +18,10 @@ java_binary(
   name = "run_tests_build_target",
   runtime_deps = [":build"],
   main_class = "CommunityRunTestsBuildTarget",
+  jvm_flags = [
+    # Reduce output which is not strictly required to run tests, but keep it discoverable
+    "-Dintellij.build.console.exporter.to.temp.file=true",
+  ],
   add_opens = INTELLIJ_ADD_OPENS,
   data = ALL_COMMUNITY_TARGETS,
 )
