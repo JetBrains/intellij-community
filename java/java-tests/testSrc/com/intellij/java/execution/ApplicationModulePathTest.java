@@ -108,7 +108,7 @@ public class ApplicationModulePathTest extends BaseConfigurationTestCase {
 
   public void testLightModule() throws ExecutionException {
     ApplicationConfiguration configuration = setupConfiguration(getTestName(true), myModule);
-    configuration.MAIN_CLASS_NAME = "my.test.launcher.Launcher";
+    configuration.setMainClassName("my.test.launcher.Launcher");
 
     VirtualFile moduleInfoFile = getContentRoot(getTestName(true))
       .findFileByRelativePath("src/module-info.java");
