@@ -69,6 +69,7 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
     val menuStyle = readMenuStyle()
 
     return DefaultComponentStyling(
+        badgeStyle = readBadgeStyle(),
         checkboxStyle = readCheckboxStyle(),
         chipStyle = readChipStyle(),
         circularProgressStyle = readCircularProgressStyle(theme.isDark),

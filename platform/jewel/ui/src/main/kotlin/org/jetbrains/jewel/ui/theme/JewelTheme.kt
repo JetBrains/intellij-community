@@ -17,6 +17,7 @@ import org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.foundation.theme.ThemeIconData
 import org.jetbrains.jewel.ui.ComponentStyling
+import org.jetbrains.jewel.ui.component.styling.BadgeStyle
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
@@ -31,6 +32,7 @@ import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.InlineBannerStyles
 import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
+import org.jetbrains.jewel.ui.component.styling.LocalBadgeStyle
 import org.jetbrains.jewel.ui.component.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.LocalChipStyle
 import org.jetbrains.jewel.ui.component.styling.LocalCircularProgressStyle
@@ -106,6 +108,9 @@ public val JewelTheme.Companion.defaultSplitButtonStyle: SplitButtonStyle
 
 public val JewelTheme.Companion.outlinedSplitButtonStyle: SplitButtonStyle
     @Composable @ReadOnlyComposable get() = LocalOutlinedSplitButtonStyle.current
+
+public val JewelTheme.Companion.badgeStyle: BadgeStyle
+    @Composable @ReadOnlyComposable get() = LocalBadgeStyle.current
 
 public val JewelTheme.Companion.checkboxStyle: CheckboxStyle
     @Composable @ReadOnlyComposable get() = LocalCheckboxStyle.current

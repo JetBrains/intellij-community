@@ -8,6 +8,7 @@ import androidx.compose.runtime.Stable
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.ContextMenuRepresentation
 import org.jetbrains.jewel.ui.component.TextContextMenu
+import org.jetbrains.jewel.ui.component.styling.BadgeStyle
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
@@ -22,6 +23,7 @@ import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.InlineBannerStyles
 import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
+import org.jetbrains.jewel.ui.component.styling.LocalBadgeStyle
 import org.jetbrains.jewel.ui.component.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.LocalChipStyle
 import org.jetbrains.jewel.ui.component.styling.LocalCircularProgressStyle
@@ -79,6 +81,7 @@ import org.jetbrains.jewel.ui.component.styling.fallbackSpeedSearchStyle
 @Stable
 @GenerateDataFunctions
 public class DefaultComponentStyling(
+    public val badgeStyle: BadgeStyle,
     public val checkboxStyle: CheckboxStyle,
     public val chipStyle: ChipStyle,
     public val circularProgressStyle: CircularProgressStyle,
@@ -117,6 +120,7 @@ public class DefaultComponentStyling(
 ) : ComponentStyling {
     @Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.HIDDEN)
     public constructor(
+        badgeStyle: BadgeStyle,
         checkboxStyle: CheckboxStyle,
         chipStyle: ChipStyle,
         circularProgressStyle: CircularProgressStyle,
@@ -151,6 +155,7 @@ public class DefaultComponentStyling(
         tooltipStyle: TooltipStyle,
         undecoratedDropdownStyle: DropdownStyle,
     ) : this(
+        badgeStyle,
         checkboxStyle,
         chipStyle,
         circularProgressStyle,
@@ -190,6 +195,7 @@ public class DefaultComponentStyling(
 
     @Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.HIDDEN)
     public constructor(
+        badgeStyle: BadgeStyle,
         checkboxStyle: CheckboxStyle,
         chipStyle: ChipStyle,
         circularProgressStyle: CircularProgressStyle,
@@ -223,6 +229,7 @@ public class DefaultComponentStyling(
         tooltipStyle: TooltipStyle,
         undecoratedDropdownStyle: DropdownStyle,
     ) : this(
+        badgeStyle,
         checkboxStyle,
         chipStyle,
         circularProgressStyle,
@@ -263,6 +270,7 @@ public class DefaultComponentStyling(
     @Composable
     override fun styles(): Array<out ProvidedValue<*>> =
         arrayOf(
+            LocalBadgeStyle provides badgeStyle,
             LocalCheckboxStyle provides checkboxStyle,
             LocalChipStyle provides chipStyle,
             LocalCircularProgressStyle provides circularProgressStyle,
@@ -308,6 +316,7 @@ public class DefaultComponentStyling(
 
         other as DefaultComponentStyling
 
+        if (badgeStyle != other.badgeStyle) return false
         if (checkboxStyle != other.checkboxStyle) return false
         if (chipStyle != other.chipStyle) return false
         if (circularProgressStyle != other.circularProgressStyle) return false
@@ -348,7 +357,8 @@ public class DefaultComponentStyling(
     }
 
     override fun hashCode(): Int {
-        var result = checkboxStyle.hashCode()
+        var result = badgeStyle.hashCode()
+        result = 31 * result + checkboxStyle.hashCode()
         result = 31 * result + chipStyle.hashCode()
         result = 31 * result + circularProgressStyle.hashCode()
         result = 31 * result + defaultBannerStyle.hashCode()
@@ -388,6 +398,7 @@ public class DefaultComponentStyling(
 
     override fun toString(): String =
         "DefaultComponentStyling(" +
+            "badgeStyle=$badgeStyle, " +
             "checkboxStyle=$checkboxStyle, " +
             "chipStyle=$chipStyle, " +
             "circularProgressStyle=$circularProgressStyle, " +
