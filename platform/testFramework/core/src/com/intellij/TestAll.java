@@ -504,9 +504,7 @@ public class TestAll implements Test {
       return testsCount[0] > 0 ? suite : null;
     }
     catch (Throwable t) {
-      System.err.println("Failed to load test: " + testCaseClass.getName());
-      t.printStackTrace(System.err);
-      return null;
+      throw new RuntimeException("Failed to load test: " + testCaseClass.getName(), t);
     }
   }
 
@@ -547,9 +545,7 @@ public class TestAll implements Test {
       return Test.class.isAssignableFrom(testCaseClass);
     }
     catch (Throwable t) {
-      System.err.println("Failed to load test: " + testCaseClass.getName());
-      t.printStackTrace(System.err);
-      return false;
+      throw new RuntimeException("Failed to load test: " + testCaseClass.getName(), t);
     }
   }
 
