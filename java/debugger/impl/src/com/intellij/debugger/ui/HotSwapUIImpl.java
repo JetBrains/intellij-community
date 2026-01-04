@@ -57,7 +57,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
    * @see ProjectTaskContext#withUserData(Key, Object)
    */
   public static final Key<Boolean> SKIP_HOT_SWAP_KEY = KeyWithDefaultValue.create("skip_hotswap_after_this_compilation", false);
-  private static final Key<HotSwapStatusListener> HOT_SWAP_CALLBACK_KEY = Key.create("hot_swap_callback");
+  public static final Key<HotSwapStatusListener> HOT_SWAP_CALLBACK_KEY = Key.create("hot_swap_callback");
 
   private final List<HotSwapVetoableListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myAskBeforeHotswap = true;

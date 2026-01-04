@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.execution.build
 
 import com.intellij.build.BuildViewManager
 import com.intellij.compiler.impl.CompilerUtil
+import com.intellij.debugger.ui.HotSwapUIImpl
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.ModuleBasedConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -42,6 +43,7 @@ import org.jetbrains.plugins.gradle.service.execution.loadHotswapDetectionInitSc
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager.*
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import java.io.IOException
 import java.nio.file.Path
@@ -95,6 +97,7 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
             continue
           }
 
+          val isHotswapActive = context.getUserData(HotSwapUIImpl.HOT_SWAP_CALLBACK_KEY) != null;
           if (hotswapDetectionInitScript != null) {
             settings.addInitScripts(rootProjectPath, hotswapDetectionInitScript)
           }
@@ -109,6 +112,9 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
                   it.externalSystemIdString = SYSTEM_ID.id
                   it.externalProjectPath = rootProjectPath
                   it.taskNames = tasksToExecute
+                  if (isHotswapActive) {
+                    it.scriptParameters = GradleConstants.NO_BUILD_CACHE_CMD_OPTION
+                  }
                 })
                 .withUserData(UserDataHolderBase().also {
                   it.putUserData(PROGRESS_LISTENER_KEY, BuildViewManager::class.java)
