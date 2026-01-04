@@ -42,6 +42,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSplitButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalPopupAdTextStyle
 import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalRadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalScrollbarStyle
@@ -58,6 +59,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTransparentIconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalUndecoratedDropdownStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.component.styling.PopupAdTextStyle
 import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
@@ -99,6 +101,7 @@ public class DefaultComponentStyling(
     public val linkStyle: LinkStyle,
     public val menuStyle: MenuStyle,
     public val outlinedButtonStyle: ButtonStyle,
+    public val popupAdTextStyle: PopupAdTextStyle,
     public val popupContainerStyle: PopupContainerStyle,
     public val outlinedSplitButtonStyle: SplitButtonStyle,
     public val radioButtonStyle: RadioButtonStyle,
@@ -137,6 +140,7 @@ public class DefaultComponentStyling(
         linkStyle: LinkStyle,
         menuStyle: MenuStyle,
         outlinedButtonStyle: ButtonStyle,
+        popupAdTextStyle: PopupAdTextStyle,
         popupContainerStyle: PopupContainerStyle,
         outlinedSplitButtonStyle: SplitButtonStyle,
         radioButtonStyle: RadioButtonStyle,
@@ -171,6 +175,7 @@ public class DefaultComponentStyling(
         linkStyle,
         menuStyle,
         outlinedButtonStyle,
+        popupAdTextStyle,
         popupContainerStyle,
         outlinedSplitButtonStyle,
         radioButtonStyle,
@@ -209,6 +214,7 @@ public class DefaultComponentStyling(
         linkStyle: LinkStyle,
         menuStyle: MenuStyle,
         outlinedButtonStyle: ButtonStyle,
+        popupAdTextStyle: PopupAdTextStyle,
         popupContainerStyle: PopupContainerStyle,
         outlinedSplitButtonStyle: SplitButtonStyle,
         radioButtonStyle: RadioButtonStyle,
@@ -243,6 +249,7 @@ public class DefaultComponentStyling(
         linkStyle,
         menuStyle,
         outlinedButtonStyle,
+        popupAdTextStyle,
         popupContainerStyle,
         outlinedSplitButtonStyle,
         radioButtonStyle,
@@ -285,6 +292,7 @@ public class DefaultComponentStyling(
             LocalLinkStyle provides linkStyle,
             LocalMenuStyle provides menuStyle,
             LocalOutlinedButtonStyle provides outlinedButtonStyle,
+            LocalPopupAdTextStyle provides popupAdTextStyle,
             LocalPopupContainerStyle provides popupContainerStyle,
             LocalOutlinedSplitButtonStyle provides outlinedSplitButtonStyle,
             LocalRadioButtonStyle provides radioButtonStyle,
@@ -328,6 +336,7 @@ public class DefaultComponentStyling(
         if (linkStyle != other.linkStyle) return false
         if (menuStyle != other.menuStyle) return false
         if (outlinedButtonStyle != other.outlinedButtonStyle) return false
+        if (popupAdTextStyle != other.popupAdTextStyle) return false
         if (popupContainerStyle != other.popupContainerStyle) return false
         if (outlinedSplitButtonStyle != other.outlinedSplitButtonStyle) return false
         if (radioButtonStyle != other.radioButtonStyle) return false
@@ -368,6 +377,7 @@ public class DefaultComponentStyling(
         result = 31 * result + linkStyle.hashCode()
         result = 31 * result + menuStyle.hashCode()
         result = 31 * result + outlinedButtonStyle.hashCode()
+        result = 31 * result + popupAdTextStyle.hashCode()
         result = 31 * result + popupContainerStyle.hashCode()
         result = 31 * result + outlinedSplitButtonStyle.hashCode()
         result = 31 * result + radioButtonStyle.hashCode()
@@ -408,6 +418,7 @@ public class DefaultComponentStyling(
             "linkStyle=$linkStyle, " +
             "menuStyle=$menuStyle, " +
             "outlinedButtonStyle=$outlinedButtonStyle, " +
+            "popupAdTextStyle=$popupAdTextStyle, " +
             "popupContainerStyle=$popupContainerStyle, " +
             "outlinedSplitButtonStyle=$outlinedSplitButtonStyle, " +
             "radioButtonStyle=$radioButtonStyle, " +

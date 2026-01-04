@@ -91,6 +91,7 @@ import org.jetbrains.jewel.ui.theme.popupContainerStyle
  * @param style The visual styling configuration for the combo box
  * @param onPopupVisibleChange Called when the popup visibility changes
  * @param listState The State object for the selectable lazy list in the popup
+ * @param adText Optional ad text to display at the bottom of the popup
  * @param itemContent Composable content for rendering each item in the list
  * @see com.intellij.openapi.ui.ComboBox
  */
@@ -114,6 +115,7 @@ public fun <T : Any> ListComboBox(
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
     listState: SelectableLazyListState =
         rememberSelectableLazyListState(selectedIndex.takeIfInBoundsOrZero(items.indices)),
+    adText: String = "",
     itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     ListComboBoxImpl(
@@ -131,6 +133,7 @@ public fun <T : Any> ListComboBox(
         style = style,
         onPopupVisibleChange = onPopupVisibleChange,
         listState = listState,
+        adText = adText,
         labelContent = { item ->
             if (item != null) {
                 itemContent(item, false, false)
@@ -250,6 +253,7 @@ public fun <T : Any> ListComboBox(
  * @param onPopupVisibleChange Called when the popup visibility changes
  * @param itemKeys Function to generate unique keys for items; defaults to using the item itself as the key
  * @param listState The State object for the selectable lazy list in the popup
+ * @param adText Optional ad text to display at the bottom of the popup
  * @see com.intellij.openapi.ui.ComboBox
  */
 @Composable
@@ -270,6 +274,7 @@ public fun ListComboBox(
     itemKeys: (Int, String) -> Any = { _, item -> item },
     listState: SelectableLazyListState =
         rememberSelectableLazyListState(selectedIndex.takeIfInBoundsOrZero(items.indices)),
+    adText: String = "",
 ) {
     ListComboBoxImpl(
         items = items,
@@ -286,6 +291,7 @@ public fun ListComboBox(
         onPopupVisibleChange = onPopupVisibleChange,
         listState = listState,
         popupModifier = popupModifier,
+        adText = adText,
         labelContent = { item -> ComboBoxLabelText(item.orEmpty(), textStyle, style, enabled) },
         itemContent = { _, item, isSelected, isActive ->
             SimpleListItem(
@@ -406,6 +412,7 @@ public fun ListComboBox(
  * @param onPopupVisibleChange Called when the popup visibility changes
  * @param itemKeys Function to generate unique keys for items; defaults to using the item itself as the key
  * @param listState The State object for the selectable lazy list in the popup
+ * @param adText Optional ad text to display at the bottom of the popup
  * @see com.intellij.openapi.ui.ComboBox
  */
 @Composable
@@ -426,6 +433,7 @@ public fun EditableListComboBox(
     itemKeys: (Int, String) -> Any = { _, item -> item },
     listState: SelectableLazyListState =
         rememberSelectableLazyListState(selectedIndex.takeIfInBoundsOrZero(items.indices)),
+    adText: String = "",
 ) {
     val density = LocalDensity.current
     var comboBoxSize by remember { mutableStateOf(DpSize.Zero) }
@@ -517,6 +525,7 @@ public fun EditableListComboBox(
                     name = "EditableListComboBoxPopup",
                 )
             },
+        adText = adText,
         popupContent = {
             PopupContent(
                 items = items,
@@ -675,6 +684,7 @@ internal fun <T : Any> ListComboBoxImpl(
             alignment = horizontalPopupAlignment,
             density = LocalDensity.current,
         ),
+    adText: String = "",
     itemContent: @Composable (index: Int, item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     LaunchedEffect(itemKeys) {
@@ -836,6 +846,7 @@ internal fun <T : Any> ListComboBoxImpl(
         horizontalPopupAlignment = horizontalPopupAlignment,
         popupStyle = popupStyle,
         popupPositionProvider = popupPositionProvider,
+        adText = adText,
         labelContent = { labelContent(items.getOrNull(selectedIndex)) },
         popupContent = {
             PopupContent(

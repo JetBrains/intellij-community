@@ -88,6 +88,7 @@ import org.jetbrains.jewel.ui.theme.popupContainerStyle
  * @param onArrowDownPress Called when the down arrow key is pressed while the popup is visible
  * @param onArrowUpPress Called when the up arrow key is pressed while the popup is visible
  * @param popupManager Manager for controlling the popup visibility state
+ * @param adText Optional ad text to display at the bottom of the popup
  * @param popupContent Composable content for the popup
  */
 @Suppress("UnavailableSymbol") // TODO(JEWEL-983) Address Metalava suppressions
@@ -107,6 +108,7 @@ public fun ComboBox(
     onArrowUpPress: () -> Unit = {},
     // TODO(JEWEL-983) Address Metalava suppressions
     @Suppress("HiddenTypeParameter", "ReferencesHidden") popupManager: PopupManager = remember { PopupManager() },
+    adText: String = "",
     popupContent: @Composable () -> Unit,
 ) {
     ComboBox(
@@ -123,6 +125,7 @@ public fun ComboBox(
         onArrowDownPress,
         onArrowUpPress,
         popupManager,
+        adText,
     )
 }
 
@@ -213,6 +216,7 @@ public fun ComboBox(
  * @param onArrowDownPress Called when the down arrow key is pressed while the popup is visible
  * @param onArrowUpPress Called when the up arrow key is pressed while the popup is visible
  * @param popupManager Manager for controlling the popup visibility state
+ * @param adText Optional ad text to display at the bottom of the popup
  */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
@@ -231,6 +235,7 @@ public fun ComboBox(
     onArrowDownPress: () -> Unit = {},
     onArrowUpPress: () -> Unit = {},
     popupManager: PopupManager = remember { PopupManager() },
+    adText: String = "",
 ) {
     ComboBoxImpl(
         labelContent = labelContent,
@@ -246,6 +251,7 @@ public fun ComboBox(
         onArrowDownPress = onArrowDownPress,
         onArrowUpPress = onArrowUpPress,
         popupManager = popupManager,
+        adText = adText,
     )
 }
 
@@ -273,6 +279,7 @@ internal fun ComboBoxImpl(
             alignment = horizontalPopupAlignment,
             density = LocalDensity.current,
         ),
+    adText: String = "",
 ) {
     var chevronHovered by remember { mutableStateOf(false) }
 
@@ -404,6 +411,7 @@ internal fun ComboBoxImpl(
                     popupProperties = PopupProperties(focusable = false),
                     style = popupStyle,
                     popupPositionProvider = popupPositionProvider,
+                    adText = adText,
                     content = popupContent,
                 )
             }
