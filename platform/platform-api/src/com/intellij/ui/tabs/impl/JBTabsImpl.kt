@@ -1548,6 +1548,7 @@ open class JBTabsImpl internal constructor(
     finally {
       isMouseInsideTabsArea = oldValue
     }
+    updateEntryPointToolbar(tabActionGroup = tab.tabPaneActions)
   }
 
   protected open val focusOwnerToStore: JComponent?
