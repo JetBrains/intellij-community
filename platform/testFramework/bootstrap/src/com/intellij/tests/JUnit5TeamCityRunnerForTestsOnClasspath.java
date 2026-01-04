@@ -45,6 +45,10 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
   }
 
   public static void main(String[] args) {
+    JUnit5TeamCityRunnerForTestAllSuite.TCExecutionListener listener = null;
+    Throwable caughtException = null;
+    boolean noTestsFound = false;
+
     try {
       Launcher launcher = LauncherFactory.create();
 
@@ -88,21 +92,45 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
           saveListOfTestClasses(testPlan);
           return;
         }
-        launcher.execute(testPlan, new JUnit5TeamCityRunnerForTestAllSuite.TCExecutionListener());
+        listener = new JUnit5TeamCityRunnerForTestAllSuite.TCExecutionListener();
+        launcher.execute(testPlan, listener);
       }
       else {
-        //see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
-        System.exit(42);
+        noTestsFound = true;
       }
     }
     catch (Throwable e) {
+      caughtException = e;
       assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestsOnClasspath", e);
-      System.exit(1);
     }
     finally {
       assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestsOnClasspath", null);
-      System.exit(0);
     }
+
+    // Determine exit code OUTSIDE of try/catch/finally to avoid finally overriding the exit code
+    int exitCode;
+    if (caughtException != null) {
+      exitCode = 1;
+    }
+    else if (noTestsFound || !listener.smthExecuted()) {
+      // see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
+      exitCode = 42;
+    }
+    else if (listener.hasFailures()) {
+      exitCode = 1;
+    }
+    else {
+      exitCode = 0;
+    }
+
+    if (exitCode != 0) {
+      System.err.println("[EXIT_CODE_DEBUG] Exiting with code: " + exitCode +
+                         ", hasFailures=" + (listener != null ? listener.hasFailures() : "N/A (listener=null)") +
+                         ", testsExecuted=" + (listener != null ? listener.smthExecuted() : "N/A (listener=null)") +
+                         ", noTestsFound=" + noTestsFound);
+    }
+
+    System.exit(exitCode);
   }
 
   private static Set<Path> getClassPathRoots(ClassLoader classLoader) throws Throwable {

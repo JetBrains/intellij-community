@@ -1008,6 +1008,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         }
 
         if (options.isDedicatedTestRuntime == "class") {
+          var hasFailures = false
+
           suspend fun runOneClass(testClassName: String) {
             val exitCode = block("running test class '$testClassName'") {
               runJUnit5Engine(
@@ -1024,6 +1026,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
               )
             }
             if (exitCode == NO_TESTS_ERROR) throw NoTestsFound()
+            if (exitCode != 0) hasFailures = true
           }
 
           if (testClassesJUnit5.isNotEmpty()) {
@@ -1038,8 +1041,14 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
               runOneClass(s)
             }
           }
+
+          if (hasFailures) {
+            throw RuntimeException("Tests failed in dedicated runtime (class mode)")
+          }
         }
         else if (options.isDedicatedTestRuntime == "package") {
+          var hasFailures = false
+
           fun groupByPackages(tests: List<String>): Map<String, List<String>> {
             return tests.groupBy {
               val i = it.lastIndexOf('.')
@@ -1066,6 +1075,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
               )
             }
             if (exitCode == NO_TESTS_ERROR) throw NoTestsFound()
+            if (exitCode != 0) hasFailures = true
           }
 
           if (testClassesJUnit5.isNotEmpty()) {
@@ -1086,6 +1096,10 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
               runOnePackage(entry)
             }
           }
+
+          if (hasFailures) {
+            throw RuntimeException("Tests failed in dedicated runtime (package mode)")
+          }
         }
       }
       else {
@@ -1101,6 +1115,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         }
         var runJUnit5 = !options.shouldSkipJUnit5Tests
         var runJUnit34 = !options.shouldSkipJUnit34Tests
+        var lastExitCode5 = 0
+        var lastExitCode34 = 0
         for (attempt in 1..options.attemptCount) {
           if (!runJUnit5 && !runJUnit34) break
           val spanNameSuffix = if (options.attemptCount > 1) " (attempt $attempt)" else ""
@@ -1130,6 +1146,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           else {
             0
           }
+          if (runJUnit5) lastExitCode5 = exitCode5
 
           additionalProperties[PathManager.PROPERTY_LOG_PATH] = "$systemPath${File.separator}log${File.separator}junit3and4"
           val exitCode34: Int = if (runJUnit34) {
@@ -1151,6 +1168,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           else {
             0
           }
+          if (runJUnit34) lastExitCode34 = exitCode34
 
           if (exitCode5 == NO_TESTS_ERROR && exitCode34 == NO_TESTS_ERROR &&
               // only check on the first (full) attempt
@@ -1179,6 +1197,14 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
               runJUnit34 = false
             }
           }
+        }
+
+        // Check if tests failed after all retry attempts are exhausted
+        val hadTestFailures = (lastExitCode5 != 0 && lastExitCode5 != NO_TESTS_ERROR) ||
+                              (lastExitCode34 != 0 && lastExitCode34 != NO_TESTS_ERROR)
+        // On TeamCity test failures themselves control the build status, no need to report them as additional errors
+        if (hadTestFailures && !TeamCityHelper.isUnderTeamCity) {
+          throw RuntimeException("Tests failed (JUnit5 exit code: $lastExitCode5 ($NO_TESTS_ERROR), JUnit3+4 exit code: $lastExitCode34, $NO_TESTS_ERROR means no test for this test framework)")
         }
       }
     }
