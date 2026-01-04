@@ -1,21 +1,44 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing.syncAction
 
+import com.google.common.collect.HashBasedTable
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.service
+import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.ProjectKeys
+import com.intellij.openapi.externalSystem.model.project.*
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.observable.operation.OperationExecutionStatus
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.modules
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.testFramework.assertion.WorkspaceAssertions
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
 import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.toBuilder
+import com.intellij.testFramework.registerServiceInstance
 import kotlinx.coroutines.delay
+import org.gradle.tooling.model.idea.IdeaModule
+import org.gradle.tooling.model.idea.IdeaProject
 import org.jetbrains.plugins.gradle.importing.TestModelProvider
 import org.jetbrains.plugins.gradle.importing.TestPhasedModel
+import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
+import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic.Companion.asSyncPhase
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.entity.GradleTestBridgeEntitySource
 import org.jetbrains.plugins.gradle.util.entity.GradleTestEntity
 import org.jetbrains.plugins.gradle.util.entity.GradleTestEntityId
@@ -419,6 +442,129 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
     `test phased Gradle sync cancellation by indicator`(GradleSyncPhase.ADDITIONAL_MODEL_PHASE)
   }
 
+  @Test
+  fun `test dependencies from previous sync are kept`() {
+    Disposer.newDisposable().use { disposable ->
+      Registry.get("gradle.phased.sync.bridge.disabled").setValue(true, disposable)
+      initMultiModuleProject(
+        useBuildSrc = false, // buildSrc modules are triggering issue IDEA-383593, and are not essential to this test
+      )
+
+      importProject()
+      assertMultiModuleProjectStructure(useBuildSrc = false)
+
+      val moduleNames = myProject.modules.map { it.name }
+
+      val dependencyListByModuleNameAtEndOfFirstSync = myProject.workspaceModel.currentSnapshot.entities<ModuleEntity>().associate {
+        it.name to it.dependencies
+      }
+
+      val dependencyListByModuleNamePerPhase = HashBasedTable.create<GradleSyncPhase, String, List<ModuleDependencyItem>>()
+      Disposer.newDisposable().use { disposable ->
+        DEFAULT_SYNC_PHASES.forEach { phase ->
+          whenSyncPhaseCompleted(phase, disposable) { context ->
+            context.project.workspaceModel.currentSnapshot.entities<ModuleEntity>().forEach { moduleEntity ->
+              dependencyListByModuleNamePerPhase.put(phase, moduleEntity.name, moduleEntity.dependencies.toList())
+            }
+          }
+        }
+
+        importProject()
+        assertMultiModuleProjectStructure(useBuildSrc = false)
+      }
+
+      val expectedPhases = DEFAULT_SYNC_PHASES.filterNot {
+        setOf( // These phase are not executed in this test case
+          GradleSyncPhase.DECLARATIVE_PHASE,
+          GradleModelFetchPhase.PROJECT_LOADED_PHASE.asSyncPhase(),
+          GradleSyncPhase.DEPENDENCY_MODEL_PHASE
+        ).contains(it)
+      }
+
+      CollectionAssertions.assertEqualsUnordered(expectedPhases, dependencyListByModuleNamePerPhase.rowKeySet()) {
+        """
+        Expected phases: $expectedPhases
+        Got phases: ${dependencyListByModuleNamePerPhase.rowKeySet()}
+        """.trimIndent()
+      }
+
+      assertDependencyListPerModulePerPhase(
+        moduleNames,
+        dependencyListByModuleNameAtEndOfFirstSync,
+        expectedPhases,
+        dependencyListByModuleNamePerPhase
+      )
+    }
+  }
+
+  @Test
+  fun `test dependencies from previous sync are kept - sync contributors can add dependencies and override the sdk explicitly`() {
+    Disposer.newDisposable().use { disposable ->
+      Registry.get("gradle.phased.sync.bridge.disabled").setValue(true, disposable)
+      initMultiModuleProject(
+        useBuildSrc = false, // buildSrc modules are triggering issue IDEA-383593, and are not essential to this test
+      )
+
+      val modulesToSetSdks = listOf(
+        "project.module",
+        "includedProject.module"
+      )
+
+      val modulesToAddLibraries = listOf(
+        "project.main", "project.test",
+        "project.module.main", "project.module.test",
+        "includedProject.main", "includedProject.test",
+        "includedProject.module.main", "includedProject.module.test"
+      )
+
+      val (libraryDependency, libraryData) = prepareFakeLibrary()
+      val (sdkDependency, sdkData) = prepareFakeSdk()
+      val dependencyToAddByModuleName = modulesToAddLibraries.associateWith { libraryDependency } + modulesToSetSdks.associateWith { sdkDependency }
+      setupTestDataService(libraryData, sdkData, dependencyToAddByModuleName)
+      addDependencySyncContributor(dependencyToAddByModuleName)
+
+      importProject()
+
+      assertMultiModuleProjectStructure(useBuildSrc = false)
+
+      val dependencyListByModuleNameAtEndOfFirstSync = assertDependencyAddedForModules(dependencyToAddByModuleName)
+      val dependencyListByModuleNamePerPhase = HashBasedTable.create<GradleSyncPhase, String, List<ModuleDependencyItem>>()
+
+      DEFAULT_SYNC_PHASES.forEach { phase ->
+        whenSyncPhaseCompleted(phase, testRootDisposable) { context ->
+          context.project.workspaceModel.currentSnapshot.entities<ModuleEntity>().forEach { moduleEntity ->
+            dependencyListByModuleNamePerPhase.put(phase, moduleEntity.name, moduleEntity.dependencies.toList())
+          }
+        }
+      }
+
+      importProject()
+      assertMultiModuleProjectStructure(useBuildSrc = false)
+
+      val expectedPhases = DEFAULT_SYNC_PHASES.filterNot {
+        setOf(
+          // These phase are not executed in this test case
+          GradleSyncPhase.DECLARATIVE_PHASE,
+          GradleModelFetchPhase.PROJECT_LOADED_PHASE.asSyncPhase(),
+        ).contains(it)
+      }
+
+      CollectionAssertions.assertEqualsUnordered(expectedPhases, dependencyListByModuleNamePerPhase.rowKeySet()) {
+        """
+        Expected phases: $expectedPhases
+        Got phases: ${dependencyListByModuleNamePerPhase.rowKeySet()}
+        """.trimIndent()
+      }
+
+      assertDependencyListPerModulePerPhase(
+        dependencyToAddByModuleName.keys,
+        dependencyListByModuleNameAtEndOfFirstSync,
+        expectedPhases,
+        dependencyListByModuleNamePerPhase
+      )
+    }
+  }
+
   private fun `test phased Gradle sync cancellation by indicator`(cancellationPhase: GradleSyncPhase) {
     `test phased Gradle sync cancellation`(cancellationPhase) { resolverContext ->
       resolverContext as DefaultProjectResolverContext
@@ -569,6 +715,163 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       executionFinishAssertion.assertListenerState(1) {
         "Gradle sync should be finished."
       }
+    }
+  }
+
+  private fun assertDependencyAddedForModules(dependencyToAddByModuleName: Map<String, ModuleDependencyItem>): Map<@NlsSafe String, List<ModuleDependencyItem>> {
+    val dependencyListByModuleName = myProject.workspaceModel.currentSnapshot
+      .entities<ModuleEntity>()
+      .filter { it.name in dependencyToAddByModuleName.keys }
+      .associate {
+        val expected = dependencyToAddByModuleName[it.name]!!
+        assertTrue("""
+              Expected to contain the added dependency for module ${it.name}: 
+                $expected
+                but is: 
+                ${it.dependencies}
+            """.trimIndent(), it.dependencies.contains(expected))
+        it.name to it.dependencies
+      }
+
+    CollectionAssertions.assertContainsUnordered(
+      dependencyToAddByModuleName.keys,
+      dependencyListByModuleName.keys
+    )
+    return dependencyListByModuleName
+  }
+
+  private fun assertDependencyListPerModulePerPhase(
+    moduleNames: Collection<String>,
+    dependencyListByModuleNameAtEndOfFirstSync: Map<@NlsSafe String, List<ModuleDependencyItem>>,
+    expectedPhases: List<GradleSyncPhase>,
+    dependencyListByModuleNamePerPhase: HashBasedTable<GradleSyncPhase, String, List<ModuleDependencyItem>>,
+  ) {
+    moduleNames.forEach { moduleName ->
+      val originalDependencies = dependencyListByModuleNameAtEndOfFirstSync[moduleName]
+      assertNotNull("Expected dependency list of $moduleName to be initialized!", originalDependencies)
+      expectedPhases.forEach { phase ->
+        val dependenciesAtEndOfPhase = dependencyListByModuleNamePerPhase.get(phase, moduleName)
+        assertNotNull("Expected to find dependencies of $moduleName at the end of phase $phase", dependenciesAtEndOfPhase)
+        CollectionAssertions.assertEqualsUnordered(originalDependencies, dependenciesAtEndOfPhase) {
+          "Dependency list doesn't match for module: $moduleName"
+        }
+      }
+    }
+  }
+
+
+  private fun addDependencySyncContributor(
+    dependencyToAddByModuleName: Map<String, ModuleDependencyItem>,
+  ) {
+    addSyncContributor(GradleSyncPhase.DEPENDENCY_MODEL_PHASE, testRootDisposable) { context, storage ->
+      val mutableStorage = storage.toBuilder()
+      mutableStorage.entities<ModuleEntity>()
+        .forEach { entity ->
+          dependencyToAddByModuleName[entity.name]?.let {
+            mutableStorage.modifyModuleEntity(entity) {
+              this.dependencies = mutableListOf(it)
+            }
+          }
+        }
+      mutableStorage.toSnapshot()
+    }
+  }
+
+  private fun setupTestDataService(
+    libraryData: LibraryData,
+    sdkData: ModuleSdkData,
+    dependencyToAddByModuleName: Map<String, ModuleDependencyItem>,
+  ) {
+    GradleProjectResolverExtension.EP_NAME.point.registerExtension(TestDependencyResolverExtension(), testRootDisposable)
+    val service = TestDependencyProjectResolverService(libraryData, sdkData, dependencyToAddByModuleName)
+    myProject.registerServiceInstance(TestDependencyProjectResolverService::class.java, service)
+  }
+
+  private fun prepareFakeSdk(): Pair<SdkDependency, ModuleSdkData> {
+    val type = JavaSdk.getInstance()
+    val sdkDependency = SdkDependency(SdkId("sdk-name", type.name))
+    val jdk = ProjectJdkTable.getInstance().createSdk(sdkDependency.sdk.name, type)
+    WriteAction.runAndWait<Throwable> {
+      ProjectJdkTable.getInstance().addJdk(jdk, testRootDisposable)
+    }
+    val sdkData = ModuleSdkData(sdkDependency.sdk.name)
+    return Pair(sdkDependency, sdkData)
+  }
+
+  private fun prepareFakeLibrary(): Pair<LibraryDependency, LibraryData> {
+    val libraryName = "some-library"
+    val libraryDependency = LibraryDependency(
+      LibraryId("Gradle: $libraryName", LibraryTableId.ProjectLibraryTableId),
+      exported = false,
+      DependencyScope.COMPILE
+    )
+    val libraryData = LibraryData(GradleConstants.SYSTEM_ID, libraryName)
+    return Pair(libraryDependency, libraryData)
+  }
+
+  /** Need to use a project level service for any data use by the [TestDependencyResolverExtension] as the instance gets recreated. */
+  class TestDependencyProjectResolverService(
+    // This extension only supports adding a singular instance of a library data and an Sdk data for simplicity
+    val libraryData: LibraryData,
+    val sdkData: ModuleSdkData,
+    // Whether to use sdk or library data is determined by the type of the ModuleDependencyItem
+    val dependencyToAddByModuleName: Map<String, ModuleDependencyItem>,
+  ): AbstractTestProjectResolverService()
+
+  /**
+   * A test resolver extension to populate fake library and sdk dependencies for modules according
+   * to the data provided by [TestDependencyProjectResolverService]
+   */
+  class TestDependencyResolverExtension: AbstractProjectResolverExtension() {
+    val service get() = resolverCtx.externalSystemTaskId.findProject()!!.service<TestDependencyProjectResolverService>()
+    val libraryData: LibraryData get() = service.libraryData
+    val sdkData: ModuleSdkData get() = service.sdkData
+    val dependencyToAddByModuleName: Map<String, ModuleDependencyItem> get() = service.dependencyToAddByModuleName
+
+    override fun populateProjectExtraModels(
+      gradleProject: IdeaProject,
+      ideProject: DataNode<ProjectData?>,
+    ) {
+      ideProject.createChild(ProjectKeys.LIBRARY, libraryData);
+      super.populateProjectExtraModels(gradleProject, ideProject)
+    }
+
+    override fun populateModuleDependencies(
+      gradleModule: IdeaModule,
+      ideModule: DataNode<ModuleData>,
+      ideProject: DataNode<ProjectData>,
+    ) {
+      (ExternalSystemApiUtil.findAll(ideModule, GradleSourceSetData.KEY) + ideModule).forEach {
+        val dependencyToAdd = dependencyToAddByModuleName[it.data.internalName] ?: return@forEach
+        if (dependencyToAdd !is LibraryDependency) return@forEach
+        it.createChild(
+          ProjectKeys.LIBRARY_DEPENDENCY,
+          LibraryDependencyData(
+            it.data,
+            libraryData,
+            LibraryLevel.PROJECT
+          )
+        )
+      }
+      super.populateModuleDependencies(gradleModule, ideModule, ideProject)
+    }
+
+    override fun populateModuleExtraModels(
+      gradleModule: IdeaModule,
+      ideModule: DataNode<ModuleData?>,
+    ) {
+      (ExternalSystemApiUtil.findAll(ideModule, GradleSourceSetData.KEY) + ideModule).forEach {
+        val dependencyToAdd = dependencyToAddByModuleName[it.data.internalName] ?: return@forEach
+        if (dependencyToAdd !is SdkDependency) return@forEach
+        checkNotNull(ExternalSystemApiUtil.find(it, ModuleSdkData.KEY)) {
+          "Expected to find existing SDK data node for ${it.data.internalName}"
+        }.clear(true)
+        it.createChild(
+          ModuleSdkData.KEY,
+          sdkData
+        )
+      }
+      super.populateModuleExtraModels(gradleModule, ideModule)
     }
   }
 }
