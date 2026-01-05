@@ -79,8 +79,8 @@ class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
     waitForImportWithinTimeout {
       projectsManager.loadState(newState)
     }
-    assertUnorderedElementsAreEqual(projectsManager.projectsTreeForTests?.rootProjectsFiles?:emptyList(), p1, p3)
-    assertUnorderedPathsAreEqual(projectsManager.projectsTreeForTests?.managedFilesPaths?:emptyList(), listOf(p1.getPath(), p3.getPath()))
+    assertUnorderedElementsAreEqual(projectsManager.projectsTreeForTests.rootProjectsFiles, p1, p3)
+    assertUnorderedPathsAreEqual(projectsManager.projectsTreeForTests.managedFilesPaths, listOf(p1.getPath(), p3.getPath()))
     assertUnorderedElementsAreEqual(projectsManager.getExplicitProfiles().enabledProfiles, "three")
     assertUnorderedPathsAreEqual(projectsManager.getIgnoredFilesPaths(), listOf(p1.getPath()))
     assertUnorderedElementsAreEqual(projectsManager.getIgnoredFilesPatterns(), "*.zzz")

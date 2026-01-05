@@ -18,7 +18,7 @@ class MavenAddFileAsMavenProjectActionTest : MavenProjectWizardTestCase() {
     val pom1: Path = createPom()
     val pom2 = pom1.parent.resolve("pom2.xml")
     pom2.write(MavenTestCase.createPomXml(
-      MavenConstants.MODEL_VERSION_4_0_0,
+     MavenConstants.MODEL_VERSION_4_0_0,
       """
         <groupId>test</groupId>
         <artifactId>project2</artifactId>
@@ -38,7 +38,7 @@ class MavenAddFileAsMavenProjectActionTest : MavenProjectWizardTestCase() {
     action.actionPerformedAsync(event)
 
     val projectsManager = MavenProjectsManager.getInstance(module.project)
-    val paths = projectsManager.projectsTreeForTests?.existingManagedFiles?.map { it.toNioPath() } ?: emptyList()
+    val paths = projectsManager.projectsTreeForTests.existingManagedFiles.map { it.toNioPath() }
     TestCase.assertEquals(1, paths.size)
     TestCase.assertEquals(pom2, paths[0])
   }

@@ -68,6 +68,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable,
              MavenAsyncProjectsManager {
   private final ReentrantLock initLock = new ReentrantLock();
+  private final AtomicBoolean projectsTreeInitialized = new AtomicBoolean();
   private final AtomicBoolean isInitialized = new AtomicBoolean();
   private final AtomicBoolean isActivated = new AtomicBoolean();
 
@@ -75,7 +76,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private final MavenEmbeddersManager myEmbeddersManager;
 
-  private volatile MavenProjectsTree myProjectsTree = null;
+  private final @NotNull MavenProjectsTree myProjectsTree = new MavenProjectsTree(getProject());
   private final AtomicReference<MavenProjectManagerWatcher> myWatcherRef = new AtomicReference<>(null);
   private volatile Exception myWatcherCreationTrace;
 
@@ -172,7 +173,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @TestOnly
   public void initForTests() {
-    initializedProjectsTree();
+    initProjectsTree();
     doInit();
   }
 
@@ -243,30 +244,26 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
 
   protected void initOnProjectStartup() {
-    MavenProjectsTree projectsTree = initializedProjectsTree();
+    initProjectsTree();
     doInit();
     doActivate();
 
-    if (!projectsTree.getManagedFilesPaths().isEmpty() && projectsTree.getRootProjects().isEmpty()) {
+    if (!myProjectsTree.getManagedFilesPaths().isEmpty() && myProjectsTree.getRootProjects().isEmpty()) {
       MavenLog.LOG.warn("MavenProjectsTree is inconsistent");
       scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.onProjectStartup"));
     }
   }
 
-  private @NotNull MavenProjectsTree initializedProjectsTree() {
-    var existing = myProjectsTree;
-    if (existing != null) return existing;
+  private void initProjectsTree() {
+    if (projectsTreeInitialized.get()) return;
+    initLock.lock();
     try {
-      initLock.lock();
-      existing = myProjectsTree;
-      if (existing != null) return existing;
+      if (projectsTreeInitialized.get()) return;
       Path path = getProjectsTreeFile();
-      var newProjectTree = new MavenProjectsTree(getProject());
-      newProjectTree.read(path);
-      applyStateToTree(newProjectTree, this);
-      newProjectTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
-      myProjectsTree = newProjectTree;
-      return newProjectTree;
+      myProjectsTree.read(path);
+      applyStateToTree(myProjectsTree, this);
+      myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
+      projectsTreeInitialized.set(true);
     }
     finally {
       initLock.unlock();
@@ -306,11 +303,10 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void saveTree() {
     try {
-      MavenProjectsTree tree = myProjectsTree;
-      if (tree == null) {
+      if (!projectsTreeInitialized.get()) {
         return;
       }
-      tree.save(getProjectsTreeFile());
+      myProjectsTree.save(getProjectsTreeFile());
     }
     catch (IOException e) {
       MavenLog.LOG.info(e);
@@ -603,23 +599,16 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @TestOnly
-  public @Nullable MavenProjectsTree getProjectsTreeForTests() {
+  public MavenProjectsTree getProjectsTreeForTests() {
     return myProjectsTree;
   }
 
   @ApiStatus.Internal
   public @NotNull MavenProjectsTree getProjectsTree() {
-    return initializedProjectsTree();
-  }
-
-  @ApiStatus.Internal
-  protected @Nullable MavenProjectsTree getProjectsTree(boolean requireInitialization) {
-    if (requireInitialization) {
-      return initializedProjectsTree();
+    if (!projectsTreeInitialized.get()) {
+      initProjectsTree();
     }
-    else {
-      return myProjectsTree;
-    }
+    return myProjectsTree;
   }
 
   /**
