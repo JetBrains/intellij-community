@@ -8,7 +8,7 @@ import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.data.CommitIdByStringCondition
-import com.intellij.vcs.log.data.DataPack
+import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -25,10 +25,12 @@ internal sealed class RangeFilterResult {
   data object Error : RangeFilterResult()
 }
 
-internal fun filterByRange(storage: VcsLogStorage,
-                           logProviders: Map<VirtualFile, VcsLogProvider>,
-                           dataPack: DataPack,
-                           rangeFilter: VcsLogRangeFilter): RangeFilterResult {
+internal fun filterByRange(
+  storage: VcsLogStorage,
+  logProviders: Map<VirtualFile, VcsLogProvider>,
+  dataPack: VcsLogGraphData,
+  rangeFilter: VcsLogRangeFilter,
+): RangeFilterResult {
   val set = IntOpenHashSet()
   for (range in rangeFilter.ranges) {
     var rangeResolvedAnywhere = false
@@ -51,17 +53,24 @@ internal fun filterByRange(storage: VcsLogStorage,
   return RangeFilterResult.Commits(set)
 }
 
-private fun getCommitsByRange(storage: VcsLogStorage, dataPack: DataPack, root: VirtualFile, range: Pair<CommitId, CommitId>): IntSet? {
+private fun getCommitsByRange(
+  storage: VcsLogStorage,
+  dataPack: VcsLogGraphData,
+  root: VirtualFile,
+  range: Pair<CommitId, CommitId>,
+): IntSet? {
   val fromIndex = storage.getCommitIndex(range.first.hash, root)
   val toIndex = storage.getCommitIndex(range.second.hash, root)
 
   return dataPack.subgraphDifference(toIndex, fromIndex)
 }
 
-private fun resolveCommits(vcsLogStorage: VcsLogStorage,
-                           dataPack: DataPack,
-                           root: VirtualFile,
-                           range: VcsLogRangeFilter.RefRange): Pair<CommitId, CommitId>? {
+private fun resolveCommits(
+  vcsLogStorage: VcsLogStorage,
+  dataPack: VcsLogGraphData,
+  root: VirtualFile,
+  range: VcsLogRangeFilter.RefRange,
+): Pair<CommitId, CommitId>? {
   val from = resolveCommit(vcsLogStorage, dataPack, root, range.exclusiveRef) ?: run {
     LOG.debug { "Can not resolve ${range.exclusiveRef} in $root for range $range" }
     return null
@@ -73,8 +82,10 @@ private fun resolveCommits(vcsLogStorage: VcsLogStorage,
   return from to to
 }
 
-private fun resolveCommit(storage: VcsLogStorage, dataPack: DataPack,
-                          root: VirtualFile, refName: String): CommitId? {
+private fun resolveCommit(
+  storage: VcsLogStorage, dataPack: VcsLogGraphData,
+  root: VirtualFile, refName: String,
+): CommitId? {
   if (VcsLogUtil.isFullHash(refName)) {
     val commitId = CommitId(HashImpl.build(refName), root)
     return if (storage.containsCommit(commitId)) commitId else null

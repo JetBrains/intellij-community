@@ -28,7 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.intellij.devkit.compose.demo.JewelIcons
+import com.intellij.devkit.compose.icons.DevkitComposeIcons
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.JBUI
@@ -332,7 +332,7 @@ private fun RightColumn(selectedItem: ContentItem?, modifier: Modifier = Modifie
 
 @Composable
 private fun ReleaseImage(imagePath: String) {
-  val painterProvider = rememberResourcePainterProvider(imagePath, JewelIcons::class.java)
+  val painterProvider = rememberResourcePainterProvider(imagePath, DevkitComposeIcons::class.java)
   val painter by painterProvider.getPainter()
   val controller = rememberFoilInteractionController()
 

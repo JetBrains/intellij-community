@@ -25,6 +25,7 @@ internal class TestFixtureImpl<T>(
         Fixture framework seems not be initialized. Make sure that:
         1. A test is written in Kotlin
         2. There is an annotation ${TestApplication::class.java.name} on top of your file. 
+        3. @Test annotation is imported from JUnit 5.
       """.trimIndent())
       @OptIn(ExperimentalCoroutinesApi::class)
       return deferred.getCompleted().first

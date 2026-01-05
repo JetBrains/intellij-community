@@ -2,14 +2,14 @@
 package org.jetbrains.plugins.groovy.util
 
 import com.intellij.psi.*
-import com.intellij.psi.util.MainMethodSearcherBase
+import com.intellij.psi.util.JvmMainMethodSearcher
 import com.siyeh.ig.psiutils.TypeUtils.isJavaLangObject
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 
-object GroovyMainMethodSearcher : MainMethodSearcherBase() {
+object GroovyMainMethodSearcher : JvmMainMethodSearcher() {
   /**
    * The logic of method priorities is taken from `org.codehaus.groovy.tools.shell.GroovyShell#runScriptOrMainOrTestOrRunnable`
    */

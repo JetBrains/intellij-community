@@ -11,15 +11,22 @@
       <li>Ability to create a project with the special file and directory structure.</li>
       <li>JavaFX-aware coding assistance (code completion, search, navigation and refactoring in JavaFX-specific source files).</li>
       <li>Integration with <a href="https://github.com/gluonhq/scenebuilder/wiki/Basic-JavaFX-project-with-Scene-Builder">JavaFX Scene Builder</a>.</li>
+      <li><i>Ultimate only:</i> Support for CSS stylesheets used with JavaFX.</li>
     </ul>
   ]]></description>
 
   <content namespace="jetbrains">
     <module name="intellij.javaFX"/>
     <module name="intellij.javaFX.properties"/>
+    <module name="intellij.javaFX.css" loading="optional"/>
+    <module name="intellij.javaFX.css.intellilang" loading="optional"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
     <dependencySupport coordinate="org.openjfx:javafx-base" kind="java" displayName="JavaFX"/>
   </extensions>
+
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+  </dependencies>
 </idea-plugin>

@@ -19,10 +19,9 @@ internal class ClientCurrentEditorProvider : CurrentEditorProvider {
     }
     else {
       if (project.currentSession.isController) {
-        // doesn't work in case of other remote clients.
+        // GTW-6595 doesn't work in case of other remote clients.
         // check com.jetbrains.rdct.cwm.distributed.undo.EditorComplicatedUndoTest.testRedoBasicCommandAfterForeignTyping
         FocusBasedCurrentEditorProvider.getCurrentEditorEx()?.let { editor ->
-          // GTW-6595
           return editor
         }
       }

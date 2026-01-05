@@ -390,18 +390,12 @@ suspend fun PyDetectedSdk.setupAssociated(
   PyResult.success(sdk)
 }
 
-var Module.pythonSdk: Sdk?
-  get() = PythonSdkUtil.findPythonSdk(this)
-  set(newSdk) {
-    val prevSdk = pythonSdk
-    thisLogger().info("Setting PythonSDK $newSdk to module $this")
-    ModuleRootModificationUtil.setModuleSdk(this, newSdk)
-    runInEdt {
-      DaemonCodeAnalyzer.getInstance(project).restart("Setting PythonSDK $newSdk to module $this")
-    }
-    ApplicationManager.getApplication().messageBus.syncPublisher(PySdkListener.TOPIC).moduleSdkUpdated(this, prevSdk, newSdk)
-  }
 
+/**
+ * Please set sdk on module level: [Module.pythonSdk]
+ */
+@get:ApiStatus.Obsolete
+@set:ApiStatus.Obsolete
 var Project.pythonSdk: Sdk?
   get() {
     val sdk = ProjectRootManager.getInstance(this).projectSdk
@@ -625,3 +619,13 @@ val Sdk.sdkSeemsValid: Boolean
     if (pythonSdkAdditionalData is PyRemoteSdkAdditionalData) return false
     return pythonSdkAdditionalData.flavorAndData.sdkSeemsValid(this, targetEnvConfiguration)
   }
+
+
+@Internal
+@Deprecated("Use module.pythonSdk", replaceWith = ReplaceWith("module.pythonSdk"), level = DeprecationLevel.ERROR)
+fun setPythonSdk(module: Module, sdk: Sdk) {
+  module.pythonSdk = sdk
+}
+@Internal
+@Deprecated("Use module.pythonSdk", replaceWith = ReplaceWith("module.pythonSdk"), level = DeprecationLevel.ERROR)
+fun getPythonSdk(module: Module): Sdk?  = module.pythonSdk

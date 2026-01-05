@@ -49,8 +49,6 @@ private fun collectActiveTasks(cs: CoroutineScope, project: Project?) {
     activeTasks
       .filter { it.projectEntity?.projectId == project?.projectId() }
       .collect { task ->
-        if (!isRhizomeProgressEnabled) return@collect
-
         showTaskIndicator(cs, projectOrDefault, task)
       }
   }

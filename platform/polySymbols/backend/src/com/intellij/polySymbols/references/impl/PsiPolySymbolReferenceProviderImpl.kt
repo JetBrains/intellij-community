@@ -208,7 +208,7 @@ private class NameSegmentReferenceWithProblem(
       .mapNotNull { segment ->
         val problemKind = segment.getProblemKind() ?: return@mapNotNull null
         val toolMapping = segment.symbolKinds.map {
-          PolySymbolInspectionToolMappingEP.get(it.namespace, it.kind, problemKind)
+          PolySymbolInspectionToolMappingEP.get(it.namespace, it.kindName, problemKind)
         }.firstOrNull()
         PolySymbolReferenceProblem.create(
           segment.symbolKinds,
@@ -227,9 +227,9 @@ private class NameSegmentReferenceWithProblem(
       val symbolTypes = nameSegments.flatMapTo(LinkedHashSet()) { it.symbolKinds }
       val toolMapping = symbolTypes.map {
         if (apiStatus is PolySymbolApiStatus.Obsolete)
-          PolySymbolInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.ObsoleteSymbol)
+          PolySymbolInspectionToolMappingEP.get(it.namespace, it.kindName, ProblemKind.ObsoleteSymbol)
             ?.let { mapping -> return@map mapping }
-        PolySymbolInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.DeprecatedSymbol)
+        PolySymbolInspectionToolMappingEP.get(it.namespace, it.kindName, ProblemKind.DeprecatedSymbol)
       }.firstOrNull()
 
       val cause = apiStatus?.getMessage()

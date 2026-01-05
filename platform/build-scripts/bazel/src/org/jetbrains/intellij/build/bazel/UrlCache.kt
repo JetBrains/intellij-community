@@ -147,11 +147,11 @@ internal fun readModules(modulesBazel: List<Path>, repositories: List<JarReposit
 
       val matchedRepositories = repositories.filter { url.startsWith(it.urlWithSlash) }
       if (matchedRepositories.isEmpty()) {
-        warn("Cannot find repository for $url across all repositories: ${repositories.map { it.urlWithSlash }}")
+        warn("Cannot find repository for $url across all repositories: ${repositories.map { it.urlWithSlash }} in file: $modulesFile")
         continue
       }
       if (matchedRepositories.size > 1) {
-        warn("Multiple repositories match $url: ${matchedRepositories.map { it.urlWithSlash }}")
+        warn("Multiple repositories match $url: ${matchedRepositories.map { it.urlWithSlash }} in file: $modulesFile")
         continue
       }
       val repository = matchedRepositories.single()

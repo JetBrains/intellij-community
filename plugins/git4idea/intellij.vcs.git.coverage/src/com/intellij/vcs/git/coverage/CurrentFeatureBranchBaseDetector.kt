@@ -25,7 +25,7 @@ import git4idea.GitRemoteBranch
 import git4idea.config.GitSharedSettings
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.WeakHashMap
+import java.util.*
 
 private data class CachedResult(val status: Status, val state: CachedState)
 private data class CachedState(val headHash: String, val protectedBranchHashes: List<Pair<String, String>>)
@@ -44,7 +44,7 @@ internal class CurrentFeatureBranchBaseDetector(private val repository: GitRepos
 
   private val logData = VcsProjectLog.getInstance(repository.project).dataManager
   private val storage = logData?.storage
-  private val pack = logData?.dataPack
+  private val pack = logData?.graphData
 
   @Suppress("UNCHECKED_CAST")
   private val permanentGraph = pack?.permanentGraph as? PermanentGraphInfo<VcsLogCommitStorageIndex>

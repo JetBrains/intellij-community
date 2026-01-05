@@ -53,8 +53,16 @@ abstract class TraceExecutionTestHelper(
   suspend fun onPause(chainSelector: ChainSelector, resultMustBeNull: Boolean? = null) {
     val chain = readAction {
       val elementAtBreakpoint = debuggerPositionResolver.getNearestElementToBreakpoint(session)
-      val chains = if (elementAtBreakpoint == null) null else createChainBuilder().build(elementAtBreakpoint)
-      if (chains.isNullOrEmpty()) null else chainSelector.select(chains)
+      if (elementAtBreakpoint == null) {
+        LOG.warn("Couldn't find element at breakpoint.")
+        return@readAction null
+      }
+      val chains = createChainBuilder().build(elementAtBreakpoint)
+      if (chains.isEmpty()) {
+        LOG.warn("Couldn't find any chains at ${elementAtBreakpoint}, text: ${elementAtBreakpoint.text}, range: ${elementAtBreakpoint.textRange}")
+        return@readAction null
+      }
+      chainSelector.select(chains)
     }
 
     if (chain == null) {

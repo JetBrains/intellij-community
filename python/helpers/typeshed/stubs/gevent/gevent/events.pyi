@@ -1,4 +1,3 @@
-import sys
 from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import Any, Protocol, TypeVar, type_check_only
@@ -6,6 +5,7 @@ from typing_extensions import TypeAlias
 
 from gevent.hub import Hub
 from greenlet import greenlet as greenlet_t
+from psutil._ntuples import pmem
 
 _T = TypeVar("_T")
 # FIXME: While it would be nice to import Interface from zope.interface here so the
@@ -16,17 +16,6 @@ _T = TypeVar("_T")
 Interface: TypeAlias = Any
 
 def implementer(interface: Interface, /) -> Callable[[_T], _T]: ...
-
-# this is copied from types-psutil, it would be nice if we could just import this
-# but it doesn't seem like we can...
-if sys.platform == "linux":
-    from psutil._pslinux import pmem
-elif sys.platform == "darwin":
-    from psutil._psosx import pmem
-elif sys.platform == "win32":
-    from psutil._pswindows import pmem
-else:
-    class pmem(Any): ...
 
 subscribers: list[Callable[[Any], object]]
 

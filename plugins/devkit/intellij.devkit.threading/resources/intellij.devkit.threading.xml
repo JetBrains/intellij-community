@@ -1,0 +1,14 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.devkit.core"/>
+    <module name="intellij.platform.compose"/>
+  </dependencies>
+
+  <resource-bundle>messages.DevkitThreadingBundle</resource-bundle>
+
+  <actions resource-bundle="messages.DevkitThreadingBundle">
+    <action id="LockReqAnalysis"
+            class="com.intellij.devkit.threading.threadingModelHelper.LockReqAction"
+            icon="com.intellij.devkit.threading.icons.DevkitThreadingIcons.LockRequirements"/>
+  </actions>
+</idea-plugin>

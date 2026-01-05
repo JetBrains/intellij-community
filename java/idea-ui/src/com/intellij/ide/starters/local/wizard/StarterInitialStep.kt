@@ -142,7 +142,9 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonS
       addSampleCodeUi()
 
       addFieldsAfter(this)
-    }.withVisualPadding(topField = true)
+    }
+      .withVisualPadding(topField = true)
+      .apply { registerValidators(parentDisposable) }
   }
 
   override fun validate(): Boolean {
@@ -152,7 +154,14 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonS
     if (!validateJdkIntentVersion(jdkIntentProperty, moduleBuilder.getMinJavaVersionInternal()?.toFeatureString(), moduleBuilder.presentableName)) {
       return false
     }
+    if (contentPanel.validateAll().isNotEmpty()) {
+      return false
+    }
     return true
+  }
+
+  override fun onStepLeaving() {
+    contentPanel.apply()
   }
 
   private fun updateStartersDependencies(starterPack: StarterPack) {

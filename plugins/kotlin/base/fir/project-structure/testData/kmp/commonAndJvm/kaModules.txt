@@ -35,24 +35,24 @@ KaLibraryModule:
     <empty>
 
 KaLibraryModule:
-  description: Library org.jetbrains.kotlin:kotlin-stdlib:2.2.0-dev-15683
+  description: Library org.jetbrains.kotlin:kotlin-stdlib:2.2.21
   targetPlatform: JVM (1.8)
-  libraryName: org.jetbrains.kotlin:kotlin-stdlib:2.2.0-dev-15683
+  libraryName: org.jetbrains.kotlin:kotlin-stdlib:2.2.21
   isSdk: false
   regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlin:kotlin-stdlib:2.2.0-dev-15683)
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlin:kotlin-stdlib:2.2.21)
   friendDependencies:
     <empty>
   dependsOnDependencies:
     <empty>
 
 KaLibraryModule:
-  description: Library org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.0-dev-15683
+  description: Library org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.21
   targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
-  libraryName: org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.0-dev-15683
+  libraryName: org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.21
   isSdk: false
   regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.0-dev-15683)
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.21)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -102,7 +102,7 @@ KaSourceModule:
   stableModuleName: <Common>
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.0-dev-15683)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.21)
     KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
   friendDependencies:
     <empty>
@@ -117,7 +117,7 @@ KaSourceModule:
   stableModuleName: <Common>
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.0-dev-15683)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.21)
     KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
     KaSourceModule(Common, production)
   friendDependencies:
@@ -133,7 +133,7 @@ KaSourceModule:
   stableModuleName: <Jvm>
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:2.2.0-dev-15683)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:2.2.21)
     KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0)
     KaLibraryModule(org.jetbrains:annotations:23.0.0)
     KaSourceModule(Common, production)
@@ -150,7 +150,7 @@ KaSourceModule:
   stableModuleName: <Jvm>
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:2.2.0-dev-15683)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:2.2.21)
     KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0)
     KaLibraryModule(org.jetbrains:annotations:23.0.0)
     KaSourceModule(Common, production)

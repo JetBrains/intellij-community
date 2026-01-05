@@ -23,9 +23,9 @@ import com.intellij.util.BitUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.*
-import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.data.VcsLogStatusBarProgress
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
@@ -101,7 +101,7 @@ open class VcsLogManager @Internal constructor(
    */
   @get:RequiresEdt
   val isLogUpToDate: Boolean
-    get() = dataManager.dataPack.isFull && !postponableRefresher.hasPostponedRoots()
+    get() = dataManager.graphData.isFull && !postponableRefresher.hasPostponedRoots()
 
   @Internal
   @CalledInAny
@@ -215,7 +215,7 @@ open class VcsLogManager @Internal constructor(
 
   private fun installRefresher(ui: VcsLogUiEx) {
     postponableRefresher.registerRefresher(ui, ui.id, object : PostponableLogRefresher.Refresher {
-      override fun setDataPack(dataPack: DataPack) {
+      override fun setDataPack(dataPack: VcsLogGraphData) {
         LOG.debug("Refreshing log window ${ui}")
         ui.refresher.setDataPack(ui.isVisible(), dataPack)
       }
@@ -451,7 +451,7 @@ private fun VcsLogManager.containsCommit(hash: Hash, root: VirtualFile): Boolean
   if (!dataManager.storage.containsCommit(CommitId(hash, root))) return false
 
   @Suppress("UNCHECKED_CAST")
-  val permanentGraphInfo = dataManager.dataPack.permanentGraph as? PermanentGraphInfo<VcsLogCommitStorageIndex> ?: return true
+  val permanentGraphInfo = dataManager.graphData.permanentGraph as? PermanentGraphInfo<VcsLogCommitStorageIndex> ?: return true
 
   val commitIndex = dataManager.storage.getCommitIndex(hash, root)
   val nodeId = permanentGraphInfo.permanentCommitsInfo.getNodeId(commitIndex)
@@ -463,7 +463,7 @@ private fun VcsLogUiEx.isVisible(): Boolean = ComponentUtil.isShowing(mainCompon
 private suspend fun VcsLogManager.waitForUpToDateLog() {
   suspendCancellableCoroutine { continuation ->
     val dataPackListener = object : DataPackChangeListener {
-      override fun onDataPackChange(newDataPack: DataPack) {
+      override fun onDataPackChange(newDataPack: VcsLogGraphData) {
         if (isLogUpToDate) {
           dataManager.removeDataPackChangeListener(this)
           continuation.resumeWith(Result.success(Unit))

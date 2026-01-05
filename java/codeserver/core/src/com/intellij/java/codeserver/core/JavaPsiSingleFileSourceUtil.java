@@ -13,6 +13,8 @@ import java.io.IOException;
  * Utilities related to single-file Java programs (JEP 330)
  */
 public final class JavaPsiSingleFileSourceUtil {
+  private JavaPsiSingleFileSourceUtil() { }
+
   /**
    * @return true if file correspond to the shebang script
    */

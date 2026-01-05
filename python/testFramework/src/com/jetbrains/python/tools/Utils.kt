@@ -16,6 +16,7 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.sdk.PythonSdkUpdater
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.tools.sdkTools.PySdkTools
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
@@ -67,7 +68,7 @@ fun openProjectWithSdk(projectPath: String,
 
     val sdk = sdkProducer(project, module)
 
-    ModuleRootModificationUtil.setModuleSdk(module, sdk)
+    module.pythonSdk = sdk
 
     if (sdk != null) {
       assert(ModuleRootManager.getInstance(module).orderEntries().classesRoots.isNotEmpty())

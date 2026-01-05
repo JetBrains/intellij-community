@@ -51,7 +51,8 @@ class FilterVcsLogTabCommand(text: String, line: Int) : PerformanceCommandCorout
     withContext(Dispatchers.IO) {
       val vcsLogData = logManager.dataManager
       val (dataPack, commitStage) = VcsLogFiltererImpl(vcsLogData)
-        .filter(vcsLogData.dataPack, VisiblePack.EMPTY, PermanentGraph.Options.Default,
+        .filter(
+          vcsLogData.graphData, VisiblePack.EMPTY, PermanentGraph.Options.Default,
                 generateVcsFilter(context.project.guessProjectDir(), extractCommandArgument(PREFIX), vcsLogData),
                 CommitCountStage.ALL)
 

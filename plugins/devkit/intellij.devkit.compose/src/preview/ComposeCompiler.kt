@@ -41,6 +41,7 @@ internal data class ContentProvider(val function: Method, val classLoader: URLCl
     Thread.currentThread().contextClassLoader = classLoader
 
     try {
+      function.isAccessible = true // handle private/protected visibility
       function.invoke(null, currentComposer, currentCompositeKeyHashCode.toInt())
     }
     catch (t: Throwable) {
@@ -82,7 +83,7 @@ internal suspend fun compileCode(fileToCompile: VirtualFile, project: Project): 
     .toTypedArray()
 
   val pluginByClass = PluginManager.getPluginByClass(ComposePreviewToolWindowFactory::class.java)
-  val filteringClassLoader = FilteringClassLoader(pluginByClass!!.classLoader)
+  val filteringClassLoader = FilteringClassLoader(pluginByClass!!.pluginClassLoader!!)
 
   val loader = ComposeUIPreviewClassLoader(diskPaths, filteringClassLoader)
   val functions = ComposableFunctionFinder(loader).findPreviewFunctions(analysis.targetClassName, analysis.composableMethodNames)

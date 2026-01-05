@@ -5,7 +5,7 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.psi.PsiElement
@@ -31,9 +31,9 @@ interface CustomElementsSymbol : PolySymbol, PolySymbolScope {
 
     private const val NAMESPACE_CUSTOM_ELEMENTS_MANIFEST: String = "custom-elements-manifest"
 
-    val CEM_PACKAGES: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, "packages"]
-    val CEM_MODULES: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, "modules"]
-    val CEM_DECLARATIONS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, "declarations"]
+    val CEM_PACKAGES: PolySymbolKind = PolySymbolKind[NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, "packages"]
+    val CEM_MODULES: PolySymbolKind = PolySymbolKind[NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, "modules"]
+    val CEM_DECLARATIONS: PolySymbolKind = PolySymbolKind[NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, "declarations"]
 
   }
 

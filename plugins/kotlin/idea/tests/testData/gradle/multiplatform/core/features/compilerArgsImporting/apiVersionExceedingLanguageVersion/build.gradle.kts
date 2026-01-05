@@ -15,13 +15,13 @@ repositories {
 kotlin {
     jvm()
     {{androidTargetPlaceholder}}
-    ios()
+    {{iosTargetPlaceholder}}
     js(IR) { nodejs() }
 
     applyHierarchyTemplate(KotlinHierarchyTemplate.default) {
         common {
             group("jvmAndroid") {
-                withAndroid()
+                withAndroidTarget()
                 withJvm()
             }
         }

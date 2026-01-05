@@ -7,7 +7,7 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.impl.SearchMap
@@ -59,7 +59,7 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
    * Allows optimizing queries and to avoid scope initialization.
    * Return `false` if particular symbol kind cannot be provided by the scope.
    */
-  protected abstract fun provides(qualifiedKind: PolySymbolQualifiedKind): Boolean
+  protected abstract fun provides(kind: PolySymbolKind): Boolean
 
   abstract override fun createPointer(): Pointer<out PolySymbolScopeWithCache<T, K>>
 
@@ -73,7 +73,7 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
   protected open val supportsSymbolsMatchingWithoutFullCacheInitialization: Boolean get() = false
 
   protected open fun getMatchingSymbols(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     nameVariant: String,
     cacheDependencies: MutableSet<Any>,
   ): List<PolySymbol> =
@@ -122,8 +122,8 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
       val map = PolySymbolSearchMap(namesProvider, framework)
       initialize(
         {
-          if (!provides(it.qualifiedKind))
-            throw IllegalArgumentException("Poly Symbol with unsupported kind: ${it.qualifiedKind} added. $it")
+          if (!provides(it.kind))
+            throw IllegalArgumentException("Poly Symbol with unsupported kind: ${it.kind} added. $it")
           map.add(it)
         }, dependencies)
       if (dependencies.isEmpty()) {
@@ -141,7 +141,7 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
   ): List<PolySymbol> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
-        && provides(qualifiedName.qualifiedKind)) {
+        && provides(qualifiedName.kind)) {
       if (supportsSymbolsMatchingWithoutFullCacheInitialization)
         tryGetMap(params.queryExecutor)?.getMatchingSymbols(qualifiedName, params, stack.copy())?.toList()
         ?: getMatchingSymbolsWithoutFullCacheInit(qualifiedName, params)
@@ -151,14 +151,14 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
     else emptyList()
 
   override fun getSymbols(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     params: PolySymbolListSymbolsQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
-        && provides(qualifiedKind)) {
-      getMap(params.queryExecutor).getSymbols(qualifiedKind, params).toList()
+        && provides(kind)) {
+      getMap(params.queryExecutor).getSymbols(kind, params).toList()
     }
     else emptyList()
 
@@ -169,7 +169,7 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
   ): List<PolySymbolCodeCompletionItem> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
-        && provides(qualifiedName.qualifiedKind)) {
+        && provides(qualifiedName.kind)) {
       getMap(params.queryExecutor).getCodeCompletions(qualifiedName, params, stack.copy()).toList()
     }
     else emptyList()
@@ -192,10 +192,10 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
       nameCache.computeIfAbsent(name) { name ->
         manager.createCachedValue {
           val dependencies = mutableSetOf<Any>()
-          val symbols = getMatchingSymbols(qualifiedName.qualifiedKind, name, dependencies)
+          val symbols = getMatchingSymbols(qualifiedName.kind, name, dependencies)
           symbols.forEach {
-            if (!provides(it.qualifiedKind))
-              throw IllegalArgumentException("Poly Symbol with unsupported kind: ${it.qualifiedKind} provided. $it")
+            if (!provides(it.kind))
+              throw IllegalArgumentException("Poly Symbol with unsupported kind: ${it.kind} provided. $it")
           }
           if (dependencies.isEmpty()) {
             throw IllegalArgumentException(
@@ -232,8 +232,8 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
       cache[PolySymbolThreadLocalCacheKeyProvider.getCacheKeys(namesProvider, project)]?.value
   }
 
-  private class PolySymbolSearchMap(namesProvider: PolySymbolNamesProvider, private val framework: FrameworkId?)
-    : SearchMap<PolySymbol>(namesProvider) {
+  private class PolySymbolSearchMap(namesProvider: PolySymbolNamesProvider, private val framework: FrameworkId?) :
+    SearchMap<PolySymbol>(namesProvider) {
 
     override fun Sequence<PolySymbol>.mapAndFilter(params: PolySymbolQueryParams): Sequence<PolySymbol> = this
 

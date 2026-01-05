@@ -15,6 +15,8 @@ import java.lang.annotation.RetentionPolicy;
  * Utility methods related to {@link PsiAnnotation}.
  */
 public final class JavaPsiAnnotationUtil {
+  private JavaPsiAnnotationUtil() { }
+
   /**
    * @param annotation annotation class
    * @return annotation retention policy; null if cannot be determined

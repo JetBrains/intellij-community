@@ -13,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
  * Utility methods related to Java enums
  */
 public final class JavaPsiEnumUtil {
+  private JavaPsiEnumUtil() { }
+
   /**
    * @param field field to check
    * @param enumClass an enum class returned from {@link #getEnumClassForExpressionInInitializer(PsiExpression)}

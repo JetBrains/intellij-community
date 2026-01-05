@@ -3,27 +3,25 @@ package com.intellij.polySymbols.impl
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolKindName
 import com.intellij.polySymbols.PolySymbolNamespace
-import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 
 internal data class PolySymbolQualifiedNameData(
-  override val qualifiedKind: PolySymbolQualifiedKind,
+  override val kind: PolySymbolKind,
   override val name: @NlsSafe String,
 ) : PolySymbolQualifiedName {
 
-  override val kind: @NlsSafe PolySymbolKind get() = qualifiedKind.kind
-
-  override val namespace: @NlsSafe PolySymbolNamespace get() = qualifiedKind.namespace
+  override val namespace: @NlsSafe PolySymbolNamespace get() = kind.namespace
 
   override fun withName(name: String): PolySymbolQualifiedName =
-    PolySymbolQualifiedNameData(qualifiedKind, name)
+    PolySymbolQualifiedNameData(kind, name)
 
-  override fun matches(qualifiedKind: PolySymbolQualifiedKind): Boolean =
-    this.qualifiedKind == qualifiedKind
+  override fun matches(kind: PolySymbolKind): Boolean =
+    this.kind == kind
 
-  override fun matches(qualifiedKind: PolySymbolQualifiedKind, vararg qualifiedKinds: PolySymbolQualifiedKind): Boolean =
-    sequenceOf(qualifiedKind).plus(qualifiedKinds).any(::matches)
+  override fun matches(kind: PolySymbolKind, vararg kinds: PolySymbolKind): Boolean =
+    sequenceOf(kind).plus(kinds).any(::matches)
 
-  override fun toString(): String = "${qualifiedKind.namespace}/${qualifiedKind.kind}/$name"
+  override fun toString(): String = "${kind.namespace}/${kind.kindName}/$name"
 }

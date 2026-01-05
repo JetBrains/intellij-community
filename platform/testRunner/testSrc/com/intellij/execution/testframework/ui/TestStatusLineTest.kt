@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.ui
 
 import com.intellij.ide.nls.NlsMessages
@@ -117,11 +117,11 @@ class TestStatusLineTest : LightPlatformTestCase() {
     val iterator = testStatusLine.stateIterator
 
     iterator.next()
-    assertEquals(iterator.fragment, "1 test failed")
+    assertEquals(iterator.fragment, "1 test failed,")
     assertEquals(iterator.textAttributes.fgColor, JBUI.CurrentTheme.Label.errorForeground())
 
     iterator.next()
-    assertEquals(iterator.fragment, ", 1 passed, ")
+    assertEquals(iterator.fragment, " 1 passed, ")
     assertEquals(iterator.textAttributes.fgColor, null)
 
     iterator.next()

@@ -2,7 +2,7 @@
 package com.intellij.devkit.compose.demo.dialog
 
 import com.intellij.devkit.compose.DevkitComposeBundle
-import com.intellij.devkit.core.icons.DevkitCoreIcons
+import com.intellij.devkit.compose.icons.DevkitComposeIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -41,7 +41,7 @@ internal class JewelToolwindowAction : DumbAwareAction() {
         id = TOOLWINDOW_ID,
         anchor = ToolWindowAnchor.BOTTOM,
         component = null,
-        icon = DevkitCoreIcons.ComposeToolWindow,
+        icon = DevkitComposeIcons.ComposeToolWindow,
         contentFactory = com.intellij.devkit.compose.demo.JewelDemoToolWindowFactory(),
         stripeTitle = DevkitComposeBundle.messagePointer("jewel.toolwindow.title"),
       )

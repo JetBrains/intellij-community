@@ -14,10 +14,12 @@ import java.util.concurrent.ConcurrentHashMap
 @Internal
 abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin : PolySymbolOrigin> : StaticPolySymbolScope {
 
-  private val namesProviderCache: MutableMap<PolySymbolNamesProvider, NameProvidersCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
+  private val namesProviderCache: MutableMap<PolySymbolNamesProvider, NameProvidersCache> =
+    ContainerUtil.createConcurrentSoftKeySoftValueMap()
   private var namesProviderCacheMisses = 0
 
-  private val queryExecutorCache: MutableMap<PolySymbolQueryExecutor, QueryExecutorContributionsCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
+  private val queryExecutorCache: MutableMap<PolySymbolQueryExecutor, QueryExecutorContributionsCache> =
+    ContainerUtil.createConcurrentSoftKeySoftValueMap()
   private var queryExecutorCacheMisses = 0
 
   private val roots = mutableMapOf<Root, Origin>()
@@ -40,12 +42,12 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin 
     }.toList()
 
   final override fun getSymbols(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     params: PolySymbolListSymbolsQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     getMaps(params).flatMap {
-      it.getSymbols(qualifiedKind, params)
+      it.getSymbols(kind, params)
     }.toList()
 
   final override fun getCodeCompletions(
@@ -71,11 +73,11 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin 
   internal fun getSymbols(
     contribution: Contribution,
     origin: Origin,
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     params: PolySymbolListSymbolsQueryParams,
   ): List<PolySymbol> =
     getMap(params.queryExecutor, contribution, origin)
-      .getSymbols(qualifiedKind, params)
+      .getSymbols(kind, params)
       .toList()
 
   internal fun getCodeCompletions(
@@ -179,7 +181,7 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin 
     roots[root]
 
   interface StaticSymbolContributionAdapter {
-    val qualifiedKind: PolySymbolQualifiedKind
+    val kind: PolySymbolKind
     val name: String
     val pattern: PolySymbolPattern?
     val framework: FrameworkId?
@@ -188,11 +190,11 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin 
       framework == null || context.framework == null || context.framework == framework
   }
 
-  private inner class ContributionSearchMap(namesProvider: PolySymbolNamesProvider)
-    : SearchMap<StaticSymbolContributionAdapter>(namesProvider) {
+  private inner class ContributionSearchMap(namesProvider: PolySymbolNamesProvider) :
+    SearchMap<StaticSymbolContributionAdapter>(namesProvider) {
 
     fun add(item: StaticSymbolContributionAdapter) {
-      add(item.qualifiedKind.withName(item.name), item.pattern, item)
+      add(item.kind.withName(item.name), item.pattern, item)
     }
 
     override fun Sequence<StaticSymbolContributionAdapter>.mapAndFilter(params: PolySymbolQueryParams): Sequence<PolySymbol> {

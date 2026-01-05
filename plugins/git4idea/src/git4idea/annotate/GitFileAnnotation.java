@@ -53,6 +53,7 @@ public final class GitFileAnnotation extends FileAnnotation {
    * The path might not match {@link #myFile} for files that are renamed locally, see {@link VcsUtil#getLastCommitPath}.
    */
   private final @NotNull FilePath myFilePath;
+  private final @NotNull VirtualFile myRoot;
   private final @NotNull GitVcs myVcs;
   private final @Nullable VcsRevisionNumber myBaseRevision;
 
@@ -89,12 +90,14 @@ public final class GitFileAnnotation extends FileAnnotation {
   public GitFileAnnotation(@NotNull Project project,
                            @NotNull VirtualFile file,
                            @NotNull FilePath filePath,
+                           @NotNull VirtualFile root,
                            @Nullable VcsRevisionNumber revision,
                            @NotNull List<LineInfo> lines) {
     super(project);
     myProject = project;
     myFile = file;
     myFilePath = filePath;
+    myRoot = root;
     myVcs = GitVcs.getInstance(myProject);
     myBaseRevision = revision;
     myLines = lines;
@@ -394,6 +397,10 @@ public final class GitFileAnnotation extends FileAnnotation {
 
   public @NotNull FilePath getFilePath() {
     return myFilePath;
+  }
+
+  public @NotNull VirtualFile getRoot() {
+    return myRoot;
   }
 
   @Override

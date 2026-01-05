@@ -73,13 +73,21 @@ class VcsLogData @ApiStatus.Internal constructor(
   val topCommitsCache: TopCommitsCache
 
   val miniDetailsGetter: MiniDetailsGetter
-  override val fullCommitDetailsCache: VcsLogCommitDataCache<VcsFullCommitDetails> get() = commitDetailsGetter
-
-  val commitDetailsGetter: CommitDetailsGetter
   override val commitMetadataCache: VcsLogCommitDataCache<VcsCommitMetadata> get() = miniDetailsGetter
 
+  val commitDetailsGetter: CommitDetailsGetter
+  override val fullCommitDetailsCache: VcsLogCommitDataCache<VcsFullCommitDetails> get() = commitDetailsGetter
+
   private val refresher: VcsLogRefresherImpl
-  val dataPack: DataPack get() = refresher.currentDataPack
+
+  val graphData: VcsLogGraphData get() = refresher.currentDataPack
+
+  @Deprecated("Use graphData instead", ReplaceWith("graphData"))
+  val dataPack: DataPack
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated("Use graphData instead", ReplaceWith("graphData"))
+    get() = DataPack(graphData.refsModel, graphData.logProviders, graphData.permanentGraph, graphData.isFull)
+
   val isRefreshInProgress: StateFlow<Boolean> get() = refresher.isBusy
   private val dataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList<DataPackChangeListener>()
 
@@ -169,7 +177,6 @@ class VcsLogData @ApiStatus.Internal constructor(
         runCatching {
           val usersByRoot = progress.runWithProgress(DATA_PACK_REFRESH) {
             checkCanceled()
-            topCommitsCache.clear() // TODO: is it thread safe at all?
             readCurrentUser()
           }
           currentUser = usersByRoot
@@ -181,7 +188,7 @@ class VcsLogData @ApiStatus.Internal constructor(
     }
 
     val indexDiagnosticJob = cs.launch {
-      IndexDiagnosticRunner(this, index, storage, logProviders.keys, { dataPack }, commitDetailsGetter, errorHandler, this@VcsLogData)
+      IndexDiagnosticRunner(this, index, storage, logProviders.keys, { graphData }, commitDetailsGetter, errorHandler, this@VcsLogData)
     }
 
     cs.launch(CoroutineName("Disposer"), CoroutineStart.ATOMIC) {
@@ -252,7 +259,7 @@ class VcsLogData @ApiStatus.Internal constructor(
     dataPackChangeListeners.remove(listener)
   }
 
-  private fun fireDataPackChangeEvent(dataPack: DataPack) {
+  private fun fireDataPackChangeEvent(dataPack: VcsLogGraphData) {
     ApplicationManager.getApplication().invokeLater(Runnable {
       for (listener in dataPackChangeListeners) {
         if (LOG.isDebugEnabled()) {

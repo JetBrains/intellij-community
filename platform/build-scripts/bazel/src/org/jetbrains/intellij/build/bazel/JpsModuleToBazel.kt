@@ -233,6 +233,7 @@ internal class JpsModuleToBazel {
       data class LibraryDescription(
         val target: String,
         val jars: List<String>,
+        val jarTargets: List<String>,
         val sourceJars: List<String>,
       )
 
@@ -259,7 +260,7 @@ internal class JpsModuleToBazel {
                    "${fileToHttpRuleFile(file.mavenCoordinates)}/" +
                    "${file.mavenCoordinates.artifactId}-${file.mavenCoordinates.version}" +
                    (if (file.mavenCoordinates.classifier != null) "-${file.mavenCoordinates.classifier}" else "") +
-                   ".jar"
+                   file.mavenCoordinates.packaging
 
         if (bazelOutputBase != null) {
           check(bazelOutputBase.resolve(path).isRegularFile()) {
@@ -270,6 +271,13 @@ internal class JpsModuleToBazel {
         return path
       }
 
+      fun makeJarTarget(library: Library, file: MavenFileDescription): String {
+        val target = library.target.container.repoLabel + "//:" +
+                     mavenCoordinatesToFileName(file.mavenCoordinates, groupDirectory = true)
+
+        return target
+      }
+
       fun makeLibraryDescription(library: Library): LibraryDescription {
         val target = "${library.target.container.repoLabel}//:${library.target.targetName}"
 
@@ -277,6 +285,7 @@ internal class JpsModuleToBazel {
           is MavenLibrary -> LibraryDescription(
             target = target,
             jars = library.jars.map { makeJarPath(library, it) },
+            jarTargets = library.jars.map { makeJarTarget(library, it) },
             sourceJars = library.sourceJars.map { makeJarPath(library, it) },
           )
 
@@ -313,6 +322,38 @@ internal class JpsModuleToBazel {
 
                 relativeToBazelOutputBase
               },
+              jarTargets = library.files.map {
+                val normalized = it.normalize()
+                require(
+                  normalized.startsWith(communityRoot) ||
+                  (ultimateRoot != null && normalized.startsWith(ultimateRoot))
+                ) {
+                  "Library file $it is not under community root ($communityRoot) or ultimate root ($ultimateRoot)"
+                }
+
+                val ultimateLibRoot = ultimateRoot?.resolve("lib")
+                val communityLibRoot = communityRoot.resolve("lib")
+
+                fun Path.toBazelLabel(repoName: String, repoRoot: Path): String {
+                  require(startsWith(repoRoot)) { "Path $this is not under root $repoRoot" }
+                  require(normalize() == this) { "Path $this must be normalized" }
+                  require(repoName.startsWith("@") || repoName.isEmpty()) { "Repo name $repoName must start with '@' or be empty" }
+                  val relative = relativeTo(repoRoot)
+                  return "$repoName//${if (relative.parent == null) "" else relative.parent.invariantSeparatorsPathString}:${relative.fileName}"
+                }
+
+                val target = when {
+                  ultimateLibRoot != null && normalized.startsWith(ultimateLibRoot) ->
+                    normalized.toBazelLabel("@ultimate_lib", ultimateLibRoot)
+                  normalized.startsWith(communityLibRoot) ->
+                    normalized.toBazelLabel("@lib", communityLibRoot)
+                  projectRoot == ultimateRoot && normalized.startsWith(communityRoot) ->
+                    normalized.toBazelLabel("@community", communityRoot)
+                  else -> normalized.toBazelLabel("", projectRoot)
+                }
+
+                target
+              },
               sourceJars = emptyList(),
             )
           }
@@ -341,9 +382,9 @@ internal class JpsModuleToBazel {
           modules = targets.associateTo(TreeMap()) { moduleTarget ->
             val moduleName = moduleTarget.moduleDescriptor.module.name
             moduleName to TargetsFileModuleDescription(
-              productionTargets = moduleTarget.productionTargets,
+              productionTargets = moduleTarget.productionTargets.map { "$it.jar" },
               productionJars = moduleTarget.productionJars.map { adjustJarPath(it) },
-              testTargets = moduleTarget.testTargets,
+              testTargets = moduleTarget.testTargets.map { "$it.jar" },
               testJars = moduleTarget.testJars.map { adjustJarPath(it) },
               exports = moduleList.deps[moduleTarget.moduleDescriptor]?.exports?.map { it.label } ?: emptyList(),
               moduleLibraries = module2Libraries[moduleName]

@@ -12,8 +12,6 @@ import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.test.VcsPlatformTest
 import junit.framework.TestCase
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
-import java.util.*
 import java.util.concurrent.*
 import java.util.function.Consumer
 import kotlin.concurrent.Volatile
@@ -222,16 +220,16 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     return VcsRefImpl(HashImpl.build(commit), name, TestVcsLogProvider.BRANCH_TYPE, projectRoot)
   }
 
-  private class DataWaiter : Consumer<DataPack> {
+  private class DataWaiter : Consumer<VcsLogGraphData> {
     @Volatile
-    private var _queue: BlockingQueue<DataPack>? = ArrayBlockingQueue(10)
-    val queue: BlockingQueue<DataPack>
+    private var _queue: BlockingQueue<VcsLogGraphData>? = ArrayBlockingQueue(10)
+    val queue: BlockingQueue<VcsLogGraphData>
       get() = _queue!!
 
     @Volatile
     private var exception: Exception? = null
 
-    override fun accept(t: DataPack) {
+    override fun accept(t: VcsLogGraphData) {
       try {
         queue.add(t)
       }
@@ -243,7 +241,7 @@ class VcsLogRefresherTest : VcsPlatformTest() {
 
     @JvmOverloads
     @Throws(InterruptedException::class)
-    fun get(timeout: Long = 1, timeUnit: TimeUnit = TimeUnit.SECONDS): DataPack {
+    fun get(timeout: Long = 1, timeUnit: TimeUnit = TimeUnit.SECONDS): VcsLogGraphData {
       return queue.poll(timeout, timeUnit)!!
     }
 

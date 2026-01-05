@@ -7,22 +7,22 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 @ApiStatus.Internal
-public final class JBZipFileWrapper implements GenericZipFile {
+final class JBZipFileWrapper implements GenericZipFile {
   private final JBZipFile myZipFile;
 
-  public JBZipFileWrapper(File file) throws IOException {
+  JBZipFileWrapper(@NotNull Path file) throws IOException {
     myZipFile = new JBZipFile(file, true);
   }
 
   @Override
-  public @Nullable GenericZipEntry getEntry(@NotNull String entryName) throws IOException {
+  public @Nullable GenericZipEntry getEntry(@NotNull String entryName) {
     JBZipEntry entry = myZipFile.getEntry(entryName);
     return entry != null ? new EntryWrapper(entry) : null;
   }
@@ -42,7 +42,7 @@ public final class JBZipFileWrapper implements GenericZipFile {
     myZipFile.close();
   }
 
-  private static class EntryWrapper implements GenericZipEntry {
+  private static final class EntryWrapper implements GenericZipEntry {
     private final JBZipEntry myEntry;
 
     EntryWrapper(JBZipEntry entry) { myEntry = entry; }

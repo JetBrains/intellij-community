@@ -354,7 +354,10 @@ abstract class UndoRedo {
     return (isRedo ? "Redo" : "Undo") + "{" + undoableGroup + "}";
   }
 
-  private static @NotNull Map<DocumentReference, Map<Integer, MutableActionChangeRange>> decompose(@NotNull UndoableGroup group, boolean isRedo) {
+  private @NotNull Map<DocumentReference, Map<Integer, MutableActionChangeRange>> decompose(@NotNull UndoableGroup group, boolean isRedo) {
+    if (!sharedStacksHolder.myIsPerClientSupported.get()) {
+      return Collections.emptyMap();
+    }
     Map<DocumentReference, Map<Integer, MutableActionChangeRange>> reference2Ranges = new HashMap<>();
     for (UndoableAction action : group.getActions()) {
       if (!(action instanceof AdjustableUndoableAction adjustable)) {

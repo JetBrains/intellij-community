@@ -38,6 +38,9 @@
 - name: lib/modules/intellij.devkit.scaffolding.jar
   contentModules:
   - name: intellij.devkit.scaffolding
+- name: lib/modules/intellij.devkit.threading.jar
+  contentModules:
+  - name: intellij.devkit.threading
 - name: lib/modules/intellij.platform.jewel.samples.showcase.jar
   contentModules:
   - name: intellij.platform.jewel.samples.showcase

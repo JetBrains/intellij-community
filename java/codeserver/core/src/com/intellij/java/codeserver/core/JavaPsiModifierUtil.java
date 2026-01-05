@@ -18,6 +18,7 @@ import java.util.Set;
  * @see PsiModifierList
  */
 public final class JavaPsiModifierUtil {
+  private JavaPsiModifierUtil() { }
   
   private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = Map.of(
     PsiModifier.ABSTRACT, Set.of(),

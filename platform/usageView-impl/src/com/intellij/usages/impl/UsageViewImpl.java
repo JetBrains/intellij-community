@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -1049,7 +1049,9 @@ public class UsageViewImpl implements UsageViewEx {
 
   private void rulesChanged() {
     try (AccessToken ignore = SlowOperations.knownIssue("IJPL-164976")) {
-      rulesChangedImpl();
+      ReadAction.run(() -> {
+        rulesChangedImpl();
+      });
     }
   }
 

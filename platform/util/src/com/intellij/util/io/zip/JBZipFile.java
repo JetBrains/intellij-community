@@ -4,6 +4,7 @@ package com.intellij.util.io.zip;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.DeprecationLevel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +58,7 @@ import static java.nio.file.StandardOpenOption.*;
  * </ul>
  * </p>
  */
-public class JBZipFile implements Closeable {
+public final class JBZipFile implements Closeable {
   static final int SHORT = 2;
   static final int WORD = 4;
   static final int DWORD = 8;
@@ -105,26 +106,18 @@ public class JBZipFile implements Closeable {
     this(file, DEFAULT_CHARSET);
   }
 
-  /** @deprecated the constructor has dubious default value of the {@code readonly} parameter */
+  /** @deprecated Use {@link #JBZipFile(Path, boolean)} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  @kotlin.Deprecated(message = "Use Path instead", level = DeprecationLevel.ERROR)
   public JBZipFile(java.io.File f) throws IOException {
-    this(f, DEFAULT_CHARSET);
+    this(f.toPath());
   }
 
-  /**
-   * Opens the given file for reading, assuming the platform's native encoding for file names.
-   *
-   * @param name name of the archive.
-   * @throws IOException if an error occurs while reading the file.
-   */
-  public JBZipFile(String name) throws IOException {
-    this(Paths.get(name), DEFAULT_CHARSET);
-  }
 
   /**
-   * Opens the given file for reading, assuming the platform's native encoding for file names.
+   * Opens the given file for reading (or writing if readonly=false), assuming the platform's native encoding for file names.
    *
    * @param file     file of the archive.
    * @param readonly true to open file as readonly
@@ -132,32 +125,6 @@ public class JBZipFile implements Closeable {
    */
   public JBZipFile(@NotNull Path file, boolean readonly) throws IOException {
     this(file, DEFAULT_CHARSET, readonly);
-  }
-
-  @ApiStatus.Obsolete
-  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
-  public JBZipFile(@NotNull java.io.File f, boolean readonly) throws IOException {
-    this(f, DEFAULT_CHARSET, readonly);
-  }
-
-  /**
-   * Opens the given file for reading, assuming the specified encoding for file names.
-   *
-   * @param name     name of the archive.
-   * @param encoding the encoding to use for file names
-   * @throws IOException if an error occurs while reading the file.
-   */
-  @ApiStatus.Obsolete
-  public JBZipFile(String name, @NotNull String encoding) throws IOException {
-    this(Paths.get(name), Charset.forName(encoding));
-  }
-
-  /** @deprecated the constructor has dubious default value of the {@code readonly} parameter */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
-  public JBZipFile(java.io.File f, @NotNull String encoding) throws IOException {
-    this(f, Charset.forName(encoding));
   }
 
   /**
@@ -171,16 +138,8 @@ public class JBZipFile implements Closeable {
     this(file, encoding, true);
   }
 
-  /** @deprecated the constructor has dubious default value of the {@code readonly} parameter */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
-  public JBZipFile(java.io.File f, @NotNull Charset encoding) throws IOException {
-    this(f, encoding, false);
-  }
-
   /**
-   * Opens the given file for reading, assuming the specified encoding for file names.
+   * Opens the given file for reading (or writing if readonly=false), assuming the specified encoding for file names.
    *
    * @param file     the archive.
    * @param encoding the encoding to use for file names
@@ -189,18 +148,6 @@ public class JBZipFile implements Closeable {
    */
   public JBZipFile(@NotNull Path file, @NotNull Charset encoding, boolean readonly) throws IOException {
     this(file, encoding, readonly, ThreeState.NO);
-  }
-
-  @ApiStatus.Obsolete
-  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
-  public JBZipFile(@NotNull java.io.File f, @NotNull Charset encoding, boolean readonly) throws IOException {
-    this(f, encoding, readonly, ThreeState.NO);
-  }
-
-  @ApiStatus.Obsolete
-  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
-  public JBZipFile(@NotNull java.io.File f, @NotNull Charset encoding, boolean readonly, @NotNull ThreeState isZip64) throws IOException {
-    this(openChannel(f, readonly), encoding, readonly, isZip64);
   }
 
   public JBZipFile(@NotNull Path file, @NotNull Charset encoding, boolean readonly, @NotNull ThreeState isZip64) throws IOException {
@@ -215,7 +162,8 @@ public class JBZipFile implements Closeable {
    * @param readonly true to open file as readonly
    * @throws IOException if an error occurs while reading the file.
    */
-  public JBZipFile(@NotNull SeekableByteChannel channel, @NotNull Charset encoding, boolean readonly, @NotNull ThreeState isZip64) throws IOException {
+  public JBZipFile(@NotNull SeekableByteChannel channel, @NotNull Charset encoding, boolean readonly, @NotNull ThreeState isZip64)
+    throws IOException {
     myEncoding = encoding;
     myIsReadonly = readonly;
     long channelSize = channel.size();
@@ -240,11 +188,6 @@ public class JBZipFile implements Closeable {
       }
       throw e;
     }
-  }
-
-  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
-  private static SeekableByteChannel openChannel(java.io.File file, boolean isReadonly) throws IOException {
-    return openChannel(file.toPath(), isReadonly);
   }
 
   private static SeekableByteChannel openChannel(Path path, boolean isReadonly) throws IOException {
@@ -303,7 +246,7 @@ public class JBZipFile implements Closeable {
    *
    * @param name name of the entry.
    * @return the ZipEntry corresponding to the given name - or
-   *         {@code null} if not present.
+   * {@code null} if not present.
    */
   public JBZipEntry getEntry(String name) {
     return nameMap.get(name);
@@ -358,7 +301,7 @@ public class JBZipFile implements Closeable {
      */
     ByteBuffer centralDirectoryCached = ByteBuffer.allocate(
       Math.min((int)(getSize() - myArchive.position()),
-               // Sometimes the size of the central directory may be significant -- up to 3 megabytes.
+        // Sometimes the size of the central directory may be significant -- up to 3 megabytes.
                64 * 1024) // seems enough
     );
     // we must fill the buffer before the loop starts
@@ -664,7 +607,7 @@ public class JBZipFile implements Closeable {
       }
 
       myArchive.position(myArchive.position() + ZIP64_EOCD_CFD_LOCATOR_OFFSET
-                          - WORD /* signature has already been read */);
+                         - WORD /* signature has already been read */);
       long value = ZipUInt64.getLongValue(readBytes(DWORD));
       currentCfdOffset = value;
       myArchive.position(value);
@@ -698,9 +641,9 @@ public class JBZipFile implements Closeable {
    */
   static final long LFH_OFFSET_FOR_FILENAME_LENGTH =
     LFH_OFFSET_FOR_CRC
-    /* crc-32                          */ + WORD
-    /* compressed size                 */ + WORD
-    /* uncompressed size               */ + WORD;
+      /* crc-32                          */ + WORD
+      /* compressed size                 */ + WORD
+      /* uncompressed size               */ + WORD;
 
   /**
    * Retrieve a String from the given bytes using the encoding set

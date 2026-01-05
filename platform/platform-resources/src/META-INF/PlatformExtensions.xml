@@ -1974,9 +1974,6 @@
 
     <projectPreInit implementation="com.intellij.execution.eel.EelProjectPreInit" order="before moduleBridgeLoaderService"/>
     <applicationActivity implementation="com.intellij.ide.SwingTooltipManagerCustomizer"/>
-    <registryKey key="rhizome.progress"
-                 defaultValue="true"
-                 description="Progress will be reported and collected through Rhizome DB. See PlatformTaskSupport for more info"/>
     <registryKey key="rhizome.progress.model"
                  defaultValue="false"
                  description="UI progress retrieves its state directly from Rhizome TaskInfoEntity, avoiding the obsolete use of ProgressIndicator."/>

@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.integration;
 
 import com.google.gson.Gson;
@@ -107,14 +108,15 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
   }
 
   public void testUpdatingTimeSpent() throws Exception {
-    final GitlabIssue issue = myRepository.fetchIssue(8 /* Time Tracking Tests */, 2);
+    final int issueID = 3 + (int)(Math.random() * 10);
+    final GitlabIssue issue = myRepository.fetchIssue(8 /* Time Tracking Tests */, issueID);
     final int secondsBefore = issue.getTimeSpent();
     assertNotNull(issue);
 
     final GitlabTask task = new GitlabTask(myRepository, issue);
     myRepository.updateTimeSpent(new LocalTaskImpl(task), "1s", "");
 
-    final GitlabIssue issue_updated = myRepository.fetchIssue(8 /* Time Tracking Tests */, 2);
+    final GitlabIssue issue_updated = myRepository.fetchIssue(8 /* Time Tracking Tests */, issueID);
     assertNotNull(issue_updated);
     assertTrue(issue_updated.getTimeSpent() > secondsBefore);
   }

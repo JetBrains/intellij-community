@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.projectRoots.Sdk
@@ -56,12 +55,6 @@ object PyProjectSdkConfiguration {
     setReadyToUseSdk(module.project, module, sdk)
     thisLogger().debug("Successfully configured sdk using ${createSdkInfoWithTool.toolId}")
     true
-  }
-
-  fun setReadyToUseSdkSync(project: Project, module: Module, sdk: Sdk) {
-    runBlockingMaybeCancellable {
-      setReadyToUseSdk(project, module, sdk)
-    }
   }
 
   suspend fun setReadyToUseSdk(project: Project, module: Module, sdk: Sdk) {

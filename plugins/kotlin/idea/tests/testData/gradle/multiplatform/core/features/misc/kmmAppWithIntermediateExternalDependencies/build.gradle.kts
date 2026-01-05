@@ -11,11 +11,10 @@ repositories {
 
 kotlin {
     {{androidTargetPlaceholder}}
-    ios()
+    {{iosTargetPlaceholder}}
 
     val commonMain by sourceSets.getting
     val androidMain by sourceSets.getting
-    val iosMain by sourceSets.getting
 
     commonMain.dependencies {
         api("io.ktor:ktor-client-core:2.1.3")

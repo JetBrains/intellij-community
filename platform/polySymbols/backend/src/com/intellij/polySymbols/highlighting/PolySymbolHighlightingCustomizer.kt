@@ -5,13 +5,13 @@ import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolKind
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 interface PolySymbolHighlightingCustomizer {
 
-  fun getSymbolKindTextAttributes(qualifiedKind: PolySymbolQualifiedKind): TextAttributesKey? = null
+  fun getSymbolKindTextAttributes(kind: PolySymbolKind): TextAttributesKey? = null
 
   fun getDefaultHostClassTextAttributes(): Map<Class<out PsiExternalReferenceHost>, TextAttributesKey> = emptyMap()
 
@@ -30,7 +30,7 @@ interface PolySymbolHighlightingCustomizer {
       EP_NAME.extensionList.firstNotNullOfOrNull { it.getSymbolTextAttributes(host, symbol, level) }
 
     @ApiStatus.Internal
-    fun getTextAttributesFor(kind: PolySymbolQualifiedKind): TextAttributesKey? =
+    fun getTextAttributesFor(kind: PolySymbolKind): TextAttributesKey? =
       EP_NAME.computeIfAbsent(kind, PolySymbolHighlightingCustomizer::class.java) { kind ->
         listOfNotNull(EP_NAME.extensionList.firstNotNullOfOrNull { it.getSymbolKindTextAttributes(kind) })
       }.firstOrNull()

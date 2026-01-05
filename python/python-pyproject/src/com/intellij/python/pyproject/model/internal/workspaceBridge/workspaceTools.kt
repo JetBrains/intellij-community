@@ -13,7 +13,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.internal.PyProjectTomlBundle
-import com.intellij.python.pyproject.model.internal.pyProjectToml.FSWalkInfo
+import com.intellij.python.pyproject.model.internal.pyProjectToml.FSWalkInfoWithToml
 import com.intellij.python.pyproject.model.internal.pyProjectToml.getProjectStructureDefault
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
@@ -21,6 +21,7 @@ import com.intellij.python.pyproject.model.spi.Tool
 import com.intellij.python.pyproject.model.spi.WorkspaceName
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.findFacet
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.findSdkEntity
+import com.intellij.workspaceModel.ide.isEqualOrParentOf
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.facet.PythonFacetSettings
 import com.jetbrains.python.venvReader.Directory
@@ -36,19 +37,41 @@ import kotlin.io.path.name
 // Workspace adapter functions
 
 
-internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfo) {
+internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWithToml) {
   changeWorkspaceMutex.withLock {
-    val entries = generatePyProjectTomlEntries(files)
+    val (entries, excludeDirs) = generatePyProjectTomlEntries(files)
     val newStorage = createEntityStorage(entries, project.workspaceModel.getVirtualFileUrlManager())
 
-    project.workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { currentStorage -> // Fake module entity is added by default if nothing was discovered
+    val workspaceModel = project.workspaceModel
+    workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { currentStorage -> // Fake module entity is added by default if nothing was discovered
       removeFakeModuleEntity(currentStorage, entries.map { it.name.name }.toSet())
+      // TODO: Store old module->SDK, so we can restoe it even when modules are destroyed
       relocateUserDefinedModuleSdk(currentStorage) {
         currentStorage.replaceBySource({ it is PyProjectTomlEntitySource }, newStorage)
+
+        // Exclude dirs
+        if (excludeDirs.isEmpty()) return@relocateUserDefinedModuleSdk
+        val modules = currentStorage.entities(ModuleEntity::class.java).toList()
+        for (excludedRoot in excludeDirs.map { it.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager()) }) {
+          currentStorage.excludeRoot(excludedRoot, modules)
+        }
       }
     }
   }
+}
 
+private fun MutableEntityStorage.excludeRoot(rootToExclude: VirtualFileUrl, modules: List<ModuleEntity>) {
+  for (moduleEntry in modules) {
+    for (rootEntity in moduleEntry.contentRoots) {
+      if (rootEntity.url.isEqualOrParentOf(rootToExclude) && rootToExclude !in rootEntity.excludedUrls.map { it.url }) {
+        modifyContentRootEntity(rootEntity) {
+          excludedUrls = excludedUrls + listOf(
+            ExcludeUrlEntity(rootToExclude, entitySource))
+        }
+        return
+      }
+    }
+  }
 }
 
 /**
@@ -89,19 +112,23 @@ internal fun relocateUserDefinedModuleSdk(storage: MutableEntityStorage, transfe
   }
 }
 
+/**
+ * Return [entires_to_create_modules_from, dirs_to_exclude]
+ */
 private suspend fun generatePyProjectTomlEntries(
-  fsInfo: FSWalkInfo,
-): Set<PyProjectTomlBasedEntryImpl> = withContext(Dispatchers.Default) {
+  fsInfo: FSWalkInfoWithToml,
+): Pair<Set<PyProjectTomlBasedEntryImpl>, Set<Directory>> = withContext(Dispatchers.Default) {
   val (files, allExcludeDirs) = fsInfo
   val entries = ArrayList<PyProjectTomlBasedEntryImpl>()
   val usedNamed = mutableSetOf<String>()
+  val tools = Tool.EP.extensionList
   // Any tool that helped us somehow must be tracked here
   for ((tomlFile, toml) in files.entries) {
     val participatedTools = mutableSetOf<ToolId>()
     val root = tomlFile.parent
     var projectNameAsString = toml.project?.name
     if (projectNameAsString == null) {
-      val toolAndName = getNameFromEP(toml)
+      val toolAndName = tools.getNameFromEP(toml)
       if (toolAndName != null) {
         projectNameAsString = toolAndName.second
         participatedTools.add(toolAndName.first.id)
@@ -118,6 +145,15 @@ private suspend fun generatePyProjectTomlEntries(
     val sourceRoots = sourceRootsAndTools.map { it.second }.toSet() + findSrc(root)
     participatedTools.addAll(sourceRootsAndTools.map { it.first.id })
     val excludedDirs = allExcludeDirs.filter { it.startsWith(root) }
+    if (participatedTools.isEmpty()) {
+      // Try to use build-tool as last resort
+      toml.toml.getString("build-system.build-backend")?.let { buildBackend ->
+        tools.firstOrNull { it.id.id in buildBackend }?.let { buildTool ->
+          participatedTools.add(buildTool.id)
+        }
+      }
+    }
+
     val relationsWithTools: List<PyProjectTomlToolRelation> = participatedTools.map { PyProjectTomlToolRelation.SimpleRelation(it) }
     val entry = PyProjectTomlBasedEntryImpl(tomlFile,
                                             HashSet(relationsWithTools),
@@ -148,12 +184,13 @@ private suspend fun generatePyProjectTomlEntries(
       entriesByName[member]!!.relationsWithTools.add(PyProjectTomlToolRelation.WorkspaceMember(tool.id, workspace))
     }
   }
-  return@withContext entries.toSet()
+  return@withContext Pair(entries.toSet(), allExcludeDirs)
 }
 
-private suspend fun getNameFromEP(projectToml: PyProjectToml): Pair<Tool, @NlsSafe String>? = withContext(Dispatchers.Default) {
-  Tool.EP.extensionList.firstNotNullOfOrNull { tool -> tool.getProjectName(projectToml.toml)?.let { Pair(tool, it) } }
-}
+private suspend fun Iterable<Tool>.getNameFromEP(projectToml: PyProjectToml): Pair<Tool, @NlsSafe String>? =
+  withContext(Dispatchers.Default) {
+    firstNotNullOfOrNull { tool -> tool.getProjectName(projectToml.toml)?.let { Pair(tool, it) } }
+  }
 
 private suspend fun createEntityStorage(
   graph: Set<PyProjectTomlBasedEntryImpl>,

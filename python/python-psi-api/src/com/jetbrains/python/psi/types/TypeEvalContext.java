@@ -15,6 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -47,6 +48,7 @@ public sealed class TypeEvalContext {
   }
 
   private final @NotNull TypeEvalConstraints myConstraints;
+  private boolean isInsideExternalTypeProviderCall = false;
 
   private List<String> myTrace;
   private String myTraceIndent = "";
@@ -295,6 +297,10 @@ public sealed class TypeEvalContext {
     return Registry.is("python.use.separated.libraries.type.cache") && isLibraryElement(element);
   }
 
+  private static boolean isExternalTypeProviderApplicable(PyTypedElement element) {
+    return element instanceof PyInstantTypeProvider;
+  }
+
   public @Nullable PyType getType(final @NotNull PyTypedElement element) {
     if (canDelegateToLibraryContext(element)) {
       var context = getLibraryContext(element.getProject());
@@ -309,21 +315,26 @@ public sealed class TypeEvalContext {
       Pair.create(element, this),
       false,
       () -> {
-        // Try external providers first
-        for (var provider : TypeEvalExternalTypeProvider.EP_NAME.getExtensionList()) {
-          try {
-            var provided = provider.provideType(element, this);
-            if (provided != null) {
-              var type = provided.get();
-              myExternalEvaluated.put(element, type == null ? PyNullType.INSTANCE : type);
-              return type;
+        if (!isExternalTypeProviderApplicable(element) && !isInsideExternalTypeProviderCall) {
+          var externalTypeProvider =
+            ContainerUtil.find(TypeEvalExternalTypeProvider.EP_NAME.getExtensionList(), TypeEvalExternalTypeProvider::isAvailable);
+          if (externalTypeProvider != null) {
+            try {
+              isInsideExternalTypeProviderCall = true;
+              var provided = externalTypeProvider.provideType(element, this);
+              isInsideExternalTypeProviderCall = false;
+              if (provided != null) {
+                var type = provided.get();
+                myExternalEvaluated.put(element, type == null ? PyNullType.INSTANCE : type);
+                return type;
+              }
             }
-          }
-          catch (ProcessCanceledException e) {
-            throw e;
-          }
-          catch (Exception e) {
-            logger.warn("Exception during external type provider " + provider.getClass().getName(), e);
+            catch (ProcessCanceledException e) {
+              throw e;
+            }
+            catch (Exception e) {
+              logger.warn("Exception during external type provider " + externalTypeProvider.getClass().getName(), e);
+            }
           }
         }
 

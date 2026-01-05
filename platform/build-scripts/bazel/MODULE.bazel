@@ -19,7 +19,7 @@ archive_override(
   strip_prefix = "rules_jvm_external-4d575639286760f67ae1ce416c4e922dc269851c",
 )
 
-intellij_version = "251.21223"
+intellij_version = "253.29346.138"
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
@@ -38,6 +38,7 @@ maven.install(
         "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2",
         "https://cache-redirector.jetbrains.com/intellij-dependencies",
         "https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository",
+        "https://cache-redirector.jetbrains.com/www.jetbrains.com/intellij-repository/releases",
     ],
 )
 use_repo(maven, "j2b_maven")

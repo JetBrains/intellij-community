@@ -82,6 +82,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
   private final ToggleShowAccessibilityIssuesAction myShowAccessibilityIssuesAction;
   private AWTEventListener myAltKeyListener;
   private AWTEventListener myChangeSelectionOnHoverListener;
+  private boolean myIsAltHoverEnabled;
 
   public InspectorWindow(@Nullable Project project,
                          @NotNull Component component,
@@ -153,6 +154,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
     actions.addSeparator();
     myShowAccessibilityIssuesAction = new ToggleShowAccessibilityIssuesAction();
     actions.add(myShowAccessibilityIssuesAction);
+    actions.addSeparator();
+    actions.add(new ToggleAltHoverAction());
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CONTEXT_TOOLBAR, actions, true);
     toolbar.setTargetComponent(getRootPane());
@@ -206,18 +209,6 @@ public final class InspectorWindow extends JDialog implements Disposable {
       topPanel.add(banner);
     }
 
-    // Add a subtle, visible hint about navigation to help discovery without being intrusive
-    String altHoverHint = InternalActionsBundle.message("ui.inspector.hint.alt.hover.next");
-    // Show once by default; hide permanently after user closes it
-    String altHoverHintKey = "ui.inspector.hint.alt.hover.next.dismissed";
-    PropertiesComponent props = PropertiesComponent.getInstance();
-    if (!props.getBoolean(altHoverHintKey, false)) {
-      InlineBanner hintBanner = new InlineBanner(altHoverHint, EditorNotificationPanel.Status.Info)
-        .showCloseButton(true)
-        .setCloseAction(() -> props.setValue(altHoverHintKey, true));
-      topPanel.add(hintBanner);
-    }
-
     topPanel.add(navBarScroll);
     add(topPanel, BorderLayout.NORTH);
 
@@ -244,10 +235,16 @@ public final class InspectorWindow extends JDialog implements Disposable {
       myShowAccessibilityIssuesAction.updateTreeWithAccessibilityAuditStatus();
     }
 
-    installAltKeyListener();
+    if (myIsAltHoverEnabled) {
+      installAltKeyListener();
+    }
   }
 
   private void installAltKeyListener() {
+    if (myAltKeyListener != null) {
+      return;
+    }
+
     myAltKeyListener = event -> {
       KeyEvent keyEvent = (KeyEvent)event;
       int eventId = event.getID();
@@ -264,6 +261,14 @@ public final class InspectorWindow extends JDialog implements Disposable {
     };
 
     Toolkit.getDefaultToolkit().addAWTEventListener(myAltKeyListener, AWTEvent.KEY_EVENT_MASK);
+  }
+
+  private void uninstallAltKeyListener() {
+    if (myAltKeyListener != null) {
+      Toolkit.getDefaultToolkit().removeAWTEventListener(myAltKeyListener);
+      myAltKeyListener = null;
+    }
+    removeChangeSelectionOnHoverListener();
   }
 
   private void installChangeSelectionOnHoverListener() {
@@ -318,6 +323,9 @@ public final class InspectorWindow extends JDialog implements Disposable {
     TreeUtil.expandAll(myHierarchyTree);
     if (selected != null) {
       myHierarchyTree.selectPath(selected, myIsAccessibleEnabled);
+    }
+    if (myShowAccessibilityIssuesAction.showAccessibilityIssues) {
+      myShowAccessibilityIssuesAction.updateTreeWithAccessibilityAuditStatus();
     }
   }
 
@@ -395,11 +403,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
   @Override
   public void dispose() {
-    if (myAltKeyListener != null) {
-      Toolkit.getDefaultToolkit().removeAWTEventListener(myAltKeyListener);
-      myAltKeyListener = null;
-    }
-    removeChangeSelectionOnHoverListener();
+    uninstallAltKeyListener();
     DimensionService.getInstance().setSize(getDimensionServiceKey(), getSize(), null);
     DimensionService.getInstance().setLocation(getDimensionServiceKey(), getLocation(), null);
     Disposer.dispose(myInspectorTable);
@@ -796,9 +800,6 @@ public final class InspectorWindow extends JDialog implements Disposable {
       myIsAccessibleEnabled = !myIsAccessibleEnabled;
       myNavBarPanel.setAccessibleEnabled(myIsAccessibleEnabled);
       resetTree(false);
-      if (myShowAccessibilityIssuesAction.showAccessibilityIssues) {
-        myShowAccessibilityIssuesAction.updateTreeWithAccessibilityAuditStatus();
-      }
     }
   }
 
@@ -820,6 +821,38 @@ public final class InspectorWindow extends JDialog implements Disposable {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.BGT;
+    }
+  }
+
+  private final class ToggleAltHoverAction extends MyTextAction implements Toggleable {
+    private static final String ALT_HOVER_ENABLED_KEY = "ui.inspector.alt.hover.enabled.key";
+
+    private ToggleAltHoverAction() {
+      super(InternalActionsBundle.messagePointer("action.Anonymous.text.AltHover"));
+      getTemplatePresentation().setDescription(InternalActionsBundle.messagePointer("action.Anonymous.description.AltHover"));
+      myIsAltHoverEnabled = PropertiesComponent.getInstance().getBoolean(ALT_HOVER_ENABLED_KEY, true);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myIsAltHoverEnabled = !myIsAltHoverEnabled;
+      PropertiesComponent.getInstance().setValue(ALT_HOVER_ENABLED_KEY, myIsAltHoverEnabled, true);
+      if (myIsAltHoverEnabled) {
+        installAltKeyListener();
+      }
+      else {
+        uninstallAltKeyListener();
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Toggleable.setSelected(e.getPresentation(), myIsAltHoverEnabled);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

@@ -70,6 +70,8 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
     fun dropExplicitVersion(): Unit = setVersion("")
 
     companion object {
+        /* This is not an official compatibility. This does not mean that JDK 25 is supported in this Kotlin as a bytecode output
+        or similar, but the compiler should be able to at least work with it. See more details on the usage site. */
         private val MIN_KOTLIN_VERSION_JDK_25 = IdeKotlinVersion.get("2.1.10").kotlinVersion
 
         // Use bundled by default because this will work even without internet connection
@@ -165,7 +167,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                     return IncompatibleJdkVersion(
                         KotlinBasePluginBundle.message(
                             "kotlin.jps.jdk.unsupported.message",
-                            jpsVersion,
+                            moduleKotlinVersion,
                             MIN_KOTLIN_VERSION_JDK_25.toString(),
                         )
                     )
@@ -259,8 +261,10 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 }
 
                 is IncompatibleJdkVersion -> {
-                    showNotificationUnsupportedJdkVersion(project, error.message)
-                    return
+                    if (isDelegatedToExtBuild) {
+                        showNotificationUnsupportedJdkVersion(project, error.message)
+                        return
+                    }
                 }
 
                 null, is OutdatedCompilerVersion -> Unit

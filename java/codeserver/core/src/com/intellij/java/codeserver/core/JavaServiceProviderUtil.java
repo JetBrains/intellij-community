@@ -14,6 +14,8 @@ import java.util.Set;
  * Utility for working with Java services (jigsaw)
  */
 public final class JavaServiceProviderUtil {
+  private JavaServiceProviderUtil() { }
+
   public static final String PROVIDER = "provider";
   public static final Set<String> JAVA_UTIL_SERVICE_LOADER_METHODS = Set.of("load", "loadInstalled");
 

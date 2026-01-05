@@ -185,7 +185,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
 
         LOG.info("All test code will be loaded using '${testModuleDescriptor?.pluginClassLoader}'")
 
-        fun getLambdaIdeContext(): LambdaIdeContext {
+        fun getLambdaIdeContext(): LambdaIdeContextClass {
           val currentTestCoroutineScope = CoroutineScope(Dispatchers.Default + CoroutineName("Lambda test session scope") + SupervisorJob())
 
           currentTestCoroutineScope.coroutineContext.job.invokeOnCompletion {
@@ -200,17 +200,35 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
 
         var ideContext = getLambdaIdeContext()
 
-        session.cleanUp.setSuspend(sessionBgtDispatcher) { _, _ ->
-          LOG.info("Resetting scopes")
-          ideContext.coroutineContext.job.cancelAndJoin()
+        session.beforeAll.setSuspend(sessionBgtDispatcher) { _, testClassName ->
+          LOG.info("========================= Test class '$testClassName' started ==========================")
+        }
+
+        session.beforeEach.setSuspend(sessionBgtDispatcher) { _, testName ->
+          LOG.info("------------------------- Test '$testName' started -------------------------")
           runLogged("Flush queue in between tests") {
             withContext(Dispatchers.EDT) {
               IdeEventQueue.getInstance().flushQueue()
             }
           }
+          runLogged("Sync front and back protocol events") {
+            LambdaTestBridge.getInstance().syncProtocolEvents()
+          }
           ideContext = getLambdaIdeContext()
         }
 
+        session.afterEach.setSuspend(sessionBgtDispatcher) { _, testName ->
+          ideContext.runAfterEachCleanup()
+          runLogged("Cancelling scopes in after each") {
+            ideContext.coroutineContext.job.cancelAndJoin()
+          }
+          LOG.info("------------------------- Test '$testName' finished -------------------------")
+        }
+
+        session.afterAll.setSuspend(sessionBgtDispatcher) { _, testClassName ->
+          ideContext.runAfterAllCleanup()
+          LOG.info("========================= Test class '$testClassName' finished =========================")
+        }
         // Advice for processing events
         session.runLambda.setSuspend(sessionBgtDispatcher) { _, parameters ->
           LOG.info("'${parameters.reference}': received lambda execution request")
@@ -330,20 +348,14 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         }
 
         session.closeAllOpenedProjects.setSuspend(sessionBgtDispatcher) { _, _ ->
-          try {
-            leaveAllModals(throwErrorIfModal = true)
+          leaveAllModals(throwErrorIfModal = true)
 
-            ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
-            withContext(Dispatchers.EDT + NonCancellable) {
-              writeIntentReadAction {
-                ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
-              }
+          ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
+          withContext(Dispatchers.EDT + NonCancellable) {
+            writeIntentReadAction {
+              ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
             }
           }
-          catch (ce: CancellationException) {
-            throw ce
-          }
-
         }
 
 

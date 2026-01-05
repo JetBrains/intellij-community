@@ -18,7 +18,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.impl.isRhizomeProgressEnabled
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.registry.Registry
@@ -157,9 +156,6 @@ private fun isModal(): Boolean {
 
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun CoroutineScope.hasActiveBackgroundTasksStateFlow(): StateFlow<Boolean> {
-  if (!isRhizomeProgressEnabled) {
-    return MutableStateFlow(false)
-  }
   return activeTasks.asValuesFlow().flatMapMerge { task ->
     flow {
       emit(1)

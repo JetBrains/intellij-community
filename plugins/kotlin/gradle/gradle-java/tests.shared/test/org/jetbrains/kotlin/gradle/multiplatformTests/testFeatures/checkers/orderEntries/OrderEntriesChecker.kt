@@ -191,6 +191,8 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
     private val STDLIB_MODULES = setOf(
         "org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}}", // Before 1.9.20
         "org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}}", // After 1.9.20
+        "org.jetbrains.kotlin:kotlin-stdlib:webMain:{{KGP_VERSION}}",
+        "org.jetbrains.kotlin:kotlin-stdlib:commonNonJvmMain:{{KGP_VERSION}}",
         "org.jetbrains.kotlin:kotlin-stdlib:all:{{KGP_VERSION}}", // Supporting disabled KGP based dependency resolution after 1.9.20
         "org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}}",
         "org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}}",

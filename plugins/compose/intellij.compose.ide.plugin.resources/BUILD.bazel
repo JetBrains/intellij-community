@@ -77,7 +77,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/lang-api:lang",
     "//xml/impl",
-    "@lib//:kotlin-test",
+    "//libraries/kotlin/test:libraries-kotlinTest",
     "@lib//:kotlin-test-junit",
     "@lib//:junit4",
     "//platform/testFramework",

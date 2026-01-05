@@ -2,10 +2,11 @@
 package org.jetbrains.intellij.build.devServer;
 
 import com.intellij.util.lang.PathClassLoader;
-import com.intellij.util.lang.UrlClassLoader;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.AbstractMap;
 import java.util.Collection;
@@ -45,19 +46,21 @@ public final class DevMainKt {
   }
 
   private static String build(MethodHandles.Lookup lookup, PathClassLoader classLoader) throws Throwable {
+    AbstractMap.SimpleImmutableEntry<String, Collection<Path>> mainClassAndClassPath;
+
     // do not use classLoader as a parent - make sure that we don't make the initial classloader dirty
     // (say, do not load kotlin coroutine classes)
-    Class<?> implClass = new PathClassLoader(UrlClassLoader.build()
-                                               .files(classLoader.getFiles())
-                                               .parent(ClassLoader.getPlatformClassLoader()))
-      .loadClass("org.jetbrains.intellij.build.devServer.DevMainImpl");
+    // also close the temporary classloader to unlock output jars on Windows
+    try (URLClassLoader tempClassLoader = new URLClassLoader(classLoader.getUrls().toArray(URL[]::new),
+                                                             ClassLoader.getPlatformClassLoader())) {
+      Class<?> implClass = tempClassLoader.loadClass("org.jetbrains.intellij.build.devServer.DevMainImpl");
 
-    @SuppressWarnings("unchecked")
-    AbstractMap.SimpleImmutableEntry<String, Collection<Path>> mainClassAndClassPath = 
-      (AbstractMap.SimpleImmutableEntry<String, Collection<Path>>)
+      //noinspection unchecked
+      mainClassAndClassPath = (AbstractMap.SimpleImmutableEntry<String, Collection<Path>>)
         lookup
           .findStatic(implClass, "buildDevMain", MethodType.methodType(AbstractMap.SimpleImmutableEntry.class))
           .invokeExact();
+    }
 
     classLoader.reset(mainClassAndClassPath.getValue());
     return mainClassAndClassPath.getKey();

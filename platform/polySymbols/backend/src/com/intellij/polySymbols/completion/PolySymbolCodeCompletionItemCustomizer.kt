@@ -3,7 +3,7 @@ package com.intellij.polySymbols.completion
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.polySymbols.FrameworkId
-import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
 
@@ -12,7 +12,7 @@ interface PolySymbolCodeCompletionItemCustomizer {
   fun customize(
     item: PolySymbolCodeCompletionItem,
     framework: FrameworkId?,
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     location: PsiElement,
   ): PolySymbolCodeCompletionItem?
 
@@ -25,7 +25,7 @@ interface PolySymbolCodeCompletionItemCustomizer {
 
     internal fun Sequence<PolySymbolCodeCompletionItem>.customizeItems(
       framework: FrameworkId?,
-      qualifiedKind: PolySymbolQualifiedKind,
+      kind: PolySymbolKind,
       location: PsiElement,
     ): Sequence<PolySymbolCodeCompletionItem> {
       val customizers = EP_NAME.extensionList
@@ -34,7 +34,7 @@ interface PolySymbolCodeCompletionItemCustomizer {
           customizers.foldRight(item) { customizer, acc: PolySymbolCodeCompletionItem? ->
             if (acc == null)
               null
-            else customizer.customize(acc, framework, qualifiedKind, location)
+            else customizer.customize(acc, framework, kind, location)
           }
         }
       else this

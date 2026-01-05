@@ -451,6 +451,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     public boolean update() {
       checkNonCancellableSection();
       try {
+        //MAYBE RC: why we do not return true/false to indicate 'nothing has changed'?
         MapReduceIndex.this.updateWith(updateData);
       }
       catch (StorageException | CancellationException ex) {

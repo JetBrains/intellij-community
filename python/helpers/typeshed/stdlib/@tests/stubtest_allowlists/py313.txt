@@ -166,6 +166,8 @@ inspect._ParameterKind.description  # Still exists, but stubtest can't see it
 typing\._SpecialForm.*  # Super-special typing primitive
 typing\.LiteralString  # Super-special typing primitive
 
+# Don't always exist at runtime
+(pdb.Pdb.curframe_locals)?
 
 # ==================================================================
 # Allowlist entries that cannot or should not be fixed; 3.11 to 3.13

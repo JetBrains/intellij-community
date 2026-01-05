@@ -16,10 +16,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.vcs.log.VcsLogBundle;
-import com.intellij.vcs.log.VcsLogDataPack;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +100,7 @@ public final class BranchFilterPopupComponent extends MultipleValueFilterPopupCo
     VcsLogDataPack logData = myFilterModel.getDataPack();
 
     List<List<String>> branchFilters = processRecentBranchFilters(
-      ContainerUtil.map2Set(logData.getRefs().getBranches(), VcsRef::getName),
+      ContainerUtil.map2Set(VcsLogRefsKt.getBranches(logData.getRefs()), VcsRef::getName),
       getRecentValuesFromSettings());
 
     actionGroup.add(new MyBranchPopupBuilder(logData, myBranchFilterModel.getVisibleRoots(), branchFilters).build());
@@ -113,7 +110,7 @@ public final class BranchFilterPopupComponent extends MultipleValueFilterPopupCo
 
   @Override
   protected @NotNull @Unmodifiable List<String> getAllValues() {
-    Collection<VcsRef> branches = myFilterModel.getDataPack().getRefs().getBranches();
+    Collection<VcsRef> branches = VcsLogRefsKt.getBranches(myFilterModel.getDataPack().getRefs());
     if (myBranchFilterModel.getVisibleRoots() != null) {
       branches = ContainerUtil.filter(branches, branch -> myBranchFilterModel.getVisibleRoots().contains(branch.getRoot()));
     }

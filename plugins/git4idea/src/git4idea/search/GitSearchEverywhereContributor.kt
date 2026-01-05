@@ -24,8 +24,9 @@ import com.intellij.util.ui.JBUI
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsRef
-import com.intellij.vcs.log.data.DataPack
+import com.intellij.vcs.log.allRefs
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.render.LabelIcon
 import com.intellij.vcs.log.util.containsAll
@@ -78,7 +79,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
       .typoTolerant()
       .build()
 
-    dataPack.refsModel.stream().forEach {
+    dataPack.refsModel.allRefs.forEach {
       progressIndicator.checkCanceled()
       when (it.type) {
         GitRefManager.LOCAL_BRANCH, GitRefManager.HEAD -> processRefOfType(it, LOCAL_BRANCH, matcher, consumer)
@@ -108,12 +109,12 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
     if (matcher.matches(ref.name)) consumer.process(FoundItemDescriptor(ref, type.weight))
   }
 
-  private fun awaitFullLogDataPack(dataManager: VcsLogData, indicator: ProgressIndicator): DataPack? {
+  private fun awaitFullLogDataPack(dataManager: VcsLogData, indicator: ProgressIndicator): VcsLogGraphData? {
     if (!Registry.`is`("vcs.log.keep.up.to.date")) return null
-    var dataPack: DataPack
+    var dataPack: VcsLogGraphData
     do {
       indicator.checkCanceled()
-      dataPack = dataManager.dataPack
+      dataPack = dataManager.graphData
     }
     while (!dataPack.isFull && Thread.sleep(1000) == Unit)
     return dataPack

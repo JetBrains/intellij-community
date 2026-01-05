@@ -19,6 +19,8 @@ import static java.util.Objects.requireNonNullElse;
  * Utilities to support Java preview feature highlighting
  */
 public final class JavaPreviewFeatureUtil {
+  private JavaPreviewFeatureUtil() { }
+
   /**
    * Internal JDK annotation for preview feature APIs
    */

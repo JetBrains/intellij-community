@@ -5,6 +5,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
 import org.jetbrains.intellij.build.productLayout.validation.rules.validateLibraryModuleDependencies
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
@@ -380,6 +383,119 @@ class PluginDependencyGeneratorTest {
     val orderEntry = orderEntries.item(0) as org.w3c.dom.Element
     assertThat(orderEntry.getAttribute("type")).isEqualTo("module")
     assertThat(orderEntry.getAttribute("module-name")).isEqualTo("intellij.libraries.junit4")
+  }
+
+  // --- Duplicate content module deduplication test ---
+
+  @Test
+  fun `duplicate content modules across plugins generates single diff`(@TempDir tempDir: Path) {
+    runBlocking {
+    // 1. Create test JPS project with modules
+    val model = JpsElementFactory.getInstance().createModel()
+    val project = model.project
+
+    // Shared content module declared in multiple plugins
+    val sharedModuleDir = tempDir.resolve("shared")
+    val sharedContentModule = project.addModule("intellij.shared.content", JpsJavaModuleType.INSTANCE)
+    sharedContentModule.container.setChild(
+      JpsModuleSerializationDataExtensionImpl.ROLE,
+      JpsModuleSerializationDataExtensionImpl(sharedModuleDir),
+    )
+
+    // Create content source root for findFileInModuleSources to work
+    val sharedResourcesDir = sharedModuleDir.resolve("resources")
+    Files.createDirectories(sharedResourcesDir)
+    val javaExtension = JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(sharedContentModule)
+    sharedContentModule.addSourceRoot(sharedResourcesDir.toUri().toString(), org.jetbrains.jps.model.java.JavaResourceRootType.RESOURCE)
+
+    // Create descriptor XML for content module (will generate diff since deps differ)
+    Files.writeString(sharedResourcesDir.resolve("intellij.shared.content.xml"), """
+      |<idea-plugin package="com.intellij.shared">
+      |</idea-plugin>
+    """.trimMargin())
+
+    // Two plugin modules, both declaring shared content module
+    val plugin1Dir = tempDir.resolve("plugin1")
+    val plugin1 = project.addModule("plugin.one", JpsJavaModuleType.INSTANCE)
+    plugin1.container.setChild(JpsModuleSerializationDataExtensionImpl.ROLE, JpsModuleSerializationDataExtensionImpl(plugin1Dir))
+
+    val plugin2Dir = tempDir.resolve("plugin2")
+    val plugin2 = project.addModule("plugin.two", JpsJavaModuleType.INSTANCE)
+    plugin2.container.setChild(JpsModuleSerializationDataExtensionImpl.ROLE, JpsModuleSerializationDataExtensionImpl(plugin2Dir))
+
+    // Create plugin.xml files
+    Files.createDirectories(plugin1Dir.resolve("resources/META-INF"))
+    Files.writeString(plugin1Dir.resolve("resources/META-INF/plugin.xml"), """
+      |<idea-plugin>
+      |  <content><module name="intellij.shared.content"/></content>
+      |</idea-plugin>
+    """.trimMargin())
+
+    Files.createDirectories(plugin2Dir.resolve("resources/META-INF"))
+    Files.writeString(plugin2Dir.resolve("resources/META-INF/plugin.xml"), """
+      |<idea-plugin>
+      |  <content><module name="intellij.shared.content"/></content>
+      |</idea-plugin>
+    """.trimMargin())
+
+    // 2. Create test infrastructure
+    val outputProvider = createTestModuleOutputProvider(project)
+    val strategy = DeferredFileUpdater(tempDir)
+
+    // Create PluginContentInfo for both plugins with shared content module
+    val sharedContentSet = setOf("intellij.shared.content")
+    val pluginContentJobs = mapOf(
+      "plugin.one" to CompletableDeferred(PluginContentInfo(
+        pluginXmlPath = plugin1Dir.resolve("resources/META-INF/plugin.xml"),
+        pluginXmlContent = Files.readString(plugin1Dir.resolve("resources/META-INF/plugin.xml")),
+        contentModules = sharedContentSet,
+        jpsDependencies = { emptyList() },
+      )),
+      "plugin.two" to CompletableDeferred(PluginContentInfo(
+        pluginXmlPath = plugin2Dir.resolve("resources/META-INF/plugin.xml"),
+        pluginXmlContent = Files.readString(plugin2Dir.resolve("resources/META-INF/plugin.xml")),
+        contentModules = sharedContentSet,
+        jpsDependencies = { emptyList() },
+      )),
+    )
+
+    val allPluginModules = AllPluginModules(
+      allModules = sharedContentSet,
+      byPlugin = mapOf("plugin.one" to sharedContentSet, "plugin.two" to sharedContentSet),
+    )
+
+    // 3. Call generatePluginDependencies
+    kotlinx.coroutines.coroutineScope {
+      val descriptorCache = ModuleDescriptorCache(outputProvider, this)
+      val result = generatePluginDependencies(
+        plugins = listOf("plugin.one", "plugin.two"),
+        pluginContentJobs = pluginContentJobs,
+        allPluginModulesDeferred = CompletableDeferred(allPluginModules),
+        productIndicesDeferred = CompletableDeferred(emptyMap()),
+        descriptorCache = descriptorCache,
+        dependencyFilter = { _, _, _ -> true },
+        strategy = strategy,
+        testFrameworkContentModules = emptySet(),
+      )
+
+      // 4. Verify: both plugins should have the content module in results
+      assertThat(result.files).hasSize(2)
+      for (pluginResult in result.files) {
+        val contentModuleNames = pluginResult.contentModuleResults.map { it.moduleName }
+        assertThat(contentModuleNames)
+          .describedAs("Plugin ${pluginResult.pluginModuleName} should have shared content module in results")
+          .contains("intellij.shared.content")
+      }
+    }
+
+    // 5. Verify: only ONE diff for the shared content module descriptor (deduplication fix)
+    val contentModuleDiffs = strategy.getDiffs().filter {
+      it.path.toString().contains("intellij.shared.content.xml")
+    }
+    assertThat(contentModuleDiffs)
+      .describedAs("Should have at most one diff for shared content module (was duplicated before fix)")
+      .hasSizeLessThanOrEqualTo(1)
+    }
   }
 }
 

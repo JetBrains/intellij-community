@@ -29,6 +29,7 @@ import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.poetry.configurePoetryEnvironment
 import com.jetbrains.python.sdk.poetry.createNewPoetrySdk
 import com.jetbrains.python.statistics.InterpreterType
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -91,11 +92,11 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
             return@collect
           }
 
-          val venvPath = path.resolve(".venv")
+          val venvPath = path.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
 
           venvExistenceValidationState.set(
             if (venvPath.exists())
-              Error(Paths.get(".venv"))
+              Error(Paths.get(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
             else
               Invisible
           )

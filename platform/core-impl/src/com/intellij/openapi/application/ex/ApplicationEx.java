@@ -187,17 +187,6 @@ public interface ApplicationEx extends Application {
   }
 
   /**
-   * Runs the specified action, releasing the write-intent lock if it is acquired at the moment of the call.
-   * <p>
-   * This method is used to implement higher-level API. Please do not use it directly.
-   */
-  @ApiStatus.Internal
-  @SuppressWarnings("UnusedReturnValue")
-  default <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
-    return action.compute();
-  }
-
-  /**
    * Runs the specified action under the write-intent lock. Can be called from any thread. The action is executed immediately
    * if no write-intent action is currently running or blocked until the currently running write-intent action completes.
    * <p>
@@ -244,7 +233,7 @@ public interface ApplicationEx extends Application {
   default void addSuspendingWriteActionListener(@NotNull WriteLockReacquisitionListener listener, @NotNull Disposable parentDisposable) { }
 
   @ApiStatus.Internal
-  default void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, boolean failSoftly, @NlsSafe String advice) {
+  default void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, @NlsSafe String advice) {
     runnable.run();
   }
 

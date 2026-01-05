@@ -139,6 +139,10 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : C
     moduleBuilder.moduleJdk = wizardContext.projectJdk
   }
 
+  override fun onStepLeaving() {
+    contentPanel.apply()
+  }
+
   private fun suggestPackageName(): String {
     return StarterModuleBuilder.suggestPackageName(groupId, artifactId)
   }
@@ -240,7 +244,9 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : C
       addSampleCodeUi()
 
       addFieldsAfter(this)
-    }.withVisualPadding()
+    }
+      .withVisualPadding()
+      .apply { registerValidators(parentDisposable) }
   }
 
   private fun createServerUrlLink(): ActionLink {
@@ -283,6 +289,10 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : C
     val passTechnologyName = if (starterSettings.languageLevels.size > 1) null else moduleBuilder.presentableName
     if (languageLevel.javaVersion.isNotBlank() &&
         !validateJdkIntentVersion(jdkIntentProperty, languageLevel.javaVersion, passTechnologyName)) {
+      return false
+    }
+
+    if (contentPanel.validateAll().isNotEmpty()) {
       return false
     }
 

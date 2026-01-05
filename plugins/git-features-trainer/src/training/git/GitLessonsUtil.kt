@@ -120,7 +120,7 @@ object GitLessonsUtil {
     highlightSubsequentCommitsInGitLog(sequenceLength, highlightInside, usePulsation) l@{ commit ->
       val vcsData = VcsProjectLog.getInstance(project).dataManager ?: return@l false
       val root = vcsData.roots.single()
-      commit.id == vcsData.dataPack.findBranch(branchName, root)?.commitHash
+      commit.id == vcsData.graphData.findBranch(branchName, root)?.commitHash
     }
   }
 

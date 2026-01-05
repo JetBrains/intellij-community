@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.*;
 import com.intellij.util.messages.MessageBus;
@@ -670,14 +669,6 @@ public interface Application extends ComponentManager {
     return isDisposed();
   }
 
-  /** @deprecated use {@link #runReadAction(Runnable)} instead */
-  @Deprecated
-  @NotNull AccessToken acquireReadActionLock();
-
-  /** @deprecated use {@link #runWriteAction}, {@link WriteAction#run(ThrowableRunnable)}, or {@link WriteAction#compute} instead */
-  @Deprecated
-  @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
-
   /** @deprecated bad name, use {@link #isWriteIntentLockAcquired()} instead */
   @Deprecated
   @ApiStatus.Experimental
@@ -697,12 +688,6 @@ public interface Application extends ComponentManager {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  default Pair<CoroutineContext, AccessToken> getLockStateAsCoroutineContext(CoroutineContext context, boolean shared) {
-    return new Pair<>(EmptyCoroutineContext.INSTANCE, AccessToken.EMPTY_ACCESS_TOKEN);
-  }
-
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
   default boolean isParallelizedReadAction(CoroutineContext context) {
     return false;
   }
@@ -717,7 +702,7 @@ public interface Application extends ComponentManager {
   }
 
   @ApiStatus.Internal
-  default @NonNls @Nullable String isLockingProhibited() {
+  default @NonNls @Nullable String getLockProhibitedAdvice() {
     return null;
   }
 

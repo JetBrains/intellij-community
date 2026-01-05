@@ -246,6 +246,8 @@
     <module name="intellij.platform.editor.frontend"/>
     <module name="intellij.platform.managed.cache" loading="embedded"/>
     <module name="intellij.platform.managed.cache.backend"/>
+    <module name="intellij.platform.todo"/>
+    <module name="intellij.platform.todo.backend"/>
     <module name="intellij.platform.bookmarks.backend"/>
     <module name="intellij.platform.bookmarks.frontend"/>
     <module name="intellij.platform.pluginManager.shared"/>

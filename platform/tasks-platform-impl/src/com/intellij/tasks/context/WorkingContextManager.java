@@ -134,13 +134,13 @@ public final class WorkingContextManager {
   private JBZipFile getTasksArchive(String postfix) {
     File file = getArchiveFile(postfix);
     try {
-      return new JBZipFile(file);
+      return new JBZipFile(file.toPath(), false);
     }
     catch (IOException e) {
       file.delete();
       JBZipFile zipFile = null;
       try {
-        zipFile = new JBZipFile(file);
+        zipFile = new JBZipFile(file.toPath(), false);
         Notifications.Bus.notify(new Notification("Tasks", TaskBundle.message("notification.title.context.data.corrupted"),
                                                   TaskBundle.message("notification.content.context.information.history", myProject.getName()), NotificationType.ERROR), myProject);
       }

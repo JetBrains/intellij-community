@@ -10,9 +10,8 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogGraphData;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
@@ -237,11 +236,10 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     }
 
     private @NotNull Predicate<Integer> getCondition() {
-      if (!(myVisiblePack instanceof VisiblePack)) return Predicates.alwaysFalse();
-      DataPackBase dataPack = ((VisiblePack)myVisiblePack).getDataPack();
-      if (!(dataPack instanceof DataPack)) return Predicates.alwaysFalse();
+      if (!(myVisiblePack instanceof VisiblePack visiblePack)) return Predicates.alwaysFalse();
+      VcsLogGraphData dataPack = visiblePack.getDataPack();
       Set<Integer> heads = Collections.singleton(myStorage.getCommitIndex(myRevision, myRoot));
-      return ((DataPack)dataPack).getPermanentGraph().getContainedInBranchCondition(heads);
+      return dataPack.getPermanentGraph().getContainedInBranchCondition(heads);
     }
 
     @Override

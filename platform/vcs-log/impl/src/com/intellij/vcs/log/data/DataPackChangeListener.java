@@ -25,5 +25,5 @@ public interface DataPackChangeListener {
    * @param newDataPack new data pack
    */
   @RequiresEdt
-  void onDataPackChange(@NotNull DataPack newDataPack);
+  void onDataPackChange(@NotNull VcsLogGraphData newDataPack);
 }

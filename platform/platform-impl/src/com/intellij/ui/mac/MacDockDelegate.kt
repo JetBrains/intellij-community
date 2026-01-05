@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac
 
 import com.intellij.ide.DataManager
@@ -7,7 +7,7 @@ import com.intellij.ide.SystemDock
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
@@ -19,7 +19,7 @@ import java.awt.*
 
 internal suspend fun createMacDelegate(): SystemDock? {
   // todo get rid of UI dispatcher here
-  return withContext(Dispatchers.EDT) {
+  return withContext(Dispatchers.UiWithModelAccess) {
     val dockMenu = PopupMenu("DockMenu")
 
     runCatching {
@@ -53,7 +53,7 @@ private class MacDockDelegate(private val recentProjectsMenu: Menu) : SystemDock
   override suspend fun updateRecentProjectsMenu() {
     val projectListActionProvider = serviceAsync<RecentProjectListActionProvider>()
     // todo get rid of UI dispatcher here
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.UiWithModelAccess) {
       recentProjectsMenu.removeAll()
       for (action in projectListActionProvider.getActionsWithoutGroups()) {
         if (action !is ProjectToolbarWidgetPresentable) {

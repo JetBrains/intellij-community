@@ -15,8 +15,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.EelPlatform;
-import com.intellij.platform.eel.fs.EelFileSystemApiKt;
+import com.intellij.platform.eel.EelOsFamily;
+import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
 import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -504,28 +504,22 @@ public class GitExecutableDetector {
     return PathEnvironmentVariableUtil.getPathVariableValue();
   }
 
-  static @Nullable String patchExecutablePath(@NotNull Project project, @NotNull String path) {
-    Boolean isWindows = null;
-    Path file = null;
+  private static Path takeGitPathIfWindows(@Nullable Project project, @NotNull @MultiRoutingFileSystemPath String pathString) {
+    Path path = Path.of(pathString.trim());
+    EelOsFamily osFamily = EelNioBridgeServiceKt.asEelPath(path).getDescriptor().getOsFamily();
+    if (osFamily != EelOsFamily.Windows) return null;
+    return path;
+  }
 
-    final var eel = GitEelExecutableDetectionHelper.tryGetEel(project, null);
-    if (eel != null) {
-      isWindows = eel.getPlatform() instanceof EelPlatform.Windows;
-      file = EelNioBridgeServiceKt.asNioPath(EelFileSystemApiKt.getPath(eel.getFs(), path.trim()));
-    }
+  static @Nullable @MultiRoutingFileSystemPath String patchExecutablePath(@NotNull Project project, @NotNull @MultiRoutingFileSystemPath String pathString) {
+    Path path = Path.of(pathString.trim());
+    EelOsFamily osFamily = EelNioBridgeServiceKt.asEelPath(path).getDescriptor().getOsFamily();
+    if (osFamily != EelOsFamily.Windows) return null;
 
-    if (isWindows == null) {
-      isWindows = SystemInfo.isWindows;
-    }
-
-    if (file == null) {
-      file = Path.of(path.trim());
-    }
-
-    if (isWindows) {
-      if (file.getFileName().toString().equals("git-cmd.exe") || file.getFileName().toString().equals("git-bash.exe")) {
-        final var patchedFile = file.getParent().resolve("bin/git.exe");
-        if (Files.exists(patchedFile)) return patchedFile.toString();
+    if (path.getFileName().toString().equals("git-cmd.exe") || path.getFileName().toString().equals("git-bash.exe")) {
+      final var patchedFile = path.getParent().resolve("bin/git.exe");
+      if (Files.exists(patchedFile)) {
+        return patchedFile.toString();
       }
     }
 
@@ -533,29 +527,16 @@ public class GitExecutableDetector {
   }
 
   public static @Nullable String getBashExecutablePath(@Nullable Project project, @NotNull String gitExecutable) {
-    Boolean isWindows = null;
-    Path gitFile = null;
-
-    final var eel = GitEelExecutableDetectionHelper.tryGetEel(project, null);
-    if (eel != null) {
-      isWindows = eel.getPlatform() instanceof EelPlatform.Windows;
-      gitFile = EelNioBridgeServiceKt.asNioPath(EelFileSystemApiKt.getPath(eel.getFs(), gitExecutable.trim()));
-    }
-
-    if (isWindows == null) {
-      isWindows = SystemInfo.isWindows;
-    }
-
-    if (gitFile == null) {
-      gitFile = Path.of(gitExecutable.trim());
-    }
-
-    if (!isWindows) return null;
+    Path gitFile = Path.of(gitExecutable.trim());
+    EelOsFamily osFamily = EelNioBridgeServiceKt.asEelPath(gitFile).getDescriptor().getOsFamily();
+    if (osFamily != EelOsFamily.Windows) return null;
 
     final var gitDirFile = gitFile.getParent();
     if (gitDirFile != null && WIN_BIN_DIRS.contains(gitDirFile.getFileName().toString())) {
       final var bashFile = gitDirFile.getParent().resolve("bin/bash.exe");
-      if (Files.exists(bashFile)) return bashFile.toString();
+      if (Files.exists(bashFile)) {
+        return bashFile.toString();
+      }
     }
 
     return null;

@@ -17,9 +17,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.LoadingOrder.Orderable
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.progress.ProgressIndicatorModel
 import com.intellij.openapi.progress.ProgressModel
 import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.progress.impl.BridgeTaskSupport
 import com.intellij.openapi.progress.impl.PerProjectTaskInfoEntityCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.StatusBarWidget.*
@@ -303,7 +302,7 @@ open class IdeStatusBarImpl @Internal constructor(
    * @param widget widget to add
    */
   internal suspend fun addWidgetToLeft(widget: StatusBarWidget) {
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.UiWithModelAccess) {
       addWidget(widget, Position.LEFT, LoadingOrder.ANY)
     }
   }
@@ -331,7 +330,7 @@ open class IdeStatusBarImpl @Internal constructor(
     // Create components in parallel (performance optimization)
     val beans: List<WidgetBean> = span("status bar widget creating") {
       widgets.map { (widget, anchor) ->
-        val component = span(widget.ID(), Dispatchers.EDT + anyModality) {
+        val component = span(widget.ID(), Dispatchers.UiWithModelAccess + anyModality) {
           val c = wrap(widget)
           if (c is StatusBarWidgetWrapper) {
             c.beforeUpdate()
@@ -342,7 +341,7 @@ open class IdeStatusBarImpl @Internal constructor(
       }
     }
 
-    withContext(Dispatchers.EDT + anyModality + CoroutineName("status bar widget adding")) {
+    withContext(Dispatchers.UiWithModelAccess + anyModality + CoroutineName("status bar widget adding")) {
       // Add all to self
       for (bean in beans) {
         addWidgetToSelf(bean, parentDisposable)
@@ -359,14 +358,14 @@ open class IdeStatusBarImpl @Internal constructor(
 
     // Fire events
     if (listeners.hasListeners()) {
-      withContext(Dispatchers.EDT + anyModality) {
+      withContext(Dispatchers.UiWithModelAccess + anyModality) {
         for (bean in beans) {
           fireWidgetAdded(bean.widget, bean.anchor)
         }
       }
     }
 
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.UiWithModelAccess) {
       PopupHandler.installPopupMenu(this@IdeStatusBarImpl, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
     }
   }
@@ -475,13 +474,8 @@ open class IdeStatusBarImpl @Internal constructor(
 
   @Suppress("UsagesOfObsoleteApi")
   override fun addProgress(indicator: ProgressIndicatorEx, info: TaskInfo) {
-    if (Registry.`is`("rhizome.progress")) {
-      @Suppress("DEPRECATION")
-      com.intellij.openapi.progress.impl.BridgeTaskSupport.getInstance().withBridgeBackgroundProgress(project, indicator, info)
-    }
-    else {
-      addProgressImpl(ProgressIndicatorModel(indicator, info.title, info.isCancellable), info)
-    }
+    @Suppress("DEPRECATION")
+    BridgeTaskSupport.getInstance().withBridgeBackgroundProgress(project, indicator, info)
   }
 
   internal fun addProgressImpl(progressModel: ProgressModel, info: TaskInfo) {

@@ -81,11 +81,21 @@ class ScanningIterators(
 
 /**
  * A task in [UnindexedFilesScannerExecutor]: (re-)scan files to index.
- * Typical usage is `UnindexedFilesScanner(...).queue()`.
+ * Typical usage is `UnindexedFilesScanner(...).queue()` -- submits the `UnindexedFilesScanner` as a task into a shared
+ * [UnindexedFilesScannerExecutor], don't wait, return a [Future] to control async execution.
+ *
+ * By default, files to scan are defined in [FileBasedIndexImpl.getIndexableFilesProviders] (=project's indexable files), but
+ * could be overriden with [ScanningParameters], see [ScanningIterators.predefinedIndexableFilesIterators].
+ *
+ * [com.intellij.openapi.roots.impl.FilePropertyPusher]s are applied to the scanned files, before enqueueing them into
+ * [PerProjectIndexingQueue]
+ *
+ * Scanning is done in [SCANNING_PARALLELISM] parallel workers, on [SCANNING_DISPATCHER].
  *
  * BEWARE: Scanner implements [Closeable], but usually it doesn't need try-with-resources, because [close] actually called async,
  * while processed by [UnindexedFilesScannerExecutor]. The only case there [close] should be called explicitly is when the scanner
  * object is created, but does NOT [queue]-ed.
+ * MAYBE RC: drop Closeable, just leave [close] method? -- avoids 'Closeable without try-w-resources' inspection warnings
  */
 @ApiStatus.Internal
 class UnindexedFilesScanner (
@@ -381,7 +391,7 @@ class UnindexedFilesScanner (
     markRef: Ref<StatusMark>,
     scanningIterators: ScanningIterators,
   ) {
-    logInfo("Started scanning for indexing of " + project.name + ". Reason: " + scanningIterators.indexingReason)
+    logInfo("Started scanning for indexing of [" + project.name + "]. Reason: " + scanningIterators.indexingReason)
 
     progressReporter.setText(IndexingBundle.message("progress.indexing.scanning"))
 

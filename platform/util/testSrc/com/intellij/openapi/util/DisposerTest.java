@@ -9,6 +9,7 @@ import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -22,9 +23,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -748,5 +751,97 @@ public class DisposerTest  {
         Disposer.register(myRoot, root);
       })
       .start();
+  }
+
+  @Test
+  public void testCheckedDisposableMustNotLeakWhenDisposedAndReRegisteredConcurrently() throws Exception {
+    // This test DETERMINISTICALLY detects a race condition where a CheckedDisposable (used as PARENT)
+    // can have children registered to it after being removed from the tree but before dispose() is called.
+    //
+    // The race window (before fix):
+    // 1. Thread A: executeAll() removes CheckedDisposable from tree (inside lock)
+    // 2. Thread A: releases lock
+    // 3. Thread A: calls beforeTreeDispose() on children -- WE BLOCK HERE
+    // 4. Thread B: tryRegister(CheckedDisposable, child) sees isDisposed()=false, registers child
+    // 5. Thread A: unblocks, calls dispose(), sets isDisposed=true
+    // Result: CheckedDisposable is in tree with isDisposed=true -> memory leak
+    //
+    // The fix: set isDisposed=true inside the lock before releasing it
+    // This way tryRegister() sees isDisposed()=true and returns false
+    //
+    // We use Disposable.Parent.beforeTreeDispose() to create a deterministic race window,
+    // since it's called AFTER the lock is released but BEFORE dispose().
+
+    ExecutorService executor = ConcurrencyUtil.newSingleThreadExecutor("testCheckedDisposableMustNotLeakWhenDisposedAndReRegisteredConcurrently");
+
+    try {
+      for (int i = 0; i < 10; i++) {
+        CountDownLatch inBeforeTreeDispose = new CountDownLatch(1);
+        CountDownLatch tryRegisterDone = new CountDownLatch(1);
+
+        // Create a CheckedDisposable to be used as parent
+        CheckedDisposable checkedParent = Disposer.newCheckedDisposable("checked-parent-" + i);
+
+        // Register a blocking child that will pause disposal after lock is released
+        Disposable.Parent blockingChild = new Disposable.Parent() {
+          @Override
+          public void beforeTreeDispose() {
+            // Signal that we're in the race window (lock released, dispose not called yet)
+            inBeforeTreeDispose.countDown();
+            try {
+              // Wait for the racing thread to complete tryRegister
+              tryRegisterDone.await(10, TimeUnit.SECONDS);
+            }
+            catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+            }
+          }
+
+          @Override
+          public void dispose() {
+          }
+        };
+        Disposer.register(checkedParent, blockingChild);
+
+        // Child to register during the race window
+        Disposable racingChild = Disposer.newDisposable("racing-child-" + i);
+
+        // Thread A: dispose the CheckedDisposable parent (will block in beforeTreeDispose)
+        Future<?> disposeFuture = executor.submit(() -> Disposer.dispose(checkedParent));
+
+        // Wait for Thread A to enter the race window
+        assertTrue("Timed out waiting for beforeTreeDispose",
+                   inBeforeTreeDispose.await(10, TimeUnit.SECONDS));
+
+        // Thread B (main thread): try to register during the race window
+        // Without fix: succeeds because isDisposed() is still false
+        // With fix: fails because isDisposed() was set true inside the lock
+        boolean registered = Disposer.tryRegister(checkedParent, racingChild);
+
+        // Let Thread A continue
+        tryRegisterDone.countDown();
+        disposeFuture.get(10, TimeUnit.SECONDS);
+
+        // Verify: the parent should be disposed
+        assertTrue("Parent should be disposed", checkedParent.isDisposed());
+
+        // With the fix: tryRegister should have failed, so parent should NOT be in tree
+        // Without fix: tryRegister succeeded, parent is in tree with isDisposed=true (LEAK!)
+        if (registered) {
+          // If registration succeeded, verify there's no leak
+          Disposer.getTree().assertNoReferenceKeptInTree(checkedParent);
+        }
+
+        // The key assertion: a disposed CheckedDisposable must not be in the tree
+        Disposer.getTree().assertNoReferenceKeptInTree(checkedParent);
+
+        // Cleanup
+        Disposer.dispose(racingChild);
+      }
+    }
+    finally {
+      executor.shutdown();
+      executor.awaitTermination(10, TimeUnit.SECONDS);
+    }
   }
 }

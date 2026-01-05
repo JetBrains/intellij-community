@@ -3,8 +3,8 @@ package com.intellij.polySymbols.utils
 
 import com.intellij.model.Pointer
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolOrigin
-import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.patterns.ComplexPatternOptions
 import com.intellij.polySymbols.patterns.PolySymbolPattern
@@ -17,10 +17,10 @@ import com.intellij.polySymbols.query.PolySymbolWithPattern
  * symbols from other namespace or kind.
  */
 class ReferencingPolySymbol private constructor(
-  override val qualifiedKind: PolySymbolQualifiedKind,
+  override val kind: PolySymbolKind,
   override val name: String,
   override val origin: PolySymbolOrigin,
-  vararg references: PolySymbolQualifiedKind,
+  vararg references: PolySymbolKind,
   override val priority: PolySymbol.Priority?,
   private val location: List<PolySymbolQualifiedName> = emptyList(),
 ) : PolySymbolWithPattern {
@@ -29,15 +29,15 @@ class ReferencingPolySymbol private constructor(
     @JvmStatic
     @JvmOverloads
     fun create(
-      qualifiedKind: PolySymbolQualifiedKind,
+      kind: PolySymbolKind,
       name: String,
       origin: PolySymbolOrigin,
-      vararg qualifiedKinds: PolySymbolQualifiedKind,
+      vararg kinds: PolySymbolKind,
       priority: PolySymbol.Priority? = null,
       location: List<PolySymbolQualifiedName> = emptyList(),
     ): ReferencingPolySymbol =
       ReferencingPolySymbol(
-        qualifiedKind, name, origin, *qualifiedKinds, priority = priority, location = location
+        kind, name, origin, *kinds, priority = priority, location = location
       )
   }
 
@@ -49,7 +49,7 @@ class ReferencingPolySymbol private constructor(
         priority = priority,
         symbolsResolver = PolySymbolPatternReferenceResolver(
           *references.map {
-            PolySymbolPatternReferenceResolver.Reference(qualifiedKind = it, location = location)
+            PolySymbolPatternReferenceResolver.Reference(kind = it, location = location)
           }.toTypedArray()
         )), false,
       PolySymbolPatternFactory.createPatternSequence(
@@ -60,7 +60,7 @@ class ReferencingPolySymbol private constructor(
   override fun equals(other: Any?): Boolean =
     other === this ||
     other is ReferencingPolySymbol
-    && other.qualifiedKind == qualifiedKind
+    && other.kind == kind
     && other.name == name
     && other.origin == origin
     && other.priority == priority
@@ -68,7 +68,7 @@ class ReferencingPolySymbol private constructor(
     && other.references == references
 
   override fun hashCode(): Int {
-    var result = qualifiedKind.hashCode()
+    var result = kind.hashCode()
     result = 31 * result + name.hashCode()
     result = 31 * result + origin.hashCode()
     result = 31 * result + priority.hashCode()

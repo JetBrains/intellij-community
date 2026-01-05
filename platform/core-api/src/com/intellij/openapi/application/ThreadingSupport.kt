@@ -12,11 +12,11 @@ import kotlin.coroutines.CoroutineContext
 interface ThreadingSupport {
 
   /**
-   * Runs the specified computation in a write intent. Must be called from the Swing dispatch thread. The action is executed
-   * immediately if no write action is currently running, or blocked until the currently running write action
-   * completes.
+   * Runs the specified computation synchronously with a _Write-Intent-Read_ lock.
+   * - If no _Write_ or _Write-Intent-Read_ action is currently running, [computation] runs immediately
+   * - If a _Write_ or _Write-Intent-Read_ action is currently running, this thread gets **blocked** until [computation] can run.
    *
-   * See also [WriteIntentReadAction.compute] for a more lambda-friendly version.
+   * See also [WriteIntentReadAction.compute] for a more java-friendly version.
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
@@ -24,8 +24,9 @@ interface ThreadingSupport {
   fun <T> runWriteIntentReadAction(computation: () -> T): T
 
   /**
-   * Runs the specified [action] synchronously with a write-intent lock. The action is executed
-   * immediately if no write action is currently running.
+   * Runs the specified computation synchronously with a _Write-Intent-Read_ lock.
+   * - If no _Write_ or _Write-Intent-Read_ action is currently running, [action] runs immediately, and this method returns `true`
+   * - If a _Write_ or _Write-Intent-Read_ action is currently running, [action] does not run, and this method returns `false` immediately.
    *
    * @param action the computation to perform.
    * @return `true` if the action was executed, `false` if another write-intent lock could not be acquired.
@@ -33,179 +34,120 @@ interface ThreadingSupport {
   fun tryRunWriteIntentReadAction(action: () -> Unit): Boolean
 
   /**
-   * Executes a runnable with a write-intent lock only if locking is permitted on this thread
-   * We hope that if locking is forbidden, then preventive acquisition of write-intent lock in top-level places (such as event dispatch)
-   * may be not needed.
+   * Checks if the current thread holds _Write-Intent-Read_ or _Write_ lock.
    */
-  fun <T> runPreventiveWriteIntentReadAction(computation: () -> T): T
+  fun isWriteIntentReadAccessAllowed(): Boolean
 
   /**
-   * Checks, if Write Intent lock acquired by the current thread.
+   * Runs the specified computation synchronously with a _Read_ lock.
+   * - If no _Write_ action is currently running, [computation] runs immediately
+   * - If a _Write_ action is currently running, this thread gets **blocked** until [computation] can run.
    *
-   * As Write Intent Lock has very special status, this method doesn't check for "inherited" lock, it returns `true` if and only if
-   * current thread is the owner of Write Intent Lock.
+   * See also [ReadAction.compute] for a more java-friendly version.
    *
-   * This is low-level API, please use [WriteIntentReadAction].
-   *
-   * @return `true` if lock is acquired, `false` otherwise.
+   * @param computation the computation to perform.
+   * @return the result returned by the computation.
    */
-  @ApiStatus.Internal
-  fun isWriteIntentLocked(): Boolean
-
-  /**
-   * Runs the specified action, releasing the write-intent lock if it is acquired at the moment of the call.
-   *
-   * This method is used to implement higher-level API. Please do not use it directly.
-   */
-  @ApiStatus.Internal
-  fun <T> runUnlockingIntendedWrite(action: () -> T): T
-
   @RequiresBlockingContext
-  fun <T> runReadAction(clazz: Class<*>, action: () -> T): T
+  fun <T> runReadAction(computation: () -> T): T
 
   /**
-   * Tries to acquire the read lock and run the `action`.
+   * Runs the specified computation synchronously with a _Read_ lock.
+   * - If no _Write_ action is currently running, [action] runs immediately, and this method returns `true`
+   * - If a _Write_ action is currently running, [action] does not run, and this method returns `false` immediately.
    *
-   * @return true if action was run while holding the lock, false if was unable to get the lock and action was not run
+   * @param action the computation to perform.
+   * @return `true` if the action was executed, `false` if _Read_ lock could not be acquired.
    */
-  fun tryRunReadAction(action: Runnable): Boolean
+  fun tryRunReadAction(action: () -> Unit): Boolean
 
   /**
-   * Check, if read lock is acquired by current thread already.
+   * Checks that this thread holds exactly _Read_ lock.
    *
-   * @return `true` if read lock has been acquired, `false` otherwise.
+   * @return `true` if this thread holds _Read_ lock, returns `false` if this thread holds _Write_, _Write-Intent-Read_ or no lock.
    */
   fun isReadLockedByThisThread(): Boolean
 
   /**
-   * Check, if read access is allowed for current thread.
-   *
-   * @return `true` if read is allowed, `false` otherwise.
+   * Checks if the current thread holds _Read_, _Write-Intent-Read_, or _Write_ lock.
    */
   fun isReadAccessAllowed(): Boolean
 
   /**
-   * Adds a [WriteActionListener].
+   * Runs the specified computation synchronously with a _Write_ lock.
+   * - If no _Write_, _Write-Intent-Read_, or _Read_ action is currently running, [computation] runs immediately
+   * - If a _Write_, _Write-Intent-Read_, or _Read_ action is currently running, this thread gets **blocked** until [computation] can run.
    *
-   * @param listener the listener to set
+   * See also [WriteAction.compute] for a more java-friendly version.
+   *
+   * @param computation the computation to perform.
+   * @return the result returned by the computation.
    */
-  fun addWriteActionListener(listener: WriteActionListener)
-
-  /**
-   * Removes a [WriteActionListener].
-   *
-   * It is error to remove listener which was not added early.
-   *
-   * @param listener the listener to remove
-   */
-  @ApiStatus.Internal
-  fun removeWriteActionListener(listener: WriteActionListener)
-
-  /**
-   * Adds a [WriteIntentReadActionListener].
-   *
-   * @param listener the listener to set
-   */
-  fun addWriteIntentReadActionListener(listener: WriteIntentReadActionListener)
-
-  /**
-   * Removes a [WriteIntentReadActionListener].
-   *
-   * It is an error to remove the listener which was not added early.
-   *
-   * @param listener the listener to remove
-   */
-  fun removeWriteIntentReadActionListener(listener: WriteIntentReadActionListener)
-
-  /**
-   * Set a [ReadActionListener].
-   *
-   * @param listener the listener to set
-   */
-  fun addReadActionListener(listener: ReadActionListener)
-
-  /**
-   * Removes a [ReadActionListener].
-   *
-   * @param listener the listener to remove
-   */
-  @ApiStatus.Internal
-  fun removeReadActionListener(listener: ReadActionListener)
-
   @RequiresBlockingContext
-  fun <T> runWriteAction(clazz: Class<*>, action: () -> T): T
+  fun <T> runWriteActionBlocking(computation: () -> T): T
 
   /**
-   * If called inside a write-action, executes the given [action] with write-lock released
-   * (e.g., to allow for read-action parallelization).
-   * It's the caller's responsibility to invoke this method only when the model is in an internally consistent state,
-   * so that background threads with read actions don't see half-baked PSI/VFS/etc. The runnable may perform write-actions itself;
-   * callers should be ready for those.
-   */
-  fun executeSuspendingWriteAction(action: () -> Unit)
-
-  /**
-   * Returns `true` if there is currently executing write action of the specified class.
+   * Runs the specified computation asynchronously with a _Write_ lock.
    *
-   * @param actionClass the class of the write action to return.
-   * @return `true` if the action is running, or `false` if no action of the specified class is currently executing.
+   * This function suspends until it is possible to acquire _Write_ lock, and then it starts running [computation] in the current context.
+   * There can happen several redispatches before [computation] runs even if it is possible to acquire write lock right away.
+   *
+   * @param computation the computation to perform.
+   * @return the result returned by the computation.
    */
-  fun hasWriteAction(actionClass: Class<*>): Boolean
+  suspend fun <T> runWriteAction(computation: () -> T): T
 
   /**
-   * @return true if some thread is performing write action right now.
-   * @see runWriteAction
+   * This function allows to conditionally execute [computation] under _Write_ lock
+   * while atomically checking a condition provided by [shouldProceedWithWriteAction].
+   *
+   * The function works in the following steps:
+   * 1. Acquire _Write-Intent-Read_ lock;
+   * 2. Execute [shouldProceedWithWriteAction];
+   * 3. If `true`, proceed with [computation] under _Write_ lock which was atomically upgraded from the previously acquired _Write-Intent-Read_;
+   * 4. If `false`, return without executing [computation];
+   * 5. Release all acquired locks.
+   *
+   * Normally, write actions are heavy -- they need to terminate all existing _Read_ actions and cancel pending ones.
+   * Also, the Platform usually drops caches on write actions.
+   * Sometimes it is possible to avoid the execution of _Write_ action, but the decision needs to be taken with a consistent view of the world.
+   * This function can be useful when the client is able to take this decision, for example, in `readAndWriteAction` group of functions.
+   *
+   * @return the result of the [computation] if it was executed, or `null` if [shouldProceedWithWriteAction] returned `false` .
+   */
+  suspend fun <T : Any> runWriteActionWithCheckInWriteIntent(shouldProceedWithWriteAction: () -> Boolean, computation: () -> T): T?
+
+  /**
+   * @return true if some thread is performing _Write_ action right now
    */
   fun isWriteActionInProgress(): Boolean
 
   /**
-   * @return true if the EDT started to acquire write action but has not acquired it yet.
-   * @see runWriteAction
+   * @return true if someone is blocked or suspended on the acquisition of _Write_ lock
    */
   fun isWriteActionPending(): Boolean
 
   /**
-   * Checks if the write access is currently allowed.
-   *
-   * @return `true` if the write access is currently allowed, `false` otherwise.
-   * @see .assertWriteAccessAllowed
-   * @see .runWriteAction
+   * Checks if the current thread runs with _Write_ lock
    */
   @Contract(pure = true)
   fun isWriteAccessAllowed(): Boolean
 
-  @Deprecated("Use `runReadAction` instead")
-  fun acquireReadActionLock(): CleanupAction
-
-  @Deprecated("Use `runWriteAction`, `WriteAction.run`, or `WriteAction.compute` instead")
-  fun acquireWriteActionLock(marker: Class<*>): CleanupAction
-
   /**
-   * Disable write actions till token will be released.
+   * Disable _Write_ actions on the current thread until [CleanupAction] will be executed.
    */
+  @ApiStatus.Internal
   fun prohibitWriteActionsInside(): CleanupAction
 
-  @ApiStatus.Internal
-  fun setWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener)
-
-  @ApiStatus.Internal
-  fun removeWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener)
-
   /**
-   * Prevents any attempt to use R/W locks inside [action].
+   * Prevents any attempt to use R/W locks on this thread inside [action].
+   * An attempt to take a lock results in [LockAccessDisallowed] exception with [advice] message.
+   *
+   * @throws LockAccessDisallowed on attempt to take a lock inside [action].
    */
   @ApiStatus.Internal
   @Throws(LockAccessDisallowed::class)
-  fun prohibitTakingLocksInsideAndRun(action: Runnable, failSoftly: Boolean, advice: String)
-
-  /**
-   * Allows using R/W locks inside [action].
-   * This is mostly needed for incremental transition from previous approach with unconditional lock acquisiton:
-   * we cannot afford prohibiting taking locks for large regions of the platform
-   */
-  @ApiStatus.Internal
-  @Throws(LockAccessDisallowed::class)
-  fun allowTakingLocksInsideAndRun(action: Runnable)
+  fun prohibitTakingLocksInsideAndRun(action: () -> Unit, advice: String)
 
   /**
    * If locking is prohibited for this thread (via [prohibitTakingLocksInsideAndRun]),
@@ -214,12 +156,23 @@ interface ThreadingSupport {
   @ApiStatus.Internal
   fun getLockingProhibitedAdvice(): String?
 
-  /** DO NOT USE */
+  /**
+   * For an existing [com.intellij.concurrency.currentThreadContext], parallelizes lock and allows to clean it up in [CleanupAction]
+   *
+   * - If the current thread holds no lock, then nothing happens
+   * - If the current thread holds _Read_ lock, a parallelized read action begins:
+   *   all coroutines started with the returned [CoroutineContext] will have read access
+   * - If the current thread holds _Write-Intent-Read_ lock, then a new instance of a lock is created,
+   *   and all coroutines with the returned [CoroutineContext] operate with this new instance of a lock.
+   * - If the current thread holds _Write_ lock, then this Write lock is downgraded to _Write-Intent-Read_. **This is a dangerous operation!**
+   */
   @ApiStatus.Internal
-  fun isInsideUnlockedWriteIntentLock(): Boolean
+  fun parallelizeLock(): Pair<CoroutineContext, CleanupAction>
 
-  @ApiStatus.Internal
-  fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): Pair<CoroutineContext, CleanupAction>
+  /**
+   * Returns current coroutine context element that corresponds to the read-write lock.
+   */
+  fun getLockContextElement(): CoroutineContext
 
   @ApiStatus.Internal
   fun isParallelizedReadAction(context: CoroutineContext): Boolean
@@ -253,13 +206,6 @@ interface ThreadingSupport {
   @TestOnly
   fun <T> releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action: () -> T): T = action()
 
-  /**
-   * Makes [runPreventiveWriteIntentReadAction] no-op inside [action].
-   * This is needed for platform code that is sure that the called action would not abuse locks
-   */
-  @ApiStatus.Internal
-  fun <T> relaxPreventiveLockingActions(action: () -> T) : T
-
   class LockAccessDisallowed(override val message: String) : IllegalStateException(message)
 
   /**
@@ -281,26 +227,65 @@ interface ThreadingSupport {
   fun transferWriteActionAndBlock(blockingExecutor: (RunnableWithTransferredWriteAction) -> Unit, action: Runnable)
 
   /**
-   * This function allows to conditionally execute [action] under write lock while checking a condition provided by [shouldProceedWithWriteAction].
-   *
-   * The function works in the following steps:
-   * 1. Acquire write-intent lock;
-   * 2. Execute [shouldProceedWithWriteAction];
-   * 3. If true, proceed with [action] under write lock which was atomically upgraded from the previously acquired write-intent;
-   * 4. If false, return without executing [action];
-   * 5. Release all acquired locks.
-   *
-   * Normally, write actions are heavy -- they need to terminate all existing read actions and cancel pending ones.
-   * Sometimes it is possible to avoid the execution of write action, but the decision needs to be taken with a consistent worldview.
-   * This function can be useful when the client is able to take this decision, for example, in `readAndWriteAction` group of functions
+   * Adds a [WriteActionListener].
    */
-  @ApiStatus.Internal
-  suspend fun <T : Any> runWriteActionWithCheckInWriteIntent(shouldProceedWithWriteAction: () -> Boolean, action: () -> T): T?
+  fun addWriteActionListener(listener: WriteActionListener)
 
   /**
-   * Executes write action while suspending for lock acquisition.
+   * Removes a [WriteActionListener].
+   *
+   * It is an error to remove a listener that was not added early.
    */
-  suspend fun <T> runWriteAction(action: () -> T): T
+  fun removeWriteActionListener(listener: WriteActionListener)
+
+  /**
+   * Adds a [WriteIntentReadActionListener].
+   */
+  fun addWriteIntentReadActionListener(listener: WriteIntentReadActionListener)
+
+  /**
+   * Removes a [WriteIntentReadActionListener].
+   *
+   * It is an error to remove a listener that was not added early.
+   */
+  fun removeWriteIntentReadActionListener(listener: WriteIntentReadActionListener)
+
+  /**
+   * Add a [ReadActionListener].
+   */
+  fun addReadActionListener(listener: ReadActionListener)
+
+  /**
+   * Removes a [ReadActionListener].
+   *
+   * It is an error to remove a listener that was not added early.
+   */
+  fun removeReadActionListener(listener: ReadActionListener)
+
+  /**
+   * If called inside a write-action, executes the given [action] with write-lock released
+   * (e.g., to allow for write-intent-read-action parallelization).
+   * It's the caller's responsibility to invoke this method only when the model is in an internally consistent state,
+   * so that background threads with read actions don't see half-baked PSI/VFS/etc. The runnable may perform write-actions itself;
+   * callers should be ready for those.
+   */
+  @Deprecated("Do not use: this is a severe violation of IJ Platform contracts")
+  fun executeSuspendingWriteAction(action: () -> Unit)
+
+  @ApiStatus.Internal
+  fun setWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener)
+
+  @ApiStatus.Internal
+  fun removeWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener)
+
+  /**
+   * Returns `true` if there is a currently executing write action of the specified class.
+   *
+   * @param actionClass the class of the write action to return.
+   * @return `true` if the action is running, or `false` if no action of the specified class is currently executing.
+   */
+  @Deprecated("Use `ExternalChangeAction` or custom logic for detecting such actions")
+  fun hasWriteAction(actionClass: Class<*>): Boolean
 
   /**
    * A marker class that helps others to identify that the runnable needs to run quickly

@@ -29,13 +29,13 @@ import java.util.*
 import javax.swing.Icon
 
 /**
- * The core element of the Poly Symbols framework. It is identified through `name` and `qualifiedKind` properties.
+ * The core element of the Poly Symbols framework. It is identified through `name` and `kind` properties.
  * The symbol has a very generic meaning and may represent a variable in some language, or an endpoint of some web server,
  * or a file.
  *
- * Symbols, which share some common characteristics should be grouped using the same `qualifiedKind`.
- * The `qualifiedKind` consists of a `namespace`, which roughly indicates a language or a framework the symbol belongs to,
- * and a `kind`, which roughly indicates, what the symbol basic characteristics are.
+ * Symbols, which share some common characteristics should be grouped using the same `kind`.
+ * The `kind` consists of a `namespace`, which roughly indicates a language or a framework the symbol belongs to,
+ * and a `kindName`, which roughly indicates, what the symbol basic characteristics are.
  *
  * [PolySymbol]s provide a straightforward way of implementing:
  * - navigation support - through [PolySymbol.getNavigationTargets] method
@@ -87,7 +87,7 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
    * Describes which group of symbols (kind) within the particular language
    * or concept (namespace) the symbol belongs to.
    */
-  val qualifiedKind: PolySymbolQualifiedKind
+  val kind: PolySymbolKind
 
   /**
    * The name of the symbol. If the symbol does not have a pattern, the name will be used as-is for matching.
@@ -172,7 +172,7 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
   val presentation: TargetPresentation
     get() {
       // TODO use kind description provider
-      val kindName = kind.replace('-', ' ').lowercase(Locale.US).let {
+      val kindName = kindName.replace('-', ' ').lowercase(Locale.US).let {
         when {
           it.endsWith("ies") -> it.substring(0, it.length - 3) + "y"
           it.endsWith("ses") -> it.substring(0, it.length - 2)

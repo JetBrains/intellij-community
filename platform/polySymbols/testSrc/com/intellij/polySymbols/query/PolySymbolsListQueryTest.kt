@@ -225,17 +225,18 @@ class PolySymbolsListQueryTest : PolySymbolsMockQueryExecutorTestBase() {
             .asSingleSymbol()
         }
       val results = queryExecutor
-        .listSymbolsQuery(parsedPath.subList(0, parsedPath.size - 1), last.qualifiedKind, true) {
+        .listSymbolsQuery(parsedPath.subList(0, parsedPath.size - 1), last.kind, true) {
           if (!includeVirtual) exclude(PolySymbolModifier.VIRTUAL)
           exclude(PolySymbolModifier.ABSTRACT)
         }
         .filter { !it.extension }
-      assertEquals(printMatches(codeCompletionResults, PolySymbolsTestsDebugOutputPrinter), printMatches(results, PolySymbolsTestsDebugOutputPrinter))
+      assertEquals(printMatches(codeCompletionResults, PolySymbolsTestsDebugOutputPrinter),
+                   printMatches(results, PolySymbolsTestsDebugOutputPrinter))
     }
 
     doTest(testPath) {
       queryExecutor
-        .listSymbolsQuery(parsedPath.subList(0, parsedPath.size - 1), last.qualifiedKind, expandPatterns) {
+        .listSymbolsQuery(parsedPath.subList(0, parsedPath.size - 1), last.kind, expandPatterns) {
           if (!includeVirtual) exclude(PolySymbolModifier.VIRTUAL)
           exclude(PolySymbolModifier.ABSTRACT)
         }

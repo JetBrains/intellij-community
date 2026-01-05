@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.openapi.application.*
@@ -68,7 +68,7 @@ object ApplicationActivationStateManager {
           if (ideFrame != null) {
             // getIdeFrameFromWindow returns something from a UI tree, so, if not null, it must be Window
             val publisher = app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC)
-            withContext(Dispatchers.EDT) {
+            withContext(Dispatchers.UiWithModelAccess) {
               publisher.delayedApplicationDeactivated(ideFrame as Window)
             }
           }

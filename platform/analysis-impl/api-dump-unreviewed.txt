@@ -306,7 +306,6 @@ f:com.intellij.codeInsight.completion.OffsetsInFile
 - f:copyWithReplacement(I,I,java.lang.String):com.intellij.codeInsight.completion.OffsetsInFile
 - f:getFile():com.intellij.psi.PsiFile
 - f:getOffsets():com.intellij.codeInsight.completion.OffsetMap
-- f:replaceInCopy(com.intellij.psi.PsiFile,I,I,java.lang.String):java.util.function.Supplier
 - f:toInjectedIfAny(I):com.intellij.codeInsight.completion.OffsetsInFile
 - f:toTopLevelFile():com.intellij.codeInsight.completion.OffsetsInFile
 c:com.intellij.codeInsight.completion.PriorityWeigher

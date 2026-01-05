@@ -15,7 +15,7 @@ typealias EnvExists = Boolean
 sealed interface CreateSdkInfo : Comparable<CreateSdkInfo> {
   @get:IntentionName
   val intentionName: String
-  val sdkCreator: suspend (NeedsConfirmation) -> PyResult<Sdk?>
+  val sdkCreator: suspend (needsConfirmation: NeedsConfirmation) -> PyResult<Sdk?>
 
   /**
    * Nullable SDK is only possible when we requested user confirmation but didn't get it. The idea behind this function is to provide
@@ -38,12 +38,12 @@ sealed interface CreateSdkInfo : Comparable<CreateSdkInfo> {
   data class ExistingEnv(
     val pythonInfo: PythonInfo,
     override val intentionName: String,
-    override val sdkCreator: suspend (NeedsConfirmation) -> PyResult<Sdk?>,
+    override val sdkCreator: suspend (needsConfirmation: NeedsConfirmation) -> PyResult<Sdk?>,
   ) : CreateSdkInfo
 
   data class WillCreateEnv(
     override val intentionName: String,
-    override val sdkCreator: suspend (NeedsConfirmation) -> PyResult<Sdk?>,
+    override val sdkCreator: suspend (needsConfirmation: NeedsConfirmation) -> PyResult<Sdk?>,
   ) : CreateSdkInfo
 }
 
@@ -58,7 +58,7 @@ sealed interface EnvCheckerResult {
 // TODO: Make internal after we drop WSL sdk configurator
 suspend fun prepareSdkCreator(
   envChecker: suspend (CheckExistence) -> EnvCheckerResult,
-  sdkCreator: (EnvExists) -> (suspend (NeedsConfirmation) -> PyResult<Sdk?>),
+  sdkCreator: (EnvExists) -> (suspend (needsConfirmation: NeedsConfirmation) -> PyResult<Sdk?>),
 ): CreateSdkInfo? {
   var res = envChecker(true)
   return when (res) {

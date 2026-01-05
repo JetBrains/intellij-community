@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.JavaImplicitTypeDeclarativeInlayHintsProvider
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
@@ -77,21 +76,6 @@ class Demo {
 }"""
     testAnnotations(text)
   }
-
-  fun testPreview() {
-    doTestPreview("""
-class ImplicitType {
-  void test() {
-    var x/*<# : |[ImplicitType:java.fqn.class]ImplicitType #>*//*<# : ImplicitType #>*/ = someMethod();
-  }
-
-  ImplicitType someMethod() {
-    return null;
-  }
-}
-    """.trimIndent(), JavaImplicitTypeDeclarativeInlayHintsProvider.PROVIDER_ID, JavaImplicitTypeDeclarativeInlayHintsProvider(), JavaLanguage.INSTANCE)
-  }
-
 
   private fun testAnnotations(@Language("Java") text: String) {
     doTestProvider("A.java", text, JavaImplicitTypeDeclarativeInlayHintsProvider())

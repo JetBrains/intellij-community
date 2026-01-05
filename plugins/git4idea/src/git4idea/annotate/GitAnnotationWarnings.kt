@@ -16,11 +16,8 @@ internal class GitAnnotationWarnings(private val project: Project) {
   fun getAnnotationWarnings(gitFileAnnotation: GitFileAnnotation): AnnotationWarning? {
     if (PropertiesComponent.getInstance(project).getBoolean(WARNINGS_DISMISSED_KEY, false)) return null
 
-    val anyRepoIsShallow = GitRepositoryManager.getInstance(project).repositories.any { repository -> repository.info.isShallow }
-    if (!anyRepoIsShallow) return null
-
-    val repository = GitRepositoryManager.getInstance(project)
-      .getRepositoryForFileQuick(gitFileAnnotation.file)?.takeIf { it.info.isShallow }?: return null
+    val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(gitFileAnnotation.root) ?: return null
+    if (!repository.info.isShallow) return null
 
     val unshallowAction = object : AnnotationWarning.Action(GitBundle.message("action.Git.Unshallow.text")) {
       override fun doAction(hideWarning: Runnable) {

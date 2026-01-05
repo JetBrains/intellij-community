@@ -92,7 +92,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/compiler/instrumentation-util",
-    "@lib//:ecj-4-25",
+    "@lib//:eclipse",
     "@lib//:kotlin-stdlib",
     "//libraries/asm",
     "//jps/model-impl",

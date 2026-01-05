@@ -21,7 +21,7 @@ jvm_library(
   name = "compose",
   module_name = "intellij.devkit.compose",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   resources = [":compose_resources"],
   kotlinc_opts = ":custom_compose",
   deps = [
@@ -53,6 +53,12 @@ jvm_library(
     "//libraries/skiko",
     "//java/debugger/impl",
     "//platform/ide-core-impl",
+    "//java/execution/impl",
+    "//platform/execution",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/execution-impl",
+    "//platform/util/jdom",
+    "//platform/external-system-impl:externalSystem-impl",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

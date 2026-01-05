@@ -62,7 +62,7 @@ jvm_library(
     "//libraries/kotlinx/datetime",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
-    "@lib//:kotlin-test",
+    "//libraries/kotlin/test:libraries-kotlinTest",
     "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
     "@lib//:kotlin-test-junit",
     "@lib//:junit5",

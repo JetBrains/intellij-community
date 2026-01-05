@@ -54,7 +54,7 @@ class VcsLogCommitSelectionListenerForDetails(
 
     val unResolvedHashes = mutableSetOf<String>()
     val presentations = detailsList.map { CommitPresentationUtil.buildPresentation(logData.project, it, unResolvedHashes) }
-    val refsModel = logData.dataPack.refsModel
+    val refsModel = logData.graphData.refsModel
     detailsPanel.forEachPanelIndexed { idx, panel ->
       val presentation = presentations[idx]
       panel.setCommit(presentation)

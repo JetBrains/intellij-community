@@ -197,7 +197,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
       .flatMap {
         it.selectShortestWithoutProblems()
           .map { matchResult ->
-            if (owner != null && owner.qualifiedKind.kind != SPECIAL_MATCHED_CONTRIB) {
+            if (owner != null && owner.kind.kindName != SPECIAL_MATCHED_CONTRIB) {
               matchResult.addOwner(owner)
             }
             else matchResult

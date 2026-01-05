@@ -4,20 +4,15 @@ package com.intellij.vcs.log.visible
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.VcsLogCommitStorageIndex
-import com.intellij.vcs.log.VcsLogDataPack
-import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.VcsLogProvider
-import com.intellij.vcs.log.VcsLogRefs
-import com.intellij.vcs.log.data.DataPack
-import com.intellij.vcs.log.data.DataPackBase
+import com.intellij.vcs.log.*
+import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.ConcurrentHashMap
 
 open class VisiblePack @JvmOverloads constructor(
-  val dataPack: DataPackBase,
+  val dataPack: VcsLogGraphData,
   val visibleGraph: VisibleGraph<VcsLogCommitStorageIndex>,
   val canRequestMore: Boolean,
   private val filters: VcsLogFilterCollection,
@@ -28,7 +23,7 @@ open class VisiblePack @JvmOverloads constructor(
   val isFull: Boolean
     get() = dataPack.isFull
 
-  override fun getLogProviders(): MutableMap<VirtualFile?, VcsLogProvider?> {
+  override fun getLogProviders(): Map<VirtualFile, VcsLogProvider> {
     return dataPack.logProviders
   }
 
@@ -45,7 +40,7 @@ open class VisiblePack @JvmOverloads constructor(
   }
 
   open fun getRootAtHead(headCommitIndex: VcsLogCommitStorageIndex): VirtualFile? {
-    return dataPack.refsModel.rootAtHead(headCommitIndex)
+    return dataPack.refsModel.getRootForHeadCommit(headCommitIndex)
   }
 
   override fun <T> getUserData(key: Key<T>): T? {
@@ -65,12 +60,12 @@ open class VisiblePack @JvmOverloads constructor(
            canRequestMore + "}"
   }
 
-  class ErrorVisiblePack(dataPack: DataPackBase, filters: VcsLogFilterCollection, val error: Throwable)
+  class ErrorVisiblePack(dataPack: VcsLogGraphData, filters: VcsLogFilterCollection, val error: Throwable)
     : VisiblePack(dataPack, EmptyVisibleGraph.getInstance(), false, filters)
 
   companion object {
     @JvmField
-    val EMPTY: VisiblePack = object : VisiblePack(DataPack.EMPTY, EmptyVisibleGraph.getInstance(), false,
+    val EMPTY: VisiblePack = object : VisiblePack(VcsLogGraphData.Empty, EmptyVisibleGraph.getInstance(), false,
                                                   VcsLogFilterObject.EMPTY_COLLECTION) {
       override fun toString(): String {
         return "EmptyVisiblePack"

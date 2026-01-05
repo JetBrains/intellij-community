@@ -99,7 +99,7 @@ jvm_library(
     "//libraries/caffeine",
     "//libraries/kotlinx/coroutines/core",
     "//libraries/markdown",
-    "@lib//:kotlin-test",
+    "//libraries/kotlin/test:libraries-kotlinTest",
     "//libraries/kotlinx/coroutines/test",
     "//platform/dvcs-impl:vcs-dvcs-impl",
     "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",

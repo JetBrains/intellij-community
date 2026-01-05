@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.registry.Registry;
@@ -232,7 +233,9 @@ final class UndoClientState implements Disposable {
         action instanceof NonUndoableAction,
         "Undoable actions allowed inside commands only (see com.intellij.openapi.command.CommandProcessor.executeCommand())"
       );
-      CmdEvent cmdEvent = CmdEventTransform.getInstance().createNonUndoable();
+      CmdEvent cmdEvent = ProgressManager.getInstance().computeInNonCancelableSection(
+        () -> CmdEventTransform.getInstance().createNonUndoable()
+      );
       commandStarted(cmdEvent, editorProvider);
       try {
         commandBuilder.addUndoableAction(action);

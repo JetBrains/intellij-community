@@ -22,14 +22,10 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils.UnixFilePermissionB
 import com.intellij.platform.eel.provider.utils.EelPathUtils.incrementalWalkingTransfer
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.produceIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Semaphore
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -44,7 +40,6 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption.*
 import java.nio.file.attribute.*
-import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.FileAlreadyExistsException
 import kotlin.io.path.*
@@ -282,6 +277,7 @@ object EelPathUtils {
     source: Path,
     target: TransferTarget,
     fileAttributesStrategy: FileTransferAttributesStrategy = FileTransferAttributesStrategy.Copy,
+    absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler? = null,
   ): Path {
     if (source.getEelDescriptor() !== LocalEelDescriptor) {
       return source
@@ -294,38 +290,15 @@ object EelPathUtils {
         }
 
         runBlockingMaybeCancellable {
-          service<TransferredContentHolder>().transferIfNeeded(target.descriptor.toEelApi(), source, fileAttributesStrategy)
+          service<TransferredContentHolder>().transferIfNeeded(target.descriptor.toEelApi(), source, fileAttributesStrategy, absoluteSymlinkHandler)
         }
       }
       is TransferTarget.Explicit -> {
         val sink = target.path
-
-        if (source.isDirectory()) { // todo: use checksums for directories?
-          if (!Files.exists(sink)) {
-            walkingTransfer(source, sink, false, fileAttributesStrategy)
-          }
-
-          sink
+        runBlockingMaybeCancellable {
+          incrementalWalkingTransfer(source, sink, fileAttributesStrategy, absoluteSymlinkHandler)
         }
-        else {
-          val remoteHash = if (Files.exists(sink)) calculateFileHashUsingPartialContent(sink) else ""
-          val sourceHash = calculateFileHashUsingPartialContent(source)
-
-          if (sourceHash != remoteHash) {
-            val tempSink = sink.resolveSibling(sink.fileName.toString() + ".part")
-
-            try {
-              walkingTransfer(source, tempSink, false, fileAttributesStrategy)
-              Files.move(tempSink, sink, StandardCopyOption.REPLACE_EXISTING)
-            }
-            finally {
-              // This file can only exist if `Files.move` hasn't been called
-              Files.deleteIfExists(tempSink)
-            }
-          }
-
-          sink
-        }
+        return sink
       }
     }
   }
@@ -343,31 +316,27 @@ object EelPathUtils {
     data class CacheKey(
       val sourcePathString: String,
       val fileAttributesStrategy: FileTransferAttributesStrategy,
+      val absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler?,
     )
 
     data class CacheValue(
-      val sourceHash: String,
       val transferredFilePath: Path
     )
 
     private class Cache: ConcurrentHashMap<CacheKey, Deferred<CacheValue>>()
 
-    // eel api instance -> (source path string -> source hash -> transferred file)
+    // eel api instance -> (source path string -> transferred file)
     private val caches = CollectionFactory.createConcurrentWeakIdentityMap<EelApi, Cache>()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun transferIfNeeded(eel: EelApi, source: Path, fileAttributesStrategy: FileTransferAttributesStrategy): Path {
+    suspend fun transferIfNeeded(eel: EelApi, source: Path, fileAttributesStrategy: FileTransferAttributesStrategy, absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler?): Path {
       val cache = caches.computeIfAbsent(eel) { Cache() }
 
-      return cache.compute(CacheKey(source.toString(), fileAttributesStrategy)) { _, deferred ->
-        val sourceHash by lazy { calculateFileHashUsingMetadata(source) }
-
+      return cache.compute(CacheKey(source.toString(), fileAttributesStrategy, absoluteSymlinkHandler)) { _, deferred ->
+        var targetPath: Path? = null
         if (deferred != null) {
           if (deferred.isCompleted) {
-            val (oldSourceHash, _) = deferred.getCompleted()
-            if (oldSourceHash == sourceHash) {
-              return@compute deferred
-            }
+            targetPath = deferred.getCompleted().transferredFilePath
           }
           else {
             return@compute deferred
@@ -375,9 +344,9 @@ object EelPathUtils {
         }
 
         scope.async {
-          val temp = eel.createTempFor(source, true)
-          walkingTransfer(source, temp, false, fileAttributesStrategy)
-          CacheValue(sourceHash, temp)
+          val targetPath = targetPath ?: eel.createTempFor(source, true)
+          incrementalWalkingTransfer(source, targetPath, fileAttributesStrategy, absoluteSymlinkHandler)
+          CacheValue(targetPath)
         }
       }!!.await().transferredFilePath
     }
@@ -390,134 +359,6 @@ object EelPathUtils {
     else {
       fs.createTemporaryFile().suffix(source.name).deleteOnExit(deleteOnExit).getOrThrowFileSystemException().asNioPath()
     }
-  }
-
-  /**
-   * Calculates a SHA-256 hash for a given file using only its metadata.
-   *
-   * This function computes a hash based solely on file attributes:
-   * - File size.
-   * - Last modified time.
-   * - Creation time.
-   * - File key (if available).
-   * - File permissions (if available).
-   *
-   * @param path the file path for which the hash is calculated.
-   * @return a hexadecimal string representing the computed SHA-256 hash.
-   */
-  private fun calculateFileHashUsingMetadata(path: Path): String {
-    val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
-    val fileSize = attributes.size()
-    val lastModified = attributes.lastModifiedTime().toMillis()
-    val creationTime = attributes.creationTime().toMillis()
-    val fileKey = attributes.fileKey()?.toString() ?: ""
-
-    val permissions = if (attributes is PosixFileAttributes) {
-      val sb = StringBuilder()
-      sb.append(attributes.group().name)
-      sb.append("\\0")
-      sb.append(attributes.owner().name)
-      for (permission in attributes.permissions()) {
-        sb.append(permission.name)
-      }
-      sb.toString()
-    }
-    else {
-      ""
-    }
-
-    val digest = MessageDigest.getInstance("SHA-256")
-
-    digest.update(fileSize.toString().toByteArray())
-    digest.update(lastModified.toString().toByteArray())
-    digest.update(creationTime.toString().toByteArray())
-    digest.update(fileKey.toByteArray())
-    digest.update(permissions.toByteArray())
-
-    return digest.digest().joinToString("") { "%02x".format(it) }
-  }
-
-  /**
-   * Calculates a SHA-256 hash for a given file by reading only selected parts of its content.
-   *
-   * This function computes a hash by updating a SHA-256 digest with:
-   * - The file size (converted to a string and then to bytes).
-   * - Partial content of the file read in 1 MB chunks:
-   *   - **Small files (<= 2 MB):** the entire file content is read.
-   *   - **Medium files (<= 3 MB):** only the first and last 1 MB chunks are read.
-   *   - **Large files (> 3 MB):** three chunks are read – the first, middle, and last 1 MB segments.
-   *
-   * This selective reading strategy minimizes I/O overhead while capturing key parts of the file.
-   *
-   * @param path the file path for which the hash is calculated.
-   * @return a hexadecimal string representing the computed SHA-256 hash.
-   */
-  private fun calculateFileHashUsingPartialContent(path: Path): String {
-    val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
-    val fileSize = attributes.size()
-    val digest = MessageDigest.getInstance("SHA-256")
-
-    digest.update(fileSize.toString().toByteArray())
-
-    // (1 MB)
-    val chunkSize = 1024 * 1024L
-
-    fun readFully(channel: FileChannel, buffer: ByteBuffer, startPosition: Long) {
-      var pos = startPosition
-      while (buffer.hasRemaining()) {
-        val bytesRead = channel.read(buffer, pos)
-        if (bytesRead <= 0) break
-        pos += bytesRead
-      }
-    }
-
-    FileChannel.open(path, READ).use { channel ->
-      when {
-        fileSize <= chunkSize * 2 -> { // For small files, read the entire file content
-          val buffer = ByteBuffer.allocate(fileSize.toInt())
-          readFully(channel, buffer, 0)
-          buffer.flip()
-          digest.update(buffer)
-        }
-        fileSize <= chunkSize * 3 -> { // For medium files, read first and last chunks
-          val buffer = ByteBuffer.allocate(chunkSize.toInt())
-
-          // Read the first chunk
-          readFully(channel, buffer, 0)
-          buffer.flip()
-          digest.update(buffer)
-
-          // Read the last chunk
-          buffer.clear()
-          readFully(channel, buffer, fileSize - chunkSize)
-          buffer.flip()
-          digest.update(buffer)
-        }
-        else -> { // For large files, read first, middle, and last chunks
-          val buffer = ByteBuffer.allocate(chunkSize.toInt())
-
-          // Read the first chunk
-          readFully(channel, buffer, 0)
-          buffer.flip()
-          digest.update(buffer)
-
-          // Read the middle chunk
-          buffer.clear()
-          val middlePosition = fileSize / 2 - chunkSize / 2
-          readFully(channel, buffer, middlePosition)
-          buffer.flip()
-          digest.update(buffer)
-
-          // Read the last chunk
-          buffer.clear()
-          readFully(channel, buffer, fileSize - chunkSize)
-          buffer.flip()
-          digest.update(buffer)
-        }
-      }
-    }
-
-    return digest.digest().joinToString("") { "%02x".format(it) }
   }
 
   @JvmStatic
@@ -566,8 +407,6 @@ object EelPathUtils {
   }
 
   @RequiresBackgroundThread
-  @RequiresBlockingContext
-  @VisibleForTesting
   fun walkingTransfer(
     sourceRoot: Path,
     targetRoot: Path,
@@ -575,9 +414,14 @@ object EelPathUtils {
     fileAttributesStrategy: FileTransferAttributesStrategy,
     absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler? = null,
   ) {
-    if (Registry.`is`("ijent.incremental.walking.transfer") && !removeSource) {
+    if (Registry.`is`("ijent.incremental.walking.transfer")) {
       runBlockingMaybeCancellable {
         incrementalWalkingTransfer(sourceRoot, targetRoot, fileAttributesStrategy, absoluteSymlinkHandler)
+        if (removeSource) {
+          val sourceEel = sourceRoot.asEelPath()
+          val sourceEelApi = sourceEel.descriptor.toEelApi()
+          sourceEelApi.fs.delete(sourceEel, true).getOrThrow()
+        }
       }
       return
     }
@@ -672,22 +516,33 @@ object EelPathUtils {
 
 
   /**
+   * Get individual parts of a relative path.
+   * Example: "a/b" -> ["a", "b"]
+   */
+  private fun getRelativePathParts(path: Path): List<String> {
+    val parts = mutableListOf<String>()
+    var current: Path? = path
+
+    while (current != null) {
+      val fileName = current.fileName
+      if (fileName != null) {
+        parts.add(fileName.toString())
+      }
+      current = current.parent
+    }
+
+    return parts.reversed()
+  }
+
+  /**
    * Compare individual parts of two relative paths lexicographically.
    * Case-sensitive by default.
    * A shorter component is considered lower compared to a longer component.
    * Example: "a/b" < "ab/b" == True
    */
   private fun compareRelativePathComponents(left: Path, right: Path, ignoreCase: Boolean = false): Int {
-    val left = left
-      .toString()
-      .replace("\\", "/")
-      .split("/")
-
-    val right = right
-      .toString()
-      .replace("\\", "/")
-      .split("/")
-
+    val left = getRelativePathParts(left)
+    val right = getRelativePathParts(right)
     for (i in 0 until min(left.size, right.size)) {
       val result = left[i].compareTo(right[i], ignoreCase)
       if (result != 0) {
@@ -1117,7 +972,6 @@ object EelPathUtils {
    * @param sourceRoot Has to be a valid path to a directory
    * @param targetRoot Has to be a valid path to a directory
    */
-  @RequiresBackgroundThread
   @VisibleForTesting
   suspend fun directoryOnlySync(
     sourceRoot: EelPath,
@@ -1209,7 +1063,6 @@ object EelPathUtils {
    * using [FileTransferAttributesStrategy]. Relative symlinks are transferred as is, and the target path does not have to be valid.
    * Permissions on symlinks are not transferred as they are ignored by on Unix-like systems.
    */
-  @RequiresBackgroundThread
   private suspend fun incrementalWalkingTransfer(
     sourceRoot: Path,
     targetRoot: Path,
@@ -1221,14 +1074,25 @@ object EelPathUtils {
       val remoteDescriptor = targetRootEel.descriptor
       val remoteEelApi = remoteDescriptor.toEelApi()
       val localPathEel = sourceRoot.asEelPath()
+      val sourceDescriptor = localPathEel.descriptor
       val localOsFamily = localPathEel.descriptor.osFamily
       val remoteOsFamily = targetRoot.getEelDescriptor().osFamily
 
       val sourceAttrs = sourceRoot.fileAttributesView<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
-      val targetAttrs = targetRoot.fileAttributesView<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
+      // handle target path not existing
+      val targetAttrs = try {
+        targetRoot.fileAttributesViewOrNull<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS)?.readAttributes()
+      }
+      catch (_: IOException) {
+        null
+      }
+
       when {
         sourceAttrs.isDirectory -> {
-          if (!targetAttrs.isDirectory) {
+          if (targetAttrs == null) {
+            Files.createDirectory(targetRoot)
+          }
+          else if (!targetAttrs.isDirectory) {
             remoteEelApi.fs.delete(targetRootEel, true).getOrThrow()
             Files.createDirectory(targetRoot)
           }
@@ -1237,14 +1101,21 @@ object EelPathUtils {
           }
         }
         sourceAttrs.isRegularFile -> {
-          if (!targetAttrs.isRegularFile) {
+          if (targetAttrs == null) {
+            Files.createFile(targetRoot)
+          }
+          else if (!targetAttrs.isRegularFile) {
             remoteEelApi.fs.delete(targetRootEel, true).getOrThrow()
             Files.createFile(targetRoot)
           }
         }
         sourceAttrs.isSymbolicLink -> {
+          if (targetAttrs == null) {
+            // a placeholder file is created so that, in the case of an absolute symlink, the user lambda receives the expected target path (where the absolute symlink should be)
+            Files.createFile(targetRoot)
+          }
           // if targetRoot is a directory, it should be deleted to prevent it from being traversed
-          if (targetAttrs.isDirectory) {
+          else if (targetAttrs.isDirectory) {
             remoteEelApi.fs.delete(targetRootEel, true).getOrThrow()
             // a placeholder file is created so that, in the case of an absolute symlink, the user lambda receives the expected target path (where the absolute symlink should be)
             Files.createFile(targetRoot)
@@ -1274,10 +1145,6 @@ object EelPathUtils {
 
       val semaphore = Semaphore(4) // TODO: fine tune
 
-      // NOTE: The buffer size was chosen based on benchmark results, which showed that performance improvements leveled off at 64 KiB
-      // TODO: different buffer size for larger files
-      val bufferSize = 64 * 1024
-
       mergeHashByPath(this, sourceRoot, targetRoot, localHashes.await(), remoteHashes.await(), fileAttributesStrategy, false).collect { diffOp ->
         // semaphore is used to limit how many files are being synced at any given moment
         semaphore.acquire()
@@ -1306,9 +1173,37 @@ object EelPathUtils {
                   is WalkDirectoryEntry.Type.Regular -> {
                     val remoteAbsoluteTempPath = remoteAbsolutePath.resolveSibling(remoteAbsolutePath.fileName.toString() + ".part")
                     try {
-                      Files.newInputStream(localFileNioPath, READ).use { localFile ->
-                        Files.newOutputStream(remoteAbsoluteTempPath, WRITE, CREATE, TRUNCATE_EXISTING).use { remoteFile ->
-                          localFile.copyTo(remoteFile, bufferSize)
+                      if (sourceDescriptor === remoteDescriptor) {
+                        Files.newInputStream(localFileNioPath, READ).use { localFile ->
+                          Files.newOutputStream(remoteAbsoluteTempPath, WRITE, CREATE, TRUNCATE_EXISTING).use { remoteFile ->
+                            // this buffer size gave the best overall performance when benchmarking
+                            localFile.copyTo(remoteFile, 64 * 1024)
+                          }
+                        }
+                      }
+                      else {
+                        val opts = WriteOptionsBuilder(remoteAbsoluteTempPath.asEelPath())
+                          .allowCreate()
+                          .truncateExisting(true)
+                          .build()
+
+                        val chunks = flow {
+                          FileChannel.open(localFileNioPath, READ).use { chan ->
+                            while (true) {
+                              // this buffer size gave the best overall performance when benchmarking
+                              val buffer = ByteBuffer.allocate(256 * 1024)
+                              val bytesRead = chan.read(buffer)
+                              if (bytesRead <= 0) break
+                              buffer.flip()
+                              emit(buffer)
+                            }
+                          }
+                          // buffer size chosen randomly, but intentionally a higher number to have chunks ready at all times
+                        }.flowOn(Dispatchers.IO).buffer(5)
+                        val writeRes = remoteEelApi.fs.streamingWrite(chunks, opts)
+                        when (writeRes) {
+                          is StreamingWriteResult.Error -> error("Streaming write failed writing file a remote machine: ${writeRes.error}")
+                          is StreamingWriteResult.Ok -> {}
                         }
                       }
                       Files.move(remoteAbsoluteTempPath, remoteAbsolutePath, StandardCopyOption.REPLACE_EXISTING)
@@ -1347,12 +1242,41 @@ object EelPathUtils {
                 Files.delete(diffOp.remoteFile.path.asNioPath())
               }
               is DiffOperation.UpdateContents -> {
+                val sourcePathNio = diffOp.localFile.path.asNioPath()
                 val remotePathNio = diffOp.remoteFile.path.asNioPath()
                 val tempRemotePath = remotePathNio.resolveSibling(remotePathNio.fileName.toString() + ".part")
                 try {
-                  Files.newInputStream(diffOp.localFile.path.asNioPath(), READ).use { localFile ->
-                    Files.newOutputStream(tempRemotePath, WRITE, TRUNCATE_EXISTING, CREATE).use { remoteFile ->
-                      localFile.copyToAsync(remoteFile, bufferSize)
+                  if (sourceDescriptor === remoteDescriptor) {
+                    Files.newInputStream(sourcePathNio, READ).use { localFile ->
+                      Files.newOutputStream(tempRemotePath, WRITE, TRUNCATE_EXISTING, CREATE).use { remoteFile ->
+                        // this buffer size gave the best overall performance when benchmarking
+                        localFile.copyTo(remoteFile, 64 * 1024)
+                      }
+                    }
+                  }
+                  else {
+                    val opts = WriteOptionsBuilder(tempRemotePath.asEelPath())
+                      .allowCreate()
+                      .truncateExisting(true)
+                      .build()
+
+                    val chunks = flow {
+                      FileChannel.open(sourcePathNio, READ).use { chan ->
+                        while (true) {
+                          // this buffer size gave the best overall performance when benchmarking
+                          val buffer = ByteBuffer.allocate(256 * 1024)
+                          val bytesRead = chan.read(buffer)
+                          if (bytesRead <= 0) break
+                          buffer.flip()
+                          emit(buffer)
+                        }
+                      }
+                      // buffer size chosen randomly, but intentionally a higher number to have chunks ready at all times
+                    }.flowOn(Dispatchers.IO).buffer(5)
+                    val writeRes = remoteEelApi.fs.streamingWrite(chunks, opts)
+                    when (writeRes) {
+                      is StreamingWriteResult.Error -> error("Streaming write failed writing file a remote machine: ${writeRes.error}")
+                      is StreamingWriteResult.Ok -> {}
                     }
                   }
                   Files.move(tempRemotePath, remotePathNio, StandardCopyOption.REPLACE_EXISTING)

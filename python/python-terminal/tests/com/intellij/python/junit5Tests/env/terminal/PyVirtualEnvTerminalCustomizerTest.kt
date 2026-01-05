@@ -28,6 +28,7 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.persist
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -119,7 +120,7 @@ class PyVirtualEnvTerminalCustomizerTest {
         val sdk = createCondaEnv(condaEnv, envDir).createSdkFromThisEnv(null, emptyList())
         sdkToDelete = sdk
         sdk.persist()
-        ModuleRootModificationUtil.setModuleSdk(moduleFixture.get(), sdk)
+        moduleFixture.get().pythonSdk = sdk
         Pair(Path(sdk.homePath!!), envDir.toRealPath().pathString)
       }
       else {

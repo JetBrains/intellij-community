@@ -14,21 +14,22 @@ import org.jetbrains.kotlin.konan.target.TargetSupportException
 import java.nio.file.Path
 import kotlin.io.path.exists
 
-const val NATIVE_PREBUILT_DEV_CDN_URL = "https://download-cdn.jetbrains.com/kotlin/native/builds/dev"
-const val NATIVE_PREBUILT_RELEASE_CDN_URL = "https://download-cdn.jetbrains.com/kotlin/native/builds/releases"
+const val NATIVE_PREBUILT_DEV_CDN_URL = "https://packages.jetbrains.team/maven/p/kt/dev/org/jetbrains/kotlin/kotlin-native-prebuilt"
+const val NATIVE_PREBUILT_RELEASE_CDN_URL = "https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-native-prebuilt"
 
 @Throws(TargetSupportException::class)
 fun getNativePrebuilt(version: String, platform: String, communityRoot: BuildDependenciesCommunityRoot): Path {
     if (!KotlinNativeHostSupportDetector.isNativeHostSupported() && platform == HostManager.platformName())
         throw TargetSupportException("kotlin-native-prebuilt can't be downloaded as it doesn't exist for the host: ${platform}")
 
-    val prebuilt = "kotlin-native-prebuilt-$platform-$version"
-    val archiveName = if (HostManager.hostIsMingw) "$prebuilt.zip" else "$prebuilt.tar.gz"
+    val downloadFileName = "kotlin-native-prebuilt-$version-$platform"
+    val tarDirectoryRoot = "kotlin-native-prebuilt-$platform-$version"
+    val downloadArchiveName = if (HostManager.hostIsMingw) "$downloadFileName.zip" else "$downloadFileName.tar.gz"
     val cdnUrl = if ("dev" in version) NATIVE_PREBUILT_DEV_CDN_URL else NATIVE_PREBUILT_RELEASE_CDN_URL
-    val downloadUrl = "$cdnUrl/$version/$platform/$archiveName"
+    val downloadUrl = "$cdnUrl/$version/$downloadArchiveName"
     val outDir = Path.of(PathManager.getCommunityHomePath()).resolve("out")
-    val expandedDir = outDir.resolve(archiveName)
-    val target = expandedDir.resolve(prebuilt)
+    val expandedDir = outDir.resolve(downloadArchiveName)
+    val target = expandedDir.resolve(tarDirectoryRoot)
 
     if (!target.exists()) {
         val archiveFilePath = downloadFileToCacheLocationSync(downloadUrl, communityRoot)

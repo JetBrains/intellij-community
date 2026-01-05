@@ -2345,6 +2345,9 @@
         <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ClassType" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Do not hardcode &quot;.venv&quot;, use constant" description="It is better to use constant from the suggested class. Moreover, read doc carefully. It could be you do not need it. " suppressId="VENV_IS_OK" problemDescriptor="&quot;.venv&quot; hardcoded instead of a constant" text="&quot;.venv&quot;" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.jetbrains.python.venvReader.VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="Do not use jdi mirrorOf directly" problemDescriptor="Do not use jdi mirrorOf directly - use DebuggerUtilsEx.mirrorOfString instead" text="$Instance$.mirrorOf($Parameter$)" recursive="true" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.VirtualMachine" exprTypeWithinHierarchy="true" within="" contains="" />
@@ -4023,6 +4026,9 @@
     </inspection_tool>
     <inspection_tool class="e2e1d7cc-54f2-3e52-bbfa-26850aa022b0" enabled="true" level="WEAK WARNING" enabled_by_default="false" editorAttributes="INFO_ATTRIBUTES">
       <scope name="Go" level="WEAK WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="e83958b8-8081-30c2-8dc9-48d2d0383511" enabled="true" level="WARNING" enabled_by_default="false">
+      <scope name="Python" level="WARNING" enabled="true" />
     </inspection_tool>
     <inspection_tool class="jol" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="osmorcClassInDefaultPackage" enabled="false" level="ERROR" enabled_by_default="false" />

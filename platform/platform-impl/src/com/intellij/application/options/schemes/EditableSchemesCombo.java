@@ -249,4 +249,8 @@ public final class EditableSchemesCombo<T extends Scheme> {
     getComponent().setEnabled(enabled);
     myComboBox.setEnabled(enabled);
   }
+
+  public void setComboBoxAccessibleName(@NotNull @Nls String name) {
+    myComboBox.getAccessibleContext().setAccessibleName(name);
+  }
 }

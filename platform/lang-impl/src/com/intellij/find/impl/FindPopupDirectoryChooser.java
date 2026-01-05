@@ -71,10 +71,13 @@ public final class FindPopupDirectoryChooser extends JPanel {
 
     ActionListener restartSearchListener = e -> myFindPopupPanel.scheduleResultsUpdate();
     myDirectoryComboBox.addActionListener(restartSearchListener);
+    myDirectoryComboBox.getAccessibleContext().setAccessibleName(FindBundle.message("find.usages.directory.combobox.accessible.name"));
 
     FixedSizeButton mySelectDirectoryButton = new FixedSizeButton(myDirectoryComboBox);
     TextFieldWithBrowseButton.MyDoClickAction.addTo(mySelectDirectoryButton, myDirectoryComboBox);
     mySelectDirectoryButton.setMargin(JBInsets.emptyInsets());
+    mySelectDirectoryButton.getAccessibleContext().setAccessibleName(FindBundle.message(
+      "find.usages.select.directory.button.accessible.name"));
 
     // TODO: Remove this 'if' branch once FindKey is enabled by default. Keep only the 'else' branch.
     if (!FindKey.isEnabled()) {

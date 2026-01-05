@@ -19,7 +19,7 @@ class PyDataViewerPanel(
   val project: Project,
   val frameAccessor: PyFrameAccessor,
   private var isPanelFromFactory: Boolean = false,
-) : JPanel(BorderLayout()), Disposable {
+) : JPanel(BorderLayout()), Disposable.Default {
 
   var component: PyDataViewerAbstractPanel
 
@@ -49,7 +49,7 @@ class PyDataViewerPanel(
   }
 
   fun addListener(onNameChangedListener: PyDataViewerAbstractPanel.OnNameChangedListener) {
-    component.addListener(onNameChangedListener)
+    component.addNameChangedListener(onNameChangedListener)
   }
 
   fun switchBetweenCommunityAndFactoriesTables() {
@@ -102,10 +102,8 @@ class PyDataViewerPanel(
     addDataProvider(this, toolbarDataProvider)
   }
 
-  override fun dispose() {}
-
   companion object {
-    val PY_DATA_VIEWER_PANEL_KEY: DataKey<PyDataViewerPanel> = DataKey.create<PyDataViewerPanel>("PY_DATA_VIEWER_PANEL_KEY")
+    val PY_DATA_VIEWER_PANEL_KEY: DataKey<PyDataViewerPanel> = DataKey.create("PY_DATA_VIEWER_PANEL_KEY")
 
     fun addDataProvider(component: JComponent, provider: DataProvider) {
       val currentProvider = DataManager.getDataProvider(component)

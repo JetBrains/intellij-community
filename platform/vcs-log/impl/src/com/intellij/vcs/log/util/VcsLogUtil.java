@@ -21,8 +21,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.CompressedRefs;
-import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
@@ -36,7 +34,6 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.VcsLogManager.findLogProviders;
@@ -159,7 +156,7 @@ public final class VcsLogUtil {
 
     String branchName = null;
     Set<VirtualFile> checkedRoots = new HashSet<>();
-    for (VcsRef branch : refs.getBranches()) {
+    for (VcsRef branch : VcsLogRefsKt.getBranches(refs)) {
       if (!filter.matches(branch.getName())) continue;
 
       if (branchName == null) {
@@ -217,11 +214,10 @@ public final class VcsLogUtil {
     return s.length() == FULL_HASH_LENGTH && HASH_REGEX.matcher(s).matches();
   }
 
-  public static @Nullable VcsRef findBranch(@NotNull RefsModel refs, @NotNull VirtualFile root, @NotNull String branchName) {
-    CompressedRefs compressedRefs = refs.getAllRefsByRoot().get(root);
-    if (compressedRefs == null) return null;
-    Stream<VcsRef> branches = compressedRefs.streamBranches();
-    return branches.filter(vcsRef -> vcsRef.getName().equals(branchName)).findFirst().orElse(null);
+  public static @Nullable VcsRef findBranch(@NotNull VcsLogRefs refs, @NotNull VirtualFile root, @NotNull String branchName) {
+    VcsLogRefsOfSingleRoot rootRefs = refs.getRefsByRoot().get(root);
+    if (rootRefs == null) return null;
+    return ContainerUtil.find(rootRefs.getBranches().iterator(), (ref) -> ref.getName().equals(branchName));
   }
 
   public static @NotNull List<Change> collectChanges(@NotNull List<? extends VcsFullCommitDetails> detailsList) {

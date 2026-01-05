@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.currentThreadContext
@@ -49,23 +49,6 @@ import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 class PlatformUtilitiesTest {
-
-  @Test
-  fun `relaxing preventive actions leads to absence of lock`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
-    withContext(Dispatchers.UiWithModelAccess) {
-      assertThat(application.isWriteIntentLockAcquired).isFalse
-      getGlobalThreadingSupport().runPreventiveWriteIntentReadAction {
-        assertThat(application.isWriteIntentLockAcquired).isTrue
-      }
-      getGlobalThreadingSupport().relaxPreventiveLockingActions {
-        getGlobalThreadingSupport().runPreventiveWriteIntentReadAction {
-          assertThat(application.isWriteIntentLockAcquired).isFalse
-        }
-      }
-
-    }
-
-  }
 
   @Test
   fun `invokeAndWaitRelaxed does not take lock`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
@@ -362,7 +345,7 @@ class PlatformUtilitiesTest {
 
   @Test
   fun `parallelization of write-intent lock removes write-intent access`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val (lockContext, lockCleanup) = getGlobalThreadingSupport().getPermitAsContextElement(currentThreadContext(), true)
+    val (lockContext, lockCleanup) = getGlobalThreadingSupport().parallelizeLock()
     installThreadContext(lockContext).use {
       try {
         assertThat(application.isWriteIntentLockAcquired).isFalse
@@ -510,6 +493,23 @@ class PlatformUtilitiesTest {
     job.start()
     finalization.asCompletableFuture().join()
     ref.get()?.let { throw it }
+  }
+
+  @Test
+  fun `NBRA is cancellable in its busy wait`(): Unit = timeoutRunBlocking {
+    val currentJob = Job(coroutineContext.job)
+    launch(Dispatchers.Default) {
+      backgroundWriteAction {
+        currentJob.asCompletableFuture().join()
+      }
+    }
+    delay(10)
+    val raJob = launch(Dispatchers.Default) {
+      ReadAction.nonBlocking(Callable { true }).executeSynchronously()
+    }
+    delay(100)
+    raJob.cancelAndJoin()
+    currentJob.complete()
   }
 
 }

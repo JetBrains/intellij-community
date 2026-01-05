@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
+import static com.intellij.ide.todo.rpc.TodoHelperKt.getFilesWithTodos;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
@@ -46,6 +47,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+
+import static com.intellij.ide.todo.TodoImplementationChooserKt.shouldUseSplitTodo;
 
 public abstract class TodoTreeBuilder implements Disposable {
   public static final Comparator<NodeDescriptor<?>> NODE_DESCRIPTOR_COMPARATOR =
@@ -327,6 +330,9 @@ public abstract class TodoTreeBuilder implements Disposable {
    */
   @RequiresBackgroundThread
   protected final void markFileAsDirty(@NotNull VirtualFile file) {
+    // Filter out in-memory files and remote files (e.g., ThinClientVirtualFile) that don't have valid parent directories
+    // and trigger expensive synchronous network calls when content is accessed
+    //if (!(file instanceof LightVirtualFile) && file.getParent() != null) {
     if (!(file instanceof LightVirtualFile)) {
       myDirtyFileSet.add(file);
     }
@@ -345,14 +351,18 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   @RequiresBackgroundThread
   protected void collectFiles(@NotNull Consumer<? super @NotNull PsiFile> consumer) {
-    TodoTreeStructure treeStructure = getTodoTreeStructure();
-    PsiTodoSearchHelper searchHelper = getSearchHelper();
-    searchHelper.processFilesWithTodoItems(psiFile -> {
-      if (searchHelper.getTodoItemsCount(psiFile) > 0 && treeStructure.accept(psiFile)) {
-        consumer.accept(psiFile);
-      }
-      return true;
-    });
+    if (shouldUseSplitTodo()) {
+      myCoroutineHelper.collectFilesFromFlow(getTodoTreeStructure().getTodoFilter(), consumer);
+    } else {
+      TodoTreeStructure treeStructure = getTodoTreeStructure();
+      PsiTodoSearchHelper searchHelper = getSearchHelper();
+      searchHelper.processFilesWithTodoItems(psiFile -> {
+        if (searchHelper.getTodoItemsCount(psiFile) > 0 && treeStructure.accept(psiFile)) {
+          consumer.accept(psiFile);
+        }
+        return true;
+      });
+    }
   }
 
   @RequiresBackgroundThread

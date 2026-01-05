@@ -264,6 +264,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
   }
 
+  /**
+   * let LookupImpl know that user changed selected element
+   * @see #isSelectionTouched()
+   */
   public void markSelectionTouched() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ThreadingAssertions.assertEventDispatchThread();

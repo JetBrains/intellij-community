@@ -9,10 +9,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.RefGroup;
-import com.intellij.vcs.log.VcsLogBundle;
-import com.intellij.vcs.log.VcsLogDataPack;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +47,7 @@ public abstract class BranchPopupBuilder {
                                       @Nullable Collection<? extends VirtualFile> visibleRoots,
                                       @Nullable List<? extends List<String>> recentItems) {
     Groups filteredGroups = new Groups();
-    Collection<VcsRef> allRefs = dataPack.getRefs().getBranches();
+    Collection<VcsRef> allRefs = VcsLogRefsKt.getBranches(dataPack.getRefs());
     for (Map.Entry<VirtualFile, Set<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
       VirtualFile root = entry.getKey();
       if (visibleRoots != null && !visibleRoots.contains(root)) continue;

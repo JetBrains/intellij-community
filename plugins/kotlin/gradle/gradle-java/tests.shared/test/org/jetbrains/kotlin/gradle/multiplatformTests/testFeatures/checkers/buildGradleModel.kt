@@ -18,7 +18,7 @@ fun <T : Any> KotlinSyncTestsContext.buildGradleModel(
 ): BuiltGradleModel<T> {
     require(this is KotlinMppTestsContext) { "buildGradleModel works only with KotlinMppTestsContext"}
     return org.jetbrains.kotlin.idea.codeInsight.gradle.buildGradleModel(
-        this.testProjectRoot, testProperties.gradleVersion, gradleJdkPath.absolutePath, clazz, debuggerOptions
+        this.testProjectRoot, testProperties.gradleVersion.version, gradleJdkPath.absolutePath, clazz, debuggerOptions
     )
 }
 

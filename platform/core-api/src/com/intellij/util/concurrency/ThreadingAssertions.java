@@ -135,7 +135,7 @@ public final class ThreadingAssertions {
   }
 
   private static void trySoftAssertReadAccessWhenLocksAreForbidden(@NotNull Application application) {
-    String advice = application.isLockingProhibited();
+    String advice = application.getLockProhibitedAdvice();
     if (advice != null) {
       getLogger().error(createLockingForbiddenException(READ_ACCESS_REQUIRED_WHILE_LOCKS_ARE_FORBIDDEN + "\n" + advice));
     }
@@ -204,7 +204,7 @@ public final class ThreadingAssertions {
   }
 
   private static void trySoftAssertWriteIntentAccessWhenLocksAreForbidden(@NotNull Application application) {
-    String advice = application.isLockingProhibited();
+    String advice = application.getLockProhibitedAdvice();
     if (advice != null) {
       getLogger().error(createLockingForbiddenException(WRITE_INTENT_ACCESS_REQUIRED_WHILE_LOCKS_ARE_FORBIDDEN + "\n" + advice));
     }
@@ -235,7 +235,7 @@ public final class ThreadingAssertions {
   }
 
   private static void trySoftAssertWriteAccessWhenLocksAreForbidden(@NotNull Application application) {
-    String advice = application.isLockingProhibited();
+    String advice = application.getLockProhibitedAdvice();
     if (advice != null) {
       getLogger().error(createLockingForbiddenException(WRITE_ACCESS_REQUIRED_WHILE_LOCKS_ARE_FORBIDDEN + "\n" + advice));
     }

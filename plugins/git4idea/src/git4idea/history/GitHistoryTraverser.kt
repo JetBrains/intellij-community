@@ -140,7 +140,7 @@ interface GitHistoryTraverser {
   companion object {
     fun create(project: Project, parentDisposable: Disposable): GitHistoryTraverser? {
       val logData = VcsProjectLog.getInstance(project).dataManager
-                      ?.takeIf { it.dataPack.isFull } ?: return null
+                      ?.takeIf { it.graphData.isFull } ?: return null
       return GitHistoryTraverserImpl(project, logData, parentDisposable)
     }
   }

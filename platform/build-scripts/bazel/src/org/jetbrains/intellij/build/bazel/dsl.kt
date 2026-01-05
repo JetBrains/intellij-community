@@ -12,6 +12,7 @@ internal interface Renderable {
 internal class BuildFile {
   private val loads = HashSet<LoadStatement>()
   private val targets = mutableListOf<Target>()
+  private val exportsFiles = mutableSetOf<String>()
   private val lines = mutableListOf<String>()
 
   val loadStatements: List<LoadStatement>
@@ -37,6 +38,10 @@ internal class BuildFile {
     addTarget(target)
   }
 
+  fun exportFile(path: String) {
+    exportsFiles.add(path)
+  }
+
   fun render(existingLoads: Map<String, Set<String>> = emptyMap()): String {
     val filteredLoads = loads.mapNotNull { load ->
       val filteredSymbols = load.symbols.filter { existingLoads[load.bzlFile]?.contains(it) != true }
@@ -52,10 +57,16 @@ internal class BuildFile {
       .map { it.render() }
       .sorted()
       .joinToString("\n")
-    val targetStatements = targets.joinToString("\n") { it.render() }
-    return sequenceOf(loadStatements, targetStatements, lines.joinToString("\n"))
+    val targetStatements = (targets.joinToString("\n") { it.render() }).trim()
+
+    val exportsFiles = if (exportsFiles.isEmpty()) "" else
+      "exports_files([\n" + exportsFiles.sorted().joinToString("") { "  \"$it\",\n" } + "], visibility = [\"//visibility:public\"])"
+
+    val render = sequenceOf(loadStatements, targetStatements, exportsFiles, lines.joinToString("\n"))
       .filter { it.isNotEmpty() }
       .joinToString("\n\n")
+
+    return render
   }
 }
 

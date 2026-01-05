@@ -387,8 +387,6 @@ com.intellij.openapi.application.AppUIExecutor
 - s:onWriteThread(com.intellij.openapi.application.ModalityState):com.intellij.openapi.application.AppUIExecutor
 com.intellij.openapi.application.Application
 - com.intellij.openapi.components.ComponentManager
-- a:acquireReadActionLock():com.intellij.openapi.application.AccessToken
-- a:acquireWriteActionLock(java.lang.Class):com.intellij.openapi.application.AccessToken
 - a:addApplicationListener(com.intellij.openapi.application.ApplicationListener):V
 - a:addApplicationListener(com.intellij.openapi.application.ApplicationListener,com.intellij.openapi.Disposable):V
 - a:assertIsDispatchThread():V
@@ -957,6 +955,8 @@ com.intellij.openapi.vfs.newvfs.FileSystemInterface
 - a:resolveSymLink(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - a:setTimeStamp(com.intellij.openapi.vfs.VirtualFile,J):V
 - a:setWritable(com.intellij.openapi.vfs.VirtualFile,Z):V
+f:com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+- isRename():Z
 com.intellij.openapi.vfs.pointers.VirtualFilePointer
 - sf:EMPTY_ARRAY:com.intellij.openapi.vfs.pointers.VirtualFilePointer[]
 - a:getFile():com.intellij.openapi.vfs.VirtualFile

@@ -248,7 +248,9 @@
         <override-text place="MainMenu"/>
         <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
       </action>
+      <!--suppress PluginXmlCapitalization -->
       <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction">
+        <!--suppress PluginXmlCapitalization -->
         <override-text place="MainMenu"/>
         <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
       </action>
@@ -346,6 +348,7 @@
         <reference ref="InsertInlineCompletionAction"/>
         <reference ref="InsertInlineCompletionWordAction"/>
         <reference ref="InsertInlineCompletionLineAction"/>
+        <!--suppress PluginXmlCapitalization -->
         <action class="com.intellij.codeInsight.completion.command.configuration.EnableCommandCompletionAction"
                 id="EnableCommandCompletion"/>
       </group>

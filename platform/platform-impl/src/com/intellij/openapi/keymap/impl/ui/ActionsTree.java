@@ -150,6 +150,7 @@ public final class ActionsTree {
     });
 
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    myTree.getAccessibleContext().setAccessibleName(KeyMapBundle.message("keymap.actions.tree.accessible.name"));
     myComponent = ScrollPaneFactory.createScrollPane(myTree,
                                                      ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -707,6 +708,8 @@ public final class ActionsTree {
       @Override
       public String getAccessibleName() {
         String name = super.getAccessibleName();
+
+        if (myIsSeparator && StringUtil.isEmpty(name)) return KeyMapBundle.message("keymap.actions.tree.separator.row.accessible.name");
 
         // Add shortcuts labels if available
         @NlsSafe String shortcutName = null;

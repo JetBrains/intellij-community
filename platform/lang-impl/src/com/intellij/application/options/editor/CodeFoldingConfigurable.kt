@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.Configurable.WithEpDependencies
-import com.intellij.openapi.options.ConfigurableBuilder
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.ExperimentalUI
@@ -30,7 +29,6 @@ internal class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingO
 
   override fun createPanel(): DialogPanel {
     val settings = EditorSettingsExternalizable.getInstance()
-    val sortedConfigurables = configurables.sortedBy { sortByTitle(it) }
 
     return panel {
       row {
@@ -63,7 +61,7 @@ internal class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingO
       }.topGap(TopGap.MEDIUM)
 
       indent {
-        for (configurable in sortedConfigurables) {
+        for (configurable in configurables) {
           appendDslConfigurable(configurable)
         }
       }
@@ -85,11 +83,6 @@ internal class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingO
   override fun apply() {
     super.apply()
     ApplicationManager.getApplication().invokeLater({ Util.applyCodeFoldingSettingsChanges() }, ModalityState.nonModal())
-  }
-
-  private fun sortByTitle(p: CodeFoldingOptionsProvider): String {
-    val title = ConfigurableBuilder.getConfigurableTitle(p)
-    return if (ApplicationBundle.message("title.general") == title) "" else title ?: "z"
   }
 
   object Util {

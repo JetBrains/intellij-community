@@ -39,7 +39,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "@lib//:junit4",
-    "@lib//:kotlin-test",
+    "//libraries/kotlin/test:libraries-kotlinTest",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//platform/external-system-impl:externalSystem-tests_test_lib",

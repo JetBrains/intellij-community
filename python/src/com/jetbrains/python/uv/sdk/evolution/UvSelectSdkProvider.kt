@@ -17,6 +17,7 @@ import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeSection
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import java.nio.file.Path
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -34,7 +35,7 @@ internal class UvSelectSdkProvider() : EvoSelectSdkProvider {
       val envByFolders = environments.groupBy { it.pythonBinaryPath?.parent?.parent?.parent }.toMutableMap()
       envByFolders.putIfAbsent(
         evoModuleSdk.module.basePath?.let { Path.of(it) },
-        listOf(EvoSdk(icon = icon, name = ".venv", pythonBinaryPath = null))
+        listOf(EvoSdk(icon = icon, name = VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME, pythonBinaryPath = null))
       )
       val envSections = envByFolders.map { (basePath, sdks) ->
         val label = basePath?.toString() ?: "undefined"

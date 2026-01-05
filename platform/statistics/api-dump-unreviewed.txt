@@ -103,8 +103,6 @@ f:com.intellij.internal.statistic.eventLog.FilteredEventMergeStrategy
 f:com.intellij.internal.statistic.eventLog.LocalStatisticsFileEventLogger
 - com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 - com.intellij.openapi.Disposable
-- <init>(java.lang.String,java.lang.String,java.lang.String,com.intellij.internal.statistic.eventLog.StatisticsEventMergeStrategy):V
-- b:<init>(java.lang.String,java.lang.String,java.lang.String,com.intellij.internal.statistic.eventLog.StatisticsEventMergeStrategy,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - cleanup():V
 - computeAsync(kotlin.jvm.functions.Function1):V
 - dispose():V

@@ -18,6 +18,7 @@ import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -168,6 +169,15 @@ private class IjentFailSafeFileSystemPosixApiImpl(
       }
     }
   }
+
+  override suspend fun streamingWrite(chunks: Flow<ByteBuffer>, targetFileOpenOptions: EelFileSystemApi.WriteOptions): StreamingWriteResult =
+    holder.withDelegateRetrying {
+      streamingWrite(chunks, targetFileOpenOptions)
+    }
+  override suspend fun streamingRead(path: EelPath): Flow<StreamingReadResult> =
+    holder.withDelegateRetrying {
+      streamingRead(path)
+    }
 
   override suspend fun listDirectory(
     path: EelPath,

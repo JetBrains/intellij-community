@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import static com.jetbrains.python.sdk.ModuleExKt.setPythonSdk;
+
 
 /**
  * Engine to create SDK for tests.
@@ -100,7 +102,7 @@ public final class PySdkTools {
       project = module.getProject();
 
       PySdkExtKt.setPythonSdk(project, sdk);
-      PySdkExtKt.setPythonSdk(module, sdk);
+      setPythonSdk(module, sdk);
     }
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();

@@ -206,6 +206,7 @@ public class JavaDebugProcess extends XDebugProcess {
       }
 
       private void showAlternativeNotification(@Nullable XStackFrame frame) {
+        if (DapMode.isDap()) return;
         if (frame != null) {
           XSourcePosition position = frame.getSourcePosition();
           if (position != null) {

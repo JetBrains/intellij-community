@@ -125,6 +125,16 @@ public final class PySelfType implements PyTypeParameterType, PyClassType {
   }
 
   @Override
+  public @NotNull List<@NotNull PyTypeMember> getAllMembers(@NotNull PyResolveContext resolveContext) {
+    return myScopeClassType.getAllMembers(resolveContext);
+  }
+
+  @Override
+  public @NotNull List<@NotNull PyTypeMember> findMember(@NotNull String name, @NotNull PyResolveContext resolveContext) {
+    return myScopeClassType.findMember(name, resolveContext);
+  }
+
+  @Override
   public boolean isValid() {
     return false;
   }

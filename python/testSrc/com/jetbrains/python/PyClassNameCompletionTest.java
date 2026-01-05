@@ -54,6 +54,11 @@ public class PyClassNameCompletionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-86175
+  public void testSubpackage() {
+    doTest();
+  }
+
   public void testSubmoduleRegularImport() {  // PY-7887
     doTestWithoutFromImport();
   }

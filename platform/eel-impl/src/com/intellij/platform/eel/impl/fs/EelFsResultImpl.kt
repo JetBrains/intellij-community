@@ -36,7 +36,10 @@ object EelFsResultImpl {
     EelFileSystemPosixApi.CreateSymbolicLinkError.Other,
     EelOpenedFile.CloseError.Other,
     EelOpenedFile.Writer.TruncateError.Other,
-    EelFileSystemApi.WalkDirectoryError.Other
+    EelFileSystemApi.WalkDirectoryError.Other,
+    EelFileSystemApi.StreamingWriteError.Other,
+    EelFileSystemApi.StreamingReadError.Other
+
 
   data class DoesNotExist(override val where: EelPath, override val message: String) :
     EelFileSystemApi.ChangeAttributesError.SourceDoesNotExist,
@@ -52,13 +55,16 @@ object EelFsResultImpl {
     EelFileSystemApi.MoveError.SourceDoesNotExist,
     EelFileSystemPosixApi.CreateSymbolicLinkError.DoesNotExist,
     EelFileSystemApi.DeleteError.DoesNotExist,
-  EelFileSystemApi.WalkDirectoryError.Other
+    EelFileSystemApi.WalkDirectoryError.DoesNotExist,
+    EelFileSystemApi.StreamingWriteError.DoesNotExist,
+    EelFileSystemApi.StreamingReadError.DoesNotExist
 
   data class AlreadyExists(override val where: EelPath, override val message: String) :
     EelFileSystemApi.FileReaderError.AlreadyExists,
     EelFileSystemApi.FileWriterError.AlreadyExists,
     EelFileSystemPosixApi.CreateDirectoryError.FileAlreadyExists,
-    EelFileSystemPosixApi.CreateSymbolicLinkError.FileAlreadyExists
+    EelFileSystemPosixApi.CreateSymbolicLinkError.FileAlreadyExists,
+    EelFileSystemApi.StreamingWriteError.AlreadyExists
 
   class PermissionDenied(override val where: EelPath, override val message: String) :
     EelFileSystemApi.CanonicalizeError.PermissionDenied,
@@ -75,7 +81,8 @@ object EelFsResultImpl {
     EelFileSystemApi.CopyError.PermissionDenied,
     EelFileSystemApi.MoveError.PermissionDenied,
     EelFileSystemPosixApi.CreateSymbolicLinkError.PermissionDenied,
-    EelFileSystemApi.WalkDirectoryError.Other
+    EelFileSystemApi.WalkDirectoryError.PermissionDenied,
+    EelFileSystemApi.StreamingWriteError.PermissionDenied
 
   data class NotDirectory(override val where: EelPath, override val message: String) :
     EelFileSystemApi.CanonicalizeError.NotDirectory,
@@ -99,7 +106,9 @@ object EelFsResultImpl {
     EelFileSystemApi.FileWriterError.NotFile,
     EelFileSystemApi.SameFileError.NotFile,
     EelFileSystemApi.StatError.NotFile,
-    EelFileSystemApi.MoveError.TargetIsDirectory
+    EelFileSystemApi.MoveError.TargetIsDirectory,
+    EelFileSystemApi.StreamingWriteError.NotFile,
+    EelFileSystemApi.StreamingReadError.NotFile
 
   data class InvalidValue(override val where: EelPath, override val message: String) :
     EelOpenedFile.Reader.ReadError.InvalidValue,
@@ -127,7 +136,8 @@ object EelFsResultImpl {
     EelFileSystemApi.DeleteError.UnresolvedLink
 
   data class NotEnoughSpace(override val where: EelPath, override val message: String) :
-    EelFileSystemApi.CopyError.NotEnoughSpace
+    EelFileSystemApi.CopyError.NotEnoughSpace,
+    EelFileSystemApi.StreamingWriteError.NotEnoughSpace
 
   data class ReadOnlyFileSystem(override val where: EelPath, override val message: String) :
     EelFileSystemApi.CopyError.ReadOnlyFileSystem,

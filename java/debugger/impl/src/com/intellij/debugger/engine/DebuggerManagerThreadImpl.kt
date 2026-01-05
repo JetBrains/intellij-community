@@ -25,6 +25,7 @@ import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.xdebugger.DapMode
 import com.sun.jdi.VMDisconnectedException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.future
@@ -70,6 +71,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
     deferred: CompletableDeferred<Unit>,
     howToCancel: () -> Unit,
   ) {
+    if (DapMode.isDap()) return
     coroutineScope.launch {
       withBackgroundProgress(project, progressTitle) {
         withProgressText(progressText) {

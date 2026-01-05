@@ -1,7 +1,7 @@
 from _typeshed import BytesPath, StrOrBytesPath, StrPath, Unused
 from abc import abstractmethod
-from collections.abc import Callable, MutableSequence
-from typing import Any, ClassVar, TypeVar, overload
+from collections.abc import Callable, MutableSequence, Sequence
+from typing import Any, ClassVar, Literal, TypeVar, overload
 from typing_extensions import TypeVarTuple, Unpack
 
 from .dist import Distribution
@@ -84,7 +84,10 @@ class Command:
     def move_file(self, src: StrPath, dst: _StrPathT, level: Unused = 1) -> _StrPathT | str: ...
     @overload
     def move_file(self, src: BytesPath, dst: _BytesPathT, level: Unused = 1) -> _BytesPathT | bytes: ...
-    def spawn(self, cmd: MutableSequence[str], search_path: bool = True, level: Unused = 1) -> None: ...
+    @overload
+    def spawn(self, cmd: Sequence[StrOrBytesPath], search_path: Literal[False], level: Unused = 1) -> None: ...
+    @overload
+    def spawn(self, cmd: MutableSequence[bytes | StrPath], search_path: Literal[True] = True, level: Unused = 1) -> None: ...
     @overload
     def make_archive(
         self,

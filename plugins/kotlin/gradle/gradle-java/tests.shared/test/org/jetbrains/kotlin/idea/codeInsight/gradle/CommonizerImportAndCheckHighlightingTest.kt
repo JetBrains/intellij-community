@@ -21,7 +21,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
         val testedVersions = setOf(KotlinGradlePluginVersions.latestStable, KotlinGradlePluginVersions.latest)
         Assume.assumeTrue(
             "CommonizerImportAndCheckHighlightingTest only runs against $testedVersions",
-            kotlinPluginVersion in testedVersions,
+            kotlinPluginVersion.version in testedVersions,
         )
         super.setUp()
     }
@@ -93,7 +93,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                 if (SystemInfo.isMac || SystemInfo.isLinux) {
                     highlightingCheck(module)
                     libraryDependencyByUrl(Regex(""".*[cC]interop-withPosix.*"""), scope)
-                    if (kotlinPluginVersion < KotlinToolingVersion("1.5.30-dev")) {
+                    if (kotlinPluginVersion.version < KotlinToolingVersion("1.5.30-dev")) {
                         libraryDependencyByUrl(Regex(""".*/\(linux_arm64, linux_x64\)/.*posix.*"""), scope)
                     }
                     libraryDependencyByUrl(Regex(""".*/linux_arm64/.*posix.*"""), scope)
@@ -104,7 +104,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                 if (SystemInfo.isMac || SystemInfo.isLinux) {
                     highlightingCheck(module)
                     libraryDependencyByUrl(Regex(""".*[cC]interop-withPosix.*"""), scope)
-                    if (kotlinPluginVersion < KotlinToolingVersion("1.5.30-dev")) {
+                    if (kotlinPluginVersion.version < KotlinToolingVersion("1.5.30-dev")) {
                         libraryDependencyByUrl(Regex(""".*/\(linux_arm64, linux_x64\)/.*posix.*"""), scope)
                     }
                     libraryDependencyByUrl(Regex(""".*/linux_x64/.*posix.*"""), scope)
@@ -115,7 +115,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                 if (SystemInfo.isMac) {
                     highlightingCheck(module)
                     libraryDependencyByUrl(Regex(""".*[cC]interop-withPosix.*"""), scope)
-                    if (kotlinPluginVersion < KotlinToolingVersion("1.5.30-dev")) {
+                    if (kotlinPluginVersion.version < KotlinToolingVersion("1.5.30-dev")) {
                         libraryDependencyByUrl(Regex(""".*/\(.*macos_x64.*\)/.*posix.*"""), scope)
                     }
                     libraryDependencyByUrl(Regex(""".*/macos_x64/.*posix.*"""), scope)

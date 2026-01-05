@@ -56,7 +56,7 @@ internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutabl
     }
 
     val workingDirectory =
-      VirtualEnvReader().getVenvRootPath(selectedInterpreterPath.path)
+      VirtualEnvReader.Instance.getVenvRootPath(selectedInterpreterPath.path)
       ?: tryResolvePath(existingSdk?.associatedModulePath)
       ?: projectDir
 

@@ -915,9 +915,9 @@ public final class FSRecordsImpl implements Closeable {
       fileRecordLock.lockForHierarchyUpdate(maxId);
       try {
         try {
-          ListResult firstParentChildren = loadChildrenUnderRecordLock(fromParentId);
-          ListResult fromParentChildrenWithoutChildMoved = firstParentChildren.remove(childToMoveId);
-          if (fromParentChildrenWithoutChildMoved == firstParentChildren) {
+          ListResult fromParentChildren = loadChildrenUnderRecordLock(fromParentId);
+          ListResult fromParentChildrenWithoutChildMoved = fromParentChildren.remove(childToMoveId);
+          if (fromParentChildrenWithoutChildMoved == fromParentChildren) {
             //RC: this means childToMove doesn't present among fromParent's children. It seems natural to fail move
             //    procedure in this case by throwing IllegalArgumentException, because there is definitely something
             //    wrong with arguments supplied. But the legacy version of this code didn't fail -- it proceeds
@@ -940,9 +940,12 @@ public final class FSRecordsImpl implements Closeable {
             //    is an error in params supplied, and it should be resolved
             String childToMoveName = getNameByNameId(childToMoveNameId);
             throw new IllegalArgumentException(
-              "Can't move child(#" + childToMoveId + ", name='" + childToMoveName + "') " +
-              "from parent(" + fromParentId + ") to (" + toParentId + "): " +
-              "toParent already has a child with same name -- " + alreadyExistingChild);
+              "Can't move child(#" + childToMoveId + ", name='" + childToMoveName + "', nameId=" + childToMoveNameId + "), " +
+              "parent (" + fromParentId + " -> " + toParentId + "): " +
+              "new parent already has a child with same name (=" + alreadyExistingChild + ")\n" +
+              "fromParent.children=" + fromParentChildren + "\n" +
+              "toParent.children=" + toParentChildren
+            );
           }
 
           ListResult toParentChildrenUpdated = toParentChildren.insert(

@@ -62,7 +62,7 @@ fun initMacApplication(mainScope: CoroutineScope) {
   val desktop = Desktop.getDesktop()
   desktop.setAboutHandler {
     submit("About", mainScope) { ideFocusManager ->
-      val project = withContext(Dispatchers.EDT) {
+      val project = withContext(Dispatchers.UiWithModelAccess) {
         val project = (ideFocusManager.lastFocusedIdeWindow as? IdeFrame)?.project
         AboutAction.perform(project)
         project

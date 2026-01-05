@@ -148,7 +148,7 @@ public abstract class AbstractModelBuilderTest {
       .addProjectImportModelProviders(modelProviders);
 
     Path targetPathMapperInitScript = GradleInitScriptUtil.createTargetPathMapperInitScript();
-    Path mainInitScript = GradleInitScriptUtil.createMainInitScript(false, getToolingExtensionClasses());
+    Path mainInitScript = GradleInitScriptUtil.createMainInitScript(false, Collections.emptySet());
     ExternalSystemExecutionSettings executionSettings = new GradleExecutionSettings()
       .withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, targetPathMapperInitScript.toString())
       .withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, mainInitScript.toString())
@@ -199,17 +199,5 @@ public abstract class AbstractModelBuilderTest {
     String daemonJavaVersion = JavaSdk.getInstance().getVersionString(gradleJvmHomePath);
     JavaVersion javaVersion = JavaVersion.tryParse(daemonJavaVersion);
     return javaVersion.isAtLeast(17);
-  }
-
-  @NotNull
-  public static Set<Class<?>> getToolingExtensionClasses() {
-    return ContainerUtil.newHashSet(
-      IonType.class,  // ion-java jar
-      Multimap.class, // guava.jar
-      Object2ObjectMap.class, // fastutil
-      ShortTypeHandling.class, // groovy
-      StringUtils.class, // apache-commons.jar
-      TObjectHash.class //trove4j.jar
-    );
   }
 }

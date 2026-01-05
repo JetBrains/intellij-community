@@ -56,7 +56,7 @@ internal class IdeKeyboardFocusManager(internal val original: KeyboardFocusManag
       }
       else {
         //todo IJPL-199557 fix all clients and remove WIRA here, but for now it is like keyboard or mouse event
-        performActivity(e, false) { getGlobalThreadingSupport().runPreventiveWriteIntentReadAction { result = dispatch() } }
+        performActivity(e, false) { getGlobalThreadingSupport().runWriteIntentReadAction { result = dispatch() } }
       }
       return result
     }

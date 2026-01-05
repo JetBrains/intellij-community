@@ -141,7 +141,8 @@ suspend fun doRunApplicationStarter(
   }
   catch (e: Exception) {
     throw RuntimeException(
-      "The application '$appStarterId' failed. " +
+      "The application '$appStarterId' failed " +
+      "(productPropertiesClass=${context.productProperties::class.java.name}, platformPrefix=${context.productProperties.platformPrefix}). " +
       "To debug it in IDE, specify '-D$debugProperty=<some debug port>', " +
       "then click 'Attach debugger' in a debugger console or use 'Remote JVM  Debug' run configuration.",
       e

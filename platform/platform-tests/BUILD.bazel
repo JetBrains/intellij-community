@@ -206,7 +206,7 @@ jvm_library(
     "//platform/syntax/syntax-psi-tests:psi-tests_test_lib",
     "//xml/xml-psi-api:psi",
     "//platform/runtime/product",
-    "//platform/locking.impl",
+    "//platform/locking-impl",
     "//platform/testFramework/junit5/highlighting",
     "//platform/vcs-impl/shared",
     "//platform/vcs-impl/shared:shared_test_lib",

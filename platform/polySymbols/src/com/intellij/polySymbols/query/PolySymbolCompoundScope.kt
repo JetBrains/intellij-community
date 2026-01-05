@@ -3,7 +3,7 @@ package com.intellij.polySymbols.query
 
 import com.intellij.model.Pointer
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 
@@ -45,7 +45,7 @@ abstract class PolySymbolCompoundScope : PolySymbolScope {
     throw UnsupportedOperationException("PolySymbolCompoundScope must be queried through PolySymbolQueryExecutor.")
 
   final override fun getSymbols(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     params: PolySymbolListSymbolsQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
@@ -58,7 +58,7 @@ abstract class PolySymbolCompoundScope : PolySymbolScope {
   ): List<PolySymbolCodeCompletionItem> =
     throw UnsupportedOperationException("PolySymbolCompoundScope must be queried through PolySymbolQueryExecutor.")
 
-  final override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
+  final override fun isExclusiveFor(kind: PolySymbolKind): Boolean =
     throw UnsupportedOperationException("PolySymbolCompoundScope must be queried through PolySymbolQueryExecutor.")
 
   abstract override fun createPointer(): Pointer<out PolySymbolCompoundScope>

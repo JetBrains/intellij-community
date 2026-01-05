@@ -16,6 +16,7 @@ import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.xml.util.JspFileTypeUtil;
+import org.jetbrains.annotations.NotNull;
 
 public final class JavaCharFilter extends CharFilter {
 
@@ -25,7 +26,7 @@ public final class JavaCharFilter extends CharFilter {
   }
 
   @Override
-  public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
+  public Result acceptChar(char c, int prefixLength, @NotNull Lookup lookup) {
     PsiFile file = lookup.getPsiFile();
     if (file == null) return null;
     boolean isJava = file.getLanguage().isKindOf(JavaLanguage.INSTANCE);

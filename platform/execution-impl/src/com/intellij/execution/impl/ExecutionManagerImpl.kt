@@ -316,7 +316,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
                 // Assign tool window id on the happy execution path in the monolith,
                 // which is used by the Services tool window.
                 // In the split mode this id is assigned on the backend side when the mock run content descriptor is created.
-                descriptor.id = descriptor.storeGlobally(coroutineScope)
+                descriptor.id = descriptor.storeGlobally(descriptor.coroutineScope)
               }
               descriptor.runConfigurationName = environment.runProfile.name
               descriptor.runConfigurationTypeId = (environment.runProfile as? RunConfiguration)?.type?.id

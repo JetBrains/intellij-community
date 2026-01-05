@@ -8,13 +8,9 @@ import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiElement
-import com.intellij.util.containers.MultiMap
-import com.intellij.util.ui.EmptyIcon
+import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.PolyContextName
-import com.intellij.polySymbols.FrameworkId
-import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.polySymbols.context.PolyContextKindRules
@@ -24,9 +20,13 @@ import com.intellij.polySymbols.context.PolyContextRulesProvider
 import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConversionRulesProvider
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.webTypes.impl.WebTypesJsonContributionAdapter
 import com.intellij.polySymbols.webTypes.impl.WebTypesJsonContributionAdapter.Companion.wrap
 import com.intellij.polySymbols.webTypes.json.*
+import com.intellij.psi.PsiElement
+import com.intellij.util.containers.MultiMap
+import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.Icon
 
@@ -92,20 +92,24 @@ abstract class WebTypesScopeBase :
   override fun matchContext(origin: WebTypesJsonOrigin, context: PolyContext): Boolean =
     origin.matchContext(context)
 
-  override fun adaptAllRootContributions(root: Contributions,
-                                         framework: FrameworkId?,
-                                         origin: WebTypesJsonOrigin): Sequence<WebTypesJsonContributionAdapter> =
+  override fun adaptAllRootContributions(
+    root: Contributions,
+    framework: FrameworkId?,
+    origin: WebTypesJsonOrigin,
+  ): Sequence<WebTypesJsonContributionAdapter> =
     root.getAllContributions(framework)
-      .flatMap { (qualifiedKind, list) ->
-        list.map { it.wrap(origin, this@WebTypesScopeBase, qualifiedKind) }
+      .flatMap { (kind, list) ->
+        list.map { it.wrap(origin, this@WebTypesScopeBase, kind) }
       }
 
-  override fun adaptAllContributions(contribution: GenericContributionsHost,
-                                     framework: FrameworkId?,
-                                     origin: WebTypesJsonOrigin): Sequence<WebTypesJsonContributionAdapter> =
+  override fun adaptAllContributions(
+    contribution: GenericContributionsHost,
+    framework: FrameworkId?,
+    origin: WebTypesJsonOrigin,
+  ): Sequence<WebTypesJsonContributionAdapter> =
     contribution.getAllContributions(framework)
-      .flatMap { (qualifiedKind, list) ->
-        list.map { it.wrap(origin, this@WebTypesScopeBase, qualifiedKind) }
+      .flatMap { (kind, list) ->
+        list.map { it.wrap(origin, this@WebTypesScopeBase, kind) }
       }
 
   private fun createContextRulesCache(): ClearableLazyValue<MultiMap<PolyContextKind, PolyContextKindRules>> {
@@ -172,7 +176,7 @@ abstract class WebTypesScopeBase :
     private val symbolLocationResolver: (source: SourceBase) -> WebTypesSymbol.Location? = { null },
     private val sourceSymbolResolver: (location: WebTypesSymbol.Location, cacheHolder: UserDataHolderEx) -> PsiElement? = { _, _ -> null },
     private val iconLoader: (path: String) -> Icon? = { null },
-    override val version: String? = webTypes.version
+    override val version: String? = webTypes.version,
   ) : WebTypesJsonOrigin {
     override val framework: FrameworkId? = webTypes.framework
 

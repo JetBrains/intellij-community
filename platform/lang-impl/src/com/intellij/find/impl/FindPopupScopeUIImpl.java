@@ -83,6 +83,7 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
         scheduleResultsUpdate();
       }
     });
+    myModuleComboBox.getAccessibleContext().setAccessibleName(FindBundle.message("find.usages.module.combobox.accessible.name"));
 
     myDirectoryChooser = new FindPopupDirectoryChooser(myFindPopupPanel);
 

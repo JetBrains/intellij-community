@@ -20,6 +20,8 @@ import static java.util.Objects.requireNonNull;
  * Utilities related to Java methods
  */
 public final class JavaPsiMethodUtil {
+  private JavaPsiMethodUtil() { }
+
   /**
    * @param aClass class to analyze
    * @param overrideEquivalentSuperMethods collection of override-equivalent super methods
@@ -46,7 +48,7 @@ public final class JavaPsiMethodUtil {
       }
     }
     if (defaults == null) return null;
-    PsiMethod defaultMethod = defaults.get(0);
+    PsiMethod defaultMethod = defaults.getFirst();
     PsiClass defaultMethodContainingClass = defaultMethod.getContainingClass();
     if (defaultMethodContainingClass == null) return null;
     if (abstractMethod == null) {
@@ -60,7 +62,7 @@ public final class JavaPsiMethodUtil {
         return unrelatedCouple;
       }
       if (hasNotOverriddenAbstract(defaults, abstractMethodContainingClass)) {
-        return Couple.of(defaults.get(0), abstractMethod);
+        return Couple.of(defaults.getFirst(), abstractMethod);
       }
     }
     return null;

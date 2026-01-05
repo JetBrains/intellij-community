@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.common.BazelTestUtil
 import com.intellij.testFramework.common.BazelTestUtil.getFileFromBazelRuntime
-import com.intellij.testFramework.common.bazel.BazelLabel
+import org.jetbrains.intellij.bazelEnvironment.BazelLabel
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.createParentDirectories
 import kotlinx.coroutines.Dispatchers
@@ -91,6 +91,8 @@ object TestKotlinArtifacts {
     }
 
     private fun downloadFile(label: BazelLabel): Path {
+        // in other modules KotlinTestsDependenciesUtil.downloadFile(label = label) may be used
+        // but here is some more complicated logic
         val downloadFile = findDownloadFile(label)
         val labelUrl = URI(downloadFile.url)
         // Kotlin plugin team use special workflow for simultaneous development Kotlin compiler and IDEA plugin.

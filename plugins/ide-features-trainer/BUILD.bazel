@@ -74,7 +74,7 @@ jvm_library(
   associates = [":featuresTrainer"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-test",
+    "//libraries/kotlin/test:libraries-kotlinTest",
     "//libraries/guava",
     "@lib//:assert_j",
     "@lib//:assertj-swing",

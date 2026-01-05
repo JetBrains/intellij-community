@@ -8,6 +8,8 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
+import org.jetbrains.intellij.bazelEnvironment.BazelLabel
+import org.jetbrains.intellij.bazelEnvironment.BazelRunfiles
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import java.nio.file.Files
@@ -84,7 +86,12 @@ internal class BazelModuleOutputProvider(
       "Cannot find $libraryMoniker"
     )
 
-    val paths = library.jars.map { bazelOutputRoot.resolve(it) }
+    val paths = if (BazelRunfiles.isRunningFromBazel) {
+      library.jarTargets.map { BazelRunfiles.getFileByLabel(BazelLabel.fromString(it)) }
+    }
+    else {
+      library.jars.map { bazelOutputRoot.resolve(it) }
+    }
 
     check(paths.isNotEmpty()) {
       "No files found for $libraryMoniker"
@@ -111,9 +118,15 @@ internal class BazelModuleOutputProvider(
 
   private fun getModuleOutputRootsImpl(module: JpsModule, forTests: Boolean): List<Path> {
     val moduleDescription = bazelTargetsMap.modules[module.name] ?: error("Cannot find module '${module.name}' in the project")
-    val jarsRelative = if (forTests) moduleDescription.testJars else moduleDescription.productionJars
-    val jars = jarsRelative.map { projectHome.resolve(it) }
-    return jars
+
+    return if (BazelRunfiles.isRunningFromBazel) {
+      val targets = if (forTests) moduleDescription.testTargets else moduleDescription.productionTargets
+      targets.map { BazelRunfiles.getFileByLabel(BazelLabel.fromString(it)) }
+    }
+    else {
+      val jarsRelative = if (forTests) moduleDescription.testJars else moduleDescription.productionJars
+      jarsRelative.map { projectHome.resolve(it) }
+    }
   }
 
   override suspend fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String?, processedModules: MutableSet<String>?): ByteArray? {

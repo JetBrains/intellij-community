@@ -7,5 +7,5 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object RdLocalChanges {
   @JvmStatic
-  fun isEnabled(): Boolean = Registry.`is`("vcs.rd.local.changes.enabled")
+  fun isEnabled(): Boolean = Registry.`is`("vcs.rd.local.changes.enabled", false)
 }

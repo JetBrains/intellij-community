@@ -14,7 +14,9 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orde
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
+import org.junit.AssumptionViolatedException
 import org.junit.Test
+import java.lang.reflect.Method
 
 @TestMetadata("multiplatform/core/features/misc")
 class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() {
@@ -44,6 +46,9 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
 
     @Test
     fun testDependencyOnStdlibFromPlatformSourceSets() {
+        if (flakyKgpImportKT82895()) {
+            throw AssumptionViolatedException("KT-82895")
+        }
         doTest {
             hideStdlib = false
             onlyCheckers(OrderEntriesChecker)
@@ -141,7 +146,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
             onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
 
             /* Code Highlighting requires 1.9, because of native opt-in annotation in source files */
-            if (kotlinPluginVersion < KotlinToolingVersion("1.9.20-dev-6845")) {
+            if (kotlinPluginVersion.version < KotlinToolingVersion("1.9.20-dev-6845")) {
                 disableCheckers(HighlightingChecker)
             }
 
@@ -192,6 +197,9 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
 
     @Test
     fun testNativeUnsupportedPlatform() {
+        if (flakyKgpImportKT82895()) {
+            throw AssumptionViolatedException("KT-82895")
+        }
         doTest {
             onlyCheckers(OrderEntriesChecker)
 

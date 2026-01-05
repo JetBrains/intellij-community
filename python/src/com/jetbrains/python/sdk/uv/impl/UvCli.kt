@@ -13,6 +13,7 @@ import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.sdk.detectTool
 import com.jetbrains.python.sdk.runExecutableWithProgress
 import com.jetbrains.python.sdk.uv.UvCli
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -42,7 +43,7 @@ private fun validateUvExecutable(uvPath: Path?): ValidationInfo? {
 
 private suspend fun runUv(uv: Path, workingDir: Path, vararg args: String): PyResult<String> {
   return runExecutableWithProgress(uv, workingDir,
-                                   env = mapOf("VIRTUAL_ENV" to ".venv"), timeout = 10.minutes, args = args)
+                                   env = mapOf("VIRTUAL_ENV" to VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME), timeout = 10.minutes, args = args)
 }
 
 private class UvCliImpl(val dispatcher: CoroutineDispatcher, val uv: Path) : UvCli {

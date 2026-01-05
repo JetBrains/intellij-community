@@ -6,9 +6,7 @@ icalendar\.tests(\..*)?
 
 # Methods that use `int` to mean `bool`.
 icalendar.Component.get_inline
-icalendar.Component.set_inline
 icalendar.cal.Component.get_inline
-icalendar.cal.Component.set_inline
 
 # Stubtest gets confused by multiple inheritance.
 icalendar.prop.vSkip.__new__

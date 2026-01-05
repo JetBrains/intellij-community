@@ -30,7 +30,7 @@ internal abstract class SearchMap<T> internal constructor(
     if (pattern == null) {
       namesProvider.getNames(qualifiedName, PolySymbolNamesProvider.Target.NAMES_MAP_STORAGE)
         .forEach {
-          statics.computeIfAbsent(SearchMapEntry(qualifiedName.qualifiedKind, it)) { SmartList() }.add(item)
+          statics.computeIfAbsent(SearchMapEntry(qualifiedName.kind, it)) { SmartList() }.add(item)
         }
 
     }
@@ -43,7 +43,7 @@ internal abstract class SearchMap<T> internal constructor(
           else it
         }
         .forEach {
-          patterns.computeIfAbsent(SearchMapEntry(qualifiedName.qualifiedKind, it)) { SmartList() }.add(item)
+          patterns.computeIfAbsent(SearchMapEntry(qualifiedName.kind, it)) { SmartList() }.add(item)
         }
   }
 
@@ -54,15 +54,15 @@ internal abstract class SearchMap<T> internal constructor(
   ): Sequence<PolySymbol> =
     namesProvider.getNames(qualifiedName, PolySymbolNamesProvider.Target.NAMES_QUERY)
       .asSequence()
-      .mapNotNull { statics[SearchMapEntry(qualifiedName.qualifiedKind, it)] }
+      .mapNotNull { statics[SearchMapEntry(qualifiedName.kind, it)] }
       .flatMapWithQueryParameters(params)
       .map { it.withMatchedName(qualifiedName.name) }
       .plus(collectPatternContributions(qualifiedName, params, stack))
 
-  internal fun getSymbols(qualifiedKind: PolySymbolQualifiedKind, params: PolySymbolListSymbolsQueryParams): Sequence<PolySymbol> =
-    statics.subMap(SearchMapEntry(qualifiedKind), SearchMapEntry(qualifiedKind, kindExclusive = true))
+  internal fun getSymbols(kind: PolySymbolKind, params: PolySymbolListSymbolsQueryParams): Sequence<PolySymbol> =
+    statics.subMap(SearchMapEntry(kind), SearchMapEntry(kind, kindExclusive = true))
       .values.asSequence()
-      .plus(patterns.subMap(SearchMapEntry(qualifiedKind), SearchMapEntry(qualifiedKind, kindExclusive = true)).values)
+      .plus(patterns.subMap(SearchMapEntry(kind), SearchMapEntry(kind, kindExclusive = true)).values)
       .distinct()
       .flatMapWithQueryParameters(params)
 
@@ -81,7 +81,7 @@ internal abstract class SearchMap<T> internal constructor(
     params: PolySymbolCodeCompletionQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbolCodeCompletionItem> =
-    statics.subMap(SearchMapEntry(qualifiedName.qualifiedKind), SearchMapEntry(qualifiedName.qualifiedKind, kindExclusive = true))
+    statics.subMap(SearchMapEntry(qualifiedName.kind), SearchMapEntry(qualifiedName.kind, kindExclusive = true))
       .values
       .asSequence()
       .flatMapWithQueryParameters(params)
@@ -94,7 +94,7 @@ internal abstract class SearchMap<T> internal constructor(
     params: PolySymbolCodeCompletionQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbolCodeCompletionItem> =
-    patterns.subMap(SearchMapEntry(qualifiedName.qualifiedKind), SearchMapEntry(qualifiedName.qualifiedKind, kindExclusive = true))
+    patterns.subMap(SearchMapEntry(qualifiedName.kind), SearchMapEntry(qualifiedName.kind, kindExclusive = true))
       .values.asSequence()
       .flatMap { it.asSequence() }
       .distinct()
@@ -119,11 +119,11 @@ internal abstract class SearchMap<T> internal constructor(
     var multipleResults: MutableSet<T>? = null
     var size = 0
     for (p in 0..qualifiedName.name.length) {
-      val check = SearchMapEntry(qualifiedName.qualifiedKind, CharSequenceSubSequence(qualifiedName.name, 0, p))
+      val check = SearchMapEntry(qualifiedName.kind, CharSequenceSubSequence(qualifiedName.name, 0, p))
       val entry = patterns.ceilingEntry(check)
       if (entry == null
           || entry.key.namespace != qualifiedName.namespace
-          || entry.key.kind != qualifiedName.kind
+          || entry.key.kindName != qualifiedName.kind.kindName
           || !entry.key.name.startsWith(check.name)) break
       if (entry.key.name.length == p && entry.value.isNotEmpty()) {
         size += entry.value.size
@@ -157,18 +157,18 @@ internal abstract class SearchMap<T> internal constructor(
 
   private data class SearchMapEntry(
     val namespace: PolySymbolNamespace,
-    val kind: PolySymbolKind,
+    val kindName: PolySymbolKindName,
     val name: CharSequence = "",
     val kindExclusive: Boolean = false,
   ) : Comparable<SearchMapEntry> {
 
-    constructor(qualifiedKind: PolySymbolQualifiedKind, name: CharSequence = "", kindExclusive: Boolean = false) :
-      this(qualifiedKind.namespace, qualifiedKind.kind, name, kindExclusive)
+    constructor(kind: PolySymbolKind, name: CharSequence = "", kindExclusive: Boolean = false) :
+      this(kind.namespace, kind.kindName, name, kindExclusive)
 
     override fun compareTo(other: SearchMapEntry): Int {
       val namespaceCompare = namespace.compareTo(other.namespace)
       if (namespaceCompare != 0) return namespaceCompare
-      val kindCompare = compareWithExclusive(kind, other.kind, kindExclusive, other.kindExclusive)
+      val kindCompare = compareWithExclusive(kindName, other.kindName, kindExclusive, other.kindExclusive)
       if (kindCompare != 0) return kindCompare
       return StringUtil.compare(name, other.name, false)
     }

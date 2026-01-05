@@ -79,7 +79,7 @@ jvm_library(
     "//python/openapi:community_test_lib",
     "//platform/util:util-ui",
     "//platform/editor-ui-api:editor-ui",
-    "@lib//:kotlin-test",
+    "//libraries/kotlin/test:libraries-kotlinTest",
     "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
     "@lib//:kotlin-test-junit",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",

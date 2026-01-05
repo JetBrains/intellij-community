@@ -73,7 +73,7 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
     }
     printObject(topLevel) { level ->
       if (source is PolySymbolWithPattern) {
-        printProperty(level, "matchedName", source.qualifiedKind.toString() + "/<pattern>")
+        printProperty(level, "matchedName", source.kind.toString() + "/<pattern>")
         printProperty(level, "name", source.name)
       }
       else {

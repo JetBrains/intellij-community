@@ -9,7 +9,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
-import com.intellij.vcs.log.data.DataPack
+import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.graph.api.EdgeFilter
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
@@ -95,7 +95,7 @@ internal object IndexDiagnostic {
     return sb.toString()
   }
 
-  fun DataPack.pickCommits(storage: VcsLogStorage, roots: Collection<VirtualFile>, old: Boolean): Set<VcsLogCommitStorageIndex> {
+  fun VcsLogGraphData.pickCommits(storage: VcsLogStorage, roots: Collection<VirtualFile>, old: Boolean): Set<VcsLogCommitStorageIndex> {
     val result = IntOpenHashSet()
 
     val rootsToCheck = roots.toMutableSet()
@@ -125,7 +125,7 @@ internal object IndexDiagnostic {
     return result
   }
 
-  fun DataPack.pickIndexedCommits(dataGetter: IndexDataGetter, roots: Collection<VirtualFile>): Set<VcsLogCommitStorageIndex> {
+  fun VcsLogGraphData.pickIndexedCommits(dataGetter: IndexDataGetter, roots: Collection<VirtualFile>): Set<VcsLogCommitStorageIndex> {
     if (roots.isEmpty()) return emptySet()
 
     val result = IntOpenHashSet()

@@ -210,6 +210,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
     myTree.setRootVisible(false);
     myTree.addTreeSelectionListener(new RestoreSelectionListener());
     myTree.addTreeSelectionListener(event -> mySelectionAlarm.cancelAndRequest());
+    myTree.getAccessibleContext().setAccessibleName(message("problems.view.tree.accessible.name"));
     TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);

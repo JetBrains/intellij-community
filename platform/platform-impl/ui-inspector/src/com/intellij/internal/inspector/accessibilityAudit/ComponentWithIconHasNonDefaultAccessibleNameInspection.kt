@@ -2,12 +2,9 @@
 package com.intellij.internal.inspector.accessibilityAudit
 
 import com.intellij.ui.SimpleColoredComponent
-import org.jetbrains.annotations.ApiStatus
 import javax.accessibility.Accessible
 import javax.swing.JLabel
 
-@ApiStatus.Internal
-@ApiStatus.Experimental
 class ComponentWithIconHasNonDefaultAccessibleNameInspection : UiInspectorAccessibilityInspection {
   override val propertyName: String = "AccessibleName"
   override val severity: Severity = Severity.RECOMMENDATION

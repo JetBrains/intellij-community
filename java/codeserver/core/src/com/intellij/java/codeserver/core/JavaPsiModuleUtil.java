@@ -48,6 +48,8 @@ import static java.util.Objects.requireNonNullElse;
  * Utilities related to JPMS modules
  */
 public final class JavaPsiModuleUtil {
+  private JavaPsiModuleUtil() { }
+
   /**
    * @param element PSI element that belongs to the module
    * @return JPMS module the supplied element belongs to; null if no module definition is found

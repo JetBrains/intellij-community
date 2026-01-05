@@ -2,12 +2,12 @@
 package com.intellij.vcs.log.graph
 
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
-import com.intellij.vcs.log.data.RefsModel
+import com.intellij.vcs.log.VcsLogRefs
 
-internal class GraphColorManagerImpl(private val refsModel: RefsModel) : GraphColorManager<VcsLogCommitStorageIndex> {
+internal class GraphColorManagerImpl(private val refsModel: VcsLogRefs) : GraphColorManager<VcsLogCommitStorageIndex> {
   override fun getColor(headCommit: VcsLogCommitStorageIndex, headFragmentIndex: Int, fragmentIndex: Int): Int {
     if (headFragmentIndex == fragmentIndex) {
-      val firstRef = refsModel.bestRefToHead(headCommit) ?: return DEFAULT_COLOR
+      val firstRef = refsModel.getRefForHeadCommit(headCommit) ?: return DEFAULT_COLOR
       return firstRef.name.hashCode()
     }
     return fragmentIndex

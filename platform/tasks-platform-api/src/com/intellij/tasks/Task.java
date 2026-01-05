@@ -10,7 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -23,9 +26,9 @@ public abstract class Task {
    * Global unique task identifier, e.g. IDEA-00001. It's important that its format is consistent with
    * {@link TaskRepository#extractId(String)}, because otherwise task won't be updated on its activation.
    * Note that this ID is used to find issues and to compare them, so (ideally) it has to be unique.
-   * 
+   *
    * In some cases task server doesn't offer such global ID (but, for instance, pair (project-name, per-project-id) instead) or it's not
-   * what users want to see in UI (e.g. notorious <tt>id</tt> and <tt>iid</tt> in Gitlab). In this case you should generate artificial ID 
+   * what users want to see in UI (e.g. notorious <tt>id</tt> and <tt>iid</tt> in Gitlab). In this case you should generate artificial ID
    * for internal usage and implement {@link #getPresentableId()}.
    *
    * @return unique global ID as described
@@ -85,6 +88,25 @@ public abstract class Task {
 
   public @Nullable TaskState getState() {
     return null;
+  }
+
+  /**
+   * Provides a list of custom task properties. Clients can use this to extract
+   * some additional information from a task.
+   *
+   * @return a map of property names and their values
+   */
+  public @NotNull Map<@NotNull String, @NotNull CustomTaskProperty> getCustomProperties() {
+    return Collections.emptyMap();
+  }
+
+  /**
+   * Provides a list of properties that should be shown in preview.
+   *
+   * @return a list of property names to be shown in preview
+   */
+  public @NotNull List<@NotNull String> getPropertiesToShowInPreview() {
+    return Collections.emptyList();
   }
 
   @Override

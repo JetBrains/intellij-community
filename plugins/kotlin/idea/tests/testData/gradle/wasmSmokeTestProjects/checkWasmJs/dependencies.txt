@@ -9,10 +9,12 @@ project.commonTest
     org.jetbrains.kotlin:kotlin-stdlib-wasm-js:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test-wasm-js:{{KGP_VERSION}} (TEST)
     wasmJsMain (friend, TEST)
+    webMain (friend, TEST)
 
 project.wasmJsMain
     commonMain (refines, COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-wasm-js:{{KGP_VERSION}} (COMPILE)
+    webMain (refines, COMPILE)
 
 project.wasmJsTest
     commonMain (friend, TEST)
@@ -20,6 +22,20 @@ project.wasmJsTest
     org.jetbrains.kotlin:kotlin-stdlib-wasm-js:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test-wasm-js:{{KGP_VERSION}} (TEST)
     wasmJsMain (friend, TEST)
+    webMain (friend, TEST)
+    webTest (refines, TEST)
+
+project.webMain
+    commonMain (refines, COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-wasm-js:{{KGP_VERSION}} (COMPILE)
+
+project.webTest
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-wasm-js:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-test-wasm-js:{{KGP_VERSION}} (TEST)
+    wasmJsMain (friend, TEST)
+    webMain (friend, TEST)
 
 
 Test configuration:

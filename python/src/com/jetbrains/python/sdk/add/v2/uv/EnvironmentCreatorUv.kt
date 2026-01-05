@@ -32,6 +32,7 @@ import com.jetbrains.python.sdk.uv.impl.setUvExecutable
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import io.github.z4kn4fein.semver.Version
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -119,12 +120,12 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
       .projectPathWithDefault
       .combine(executableFlow) { projectPath, executable -> projectPath to executable }
       .onEach { (projectPath, executable) ->
-        val venvPath = projectPath.resolve(".venv")
+        val venvPath = projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
 
         withContext(Dispatchers.IO) {
           venvExistenceValidationState.set(
             if (venvPath.exists())
-              VenvExistenceValidationState.Error(Paths.get(".venv"))
+              VenvExistenceValidationState.Error(Paths.get(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
             else
               VenvExistenceValidationState.Invisible
           )

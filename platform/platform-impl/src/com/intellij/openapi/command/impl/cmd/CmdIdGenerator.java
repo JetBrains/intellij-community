@@ -3,34 +3,23 @@ package com.intellij.openapi.command.impl.cmd;
 
 import com.intellij.openapi.command.impl.CommandId;
 import org.jetbrains.annotations.NotNull;
-
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 
-final class CmdIdGenerator {
+abstract class CmdIdGenerator {
 
   // for debug purpose: command - even number, transparent - odd number
-  private final AtomicLong idGenerator = new AtomicLong();
-  private final AtomicReference<CommandId> currentId = new AtomicReference<>();
+  private final AtomicLong generator = new AtomicLong(2);
 
-  @NotNull CommandId nextCommandId() {
-    long commandId = idGenerator.updateAndGet(id -> (id % 2 == 0) ? (id + 2) : (id + 1));
+  final @NotNull CommandId nextCommandId() {
+    long commandId = generator.updateAndGet(id -> (id % 2 == 0) ? (id + 2) : (id + 1));
     return createId(commandId);
   }
 
-  @NotNull CommandId nextTransparentId() {
-    long commandId = idGenerator.updateAndGet(id -> (id % 2 != 0) ? (id + 2) : (id + 1));
+  final @NotNull CommandId nextTransparentId() {
+    long commandId = generator.updateAndGet(id -> (id % 2 != 0) ? (id + 2) : (id + 1));
     return createId(commandId);
   }
 
-  @NotNull CommandId currentId() {
-    return currentId.get();
-  }
-
-  private @NotNull CommandId createId(long commandId) {
-    CommandId id = CommandId.fromLong(commandId);
-    currentId.set(id);
-    return id;
-  }
+  protected abstract @NotNull CommandId createId(long commandId);
 }

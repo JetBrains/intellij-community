@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 @ApiStatus.Internal
 final class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<ImmutableActionChangeRange> {
   private final SharedAdjustableUndoableActionsHolder myAdjustableUndoableActionsHolder;
-  private final Supplier<Boolean> myIsPerClientSupported;
+  final Supplier<Boolean> myIsPerClientSupported;
 
   SharedUndoRedoStacksHolder(
     @NotNull SharedAdjustableUndoableActionsHolder undoableActionsHolder,

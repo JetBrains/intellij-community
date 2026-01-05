@@ -19,7 +19,7 @@ suspend fun openNewProjectAndEditor(relativePath: String) {
 
   val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder("Test")
   val codeInsightFixture = CodeInsightTestFixtureImpl(projectBuilder.fixture, TempDirTestFixtureImpl())
-  lambdaBackendContext.addPostCleanup {
+  lambdaBackendContext.addAfterEachCleanup {
     codeInsightFixture.tearDown()
     Disposer.dispose(disposable)
   }

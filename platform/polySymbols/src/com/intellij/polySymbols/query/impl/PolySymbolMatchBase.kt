@@ -10,7 +10,6 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.PolySymbol.Priority
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
-import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationTargetImpl
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolMatchBuilder
 import com.intellij.polySymbols.query.PolySymbolMatchCustomizerFactory
@@ -26,7 +25,7 @@ import javax.swing.Icon
 internal open class PolySymbolMatchBase internal constructor(
   override val matchedName: String,
   override val nameSegments: List<PolySymbolNameSegment>,
-  override val qualifiedKind: PolySymbolQualifiedKind,
+  override val kind: PolySymbolKind,
   override val origin: PolySymbolOrigin,
   override val explicitPriority: Priority?,
   override val explicitProximity: Int?,
@@ -42,7 +41,7 @@ internal open class PolySymbolMatchBase internal constructor(
   }
 
   internal fun withSegments(segments: List<PolySymbolNameSegment>): PolySymbolMatch =
-    create(matchedName, segments, qualifiedKind, origin, explicitPriority, explicitProximity, additionalProperties)
+    create(matchedName, segments, kind, origin, explicitPriority, explicitProximity, additionalProperties)
 
 
   override val modifiers: Set<PolySymbolModifier>
@@ -61,7 +60,7 @@ internal open class PolySymbolMatchBase internal constructor(
     other is PolySymbolMatch
     && other.name == name
     && other.origin == origin
-    && other.qualifiedKind == qualifiedKind
+    && other.kind == kind
     && other.nameSegments.equalsIgnoreOffset(nameSegments)
 
   override fun hashCode(): Int = name.hashCode()
@@ -71,7 +70,7 @@ internal open class PolySymbolMatchBase internal constructor(
 
   class BuilderImpl(
     private var matchedName: String,
-    private var qualifiedKind: PolySymbolQualifiedKind,
+    private var kind: PolySymbolKind,
     private var origin: PolySymbolOrigin,
   ) : PolySymbolMatchBuilder {
 
@@ -81,7 +80,7 @@ internal open class PolySymbolMatchBase internal constructor(
     private var explicitProximity: Int? = null
 
     fun build(): PolySymbolMatch =
-      create(matchedName, nameSegments, qualifiedKind,
+      create(matchedName, nameSegments, kind,
              origin, explicitPriority, explicitProximity, properties)
 
     override fun addNameSegments(value: List<PolySymbolNameSegment>): PolySymbolMatchBuilder = this.also {
@@ -114,12 +113,12 @@ internal open class PolySymbolMatchBase internal constructor(
 private class PsiSourcedPolySymbolMatch(
   matchedName: String,
   nameSegments: List<PolySymbolNameSegment>,
-  qualifiedKind: PolySymbolQualifiedKind,
+  kind: PolySymbolKind,
   origin: PolySymbolOrigin,
   explicitPriority: Priority?,
   explicitProximity: Int?,
   additionalProperties: Map<String, Any>,
-) : PolySymbolMatchBase(matchedName, nameSegments, qualifiedKind, origin, explicitPriority, explicitProximity, additionalProperties),
+) : PolySymbolMatchBase(matchedName, nameSegments, kind, origin, explicitPriority, explicitProximity, additionalProperties),
     PsiSourcedPolySymbolMatchMixin {
 
   override fun createPointer(): Pointer<PsiSourcedPolySymbolMatch> =
@@ -130,19 +129,20 @@ private class PsiSourcedPolySymbolMatch(
 private fun create(
   matchedName: String,
   nameSegments: List<PolySymbolNameSegment>,
-  qualifiedKind: PolySymbolQualifiedKind,
+  kind: PolySymbolKind,
   origin: PolySymbolOrigin,
   explicitPriority: Priority?,
   explicitProximity: Int?,
   additionalProperties: Map<String, Any>,
 ): PolySymbolMatch {
-  val psiSourcedMixin = nameSegments.all { it.start == it.end || (it.symbols.isNotEmpty() && it.symbols.any { symbol -> symbol is PsiSourcedPolySymbol }) }
+  val psiSourcedMixin =
+    nameSegments.all { it.start == it.end || (it.symbols.isNotEmpty() && it.symbols.any { symbol -> symbol is PsiSourcedPolySymbol }) }
   return if (psiSourcedMixin) {
-    PsiSourcedPolySymbolMatch(matchedName, nameSegments, qualifiedKind, origin,
+    PsiSourcedPolySymbolMatch(matchedName, nameSegments, kind, origin,
                               explicitPriority, explicitProximity, additionalProperties)
   }
   else {
-    PolySymbolMatchBase(matchedName, nameSegments, qualifiedKind, origin,
+    PolySymbolMatchBase(matchedName, nameSegments, kind, origin,
                         explicitPriority, explicitProximity, additionalProperties)
   }
 }
@@ -156,7 +156,7 @@ private interface PolySymbolMatchMixin : PolySymbolMatch {
   fun reversedSegments() = Sequence { ReverseListIterator(nameSegments) }
 
   override fun withCustomProperties(properties: Map<String, Any>): PolySymbolMatch =
-    create(matchedName, nameSegments, qualifiedKind, origin, explicitPriority, explicitProximity, additionalProperties + properties)
+    create(matchedName, nameSegments, kind, origin, explicitPriority, explicitProximity, additionalProperties + properties)
 
   override val psiContext: PsiElement?
     get() = reversedSegments().flatMap { it.symbols.asSequence() }
@@ -297,7 +297,7 @@ private class PolySymbolMatchPointer<T : PolySymbolMatch>(
   private val newInstanceProvider: (
     matchedName: String,
     nameSegments: List<PolySymbolNameSegment>,
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     origin: PolySymbolOrigin,
     explicitPriority: Priority?,
     explicitProximity: Int?,
@@ -308,7 +308,7 @@ private class PolySymbolMatchPointer<T : PolySymbolMatch>(
   private val matchedName = polySymbolMatch.matchedName
   private val nameSegments = polySymbolMatch.nameSegments
     .map { it.createPointer() }
-  private val qualifiedKind = polySymbolMatch.qualifiedKind
+  private val kind = polySymbolMatch.kind
   private val origin = polySymbolMatch.origin
   private val explicitPriority = polySymbolMatch.explicitPriority
   private val explicitProximity = polySymbolMatch.explicitProximity
@@ -324,7 +324,7 @@ private class PolySymbolMatchPointer<T : PolySymbolMatch>(
         if (dereferencingProblems.get()) return null
 
         @Suppress("UNCHECKED_CAST")
-        newInstanceProvider(matchedName, it as List<PolySymbolNameSegment>, qualifiedKind, origin,
+        newInstanceProvider(matchedName, it as List<PolySymbolNameSegment>, kind, origin,
                             explicitPriority, explicitProximity, dereferencedProperties)
       }
 

@@ -109,7 +109,7 @@ context(lambdaBackendContext: LambdaBackendContext)
 suspend fun openProject(projectPath: Path): Project {
   frameworkLogger.info("Opening project at $projectPath")
   val disposable = Disposer.newDisposable("Dialog setup")
-  lambdaBackendContext.addPostCleanup {
+  lambdaBackendContext.addAfterEachCleanup {
     Disposer.dispose(disposable)
   }
   TrustedProjectStartupDialog.setDialogChoiceInTests(OpenUntrustedProjectChoice.TRUST_AND_OPEN, disposable)
@@ -121,7 +121,7 @@ suspend fun openProject(projectPath: Path): Project {
     }
   ) ?: error("Failed to open project at $projectPath")
 
-  lambdaBackendContext.addPostCleanup {
+  lambdaBackendContext.addAfterEachCleanup {
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
       projectManager.forceCloseProjectAsync(project, save = false)

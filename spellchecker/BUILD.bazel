@@ -88,7 +88,7 @@ jvm_library(
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/util/jdom",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-test",
+    "//libraries/kotlin/test:libraries-kotlinTest",
     "@lib//:kotlin-test-junit",
     "//libraries/kotlinx/coroutines/core",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",

@@ -91,7 +91,16 @@
   module: intellij.grazie.core
   files:
   - name: $MAVEN_REPOSITORY$/com/vdurmont/emoji-java/5/emoji-java-5.jar
-- name: lib/grazie-frontend.jar
+- name: lib/grazie.jar
+  modules:
+  - name: intellij.grazie
+  contentModules:
+  - name: intellij.grazie.core
+  - name: intellij.grazie.json
+  - name: intellij.grazie.markdown
+  - name: intellij.grazie.xml
+  - name: intellij.grazie.yaml
+- name: lib/intellij.libraries.ai.grazie.spell.gec.engine.local.jar
   contentModules:
   - name: intellij.libraries.ai.grazie.spell.gec.engine.local
     libraries:
@@ -114,15 +123,6 @@
       - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0/nlp-detect-jvm-0.jar
       ai.grazie.model.swagger.annotations.jvm:
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0/swagger-annotations-jvm-0.jar
-- name: lib/grazie.jar
-  modules:
-  - name: intellij.grazie
-  contentModules:
-  - name: intellij.grazie.core
-  - name: intellij.grazie.json
-  - name: intellij.grazie.markdown
-  - name: intellij.grazie.xml
-  - name: intellij.grazie.yaml
 - name: lib/javax.measure-unit-api.jar
   library: javax.measure:unit-api:1.0
   module: intellij.grazie.core

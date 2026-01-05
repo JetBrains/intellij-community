@@ -4,7 +4,7 @@ package com.intellij.polySymbols.query
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.utils.getDefaultCodeCompletions
@@ -44,7 +44,7 @@ interface PolySymbolScope : ModificationTracker {
     params: PolySymbolNameMatchQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
-    getSymbols(qualifiedName.qualifiedKind,
+    getSymbols(qualifiedName.kind,
                PolySymbolListSymbolsQueryParams.create(
                  params.queryExecutor, expandPatterns = false) {
                  strictScope(params.strictScope)
@@ -59,7 +59,7 @@ interface PolySymbolScope : ModificationTracker {
    * If the scope contains many symbols, or results should be cached consider extending [com.intellij.polySymbols.utils.PolySymbolScopeWithCache].
    */
   fun getSymbols(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     params: PolySymbolListSymbolsQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
@@ -84,7 +84,7 @@ interface PolySymbolScope : ModificationTracker {
   /**
    * When scope is exclusive for a particular namespace and kind, resolve will not continue down the stack during pattern matching.
    */
-  fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
+  fun isExclusiveFor(kind: PolySymbolKind): Boolean =
     false
 
 }

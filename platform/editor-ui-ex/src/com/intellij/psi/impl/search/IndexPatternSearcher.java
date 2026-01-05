@@ -23,6 +23,7 @@ import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -56,9 +57,10 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
 
     final TodoCacheManager cacheManager = TodoCacheManager.getInstance(file.getProject());
     final IndexPatternProvider patternProvider = queryParameters.getPatternProvider();
+    final IndexPattern queryParametersPattern = queryParameters.getPattern();
     int count = patternProvider != null
                 ? cacheManager.getTodoCount(virtualFile, patternProvider)
-                : cacheManager.getTodoCount(virtualFile, queryParameters.getPattern());
+                : (queryParametersPattern != null ? cacheManager.getTodoCount(virtualFile, queryParametersPattern) : 0);
     if (count != 0) {
       executeImpl(queryParameters, consumer);
     }
@@ -103,12 +105,13 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
     if (file instanceof PsiPlainTextFile) {
       FileType fType = file.getFileType();
       if (fType instanceof CustomSyntaxTableFileType) {
-        Lexer lexer = SyntaxHighlighterFactory.getSyntaxHighlighter(fType, file.getProject(), file.getVirtualFile()).getHighlightingLexer();
-        return findComments(lexer, chars, range, COMMENT_TOKENS, null, multiLine);
+        Lexer lexer = ObjectUtils.doIfNotNull(SyntaxHighlighterFactory.getSyntaxHighlighter(fType, file.getProject(), file.getVirtualFile()), SyntaxHighlighter::getHighlightingLexer);
+        if (lexer != null) {
+          findComments(lexer, chars, range, COMMENT_TOKENS, null, multiLine);
+        }
       }
-      else {
-        return Collections.singletonList(new CommentRange(0, chars.length()));
-      }
+
+      return Collections.singletonList(new CommentRange(0, chars.length()));
     }
     else {
       List<CommentRange> commentRanges = new ArrayList<>();
@@ -121,14 +124,18 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
         Lexer lexer = syntaxHighlighter.getHighlightingLexer();
         TokenSet commentTokens = null;
         IndexPatternBuilder builderForFile = null;
-        for (IndexPatternBuilder builder : IndexPatternBuilder.EP_NAME.getExtensionList()) {
-          Lexer lexerFromBuilder = builder.getIndexingLexer(currentPsiFile);
-          if (lexerFromBuilder != null) {
-            lexer = lexerFromBuilder;
-            commentTokens = builder.getCommentTokenSet(currentPsiFile);
-            builderForFile = builder;
+
+        if (currentPsiFile != null) {
+          for (IndexPatternBuilder builder : IndexPatternBuilder.EP_NAME.getExtensionList()) {
+            Lexer lexerFromBuilder = builder.getIndexingLexer(currentPsiFile);
+            if (lexerFromBuilder != null) {
+              lexer = lexerFromBuilder;
+              commentTokens = builder.getCommentTokenSet(currentPsiFile);
+              builderForFile = builder;
+            }
           }
         }
+
         if (builderForFile == null) {
           final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
           if (parserDefinition != null) {
@@ -238,7 +245,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
             List<TextRange> additionalRanges = multiLine ? findContinuation(start, chars, allIndexPatterns, commentRanges, commentNum)
                                                          : Collections.emptyList();
             if (range != null && !additionalRanges.isEmpty() &&
-                additionalRanges.get(additionalRanges.size() - 1).getEndOffset() > range.getEndOffset()) {
+                additionalRanges.getLast().getEndOffset() > range.getEndOffset()) {
               continue;
             }
             matches.add(start);

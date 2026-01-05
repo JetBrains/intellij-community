@@ -27,24 +27,29 @@
     <registryKey key="devkit.compose.example.settings.page" defaultValue="false"
                  description="Enable example Settings page implemented with Compose UI"/>
 
-    <editorNotificationProvider implementation="com.intellij.devkit.compose.hotreload.ComposeHotReloadSuggester"/>
-    <lang.documentationProvider language="kotlin" implementationClass="com.intellij.devkit.compose.hotreload.ComposeHotReloadTips"/>
+    <editorNotificationProvider implementation="com.intellij.devkit.compose.hotreload.DevkitHotReloadSuggester"/>
+    <lang.documentationProvider language="kotlin" implementationClass="com.intellij.devkit.compose.hotreload.DevkitHotReloadTips"/>
     <editorFactoryListener implementation="com.intellij.devkit.compose.hotreload.ToggleComposeSandboxTipsEditorListener"/>
 
     <registryKey key="devkit.compose.desktop.preview" defaultValue="true"
                  restartRequired="true" description="Enables Compose UI previews tool window"/>
     <library.toolWindow id="ComposeUIPreview" anchor="right"
                         factoryClass="com.intellij.devkit.compose.preview.ComposePreviewToolWindowFactory"
-                        icon="com.intellij.devkit.core.icons.DevkitCoreIcons.ComposeToolWindow"
+                        icon="com.intellij.devkit.compose.icons.DevkitComposeIcons.ComposeToolWindow"
                         librarySearchClass="com.intellij.devkit.compose.preview.ComposePreviewSearcher"/>
     <implicitUsageProvider implementation="com.intellij.devkit.compose.preview.ComposePreviewImplicitUsageProvider"/>
 
+    <registryKey key="devkit.compose.hot.reload.agent.version" defaultValue="" description="'Compose Hot Reload' agent version override"/>
+    <runConfigurationExtension implementation="com.intellij.devkit.compose.hotreload.DevkitHotReloadCommandLinePatcher" />
+    <executor implementation="com.intellij.devkit.compose.hotreload.DevkitHotReloadExecutor"/>
+    <programRunner implementation="com.intellij.devkit.compose.hotreload.DevkitHotReloadRunner"/>
+    <programRunner implementation="com.intellij.devkit.compose.hotreload.DevkitGradleHotReloadRunner"/>
   </extensions>
 
   <actions>
     <group id="ComposeToolsGroup" searchable="false">
       <action id="JewelToolwindow" class="com.intellij.devkit.compose.demo.dialog.JewelToolwindowAction"
-              icon="com.intellij.devkit.core.icons.DevkitCoreIcons.ComposeToolWindow"/>
+              icon="com.intellij.devkit.compose.icons.DevkitComposeIcons.ComposeToolWindow"/>
       <action id="JewelComponentShowcaseDialog" class="com.intellij.devkit.compose.demo.dialog.ComponentShowcaseDialogAction"
               icon="com.intellij.devkit.core.icons.DevkitCoreIcons.Items"/>
       <action id="JewelWizardDialog" class="com.intellij.devkit.compose.demo.dialog.JewelWizardDialogAction"/>
@@ -63,8 +68,6 @@
     <!-- Legacy actions, only available from Search Everywhere -->
     <action id="ComposeShowcase" class="com.intellij.devkit.compose.showcase.ComposeShowcaseAction"/>
     <action id="JewelActionSystemTest" class="com.intellij.devkit.compose.demo.ActionSystemTestAction"/>
-
-    <action id="LockReqAnalysis" internal="true" class="com.intellij.devkit.compose.threadingModelHelper.LockReqAction"/>
 
     <group id="ComposePreviewActions.Title" searchable="false">
       <action id="ComposePreviewRefresh"

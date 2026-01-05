@@ -1,9 +1,12 @@
 <!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
 <idea-plugin>
-  <module value="com.intellij.modules.todo"/>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex"/>
+    <registryKey
+      key="todo.toolwindow.split"
+      defaultValue="false"
+      description="Enables the `TODO toolwindow` implementation, optimized to support both remote development workflows and monolithic setups."/>
+
     <highlightVisitor implementation="com.intellij.ide.todo.codeInsight.TodoHighlightVisitor"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.ide.todo.TodoConfigurationCollector"/>
@@ -17,9 +20,11 @@
     <projectService serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper"/>
     <projectService serviceImplementation="com.intellij.ide.todo.TodoView" client="all"/>
 
+    <projectService serviceInterface="com.intellij.psi.impl.cache.TodoCacheManager"
+                    serviceImplementation="com.intellij.psi.impl.cache.impl.EmptyTodoCacheManager"/>
+
     <toolWindow id="TODO" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowTodo"
                 factoryClass="com.intellij.ide.todo.TodoToolWindowFactory" canCloseContents="true"/>
-    <toolWindowExtractorMode id="TODO" mode="per_client"/>
     <projectService serviceImplementation="com.intellij.ide.todo.TodoViewChangesSupport"/>
   </extensions>
 

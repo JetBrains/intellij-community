@@ -277,7 +277,7 @@ class RunBlockingCancellableTest : CancellationTest() {
   @Test
   @RegistryKey("ide.run.blocking.cancellable.assert.in.tests", "true")
   fun `runBlockingCancellable in inner explicit ra of wa`(): Unit = timeoutRunBlocking {
-    getGlobalThreadingSupport().runWriteAction(Runnable::class.java) {
+    getGlobalThreadingSupport().runWriteAction {
       ReadAction.run<Throwable> {
         // checks that there are no assertions
         runBlockingCancellable {

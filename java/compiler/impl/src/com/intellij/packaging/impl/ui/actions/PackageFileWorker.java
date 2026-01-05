@@ -176,7 +176,7 @@ public final class PackageFileWorker {
   private static JBZipFile getOrCreateZipFile(File archiveFile) throws IOException {
     FileUtil.createIfDoesntExist(archiveFile);
     try {
-      return new JBZipFile(archiveFile);
+      return new JBZipFile(archiveFile.toPath(), false);
     }
     catch (IllegalArgumentException e) {
       throw new IOException(e);

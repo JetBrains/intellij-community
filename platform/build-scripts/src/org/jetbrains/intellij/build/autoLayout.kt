@@ -9,7 +9,9 @@ import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
+import org.jetbrains.intellij.build.impl.DescriptorCacheWriter
 import org.jetbrains.intellij.build.impl.contentModuleNameToDescriptorFileName
+import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 
 private const val VERIFIER_MODULE = "intellij.platform.commercial.verifier"
 
@@ -99,24 +101,18 @@ internal suspend fun computeModuleSourcesByContent(
       continue
     }
 
-    val useSeparateJar: Boolean
-    if (loadingRule == "embedded") {
-      useSeparateJar = false
-    }
-    else {
-      val module = context.outputProvider.findRequiredModule(moduleName)
-      val descriptorFileName = contentModuleNameToDescriptorFileName(moduleName)
-      var descriptorData = pluginCachedDescriptorContainer.getCachedFileData(descriptorFileName)
-      if (descriptorData == null) {
-        descriptorData = requireNotNull(findUnprocessedDescriptorContent(module = module, path = descriptorFileName, outputProvider = context.outputProvider)) {
-          "$descriptorFileName not found in module $moduleName"
-        }
-        descriptorCacheWriter.put(descriptorFileName, descriptorData)
-      }
-      val descriptor = readXmlAsModel(descriptorData)
-      useSeparateJar = (descriptor.getAttributeValue("package") == null || helper.isPluginModulePackedIntoSeparateJar(module, pluginLayout, frontendModuleFilter))
-    }
-    if (!useSeparateJar && modulesWithCustomPath.contains(moduleName)) {
+    val relativeOutputFile = computeOutputJarPath(
+      moduleName = moduleName,
+      loadingRule = loadingRule,
+      modulesWithCustomPath = modulesWithCustomPath,
+      pluginLayout = pluginLayout,
+      frontendModuleFilter = frontendModuleFilter,
+      helper = helper,
+      context = context,
+      pluginCachedDescriptorContainer = pluginCachedDescriptorContainer,
+      descriptorCacheWriter = descriptorCacheWriter,
+    )
+    if (relativeOutputFile == null) {
       addedModules.remove(moduleName)
       continue
     }
@@ -124,8 +120,7 @@ internal suspend fun computeModuleSourcesByContent(
     jarPackager.computeSourcesForModule(
       item = ModuleItem(
         moduleName = moduleName,
-        // relative path with `/` is always packed by dev-mode, so we don't need to fix resolving for now and can improve it later
-        relativeOutputFile = if (useSeparateJar) "modules/$moduleName.jar" else getDefaultJarName(pluginLayout, moduleName, frontendModuleFilter),
+        relativeOutputFile = relativeOutputFile,
         reason = "<- ${pluginLayout.mainModule} (plugin content)",
       ),
       layout = pluginLayout,
@@ -133,6 +128,68 @@ internal suspend fun computeModuleSourcesByContent(
     )
   }
   descriptorCacheWriter.apply()
+}
+
+private fun computeOutputJarPath(
+  moduleName: String,
+  loadingRule: String?,
+  modulesWithCustomPath: Set<String>,
+  pluginLayout: PluginLayout,
+  frontendModuleFilter: FrontendModuleFilter,
+  helper: JarPackagerDependencyHelper,
+  context: BuildContext,
+  pluginCachedDescriptorContainer: ScopedCachedDescriptorContainer,
+  descriptorCacheWriter: DescriptorCacheWriter,
+): String? {
+  if (loadingRule == "embedded") {
+    // Case 1: Embedded lib modules → separate jar in root directory
+    if (moduleName.startsWith(LIB_MODULE_PREFIX)) {
+      return "$moduleName.jar"
+    }
+
+    // Case 2: Embedded regular modules → merge into main plugin jar
+    return if (modulesWithCustomPath.contains(moduleName)) null else getDefaultJarName(pluginLayout, moduleName, frontendModuleFilter)
+  }
+
+  // Case 3: Non-embedded modules → check descriptor for separate jar need
+  val needsSeparateJar = checkNeedsSeparateJar(
+    moduleName = moduleName,
+    pluginLayout = pluginLayout,
+    frontendModuleFilter = frontendModuleFilter,
+    helper = helper,
+    context = context,
+    pluginCachedDescriptorContainer = pluginCachedDescriptorContainer,
+    descriptorCacheWriter = descriptorCacheWriter,
+  )
+
+  return when {
+    needsSeparateJar -> "modules/$moduleName.jar"
+    modulesWithCustomPath.contains(moduleName) -> null
+    else -> getDefaultJarName(pluginLayout, moduleName, frontendModuleFilter)
+  }
+}
+
+private fun checkNeedsSeparateJar(
+  moduleName: String,
+  pluginLayout: PluginLayout,
+  frontendModuleFilter: FrontendModuleFilter,
+  helper: JarPackagerDependencyHelper,
+  context: BuildContext,
+  pluginCachedDescriptorContainer: ScopedCachedDescriptorContainer,
+  descriptorCacheWriter: DescriptorCacheWriter,
+): Boolean {
+  val module = context.outputProvider.findRequiredModule(moduleName)
+  val descriptorFileName = contentModuleNameToDescriptorFileName(moduleName)
+  var descriptorData = pluginCachedDescriptorContainer.getCachedFileData(descriptorFileName)
+  if (descriptorData == null) {
+    descriptorData = requireNotNull(findUnprocessedDescriptorContent(module = module, path = descriptorFileName, outputProvider = context.outputProvider)) {
+      "$descriptorFileName not found in module $moduleName"
+    }
+    descriptorCacheWriter.put(descriptorFileName, descriptorData)
+  }
+  val descriptor = readXmlAsModel(descriptorData)
+  return descriptor.getAttributeValue("package") == null ||
+         helper.isPluginModulePackedIntoSeparateJar(module, pluginLayout, frontendModuleFilter)
 }
 
 private fun getDefaultJarName(layout: PluginLayout, moduleName: String, frontendModuleFilter: FrontendModuleFilter): String {

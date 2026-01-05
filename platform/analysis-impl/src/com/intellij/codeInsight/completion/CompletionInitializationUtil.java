@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 import static com.intellij.reference.SoftReference.dereference;
 
@@ -113,15 +112,15 @@ public final class CompletionInitializationUtil {
                                     initContext.getEditor(), indicator);
   }
 
-  public static Supplier<OffsetsInFile> insertDummyIdentifier(@NotNull CompletionInitializationContext initContext,
-                                                              @NotNull CompletionProcessEx indicator) {
+  public static CopyFileUpdateTask insertDummyIdentifier(@NotNull CompletionInitializationContext initContext,
+                                                         @NotNull CompletionProcessEx indicator) {
     OffsetsInFile topLevelOffsets = indicator.getHostOffsets();
     return doInsertDummyIdentifier(initContext, topLevelOffsets, indicator);
   }
 
-  private static Supplier<OffsetsInFile> doInsertDummyIdentifier(@NotNull CompletionInitializationContext initContext,
-                                                                 @NotNull OffsetsInFile topLevelOffsets,
-                                                                 @NotNull CompletionProcessEx completionProcess) {
+  private static CopyFileUpdateTask doInsertDummyIdentifier(@NotNull CompletionInitializationContext initContext,
+                                                            @NotNull OffsetsInFile topLevelOffsets,
+                                                            @NotNull CompletionProcessEx completionProcess) {
 
     CompletionAssertions.checkEditorValid(initContext.getEditor());
     if (initContext.getDummyIdentifier().isEmpty()) {
@@ -139,8 +138,7 @@ public final class CompletionInitializationUtil {
     int startOffset = hostMap.getOffset(CompletionInitializationContext.START_OFFSET);
     int endOffset = hostMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
 
-    Supplier<OffsetsInFile> apply = topLevelOffsets.replaceInCopy(hostCopy, startOffset, endOffset, dummyIdentifier);
-
+    CopyFileUpdateTask copyFileUpdateTask = topLevelOffsets.replaceInCopy(hostCopy, startOffset, endOffset, dummyIdentifier);
 
     // despite being non-physical, the copy file should only be modified in a write action,
     // because it's reused in multiple completions, and it can also escape uncontrollably into other threads (e.g., quick doc)
@@ -150,7 +148,7 @@ public final class CompletionInitializationUtil {
           () -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier)
         );
 
-        OffsetsInFile copyOffsets = apply.get();
+        OffsetsInFile copyOffsets = copyFileUpdateTask.ensureUpdatedAndGetNewOffsets();
         completionProcess.registerChildDisposable(() -> copyOffsets.getOffsets());
 
         return copyOffsets;

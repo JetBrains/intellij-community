@@ -57,10 +57,10 @@ fun List<PolySymbol>.asSingleSymbol(force: Boolean = false): PolySymbol? =
     this[0]
   else {
     val first = this[0]
-    if (!force && any { it.qualifiedKind != first.qualifiedKind })
+    if (!force && any { it.kind != first.kind })
       null
     else
-      PolySymbolMatch.create(first.name, first.qualifiedKind, first.origin,
+      PolySymbolMatch.create(first.name, first.kind, first.origin,
                              PolySymbolNameSegment.create(0, first.name.length, sortSymbolsByPriority()))
   }
 
@@ -70,18 +70,18 @@ fun PolySymbol.withMatchedName(matchedName: String): PolySymbol =
       nameSegments[0].withRange(0, matchedName.length)
     else
       PolySymbolNameSegment.create(0, matchedName.length, this)
-    PolySymbolMatch.create(matchedName, qualifiedKind, origin, nameSegment)
+    PolySymbolMatch.create(matchedName, kind, origin, nameSegment)
   }
   else this
 
-fun PolySymbol.withMatchedKind(qualifiedKind: PolySymbolQualifiedKind): PolySymbol =
-  if (qualifiedKind != this.qualifiedKind) {
+fun PolySymbol.withMatchedKind(kind: PolySymbolKind): PolySymbol =
+  if (kind != this.kind) {
     val matchedName = this.asSafely<PolySymbolMatch>()?.matchedName ?: name
     val nameSegment = if (this is PolySymbolMatch && nameSegments.size == 1)
       nameSegments[0].withRange(0, matchedName.length)
     else
       PolySymbolNameSegment.create(0, matchedName.length, this)
-    PolySymbolMatch.create(matchedName, qualifiedKind, origin, nameSegment)
+    PolySymbolMatch.create(matchedName, kind, origin, nameSegment)
   }
   else this
 
@@ -160,7 +160,7 @@ fun PolySymbol.match(
             null
           }
           else {
-            PolySymbolMatch.create(nameToMatch, matchResult.segments, qualifiedKind, origin)
+            PolySymbolMatch.create(nameToMatch, matchResult.segments, kind, origin)
           }
         }
     }
@@ -190,19 +190,19 @@ fun PolySymbol.toCodeCompletionItems(
     .map { PolySymbolCodeCompletionItem.create(it, 0, symbol = this) }
 
 fun PolySymbol.nameMatches(name: String, queryExecutor: PolySymbolQueryExecutor): Boolean {
-  val queryNames = queryExecutor.namesProvider.getNames(qualifiedKind.withName(name), PolySymbolNamesProvider.Target.NAMES_QUERY)
+  val queryNames = queryExecutor.namesProvider.getNames(kind.withName(name), PolySymbolNamesProvider.Target.NAMES_QUERY)
   val symbolNames = queryExecutor.namesProvider.getNames(qualifiedName, PolySymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
   return queryNames.any { symbolNames.contains(it) }
 }
 
 val PolySymbol.qualifiedName: PolySymbolQualifiedName
-  get() = qualifiedKind.withName(name)
+  get() = kind.withName(name)
 
 val PolySymbol.namespace: PolySymbolNamespace
-  get() = qualifiedKind.namespace
+  get() = kind.namespace
 
-val PolySymbol.kind: PolySymbolKind
-  get() = qualifiedKind.kind
+val PolySymbol.kindName: PolySymbolKindName
+  get() = kind.kindName
 
 val PolySymbol.completeMatch: Boolean
   get() = this !is PolySymbolMatch
@@ -376,7 +376,7 @@ fun PolySymbolScope.getDefaultCodeCompletions(
   params: PolySymbolCodeCompletionQueryParams,
   stack: PolySymbolQueryStack,
 ): List<PolySymbolCodeCompletionItem> =
-  getSymbols(qualifiedName.qualifiedKind,
+  getSymbols(qualifiedName.kind,
              PolySymbolListSymbolsQueryParams.create(
                params.queryExecutor,
                expandPatterns = false) {

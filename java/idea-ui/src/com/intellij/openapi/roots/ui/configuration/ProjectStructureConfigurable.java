@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.server.BuildManager;
@@ -74,11 +74,11 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   private final FacetStructureConfigurable myFacetStructureConfigurable;
   private final ArtifactsStructureConfigurable myArtifactsStructureConfigurable;
 
-  private History myHistory = new History(this);
+  private History myHistory;
   private SidePanel mySidePanel;
 
   private JPanel myComponent;
-  private final Wrapper myDetails = new Wrapper();
+  private Wrapper myDetails;
 
   private Configurable mySelectedConfigurable;
 
@@ -96,9 +96,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   private final ModulesConfigurator myModuleConfigurator;
   private final JdkListConfigurable myJdkListConfig;
 
-  private final JLabel myEmptySelection = new JLabel(
-    JavaUiBundle.message("project.structure.empty.text"),
-    SwingConstants.CENTER);
+  private JLabel myEmptySelection;
 
   private final ObsoleteLibraryFilesRemover myObsoleteLibraryFilesRemover;
 
@@ -161,7 +159,9 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   @Override
   public JComponent createComponent() {
     myComponent = new MyPanel();
-
+    myDetails = new Wrapper();
+    myHistory = new History(this);
+    myEmptySelection = new JLabel(JavaUiBundle.message("project.structure.empty.text"), SwingConstants.CENTER);
     mySplitter = new OnePixelSplitter(false, .15f);
     mySplitter.setSplitterProportionKey("ProjectStructure.TopLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);

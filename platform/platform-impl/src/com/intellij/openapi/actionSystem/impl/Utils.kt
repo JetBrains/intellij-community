@@ -7,6 +7,7 @@ import com.intellij.CommonBundle
 import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.concurrency.IntelliJContextElement
+import com.intellij.concurrency.installThreadContext
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
@@ -1307,7 +1308,14 @@ internal inline fun <R> runBlockingForActionExpand(context: CoroutineContext = E
     //
     // sometimes this code runs under write action. It does not call read actions inside, so it makes no sense parallelizing lock; moreover, having write access
     // could prevent deadlocks caused by background write actions
-    val (lockContextElement, cleanup) = getGlobalThreadingSupport().getPermitAsContextElement(ctx, !application.isWriteAccessAllowed)
+    val (lockContextElement, cleanup) = if (application.isWriteAccessAllowed) {
+      getGlobalThreadingSupport().getLockContextElement() to {}
+    }
+    else {
+      installThreadContext(ctx, true) {
+        getGlobalThreadingSupport().parallelizeLock()
+      }
+    }
     try {
       @OptIn(InternalCoroutinesApi::class)
       IntelliJCoroutinesFacade.runBlockingWithParallelismCompensation(

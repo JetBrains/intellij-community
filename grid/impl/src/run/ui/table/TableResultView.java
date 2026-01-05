@@ -372,7 +372,9 @@ public final class TableResultView extends JBTableWithResizableCells
   public void addSelectionChangedListener(@NotNull Consumer<Boolean> listener) {
     ListSelectionListener l = e -> {
       if (!myDisableSelectionListeners) {
-        listener.accept(e.getValueIsAdjusting());
+        WriteIntentReadAction.run(() -> {
+          listener.accept(e.getValueIsAdjusting());
+        });
       }
     };
     getColumnModel().getSelectionModel().addListSelectionListener(l);

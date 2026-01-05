@@ -64,24 +64,24 @@ private class YamlFileBasedPluginLayoutProvider(
     deserializeContentData(ideContentYamlPath.readText())
   }
 
-  private val mergedContentData by lazy {
-    loadMergedContentData()
+  private val mergedContentDataForEmbeddedModules by lazy {
+    loadMergedDataForEmbeddedModules()
   }
 
-  private fun loadMergedContentData(): List<FileEntry> {
+  private fun loadMergedDataForEmbeddedModules(): List<FileEntry> {
     val baseEntries = ideContentData.toMutableList()
 
     // Collect productModules and productEmbeddedModules separately, expanding module sets
     val productModuleNames = ideContentData
       .asSequence()
       .flatMap { it.productModules }
-      .flatMap { moduleName -> resolveModuleSet(moduleName, ultimateHome) }
+      .flatMap { moduleName -> resolveModuleSet(moduleName, embeddedOnly = true, ultimateHome) }
       .distinct()
 
     val productEmbeddedModuleNames = ideContentData
       .asSequence()
       .flatMap { it.productEmbeddedModules }
-      .flatMap { moduleName -> resolveModuleSet(moduleName, ultimateHome) }
+      .flatMap { moduleName -> resolveModuleSet(moduleName, embeddedOnly = true, ultimateHome) }
       .distinct()
 
     for (moduleName in (productModuleNames + productEmbeddedModuleNames)) {
@@ -115,7 +115,7 @@ private class YamlFileBasedPluginLayoutProvider(
 
   override fun loadCorePluginLayout(): PluginLayoutDescription {
     return toPluginLayoutDescription(
-      entries = mergedContentData,
+      entries = mergedContentDataForEmbeddedModules,
       mainModuleName = mainModuleOfCorePlugin,
       pluginDescriptorPath = corePluginDescriptorPath,
       mainLibDir = "dist.all/lib",

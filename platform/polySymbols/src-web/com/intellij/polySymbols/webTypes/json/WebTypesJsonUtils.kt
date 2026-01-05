@@ -39,13 +39,13 @@ private fun namespaceOf(host: GenericContributionsHost): PolySymbolNamespace =
     else -> throw IllegalArgumentException(host.toString())
   }
 
-internal fun Contributions.getAllContributions(framework: FrameworkId?): Sequence<Pair<PolySymbolQualifiedKind, List<BaseContribution>>> =
+internal fun Contributions.getAllContributions(framework: FrameworkId?): Sequence<Pair<PolySymbolKind, List<BaseContribution>>> =
   sequenceOf(css, html)
     .filter { it != null }
     .flatMap { host -> host.collectDirectContributions(framework) }
     .plus(js?.collectDirectContributions() ?: emptySequence())
 
-internal fun GenericContributionsHost.getAllContributions(framework: FrameworkId?): Sequence<Pair<PolySymbolQualifiedKind, List<BaseContribution>>> =
+internal fun GenericContributionsHost.getAllContributions(framework: FrameworkId?): Sequence<Pair<PolySymbolKind, List<BaseContribution>>> =
   if (this is BaseContribution)
     sequenceOf(this, css, js, html)
       .filter { it != null }
@@ -53,17 +53,17 @@ internal fun GenericContributionsHost.getAllContributions(framework: FrameworkId
   else
     this.collectDirectContributions(framework)
 
-internal val HTML_VUE_LEGACY_COMPONENTS = PolySymbolQualifiedKind[NAMESPACE_HTML, "\$vue-legacy-components\$"]
+internal val HTML_VUE_LEGACY_COMPONENTS = PolySymbolKind[NAMESPACE_HTML, "\$vue-legacy-components\$"]
 
 internal const val VUE_DIRECTIVE_PREFIX = "v-"
 internal const val VUE_FRAMEWORK = "vue"
-internal val HTML_VUE_COMPONENTS = PolySymbolQualifiedKind[NAMESPACE_HTML, "vue-components"]
-internal val HTML_VUE_COMPONENT_PROPS = PolySymbolQualifiedKind[NAMESPACE_HTML, "props"]
-internal val HTML_VUE_DIRECTIVES = PolySymbolQualifiedKind[NAMESPACE_HTML, "vue-directives"]
-internal val HTML_VUE_DIRECTIVE_ARGUMENT = PolySymbolQualifiedKind[NAMESPACE_HTML, "argument"]
-internal val HTML_VUE_DIRECTIVE_MODIFIERS = PolySymbolQualifiedKind[NAMESPACE_HTML, "modifiers"]
+internal val HTML_VUE_COMPONENTS = PolySymbolKind[NAMESPACE_HTML, "vue-components"]
+internal val HTML_VUE_COMPONENT_PROPS = PolySymbolKind[NAMESPACE_HTML, "props"]
+internal val HTML_VUE_DIRECTIVES = PolySymbolKind[NAMESPACE_HTML, "vue-directives"]
+internal val HTML_VUE_DIRECTIVE_ARGUMENT = PolySymbolKind[NAMESPACE_HTML, "argument"]
+internal val HTML_VUE_DIRECTIVE_MODIFIERS = PolySymbolKind[NAMESPACE_HTML, "modifiers"]
 
-private fun GenericContributionsHost.collectDirectContributions(framework: FrameworkId?): Sequence<Pair<PolySymbolQualifiedKind, List<BaseContribution>>> =
+private fun GenericContributionsHost.collectDirectContributions(framework: FrameworkId?): Sequence<Pair<PolySymbolKind, List<BaseContribution>>> =
   (when (this) {
     is HtmlContributionsHost -> sequenceOf(
       Pair(HTML_ATTRIBUTES, this.attributes),
@@ -107,12 +107,12 @@ private fun GenericContributionsHost.collectDirectContributions(framework: Frame
   })
     .plus(this.additionalProperties.asSequence()
             .map { (name, list) ->
-              Pair(PolySymbolQualifiedKind[namespaceOf(this), name],
+              Pair(PolySymbolKind[namespaceOf(this), name],
                    list?.mapNotNull { it?.value as? GenericContribution } ?: emptyList())
             }
             .filter { it.second.isNotEmpty() })
 
-private fun JsGlobal.collectDirectContributions(): Sequence<Pair<PolySymbolQualifiedKind, List<BaseContribution>>> =
+private fun JsGlobal.collectDirectContributions(): Sequence<Pair<PolySymbolKind, List<BaseContribution>>> =
   sequenceOf(
     Pair(JS_EVENTS, this.events),
     Pair(JS_SYMBOLS, this.symbols),
@@ -121,7 +121,7 @@ private fun JsGlobal.collectDirectContributions(): Sequence<Pair<PolySymbolQuali
     .plus(additionalProperties.asSequence()
             .filter { (name, _) -> !WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS.contains(name) }
             .map { (name, list) ->
-              Pair(PolySymbolQualifiedKind[NAMESPACE_JS, name],
+              Pair(PolySymbolKind[NAMESPACE_JS, name],
                    list?.mapNotNull { it?.value as? GenericContribution } ?: emptyList())
             }
             .filter { it.second.isNotEmpty() })
@@ -156,7 +156,7 @@ internal val GenericContributionsHost.genericProperties: Map<String, Any>
       )
       .toMap()
 
-internal fun Reference.getSymbolKind(context: PolySymbol?): PolySymbolQualifiedKind? =
+internal fun Reference.getSymbolKind(context: PolySymbol?): PolySymbolKind? =
   when (val reference = this.value) {
     is String -> reference
     is ReferenceWithProps -> reference.path
@@ -164,7 +164,7 @@ internal fun Reference.getSymbolKind(context: PolySymbol?): PolySymbolQualifiedK
   }
     .let { parseWebTypesPath(it, context) }
     .lastOrNull()
-    ?.qualifiedKind
+    ?.kind
 
 internal fun Reference.resolve(
   name: String,
@@ -191,7 +191,7 @@ internal fun Reference.resolve(
     if (path.isEmpty()) return@processPolySymbols emptyList()
     val lastSegment = path.last()
     if (lastSegment.name.isEmpty())
-      listSymbolsQuery(path.subList(0, path.size - 1), lastSegment.qualifiedKind,
+      listSymbolsQuery(path.subList(0, path.size - 1), lastSegment.kind,
                        false) {
         if (!virtualSymbols2) exclude(PolySymbolModifier.VIRTUAL)
         if (!abstractSymbols2) exclude(PolySymbolModifier.ABSTRACT)
@@ -215,7 +215,7 @@ internal fun Reference.list(
   processPolySymbols(null, stack, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
     if (path.isEmpty()) return@processPolySymbols emptyList()
     val lastSegment = path.last()
-    listSymbolsQuery(path.subList(0, path.size - 1), lastSegment.qualifiedKind,
+    listSymbolsQuery(path.subList(0, path.size - 1), lastSegment.kind,
                      expandPatterns) {
       if (!virtualSymbols2) exclude(PolySymbolModifier.VIRTUAL)
       if (!abstractSymbols2) exclude(PolySymbolModifier.ABSTRACT)
@@ -459,13 +459,13 @@ private fun ReferenceWithProps.createNameConversionRules(context: PolySymbol?): 
 
   val builder = PolySymbolNameConversionRules.builder()
 
-  fun buildConvertersMap(value: Any?, addToBuilder: (PolySymbolQualifiedKind, PolySymbolNameConverter) -> Unit) {
+  fun buildConvertersMap(value: Any?, addToBuilder: (PolySymbolKind, PolySymbolNameConverter) -> Unit) {
     when (value) {
       is NameConverter -> mergeConverters(listOf(value))?.let {
-        addToBuilder(lastPath.qualifiedKind, it)
+        addToBuilder(lastPath.kind, it)
       }
       is List<*> -> mergeConverters(value.filterIsInstance<NameConverter>())?.let {
-        addToBuilder(lastPath.qualifiedKind, it)
+        addToBuilder(lastPath.kind, it)
       }
       is NameConversionRulesSingle -> buildNameConverters(value.additionalProperties, { mergeConverters(listOf(it)) }, addToBuilder)
       is NameConversionRulesMultiple -> buildNameConverters(value.additionalProperties, { mergeConverters(it) }, addToBuilder)
@@ -505,7 +505,7 @@ internal fun mergeConverters(converters: List<NameConverter>): PolySymbolNameCon
 internal fun <T> buildNameConverters(
   map: Map<String, T>?,
   mapper: (T) -> (PolySymbolNameConverter?),
-  addToBuilder: (PolySymbolQualifiedKind, PolySymbolNameConverter) -> Unit,
+  addToBuilder: (PolySymbolKind, PolySymbolNameConverter) -> Unit,
 ) {
   for ((key, value) in map?.entries ?: return) {
     val path = key.splitToSequence('/')
@@ -514,7 +514,7 @@ internal fun <T> buildNameConverters(
     val namespace = path[0].asWebTypesSymbolNamespace() ?: continue
     val symbolKind = path[1]
     val converter = mapper(value) ?: continue
-    addToBuilder(PolySymbolQualifiedKind[namespace, symbolKind], converter)
+    addToBuilder(PolySymbolKind[namespace, symbolKind], converter)
   }
 }
 

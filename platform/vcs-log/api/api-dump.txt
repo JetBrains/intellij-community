@@ -144,7 +144,6 @@ f:com.intellij.vcs.log.VcsLogProperties
 - sf:CASE_INSENSITIVE_REGEX:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:HAS_COMMITTER:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:LIGHTWEIGHT_BRANCHES:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
-- sf:SUPPORTS_INCREMENTAL_REFRESH:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:SUPPORTS_INDEXING:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:SUPPORTS_LOG_DIRECTORY_HISTORY:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:SUPPORTS_PARENTS_FILTER:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
@@ -210,8 +209,23 @@ com.intellij.vcs.log.VcsLogRefManager
 com.intellij.vcs.log.VcsLogRefresher
 - a:refresh(com.intellij.openapi.vfs.VirtualFile):V
 com.intellij.vcs.log.VcsLogRefs
-- a:getBranches():java.util.Collection
-- a:stream():java.util.stream.Stream
+- a:getRefForHeadCommit(I):com.intellij.vcs.log.VcsRef
+- a:getRefsByRoot():java.util.Map
+- a:getRootForHeadCommit(I):com.intellij.openapi.vfs.VirtualFile
+- a:refsToCommit(I):java.util.List
+f:com.intellij.vcs.log.VcsLogRefsKt
+- sf:allRefsStream(com.intellij.vcs.log.VcsLogRefs):java.util.stream.Stream
+- sf:getAllRefs(com.intellij.vcs.log.VcsLogRefs):kotlin.sequences.Sequence
+- sf:getBranches(com.intellij.vcs.log.VcsLogRefs):java.util.List
+- sf:refsToCommit(com.intellij.vcs.log.VcsLogRefs,com.intellij.openapi.vfs.VirtualFile,I):java.util.List
+com.intellij.vcs.log.VcsLogRefsOfSingleRoot
+- a:contains(I):Z
+- a:forEachBranchIndex(java.util.function.IntConsumer):V
+- a:getBranches():kotlin.sequences.Sequence
+- getRefs():kotlin.sequences.Sequence
+- a:getRefsIndexes():java.util.Collection
+- a:getTags():kotlin.sequences.Sequence
+- a:refsToCommit(I):java.util.List
 com.intellij.vcs.log.VcsLogRevisionFilter
 - com.intellij.vcs.log.VcsLogBranchLikeFilter
 - getDisplayText():java.lang.String

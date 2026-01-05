@@ -39,8 +39,9 @@ kotlin {
     val linuxArm64Main by sourceSets.getting
     val appleMain by sourceSets.creating
     val macosMain by sourceSets.getting
-    val iosX64Main by sourceSets.getting
+    val iosMain by sourceSets.creating
     val iosArm64Main by sourceSets.getting
+    val iosX64Main by sourceSets.getting
     val iosSimulatorArm64Main by sourceSets.getting
     val windowsMain by sourceSets.getting
 
@@ -51,9 +52,11 @@ kotlin {
             -nativeMain {
                 -appleAndLinuxMain {
                     -appleMain {
-                        -iosX64Main
-                        -iosArm64Main
-                        -iosSimulatorArm64Main
+                        -iosMain {
+                            -iosArm64Main
+                            -iosX64Main
+                            -iosSimulatorArm64Main
+                        }
                         -macosMain
                     }
                     -linuxMain {

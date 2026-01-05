@@ -619,7 +619,8 @@ public abstract class PyTestCase extends UsefulTestCase {
       test.run();
     }
     catch (Throwable failedError) {
-      if (c.isInstance(failedError)) {
+      if (c.isInstance(failedError) ||
+          failedError instanceof TestLoggerFactory.TestLoggerAssertionError testLoggerError && c.isInstance(testLoggerError.getCause())) {
         // fix-me tests are supposed to fail
         return;
       }

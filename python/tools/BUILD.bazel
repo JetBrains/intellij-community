@@ -24,7 +24,7 @@ jvm_library(
     "//libraries/guava",
     "//python/python-sdk:sdk",
     "@lib//:kotlin-script-runtime",
-    "@lib//ant/lib:ant-antlr-provided",
+    "@lib//ant/lib:ant-provided",
     "//python/testFramework",
   ],
   runtime_deps = [

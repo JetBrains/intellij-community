@@ -87,7 +87,7 @@ interface WebTypesSymbol : PsiSourcedPolySymbol, PolySymbolScope {
 }
 
 internal val WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS = setOf(
-  JS_PROPERTIES.kind, JS_STRING_LITERALS.kind
+  JS_PROPERTIES.kindName, JS_STRING_LITERALS.kindName
 )
 
 private data class ModuleExportData(

@@ -3,7 +3,7 @@ package com.intellij.vcs.log.history
 
 import com.intellij.openapi.util.Ref
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
-import com.intellij.vcs.log.data.DataPack
+import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
@@ -29,7 +29,7 @@ private fun LinearGraph.findAncestorNode(startNodeId: Int, condition: (Int) -> B
 internal fun findVisibleAncestorRow(commitId: VcsLogCommitStorageIndex, visiblePack: VisiblePack): Int? {
   val dataPack = visiblePack.dataPack
   val visibleGraph = visiblePack.visibleGraph
-  if (dataPack is DataPack && dataPack.permanentGraph is PermanentGraphInfo<*> && visibleGraph is VisibleGraphImpl) {
+  if (dataPack is VcsLogGraphData && dataPack.permanentGraph is PermanentGraphInfo<*> && visibleGraph is VisibleGraphImpl) {
     return findVisibleAncestorRow(commitId, visibleGraph.linearGraph, dataPack.permanentGraph as PermanentGraphInfo<VcsLogCommitStorageIndex>) { true }
   }
   return null

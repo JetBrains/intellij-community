@@ -239,7 +239,7 @@ class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
           params: PolySymbolCodeCompletionQueryParams,
           stack: PolySymbolQueryStack,
         ): List<PolySymbolCodeCompletionItem> {
-          return if (qualifiedName.qualifiedKind == HTML_ATTRIBUTES) {
+          return if (qualifiedName.kind == HTML_ATTRIBUTES) {
             listOf(PolySymbolCodeCompletionItem.create("bar"))
           }
           else emptyList()

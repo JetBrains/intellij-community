@@ -604,7 +604,23 @@ fun getLockPermitContext(forSharing: Boolean = false): Pair<CoroutineContext, Ac
 fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): Pair<CoroutineContext, AccessToken> {
   val application = ApplicationManager.getApplication()
   return if (application != null) {
-    val (context, cleanup) = application.getLockStateAsCoroutineContext(baseContext, forSharing)
+    val (context, cleanup) = installThreadContext(baseContext, true) {
+      val threadingSupport = application.threadingSupport
+      when {
+        threadingSupport == null -> EmptyCoroutineContext to AccessToken.EMPTY_ACCESS_TOKEN
+        forSharing -> {
+          val (context, cleanup) = threadingSupport.parallelizeLock()
+          context to object : AccessToken() {
+            override fun finish() {
+              cleanup()
+            }
+          }
+        }
+        else -> {
+          threadingSupport.getLockContextElement() to AccessToken.EMPTY_ACCESS_TOKEN
+        }
+      }
+    }
     val targetContext = if (EDT.isCurrentThreadEdt()) {
       context + SafeForRunBlockingUnderReadAction
     }

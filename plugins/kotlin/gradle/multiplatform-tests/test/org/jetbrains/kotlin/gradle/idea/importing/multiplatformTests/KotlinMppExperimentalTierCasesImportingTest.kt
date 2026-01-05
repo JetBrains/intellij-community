@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orde
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
+import org.junit.AssumptionViolatedException
 import org.junit.Test
 
 @TestMetadata("multiplatform/core/experimentalTier")
@@ -25,7 +26,7 @@ class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImpor
     fun testCommonMainIsNativeShared() {
         doTest {
             /* Code Highlighting requires 1.9, because of native opt-in annotation in source files */
-            if (kotlinPluginVersion < KotlinToolingVersion("1.9.20-dev-6845")) {
+            if (kotlinPluginVersion.version < KotlinToolingVersion("1.9.20-dev-6845")) {
                 disableCheckers(HighlightingChecker)
             }
         }
@@ -42,7 +43,7 @@ class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImpor
     fun testJvmAndAndroidSource() {
         doTest {
             // highlighting for the 1.8.0 is different
-            if (kotlinPluginVersion < KotlinToolingVersion("1.9.0")) {
+            if (kotlinPluginVersion.version < KotlinToolingVersion("1.9.0")) {
                 disableCheckers(HighlightingChecker)
             }
         }
@@ -149,6 +150,9 @@ class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImpor
     @Test
     @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+") // applyHierarchyTemplate used
     fun testSimilarTargetsBamboo() {
+        if (flakyKgpImportKT82895()) {
+            throw AssumptionViolatedException("KT-82895")
+        }
         doTest {
             onlyCheckers(KotlinFacetSettingsChecker, OrderEntriesChecker)
             onlyFacetFields(IKotlinFacetSettings::targetPlatform)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage
 
 import com.fasterxml.jackson.annotation.JsonInclude
@@ -174,12 +174,12 @@ object FusComponentProvider {
   @JvmStatic
   fun createBlindFusComponents(recorderId: String): FusComponents {
     return FusComponents(
-      CompositeValidationRulesStorage(
-        BlindMetadataStorage(),
-        ValidationTestRulesPersistedStorage(recorderId)
+      metadataStorage = CompositeValidationRulesStorage(
+        metadataStorage = BlindMetadataStorage(),
+        testRulesStorage = ValidationTestRulesPersistedStorage(recorderId)
       ),
-      MessageBus(),
-      BlindRemoteConfig()
+      messageBus = MessageBus(),
+      remoteConfig = BlindRemoteConfig()
     )
   }
 

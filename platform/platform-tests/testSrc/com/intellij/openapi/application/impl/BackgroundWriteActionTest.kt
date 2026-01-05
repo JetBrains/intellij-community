@@ -708,7 +708,7 @@ class BackgroundWriteActionTest {
       executed.set(true)
     }
     assertThat(executed.get()).isFalse
-    val clenanup = getGlobalThreadingSupport().getPermitAsContextElement(currentThreadContext(), true).second
+    val clenanup = getGlobalThreadingSupport().parallelizeLock().second
     try {
       assertThat(executed.get()).isTrue
     } finally {

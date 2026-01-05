@@ -182,6 +182,10 @@ public final class CommandMerger {
     return commandName;
   }
 
+  @Nullable Object getLastGroupId() {
+    return SoftReference.dereference(lastGroupId);
+  }
+
   boolean isGlobal() {
     return isForcedGlobal || affectedDocuments.affectsMultiplePhysical();
   }
@@ -294,7 +298,7 @@ public final class CommandMerger {
       SoftReference.dereference(lastGroupId),
       isTransparent(),
       isForcedGlobal,
-      null,
+      performedCommand.commandName(),
       performedCommand.groupId(),
       performedCommand.isTransparent(),
       performedCommand.isGlobal()

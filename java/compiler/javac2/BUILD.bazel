@@ -8,7 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = [
-    "@lib//ant/lib:ant-antlr-provided",
+    "@lib//ant/lib:ant-provided",
     "//java/compiler/forms-compiler:java-guiForms-compiler",
     "//platform/forms_rt:java-guiForms-rt",
     "//libraries/asm",

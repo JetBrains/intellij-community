@@ -59,7 +59,7 @@ internal sealed class EdtCoroutineDispatcher(
     return when (type.lockBehavior) {
       EdtDispatcherKind.LockBehavior.LOCKS_DISALLOWED_FAIL_HARD -> {
         Runnable {
-          ApplicationManagerEx.getApplicationEx().prohibitTakingLocksInsideAndRun(runnable, false, lockAccessViolationMessage)
+          ApplicationManagerEx.getApplicationEx().prohibitTakingLocksInsideAndRun(runnable, lockAccessViolationMessage)
         }
       }
       EdtDispatcherKind.LockBehavior.LOCKS_ALLOWED_NO_WRAPPING -> {
@@ -88,7 +88,7 @@ internal sealed class EdtCoroutineDispatcher(
   val lockAccessViolationMessage = """The use of the RW lock is forbidden by `$this`. This dispatcher is intended for pure UI operations, which do not interact with the IntelliJ Platform model (PSI, VFS, etc.).
 The following solutions are available:
 1. Consider moving the model access outside `$this`. This would help to ensure that the UI is responsive.
-2. Consider using legacy `Dispatchers.UiWithModelAccess` that permits usage of the RW lock. In this case, you can wrap the model-accessing code in `Dispatchers.UiWithModelAccess`
+2. Consider using legacy `Dispatchers.EDT` that permits usage of the RW lock.
 """
 }
 
@@ -116,7 +116,7 @@ private class ImmediateEdtCoroutineDispatcher(type: EdtDispatcherKind) : EdtCoro
       EdtDispatcherKind.MAIN -> false
       // Immediate relaxed dispatcher should do redispatch if it runs under Dispatchers.UI
       // that's because the context of Dispatchers.UI forbids taking locks, so we need to get into an appropriate context
-      EdtDispatcherKind.LAX_UI -> ApplicationManager.getApplication().isLockingProhibited != null
+      EdtDispatcherKind.LAX_UI -> ApplicationManager.getApplication().lockProhibitedAdvice != null
       // `Dispatchers.EdtImmediate` must perform dispatch when invoked on a thread without locks, because it needs to get into correct context.
       EdtDispatcherKind.EDT -> !ApplicationManager.getApplication().isWriteIntentLockAcquired
       // `Dispatchers.UIImmediate` must perform dispatch when invoked on a thread with locks, because it needs to escape locking and forbid using them inside.

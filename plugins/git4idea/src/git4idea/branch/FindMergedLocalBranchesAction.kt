@@ -95,7 +95,7 @@ internal class FindMergedLocalBranchesAction : DumbAwareAction() {
               indicator.checkCanceled()
 
               val (repo, candidateName) = branchToProcess
-              val result = DeepComparator(project, dataProvider, dataProvider.dataPack, reposWithTarget, candidateName).compare()
+              val result = DeepComparator(project, dataProvider, dataProvider.graphData, reposWithTarget, candidateName).compare()
               result.exception?.let { throw it }
 
               val merged = result.nonPickedCommits.isEmpty()

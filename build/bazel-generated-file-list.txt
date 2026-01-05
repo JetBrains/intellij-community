@@ -513,6 +513,8 @@ platform/build-scripts/downloader
 platform/build-scripts/icons
 platform/build-scripts/product-dsl
 platform/build-scripts/testFramework
+platform/build-scripts/testPlugins/testPluginWithMissingDependencies
+platform/build-scripts/testPlugins/testPluginWithMissingDependencies/module
 platform/build-scripts/tests
 platform/build-scripts/usages
 platform/buildData
@@ -641,7 +643,7 @@ platform/lang-impl
 platform/lang-impl/backend
 platform/lang-impl/testEntities
 platform/libraries/cglib
-platform/locking.impl
+platform/locking-impl
 platform/lvcs-api
 platform/lvcs-impl
 platform/macro
@@ -791,6 +793,7 @@ platform/testRunner
 platform/threadDumpParser
 platform/tips-of-the-day
 platform/todo
+platform/todo/backend
 platform/tracing
 platform/tracing-ide
 platform/ui.jcef
@@ -916,6 +919,7 @@ plugins/devkit/intellij.devkit.scaffolding
 plugins/devkit/intellij.devkit.smartupdate
 plugins/devkit/intellij.devkit.stacktrace
 plugins/devkit/intellij.devkit.themes
+plugins/devkit/intellij.devkit.threading
 plugins/devkit/intellij.devkit.uiDesigner
 plugins/devkit/intellij.devkit.workspaceModel
 plugins/devkit/intellij.devkit.workspaceModel/k1

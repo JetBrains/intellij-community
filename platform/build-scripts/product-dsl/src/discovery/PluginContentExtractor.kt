@@ -60,9 +60,10 @@ internal suspend fun extractPluginContent(
   xIncludeCache: AsyncCache<String, ByteArray?>,
   skipXIncludePaths: Set<String> = emptySet(),
   prefixFilter: (moduleName: String) -> String? = { null },
+  onlyProductionSources: Boolean = true,
 ): PluginContentInfo? {
   val jpsModule = outputProvider.findModule(pluginName) ?: return null
-  val pluginXmlPath = findFileInModuleSources(module = jpsModule, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = true) ?: return null
+  val pluginXmlPath = findFileInModuleSources(module = jpsModule, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = onlyProductionSources) ?: return null
   val content = withContext(Dispatchers.IO) { Files.readString(pluginXmlPath) }
 
   val prefix = prefixFilter(pluginName)

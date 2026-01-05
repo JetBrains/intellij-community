@@ -94,12 +94,31 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
     }
   }
 
-  suspend inline fun cleanUp() {
+  suspend inline fun forEachSession(
+    stepNamePrefix: String,
+    crossinline action: suspend (LambdaRdTestSession) -> Unit,
+  ) {
     val inDebug = runContext.frontendContext.calculateVmOptions().isUnderDebug()
-    listOfNotNull(rdSession, backendRdSession).forEach {
-      runLogged("Clean up for ${it.rdIdeType}", if (!inDebug) 30.seconds else 10.minutes) {
-        it.cleanUp.startSuspending(Unit)
+    listOfNotNull(rdSession, backendRdSession).forEach { session ->
+      runLogged("$stepNamePrefix for ${session.rdIdeType}", if (!inDebug) 30.seconds else 10.minutes) {
+        action(session)
       }
     }
+  }
+
+  suspend inline fun beforeAll(testName: String) {
+    forEachSession("Before each container") { it.beforeAll.startSuspending(testName) }
+  }
+
+  suspend inline fun beforeEach(testClassName: String) {
+    forEachSession("Before each") { it.beforeEach.startSuspending(testClassName) }
+  }
+
+  suspend inline fun afterEach(testName: String) {
+    forEachSession("After each") { it.afterEach.startSuspending(testName) }
+  }
+
+  suspend inline fun afterAll(testClassName: String) {
+    forEachSession("After each container") { it.afterAll.startSuspending(testClassName) }
   }
 }

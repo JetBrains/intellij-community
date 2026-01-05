@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
+import kotlin.test.Ignore
 
 @TestMetadata("multiplatform/k2/highlighting")
 class K2MppHighlightingIntegrationTest : AbstractKotlinMppGradleImportingTest() {
@@ -27,6 +28,7 @@ class K2MppHighlightingIntegrationTest : AbstractKotlinMppGradleImportingTest() 
         hideLineMarkers = true
     }
 
+    @Ignore(value = "KTIJ-36978: Incorrect hightlighting of runBlocking in shared native source sets")
     @Test
     @PluginTargetVersions(pluginVersion = "1.9.30-dev-0+")
     fun testMppStdlibAndCoroutinesHighlighting() {

@@ -63,6 +63,11 @@ data class ModuleSetGenerationConfig(
    */
   @JvmField val knownPlugins: Set<String> = emptySet(),
   /**
+   * Set of test plugin names that have their plugin.xml in test resources.
+   * These plugins need special handling during content extraction (onlyProductionSources = false).
+   */
+  @JvmField val testPlugins: Set<String> = emptySet(),
+  /**
    * Filter to determine which dependencies should be included in generated XML files.
    *
    * @param embeddedModules Set of modules that are embedded in the product
@@ -290,7 +295,8 @@ suspend fun generateAllModuleSetsWithProducts(
     // multiple consumers can await these Deferred values (validation + plugin dep gen)
     // Collect all plugins: bundled from products + nonBundled from all products + known plugins
     val allNonBundledPlugins = config.nonBundledPlugins.values.asSequence().flatten()
-    val allBundledPlugins = (config.discoveredProducts.asSequence().mapNotNull { it.spec?.bundledPlugins }.flatten() + allNonBundledPlugins + config.knownPlugins)
+    // testPlugins are automatically included as known plugins (they need content extraction too)
+    val allBundledPlugins = (config.discoveredProducts.asSequence().mapNotNull { it.spec?.bundledPlugins }.flatten() + allNonBundledPlugins + config.knownPlugins + config.testPlugins)
       .distinct()
       .toList()
 
@@ -303,6 +309,7 @@ suspend fun generateAllModuleSetsWithProducts(
           xIncludeCache = xIncludeCache,
           skipXIncludePaths = config.skipXIncludePaths,
           prefixFilter = config.xIncludePrefixFilter,
+          onlyProductionSources = pluginName !in config.testPlugins,
         )
       }
     }

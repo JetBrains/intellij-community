@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.execService"/>

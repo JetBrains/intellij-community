@@ -4,9 +4,9 @@ package com.intellij.vcs.log.util
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogRefs
 import com.intellij.vcs.log.VcsRef
-import com.intellij.vcs.log.data.DataPack
-import com.intellij.vcs.log.data.RefsModel
+import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfoImpl
@@ -15,10 +15,10 @@ import com.intellij.vcs.log.graph.utils.subgraphDifference
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 
-fun RefsModel.findBranch(name: String, root: VirtualFile): VcsRef? = VcsLogUtil.findBranch(this, root, name)
-fun DataPack.findBranch(name: String, root: VirtualFile): VcsRef? = refsModel.findBranch(name, root)
+fun VcsLogRefs.findBranch(name: String, root: VirtualFile): VcsRef? = VcsLogUtil.findBranch(this, root, name)
+fun VcsLogGraphData.findBranch(name: String, root: VirtualFile): VcsRef? = refsModel.findBranch(name, root)
 
-fun DataPack.subgraphDifference(withRef: VcsRef, withoutRef: VcsRef, storage: VcsLogStorage): IntSet? {
+fun VcsLogGraphData.subgraphDifference(withRef: VcsRef, withoutRef: VcsRef, storage: VcsLogStorage): IntSet? {
   if (withoutRef.root != withRef.root) return null
 
   val withRefIndex = storage.getCommitIndex(withRef.commitHash, withRef.root)
@@ -27,7 +27,7 @@ fun DataPack.subgraphDifference(withRef: VcsRef, withoutRef: VcsRef, storage: Vc
   return subgraphDifference(withRefIndex, withoutRefIndex)
 }
 
-fun DataPack.subgraphDifference(withRefIndex: VcsLogCommitStorageIndex, withoutRefIndex: VcsLogCommitStorageIndex): IntSet? {
+fun VcsLogGraphData.subgraphDifference(withRefIndex: VcsLogCommitStorageIndex, withoutRefIndex: VcsLogCommitStorageIndex): IntSet? {
   if (withRefIndex == withoutRefIndex) return IntOpenHashSet()
 
   @Suppress("UNCHECKED_CAST") val permanentGraphInfo = permanentGraph as? PermanentGraphInfo<VcsLogCommitStorageIndex> ?: return null
@@ -41,7 +41,7 @@ fun DataPack.subgraphDifference(withRefIndex: VcsLogCommitStorageIndex, withoutR
   return IntCollectionUtil.map2IntSet(withRefNodeIds) { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) }
 }
 
-fun DataPack.containsAll(commits: Collection<CommitId>, storage: VcsLogStorage): Boolean {
+fun VcsLogGraphData.containsAll(commits: Collection<CommitId>, storage: VcsLogStorage): Boolean {
   val commitIds = commits.map { storage.getCommitIndex(it.hash, it.root) }
   @Suppress("UNCHECKED_CAST") val permanentGraphInfo = permanentGraph as? PermanentGraphInfo<VcsLogCommitStorageIndex> ?: return false
   if (permanentGraphInfo.permanentCommitsInfo is PermanentCommitsInfoImpl<VcsLogCommitStorageIndex>) {
@@ -51,7 +51,7 @@ fun DataPack.containsAll(commits: Collection<CommitId>, storage: VcsLogStorage):
   return nodeIds.size == commits.size && nodeIds.all { it >= 0 }
 }
 
-fun DataPack.exclusiveCommits(ref: VcsRef, refsModel: RefsModel, storage: VcsLogStorage): IntSet? {
+fun VcsLogGraphData.exclusiveCommits(ref: VcsRef, refsModel: VcsLogRefs, storage: VcsLogStorage): IntSet? {
   val refIndex = storage.getCommitIndex(ref.commitHash, ref.root)
   @Suppress("UNCHECKED_CAST") val permanentGraphInfo = permanentGraph as? PermanentGraphInfo<VcsLogCommitStorageIndex> ?: return null
   val refNode = permanentGraphInfo.permanentCommitsInfo.getNodeId(refIndex)
@@ -63,4 +63,4 @@ fun DataPack.exclusiveCommits(ref: VcsRef, refsModel: RefsModel, storage: VcsLog
   return IntCollectionUtil.map2IntSet(exclusiveNodes) { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) }
 }
 
-private fun RefsModel.isBranchHead(commitId: VcsLogCommitStorageIndex) = refsToCommit(commitId).any { it.type.isBranch }
+private fun VcsLogRefs.isBranchHead(commitId: VcsLogCommitStorageIndex) = refsToCommit(commitId).any { it.type.isBranch }

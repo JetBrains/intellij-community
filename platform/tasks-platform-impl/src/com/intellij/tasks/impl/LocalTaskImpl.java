@@ -18,9 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -57,6 +55,9 @@ public class LocalTaskImpl extends LocalTask {
   private List<WorkItem> myWorkItems = new ArrayList<>();
   private Date myLastPost;
   private List<BranchInfo> myBranches = new ArrayList<>();
+
+  private Map<String, CustomTaskProperty> myAdditionalProperties = new HashMap<>();
+  private List<String> myPropertiesToShowInPreview = new ArrayList<>();
 
   /** for serialization */
   public LocalTaskImpl() {
@@ -154,6 +155,9 @@ public class LocalTaskImpl extends LocalTask {
     myProject = issue.getProject();
     myNumber = issue.getNumber();
     myPresentableId = issue.getPresentableId();
+
+    myAdditionalProperties = new HashMap<>(issue.getCustomProperties());
+    myPropertiesToShowInPreview = new ArrayList<>(issue.getPropertiesToShowInPreview());
   }
 
   public void setId(String id) {
@@ -205,6 +209,28 @@ public class LocalTaskImpl extends LocalTask {
   @Override
   public void setUpdated(Date updated) {
     myUpdated = updated;
+  }
+
+  @Override
+  @Property(surroundWithTag = false)
+  @XMap(propertyElementName = "additionalProperties")
+  public @NotNull Map<String, CustomTaskProperty> getCustomProperties() {
+    return myAdditionalProperties;
+  }
+
+  public void setAdditionalProperties(Map<String, CustomTaskProperty> additionalProperties) {
+    myAdditionalProperties = additionalProperties;
+  }
+
+  @Override
+  @Property(surroundWithTag = false)
+  @XCollection(elementName = "previewProperty")
+  public @NotNull List<@NotNull String> getPropertiesToShowInPreview() {
+    return myPropertiesToShowInPreview;
+  }
+
+  public void setPropertiesToShowInPreview(List<String> propertiesToShowInPreview) {
+    myPropertiesToShowInPreview = propertiesToShowInPreview;
   }
 
   @Override

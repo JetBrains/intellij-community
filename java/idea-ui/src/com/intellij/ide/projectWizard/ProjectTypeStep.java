@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.diagnostic.PluginException;
@@ -605,6 +605,13 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   }
 
   @Override
+  public void onStepLeaving() {
+    if (myCustomSteps.get(myCurrentCard) instanceof ModuleWizardStep wizardStep) {
+      wizardStep.onStepLeaving();
+    }
+  }
+
+  @Override
   public void onWizardFinished() throws CommitStepException {
     if (isFrameworksMode()) {
       boolean ok = myFrameworksPanel.downloadLibraries(myWizard.getContentComponent());
@@ -646,6 +653,9 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
     if (isFrameworksMode() && !myFrameworksPanel.validate()) {
       return false;
+    }
+    if (myCustomSteps.get(myCurrentCard) instanceof ModuleWizardStep wizardStep) {
+      if (!wizardStep.validate()) return false;
     }
     return super.validate();
   }

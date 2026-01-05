@@ -76,7 +76,6 @@ internal val PLATFORM_CORE_MODULES = java.util.List.of(
 
   "intellij.platform.ide.favoritesTreeView",
   "intellij.platform.bookmarks",
-  "intellij.platform.todo",
 )
 
 @Suppress("RemoveRedundantQualifierName")

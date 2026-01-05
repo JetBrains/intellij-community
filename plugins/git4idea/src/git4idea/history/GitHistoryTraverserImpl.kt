@@ -54,7 +54,7 @@ internal class GitHistoryTraverserImpl(
     walker: (startId: VcsLogCommitStorageIndex, graph: LiteLinearGraph, visited: BitSetFlags, handler: (id: VcsLogCommitStorageIndex) -> Boolean) -> Unit,
     commitHandler: Traverse.(id: TraverseCommitInfo) -> Boolean
   ) {
-    val dataPack = logData.dataPack
+    val dataPack = logData.graphData
     val hashIndex = logData.getCommitIndex(start, root)
 
     val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<VcsLogCommitStorageIndex>
@@ -83,7 +83,7 @@ internal class GitHistoryTraverserImpl(
     commitHandler: Traverse.(id: TraverseCommitInfo) -> Boolean
   ) {
     fun findBranchHash(branchName: String) =
-      VcsLogUtil.findBranch(logData.dataPack.refsModel, root, branchName)?.commitHash
+      VcsLogUtil.findBranch(logData.graphData.refsModel, root, branchName)?.commitHash
       ?: throw IllegalArgumentException("Branch '$branchName' doesn't exist in the repository: $root")
 
     val hash = when (start) {

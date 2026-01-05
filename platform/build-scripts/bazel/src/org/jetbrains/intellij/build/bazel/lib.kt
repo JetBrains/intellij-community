@@ -43,12 +43,14 @@ internal data class MavenCoordinates(
   val artifactId: String,
   val version: String,
   val classifier: String? = null,
+  val packaging: String = ".jar",
 ) {
   init {
     require(groupId.isNotBlank())
     require(artifactId.isNotBlank())
     require(version.isNotBlank())
     require(classifier == null || classifier.isNotBlank())
+    require(packaging.isNotBlank())
   }
 }
 
@@ -113,6 +115,26 @@ internal fun BuildFile.generateMavenLib(
   @Suppress("SpellCheckingInspection")
   if (targetName == "bifurcan" || targetName == "kotlinx-collections-immutable-jvm") {
     return
+  }
+
+  for (jar in lib.jars) {
+    // We must use path with '/' (groupDirectory=true) because file name on disk is used to match library files
+    // in org.jetbrains.intellij.build.impl.JarPackagerKt.getCanonicalPath
+    val label = mavenCoordinatesToFileName(jar.mavenCoordinates, groupDirectory = true)
+    if (labelTracker.put(label, "") != null) {
+      continue
+    }
+
+    // It would be better to use alias, but alias does not propagate to runfiles
+    // see https://github.com/bazelbuild/bazel/issues/18477
+    load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+    target("copy_file") {
+      option("name", label + "_copy")
+      option("src", "@${fileToHttpRuleFile(jar.mavenCoordinates)}")
+      option("out", label)
+      option("allow_symlink", true)
+      visibility(arrayOf("//visibility:public"))
+    }
   }
 
   if (lib.jars.size == 1) {
@@ -295,9 +317,22 @@ internal fun generateBazelModuleSectionsForLibs(
  * To reduce noise, we can remove duplication of the GAV coordinate parts from the jar filename, and then make sure there are no consecutive dashes left over.
  */
 private fun mavenCoordinatesToHttpRuleRepoName(mavenCoordinates: MavenCoordinates): String {
+  val name = mavenCoordinatesToFileName(mavenCoordinates, groupDirectory = false).removeSuffix(".jar")
+  val sanitizedName = bazelLabelBadCharsPattern.replace(name, "_")
+  return sanitizedName + "_http"
+}
+
+internal fun mavenCoordinatesToFileName(mavenCoordinates: MavenCoordinates, groupDirectory: Boolean): String {
   val name = buildString {
     append(mavenCoordinates.groupId)
-    append('-')
+
+    if (groupDirectory) {
+      append('/')
+    }
+    else {
+      append('-')
+    }
+
     append(mavenCoordinates.artifactId)
     append('-')
     append(mavenCoordinates.version)
@@ -306,10 +341,11 @@ private fun mavenCoordinatesToHttpRuleRepoName(mavenCoordinates: MavenCoordinate
       append('-')
       append(mavenCoordinates.classifier)
     }
+
+    append(mavenCoordinates.packaging)
   }
 
-  val sanitizedName = bazelLabelBadCharsPattern.replace(name, "_")
-  return sanitizedName + "_http"
+  return name
 }
 
 internal fun fileToHttpRuleFile(coordinates: MavenCoordinates): String =
@@ -339,6 +375,10 @@ internal fun generateLocalLibs(libs: Collection<LocalLibrary>, isLibraryProvided
             option("neverlink", true)
             visibility(arrayOf("//visibility:public"))
           }
+        }
+
+        for (file in lib.files) {
+          exportFile(file.relativeTo(dir).invariantSeparatorsPathString)
         }
       }
     }

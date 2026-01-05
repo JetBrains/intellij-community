@@ -18,8 +18,8 @@ import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.service
@@ -349,7 +349,7 @@ abstract class ProjectFrameHelper internal constructor(
 
   suspend fun updateTitle(title: String, project: Project) {
     val titleInfoProviders = getTitleInfoProviders()
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.UiWithModelAccess) {
       this@ProjectFrameHelper.title = title
       updateTitle(project = project, titleInfoProviders = titleInfoProviders)
     }
@@ -435,7 +435,7 @@ abstract class ProjectFrameHelper internal constructor(
 
     this.project = project
 
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.UiWithModelAccess) {
       applyInitBounds()
 
       if (statusBar == null) {

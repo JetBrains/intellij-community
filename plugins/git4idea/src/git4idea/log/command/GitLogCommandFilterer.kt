@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.data.DataPack
+import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.data.VcsLogProgress
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.graph.PermanentGraph
@@ -27,11 +27,13 @@ class GitLogCommandFilterer(private val project: Project,
 
   private var collectorTask: RevisionCollectorTask<Int>? = null
 
-  override fun filter(dataPack: DataPack,
-                      oldVisiblePack: VisiblePack,
-                      graphOptions: PermanentGraph.Options,
-                      filters: VcsLogFilterCollection,
-                      commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
+  override fun filter(
+    dataPack: VcsLogGraphData,
+    oldVisiblePack: VisiblePack,
+    graphOptions: PermanentGraph.Options,
+    filters: VcsLogFilterCollection,
+    commitCount: CommitCountStage,
+  ): Pair<VisiblePack, CommitCountStage> {
     val gitRoots = dataPack.logProviders.filterValues { it.supportedVcs == GitVcs.getKey() }.keys
     val commandFilter = filters[GitLogCommandFilter.KEY]
 

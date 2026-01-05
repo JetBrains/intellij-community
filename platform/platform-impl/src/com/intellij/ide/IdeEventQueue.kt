@@ -347,7 +347,7 @@ class IdeEventQueue private constructor() : EventQueue() {
           val progressManager = ProgressManager.getInstanceOrNull()
           try {
             runCustomProcessors(finalEvent, preProcessors)
-            performActivity(finalEvent, !nakedRunnable && isPureSwingEventWilEnabled && !threadingSupport.isInsideUnlockedWriteIntentLock()) {
+            performActivity(finalEvent, !nakedRunnable && isPureSwingEventWilEnabled) {
               if (progressManager == null || (runnable != null && useNonBlockingFlushQueue && InvocationUtil.isFlushNow(runnable))) {
                 _dispatchEvent(finalEvent)
               }
@@ -498,7 +498,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     if (isUserActivityEvent(e)) {
       ActivityTracker.getInstance().inc()
     }
-    if (popupManager.isPopupActive && !shouldSkipListeners(e) && threadingSupport.runPreventiveWriteIntentReadAction { popupManager.dispatch(e) }) {
+    if (popupManager.isPopupActive && !shouldSkipListeners(e) && threadingSupport.runWriteIntentReadAction { popupManager.dispatch(e) }) {
       if (keyEventDispatcher.isWaitingForSecondKeyStroke) {
         keyEventDispatcher.state = KeyState.STATE_INIT
       }
@@ -508,7 +508,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     if (e is WindowEvent) {
       // app activation can call methods that need write intent (like project saving)
       if (wrapHighLevelFunctionsInWriteIntent) {
-        threadingSupport.runPreventiveWriteIntentReadAction { processAppActivationEvent(e) }
+        threadingSupport.runWriteIntentReadAction { processAppActivationEvent(e) }
       }
       else {
         processAppActivationEvent(e)
@@ -525,7 +525,7 @@ class IdeEventQueue private constructor() : EventQueue() {
 
     when {
       e is MouseEvent -> if (actuallyWrapInputEventsIntoWriteIntentLock) {
-        threadingSupport.runPreventiveWriteIntentReadAction {
+        threadingSupport.runWriteIntentReadAction {
           dispatchMouseEvent(e)
         }
       } else {
@@ -534,7 +534,7 @@ class IdeEventQueue private constructor() : EventQueue() {
         }
       }
       e is KeyEvent -> if (actuallyWrapInputEventsIntoWriteIntentLock) {
-        threadingSupport.runPreventiveWriteIntentReadAction {
+        threadingSupport.runWriteIntentReadAction {
           dispatchKeyEvent(e)
         }
       } else {

@@ -63,10 +63,12 @@ public abstract class IdFilter {
 
   private static @NotNull IdFilter buildProjectIdFilterForContentFiles(@NotNull Project project) {
     long started = System.currentTimeMillis();
-    final BitSet idSet = new BitSet();
+    BitSet idSet = new BitSet();
 
     ContentIterator iterator = fileOrDir -> {
-      idSet.set(((VirtualFileWithId)fileOrDir).getId());
+      if (fileOrDir instanceof VirtualFileWithId fileWithId) {
+        idSet.set(fileWithId.getId());
+      }//else: if file doesn't have id -- we don't bother adding it to IdFilter?
       ProgressManager.checkCanceled();
       return true;
     };

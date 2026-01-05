@@ -15,12 +15,14 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.diagnostic.telemetry.rt.PlatformTelemetryRtClass
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
 import gnu.trove.TObjectHash
 import groovy.lang.MissingMethodException
-import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.context.ImplicitContextKeyed
+import io.opentelemetry.sdk.OpenTelemetrySdk
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.invocation.Gradle
 import org.gradle.util.GradleVersion
@@ -73,6 +75,7 @@ val GRADLE_TOOLING_EXTENSION_CLASSES: Set<Class<*>> = setOf(
   ExternalSystemRtClass::class.java, // intellij.platform.externalSystem.rt
   GradleToolingExtensionClass::class.java, // intellij.gradle.toolingExtension
   GradleToolingExtensionImplClass::class.java, // intellij.gradle.toolingExtension.impl
+  PlatformTelemetryRtClass::class.java, // intellij.platform.diagnostic.telemetry.rt
 
   // the set of dependencies required for the modules above
   Unit::class.java, // kotlin-stdlib
@@ -81,8 +84,9 @@ val GRADLE_TOOLING_EXTENSION_CLASSES: Set<Class<*>> = setOf(
   Multimap::class.java, // guava
   StringUtils::class.java, // apache commons
   TObjectHash::class.java, // trove hashing
-  Span::class.java, // opentelemetry
-  ImplicitContextKeyed::class.java // opentelemetry-context
+  OpenTelemetry::class.java, // opentelemetry-api
+  OpenTelemetrySdk::class.java, // opentelemetry-sdk
+  ImplicitContextKeyed::class.java, // opentelemetry-context
 )
 
 @JvmField

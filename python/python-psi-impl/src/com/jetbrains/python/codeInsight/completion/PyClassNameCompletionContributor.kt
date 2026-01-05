@@ -118,6 +118,7 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
         if (!result.prefixMatcher.isStartMatch(modulePackageName)) return@forEachModulePackageNameFromIndex true
         for (vFile in fileBasedIndex.getContainingFilesIterator(PyModuleNameIndex.NAME, modulePackageName, modulePackageScope)) {
           ProgressManager.checkCanceled()
+          // For ordinary packages (non-namespace) PyModuleNameIndex returns the corresponding __init__.py
           val psiFile = originalFile.manager.findFile(vFile) as? PyFile
           if (psiFile == null) {
             return@forEachModulePackageNameFromIndex true

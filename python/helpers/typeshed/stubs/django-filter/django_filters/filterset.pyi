@@ -77,7 +77,9 @@ class BaseFilterSet:
         cls, field: models.Field[Any, Any], field_name: str, lookup_expr: str | None = None
     ) -> Filter: ...  # Accepts any Django field type
     @classmethod
-    def filter_for_lookup(cls, field: models.Field[Any, Any], lookup_type: str) -> type[Filter]: ...  # Field type varies by model
+    def filter_for_lookup(
+        cls, field: models.Field[Any, Any], lookup_type: str  # Field type varies by model
+    ) -> tuple[type[Filter], dict[str, Any]]: ...
 
 class FilterSet(BaseFilterSet, metaclass=FilterSetMetaclass): ...
 

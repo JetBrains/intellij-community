@@ -18,6 +18,7 @@ import java.util.Objects;
  * Utility methods related to variables
  */
 public final class JavaPsiVariableUtil {
+  private JavaPsiVariableUtil() { }
 
   private static PsiVariable findSameNameSibling(@NotNull PsiVariable variable) {
     PsiElement scope = variable.getParent();

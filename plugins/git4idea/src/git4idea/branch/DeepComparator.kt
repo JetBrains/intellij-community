@@ -11,8 +11,8 @@ import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.log.VcsRef
-import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.util.subgraphDifference
@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NonNls
 internal class DeepComparator(
   private val project: Project,
   private val vcsLogData: VcsLogData,
-  private val dataPack: DataPack?,
+  private val dataPack: VcsLogGraphData?,
   private val repositoriesWithTargetBranches: Map<GitRepository, String>,
   private val comparedBranch: String,
 ) {
@@ -142,7 +142,7 @@ internal class DeepComparator(
   }
 
   private fun getCommitsFromIndex(
-    dataPack: DataPack?, root: VirtualFile,
+    dataPack: VcsLogGraphData?, root: VirtualFile,
     sourceBranchRef: VcsRef, targetBranchRef: VcsRef,
     sourceBranchCommits: IntSet, reliable: Boolean,
   ): IntSet? {

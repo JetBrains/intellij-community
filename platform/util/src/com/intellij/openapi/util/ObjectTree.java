@@ -182,6 +182,15 @@ public final class ObjectTree {
       for (Disposable disposable : disposables) {
         myObject2ParentNode.remove(disposable);
       }
+      
+      // Mark CheckedDisposable objects as disposed INSIDE the lock to prevent race condition
+      // where another thread could re-register the disposable between tree removal and dispose() call.
+      for (Disposable disposable : disposables) {
+        if (disposable instanceof Disposer.CheckedDisposableImpl) {
+          ((Disposer.CheckedDisposableImpl)disposable).isDisposed = true;
+        }
+      }
+      
       return disposables;
     });
   }
@@ -204,6 +213,16 @@ public final class ObjectTree {
       for (Disposable disposable : disposables) {
         myObject2ParentNode.remove(disposable);
       }
+
+      // Mark CheckedDisposable objects as disposed INSIDE the lock to prevent race condition
+      // where another thread could re-register the disposable between tree removal and dispose() call.
+      // This is safe because CheckedDisposable.dispose() is idempotent (just sets isDisposed=true).
+      for (Disposable disposable : disposables) {
+        if (disposable instanceof Disposer.CheckedDisposableImpl) {
+          ((Disposer.CheckedDisposableImpl)disposable).isDisposed = true;
+        }
+      }
+
       return disposables;
     });
   }

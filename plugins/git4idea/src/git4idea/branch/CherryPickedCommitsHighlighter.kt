@@ -17,8 +17,8 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.*
-import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory
@@ -173,7 +173,7 @@ internal class CherryPickedCommitsHighlighter(
     Task.Backgroundable(project, GitBundle.message("git.log.cherry.picked.highlighter.process")) {
 
     private val comparator =
-      DeepComparator(project, vcsLogData, (vcsLogDataPack as? VisiblePack)?.dataPack as? DataPack,
+      DeepComparator(project, vcsLogData, (vcsLogDataPack as? VisiblePack)?.dataPack as? VcsLogGraphData,
                      repositoriesWithTargetBranches, comparedBranch)
 
     override fun run(indicator: ProgressIndicator) {

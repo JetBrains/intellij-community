@@ -16,14 +16,12 @@ import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.PolySymbolProperty
-import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
 import com.intellij.pom.Navigatable
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiPlainTextFile
 
 internal class CommitMessageReferenceProvider : PsiPolySymbolReferenceProvider<PsiPlainTextFile> {
@@ -55,7 +53,7 @@ internal class CommitMessageReferenceProvider : PsiPolySymbolReferenceProvider<P
     override val origin: PolySymbolOrigin
       get() = PolySymbolOrigin.empty()
 
-    override val qualifiedKind: PolySymbolQualifiedKind = PolySymbolQualifiedKind["vcs", "issue"]
+    override val kind: PolySymbolKind = PolySymbolKind["vcs", "issue"]
 
     override fun createPointer(): Pointer<out PolySymbol> = hardPointer(this)
 

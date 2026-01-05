@@ -28,10 +28,14 @@
       <action id="List-selectNextColumn" class="com.intellij.ui.ListActions$Right" use-shortcut-of="EditorRight"/>
       <action id="List-selectNextColumnExtendSelection" class="com.intellij.ui.ListActions$ShiftRight"
               use-shortcut-of="EditorRightWithSelection"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="List-scrollUp" class="com.intellij.ui.ListActions$PageUp" use-shortcut-of="EditorPageUp"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="List-scrollUpExtendSelection" class="com.intellij.ui.ListActions$ShiftPageUp"
               use-shortcut-of="EditorPageUpWithSelection"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="List-scrollDown" class="com.intellij.ui.ListActions$PageDown" use-shortcut-of="EditorPageDown"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="List-scrollDownExtendSelection" class="com.intellij.ui.ListActions$ShiftPageDown"
               use-shortcut-of="EditorPageDownWithSelection"/>
       <add-to-group group-id="Other.KeymapGroup"/>
@@ -68,10 +72,14 @@
       <action id="Table-selectNextColumn" class="com.intellij.ui.TableActions$Right" use-shortcut-of="EditorRight"/>
       <action id="Table-selectNextColumnExtendSelection" class="com.intellij.ui.TableActions$ShiftRight"
               use-shortcut-of="EditorRightWithSelection"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="Table-scrollUpChangeSelection" class="com.intellij.ui.TableActions$PageUp" use-shortcut-of="EditorPageUp"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="Table-scrollUpExtendSelection" class="com.intellij.ui.TableActions$ShiftPageUp"
               use-shortcut-of="EditorPageUpWithSelection"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="Table-scrollDownChangeSelection" class="com.intellij.ui.TableActions$PageDown" use-shortcut-of="EditorPageDown"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="Table-scrollDownExtendSelection" class="com.intellij.ui.TableActions$ShiftPageDown"
               use-shortcut-of="EditorPageDownWithSelection"/>
       <action id="Table-startEditing" icon="AllIcons.Actions.Edit" class="com.intellij.ide.actions.table.StartEditingAction">
@@ -98,10 +106,14 @@
       <action id="Tree-selectChild" class="com.intellij.ui.TreeActions$Right" use-shortcut-of="EditorRight"/>
       <action id="Tree-selectChildExtendSelection" class="com.intellij.ui.TreeActions$ShiftRight"
               use-shortcut-of="EditorRightWithSelection"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="Tree-scrollUpChangeSelection" class="com.intellij.ui.TreeActions$PageUp" use-shortcut-of="EditorPageUp"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="Tree-scrollUpExtendSelection" class="com.intellij.ui.TreeActions$ShiftPageUp"
               use-shortcut-of="EditorPageUpWithSelection"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="Tree-scrollDownChangeSelection" class="com.intellij.ui.TreeActions$PageDown" use-shortcut-of="EditorPageDown"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="Tree-scrollDownExtendSelection" class="com.intellij.ui.TreeActions$ShiftPageDown"
               use-shortcut-of="EditorPageDownWithSelection"/>
       <action id="Tree-selectNextSibling" class="com.intellij.ui.TreeActions$NextSibling"/>
@@ -197,7 +209,9 @@
     <group id="EditorActions">
       <action id="EditorPageUp" class="com.intellij.openapi.editor.actions.PageUpAction"/>
       <action id="EditorPageDown" class="com.intellij.openapi.editor.actions.PageDownAction"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="EditorPageUpWithSelection" class="com.intellij.openapi.editor.actions.PageUpWithSelectionAction"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="EditorPageDownWithSelection" class="com.intellij.openapi.editor.actions.PageDownWithSelectionAction"/>
       <action id="EditorCopy" class="com.intellij.openapi.editor.actions.CopyAction" use-shortcut-of="$Copy" icon="AllIcons.Actions.Copy"/>
       <action id="EditorCut" class="com.intellij.openapi.editor.actions.CutAction" use-shortcut-of="$Cut" icon="AllIcons.Actions.MenuCut"/>
@@ -226,15 +240,21 @@
       <action id="EditorResetFontSize" class="com.intellij.openapi.editor.actions.ResetFontSizeAction"/>
       <action id="EditorScrollUp" class="com.intellij.openapi.editor.actions.ScrollUpAction"/>
       <action id="EditorScrollDown" class="com.intellij.openapi.editor.actions.ScrollDownAction"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="EditorScrollUpAndMove" class="com.intellij.openapi.editor.actions.ScrollUpAndMoveAction"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="EditorScrollDownAndMove" class="com.intellij.openapi.editor.actions.ScrollDownAndMoveAction"/>
       <action id="EditorScrollRight" class="com.intellij.openapi.editor.actions.ScrollRightAction"/>
       <action id="EditorScrollLeft" class="com.intellij.openapi.editor.actions.ScrollLeftAction"/>
       <action id="EditorScrollTop" class="com.intellij.openapi.editor.actions.ScrollToTopAction"/>
       <action id="EditorScrollBottom" class="com.intellij.openapi.editor.actions.ScrollToBottomAction"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="EditorMoveUpAndScroll" class="com.intellij.openapi.editor.actions.MoveUpAndScrollAction"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="EditorMoveDownAndScroll" class="com.intellij.openapi.editor.actions.MoveDownAndScrollAction"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="EditorMoveUpAndScrollWithSelection" class="com.intellij.openapi.editor.actions.MoveUpWithSelectionAndScrollAction"/>
+      <!--suppress PluginXmlCapitalization -->
       <action id="EditorMoveDownAndScrollWithSelection" class="com.intellij.openapi.editor.actions.MoveDownWithSelectionAndScrollAction"/>
       <action id="EditorAddOrRemoveCaret" class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <action id="EditorCreateRectangularSelection" class="com.intellij.openapi.editor.actions.CreateRectangularSelectionAction"/>
@@ -643,6 +663,7 @@
               <synonym key="action.ToggleFullScreen.text.enter"/>
               <synonym key="action.ToggleFullScreen.text.exit"/>
             </action>
+            <!--suppress PluginXmlCapitalization -->
             <action id="ToggleZenMode" class="com.intellij.ide.actions.ToggleZenModeAction">
               <synonym key="action.ToggleZenMode.exit"/>
               <synonym key="action.ToggleZenMode.enter"/>
@@ -883,6 +904,7 @@
                     use-shortcut-of="EditorUp"/>
             <action id="SplitChooser.SplitLeft" class="com.intellij.ide.actions.InteractiveSplitAction$Key$SplitLeft"
                     use-shortcut-of="EditorLeft"/>
+            <!--suppress PluginXmlCapitalization -->
             <action id="SplitChooser.SplitDown" class="com.intellij.ide.actions.InteractiveSplitAction$Key$SplitDown"
                     use-shortcut-of="EditorDown"/>
             <action id="SplitChooser.SplitRight" class="com.intellij.ide.actions.InteractiveSplitAction$Key$SplitRight"
@@ -979,10 +1001,14 @@
       <reference ref="RevealGroup"/>
     </group>
 
+    <!--suppress PluginXmlCapitalization -->
     <action id="ZoomInIdeAction" class="com.intellij.ide.actions.ZoomInIdeAction">
+      <!--suppress PluginXmlCapitalization -->
       <synonym key="action.ZoomInIdeAction.text"/>
     </action>
+    <!--suppress PluginXmlCapitalization -->
     <action id="ZoomOutIdeAction" class="com.intellij.ide.actions.ZoomOutIdeAction">
+      <!--suppress PluginXmlCapitalization -->
       <synonym key="action.ZoomOutIdeAction.text"/>
     </action>
     <action id="ResetIdeScaleAction" class="com.intellij.ide.actions.ResetIdeScaleAction">
@@ -1127,7 +1153,7 @@
         </group>
         <group id="TouchBarDefault_cmd">
           <!--Use Cmd modifier key to show Navigation buttons, Bookmark and Breakpoint toggles and to Show Usages/-->
-          <!--Cmd key is used, because it’s used in most of the action shortcuts: Back/Forward, Breakpoint and Find Usages./-->
+          <!--Cmd key is used because it’s used in most of the action shortcuts: Back/Forward, Breakpoint and Find Usages./-->
           <reference ref="Back"/>
           <reference ref="Forward"/>
           <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
@@ -1327,7 +1353,7 @@
     <action id="LogFocusRequests" class="com.intellij.internal.focus.LogFocusRequestsAction"/>
     <action id="CreateAllServicesAndExtensions" internal="true"
             class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsAction"
-            text="Create All Services And Extensions"/>
+            text="Create All Services and Extensions"/>
     <action id="PerformGC" internal="true" class="com.intellij.internal.PerformGCAction"/>
 
     <action id="ShowTrustProjectDialog" class="com.intellij.ide.trustedProjects.impl.ShowTrustProjectDialogAction"/>
@@ -1363,8 +1389,8 @@
         <action id="WorkspaceEntitiesJsonLogFile" internal="true"
                 class="com.intellij.workspaceModel.ide.impl.jsonDump.DumpWorkspaceEntitiesToLogFileAction"
                 text="Dump Workspace Entities to a File as Json"/>
-
       </group>
+
       <action id="ShowEdtUtilizationChart" internal="true" class="com.intellij.internal.ShowEdtUtilizationChartAction"/>
       <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction">
@@ -1702,8 +1728,6 @@
       <action id="AnalyzeHeapDumpSnapshot" class="com.intellij.diagnostic.hprof.action.AnalyzeReportAction" internal="true"/>
       <add-to-group group-id="Internal"/>
     </group>
-
-    <action id="AnalyzePluginStartupPerformance" class="com.intellij.diagnostic.AnalyzePluginStartupPerformanceAction" internal="true"/>
 
     <action id="TriggerLowMemoryNotification" class="com.intellij.diagnostic.TriggerLowMemoryNotificationAction" internal="true"/>
 

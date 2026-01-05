@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.diagnostic.startUpPerformanceReporter
 
 import com.intellij.concurrency.IntelliJContextElement
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter
 import com.intellij.util.containers.ComparatorUtil
@@ -205,13 +206,15 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.WelcomeScreenEvent())
   }
 
-  fun reportReopeningProjects(openPaths: List<*>) {
+  fun reportReopeningProjects(openPaths: List<Path>) {
     if (!currentThreadContext().isProperContext()) return
-    when (openPaths.size) {
-      0 -> reportViolation(Violation.NoProjectFound)
-      1 -> reportProjectType(ProjectsType.Reopened)
+    val size = openPaths.size
+    when {
+      size == 0 -> reportViolation(Violation.NoProjectFound)
+      size > 1 -> openingMultipleProjects(true, size, false)
+      openPaths[0] == WelcomeScreenProjectProvider.getWelcomeScreenProjectPath() -> reportWelcomeScreenShown()
+      else -> reportProjectType(ProjectsType.Reopened)
       // light edit files are not reopened
-      else -> openingMultipleProjects(true, openPaths.size, false)
     }
   }
 
@@ -232,6 +235,10 @@ object FUSProjectHotStartUpMeasurer {
 
     if (currentThreadContext().getProjectMarker() != null) {
       return block.invoke()
+    }
+
+    if (projectFile == WelcomeScreenProjectProvider.getWelcomeScreenProjectPath()) {
+      reportWelcomeScreenShown()
     }
 
     val projectId = ProjectId()

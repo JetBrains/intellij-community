@@ -1,0 +1,5 @@
+c:com.intellij.tasks.impl.LocalTaskImpl
+- getCustomProperties():java.util.Map
+- getPropertiesToShowInPreview():java.util.List
+- setAdditionalProperties(java.util.Map):V
+- setPropertiesToShowInPreview(java.util.List):V

@@ -23,16 +23,6 @@ import kotlinx.coroutines.flow.first
 
 open class TaskSuspenderTest : BasePlatformTestCase() {
 
-  override fun setUp() {
-    super.setUp()
-    Registry.get("rhizome.progress").setValue(true)
-  }
-
-  override fun tearDown() {
-    Registry.get("rhizome.progress").resetToDefault()
-    super.tearDown()
-  }
-
   fun testSuspendResumeTask(): Unit = timeoutRunBlocking {
     val mayStop = CompletableDeferred<Unit>()
 

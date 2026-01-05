@@ -131,7 +131,7 @@ internal object BranchesDashboardUtil {
   }
 
   private fun findExclusiveCommits(logData: VcsLogData, branchName: String, repo: GitRepository): IntSet? {
-    val dataPack = logData.dataPack
+    val dataPack = logData.graphData
 
     val ref = dataPack.findBranch(branchName, repo.root) ?: return null
     if (!ref.type.isBranch) return null

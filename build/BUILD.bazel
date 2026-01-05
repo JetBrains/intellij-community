@@ -1,6 +1,26 @@
+load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 load("//build:intellij_dev_community.bzl", "intellij_dev_binary_community")
+load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
+
+# Can't name the target 'installers' since it triggers elevation in Windows
+java_binary(
+  name = "i_build_target",
+  runtime_deps = [":build"],
+  main_class = "OpenSourceCommunityInstallersBuildTarget",
+  add_opens = INTELLIJ_ADD_OPENS,
+  data = ALL_COMMUNITY_TARGETS,
+)
+
+java_binary(
+  name = "run_tests_build_target",
+  runtime_deps = [":build"],
+  main_class = "CommunityRunTestsBuildTarget",
+  add_opens = INTELLIJ_ADD_OPENS,
+  data = ALL_COMMUNITY_TARGETS,
+)
 
 # Dev-build targets for running IDEs locally via `bazel run //build:<target>`
 intellij_dev_binary_community(
