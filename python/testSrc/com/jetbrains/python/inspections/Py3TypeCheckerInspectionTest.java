@@ -4125,5 +4125,37 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                        _: C2 = c1
                    """);
   }
+
+  // PY-85030
+  public void testStructuralTypeAndStrictUnion() {
+    doTestByText("""
+                   responses = {
+                       100: "abc",
+                   }
+                   
+                   def process(status):
+                       if isinstance(status, int):
+                           status = responses[status]
+                       return status.lower().replace(" ", "-")
+                   
+                   def do(arg):
+                       title = "abc" if arg else 100
+                       return process(title)
+                   """);
+  }
+
+  // PY-85030
+  public void testStructuralTypeAndDefiniteReassignmentUnderCondition() {
+    doTestByText("""
+                   def f(p):
+                       if p:
+                           p = "foo"
+                       else:
+                           p = "bar"
+                       return p.lower()
+                   
+                   f(42)
+                   """);
+  }
 }
 
