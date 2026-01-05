@@ -937,7 +937,7 @@ public class JavaDocInfoGenerator {
           buffer.append(NBSP);
         }
         else {
-          buffer.append('\n').append(NBSP.repeat(keyword.length() + 1));
+          buffer.append('\n').repeat(NBSP, keyword.length() + 1);
         }
       }
     }
@@ -1296,7 +1296,7 @@ public class JavaDocInfoGenerator {
       }
       else {
         // initializer should be printed on the new line
-        buffer.append("\n").append(NBSP.repeat(CodeStyle.getIndentSize(variable.getContainingFile())));
+        buffer.append("\n").repeat(NBSP, CodeStyle.getIndentSize(variable.getContainingFile()));
       }
       appendStyledSpan(buffer, getHighlightingManager().getOperationSignAttributes(), "= ");
 
@@ -1957,7 +1957,7 @@ public class JavaDocInfoGenerator {
     if (body != null) {
       List<Pair<PsiElement, TextRange>> files =
         InjectedLanguageManager.getInstance(snippetTag.getProject()).getInjectedPsiFiles(snippetTag);
-      PsiElement element = files != null ? files.get(0).first : null;
+      PsiElement element = files != null ? files.getFirst().first : null;
       buffer.append(preTag);
       generateSnippetBody(buffer, element != null ? element : body, region);
       buffer.append("</pre>");
