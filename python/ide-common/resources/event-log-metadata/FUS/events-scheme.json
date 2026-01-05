@@ -10433,6 +10433,7 @@
         "plugin_version" : [ "{util#plugin_version}" ],
         "primary_spot_inline_attribute" : [ "{enum:Error|Warning|SecondarySpot|Default}" ],
         "projects_number" : [ "{regexp#integer}" ],
+        "reason" : [ "{enum:CRATE_WITH_DIFFERENT_VERSIONS|NESTED_TYPE_WITH_ELLIPSIS|UNKNOWN}" ],
         "restore_type" : [ "{enum:MANUALLY|BY_NOTIFICATION_FIX}" ],
         "result" : [ "{enum:BuildException|MultiVariantMethodResolution|UnknownException|Unknown|TODO|Success}" ],
         "status" : [ "{enum:SUCCESS|ERROR_WHILE_PARSING_TYPES|INVALID_TYPES}" ],
@@ -10445,7 +10446,7 @@
         "type_text_presentation_source" : [ "{enum:RustRover|ExternalLinter}" ]
       },
       "enums" : {
-        "__event_id" : [ "new_project_creation", "crate.imported.on.completion", "chained.method.completed", "full.function.parameter.completed", "parentheses.skipped.on.function.completion", "rust.attach.file.quickfix.invoked", "rust.new.file.created", "fix.add.crate.dependency", "toolchain.updated", "cfg.disabled.item.completed", "rust.created.file.attached.to.module", "cargo.reload.disabled.from.balloon", "intention.called", "implement.members.invoked.from.hint", "macro.task.duration", "auto.imports.added", "terminal.path.clicked", "self.prefix.completed", "moved.e0382.value.completed", "projects.to.attach.number", "derive.trait.fix.called", "library.file.content.restored", "full.named.field.decl.completed", "mir.for.borrowch.building.result.throttled", "mir.for.borrowch.building.completed", "multispot.highlighting.hidden", "multispot.highlighting.shown", "multispot.highlighting.connection.hint.shown", "inline.descriptions.disabled.via.popup", "inline.explanations.disabled.via.popup", "inline.error.shown", "inline.problem.shown", "lookup.with.error.selected", "rust.new.module.created", "inspection.popup.shown", "inspection.popup.hidden", "type.mismatch.view.rendering.status", "rename.package.directory.action.called" ],
+        "__event_id" : [ "new_project_creation", "crate.imported.on.completion", "chained.method.completed", "full.function.parameter.completed", "parentheses.skipped.on.function.completion", "rust.attach.file.quickfix.invoked", "rust.new.file.created", "fix.add.crate.dependency", "toolchain.updated", "cfg.disabled.item.completed", "rust.created.file.attached.to.module", "cargo.reload.disabled.from.balloon", "intention.called", "implement.members.invoked.from.hint", "macro.task.duration", "auto.imports.added", "terminal.path.clicked", "self.prefix.completed", "moved.e0382.value.completed", "projects.to.attach.number", "derive.trait.fix.called", "library.file.content.restored", "full.named.field.decl.completed", "mir.for.borrowch.building.result.throttled", "mir.for.borrowch.building.completed", "multispot.highlighting.hidden", "multispot.highlighting.shown", "multispot.highlighting.connection.hint.shown", "inline.descriptions.disabled.via.popup", "inline.explanations.disabled.via.popup", "inline.error.shown", "inline.problem.shown", "lookup.with.error.selected", "rust.new.module.created", "inspection.popup.shown", "inspection.popup.hidden", "type.mismatch.view.rendering.status", "rename.package.directory.action.called", "exact.path.type.mismatch" ],
         "__thir_incomplete" : [ "PatConstTyAdtNotEnum", "PatConstTyAdtUnresolvedVariant", "UnknownConstantPat", "PatConstTyAdtUnknownVariantIndex", "PatConstTyAdtNotPathExpr", "UnknownPatConst", "UnknownPatMacroUnexpanded", "UnknownPatStructFieldDeclOutOfIndex", "UnknownPatTuplePathIsNotEnum", "UnknownPatStructIsNotTyAdt", "UnknownPat", "UnknownPatIdentResolution", "UnknownPatTupleIsNotTyAdt", "UnknownPatTupleIsNotTyTuple", "UnknownPatStructFieldDeclUnresolved", "UnknownPatternEnumIsNotAdt", "UnknownPatStructPathIsNotFieldsOwner", "UnknownPatSlice", "UnknownPatStructUnknownPatField" ]
       }
     },
@@ -12967,7 +12968,7 @@
         "value" : [ "{enum:Normal|Bek|LinearBek}", "{enum:Base|LinearBek|FirstParent}" ]
       },
       "enums" : {
-        "__event_id" : [ "onlyAffectedChanges", "textFilter.matchCase", "labels.onTheLeft", "long.edges", "details", "parentChanges", "roots", "diffPreview", "uiInitialized", "filter", "column", "labels.showTagNames", "labels.compact", "sort", "highlighter", "textFilter.regex", "diffPreviewOnTheBottom", "additionalTabs", "graphOptionsType", "showCommitDate", "additionalTabs.ToolWindow", "additionalTabs.Editor", "mainUiInitialized" ]
+        "__event_id" : [ "onlyAffectedChanges", "textFilter.matchCase", "labels.onTheLeft", "long.edges", "details", "parentChanges", "roots", "diffPreview", "uiInitialized", "filter", "column", "labels.showTagNames", "labels.compact", "sort", "highlighter", "textFilter.regex", "diffPreviewOnTheBottom", "additionalTabs", "graphOptionsType", "showCommitDate", "additionalTabs.ToolWindow", "additionalTabs.Editor", "mainUiInitialized", "issue.showPreviewOnHover" ]
       }
     }
   }, {
@@ -13719,5 +13720,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6606"
+  "version" : "6608"
 }
