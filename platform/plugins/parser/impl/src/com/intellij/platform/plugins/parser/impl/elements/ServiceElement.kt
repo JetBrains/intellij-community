@@ -7,6 +7,7 @@ class ServiceElement(
   @JvmField val testServiceImplementation: String?,
   @JvmField val headlessImplementation: String?,
   @JvmField val overrides: Boolean,
+  @JvmField val open: Boolean,
   @JvmField val configurationSchemaKey: String?,
   @JvmField val preload: PreloadModeValue,
   @JvmField val client: ClientKindValue?,
@@ -19,6 +20,7 @@ class ServiceElement(
       if (testServiceImplementation != null) append(", testServiceImplementation=$testServiceImplementation")
       if (headlessImplementation != null) append(", headlessImplementation=$headlessImplementation")
       if (overrides) append(", overrides=true")
+      if (open) append(", open=true")
       if (configurationSchemaKey != null) append(", configurationSchemaKey=$configurationSchemaKey")
       if (preload != PreloadModeValue.FALSE) append(", preload=$preload")
       if (client != null) append(", client=$client")

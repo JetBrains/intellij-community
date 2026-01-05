@@ -793,7 +793,7 @@ abstract class ComponentManagerImpl(
     clientKind: ClientKind?
   ) {
     val descriptor = ServiceDescriptor(serviceInterface.name, implementation.name, null, null, false,
-                                       null, PreloadMode.FALSE, clientKind, null)
+                                       false, null, PreloadMode.FALSE, clientKind, null)
     serviceContainer.registerInitializer(
       keyClass = serviceInterface,
       initializer = ServiceClassInstanceInitializer(

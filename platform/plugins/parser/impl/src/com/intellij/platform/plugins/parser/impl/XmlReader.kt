@@ -508,6 +508,7 @@ private fun readServiceElement(reader: XMLStreamReader2, os: OSValue?): ServiceE
   var headlessImplementation: String? = null
   var configurationSchemaKey: String? = null
   var overrides = false
+  var open = false
   var preload = PreloadModeValue.FALSE
   var client: ClientKindValue? = null
   for (i in 0 until reader.attributeCount) {
@@ -518,6 +519,7 @@ private fun readServiceElement(reader: XMLStreamReader2, os: OSValue?): ServiceE
       PluginXmlConst.SERVICE_EP_HEADLESS_IMPLEMENTATION_ATTR -> headlessImplementation = getNullifiedAttributeValue(reader, i)
       PluginXmlConst.SERVICE_EP_CONFIGURATION_SCHEMA_KEY_ATTR -> configurationSchemaKey = reader.getAttributeValue(i)
       PluginXmlConst.SERVICE_EP_OVERRIDES_ATTR -> overrides = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.SERVICE_EP_OPEN_ATTR -> open = reader.getAttributeAsBoolean(i)
       PluginXmlConst.SERVICE_EP_PRELOAD_ATTR -> {
         when (reader.getAttributeValue(i)) {
           PluginXmlConst.SERVICE_EP_PRELOAD_TRUE_VALUE -> preload = PreloadModeValue.TRUE
@@ -549,6 +551,7 @@ private fun readServiceElement(reader: XMLStreamReader2, os: OSValue?): ServiceE
     testServiceImplementation = testServiceImplementation,
     headlessImplementation = headlessImplementation,
     overrides = overrides,
+    open = open,
     configurationSchemaKey = configurationSchemaKey,
     preload = preload,
     client = client,
