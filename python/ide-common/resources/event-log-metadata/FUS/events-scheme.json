@@ -6863,9 +6863,12 @@
       "from" : "1"
     } ],
     "rules" : {
-      "event_id" : [ "{enum:still.in.use.notification.configure.clicked|configurable.validation.error.on.apply|still.in.use.notification.shown}" ],
+      "event_id" : [ "{enum#__event_id}" ],
       "event_data" : {
         "validation_error" : [ "{enum:CUSTOM_MODEL_CANNOT_BE_EMPTY|CUSTOM_MODEL_NOT_AVAILABLE}" ]
+      },
+      "enums" : {
+        "__event_id" : [ "still.in.use.notification.configure.clicked", "configurable.validation.error.on.apply", "still.in.use.notification.shown", "activate.jb.ai.clicked", "test.connection.clicked" ]
       }
     }
   }, {
@@ -10930,7 +10933,7 @@
       "enums" : {
         "__contributorID" : [ "FileSearchEverywhereContributor", "SearchEverywhereContributor.All", "ClassSearchEverywhereContributor", "RecentFilesSEContributor", "ActionSearchEverywhereContributor", "SymbolSearchEverywhereContributor", "TopHitSEContributor", "RunConfigurationsSEContributor", "YAMLKeysSearchEverywhereContributor", "CommandsContributor", "FuzzySearchContributor", "third.party", "Vcs.Git", "UrlSearchEverywhereContributor", "GitSearchEverywhereContributor" ],
         "__currentTabId" : [ "FileSearchEverywhereContributor", "SearchEverywhereContributor.All", "ClassSearchEverywhereContributor", "ActionSearchEverywhereContributor", "SymbolSearchEverywhereContributor", "FuzzySearchContributor", "third.party", "Vcs.Git" ],
-        "__event_id" : [ "dialogOpen", "tabSwitched", "navigateThroughGroups", "contributorItemChosen", "moreItemChosen", "commandUsed", "commandCompleted", "dialogClosed", "sessionFinished", "moreItemShown", "previewClosed", "previewSwitched", "hasOnlySimilarItemShown", "fuzzySearch.finished", "fuzzySearch.started" ]
+        "__event_id" : [ "dialogOpen", "tabSwitched", "navigateThroughGroups", "contributorItemChosen", "moreItemChosen", "commandUsed", "commandCompleted", "dialogClosed", "sessionFinished", "moreItemShown", "previewClosed", "previewSwitched", "hasOnlySimilarItemShown", "fuzzySearch.finished", "fuzzySearch.started", "splitSwitched" ]
       }
     }
   }, {
@@ -13716,5 +13719,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6604"
+  "version" : "6606"
 }
