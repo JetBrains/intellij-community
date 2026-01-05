@@ -33,6 +33,8 @@ internal class LightServiceInstanceSupport(
   private inner class LightServiceInstanceInitializer(
     private val instanceClass: Class<*>,
   ) : InstanceInitializer {
+    override val overridable: Boolean = false
+
     override val instanceClassName: String
       get() = instanceClass.name
 

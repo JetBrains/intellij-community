@@ -11,6 +11,8 @@ import org.jetbrains.annotations.ApiStatus.OverrideOnly
 interface InstanceInitializer {
   val instanceClassName: String
 
+  val overridable: Boolean
+
   fun loadInstanceClass(keyClass: Class<*>?): Class<*>
 
   suspend fun createInstance(parentScope: CoroutineScope, instanceClass: Class<*>): Any

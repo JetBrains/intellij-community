@@ -34,7 +34,7 @@ internal inline fun InstanceContainerImpl.use(action: (InstanceContainerImpl) ->
 internal suspend fun withContainer(containerName: String, test: suspend CoroutineScope.(InstanceContainerImpl) -> Unit) {
   coroutineScope {
     ScopeHolder(this, EmptyCoroutineContext, containerName).use { holder ->
-      InstanceContainerImpl(holder, containerName, null, false).use {
+      InstanceContainerImpl(holder, containerName, null, false, false).use {
         test(it)
       }
     }

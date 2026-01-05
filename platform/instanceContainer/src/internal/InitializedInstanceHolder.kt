@@ -30,4 +30,7 @@ internal class InitializedInstanceHolder(val instance: Any) : InstanceHolder {
   override suspend fun getInstanceInCallerContext(keyClass: Class<*>?): Any {
     return tryGetInstance()
   }
+
+  // directly initialized instance cannot be overridden, because there is no way to recreate the instance if override is canceled
+  override val overridable: Boolean = false
 }

@@ -28,6 +28,7 @@ internal abstract class LazyInstanceHolder(
   private class CannotLoadClass(@JvmField val instanceClassName: String, @JvmField val classLoadingError: Throwable)
   private class CannotInitialize(@JvmField val instanceClass: Class<*>, @JvmField val initializationError: Throwable)
 
+  override val overridable = initializer.overridable
   private var _state: Any = Initial(parentScope, initializer)
   private fun state(): Any = stateHandle.getVolatile(this)
 

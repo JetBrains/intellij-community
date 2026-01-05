@@ -47,6 +47,8 @@ internal class ComponentDescriptorInstanceInitializer(
   interfaceClass: Class<*>,
   override val instanceClassName: String,
 ) : ComponentInstanceInitializer(componentManager, pluginDescriptor.pluginId, interfaceClass) {
+  override val overridable: Boolean = false
+
   override fun loadInstanceClass(keyClass: Class<*>?): Class<*> {
     if (keyClass != null && (interfaceClass.name == instanceClassName)) {
       // avoid classloading

@@ -2,14 +2,16 @@
 package com.intellij.platform.instanceContainer.internal
 
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.platform.instanceContainer.InstanceNotOverridableException
 import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
 
 internal class InstanceRegistrarImpl(
   private val debugString: String,
   private val existingKeys: Map<String, InstanceHolder>,
+  // at the moment, this flag only changes log level error->warn but does not prevent incorrect registration
+  private val shouldTolerateIncorrectOverrides: Boolean,
   private val completion: (Map<String, RegistrationAction>) -> UnregisterHandle?,
 ) : InstanceRegistrar {
-
   private var _actions: MutableMap<String, RegistrationAction>? = LinkedHashMap()
   private fun actions(): MutableMap<String, RegistrationAction> = checkNotNull(_actions) {
     "$debugString : instance registrar is already completed"
@@ -51,19 +53,32 @@ internal class InstanceRegistrarImpl(
 
   override fun overrideInitializer(keyClassName: String, initializer: InstanceInitializer?) {
     val actions = actions()
-    val newAction = when (val existing = actions[keyClassName]) {
+    val existingAction = actions[keyClassName]
+
+    val newAction = when (existingAction) {
       null -> {
-        if (keyClassName !in existingKeys) {
+        val existingInstanceHolder = existingKeys[keyClassName]
+        if (existingInstanceHolder == null) {
           LOG.error(InstanceNotRegisteredException("$keyClassName -> ${initializer?.instanceClassName ?: "<removed>"}"))
           return
+        }
+        if (!existingInstanceHolder.overridable) {
+          val exception =
+            InstanceNotOverridableException("$keyClassName -> existing: ${existingInstanceHolder.instanceClassName()}, new: ${initializer?.instanceClassName ?: "<removed>"}")
+          logIncorrectOverride(exception)
         }
         if (initializer == null) RegistrationAction.Remove else RegistrationAction.Override(initializer)
       }
       is RegistrationAction.Register -> {
         check(keyClassName !in existingKeys) // sanity check
+        if (!existingAction.initializer.overridable) {
+          val exception =
+            InstanceNotOverridableException("$keyClassName -> existing: ${existingAction.initializer.instanceClassName}, new: ${initializer?.instanceClassName ?: "<removed>"}")
+          logIncorrectOverride(exception)
+        }
         LOG.trace {
           "$debugString : $keyClassName is registered and overridden in the same scope " +
-          "(${existing.initializer.instanceClassName} -> ${initializer?.instanceClassName ?: "<removed>"})"
+          "(${existingAction.initializer.instanceClassName} -> ${initializer?.instanceClassName ?: "<removed>"})"
         }
         if (initializer == null) {
           actions.remove(keyClassName)
@@ -75,9 +90,14 @@ internal class InstanceRegistrarImpl(
       }
       is RegistrationAction.Override -> {
         check(keyClassName in existingKeys) // sanity check
+        if (!existingAction.initializer.overridable) {
+          val exception =
+            InstanceNotOverridableException("$keyClassName -> existing: ${existingAction.initializer.instanceClassName}, new: ${initializer?.instanceClassName ?: "<removed>"}")
+          logIncorrectOverride(exception)
+        }
         LOG.trace {
           "$debugString : $keyClassName is overridden again in the same scope " +
-          "(${existing.initializer.instanceClassName} -> ${initializer?.instanceClassName ?: "<removed>"})"
+          "(${existingAction.initializer.instanceClassName} -> ${initializer?.instanceClassName ?: "<removed>"})"
         }
         if (initializer == null) RegistrationAction.Remove else RegistrationAction.Override(initializer)
       }
@@ -92,5 +112,14 @@ internal class InstanceRegistrarImpl(
       }
     }
     actions[keyClassName] = newAction
+  }
+
+  private fun logIncorrectOverride(exception: InstanceNotOverridableException) {
+    if (shouldTolerateIncorrectOverrides) {
+      LOG.warn(exception)
+    }
+    else {
+      LOG.error(exception)
+    }
   }
 }

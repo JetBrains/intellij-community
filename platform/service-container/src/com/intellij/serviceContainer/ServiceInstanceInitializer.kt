@@ -23,6 +23,9 @@ internal abstract class ServiceInstanceInitializer(
   private val pluginId: PluginId,
   private val serviceDescriptor: ServiceDescriptor,
 ) : InstanceInitializer {
+  override val overridable: Boolean
+    get() = serviceDescriptor.open
+
   override suspend fun createInstance(parentScope: CoroutineScope, instanceClass: Class<*>): Any {
     checkWriteAction(instanceClass)
     val instance = try {
