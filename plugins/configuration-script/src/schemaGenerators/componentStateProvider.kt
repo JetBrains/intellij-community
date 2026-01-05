@@ -73,7 +73,7 @@ internal class ComponentStateJsonSchemaGenerator : SchemaGenerator {
   private fun processServiceDescriptor(serviceDescriptor: ServiceDescriptor, plugin: PluginDescriptor) {
     val schemaKeyPath = serviceDescriptor.configurationSchemaKey ?: return
     LOG.runAndLogException {
-      val implClass = Class.forName(serviceDescriptor.implementationClassName, /* initialize = */ false, plugin.pluginClassLoader)
+      val implClass = Class.forName(serviceDescriptor.implementation, /* initialize = */ false, plugin.pluginClassLoader)
       if (!PersistentStateComponent::class.java.isAssignableFrom(implClass)) {
         return
       }

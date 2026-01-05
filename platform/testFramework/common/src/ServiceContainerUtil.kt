@@ -80,7 +80,7 @@ fun <T : Any> ComponentManager.registerExtension(name: BaseExtensionPointName<*>
 fun ComponentManager.getServiceImplementationClassNames(prefix: String): List<String> {
   val result = ArrayList<String>()
   processAllServiceDescriptors(this) { serviceDescriptor ->
-    val implementation = serviceDescriptor.implementationClassName ?: return@processAllServiceDescriptors
+    val implementation = serviceDescriptor.implementation ?: return@processAllServiceDescriptors
     if (implementation.startsWith(prefix)) {
       result.add(implementation)
     }

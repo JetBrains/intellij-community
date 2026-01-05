@@ -567,7 +567,7 @@ abstract class ComponentManagerImpl(
 
       // Allow to re-define service implementations in plugins.
       // Null serviceImplementation means we want unregistering service. (empty serviceImplementation will be nullized by the reader)
-      // This is the same code as in the ServiceDescriptor.getImplementationClassName with the difference in how application instance is obtained.
+      // This is the same code as in the ServiceDescriptor.getImplementation with the difference in how application instance is obtained.
       val implementation: String? = when {
         descriptor.testServiceImplementation != null && app.isUnitTestMode -> descriptor.testServiceImplementation
         descriptor.headlessImplementation != null && app.isHeadlessEnvironment -> descriptor.headlessImplementation

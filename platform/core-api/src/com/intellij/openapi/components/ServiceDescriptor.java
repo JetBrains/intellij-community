@@ -104,7 +104,7 @@ public final class ServiceDescriptor {
   @Attribute public final @Nullable ClientKind client;
 
   @ApiStatus.Internal
-  public @Nullable String getImplementationClassName() {
+  public @Nullable String getImplementation() {
     if (testServiceImplementation != null && ApplicationManager.getApplication().isUnitTestMode()) {
       return testServiceImplementation;
     }
