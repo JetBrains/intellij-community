@@ -13,7 +13,6 @@ import java.awt.Toolkit
 import java.awt.event.AWTEventListener
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
-import javax.swing.SwingUtilities
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.actionSystem.ComponentDataProviderBridge
 import org.jetbrains.jewel.bridge.component.JBPopupRenderer
@@ -206,7 +205,7 @@ public class JewelComposePanelWrapper(private val focusOnClickInside: Boolean) :
     internal var targetProvider: UiDataProvider? = null
     private val listener = AWTEventListener { event ->
         if (event !is MouseEvent || event.button == MouseEvent.NOBUTTON) return@AWTEventListener
-        if (!isFocusOwner && SwingUtilities.isDescendingFrom(event.component, this)) {
+        if (!composePanel.isFocusOwner && event.component.parent == composePanel) {
             composePanel.requestFocus()
         }
     }
