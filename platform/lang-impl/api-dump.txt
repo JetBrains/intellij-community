@@ -288,6 +288,25 @@ com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProvider
 - a:getRelativeOrderings():java.util.List
 - handleClick(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.codeVision.CodeVisionEntry):V
 - preparePreview(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
+a:com.intellij.codeInsight.hints.presentation.AbstractRoundWithBackgroundPresentation
+- com.intellij.codeInsight.hints.presentation.StaticDelegatePresentation
+- <init>(com.intellij.codeInsight.hints.presentation.InlayPresentation,java.awt.Color,F):V
+- a:getArcHeight():I
+- a:getArcWidth():I
+- f:getBackgroundAlpha():F
+- f:getColor():java.awt.Color
+- paint(java.awt.Graphics2D,com.intellij.openapi.editor.markup.TextAttributes):V
+f:com.intellij.codeInsight.hints.presentation.PillWithBackgroundPresentation
+- com.intellij.codeInsight.hints.presentation.AbstractRoundWithBackgroundPresentation
+f:com.intellij.codeInsight.hints.presentation.RoundWithBackgroundBorderedPresentation
+- <init>(com.intellij.codeInsight.hints.presentation.AbstractRoundWithBackgroundPresentation,java.awt.Color,I):V
+- b:<init>(com.intellij.codeInsight.hints.presentation.AbstractRoundWithBackgroundPresentation,java.awt.Color,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+f:com.intellij.codeInsight.hints.presentation.RoundWithBackgroundPresentation
+- com.intellij.codeInsight.hints.presentation.AbstractRoundWithBackgroundPresentation
+- <init>(com.intellij.codeInsight.hints.presentation.InlayPresentation,I,I,java.awt.Color,F):V
+- b:<init>(com.intellij.codeInsight.hints.presentation.InlayPresentation,I,I,java.awt.Color,F,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- getArcHeight():I
+- getArcWidth():I
 f:com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 - com.intellij.codeInsight.intention.IntentionActionDelegate
 - com.intellij.openapi.actionSystem.ShortcutProvider

@@ -3637,7 +3637,6 @@ f:com.intellij.codeInsight.hints.presentation.OnHoverPresentation
 - mouseExited():V
 - mouseMoved(java.awt.event.MouseEvent,java.awt.Point):V
 f:com.intellij.codeInsight.hints.presentation.PillWithBackgroundPresentation
-- com.intellij.codeInsight.hints.presentation.RoundWithBackgroundPresentation
 - <init>(com.intellij.codeInsight.hints.presentation.InlayPresentation,java.awt.Color,F):V
 - b:<init>(com.intellij.codeInsight.hints.presentation.InlayPresentation,java.awt.Color,F,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - getArcHeight():I
@@ -3702,19 +3701,8 @@ f:com.intellij.codeInsight.hints.presentation.PresentationRenderer
 - translatePoint(java.awt.Point):java.awt.Point
 f:com.intellij.codeInsight.hints.presentation.RoundWithBackgroundBorderedPresentation
 - com.intellij.codeInsight.hints.presentation.StaticDelegatePresentation
-- <init>(com.intellij.codeInsight.hints.presentation.RoundWithBackgroundPresentation,java.awt.Color,I):V
-- b:<init>(com.intellij.codeInsight.hints.presentation.RoundWithBackgroundPresentation,java.awt.Color,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getBorderColor():java.awt.Color
 - f:getBorderWidth():I
-- paint(java.awt.Graphics2D,com.intellij.openapi.editor.markup.TextAttributes):V
-c:com.intellij.codeInsight.hints.presentation.RoundWithBackgroundPresentation
-- com.intellij.codeInsight.hints.presentation.StaticDelegatePresentation
-- <init>(com.intellij.codeInsight.hints.presentation.InlayPresentation,I,I,java.awt.Color,F):V
-- b:<init>(com.intellij.codeInsight.hints.presentation.InlayPresentation,I,I,java.awt.Color,F,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- getArcHeight():I
-- getArcWidth():I
-- f:getBackgroundAlpha():F
-- f:getColor():java.awt.Color
 - paint(java.awt.Graphics2D,com.intellij.openapi.editor.markup.TextAttributes):V
 f:com.intellij.codeInsight.hints.presentation.ScaleAwarePresentationFactory
 - com.intellij.codeInsight.hints.InlayPresentationFactory
