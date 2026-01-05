@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -25,7 +26,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Consumer
-import kotlin.concurrent.Volatile
 import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG = Logger.getInstance(VcsLogRefresherImpl::class.java)
@@ -82,41 +82,50 @@ internal class VcsLogRefresherImpl(
     }
   }
 
+  /**
+   * Continuously handles incoming refresh requests for updating the VCS log data pack.
+   * The method runs indefinitely, unless [refresherJob] is interrupted.
+   *
+   * If a series of refresh requests is received, they are accumulated and processed in a batch.
+   * Moreover, if a new request is received while processing a batch, no data pack update is performed until
+   * it is processed.
+   */
   private suspend fun handleRefreshRequests(): Nothing {
     while (true) {
       checkCanceled()
       val request = checkWasRequested() ?: refreshRequests.receive()
       val requests = mutableListOf(request)
-      try { // don't cancel the request processing on processing errors
+      runCatching {
         progress.runWithProgress(VcsLogData.DATA_PACK_REFRESH) {
           var dataPack = currentDataPack
           val refreshSessionData = RefreshSessionData()
           while (true) {
             checkCanceled()
-            refreshRequests.receiveAll(requests::add)
-            if (requests.isEmpty()) {
-              break
-            }
-            LOG.debug("Refresh requests: $requests")
-
-            val cumulativeRequest = RefreshRequest.fold(requests)
-            requests.clear()
+            val cumulativeRequest = accumulateRequests(requests) ?: break
             LOG.debug("Cumulative refresh request: $cumulativeRequest")
             dataPack = handleRequest(dataPack, refreshSessionData, cumulativeRequest)
           }
-
           if (dataPack !== currentDataPack) {
             currentDataPack = dataPack
           }
         }
-      }
-      catch (ce: CancellationException) {
-        throw ce
-      }
-      catch (e: Exception) {
+      }.getOrHandleException { e ->
         LOG.warn("Failed to handle the VCS Log refresh requests", e)
       }
     }
+  }
+
+  private fun accumulateRequests(accumulator: MutableList<RefreshRequest>): RefreshRequest? {
+    refreshRequests.receiveAll(accumulator::add)
+    if (accumulator.isEmpty()) {
+      LOG.trace("No refresh requests received")
+      return null
+    }
+
+    LOG.debug("Refresh requests: $accumulator")
+    val cumulativeRequest = RefreshRequest.fold(accumulator)
+    accumulator.clear()
+    return cumulativeRequest
   }
 
   private suspend fun handleRequest(
