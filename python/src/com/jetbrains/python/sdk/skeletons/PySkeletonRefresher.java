@@ -19,8 +19,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
-import com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
@@ -308,15 +306,6 @@ public class PySkeletonRefresher {
       myGeneratorVersion = readGeneratorVersion();
     }
     return myGeneratorVersion;
-  }
-
-  public static @NotNull PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project,
-                                                                           Component ownerComponent,
-                                                                           @NotNull Sdk sdk,
-                                                                           String skeletonsPath) throws ExecutionException {
-    PyRemoteSdkAdditionalDataBase sdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
-    return PyRemoteSkeletonGeneratorFactory.getInstance(sdkAdditionalData)
-      .createRemoteSkeletonGenerator(project, ownerComponent, sdk, skeletonsPath);
   }
 
   public @NotNull PySkeletonGenerator getGenerator() {
