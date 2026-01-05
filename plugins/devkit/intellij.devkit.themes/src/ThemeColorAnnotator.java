@@ -188,16 +188,35 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
       }
     }
 
-    private @Nullable Color findNamedColor(String colorText) {
+    private @Nullable Color findNamedColor(@NotNull String colorText) {
       final PsiFile file = myLiteral.getContainingFile();
       if (!(file instanceof JsonFile)) return null;
+
       final List<JsonProperty> colors = ThemeJsonUtil.getNamedColors((JsonFile)file);
+      String colorValue = findNamedColorValue(colors, colorText);
+      if (colorValue == null) {
+        return null;
+      }
+
+      if (!colorValue.startsWith("#")) {
+        String nextColorValue = findNamedColorValue(colors, colorValue);
+        if (nextColorValue != null) {
+          colorValue = nextColorValue;
+        }
+      }
+
+      return parseColor(colorValue);
+    }
+
+    private static @Nullable String findNamedColorValue(List<JsonProperty> colors, @NotNull String colorText) {
       final JsonProperty namedColor = ContainerUtil.find(colors, property -> property.getName().equals(colorText));
       if (namedColor == null) return null;
 
       final JsonValue value = namedColor.getValue();
-      if (!(value instanceof JsonStringLiteral)) return null;
-      return parseColor(((JsonStringLiteral)value).getValue());
+      if ((value instanceof JsonStringLiteral literal)) {
+        return literal.getValue();
+      }
+      return null;
     }
 
     private static boolean isRgbaColorHex(@NotNull String colorHex) {
