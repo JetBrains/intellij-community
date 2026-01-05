@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("OVERRIDE_DEPRECATION", "ReplaceGetOrSet", "LeakingThis", "ReplaceJavaStaticMethodWithKotlinAnalog")
 @file:OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 
@@ -1124,7 +1124,17 @@ open class FileEditorManagerImpl(
       return session.serviceOrNull<ClientFileEditorManager>()
     }
 
-  protected open fun onNewModalityOnWaiting() {}
+  /**
+   * An internal hack that is used in [blockingWaitForCompositeFileOpen]: the method is called when a new modality is entered while waiting.
+   * This handler will be called if the file is opened:
+   * 1. On the EDT
+   * 2. Inside modal progress
+   * 3. Used a non-suspendable function
+   * 4. waitForComposite=true
+   *
+   * The handler is used mainly in FrontendFileEditorManager to allow protocol pumping for the new modality
+   */
+  protected open fun omNewModalityInsideBlockingWaitOnEdt() {}
 
   /**
    * This method can be invoked from background thread. Of course, UI for returned editors should be accessed from EDT in any case.
@@ -1168,7 +1178,7 @@ open class FileEditorManagerImpl(
         val composite = open()
         if (composite is EditorComposite) {
           if (options.waitForCompositeOpen) {
-            blockingWaitForCompositeFileOpen(composite, this::onNewModalityOnWaiting)
+            blockingWaitForCompositeFileOpen(composite, this::omNewModalityInsideBlockingWaitOnEdt)
             if (composite.providerSequence.none()) {
               closeFile(window = window, composite = composite, runChecks = false)
               return@Computable FileEditorComposite.EMPTY
