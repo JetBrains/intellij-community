@@ -121,14 +121,18 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
         Lexer lexer = syntaxHighlighter.getHighlightingLexer();
         TokenSet commentTokens = null;
         IndexPatternBuilder builderForFile = null;
-        for (IndexPatternBuilder builder : IndexPatternBuilder.EP_NAME.getExtensionList()) {
-          Lexer lexerFromBuilder = builder.getIndexingLexer(currentPsiFile);
-          if (lexerFromBuilder != null) {
-            lexer = lexerFromBuilder;
-            commentTokens = builder.getCommentTokenSet(currentPsiFile);
-            builderForFile = builder;
+
+        if (currentPsiFile != null) {
+          for (IndexPatternBuilder builder : IndexPatternBuilder.EP_NAME.getExtensionList()) {
+            Lexer lexerFromBuilder = builder.getIndexingLexer(currentPsiFile);
+            if (lexerFromBuilder != null) {
+              lexer = lexerFromBuilder;
+              commentTokens = builder.getCommentTokenSet(currentPsiFile);
+              builderForFile = builder;
+            }
           }
         }
+
         if (builderForFile == null) {
           final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
           if (parserDefinition != null) {
