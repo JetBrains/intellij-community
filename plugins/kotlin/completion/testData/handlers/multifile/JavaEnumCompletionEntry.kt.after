@@ -1,8 +1,8 @@
 // IGNORE_K1
 fun foo() {
 
-    JavaEnum.FOO<caret>
+    JavaEnum.FOO_BAR_ENUM_ENTRY<caret>
 }
 
-// ELEMENT: FOO
+// ELEMENT: FOO_BAR_ENUM_ENTRY
 // INVOCATION_COUNT: 2

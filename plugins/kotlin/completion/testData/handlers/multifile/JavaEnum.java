@@ -1,4 +1,4 @@
 public enum JavaEnum {
 
-    FOO
+    FOO_BAR_ENUM_ENTRY
 }
