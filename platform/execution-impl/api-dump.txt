@@ -90,7 +90,7 @@ com.intellij.terminal.JBTerminalWidgetListener
 - a:showTabs():V
 - split(Z):V
 c:com.intellij.terminal.ProcessHandlerTtyConnector
-- getProcess():java.lang.Process
+- f:getProcess():java.lang.Process
 c:com.intellij.terminal.TerminalExecutionConsole
 - com.intellij.execution.ui.ConsoleView
 - com.intellij.execution.ui.ObservableConsoleView

@@ -132,7 +132,7 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
     return myProcessHandler;
   }
 
-  public @Nullable Process getProcess() {
+  public final @Nullable Process getProcess() {
     return myPtyProcess;
   }
 
