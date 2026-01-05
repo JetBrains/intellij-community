@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.idea.completion.checkers
 
+import com.intellij.lang.jvm.JvmModifier
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaUseSiteVisibilityChecker
@@ -44,23 +47,30 @@ internal class CompletionVisibilityChecker(
         return parentsWithSelf.any { it is KtModifierListOwner && it.hasModifier(visibility) }
     }
 
-    fun canBeVisible(declaration: KtDeclaration): Boolean = forbidAnalysis("canBeVisible") {
+    fun canBeVisible(declaration: PsiElement): Boolean = forbidAnalysis("canBeVisible") {
         val originalFile = parameters.originalFile
         if (originalFile is KtCodeFragment) return true
 
         // todo should be > 2
         if (parameters.invocationCount >= 2) return true
 
-        val declarationContainingFile = declaration.containingKtFile
-        if (declaration.hasEffectiveVisibility(KtTokens.PRIVATE_KEYWORD)
-            && declarationContainingFile != originalFile
-            && declarationContainingFile != parameters.completionFile
-        ) {
-            return false
-        } else if (declaration.hasEffectiveVisibility(KtTokens.INTERNAL_KEYWORD)) {
-            return canAccessInternalDeclarationsFromFile(declarationContainingFile)
+        val declarationContainingFile = declaration.containingFile ?: return false
+
+        if (declarationContainingFile is KtFile && declaration is KtDeclaration) {
+            if (declaration.hasEffectiveVisibility(KtTokens.PRIVATE_KEYWORD)
+                && declarationContainingFile != originalFile
+                && declarationContainingFile != parameters.completionFile
+            ) {
+                return false
+            } else if (declaration.hasEffectiveVisibility(KtTokens.INTERNAL_KEYWORD)) {
+                return canAccessInternalDeclarationsFromFile(declarationContainingFile)
+            } else {
+                return true
+            }
+        } else if (declaration is PsiMember) {
+            return declaration.hasModifier(JvmModifier.PUBLIC) && declaration.containingClass?.hasModifier(JvmModifier.PUBLIC) == true
         } else {
-            return true
+            return false
         }
     }
 
