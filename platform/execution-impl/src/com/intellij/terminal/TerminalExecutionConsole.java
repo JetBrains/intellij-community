@@ -156,7 +156,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
     if (myFirstOutput.compareAndSet(false, true) &&
         contentType == ConsoleViewContentType.SYSTEM_OUTPUT &&
-        getPtyProcess() instanceof WinConPtyProcess) {
+        getProcess() instanceof WinConPtyProcess) {
       moveScreenToScrollbackBufferAndShowAllOutput();
     }
   }
@@ -474,7 +474,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
         @Override
         public byte[] getCode(int key, int modifiers) {
           if (key == KeyEvent.VK_ENTER && modifiers == 0 && myEnterKeyDefaultCodeEnabled) {
-            PtyProcess process = getPtyProcess();
+            PtyProcess process = ObjectUtils.tryCast(getProcess(), PtyProcess.class);
             return process != null ? new byte[]{process.getEnterKeyCode()} : LineSeparator.CR.getSeparatorBytes();
           }
           return super.getCode(key, modifiers);
@@ -489,9 +489,9 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     }
   }
 
-  private @Nullable PtyProcess getPtyProcess() {
+  private @Nullable Process getProcess() {
     ProcessHandlerTtyConnector phc = ObjectUtils.tryCast(myTerminalWidget.getTtyConnector(), ProcessHandlerTtyConnector.class);
-    return phc != null ? phc.getPtyProcess() : null;
+    return phc != null ? phc.getProcess() : null;
   }
 
   private final class ClearAction extends DumbAwareAction {

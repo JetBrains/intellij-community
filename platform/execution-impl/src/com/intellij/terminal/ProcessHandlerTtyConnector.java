@@ -87,7 +87,6 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
 
   @Override
   public String getName() {
-    //noinspection HardCodedStringLiteral
     return "TtyConnector:" + myProcessHandler.toString();
   }
 
@@ -133,6 +132,14 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
     return myProcessHandler;
   }
 
+  public @Nullable Process getProcess() {
+    return myPtyProcess;
+  }
+
+  /**
+   * @deprecated use {@link #getProcess()} instead
+   */
+  @Deprecated
   public @Nullable PtyProcess getPtyProcess() {
     return ObjectUtils.tryCast(myPtyProcess, PtyProcess.class);
   }
