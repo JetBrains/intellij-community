@@ -13242,6 +13242,18 @@
       }
     }
   }, {
+    "id" : "welcome.screen.tab",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "1"
+    } ],
+    "rules" : {
+      "event_id" : [ "{enum:welcome.screen.tab.opened|welcome.screen.tab.closed|welcome.screen.tab.visibility.changed}" ],
+      "event_data" : {
+        "isEnabled" : [ "{enum#boolean}" ]
+      }
+    }
+  }, {
     "id" : "welcome_screen.clone",
     "builds" : [ ],
     "versions" : [ {
@@ -13701,5 +13713,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6594"
+  "version" : "6602"
 }
