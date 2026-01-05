@@ -31,10 +31,11 @@ public class JpsMavenSettingsTest {
   }
 
   @Test
-  public void testLoadAuthenticationSettingsUnknownNamespace() throws Exception {
+  public void testLoadSettingsUnknownNamespace() throws Exception {
     File wrongNsFile = tempFolder.newFile();
     String wrongNsXml = """
       <settings xmlns="http://maven.apache.org/UNKNOWN">
+          <localRepository>some/path</localRepository>
           <servers>
               <server>
                 <id>id1</id>
@@ -46,8 +47,11 @@ public class JpsMavenSettingsTest {
       """;
     Files.writeString(wrongNsFile.toPath(), wrongNsXml, StandardCharsets.UTF_8);
 
-    var result = JpsMavenSettings.loadAuthenticationSettings(wrongNsFile, wrongNsFile);
-    assertTrue(result.isEmpty());
+    var settings = JpsMavenSettings.loadAuthenticationSettings(wrongNsFile, wrongNsFile);
+    assertTrue(settings.isEmpty());
+
+    var localRepo = JpsMavenSettings.getRepositoryFromSettings(wrongNsFile);
+    assertNull(localRepo);
   }
 
   @Test
@@ -116,13 +120,18 @@ public class JpsMavenSettingsTest {
   }
 
   @Test
-  public void testLoadAuthenticationSettings_SupportsAllKnownNamespaces() throws Exception {
-    List<String> knownNamespaces = List.of("http://maven.apache.org/SETTINGS/1.0.0",
-                                           "http://maven.apache.org/SETTINGS/1.1.0",
-                                           "http://maven.apache.org/SETTINGS/1.2.0");
+  public void testLoadSettingsAllKnownNamespaces() throws Exception {
+    List<String> knownNamespaces = List.of(
+      "", // no namespace is OK
+      "http://maven.apache.org/SETTINGS/1.0.0",
+      "http://maven.apache.org/SETTINGS/1.1.0",
+      "http://maven.apache.org/SETTINGS/1.2.0"
+    );
     for (String namespace : knownNamespaces) {
+      String xmlns = namespace.isEmpty() ? "" : " xmlns=\"" + namespace + "\"";
       String xml = """
-        <settings xmlns="%s">
+        <settings%s>
+            <localRepository>some/path</localRepository>
             <servers>
                 <server>
                   <id>id1</id>
@@ -131,15 +140,18 @@ public class JpsMavenSettingsTest {
                 </server>
             </servers>
         </settings>
-        """.formatted(namespace);
+        """.formatted(xmlns);
 
       File settingsFile = tempFolder.newFile();
       Files.writeString(settingsFile.toPath(), xml, StandardCharsets.UTF_8);
 
-      var result = JpsMavenSettings.loadAuthenticationSettings(settingsFile, settingsFile);
-      assertNotNull(result.get("id1"));
-      assertEquals("user1", result.get("id1").getUsername());
-      assertEquals("pass1", result.get("id1").getPassword());
+      var settings = JpsMavenSettings.loadAuthenticationSettings(settingsFile, settingsFile);
+      assertNotNull(settings.get("id1"));
+      assertEquals("user1", settings.get("id1").getUsername());
+      assertEquals("pass1", settings.get("id1").getPassword());
+
+      var localRepo = JpsMavenSettings.getRepositoryFromSettings(settingsFile);
+      assertEquals("some/path", localRepo);
     }
   }
 }
