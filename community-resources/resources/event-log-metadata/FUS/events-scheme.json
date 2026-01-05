@@ -8579,10 +8579,13 @@
       "from" : "1"
     } ],
     "rules" : {
-      "event_id" : [ "{enum:third.party.available.llm.profiles|third.party.ai.providers.enabled|third.party.url}" ],
+      "event_id" : [ "{enum:third.party.available.llm.profiles|third.party.ai.providers.enabled|third.party.url|third.party.provider.enabled}" ],
       "event_data" : {
+        "isApiKeySet" : [ "{enum#boolean}" ],
         "isLocalhost" : [ "{enum#boolean}" ],
+        "isLocalhostUrl" : [ "{enum#boolean}" ],
         "profileIds" : [ "{enum:llama3.2:latest|llama3.2:1b|llama3.2:3b|llama3.1:latest|llama3.1:8b|llama3.1:70b|gemma2:latest|gemma2:2b|gemma2:9b|gemma2:27b|qwen2.5:latest|qwen2.5:3b|qwen2.5:7b|qwen2.5:14b|qwen2.5:32b}", "{util#llm_profile_id}" ],
+        "providerId" : [ "{enum:OpenAI|Anthropic|Google|Grazie|Alibaba|Mistral|HuggingFace|DeepSeek|Local|Xai|Unknown|OpenAIAPI|Ollama|LMStudio}" ],
         "providerIds" : [ "{enum:ollama}", "{enum:lmstudio}", "{enum:liteLLM|llama.cpp}", "{enum:OpenAI}", "{enum:JetBrains}" ]
       }
     }
@@ -15257,5 +15260,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6602"
+  "version" : "6604"
 }
