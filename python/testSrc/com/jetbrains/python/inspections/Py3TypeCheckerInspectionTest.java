@@ -4157,5 +4157,22 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    f(42)
                    """);
   }
+
+  // PY-86655
+  public void testStructuralTypeAsyncForRequiresAiter() {
+    doTestByText("""
+                   async def async_for(p):
+                       async for i in p:
+                           pass
+                   
+                   
+                   async def async_iter():
+                       yield 42
+                   
+                   
+                   async_for(async_iter())
+                   async_for(<warning descr="Type 'list[int]' doesn't have expected attribute '__aiter__'">[1, 2, 3]</warning>)
+                   """);
+  }
 }
 

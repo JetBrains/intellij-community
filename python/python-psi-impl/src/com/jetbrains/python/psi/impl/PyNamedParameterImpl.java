@@ -334,7 +334,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         @Override
         public void visitPyForStatement(@NotNull PyForStatement node) {
           if (isReferenceToParameter(node.getForPart().getSource())) {
-            usedAttributes.add(PyNames.ITER);
+            usedAttributes.add(node.isAsync() ? PyNames.AITER : PyNames.ITER);
           }
 
           super.visitPyForStatement(node);
