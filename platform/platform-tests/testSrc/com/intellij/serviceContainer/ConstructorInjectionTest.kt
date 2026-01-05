@@ -3,18 +3,11 @@
 
 package com.intellij.serviceContainer
 
-import com.intellij.ide.plugins.TestIdeaPluginDescriptor
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.ServiceDescriptor
-import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertInstanceOf
-import org.junit.jupiter.api.assertNotNull
-import org.junit.jupiter.api.fail
 
 class ConstructorInjectionTest {
   @Test
@@ -34,44 +27,6 @@ class ConstructorInjectionTest {
     val componentManager = TestComponentManager()
     componentManager.registerService(ConstructorWithBoolean::class.java, ConstructorWithBoolean::class.java, DefaultPluginDescriptor("test"), false)
     componentManager.getService(ConstructorWithBoolean::class.java)
-  }
-
-  @Test
-  fun `test service factory method with bundled plugin`() {
-    val componentManager = TestComponentManager()
-    val serviceClassName = ConstructWithFactoryMethod::class.java.name
-    componentManager.registerService(serviceDescriptor(serviceClassName, "${serviceClassName}#createServiceInstance"),
-                                     IdeaPluginDescriptorForServiceRegistration(bundled = true))
-    val service = componentManager.getService(ConstructWithFactoryMethod::class.java)
-    assertNotNull(service)
-    assertInstanceOf<ConstructWithFactoryMethod>(service)
-  }
-
-  @Test
-  fun `test service factory method with non-bundled plugin`() {
-    val componentManager = TestComponentManager()
-    val serviceClassName = ConstructWithFactoryMethod::class.java.name
-    componentManager.registerService(serviceDescriptor(serviceClassName, "${serviceClassName}#createServiceInstance"),
-                                     IdeaPluginDescriptorForServiceRegistration(bundled = false))
-    try {
-      componentManager.getService(ConstructWithFactoryMethod::class.java)
-      fail("Should throw ISE, because factory service methods in non-bundled plugins are forbidden")
-    }
-    catch (ise: IllegalStateException) {
-      assertThat(ise).hasMessageStartingWith("Only bundled plugins may declare factory methods for classes.")
-    }
-  }
-
-  private class IdeaPluginDescriptorForServiceRegistration(private val bundled: Boolean) : TestIdeaPluginDescriptor() {
-    override fun getPluginId(): PluginId = PluginId("test")
-    override fun getPluginClassLoader(): ClassLoader? = null
-    override fun isBundled(): Boolean = bundled
-  }
-
-  private fun serviceDescriptor(serviceIfcName: String, serviceImplName: String): ServiceDescriptor {
-    return ServiceDescriptor(serviceIfcName, serviceImplName,
-                             null, null, false, null,
-                             PreloadMode.FALSE, null, null)
   }
 }
 @Service

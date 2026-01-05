@@ -2,7 +2,6 @@
 package com.intellij.serviceContainer
 
 import com.intellij.configurationStore.NonPersistentStore
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ServiceDescriptor
@@ -38,9 +37,5 @@ class TestComponentManager(
 
     val preloadedService = getServiceIfCreated(clazz)
     assert(preloadedService !== null) { "Service was not preloaded: $clazz" }
-  }
-
-  fun registerService(serviceDescriptor: ServiceDescriptor, pluginDescriptor: IdeaPluginDescriptor) {
-    registerServices(listOf(serviceDescriptor), pluginDescriptor)
   }
 }

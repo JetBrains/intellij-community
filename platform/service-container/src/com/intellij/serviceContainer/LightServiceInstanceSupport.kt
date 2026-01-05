@@ -4,7 +4,6 @@ package com.intellij.serviceContainer
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.components.Service
-import com.intellij.platform.instanceContainer.instantiation.FACTORY_METHOD_CONSTRUCTOR
 import com.intellij.platform.instanceContainer.instantiation.instantiate
 import com.intellij.platform.instanceContainer.internal.DynamicInstanceSupport
 import com.intellij.platform.instanceContainer.internal.DynamicInstanceSupport.DynamicInstanceInitializer
@@ -45,7 +44,6 @@ internal class LightServiceInstanceSupport(
         resolver = componentManager.dependencyResolver,
         parentScope = parentScope,
         instanceClass = instanceClass,
-        factoryMethodName = FACTORY_METHOD_CONSTRUCTOR, // Light services can only be instantiated via their constructor invocation.
         supportedSignatures = componentManager.supportedSignaturesOfLightServiceConstructors,
       )
       initializeComponentOrLightService(instance, PluginUtil.getPluginId(instanceClass.classLoader), componentManager)

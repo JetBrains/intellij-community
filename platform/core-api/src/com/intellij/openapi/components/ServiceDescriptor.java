@@ -104,7 +104,7 @@ public final class ServiceDescriptor {
   @Attribute public final @Nullable ClientKind client;
 
   @ApiStatus.Internal
-  public @Nullable String getImplementationString() {
+  public @Nullable String getImplementationClassName() {
     if (testServiceImplementation != null && ApplicationManager.getApplication().isUnitTestMode()) {
       return testServiceImplementation;
     }
@@ -113,18 +113,6 @@ public final class ServiceDescriptor {
     }
     else {
       return serviceImplementation; // empty serviceImplementation will be replaced with null by the reader
-    }
-  }
-
-  @ApiStatus.Internal
-  public @Nullable String getImplementationClassName() {
-    String impl = getImplementationString();
-    if (impl != null) {
-      int hashIndex = impl.indexOf('#');
-      return hashIndex >= 0 ? impl.substring(0, hashIndex) : impl;
-    }
-    else {
-      return impl;
     }
   }
 

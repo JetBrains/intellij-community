@@ -559,7 +559,7 @@ abstract class ComponentManagerImpl(
       null
     }
     val registrar = serviceContainer.startRegistration(registrationScope)
-    val app = getApplication()
+    val app = getApplication()!!
     for (descriptor in services) {
       if (!isServiceSuitable(descriptor) || (descriptor.os != null && !descriptor.os.isSuitableForOs())) {
         continue
@@ -569,15 +569,15 @@ abstract class ComponentManagerImpl(
       // Null serviceImplementation means we want unregistering service. (empty serviceImplementation will be nullized by the reader)
       // This is the same code as in the ServiceDescriptor.getImplementationClassName with the difference in how application instance is obtained.
       val implementation: String? = when {
-        descriptor.testServiceImplementation != null && app!!.isUnitTestMode -> descriptor.testServiceImplementation
-        descriptor.headlessImplementation != null && app!!.isHeadlessEnvironment -> descriptor.headlessImplementation
+        descriptor.testServiceImplementation != null && app.isUnitTestMode -> descriptor.testServiceImplementation
+        descriptor.headlessImplementation != null && app.isHeadlessEnvironment -> descriptor.headlessImplementation
         else -> descriptor.serviceImplementation
       }
 
       val key = descriptor.serviceInterface ?: implementation
       if (key == null) {
         LOG.error("Either 'serviceInterface' or 'serviceImplementation' must be non-null and non-empty. " +
-                  "(isUnitTestMode=${app?.isUnitTestMode}, isHeadlessEnvironment=${app?.isHeadlessEnvironment}. " +
+                  "(isUnitTestMode=${app.isUnitTestMode}, isHeadlessEnvironment=${app.isHeadlessEnvironment}. " +
                   "Error while loading service descriptor: $descriptor")
         continue
       }

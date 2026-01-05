@@ -11,8 +11,6 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.instanceContainer.instantiation.FACTORY_METHOD_CONSTRUCTOR
-import com.intellij.platform.instanceContainer.instantiation.FACTORY_METHOD_SEPARATOR
 import com.intellij.platform.instanceContainer.instantiation.InstantiationException
 import com.intellij.platform.instanceContainer.instantiation.instantiate
 import com.intellij.platform.instanceContainer.internal.InstanceInitializer
@@ -25,15 +23,6 @@ internal abstract class ServiceInstanceInitializer(
   private val pluginId: PluginId,
   private val serviceDescriptor: ServiceDescriptor,
 ) : InstanceInitializer {
-  protected fun getFactoryMethodName(): String {
-    return serviceDescriptor.implementationString?.substringAfter(FACTORY_METHOD_SEPARATOR, FACTORY_METHOD_CONSTRUCTOR)
-           ?: FACTORY_METHOD_CONSTRUCTOR
-  }
-
-  protected fun hasFactoryMethodName(): Boolean {
-    return serviceDescriptor.implementationString?.contains(FACTORY_METHOD_SEPARATOR) ?: false
-  }
-
   override suspend fun createInstance(parentScope: CoroutineScope, instanceClass: Class<*>): Any {
     checkWriteAction(instanceClass)
     val instance = try {
@@ -41,7 +30,6 @@ internal abstract class ServiceInstanceInitializer(
         resolver = componentManager.dependencyResolver,
         parentScope = parentScope,
         instanceClass = instanceClass,
-        factoryMethodName = getFactoryMethodName(),
         supportedSignatures = componentManager.supportedSignaturesOfLightServiceConstructors,
       )
     }
@@ -85,14 +73,6 @@ internal open class ServiceDescriptorInstanceInitializer(
   private val pluginDescriptor: PluginDescriptor,
   private val serviceDescriptor: ServiceDescriptor,
 ) : ServiceInstanceInitializer(componentManager, pluginDescriptor.pluginId, serviceDescriptor) {
-  override suspend fun createInstance(parentScope: CoroutineScope, instanceClass: Class<*>): Any {
-    if (!pluginDescriptor.isBundled && hasFactoryMethodName()) {
-      throw IllegalStateException("Only bundled plugins may declare factory methods for classes. " +
-                                  "Please submit a ticket to https://youtrack.jetbrains.com if you want to use this feature in a non-bundled plugin.")
-    }
-    return super.createInstance(parentScope, instanceClass)
-  }
-
   override fun loadInstanceClass(keyClass: Class<*>?): Class<*> {
     if (keyClass != null && keyClassName == instanceClassName) {
       // avoid classloading
