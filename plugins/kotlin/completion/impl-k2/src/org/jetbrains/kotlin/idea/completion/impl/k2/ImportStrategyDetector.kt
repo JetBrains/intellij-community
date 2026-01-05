@@ -26,17 +26,29 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
         excludedImports = imports.excludedFromDefaultImports.map { it.fqName }
     }
 
+    /**
+     * Returns if the callable symbol is a JVM static field or method.
+     */
+    private fun KaCallableSymbol.isStaticFieldOrMethod(): Boolean = when(this) {
+        is KaNamedFunctionSymbol -> isStatic
+        is KaJavaFieldSymbol -> isStatic
+        else -> false
+    }
 
     context(_: KaSession)
-    fun detectImportStrategyForCallableSymbol(symbol: KaCallableSymbol, isFunctionalVariableCall: Boolean = false): ImportStrategy {
-        val hasStablePath = when ((symbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol)?.classKind) {
+    private fun KaCallableSymbol.hasStablePath(): Boolean {
+        val containingClass = fakeOverrideOriginal.containingSymbol as? KaClassSymbol ?: return false
+        return when (containingClass.classKind) {
             KaClassKind.ENUM_CLASS,
             KaClassKind.OBJECT,
             KaClassKind.COMPANION_OBJECT -> true
-
-            else -> false
+            else -> isStaticFieldOrMethod()
         }
-        if (symbol.location == KaSymbolLocation.CLASS && !hasStablePath) return ImportStrategy.DoNothing
+    }
+
+    context(_: KaSession)
+    fun detectImportStrategyForCallableSymbol(symbol: KaCallableSymbol, isFunctionalVariableCall: Boolean = false): ImportStrategy {
+        if (symbol.location == KaSymbolLocation.CLASS && !symbol.hasStablePath()) return ImportStrategy.DoNothing
 
         val callableId = symbol.callableId?.asSingleFqName() ?: return ImportStrategy.DoNothing
 
