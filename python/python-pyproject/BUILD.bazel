@@ -39,6 +39,8 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/projectModel-api:projectModel",
     "//python/common",
+    "//platform/statistics",
+    "//platform/indexing-api:indexing",
   ],
   exports = ["@lib//:tuweni-toml"]
 )
@@ -73,6 +75,12 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/projectModel-api:projectModel",
     "//python/common",
+    "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/indexing-api:indexing",
   ],
   exports = ["@lib//:tuweni-toml"]
 )
