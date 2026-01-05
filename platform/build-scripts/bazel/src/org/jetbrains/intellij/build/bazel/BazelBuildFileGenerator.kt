@@ -824,7 +824,7 @@ internal class BazelBuildFileGenerator(
     val parentDirDirName = when {
       baseBuildDir == ultimateRoot -> null
       baseBuildDir.parent == ultimateRoot -> "idea"
-      else -> baseBuildDir.parent.fileName.toString()
+      else -> baseBuildDir.parent?.fileName.toString()
     }
 
     return result
