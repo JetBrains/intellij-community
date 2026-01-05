@@ -273,6 +273,10 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
     if (owner != null && name != null) {
+      // TODO revise this whole approach to constructing structural types.
+      //  Instead of selectively skipping conditional branches in a visitor, use CFG and consider
+      //  all attribute access reachable on the original untyped parameter, not intercepted by
+      //  reassignments or type narrowing.
       owner.accept(new PyRecursiveElementVisitor() {
         @Override
         public void visitPyElement(@NotNull PyElement node) {
@@ -334,6 +338,22 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           }
 
           super.visitPyForStatement(node);
+        }
+
+        @Override
+        public void visitPyMatchStatement(@NotNull PyMatchStatement node) {
+          PyExpression subject = node.getSubject();
+          if (subject != null) {
+            subject.accept(this);
+          }
+        }
+
+        @Override
+        public void visitPyConditionalExpression(@NotNull PyConditionalExpression node) {
+          PyExpression condition = node.getCondition();
+          if (condition != null) {
+            condition.accept(this);
+          }
         }
 
         @Override
