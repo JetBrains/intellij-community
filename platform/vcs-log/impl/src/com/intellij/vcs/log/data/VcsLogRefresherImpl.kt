@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData.*
@@ -59,9 +60,7 @@ internal class VcsLogRefresherImpl(
       try {
         _isBusy.value = true
         currentDataPack = runInitialRefresh()
-
-        refreshRequests.send(RefreshRequest.ReloadAll) // build/rebuild the full  log in background
-
+        refreshRequests.send(RefreshRequest(providers.keys, false))
         handleRefreshRequests()
       }
       finally {
@@ -91,7 +90,7 @@ internal class VcsLogRefresherImpl(
       try { // don't cancel the request processing on processing errors
         progress.runWithProgress(VcsLogData.DATA_PACK_REFRESH) {
           var dataPack = currentDataPack
-          val logInfo = LogInfo()
+          val refreshSessionData = RefreshSessionData()
           while (true) {
             checkCanceled()
             refreshRequests.receiveAll(requests::add)
@@ -100,10 +99,10 @@ internal class VcsLogRefresherImpl(
             }
             LOG.debug("Refresh requests: $requests")
 
-            val cumulativeRequest = requests.fold()
+            val cumulativeRequest = RefreshRequest.fold(requests)
             requests.clear()
             LOG.debug("Cumulative refresh request: $cumulativeRequest")
-            dataPack = handleRequest(dataPack, logInfo, cumulativeRequest)
+            dataPack = handleRequest(dataPack, refreshSessionData, cumulativeRequest)
           }
 
           if (dataPack !== currentDataPack) {
@@ -120,31 +119,19 @@ internal class VcsLogRefresherImpl(
     }
   }
 
-  private suspend fun handleRequest(currentDataPack: VcsLogGraphData, logInfo: LogInfo, request: RefreshRequest): VcsLogGraphData {
-    val rootsToRefresh: Set<VirtualFile>
-    val optimize: Boolean
-    val dataPack: VcsLogGraphData
-    when (request) {
-      is RefreshRequest.RefreshRoots -> {
-        if (request.rootsToRefresh.isEmpty()) {
-          LOG.debug("No roots to refresh")
-          return currentDataPack
-        }
-
-        rootsToRefresh = request.rootsToRefresh
-        optimize = request.optimize
-        dataPack = currentDataPack
-      }
-      RefreshRequest.ReloadAll -> {
-        rootsToRefresh = providers.keys
-        optimize = false
-        dataPack = VcsLogGraphData.Empty
-        logInfo.clear()
-      }
+  private suspend fun handleRequest(
+    currentDataPack: VcsLogGraphData,
+    refreshSessionData: RefreshSessionData,
+    request: RefreshRequest,
+  ): VcsLogGraphData {
+    val rootsToRefresh = request.roots
+    if (rootsToRefresh.isEmpty()) {
+      LOG.debug("No roots to refresh")
+      return currentDataPack
     }
 
-    LOG.debug("Refreshing roots: $rootsToRefresh")
-    if (optimize && VcsLogGraphData.OverlayData.isEnabled) {
+    LOG.debug("Refreshing roots: ${request.roots}")
+    if (request.loadOverlayData && VcsLogGraphData.OverlayData.isEnabled) {
       val smallDataPack = loadSmallDataPack()
       if (smallDataPack !== VcsLogGraphData.Empty) {
         dataPackUpdateHandler.accept(smallDataPack)
@@ -152,23 +139,16 @@ internal class VcsLogRefresherImpl(
     }
 
     checkCanceled()
-    val newDataPack = try {
-      if (!dataPack.isFull) {
-        loadFullLog()
-      }
-      else {
-        loadUpdatedDataPack(dataPack, logInfo, rootsToRefresh)
-        ?: loadFullLog()
-      }
-    }
-    catch (ce: CancellationException) {
-      throw ce
-    }
-    catch (e: Exception) {
-      LOG.info(e)
+    return runCatching {
+      val partiallyLoadedLog =
+        if (currentDataPack.isFull) loadUpdatedDataPack(currentDataPack, refreshSessionData, rootsToRefresh)
+        else null
+
+      partiallyLoadedLog ?: loadFullLog()
+    }.recoverCatching { e ->
+      rethrowControlFlowException(e)
       VcsLogGraphData.Error(e)
-    }
-    return newDataPack
+    }.getOrThrow()
   }
 
   override fun initialize() {
@@ -194,9 +174,7 @@ internal class VcsLogRefresherImpl(
     if (rootsToRefresh.isEmpty()) return
 
     refresherJob.start()
-    refreshRequests.trySend(
-      RefreshRequest.RefreshRoots(rootsToRefresh.toSet(), optimized)
-    ).onSuccess {
+    refreshRequests.trySend(RefreshRequest(rootsToRefresh.toSet(), optimized)).onSuccess {
       _isBusy.value = true
     }.onClosed {
       LOG.warn("Log refresher is already shut down. Refresh will not be performed", it)
@@ -233,7 +211,7 @@ internal class VcsLogRefresherImpl(
 
   private suspend fun loadUpdatedDataPack(
     dataPack: VcsLogGraphData,
-    loadedInfo: LogInfo,
+    refreshSessionData: RefreshSessionData,
     roots: Collection<VirtualFile>,
   ): VcsLogGraphData? =
     tracer.trace(Refreshing) {
@@ -242,20 +220,16 @@ internal class VcsLogRefresherImpl(
       val currentRefs = dataPack.refsModel.refsByRoot
       var commitCount = recentCommitCount
       repeat(2) {
-        val requirements = prepareRequirements(roots, commitCount, currentRefs)
-        val logInfo = loadRecentData(requirements)
+        val currentAttemptData = loadRecentData(prepareRequirements(roots, commitCount, currentRefs))
         LOG.trace("Recent log loaded")
         checkCanceled()
-        for (root in roots) {
-          loadedInfo.put(root, logInfo.getCommits(root)!!)
-          loadedInfo.put(root, logInfo.getRefs(root)!!)
-        }
+        refreshSessionData.put(currentAttemptData)
 
-        val compoundLog = multiRepoJoin(loadedInfo.getCommits())
+        val compoundLog = multiRepoJoin(refreshSessionData.getCommits())
         checkCanceled()
         val allNewRefs = currentRefs.toMutableMap().apply {
           replaceAll { root, refs ->
-            loadedInfo.getRefs(root) ?: refs
+            refreshSessionData.getRefs(root) ?: refs
           }
         }
         val joinedFullLog = join(permanentGraph.allCommits.toList(), compoundLog, currentRefs, allNewRefs)
@@ -320,10 +294,10 @@ internal class VcsLogRefresherImpl(
       }
     }
 
-  private suspend fun loadRecentData(requirements: Map<VirtualFile, VcsLogProvider.Requirements>): LogInfo =
+  private suspend fun loadRecentData(requirements: Map<VirtualFile, VcsLogProvider.Requirements>): RefreshSessionData =
     tracer.trace(ReadingRecentCommits) {
       LOG.debug("Loading the recent data by requirements $requirements")
-      val logInfo = LogInfo()
+      val refreshSessionData = RefreshSessionData()
       for ((root, requirements) in requirements) {
         LOG.trace("Loading recent data for root $root with requirements $requirements")
         val provider = requireNotNull(providers[root]) { "Cannot find provider for root $root" }
@@ -343,8 +317,7 @@ internal class VcsLogRefresherImpl(
           }
           LOG.trace("Recent commits compacted")
           checkCanceled()
-          logInfo.put(root, commits)
-          logInfo.put(root, CompressedRefs(data.getRefs(), storage))
+          refreshSessionData.put(root, commits, CompressedRefs(data.getRefs(), storage))
 
           val users = buildSet {
             for (metadata in data.getCommits()) {
@@ -359,12 +332,12 @@ internal class VcsLogRefresherImpl(
       }
       LOG.trace("Recent data flushing")
       commitDataConsumer?.onAllDataLoaded(onFullReload = false)
-      logInfo
+      refreshSessionData
     }
 
-  private suspend fun readFullLogFromVcs(): LogInfo =
+  private suspend fun readFullLogFromVcs(): RefreshSessionData =
     tracer.trace(ReadingAllCommits) {
-      val logInfo = LogInfo()
+      val refreshSessionData = RefreshSessionData()
       for ((root, provider) in providers.entries) {
         LOG.trace("Loading the full data for root $root")
         tracer.trace(ReadingAllCommitsInRoot) { span ->
@@ -378,8 +351,7 @@ internal class VcsLogRefresherImpl(
             }
           }
           LOG.trace("Full data loaded and compacted")
-          logInfo.put(root, graphCommits)
-          logInfo.put(root, CompressedRefs(data.getRefs(), storage))
+          refreshSessionData.put(root, graphCommits, CompressedRefs(data.getRefs(), storage))
 
           LOG.trace("Storing full data: ${graphCommits.size} commits, ${data.getUsers().size} users")
           commitDataConsumer?.storeData(root, graphCommits, data.getUsers())
@@ -387,7 +359,7 @@ internal class VcsLogRefresherImpl(
       }
       LOG.trace("Full data flushing")
       commitDataConsumer?.onAllDataLoaded(onFullReload = true)
-      logInfo
+      refreshSessionData
     }
 
   private fun compactCommit(commit: TimedVcsCommit, root: VirtualFile): GraphCommit<Int> {
@@ -430,44 +402,49 @@ internal class VcsLogRefresherImpl(
     }
 }
 
-private sealed interface RefreshRequest {
-  data class RefreshRoots(
-    val rootsToRefresh: Set<VirtualFile>,
-    val optimize: Boolean,
-  ) : RefreshRequest
-
-  object ReloadAll : RefreshRequest
+private data class RefreshRequest(
+  val roots: Set<VirtualFile>,
+  /**
+   * @see [VcsLogGraphData.OverlayData]
+   */
+  val loadOverlayData: Boolean,
+) {
+  companion object {
+    fun fold(requests: List<RefreshRequest>): RefreshRequest {
+      val roots = mutableSetOf<VirtualFile>()
+      var loadOverlayData = false
+      requests.forEach { request ->
+        roots.addAll(request.roots)
+        loadOverlayData = loadOverlayData || request.loadOverlayData
+      }
+      return RefreshRequest(roots, loadOverlayData)
+    }
+  }
 }
-
 
 private data class CommitCountRequirements(private val commitCount: Int) : VcsLogProvider.Requirements {
   override fun getCommitCount(): Int = commitCount
 }
 
-private class LogInfo {
+private class RefreshSessionData {
   private val refsByRoot = HashMap<VirtualFile, VcsLogRefsOfSingleRoot>()
   private val commitsByRoot = HashMap<VirtualFile, List<GraphCommit<Int>>>()
 
-  fun put(root: VirtualFile, commits: List<GraphCommit<Int>>) {
-    commitsByRoot[root] = commits
+  fun put(other: RefreshSessionData) {
+    commitsByRoot.putAll(other.commitsByRoot)
+    refsByRoot.putAll(other.refsByRoot)
   }
 
-  fun put(root: VirtualFile, refs: VcsLogRefsOfSingleRoot) {
+  fun put(root: VirtualFile, commits: List<GraphCommit<Int>>, refs: VcsLogRefsOfSingleRoot) {
+    commitsByRoot[root] = commits
     refsByRoot[root] = refs
   }
 
   fun getCommits(): Collection<List<GraphCommit<Int>>> = commitsByRoot.values
 
-  fun getCommits(root: VirtualFile): List<GraphCommit<Int>>? = commitsByRoot[root]
-
   fun getRefs(): Map<VirtualFile, VcsLogRefsOfSingleRoot> = refsByRoot.toMap()
 
   fun getRefs(root: VirtualFile): VcsLogRefsOfSingleRoot? = refsByRoot[root]
-
-  fun clear() {
-    refsByRoot.clear()
-    commitsByRoot.clear()
-  }
 }
 
 /**
@@ -482,22 +459,4 @@ private inline fun <T> Channel<T>.receiveAll(consumer: (T) -> Unit) {
     }
   }
   while (nextItem != null)
-}
-
-private fun List<RefreshRequest>.fold(): RefreshRequest {
-  val roots = mutableSetOf<VirtualFile>()
-  var optimize = false
-  val list = this
-  for (request in list) {
-    when (request) {
-      is RefreshRequest.RefreshRoots -> {
-        roots.addAll(request.rootsToRefresh)
-        optimize = optimize || request.optimize
-      }
-      RefreshRequest.ReloadAll -> {
-        return RefreshRequest.ReloadAll
-      }
-    }
-  }
-  return RefreshRequest.RefreshRoots(roots, optimize)
 }
