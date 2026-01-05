@@ -21,7 +21,7 @@ import fleet.kernel.ref
 import fleet.kernel.rete.collectLatest
 import fleet.kernel.rete.each
 import fleet.kernel.rete.filter
-import fleet.kernel.shared
+import fleet.kernel.rebase.shared
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

@@ -15,7 +15,7 @@ import fleet.kernel.rebase.InstructionCoder
 import fleet.kernel.rebase.InstructionDecodingContext
 import fleet.kernel.rebase.InstructionEncodingContext
 import fleet.kernel.rebase.SharedInstructionData
-import fleet.kernel.rebase.sharedId
+import fleet.kernel.sharedId
 import fleet.kernel.rebase.sharedInstruction
 import fleet.util.Random
 import fleet.util.UID

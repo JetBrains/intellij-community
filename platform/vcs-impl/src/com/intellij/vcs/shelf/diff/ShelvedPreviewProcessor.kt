@@ -23,7 +23,7 @@ import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.change
-import fleet.kernel.shared
+import fleet.kernel.rebase.shared
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest

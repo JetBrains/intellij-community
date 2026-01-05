@@ -48,7 +48,7 @@ import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import fleet.kernel.change
-import fleet.kernel.shared
+import fleet.kernel.rebase.shared
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import org.jetbrains.annotations.ApiStatus

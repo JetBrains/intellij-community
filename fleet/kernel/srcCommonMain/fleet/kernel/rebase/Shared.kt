@@ -1,14 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.kernel
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package fleet.kernel.rebase
 
 import com.jetbrains.rhizomedb.ChangeScope
 import com.jetbrains.rhizomedb.ChangeScopeKey
 import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.partition
+import fleet.kernel.SharedPart
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 
 val Entity.isShared: Boolean
-  get() = com.jetbrains.rhizomedb.partition(eid) == SharedPart
+  get() = partition(eid) == SharedPart
 
 /**
  * UGLY HACK for UNSHARED documents, please don't use it

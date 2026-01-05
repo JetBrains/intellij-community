@@ -16,9 +16,7 @@ import com.intellij.openapi.editor.impl.ad.util.ThreadLocalRhizomeDB
 import com.intellij.platform.pasta.common.DocumentEntity
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ui.EDT
-import fleet.kernel.awaitCommitted
 import fleet.kernel.change
-import fleet.kernel.shared
 import fleet.kernel.rete.*
 import fleet.util.openmap.OpenMap
 import kotlinx.coroutines.CoroutineScope

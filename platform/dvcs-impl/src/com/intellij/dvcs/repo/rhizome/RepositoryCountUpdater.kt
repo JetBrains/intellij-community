@@ -8,7 +8,7 @@ import com.intellij.platform.project.asEntity
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.platform.vcs.impl.shared.rhizome.RepositoryCountEntity
 import fleet.kernel.change
-import fleet.kernel.shared
+import fleet.kernel.rebase.shared
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.launch
