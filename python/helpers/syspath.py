@@ -12,6 +12,11 @@ def get_pep660_editable_roots_from_metadata():
     except ImportError:
         return []
 
+    # We only reach here on Python 3.8+ (or environments providing importlib.metadata).
+    # Safe to import these urllib submodules (since Python 3.0+) here.
+    from urllib.parse import urlsplit
+    from urllib.request import url2pathname
+
     def read_from_direct_url_json(dist):
         # type: (Distribution) -> str | None
 
@@ -24,6 +29,20 @@ def get_pep660_editable_roots_from_metadata():
                     return data.get('url', '')
         return None
 
+    def file_url_to_path(url):
+        # type: (str) -> str | None
+
+        parts = urlsplit(url)
+        if parts.scheme != "file":
+            return None
+
+        # For local file URLs, netloc is "" or "localhost"
+        if parts.netloc not in ("", "localhost"):
+            # Non-local authorities exist but usually aren't meaningful for local sys.path usage
+            return None
+
+        return url2pathname(parts.path)
+
     editable_roots = []
     for dist in distributions():
         url = None  # type: str | None
@@ -34,9 +53,11 @@ def get_pep660_editable_roots_from_metadata():
         except AttributeError:
             url = read_from_direct_url_json(dist)
 
-        FILE_PREFIX = "file://"
-        if url and url.startswith(FILE_PREFIX):
-            editable_roots.append(url[len(FILE_PREFIX):])
+        if url:
+            path = file_url_to_path(url)
+            if path:
+                editable_roots.append(path)
+
     return editable_roots
 
 
