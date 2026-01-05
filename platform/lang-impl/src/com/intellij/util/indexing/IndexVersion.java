@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
 @ApiStatus.Internal
@@ -199,6 +200,10 @@ public final class IndexVersion {
           version = new IndexVersion(in);
           LOG.debug("Version for index '", indexName, "' from file ", versionFile, ": ", version);
         }
+      }
+      catch (NoSuchFileException nfe) {
+        version = NON_EXISTING_INDEX_VERSION;
+        LOG.debug("No version file for index '" + indexName + "'");//frequent case -- don't log the stacktrace
       }
       catch (IOException e) {
         version = NON_EXISTING_INDEX_VERSION;
