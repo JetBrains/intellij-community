@@ -26,11 +26,11 @@ jobs:
     name: Check typeshed structure
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           version-file: "requirements-tests.txt"
       - run: uv pip install -r requirements-tests.txt --system
@@ -45,12 +45,12 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           version-file: "requirements-tests.txt"
       - run: uv pip install -r requirements-tests.txt --system
@@ -68,11 +68,11 @@ jobs:
     name: "mypy: Run test cases"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: "3.14"
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           version-file: "requirements-tests.txt"
       - run: uv pip install -r requirements-tests.txt --system
@@ -87,11 +87,11 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           version-file: "requirements-tests.txt"
       - name: Install typeshed test-suite requirements
@@ -146,11 +146,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout typeshed
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: typeshed
       - name: Checkout stub_uploader
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: typeshed-internal/stub_uploader
           path: stub_uploader
@@ -158,7 +158,7 @@ jobs:
         with:
           # Keep in sync with stub_uploader's check_scripts.yml workflow.
           python-version: "3.13"
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           version-file: "typeshed/requirements-tests.txt"
       - name: Run tests

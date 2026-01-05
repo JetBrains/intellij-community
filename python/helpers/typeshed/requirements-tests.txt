@@ -4,22 +4,22 @@ mypy==1.18.2
 pyright==1.1.407
 
 # Libraries used by our various scripts.
-aiohttp==3.12.15
+aiohttp==3.13.2
 # TODO (2025-05-09): No wheels exist for Python 3.14 yet, slowing down CI
 # considerably and prone to fail.
 grpcio-tools>=1.66.2; python_version < "3.14" # For grpc_tools.protoc
-mypy-protobuf==3.6.0
+mypy-protobuf==4.0.0
 packaging==25.0
 pathspec>=0.11.1
 pre-commit
 # Required by create_baseline_stubs.py. Must match .pre-commit-config.yaml.
-ruff==0.13.2
+ruff==0.14.10
 stubdefaulter==0.1.0
 termcolor>=2.3
-tomli==2.2.1; python_version < "3.11"
+tomli==2.3.0; python_version < "3.11"
 tomlkit==0.13.3
 typing_extensions>=4.15.0rc1
-uv==0.9.6
+uv==0.9.21
 
 # Utilities for typeshed infrastructure scripts.
 ts_utils @ file:lib

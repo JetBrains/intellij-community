@@ -19,7 +19,7 @@ jobs:
     if: github.repository == 'python/typeshed'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           # use an ssh key so that checks automatically run on stubsabot PRs
           ssh-key: ${{ secrets.STUBSABOT_SSH_PRIVATE_KEY }}
@@ -27,7 +27,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           version-file: "requirements-tests.txt"
       - name: git config
