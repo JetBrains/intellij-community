@@ -63,6 +63,9 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/execution",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/backend/observation",
   ]
 )
 ### auto-generated section `build intellij.kotlin.projectConfiguration` end

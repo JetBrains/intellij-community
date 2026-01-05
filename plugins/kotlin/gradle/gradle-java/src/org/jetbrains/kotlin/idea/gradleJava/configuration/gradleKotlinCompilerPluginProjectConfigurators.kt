@@ -1,17 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJvmStdlibDetectorFacility
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.ChangedConfiguratorFiles
@@ -26,7 +23,7 @@ import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.PathUtil
 
-abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator(private val coroutineScope: CoroutineScope): KotlinCompilerPluginProjectConfigurator {
+abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator : KotlinCompilerPluginProjectConfigurator {
     override fun configureModule(module: Module): PsiFile? {
         val project = module.project
         val changedFiles = ChangedConfiguratorFiles()
@@ -34,14 +31,11 @@ abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator(private val
         val topLevelFile = project.getTopLevelBuildScriptPsiFile() ?: return null
         val moduleFile = module.getBuildScriptPsiFile().takeIf { it != topLevelFile }
 
-        coroutineScope.launchTracked {
-            edtWriteAction {
-                project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", topLevelFile.name), null) {
-                    topLevelFile.add(addVersion = true, sourceModule = module, changedFiles = changedFiles)
-                    moduleFile?.add(addVersion = false, sourceModule = module, changedFiles = changedFiles)
-                }
-            }
+        project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", topLevelFile.name), null) {
+            topLevelFile.add(addVersion = true, sourceModule = module, changedFiles = changedFiles)
+            moduleFile?.add(addVersion = false, sourceModule = module, changedFiles = changedFiles)
         }
+
         return moduleFile ?: topLevelFile
     }
 
@@ -51,7 +45,7 @@ abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator(private val
         val version =
             manipulator.getKotlinVersion() ?: detectKotlinStdlibVersion(sourceModule) ?: defaultKotlinVersion
         manipulator.configureBuildScripts(
-            kotlinPluginName,
+            "kotlin.$kotlinCompilerPluginId",
             getKotlinPluginExpression(this is KtFile),
             PathUtil.KOTLIN_JAVA_STDLIB_NAME,
             addVersion = addVersion,
@@ -91,29 +85,19 @@ abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator(private val
         }
     }
 
-    protected abstract val kotlinPluginName: String
-
     protected abstract fun getKotlinPluginExpression(forKotlinDsl: Boolean): String
 }
 
-class SpringGradleKotlinCompilerPluginProjectConfigurator(coroutineScope: CoroutineScope): AbstractGradleKotlinCompilerPluginProjectConfigurator(coroutineScope) {
-    override val kotlinPluginName: String
-        get() = "kotlin.spring"
+class SpringGradleKotlinCompilerPluginProjectConfigurator : AbstractGradleKotlinCompilerPluginProjectConfigurator() {
+    override val kotlinCompilerPluginId: String = "spring"
 
     override fun getKotlinPluginExpression(forKotlinDsl: Boolean): String =
         if (forKotlinDsl) "kotlin(\"plugin.spring\")" else "id \"org.jetbrains.kotlin.plugin.spring\""
-
-    override val compilerId: String = "kotlin-spring"
-
 }
 
-class JpaGradleKotlinCompilerPluginProjectConfigurator(coroutineScope: CoroutineScope): AbstractGradleKotlinCompilerPluginProjectConfigurator(coroutineScope) {
-    override val kotlinPluginName: String
-        get() = "kotlin.jpa"
+class JpaGradleKotlinCompilerPluginProjectConfigurator : AbstractGradleKotlinCompilerPluginProjectConfigurator() {
+    override val kotlinCompilerPluginId: String = "jpa"
 
     override fun getKotlinPluginExpression(forKotlinDsl: Boolean): String =
         if (forKotlinDsl) "kotlin(\"plugin.jpa\")" else "id \"org.jetbrains.kotlin.plugin.jpa\""
-
-    override val compilerId: String = "kotlin-jpa"
-
 }

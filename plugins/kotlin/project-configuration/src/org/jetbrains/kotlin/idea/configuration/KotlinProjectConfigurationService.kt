@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import java.util.concurrent.atomic.AtomicReference
 
 @Service(Service.Level.PROJECT)
-class KotlinProjectConfigurationService(private val project: Project, private val coroutineScope: CoroutineScope) {
+class KotlinProjectConfigurationService(private val project: Project, val coroutineScope: CoroutineScope) {
     companion object {
         fun getInstance(project: Project): KotlinProjectConfigurationService {
             return project.service()
