@@ -1,7 +1,5 @@
 package com.jetbrains.fleet.rpc.plugin
 
-import com.jetbrains.fleet.rpc.plugin.fir.RpcFirExtensionRegistrar
-import com.jetbrains.fleet.rpc.plugin.ir.RpcIrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.compiler.plugin.AbstractCliOption
