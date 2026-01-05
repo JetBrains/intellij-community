@@ -138,7 +138,7 @@ internal suspend fun buildNsisInstaller(
 
   if (customizer.publishUninstaller) {
     val uninstallerFile = context.paths.artifactDir.resolve(uninstallerFileName)
-    check(Files.exists(uninstallerFile)) { "Windows uninstaller is missing." }
+    check(Files.exists(uninstallerFile)) { "Windows uninstaller is missing: $uninstallerFile" }
     context.notifyArtifactBuilt(uninstallerFile)
   }
 
@@ -187,7 +187,7 @@ private suspend fun prepareConfigurationFiles(nsiConfDir: Path, uninstallerFileN
       "'${signTool}' '%1'"
     }
     OsFamily.currentOs == OsFamily.WINDOWS -> {
-      "COPY /B /Y '%1' '${uninstallerCopy}'"
+      "COPY /B /Y \$\\\"%1\$\\\" \$\\\"${uninstallerCopy}\$\\\""
     }
     else -> {
       "cp -f '%1' '${uninstallerCopy}'"
