@@ -66,5 +66,6 @@ f:com.intellij.platform.eel.provider.utils.EelProcessUtilsKt
 - *sf:getStdoutString(com.intellij.platform.eel.provider.utils.EelProcessExecutionResultInfo):java.lang.String
 f:com.intellij.platform.eel.provider.utils.IjentTunnelsUtil
 - *sf:asInetAddress(com.intellij.platform.eel.EelTunnelsApi$ResolvedSocketAddress):java.net.InetSocketAddress
+- *sf:findAvailablePort(com.intellij.platform.eel.EelTunnelsApi,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:forwardLocalPort(kotlinx.coroutines.CoroutineScope,com.intellij.platform.eel.EelTunnelsApi,I,com.intellij.platform.eel.EelTunnelsApi$HostAddress):V
 - *sf:forwardLocalServer(kotlinx.coroutines.CoroutineScope,com.intellij.platform.eel.EelTunnelsApi,I,com.intellij.platform.eel.EelTunnelsApi$HostAddress):kotlinx.coroutines.Deferred

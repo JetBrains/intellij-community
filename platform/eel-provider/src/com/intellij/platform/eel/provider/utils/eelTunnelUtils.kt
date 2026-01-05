@@ -7,6 +7,7 @@ package com.intellij.platform.eel.provider.utils
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.util.io.blockingDispatcher
@@ -79,6 +80,30 @@ fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, addr
   }.invokeOnCompletion {
     LOG.info("Local server on $localPort (was tunneling to $address) is terminated")
   }
+}
+
+/**
+ * Finds an available port on the EEL machine by creating a temporary server socket.
+ *
+ * ## Why @EelDelicateApi?
+ *
+ * Time-of-Check to Time-of-Use (TOCTOU) race condition - same issue as
+ * `com.intellij.util.net.NetUtils#findAvailableSocketPort`:
+ *
+ * 1. Opens socket with port 0, gets available port
+ * 2. Closes socket immediately
+ * 3. Returns port number
+ * 4. Another process can grab the port before you bind to it
+ *
+ * The returned port is NOT guaranteed to be available when you use it.
+ */
+@EelDelicateApi
+@ThrowsChecked(EelConnectionError::class)
+@ApiStatus.Experimental
+suspend fun EelTunnelsApi.findAvailablePort(): Int {
+  val acceptor = getAcceptorForRemotePort().eelIt()
+  acceptor.close()
+  return acceptor.boundAddress.port.toInt()
 }
 
 /**
