@@ -269,7 +269,6 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
     final String name = getName();
 
-    final Ref<Boolean> parameterWasReassigned = Ref.create(false);
     final Ref<Boolean> noneComparison = Ref.create(false);
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
@@ -277,8 +276,6 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
       owner.accept(new PyRecursiveElementVisitor() {
         @Override
         public void visitPyElement(@NotNull PyElement node) {
-          if (parameterWasReassigned.get()) return;
-
           if (node instanceof ScopeOwner && node != owner) {
             return;
           }
@@ -305,8 +302,6 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
         @Override
         public void visitPyIfStatement(@NotNull PyIfStatement node) {
-          if (parameterWasReassigned.get()) return;
-
           final PyExpression ifCondition = node.getIfPart().getCondition();
           if (ifCondition != null) {
             ifCondition.accept(this);
@@ -321,8 +316,6 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
         @Override
         public void visitPyCallExpression(@NotNull PyCallExpression node) {
-          if (parameterWasReassigned.get()) return;
-
           Optional
             .ofNullable(node.getCallee())
             .filter(callee -> "len".equals(callee.getName()) && isReferenceToParameter(node.getArgument(0, PyReferenceExpression.class)))
@@ -336,25 +329,11 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
         @Override
         public void visitPyForStatement(@NotNull PyForStatement node) {
-          if (parameterWasReassigned.get()) return;
-
           if (isReferenceToParameter(node.getForPart().getSource())) {
             usedAttributes.add(PyNames.ITER);
           }
 
           super.visitPyForStatement(node);
-        }
-
-        @Override
-        public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
-          if (parameterWasReassigned.get()) return;
-
-          if (isReferenceToParameter(node)) {
-            parameterWasReassigned.set(true);
-          }
-          else {
-            super.visitPyTargetExpression(node);
-          }
         }
 
         @Override
