@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.ui.GenericListComponentUpdater;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Computable;
@@ -203,7 +204,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   public PopupChooserBuilder<T> setItemChosenCallback(@NotNull Runnable runnable) {
     myItemChosenRunnable = () -> {
       try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-        runnable.run();
+        WriteIntentReadAction.run(runnable);
       }
     };
     return this;

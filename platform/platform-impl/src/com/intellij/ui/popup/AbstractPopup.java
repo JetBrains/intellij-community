@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.google.common.base.Predicate;
@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -2081,7 +2082,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       Runnable finalRunnable = myFinalRunnable;
       getFocusManager().doWhenFocusSettlesDown(() -> {
         try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-          finalRunnable.run();
+          WriteIntentReadAction.run(finalRunnable);
         }
       });
       myFinalRunnable = null;
