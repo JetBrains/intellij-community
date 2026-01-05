@@ -22,7 +22,7 @@ foreach ($arg in $rest) {
   if ($arg -eq '--debug') {
     $ARGS += '--debug'
   } else {
-    $ARGS += "--jvm-arg=$arg"
+    $ARGS += "--jvm_flag=$arg"
   }
 }
 
