@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit.testFramework
 
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -29,4 +29,11 @@ fun ModifiableRootModel.addHamcrestLibrary() {
 fun ModifiableRootModel.addJUnit5Library(version: String = "5.12.0") {
   MavenDependencyUtil.addFromMaven(this, "org.junit.jupiter:junit-jupiter-api:$version")
   MavenDependencyUtil.addFromMaven(this, "org.junit.jupiter:junit-jupiter-params:$version")
+  MavenDependencyUtil.addFromMaven(this, "org.junit.platform:junit-platform-suite-api:${mapJUnit5VersionToPlatformVersion(version)}")
+}
+
+private fun mapJUnit5VersionToPlatformVersion(version: String): String {
+  if (version.startsWith("6.")) return version
+  if (version.startsWith("5.")) return "1." + version.substring(2)
+  throw IllegalArgumentException("Unsupported JUnit 5 version: $version")
 }

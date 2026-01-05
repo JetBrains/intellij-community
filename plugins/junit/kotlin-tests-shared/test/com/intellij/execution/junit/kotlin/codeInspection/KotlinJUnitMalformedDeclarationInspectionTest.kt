@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
@@ -2189,6 +2189,22 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
         @org.junit.jupiter.api.extension.ExtendWith(MockitoExtension::class)
         fun testFoo(x: String) { }
       }
+    """.trimIndent())
+  }
+
+  fun `test malformed before and after suite should be static highlighting`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      @org.junit.platform.suite.api.Suite
+      @org.junit.platform.suite.api.SelectClasses(MyTest::class)
+      class MySuite {
+        @org.junit.platform.suite.api.BeforeSuite
+        fun <error descr="Method 'before' annotated with '@BeforeSuite' should be static">before</error>() { }
+        
+        @org.junit.platform.suite.api.AfterSuite
+        fun <error descr="Method 'after' annotated with '@AfterSuite' should be static">after</error>() { }
+      }
+      
+      class MyTest {}
     """.trimIndent())
   }
 

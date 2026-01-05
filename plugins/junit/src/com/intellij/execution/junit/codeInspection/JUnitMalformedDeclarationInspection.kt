@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -108,6 +108,7 @@ private class JUnitMalformedSignatureVisitor(
     beforeAfterEachProblem.check(holder, node)
     beforeAfterClassProblem.check(holder, node)
     beforeAfterAllProblem.check(holder, node)
+    beforeAfterSuiteProblem.check(holder, node)
     ruleSignatureProblem.check(holder, node)
     classRuleSignatureProblem.check(holder, node)
     checkJUnit3Test(node)
@@ -196,6 +197,11 @@ private class JUnitMalformedSignatureVisitor(
         || param.inParameterResolverContext()
       }
     }
+  )
+  private val beforeAfterSuiteProblem = AnnotatedSignatureProblem(
+    annotations = listOf(ORG_JUNIT_PLATFORM_SUITE_API_BEFORESUITE, ORG_JUNIT_PLATFORM_SUITE_API_AFTERSUITE),
+    shouldBeInTestInstancePerClass = false,
+    shouldBeStatic = true
   )
 
   private val junit4TestProblem = AnnotatedSignatureProblem(

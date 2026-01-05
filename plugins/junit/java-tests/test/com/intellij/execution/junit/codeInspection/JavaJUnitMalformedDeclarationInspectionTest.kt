@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.junit.testFramework.JUnitMalformedDeclarationInspectionTestBase
@@ -2187,6 +2187,21 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       """.trimIndent())
     }
 
+    fun `test malformed before and after suite should be static highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      @org.junit.platform.suite.api.Suite
+      @org.junit.platform.suite.api.SelectClasses({MyTest.class})
+      class MySuite {
+        @org.junit.platform.suite.api.BeforeSuite
+        public void <error descr="Method 'before' annotated with '@BeforeSuite' should be static">before</error>() { }
+        
+        @org.junit.platform.suite.api.AfterSuite
+        public void <error descr="Method 'after' annotated with '@AfterSuite' should be static">after</error>() { }
+      }
+      
+      class MyTest {}
+    """.trimIndent())
+    }
 
     // Unconstructable test case
     fun testPlain() {
