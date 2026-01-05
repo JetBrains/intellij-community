@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fe10.testGenerator
 
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
@@ -68,10 +68,10 @@ import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.highlighter.*
-import org.jetbrains.kotlin.idea.imports.AbstractK1JsOptimizeImportsTest
-import org.jetbrains.kotlin.idea.imports.AbstractK1JvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.imports.AbstractK1AutoImportTest
 import org.jetbrains.kotlin.idea.imports.AbstractK1FilteringAutoImportTest
+import org.jetbrains.kotlin.idea.imports.AbstractK1JsOptimizeImportsTest
+import org.jetbrains.kotlin.idea.imports.AbstractK1JvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.index.AbstractKotlinTypeAliasByExpansionShortNameIndexTest
 import org.jetbrains.kotlin.idea.inspections.*
 import org.jetbrains.kotlin.idea.intentions.AbstractConcatenatedStringGeneratorTest
@@ -102,8 +102,8 @@ import org.jetbrains.kotlin.idea.refactoring.copy.AbstractMultiModuleCopyTest
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineMultiFileTest
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineTest
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineTestWithSomeDescriptors
-import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractK1InplaceIntroduceFunctionTest
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractK1ExtractionTest
+import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractK1InplaceIntroduceFunctionTest
 import org.jetbrains.kotlin.idea.refactoring.move.AbstractK1MultiModuleMoveTest
 import org.jetbrains.kotlin.idea.refactoring.move.AbstractMoveTest
 import org.jetbrains.kotlin.idea.refactoring.pullUp.AbstractPullUpTest
@@ -1339,6 +1339,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                 "asJava/lightClasses/lightClassByFqName",
                 excludedDirectories = listOf(
                     "withTestCompilerPluginEnabled", // relevant only for K2
+                    "k2", // relevant only for K2
                 ),
                 pattern = KT_OR_KTS_WITHOUT_DOTS,
             )
@@ -1350,6 +1351,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                 pattern = KT_OR_KTS_WITHOUT_DOTS,
                 excludedDirectories = listOf(
                     "jvmExposeBoxed", // K2 feature
+                    "k2", // relevant only for K2
                 )
             )
         }
@@ -1363,6 +1365,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "ideRegression",
                     "script",
                     "withTestCompilerPluginEnabled", // relevant only for K2
+                    "k2", // relevant only for K2
                 ),
                 pattern = KT_OR_KTS_WITHOUT_DOTS,
             )
