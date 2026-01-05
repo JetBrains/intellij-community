@@ -196,6 +196,35 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             )
         }
 
+    private fun KaCallableSymbol.isStaticJavaSymbol(): Boolean {
+        return (this is KaNamedFunctionSymbol && this.isStatic) ||
+                (this is KaJavaFieldSymbol && this.isStatic)
+    }
+
+    /**
+     * Returns all top-level callables from index, included nested ones, both from Java and Kotlin.
+     * Applicable Kotlin callables are returned before Java ones.
+     */
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
+    private fun getAllTopLevelCallablesFromIndex(): Sequence<KaCallableSymbol> {
+        val scopeNameFilter = context.completionContext.scopeNameFilter
+        val kotlinCallables = context.symbolFromIndexProvider.getKotlinCallableSymbolsByNameFilter(scopeNameFilter) {
+            if (!context.visibilityChecker.canBeVisible(it)) return@getKotlinCallableSymbolsByNameFilter false
+            // We should not show class members when we do not have a receiver.
+            val containingSymbol = it.symbol.containingSymbol
+            containingSymbol !is KaClassSymbol || containingSymbol.classKind.isObject
+        }
+
+        val javaCallables = context.symbolFromIndexProvider
+            .getJavaCallablesByNameFilter(scopeNameFilter)
+            .filter {
+                // We only show static members
+                it.isStaticJavaSymbol() && context.visibilityChecker.canBeVisible(it.psi())
+            }
+
+        return kotlinCallables + javaCallables
+    }
+
     context(_: KaSession, context: K2CompletionSectionContext<P>)
     private fun completeWithoutReceiverFromIndex(): Sequence<CallableWithMetadataForCompletion> = sequence {
         val prefix = context.prefixMatcher.prefix
@@ -205,12 +234,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
 
         if (prefix.isNotEmpty()) {
             val callablesFromIndex = if (invocationCount > 1) {
-                context.symbolFromIndexProvider.getKotlinCallableSymbolsByNameFilter(context.completionContext.scopeNameFilter) {
-                    if (!context.visibilityChecker.canBeVisible(it)) return@getKotlinCallableSymbolsByNameFilter false
-                    // We should not show class members when we do not have a receiver.
-                    val containingSymbol = it.symbol.containingSymbol
-                    containingSymbol !is KaClassSymbol || containingSymbol.classKind.isObject
-                }
+                getAllTopLevelCallablesFromIndex()
             } else {
                 context.symbolFromIndexProvider.getTopLevelCallableSymbolsByNameFilter(context.completionContext.scopeNameFilter) {
                     context.visibilityChecker.canBeVisible(it)
