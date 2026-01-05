@@ -6,15 +6,6 @@
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoProject"/>
     </action>
 
-    <group id="JavaCompileGroup">
-      <separator/>
-      <reference ref="ToggleMethodBreakpoint"/>
-      <reference ref="ToggleFieldBreakpoint"/>
-
-      <add-to-group group-id="ProjectViewCompileGroup" anchor="first"/>
-      <add-to-group group-id="StructureViewCompileGroup" anchor="first"/>
-    </group>
-
     <group id="NewGroup1" searchable="false">
       <action id="NewModuleInGroup" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleInGroupAction"
               icon="AllIcons.Nodes.Module"/>
@@ -188,6 +179,15 @@
       <add-to-group group-id="StructureViewPopupMenu" anchor="after" relative-to-action="RunContextPopupGroup"/>
     </group>
 
+
+    <group id="JavaCompileGroup">
+      <separator/>
+      <reference ref="ToggleMethodBreakpoint"/>
+      <reference ref="ToggleFieldBreakpoint"/>
+
+      <add-to-group group-id="ProjectViewCompileGroup" anchor="first"/>
+      <add-to-group group-id="StructureViewCompileGroup" anchor="first"/>
+    </group>
 
     <group id="AnalyzeJavaMenu">
       <separator/>
