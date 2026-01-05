@@ -271,6 +271,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
     final Ref<Boolean> parameterWasReassigned = Ref.create(false);
     final Ref<Boolean> noneComparison = Ref.create(false);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
     if (owner != null && name != null) {
       owner.accept(new PyRecursiveElementVisitor() {
@@ -378,8 +379,10 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         @Contract("null -> false")
         private boolean isReferenceToParameter(@Nullable PsiElement element) {
           if (element == null) return false;
-          final PsiReference reference = element.getReference();
-          return reference != null && reference.isReferenceTo(PyNamedParameterImpl.this);
+          if (!(element instanceof PyReferenceExpression || element instanceof PyTargetExpression)) return false;
+          if (((PyQualifiedExpression)element).isQualified()) return false;
+          List<@Nullable PsiElement> definitions = PyUtil.multiResolveTopPriority(element, resolveContext);
+          return ContainerUtil.all(definitions, e -> e == PyNamedParameterImpl.this);
         }
       });
     }

@@ -4676,6 +4676,17 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-85030
+  public void testStructuralTypesAttributeAccessAfterTypeNarrowingAndReassignmentInIf() {
+    doTest("(p: Any) -> None", """
+      def f(p):
+          if isinstance(p, int):
+              p = "foo"
+          x = p.lower()
+      expr = f
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
