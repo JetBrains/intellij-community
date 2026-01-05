@@ -59,6 +59,7 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/util/jdom",
     "//platform/external-system-impl:externalSystem-impl",
+    "//plugins/gradle",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

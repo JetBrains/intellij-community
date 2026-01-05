@@ -12,7 +12,6 @@ import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.PathManager
@@ -22,6 +21,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunna
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner
 import com.intellij.openapi.project.IntelliJProjectUtil.isIntelliJPlatformProject
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions.ActionDescription
 import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.openapi.util.NlsSafe
@@ -30,8 +30,10 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.util.download.DownloadableFileService
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.devkit.util.PsiUtil.isPluginProject
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
+import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.Icon
@@ -42,13 +44,13 @@ import kotlin.io.path.pathString
 
 private const val COMPOSE_HOT_RELOAD_AGENT_DEFAULT_VERSION = "1.1.0-alpha03"
 private const val COMPOSE_HOT_RELOAD_AGENT_FILE_PREFIX = "agent"
-private const val HOT_RELOAD_AGENT_VERSION_REGISTRY_KEY = "devkit.compose.hot.reload.agent.version"
+private const val COMPOSE_HOT_RELOAD_GRADLE_ARG = "--compose-hot-reload"
 
 private val LOG = logger<DevkitHotReloadCommandLinePatcher>()
 
 private val COMPOSE_HOT_RELOAD_AGENT_VERSION: String
   get() {
-    val versionFromRegistry = Registry.stringValue(HOT_RELOAD_AGENT_VERSION_REGISTRY_KEY)
+    val versionFromRegistry = Registry.stringValue("devkit.compose.hot.reload.agent.version")
     return versionFromRegistry.ifEmpty { COMPOSE_HOT_RELOAD_AGENT_DEFAULT_VERSION }
   }
 
@@ -66,6 +68,7 @@ private val agentFilePath: Path
 private const val DEVKIT_HOT_RELOAD_EXECUTOR_ID = "DevkitComposeHotReloadExecutor"
 private const val DEVKIT_HOT_RELOAD_RUNNER_ID = "DevkitHotReloadRunner"
 private const val DEVKIT_GRADLE_HOT_RELOAD_RUNNER_ID = "DevkitGradleHotReloadRunner"
+private val DEVKIT_HOT_RELOAD_EXECUTOR_ID_KEY = Key.create<Boolean>(DEVKIT_HOT_RELOAD_EXECUTOR_ID)
 
 internal class DevkitHotReloadExecutor : Executor() {
   override fun getId(): @NonNls String = DEVKIT_HOT_RELOAD_EXECUTOR_ID
@@ -178,19 +181,20 @@ internal class DevkitGradleHotReloadRunner : ExternalSystemTaskDebugRunner() {
   }
 
   override fun doExecute(state: RunProfileState, env: ExecutionEnvironment): RunContentDescriptor? {
-    patchCommandLine(state)
+    if (state is ExternalSystemRunnableState) {
+      state.putUserData(DEVKIT_HOT_RELOAD_EXECUTOR_ID_KEY, true)
+    }
     return super.doExecute(state, env)
   }
+}
 
-  override fun doExecuteAsync(state: TargetEnvironmentAwareRunProfileState, env: ExecutionEnvironment): Promise<RunContentDescriptor?> {
-    patchCommandLine(state)
-    return super.doExecuteAsync(state, env)
-  }
-
-  private fun patchCommandLine(state: RunProfileState) {
-    if (state is ExternalSystemRunnableState) {
-      state.additionalArguments = "--compose-hot-reload"
+internal class DevkitGradleExecutionHelper : GradleExecutionHelperExtension {
+  override fun configureSettings(settings: GradleExecutionSettings, context: GradleExecutionContext) {
+    if (settings.getUserData(DEVKIT_HOT_RELOAD_EXECUTOR_ID_KEY) == true) {
+      settings.withArgument(COMPOSE_HOT_RELOAD_GRADLE_ARG)
     }
+
+    super.configureSettings(settings, context)
   }
 }
 

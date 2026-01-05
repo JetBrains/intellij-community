@@ -67,11 +67,6 @@ c:com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigu
 - com.intellij.execution.configurations.LocatableConfigurationBase
 - com.intellij.execution.configurations.SearchScopeProvidingRunProfile
 - *p:setSoftProcessKillEnabled(Z):V
-c:com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState
-- com.intellij.openapi.util.UserDataHolderBase
-- com.intellij.execution.configurations.RunProfileState
-- *:getAdditionalArguments():java.lang.String
-- *:setAdditionalArguments(java.lang.String):V
 *:com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 - a:getEnvironmentConfiguration():com.intellij.execution.target.TargetEnvironmentConfiguration
 - a:getPathMapper():com.intellij.util.PathMapper

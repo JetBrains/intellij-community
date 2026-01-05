@@ -6,6 +6,7 @@
     <module name="intellij.platform.compose.markdown"/>
     <module name="intellij.platform.jewel.markdown.extensions.images"/>
     <plugin id="com.intellij.java"/>
+    <plugin id="com.intellij.gradle"/>
     <plugin id="org.jetbrains.kotlin"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.skiko"/>
@@ -44,6 +45,10 @@
     <executor implementation="com.intellij.devkit.compose.hotreload.DevkitHotReloadExecutor"/>
     <programRunner implementation="com.intellij.devkit.compose.hotreload.DevkitHotReloadRunner"/>
     <programRunner implementation="com.intellij.devkit.compose.hotreload.DevkitGradleHotReloadRunner"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <executionHelperExtension implementation="com.intellij.devkit.compose.hotreload.DevkitGradleExecutionHelper"/>
   </extensions>
 
   <actions>
