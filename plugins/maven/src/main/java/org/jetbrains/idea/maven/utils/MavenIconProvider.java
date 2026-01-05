@@ -21,9 +21,14 @@ public final class MavenIconProvider implements DumbAware, FileIconProvider {
   public @Nullable Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
     if (project == null) return null;
 
-    MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(file);
+    var mavenProjectsManager = MavenProjectsManager.getInstanceIfCreated(project);
+    if (mavenProjectsManager == null) return null;
+
+    if (!mavenProjectsManager.isMavenizedProject()) return null;
+
+    MavenProject mavenProject = mavenProjectsManager.findProject(file);
     if (mavenProject != null) {
-      if (MavenProjectsManager.getInstance(project).isIgnored(mavenProject)) {
+      if (mavenProjectsManager.isIgnored(mavenProject)) {
         return MavenIcons.MavenIgnored;
       }
       return RepositoryLibraryLogo;
