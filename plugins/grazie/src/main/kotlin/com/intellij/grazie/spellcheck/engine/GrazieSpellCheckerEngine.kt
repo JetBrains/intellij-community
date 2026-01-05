@@ -5,7 +5,6 @@ package com.intellij.grazie.spellcheck.engine
 
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.LanguageISO
-import ai.grazie.nlp.langs.alphabet.Alphabet
 import ai.grazie.nlp.utils.normalization.StripAccentsNormalizer
 import ai.grazie.spell.GrazieSpeller
 import ai.grazie.spell.GrazieSplittingSpeller
@@ -26,7 +25,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.FileUtil
@@ -37,7 +35,6 @@ import com.intellij.spellchecker.dictionary.Loader
 import com.intellij.spellchecker.engine.SpellCheckerEngine
 import com.intellij.spellchecker.engine.SpellCheckerEngineListener
 import com.intellij.spellchecker.engine.Transformation
-import com.intellij.spellchecker.grazie.SpellcheckerLifecycle
 import com.intellij.spellchecker.settings.CustomDictionarySettingsListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,8 +43,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
-const val MAX_WORD_LENGTH: Int = 32
-internal val LIFECYCLE_EP_NAME: ExtensionPointName<SpellcheckerLifecycle> = ExtensionPointName("com.intellij.spellchecker.lifecycle")
+internal const val MAX_WORD_LENGTH: Int = 32
 
 class GrazieSpellCheckerEngine(
   project: Project,
@@ -86,11 +82,6 @@ class GrazieSpellCheckerEngine(
     override suspend fun execute(project: Project) {
       getInstance(project).initializeSpeller(project)
       project.serviceAsync<SpellCheckerManager>()
-
-      // heavy classloading to avoid freezes from FJP thread starvation
-      for (lifecycle in LIFECYCLE_EP_NAME.extensionList) {
-        lifecycle.preload(project)
-      }
     }
   }
 

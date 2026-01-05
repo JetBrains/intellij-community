@@ -69,7 +69,7 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
             if (!speller.isMisspelled(word)) true
             else {
               // if the speller does not return matches, but the word is still misspelled (not in the dictionary),
-              // then this word was ignored by the rule (e.g. alien word), and we cannot be sure about its correctness
+              // then this word was ignored by the rule (e.g., alien word), and we cannot be sure about its correctness
               // let's try adding a small change to a word to see if it's alien
               val mutated = word + word.last() + word.last()
               if (speller.match(tool.getRawAnalyzedSentence(mutated)).isEmpty()) null else true
@@ -105,7 +105,6 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     connection.subscribe(CONFIG_STATE_TOPIC, this)
   }
 
-  // getService() enables cancellable code to be canceled even when init of service is a long operation
   @OptIn(DelicateCoroutinesApi::class)
   private fun heavyInit(): Set<SpellerTool> {
     val checkers = this.checkers
