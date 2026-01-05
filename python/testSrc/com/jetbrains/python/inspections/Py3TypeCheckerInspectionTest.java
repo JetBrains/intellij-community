@@ -1851,16 +1851,34 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    Ts = TypeVarTuple('Ts')
                    
-                   
                    def foo(a: int, f: Callable[[*Ts], None], args: Tuple[*Ts]) -> None: ...
                    def bar(a: int, b: str) -> None: ...
+                   def baz(a: int, b: str, c: float, d: bool) -> None: ...
                    
                    
                    foo(1, bar, args=(0, 'foo'))
+                   foo(1, baz, args=(0, 'foo', 1.0, False))
                    
                    foo(1, bar, <warning descr="Expected type 'tuple[int, str]' (matched generic type 'tuple[*Ts]'), got 'tuple[str, int]' instead">args=('foo', 0)</warning>)
+                   foo(1, baz, <warning descr="Expected type 'tuple[int, str, float, bool]' (matched generic type 'tuple[*Ts]'), got 'tuple[str, int, float, bool]' instead">args=('foo', 0, 1.0, False)</warning>)
                    """);
   }
+
+  // PY-53105 TODO investigate
+  //public void testVariadicGenericArgumentByCallableInFunctionMultipleTypeVars() {
+  //  doTestByText("""
+  //                 from typing import Callable, TypeVarTuple, Tuple, TypeVar
+  //
+  //                 def foo[T, T1, *Ts](a: T, f: Callable[[T, *Ts, T1], None], args: Tuple[*Ts, T, T1]) -> None: ...
+  //                 def bar(a: int, b: float, c: str, d: bool) -> None: ...
+  //                 def baz(a: str, b: float, d: int) -> None: ...
+  //
+  //                 foo(1, bar, args=(1.0, "str", 1, True)) # T -> int, T1 -> bool, *Ts -> (float, str)
+  //                 foo("str", baz, args=(1.0, "str", 3)) # T - > str, T1 -> int, *Ts -> float
+  //                 foo(1, <warning descr="Expected type '(int, *Ts, T1) -> None' (matched generic type '(T, *Ts, T1) -> None'), got '(a: str, b: float, d: int) -> None' instead">baz</warning>, <warning descr="Expected type 'tuple[float, int, T1]' (matched generic type 'tuple[*Ts, T, T1]'), got 'tuple[float, str, int]' instead">args=(1.0, "str", 3)</warning>)
+  //                 foo(1, bar, <warning descr="Expected type 'tuple[float, str, int, bool]' (matched generic type 'tuple[*Ts, T, T1]'), got 'tuple[float, str, float, bool]' instead">args=(1.0, "str", 1.0, True)</warning>)
+  //                 """);
+  //}
 
   // PY-53105
   public void testVariadicGenericCheckCallableInFunction() {
@@ -3817,6 +3835,295 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    xs: MyProtocol[str] = ys
                    """);
     });
+  }
+
+  // Test for callable subtyping rules - covariance and contravariance
+  public void testCallableSubtypingCovarianceContravariance() {
+    doTestByText("""
+                   from typing import Callable
+                   
+                   # Test covariance with respect to return types and contravariance with respect to parameter types
+                   def func1(
+                       cb1: Callable[[float], int],
+                       cb2: Callable[[float], float],
+                       cb3: Callable[[int], int],
+                   ) -> None:
+                       f1: Callable[[int], float] = cb1  # OK
+                       f2: Callable[[int], float] = cb2  # OK
+                       f3: Callable[[int], float] = cb3  # OK
+                   
+                       f4: Callable[[float], float] = cb1  # OK
+                       f5: Callable[[float], float] = cb2  # OK
+                       f6: Callable[[float], float] = <warning descr="Expected type '(float) -> float', got '(int) -> int' instead">cb3</warning>  # Error
+                   
+                       f7: Callable[[int], int] = cb1  # OK
+                       f8: Callable[[int], int] = <warning descr="Expected type '(int) -> int', got '(float) -> float' instead">cb2</warning>  # Error
+                       f9: Callable[[int], int] = cb3  # OK
+                   """);
+  }
+
+  // https://typing.python.org/en/latest/spec/callables.html#parameter-kinds
+  public void testCallableSubtypingParameterKinds() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   # Test positional-only, keyword-only, and standard parameters
+                   class PosOnly(Protocol):
+                       def __call__(self, a: int, b: str, /) -> None: ...
+                   
+                   class KwOnly(Protocol):
+                       def __call__(self, *, a: int, b: str) -> None: ...
+                   
+                   class Standard(Protocol):
+                       def __call__(self, a: int, b: str) -> None: ...
+                   
+                   def func2(standard: Standard, pos_only: PosOnly, kw_only: KwOnly):
+                       f1: Standard = <warning descr="Expected type 'Standard', got 'PosOnly' instead">pos_only</warning>  # Error
+                       f2: Standard = <warning descr="Expected type 'Standard', got 'KwOnly' instead">kw_only</warning>  # Error
+                   
+                       f3: PosOnly = standard  # OK
+                       f4: PosOnly = <warning descr="Expected type 'PosOnly', got 'KwOnly' instead">kw_only</warning>  # Error
+                   
+                       f5: KwOnly = standard  # OK
+                       f6: KwOnly = <warning descr="Expected type 'KwOnly', got 'PosOnly' instead">pos_only</warning>  # Error
+                   """);
+  }
+
+  // https://typing.python.org/en/latest/spec/callables.html#args-parameters
+  public void testCallableSubtypingArgsParameter() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   # Test *args parameter
+                   class NoArgs(Protocol):
+                       def __call__(self) -> None: ...
+                   
+                   class IntArgs(Protocol):
+                       def __call__(self, *args: int) -> None: ...
+                   
+                   class FloatArgs(Protocol):
+                       def __call__(self, *args: float) -> None: ...
+                   
+                   def func3(no_args: NoArgs, int_args: IntArgs, float_args: FloatArgs):
+                       f1: NoArgs = int_args  # OK
+                       f2: NoArgs = float_args  # OK
+                   
+                       f3: IntArgs = <warning descr="Expected type 'IntArgs', got 'NoArgs' instead">no_args</warning>  # Error: missing *args
+                       f4: IntArgs = float_args  # OK
+                   
+                       f5: FloatArgs = <warning descr="Expected type 'FloatArgs', got 'NoArgs' instead">no_args</warning>  # Error: missing *args
+                       f6: FloatArgs = <warning descr="Expected type 'FloatArgs', got 'IntArgs' instead">int_args</warning>  # Error: float is not subtype of int
+                   """);
+  }
+
+  // https://typing.python.org/en/latest/spec/callables.html#args-parameters
+  public void testCallableSubtypingArgsParameter2() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class PosOnly(Protocol):
+                       def __call__(self, a: int, b: str, /) -> None: ...
+                   
+                   class IntArgs(Protocol):
+                       def __call__(self, *args: int) -> None: ...
+                   
+                   class IntStrArgs(Protocol):
+                       def __call__(self, *args: int | str) -> None: ...
+                   
+                   class StrArgs(Protocol):
+                       def __call__(self, a: int, /, *args: str) -> None: ...
+                   
+                   class Standard(Protocol):
+                       def __call__(self, a: int, b: str) -> None: ...
+                   
+                   def func(int_args: IntArgs, int_str_args: IntStrArgs, str_args: StrArgs):
+                       f1: PosOnly = <warning descr="Expected type 'PosOnly', got 'IntArgs' instead">int_args</warning>  # Error: str is not assignable to int
+                       f2: PosOnly = int_str_args  # OK
+                       f3: PosOnly = str_args  # OK
+                       f4: IntStrArgs = <warning descr="Expected type 'IntStrArgs', got 'StrArgs' instead">str_args</warning>  # Error: int | str is not assignable to str
+                       f5: IntStrArgs = <warning descr="Expected type 'IntStrArgs', got 'IntArgs' instead">int_args</warning>  # Error: int | str is not assignable to int
+                       f6: StrArgs = int_str_args  # OK
+                       f7: StrArgs = <warning descr="Expected type 'StrArgs', got 'IntArgs' instead">int_args</warning>  # Error: str is not assignable to int
+                       f8: IntArgs = int_str_args  # OK
+                       f9: IntArgs = <warning descr="Expected type 'IntArgs', got 'StrArgs' instead">str_args</warning>  # Error: int is not assignable to str
+                       f10: Standard = <warning descr="Expected type 'Standard', got 'IntStrArgs' instead">int_str_args</warning>  # Error: keyword parameters a and b missing
+                       f11: Standard = <warning descr="Expected type 'Standard', got 'StrArgs' instead">str_args</warning>  # Error: keyword parameter b missing
+                   """);
+  }
+
+  // https://typing.python.org/en/latest/spec/callables.html#kwargs-parameters
+  public void testCallableSubtypingKwargsParameters() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   # Test **kwargs parameter
+                   class NoKwargs(Protocol):
+                       def __call__(self) -> None: ...
+                   
+                   class IntKwargs(Protocol):
+                       def __call__(self, **kwargs: int) -> None: ...
+                   
+                   class FloatKwargs(Protocol):
+                       def __call__(self, **kwargs: float) -> None: ...
+                   
+                   def func5(no_kwargs: NoKwargs, int_kwargs: IntKwargs, float_kwargs: FloatKwargs):
+                       f1: NoKwargs = int_kwargs  # OK
+                       f2: NoKwargs = float_kwargs  # OK
+                   
+                       f3: IntKwargs = <warning descr="Expected type 'IntKwargs', got 'NoKwargs' instead">no_kwargs</warning>  # Error: missing **kwargs
+                       f4: IntKwargs = float_kwargs  # OK
+                   
+                       f5: FloatKwargs = <warning descr="Expected type 'FloatKwargs', got 'NoKwargs' instead">no_kwargs</warning>  # Error: missing **kwargs
+                       f6: FloatKwargs = <warning descr="Expected type 'FloatKwargs', got 'IntKwargs' instead">int_kwargs</warning>  # Error: float is not subtype of int
+                   """);
+  }
+
+  // https://typing.python.org/en/latest/spec/callables.html#kwargs-parameters
+  public void testCallableSubtypingKwargsParameters2() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class KwOnly(Protocol):
+                       def __call__(self, *, a: int, b: str) -> None: ...
+                   
+                   class IntKwargs(Protocol):
+                       def __call__(self, **kwargs: int) -> None: ...
+                   
+                   class IntStrKwargs(Protocol):
+                       def __call__(self, **kwargs: int | str) -> None: ...
+                   
+                   class StrKwargs(Protocol):
+                       def __call__(self, *, a: int, **kwargs: str) -> None: ...
+                   
+                   class Standard(Protocol):
+                       def __call__(self, a: int, b: str) -> None: ...
+                   
+                   def func(int_kwargs: IntKwargs, int_str_kwargs: IntStrKwargs, str_kwargs: StrKwargs):
+                       f1: KwOnly = <warning descr="Expected type 'KwOnly', got 'IntKwargs' instead">int_kwargs</warning>  # Error: str is not assignable to int
+                       f2: KwOnly = int_str_kwargs  # OK
+                       f3: KwOnly = str_kwargs  # OK
+                       f4: IntStrKwargs = <warning descr="Expected type 'IntStrKwargs', got 'StrKwargs' instead">str_kwargs</warning>  # Error: int | str is not assignable to str
+                       f5: IntStrKwargs = <warning descr="Expected type 'IntStrKwargs', got 'IntKwargs' instead">int_kwargs</warning>  # Error: int | str is not assignable to int
+                       f6: StrKwargs = int_str_kwargs  # OK
+                       f7: StrKwargs = <warning descr="Expected type 'StrKwargs', got 'IntKwargs' instead">int_kwargs</warning>  # Error: str is not assignable to int
+                       f8: IntKwargs = int_str_kwargs  # OK
+                       f9: IntKwargs = <warning descr="Expected type 'IntKwargs', got 'StrKwargs' instead">str_kwargs</warning>  # Error: int is not assignable to str
+                       f10: Standard = <warning descr="Expected type 'Standard', got 'IntStrKwargs' instead">int_str_kwargs</warning>  # Error: Does not accept positional arguments
+                       f11: Standard = <warning descr="Expected type 'Standard', got 'StrKwargs' instead">str_kwargs</warning>  # Error: Does not accept positional arguments
+                   """);
+  }
+
+  // https://typing.python.org/en/latest/spec/callables.html#id4
+  public void testCallableSubtypingDefaultArguments() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   # Test default arguments
+                   class DefaultArg(Protocol):
+                       def __call__(self, x: int = 0) -> None: ...
+                   
+                   class NoDefaultArg(Protocol):
+                       def __call__(self, x: int) -> None: ...
+                   
+                   class NoX(Protocol):
+                       def __call__(self) -> None: ...
+                   
+                   def func8(default_arg: DefaultArg, no_default_arg: NoDefaultArg, no_x: NoX):
+                       f1: DefaultArg = <warning descr="Expected type 'DefaultArg', got 'NoDefaultArg' instead">no_default_arg</warning>  # Error
+                       f2: DefaultArg = <warning descr="Expected type 'DefaultArg', got 'NoX' instead">no_x</warning>  # Error
+                   
+                       f3: NoDefaultArg = default_arg  # OK
+                       f4: NoDefaultArg = <warning descr="Expected type 'NoDefaultArg', got 'NoX' instead">no_x</warning>  # Error
+                   
+                       f5: NoX = default_arg  # OK
+                       f6: NoX = <warning descr="Expected type 'NoX', got 'NoDefaultArg' instead">no_default_arg</warning>  # Error
+                   """);
+  }
+
+  // https://typing.python.org/en/latest/spec/callables.html#overloads
+  public void testCallableSubtypingOverloads() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class Overloaded(Protocol):
+                       @overload
+                       def __call__(self, x: int) -> int: ...
+                       @overload
+                       def __call__(self, x: str) -> str: ...
+                   
+                   class IntArg(Protocol):
+                       def __call__(self, x: int) -> int: ...
+                   
+                   class StrArg(Protocol):
+                       def __call__(self, x: str) -> str: ...
+                   
+                   class FloatArg(Protocol):
+                       def __call__(self, x: float) -> float: ...
+                   
+                   def func(overloaded: Overloaded):
+                       f1: IntArg = overloaded  # OK
+                       f2: StrArg = overloaded  # OK
+                       f3: FloatArg = <warning descr="Expected type 'FloatArg', got 'Overloaded' instead">overloaded</warning>  # Error
+                   """);
+  }
+
+  // https://typing.python.org/en/latest/spec/callables.html#overloads
+  public void testCallableSubtypingOverloads2() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class Overloaded(Protocol):
+                       @overload
+                       def __call__(self, x: int, y: str) -> float: ...
+                       @overload
+                       def __call__(self, x: str) -> complex: ...
+                   
+                   class StrArg(Protocol):
+                       def __call__(self, x: str) -> complex: ...
+                   
+                   class IntStrArg(Protocol):
+                       def __call__(self, x: int | str, y: str = "") -> int: ...
+                   
+                   def func(int_str_arg: IntStrArg, str_arg: StrArg):
+                       f1: Overloaded = int_str_arg  # OK
+                       f2: Overloaded = <warning descr="Expected type 'Overloaded', got 'StrArg' instead">str_arg</warning>  # Error
+                   """);
+  }
+
+
+  // https://typing.python.org/en/latest/spec/callables.html#signatures-with-paramspecs
+  public void testSignaturesWithParamSpec() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class ProtocolWithP[**P](Protocol):
+                     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> None: ...
+                   
+                   type TypeAliasWithP[**P] = Callable[P, None]
+                   
+                   def func[**P](proto: ProtocolWithP[P], ta: TypeAliasWithP[P]):
+                     # These two types are equivalent
+                     f1: TypeAliasWithP[P] = proto  # OK
+                     f2: ProtocolWithP[P] = ta  # OK
+                   """);
+  }
+
+  // PY-76883
+  public void testCallableSubtypingKeywordOnlyOrder() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class C1(Protocol):
+                       def __call__(self, *, a: int, b: str, c: float): ...
+                   
+                   class C2(Protocol):
+                       def __call__(self, *, c: float, b: str, a: int): ...
+                   
+                   # Order is not important
+                   def foo(c1: C1, c2: C2):
+                       _: C1 = c2
+                       _: C2 = c1
+                   """);
   }
 }
 

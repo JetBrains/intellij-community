@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -267,6 +268,12 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
       """);
   }
 
+  public void testMappingVariadicTypeToEmptyParameters() {
+    doTestParameterListMapping("*Ts", "", """
+      *Ts -> *tuple[]
+      """);
+  }
+
   public void testMappingVariadicTypeToFewPositionalParameters() {
     doTestParameterListMapping("int, *Ts", "x: int, y: str, z: bool", """
       int -> int
@@ -431,9 +438,11 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
     PyFunction actualFunction = myFixture.findElementByText("actual", PyFunction.class);
     PyFunctionType actualFunctionType = assertInstanceOf(context.getType(actualFunction), PyFunctionType.class);
 
+    List<PyCallableParameter> expectedParameters = ContainerUtil.map(ContainerUtil.subList(expectedTupleType.getElementTypes(), 1),
+                                                                     type -> PyCallableParameterImpl.nonPsi(type));
+
     PyTypeParameterMapping mapping =
-      PyTypeParameterMapping.mapWithParameterList(ContainerUtil.subList(expectedTupleType.getElementTypes(), 1),
-                                                  actualFunctionType.getParameters(context), context);
+      PyCallableParameterMapping.mapCallableParameters(expectedParameters, actualFunctionType.getParameters(context), context);
 
     assertTypeMapping(expectedMapping, mapping, context);
   }
@@ -468,7 +477,7 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
     assertTypeMapping(expectedMapping, mapping, context);
   }
 
-  private static void assertTypeMapping(@NotNull String expectedMappingDump,
+  static void assertTypeMapping(@NotNull String expectedMappingDump,
                                         @Nullable PyTypeParameterMapping actualMapping,
                                         @NotNull TypeEvalContext context) {
     if (expectedMappingDump.isEmpty()) {
