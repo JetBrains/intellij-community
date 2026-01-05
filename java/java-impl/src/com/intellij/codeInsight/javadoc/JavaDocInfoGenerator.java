@@ -42,6 +42,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -49,10 +50,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetDocTagImpl;
-import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.JavaDocElementType;
-import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -638,7 +636,7 @@ public class JavaDocInfoGenerator {
     if (classComment == null) return null;
     PsiDocTag tag = getParamTagByName(classComment, recordComponentName);
     if (tag == null) return null;
-    PsiElement[] elements = tag.getDataElements();
+    PsiElement[] elements = dataElementWithSpaces(tag);
     if (elements.length == 0) return null;
     String text = elements[0].getText();
     StringBuilder buffer = new StringBuilder();
@@ -1450,7 +1448,7 @@ public class JavaDocInfoGenerator {
         if (parameter.getParent() == parameterList) {
           ParamInfo tagInfoProvider = findTagInfoProvider(parameter, method, parameterList);
           if (tagInfoProvider != null) {
-            PsiElement[] elements = tagInfoProvider.docTag.getDataElements();
+            PsiElement[] elements = dataElementWithSpaces(tagInfoProvider.docTag);
             if (elements.length == 0) return null;
             String text = elements[0].getText();
             StringBuilder buffer = new StringBuilder();
@@ -1791,7 +1789,7 @@ public class JavaDocInfoGenerator {
         if (htmlCodeBlockContents != null) {
           htmlCodeBlockContents.append(' ');
         }
-        else {
+        else if (!subBuffer.isEmpty() && !Strings.isWhiteSpace(subBuffer.charAt(subBuffer.length() - 1))) {
           subBuffer.append(' ');
         }
       }
@@ -2455,7 +2453,7 @@ public class JavaDocInfoGenerator {
       startHeaderSection(buffer, JavaBundle.message("javadoc.see.also")).append("<p>");
       for (int i = 0; i < tags.length; i++) {
         PsiDocTag tag = tags[i];
-        PsiElement[] elements = tag.getDataElements();
+        PsiElement[] elements = dataElementWithSpaces(tag);
         if (elements.length > 0) {
           PsiElement ref = getRefElement(elements);
           String linkLabel = getLinkLabel(elements, ref);
@@ -2559,7 +2557,7 @@ public class JavaDocInfoGenerator {
   }
 
   private String generateOneParameter(ParamInfo tag) {
-    PsiElement[] elements = tag.docTag.getDataElements();
+    PsiElement[] elements = dataElementWithSpaces(tag.docTag);
     if (elements.length == 0) return "";
     String text = elements[0].getText();
     StringBuilder buffer = new StringBuilder();
@@ -2592,7 +2590,7 @@ public class JavaDocInfoGenerator {
 
     if (docInfo != null && docInfo.element != null) {
       startHeaderSection(buffer, CodeInsightBundle.message("javadoc.returns")).append("<p>");
-      generateValue(buffer, docInfo.element.getDataElements(), mapProvider(docInfo.provider, false));
+      generateValue(buffer, dataElementWithSpaces(docInfo.element), mapProvider(docInfo.provider, false));
       buffer.append(DocumentationMarkup.SECTION_END);
     }
   }
@@ -2619,7 +2617,7 @@ public class JavaDocInfoGenerator {
     Set<String> documentedExceptions = new HashSet<>(throwsJavadocTags.length);
     for (PsiDocTag tag : throwsJavadocTags) {
       buffer.append("<p>");
-      PsiElement[] dataElements = tag.getDataElements();
+      PsiElement[] dataElements = dataElementWithSpaces(tag);
       if (dataElements.length == 0) continue;
       PsiElement child = dataElements[0].getFirstChild();
       if (child == null) continue;
@@ -3327,5 +3325,24 @@ public class JavaDocInfoGenerator {
 
   private enum SignaturePlace {
     Javadoc, ToolTip
+  }
+
+  /// Returns the tag data element with the **relevant** spaces included.
+  /// This function is useful to interact with non-inline tag content
+  static PsiElement[] dataElementWithSpaces(PsiDocTag tag) {
+    List<PsiElement> result = new ArrayList<>();
+    PsiElement[] dataElements = tag.getDataElements();
+    for (int i =0; i < dataElements.length; i++) {
+      PsiElement dataElement = dataElements[i];
+      result.add(dataElement);
+      if (i != dataElements.length - 1 
+          && dataElement.getNode().getElementType() == JavaDocTokenType.DOC_COMMENT_DATA 
+          && dataElement.getNextSibling() instanceof PsiWhiteSpace
+          // Don't fetch next whitespace if the next data element is equivalent to one
+          && !(dataElements[i + 1] instanceof LeafPsiElement leaf && Strings.isEmptyOrSpaces(leaf.getChars()))) {
+        result.add(dataElement.getNextSibling());
+      }
+    }
+    return result.toArray(PsiElement.EMPTY_ARRAY);
   }
 }
