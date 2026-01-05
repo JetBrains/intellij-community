@@ -1,24 +1,53 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.packaging
+package com.intellij.python.junit5Tests.unit.pyproject
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFileFactory
+import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.statistics.PyProjectTomlUsageCollector
+import com.intellij.python.pyproject.statistics.DEPENDENCY_GROUP_OTHER
+import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import kotlinx.coroutines.Dispatchers
+import org.junit.jupiter.api.Test
+import org.toml.lang.psi.TomlFileType
 
-class PyProjectTomlStatsTest : PyTestCase() {
-  fun doTest(text: String, toolNames: Set<String>, backendNames: Set<String>) {
-    val psiFile = myFixture.configureByText(PY_PROJECT_TOML, text)
+@PyDefaultTestApplication
+class PyProjectTomlCollectorTest(val project: Project) {
+  fun doTest(
+    text: String,
+    toolNames: Set<String> = emptySet(),
+    backendNames: Set<String> = emptySet(),
+    dependencyGroupsNames: Set<String> = emptySet(),
+  ) = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val psiFile = PsiFileFactory.getInstance(project).createFileFromText(PY_PROJECT_TOML, TomlFileType, text)
 
-    val tools = mutableSetOf<String>()
-    val backends = mutableSetOf<String>()
+    val tools = PyProjectTomlCollector.findDeclaredTools(psiFile).map { it.fusName }
+    val backends = PyProjectTomlCollector.findBuildSystemRequiresTools(psiFile).map { it.fusName }
+    val dependencyGroups = PyProjectTomlCollector.findDependencyGroups(psiFile)
 
-    PyProjectTomlUsageCollector.collectTools(psiFile, tools)
-    PyProjectTomlUsageCollector.collectBuildBackends(psiFile, backends)
-
-    assertSameElements(tools, toolNames)
-    assertSameElements(backends, backendNames)
+    UsefulTestCase.assertSameElements(tools, toolNames)
+    UsefulTestCase.assertSameElements(backends, backendNames)
+    UsefulTestCase.assertSameElements(dependencyGroups, dependencyGroupsNames)
   }
 
+  @Test
+  fun testDependencyGroups() {
+    val text = """
+      [dependency-groups]
+      test = ["pytest<8", "coverage"]
+      typing = ["mypy==1.7.1", "types-requests"]
+      
+      [dependency-groups]
+      lint = ["black", "flake8"]
+      typing-test = [{include-group = "typing"}, "pytest<8"]
+      """.trimIndent()
+    doTest(text, dependencyGroupsNames = setOf("test", "typing", "lint", DEPENDENCY_GROUP_OTHER))
+  }
+
+  @Test
   fun testEmptyFile() {
     val text = """
         """.trimIndent()
@@ -26,6 +55,7 @@ class PyProjectTomlStatsTest : PyTestCase() {
     doTest(text, emptySet(), emptySet())
   }
 
+  @Test
   fun testInvalidFile() {
     val text = """
       some abradackadabra
@@ -36,6 +66,7 @@ class PyProjectTomlStatsTest : PyTestCase() {
     doTest(text, emptySet(), emptySet())
   }
 
+  @Test
   fun testEmptyToml() {
     val text = """
         [build-system]
@@ -46,6 +77,7 @@ class PyProjectTomlStatsTest : PyTestCase() {
     doTest(text, emptySet(), emptySet())
   }
 
+  @Test
   fun testDeduplicateTools() {
     val text = """
       [tool.ruff.isort.sections]
@@ -61,18 +93,20 @@ class PyProjectTomlStatsTest : PyTestCase() {
     doTest(text, setOf("ruff"), emptySet())
   }
 
+  @Test
   fun testNormalizeTools() {
     val text = """
-      [tool.ruff_furr.isort.sections]
+      [tool.py_spy.isort.sections]
       "nextgisweb_env_lib" = ["nextgisweb.env", "nextgisweb.lib"]
       "nextgisweb_comp" = ["nextgisweb"]
 
      
     """.trimIndent()
 
-    doTest(text, setOf("ruff-furr"), emptySet())
+    doTest(text, setOf("py-spy"), emptySet())
   }
 
+  @Test
   fun testCollectBuilds() {
     val text = """
       [build-system]
@@ -83,6 +117,7 @@ class PyProjectTomlStatsTest : PyTestCase() {
     doTest(text, emptySet(), setOf("hatchling", "setuptools", "flit"))
   }
 
+  @Test
   fun testDeduplicateBuilds() {
     val text = """
       [build-system]
@@ -93,6 +128,7 @@ class PyProjectTomlStatsTest : PyTestCase() {
     doTest(text, emptySet(), setOf("hatchling", "flit"))
   }
 
+  @Test
   fun testCommentedBuilds() {
     val text = """
       [build-system]
@@ -106,16 +142,18 @@ class PyProjectTomlStatsTest : PyTestCase() {
     doTest(text, emptySet(), setOf("hatchling"))
   }
 
+  @Test
   fun testNormalizeBuilds() {
     val text = """
       [build-system]
-      requires = ["flit_core", "setup.tools >= 61", "flit "]
+      requires = ["flit_core", "setuptools >= 61", "flit "]
       build-backend = "xxxxyyy.build"
     """.trimIndent()
 
-    doTest(text, emptySet(), setOf("flit", "setup-tools", "flit-core"))
+    doTest(text, emptySet(), setOf("flit", "setuptools", "flit-core"))
   }
 
+  @Test
   fun testPyPiSimpleExample() {
     val text = """
       [build-system]
@@ -158,6 +196,7 @@ class PyProjectTomlStatsTest : PyTestCase() {
     doTest(text, setOf("hatch", "mypy", "pydantic-mypy"), setOf("hatchling"))
   }
 
+  @Test
   fun testPyProjectExample() {
     val text = """
       [build-system]

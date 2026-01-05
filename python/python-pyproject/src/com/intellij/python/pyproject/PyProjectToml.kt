@@ -28,7 +28,10 @@ const val PY_PROJECT_TOML_PROJECT: String = "project"
 const val PY_PROJECT_TOML_BUILD_SYSTEM: String = "build-system"
 
 @Internal
-const val PY_PROJECT_TOML_TOOL_PREFIX: String = "tool."
+const val PY_PROJECT_TOML_DEPENDENCY_GROUPS: String = "dependency-groups"
+
+@Internal
+const val PY_PROJECT_TOML_TOOL_PREFIX: String = "tool"
 
 /**
  * Represents an issue that could occur in [PyProjectToml.parse].

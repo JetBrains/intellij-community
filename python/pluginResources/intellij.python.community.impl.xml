@@ -543,7 +543,6 @@
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageVersionUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageInEditorUsageCollector"/>
-    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyProjectTomlUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyCompatibilityInspectionCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.namespacePackages.PyNamespacePackagesStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.codeInsight.codeVision.PyCodeVisionUsageCollector"/>
