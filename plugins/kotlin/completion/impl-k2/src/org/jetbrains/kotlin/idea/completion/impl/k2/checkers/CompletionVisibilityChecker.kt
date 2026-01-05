@@ -18,11 +18,13 @@ import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Compan
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.psiUtil.isPrivate
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 @OptIn(KaExperimentalApi::class)
@@ -35,6 +37,13 @@ internal class CompletionVisibilityChecker(
     // we will cache all of them  just in case.
     private val visibilityCheckerPerPositionContextCache = mutableMapOf<KotlinRawPositionContext, KaUseSiteVisibilityChecker>()
 
+    /**
+     * Returns true if the declaration or any of its parents have the [visibility] modifier.
+     */
+    private fun KtDeclaration.hasEffectiveVisibility(visibility: KtModifierKeywordToken): Boolean {
+        return parentsWithSelf.any { it is KtModifierListOwner && it.hasModifier(visibility) }
+    }
+
     fun canBeVisible(declaration: KtDeclaration): Boolean = forbidAnalysis("canBeVisible") {
         val originalFile = parameters.originalFile
         if (originalFile is KtCodeFragment) return true
@@ -43,21 +52,16 @@ internal class CompletionVisibilityChecker(
         if (parameters.invocationCount >= 2) return true
 
         val declarationContainingFile = declaration.containingKtFile
-        // todo
-        //   class Outer {
-        //     private class Inner {
-        //       fun member() {}
-        //     }
-        //   }
-        //  in this example the member itself if neither private or internal,
-        //  but the parent is.
-        return if (declaration.isPrivate()
+        if (declaration.hasEffectiveVisibility(KtTokens.PRIVATE_KEYWORD)
             && declarationContainingFile != originalFile
             && declarationContainingFile != parameters.completionFile
-        ) false
-        else if (declaration.hasModifier(KtTokens.INTERNAL_KEYWORD))
-            canAccessInternalDeclarationsFromFile(declarationContainingFile)
-        else true
+        ) {
+            return false
+        } else if (declaration.hasEffectiveVisibility(KtTokens.INTERNAL_KEYWORD)) {
+            return canAccessInternalDeclarationsFromFile(declarationContainingFile)
+        } else {
+            return true
+        }
     }
 
     private fun canAccessInternalDeclarationsFromFile(file: KtFile): Boolean {
