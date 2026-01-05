@@ -297,7 +297,7 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
     changeSupport.firePropertyChange(ALERT_STATUS, null, false)
   }
 
-  override fun toString(): String = LoadingNode.getText()
+  override fun toString(): String = text
 
   fun getAlertIcon(): AlertIcon = alertIcon ?: DEFAULT_ALERT_ICON
 

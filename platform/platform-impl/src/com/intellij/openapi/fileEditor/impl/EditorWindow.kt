@@ -730,8 +730,12 @@ class EditorWindow internal constructor(
     fileBeingClosed: VirtualFile,
     componentIndex: Int,
   ): TabInfo? {
-    tabBeingClosed.previousSelection?.let {
-      return it
+    val previousSelection = tabBeingClosed.previousSelection
+    if (previousSelection != null) {
+      // the WeakReference might reference an already closed tab
+      if (tabbedPane.editorTabs.getVisibleInfos().contains(previousSelection)) {
+        return previousSelection
+      }
     }
 
     val indexToSelect = computeIndexToSelect(fileBeingClosed = fileBeingClosed, fileIndex = componentIndex)

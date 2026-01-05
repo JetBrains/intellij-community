@@ -2464,9 +2464,12 @@ open class JBTabsImpl internal constructor(
     val toSelect = if (forcedSelectionTransfer == null) {
       getToSelectOnRemoveOf(info!!)
     }
-    else {
-      assert(visibleInfos.contains(forcedSelectionTransfer)) { "Cannot find tab for selection transfer, tab=$forcedSelectionTransfer" }
+    else if (visibleInfos.contains(forcedSelectionTransfer)) {
       forcedSelectionTransfer
+    }
+    else {
+      LOG.error("Cannot find tab for selection transfer, tab=$forcedSelectionTransfer")
+      getToSelectOnRemoveOf(info!!)
     }
 
     val result = ActionCallback()
