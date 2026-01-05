@@ -184,23 +184,12 @@ if version[0] > 2:
 else:
     fopen = open
 
-if sys.platform == 'cli':
-    #noinspection PyUnresolvedReferences
-    from System import DateTime
+class Timer(object):
+    def __init__(self):
+        self.started = time.time()
 
-    class Timer(object):
-        def __init__(self):
-            self.started = DateTime.Now
-
-        def elapsed(self):
-            return (DateTime.Now - self.started).TotalMilliseconds
-else:
-    class Timer(object):
-        def __init__(self):
-            self.started = time.time()
-
-        def elapsed(self):
-            return int((time.time() - self.started) * 1000)
+    def elapsed(self):
+        return int((time.time() - self.started) * 1000)
 
 IS_JAVA = hasattr(os, "java")
 

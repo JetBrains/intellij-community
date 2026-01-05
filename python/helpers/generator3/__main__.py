@@ -92,16 +92,6 @@ def parse_args(gen_version):
 
     parser.add_argument('-V', action='version', version=gen_version)
 
-    clr_specific = parser.add_argument_group('CLR specific options')
-    clr_specific.add_argument(
-        '-c', dest='clr_assemblies', metavar='MODULES',
-        type=(lambda s: s.split(';')), default=[],
-        help='Semicolon separated list of CLR assemblies to be imported.'
-    )
-    clr_specific.add_argument(
-        '-p', dest='run_clr_profiler', action='store_true', help='Run CLR profiler.'
-    )
-
     parser.add_argument(
         "mod_name", nargs='?', default=None,
         help='Qualified name of a single module to analyze.'
@@ -115,10 +105,9 @@ def parse_args(gen_version):
 
 def main():
     import generator3.core
-    from generator3.clr_tools import get_namespace_by_name
     from generator3.constants import Timer
     from generator3.core import version, GenerationStatus, SkeletonGenerator
-    from generator3.util_methods import set_verbose, say, note, print_profile
+    from generator3.util_methods import set_verbose, say, note
 
     args = parse_args(version())
 
@@ -157,19 +146,6 @@ def main():
         generator.discover_and_process_all_modules(name_pattern=args.name_pattern,
                                                    builtins_only=args.builtins_only)
         sys.exit(0)
-
-    if sys.platform == 'cli':
-        # noinspection PyUnresolvedReferences
-        import clr
-
-        for ref in args.clr_assemblies:
-            clr.AddReferenceByPartialName(ref)
-
-        if args.run_clr_profiler:
-            atexit.register(print_profile)
-
-        # We take module name from import statement
-        args.mod_name = get_namespace_by_name(args.mod_name)
 
     if generator.process_module(args.mod_name, args.mod_path) == GenerationStatus.FAILED:
         sys.exit(1)
