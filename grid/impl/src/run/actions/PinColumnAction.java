@@ -21,7 +21,7 @@ public class PinColumnAction extends ColumnHeaderActionBase {
   @Override
   protected void update(AnActionEvent e, @NotNull DataGrid grid, @NotNull ModelIndexSet<GridColumn> columnIdxs) {
     TableResultView table = getTableResultView(grid);
-    boolean visible = table != null && columnIdxs.size() == 1;
+    boolean visible = table != null && columnIdxs.size() == 1 && !table.isTransposed();
     
     if (visible) {
       ModelIndex<GridColumn> columnIdx = columnIdxs.first();

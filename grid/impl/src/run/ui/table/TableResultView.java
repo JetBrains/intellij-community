@@ -482,6 +482,11 @@ public final class TableResultView extends JBTableWithResizableCells
 
   @Override
   public void setColumnEnabled(@NotNull ModelIndex<GridColumn> columnIdx, boolean state) {
+    // If hiding a pinned column, unpin it first
+    if (!state && isColumnPinned(columnIdx)) {
+      unpinColumn(columnIdx);
+    }
+    
     if (isTransposed()) {
       getModel().fireTableDataChanged();
     }
