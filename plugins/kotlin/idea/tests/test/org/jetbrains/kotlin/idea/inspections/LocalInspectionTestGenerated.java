@@ -1737,6 +1737,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
                 runTest("testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceForMapNotNull.kt");
             }
 
+            @TestMetadata("filterIsInstanceForMapNotNull_arbitraryLHS.kt")
+            public void testFilterIsInstanceForMapNotNull_arbitraryLHS() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceForMapNotNull_arbitraryLHS.kt");
+            }
+
+            @TestMetadata("filterIsInstanceForMapNotNull_dotQualifiedLHS.kt")
+            public void testFilterIsInstanceForMapNotNull_dotQualifiedLHS() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceForMapNotNull_dotQualifiedLHS.kt");
+            }
+
+            @TestMetadata("filterIsInstanceForMapNotNull_namedLambda.kt")
+            public void testFilterIsInstanceForMapNotNull_namedLambda() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceForMapNotNull_namedLambda.kt");
+            }
+
             @TestMetadata("filterIsInstanceReceiver.kt")
             public void testFilterIsInstanceReceiver() throws Exception {
                 runTest("testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceReceiver.kt");
