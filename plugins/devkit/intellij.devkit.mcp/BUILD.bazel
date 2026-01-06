@@ -23,6 +23,7 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
+    "//platform/progress/shared:ide-progress",
   ]
 )
 ### auto-generated section `build intellij.devkit.mcp` end

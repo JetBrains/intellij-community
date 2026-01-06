@@ -103,6 +103,7 @@ class BaseLockReqRules : LockReqRules {
   override val disposeMethodNames: Set<String> = setOf("dispose")
 
   override val indifferent: Set<Pair<EnumSet<ConstraintType>, Signature>> = setOf(
+    THREAD_REQUIREMENTS to Signature("com.intellij.openapi.application.impl.ServerNonBlockingReadAction", "submit"),
     LOCK_REQUIREMENTS to Signature("com.intellij.openapi.vfs.VirtualFileManager", "findFileByUrl"),
     LOCK_REQUIREMENTS to Signature("com.intellij.openapi.vfs.impl.VirtualFileManagerImpl", "findFileByUrl")
 
