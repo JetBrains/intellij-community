@@ -73,6 +73,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.IntUnaryOperator;
@@ -2897,23 +2899,29 @@ public final class TableResultView extends JBTableWithResizableCells
 
     MyTableColumnModel columnModel = (MyTableColumnModel) getColumnModel();
     
+    // Build a map of model index to view index for O(1) lookup
+    Map<Integer, Integer> modelToViewMap = new HashMap<>();
+    for (int viewIdx = 0; viewIdx < columnModel.getColumnCount(); viewIdx++) {
+      TableResultViewColumn column = columnModel.getColumn(viewIdx);
+      modelToViewMap.put(column.getModelIndex(), viewIdx);
+    }
+    
     // Move pinned columns to the left in order
     for (int i = 0; i < myPinnedColumnModelIndices.size(); i++) {
       int pinnedModelIndex = myPinnedColumnModelIndices.get(i);
       
-      // Find the view index of this pinned column
-      int currentViewIndex = -1;
-      for (int viewIdx = 0; viewIdx < columnModel.getColumnCount(); viewIdx++) {
-        TableResultViewColumn column = columnModel.getColumn(viewIdx);
-        if (column.getModelIndex() == pinnedModelIndex) {
-          currentViewIndex = viewIdx;
-          break;
-        }
-      }
+      // Find the view index of this pinned column using the map
+      Integer currentViewIndex = modelToViewMap.get(pinnedModelIndex);
       
       // Move it to position i if not already there
-      if (currentViewIndex != -1 && currentViewIndex != i) {
+      if (currentViewIndex != null && currentViewIndex != i) {
         columnModel.moveColumn(currentViewIndex, i);
+        
+        // Update the map after moving
+        // The column that was at position i is now at currentViewIndex
+        TableResultViewColumn movedColumn = columnModel.getColumn(currentViewIndex);
+        modelToViewMap.put(movedColumn.getModelIndex(), currentViewIndex);
+        modelToViewMap.put(pinnedModelIndex, i);
       }
     }
   }
