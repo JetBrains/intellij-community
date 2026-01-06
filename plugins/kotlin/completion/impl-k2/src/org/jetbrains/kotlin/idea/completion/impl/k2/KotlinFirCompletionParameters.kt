@@ -17,6 +17,12 @@ import org.jetbrains.kotlin.psi.KtFile
 
 internal sealed class KotlinFirCompletionParameters(
     val delegate: CompletionParameters, // delegate as much as possible; use only in corner cases/platform methods
+    /**
+     * Indicates whether the parameters were created for a completion rerun.
+     * A rerun happens if the first invocation of completion does not yield any results.
+     * In such a case, more sources (e.g., nested callables) will also be considered during the rerun.
+     */
+    val isRerun: Boolean,
 ) {
 
     abstract val type: CorrectionType?
@@ -39,11 +45,28 @@ internal sealed class KotlinFirCompletionParameters(
     val completionFile: KtFile
         get() = delegate.completionKtFile!!
 
+    protected fun createRerunIjParameters(): CompletionParameters {
+        return delegate.withInvocationCount(2)
+    }
+
+    /**
+     * Returns a copy of the parameters for rerunning completion after no results have been found
+     * in the first attempt.
+     * The resulting parameters will have their [invocationCount] set to 2 and will indicate
+     * that the parameters are for a rerun.
+     */
+    abstract fun copyForRerun(): KotlinFirCompletionParameters
+
     internal class Original private constructor(
         ijParameters: CompletionParameters,
-    ) : KotlinFirCompletionParameters(ijParameters) {
+        isRerun: Boolean = false,
+    ) : KotlinFirCompletionParameters(ijParameters, isRerun) {
 
         override val type: CorrectionType? get() = null
+
+        override fun copyForRerun(): KotlinFirCompletionParameters {
+            return Original(createRerunIjParameters(), isRerun = true)
+        }
 
         companion object {
 
@@ -60,7 +83,12 @@ internal sealed class KotlinFirCompletionParameters(
         ijParameters: CompletionParameters,
         val original: CompletionParameters,
         override val type: CorrectionType,
-    ) : KotlinFirCompletionParameters(ijParameters) {
+        isRerun: Boolean = false,
+    ) : KotlinFirCompletionParameters(ijParameters, isRerun) {
+
+        override fun copyForRerun(): KotlinFirCompletionParameters {
+            return Corrected(createRerunIjParameters(), original, type, isRerun = true)
+        }
 
         companion object {
 

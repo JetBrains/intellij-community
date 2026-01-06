@@ -89,8 +89,7 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         val completionSetupEvent = CompletionSetupEvent()
         completionSetupEvent.begin()
 
-        @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParameters.create(parameters)
-            ?: return
+        val parameters = KotlinFirCompletionParameters.create(parameters) ?: return
         val position = parameters.position
 
         // no completion inside number literals
@@ -124,9 +123,8 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         // If we have not found any results and we have an invocation count 1, we want to re-run completion because
         // it will also start looking in nested objects etc.
         if (completionResult.addedElements == 0 && !addedElementsThroughChainCompletion && parameters.invocationCount == 1) {
-            val newParameters = KotlinFirCompletionParameters.Original.create(parameters.delegate.withInvocationCount(2)) ?: return
             CompletionEvent(isRerun = true).timeEvent {
-                Completions.complete(newParameters, positionContext, resultSet)
+                Completions.complete(parameters.copyForRerun(), positionContext, resultSet)
             }
         }
     }
