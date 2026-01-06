@@ -172,7 +172,7 @@ class AnnotationPresentationInfo(
     private fun convertSeverity(highlightType: ProblemHighlightType?, severity: Severity): HighlightInfoType =
         when (severity) {
             Severity.ERROR -> HighlightInfoType.ERROR
-            Severity.WARNING, Severity.FIXED_WARNING -> {
+            Severity.WARNING, Severity.FIXED_WARNING, Severity.STRONG_WARNING -> {
                 if (highlightType == ProblemHighlightType.WEAK_WARNING) {
                     HighlightInfoType.WEAK_WARNING
                 } else HighlightInfoType.WARNING
@@ -185,7 +185,7 @@ class AnnotationPresentationInfo(
             null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING ->
                 when (severity) {
                     Severity.ERROR -> CodeInsightColors.ERRORS_ATTRIBUTES
-                    Severity.WARNING, Severity.FIXED_WARNING -> CodeInsightColors.WARNINGS_ATTRIBUTES
+                    Severity.WARNING, Severity.FIXED_WARNING, Severity.STRONG_WARNING -> CodeInsightColors.WARNINGS_ATTRIBUTES
                     Severity.INFO -> CodeInsightColors.WARNINGS_ATTRIBUTES
                 }
             ProblemHighlightType.GENERIC_ERROR -> CodeInsightColors.ERRORS_ATTRIBUTES

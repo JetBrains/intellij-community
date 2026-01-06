@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.diagnostics.Severity
 internal class ConsoleErrorRenderer(private val messages: List<SeverityDetails>) : GutterIconRenderer() {
     private fun msgType(severity: Severity) = when (severity) {
         Severity.ERROR -> KotlinIdeaReplBundle.message("message.type.error")
-        Severity.WARNING, Severity.FIXED_WARNING -> KotlinIdeaReplBundle.message("message.type.warning")
+        Severity.WARNING, Severity.FIXED_WARNING, Severity.STRONG_WARNING -> KotlinIdeaReplBundle.message("message.type.warning")
         Severity.INFO -> KotlinIdeaReplBundle.message("message.type.info")
     }
 
