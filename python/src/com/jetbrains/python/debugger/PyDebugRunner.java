@@ -5,7 +5,6 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.console.LanguageConsoleBuilder;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -297,7 +296,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
       session = createXDebugSession(environment, pyState, serverSocket, result);
     }
-    initSession(session, state, environment.getExecutor());
     return session.getRunContentDescriptor();
   }
 
@@ -327,7 +325,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
         if (sessionListener != null) {
           session.addSessionListener(sessionListener);
         }
-        initSession(session, state, environment.getExecutor());
         return session.getRunContentDescriptor();
       }));
   }
@@ -358,8 +355,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     return AppUIExecutor.onUiThread().submit(() -> doExecute(state, environment));
   }
 
-  protected void initSession(XDebugSession session, RunProfileState state, Executor executor) {
-  }
 
   public static int findIndex(List<String> paramList, String paramName) {
     for (int i = 0; i < paramList.size(); i++) {

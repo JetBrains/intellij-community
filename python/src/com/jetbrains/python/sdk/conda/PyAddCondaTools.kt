@@ -266,10 +266,3 @@ private fun Process.captureProcessOutput(commandLine: List<String>): ProcessOutp
   return CapturingProcessHandler(this, Charsets.UTF_8, commandLineString).runProcess()
 }
 
-internal class IntrospectableCommandExecutor(private val introspectable: LanguageRuntimeType.Introspectable) : TargetCommandExecutor {
-  override val local: Boolean = false // we never introspect local machine for now
-  override val targetPlatform: CompletableFuture<TargetPlatform>
-    get() = introspectable.targetPlatform
-
-  override fun execute(command: List<String>): CompletableFuture<ProcessOutput> = introspectable.promiseExecuteScript(command)
-}

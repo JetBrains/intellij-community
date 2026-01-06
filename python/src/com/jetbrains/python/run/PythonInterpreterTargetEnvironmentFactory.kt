@@ -13,7 +13,6 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.isPackageManagementSupported
 import com.jetbrains.python.run.target.HelpersAwareLocalTargetEnvironmentRequest
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
@@ -105,7 +104,7 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
     @JvmStatic
     fun findPythonTargetInterpreter(sdk: Sdk, project: Project): HelpersAwareTargetEnvironmentRequest =
       when (sdk.sdkAdditionalData) {
-        is TargetBasedSdkAdditionalData, is PyRemoteSdkAdditionalDataBase ->
+        is TargetBasedSdkAdditionalData ->
           EP_NAME.extensionList.firstNotNullOfOrNull { it.getPythonTargetInterpreter(sdk, project) }
         else -> null
       } ?: HelpersAwareLocalTargetEnvironmentRequest()

@@ -4,7 +4,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.remote.ext.CredentialsLanguageContribution;
 import com.intellij.testFramework.PlatformLiteFixture;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import org.junit.Assert;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -16,7 +15,6 @@ import static org.mockito.Mockito.when;
  */
 public class PythonSdkTypePlatformTest extends PlatformLiteFixture {
   @Mock private Sdk sdk;
-  @Mock private PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData;
   @Mock private SdkAdditionalData sdkAdditionalData;
   @Mock private CredentialsLanguageContribution credentialsLanguageContribution;
 
@@ -33,8 +31,4 @@ public class PythonSdkTypePlatformTest extends PlatformLiteFixture {
     Assert.assertFalse(PythonSdkType.hasInvalidRemoteCredentials(sdk));
   }
 
-  public void testAbsentRemoteSdkCredentials() {
-    when(sdk.getSdkAdditionalData()).thenReturn(remoteSdkAdditionalData);
-    Assert.assertFalse(PythonSdkType.hasInvalidRemoteCredentials(sdk));
-  }
 }

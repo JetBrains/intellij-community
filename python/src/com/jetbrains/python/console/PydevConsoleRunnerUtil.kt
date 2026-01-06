@@ -27,7 +27,6 @@ import com.jetbrains.python.console.completion.PydevConsoleElement
 import com.jetbrains.python.console.pydev.ConsoleCommunication
 import com.jetbrains.python.parsing.console.PythonConsoleData
 import com.jetbrains.python.remote.PyRemotePathMapper
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager
 import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.toStringLiteral
@@ -62,7 +61,6 @@ fun getPathMapper(project: Project,
   if (sdk == null) return null
   return when (val sdkAdditionalData = sdk.sdkAdditionalData) {
     is PyTargetAwareAdditionalData -> getPathMapper(project, consoleSettings, sdkAdditionalData)
-    is PyRemoteSdkAdditionalDataBase -> getPathMapper(project, consoleSettings, sdkAdditionalData)
     else -> null
   }
 }
@@ -112,17 +110,6 @@ private fun appendBasicMappings(project: Project, data: RemoteSdkProperties): Py
     pathMapper.addAll(mappings.settings, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
   }
   return pathMapper
-}
-
-fun getPathMapper(project: Project,
-                  consoleSettings: PyConsoleSettings,
-                  remoteSdkAdditionalData: PyRemoteSdkAdditionalDataBase): PyRemotePathMapper {
-  val remotePathMapper = PythonRemoteInterpreterManager.appendBasicMappings(project, null, remoteSdkAdditionalData)
-  val mappingSettings = consoleSettings.mappingSettings
-  if (mappingSettings != null) {
-    remotePathMapper.addAll(mappingSettings.pathMappings, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
-  }
-  return remotePathMapper
 }
 
 fun findPythonSdkAndModule(project: Project, contextModule: Module?): Pair<Sdk?, Module?> {

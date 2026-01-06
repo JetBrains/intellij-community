@@ -1,12 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.*
 import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.openapi.application.*
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
@@ -16,7 +14,6 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
@@ -40,7 +37,6 @@ import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isVirtualEnv
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
@@ -584,7 +580,6 @@ val Sdk.remoteSourcesLocalPath: Path
     Path.of(PythonSdkUtil.REMOTE_SOURCES_DIR_NAME) /
     Path.of(when (val data = sdkAdditionalData) {
               is PyTargetAwareAdditionalData -> data.uuid.toString()
-              is PyRemoteSdkAdditionalData -> homePath!!
               else -> error("Only legacy and remote SDK and target-based SDKs are supported")
             }.hashCode().toString())
 
@@ -605,18 +600,17 @@ fun Sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCo
  * on a target. The latter case takes place when [PythonSdkAdditionalData] of this [Sdk] implements [PyTargetAwareAdditionalData] and the
  * corresponding target provides file system operations (see [com.jetbrains.python.pathValidation.ValidationRequest]).
  *
- * Note that if [PythonSdkAdditionalData] of this [Sdk] is [PyRemoteSdkAdditionalData] this method does not do any checks and returns
- * `false`. This behavior may be improved in the future by generating [TargetEnvironmentConfiguration] based on the present
- * [PyRemoteSdkAdditionalData].
  *
  * @see PythonSdkFlavor.sdkSeemsValid
  */
 val Sdk.sdkSeemsValid: Boolean
   get() {
     if (!isPythonSdk(this, true)) return false
+    if (this.sdkAdditionalData == PyInvalidSdk) {
+      return false
+    }
 
     val pythonSdkAdditionalData = getOrCreateAdditionalData()
-    if (pythonSdkAdditionalData is PyRemoteSdkAdditionalData) return false
     return pythonSdkAdditionalData.flavorAndData.sdkSeemsValid(this, targetEnvConfiguration)
   }
 

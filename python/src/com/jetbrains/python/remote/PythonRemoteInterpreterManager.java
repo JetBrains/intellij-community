@@ -1,13 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.remote;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
@@ -21,7 +18,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.extensions.ProgressManagerExtKt;
 import com.jetbrains.python.remote.PyRemotePathMapper.PyPathMappingType;
 import kotlin.jvm.functions.Function0;
-import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,11 +89,6 @@ public abstract class PythonRemoteInterpreterManager {
 
     return newPathMapper;
   }
-
-  public abstract @NotNull SdkAdditionalData loadRemoteSdkData(@NotNull Sdk sdk, @Nullable Element additional);
-
-  public abstract String @NotNull [] chooseRemoteFiles(@NotNull Project project, @NotNull PyRemoteSdkAdditionalDataBase data, boolean foldersOnly)
-    throws ExecutionException, InterruptedException;
 
   public static class PyHelpersNotReadyException extends RuntimeException {
     public PyHelpersNotReadyException(Throwable cause) {

@@ -19,9 +19,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSourceItem;
-import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import com.jetbrains.python.ui.targetPathEditor.ManualPathEntryDialog;
@@ -109,14 +107,7 @@ class PyRemotePathEditor extends PythonPathEditor {
 
   private String @NotNull [] chooseRemoteFiles() throws ExecutionException, InterruptedException {
     SdkAdditionalData sdkAdditionalData = mySdk.getSdkAdditionalData();
-    if (sdkAdditionalData instanceof PyRemoteSdkAdditionalDataBase) {
-      PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
-      if (remoteInterpreterManager == null) {
-        return ArrayUtil.EMPTY_STRING_ARRAY;
-      }
-      return remoteInterpreterManager.chooseRemoteFiles(myProject, (PyRemoteSdkAdditionalDataBase)sdkAdditionalData, false);
-    }
-    else if (sdkAdditionalData instanceof PyTargetAwareAdditionalData) {
+    if (sdkAdditionalData instanceof PyTargetAwareAdditionalData) {
       var dialog = new ManualPathEntryDialog(myProject,
                                              ((PyTargetAwareAdditionalData)sdkAdditionalData).getTargetEnvironmentConfiguration());
       if (dialog.showAndGet()) {
