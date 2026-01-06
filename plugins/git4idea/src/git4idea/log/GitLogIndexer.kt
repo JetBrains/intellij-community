@@ -15,7 +15,8 @@ import git4idea.history.GitCommitRequirements.DiffInMergeCommits
 import git4idea.history.GitCommitRequirements.DiffRenames
 import git4idea.history.GitCompressedDetailsCollector
 import git4idea.history.GitLogUtil
-import git4idea.log.GitLogProvider.*
+import git4idea.log.GitLogProvider.Companion.getRepository
+import git4idea.log.GitLogProvider.Companion.shouldIncludeRootChanges
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import it.unimi.dsi.fastutil.ints.Int2IntMap
