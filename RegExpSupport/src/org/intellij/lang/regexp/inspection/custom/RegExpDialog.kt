@@ -41,7 +41,11 @@ import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.border.CompoundBorder
 
-internal class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaultPattern: InspectionPattern? = null) : DialogWrapper(project, true) {
+internal class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaultPattern: InspectionPattern? = null)
+  : DialogWrapper(project, true) {
+  private val FILTER_ICON = BadgeIconSupplier(LayeredIcon.create(AllIcons.General.Filter, AllIcons.General.Dropdown))
+  private val REGEXP_FLAGS_ICON = BadgeIconSupplier(LayeredIcon.GEAR_WITH_DROPDOWN)
+
   private var searchContext: FindModel.SearchContext = FindModel.SearchContext.ANY
   private var flags: Int = RegExpFlag.UNICODE_CASE.id
   private var replace: Boolean = false
@@ -122,11 +126,17 @@ internal class RegExpDialog(val project: Project?, val editConfiguration: Boolea
           }
           .gap(RightGap.SMALL)
           .component
-        filterButton = actionButton(MyFilterAction())
-          .gap(RightGap.SMALL)
-          .component
-        flagsButton = actionButton(SelectRegExpFlagsAction())
-          .component
+        filterButton = 
+          cell(object : ActionButton(FilterAction(), null, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+            override fun getIcon() = FILTER_ICON.getLiveIndicatorIcon(searchContext != FindModel.SearchContext.ANY)
+          })
+            .gap(RightGap.SMALL)
+            .component
+        flagsButton = 
+          cell(object : ActionButton(RegExpFlagsAction(), null, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+            override fun getIcon() = REGEXP_FLAGS_ICON.getLiveIndicatorIcon(flags != 0)
+          })
+            .component
       }
     }.customize(UnscaledGaps(0, intelliJSpacingConfiguration.horizontalSmallGap, 0, intelliJSpacingConfiguration.horizontalSmallGap))
 
@@ -244,11 +254,7 @@ internal class RegExpDialog(val project: Project?, val editConfiguration: Boolea
     }
   }
 
-  private inner class MyFilterAction : DumbAwareAction(
-    FindBundle.messagePointer("find.popup.show.filter.popup"),
-    Presentation.NULL_STRING,
-    LayeredIcon.create(AllIcons.General.Filter, AllIcons.General.Dropdown)
-  ) {
+  private inner class FilterAction : DumbAwareAction(FindBundle.messagePointer("find.popup.show.filter.popup")) {
     val myGroup: ActionGroup
     var listPopup: ListPopup? = null
     init {
@@ -256,7 +262,7 @@ internal class RegExpDialog(val project: Project?, val editConfiguration: Boolea
         shortcutSet = CustomShortcutSet(it)
       }
       myGroup = DefaultActionGroup().apply {
-        FindModel.SearchContext.entries.forEach { add(MyToggleAction(it, this@MyFilterAction)) }
+        FindModel.SearchContext.entries.forEach { add(ToggleFilterAction(it, this@FilterAction)) }
         isPopup = true
       }
     }
@@ -267,7 +273,7 @@ internal class RegExpDialog(val project: Project?, val editConfiguration: Boolea
     }
   }
 
-  private inner class MyToggleAction(val context: FindModel.SearchContext, val action: MyFilterAction)
+  private inner class ToggleFilterAction(val context: FindModel.SearchContext, val action: FilterAction)
     : ToggleAction(FindInProjectUtil.getPresentableName(context)), DumbAware {
     override fun isSelected(e: AnActionEvent): Boolean {
       return searchContext == context
@@ -284,7 +290,7 @@ internal class RegExpDialog(val project: Project?, val editConfiguration: Boolea
     }
   }
 
-  private inner class SelectRegExpFlagsAction : DumbAwareAction(RegExpBundle.messagePointer("regexp.dialog.regexp.flags"), Presentation.NULL_STRING, LayeredIcon.GEAR_WITH_DROPDOWN) {
+  private inner class RegExpFlagsAction : DumbAwareAction(RegExpBundle.messagePointer("regexp.dialog.regexp.flags")) {
     val myGroup: ActionGroup = DefaultActionGroup().apply {
       RegExpFlag.entries.forEach {
         if (it == RegExpFlag.LITERAL) addSeparator()
@@ -317,6 +323,7 @@ internal class RegExpDialog(val project: Project?, val editConfiguration: Boolea
         searchEditor.fileType = if (state) PlainTextFileType.INSTANCE else RegExpFileType.INSTANCE
       }
       flags = flags xor flag.id
+      flagsButton.repaint()
     }
 
     override fun update(e: AnActionEvent) {
