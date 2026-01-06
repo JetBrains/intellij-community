@@ -97,8 +97,6 @@ object IdeInstance {
     else {
       LOG.info("IDE wasn't started. Skipping stopping it.")
     }
-
-    cancelSupervisorScope(perClassSupervisorScope, "IDE was stopped/not running so cancelling it's scope as well")
   }
 
   fun publishArtifacts(): Unit = synchronized(this) {
