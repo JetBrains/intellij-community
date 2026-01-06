@@ -63,6 +63,7 @@ DEFAULT_JVM_FLAGS = [
     "-Didea.is.internal=true",
     "-Didea.debug.mode=true",
     "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
+    "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
 ]
 
 def intellij_dev_binary(name, visibility, data, jvm_flags, env, platform_prefix, config_path, system_path, additional_modules):
