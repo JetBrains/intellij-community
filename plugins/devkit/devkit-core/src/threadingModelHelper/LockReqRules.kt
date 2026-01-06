@@ -1,7 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
-import java.util.EnumSet
+import java.util.*
 
 interface LockReqRules {
   val assertionMethods: Map<String, Map<String, ConstraintType>>
@@ -89,7 +89,8 @@ class BaseLockReqRules : LockReqRules {
   override val asyncMethods: Set<String> = setOf(
     "invokeLater", "invokeAndWait", "runInEdt",
     "submit", "execute", "executeOnPooledThread",
-    "runAsync", "supplyAsync", "invokeLaterOnWriteThread"
+    "runAsync", "supplyAsync", "invokeLaterOnWriteThread",
+    "invokeLaterIfNeeded",
   )
 
   override val messageBusClasses: Set<String> = setOf(
