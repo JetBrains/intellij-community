@@ -27,8 +27,6 @@ open class TestCleanupListener : TestExecutionListener {
     val shutdownHookThread = Thread(Runnable {
       val reason = "Shutdown is in progress: either SIGTERM or SIGKILL is caught"
       logOutput("Canceling supervisor scopes: $reason")
-      perTestSupervisorScope.cancel(CancellationException(reason))
-      perClassSupervisorScope.cancel(CancellationException(reason))
       testSuiteSupervisorScope.cancel(CancellationException(reason))
     }, "test-scopes-shutdown-hook")
     try {
@@ -50,9 +48,9 @@ open class TestCleanupListener : TestExecutionListener {
     val testIdentifierName = testIdentifier.displayName
     if (testIdentifier.isContainer) {
       cancelSupervisorScope(perClassSupervisorScope, "Test class `$testIdentifierName` execution is finished")
+    } else {
+      cancelPerTestSupervisorScope(testIdentifier)
     }
-
-    cancelPerTestSupervisorScope(testIdentifier)
   }
 
   override fun testPlanExecutionFinished(testPlan: TestPlan) {
