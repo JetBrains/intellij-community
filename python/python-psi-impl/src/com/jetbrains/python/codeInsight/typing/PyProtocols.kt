@@ -37,6 +37,7 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
 
   val protocolMembers = protocol.toInstance().getAllMembers(resolveContext)
   val superClassesMembers = protocol.toInstance().getSuperClassTypes(context)
+    .filterNotNull()
     .filter { it.isProtocol(context) }
     .flatMap { it.toInstance().getAllMembers(resolveContext).asIterable() }
   protocolMembers.addAll(superClassesMembers)
