@@ -12,33 +12,11 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.project.ProjectStoreOwner
+import com.intellij.util.ownsSdk
 import org.jetbrains.annotations.Unmodifiable
-import java.nio.file.InvalidPathException
-import kotlin.io.path.Path
-
-private fun EelMachine.ownsSdk(sdk: Sdk): Boolean {
-  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) {
-    return true
-  }
-
-  return try {
-    val nioPath = sdk.homePath?.let(::Path)
-
-    return if (nioPath != null) {
-      ownsPath(nioPath)
-    }
-    else {
-      this == LocalEelMachine
-    }
-  }
-  catch (_: InvalidPathException) {
-    this == LocalEelMachine
-  }
-}
 
 internal class SdkTableProjectViewProviderImpl(private val project: Project) : SdkTableProjectViewProvider, Disposable {
   @Suppress("SimpleRedundantLet")
