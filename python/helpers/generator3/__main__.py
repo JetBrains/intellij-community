@@ -92,23 +92,6 @@ def parse_args(gen_version):
 
     parser.add_argument('-V', action='version', version=gen_version)
 
-    extra_modes = parser.add_argument_group('extra modes')
-    extra_modes.add_argument(
-        '-S', dest='list_sources_mode', action='store_true',
-        help='Lists all python sources found in `sys.path` and directories specified '
-             'with -s.'
-    )
-    extra_modes.add_argument(
-        '-z', dest='zip_sources_archive', metavar='ARCHIVE',
-        help='Zip files to specified archive. Accepts files to be archived from stdin '
-             'in format: <filepath> <name in archive>.'
-    )
-    extra_modes.add_argument(
-        '-u', dest='zip_roots_archive', metavar='ARCHIVE',
-        help='Zip all source files from `sys.path` and provided roots in the specified '
-             'archive.'
-    )
-
     clr_specific = parser.add_argument_group('CLR specific options')
     clr_specific.add_argument(
         '-c', dest='clr_assemblies', metavar='MODULES',
@@ -132,7 +115,6 @@ def parse_args(gen_version):
 
 def main():
     import generator3.core
-    import generator3.extra
     from generator3.clr_tools import get_namespace_by_name
     from generator3.constants import Timer
     from generator3.core import version, GenerationStatus, SkeletonGenerator
@@ -162,19 +144,6 @@ def main():
         state_json = None
 
     target_roots = _cleanup_sys_path()
-
-    if args.list_sources_mode:
-        say(version())
-        generator3.extra.list_sources(target_roots)
-        sys.exit(0)
-
-    if args.zip_sources_archive:
-        generator3.extra.zip_sources(args.zip_sources_archive)
-        sys.exit(0)
-
-    if args.zip_roots_archive:
-        generator3.extra.zip_stdlib(target_roots, args.zip_roots_archive)
-        sys.exit(0)
 
     generator = SkeletonGenerator(
         output_dir=args.output_dir,
