@@ -2,5 +2,8 @@
   <dependencies>
     <module name="intellij.libraries.junit5.params"/>
     <module name="intellij.python.pyproject"/>
+    <module name="intellij.platform.testFramework.junit5"/>
+    <module name="intellij.python.community.junit5Tests.framework._test"/>
+    <module name="intellij.platform.testFramework"/>
   </dependencies>
 </idea-plugin>
