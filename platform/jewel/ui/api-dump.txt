@@ -3973,6 +3973,10 @@ f:org.jetbrains.jewel.ui.painter.hints.SizeKt
 - sf:Size(I,I):org.jetbrains.jewel.ui.painter.PainterHint
 f:org.jetbrains.jewel.ui.painter.hints.StatefulKt
 - sf:Stateful(org.jetbrains.jewel.foundation.state.InteractiveComponentState):org.jetbrains.jewel.ui.painter.PainterHint
+org.jetbrains.jewel.ui.platform.PlatformCursorController
+- a:hideCursor():V
+f:org.jetbrains.jewel.ui.platform.PlatformCursorControllerKt
+- sf:getLocalPlatformCursorController():androidx.compose.runtime.ProvidableCompositionLocal
 f:org.jetbrains.jewel.ui.theme.JewelThemeKt
 - sf:BaseJewelTheme(org.jetbrains.jewel.foundation.theme.ThemeDefinition,org.jetbrains.jewel.ui.ComponentStyling,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
 - sf:BaseJewelTheme(org.jetbrains.jewel.foundation.theme.ThemeDefinition,org.jetbrains.jewel.ui.ComponentStyling,Z,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
