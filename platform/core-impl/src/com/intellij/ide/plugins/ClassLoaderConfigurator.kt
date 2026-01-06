@@ -147,7 +147,6 @@ class ClassLoaderConfigurator(
                                       || module.moduleId.name == "intellij.rider.plugins.unity.test.cases"
                                       || module.moduleId.name == "intellij.rider.plugins.unreal.link.test.cases"
                                       || module.moduleId.name == "intellij.rider.test.cases.qodana"
-                                      || module.moduleId.name == "intellij.rider.test.cases.supplementary"
                                       || module.moduleId.name == "intellij.rider.test.cases.consoles"
                                       || module.moduleId.name == "intellij.rider.test.cases.rdct")
       module.pluginClassLoader = PluginClassLoader(
