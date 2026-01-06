@@ -83,6 +83,10 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
     }
   }
 
+  override fun listRegisteredApis(): List<String> {
+    return remoteApis.keys.toList()
+  }
+
   companion object {
     private val LOG = logger<RemoteApiRegistry>()
   }

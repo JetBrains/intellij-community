@@ -60,6 +60,7 @@ jvm_library(
     "//libraries/jbr",
     "//platform/projectModel-impl",
     "//platform/execution",
+    "//platform/kernel/rpc",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.internal` end
