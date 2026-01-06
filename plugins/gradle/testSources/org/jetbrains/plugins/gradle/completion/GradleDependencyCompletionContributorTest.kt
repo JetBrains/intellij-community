@@ -9,9 +9,7 @@ import com.intellij.testFramework.replaceService
 import com.intellij.util.application
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.idea.completion.api.DependencyCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionResult
-import org.jetbrains.idea.completion.api.GradleDependencyCompletionContext
+import org.jetbrains.idea.completion.api.*
 import org.jetbrains.plugins.gradle.service.cache.GradleLocalRepositoryIndexer
 import org.jetbrains.plugins.gradle.service.cache.GradleLocalRepositoryIndexerTestImpl
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -389,6 +387,204 @@ class GradleDependencyCompletionContributorTest {
       DependencyCompletionResult("group", "artifact", "version"),
       DependencyCompletionResult("prefix-groupsuffix", "prefixartifact-suffix", "prefix.version-suffix"),
     )
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = [
+    "",
+    "g",
+    "grou",
+    "group",
+  ])
+  fun `test group single`(searchString: String): Unit = runBlocking {
+    configureLocalIndex("group:artifact:version")
+
+    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val request = DependencyGroupCompletionRequest(searchString, "", context)
+    val contributor = GradleDependencyCompletionContributor()
+    val results = contributor.getGroups(request)
+
+    assertThat(results).containsExactlyInAnyOrder("group")
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = [
+    "g",
+    "grou",
+    "group",
+  ])
+  fun `test group multiple`(searchString: String): Unit = runBlocking {
+    configureLocalIndex(
+      "group:artifact:version",
+      "group:other:version",
+      "prefix-group:artifact:version",
+      "group-suffix:artifact:version",
+      "other:artifact:version",
+    )
+
+    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val request = DependencyGroupCompletionRequest(searchString, "", context)
+    val contributor = GradleDependencyCompletionContributor()
+    val results = contributor.getGroups(request)
+
+    assertThat(results).containsExactlyInAnyOrder(
+      "group",
+      "prefix-group",
+      "group-suffix"
+    )
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = [
+    "",
+    "g",
+    "grou",
+    "group",
+  ])
+  fun `test group with artifact filter`(searchString: String): Unit = runBlocking {
+    configureLocalIndex(
+      "group:correct:version",
+      "group-wrong:wrong:version",
+      "group-also-wrong:correct-not:version",
+    )
+
+    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val request = DependencyGroupCompletionRequest(searchString, "correct", context)
+    val contributor = GradleDependencyCompletionContributor()
+    val results = contributor.getGroups(request)
+
+    assertThat(results).containsExactlyInAnyOrder("group")
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = [
+    "",
+    "a",
+    "arti",
+    "artifact",
+  ])
+  fun `test artifact single`(searchString: String): Unit = runBlocking {
+    configureLocalIndex("group:artifact:version")
+
+    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val request = DependencyArtifactCompletionRequest("group", searchString, context)
+    val contributor = GradleDependencyCompletionContributor()
+    val results = contributor.getArtifacts(request)
+
+    assertThat(results).containsExactlyInAnyOrder("artifact")
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = [
+    "a",
+    "arti",
+    "artifact",
+  ])
+  fun `test artifact multiple`(searchString: String): Unit = runBlocking {
+    configureLocalIndex(
+      "group:artifact:version",
+      "other:artifact:version",
+      "group:prefix-artifact:version",
+      "group:artifact-suffix:version",
+      "group:other:version",
+    )
+
+    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val request = DependencyArtifactCompletionRequest("group", searchString, context)
+    val contributor = GradleDependencyCompletionContributor()
+    val results = contributor.getArtifacts(request)
+
+    assertThat(results).containsExactlyInAnyOrder(
+      "artifact",
+      "prefix-artifact",
+      "artifact-suffix"
+    )
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = [
+    "",
+    "a",
+    "arti",
+    "artifact",
+  ])
+  fun `test artifact with group filter`(searchString: String): Unit = runBlocking {
+    configureLocalIndex(
+      "correct:artifact:version",
+      "wrong:artifact-wrong:version",
+      "correct-not:artifact-also-wrong:version",
+    )
+
+    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val request = DependencyArtifactCompletionRequest("correct", searchString, context)
+    val contributor = GradleDependencyCompletionContributor()
+    val results = contributor.getArtifacts(request)
+
+    assertThat(results).containsExactlyInAnyOrder("artifact")
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = [
+    "",
+    "v",
+    "version",
+  ])
+  fun `test version single`(searchString: String): Unit = runBlocking {
+    configureLocalIndex("group:artifact:version")
+
+    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val request = DependencyVersionCompletionRequest("group", "artifact", searchString, context)
+    val contributor = GradleDependencyCompletionContributor()
+    val results = contributor.getVersions(request)
+
+    assertThat(results).containsExactlyInAnyOrder("version")
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = [
+    "v",
+    "version",
+  ])
+  fun `test version multiple`(searchString: String): Unit = runBlocking {
+    configureLocalIndex(
+      "group:artifact:version",
+      "group:artifact:version2",
+      "group:artifact:version.3",
+      "group:artifact:other",
+    )
+
+    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val request = DependencyVersionCompletionRequest("group", "artifact", searchString, context)
+    val contributor = GradleDependencyCompletionContributor()
+    val results = contributor.getVersions(request)
+
+    assertThat(results).containsExactlyInAnyOrder(
+      "version",
+      "version2",
+      "version.3",
+    )
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = [
+    "",
+    "v",
+    "version",
+  ])
+  fun `test version with group and artifact filters`(searchString: String): Unit = runBlocking {
+    configureLocalIndex(
+      "correct-group:correct-artifact:version",
+      "pre-correct-group.post:post.correct-artifact-pre:version1",
+      "correct-group:wrong-artifact:version2",
+      "wrong-group:correct-artifact:version.3",
+    )
+
+    val context = GradleDependencyCompletionContext(eelDescriptor)
+    val request = DependencyVersionCompletionRequest("correct-group", "correct-artifact", searchString, context)
+    val contributor = GradleDependencyCompletionContributor()
+    val results = contributor.getVersions(request)
+
+    assertThat(results).containsExactlyInAnyOrder("version")
   }
 
   private fun configureLocalIndex(vararg gav: String) {
