@@ -1,22 +1,22 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInspection.groovy
 
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.OriginInfoAwareElement
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.codeInspection.fix.GradleDependencyNamedArgumentsFix
-import org.jetbrains.plugins.gradle.service.resolve.GradleDependencyHandlerContributor
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_DEPENDENCY_HANDLER
+import org.jetbrains.plugins.gradle.service.resolve.GradleDependencyHandlerContributor.Companion.dependencyMethodKind
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyMethodCallPattern
+import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
+import org.jetbrains.plugins.groovy.lang.psi.patterns.withKind
 
 class GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val holder: ProblemsHolder) : GroovyElementVisitor() {
   override fun visitMethodCall(call: GrMethodCall) {
-    val method = call.resolveMethod() ?: return
-    if (method !is OriginInfoAwareElement || method.originInfo != GradleDependencyHandlerContributor.DEPENDENCY_NOTATION) {
-      return
-    }
+    if (!DEPENDENCY_CALL_PATTERN.accepts(call) && !SPECIAL_DEPENDENCY_CALL_PATTERN.accepts(call)) return
     val arguments = call.argumentList.expressionArguments
     if (arguments.isEmpty()) {
       if (hasUnexpectedNamedArguments(call.namedArguments.asList())) return
@@ -45,5 +45,12 @@ class GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val h
   private fun hasUnexpectedNamedArguments(namedArguments: List<GrNamedArgument>): Boolean {
     val namedArgumentsNames = namedArguments.map { it.labelName }.toSet()
     return !namedArgumentsNames.containsAll(setOf("group", "name"))
+  }
+
+  companion object {
+    private val DEPENDENCY_CALL_PATTERN = GroovyMethodCallPattern
+      .resolvesTo(psiMethod(GRADLE_API_DEPENDENCY_HANDLER).withKind(dependencyMethodKind))
+    private val SPECIAL_DEPENDENCY_CALL_PATTERN = GroovyMethodCallPattern
+      .resolvesTo(psiMethod(GRADLE_API_DEPENDENCY_HANDLER).withName("platform", "enforcedPlatform", "testFixtures"))
   }
 }

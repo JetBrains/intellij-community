@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl.inspections
 
 import com.intellij.testFramework.runInEdtAndWait
@@ -8,6 +8,7 @@ import org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArg
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -598,7 +599,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   fun testListOfMapsWithFunctionArguments(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
-        $"""
+        """
         static def ver() { return '1.0' }
         def name() { return 'guava' }
         dependencies {
@@ -964,6 +965,90 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
             implementation("org.gradle:gradle-core") {
                 targetConfiguration = 'configTarget'
             }
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun testPlatformCall(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion, "5.0") { "Platform is supported since Gradle 5.0" }
+    runTest(gradleVersion) {
+      testHighlighting(
+        """
+        dependencies { 
+            testImplementation platform$WARNING_START(group: 'org.junit', name: 'junit-bom', version: '5.10.0')$WARNING_END
+        }
+        """.trimIndent()
+      )
+      testIntention(
+        """
+        dependencies {
+            testImplementation platform(group: 'org.junit', name: 'junit-bom', version: '5.10.0')<caret>
+        }
+        """.trimIndent(),
+        """
+        dependencies {
+            testImplementation platform("org.junit:junit-bom:5.10.0")
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun testEnforcedPlatformCall(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion, "5.0") { "Enforced platform is supported since Gradle 5.0" }
+    runTest(gradleVersion) {
+      testHighlighting(
+        """
+        dependencies { 
+            testImplementation enforcedPlatform$WARNING_START(group: 'org.junit', name: 'junit-bom', version: '5.10.0')$WARNING_END
+        }
+        """.trimIndent()
+      )
+      testIntention(
+        """
+        dependencies {
+            testImplementation enforcedPlatform(group: 'org.junit', name: 'junit-bom', version: '5.10.0')<caret>
+        }
+        """.trimIndent(),
+        """
+        dependencies {
+            testImplementation enforcedPlatform("org.junit:junit-bom:5.10.0")
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun testTestFixturesCall(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion, "5.6") { "TestFixtures is supported since Gradle 5.6" }
+    runTest(gradleVersion) {
+      testHighlighting(
+        """
+        dependencies { 
+            testImplementation testFixtures$WARNING_START(group: 'org.junit', name: 'junit-bom', version: '5.10.0')$WARNING_END
+        }
+        """.trimIndent()
+      )
+      testIntention(
+        """
+        dependencies {
+            testImplementation testFixtures(group: 'org.junit', name: 'junit-bom', version: '5.10.0')<caret>
+        }
+        """.trimIndent(),
+        """
+        dependencies {
+            testImplementation testFixtures("org.junit:junit-bom:5.10.0")
         }
         """.trimIndent(),
         "Simplify"

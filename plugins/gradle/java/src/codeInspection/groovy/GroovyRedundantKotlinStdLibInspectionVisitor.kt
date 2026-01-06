@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInspection.groovy
 
 import com.intellij.codeInspection.CommonQuickFixBundle
@@ -43,7 +43,7 @@ class GroovyRedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsH
 
   override fun visitCallExpression(callExpression: GrCallExpression) {
     if (kotlinJvmPluginVersion == null) return
-    if (!apiDependencyPattern.accepts(callExpression)) return
+    if (!DEPENDENCY_CALL_PATTERN.accepts(callExpression)) return
     if (callExpression.hasClosureArguments()) return // dependency declaration with a closure probably has a custom configuration
     if (callExpression is GrMethodCall && isNonRedundantConfiguration(callExpression.invokedExpression.text)) return
 
@@ -207,7 +207,7 @@ class GroovyRedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsH
   }
 
   companion object {
-    private val apiDependencyPattern = GroovyMethodCallPattern
+    private val DEPENDENCY_CALL_PATTERN = GroovyMethodCallPattern
       .resolvesTo(psiMethod(GRADLE_API_DEPENDENCY_HANDLER).withKind(dependencyMethodKind))
     private const val KOTLIN_GROUP_ID = "org.jetbrains.kotlin"
     private const val KOTLIN_JAVA_STDLIB_NAME = "kotlin-stdlib"
