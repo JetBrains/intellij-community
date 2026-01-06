@@ -136,6 +136,9 @@ open class ClientSessionsManager<T : ClientSession>(private val scope: Coroutine
     return sessions[clientId]
   }
 
+  /**
+   * [disposable] should be disposed on EDT.
+   */
   fun registerSession(disposable: Disposable, session: T) {
     val clientId = session.clientId
     val oldSession = sessions.put(clientId, session)
@@ -158,8 +161,10 @@ open class ClientSessionsManager<T : ClientSession>(private val scope: Coroutine
     LOG.debug { "Session added '$session'" }
 
     Disposer.register(disposable) {
-      // write intent lock is already here because the disposable takes it when disposing on EDT
-      Disposer.dispose(session)
+      WriteIntentReadAction.run {
+        Disposer.dispose(session)
+      }
+
       LOG.debug { "Session for '$clientId' will be removed after delay" }
       scope.launch {
         delay(disposedRemovalDelay)
