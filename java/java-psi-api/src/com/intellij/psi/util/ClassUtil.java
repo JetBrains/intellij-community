@@ -15,6 +15,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.containers.ObjectIntMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -176,7 +177,11 @@ public final class ClassUtil {
   /**
    * Looks for inner and anonymous classes by FQN in a javac notation ('pkg.Top$Inner').
    * If there are several classes with the same FQN, it prefers the one from the content roots of the project.
+   *
+   * @deprecated use {@link JavaPsiFacade#findClasses(String, GlobalSearchScope)} instead and gracefully process possible duplicates.
    */
+  @ApiStatus.Internal
+  @Deprecated
   @RequiresBackgroundThread
   @RequiresReadLock
   public static @Nullable PsiClass findPsiClassWithSourcePriority(@NotNull PsiManager manager,
