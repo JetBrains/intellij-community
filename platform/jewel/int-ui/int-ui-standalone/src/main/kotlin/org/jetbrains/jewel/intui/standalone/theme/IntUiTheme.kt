@@ -19,6 +19,7 @@ import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.IntUiMessageResourceResolver
 import org.jetbrains.jewel.intui.standalone.IntUiTypography
 import org.jetbrains.jewel.intui.standalone.StandalonePainterHintsProvider
+import org.jetbrains.jewel.intui.standalone.StandalonePlatformCursorController
 import org.jetbrains.jewel.intui.standalone.icon.StandaloneNewUiChecker
 import org.jetbrains.jewel.intui.standalone.menuShortcut.StandaloneMenuItemShortcutHintProvider
 import org.jetbrains.jewel.intui.standalone.menuShortcut.StandaloneShortcutProvider
@@ -69,6 +70,7 @@ import org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.icon.LocalNewUiChecker
 import org.jetbrains.jewel.ui.painter.LocalPainterHintsProvider
+import org.jetbrains.jewel.ui.platform.LocalPlatformCursorController
 import org.jetbrains.jewel.ui.theme.BaseJewelTheme
 import org.jetbrains.jewel.ui.util.LocalMessageResourceResolverProvider
 
@@ -892,6 +894,7 @@ public fun IntUiTheme(
             LocalMenuItemShortcutHintProvider provides StandaloneMenuItemShortcutHintProvider,
             LocalTypography provides IntUiTypography,
             LocalMessageResourceResolverProvider provides IntUiMessageResourceResolver,
+            LocalPlatformCursorController provides StandalonePlatformCursorController,
         ) {
             content()
         }
