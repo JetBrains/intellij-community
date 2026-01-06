@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog", "OVERRIDE_DEPRECATION", "RemoveRedundantQualifierName")
 
 package com.intellij.openapi.actionSystem.impl
@@ -1207,7 +1207,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   // inlining here to reduce the number of service stacktraces
   @Suppress("NOTHING_TO_INLINE")
   inline fun runInWriteIntentConditionally(action: AnAction, runnable: Runnable) {
-    if (action.templatePresentation.isRWLockRequired) {
+    if (Utils.isLockRequiredForProcessing(action)) {
       WriteIntentReadAction.run(runnable)
     } else {
       runnable.run()

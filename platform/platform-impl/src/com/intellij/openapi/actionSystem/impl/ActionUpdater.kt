@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ActionUpdaterKt")
 @file:OptIn(IntellijInternalApi::class)
 
@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil.ALWAYS_VISIBLE_GROUP
 import com.intellij.openapi.actionSystem.ex.ActionUtil.HIDE_DISABLED_CHILDREN
 import com.intellij.openapi.actionSystem.ex.ActionUtil.SUPPRESS_SUBMENU
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.Utils.isLockRequiredForProcessing
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -353,7 +354,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     val children = try {
       retryOnAwaitSharedData(opElement, maxAwaitSharedDataRetries) {
         ActionUpdaterInterceptor.getGroupChildren(group, event) {
-          callAction(opElement, group.actionUpdateThread, group.templatePresentation.isRWLockRequired) {
+          callAction(opElement, group.actionUpdateThread, isLockRequiredForProcessing(group)) {
             group.getChildren(event).apply {
               ensureNotNullChildren(opElement, this as Array<AnAction?>)
             }.asList()
@@ -528,7 +529,7 @@ internal class ActionUpdater @JvmOverloads constructor(
               AnActionResult.PERFORMED
             }
             else -> {
-              callAction(opElement, action.actionUpdateThread, action.templatePresentation.isRWLockRequired) {
+              callAction(opElement, action.actionUpdateThread, isLockRequiredForProcessing(action)) {
                 ActionUtil.updateAction(action, event)
               }
             }
@@ -549,6 +550,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
     return null
   }
+
 
   @Suppress("UNCHECKED_CAST")
   private fun <T : Any?> getSessionDataDeferred(

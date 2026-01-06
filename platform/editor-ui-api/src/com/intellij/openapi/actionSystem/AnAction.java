@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.diagnostic.LoadingState;
@@ -10,7 +10,6 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SmartFMap;
@@ -390,12 +389,6 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
         presentation.putClientProperty("USE_SMALL_FONT_IN_TOOLBAR", true);
       }
     }
-    boolean canRunEdtActionWithoutRwLock =
-      // BackendActionManager gets preloaded, and it retrieves template presentation of some actions
-      LoadingState.APP_STARTED.isOccurred()
-      && Registry.is("actions.update.edt.actions.without.rw.lock", false)
-      && getActionUpdateThread() == ActionUpdateThread.EDT;
-    presentation.setRWLockRequired(!canRunEdtActionWithoutRwLock);
     return presentation;
   }
 

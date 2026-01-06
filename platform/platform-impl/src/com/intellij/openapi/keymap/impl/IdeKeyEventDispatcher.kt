@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.keymap.impl
@@ -538,7 +538,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
 
     fireBeforeShortcutTriggered(shortcut, actions, context)
 
-    val isRwLockRequired = actions.any { it.templatePresentation.isRWLockRequired }
+    val isRwLockRequired = actions.any(Utils::isLockRequiredForProcessing)
 
     val chosen = if (isRwLockRequired) {
       WriteIntentReadAction.compute {
