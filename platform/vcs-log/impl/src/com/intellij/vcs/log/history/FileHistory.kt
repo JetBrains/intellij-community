@@ -347,13 +347,14 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
     return !changes.containsValue(ChangeKind.REMOVED)
   }
 
-  fun getCommits(): IntSet {
-    val result = IntOpenHashSet()
-    forEach(affectedCommits) { _, commit, _ ->
-      result.add(commit)
+  val commits: IntSet
+    get() {
+      val result = IntOpenHashSet()
+      forEach(affectedCommits) { _, commit, _ ->
+        result.add(commit)
+      }
+      return result
     }
-    return result
-  }
 
   fun getCommitsWithRenames(): Set<VcsLogCommitStorageIndex> {
     return commitToRename.values().mapTo(mutableSetOf()) { rename -> rename.childCommit }

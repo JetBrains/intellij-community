@@ -1,99 +1,94 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.log
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.messages.MessageBus;
-import com.intellij.vcs.log.graph.PermanentGraph;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsKey
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Consumer
+import com.intellij.util.messages.MessageBus
+import com.intellij.vcs.log.graph.PermanentGraph
 
 /**
  * Provides the information needed to build the VCS log, such as the list of most recent commits with their parents.
  */
-public interface VcsLogProvider {
-  ExtensionPointName<VcsLogProvider> LOG_PROVIDER_EP = ExtensionPointName.create("com.intellij.logProvider");
-
+interface VcsLogProvider {
   /**
-   * Reads the most recent commits from the log together with all repository references.<br/>
+   * Reads the most recent commits from the log together with all repository references.
+   *
    * Commits should be at least topologically ordered, better considering commit time as well: they will be shown in the log in this order.
-   * <p/>
+   *
    * This method is called both on the startup and on refresh.
    *
    * @param requirements some limitations on commit data that should be returned, e.g. the number of commits.
-   * @return given amount of ordered commits and <b>all</b> references in the repository.
+   * @return given amount of ordered commits and **all** references in the repository.
    */
-  @NotNull
-  DetailedLogData readFirstBlock(@NotNull VirtualFile root, @NotNull Requirements requirements) throws VcsException;
+  @Throws(VcsException::class)
+  fun readFirstBlock(root: VirtualFile, requirements: Requirements): DetailedLogData
 
   /**
    * Reads the whole history.
-   * <p/>
+   *
    * Reports the commits to the consumer to avoid creation & even temporary storage of a too large commits collection.
    *
    * @return all references and all authors in the repository.
    */
-  @NotNull
-  LogData readAllHashes(@NotNull VirtualFile root, @NotNull Consumer<? super TimedVcsCommit> commitConsumer) throws VcsException;
+  @Throws(VcsException::class)
+  fun readAllHashes(root: VirtualFile, commitConsumer: Consumer<in TimedVcsCommit>): LogData
 
   /**
    * Reads those details of the given commits, which are necessary to be shown in the log table and commit details.
    */
-  void readMetadata(@NotNull VirtualFile root,
-                    @NotNull List<String> hashes,
-                    @NotNull Consumer<? super VcsCommitMetadata> consumer) throws VcsException;
+  @Throws(VcsException::class)
+  fun readMetadata(root: VirtualFile, hashes: List<String>, consumer: Consumer<in VcsCommitMetadata>)
 
   /**
    * Reads full details for specified commits in the repository.
-   * <p/>
+   *
    * Reports the commits to the consumer to avoid creation & even temporary storage of a too large commits collection.
    */
-  void readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes,
-                       @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer) throws VcsException;
+  @Throws(VcsException::class)
+  fun readFullDetails(root: VirtualFile, hashes: List<String>, commitConsumer: Consumer<in VcsFullCommitDetails>)
 
   /**
-   * <p>Returns the VCS which is supported by this provider.</p>
-   * <p>If there will be several VcsLogProviders which support the same VCS, only one will be chosen. It is undefined, which one.</p>
+   * Returns the VCS which is supported by this provider.
+   *
+   * If there will be several VcsLogProviders which support the same VCS, only one will be chosen. It is undefined, which one.
    */
-  @NotNull
-  VcsKey getSupportedVcs();
+  val supportedVcs: VcsKey
 
   /**
-   * Returns the {@link VcsLogRefManager} which will be used to identify positions of references in the log table, on the branches panel,
+   * Returns the [VcsLogRefManager] which will be used to identify positions of references in the log table, on the branches panel,
    * and on the details panel.
    */
-  @NotNull
-  VcsLogRefManager getReferenceManager();
+  val referenceManager: VcsLogRefManager
 
   /**
-   * <p>Starts listening to events from the certain VCS, which should lead to the log refresh.</p>
-   * <p>Returns disposable that unsubscribes from events.
-   * Using a {@link MessageBus} topic can help to accomplish that.</p>
+   * Starts listening to events from the certain VCS, which should lead to the log refresh.
+   *
+   * Returns disposable that unsubscribes from events.
+   * Using a [MessageBus] topic can help to accomplish that.
    *
    * @param roots     VCS roots which should be listened to.
    * @param refresher The refresher which should be notified about the need of refresh.
    * @return Disposable that unsubscribes from events on dispose.
    */
-  @NotNull
-  Disposable subscribeToRootRefreshEvents(@NotNull Collection<? extends VirtualFile> roots, @NotNull VcsLogRefresher refresher);
+  fun subscribeToRootRefreshEvents(roots: Collection<VirtualFile>, refresher: VcsLogRefresher): Disposable
 
   /**
-   * @deprecated implement {@link VcsLogProvider#getCommitsMatchingFilter(VirtualFile, VcsLogFilterCollection, PermanentGraph.Options, int)} instead
+   * @deprecated implement [VcsLogProvider.getCommitsMatchingFilter] with graphOptions parameter instead
    */
-  default @NotNull List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection,
-                                                        int maxCount)
-    throws VcsException {
-    return getCommitsMatchingFilter(root, filterCollection, PermanentGraph.Options.Default, maxCount);
+  @Deprecated("implement getCommitsMatchingFilter with graphOptions parameter instead")
+  @Throws(VcsException::class)
+  fun getCommitsMatchingFilter(
+    root: VirtualFile,
+    filterCollection: VcsLogFilterCollection,
+    maxCount: Int,
+  ): List<TimedVcsCommit> {
+    return getCommitsMatchingFilter(root, filterCollection, PermanentGraph.Options.Default, maxCount)
   }
 
   /**
@@ -101,36 +96,40 @@ public interface VcsLogProvider {
    *
    * @param root             repository root
    * @param filterCollection filters to use
-   * @param graphOptions     additional options, such as "--first-parent", see {@link PermanentGraph.Options}
+   * @param graphOptions     additional options, such as "--first-parent", see [PermanentGraph.Options]
    * @param maxCount         maximum number of commits to request from the VCS, or -1 for unlimited.
    */
-  default @NotNull List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection,
-                                                        @NotNull PermanentGraph.Options graphOptions, int maxCount) throws VcsException {
-    throw new UnsupportedOperationException("Method getCommitsMatchingFilter is not implemented the class " + this.getClass().getName());
+  @Throws(VcsException::class)
+  fun getCommitsMatchingFilter(
+    root: VirtualFile,
+    filterCollection: VcsLogFilterCollection,
+    graphOptions: PermanentGraph.Options,
+    maxCount: Int,
+  ): List<TimedVcsCommit> {
+    throw UnsupportedOperationException("Method getCommitsMatchingFilter is not implemented the class ${this.javaClass.name}")
   }
 
   /**
    * Returns the name of current user as specified for the given root,
    * or null if user didn't configure his name in the VCS settings.
    */
-  @Nullable
-  VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException;
+  @Throws(VcsException::class)
+  fun getCurrentUser(root: VirtualFile): VcsUser?
 
   /**
    * Returns the list of names of branches/references which contain the given commit.
    */
-  @NotNull
-  Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException;
+  @Throws(VcsException::class)
+  fun getContainingBranches(root: VirtualFile, commitHash: Hash): Collection<String>
 
   /**
-   * In order to tune log for it's VCS, provider may set value to one of the properties specified in {@link VcsLogProperties}.
+   * In order to tune log for it's VCS, provider may set value to one of the properties specified in [VcsLogProperties].
    *
    * @param property Property instance to return value for.
-   * @param <T>      Type of property value.
+   * @param T        Type of property value.
    * @return Property value or null if unset.
    */
-  @Nullable
-  <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property);
+  fun <T> getPropertyValue(property: VcsLogProperties.VcsLogProperty<T>): T?
 
   /**
    * Returns currently checked out branch in given root, or null if not on any branch or provided root is not under version control.
@@ -138,70 +137,65 @@ public interface VcsLogProvider {
    * @param root root for which branch is requested.
    * @return branch that is currently checked out in the specified root.
    */
-  @Nullable
-  String getCurrentBranch(@NotNull VirtualFile root);
+  fun getCurrentBranch(root: VirtualFile): String?
 
   /**
-   * Returns {@link VcsLogDiffHandler} for this provider in order to support comparing commits and with local version from log-based file history.
+   * Returns [VcsLogDiffHandler] for this provider in order to support comparing commits and with local version from log-based file history.
    *
    * @return diff handler or null if unsupported.
    */
-  default @Nullable VcsLogDiffHandler getDiffHandler() {
-    return null;
-  }
+  val diffHandler: VcsLogDiffHandler?
+    get() = null
 
   /**
-   * Returns {@link VcsLogFileHistoryHandler} for this provider in order to support Log-based file history.
+   * Returns [VcsLogFileHistoryHandler] for this provider in order to support Log-based file history.
    *
    * @return file history handler or null if unsupported.
    */
-  default @Nullable VcsLogFileHistoryHandler getFileHistoryHandler(Project project) {
-    return VcsLogFileHistoryHandler.getByVcs(project, getSupportedVcs());
+  fun getFileHistoryHandler(project: Project): VcsLogFileHistoryHandler? {
+    return VcsLogFileHistoryHandler.getByVcs(project, supportedVcs)
   }
 
   /**
    * Checks that the given reference points to a valid commit in the given root, and returns the Hash of this commit.
    * Otherwise, if the reference is invalid, returns null.
    */
-  default @Nullable Hash resolveReference(@NotNull String ref, @NotNull VirtualFile root) {
-    return null;
-  }
+  fun resolveReference(ref: String, root: VirtualFile): Hash? = null
 
   /**
    * Returns the VCS root which should be used by the file history instead of the root found by standard mechanism (through mappings).
    */
-  default @Nullable VirtualFile getVcsRoot(@NotNull Project project, @NotNull VirtualFile detectedRoot, @NotNull FilePath filePath) {
-    return detectedRoot;
-  }
+  fun getVcsRoot(project: Project, detectedRoot: VirtualFile, filePath: FilePath): VirtualFile? = detectedRoot
 
   interface Requirements {
-
     /**
-     * Returns the number of commits that should be queried from the VCS. <br/>
+     * Returns the number of commits that should be queried from the VCS.
+     *
      * (of course it may return fewer commits if the repository is small)
      */
-    int getCommitCount();
+    val commitCount: Int
   }
 
   /**
    * Container for references and users.
    */
   interface LogData {
-    @NotNull
-    Set<VcsRef> getRefs();
+    val refs: Set<VcsRef>
 
-    @NotNull
-    Set<VcsUser> getUsers();
+    val users: Set<VcsUser>
   }
 
   /**
    * Container for the ordered list of commits together with their details, and references.
    */
   interface DetailedLogData {
-    @NotNull
-    List<VcsCommitMetadata> getCommits();
+    val commits: List<VcsCommitMetadata>
 
-    @NotNull
-    Set<VcsRef> getRefs();
+    val refs: Set<VcsRef>
+  }
+
+  companion object {
+    @JvmField
+    val LOG_PROVIDER_EP: ExtensionPointName<VcsLogProvider> = ExtensionPointName.create("com.intellij.logProvider")
   }
 }

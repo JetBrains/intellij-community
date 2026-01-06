@@ -151,6 +151,7 @@ f:com.intellij.vcs.log.VcsLogProperties
 f:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - getOrDefault(com.intellij.vcs.log.VcsLogProvider):java.lang.Object
 com.intellij.vcs.log.VcsLogProvider
+- sf:Companion:com.intellij.vcs.log.VcsLogProvider$Companion
 - sf:LOG_PROVIDER_EP:com.intellij.openapi.extensions.ExtensionPointName
 - getCommitsMatchingFilter(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.VcsLogFilterCollection,I):java.util.List
 - getCommitsMatchingFilter(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.graph.PermanentGraph$Options,I):java.util.List
@@ -169,6 +170,7 @@ com.intellij.vcs.log.VcsLogProvider
 - a:readMetadata(com.intellij.openapi.vfs.VirtualFile,java.util.List,com.intellij.util.Consumer):V
 - resolveReference(java.lang.String,com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.Hash
 - a:subscribeToRootRefreshEvents(java.util.Collection,com.intellij.vcs.log.VcsLogRefresher):com.intellij.openapi.Disposable
+f:com.intellij.vcs.log.VcsLogProvider$Companion
 com.intellij.vcs.log.VcsLogProvider$DetailedLogData
 - a:getCommits():java.util.List
 - a:getRefs():java.util.Set

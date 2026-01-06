@@ -15,6 +15,7 @@ import com.intellij.vcs.log.data.util.trace
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.impl.RequirementsImpl
+import com.intellij.vcs.log.impl.SimpleLogProviderRequirements
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -206,14 +207,14 @@ internal class VcsLogRefresherImpl(
   private suspend fun loadFirstBlock(): VcsLogGraphData =
     tracer.trace(Initializing) {
       LOG.debug("Loading the first block")
-      val commitCountRequirements = CommitCountRequirements(recentCommitCount)
+      val commitCountRequirements = SimpleLogProviderRequirements(recentCommitCount)
       val data = loadRecentData(providers.keys.associateWith { commitCountRequirements })
       LOG.trace("First block loaded")
       checkCanceled()
-      val compoundList = multiRepoJoin(data.getCommits()).take(recentCommitCount)
+      val compoundList = multiRepoJoin(data.commits).take(recentCommitCount)
       LOG.trace("First block joined")
       checkCanceled()
-      VcsLogGraphDataFactory.buildData(compoundList, data.getRefs(), providers, storage, false).also {
+      VcsLogGraphDataFactory.buildData(compoundList, data.refs, providers, storage, false).also {
         LOG.trace("First block built")
       }
     }
@@ -234,7 +235,7 @@ internal class VcsLogRefresherImpl(
         checkCanceled()
         refreshSessionData.put(currentAttemptData)
 
-        val compoundLog = multiRepoJoin(refreshSessionData.getCommits())
+        val compoundLog = multiRepoJoin(refreshSessionData.commits)
         checkCanceled()
         val allNewRefs = currentRefs.toMutableMap().apply {
           replaceAll { root, refs ->
@@ -261,10 +262,10 @@ internal class VcsLogRefresherImpl(
       val logInfo = readFullLogFromVcs()
       LOG.trace("Full log loaded")
       checkCanceled()
-      val graphCommits = multiRepoJoin(logInfo.getCommits())
+      val graphCommits = multiRepoJoin(logInfo.commits)
       LOG.trace("Full log joined")
       checkCanceled()
-      VcsLogGraphDataFactory.buildData(graphCommits, logInfo.getRefs(), providers, storage, true).also {
+      VcsLogGraphDataFactory.buildData(graphCommits, logInfo.refs, providers, storage, true).also {
         LOG.trace("Full log built")
       }
     }
@@ -277,9 +278,9 @@ internal class VcsLogRefresherImpl(
         val requirements = prepareRequirements(providers.keys, commitCount, null)
         val data = loadRecentData(requirements)
         LOG.trace("Small pack loaded")
-        val compoundList = multiRepoJoin(data.getCommits()).take(commitCount)
+        val compoundList = multiRepoJoin(data.commits).take(commitCount)
         LOG.trace("Small pack joined")
-        VcsLogGraphDataFactory.buildOverlayData(compoundList, data.getRefs(), providers, storage).also {
+        VcsLogGraphDataFactory.buildOverlayData(compoundList, data.refs, providers, storage).also {
           LOG.trace("Small pack built")
         }
       }
@@ -320,23 +321,23 @@ internal class VcsLogRefresherImpl(
           LOG.trace("Recent data loaded")
           checkCanceled()
           val commits = tracer.trace(CompactingCommits) {
-            data.getCommits().map {
+            data.commits.map {
               compactCommit(it, root)
             }
           }
           LOG.trace("Recent commits compacted")
           checkCanceled()
-          refreshSessionData.put(root, commits, CompressedRefs(data.getRefs(), storage))
+          refreshSessionData.put(root, commits, CompressedRefs(data.refs, storage))
 
           val users = buildSet {
-            for (metadata in data.getCommits()) {
+            for (metadata in data.commits) {
               add(metadata.author)
               add(metadata.committer)
             }
           }
           LOG.trace("Storing recent data: ${commits.size} commits, ${users.size} users")
           commitDataConsumer?.storeData(root, commits, users)
-          commitDataConsumer?.storeRecentDetails(data.getCommits())
+          commitDataConsumer?.storeRecentDetails(data.commits)
         }
       }
       LOG.trace("Recent data flushing")
@@ -360,10 +361,10 @@ internal class VcsLogRefresherImpl(
             }
           }
           LOG.trace("Full data loaded and compacted")
-          refreshSessionData.put(root, graphCommits, CompressedRefs(data.getRefs(), storage))
+          refreshSessionData.put(root, graphCommits, CompressedRefs(data.refs, storage))
 
-          LOG.trace("Storing full data: ${graphCommits.size} commits, ${data.getUsers().size} users")
-          commitDataConsumer?.storeData(root, graphCommits, data.getUsers())
+          LOG.trace("Storing full data: ${graphCommits.size} commits, ${data.users.size} users")
+          commitDataConsumer?.storeData(root, graphCommits, data.users)
         }
       }
       LOG.trace("Full data flushing")
@@ -431,10 +432,6 @@ private data class RefreshRequest(
   }
 }
 
-private data class CommitCountRequirements(private val commitCount: Int) : VcsLogProvider.Requirements {
-  override fun getCommitCount(): Int = commitCount
-}
-
 private class RefreshSessionData {
   private val refsByRoot = HashMap<VirtualFile, VcsLogRefsOfSingleRoot>()
   private val commitsByRoot = HashMap<VirtualFile, List<GraphCommit<Int>>>()
@@ -449,9 +446,11 @@ private class RefreshSessionData {
     refsByRoot[root] = refs
   }
 
-  fun getCommits(): Collection<List<GraphCommit<Int>>> = commitsByRoot.values
+  val commits: Collection<List<GraphCommit<Int>>>
+    get() = commitsByRoot.values
 
-  fun getRefs(): Map<VirtualFile, VcsLogRefsOfSingleRoot> = refsByRoot.toMap()
+  val refs: Map<VirtualFile, VcsLogRefsOfSingleRoot>
+    get() = refsByRoot.toMap()
 
   fun getRefs(root: VirtualFile): VcsLogRefsOfSingleRoot? = refsByRoot[root]
 }

@@ -137,7 +137,7 @@ object VcsLogComponents {
     sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = VfsUtilCore.toVirtualFileArray(roots)
     val onlyRoot = ContainerUtil.getOnlyItem<VirtualFile?>(roots)
     if (onlyRoot != null) {
-      sink[VcsLogInternalDataKeys.LOG_DIFF_HANDLER] = logData.getLogProvider(onlyRoot).getDiffHandler()
+      sink[VcsLogInternalDataKeys.LOG_DIFF_HANDLER] = logData.getLogProvider(onlyRoot).diffHandler
     }
     sink[VcsLogInternalDataKeys.VCS_LOG_VISIBLE_ROOTS] = VcsLogUtil.getAllVisibleRoots(logData.roots, filterUi.filters)
     sink[PlatformCoreDataKeys.HELP_ID] = HELP_ID

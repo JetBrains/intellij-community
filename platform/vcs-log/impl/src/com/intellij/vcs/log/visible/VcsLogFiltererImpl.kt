@@ -211,7 +211,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                           ?: return Pair(dataGetter.filter(detailsFilters, commitCandidates), null)
 
     val historyData = dataGetter.createFileHistoryData(structureFilter.files).build()
-    val candidates = IntCollectionUtil.intersect(historyData.getCommits(), commitCandidates)
+    val candidates = IntCollectionUtil.intersect(historyData.commits, commitCandidates)
 
     val filtersWithoutStructure = detailsFilters.filterNot { it is VcsLogStructureFilter }
     if (filtersWithoutStructure.isEmpty()) {

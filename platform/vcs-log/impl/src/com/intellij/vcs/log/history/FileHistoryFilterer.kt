@@ -268,7 +268,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
 
       val permanentGraph = dataPack.permanentGraph
       if (permanentGraph !is PermanentGraphImpl) {
-        val visibleGraph = createVisibleGraph(dataPack, graphOptions, matchingHeads, data.getCommits())
+        val visibleGraph = createVisibleGraph(dataPack, graphOptions, matchingHeads, data.commits)
         val fileHistory = FileHistory(data.buildFileStatesMap())
         return VisiblePack(dataPack, visibleGraph, false, filters).withFileHistory(fileHistory)
       }
@@ -281,7 +281,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
       val historyBuilder = FileHistoryBuilder(commit, filePath, data, oldFileHistory,
                                               removeTrivialMerges = FileHistoryBuilder.isRemoveTrivialMerges,
                                               refine = FileHistoryBuilder.isRefine)
-      val visibleGraph = permanentGraph.createVisibleGraph(graphOptions, matchingHeads, data.getCommits(), historyBuilder)
+      val visibleGraph = permanentGraph.createVisibleGraph(graphOptions, matchingHeads, data.commits, historyBuilder)
       val fileHistory = historyBuilder.fileHistory
 
       return VisiblePack(dataPack, visibleGraph, fileHistory.unmatchedAdditionsDeletions.isNotEmpty(), filters).withFileHistory(fileHistory)
