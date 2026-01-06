@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -6,7 +6,6 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.client.ClientSession;
 import com.intellij.openapi.client.ClientSessionsManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -513,11 +512,11 @@ public class UndoManagerImpl extends UndoManager {
       if (appSession != null && appSession.isController()) {
         // IJPL-168172: If current session is a controller, return a local client state instead
         try (AccessToken ignored = ClientId.withExplicitClientId(ClientId.getLocalId())) {
-          return getComponentManager().getService(UndoClientState.class);
+          return UndoClientState.getInstance(myProject);
         }
       }
     }
-    return getComponentManager().getService(UndoClientState.class);
+    return UndoClientState.getInstance(myProject);
   }
 
   private @Nullable UndoClientState getClientState(@Nullable FileEditor editor) {
@@ -538,7 +537,7 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   private @Unmodifiable @NotNull List<UndoClientState> getAllClientStates() {
-    return getComponentManager().getServices(UndoClientState.class, ClientKind.ALL);
+    return UndoClientState.getAllInstances(myProject);
   }
 
   private @NotNull List<UndoProvider> getUndoProviders() {
@@ -547,10 +546,6 @@ public class UndoManagerImpl extends UndoManager {
             ? UndoProvider.EP_NAME.getExtensionList()
             : UndoProvider.PROJECT_EP_NAME.getExtensionList(myProject)
     );
-  }
-
-  private @NotNull ComponentManager getComponentManager() {
-    return myProject != null ? myProject : ApplicationManager.getApplication();
   }
 
   @TestOnly

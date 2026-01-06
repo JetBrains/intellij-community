@@ -1,9 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.client.ClientAppSession;
+import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.client.ClientProjectSession;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.cmd.CmdEvent;
@@ -11,6 +13,7 @@ import com.intellij.openapi.command.impl.cmd.CmdEventTransform;
 import com.intellij.openapi.command.impl.cmd.MutableCmdMeta;
 import com.intellij.openapi.command.impl.cmd.UndoMeta;
 import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -24,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -31,6 +35,14 @@ import java.util.stream.Collectors;
 
 
 final class UndoClientState implements Disposable {
+
+  static @Nullable UndoClientState getInstance(@Nullable Project project) {
+    return getComponentManager(project).getService(UndoClientState.class);
+  }
+
+  static @Unmodifiable @NotNull List<UndoClientState> getAllInstances(@Nullable Project project) {
+    return getComponentManager(project).getServices(UndoClientState.class, ClientKind.ALL);
+  }
 
   private static final Logger LOG = Logger.getInstance(UndoClientState.class);
 
@@ -547,6 +559,10 @@ final class UndoClientState implements Disposable {
       %s
       %s
       """.formatted(s, inEditor, redo, undo);
+  }
+
+  private static @NotNull ComponentManager getComponentManager(@Nullable Project project) {
+    return project != null ? project : ApplicationManager.getApplication();
   }
 
   private enum UndoRedoInProgress { NONE, UNDO, REDO }
