@@ -41,5 +41,6 @@
     <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
     <orderEntry type="module" module-name="intellij.libraries.jbr" />
+    <orderEntry type="library" name="jna" level="project" />
   </component>
 </module>
