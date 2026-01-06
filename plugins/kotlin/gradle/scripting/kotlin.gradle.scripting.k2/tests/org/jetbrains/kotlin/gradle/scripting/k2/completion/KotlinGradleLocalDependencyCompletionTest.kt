@@ -381,11 +381,52 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     fun `test single part being artifact`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
+                "org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.0",
+                "org.jetbrains:gradle-plugin:2.3.0",
+                "com.google.guava:guava:33.5.0-jre",
+            )
+            testCompletionStrict(
+                """
+                dependencies {
+                    implementation("gradle<caret>")
+                }
+                """.trimIndent(),
+                "org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.0",
+                "org.jetbrains:gradle-plugin:2.3.0",
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun `test single part being group`(gradleVersion: GradleVersion) {
+        test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
+            configureLocalIndex(
+                "org.gradle:api:9.0.0",
+                "gradle:artifact:version",
+                "com.google.guava:guava:33.5.0-jre",
+            )
+            testCompletionStrict(
+                """
+                dependencies {
+                    implementation("gradle<caret>")
+                }
+                """.trimIndent(),
+                "org.gradle:api:9.0.0",
+                "gradle:artifact:version",
+                "org.gradle:api:9.0.0",
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun `test single part being artifact or group`(gradleVersion: GradleVersion) {
+        test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
+            configureLocalIndex(
                 "org.jetbrains.kotlin:kotlin-reflect:2.0.0",
                 "org.gradle:gradle-tooling-api:9.2.1",
-                "org.gradle:gradle-tooling-api:9.2.0",
-                "org.gradle:gradle-tooling-extension-api:9.2.0",
-                "org.gradle:gradle-tooling-extension-api:9.1.0",
+                "org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.0",
                 "org.gradle:api:9.0.0",
                 "com.google.guava:guava:33.5.0-jre",
             )
@@ -396,9 +437,28 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
                 }
                 """.trimIndent(),
                 "org.gradle:gradle-tooling-api:9.2.1",
-                "org.gradle:gradle-tooling-api:9.2.0",
-                "org.gradle:gradle-tooling-extension-api:9.2.0",
-                "org.gradle:gradle-tooling-extension-api:9.1.0",
+                "org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.0",
+                "org.gradle:api:9.0.0",
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun `test each part uses contains`(gradleVersion: GradleVersion) {
+        test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
+            configureLocalIndex(
+                "group:artifact:version",
+                "prefix-groupsuffix:prefixartifact-suffix:prefix.version-suffix",
+            )
+            testCompletionStrict(
+                """
+                dependencies {
+                    implementation("group:artifact:version<caret>")
+                }
+                """.trimIndent(),
+                "group:artifact:version",
+                "prefix-groupsuffix:prefixartifact-suffix:prefix.version-suffix",
             )
         }
     }

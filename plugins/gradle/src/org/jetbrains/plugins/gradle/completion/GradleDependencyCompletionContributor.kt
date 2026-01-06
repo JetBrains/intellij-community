@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.completion
 
 import com.intellij.openapi.components.service
@@ -18,93 +18,84 @@ class GradleDependencyCompletionContributor : DependencyCompletionContributor {
 
     val parts = searchString.split(":")
 
-    val groupPrefix = parts.getOrNull(0).orEmpty()
-    val artifactPrefix = parts.getOrNull(1).orEmpty()
-    val versionPrefix = parts.getOrNull(2).orEmpty()
+    val groupSubstring = parts.getOrNull(0).orEmpty()
+    val artifactSubstring = parts.getOrNull(1).orEmpty()
+    val versionSubstring = parts.getOrNull(2).orEmpty()
 
     return when (parts.size) {
-      1 -> searchSingle(request, groupPrefix)
-      else -> searchFull(request, groupPrefix, artifactPrefix, versionPrefix)
+      1 -> searchSingle(request, groupSubstring)
+      else -> searchFull(request, groupSubstring, artifactSubstring, versionSubstring)
     }
   }
 
-  private fun searchSingle(request: DependencyCompletionRequest, prefix: String): List<DependencyCompletionResult> {
+  /**
+   * Finds dependencies all matching group or artifact substring
+   */
+  private fun searchSingle(request: DependencyCompletionRequest, substring: String): List<DependencyCompletionResult> {
     val eelDescriptor = request.context.eelDescriptor
     val indexer = service<GradleLocalRepositoryIndexer>()
-    val results = indexer.artifacts(eelDescriptor)
-      .asSequence()
-      .startsWithPrefix(prefix)
-      .flatMap { artifact ->
-        indexer.groups(eelDescriptor, artifact)
-          .asSequence()
-          .flatMap { group ->
+    val matchesOnGroup = indexer.groups(eelDescriptor)
+      .filter { it.contains(substring, ignoreCase = true) }
+      .flatMap { group ->
+        indexer.artifacts(eelDescriptor, group)
+          .flatMap { artifact ->
             indexer.versions(eelDescriptor, group, artifact)
-              .asSequence()
               .map { version -> DependencyCompletionResult(group, artifact, version) }
           }
-      }.toList()
-    if (results.isNotEmpty()) return results
-    return searchFull(request, prefix, "", "")
+      }.toSet()
+    val matchesOnArtifact = indexer.artifacts(eelDescriptor)
+      .filter { it.contains(substring, ignoreCase = true) }
+      .flatMap { artifact ->
+        indexer.groups(eelDescriptor, artifact)
+          .flatMap { group ->
+            indexer.versions(eelDescriptor, group, artifact)
+              .map { version -> DependencyCompletionResult(group, artifact, version) }
+          }
+      }.toSet()
+    return (matchesOnGroup + matchesOnArtifact).toList()
   }
 
   private fun searchFull(
     request: DependencyCompletionRequest,
-    groupPrefix: String,
-    artifactPrefix: String,
-    versionPrefix: String,
+    groupSubstring: String,
+    artifactSubstring: String,
+    versionSubstring: String,
   ): List<DependencyCompletionResult> {
     val eelDescriptor = request.context.eelDescriptor
     val indexer = service<GradleLocalRepositoryIndexer>()
     return indexer.groups(eelDescriptor)
-      .asSequence()
-      .startsWithPrefix(groupPrefix)
+      .filter { it.contains(groupSubstring, ignoreCase = true) }
       .flatMap { group ->
         indexer.artifacts(eelDescriptor, group)
-          .asSequence()
-          .startsWithPrefix(artifactPrefix)
+          .filter { it.contains(artifactSubstring, ignoreCase = true) }
           .flatMap { artifact ->
             indexer.versions(eelDescriptor, group, artifact)
-              .asSequence()
-              .startsWithPrefix(versionPrefix)
+              .filter { it.contains(versionSubstring, ignoreCase = true) }
               .map { version -> DependencyCompletionResult(group, artifact, version) }
           }
-      }.toList()
+      }
   }
-
-  private fun Sequence<String>.startsWithPrefix(prefix: String) = if (prefix.isEmpty()) this else filter { it.startsWith(prefix) }
 
   override suspend fun getGroups(request: DependencyGroupCompletionRequest): List<String> {
     val artifactFilter = request.artifact
     val eelDescriptor = request.context.eelDescriptor
     val indexer = service<GradleLocalRepositoryIndexer>()
-    val groups = indexer.groups(eelDescriptor)
-      .asSequence()
-      .filter { it.startsWith(request.groupPrefix) }
-      .filter { artifactFilter.isEmpty() || (indexer.artifacts(eelDescriptor, it).contains(artifactFilter)) }
-      .sorted()
-      .toList()
-    return groups
+    return indexer.groups(eelDescriptor)
+      .filter { it.contains(request.groupPrefix, ignoreCase = true) }
+      .filter { artifactFilter.isEmpty() || indexer.artifacts(eelDescriptor, it).contains(artifactFilter) }
   }
 
   override suspend fun getArtifacts(request: DependencyArtifactCompletionRequest): List<String> {
     val eelDescriptor = request.context.eelDescriptor
     val indexer = service<GradleLocalRepositoryIndexer>()
-    val artifacts = indexer.artifacts(eelDescriptor, request.group)
-      .asSequence()
-      .filter { it.startsWith(request.artifactPrefix) }
-      .sorted()
-      .toList()
-    return artifacts
+    return indexer.artifacts(eelDescriptor, request.group)
+      .filter { it.contains(request.artifactPrefix, ignoreCase = true) }
   }
 
   override suspend fun getVersions(request: DependencyVersionCompletionRequest): List<String> {
     val eelDescriptor = request.context.eelDescriptor
     val indexer = service<GradleLocalRepositoryIndexer>()
-    val versions = indexer.versions(eelDescriptor, request.group, request.artifact)
-      .asSequence()
-      .filter { it.startsWith(request.versionPrefix) }
-      .sortedDescending()
-      .toList()
-    return versions
+    return indexer.versions(eelDescriptor, request.group, request.artifact)
+      .filter { it.contains(request.versionPrefix, ignoreCase = true) }
   }
 }
