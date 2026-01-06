@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom
 
 import com.intellij.find.FindBundle
@@ -296,7 +296,7 @@ internal class RegExpDialog(val project: Project?, val editConfiguration: Boolea
     override fun actionPerformed(e: AnActionEvent) {
       JBPopupFactory.getInstance()
         .createActionGroupPopup(RegExpBundle.message("regexp.dialog.regexp.flags"), myGroup, e.dataContext, true, null, 10)
-        .showUnderneathOf(filterButton)
+        .showUnderneathOf(flagsButton)
     }
   }
 
