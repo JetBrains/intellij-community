@@ -2250,8 +2250,6 @@ f:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ui.ChangesViewContentI
 - sf:getToolWindowFor(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.wm.ToolWindow
 - sf:getToolWindowIdFor(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
-- f:isCommitToolWindowEnabled():kotlinx.coroutines.flow.StateFlow
-- sf:isCommitToolWindowShown(com.intellij.openapi.project.Project):Z
 - f:isContentSelected(java.lang.String):Z
 - sf:isToolWindowTabVertical(com.intellij.openapi.project.Project,java.lang.String):Z
 - removeContent(com.intellij.ui.content.Content):V
@@ -2265,7 +2263,6 @@ f:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$Companion
 - f:getInstanceImpl(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 - f:getToolWindowFor(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.wm.ToolWindow
 - f:getToolWindowIdFor(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
-- f:isCommitToolWindowShown(com.intellij.openapi.project.Project):Z
 - f:isToolWindowTabVertical(com.intellij.openapi.project.Project,java.lang.String):Z
 - f:shouldHaveSplitterDiffPreview(com.intellij.openapi.project.Project,Z):Z
 e:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$TabOrderWeight
@@ -4017,14 +4014,17 @@ f:com.intellij.vcs.commit.CommitModeManager
 - sf:SETTINGS:com.intellij.util.messages.Topic
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - dispose():V
+- f:getCommitModeState():kotlinx.coroutines.flow.StateFlow
 - f:getCurrentCommitMode():com.intellij.vcs.commit.CommitMode
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.vcs.commit.CommitModeManager
+- sf:isCommitToolWindowEnabled(com.intellij.openapi.project.Project):Z
 - sf:subscribeOnCommitModeChange(com.intellij.util.messages.SimpleMessageBusConnection,com.intellij.vcs.commit.CommitModeManager$CommitModeListener):V
 com.intellij.vcs.commit.CommitModeManager$CommitModeListener
 - java.util.EventListener
 - a:commitModeChanged():V
 f:com.intellij.vcs.commit.CommitModeManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.vcs.commit.CommitModeManager
+- f:isCommitToolWindowEnabled(com.intellij.openapi.project.Project):Z
 - f:subscribeOnCommitModeChange(com.intellij.util.messages.SimpleMessageBusConnection,com.intellij.vcs.commit.CommitModeManager$CommitModeListener):V
 com.intellij.vcs.commit.CommitModeManager$SettingsListener
 - java.util.EventListener

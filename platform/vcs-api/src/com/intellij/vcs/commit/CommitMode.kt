@@ -1,38 +1,27 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import org.jetbrains.annotations.ApiStatus
 
 interface CommitMode {
-  fun useCommitToolWindow(): Boolean
-  fun hideLocalChangesTab(): Boolean = false
-  fun disableDefaultCommitAction(): Boolean = false
+  val isCommitTwEnabled: Boolean
+  val isLocalChangesTabHidden: Boolean get() = false
+  val isDefaultCommitActionDisabled: Boolean get() = false
 
   object PendingCommitMode : CommitMode {
-    override fun useCommitToolWindow(): Boolean {
-      // Enable 'Commit' toolwindow before vcses are activated
-      return true
-    }
+    // Enable 'Commit' toolwindow before vcses are activated
+    override val isCommitTwEnabled: Boolean = true
 
-    override fun disableDefaultCommitAction(): Boolean {
-      // Disable `Commit` action until vcses are activated
-      return true
-    }
+    // Disable `Commit` action until vcses are activated
+    override val isDefaultCommitActionDisabled: Boolean = true
   }
 
   object ModalCommitMode : CommitMode {
-    override fun useCommitToolWindow(): Boolean = false
+    override val isCommitTwEnabled: Boolean = false
   }
 
-  data class NonModalCommitMode(val isToggleMode: Boolean) : CommitMode {
-    companion object {
-      const val COMMIT_TOOL_WINDOW_SETTINGS_KEY: String = "vcs.commit.tool.window"
-
-      @ApiStatus.Internal
-      fun commitTwEnabled(): Boolean = AdvancedSettings.getBoolean(COMMIT_TOOL_WINDOW_SETTINGS_KEY)
-    }
-
-    override fun useCommitToolWindow(): Boolean = commitTwEnabled()
-  }
+  data class NonModalCommitMode @ApiStatus.Internal constructor(
+    override val isCommitTwEnabled: Boolean,
+    val isToggleMode: Boolean,
+  ) : CommitMode
 }

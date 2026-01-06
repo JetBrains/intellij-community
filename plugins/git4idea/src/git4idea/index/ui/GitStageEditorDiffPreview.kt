@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.isCommitToolWindowShown
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
+import com.intellij.vcs.commit.CommitModeManager
 import git4idea.index.GitStageTracker
 import git4idea.index.actions.updateStageDiffAvailability
 import javax.swing.JComponent
@@ -40,7 +40,7 @@ class GitStageEditorDiffPreview(
   }
 
   override fun isPreviewOnDoubleClick(): Boolean {
-    if (isCommitToolWindowShown(project)) {
+    if (CommitModeManager.isCommitToolWindowEnabled(project)) {
       return VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK
     }
     else {
@@ -49,7 +49,7 @@ class GitStageEditorDiffPreview(
   }
 
   override fun isPreviewOnEnter(): Boolean {
-    if (isCommitToolWindowShown(project)) {
+    if (CommitModeManager.isCommitToolWindowEnabled(project)) {
       return VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK
     }
     else {

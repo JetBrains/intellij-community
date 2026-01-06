@@ -53,7 +53,7 @@ a:com.intellij.openapi.vcs.AbstractVcs
 - getDiffProvider():com.intellij.openapi.vcs.diff.DiffProvider
 - a:getDisplayName():java.lang.String
 - getEditFileProvider():com.intellij.openapi.vcs.EditFileProvider
-- getForcedCommitMode():com.intellij.vcs.commit.CommitMode
+- getForcedCommitMode(com.intellij.vcs.commit.CommitMode):com.intellij.vcs.commit.CommitMode
 - getIntegrateEnvironment():com.intellij.openapi.vcs.update.UpdateEnvironment
 - f:getKeyInstanceMethod():com.intellij.openapi.vcs.VcsKey
 - getMergeProvider():com.intellij.openapi.vcs.merge.MergeProvider
@@ -2010,31 +2010,28 @@ com.intellij.vcs.commit.CommitMessageUi
 - a:startLoading():V
 - a:stopLoading():V
 com.intellij.vcs.commit.CommitMode
-- disableDefaultCommitAction():Z
-- hideLocalChangesTab():Z
-- a:useCommitToolWindow():Z
+- a:isCommitTwEnabled():Z
+- isDefaultCommitActionDisabled():Z
+- isLocalChangesTabHidden():Z
 f:com.intellij.vcs.commit.CommitMode$ModalCommitMode
 - com.intellij.vcs.commit.CommitMode
 - sf:INSTANCE:com.intellij.vcs.commit.CommitMode$ModalCommitMode
-- useCommitToolWindow():Z
+- isCommitTwEnabled():Z
 f:com.intellij.vcs.commit.CommitMode$NonModalCommitMode
 - com.intellij.vcs.commit.CommitMode
-- sf:COMMIT_TOOL_WINDOW_SETTINGS_KEY:java.lang.String
-- sf:Companion:com.intellij.vcs.commit.CommitMode$NonModalCommitMode$Companion
-- <init>(Z):V
 - f:component1():Z
-- f:copy(Z):com.intellij.vcs.commit.CommitMode$NonModalCommitMode
-- bs:copy$default(com.intellij.vcs.commit.CommitMode$NonModalCommitMode,Z,I,java.lang.Object):com.intellij.vcs.commit.CommitMode$NonModalCommitMode
+- f:component2():Z
+- f:copy(Z,Z):com.intellij.vcs.commit.CommitMode$NonModalCommitMode
+- bs:copy$default(com.intellij.vcs.commit.CommitMode$NonModalCommitMode,Z,Z,I,java.lang.Object):com.intellij.vcs.commit.CommitMode$NonModalCommitMode
 - equals(java.lang.Object):Z
 - hashCode():I
+- isCommitTwEnabled():Z
 - f:isToggleMode():Z
-- useCommitToolWindow():Z
-f:com.intellij.vcs.commit.CommitMode$NonModalCommitMode$Companion
 f:com.intellij.vcs.commit.CommitMode$PendingCommitMode
 - com.intellij.vcs.commit.CommitMode
 - sf:INSTANCE:com.intellij.vcs.commit.CommitMode$PendingCommitMode
-- disableDefaultCommitAction():Z
-- useCommitToolWindow():Z
+- isCommitTwEnabled():Z
+- isDefaultCommitActionDisabled():Z
 com.intellij.vcs.commit.CommitWorkflowHandler
 - a:execute(com.intellij.openapi.vcs.changes.CommitExecutor):V
 - a:getAmendCommitHandler():com.intellij.vcs.commit.AmendCommitHandler

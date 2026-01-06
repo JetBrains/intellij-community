@@ -10,9 +10,7 @@ import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -57,7 +55,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.*;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowShown;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.subscribeOnVcsToolWindowLayoutChanges;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 
@@ -174,7 +171,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     @Override
     public boolean test(Project project) {
       return ProjectLevelVcsManager.getInstance(project).hasActiveVcss() &&
-             !CommitModeManager.getInstance(project).getCurrentCommitMode().hideLocalChangesTab();
+             !CommitModeManager.getInstance(project).getCurrentCommitMode().isLocalChangesTabHidden();
     }
   }
 
@@ -325,15 +322,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
       registerShortcuts(this);
 
-      ApplicationManager.getApplication().getMessageBus().connect(project)
-        .subscribe(AdvancedSettingsChangeListener.TOPIC, new AdvancedSettingsChangeListener() {
-          @Override
-          public void advancedSettingChanged(@NotNull String id, @NotNull Object oldValue, @NotNull Object newValue) {
-            if (CommitMode.NonModalCommitMode.COMMIT_TOOL_WINDOW_SETTINGS_KEY.equals(id) && oldValue != newValue) {
-              configureToolbars();
-            }
-          }
-        });
+      CommitModeManager.subscribeOnCommitModeChange(busConnection, () -> configureToolbars());
       configureToolbars();
 
       myCommitPanelSplitter = new ChangesViewCommitPanelSplitter(myProject);
@@ -446,7 +435,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     }
 
     private void configureToolbars() {
-      boolean isToolbarHorizontal = CommitModeManager.getInstance(myProject).getCurrentCommitMode().useCommitToolWindow();
+      boolean isToolbarHorizontal = CommitModeManager.isCommitToolWindowEnabled(myProject);
       myChangesView.setToolbarHorizontal(isToolbarHorizontal);
     }
 
@@ -493,7 +482,9 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   }
 
   public static @NotNull @Nls String getLocalChangesToolWindowName(@NotNull Project project) {
-    return isCommitToolWindowShown(project) ? VcsBundle.message("tab.title.commit") : VcsBundle.message("local.changes.tab");
+    return CommitModeManager.isCommitToolWindowEnabled(project)
+           ? VcsBundle.message("tab.title.commit")
+           : VcsBundle.message("local.changes.tab");
   }
 
   @ApiStatus.Internal

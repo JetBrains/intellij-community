@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.platform.vcs.impl.shared.rpc.BackendChangesViewEvent
@@ -16,6 +15,7 @@ import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
 import com.intellij.platform.vcs.impl.shared.rpc.InclusionDto
 import com.intellij.vcs.changes.viewModel.getRpcChangesView
+import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.getProjectScoped
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScoped
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
@@ -24,6 +24,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 internal class ChangesViewApiImpl : ChangesViewApi {
   override suspend fun getBackendChangesViewEvents(projectId: ProjectId): Flow<BackendChangesViewEvent> =
@@ -67,7 +68,7 @@ internal class ChangesViewApiImpl : ChangesViewApi {
   }
 
   override suspend fun isCommitToolWindowEnabled(projectId: ProjectId): Flow<Boolean> = getProjectScoped(projectId) { project ->
-    ChangesViewContentManager.getInstanceImpl(project)?.isCommitToolWindowEnabled
+    project.serviceAsync<CommitModeManager>().commitModeState.map { it.isCommitTwEnabled }
   } ?: flowOf(false)
 
   override suspend fun synchronizeInclusion(projectId: ProjectId) = projectScoped(projectId) { project ->

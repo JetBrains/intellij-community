@@ -330,7 +330,7 @@ public final class HgVcs extends AbstractVcs {
   }
 
   @Override
-  public @Nullable CommitMode getForcedCommitMode() {
+  public @Nullable CommitMode getForcedCommitMode(@NotNull CommitMode originalMode) {
     return DvcsCommitModeProvider.compute();
   }
 
