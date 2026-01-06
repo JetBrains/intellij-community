@@ -1,6 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
-import com.intellij.ide.starter.coroutine.testSuiteSupervisorScope
+import com.intellij.ide.starter.coroutine.CommonScope.testSuiteSupervisorScope
 import com.intellij.lambda.testFramework.starter.IdeInstance.ide
 import com.intellij.lambda.testFramework.starter.IdeInstance.isStarted
 import com.intellij.lambda.testFramework.utils.IdeWithLambda

@@ -2,9 +2,9 @@ package com.intellij.ide.starter.junit5
 
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.coroutineScopesCancellationTimeout
-import com.intellij.ide.starter.coroutine.perClassSupervisorScope
-import com.intellij.ide.starter.coroutine.perTestSupervisorScope
-import com.intellij.ide.starter.coroutine.testSuiteSupervisorScope
+import com.intellij.ide.starter.coroutine.CommonScope.testSuiteSupervisorScope
+import com.intellij.ide.starter.coroutine.CommonScope.perClassSupervisorScope
+import com.intellij.ide.starter.coroutine.CommonScope.perTestSupervisorScope
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
@@ -22,21 +22,6 @@ import org.junit.platform.launcher.TestPlan
  *
  */
 open class TestCleanupListener : TestExecutionListener {
-  init {
-    // Shutdown hook is needed to make sure we will surely cancel the scope on builds cancellation on TC.
-    val shutdownHookThread = Thread(Runnable {
-      val reason = "Shutdown is in progress: either SIGTERM or SIGKILL is caught"
-      logOutput("Canceling supervisor scopes: $reason")
-      testSuiteSupervisorScope.cancel(CancellationException(reason))
-    }, "test-scopes-shutdown-hook")
-    try {
-      Runtime.getRuntime().addShutdownHook(shutdownHookThread)
-    }
-    catch (e: IllegalStateException) {
-      logError("Shutting down test scopes: Shutdown hook cannot be added because: ${e.message}")
-    }
-  }
-
   fun cancelPerTestSupervisorScope(testIdentifier: TestIdentifier) {
     if (!testIdentifier.isTest) return
 

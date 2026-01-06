@@ -1,6 +1,6 @@
 package com.intellij.ide.starter.screenRecorder
 
-import com.intellij.ide.starter.coroutine.testSuiteSupervisorScope
+import com.intellij.ide.starter.coroutine.CommonScope.testSuiteSupervisorScope
 import com.intellij.ide.starter.ide.DEFAULT_DISPLAY_ID
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
