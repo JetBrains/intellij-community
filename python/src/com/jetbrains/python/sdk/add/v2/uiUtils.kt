@@ -299,7 +299,6 @@ internal fun <P : PathHolder> Panel.pythonInterpreterComboBox(
       cell(comboBox)
         .bindItem(selectedSdkProperty)
         .applyToComponent {
-          preferredSize = JBUI.size(preferredSize)
           isEditable = true
         }
         .validationRequestor(
@@ -331,6 +330,7 @@ internal class PythonInterpreterComboBox<P : PathHolder>(
 
   init {
     renderer = PythonSdkComboBoxListCellRenderer { isLoading.get() }
+    preferredSize = JBUI.size(preferredSize)
     val newOnPathSelected: (String) -> Unit = { rawPath ->
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("python.sdk.validating.environment")) {
         val pathOnFileSystem = fileSystem.parsePath(rawPath).onFailure { error ->

@@ -48,7 +48,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionListener
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import javax.swing.Icon
 import javax.swing.JTextField
 import javax.swing.KeyStroke
@@ -142,6 +145,16 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
         textInputFlow.value = text
       }
     })
+
+    createBrowseFolderListener(browseFolderDialogTitle, isFileSelectionMode)?.also {
+      addActionListener(it)
+    }
+
+    textField.addFocusListener(object : FocusAdapter() {
+      override fun focusLost(e: FocusEvent) {
+         validationAction.doValidate()
+      }
+    })
   }
 
   private fun registerPropertyCallbacks() {
@@ -188,6 +201,13 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
   fun initialize(scope: CoroutineScope) {
     this.scope = scope
     registerPropertyCallbacks()
+    this.parent.addMouseListener(object : java.awt.event.MouseAdapter() {
+      override fun mouseClicked(e: MouseEvent?) {
+        if (!this@ValidatedPathField.isVisible) return
+        validationAction.doValidate()
+      }
+    })
+
 
     scope.launch(Dispatchers.UI) {
       textInputFlow
