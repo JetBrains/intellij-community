@@ -51,8 +51,8 @@ internal class CompletionVisibilityChecker(
         val originalFile = parameters.originalFile
         if (originalFile is KtCodeFragment) return true
 
-        // todo should be > 2
-        if (parameters.invocationCount >= 2) return true
+        // TODO: We should consider only showing private members for invocationCount > 2
+        if (!parameters.isRerun && parameters.invocationCount >= 2) return true
 
         val declarationContainingFile = declaration.containingFile ?: return false
 
