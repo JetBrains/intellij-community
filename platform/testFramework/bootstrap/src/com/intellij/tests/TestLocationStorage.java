@@ -95,7 +95,7 @@ public final class TestLocationStorage {
     return null;
   }
 
-  private static String getPackagePath(Class<?> testClass) {
+  public static String getPackagePath(Class<?> testClass) {
     if (testClass == null) return "";
 
     try {
