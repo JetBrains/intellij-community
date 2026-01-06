@@ -113,6 +113,9 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
     val settings = CodeInsightSettings.getInstance()
 
     return panel {
+      row {
+        text(ApplicationBundle.message("completion.description"))
+      }
       buttonsGroup {
         row {
           cbMatchCase = checkBox(ApplicationBundle.message("completion.option.match.case"))
