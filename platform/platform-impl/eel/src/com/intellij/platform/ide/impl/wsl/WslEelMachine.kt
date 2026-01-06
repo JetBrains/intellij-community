@@ -6,7 +6,7 @@ import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
-import com.intellij.platform.eel.provider.EelMachineProvider
+import com.intellij.platform.eel.provider.EelMachineResolver
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ijent.IjentPosixApi
 import org.jetbrains.annotations.ApiStatus
@@ -16,12 +16,12 @@ private suspend fun WSLDistribution.getIjent(descriptor: EelDescriptor): IjentPo
   return WslIjentManager.instanceAsync().getIjentApi(descriptor, this, null, false)
 }
 
-internal class WslEelMachineProvider : EelMachineProvider {
-  override suspend fun getEelMachine(eelDescriptor: EelDescriptor): EelMachine? {
+internal class WslEelMachineResolver : EelMachineResolver {
+  override suspend fun resolveEelMachine(eelDescriptor: EelDescriptor): EelMachine? {
     return getResolvedEelMachine(eelDescriptor)
   }
 
-  override suspend fun getEelMachineByInternalName(internalName: String): EelMachine? {
+  override suspend fun resolveEelMachineByInternalName(internalName: String): EelMachine? {
     return if (internalName.startsWith("WSL-"))
       WslEelMachine(WSLDistribution(internalName.substring(4)))
     else

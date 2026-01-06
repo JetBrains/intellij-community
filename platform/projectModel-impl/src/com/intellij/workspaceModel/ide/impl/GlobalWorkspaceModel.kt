@@ -17,7 +17,7 @@ import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.eel.EelMachine
-import com.intellij.platform.eel.provider.EelMachineProvider
+import com.intellij.platform.eel.provider.EelMachineResolver
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.platform.workspace.jps.GlobalStorageEntitySource
@@ -471,7 +471,7 @@ class GlobalWorkspaceModelRegistry {
       LocalEelMachine
     }
     else {
-      EelMachineProvider.getEelMachineByInternalName(protectedName.name)
+      EelMachineResolver.getEelMachineByInternalName(protectedName.name)
     }
     val model = getGlobalModel(machine)
     return model

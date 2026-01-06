@@ -10,30 +10,30 @@ import com.intellij.platform.eel.EelMachine
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-suspend fun EelDescriptor.getEelMachine(): EelMachine {
+suspend fun EelDescriptor.resolveEelMachine(): EelMachine {
   if (this === LocalEelDescriptor) return LocalEelMachine
-  return EelMachineProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getEelMachine(this) }
+  return EelMachineResolver.EP_NAME.extensionList.firstNotNullOfOrNull { it.resolveEelMachine(this) }
          ?: throw IllegalStateException("No EelMachine found for descriptor: $this (${this.name})")
 }
 
 @ApiStatus.Experimental
 fun EelDescriptor.getResolvedEelMachine(): EelMachine? {
   if (this === LocalEelDescriptor) return LocalEelMachine
-  return EelMachineProvider.EP_NAME.extensionList.firstNotNullOfOrNull {
+  return EelMachineResolver.EP_NAME.extensionList.firstNotNullOfOrNull {
     it.getResolvedEelMachine(this)
   }
 }
 
 @ApiStatus.Experimental
 suspend fun EelDescriptor.toEelApi(): EelApi {
-  return getEelMachine().toEelApi(this)
+  return resolveEelMachine().toEelApi(this)
 }
 
 @ApiStatus.Experimental
-interface EelMachineProvider {
+interface EelMachineResolver {
   companion object {
     @ApiStatus.Internal
-    val EP_NAME: ExtensionPointName<EelMachineProvider> = ExtensionPointName("com.intellij.eelMachineProvider")
+    val EP_NAME: ExtensionPointName<EelMachineResolver> = ExtensionPointName("com.intellij.eelMachineResolver")
 
     @ApiStatus.Internal
     suspend fun getEelMachineByInternalName(internalName: String): EelMachine {
@@ -42,7 +42,7 @@ interface EelMachineProvider {
       }
 
       return EP_NAME.extensionList.firstNotNullOfOrNull {
-        it.getEelMachineByInternalName(internalName)
+        it.resolveEelMachineByInternalName(internalName)
       } ?: throw IllegalStateException("No EelMachine found for internal name: $internalName")
     }
   }
@@ -50,8 +50,8 @@ interface EelMachineProvider {
   @ApiStatus.Internal
   fun getResolvedEelMachine(eelDescriptor: EelDescriptor): EelMachine?
 
-  suspend fun getEelMachine(eelDescriptor: EelDescriptor): EelMachine?
+  suspend fun resolveEelMachine(eelDescriptor: EelDescriptor): EelMachine?
 
   @ApiStatus.Internal
-  suspend fun getEelMachineByInternalName(internalName: String): EelMachine?
+  suspend fun resolveEelMachineByInternalName(internalName: String): EelMachine?
 }

@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.platform.eel.EelMachine
-import com.intellij.platform.eel.provider.EelMachineProvider
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.platform.workspace.storage.MutableEntityStorage
