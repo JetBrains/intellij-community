@@ -552,10 +552,11 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
           DumbService.getInstance(myProject).completeJustSubmittedTasks();
 
-          // Invalidate file properties to ensure FileIndex is updated for the new source root
+          // Invalidate file properties to ensure FileIndex is updated for the new source root.
+          // Accept all files to ensure the moved file's properties are fully refreshed.
           VirtualFile movedFile = newElement.getVirtualFile();
           if (movedFile != null) {
-            PushedFilePropertiesUpdater.getInstance(myProject).filePropertiesChanged(movedFile, file -> true);
+            PushedFilePropertiesUpdater.getInstance(myProject).filePropertiesChanged(movedFile, __ -> true);
           }
 
           final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(directory);

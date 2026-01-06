@@ -238,11 +238,12 @@ public final class MoveClassesOrPackagesUtil {
 
       file = moveDestination.findFile(file.getName());
 
-      // Invalidate file properties to ensure FileIndex is updated for the new source root
+      // Invalidate file properties to ensure FileIndex is updated for the new source root.
+      // Accept all files to ensure the moved file's properties are fully refreshed.
       if (file != null) {
         VirtualFile movedFile = file.getVirtualFile();
         if (movedFile != null) {
-          PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(movedFile, f -> true);
+          PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(movedFile, __ -> true);
         }
       }
     }
