@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.types
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Ref
+import com.intellij.psi.PsiElement
 import com.jetbrains.python.psi.PyTypedElement
 import org.jetbrains.annotations.ApiStatus
 
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface TypeEvalExternalTypeProvider {
-  fun isAvailable(): Boolean
+  fun isAvailable(element: PsiElement): Boolean
 
   fun provideType(element: PyTypedElement, context: TypeEvalContext): Ref<PyType?>?
 
