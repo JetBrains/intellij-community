@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.rpc.backend.impl
 
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.platform.rpc.RemoteApiProviderService
@@ -23,12 +25,14 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
 
   private val registeringSink = object : RemoteApiProvider.Sink {
     override fun <T : RemoteApi<Unit>> remoteApi(descriptor: RemoteApiDescriptor<T>, implementation: () -> T) {
+      LOG.debug("Registering remote api ${descriptor.getApiFqn()} - $descriptor")
       remoteApis[descriptor.getApiFqn()] = ServiceImplementation(descriptor, implementation(), null)
     }
   }
 
   private val unregisteringSink = object : RemoteApiProvider.Sink {
     override fun <T : RemoteApi<Unit>> remoteApi(descriptor: RemoteApiDescriptor<T>, implementation: () -> T) {
+      LOG.debug("Unregistering remote api ${descriptor.getApiFqn()} - $descriptor")
       remoteApis.remove(descriptor.getApiFqn())
     }
   }
@@ -37,6 +41,7 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
     EP_NAME.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<RemoteApiProvider> {
       override fun extensionAdded(extension: RemoteApiProvider, pluginDescriptor: PluginDescriptor) {
         if (visitedEPs.putIfAbsent(extension, Unit) == null) {
+          LOG.debug("A new remote api provider has been added - $extension")
           with(extension) {
             registeringSink.remoteApis()
           }
@@ -45,6 +50,7 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
 
       override fun extensionRemoved(extension: RemoteApiProvider, pluginDescriptor: PluginDescriptor) {
         visitedEPs.remove(extension)
+        LOG.debug("Remote api provider has been removed - $extension")
         synchronized(this) {
           with(extension) {
             unregisteringSink.remoteApis()
@@ -54,6 +60,7 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
     })
     for (extension in EP_NAME.extensionList) {
       if (visitedEPs.putIfAbsent(extension, Unit) == null) {
+        LOG.debug("Processing remote api provider extension - $extension")
         with(extension) {
           registeringSink.remoteApis()
         }
@@ -68,6 +75,15 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
   }
 
   override fun resolve(serviceId: InstanceId): ServiceImplementation? {
-    return remoteApis[serviceId.id]
+    return remoteApis[serviceId.id].also {
+      if (it == null) {
+        LOG.debug("No remote API found for service ID: ${serviceId.id}")
+        LOG.trace { "Available remote APIs: ${remoteApis.keys.joinToString("\n\t")}" }
+      }
+    }
+  }
+
+  companion object {
+    private val LOG = logger<RemoteApiRegistry>()
   }
 }
