@@ -187,7 +187,7 @@ private fun <T> ChangeScope.withTransactorView(kernelViewEntity: TransactorViewE
           when (val part = partition(instruction.eid)) {
             hiddenPart -> hiddenPartContext!!
             visiblePart -> visiblePartContext!!
-            _root_ide_package_.fleet.kernel.SharedPart -> sharedPartContext!!
+            fleet.kernel.SharedPart -> sharedPartContext!!
             else -> error("effects in partition $part are not supported")
           }
         }
@@ -196,14 +196,14 @@ private fun <T> ChangeScope.withTransactorView(kernelViewEntity: TransactorViewE
     }
 
     sharedPartContext = i
-      .intersectingPartitions(IntList.of(SchemaPart, _root_ide_package_.fleet.kernel.CommonPart, _root_ide_package_.fleet.kernel.SharedPart))
-      .cachedQueryWithParts(IntList.of(SchemaPart, _root_ide_package_.fleet.kernel.CommonPart, _root_ide_package_.fleet.kernel.SharedPart))
+      .intersectingPartitions(IntList.of(SchemaPart, fleet.kernel.CommonPart, fleet.kernel.SharedPart))
+      .cachedQueryWithParts(IntList.of(SchemaPart, fleet.kernel.CommonPart, fleet.kernel.SharedPart))
       .expandAndMutateWithParts(AllParts)
       .enforcingUniquenessConstraints(IntList.of(SchemaPart,
-          _root_ide_package_.fleet.kernel.CommonPart,
-          _root_ide_package_.fleet.kernel.SharedPart
+          fleet.kernel.CommonPart,
+          fleet.kernel.SharedPart
       ))
-      .withDefaultPart(_root_ide_package_.fleet.kernel.SharedPart)
+      .withDefaultPart(fleet.kernel.SharedPart)
       .executingEffects(::effectsContext)
 
     hiddenPartContext = i
@@ -246,11 +246,11 @@ private fun kernelViewMiddleware(kernelViewEntity: TransactorViewEntity2): fleet
           next()
         }
 
-        if (kernelViewEntity[TransactorViewEntity2.HiddenPart] == _root_ide_package_.fleet.kernel.FrontendPart) {
+        if (kernelViewEntity[TransactorViewEntity2.HiddenPart] == fleet.kernel.FrontendPart) {
           val novelty = meta[MutableNoveltyKey]!!
-          val sharedNovelty = novelty.filter { datom -> partition(datom.eid) == _root_ide_package_.fleet.kernel.SharedPart }.toNovelty()
+          val sharedNovelty = novelty.filter { datom -> partition(datom.eid) == fleet.kernel.SharedPart }.toNovelty()
           if (sharedNovelty.isNotEmpty()) {
-            TransactorViewEntity2.forDefaultPart(_root_ide_package_.fleet.kernel.FrontendPart)?.let { frontendKernelViewEnitty ->
+            TransactorViewEntity2.forDefaultPart(fleet.kernel.FrontendPart)?.let { frontendKernelViewEnitty ->
               withTransactorView(frontendKernelViewEnitty) {
                 runOfferContributors(sharedNovelty)
               }
@@ -267,11 +267,11 @@ private fun kernelViewMiddleware(kernelViewEntity: TransactorViewEntity2): fleet
 suspend fun <T> withTransactorView(
     hiddenPart: Part,
     defaultPart: Part,
-    middleware: fleet.kernel.TransactorMiddleware = _root_ide_package_.fleet.kernel.TransactorMiddleware.Identity,
+    middleware: fleet.kernel.TransactorMiddleware = fleet.kernel.TransactorMiddleware.Identity,
     body: suspend CoroutineScope.(fleet.kernel.Transactor) -> T,
 ): T =
   spannedScope("withKernelView $defaultPart") {
-    val kernelViewEntity = _root_ide_package_.fleet.kernel.change {
+    val kernelViewEntity = fleet.kernel.change {
         register(TransactorViewEntity2)
         TransactorViewEntity2.new {
             it[TransactorViewEntity2.DefaultPart] = defaultPart
@@ -280,7 +280,7 @@ suspend fun <T> withTransactorView(
         }
     }
 
-    val kernel = _root_ide_package_.fleet.kernel.transactor()
+    val kernel = fleet.kernel.transactor()
 
     val myMiddleware = kernelViewMiddleware(kernelViewEntity) + middleware
     fun wrapChange(f: ChangeScope.() -> Unit): ChangeScope.() -> Unit {
@@ -305,18 +305,18 @@ suspend fun <T> withTransactorView(
         kernel.log.map { e ->
           when (e) {
             is fleet.kernel.SubscriptionEvent.First ->
-              _root_ide_package_.fleet.kernel.SubscriptionEvent.First(e.db.subDB(hiddenPart, kernelViewEntity))
+              fleet.kernel.SubscriptionEvent.First(e.db.subDB(hiddenPart, kernelViewEntity))
             is fleet.kernel.SubscriptionEvent.Next ->
-              _root_ide_package_.fleet.kernel.SubscriptionEvent.Next(e.change.subChange(hiddenPart, kernelViewEntity))
+              fleet.kernel.SubscriptionEvent.Next(e.change.subChange(hiddenPart, kernelViewEntity))
             is fleet.kernel.SubscriptionEvent.Reset ->
-              _root_ide_package_.fleet.kernel.SubscriptionEvent.Reset(e.db.subDB(hiddenPart, kernelViewEntity))
+              fleet.kernel.SubscriptionEvent.Reset(e.db.subDB(hiddenPart, kernelViewEntity))
           }
         }
 
       override val meta: MutableOpenMap<fleet.kernel.Transactor> = MutableOpenMap.empty()
     }
-    withContext(transactorView + _root_ide_package_.fleet.kernel.DbSource.ContextElement(
-        _root_ide_package_.fleet.kernel.FlowDbSource(
+    withContext(transactorView + fleet.kernel.DbSource.ContextElement(
+        fleet.kernel.FlowDbSource(
             transactorView.dbState,
             debugName = "kernelView $transactorView"
         )
