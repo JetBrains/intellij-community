@@ -34,7 +34,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -117,8 +116,7 @@ public final class CompileDriver {
     if (LOG.isDebugEnabled()) {
       LOG.debug("isUpToDate operation started");
     }
-    if (Registry.is("compiler.build.can.use.eel") &&
-        ProjectRootManager.getInstance(myProject).getProjectSdk() == null &&
+    if (ProjectRootManager.getInstance(myProject).getProjectSdk() == null &&
         !EelPathUtils.isProjectLocal(myProject)) {
       // BuildManager tries to use the internal JDK if the project jdk is not set
       // We cannot allow fallback to the internal jdk
