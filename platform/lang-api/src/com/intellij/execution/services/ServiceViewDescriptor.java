@@ -59,8 +59,11 @@ public interface ServiceViewDescriptor {
     return getToolbarActions();
   }
 
-  /// Obsolete, implement [UiDataProvider] instead
+  //void uiDataSnapshot(DataSink sink);
+
+  /// @deprecated Implement [UiDataProvider] instead
   @ApiStatus.Obsolete
+  @Deprecated(forRemoval = true)
   default @Nullable DataProvider getDataProvider() {
     return null;
   }
