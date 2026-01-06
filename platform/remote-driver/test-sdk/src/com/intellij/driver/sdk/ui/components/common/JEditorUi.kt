@@ -176,6 +176,12 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
+  fun moveCaretToText(targetText: String) {
+    interact {
+      getCaretModel().moveToOffset(text.indexOf(targetText))
+    }
+  }
+
   private fun calculatePositionPoint(line: Int, column: Int): Point {
     return interact {
       val lowerPoint = editor.logicalPositionToXY(driver.logicalPosition(line - 1, column - 1))
@@ -229,19 +235,28 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
-  fun getInlineCompletion(line: Int? = null): List<InlayHint> {
-    val startOffset = line?.let { editor.getDocument().getLineStartOffset(it - 1) } ?: 0
-    val endOffset = line?.let { editor.getDocument().getLineEndOffset(it - 1) } ?: Int.MAX_VALUE
-    val offsetToInlay: List<Pair<Int, String>> = this.editor.getInlayModel().getInlineElementsInRange(startOffset, endOffset).mapNotNull { element ->
+  /**
+  * Retrieves inline completion text at the specified offset or current caret position.
+  * @param offset The offset at which to retrieve inline completion. Defaults to the current caret position.
+  * @return The inline completion text at the specified offset.
+  */
+  fun getInlineCompletion(offset: Int = interact { editor.getCaretModel().getOffset() }): String {
+    val endOffset: Int = with(editor.getDocument()) {
+      val lastLine = getLineCount() - 1
+      getLineEndOffset(lastLine)
+    }
+    val inlineElements = editor.getInlayModel().getInlineElementsInRange(offset, endOffset).filter { it.getOffset() == offset }
+    val blockElements = editor.getInlayModel().getBlockElementsInRange(offset, endOffset).filter { it.getOffset() == offset }
+
+    val completions = (inlineElements + blockElements).mapNotNull { element ->
       try {
-        val text = driver.cast(element.getRenderer(), InlineCompletionLineRenderer::class).getBlocks().joinToString { it.text }
-        element.getOffset() to text
+        driver.cast(element.getRenderer(), InlineCompletionLineRenderer::class).getBlocks().joinToString("") { it.text }
       }
       catch (_: DriverCallException) {
         return@mapNotNull null
       }
     }
-    return offsetToInlay.map { InlayHint(it.first, it.second) }
+    return completions.joinToString("\n")
   }
 
   fun getAfterLineHints(line: Int): List<String> = editor.getInlayModel().getAfterLineEndElementsForLogicalLine(line - 1)
