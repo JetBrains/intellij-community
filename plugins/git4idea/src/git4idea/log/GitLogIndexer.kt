@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
+import com.intellij.dvcs.repo.getRepositoryUnlessFresh
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsKey
@@ -15,7 +16,6 @@ import git4idea.history.GitCommitRequirements.DiffInMergeCommits
 import git4idea.history.GitCommitRequirements.DiffRenames
 import git4idea.history.GitCompressedDetailsCollector
 import git4idea.history.GitLogUtil
-import git4idea.log.GitLogProvider.Companion.getRepository
 import git4idea.log.GitLogProvider.Companion.shouldIncludeRootChanges
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -27,7 +27,7 @@ class GitLogIndexer(private val project: Project,
   @Throws(VcsException::class)
   override fun readAllFullDetails(root: VirtualFile, encoder: VcsLogIndexer.PathsEncoder,
                                   commitConsumer: com.intellij.util.Consumer<in VcsLogIndexer.CompressedDetails>) {
-    val repository = getRepository(repositoryManager, root) ?: return
+    val repository = repositoryManager.getRepositoryUnlessFresh(root) ?: return
     val requirements = getGitCommitRequirements(repository)
     GitCompressedDetailsCollector(project, root, encoder).readFullDetails(commitConsumer::consume, requirements, true,
                                                                           *ArrayUtil.toStringArray(GitLogUtil.LOG_ALL))
@@ -38,7 +38,7 @@ class GitLogIndexer(private val project: Project,
                                hashes: List<String>,
                                encoder: VcsLogIndexer.PathsEncoder,
                                commitConsumer: com.intellij.util.Consumer<in VcsLogIndexer.CompressedDetails>) {
-    val repository = getRepository(repositoryManager, root) ?: return
+    val repository = repositoryManager.getRepositoryUnlessFresh(root) ?: return
     val requirements = getGitCommitRequirements(repository)
     GitCompressedDetailsCollector(project, root, encoder).readFullDetailsForHashes(hashes, requirements, true, commitConsumer::consume)
   }

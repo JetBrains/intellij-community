@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
+import com.intellij.dvcs.repo.getRepositoryUnlessFresh
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
@@ -61,7 +62,7 @@ class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexabl
 
   @Throws(VcsException::class)
   override fun readFirstBlock(root: VirtualFile, requirements: VcsLogProvider.Requirements): VcsLogProvider.DetailedLogData {
-    val repository = getRepository(root) ?: return LogDataImpl.empty()
+    val repository = repositoryManager.getRepositoryUnlessFresh(root) ?: return LogDataImpl.empty()
 
     // need to query more to sort them manually; this doesn't affect performance: it is equal for -1000 and -2000
     val commitCount = requirements.commitCount * 2
@@ -155,7 +156,7 @@ class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexabl
 
   @Throws(VcsException::class)
   override fun readAllHashes(root: VirtualFile, commitConsumer: Consumer<in TimedVcsCommit>): VcsLogProvider.LogData {
-    if (getRepository(root) == null) {
+    if (repositoryManager.getRepositoryUnlessFresh<GitRepository>(root) == null) {
       return LogDataImpl.empty()
     }
 
@@ -179,7 +180,7 @@ class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexabl
     hashes: List<String>,
     commitConsumer: Consumer<in VcsFullCommitDetails>,
   ) {
-    val repository = getRepository(root) ?: return
+    val repository = repositoryManager.getRepositoryUnlessFresh(root) ?: return
 
     val requirements = GitCommitRequirements(
       shouldIncludeRootChanges(repository),
@@ -366,10 +367,6 @@ class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexabl
     }
   }
 
-  private fun getRepository(root: VirtualFile): GitRepository? {
-    return getRepository(repositoryManager, root)
-  }
-
   companion object {
     private val LOG = logger<GitLogProvider>()
 
@@ -388,19 +385,6 @@ class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexabl
 
     internal fun shouldIncludeRootChanges(repository: GitRepository): Boolean {
       return !repository.info.isShallow
-    }
-
-    internal fun getRepository(manager: GitRepositoryManager, root: VirtualFile): GitRepository? {
-      val repository = manager.getRepositoryForRoot(root)
-      if (repository == null) {
-        LOG.warn("Repository not found for root $root")
-        return null
-      }
-      else if (repository.isFresh) {
-        LOG.info("Fresh repository: $root")
-        return null
-      }
-      return repository
     }
 
     internal fun getCorrectedVcsRoot(
@@ -427,7 +411,7 @@ class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexabl
       options: PermanentGraph.Options,
       maxCount: Int,
     ): GitLogCommandParameters? {
-      val repository = getRepository(GitRepositoryManager.getInstance(project), root) ?: return null
+      val repository = GitRepositoryManager.getInstance(project).getRepositoryUnlessFresh(root) ?: return null
 
       val configParameters = ArrayList<String>()
 
