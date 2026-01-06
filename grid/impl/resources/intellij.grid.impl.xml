@@ -167,6 +167,9 @@
       <action id="TableResult.SelectColumn" class="com.intellij.database.actions.SelectColumnAction"
               use-shortcut-of="EditorSelectWord"/>
       <separator/>
+      <action id="Console.TableResult.PinColumn" class="com.intellij.database.run.actions.PinColumnAction"/>
+      <action id="Console.TableResult.UnpinColumn" class="com.intellij.database.run.actions.UnpinColumnAction"/>
+      <separator/>
       <action id="Console.TableResult.HideColumn" class="com.intellij.database.run.actions.HideColumnAction"/>
       <action id="Console.TableResult.HideOtherColumns" class="com.intellij.database.run.actions.HideOtherColumnsAction"/>
       <action id="Console.TableResult.ShowAllColumns" class="com.intellij.database.run.actions.ShowAllColumnsAction"/>

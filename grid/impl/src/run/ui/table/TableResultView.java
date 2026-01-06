@@ -63,6 +63,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableColumnModelEvent;
@@ -72,6 +73,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.IntUnaryOperator;
@@ -106,6 +109,9 @@ public final class TableResultView extends JBTableWithResizableCells
   private final GridColumnLayout<GridRow, GridColumn> myColumnLayout;
   private final GridSelectionGrower myGrower;
   private final List<Consumer<Boolean>> mySelectionListeners = new ArrayList<>();
+  
+  // Pinned columns management - stores model indices of pinned columns in order
+  private final List<Integer> myPinnedColumnModelIndices = new ArrayList<>();
 
   private ModelIndex<GridColumn> myClickedHeaderColumnIdx;
   private Point myClickedHeaderPoint;
@@ -478,6 +484,11 @@ public final class TableResultView extends JBTableWithResizableCells
 
   @Override
   public void setColumnEnabled(@NotNull ModelIndex<GridColumn> columnIdx, boolean state) {
+    // If hiding a pinned column, unpin it first
+    if (!state && isColumnPinned(columnIdx)) {
+      unpinColumn(columnIdx);
+    }
+    
     if (isTransposed()) {
       getModel().fireTableDataChanged();
     }
@@ -1280,7 +1291,22 @@ public final class TableResultView extends JBTableWithResizableCells
 
     ViewIndex<GridRow> rowIdx = ViewIndex.forRow(myResultPanel, isTransposed() ? column : row);
     ViewIndex<GridColumn> columnIdx = ViewIndex.forColumn(myResultPanel, isTransposed() ? row : column);
-    return ResultViewWithCells.prepareComponent(component, myResultPanel, this, rowIdx, columnIdx, forDisplay);
+    Component prepared = ResultViewWithCells.prepareComponent(component, myResultPanel, this, rowIdx, columnIdx, forDisplay);
+    
+    // Add visual distinction for pinned columns
+    ModelIndex<GridColumn> modelColumnIdx = columnIdx.toModel(myResultPanel);
+    if (isColumnPinned(modelColumnIdx) && prepared instanceof JComponent jComponent) {
+      // Add a subtle right border to pinned column cells
+      Border existingBorder = jComponent.getBorder();
+      Border pinnedBorder = IdeBorderFactory.createBorder(new JBColor(Gray._150, Gray._100), SideBorder.RIGHT, 1);
+      if (existingBorder != null) {
+        jComponent.setBorder(BorderFactory.createCompoundBorder(pinnedBorder, existingBorder));
+      } else {
+        jComponent.setBorder(pinnedBorder);
+      }
+    }
+    
+    return prepared;
   }
 
   @Override
@@ -2281,7 +2307,15 @@ public final class TableResultView extends JBTableWithResizableCells
       }
       else {
         setValueForLastNonEmptyHeaderLine(myCurrentColumn.getHeaderValue().trim(), 0, columnDataIdx, forDisplay);
-        setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
+        
+        // Add visual distinction for pinned columns
+        ModelIndex<GridColumn> columnIdx = ModelIndex.forColumn(myTable.myResultPanel, columnDataIdx);
+        if (myTable.isColumnPinned(columnIdx)) {
+          // Add a thicker right border for pinned columns
+          setBorder(IdeBorderFactory.createBorder(new JBColor(Gray._150, Gray._100), SideBorder.RIGHT, 2));
+        } else {
+          setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
+        }
       }
 
       myCompositeLabel.revalidate();
@@ -2815,5 +2849,80 @@ public final class TableResultView extends JBTableWithResizableCells
   @Override
   public void onLocalFilterStateChanged() {
     updateRowFilter();
+  }
+
+  /**
+   * Pin a column to the left side of the table.
+   * Pinned columns remain visible at the leftmost position when scrolling horizontally.
+   *
+   * @param columnIdx the model index of the column to pin
+   */
+  public void pinColumn(@NotNull ModelIndex<GridColumn> columnIdx) {
+    int modelIndex = columnIdx.value;
+    if (!myPinnedColumnModelIndices.contains(modelIndex)) {
+      myPinnedColumnModelIndices.add(modelIndex);
+      reorganizeColumns();
+      repaint();
+    }
+  }
+
+  /**
+   * Unpin a column from the left side of the table.
+   *
+   * @param columnIdx the model index of the column to unpin
+   */
+  public void unpinColumn(@NotNull ModelIndex<GridColumn> columnIdx) {
+    int modelIndex = columnIdx.value;
+    if (myPinnedColumnModelIndices.remove(Integer.valueOf(modelIndex))) {
+      reorganizeColumns();
+      repaint();
+    }
+  }
+
+  /**
+   * Check if a column is pinned.
+   *
+   * @param columnIdx the model index of the column to check
+   * @return true if the column is pinned, false otherwise
+   */
+  public boolean isColumnPinned(@NotNull ModelIndex<GridColumn> columnIdx) {
+    return myPinnedColumnModelIndices.contains(columnIdx.value);
+  }
+
+  /**
+   * Reorganize columns to keep pinned columns at the left.
+   */
+  private void reorganizeColumns() {
+    if (myPinnedColumnModelIndices.isEmpty()) {
+      return;
+    }
+
+    MyTableColumnModel columnModel = (MyTableColumnModel) getColumnModel();
+    
+    // Build a map of model index to view index for O(1) lookup
+    Map<Integer, Integer> modelToViewMap = new HashMap<>();
+    for (int viewIdx = 0; viewIdx < columnModel.getColumnCount(); viewIdx++) {
+      TableResultViewColumn column = columnModel.getColumn(viewIdx);
+      modelToViewMap.put(column.getModelIndex(), viewIdx);
+    }
+    
+    // Move pinned columns to the left in order
+    for (int i = 0; i < myPinnedColumnModelIndices.size(); i++) {
+      int pinnedModelIndex = myPinnedColumnModelIndices.get(i);
+      
+      // Find the view index of this pinned column using the map
+      Integer currentViewIndex = modelToViewMap.get(pinnedModelIndex);
+      
+      // Move it to position i if not already there
+      if (currentViewIndex != null && currentViewIndex != i) {
+        columnModel.moveColumn(currentViewIndex, i);
+        
+        // Update the map after moving
+        // The column that was at position i is now at currentViewIndex
+        TableResultViewColumn movedColumn = columnModel.getColumn(currentViewIndex);
+        modelToViewMap.put(movedColumn.getModelIndex(), currentViewIndex);
+        modelToViewMap.put(pinnedModelIndex, i);
+      }
+    }
   }
 }
