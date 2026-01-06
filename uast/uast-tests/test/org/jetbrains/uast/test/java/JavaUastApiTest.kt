@@ -325,4 +325,57 @@ class JavaUastApiTest : AbstractJavaUastTest() {
     // IDEA-336319: TYPE_USE should not be applicable to UMethod
     TestCase.assertEquals(0, count)
   }
+
+  @Test
+  fun testLambdaFunctionalInterfaceType() {
+    // IDEA-383770
+    val file = myFixture.configureByText(
+      "MyClass.java",
+      """
+        package com.example
+
+        public class Message {
+            public int what;
+        }
+
+        class Looper {}
+
+        class Handler {
+            public interface Callback {
+                boolean handleMessage(Message msg);
+            }
+
+            public Handler() {}
+
+            public Handler(Callback callback) {}
+
+            public Handler(Looper looper) {}
+        }
+
+        final class MyClass {
+            public static void foo() {
+                Handler handler =
+                    new Handler(
+                        msg -> {
+                            switch (msg.what) {
+                                case 1:
+                                    return true;
+                                default:
+                                    return false;
+                            }
+                        });
+            }
+        }
+      """.trimIndent()
+    )
+    val uFile = file.toUElementOfType<UFile>()!!
+    uFile.accept(
+      object : AbstractUastVisitor() {
+        override fun visitLambdaExpression(node: ULambdaExpression): Boolean {
+          TestCase.assertEquals("com.example.Handler.Callback", node.functionalInterfaceType?.canonicalText)
+          return super.visitLambdaExpression(node)
+        }
+      }
+    )
+  }
 }
