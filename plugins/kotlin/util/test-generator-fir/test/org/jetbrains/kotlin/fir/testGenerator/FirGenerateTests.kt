@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.fir.AbstractK2JsBasicCompletionLegacyStdlibTest
 import org.jetbrains.kotlin.idea.fir.actions.AbstractK2AddImportActionTest
 import org.jetbrains.kotlin.idea.fir.actions.AbstractK2BytecodeToolWindowTest
+import org.jetbrains.kotlin.idea.fir.codeInsight.AbstractK2ErrorDescriptorTest
 import org.jetbrains.kotlin.idea.fir.codeInsight.AbstractK2MultiModuleLineMarkerTest
 import org.jetbrains.kotlin.idea.fir.completion.*
 import org.jetbrains.kotlin.idea.fir.completion.kmpBasic.AbstractKotlinKmpCompletionTest
@@ -476,6 +477,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     }
 
     testGroup("fir/tests", category = CODE_INSIGHT) {
+        testClass<AbstractK2ErrorDescriptorTest> {
+            model("../../../idea/tests/testData/editor/errorDescription", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""))
+        }
+
         testClass<AbstractFirQuickDocTest> {
             model("../../../idea/tests/testData/editor/quickDoc", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""), isRecursive = false)
             model("../../../idea/tests/testData/editor/quickDoc/misc", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""), isRecursive = true, excludedDirectories = listOf("dependencies"))
