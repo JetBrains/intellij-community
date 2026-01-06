@@ -7,6 +7,7 @@ on:
     # for each release
     tags:
       - 'pycharm/20*'
+  workflow_dispatch:
 
 jobs:
   build:
