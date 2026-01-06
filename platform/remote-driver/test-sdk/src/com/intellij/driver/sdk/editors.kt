@@ -6,6 +6,7 @@ import com.intellij.driver.client.service
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.remoteDev.GuestNavigationService
+import com.intellij.driver.sdk.ui.remote.ColorRef
 import java.awt.Point
 import java.awt.Rectangle
 import kotlin.time.Duration.Companion.seconds
@@ -38,7 +39,11 @@ interface MarkupModel {
 }
 
 @Remote("com.intellij.openapi.editor.markup.RangeHighlighter")
-interface RangeHighlighter
+interface RangeHighlighter {
+  fun getStartOffset(): Int
+  fun getEndOffset(): Int
+  fun getTextAttributes(): TextAttributes?
+}
 
 @Remote("com.intellij.openapi.editor.VisualPosition")
 interface VisualPosition {
@@ -53,6 +58,7 @@ interface Document {
   fun getLineNumber(offset: Int): Int
   fun getLineStartOffset(line: Int): Int
   fun getLineEndOffset(line: Int): Int
+  fun getLineCount(): Int
 }
 
 @Remote("com.intellij.openapi.editor.CaretModel")
@@ -60,8 +66,20 @@ interface CaretModel {
   fun moveToLogicalPosition(position: LogicalPosition)
   fun moveToVisualPosition(pos: VisualPosition)
   fun getLogicalPosition(): LogicalPosition
+  fun getAllCarets(): List<Caret>
   fun moveToOffset(offset: Int)
   fun getOffset(): Int
+  fun getCurrentCaret(): Caret
+}
+@Remote("com.intellij.openapi.editor.Caret")
+interface Caret {
+  fun getLogicalPosition(): LogicalPosition
+  fun getVisualAttributes(): CaretVisualAttributes
+}
+
+@Remote("com.intellij.openapi.editor.CaretVisualAttributes")
+interface CaretVisualAttributes {
+  fun getColor(): ColorRef?
 }
 
 @Remote("com.intellij.openapi.editor.ScrollingModel")
@@ -78,6 +96,7 @@ interface ScrollType {
 @Remote("com.intellij.openapi.editor.InlayModel")
 interface InlayModel {
   fun getInlineElementsInRange(startOffset: Int, endOffset: Int): List<Inlay>
+  fun getBlockElementsInRange(startOffset: Int, endOffset: Int): List<Inlay>
   fun getAfterLineEndElementsForLogicalLine(logicalLine: Int): List<Inlay>
 }
 
@@ -162,9 +181,19 @@ interface EditorColorsScheme {
 @Remote("com.intellij.openapi.editor.SelectionModel")
 interface SelectionModel {
   fun setSelection(startOffset: Int, endOffset: Int)
-  fun getSelectedText(): String?
+  fun getSelectedText(allCaret: Boolean = false): String?
   fun removeSelection()
 }
+
+@Remote("com.intellij.openapi.editor.markup.TextAttributes")
+interface TextAttributes {
+  fun getEffectType(): EffectType
+  fun getEffectColor(): ColorRef?
+  fun getForegroundColor(): ColorRef
+}
+
+@Remote("com.intellij.openapi.editor.markup.EffectType")
+interface EffectType
 
 fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEditor> {
   return withContext(OnDispatcher.EDT) {
