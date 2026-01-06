@@ -22,5 +22,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <statistics.validation.customValidationRule implementation="com.intellij.platform.debugger.impl.shared.FrameTypeValidator"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.debugger.impl.shared.XDebuggerActionsCollector"/>
+    <xdebugger.customXDescriptorSerializerProvider implementation="com.intellij.xdebugger.impl.mixedmode.XMixedModeExecutionStackDescriptorSerializerProvider"/>
   </extensions>
 </idea-plugin>

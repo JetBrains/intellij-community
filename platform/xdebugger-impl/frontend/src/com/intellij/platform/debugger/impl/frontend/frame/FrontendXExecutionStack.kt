@@ -10,7 +10,6 @@ import com.intellij.platform.debugger.impl.rpc.XExecutionStackApi
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackDto
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XStackFramesEvent
-import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
 import com.intellij.xdebugger.frame.XDescriptor
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
@@ -33,13 +32,6 @@ internal class FrontendXExecutionStack(
     suspendContextLifetimeScope.getOrCreateStackFrame(frameDto, project)
   }.exceptionally {
     null
-  }
-
-  init {
-    suspendContextLifetimeScope.launch {
-      val descriptor = stackDto.descriptor?.await() ?: return@launch
-      FrontendDescriptorStateManager.getInstance(project).registerDescriptor(descriptor, suspendContextLifetimeScope)
-    }
   }
 
   override fun getTopFrame(): XStackFrame? {

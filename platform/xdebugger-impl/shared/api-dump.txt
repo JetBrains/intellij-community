@@ -57,6 +57,8 @@ com.intellij.xdebugger.impl.inline.XInlineWatchesView
 - sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - a:addInlineWatchExpression(com.intellij.xdebugger.impl.inline.InlineWatch,I,Z):V
 - a:removeInlineWatches(java.util.Collection):V
+f:com.intellij.xdebugger.impl.mixedmode.XMixedModeExecutionStackDescriptorKt
+- sf:MIXED_MODE_EXECUTION_STACK_DESCRIPTOR_ID:java.lang.String
 c:com.intellij.xdebugger.impl.ui.XDebugSessionData
 - com.intellij.openapi.util.UserDataHolderBase
 - sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
