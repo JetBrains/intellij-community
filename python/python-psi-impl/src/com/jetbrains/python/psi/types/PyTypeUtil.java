@@ -160,6 +160,9 @@ public final class PyTypeUtil {
     if (type instanceof PyUnsafeUnionType weakUnionType) {
       return StreamEx.of(weakUnionType.getMembers());
     }
+    if (type instanceof PyIntersectionType intersectionType) {
+      return StreamEx.of(intersectionType.getMembers());
+    }
     return StreamEx.of(type);
   }
 
@@ -219,6 +222,11 @@ public final class PyTypeUtil {
   @ApiStatus.Experimental
   public static @NotNull Collector<@Nullable PyType, ?, @Nullable PyType> toUnsafeUnion() {
     return Collectors.collectingAndThen(Collectors.toList(), PyUnsafeUnionType::unsafeUnion);
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull Collector<@Nullable PyType, ?, @Nullable PyType> toIntersection() {
+    return Collectors.collectingAndThen(Collectors.toList(), PyIntersectionType::intersection);
   }
 
   public static @NotNull Collector<@Nullable PyType, ?, @Nullable PyType> toUnion(@Nullable PyType streamSource) {

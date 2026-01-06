@@ -6877,6 +6877,22 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-76922
+  public void testIntersectionTypeParsing() {
+    doTest("int & str", """
+      expr: int & str
+      """);
+  }
+
+  // PY-76922
+  public void testLegacyTypeAliasesWithQuotedIntersectionTypesPreservedInStubs() {
+    doMultiFileStubAwareTest("list[int & str]", """
+      from mod import x
+      
+      expr = x
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

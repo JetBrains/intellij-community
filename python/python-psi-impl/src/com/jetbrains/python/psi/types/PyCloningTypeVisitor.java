@@ -150,6 +150,11 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   }
 
   @Override
+  public PyType visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
+    return PyIntersectionType.intersection(ContainerUtil.map(intersectionType.getMembers(), type -> clone(type)));
+  }
+
+  @Override
   public PyType visitPyTypingNewType(@NotNull PyTypingNewType typingNewType) {
     return typingNewType;
   }

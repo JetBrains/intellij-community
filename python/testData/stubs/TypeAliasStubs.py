@@ -19,7 +19,7 @@ S6_notOk = b"int"
 bin1_ok = int | str
 bin2_ok = int | str | bool | None
 bin3_ok = Union[str, bool] | None
-bin4_notOk = str & int
+bin4_ok = str & int
 list_notOk = [int, str]
 
 bin5_notOk: int | str = "foo"

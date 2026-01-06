@@ -190,6 +190,11 @@ public final class PyRecursiveTypeVisitor extends PyTypeVisitorExt<PyRecursiveTy
     }
 
     @Override
+    public @NotNull List<@Nullable PyType> visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
+      return Collections.unmodifiableList(new ArrayList<>(intersectionType.getMembers()));
+    }
+
+    @Override
     public @NotNull List<@Nullable PyType> visitPyUnpackedTupleType(@NotNull PyUnpackedTupleType unpackedTupleType) {
       return unpackedTupleType.getElementTypes();
     }

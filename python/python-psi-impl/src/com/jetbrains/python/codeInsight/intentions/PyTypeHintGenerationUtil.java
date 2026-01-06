@@ -316,6 +316,7 @@ public final class PyTypeHintGenerationUtil {
         isNoneType(type) ||
         // Will be rendered as just Any
         type instanceof PyUnsafeUnionType ||
+        type instanceof PyIntersectionType ||
         type instanceof PyTypeParameterType) {
       return;
     }

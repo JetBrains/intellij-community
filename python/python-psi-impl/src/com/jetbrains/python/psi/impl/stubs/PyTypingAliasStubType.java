@@ -53,8 +53,8 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
       (?x)
       \\s*
       \\S+(\\[.*])?   # initial type like: "list[int]"
-      (\\s*\\|\\s*    # union operator: " | "
-        \\S+(\\[.*])? # type between union operator
+      (\\s*[|&]\\s*   # union or intersection operators: " | " or " & "
+        \\S+(\\[.*])? # operand types
       )*              # repeating
       \\s*
       """,
@@ -174,7 +174,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
 
       @Override
       public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
-        if (node.getOperator() != PyTokenTypes.OR) {
+        if (!(node.getOperator() == PyTokenTypes.OR || node.getOperator() == PyTokenTypes.AND)) {
           illegal[0] = true;
           return;
         }

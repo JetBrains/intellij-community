@@ -879,6 +879,11 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
     });
   }
 
+  // PY-76922
+  public void testIntersectionType() {
+    checkHTMLOnly();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/quickdoc/";

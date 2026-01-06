@@ -189,6 +189,14 @@ public final class PyTypeChecker {
       return Optional.of(match(weakUnionType, actual, context));
     }
 
+    if (actual instanceof PyIntersectionType intersectionType) {
+      return Optional.of(match(expected, intersectionType, context));
+    }
+
+    if (expected instanceof PyIntersectionType intersectionType) {
+      return Optional.of(match(intersectionType, actual, context));
+    }
+
     if (expected instanceof PyClassType && actual instanceof PyClassType) {
       Optional<Boolean> match = match((PyClassType)expected, (PyClassType)actual, context);
       if (match.isPresent()) {
@@ -521,10 +529,6 @@ public final class PyTypeChecker {
     return ContainerUtil.and(actual.getMembers(), type -> match(expected, type, context).orElse(false));
   }
 
-  private static boolean match(@NotNull PyType expected, @NotNull PyUnsafeUnionType actual, @NotNull MatchContext context) {
-    return ContainerUtil.or(actual.getMembers(), type -> match(expected, type, context).orElse(false));
-  }
-
   private static @NotNull Optional<Boolean> match(@NotNull PyTupleType expected,
                                                   @NotNull PyUnionType actual,
                                                   @NotNull MatchContext context) {
@@ -545,6 +549,18 @@ public final class PyTypeChecker {
       return true;
     }
     return ContainerUtil.or(expected.getMembers(), type -> match(type, actual, context).orElse(true));
+  }
+
+  private static boolean match(@NotNull PyType expected, @NotNull PyIntersectionType actual, @NotNull MatchContext context) {
+    return ContainerUtil.or(actual.getMembers(), type -> match(expected, type, context).orElse(false));
+  }
+
+  private static boolean match(@NotNull PyIntersectionType expected, @NotNull PyType actual, @NotNull MatchContext context) {
+    return ContainerUtil.all(expected.getMembers(), type -> match(type, actual, context).orElse(true));
+  }
+
+  private static boolean match(@NotNull PyType expected, @NotNull PyUnsafeUnionType actual, @NotNull MatchContext context) {
+    return ContainerUtil.or(actual.getMembers(), type -> match(expected, type, context).orElse(false));
   }
 
   private static boolean match(@NotNull PyUnsafeUnionType expected, @NotNull PyType actual, @NotNull MatchContext context) {
@@ -1140,6 +1156,9 @@ public final class PyTypeChecker {
     }
     if (type instanceof PyUnsafeUnionType weakUnion) {
       return ContainerUtil.exists(weakUnion.getMembers(), member -> isUnknown(member, genericsAreUnknown, context));
+    }
+    if (type instanceof PyIntersectionType intersectionType) {
+      return ContainerUtil.exists(intersectionType.getMembers(), member -> isUnknown(member, genericsAreUnknown, context));
     }
     return false;
   }

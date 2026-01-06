@@ -921,6 +921,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (unionType != null) {
         return unionType;
       }
+      final Ref<PyType> intersectionType = getIntersectionType(resolved, context);
+      if (intersectionType != null) {
+        return intersectionType;
+      }
       final PyType concatenateType = getConcatenateType(resolved, context);
       if (concatenateType != null) {
         return Ref.create(concatenateType);
@@ -1069,6 +1073,22 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       return null;
     }
     return Ref.create(new PyModuleType(firstModuleInitFile));
+  }
+
+  private static Ref<PyType> getIntersectionType(@NotNull PsiElement resolved, @NotNull PyTypingTypeProvider.Context context) {
+    if (resolved instanceof PyBinaryExpression expression && expression.getOperator() == PyTokenTypes.AND) {
+      PyExpression left = expression.getLeftExpression();
+      PyExpression right = expression.getRightExpression();
+      if (left == null || right == null) return null;
+
+      Ref<PyType> leftTypeRef = getType(left, context);
+      Ref<PyType> rightTypeRef = getType(right, context);
+      if (leftTypeRef == null || rightTypeRef == null) return null;
+
+      PyType intersection = PyIntersectionType.intersection(leftTypeRef.get(), rightTypeRef.get());
+      return intersection != null ? Ref.create(intersection) : null;
+    }
+    return null;
   }
 
   private static @Nullable Ref<PyType> getNoneType(@NotNull PyExpression typeHint, @NotNull PsiElement resolved) {

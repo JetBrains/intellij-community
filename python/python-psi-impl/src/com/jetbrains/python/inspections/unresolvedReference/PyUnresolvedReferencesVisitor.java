@@ -431,6 +431,9 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     if (type instanceof PyUnsafeUnionType weakUnionType) {
       return ContainerUtil.exists(weakUnionType.getMembers(), member -> ignoreUnresolvedMemberForType(member, reference, name));
     }
+    if (type instanceof PyIntersectionType intersectionType) {
+      return ContainerUtil.exists(intersectionType.getMembers(), member -> ignoreUnresolvedMemberForType(member, reference, name));
+    }
     if (PyTypeChecker.isUnknown(type, myTypeEvalContext)) {
       // this almost always means that we don't know the type, so don't show an error in this case
       return true;

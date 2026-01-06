@@ -561,4 +561,9 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                            super().<warning descr="Cannot find reference 'non_existing' in 'A | ABC'">non_existing</warning>()
                    """);
   }
+
+  // PY-76922
+  public void testIntersectionMemberAttributeAccess() {
+    doTest();
+  }
 }

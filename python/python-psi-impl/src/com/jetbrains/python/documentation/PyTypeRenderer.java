@@ -199,6 +199,12 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     }
 
     @Override
+    public @NotNull HtmlChunk visitPyIntersectionType(com.jetbrains.python.psi.types.@NotNull PyIntersectionType intersectionType) {
+      // There is no way to represent intersections through the standard type hints at the moment
+      return visitUnknownType();
+    }
+
+    @Override
     public @NotNull HtmlChunk visitPySelfType(@NotNull PySelfType selfType) {
       HtmlChunk selfTypeRender = className(isRenderingFqn() ? "typing.Self" : "Self"); //NON-NLS
       return selfType.isDefinition() ? wrapInTypingType(selfTypeRender) : selfTypeRender;
@@ -394,6 +400,11 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     return result.toFragment();
   }
 
+  @Override
+  public @NotNull HtmlChunk visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
+    return renderList(ContainerUtil.map(intersectionType.getMembers(), this::render), " & ");
+  }
+
   private static @Nullable Pair<@NotNull List<PyLiteralType>, @NotNull List<PyType>> extractLiterals(@NotNull PyUnionType type) {
     final Collection<PyType> members = type.getMembers();
 
@@ -502,6 +513,9 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
         yield styled(separator, PyHighlighter.PY_COMMA);
       }
       case " | " -> {
+        yield styled(separator, PyHighlighter.PY_OPERATION_SIGN);
+      }
+      case " & " -> {
         yield styled(separator, PyHighlighter.PY_OPERATION_SIGN);
       }
       default -> {
