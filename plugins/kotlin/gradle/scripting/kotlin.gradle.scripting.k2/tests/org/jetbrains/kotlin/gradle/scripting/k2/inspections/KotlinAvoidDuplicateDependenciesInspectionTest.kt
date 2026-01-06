@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import org.gradle.util.GradleVersion
@@ -519,6 +519,85 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
                     val versionRef2 = "2.2.0"
                     api(kotlin("stdlib", versionRef1))
                     api(kotlin("stdlib", versionRef2))
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testEquivalentKotlinArgWithSingleString(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, withVersionCatalogs = false) {
+            testHighlighting(
+                """
+                dependencies {
+                    <weak_warning>api(kotlin("stdlib"))</weak_warning>
+                    <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib")</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testEquivalentKotlinArgWithNamedArguments(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, withVersionCatalogs = false) {
+            testHighlighting(
+                """
+                dependencies {
+                    <weak_warning>api(kotlin("stdlib"))</weak_warning>
+                    <weak_warning>api("org.jetbrains.kotlin", "kotlin-stdlib")</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testEquivalentKotlinArgWithSingleStringAndVersions(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, withVersionCatalogs = false) {
+            testHighlighting(
+                """
+                dependencies {
+                    <weak_warning>api(kotlin("stdlib", "2.2.0"))</weak_warning>
+                    <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testEquivalentKotlinArgWithNamedArgumentsAndVersions(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, withVersionCatalogs = false) {
+            testHighlighting(
+                """
+                dependencies {
+                    <weak_warning>api(kotlin("stdlib", "2.2.0"))</weak_warning>
+                    <weak_warning>api("org.jetbrains.kotlin", "kotlin-stdlib", "2.2.0")</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testNotEquivalentKotlinArg(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, withVersionCatalogs = false) {
+            testHighlighting(
+                """
+                dependencies {
+                    api(kotlin("stdlib", "2.2.0"))
+                    api("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.0")
+                    api("org.jetbrains.kotlin:kotlin-stdlib")
+                    api("org.jetbrains:kotlin-stdlib:2.2.0")
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
+                    api("org.jetbrains.kotlin:stdlib:2.2.0")
                 }
                 """.trimIndent()
             )

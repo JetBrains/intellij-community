@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -103,7 +103,7 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
             val argList = argumentExpression.valueArgumentList ?: return null
             val module = argList.findNamedOrPositionalArgument("module", 0)?.evaluateString() ?: return null
             val version = argList.findNamedOrPositionalArgument("version", 1)?.evaluateString()
-            return if (version != null) "kotlin($module:$version)" else "kotlin($module)"
+            return "org.jetbrains.kotlin:kotlin-$module${version?.let { ":$version" } ?: ""}"
         }
 
         // version catalog argument
