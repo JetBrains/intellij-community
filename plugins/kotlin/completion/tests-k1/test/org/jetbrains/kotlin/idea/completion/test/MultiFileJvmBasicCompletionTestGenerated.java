@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test;
 
@@ -573,6 +573,21 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
     @TestMetadata("StaticMembersOfNotImportedClassNameConflict")
     public void testStaticMembersOfNotImportedClassNameConflict() throws Exception {
         runTest("../testData/basic/multifile/StaticMembersOfNotImportedClassNameConflict/");
+    }
+
+    @TestMetadata("StaticMembersOfPrivateClassHiddenInRerun")
+    public void testStaticMembersOfPrivateClassHiddenInRerun() throws Exception {
+        runTest("../testData/basic/multifile/StaticMembersOfPrivateClassHiddenInRerun/");
+    }
+
+    @TestMetadata("StaticPrivateMembersHiddenInRerun")
+    public void testStaticPrivateMembersHiddenInRerun() throws Exception {
+        runTest("../testData/basic/multifile/StaticPrivateMembersHiddenInRerun/");
+    }
+
+    @TestMetadata("StaticPrivateMembersHighInvocation")
+    public void testStaticPrivateMembersHighInvocation() throws Exception {
+        runTest("../testData/basic/multifile/StaticPrivateMembersHighInvocation/");
     }
 
     @TestMetadata("SuspensionPointInMonitor")
