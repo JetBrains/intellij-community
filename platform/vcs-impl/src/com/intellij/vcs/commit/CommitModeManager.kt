@@ -29,13 +29,18 @@ import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.CalledInAny
 import java.util.*
 
 private const val TOGGLE_COMMIT_UI = "vcs.non.modal.commit.toggle.ui"
+private const val COMMIT_TOOL_WINDOW_SETTINGS_KEY = "vcs.commit.tool.window"
 
 private val isToggleCommitUi get() = AdvancedSettings.getBoolean(TOGGLE_COMMIT_UI)
+private val isCommitTwEnabled get() = AdvancedSettings.getBoolean(COMMIT_TOOL_WINDOW_SETTINGS_KEY)
 private val isForceNonModalCommit get() = Registry.get("vcs.force.non.modal.commit")
 
 internal fun AnActionEvent.getProjectCommitMode(): CommitMode? {
@@ -65,7 +70,8 @@ class CommitModeManager(private val project: Project, private val coroutineScope
     }
   }
 
-  private var commitMode: CommitMode = CommitMode.PendingCommitMode
+  private val _commitModeState = MutableStateFlow<CommitMode>(CommitMode.PendingCommitMode)
+  val commitModeState: StateFlow<CommitMode> = _commitModeState.asStateFlow()
 
   private fun scheduleUpdateCommitMode() {
     getApplication().invokeLater(::updateCommitMode, ModalityState.nonModal(), project.disposed)
@@ -74,10 +80,10 @@ class CommitModeManager(private val project: Project, private val coroutineScope
   @RequiresEdt
   private fun updateCommitMode() {
     val newCommitMode = getNewCommitMode()
-    if (commitMode == newCommitMode) {
+    if (_commitModeState.value == newCommitMode) {
       return
     }
-    commitMode = newCommitMode
+    _commitModeState.value = newCommitMode
 
     project.messageBus.syncPublisher(COMMIT_MODE_TOPIC).commitModeChanged()
   }
@@ -92,20 +98,18 @@ class CommitModeManager(private val project: Project, private val coroutineScope
       return CommitMode.ModalCommitMode
     }
 
-    val forcedCommitMode = singleVcs?.forcedCommitMode
-    if (forcedCommitMode != null) {
-      return forcedCommitMode
+    val commitMode = if (canSetNonModal()) {
+      CommitMode.NonModalCommitMode(isCommitTwEnabled, isToggleCommitUi)
+    }
+    else {
+      CommitMode.ModalCommitMode
     }
 
-    if (canSetNonModal()) {
-      return CommitMode.NonModalCommitMode(isToggleCommitUi)
-    }
-
-    return CommitMode.ModalCommitMode
+    return singleVcs?.getForcedCommitMode(commitMode) ?: commitMode
   }
 
   @CalledInAny
-  fun getCurrentCommitMode(): CommitMode = commitMode
+  fun getCurrentCommitMode(): CommitMode = _commitModeState.value
 
   private fun canSetNonModal(): Boolean {
     if (isForceNonModalCommit.asBoolean()) return true
@@ -121,7 +125,7 @@ class CommitModeManager(private val project: Project, private val coroutineScope
     val connection = getApplication().messageBus.connect(coroutineScope)
     connection.subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
       override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
-        if (id == TOGGLE_COMMIT_UI) {
+        if (id == TOGGLE_COMMIT_UI || id == COMMIT_TOOL_WINDOW_SETTINGS_KEY) {
           updateCommitMode()
         }
       }
@@ -146,6 +150,9 @@ class CommitModeManager(private val project: Project, private val coroutineScope
     fun subscribeOnCommitModeChange(connection: SimpleMessageBusConnection, listener: CommitModeListener) {
       connection.subscribe(COMMIT_MODE_TOPIC, listener)
     }
+
+    @JvmStatic
+    fun isCommitToolWindowEnabled(project: Project): Boolean = getInstance(project).getCurrentCommitMode().isCommitTwEnabled
 
     @JvmStatic
     fun getInstance(project: Project): CommitModeManager = project.service()

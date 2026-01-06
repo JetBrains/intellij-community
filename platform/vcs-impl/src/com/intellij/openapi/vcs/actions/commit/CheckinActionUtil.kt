@@ -32,7 +32,7 @@ internal object CheckinActionUtil {
 
     if (project == null ||
         !ProjectLevelVcsManager.getInstance(project).hasActiveVcss() ||
-        CommitModeManager.getInstance(project).getCurrentCommitMode().disableDefaultCommitAction()) {
+        CommitModeManager.getInstance(project).getCurrentCommitMode().isDefaultCommitActionDisabled) {
       presentation.isEnabledAndVisible = false
       return
     }

@@ -1542,7 +1542,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   private boolean shouldEnableChangeLists() {
-    boolean forceDisable = CommitModeManager.getInstance(project).getCurrentCommitMode().hideLocalChangesTab() ||
+    boolean forceDisable = CommitModeManager.getInstance(project).getCurrentCommitMode().isLocalChangesTabHidden() ||
                            Registry.is("vcs.disable.changelists", false);
     return !forceDisable;
   }

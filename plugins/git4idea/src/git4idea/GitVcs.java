@@ -338,9 +338,10 @@ public final class GitVcs extends AbstractVcs {
   }
 
   @Override
-  public @Nullable CommitMode getForcedCommitMode() {
-    if (GitVcsApplicationSettings.getInstance().isStagingAreaEnabled()) {
-      return GitStagingAreaCommitMode.INSTANCE;
+  public @Nullable CommitMode getForcedCommitMode(@NotNull CommitMode originalMode) {
+    if (originalMode instanceof CommitMode.NonModalCommitMode nonModalCommitMode
+        && GitVcsApplicationSettings.getInstance().isStagingAreaEnabled()) {
+      return new GitStagingAreaCommitMode(nonModalCommitMode.isCommitTwEnabled());
     }
     return DvcsCommitModeProvider.compute();
   }

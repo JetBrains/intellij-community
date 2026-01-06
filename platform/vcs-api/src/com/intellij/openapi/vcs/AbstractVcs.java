@@ -145,7 +145,7 @@ public abstract class AbstractVcs extends StartedActivated {
    *
    * @return the commit mode to enforce for this VCS, or null to apply the project's default
    */
-  public @Nullable CommitMode getForcedCommitMode() {
+  public @Nullable CommitMode getForcedCommitMode(@NotNull CommitMode originalMode) {
     return null;
   }
 
