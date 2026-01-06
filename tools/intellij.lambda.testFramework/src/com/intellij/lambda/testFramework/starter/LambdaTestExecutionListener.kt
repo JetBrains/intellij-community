@@ -41,6 +41,7 @@ class LambdaTestExecutionListener : TestCleanupListener() {
     }
   }
 
+  // Due to this override IDE that is by default is launched on perClassSupervisorScope is not cancelled in Lambda tests
   override fun executionFinished(testIdentifier: TestIdentifier, testExecutionResult: TestExecutionResult) {
     if (!testIdentifier.isTest) return
 
