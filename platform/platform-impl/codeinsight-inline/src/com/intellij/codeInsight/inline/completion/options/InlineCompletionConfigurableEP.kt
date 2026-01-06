@@ -6,7 +6,6 @@ import com.intellij.openapi.options.ConfigurableEP
 import com.intellij.openapi.options.UnnamedConfigurable
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class InlineCompletionConfigurableEP @ApiStatus.Internal constructor(): ConfigurableEP<UnnamedConfigurable>() {
 
   companion object {

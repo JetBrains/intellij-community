@@ -827,9 +827,6 @@
       instance="com.intellij.application.options.CodeCompletionConfigurable"
       id="editor.preferences.completion.popup"
     />
-    <editorCompletionConfigurable
-      instance="com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurable"
-      id="editor.preferences.completion.inline"/>
 
     <projectConfigurable instance="com.intellij.application.options.editor.AutoImportOptionsConfigurable"
                          id="editor.preferences.import"

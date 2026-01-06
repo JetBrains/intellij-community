@@ -13,7 +13,7 @@ import com.intellij.ui.dsl.builder.panel
 
 class InlineCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>(
   ApplicationBundle.message("title.code.completion.inline"),
-  "reference.settingsdialog.IDE.editor.inline.completion"
+  "reference.settingsdialog.IDE.editor.completion.inline"
 ), WithEpDependencies, SearchableConfigurable {
 
   override fun getId(): String = ID
@@ -38,6 +38,6 @@ class InlineCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigura
   }
 
   companion object {
-    const val ID: String = "editor.preferences.inline.completion"
+    const val ID: String = "editor.preferences.completion.inline"
   }
 }
