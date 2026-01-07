@@ -114,6 +114,40 @@ public final class IdeaTestUtil {
     return getMockJdk(level.toJavaVersion());
   }
 
+  /**
+   * Returns a mock JDK for the specified Java version.
+   *
+   * <h3>Version Mapping</h3>
+   * Mock JDKs are simplified JDKs with limited class coverage. The requested version
+   * is mapped to the nearest available mock JDK:
+   * <ul>
+   *   <li>Java 4-6 → Mock JDK 1.7</li>
+   *   <li>Java 7 → Mock JDK 1.7</li>
+   *   <li>Java 8 → Mock JDK 1.8</li>
+   *   <li>Java 9-10 → Mock JDK 9</li>
+   *   <li>Java 11-20 → Mock JDK 11</li>
+   *   <li>Java 21-24 → Mock JDK 21</li>
+   *   <li>Java 25+ → Mock JDK 25</li>
+   * </ul>
+   *
+   * <h3>Class Coverage</h3>
+   * <table border="1">
+   *   <caption>Mock JDK Class Coverage</caption>
+   *   <tr><th>Mock JDK</th><th>java.io.File</th><th>java.nio.file.*</th><th>Source</th></tr>
+   *   <tr><td>1.7</td><td>Yes</td><td>No</td><td>community/java/mockJDK-1.7/</td></tr>
+   *   <tr><td>1.8</td><td>Yes</td><td>No</td><td>community/java/mockJDK-1.8/</td></tr>
+   *   <tr><td>11+</td><td>Yes</td><td>Yes</td><td>Maven: org.jetbrains.mockjdk:mockjdk-base-java</td></tr>
+   * </table>
+   *
+   * <h3>Common Pitfall</h3>
+   * If your test uses {@code java.nio.file.Path} (e.g., {@code File.toPath()}),
+   * you need Mock JDK 11 or higher. Use {@link #getMockJdk11()} or specify
+   * {@code JavaVersion.compose(11)} or higher.
+   *
+   * @param version the desired Java version
+   * @return a mock JDK SDK
+   * @see #getMockJdk11()
+   */
   public static @NotNull Sdk getMockJdk(@NotNull JavaVersion version) {
     int mockJdk = version.feature >= 25 ? 25 :
                   version.feature >= 21 ? 21 :
@@ -228,39 +262,107 @@ public final class IdeaTestUtil {
     return createMockJdk(name, path, null);
   }
 
-  /// It's JDK 1.4, not 14.
+  /**
+   * Returns Mock JDK 1.4 (Java 4).
+   *
+   * <p><b>Warning:</b> The method name "14" refers to version "1.4" (Java 4), NOT Java 14.
+   *
+   * @return Mock JDK 1.4 (Java 4)
+   * @see #getMockJdk(JavaVersion) for version mapping and class coverage details
+   */
   public static @NotNull Sdk getMockJdk14() {
     return getMockJdk(JavaVersion.compose(4));
   }
 
-  /// It's JDK 1.6, not 16.
+  /**
+   * Returns Mock JDK 1.7 (Java 7), since there is no Mock JDK 1.6.
+   *
+   * <p><b>Warning:</b> The method name "16" refers to version "1.6" (Java 6), NOT Java 16.
+   * This actually returns Mock JDK 1.7 due to version mapping.
+   *
+   * @return Mock JDK 1.7 (Java 7)
+   * @see #getMockJdk(JavaVersion) for version mapping and class coverage details
+   */
   public static @NotNull Sdk getMockJdk16() {
     return getMockJdk(JavaVersion.compose(6));
   }
 
-  /// It's JDK 1.7, not 17.
+  /**
+   * Returns Mock JDK 1.7 (Java 7).
+   *
+   * <p><b>Warning:</b> The method name "17" refers to version "1.7" (Java 7), NOT Java 17.
+   * For Java 17, use {@code getMockJdk(JavaVersion.compose(17))}.
+   *
+   * <p>This mock JDK does NOT contain {@code java.nio.file.*} classes.
+   * If you need {@code Path}, {@code Paths}, or {@code Files}, use {@link #getMockJdk11()}.
+   *
+   * @return Mock JDK 1.7 (Java 7)
+   * @see #getMockJdk11() for tests needing java.nio.file.*
+   * @see #getMockJdk(JavaVersion) for version mapping and class coverage details
+   */
   public static @NotNull Sdk getMockJdk17() {
     return getMockJdk(JavaVersion.compose(7));
   }
 
-  /// It's JDK 1.7, not 17.
+  /**
+   * Returns Mock JDK 1.7 (Java 7) with a custom name.
+   *
+   * <p><b>Warning:</b> The method name "17" refers to version "1.7" (Java 7), NOT Java 17.
+   *
+   * @param name the SDK name
+   * @return Mock JDK 1.7 (Java 7)
+   * @see #getMockJdk17()
+   */
   public static @NotNull Sdk getMockJdk17(@NotNull String name) {
     return createMockJdk(name, getMockJdk17Path().getPath());
   }
 
-  /// It's JDK 1.8, not 18.
+  /**
+   * Returns Mock JDK 1.8 (Java 8).
+   *
+   * <p><b>Warning:</b> The method name "18" refers to version "1.8" (Java 8), NOT Java 18.
+   * For Java 18, use {@code getMockJdk(JavaVersion.compose(18))}.
+   *
+   * <p>This mock JDK does NOT contain {@code java.nio.file.*} classes.
+   * If you need {@code Path}, {@code Paths}, or {@code Files}, use {@link #getMockJdk11()}.
+   *
+   * @return Mock JDK 1.8 (Java 8)
+   * @see #getMockJdk11() for tests needing java.nio.file.*
+   * @see #getMockJdk(JavaVersion) for version mapping and class coverage details
+   */
   public static @NotNull Sdk getMockJdk18() {
     return getMockJdk(JavaVersion.compose(8));
   }
 
+  /**
+   * Returns Mock JDK 9.
+   *
+   * @return Mock JDK 9
+   * @see #getMockJdk(JavaVersion) for version mapping and class coverage details
+   */
   public static @NotNull Sdk getMockJdk9() {
     return getMockJdk(JavaVersion.compose(9));
   }
-  
+
+  /**
+   * Returns Mock JDK 11.
+   *
+   * <p>This is the recommended mock JDK for tests that need {@code java.nio.file.*} classes
+   * ({@code Path}, {@code Paths}, {@code Files}). Mock JDKs 1.7 and 1.8 do NOT contain these classes.
+   *
+   * @return Mock JDK 11
+   * @see #getMockJdk(JavaVersion) for version mapping and class coverage details
+   */
   public static @NotNull Sdk getMockJdk11() {
     return getMockJdk(JavaVersion.compose(11));
   }
 
+  /**
+   * Returns Mock JDK 21.
+   *
+   * @return Mock JDK 21
+   * @see #getMockJdk(JavaVersion) for version mapping and class coverage details
+   */
   public static @NotNull Sdk getMockJdk21() {
     return getMockJdk(JavaVersion.compose(21));
   }
