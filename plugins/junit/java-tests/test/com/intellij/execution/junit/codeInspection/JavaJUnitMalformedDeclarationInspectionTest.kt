@@ -2219,6 +2219,25 @@ class JavaJUnitMalformedDeclarationInspectionTest {
     """.trimIndent())
     }
 
+    fun `test malformed before and after suite should be not private highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      @org.junit.platform.suite.api.Suite
+      @org.junit.platform.suite.api.SelectClasses({MyTest.class})
+      class MySuite {
+        @org.junit.platform.suite.api.BeforeSuite
+        private static void <error descr="Method 'before' annotated with '@BeforeSuite' should be public">before</error>() { }
+        
+        @org.junit.platform.suite.api.AfterSuite
+        public static void after1() { }
+        
+        @org.junit.platform.suite.api.AfterSuite
+        static void after2() { }
+      }
+      
+      class MyTest {}
+    """.trimIndent())
+    }
+
     // Unconstructable test case
     fun testPlain() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """

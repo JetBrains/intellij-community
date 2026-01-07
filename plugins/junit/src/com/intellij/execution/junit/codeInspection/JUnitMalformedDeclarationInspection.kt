@@ -202,7 +202,8 @@ private class JUnitMalformedSignatureVisitor(
     annotations = listOf(ORG_JUNIT_PLATFORM_SUITE_API_BEFORESUITE, ORG_JUNIT_PLATFORM_SUITE_API_AFTERSUITE),
     shouldBeInTestInstancePerClass = false,
     shouldBeStatic = true,
-    shouldBeVoidType = true
+    shouldBeVoidType = true,
+    validVisibility = ::notPrivate
   )
 
   private val junit4TestProblem = AnnotatedSignatureProblem(

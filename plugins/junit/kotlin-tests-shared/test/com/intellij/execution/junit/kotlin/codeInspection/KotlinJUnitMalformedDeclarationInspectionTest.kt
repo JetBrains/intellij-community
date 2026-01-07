@@ -2228,6 +2228,30 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
     """.trimIndent())
   }
 
+  fun `test malformed before and after suite should be not private highlighting`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      @org.junit.platform.suite.api.Suite
+      @org.junit.platform.suite.api.SelectClasses(MyTest::class)
+      class MySuite {
+        companion object {
+          @JvmStatic
+          @org.junit.platform.suite.api.BeforeSuite
+          private fun <error descr="Method 'before' annotated with '@BeforeSuite' should be public">before</error>() {}
+          
+          @JvmStatic
+          @org.junit.platform.suite.api.AfterSuite
+          fun after1() {}
+          
+          @JvmStatic
+          @org.junit.platform.suite.api.AfterSuite
+          internal fun after2() {}
+        }
+      }
+      
+      class MyTest {}
+      """.trimIndent())
+  }
+
   // Unconstructable test case
   fun testPlain() {
     myFixture.testHighlighting(
