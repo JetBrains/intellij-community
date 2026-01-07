@@ -197,23 +197,17 @@ class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexabl
 
   private fun readBranches(repository: GitRepository): Set<VcsRef> {
     return tracer.spanBuilder(ReadingBranches.name).setAttribute("rootName", repository.root.name).use {
-      val root = repository.root
       repository.update()
-      val branches = repository.branches
-      val localBranches = branches.localBranches
-      val remoteBranches = branches.remoteBranches
-      val refs = HashSet<VcsRef>(localBranches.size + remoteBranches.size)
-      for (localBranch in localBranches) {
-        val hash = branches.getHash(localBranch)
-        checkNotNull(hash)
-        refs.add(vcsObjectsFactory.createRef(hash, localBranch.name, GitRefManager.LOCAL_BRANCH, root))
+      val repoInfo = repository.info
+      val root = repository.root
+      val refs = HashSet<VcsRef>(repoInfo.localBranchesWithHashes.size + repoInfo.remoteBranchesWithHashes.size)
+      repoInfo.localBranchesWithHashes.forEach { (branch, hash) ->
+        refs.add(vcsObjectsFactory.createRef(hash, branch.name, GitRefManager.LOCAL_BRANCH, root))
       }
-      for (remoteBranch in remoteBranches) {
-        val hash = branches.getHash(remoteBranch)
-        checkNotNull(hash)
-        refs.add(vcsObjectsFactory.createRef(hash, remoteBranch.nameForLocalOperations, GitRefManager.REMOTE_BRANCH, root))
+      repoInfo.remoteBranchesWithHashes.forEach { (branch, hash) ->
+        refs.add(vcsObjectsFactory.createRef(hash, branch.nameForLocalOperations, GitRefManager.REMOTE_BRANCH, root))
       }
-      val currentRevision = repository.currentRevision
+      val currentRevision = repoInfo.currentRevision
       if (currentRevision != null) { // null => fresh repository
         refs.add(vcsObjectsFactory.createRef(HashImpl.build(currentRevision), GitUtil.HEAD, GitRefManager.HEAD, root))
       }
