@@ -328,13 +328,22 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         processHandler, eventDispatcher, buildDescriptor, dataContext,
         consoleManager, consoleView, settingsDescription
       ));
-      Throwable taskError = task.getError();
-      if (taskError != null && !(taskError instanceof Exception)) {
-        var eventMessage = BuildBundle.message("build.status.failed");
-        var eventResult = new FailureResultImpl(taskError);
-        eventDispatcher.onEvent(task.getId(), FinishBuildEvent.builder(task.getId(), eventMessage, eventResult).build());
-      }
+      handleTaskResult(task, eventDispatcher);
     }
+  }
+
+  private static void handleTaskResult(
+    @NotNull ExternalSystemExecuteTaskTask task,
+    @NotNull BuildEventDispatcher eventDispatcher
+  ) {
+    var taskId = task.getId();
+    var taskError = task.getError();
+    if (taskError == null || taskError instanceof Exception) {
+      return;
+    }
+    var eventMessage = BuildBundle.message("build.status.failed");
+    var eventResult = new FailureResultImpl(taskError);
+    eventDispatcher.onEvent(taskId, FinishBuildEvent.builder(taskId, eventMessage, eventResult).build());
   }
 
   private void addDebugUserDataTo(UserDataHolderBase holder) {
