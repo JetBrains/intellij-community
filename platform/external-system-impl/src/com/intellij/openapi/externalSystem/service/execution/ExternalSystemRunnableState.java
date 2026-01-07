@@ -25,16 +25,21 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.filters.Filter;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.runners.BackendExecutionEnvironmentProxy;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentProxy;
+import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
@@ -73,6 +78,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.Icon;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -82,10 +88,12 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.createFailureResult;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
+import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY;
 
 public class ExternalSystemRunnableState extends UserDataHolderBase implements RunProfileState {
 
@@ -252,7 +260,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       buildDescriptor.setNavigateToError(navigateToError);
     }
 
-    Class<? extends BuildProgressListener> progressListenerClazz = task.getUserData(ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY);
+    Class<? extends BuildProgressListener> progressListenerClazz = task.getUserData(PROGRESS_LISTENER_KEY);
     Filter[] filters = consoleManager.getCustomExecutionFilters(myProject, task, myEnv);
     Arrays.stream(filters).forEach(buildDescriptor::withExecutionFilter);
     final BuildProgressListener progressListener =
@@ -330,13 +338,12 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         @Override
         public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
           if (progressListener != null) {
-            AnAction rerunTaskAction = new ExternalSystemRunConfiguration.MyTaskRerunAction(progressListener, myEnv, myContentDescriptor);
             buildDescriptor
               .withProcessHandler(processHandler, view -> ExternalSystemRunConfiguration
                 .foldGreetingOrFarewell(consoleView, greeting, true))
               .withContentDescriptor(() -> myContentDescriptor)
+              .withRestartAction(new TaskRerunAction(task))
               .withActions(customActions)
-              .withRestartAction(rerunTaskAction)
               .withRestartActions(restartActions)
               .withContextActions(contextActions)
               .withExecutionEnvironment(myEnv);
@@ -484,6 +491,48 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         contentDescriptor.setActivateToolWindowWhenAdded(settings.isActivateToolWindowBeforeRun());
         contentDescriptor.setAutoFocusContent(settings.isFocusToolWindowBeforeRun());
       }
+    }
+  }
+
+  private class TaskRerunAction extends FakeRerunAction {
+
+    private final @NotNull ExternalSystemExecuteTaskTask myTask;
+
+    TaskRerunAction(@NotNull ExternalSystemExecuteTaskTask task) {
+      myTask = task;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent event) {
+      event.getPresentation().setText(getText());
+      event.getPresentation().setIcon(getIcon(event));
+      event.getPresentation().setEnabled(isEnabled(event));
+    }
+
+    private @NotNull Supplier<String> getText() {
+      var executionName = StringUtil.escapeMnemonics(myEnv.getRunProfile().getName());
+      return ExecutionBundle.messagePointer("rerun.configuration.action.name", executionName);
+    }
+
+    private @NotNull Icon getIcon(@NotNull AnActionEvent event) {
+      var descriptor = getDescriptor(event);
+      if (descriptor != null && ExecutionManagerImpl.isProcessRunning(descriptor)) {
+        return AllIcons.Actions.Restart;
+      }
+      if (BuildViewManager.class.equals(myTask.getUserData(PROGRESS_LISTENER_KEY))) {
+        return AllIcons.Actions.Compile;
+      }
+      return myEnv.getExecutor().getIcon();
+    }
+
+    @Override
+    protected @Nullable RunContentDescriptor getDescriptor(AnActionEvent event) {
+      return myContentDescriptor != null ? myContentDescriptor : super.getDescriptor(event);
+    }
+
+    @Override
+    protected @NotNull ExecutionEnvironmentProxy getEnvironmentProxy(@NotNull AnActionEvent event) {
+      return new BackendExecutionEnvironmentProxy(myEnv);
     }
   }
 }

@@ -2,8 +2,6 @@
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.BuildProgressListener;
-import com.intellij.build.BuildViewManager;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.AdditionalTabComponentManager;
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -17,15 +15,8 @@ import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.BackendExecutionEnvironmentProxy;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionEnvironmentProxy;
-import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -324,51 +315,6 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     RunProfile runProfile = ExecutionManagerImpl.getDelegatedRunProfile(this);
     if (runProfile instanceof RunConfigurationBase<?>) {
       ((RunConfigurationBase<?>)runProfile).createAdditionalTabComponents(manager, startedProcess);
-    }
-  }
-
-  static class MyTaskRerunAction extends FakeRerunAction {
-    private final BuildProgressListener myProgressListener;
-    private final RunContentDescriptor myContentDescriptor;
-    private final ExecutionEnvironment myEnvironment;
-
-    MyTaskRerunAction(BuildProgressListener progressListener,
-                      ExecutionEnvironment environment,
-                      RunContentDescriptor contentDescriptor) {
-      myProgressListener = progressListener;
-      myContentDescriptor = contentDescriptor;
-      myEnvironment = environment;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent event) {
-      Presentation presentation = event.getPresentation();
-      ExecutionEnvironmentProxy environment = getEnvironmentProxy(event);
-      if (environment != null) {
-        presentation.setText(ExecutionBundle.messagePointer("rerun.configuration.action.name",
-                                                            StringUtil.escapeMnemonics(environment.getRunProfileName())));
-        RunContentDescriptor descriptor = getDescriptor(event);
-        Icon icon = (descriptor != null && ExecutionManagerImpl.isProcessRunning(getDescriptor(event)))
-                    ? AllIcons.Actions.Restart
-                    : myProgressListener instanceof BuildViewManager
-                      ? AllIcons.Actions.Compile
-                      : environment.getIcon();
-        presentation.setIcon(icon);
-        presentation.setEnabled(isEnabled(event));
-        return;
-      }
-
-      presentation.setEnabled(false);
-    }
-
-    @Override
-    protected @Nullable RunContentDescriptor getDescriptor(AnActionEvent event) {
-      return myContentDescriptor != null ? myContentDescriptor : super.getDescriptor(event);
-    }
-
-    @Override
-    protected ExecutionEnvironmentProxy getEnvironmentProxy(@NotNull AnActionEvent event) {
-      return new BackendExecutionEnvironmentProxy(myEnvironment);
     }
   }
 }
