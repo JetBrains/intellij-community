@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.project.Project;
@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
+import com.intellij.util.ui.dialog.VcsDialogUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -62,6 +63,10 @@ public final class StartUseVcsDialog extends DialogWrapper {
 
     mainPanel.add(myVcsCombo, gb);
 
+    ++gb.gridx;
+
+    mainPanel.add(VcsDialogUtils.getMorePluginsLink(mainPanel), gb);
+
     String path = isMac ? VcsBundle.message("vcs.settings.path.mac") : VcsBundle.message("vcs.settings.path");
     JLabel helpText = new JLabel(VcsBundle.message("dialog.enable.version.control.integration.hint.text") + path);
     helpText.setUI(new MultiLineLabelUI());
@@ -70,7 +75,7 @@ public final class StartUseVcsDialog extends DialogWrapper {
     gb.anchor = GridBagConstraints.NORTHWEST;
     gb.gridx = 0;
     ++gb.gridy;
-    gb.gridwidth = 2;
+    gb.gridwidth = 3;
     mainPanel.add(helpText, gb);
 
     JPanel wrapper = new JPanel(new GridBagLayout());

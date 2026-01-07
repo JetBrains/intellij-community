@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.impl.VcsDescriptor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.dialog.VcsDialogUtils.getMorePluginsLink
 import com.intellij.xml.util.XmlStringUtil.wrapInHtml
 import java.awt.BorderLayout
 import java.awt.event.ActionListener
@@ -104,7 +105,9 @@ internal class VcsMappingConfigurationDialog(
       row {
         label(VcsBundle.message("vcs.common.labels.vcs"))
         cell(vcsComboBox)
+          .resizableColumn()
           .align(AlignX.FILL)
+        cell(getMorePluginsLink(contentPanel, Runnable { close(CANCEL_EXIT_CODE) }))
       }.layout(RowLayout.PARENT_GRID)
     }
 
