@@ -68,7 +68,7 @@ public class ShellEnvironmentReaderTest {
 
     var timeout = 1000;
     var file = Files.writeString(tempDir.resolve("test.sh"), "sleep " + timeout * 5 / 1000);
-    var command = ShellEnvironmentReader.shellCommand("/bin/sh", file, List.of("arg_value"));
+    var command = ShellEnvironmentReader.shellCommand("/bin/sh", file, null);
     assertThatThrownBy(() -> ShellEnvironmentReader.readEnvironment(command, timeout))
       .isInstanceOf(IOException.class);
   }

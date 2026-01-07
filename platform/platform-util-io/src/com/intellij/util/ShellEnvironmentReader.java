@@ -78,7 +78,7 @@ public final class ShellEnvironmentReader {
       command.add("-i");
     }
 
-    // macOS now supports the `-0` option, too (supposedly, from 12.3); we can drop `printenv` in ~3 years
+    // FTR, macOS now supports the `-0` option, too (supposedly, from 12.3)
     var reader = OS.CURRENT == OS.macOS ? "'" + PathManager.findBinFileWithException("printenv") + "'" : "/usr/bin/env -0";
     if (shFile != null) {
       if ("nu".equals(name) || "pwsh".equals(name) || "xonsh".equals(name))
