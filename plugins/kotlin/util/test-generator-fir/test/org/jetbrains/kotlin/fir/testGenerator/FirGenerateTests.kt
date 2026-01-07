@@ -422,7 +422,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
             model("refactoring/rename", pattern = TEST, flatten = true)
         }
         testClass<AbstractK2InplaceRenameTest> {
-            model("refactoring/rename/inplace", pattern = KT, flatten = true)
+            model("refactoring/rename/inplace", pattern = Patterns.KT_OR_JAVA, flatten = true)
         }
         testClass<AbstractFirMultiModuleRenameTest> {
             model("refactoring/renameMultiModule", pattern = TEST, flatten = true)

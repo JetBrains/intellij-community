@@ -12,6 +12,7 @@ import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -87,7 +88,7 @@ class KotlinMemberInplaceRenameHandler : MemberInplaceRenameHandler() {
 
     override fun isAvailable(element: PsiElement?, editor: Editor, file: PsiFile): Boolean {
         if (!editor.settings.isVariableInplaceRenameEnabled) return false
-        val currentElement = element?.substitute() as? KtNamedDeclaration ?: return false
+        val currentElement = element?.substitute()?.unwrapped as? KtNamedDeclaration ?: return false
         val elementAtCaret = file.findElementAt(editor.caretModel.offset)
         val thisExpression = PsiTreeUtil.getParentOfType(elementAtCaret, KtThisExpression::class.java)
         if (thisExpression != null && PsiTreeUtil.isAncestor(thisExpression.instanceReference, elementAtCaret!!, false)) {
