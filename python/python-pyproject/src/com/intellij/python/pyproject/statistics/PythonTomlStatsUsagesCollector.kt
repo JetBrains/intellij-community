@@ -22,82 +22,32 @@ import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.TomlTable
 import java.util.concurrent.atomic.AtomicInteger
 
-internal enum class PythonTool(val normalizedName: String, val markerFileNames: Set<String>) {
-  AUTOFLAKE("autoflake"),
-  AUTOIMPORT("autoimport"),
-  BASEDPYRIGHT("basedpyright"),
-  BANDIT("bandit", ".bandit"),
-  BLACK("black", "black.toml"),
-  CIBUILDWHEEL("cibuildwheel"),
-  CHECK_JSONSCHEMA("check-jsonschema"),
-  CODESPELL("codespell", ".codespellrc"),
-  COMFY("comfy"),
-  CONDA_LOCK("conda-lock"),
-  COVERAGE("coverage", ".coveragerc"),
-  CYTHON("cython"),
-  DAGSTER("dagster"),
-  DARKER("darker"),
-  DEPTRY("deptry"),
-  DOCFORMATTER("docformatter"),
-  FLIT("flit", "flit.ini"),
-  FLIT_CORE("flit-core"),
-  FLAKE8("flake8", ".flake8"),
-  GREAT_EXPECTATIONS("great-expectations", "great_expectations.yml"),
-  HATCH("hatch", "hatch.toml", "hatch.lock"),
-  HATCHLING("hatchling"),
-  HATCH_VCS("hatch-vcs"),
-  HYPOTHESIS("hypothesis", ".hypothesis"),
-  ISORT("isort", ".isort.cfg"),
-  MAKE_ENV("make-env"),
-  MKDOCSTRINGS("mkdocstrings"),
-  MYST_PARSER("myst-parser"),
-  MYPY("mypy", "mypy.ini"),
-  NBQA("nbqa"),
-  NINJA("ninja"),
-  NOX("nox", "noxfile.py"),
-  PDOC("pdoc"),
-  PDM("pdm", "pdm.lock"),
-  PIXI("pixi", "pixi.toml", "pixi.lock"),
-  POETRY("poetry", "poetry.lock"),
-  POETRY_CORE("poetry-core"),
-  POE("poe"),
-  PREFECT("prefect", "prefect.yaml"),
-  PYBIND11("pybind11"),
-  PYCLN("pycln"),
-  PYDANTIC_MYPY("pydantic-mypy"),
-  PYRIGHT("pyright", "pyrightconfig.json"),
-  PY_SPY("py-spy"),
-  PYTKDOCS("pytkdocs"),
-  PYTONIQ("pytoniq"),
-  PYUPGRADE("pyupgrade"),
-  REFURB("refurb"),
-  RUFF("ruff", "ruff.toml"),
-  SAFETY("safety"),
-  SCITK_BUILD("scikit-build"),
-  SCITK_BUILD_CORE("scikit-build-core"),
-  SEMATIC_RELEASE("sematic-release"),
-  SETUPTOOLS("setuptools", "setup.py", "setup.cfg"),
-  SETUPTOOLS_RUST("setuptools-rust"),
-  SETUPTOOLS_SCM("setuptools-scm"),
-  SPHINX("sphinx"),
-  TOX("tox", "tox.ini", "tox.toml"),
-  UV("uv", "uv.lock"),
-  VALIDATE_PYPROJECT("validate-pyproject"),
-  VULTURE("vulture"),
-  WHEEL("wheel"),
-  YAPF("yapf", ".style.yapf");
 
-  /**
-   * For backward compatibility using normalized name instead of Enum name for FUS.
-   */
-  val fusName: String get() = normalizedName
-
-  constructor(key: String, vararg markerFileNames: String) : this(key, markerFileNames.toSet())
-
-  companion object {
-    fun findByNormalizedName(normalizedName: String): PythonTool? = entries.find { it.normalizedName == normalizedName }
-  }
-}
+internal val PYTHON_TOOL_MARKERS: Map<String, Set<String>> = mapOf(
+    "bandit" to setOf(".bandit"),
+    "black" to setOf("black.toml"),
+    "codespell" to setOf(".codespellrc"),
+    "coverage" to setOf(".coveragerc"),
+    "flit" to setOf("flit.ini"),
+    "flake8" to setOf(".flake8"),
+    "great-expectations" to setOf("great_expectations.yml"),
+    "hatch" to setOf("hatch.toml", "hatch.lock"),
+    "hypothesis" to setOf(".hypothesis"),
+    "isort" to setOf(".isort.cfg"),
+    "mypy" to setOf("mypy.ini", ".mypy.ini"),
+    "nox" to setOf("noxfile.py"),
+    "pdm" to setOf("pdm.lock"),
+    "pixi" to setOf("pixi.toml", "pixi.lock"),
+    "poetry" to setOf("poetry.lock"),
+    "prefect" to setOf("prefect.yaml"),
+    "pyright" to setOf("pyrightconfig.json"),
+    "pytest" to setOf("pytest.toml", ".pytest.toml", "pytest.ini", ".pytest.ini"),
+    "ruff" to setOf("ruff.toml", ".ruff.toml"),
+    "setuptools" to setOf("setup.py", "setup.cfg"),
+    "tox" to setOf("tox.ini", "tox.toml"),
+    "uv" to setOf("uv.lock"),
+    "yapf" to setOf(".style.yapf")
+)
 
 internal val TRACKED_DEPENDENCY_GROUPS = listOf(
   "all", "async", "bench", "build", "ci",
@@ -108,24 +58,25 @@ internal val TRACKED_DEPENDENCY_GROUPS = listOf(
 )
 internal const val DEPENDENCY_GROUP_OTHER = "other"
 
-private val GROUP = EventLogGroup("python.toml.stats", 2, "FUS", "Python Project Statistics")
+private val GROUP = EventLogGroup("python.toml.stats", 3, "FUS", "Python Project Statistics")
+private val PACKAGE_NAME_FIELD = EventFields.StringValidatedByDictionary("name", "python_packages.ndjson")
 
 internal val PYTHON_PYPROJECT_TOOLS = GROUP.registerEvent(
   "python.pyproject.tools",
-  EventFields.Enum("name", PythonTool::class.java) { it.fusName },
+  PACKAGE_NAME_FIELD,
   "A Python tool defined in the [tool.*] table of pyproject.toml"
 )
 
 // https://peps.python.org/pep-0518/
 internal val PYTHON_PYPROJECT_BUILDSYSTEM = GROUP.registerEvent(
   "python.pyproject.buildsystem",
-  EventFields.Enum("name", PythonTool::class.java) { it.fusName },
+  PACKAGE_NAME_FIELD,
   "A Python tool defined in build-system.requires of pyproject.toml"
 )
 
 internal val PYTHON_TOOL_MARKERS_DETECTED = GROUP.registerEvent(
   "python.tool.markers.detected",
-  EventFields.Enum("name", PythonTool::class.java) { it.fusName },
+  PACKAGE_NAME_FIELD,
   "A Python tool detected via tool marker files (e.g., uv.lock, hatch.toml)"
 )
 
@@ -153,8 +104,8 @@ internal class PythonTomlStatsUsagesCollector : ProjectUsagesCollector() {
     val scope = ProjectScope.getContentScope(project)
 
     val pyProjectTomlCounter = AtomicInteger(0)
-    val tools = mutableSetOf<PythonTool>()
-    val buildSystems = mutableSetOf<PythonTool>()
+    val tools = mutableSetOf<String>()
+    val buildSystems = mutableSetOf<String>()
     val dependencyGroups = mutableSetOf<String>()
 
     FilenameIndex.processFilesByName(PY_PROJECT_TOML, true, scope) { virtualFile ->
@@ -167,9 +118,9 @@ internal class PythonTomlStatsUsagesCollector : ProjectUsagesCollector() {
       true
     }
 
-    val toolsDetectedByMarkers = PythonTool.entries.filterNot { tool ->
-      FilenameIndex.processFilesByNames(tool.markerFileNames, true, scope, null) { false }
-    }
+    val toolsDetectedByMarkers = PYTHON_TOOL_MARKERS.entries.filterNot { (_, markerFileNames)  ->
+      FilenameIndex.processFilesByNames(markerFileNames, true, scope, null) { false }
+    }.map { it.key }
 
     val metrics = mutableSetOf<MetricEvent>()
 
@@ -184,7 +135,7 @@ internal class PythonTomlStatsUsagesCollector : ProjectUsagesCollector() {
 }
 
 internal object PyProjectTomlCollector {
-  fun findDeclaredTools(file: PsiFile): Set<PythonTool> {
+  fun findDeclaredTools(file: PsiFile): Set<String> {
     val declaredTools = file.children.mapNotNullTo(mutableSetOf()) { element ->
       val toolTomlKey = (element as? TomlTable)?.header?.key?.takeIf {
         it.segments.firstOrNull()?.text == PY_PROJECT_TOML_TOOL_PREFIX
@@ -194,13 +145,13 @@ internal object PyProjectTomlCollector {
         PyPackageName.normalizePackageName(it)
       }
 
-      toolNormalizedName?.let { PythonTool.findByNormalizedName(it) }
+      toolNormalizedName
     }
 
     return declaredTools
   }
 
-  fun findBuildSystemRequiresTools(file: PsiFile): Set<PythonTool> {
+  fun findBuildSystemRequiresTools(file: PsiFile): Set<String> {
     val buildSystemTables = file.children.mapNotNull { psiElement ->
       (psiElement as? TomlTable)?.takeIf { it.header.key?.text == PY_PROJECT_TOML_BUILD_SYSTEM }
     }
@@ -217,7 +168,7 @@ internal object PyProjectTomlCollector {
 
     val buildTools = literals.mapNotNullTo(mutableSetOf()) {
       val requirement = PyRequirementParser.fromLine(it.removeSurrounding("\""))
-      requirement?.name?.let { key -> PythonTool.findByNormalizedName(key) }
+      requirement?.name
     }
 
     return buildTools
