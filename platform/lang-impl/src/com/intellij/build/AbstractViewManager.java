@@ -36,8 +36,8 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
 
   protected final Project myProject;
   protected final BuildContentManager myBuildContentManager;
-  private final SynchronizedClearableLazy<AbstractMultipleBuildsView> myBuildsViewValue;
-  private final Set<AbstractMultipleBuildsView> myPinnedViews;
+  private final SynchronizedClearableLazy<MultipleBuildsView> myBuildsViewValue;
+  private final Set<MultipleBuildsView> myPinnedViews;
   private final AtomicBoolean isDisposed = new AtomicBoolean(false);
   private final DisposableWrapperList<BuildProgressListener> myListeners = new DisposableWrapperList<>();
   final int myId = ID_GENERATOR.incrementAndGet();
@@ -46,11 +46,11 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     myProject = project;
     myBuildContentManager = BuildContentManager.getInstance(project);
     myBuildsViewValue = new SynchronizedClearableLazy<>(() -> {
-      Ref<AbstractMultipleBuildsView> ref = new Ref<>();
+      Ref<MultipleBuildsView> ref = new Ref<>();
       ApplicationManager.getApplication().invokeAndWait(() -> {
         ref.set(createMultipleBuildsView());
       });
-      AbstractMultipleBuildsView buildsView = ref.get();
+      MultipleBuildsView buildsView = ref.get();
       Disposer.register(this, buildsView);
       return buildsView;
     });
@@ -61,9 +61,9 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     }
   }
 
-  private AbstractMultipleBuildsView createMultipleBuildsView() {
+  private MultipleBuildsView createMultipleBuildsView() {
     return Registry.is("build.toolwindow.split") ? new BackendMultipleBuildsView(myProject, myBuildContentManager, this)
-                                                 : new MultipleBuildsView(myProject, myBuildContentManager, this);
+                                                 : new MultipleBuildsViewImpl(myProject, myBuildContentManager, this);
   }
 
   @Override
@@ -92,7 +92,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
     if (isDisposed.get()) return;
 
-    AbstractMultipleBuildsView buildsView;
+    MultipleBuildsView buildsView;
     if (event instanceof StartBuildEvent) {
       configurePinnedContent();
       buildsView = myBuildsViewValue.getValue();
@@ -113,9 +113,9 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     }
   }
 
-  private @Nullable AbstractMultipleBuildsView getMultipleBuildsView(@NotNull Object buildId) {
+  private @Nullable MultipleBuildsView getMultipleBuildsView(@NotNull Object buildId) {
     if (myProject.isDisposed()) return null;
-    AbstractMultipleBuildsView buildsView = myBuildsViewValue.getValue();
+    MultipleBuildsView buildsView = myBuildsViewValue.getValue();
     if (!buildsView.shouldConsume(buildId)) {
       buildsView = ContainerUtil.find(myPinnedViews, pinnedView -> pinnedView.shouldConsume(buildId));
     }
@@ -124,7 +124,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
 
   @ApiStatus.Internal
   public @Nullable BuildView getBuildView(@NotNull Object buildId) {
-    AbstractMultipleBuildsView buildsView = getMultipleBuildsView(buildId);
+    MultipleBuildsView buildsView = getMultipleBuildsView(buildId);
     if (buildsView == null) return null;
 
     return buildsView.getBuildView(buildId);
@@ -147,7 +147,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     myBuildsViewValue.drop();
   }
 
-  void onBuildsViewRemove(@NotNull AbstractMultipleBuildsView buildsView) {
+  void onBuildsViewRemove(@NotNull MultipleBuildsView buildsView) {
     if (isDisposed.get()) return;
 
     if (myBuildsViewValue.getValue() == buildsView) {
@@ -159,7 +159,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   }
 
   private void configurePinnedContent() {
-    AbstractMultipleBuildsView buildsView = myBuildsViewValue.getValue();
+    MultipleBuildsView buildsView = myBuildsViewValue.getValue();
     if (buildsView.isPinned()) {
       buildsView.lockContent();
       myPinnedViews.add(buildsView);

@@ -30,7 +30,7 @@ class BackendMultipleBuildsView(
   private val project: Project,
   private val buildContentManager: BuildContentManager,
   internal val viewManager: AbstractViewManager,
-) : AbstractMultipleBuildsView() {
+) : MultipleBuildsView {
   companion object {
     fun getById(buildContentId: BuildContentId): BackendMultipleBuildsView? {
       return findValueById(buildContentId, BackendMultipleBuildsViewIdType)
