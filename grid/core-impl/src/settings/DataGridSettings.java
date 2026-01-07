@@ -145,4 +145,10 @@ public interface DataGridSettings {
   default boolean isFloatingToolbarCustomizable() { return true; }
 
   default void setFloatingToolbarCustomizable(boolean value) { }
+
+  default boolean isShowGeoAsBinary() {
+    return false;
+  }
+
+  default void setShowGeoAsBinary(boolean value) { }
 }
