@@ -14,6 +14,7 @@ import com.intellij.platform.backend.documentation.*
 import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 
 internal fun DocumentationTarget.documentationRequest(): DocumentationRequest {
   ApplicationManager.getApplication().assertReadAccessAllowed()
@@ -148,7 +149,8 @@ private fun <X> resolveLinkInReadAction(
   }
 }
 
-private fun resolveLink(target: DocumentationTarget, url: String): LinkResolveResult? {
+@VisibleForTesting
+fun resolveLink(target: DocumentationTarget, url: String): LinkResolveResult? {
   for (handler in DocumentationLinkHandler.EP_NAME.extensionList) {
     ProgressManager.checkCanceled()
     return handler.resolveLink(target, url) ?: continue

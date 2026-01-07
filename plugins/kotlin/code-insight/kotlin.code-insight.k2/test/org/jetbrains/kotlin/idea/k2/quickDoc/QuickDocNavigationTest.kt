@@ -2,13 +2,17 @@
 
 package org.jetbrains.kotlin.idea.k2.quickDoc
 
+import com.intellij.codeInsight.documentation.DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL
+import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.platform.backend.documentation.impl.resolveLink
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.resolveKDocLink
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -19,6 +23,7 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.test.util.invalidateCaches
 import org.junit.Assert
@@ -93,6 +98,26 @@ class QuickDocNavigationTest() : KotlinLightCodeInsightFixtureTestCase() {
         val target = resolveDocLink("this")
         assertInstanceOf(target, KtTypeReference::class.java)
         Assert.assertEquals("A", (target as KtTypeReference).text)
+    }
+
+    fun testResolveFromJava() {
+        val files = myFixture.configureByFiles(
+            getTestName(false) + "_Java.java",
+            getTestName(false) + "_Kotlin.kt"
+        )
+
+        val editor = files.first().findExistingEditor()
+        assertNotNull(editor)
+        
+        val targets = IdeDocumentationTargetProvider.getInstance(project).documentationTargetsForInlineDoc(
+            editor!!,
+            files.first(),
+            files.first().findElementAt(editor.caretModel.offset)!!.startOffset
+        )
+        Assert.assertTrue("No documentation target available", targets.isNotEmpty())
+
+        val resolved = resolveLink(targets.first(), "${PSI_ELEMENT_PROTOCOL}kotlinFun2")
+        assertNotNull("The link isn't resolved", resolved)
     }
 
     private fun resolveDocLink(linkText: String): PsiElement? {
