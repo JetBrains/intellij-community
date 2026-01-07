@@ -312,7 +312,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     @NotNull ExternalSystemExecuteTaskTask task,
     @NotNull ProgressIndicator indicator,
     @NotNull ExternalSystemProcessHandler processHandler,
-    @Nullable BuildProgressListener progressListener,
+    @NotNull BuildProgressListener progressListener,
     @NotNull BuildDescriptor buildDescriptor,
     @NotNull ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler> consoleManager,
     @Nullable ExecutionConsole consoleView
@@ -326,15 +326,13 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       ExternalSystemTaskNotificationListener taskListener = new ExternalSystemTaskNotificationListener() {
         @Override
         public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
-          if (progressListener != null) {
-            var eventMessage = BuildBundle.message("build.status.running");
-            var viewSettingsProvider = ObjectUtils.doIfCast(consoleView, BuildViewSettingsProvider.class, BuildViewSettingsProviderAdapter::new);
-            progressListener.onEvent(id,
-              StartBuildEvent.builder(eventMessage, buildDescriptor)
-                .withBuildViewSettings(viewSettingsProvider)
-                .build()
-            );
-          }
+          var eventMessage = BuildBundle.message("build.status.running");
+          var viewSettingsProvider = ObjectUtils.doIfCast(consoleView, BuildViewSettingsProvider.class, BuildViewSettingsProviderAdapter::new);
+          progressListener.onEvent(id,
+            StartBuildEvent.builder(eventMessage, buildDescriptor)
+              .withBuildViewSettings(viewSettingsProvider)
+              .build()
+          );
         }
 
         @Override
@@ -351,15 +349,13 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
         @Override
         public void onFailure(@NotNull String projectPath, @NotNull ExternalSystemTaskId id, @NotNull Exception exception) {
-          if (progressListener != null) {
-            var eventMessage = BuildBundle.message("build.status.failed");
-            var title = processHandler.getExecutionName() + " " + BuildBundle.message("build.status.failed");
-            var externalSystemId = id.getProjectSystemId();
-            var externalProjectPath = mySettings.getExternalProjectPath();
-            var dataContext = BuildConsoleUtils.getDataContext(id, progressListener, consoleView);
-            var eventResult = createFailureResult(title, exception, externalSystemId, myProject, externalProjectPath, dataContext);
-            eventDispatcher.onEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
-          }
+          var eventMessage = BuildBundle.message("build.status.failed");
+          var title = processHandler.getExecutionName() + " " + BuildBundle.message("build.status.failed");
+          var externalSystemId = id.getProjectSystemId();
+          var externalProjectPath = mySettings.getExternalProjectPath();
+          var dataContext = BuildConsoleUtils.getDataContext(id, progressListener, consoleView);
+          var eventResult = createFailureResult(title, exception, externalSystemId, myProject, externalProjectPath, dataContext);
+          eventDispatcher.onEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
           processHandler.notifyProcessTerminated(1);
         }
 
