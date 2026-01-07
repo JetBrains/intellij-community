@@ -2252,6 +2252,31 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
       """.trimIndent())
   }
 
+
+  fun `test malformed before and after suite should not declare parameters highlighting`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      @org.junit.platform.suite.api.Suite
+      @org.junit.platform.suite.api.SelectClasses(MyTest::class)
+      class MySuite {
+        companion object {
+          @JvmStatic
+          @org.junit.platform.suite.api.BeforeSuite
+          fun <error descr="Method 'before' annotated with '@BeforeSuite' should not declare parameter 'a'">before</error>(a: Int) {
+            print(a)
+          }
+      
+          @JvmStatic
+          @org.junit.platform.suite.api.AfterSuite
+          fun <error descr="Method 'after' annotated with '@AfterSuite' should not declare parameters 'test', 'suite' and 'a'">after</error>(test: MyTest, suite: MySuite, a: Int) {
+            print("" + test + suite + a)
+          }
+        }
+      }
+      
+      class MyTest {}
+      """.trimIndent())
+  }
+
   // Unconstructable test case
   fun testPlain() {
     myFixture.testHighlighting(

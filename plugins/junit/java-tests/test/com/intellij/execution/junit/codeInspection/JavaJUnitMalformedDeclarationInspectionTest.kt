@@ -2257,6 +2257,22 @@ class JavaJUnitMalformedDeclarationInspectionTest {
     """.trimIndent())
     }
 
+    fun `test malformed before and after suite should not declare parameters highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      @org.junit.platform.suite.api.Suite
+      @org.junit.platform.suite.api.SelectClasses({MyTest.class})
+      class MySuite {
+        @org.junit.platform.suite.api.BeforeSuite
+        public static void <error descr="Method 'before' annotated with '@BeforeSuite' should not declare parameter 'a'">before</error>(int a) { }
+        
+        @org.junit.platform.suite.api.AfterSuite
+        public static void <error descr="Method 'after' annotated with '@AfterSuite' should not declare parameters 'test', 'suite' and 'a'">after</error>(MyTest test, MySuite suite, int a) { }
+      }
+      
+      class MyTest {}
+    """.trimIndent())
+    }
+
     // Unconstructable test case
     fun testPlain() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """

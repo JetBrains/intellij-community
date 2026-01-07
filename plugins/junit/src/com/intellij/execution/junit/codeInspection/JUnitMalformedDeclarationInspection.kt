@@ -198,12 +198,14 @@ private class JUnitMalformedSignatureVisitor(
       }
     }
   )
+
   private val beforeAfterSuiteProblem = AnnotatedSignatureProblem(
     annotations = listOf(ORG_JUNIT_PLATFORM_SUITE_API_BEFORESUITE, ORG_JUNIT_PLATFORM_SUITE_API_AFTERSUITE),
     shouldBeInTestInstancePerClass = false,
     shouldBeStatic = true,
     shouldBeVoidType = true,
-    validVisibility = ::notPrivate
+    validVisibility = ::notPrivate,
+    validParameters = { _ -> emptyList() }
   )
 
   private val junit4TestProblem = AnnotatedSignatureProblem(
