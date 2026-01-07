@@ -252,18 +252,11 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     if (subject == null) return;
     // allowAnyExpr is here because we need negative edges with Never even when subject is not reference expression
     pushAssertion(subject, true, true, true, context -> {
-      PyType subjectType = context.getType(subject);
-      for (PyCaseClause cs : matchStatement.getCaseClauses()) {
-        if (cs.getPattern() == null) continue;
-        if (cs.getGuardCondition() != null) continue;
-        if (cs.getPattern().isIrrefutable()) {
-          subjectType = PyNeverType.NEVER;
-          break;
-        }
-        subjectType = Ref.deref(createAssertionType(subjectType, context.getType(cs.getPattern()), false, true, context));
+      List<PyCaseClause> clauses = matchStatement.getCaseClauses();
+      if (!clauses.isEmpty()) {
+        return clauses.getLast().getSubjectTypeAfter(context);
       }
-
-      return subjectType;
+      return null;
     });
   }
 

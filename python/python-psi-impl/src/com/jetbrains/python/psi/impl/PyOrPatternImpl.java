@@ -24,4 +24,9 @@ public class PyOrPatternImpl extends PyElementImpl implements PyOrPattern {
   public @Nullable PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
     return PyUnionType.union(ContainerUtil.map(getAlternatives(), it -> context.getType(it)));
   }
+
+  @Override
+  public boolean canExcludePatternType(@NotNull TypeEvalContext context) {
+    return ContainerUtil.all(getAlternatives(), it -> it.canExcludePatternType(context));
+  }
 }
