@@ -293,10 +293,10 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   private fun getMachineWorkspacePath(storeDescriptor: ProjectStoreDescriptor): Path? {
     val projectPath = storeDescriptor.historicalProjectBasePath
     if (projectPath.fileSystem != FileSystems.getDefault()) return null
-    val machine = projectPath.asEelPath().descriptor.machine
-    if (machine is LocalEelMachine) return null
+    val descriptor = projectPath.asEelPath().descriptor
+    if (descriptor::class.simpleName != "DockerEelDescriptor") return null
     val pathHash = FileUtilRt.pathHashCode(projectBasePath.invariantSeparatorsPathString)
-    return PathManager.getOriginalConfigDir().resolve("$CONFIG_WORKSPACE_DIR/${sanitizeFileName(machine.name)}.${pathHash.toHexString()}.xml")
+    return PathManager.getOriginalConfigDir().resolve("$CONFIG_WORKSPACE_DIR/${sanitizeFileName(descriptor.machine.name)}.${pathHash.toHexString()}.xml")
   }
 }
 
