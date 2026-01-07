@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.ide.impl.ContentManagerWatcher;
@@ -6,6 +6,7 @@ import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -41,6 +42,7 @@ public final class ExtractMethodPreviewManager {
     String title = (psiFile != null ? psiFile.getName() + ": " : "") + processor.getMethodName() + "()";
     PreviewPanel panel = new PreviewPanel(processor);
     Content content = myContentManager.getFactory().createContent(panel, title, true);
+    Disposer.register(content, panel);
     myContentManager.addContent(content);
     myContentManager.setSelectedContent(content);
     panel.setContent(content);
@@ -50,7 +52,6 @@ public final class ExtractMethodPreviewManager {
 
   public void closeContent(Content content) {
     myContentManager.removeContent(content, true);
-    content.release();
   }
 
   public static ExtractMethodPreviewManager getInstance(Project project) {
