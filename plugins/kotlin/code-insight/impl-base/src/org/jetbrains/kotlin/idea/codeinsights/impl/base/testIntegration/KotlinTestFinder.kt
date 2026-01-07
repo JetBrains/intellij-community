@@ -21,6 +21,9 @@ import com.intellij.testIntegration.TestFinderHelper
 import com.intellij.testIntegration.TestFramework
 import com.intellij.testIntegration.TestIntegrationUtils
 import com.intellij.util.CommonProcessors
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
@@ -39,14 +42,19 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import java.util.regex.Pattern
 
-abstract class AbstractKotlinTestFinder : TestFinder {
+class KotlinTestFinder : TestFinder {
 
-    protected abstract fun isResolvable(classOrObject: KtClassOrObject): Boolean
-
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun findSourceElement(from: PsiElement): PsiElement? {
         from.parentsWithSelf
             .filterIsInstance<KtClassOrObject>()
-            .firstOrNull { !it.isLocal && isResolvable(it) }
+            .firstOrNull { !it.isLocal &&
+                    allowAnalysisOnEdt {
+                        analyze(it) {
+                            it.classSymbol != null
+                        }
+                    }
+            }
             ?.let { return it }
 
         from.parentsWithSelf.firstNotNullOfOrNull {
@@ -180,7 +188,7 @@ abstract class AbstractKotlinTestFinder : TestFinder {
             }
         }
 
-        return TestFinderHelper.getSortedElements(classesWithWeights, true)
+        return TestFinderHelper.getSortedElements(classesWithWeights, false)
     }
 
     override fun findTestsForClass(element: PsiElement): Collection<PsiElement> {
