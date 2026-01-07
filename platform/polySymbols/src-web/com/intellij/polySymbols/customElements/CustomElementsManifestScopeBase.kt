@@ -39,14 +39,12 @@ abstract class CustomElementsManifestScopeBase :
 
   override fun adaptAllRootContributions(
     root: CustomElementsManifest,
-    framework: FrameworkId?,
     origin: CustomElementsJsonOrigin,
   ): Sequence<StaticSymbolContributionAdapter> =
     root.adaptAllContributions(origin, this)
 
   override fun adaptAllContributions(
     contribution: Any,
-    framework: FrameworkId?,
     origin: CustomElementsJsonOrigin,
   ): Sequence<StaticSymbolContributionAdapter> =
     when (contribution) {
@@ -75,8 +73,6 @@ abstract class CustomElementsManifestScopeBase :
     override val typeSupport: PolySymbolTypeSupport? = null,
     private val sourceSymbolResolver: (source: SourceReference, cacheHolder: UserDataHolderEx) -> PsiElement? = { _, _ -> null },
   ) : CustomElementsJsonOrigin {
-
-    override val framework: FrameworkId? = null
 
     override fun resolveSourceSymbol(source: SourceReference, cacheHolder: UserDataHolderEx): PsiElement? =
       sourceSymbolResolver(source, cacheHolder)

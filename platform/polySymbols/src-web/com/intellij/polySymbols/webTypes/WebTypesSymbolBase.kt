@@ -196,7 +196,9 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     || superContributions.flatMap { it.queryScope }.any { it.isExclusiveFor(kind) }
 
   override fun matchContext(context: PolyContext): Boolean =
-    super.matchContext(context) && base.contribution.requiredContext.evaluate(context)
+    super.matchContext(context)
+    && (base.jsonOrigin.framework == null || context.framework == null || base.jsonOrigin.framework == context.framework)
+    && base.contribution.requiredContext.evaluate(context)
 
   internal class WebTypesSymbolWithPattern(private val jsonPattern: NamePatternRoot) : WebTypesSymbolBase(), PolySymbolWithPattern {
     override val pattern: PolySymbolPattern

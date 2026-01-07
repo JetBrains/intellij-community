@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.html
 
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.framework.PolySymbolFramework
 import com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolDescriptor
@@ -21,6 +23,18 @@ interface HtmlFrameworkSymbolsSupport {
   fun getAttributeNameCodeCompletionFilter(tag: XmlTag): Predicate<String> = Predicate { true }
 
   companion object {
+    /**
+     * Provides id of the Symbol's framework, e.g. vue, angular, react, etc.
+     */
+    @JvmField
+    val PROP_HTML_FRAMEWORK_ID: PolySymbolProperty<FrameworkId> = PolySymbolProperty["html-framework-id"]
+
+    @JvmStatic
+    fun get(symbol: PolySymbol): HtmlFrameworkSymbolsSupport =
+      PolySymbolFramework.get(symbol.framework ?: "") as? HtmlFrameworkSymbolsSupport
+      ?: DefaultHtmlSupport
+
+
     @JvmStatic
     fun get(id: FrameworkId?): HtmlFrameworkSymbolsSupport =
       PolySymbolFramework.get(id ?: "") as? HtmlFrameworkSymbolsSupport

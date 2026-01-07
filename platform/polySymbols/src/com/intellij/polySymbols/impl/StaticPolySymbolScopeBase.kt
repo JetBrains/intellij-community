@@ -112,13 +112,11 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin 
 
   protected abstract fun adaptAllContributions(
     contribution: Contribution,
-    framework: FrameworkId?,
     origin: Origin,
   ): Sequence<StaticSymbolContributionAdapter>
 
   protected abstract fun adaptAllRootContributions(
     root: Root,
-    framework: FrameworkId?,
     origin: Origin,
   ): Sequence<StaticSymbolContributionAdapter>
 
@@ -128,7 +126,7 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin 
     origin: Origin,
   ): ContributionSearchMap =
     getOrCreateMap(queryExecutor, contribution) { consumer ->
-      adaptAllContributions(contribution, origin.framework, origin).forEach(consumer)
+      adaptAllContributions(contribution, origin).forEach(consumer)
     }
 
 
@@ -138,7 +136,7 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin 
     origin: Origin,
   ): ContributionSearchMap =
     getOrCreateMap(queryExecutor, root) { consumer ->
-      adaptAllRootContributions(root, origin.framework, origin).forEach(consumer)
+      adaptAllRootContributions(root, origin).forEach(consumer)
     }
 
   private fun getOrCreateMap(

@@ -2,7 +2,6 @@
 package com.intellij.polySymbols
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.impl.PolySymbolOriginImpl
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import javax.swing.Icon
@@ -11,9 +10,6 @@ import javax.swing.Icon
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/
 interface PolySymbolOrigin {
-  val framework: @NlsSafe FrameworkId?
-    get() = null
-
   val library: @NlsSafe String?
     get() = null
 
@@ -31,13 +27,12 @@ interface PolySymbolOrigin {
   companion object {
     @JvmStatic
     fun create(
-      framework: FrameworkId? = null,
       library: String? = null,
       version: String? = null,
       defaultIcon: Icon? = null,
       typeSupport: PolySymbolTypeSupport? = null,
     ): PolySymbolOrigin =
-      PolySymbolOriginImpl(framework, library, version, defaultIcon, typeSupport)
+      PolySymbolOriginImpl(library, version, defaultIcon, typeSupport)
 
     @JvmStatic
     fun empty(): PolySymbolOrigin =

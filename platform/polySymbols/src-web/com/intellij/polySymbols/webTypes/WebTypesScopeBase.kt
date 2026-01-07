@@ -94,20 +94,18 @@ abstract class WebTypesScopeBase :
 
   override fun adaptAllRootContributions(
     root: Contributions,
-    framework: FrameworkId?,
     origin: WebTypesJsonOrigin,
   ): Sequence<WebTypesJsonContributionAdapter> =
-    root.getAllContributions(framework)
+    root.getAllContributions(origin.framework)
       .flatMap { (kind, list) ->
         list.map { it.wrap(origin, this@WebTypesScopeBase, kind) }
       }
 
   override fun adaptAllContributions(
     contribution: GenericContributionsHost,
-    framework: FrameworkId?,
     origin: WebTypesJsonOrigin,
   ): Sequence<WebTypesJsonContributionAdapter> =
-    contribution.getAllContributions(framework)
+    contribution.getAllContributions(origin.framework)
       .flatMap { (kind, list) ->
         list.map { it.wrap(origin, this@WebTypesScopeBase, kind) }
       }

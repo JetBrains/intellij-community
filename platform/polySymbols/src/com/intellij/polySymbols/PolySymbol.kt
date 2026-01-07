@@ -246,7 +246,7 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
    * in the particular context. By default, the current symbol framework is checked.
    */
   fun matchContext(context: PolyContext): Boolean =
-    origin.framework == null || context.framework == null || origin.framework == context.framework
+    true
 
   /**
    * Returns `true` if two symbols are the same or equivalent for resolve purposes.
