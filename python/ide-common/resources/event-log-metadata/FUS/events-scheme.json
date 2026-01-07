@@ -3183,7 +3183,7 @@
         "file_name_pattern" : [ "{util#file_name_pattern}" ],
         "file_path" : [ "{regexp#hash}" ],
         "file_template_name" : [ "{util#file_template_name}" ],
-        "file_type" : [ "{util#file_type}", "{enum:DIFF|WebPreview}" ],
+        "file_type" : [ "{util#file_type}", "{enum:DIFF|WebPreview|Welcome to PyCharm}" ],
         "incomplete_dependencies_mode" : [ "{enum:COMPLETE|INCOMPLETE}" ],
         "is_in_reader_mode" : [ "{enum#boolean}" ],
         "is_preview_tab" : [ "{enum#boolean}" ],
@@ -13720,5 +13720,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6608"
+  "version" : "6611"
 }
