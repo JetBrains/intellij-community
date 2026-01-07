@@ -255,10 +255,23 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     var runnerSettings = myEnv.getRunnerSettings();
     var runConfigurationExtensionManager = ExternalSystemRunConfigurationExtensionManager.getInstance();
     runConfigurationExtensionManager.attachExtensionsToProcess(myConfiguration, processHandler, runnerSettings);
+
     BackgroundTaskUtil.executeOnPooledThread(processHandler, () -> {
       var progressIndicator = ObjectUtils.notNull(myEnv.getUserData(PROGRESS_INDICATOR_KEY), () -> new EmptyProgressIndicator());
-      executeTask(task, progressIndicator, processHandler, progressListener, buildDescriptor, consoleManager, consoleView);
+      var dataContext = BuildConsoleUtils.getDataContext(task.getId(), progressListener, consoleView);
+      final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+      final String settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings);
+      final String greeting = ExternalSystemBundle.message("run.text.starting.task", startDateTime, settingsDescription) + "\n";
+      processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
+      try (ExternalSystemEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false)) {
+        task.execute(progressIndicator, new ExternalSystemTaskEventMulticaster(
+          processHandler, eventDispatcher, buildDescriptor, dataContext,
+          consoleManager, consoleView, settingsDescription
+        ));
+        handleTaskResult(task, eventDispatcher);
+      }
     });
+
     return getExecutionResult(executor, progressListener, consoleView, processHandler, buildDescriptor);
   }
 
@@ -317,30 +330,6 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
                                                                     mySettings.getTaskNames(), mySettings.getExecutionName(),
                                                                     DEFAULT_TASK_PREFIX, DEFAULT_TASK_POSTFIX
     );
-  }
-
-  private void executeTask(
-    @NotNull ExternalSystemExecuteTaskTask task,
-    @NotNull ProgressIndicator indicator,
-    @NotNull ExternalSystemProcessHandler processHandler,
-    @NotNull BuildProgressListener progressListener,
-    @NotNull BuildDescriptor buildDescriptor,
-    @NotNull ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler> consoleManager,
-    @Nullable ExecutionConsole consoleView
-  ) {
-    final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
-    final String settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings);
-    final String greeting = ExternalSystemBundle.message("run.text.starting.task", startDateTime, settingsDescription) + "\n";
-    processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
-
-    var dataContext = BuildConsoleUtils.getDataContext(task.getId(), progressListener, consoleView);
-    try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false)) {
-      task.execute(indicator, new ExternalSystemTaskEventMulticaster(
-        processHandler, eventDispatcher, buildDescriptor, dataContext,
-        consoleManager, consoleView, settingsDescription
-      ));
-      handleTaskResult(task, eventDispatcher);
-    }
   }
 
   private static void handleTaskResult(
