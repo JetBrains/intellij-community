@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
@@ -64,6 +64,25 @@ public class JUnitUnusedMethodsTest extends LightJavaCodeInsightFixtureTestCase 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EnumSource(value = Foo.class, names = {"AAA", "BBB"})
         void valid() {}
+      }
+      """);
+    myFixture.testHighlighting(true, false, false);
+  }
+
+  public void testBeforeSuiteIsImplicitUsage() {
+    myFixture.addClass("package org.junit.platform.suite.api; public @interface Suite {}");
+    myFixture.addClass("package org.junit.platform.suite.api; public @interface BeforeSuite {}");
+    myFixture.addClass("package org.junit.platform.suite.api; public @interface AfterSuite {}");
+    myFixture.configureByText("MySuite.java", """
+      import org.junit.platform.suite.api.*;
+      
+      @Suite
+      public class MySuite {
+        @BeforeSuite
+        public static void beforeSuite() {}
+      
+        @AfterSuite
+        public static void afterSuite() {}
       }
       """);
     myFixture.testHighlighting(true, false, false);
