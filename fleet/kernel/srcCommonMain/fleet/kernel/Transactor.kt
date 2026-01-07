@@ -479,7 +479,7 @@ suspend fun <T> withTransactor(
                               duration = timedChange.duration,
                               location = changeTask.causeSpan)
                 val change = timedChange.value
-                Transactor.logger.trace { "[$transactor] broadcasting change $change" }
+                Transactor.logger.trace { "[$transactor] broadcasting change [${change.dbBefore.timestamp} -> ${change.dbAfter.timestamp}] $change" }
                 check(sharedFlow.tryEmit(
                   TransactorEvent.SequentialChange(
                     timestamp = ts++,

@@ -103,17 +103,24 @@ suspend fun <T> withRete(
             // todo: implement a proper reconnect, this could still fail because of thread starvation
             changes.consumeAsFlow()
               .conflateReduce { c1, c2 ->
-                Change(dbBefore = c1.dbBefore,
-                       dbAfter = c2.dbAfter,
-                       novelty = c1.novelty + c2.novelty,
-                       meta = c1.meta.merge(c2.meta))
+                Change(
+                  dbBefore = c1.dbBefore,
+                  dbAfter = c2.dbAfter,
+                  novelty = c1.novelty + c2.novelty,
+                  meta = c1.meta.merge(c2.meta)
+                )
               }
               .produceIn(this)
               .consume {
                 val changesConflated = this
-                val rete = postponedVars(lastKnownDb, ReteNetwork.new(lastKnownDb,
-                                                                      failWhenPropagationFailed = abortOnError,
-                                                                      performAdditionalChecks = performAdditionalChecks))
+                val rete = postponedVars(
+                  lastKnownDb = lastKnownDb,
+                  reteNetwork = ReteNetwork.new(
+                    lastKnownDb,
+                    failWhenPropagationFailed = abortOnError,
+                    performAdditionalChecks = performAdditionalChecks
+                  )
+                )
                 whileSelect {
                   commandsReceiver.onReceive { cmd ->
                     rete.command(cmd)
@@ -126,6 +133,7 @@ suspend fun <T> withRete(
                         rete.propagateChange(change)
                         true
                       }
+
                       else -> false
                     }
                   }
@@ -137,10 +145,12 @@ suspend fun <T> withRete(
             lastKnownDb.value = ReteState.Poison(ex ?: RuntimeException("rete is terminating"))
           }
         }.use {
-          val rete = Rete(commands = commandsSender,
-                          reteState = lastKnownDb,
-                          abortOnError = abortOnError,
-                          dbSource = ReteDbSource(lastKnownDb))
+          val rete = Rete(
+            commands = commandsSender,
+            reteState = lastKnownDb,
+            abortOnError = abortOnError,
+            dbSource = ReteDbSource(lastKnownDb)
+          )
           val reteEntity = change {
             register(ReteEntity)
             ReteEntity.new {
@@ -261,11 +271,18 @@ private val ReteSpinChangeInterceptor: ChangeInterceptor =
         validationVar = validation
       }
       return when (val x = validationVar) {
-        is ValidationResult.Invalid -> throw UnsatisfiedMatchException(CancellationReason("match invalidated by rete", x.marker))
+        is ValidationResult.Invalid -> throw UnsatisfiedMatchException(
+          CancellationReason(
+            "match invalidated by rete",
+            x.marker
+          )
+        )
+
         is ValidationResult.Inconclusive -> {
           waitForReteToCatchUp(change.dbAfter)
           spin()
         }
+
         ValidationResult.Valid -> change
       }
     }
@@ -290,14 +307,18 @@ fun <T> Query<*, T>.observe(
   observer: QueryObserver<T>,
 ): DisposableHandle = let { query ->
   val terminalId = Rete.ObserverId()
-  check(rete.commands.trySend(Rete.Command.AddObserver(
-    dbTimestamp = dbTimestamp,
-    dependencies = contextMatches?.matches ?: emptyList(),
-    query = query,
-    tracingKey = queryTracingKey,
-    observerId = terminalId,
-    observer = observer,
-  )).isSuccess) { "Rete is dead" }
+  check(
+    rete.commands.trySend(
+      Rete.Command.AddObserver(
+        dbTimestamp = dbTimestamp,
+        dependencies = contextMatches?.matches ?: emptyList(),
+        query = query,
+        tracingKey = queryTracingKey,
+        observerId = terminalId,
+        observer = observer,
+      )
+    ).isSuccess
+  ) { "Rete is dead" }
 
   DisposableHandle {
     check(rete.commands.trySend(Rete.Command.RemoveObserver(terminalId)).isSuccess) { "Rete is dead" }
@@ -316,8 +337,12 @@ private suspend fun <T> Query<*, T>.observeSuspend(observer: suspend (ReceiveCha
       // trySends to the send channel may throw cancellation,
       // but it will also cancel the flow itself,
       // which will lead to observer removal from the DisposableHandle
-      send.trySend(TokenSet(asserted = initial,
-                            retracted = emptySet()))
+      send.trySend(
+        TokenSet(
+          asserted = initial,
+          retracted = emptySet()
+        )
+      )
       OnTokens { tokens ->
         send.trySend(tokens)
       }
@@ -337,19 +362,22 @@ internal suspend fun <T> withReteDbSource(body: suspend CoroutineScope.() -> T):
     val currentDbSource = requireNotNull(currentCoroutineContext()[DbSource.ContextElement]).dbSource
     if (currentDbSource == rete.dbSource) {
       coroutineScope(body)
-    }
-    else {
+    } else {
       waitForReteToCatchUp(currentDbSource.latest)
       val (res, dbTimestamp) = withContext(DbSource.ContextElement(rete.dbSource) + ReteSpinChangeInterceptor) {
         val res = body()
-        res to db().timestamp
+        val timestamp = when (DbContext.threadBound.poison) {
+          null -> DbContext.threadBound.impl.timestamp
+          else -> null
+        }
+        res to timestamp
       }
       // we're switching db source here:
       // in general we don't know how this db source is ordered to Rete,
       // it might not necessary be a transactor source,
       // it might be noria, or other Rete,
       // so let's ensure happens before here by catching up with what we've seen:
-      waitForDbSourceToCatchUpWithTimestamp(dbTimestamp)
+      dbTimestamp?.let { waitForDbSourceToCatchUpWithTimestamp(it) }
       res
     }
   }
@@ -366,8 +394,7 @@ internal data class ReteDbSource(val reteState: StateFlow<ReteState>) : DbSource
 private inline fun <T> DisposableHandle.useInline(function: () -> T): T =
   try {
     function()
-  }
-  finally {
+  } finally {
     dispose()
   }
 
@@ -503,7 +530,10 @@ suspend fun <T> Query<*, T>.collect(f: suspend CoroutineScope.(T) -> Unit) {
  * invokes [f] sequentially with each value of [Query] [Match]es
  * when new match arrives, the previous work is cancelled, see [Flow.collectLatest]
  */
-@Deprecated(replaceWith = ReplaceWith("collect(f)", "fleet.kernel.rete.collect"), message = "its usage is either equivalent to .collect() or is a bug")
+@Deprecated(
+  replaceWith = ReplaceWith("collect(f)", "fleet.kernel.rete.collect"),
+  message = "its usage is either equivalent to .collect() or is a bug"
+)
 suspend fun <T> Query<*, T>.collectLatest(f: suspend CoroutineScope.(T) -> Unit) {
   matchesFlow().collectLatestMatch(f)
 }

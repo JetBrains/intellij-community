@@ -8,6 +8,8 @@ import fleet.kernel.rete.CancellationReason
 import fleet.kernel.rete.ContextMatches
 import fleet.kernel.rete.ReteEntity
 import fleet.kernel.rete.UnsatisfiedMatchException
+import fleet.kernel.rete.impl.ObservableMatch
+import fleet.util.logging.KLoggers
 import kotlinx.coroutines.ThreadContextElement
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +36,7 @@ interface DbSource {
           val ctx = DbContext<DB>(latest, dbSource)
           DbContext.threadLocal.set(ctx)
           context[ContextMatches]?.matches?.firstOrNull { m -> m.wasInvalidated }?.let { cancelledMatch ->
-            ctx.setPoison(UnsatisfiedMatchException(CancellationReason("match invalidated by rete", cancelledMatch)))
+            ctx.setUnsatisfiedMatchPoison(cancelledMatch)
           }
         }.onFailure { ex ->
           val ctx = DbContext<DB>(RuntimeException("Failed to obtain latest db snapshot", ex), dbSource)
@@ -66,7 +68,12 @@ interface DbSource {
       oldState?.let {
         (oldState.dbSource as DbSource?)?.let { dbSource ->
           runCatching { dbSource.latest }
-            .onSuccess { latest -> oldState.set(latest) }
+            .onSuccess { latest ->
+              when (val cancelledMatch = context[ContextMatches]?.matches?.firstOrNull { m -> m.wasInvalidated }) {
+                null -> oldState.set(latest)
+                else -> oldState.setUnsatisfiedMatchPoison(cancelledMatch)
+              }
+            }
             .onFailure { ex -> oldState.setPoison(RuntimeException("Failed to obtain latest db snapshot", ex)) }
         }
       }
@@ -75,6 +82,10 @@ interface DbSource {
 
     override fun toString(): String = "DbSourceContextElement(${dbSource.debugName})"
   }
+}
+
+private fun DbContext<*>.setUnsatisfiedMatchPoison(cancelledMatch: ObservableMatch<*>) {
+  setPoison(UnsatisfiedMatchException(CancellationReason("match invalidated by rete", cancelledMatch)))
 }
 
 class ConstantDBSource(private val db: DB) : DbSource {
@@ -103,10 +114,12 @@ class FlowDbSource(
 }
 
 
-fun KernelContextElement(transactor: Transactor, dbSource: DbSource = FlowDbSource(transactor.dbState, "kernel $transactor")): CoroutineContext =
-  transactor +
-  DbSource.ContextElement(dbSource) +
-  (asOf(transactor.dbState.value) { ReteEntity.forKernel(transactor) } ?: EmptyCoroutineContext)
+fun KernelContextElement(
+  transactor: Transactor,
+  dbSource: DbSource = FlowDbSource(transactor.dbState, "kernel $transactor")
+): CoroutineContext =
+  transactor + DbSource.ContextElement(dbSource) + (asOf(transactor.dbState.value) { ReteEntity.forKernel(transactor) }
+    ?: EmptyCoroutineContext)
 
 fun ConstantDbContext(db: DB): CoroutineContext =
   DbSource.ContextElement(ConstantDBSource(db))
@@ -121,13 +134,12 @@ val CoroutineContext.dbSource: DbSource
   get() = requireNotNull(this[DbSource.ContextElement]) { "no DbSource on coroutineContext" }.dbSource
 
 
-suspend fun DbSource.catchUp(timestamp: Long) {
+suspend fun DbSource.catchUp(targetTimestamp: Long) {
   let { dbSource ->
-    val dbContext = DbContext.threadBound
-    if (dbContext.poison == null) {
-      if (dbContext.impl.timestamp < timestamp || dbSource.latest.timestamp < timestamp) {
+    if (DbContext.threadBound.poison == null) {
+      if (DbContext.threadBound.impl.timestamp < targetTimestamp || dbSource.latest.timestamp < targetTimestamp) {
         val dbAfterTimestamp = dbSource.flow.first { db ->
-          db.timestamp >= timestamp
+          db.timestamp >= targetTimestamp
         }
         yield()
         if (DbContext.threadBound.poison == null) {
