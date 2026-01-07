@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections;
 
@@ -4964,6 +4964,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/emptyRange/char.kt");
         }
 
+        @TestMetadata("customGetterRange.kt")
+        public void testCustomGetterRange() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/customGetterRange.kt");
+        }
+
         @TestMetadata("double.kt")
         public void testDouble() throws Exception {
             runTest("testData/inspectionsLocal/emptyRange/double.kt");
@@ -5042,6 +5047,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
         @TestMetadata("until2.kt")
         public void testUntil2() throws Exception {
             runTest("testData/inspectionsLocal/emptyRange/until2.kt");
+        }
+
+        @TestMetadata("varRange.kt")
+        public void testVarRange() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/varRange.kt");
         }
     }
 

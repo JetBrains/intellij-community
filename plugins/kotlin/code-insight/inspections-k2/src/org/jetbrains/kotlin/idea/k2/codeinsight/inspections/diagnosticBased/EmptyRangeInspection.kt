@@ -87,7 +87,7 @@ internal class EmptyRangeInspection : KotlinApplicableInspectionBase<KtElement, 
         fun KtExpression.normalizedValue(): T? = when (this) {
             is KtNameReferenceExpression -> {
                 val initializer = when (val resolved = mainReference.resolve()) {
-                    is KtProperty -> resolved.initializer
+                    is KtProperty -> if (resolved.isVar) null else resolved.initializer
                     is KtParameter -> resolved.defaultValue
                     else -> null
                 }
