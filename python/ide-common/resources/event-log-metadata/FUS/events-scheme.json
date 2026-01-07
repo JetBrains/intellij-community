@@ -1455,6 +1455,19 @@
       }
     }
   }, {
+    "id" : "csv.file.usage",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "1"
+    } ],
+    "rules" : {
+      "event_id" : [ "{enum:opened}" ],
+      "event_data" : {
+        "file_size_bytes" : [ "{regexp#integer}" ],
+        "open_mode" : [ "{enum:DATA|TEXT}" ]
+      }
+    }
+  }, {
     "id" : "customize.wizard",
     "builds" : [ ],
     "versions" : [ {
@@ -13720,5 +13733,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6611"
+  "version" : "6612"
 }
