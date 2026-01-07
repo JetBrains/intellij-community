@@ -247,6 +247,7 @@ c:com.intellij.build.DefaultBuildDescriptor
 - setActivateToolWindowWhenFailed(Z):V
 - setNavigateToError(com.intellij.util.ThreeState):V
 - withContentDescriptor(java.util.function.Supplier):com.intellij.build.DefaultBuildDescriptor
+- withNavigateToError(com.intellij.util.ThreeState):com.intellij.build.DefaultBuildDescriptor
 c:com.intellij.build.ExecutionNode
 - com.intellij.ide.util.treeView.PresentableNodeDescriptor
 - add(com.intellij.build.ExecutionNode):V
@@ -2262,7 +2263,6 @@ com.intellij.find.actions.ShowUsagesActionHandler
 - a:navigateToSingleUsageImmediately():Z
 - a:showDialog():com.intellij.find.actions.ShowUsagesActionHandler
 - a:withScope(com.intellij.psi.search.SearchScope):com.intellij.find.actions.ShowUsagesActionHandler
-c:com.intellij.find.actions.ShowUsagesManager
 f:com.intellij.find.actions.UsageListCellRenderer
 - com.intellij.ui.ColoredListCellRenderer
 - s:getVirtualFile(com.intellij.usages.Usage):com.intellij.openapi.vfs.VirtualFile
@@ -2867,7 +2867,6 @@ f:com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor$Fa
 f:com.intellij.ide.extensionResources.ExtensionsRootType
 - com.intellij.ide.scratch.RootType
 - s:getInstance():com.intellij.ide.extensionResources.ExtensionsRootType
-f:com.intellij.ide.extensionResources.ExternalResourcesUnpackExtensionBean
 com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer
 - sf:CREATE_FROM_TEMPLATE_REPLACER:com.intellij.openapi.extensions.ExtensionPointName
 - a:replaceCreateFromFileTemplateAction(com.intellij.ide.fileTemplates.FileTemplate):com.intellij.openapi.actionSystem.AnAction
@@ -5625,7 +5624,6 @@ a:com.intellij.ui.tabs.ColorButtonBase
 - setColor(java.awt.Color):V
 pc:com.intellij.ui.tabs.ColorButtonBase$ColorButtonUI
 - javax.swing.plaf.basic.BasicToggleButtonUI
-f:com.intellij.unscramble.AnalyzeStacktraceUtil
 com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory
 - a:createConsoleComponent(com.intellij.execution.ui.ConsoleView,com.intellij.openapi.actionSystem.DefaultActionGroup):javax.swing.JComponent
 a:com.intellij.util.TextFieldCompletionProvider

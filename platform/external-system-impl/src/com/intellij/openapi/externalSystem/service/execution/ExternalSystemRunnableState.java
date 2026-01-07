@@ -7,6 +7,7 @@ import com.intellij.build.BuildEventDispatcher;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.BuildTreeFilters;
 import com.intellij.build.BuildView;
+import com.intellij.build.BuildViewManager;
 import com.intellij.build.BuildViewSettingsProvider;
 import com.intellij.build.BuildViewSettingsProviderAdapter;
 import com.intellij.build.DefaultBuildDescriptor;
@@ -17,6 +18,7 @@ import com.intellij.build.events.StartBuildEvent;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.execution.DefaultExecutionResult;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
@@ -250,12 +252,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       contextActions = consoleManager.getCustomContextActions(myProject, task, myEnv);
     }
     DefaultBuildDescriptor buildDescriptor =
-      new DefaultBuildDescriptor(task.getId(), processHandler.getExecutionName(), task.getExternalProjectPath(), System.currentTimeMillis());
-
-    ThreeState navigateToError = myEnv.getUserData(NAVIGATE_TO_ERROR_KEY);
-    if (navigateToError != null) {
-      buildDescriptor.setNavigateToError(navigateToError);
-    }
+      new DefaultBuildDescriptor(task.getId(), processHandler.getExecutionName(), task.getExternalProjectPath(), System.currentTimeMillis())
+        .withNavigateToError(ObjectUtils.notNull(myEnv.getUserData(NAVIGATE_TO_ERROR_KEY), ThreeState.UNSURE));
 
     Class<? extends BuildProgressListener> progressListenerClazz = task.getUserData(PROGRESS_LISTENER_KEY);
     Filter[] filters = consoleManager.getCustomExecutionFilters(myProject, task, myEnv);
