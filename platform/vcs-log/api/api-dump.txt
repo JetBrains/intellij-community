@@ -165,9 +165,10 @@ com.intellij.vcs.log.VcsLogProvider
 - a:getSupportedVcs():com.intellij.openapi.vcs.VcsKey
 - getVcsRoot(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vfs.VirtualFile
 - a:readAllHashes(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Consumer):com.intellij.vcs.log.VcsLogProvider$LogData
-- a:readFirstBlock(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.VcsLogProvider$Requirements):com.intellij.vcs.log.VcsLogProvider$DetailedLogData
+- readFirstBlock(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.VcsLogProvider$Requirements):com.intellij.vcs.log.VcsLogProvider$DetailedLogData
 - a:readFullDetails(com.intellij.openapi.vfs.VirtualFile,java.util.List,com.intellij.util.Consumer):V
 - a:readMetadata(com.intellij.openapi.vfs.VirtualFile,java.util.List,com.intellij.util.Consumer):V
+- readRecentCommits(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.VcsLogProvider$Requirements,com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy,kotlin.coroutines.Continuation):java.lang.Object
 - resolveReference(java.lang.String,com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.Hash
 - a:subscribeToRootRefreshEvents(java.util.Collection,com.intellij.vcs.log.VcsLogRefresher):com.intellij.openapi.Disposable
 f:com.intellij.vcs.log.VcsLogProvider$Companion
@@ -177,6 +178,13 @@ com.intellij.vcs.log.VcsLogProvider$DetailedLogData
 com.intellij.vcs.log.VcsLogProvider$LogData
 - a:getRefs():java.util.Set
 - a:getUsers():java.util.Set
+com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy
+f:com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy$FromLoadedCommits
+- com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy
+- sf:INSTANCE:com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy$FromLoadedCommits
+com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy$LoadAllRefs
+- com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy
+- a:getPreviouslyLoadedRefs():java.util.Collection
 com.intellij.vcs.log.VcsLogProvider$Requirements
 - a:getCommitCount():I
 com.intellij.vcs.log.VcsLogProviderRequirementsEx

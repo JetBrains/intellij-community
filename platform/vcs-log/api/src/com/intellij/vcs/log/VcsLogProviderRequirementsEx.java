@@ -2,6 +2,7 @@
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -13,6 +14,7 @@ import static com.intellij.vcs.log.VcsLogProvider.Requirements;
  * An instance of this class is actually passed to {@link VcsLogProvider#readFirstBlock(VirtualFile, Requirements)},
  * but VcsLogProviders which need this additional information must check for instanceof before casting & be able to fallback.
  */
+@ApiStatus.Obsolete
 public interface VcsLogProviderRequirementsEx extends Requirements {
 
   /**

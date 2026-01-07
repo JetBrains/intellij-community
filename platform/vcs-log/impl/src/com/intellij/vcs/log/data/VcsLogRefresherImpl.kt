@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.vcs.log.*
+import com.intellij.vcs.log.VcsLogProvider.RefsLoadingPolicy
 import com.intellij.vcs.log.data.util.trace
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
@@ -321,11 +322,7 @@ internal class VcsLogRefresherImpl(
         tracer.trace(ReadingRecentCommitsInRoot) {
           it.setAttribute("rootName", root.getName())
           val (data, readTime) = measureTimedValue {
-            withContext(Dispatchers.IO) {
-              coroutineToIndicator {
-                provider.readFirstBlock(root, requirements)
-              }
-            }
+            provider.readRecentCommits(root, requirements, requirements.toRefsLoadingPolicy())
           }
           LOG.trace { "Recent data loaded in ${readTime.inWholeMilliseconds} ms" }
           checkCanceled()
@@ -484,3 +481,9 @@ private inline fun <T> Channel<T>.receiveAll(consumer: (T) -> Unit) {
   }
   while (nextItem != null)
 }
+
+private class LoadRefsPolicy(override val previouslyLoadedRefs: Collection<VcsRef>) : RefsLoadingPolicy.LoadAllRefs
+
+private fun VcsLogProvider.Requirements.toRefsLoadingPolicy(): RefsLoadingPolicy =
+  if (this !is VcsLogProviderRequirementsEx || !isRefreshRefs) RefsLoadingPolicy.FromLoadedCommits
+  else LoadRefsPolicy(previousRefs)

@@ -3,6 +3,7 @@ package com.intellij.vcs.log
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
@@ -11,6 +12,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.messages.MessageBus
 import com.intellij.vcs.log.graph.PermanentGraph
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Provides the information needed to build the VCS log, such as the list of most recent commits with their parents.
@@ -23,11 +26,37 @@ interface VcsLogProvider {
    *
    * This method is called both on the startup and on refresh.
    *
-   * @param requirements some limitations on commit data that should be returned, e.g. the number of commits.
-   * @return given amount of ordered commits and **all** references in the repository.
+   * @param root The root of the repository where the commits and references should be read from.
+   * @param requirements Specifies the limitations on the commit data to return, such as the required number of commits.
+   * @param refsLoadingPolicy policy defining whether repository references should be loaded or skipped (e.g., to optimize an initial load).
+   *
+   * @return List of commits along with their metadata and repository references if requested.
    */
   @Throws(VcsException::class)
-  fun readFirstBlock(root: VirtualFile, requirements: Requirements): DetailedLogData
+  suspend fun readRecentCommits(
+    root: VirtualFile,
+    requirements: Requirements,
+    refsLoadingPolicy: RefsLoadingPolicy,
+  ): DetailedLogData {
+    return withContext(Dispatchers.IO) { coroutineToIndicator { readFirstBlock(root, requirements) } }
+  }
+
+  /**
+   * Reads the most recent commits from the log together with all repository references.
+   *
+   * Commits should be at least topologically ordered, better considering commit time as well: they will be shown in the log in this order.
+   *
+   * This method is called both on the startup and on refresh.
+   *
+   * @param requirements some limitations on commit data that should be returned, e.g. the number of commits.
+   * @return given amount of ordered commits and **all** references in the repository.
+   * @deprecated Use [readRecentCommits] instead
+   */
+  @Deprecated("Use readRecentCommits instead", ReplaceWith("readRecentCommits(root, requirements)"))
+  @Throws(VcsException::class)
+  fun readFirstBlock(root: VirtualFile, requirements: Requirements): DetailedLogData {
+    throw UnsupportedOperationException("Method readFirstBlock is not implemented in class ${this.javaClass.name}. Please implement readRecentCommits instead.")
+  }
 
   /**
    * Reads the whole history.
@@ -189,9 +218,26 @@ interface VcsLogProvider {
    * Container for the ordered list of commits together with their details, and references.
    */
   interface DetailedLogData {
+    /**
+     * In the case of refresh can contain only 'recent' commits, which will be joined the previously loaded data.
+     */
     val commits: List<VcsCommitMetadata>
 
+    /**
+     * Should contain all the refs which are related to commits to display in log.
+     * It means that in case of refresh all refs should be loaded,
+     * while during the initial load refs related to [commits] can be loaded.
+     *
+     * @see [RefsLoadingPolicy]
+     */
     val refs: Set<VcsRef>
+  }
+
+  sealed interface RefsLoadingPolicy {
+    object FromLoadedCommits : RefsLoadingPolicy
+    interface LoadAllRefs : RefsLoadingPolicy {
+      val previouslyLoadedRefs: Collection<VcsRef>
+    }
   }
 
   companion object {
