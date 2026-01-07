@@ -86,6 +86,7 @@ import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.function.Supplier;
 
@@ -258,19 +259,29 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       var progressIndicator = ObjectUtils.notNull(myEnv.getUserData(PROGRESS_INDICATOR_KEY), () -> new EmptyProgressIndicator());
       executeTask(task, progressIndicator, processHandler, progressListener, buildDescriptor, consoleManager, consoleView);
     });
-    ExecutionConsole executionConsole = progressListener instanceof ExecutionConsole ? (ExecutionConsole)progressListener : consoleView;
-    DefaultActionGroup actionGroup = new DefaultActionGroup();
-    if (executionConsole instanceof BuildView) {
-      actionGroup.addAll(((BuildView)executionConsole).getSwitchActions());
-      actionGroup.add(BuildTreeFilters.createFilteringActionsGroup(new WeakFilterableSupplier<>((BuildView)executionConsole)));
+    return getExecutionResult(executor, progressListener, consoleView, processHandler, buildDescriptor);
+  }
+
+  private @NotNull DefaultExecutionResult getExecutionResult(
+    @NotNull Executor executor,
+    @NotNull BuildProgressListener progressListener,
+    @Nullable ExecutionConsole consoleView,
+    @NotNull ExternalSystemProcessHandler processHandler,
+    @NotNull DefaultBuildDescriptor buildDescriptor
+  ) {
+    var executionConsole = progressListener instanceof ExecutionConsole ? (ExecutionConsole)progressListener : consoleView;
+
+    var actions = new ArrayList<AnAction>();
+    if (executionConsole instanceof BuildView buildView) {
+      ContainerUtil.addAll(actions, buildView.getSwitchActions());
+      actions.add(BuildTreeFilters.createFilteringActionsGroup(new WeakFilterableSupplier<>(buildView)));
     }
-    RunConfigurationTaskState taskState = myConfiguration.getUserData(RunConfigurationTaskState.getKEY());
+    var taskState = myConfiguration.getUserData(RunConfigurationTaskState.getKEY());
     if (taskState != null && consoleView != null) {
-      actionGroup.addAll(taskState.createCustomActions(processHandler, consoleView, executor));
+      actions.addAll(taskState.createCustomActions(processHandler, consoleView, executor));
     }
 
-    DefaultExecutionResult executionResult = new DefaultExecutionResult(
-      executionConsole, processHandler, actionGroup.getChildren(ActionManager.getInstance()));
+    var executionResult = new DefaultExecutionResult(executionConsole, processHandler, actions.toArray(AnAction.EMPTY_ARRAY));
     executionResult.setRestartActions(buildDescriptor.getRestartActions().toArray(AnAction.EMPTY_ARRAY));
     return executionResult;
   }
