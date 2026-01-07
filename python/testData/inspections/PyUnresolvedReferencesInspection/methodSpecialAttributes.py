@@ -14,10 +14,10 @@ MyClass.method.<warning descr="Cannot find reference '__defaults__' in '(self: M
 # Bound method with qualifier
 inst = MyClass()
 inst.method.__func__
-inst.method.<warning descr="Cannot find reference '__defaults__' in 'function'">__defaults__</warning>
+inst.method.<warning descr="Cannot find reference '__defaults__' in '() -> Any'">__defaults__</warning>
 
 # Static method
-inst.static_method.<warning descr="Cannot find reference '__func__' in 'function'">__func__</warning>
+inst.static_method.<warning descr="Cannot find reference '__func__' in '() -> Any'">__func__</warning>
 inst.static_method.__defaults__
-MyClass.static_method.<warning descr="Cannot find reference '__func__' in 'function'">__func__</warning>
+MyClass.static_method.<warning descr="Cannot find reference '__func__' in '() -> Any'">__func__</warning>
 MyClass.static_method.__defaults__

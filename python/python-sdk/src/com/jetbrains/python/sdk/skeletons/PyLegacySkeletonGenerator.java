@@ -11,11 +11,11 @@ import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Time;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.impl.PySdkBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,10 +96,6 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
       commandLine.add(PythonHelpersLocator.findPathStringInHelpers(GENERATOR3));
       commandLine.add("-d");
       commandLine.add(mySkeletonsPath);
-      if (!ContainerUtil.isEmpty(myAssemblyRefs)) {
-        commandLine.add("-c");
-        commandLine.add(StringUtil.join(myAssemblyRefs, ";"));
-      }
       if (!ContainerUtil.isEmpty(myExtraSysPath)) {
         commandLine.add("-s");
         commandLine.add(StringUtil.join(myExtraSysPath, File.pathSeparator));

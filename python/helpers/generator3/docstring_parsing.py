@@ -120,7 +120,6 @@ paramSeqAndRest = paramSeq + Suppress(')') + Optional(return_type) + Suppress(Op
 
 def transform_seq(results, toplevel=True):
     """Transforms a tree of ParseResults into a param spec string."""
-    is_clr = sys.platform == "cli"
     ret = [] # add here token to join
     for token in results:
         token_type = token[0]
@@ -128,7 +127,7 @@ def transform_seq(results, toplevel=True):
             token_name = token[1]
             if len(token) == 3: # name with value
                 if toplevel:
-                    ret.append(sanitize_ident(token_name, is_clr) + "=" + sanitize_value(token[2]))
+                    ret.append(sanitize_ident(token_name) + "=" + sanitize_value(token[2]))
                 else:
                     # smth like "a, (b1=1, b2=2)", make it "a, p_b"
                     return ["p_" + results[0][1]] # NOTE: for each item of tuple, return the same name of its 1st item.
@@ -139,7 +138,7 @@ def transform_seq(results, toplevel=True):
                     # we're in a "foo, (bar1, bar2, ...)"; make it "foo, bar_tuple"
                     return extract_alpha_prefix(results[0][1]) + "_tuple"
             else: # just name
-                ret.append(sanitize_ident(token_name, is_clr))
+                ret.append(sanitize_ident(token_name))
         elif token_type is T_NESTED:
             inner = transform_seq(token[1:], False)
             if len(inner) != 1:
@@ -162,20 +161,19 @@ def transform_optional_seq(results):
     """
     assert results[0] is T_OPTIONAL, "transform_optional_seq expects a T_OPTIONAL node, sees " + \
                                      repr(results[0])
-    is_clr = sys.platform == "cli"
     ret = []
     for token in results[1:]:
         token_type = token[0]
         if token_type is T_SIMPLE:
             token_name = token[1]
             if len(token) == 3: # name with value; little sense, but can happen in a deeply nested optional
-                ret.append(sanitize_ident(token_name, is_clr) + "=" + sanitize_value(token[2]))
+                ret.append(sanitize_ident(token_name) + "=" + sanitize_value(token[2]))
             elif token_name == '...':
                 # we're in a "foo, [bar, ...]"; make it "foo, *bar"
                 return ["*" + extract_alpha_prefix(
                     results[1][1])] # we must return a seq; [1] is first simple, [1][1] is its name
             else: # just name
-                ret.append(sanitize_ident(token_name, is_clr) + "=None")
+                ret.append(sanitize_ident(token_name) + "=None")
         elif token_type is T_OPTIONAL:
             ret.extend(transform_optional_seq(token))
             # maybe handle T_NESTED if such cases ever occur in real life
@@ -190,16 +188,11 @@ def has_item_starting_with(p_seq, p_start):
     return False
 
 
-def sanitize_ident(x, is_clr=False):
+def sanitize_ident(x):
     """Takes an identifier and returns it sanitized"""
     if x in ("class", "object", "def", "list", "tuple", "int", "float", "str", "unicode" "None"):
         return "p_" + x
     else:
-        if is_clr:
-            # it tends to have names like "int x", turn it to just x
-            xs = x.split(" ")
-            if len(xs) == 2:
-                return sanitize_ident(xs[1])
         return x.replace("-", "_").replace(" ", "_").replace(".", "_") # for things like "list-or-tuple" or "list or tuple"
 
 

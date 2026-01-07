@@ -43,6 +43,14 @@ class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
         }
         throw BuildScriptsLoggedError(message.errorMessages.joinToString(prefix = "${message.text}:\n", separator = "\n"))
       }
+      LogMessage.Kind.INFO,
+      LogMessage.Kind.DEBUG,
+      LogMessage.Kind.PROGRESS,
+      LogMessage.Kind.STATISTICS -> {
+        if (verbose) {
+          super.processMessage(message)
+        }
+      }
       else -> super.processMessage(message)
     }
   }
@@ -53,3 +61,7 @@ class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
     println(line)
   }
 }
+
+private const val VERBOSE_PROPERTY = "intellij.build.console.messages.verbose"
+private const val VERBOSE_DEFAULT = "true"
+private val verbose = System.getProperty(VERBOSE_PROPERTY, VERBOSE_DEFAULT).toBooleanStrict()

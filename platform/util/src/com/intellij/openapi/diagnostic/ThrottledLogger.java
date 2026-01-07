@@ -45,12 +45,12 @@ public final class ThrottledLogger {
   }
 
   public void debug(String message, @Nullable Throwable t) {
-    if (!logger.isDebugEnabled() || isMuted()) return;
+    if (!logger.isDebugEnabled() || shouldThrottle()) return;
     logger.debug(message, t);
   }
 
   public void debug(@NotNull Supplier<String> messageSupplier) {
-    if (!logger.isDebugEnabled() || isMuted()) return;
+    if (!logger.isDebugEnabled() || shouldThrottle()) return;
     logger.debug(messageSupplier.get());
   }
 
@@ -59,12 +59,12 @@ public final class ThrottledLogger {
   }
 
   public void info(String message, @Nullable Throwable t) {
-    if (isMuted()) return;
+    if (shouldThrottle()) return;
     logger.info(message, t);
   }
 
   public void info(@NotNull Supplier<String> messageSupplier) {
-    if (isMuted()) return;
+    if (shouldThrottle()) return;
     logger.info(messageSupplier.get());
   }
 
@@ -73,12 +73,12 @@ public final class ThrottledLogger {
   }
 
   public void warn(String message, @Nullable Throwable t) {
-    if (isMuted()) return;
+    if (shouldThrottle()) return;
     logger.warn(message, t);
   }
 
   public void warn(@NotNull Supplier<String> messageSupplier) {
-    if (isMuted()) return;
+    if (shouldThrottle()) return;
     logger.warn(messageSupplier.get());
   }
 
@@ -87,16 +87,16 @@ public final class ThrottledLogger {
   }
 
   public void error(String message, @Nullable Throwable t) {
-    if (isMuted()) return;
+    if (shouldThrottle()) return;
     logger.error(message, t);
   }
 
   public void error(@NotNull Supplier<String> messageSupplier) {
-    if (isMuted()) return;
+    if (shouldThrottle()) return;
     logger.error(messageSupplier.get());
   }
 
-  private boolean isMuted() {
+  private boolean shouldThrottle() {
     if (ignoreRepeatedMessagesInMs == 0) return false;
 
     long nowMs = System.currentTimeMillis();

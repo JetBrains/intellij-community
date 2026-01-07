@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.platform.pasta.common.DocumentEntity
 import com.jetbrains.rhizomedb.exists
 import fleet.kernel.change
-import fleet.kernel.shared
+import fleet.kernel.rebase.shared
 import fleet.util.UID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel

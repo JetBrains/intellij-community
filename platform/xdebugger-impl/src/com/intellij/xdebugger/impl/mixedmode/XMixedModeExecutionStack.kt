@@ -3,7 +3,9 @@ package com.intellij.xdebugger.impl.mixedmode
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.frame.XDescriptor
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.mixedMode.XExecutionStackWithNativeThreadId
 import com.intellij.xdebugger.frame.XStackFrame
@@ -17,9 +19,12 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CancellationException
+import java.util.concurrent.CompletableFuture
 import kotlin.time.measureTimedValue
 
 private val logger = logger<XMixedModeExecutionStack>()
@@ -41,6 +46,17 @@ class XMixedModeExecutionStack(
   // TODO: need to set it cancelled in this case to not block waiters forever
   val computedFramesMap: CompletableDeferred<Map</*low-level frame*/XStackFrame, /*high-level frame*/XStackFrame?>> = CompletableDeferred()
   private var currentFrame: XStackFrame? = topFrame
+
+  private val myStackDescriptor: CompletableFuture<XDescriptor?> = coroutineScope.future {
+    val highStackDescriptor = highLevelExecutionStack?.xExecutionStackDescriptorAsync?.await()
+    val lowStackDescriptor = lowLevelExecutionStack.xExecutionStackDescriptorAsync?.await()
+    val descriptor = XMixedModeExecutionStackDescriptor(
+      highStackDescriptor,
+      lowStackDescriptor
+    )
+    //FrontendDescriptorStateManager.getInstance(session.project).registerDescriptor(descriptor, coroutineScope)
+    descriptor
+  }
 
   init {
     // we need to track when the current frame is changed to show the correct thread after rebuildAllViews
@@ -97,6 +113,10 @@ class XMixedModeExecutionStack(
       lowLevelExecutionStack.executionLineIconRenderer
     else
       highLevelExecutionStack?.executionLineIconRenderer
+  }
+
+  override fun getXExecutionStackDescriptorAsync(): CompletableFuture<XDescriptor?> {
+    return myStackDescriptor
   }
 
   private suspend fun computeStackFramesInternal(firstFrameIndex: Int, container: XStackFrameContainer) {

@@ -1,9 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.kernel
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package fleet.kernel.rebase
 
 import com.jetbrains.rhizomedb.DbContext
-import fleet.kernel.rebase.RebaseLoopStateDebugKernelMetaKey
-import fleet.kernel.rebase.clientClock
+import fleet.kernel.db
+import fleet.kernel.dbSource
+import fleet.kernel.timestamp
+import fleet.kernel.transactor
+import fleet.kernel.waitForDbSourceToCatchUpWithTimestamp
 import fleet.util.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CopyableThrowable
@@ -51,7 +54,7 @@ suspend fun CompressedVectorClock.await(timeout_millis: Long = 30_000) {
  * Captures a value in [Causal]
  * Requires []
  * Meant to be used to pass data associated with DB in RPC channels
- * The receiver of [Causal] may [await] on it to ensure all the changes seen by the capturer is consumed by receiver's local [Transactor]
+ * The receiver of [Causal] may [await] on it to ensure all the changes seen by the capturer is consumed by receiver's local [fleet.kernel.Transactor]
  * */
 suspend fun <T> causal(value: T): Causal<T> {
   return Causal(value, captureVectorClock(), LocalDbTimestamp(transactor(), db().timestamp))
@@ -63,7 +66,7 @@ suspend fun LocalDbTimestamp.await() {
 }
 
 /**
- * Suspends until all the changes as of the moment of [Causal]'s capturing are received by the [Transactor] in [saga]
+ * Suspends until all the changes as of the moment of [Causal]'s capturing are received by the [fleet.kernel.Transactor] in [fleet.kernel.saga]
  * Requires []
  * */
 suspend fun <T> Causal<T>.await(): T {

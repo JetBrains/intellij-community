@@ -1,3 +1,17 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+
+load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
+
+# Can't name the target 'installers' since it triggers elevation in Windows
+java_binary(
+  name = "i_build_target",
+  runtime_deps = [":build"],
+  main_class = "PyCharmCommunityInstallersBuildTarget",
+  add_opens = INTELLIJ_ADD_OPENS,
+  data = ALL_COMMUNITY_TARGETS,
+)
+
 ### auto-generated section `build intellij.pycharm.community.build` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 

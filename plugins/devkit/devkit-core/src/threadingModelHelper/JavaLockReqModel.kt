@@ -48,7 +48,7 @@ data class MethodCall(
 
 internal fun PsiMethod.location(): String {
   val containingDocument = containingFile.fileDocument
-  val containingFile = containingFile.virtualFile.name
+  val containingFile = containingFile.virtualFile?.name ?: "<unknown>"
   val methodLocation = textRange?.startOffset?.let { containingDocument.getLineNumber(it) } ?: -1
   return "$containingFile:$methodLocation"
 }

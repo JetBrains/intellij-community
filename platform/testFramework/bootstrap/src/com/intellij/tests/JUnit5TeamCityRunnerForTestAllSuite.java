@@ -104,12 +104,6 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       exitCode = 0;
     }
 
-    if (exitCode != 0) {
-      System.err.println("[EXIT_CODE_DEBUG] Exiting with code: " + exitCode +
-                         ", hasFailures=" + (listener != null ? listener.hasFailures() : "N/A (listener=null)") +
-                         ", testsExecuted=" + (listener != null ? listener.smthExecuted() : "N/A (listener=null)"));
-    }
-
     System.exit(exitCode);
   }
 

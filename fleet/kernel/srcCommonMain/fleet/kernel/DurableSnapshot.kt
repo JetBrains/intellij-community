@@ -10,8 +10,6 @@ import com.jetbrains.rhizomedb.Schema.Companion.RequiredMask
 import com.jetbrains.rhizomedb.Schema.Companion.UniqueMask
 import com.jetbrains.rhizomedb.impl.attributeSerializer
 import com.jetbrains.rhizomedb.impl.generateSeed
-import fleet.kernel.rebase.deserialize
-import fleet.kernel.rebase.encodeDbValue
 import fleet.reporting.shared.tracing.span
 import fleet.util.UID
 import fleet.util.computeShim

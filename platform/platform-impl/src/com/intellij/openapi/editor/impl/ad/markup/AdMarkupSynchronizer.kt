@@ -17,7 +17,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
 import fleet.kernel.change
-import fleet.kernel.shared
+import fleet.kernel.rebase.shared
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

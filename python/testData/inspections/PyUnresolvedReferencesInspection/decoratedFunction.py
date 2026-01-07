@@ -8,5 +8,5 @@ def f(x):
 def g(x):
     return x
 
-print(f.<warning descr="Cannot find reference 'foo' in 'function'">foo</warning>) #fail
+print(f.<warning descr="Cannot find reference 'foo' in '(x: Any) -> Any'">foo</warning>) #fail
 print(g.bar) #pass

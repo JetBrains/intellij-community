@@ -164,11 +164,11 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   public void testAnnotationImportTypingUnion() {
-    doMultiFileAnnotationTest();
+    doMultiFileAnnotationTest(LanguageLevel.PYTHON36);
   }
 
   public void testAnnotationImportTypingOptional() {
-    doMultiFileAnnotationTest();
+    doMultiFileAnnotationTest(LanguageLevel.PYTHON36);
   }
 
   public void testAnnotationImportClassName() {
@@ -277,7 +277,7 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   public void testConflictWithAnnotationFunctionTypeIntention() {
-    doTest(LanguageLevel.PYTHON36);
+    doAnnotationTest();
   }
 
   // PY-28715
@@ -318,7 +318,7 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   // PY-76642
   public void testAnnotationInferredTypedDict() {
     // builtin dict and "|" operator will be used
-    doTest(LanguageLevel.getLatest());
+    doAnnotationTest();
   }
 
   // PY-76642
@@ -333,11 +333,11 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
 
   // PY-85948
   public void testSelfType() {
-    doTest(LanguageLevel.getLatest());
+    doAnnotationTest();
   }
 
   private void doAnnotationTest() {
-    doTest(LanguageLevel.PYTHON36);
+    doTest(LanguageLevel.getLatest());
   }
 
   private void doTypeCommentTest() {
@@ -345,11 +345,11 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   private void doNegativeTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable")));
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doNegativeTest(PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable")));
   }
 
   public void doMultiFileAnnotationTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doMultiFileTest(PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable")));
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doMultiFileTest(PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable")));
   }
 
   public void doMultiFileAnnotationTest(LanguageLevel languageLevel) {

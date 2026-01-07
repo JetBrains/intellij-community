@@ -22,7 +22,7 @@ public interface PyClassLikeType extends PyCallableType, PyWithAncestors, PyInst
   String getClassQName();
 
   @NotNull
-  List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context);
+  List<@Nullable PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context);
 
   @Nullable
   List<? extends RatedResolveResult> resolveMember(final @NotNull String name,

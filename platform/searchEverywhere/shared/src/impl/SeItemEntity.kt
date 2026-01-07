@@ -10,6 +10,7 @@ import com.intellij.platform.searchEverywhere.impl.SeItemEntityHolder.Companion.
 import com.intellij.platform.searchEverywhere.impl.SeItemEntityHolder.Companion.ItemEntity
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.*
+import fleet.kernel.rebase.shared
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 

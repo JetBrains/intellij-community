@@ -1,7 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.kernel
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package fleet.kernel.rebase
 
 import com.jetbrains.rhizomedb.ChangeScope
+import fleet.kernel.DeferredChangeKey
+import fleet.kernel.change
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.yield
@@ -33,13 +35,13 @@ fun <T> ChangeScope.sharedRead(f: SharedChangeScope.() -> T): ReplayingValue<T> 
 
 suspend fun awaitCommitted() {
   val deferred = CompletableDeferred<Job>()
-  change {
-    shared {
-      effect {
-        deferred.complete(meta[DeferredChangeKey]!!)
-      }
+    change {
+        shared {
+            effect {
+                deferred.complete(meta[DeferredChangeKey]!!)
+            }
+        }
     }
-  }
   deferred.await().join()
   yield()
 }

@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.kernel
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package fleet.kernel.rebase
 
 import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.get
 import com.jetbrains.rhizomedb.impl.Editor
 import fleet.kernel.rebase.runOfferContributors
 import fleet.reporting.shared.tracing.spannedScope
@@ -186,7 +187,7 @@ private fun <T> ChangeScope.withTransactorView(kernelViewEntity: TransactorViewE
           when (val part = partition(instruction.eid)) {
             hiddenPart -> hiddenPartContext!!
             visiblePart -> visiblePartContext!!
-            SharedPart -> sharedPartContext!!
+            fleet.kernel.SharedPart -> sharedPartContext!!
             else -> error("effects in partition $part are not supported")
           }
         }
@@ -195,11 +196,14 @@ private fun <T> ChangeScope.withTransactorView(kernelViewEntity: TransactorViewE
     }
 
     sharedPartContext = i
-      .intersectingPartitions(IntList.of(SchemaPart, CommonPart, SharedPart))
-      .cachedQueryWithParts(IntList.of(SchemaPart, CommonPart, SharedPart))
+      .intersectingPartitions(IntList.of(SchemaPart, fleet.kernel.CommonPart, fleet.kernel.SharedPart))
+      .cachedQueryWithParts(IntList.of(SchemaPart, fleet.kernel.CommonPart, fleet.kernel.SharedPart))
       .expandAndMutateWithParts(AllParts)
-      .enforcingUniquenessConstraints(IntList.of(SchemaPart, CommonPart, SharedPart))
-      .withDefaultPart(SharedPart)
+      .enforcingUniquenessConstraints(IntList.of(SchemaPart,
+          fleet.kernel.CommonPart,
+          fleet.kernel.SharedPart
+      ))
+      .withDefaultPart(fleet.kernel.SharedPart)
       .executingEffects(::effectsContext)
 
     hiddenPartContext = i
@@ -234,19 +238,19 @@ private fun <T> ChangeScope.withTransactorView(kernelViewEntity: TransactorViewE
     res
   }
 
-private fun kernelViewMiddleware(kernelViewEntity: TransactorViewEntity2): TransactorMiddleware =
-  object : TransactorMiddleware {
+private fun kernelViewMiddleware(kernelViewEntity: TransactorViewEntity2): fleet.kernel.TransactorMiddleware =
+  object : fleet.kernel.TransactorMiddleware {
     override fun ChangeScope.performChange(next: ChangeScope.() -> Unit) {
       DbContext.threadBound.ensureMutable {
         withTransactorView(kernelViewEntity) {
           next()
         }
 
-        if (kernelViewEntity[TransactorViewEntity2.HiddenPart] == FrontendPart) {
+        if (kernelViewEntity[TransactorViewEntity2.HiddenPart] == fleet.kernel.FrontendPart) {
           val novelty = meta[MutableNoveltyKey]!!
-          val sharedNovelty = novelty.filter { datom -> partition(datom.eid) == SharedPart }.toNovelty()
+          val sharedNovelty = novelty.filter { datom -> partition(datom.eid) == fleet.kernel.SharedPart }.toNovelty()
           if (sharedNovelty.isNotEmpty()) {
-            TransactorViewEntity2.forDefaultPart(FrontendPart)?.let { frontendKernelViewEnitty ->
+            TransactorViewEntity2.forDefaultPart(fleet.kernel.FrontendPart)?.let { frontendKernelViewEnitty ->
               withTransactorView(frontendKernelViewEnitty) {
                 runOfferContributors(sharedNovelty)
               }
@@ -255,25 +259,28 @@ private fun kernelViewMiddleware(kernelViewEntity: TransactorViewEntity2): Trans
         }
       }
     }
+
+    context(cs: ChangeScope)
+    override fun initDb() { }
   }
 
 suspend fun <T> withTransactorView(
-  hiddenPart: Part,
-  defaultPart: Part,
-  middleware: TransactorMiddleware = TransactorMiddleware.Identity,
-  body: suspend CoroutineScope.(Transactor) -> T,
+    hiddenPart: Part,
+    defaultPart: Part,
+    middleware: fleet.kernel.TransactorMiddleware = fleet.kernel.TransactorMiddleware.Identity,
+    body: suspend CoroutineScope.(fleet.kernel.Transactor) -> T,
 ): T =
   spannedScope("withKernelView $defaultPart") {
-    val kernelViewEntity = change {
-      register(TransactorViewEntity2)
-      TransactorViewEntity2.new {
-        it[TransactorViewEntity2.DefaultPart] = defaultPart
-        it[TransactorViewEntity2.HiddenPart] = hiddenPart
-        it[TransactorViewEntity2.QueryCache] = QueryCache.empty()
-      }
+    val kernelViewEntity = fleet.kernel.change {
+        register(TransactorViewEntity2)
+        TransactorViewEntity2.new {
+            it[TransactorViewEntity2.DefaultPart] = defaultPart
+            it[TransactorViewEntity2.HiddenPart] = hiddenPart
+            it[TransactorViewEntity2.QueryCache] = QueryCache.empty()
+        }
     }
 
-    val kernel = transactor()
+    val kernel = fleet.kernel.transactor()
 
     val myMiddleware = kernelViewMiddleware(kernelViewEntity) + middleware
     fun wrapChange(f: ChangeScope.() -> Unit): ChangeScope.() -> Unit {
@@ -282,8 +289,8 @@ suspend fun <T> withTransactorView(
       }
     }
 
-    val transactorView = object : Transactor {
-      override val middleware: TransactorMiddleware = kernel.middleware + myMiddleware
+    val transactorView = object : fleet.kernel.Transactor {
+      override val middleware: fleet.kernel.TransactorMiddleware = kernel.middleware + myMiddleware
 
       override val dbState: StateFlow<DB> =
         kernel.dbState.view { db -> db.subDB(hiddenPart, kernelViewEntity) }
@@ -294,20 +301,25 @@ suspend fun <T> withTransactorView(
       override suspend fun changeSuspend(f: ChangeScope.() -> Unit): Change =
         kernel.changeSuspend(wrapChange(f)).subChange(hiddenPart, kernelViewEntity)
 
-      override val log: Flow<SubscriptionEvent> =
+      override val log: Flow<fleet.kernel.SubscriptionEvent> =
         kernel.log.map { e ->
           when (e) {
-            is SubscriptionEvent.First ->
-              SubscriptionEvent.First(e.db.subDB(hiddenPart, kernelViewEntity))
-            is SubscriptionEvent.Next ->
-              SubscriptionEvent.Next(e.change.subChange(hiddenPart, kernelViewEntity))
-            is SubscriptionEvent.Reset ->
-              SubscriptionEvent.Reset(e.db.subDB(hiddenPart, kernelViewEntity))
+            is fleet.kernel.SubscriptionEvent.First ->
+              fleet.kernel.SubscriptionEvent.First(e.db.subDB(hiddenPart, kernelViewEntity))
+            is fleet.kernel.SubscriptionEvent.Next ->
+              fleet.kernel.SubscriptionEvent.Next(e.change.subChange(hiddenPart, kernelViewEntity))
+            is fleet.kernel.SubscriptionEvent.Reset ->
+              fleet.kernel.SubscriptionEvent.Reset(e.db.subDB(hiddenPart, kernelViewEntity))
           }
         }
 
-      override val meta: MutableOpenMap<Transactor> = MutableOpenMap.empty()
+      override val meta: MutableOpenMap<fleet.kernel.Transactor> = MutableOpenMap.empty()
     }
-    withContext(transactorView + DbSource.ContextElement(FlowDbSource(transactorView.dbState, debugName = "kernelView $transactorView"))) { body(transactorView) }
+    withContext(transactorView + fleet.kernel.DbSource.ContextElement(
+        fleet.kernel.FlowDbSource(
+            transactorView.dbState,
+            debugName = "kernelView $transactorView"
+        )
+    )) { body(transactorView) }
   }
 

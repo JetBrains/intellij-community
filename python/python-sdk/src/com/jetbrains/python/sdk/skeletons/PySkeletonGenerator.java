@@ -114,7 +114,6 @@ public abstract class PySkeletonGenerator {
    */
   public abstract class Builder {
     protected final List<String> myExtraSysPath = new ArrayList<>();
-    protected final List<String> myAssemblyRefs = new ArrayList<>();
     protected final List<String> myExtraArgs = new ArrayList<>();
     protected String myWorkingDir;
     protected String myTargetModuleName;
@@ -128,11 +127,6 @@ public abstract class PySkeletonGenerator {
 
     public @NotNull Builder extraSysPath(@NotNull List<String> roots) {
       myExtraSysPath.addAll(roots);
-      return this;
-    }
-
-    public @NotNull Builder assemblyRefs(@NotNull List<String> assemblyRefs) {
-      myAssemblyRefs.addAll(assemblyRefs);
       return this;
     }
 

@@ -9,6 +9,7 @@ import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.util.io.BaseDataReader
 import com.intellij.util.io.BaseOutputReader
+import com.jediterm.core.util.TermSize
 import com.pty4j.windows.conpty.WinConPtyProcess
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.jupiter.api.Assumptions
@@ -25,10 +26,11 @@ import kotlin.time.Duration.Companion.seconds
 internal suspend fun createTerminalProcessHandler(
   coroutineScope: CoroutineScope,
   javaCommand: TestJavaMainClassCommand,
+  initialTermSize: TermSize,
 ): ProcessHandler {
   val eelProcess = try {
     javaCommand.createLocalProcessBuilder()
-      .interactionOptions(Pty(80, 25, true))
+      .interactionOptions(Pty(initialTermSize.columns, initialTermSize.rows, true))
       .scope(coroutineScope)
       .eelIt()
   }
@@ -64,6 +66,11 @@ private fun createTerminalProcessHandler(process: Process, commandLine: String):
     override fun readerOptions(): BaseOutputReader.Options = terminalOutputOptions
   }
 }
+
+internal val TerminalExecutionConsole.termSize: TermSize
+  get() = with(this.terminalWidget.terminalTextBuffer) {
+    TermSize(this.width, this.height)
+  }
 
 internal fun ProcessHandler.writeToStdinAndHitEnter(input: String) {
   processInput!!.let {

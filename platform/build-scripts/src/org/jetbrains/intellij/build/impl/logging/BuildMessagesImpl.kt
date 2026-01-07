@@ -44,6 +44,7 @@ class BuildMessagesImpl private constructor(
   }
 
   fun setDebugLogPath(path: Path) {
+    System.err.println("Debug logging (but not spans) will be written to $path")
     debugLogger.setOutputFile(path)
   }
 

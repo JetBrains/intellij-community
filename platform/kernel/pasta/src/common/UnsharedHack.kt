@@ -3,7 +3,11 @@ package com.intellij.platform.pasta.common
 
 import com.jetbrains.rhizomedb.ChangeScope
 import com.jetbrains.rhizomedb.Entity
-import fleet.kernel.*
+import fleet.kernel.rebase.ReplayingValue
+import fleet.kernel.rebase.SharedChangeScope
+import fleet.kernel.rebase.isShared
+import fleet.kernel.rebase.shared
+import fleet.kernel.rebase.unshared
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental

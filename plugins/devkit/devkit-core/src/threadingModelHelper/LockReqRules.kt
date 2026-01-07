@@ -1,15 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
-import java.util.EnumSet
+import java.util.*
 
 interface LockReqRules {
   val assertionMethods: Map<String, Map<String, ConstraintType>>
   val lockAnnotations: Map<String, ConstraintType>
   val edtRequiredPackages: Set<String>
   val edtRequiredClasses: Set<String>
-  val asyncClasses: Set<String>
-  val asyncMethods: Set<String>
+  val asyncMethods: Set<Pair<String, String>>
   val messageBusClasses: Set<String>
   val messageBusSyncMethods: Set<String>
   val commonMethods: Set<String>
@@ -79,18 +78,9 @@ class BaseLockReqRules : LockReqRules {
     "java.awt.Window", "java.awt.Frame", "java.awt.Dialog"
   )
 
-  override val asyncClasses: Set<String> = setOf(
-    "com.intellij.openapi.application.ApplicationManager",
-    "java.util.concurrent.CompletableFuture",
-    "java.util.concurrent.ExecutorService",
-    "com.intellij.util.concurrency.AppExecutorUtil"
-  )
-
-  override val asyncMethods: Set<String> = setOf(
-    "invokeLater", "invokeAndWait", "runInEdt",
-    "submit", "execute", "executeOnPooledThread",
-    "runAsync", "supplyAsync", "invokeLaterOnWriteThread"
-  )
+  override val asyncMethods: Set<Pair<String, String>> =
+    listOf("invokeLater", "invokeAndWait", "invokeLaterOnWriteThread", "executeOnPooledThread").mapTo(mutableSetOf()) { "com.intellij.openapi.application.Application" to it } +
+    listOf("invokeLaterIfNeeded", "invokeAndWaitIfNeeded").mapTo(mutableSetOf()) { "com.intellij.util.ui.UIUtil" to it }
 
   override val messageBusClasses: Set<String> = setOf(
     "com.intellij.util.messages.MessageBus"
@@ -113,6 +103,7 @@ class BaseLockReqRules : LockReqRules {
   override val disposeMethodNames: Set<String> = setOf("dispose")
 
   override val indifferent: Set<Pair<EnumSet<ConstraintType>, Signature>> = setOf(
+    THREAD_REQUIREMENTS to Signature("com.intellij.openapi.application.impl.ServerNonBlockingReadAction", "submit"),
     LOCK_REQUIREMENTS to Signature("com.intellij.openapi.vfs.VirtualFileManager", "findFileByUrl"),
     LOCK_REQUIREMENTS to Signature("com.intellij.openapi.vfs.impl.VirtualFileManagerImpl", "findFileByUrl")
 

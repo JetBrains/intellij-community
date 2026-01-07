@@ -35,13 +35,12 @@ abstract class AbstractFragmentBuilder<Settings : FragmentedSettings> {
   abstract fun build(): SettingsEditorFragment<Settings, *>
 }
 
-@ApiStatus.Experimental
 @FragmentsDsl
-class Group<Settings : FragmentedSettings>(
+class Group<Settings : FragmentedSettings> internal constructor(
   val parentId: String,
   val id: String,
   @Nls val name: String,
-  private val extenders: List<FragmentsDslBuilderExtender<Settings>>
+  private val extenders: List<FragmentsDslBuilderExtender<Settings>>,
 ) : AbstractFragmentBuilder<Settings>() {
 
   var applyVisibility: ((Settings, Boolean) -> Unit)? = null
@@ -82,9 +81,8 @@ class Group<Settings : FragmentedSettings>(
   }
 }
 
-@ApiStatus.Experimental
 @FragmentsDsl
-class VariantableTag<Settings : FragmentedSettings, V : Any>(
+class VariantableTag<Settings : FragmentedSettings, V : Any> internal constructor(
   val id: String,
   @Nls val name: String,
 ) : AbstractFragmentBuilder<Settings>() {
@@ -95,7 +93,7 @@ class VariantableTag<Settings : FragmentedSettings, V : Any>(
     @Nls val description: String?,
     val getter: (S) -> Boolean,
     val setter: (S, Boolean) -> Unit,
-    val validation: (S) -> ValidationInfo?
+    val validation: (S) -> ValidationInfo?,
   )
 
   private val myVariants = mutableMapOf<V, Variant<Settings, V>>()
@@ -109,7 +107,7 @@ class VariantableTag<Settings : FragmentedSettings, V : Any>(
     @Nls description: String? = null,
     getter: (Settings) -> Boolean,
     setter: (Settings, Boolean) -> Unit = { _, _ -> },
-    validation: (Settings) -> ValidationInfo? = { null }
+    validation: (Settings) -> ValidationInfo? = { null },
   ) {
     myVariants[key] = Variant(key, name, hint, description, getter, setter, validation)
   }
@@ -137,11 +135,10 @@ class VariantableTag<Settings : FragmentedSettings, V : Any>(
   }
 }
 
-@ApiStatus.Experimental
 @FragmentsDsl
-class Tag<Settings : FragmentedSettings>(
+class Tag<Settings : FragmentedSettings> internal constructor(
   val id: String,
-  @Nls val name: String
+  @Nls val name: String,
 ) : AbstractFragmentBuilder<Settings>() {
   var getter: (Settings) -> Boolean = { false }
   var setter: (Settings, Boolean) -> Unit = { _, _ -> }
@@ -173,11 +170,10 @@ class Tag<Settings : FragmentedSettings>(
   }
 }
 
-@ApiStatus.Experimental
 @FragmentsDsl
-class Fragment<Settings : FragmentedSettings, Component : JComponent>(
+class Fragment<Settings : FragmentedSettings, Component : JComponent> internal constructor(
   val id: String,
-  private val component: Component
+  private val component: Component,
 ) : AbstractFragmentBuilder<Settings>() {
 
   @Nls
@@ -255,12 +251,11 @@ class Fragment<Settings : FragmentedSettings, Component : JComponent>(
   }
 }
 
-@ApiStatus.Experimental
 @FragmentsDsl
-class FragmentsBuilder<Settings : FragmentedSettings>(
+class FragmentsBuilder<Settings : FragmentedSettings> internal constructor(
   parentId: String?,
   id: String,
-  private val extenders: List<FragmentsDslBuilderExtender<Settings>>
+  private val extenders: List<FragmentsDslBuilderExtender<Settings>>,
 ) {
   val fullId: String = (if (parentId == null) "" else "$parentId.") + id
 
@@ -268,12 +263,12 @@ class FragmentsBuilder<Settings : FragmentedSettings>(
 
   fun <Component : JComponent> Component.asFragment(
     id: String,
-    setup: Fragment<Settings, Component>.() -> Unit
+    setup: Fragment<Settings, Component>.() -> Unit,
   ): SettingsEditorFragment<Settings, Component> = fragment(id, this, setup)
 
   fun <Builder : AbstractFragmentBuilder<Settings>> withCustomBuilder(
     builder: Builder,
-    setup: Builder.() -> Unit
+    setup: Builder.() -> Unit,
   ): SettingsEditorFragment<Settings, *> {
     return builder.apply(setup).let { it.build().apply { fragments += this } }
   }
@@ -281,12 +276,13 @@ class FragmentsBuilder<Settings : FragmentedSettings>(
   fun <Component : JComponent> fragment(
     id: String,
     component: Component,
-    setup: Fragment<Settings, Component>.() -> Unit
+    setup: Fragment<Settings, Component>.() -> Unit,
   ): SettingsEditorFragment<Settings, Component> {
     return Fragment<Settings, Component>(id, component).also(setup).let { it.build().apply { fragments += this } }
   }
 
-  fun customFragment(fragment: SettingsEditorFragment<Settings, *>): SettingsEditorFragment<Settings, *> = fragment.apply { fragments += this }
+  fun customFragment(fragment: SettingsEditorFragment<Settings, *>): SettingsEditorFragment<Settings, *> =
+    fragment.apply { fragments += this }
 
   fun tag(id: String, @Nls name: String, setup: Tag<Settings>.() -> Unit): SettingsEditorFragment<Settings, TagButton> {
     return Tag<Settings>(id, name).also(setup).let { it.build().apply { fragments += this } }
@@ -306,7 +302,7 @@ class FragmentsBuilder<Settings : FragmentedSettings>(
   }
 }
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface FragmentsDslBuilderExtender<Settings : FragmentedSettings> {
   val id: String
 
@@ -315,10 +311,10 @@ interface FragmentsDslBuilderExtender<Settings : FragmentedSettings> {
   fun isApplicableTo(builder: FragmentsBuilder<Settings>): Boolean = builder.fullId == id
 
   companion object {
-    @JvmField
-    val EP_NAME: ExtensionPointName<FragmentsDslBuilderExtender<*>> = ExtensionPointName.create("com.intellij.fragments.dsl.builder.extender")
+    internal val EP_NAME: ExtensionPointName<FragmentsDslBuilderExtender<*>> =
+      ExtensionPointName.create("com.intellij.fragments.dsl.builder.extender")
 
-    inline fun <reified T : FragmentedSettings> getExtenders(startId: String): List<FragmentsDslBuilderExtender<T>> {
+    internal fun <T : FragmentedSettings> getExtenders(startId: String): List<FragmentsDslBuilderExtender<T>> {
       return EP_NAME.extensionList.map {
         @Suppress("UNCHECKED_CAST")
         it as FragmentsDslBuilderExtender<T>
@@ -327,17 +323,21 @@ interface FragmentsDslBuilderExtender<Settings : FragmentedSettings> {
   }
 }
 
-@ApiStatus.Experimental
 inline fun <reified Settings : FragmentedSettings> fragments(
   title: @Nls String? = null,
   id: String,
-  extenders: List<FragmentsDslBuilderExtender<Settings>> = FragmentsDslBuilderExtender.getExtenders(id),
-  setup: FragmentsBuilder<Settings>.() -> Unit
-): MutableList<SettingsEditorFragment<Settings, *>> = FragmentsBuilder(null, id, extenders).apply {
-  if (title != null) {
-    fragment("title", JLabel(title).also { it.font = JBUI.Fonts.label().deriveFont(Font.BOLD) }) {
-      isRemovable = false
-      commandLinePosition = -1
+  setup: FragmentsBuilder<Settings>.() -> Unit,
+): MutableList<SettingsEditorFragment<Settings, *>> {
+  return fragmentsBuilder<Settings>(id, title).also(setup).build()
+}
+
+fun <Settings : FragmentedSettings> fragmentsBuilder(id: String, title: @Nls String?): FragmentsBuilder<Settings> {
+  return FragmentsBuilder<Settings>(null, id, FragmentsDslBuilderExtender.getExtenders(id)).apply {
+    if (title != null) {
+      fragment("title", JLabel(title).also { it.font = JBUI.Fonts.label().deriveFont(Font.BOLD) }) {
+        isRemovable = false
+        commandLinePosition = -1
+      }
     }
   }
-}.also(setup).build()
+}

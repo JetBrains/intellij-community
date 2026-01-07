@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.mmapped;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -403,11 +403,14 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
     if (actuallyClosed && WARN_OF_DELETED_STORAGES_USE) {
       Path parent = storagePath.getParent();
       if (!Files.exists(parent)) {
-        LOG.warn("Storage parent dir[" + parent.toAbsolutePath() + "] is not exist: storage files were removed while wasn't yet closed!");
+        LOG.warn("Storage parent dir[" + parent.toAbsolutePath() + "] is not exist: storage files were removed while wasn't yet closed!",
+                 new IOException("Storage parent dir has disappeared")
+        );
       }
       else {
         if (!Files.exists(storagePath)) {
-          LOG.warn("Storage[" + storagePath.toAbsolutePath() + "] is not exist: storage file was removed while wasn't yet closed!");
+          LOG.warn("Storage[" + storagePath.toAbsolutePath() + "] is not exist: storage file was removed while wasn't yet closed!",
+                   new IOException("Storage parent file has disappeared"));
         }
       }
     }
