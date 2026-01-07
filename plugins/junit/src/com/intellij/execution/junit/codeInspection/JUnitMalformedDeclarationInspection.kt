@@ -1237,7 +1237,7 @@ private class JUnitMalformedSignatureVisitor(
         )
         problems.isEmpty() && invalidParams.size > 1 -> JUnitBundle.message(
           "jvm.inspections.junit.malformed.annotated.method.param.double.descriptor",
-          annotation, invalidParams.joinToString { "'${it.name}'" }, invalidParams.last().name
+          annotation, invalidParams.dropLast(1).joinToString { "'${it.name}'" }, invalidParams.last().name
         )
         problems.size == 1 && invalidParams.size == 1 -> JUnitBundle.message(
           "jvm.inspections.junit.malformed.annotated.method.single.param.single.descriptor",
@@ -1245,8 +1245,7 @@ private class JUnitMalformedSignatureVisitor(
         )
         problems.size == 1 && invalidParams.size > 1 -> JUnitBundle.message(
           "jvm.inspections.junit.malformed.annotated.method.single.param.double.descriptor",
-          annotation, problems.first(), invalidParams.joinToString { "'${it.name}'" },
-          invalidParams.last().name
+          annotation, problems.first(), invalidParams.dropLast(1).joinToString { "'${it.name}'" }, invalidParams.last().name
         )
         problems.size == 2 && invalidParams.size == 1 -> JUnitBundle.message(
           "jvm.inspections.junit.malformed.annotated.method.double.param.single.descriptor",
@@ -1254,8 +1253,7 @@ private class JUnitMalformedSignatureVisitor(
         )
         problems.size == 2 && invalidParams.size > 1 -> JUnitBundle.message(
           "jvm.inspections.junit.malformed.annotated.method.double.param.double.descriptor",
-          annotation, problems.first(), problems.last(), invalidParams.joinToString { "'${it.name}'" },
-          invalidParams.last().name
+          annotation, problems.first(), problems.last(), invalidParams.dropLast(1).joinToString { "'${it.name}'" }, invalidParams.last().name
         )
         else -> error("Non valid problem.")
       }
@@ -1274,7 +1272,7 @@ private class JUnitMalformedSignatureVisitor(
         )
         problems.isEmpty() && invalidParams.size > 1 -> JUnitBundle.message(
           "jvm.inspections.junit.malformed.annotated.method.typed.param.double.descriptor",
-          annotation, type, invalidParams.joinToString { "'${it.name}'" }, invalidParams.last().name
+          annotation, type, invalidParams.dropLast(1).joinToString { "'${it.name}'" }, invalidParams.last().name
         )
         problems.size == 1 && invalidParams.size == 1 -> JUnitBundle.message(
           "jvm.inspections.junit.malformed.annotated.method.single.typed.param.single.descriptor",
@@ -1282,8 +1280,7 @@ private class JUnitMalformedSignatureVisitor(
         )
         problems.size == 1 && invalidParams.size > 1 -> JUnitBundle.message(
           "jvm.inspections.junit.malformed.annotated.method.single.typed.param.double.descriptor",
-          annotation, problems.first(), type, invalidParams.joinToString { "'${it.name}'" },
-          invalidParams.last().name
+          annotation, problems.first(), type, invalidParams.dropLast(1).joinToString { "'${it.name}'" }, invalidParams.last().name
         )
         problems.size == 2 && invalidParams.size == 1 -> JUnitBundle.message(
           "jvm.inspections.junit.malformed.annotated.method.double.typed.param.single.descriptor",
@@ -1291,8 +1288,7 @@ private class JUnitMalformedSignatureVisitor(
         )
         problems.size == 2 && invalidParams.size > 1 -> JUnitBundle.message(
           "jvm.inspections.junit.malformed.annotated.method.double.typed.param.double.descriptor",
-          annotation, problems.first(), problems.last(), type, invalidParams.joinToString { "'${it.name}'" },
-          invalidParams.last().name
+          annotation, problems.first(), problems.last(), type, invalidParams.dropLast(1).joinToString { "'${it.name}'" }, invalidParams.last().name
         )
         else -> error("Non valid problem.")
       }

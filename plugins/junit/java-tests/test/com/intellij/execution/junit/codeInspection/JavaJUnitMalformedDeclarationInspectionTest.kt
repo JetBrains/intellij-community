@@ -1515,6 +1515,9 @@ class JavaJUnitMalformedDeclarationInspectionTest {
 
         @org.junit.jupiter.api.Test
         void <error descr="Method 'nonRepeated' annotated with '@Test' should not declare parameter 'repetitionInfo'">nonRepeated</error>(org.junit.jupiter.api.RepetitionInfo repetitionInfo) { }
+        
+        @org.junit.jupiter.api.Test
+        void <error descr="Method 'nonRepeated' annotated with '@Test' should not declare parameters 'repetitionInfo' and 'a'">nonRepeated</error>(org.junit.jupiter.api.RepetitionInfo repetitionInfo, int a) { }
       }      
     """.trimIndent())
     }
@@ -1524,6 +1527,9 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       class WithBeforeEach {
         @org.junit.jupiter.api.BeforeAll
         void <error descr="Method 'beforeAllWithRepetitionInfo' annotated with '@BeforeAll' should be static and not declare parameter 'repetitionInfo'">beforeAllWithRepetitionInfo</error>(org.junit.jupiter.api.RepetitionInfo repetitionInfo) { }
+        
+        @org.junit.jupiter.api.AfterAll
+        void <error descr="Method 'afterAllWithRepetitionInfo' annotated with '@AfterAll' should be static and not declare parameters 'repetitionInfo' and 'a'">afterAllWithRepetitionInfo</error>(org.junit.jupiter.api.RepetitionInfo repetitionInfo, String a) { }
       }
     """.trimIndent())
     }
@@ -1546,6 +1552,9 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       class MainTest {
         @org.junit.Before
         String <error descr="Method 'before' annotated with '@Before' should be public, of type 'void' and not declare parameter 'i'">before</error>(int i) { return ""; }
+        
+        @org.junit.After
+        String <error descr="Method 'after' annotated with '@After' should be public, of type 'void' and not declare parameters 'a', 'b', 'c' and 'd'">after</error>(int a, boolean b, String c, char d) { return ""; }
       }
     """.trimIndent())
     }
@@ -1555,6 +1564,9 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       class MainTest {
         @org.junit.jupiter.api.BeforeEach
         String <error descr="Method 'beforeEach' annotated with '@BeforeEach' should be of type 'void' and not declare parameter 'i'">beforeEach</error>(int i) { return ""; }
+        
+        @org.junit.jupiter.api.AfterEach
+        String <error descr="Method 'afterEach' annotated with '@AfterEach' should be of type 'void' and not declare parameters 'i' and 'j'">afterEach</error>(int i, int j) { return ""; }
       }
     """.trimIndent())
     }
@@ -1658,6 +1670,9 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       class MainTest {
         @org.junit.jupiter.api.BeforeAll
         String <error descr="Method 'beforeAll' annotated with '@BeforeAll' should be static, of type 'void' and not declare parameter 'i'">beforeAll</error>(int i) { return ""; }
+        
+        @org.junit.jupiter.api.AfterAll
+        String <error descr="Method 'afterAll' annotated with '@AfterAll' should be static, of type 'void' and not declare parameters 'i', 'j' and 'k'">afterAll</error>(int i, int j, int k) { return ""; }
       }
     """.trimIndent())
     }
@@ -2056,6 +2071,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         @org.junit.Test public static void <error descr="Method 'testThree' annotated with '@Test' should be non-static">testThree</error>() {}
         @org.junit.Test public void <error descr="Method 'testFour' annotated with '@Test' should not declare parameter 'i'">testFour</error>(int i) {}
         @org.junit.Test public void testFive() {}
+        @org.junit.Test public void <error descr="Method 'testSix' annotated with '@Test' should not declare parameters 'i', 'j' and 'k'">testSix</error>(int i, int j, int k) {}
         @org.junit.Test public void testMock(@mockit.Mocked String s) {}
       }
     """.trimIndent(), "JUnit4TestMethodIsPublicVoidNoArg")
@@ -2085,6 +2101,9 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       class Foo {
           @org.junit.Test 
           public int <error descr="Method 'testMe' annotated with '@Test' should be of type 'void' and not declare parameter 'i'">testMe</error>(int i) { return -1; }
+          
+          @org.junit.Test 
+          public int <error descr="Method 'testMe' annotated with '@Test' should be of type 'void' and not declare parameters 'a', 'b' and 'c'">testMe</error>(int a, String b, boolean c) { return -1; }
       }
     """.trimIndent())
     }
