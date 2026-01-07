@@ -131,6 +131,8 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       "fleet.reporting.api",
       "fleet.reporting.shared",
       "fleet.rhizomedb",
+      "fleet.rhizomedb.transactor",
+      "fleet.rhizomedb.transactor.rebase",
       "fleet.rpc",
       "fleet.rpc.server",
       "fleet.util.core",

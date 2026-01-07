@@ -1,0 +1,52 @@
+### auto-generated section `build fleet.rhizomedb.transactor` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_rhizomedb.transactor",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+    "kotlin.concurrent.atomics.ExperimentalAtomicApi",
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
+)
+
+resourcegroup(
+  name = "rhizomedb.transactor_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "rhizomedb.transactor",
+  module_name = "fleet.rhizomedb.transactor",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  resources = [":rhizomedb.transactor_resources"],
+  kotlinc_opts = ":custom_rhizomedb.transactor",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//fleet/rhizomedb",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//fleet/util/core",
+    "//fleet/rpc",
+    "@lib//:kotlinx-coroutines-core",
+    "//fleet/reporting/api",
+    "//fleet/reporting/shared",
+    "//fleet/multiplatform.shims",
+    "@lib//:fastutil-min",
+    "//fleet/bifurcan",
+    "//fleet/fastutil",
+  ],
+  exports = [
+    "//fleet/rhizomedb",
+    "//fleet/util/core",
+    "//fleet/rpc",
+  ]
+)
+### auto-generated section `build fleet.rhizomedb.transactor` end

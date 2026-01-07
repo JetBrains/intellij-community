@@ -20,7 +20,7 @@ plugins {
 
 fleetModule {
   module {
-    name = "fleet.kernel"
+    name = "fleet.rhizomedb.transactor"
     importedFromJps {}
   }
 }
@@ -68,8 +68,26 @@ kotlin {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
-    api(project(":fleet.rhizomedb.transactor"))
-    api(project(":fleet.rhizomedb.transactor.rebase"))
+    implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.core.jvm1739247612.get().let { "${it.group}:kotlinx-serialization-core:${it.version}" }) {
+      isTransitive = false
+    }
+    implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.json.jvm231489733.get().let { "${it.group}:kotlinx-serialization-json:${it.version}" }) {
+      isTransitive = false
+    }
+    implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.core.jvm930800474.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
+      isTransitive = false
+    }
+    implementation(jps.org.jetbrains.intellij.deps.fastutil.intellij.deps.fastutil1191883795.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+    }
+    api(project(":fleet.rhizomedb"))
+    api(project(":fleet.util.core"))
+    api(project(":fleet.rpc"))
+    implementation(project(":fleet.reporting.api"))
+    implementation(project(":fleet.reporting.shared"))
+    implementation(project(":fleet.multiplatform.shims"))
+    implementation(project(":fleet.bifurcan"))
+    implementation(project(":fleet.fastutil"))
   }
   // KOTLIN__MARKER_END
 }

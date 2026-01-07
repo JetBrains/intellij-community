@@ -15,7 +15,7 @@ fun DbContext<Q>.sharedId(eid: EID, uidAttribute: Attribute<UID>): UID? =
     else -> null
   }
 
-internal fun DbContext<Q>.encodeDbValue(
+fun DbContext<Q>.encodeDbValue(
   uidAttribute: Attribute<UID>,
   a: Attribute<*>,
   v: Any,
@@ -37,7 +37,7 @@ internal fun DbContext<Q>.encodeDbValue(
     }
   }
 
-internal fun DbContext<Q>.deserialize(
+fun DbContext<Q>.deserialize(
   a: Attribute<*>,
   v: JsonElement,
 ): Any =
@@ -50,7 +50,7 @@ internal fun DbContext<Q>.deserialize(
 /*
 * returns null if and only if v is a reference which can't be resolved
 */
-internal fun DbContext<Q>.serialize1(
+fun DbContext<Q>.serialize1(
   eidToUid: DbContext<Q>.(EID) -> UID?,
   a: Attribute<*>,
   v: Any,

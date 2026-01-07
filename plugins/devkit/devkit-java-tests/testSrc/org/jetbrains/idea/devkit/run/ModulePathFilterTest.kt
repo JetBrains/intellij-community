@@ -70,7 +70,7 @@ internal class ModulePathFilterTest {
 
   @Test
   fun testPatternMatchesFleetModules() {
-    assertThat(ModulePattern.matches("fleet.kernel")).isTrue()
+    assertThat(ModulePattern.matches("fleet.rhizomedb.transactor")).isTrue()
   }
 
   @Test

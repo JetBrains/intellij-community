@@ -248,6 +248,8 @@ fleet/preferences
 fleet/reporting/api
 fleet/reporting/shared
 fleet/rhizomedb
+fleet/rhizomedb.transactor
+fleet/rhizomedb.transactor.rebase
 fleet/rpc
 fleet/rpc.server
 fleet/util/codepoints

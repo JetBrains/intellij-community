@@ -30,23 +30,12 @@ jvm_library(
   kotlinc_opts = ":custom_kernel",
   deps = [
     "@lib//:kotlin-stdlib",
-    "//fleet/rhizomedb",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
-    "//fleet/util/core",
-    "//fleet/rpc",
-    "@lib//:kotlinx-coroutines-core",
-    "//fleet/reporting/api",
-    "//fleet/reporting/shared",
-    "//fleet/multiplatform.shims",
-    "@lib//:fastutil-min",
-    "//fleet/bifurcan",
-    "//fleet/fastutil",
+    "//fleet/rhizomedb.transactor",
+    "//fleet/rhizomedb.transactor.rebase",
   ],
   exports = [
-    "//fleet/rhizomedb",
-    "//fleet/util/core",
-    "//fleet/rpc",
+    "//fleet/rhizomedb.transactor",
+    "//fleet/rhizomedb.transactor.rebase",
   ]
 )
 ### auto-generated section `build fleet.kernel` end

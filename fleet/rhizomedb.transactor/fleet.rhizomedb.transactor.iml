@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -opt-in=kotlin.ExperimentalStdlibApi -Xlambdas=class -Xconsistent-data-class-copy-visibility -opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi -Xcontext-parameters -Xwasm-kclass-fqn -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
+          <option name="additionalArguments" value="-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -opt-in=kotlin.ExperimentalStdlibApi -Xlambdas=class -Xconsistent-data-class-copy-visibility -opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi -Xcontext-parameters -Xwasm-kclass-fqn -XXLanguage:+AllowEagerSupertypeAccessibilityChecks  -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -35,7 +35,17 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="fleet.rhizomedb.transactor" exported="" />
-    <orderEntry type="module" module-name="fleet.rhizomedb.transactor.rebase" exported="" />
+    <orderEntry type="module" module-name="fleet.rhizomedb" exported="" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="module" module-name="fleet.util.core" exported="" />
+    <orderEntry type="module" module-name="fleet.rpc" exported="" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="fleet.reporting.api" />
+    <orderEntry type="module" module-name="fleet.reporting.shared" />
+    <orderEntry type="module" module-name="fleet.multiplatform.shims" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="fleet.bifurcan" />
+    <orderEntry type="module" module-name="fleet.fastutil" />
   </component>
 </module>

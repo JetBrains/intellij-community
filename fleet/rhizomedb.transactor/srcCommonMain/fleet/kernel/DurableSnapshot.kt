@@ -22,8 +22,6 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonElement
-import kotlin.collections.component1
-import kotlin.collections.component2
 import kotlin.collections.set
 import kotlin.reflect.KClass
 
@@ -287,7 +285,7 @@ internal fun DbContext<Mut>.applySnapshotNew(snapshot: DurableSnapshot, uidToEid
   }
 }
 
-internal fun DbContext<Mut>.applyWorkspaceSnapshot(snapshot: DurableSnapshot, uidToEid: (UID) -> EID) {
+fun DbContext<Mut>.applyWorkspaceSnapshot(snapshot: DurableSnapshot, uidToEid: (UID) -> EID) {
   val local = prepareSnapshot(snapshot, uidToEid)
   span("applySnapshot", { set("entitiesNum", snapshot.entities.size.toString()) }) {
     local.unknownAttributes.forEach { mutate(it) }

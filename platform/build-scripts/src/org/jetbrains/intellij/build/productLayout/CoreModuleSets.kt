@@ -352,6 +352,8 @@ object CoreModuleSets {
     embeddedModule("fleet.reporting.api")
     embeddedModule("fleet.reporting.shared")
     embeddedModule("fleet.rhizomedb")
+    embeddedModule("fleet.rhizomedb.transactor")
+    embeddedModule("fleet.rhizomedb.transactor.rebase")
     embeddedModule("fleet.rpc")
     embeddedModule("fleet.util.codepoints")
     embeddedModule("fleet.util.core")
