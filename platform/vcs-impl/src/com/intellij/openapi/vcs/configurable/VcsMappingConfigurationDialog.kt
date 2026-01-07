@@ -8,7 +8,6 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListener
@@ -23,10 +22,12 @@ import com.intellij.openapi.vcs.configurable.VcsDirectoryConfigurationPanel.Comp
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
 import com.intellij.openapi.vcs.impl.VcsDescriptor
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.dialog.VcsDialogUtils.getMorePluginsLink
-import com.intellij.xml.util.XmlStringUtil.wrapInHtml
 import java.awt.BorderLayout
 import java.awt.event.ActionListener
 import javax.swing.JComponent
@@ -45,8 +46,8 @@ internal class VcsMappingConfigurationDialog(
   private val directoryTextField: TextFieldWithBrowseButton = TextFieldWithBrowseButton()
   private val vcsConfigurablePlaceholder: JPanel = JPanel(BorderLayout())
 
-  private val projectRadioButton: JRadioButton = JRadioButton(ProjectBundle.message("project.roots.project.display.name"))
   private val directoryRadioButton: JRadioButton = JRadioButton(VcsBundle.message("vcs.common.labels.directory"))
+  private val projectRadioButton: JRadioButton = JRadioButton()
 
   private var vcsConfigurable: UnnamedConfigurable? = null
   private var vcsConfigurableComponent: JComponent? = null
@@ -65,6 +66,7 @@ internal class VcsMappingConfigurationDialog(
     directoryTextField.addActionListener(MyBrowseFolderListener(directoryTextField, project, descriptor))
 
     setTitle(title)
+    setOKButtonText(VcsBundle.message("directory.mapping.save.button"))
     init()
 
     setMapping(suggestDefaultMapping(project))
@@ -90,25 +92,26 @@ internal class VcsMappingConfigurationDialog(
   }
 
   override fun createCenterPanel(): JComponent = panel {
+    row(VcsBundle.message("vcs.common.labels.version.control")) {
+      cell(vcsComboBox)
+        .resizableColumn()
+        .align(AlignX.FILL)
+      cell(getMorePluginsLink(contentPanel, Runnable { close(CANCEL_EXIT_CODE) }))
+    }.layout(RowLayout.LABEL_ALIGNED)
+
     buttonsGroup {
-      row {
-        cell(projectRadioButton)
-      }
-      row {
-        comment(wrapInHtml(DefaultVcsRootPolicy.getInstance(project).projectConfigurationMessage))
-      }.topGap(TopGap.NONE)
       row {
         cell(directoryRadioButton)
         cell(directoryTextField)
-          .align(AlignX.FILL)
-      }.layout(RowLayout.PARENT_GRID)
-      row {
-        label(VcsBundle.message("vcs.common.labels.vcs"))
-        cell(vcsComboBox)
           .resizableColumn()
           .align(AlignX.FILL)
-        cell(getMorePluginsLink(contentPanel, Runnable { close(CANCEL_EXIT_CODE) }))
-      }.layout(RowLayout.PARENT_GRID)
+      }.layout(RowLayout.LABEL_ALIGNED)
+      row {
+        cell(projectRadioButton)
+          .applyToComponent {
+            text = DefaultVcsRootPolicy.getInstance(project).getProjectMappingInDialogDescription()
+          }
+      }
     }
 
     row {

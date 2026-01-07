@@ -211,7 +211,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : Di
   }
 
   private fun addMapping() {
-    val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.add.title"))
+    val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.title"))
     if (dlg.showAndGet()) {
       val items = mappingTableModel.items.toMutableList()
       items.add(createRegisteredInfo(dlg.getMapping()))
@@ -245,7 +245,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : Di
     val row = mappingTable.selectedRow
     val info = mappingTable.getRow(row) as? RecordInfo.RegisteredMappingInfo ?: return
 
-    val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.remove.title"))
+    val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.title"))
     dlg.setMapping(info.mapping)
     if (dlg.showAndGet()) {
       val items = mappingTableModel.items.toMutableList()

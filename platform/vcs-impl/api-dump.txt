@@ -2960,6 +2960,7 @@ a:com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
 - a:getDefaultVcsRoots():java.util.Collection
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
 - getProjectConfigurationMessage():java.lang.String
+- getProjectMappingInDialogDescription():java.lang.String
 - p:scheduleMappedRootsUpdate():V
 - p:scheduleRootsChangeProcessing(java.util.Collection,java.util.Collection):V
 a:com.intellij.openapi.vcs.impl.GenericNotifierImpl
