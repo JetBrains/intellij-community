@@ -46,7 +46,6 @@ object CommunityModuleSets {
    * **Use when:** Building lightweight IDE products that provide code editing functionality
    *
    * **Example products:**
-   * - **GitClient**: Lightweight VCS IDE with editing - uses `essentialMinimal()` + `vcs()`
    * - **Gateway**: Remote development gateway - uses `essentialMinimal()` + `vcs()` + `ssh()`
    *
    * **Don't use for:**

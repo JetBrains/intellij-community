@@ -32,7 +32,6 @@ public enum IntelliJPlatformProduct {
   FLEET_BACKEND("FLIJ", "Fleet Backend", PlatformUtils.FLEET_PREFIX, "com.jetbrains.intellij.fleetBackend:fleetBackend", null),
   AQUA("QA", "Aqua", PlatformUtils.AQUA_PREFIX, null, "aqua:aqua"),
   RUSTROVER("RR", "RustRover", PlatformUtils.RUSTROVER_PREFIX, "com.jetbrains.intellij.rustrover:RustRover", "rustrover:RustRover"),
-  GIT_CLIENT("GIG", "GitClient", PlatformUtils.GIT_CLIENT_PREFIX, null, null),
   MPS("MPS", "MPS", PlatformUtils.MPS_PREFIX, null, "mps:MPS"),;
 
   private final String myProductCode;

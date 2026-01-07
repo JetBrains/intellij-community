@@ -136,12 +136,4 @@ object IdeProductImp : IdeProduct {
     executableFileName = "gateway",
     fullName = "Gateway"
   )
-
-  /** Git Client */
-  override val GIG: IdeInfo = IdeInfo(
-    productCode = "GIG",
-    platformPrefix = "GitClient",
-    executableFileName = "gitClient",
-    fullName = "GitClient"
-  )
 }

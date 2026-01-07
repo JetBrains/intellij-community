@@ -212,7 +212,6 @@ Use this decision tree to select the appropriate module set:
 
 **Example products:**
 - **CodeServer** (analysis/inspection tool without editing): Uses `corePlatform`
-- **GitClient** (lightweight IDE with editing): Uses `essentialMinimal` + `vcs()`
 - **WebStorm** (full IDE): Uses `ide.common` + web-specific modules
 - **IntelliJ IDEA Ultimate**: Uses `ide.ultimate` + all language plugins
 
