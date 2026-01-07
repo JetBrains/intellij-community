@@ -10,6 +10,7 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
@@ -18,6 +19,7 @@ class KtFirPropertyKeyFoldingTest : JavaCodeInsightFixtureTestCase(), ExpectedPl
   override fun setUp() {
     setUpWithKotlinPlugin { super.setUp() }
     ModuleRootModificationUtil.updateModel(module, DefaultLightProjectDescriptor::addJetBrainsAnnotations)
+    ConfigLibraryUtil.configureKotlinRuntime(module)
   }
 
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
