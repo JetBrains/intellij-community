@@ -86,7 +86,6 @@ import java.util.Enumeration;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.createFailureResult;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
-import static com.intellij.openapi.util.text.StringUtil.nullize;
 
 public class ExternalSystemRunnableState extends UserDataHolderBase implements RunProfileState {
 
@@ -211,12 +210,10 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       throw new ExecutionException(ExternalSystemBundle.message("untrusted.project.notification.execution.error", externalSystemName));
     }
 
-    String jvmParametersSetup = getJvmAgentsSetup();
-
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(myProject, mySettings, jvmParametersSetup, myConfiguration);
+    ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(myProject, mySettings, getJvmAgentsSetup(), myConfiguration);
     copyUserDataTo(task);
     addDebugUserDataTo(task);
 
@@ -452,9 +449,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     var runConfigurationExtensionManager = ExternalSystemRunConfigurationExtensionManager.getInstance();
     runConfigurationExtensionManager.updateVMParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings(), myEnv.getExecutor());
 
-    String jvmParametersSetup = "";
-    final ParametersList allVMParameters = new ParametersList();
-    final ParametersList data = myEnv.getUserData(ExternalSystemTaskExecutionSettings.JVM_AGENT_SETUP_KEY);
+    var allVMParameters = new ParametersList();
+    var data = myEnv.getUserData(ExternalSystemTaskExecutionSettings.JVM_AGENT_SETUP_KEY);
     if (data != null) {
       for (String parameter : data.getList()) {
         if (parameter.startsWith("-agentlib:")) continue;
@@ -465,8 +461,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       allVMParameters.addAll(data.getParameters());
     }
     allVMParameters.addAll(extensionsJP.getVMParametersList().getParameters());
-    jvmParametersSetup = allVMParameters.getParametersString();
-    return nullize(jvmParametersSetup);
+    return StringUtil.nullize(allVMParameters.getParametersString());
   }
 
   protected BuildView createBuildView(DefaultBuildDescriptor buildDescriptor, ExecutionConsole executionConsole) {
