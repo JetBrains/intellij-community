@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl.cmd
 
 import com.intellij.openapi.command.CommandEvent
@@ -36,5 +36,17 @@ internal class CmdEventImpl(
 
   override fun isTransparent(): Boolean {
     return false
+  }
+
+  override fun withNameAndGroupId(name: @Command String?, groupId: Any?): CmdEvent {
+    return CmdEvent.createImmutable(
+      id(),
+      project(),
+      name,
+      groupId,
+      confirmationPolicy(),
+      recordOriginalDocument(),
+      meta(),
+    )
   }
 }

@@ -29,6 +29,10 @@ internal class CmdEventTransparent(
   override fun isTransparent(): Boolean {
     return true
   }
+
+  override fun withNameAndGroupId(name: String?, groupId: Any?): CmdEvent {
+    throw UnsupportedOperationException("withNameAndGroupId")
+  }
 }
 
 private object TransparentGroupId {

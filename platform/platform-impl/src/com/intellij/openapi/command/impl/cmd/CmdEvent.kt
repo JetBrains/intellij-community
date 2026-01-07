@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl.cmd
 
 import com.intellij.openapi.command.CommandEvent
@@ -17,6 +17,7 @@ interface CmdEvent {
   fun recordOriginalDocument(): Boolean
   fun isTransparent(): Boolean
   fun meta(): CmdMeta
+  fun withNameAndGroupId(name: @Command String?, groupId: Any?): CmdEvent
 
   companion object {
     @JvmStatic
@@ -32,6 +33,27 @@ interface CmdEvent {
     @JvmStatic
     fun createNonUndoable(commandId: CommandId, meta: CmdMeta): CmdEvent {
       return CmdEventNonUndoable(commandId, meta)
+    }
+
+    @JvmStatic
+    fun createImmutable(
+      commandId: CommandId,
+      commandProject: Project?,
+      commandName: @Command String?,
+      groupId: Any?,
+      confirmationPolicy: UndoConfirmationPolicy,
+      recordOriginator: Boolean,
+      commandMeta: CmdMeta,
+    ): CmdEvent {
+      return CmdEventImmutable(
+        commandId,
+        commandProject,
+        commandName,
+        groupId,
+        confirmationPolicy,
+        recordOriginator,
+        commandMeta,
+      )
     }
   }
 }

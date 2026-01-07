@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl.cmd;
 
 import com.intellij.openapi.command.CommandEvent;
@@ -24,9 +24,7 @@ public final class CmdEventTransform {
     }
     boolean isTransparent = event == null;
     CommandId commandId = getCommandId(isTransparent, isStart);
-    var meta = isStart
-               ? CmdMeta.createMutable()
-               : CmdMeta.createEmpty();
+    CmdMeta meta = CmdMeta.createMutable();
     return isTransparent
            ? CmdEvent.createTransparent(commandId, meta)
            : CmdEvent.create(event, commandId, meta);
@@ -34,7 +32,7 @@ public final class CmdEventTransform {
 
   public @NotNull CmdEvent createNonUndoable() {
     CommandId commandId = CmdIdService.getInstance().nextCommandId(false);
-    return CmdEvent.createNonUndoable(commandId, NoCmdMeta.INSTANCE);
+    return CmdEvent.createNonUndoable(commandId, CmdMeta.createEmpty());
   }
 
   private static @NotNull CommandId getCommandId(boolean isTransparent, boolean isStart) {

@@ -1,10 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.impl.cmd.CmdEvent;
 import com.intellij.openapi.command.impl.cmd.CmdMeta;
+import com.intellij.openapi.command.impl.cmd.MutableCmdMeta;
+import com.intellij.openapi.command.impl.cmd.UndoMeta;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,16 +64,26 @@ final class CommandBuilder {
     return !undoableActions.isEmpty();
   }
 
-  void commandStarted(@NotNull CmdEvent cmdEvent, @NotNull CurrentEditorProvider editorProvider) {
-    assertOutsideCommand(cmdEvent);
+  void commandStarted(@NotNull CmdEvent cmdStartEvent, @NotNull CurrentEditorProvider editorProvider) {
+    assertOutsideCommand(cmdStartEvent);
     if (LOG.isTraceEnabled() || ApplicationManager.getApplication().isUnitTestMode()) {
       this.tracedStartCommand = new Throwable();
     }
-    this.cmdEvent = cmdEvent;
+    this.cmdEvent = cmdStartEvent;
     this.editorProvider = editorProvider;
     this.editorStateBefore = currentEditorState();
     this.originalDocument = this.cmdEvent.recordOriginalDocument() ? originalDocument() : null;
     this.isInsideCommand = true;
+    UndoSpy undoSpy = UndoSpy.getInstance();
+    if (undoSpy != null && cmdStartEvent.meta() instanceof MutableCmdMeta mutableMeta) {
+      mutableMeta.addUndoMeta(
+        UndoMeta.create(
+          undoProject,
+          editorProvider.getCurrentEditor(undoProject),
+          originalDocument
+        )
+      );
+    }
   }
 
   void addUndoableAction(@NotNull UndoableAction action) {
@@ -123,10 +135,10 @@ final class CommandBuilder {
     }
   }
 
-  @NotNull PerformedCommand commandFinished(@NotNull CmdEvent cmdEvent) {
-    assertInsideCommand(cmdEvent);
+  @NotNull PerformedCommand commandFinished(@NotNull CmdEvent cmdFinishEvent) {
+    assertInsideCommand(cmdFinishEvent);
     if (isGroupIdChangeSupported) {
-      this.cmdEvent = cmdEvent;
+      this.cmdEvent = cmdFinishEvent;
     }
     this.editorStateAfter = currentEditorState();
     if (originalDocument != null && hasActions() && !isTransparent() && affectedDocuments.affectsOnlyPhysical()) {
@@ -137,10 +149,6 @@ final class CommandBuilder {
 
   void assertOutsideCommand() {
     assertOutsideCommand(null);
-  }
-
-  @Nullable DocumentReference getOriginalDocument() {
-    return originalDocument;
   }
 
   private void assertInsideCommand() {
@@ -270,6 +278,9 @@ final class CommandBuilder {
 
     @Override
     public @NotNull CmdMeta meta() { throw new UnsupportedOperationException(); }
+
+    @Override
+    public @NotNull CmdEvent withNameAndGroupId(@Nullable String name, @Nullable Object groupId) { throw new UnsupportedOperationException(); }
 
     // endregion
   }

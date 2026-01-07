@@ -33,16 +33,23 @@ final class UndoCommandListener implements SeparatedCommandListener {
   }
 
   @Override
-  public void onCommandStarted(@NotNull CmdEvent cmdEvent) {
+  public void onCommandStarted(@NotNull CmdEvent cmdStartEvent) {
     if (projectNotDisposed()) {
-      undoManager.onCommandStarted(eventWithProject(cmdEvent));
+      undoManager.onCommandStarted(eventWithProject(cmdStartEvent));
     }
   }
 
   @Override
-  public void onCommandFinished(@NotNull CmdEvent cmdEvent) {
+  public void onCommandFinished(@NotNull CmdEvent cmdFinishEvent) {
     if (projectNotDisposed()) {
-      undoManager.onCommandFinished(eventWithProject(cmdEvent));
+      undoManager.onCommandFinished(eventWithProject(cmdFinishEvent));
+    }
+  }
+
+  @Override
+  public void onCommandFakeFinished(@NotNull CmdEvent cmdFakeFinishEvent) {
+    if (projectNotDisposed()) {
+      undoManager.onCommandFakeFinished(cmdFakeFinishEvent);
     }
   }
 

@@ -10,8 +10,6 @@ import com.intellij.openapi.client.ClientProjectSession;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.cmd.CmdEvent;
 import com.intellij.openapi.command.impl.cmd.CmdEventTransform;
-import com.intellij.openapi.command.impl.cmd.MutableCmdMeta;
-import com.intellij.openapi.command.impl.cmd.UndoMeta;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -175,24 +173,18 @@ final class UndoClientState implements Disposable {
     return lastAction == null ? null : lastAction.getCommandName();
   }
 
-  void commandStarted(@NotNull CmdEvent cmdEvent, @NotNull CurrentEditorProvider editorProvider) {
-    commandBuilder.commandStarted(cmdEvent, editorProvider);
-    UndoSpy undoSpy = UndoSpy.getInstance();
-    if (undoSpy != null && cmdEvent.meta() instanceof MutableCmdMeta mutableMeta) {
-      mutableMeta.addUndoMeta(
-        UndoMeta.create(
-          project,
-          editorProvider.getCurrentEditor(project),
-          commandBuilder.getOriginalDocument()
-        )
-      );
-    }
+  void commandStarted(@NotNull CmdEvent cmdStartEvent, @NotNull CurrentEditorProvider editorProvider) {
+    commandBuilder.commandStarted(cmdStartEvent, editorProvider);
   }
 
-  void commandFinished(@NotNull CmdEvent cmdEvent) {
-    PerformedCommand performedCommand = commandBuilder.commandFinished(cmdEvent);
+  void commandFinished(@NotNull CmdEvent cmdFinishEvent) {
+    PerformedCommand performedCommand = commandBuilder.commandFinished(cmdFinishEvent);
     commitCommand(performedCommand);
     notifyUndoSpy(performedCommand);
+  }
+
+  void commandFakeFinished(@NotNull CmdEvent cmdFakeFinishEvent) {
+    // TODO: implement undo meta collection (isForcedGlobal, recordOriginator)
   }
 
   private void commitCommand(@NotNull PerformedCommand performedCommand) {

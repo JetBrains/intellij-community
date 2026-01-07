@@ -339,8 +339,15 @@ public class UndoManagerImpl extends UndoManager {
     return true;
   }
 
+  // TODO: remove it
   @ApiStatus.Internal
   public boolean isGroupIdChangeSupported() {
+    return true;
+  }
+
+  // TODO: IT IS A PRIORITY ONE
+  @ApiStatus.Internal
+  public boolean isCommandRestartSupported() {
     return true;
   }
 
@@ -355,24 +362,30 @@ public class UndoManagerImpl extends UndoManager {
     return state.getStackSize(docRef, isUndo);
   }
 
-  @ApiStatus.Internal
-  protected void onCommandStarted(@NotNull CmdEvent cmdEvent) {
+  void onCommandStarted(@NotNull CmdEvent cmdStartEvent) {
     for (UndoProvider undoProvider : getUndoProviders()) {
-      undoProvider.commandStarted(cmdEvent.project());
+      undoProvider.commandStarted(cmdStartEvent.project());
     }
     UndoClientState state = getClientState();
     if (state != null) {
-      state.commandStarted(cmdEvent, getEditorProvider());
+      state.commandStarted(cmdStartEvent, getEditorProvider());
     }
   }
 
-  void onCommandFinished(@NotNull CmdEvent cmdEvent) {
+  void onCommandFinished(@NotNull CmdEvent cmdFinishEvent) {
     UndoClientState state = getClientState();
     if (state != null) {
-      state.commandFinished(cmdEvent);
+      state.commandFinished(cmdFinishEvent);
     }
     for (UndoProvider undoProvider : getUndoProviders()) {
-      undoProvider.commandFinished(cmdEvent.project());
+      undoProvider.commandFinished(cmdFinishEvent.project());
+    }
+  }
+
+  void onCommandFakeFinished(@NotNull CmdEvent cmdFakeFinishEvent) {
+    UndoClientState state = getClientState();
+    if (state != null) {
+      state.commandFakeFinished(cmdFakeFinishEvent);
     }
   }
 
