@@ -45,7 +45,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
@@ -212,31 +211,28 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   public @Nullable ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     if (myProject.isDisposed()) return null;
 
-    ProjectSystemId externalSystemId = mySettings.getExternalSystemId();
-    if (!ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(myProject, externalSystemId)) {
-      String externalSystemName = externalSystemId.getReadableName();
+    if (!ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(myProject, mySettings.getExternalSystemId())) {
+      var externalSystemName = mySettings.getExternalSystemId().getReadableName();
       throw new ExecutionException(ExternalSystemBundle.message("untrusted.project.notification.execution.error", externalSystemName));
     }
 
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(myProject, mySettings, getJvmAgentsSetup(), myConfiguration);
+    var task = new ExternalSystemExecuteTaskTask(myProject, mySettings, getJvmAgentsSetup(), myConfiguration);
     copyUserDataTo(task);
     addDebugUserDataTo(task);
 
-    ExternalSystemTaskNotificationListener listener = myEnv.getUserData(TASK_NOTIFICATION_LISTENER_KEY);
+    var listener = myEnv.getUserData(TASK_NOTIFICATION_LISTENER_KEY);
     if (listener != null) {
-      ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(task.getId(), listener);
+      ExternalSystemProgressNotificationManager.getInstance()
+        .addNotificationListener(task.getId(), listener);
     }
 
-    final String executionName = getExecutionName(externalSystemId);
-    final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(task, executionName);
-    final ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler>
-      consoleManager = getConsoleManagerFor(task);
+    var processHandler = new ExternalSystemProcessHandler(task, getExecutionName());
 
-    final ExecutionConsole consoleView =
-      consoleManager.attachExecutionConsole(myProject, task, myEnv, processHandler);
+    var consoleManager = getConsoleManagerFor(task);
+    var consoleView = consoleManager.attachExecutionConsole(myProject, task, myEnv, processHandler);
     if (consoleView == null) {
       Disposer.register(myProject, processHandler);
     }
@@ -247,23 +243,20 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
     var buildDescriptor = createBuildDescriptor(task, processHandler, consoleManager, consoleView);
 
-    Class<? extends BuildProgressListener> progressListenerClazz = task.getUserData(PROGRESS_LISTENER_KEY);
-    final BuildProgressListener progressListener =
-      progressListenerClazz != null ? myProject.getService(progressListenerClazz)
-                                    : createBuildView(buildDescriptor, consoleView);
+    var customProgressListener = ObjectUtils.doIfNotNull(task.getUserData(PROGRESS_LISTENER_KEY), it -> myProject.getService(it));
+    var progressListener = ObjectUtils.notNull(customProgressListener, () -> createBuildView(buildDescriptor, consoleView));
 
-    var runnerSettings = myEnv.getRunnerSettings();
-    var runConfigurationExtensionManager = ExternalSystemRunConfigurationExtensionManager.getInstance();
-    runConfigurationExtensionManager.attachExtensionsToProcess(myConfiguration, processHandler, runnerSettings);
+    ExternalSystemRunConfigurationExtensionManager.getInstance()
+      .attachExtensionsToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings());
 
     BackgroundTaskUtil.executeOnPooledThread(processHandler, () -> {
       var progressIndicator = ObjectUtils.notNull(myEnv.getUserData(PROGRESS_INDICATOR_KEY), () -> new EmptyProgressIndicator());
       var dataContext = BuildConsoleUtils.getDataContext(task.getId(), progressListener, consoleView);
-      final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
-      final String settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings);
-      final String greeting = ExternalSystemBundle.message("run.text.starting.task", startDateTime, settingsDescription) + "\n";
+      var startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+      var settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings);
+      var greeting = ExternalSystemBundle.message("run.text.starting.task", startDateTime, settingsDescription) + "\n";
       processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
-      try (ExternalSystemEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false)) {
+      try (var eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false)) {
         task.execute(progressIndicator, new ExternalSystemTaskEventMulticaster(
           processHandler, eventDispatcher, buildDescriptor, dataContext,
           consoleManager, consoleView, settingsDescription
@@ -319,16 +312,18 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       .withExecutionEnvironment(myEnv);
   }
 
-  private @NotNull @Nls String getExecutionName(@NotNull ProjectSystemId externalSystemId) {
+  private @NotNull @Nls String getExecutionName() {
     if (StringUtil.isNotEmpty(mySettings.getExecutionName())) {
       return mySettings.getExecutionName();
     }
     if (StringUtil.isNotEmpty(myConfiguration.getName())) {
       return myConfiguration.getName();
     }
-    return AbstractExternalSystemTaskConfigurationType.generateName(myProject, externalSystemId, mySettings.getExternalProjectPath(),
-                                                                    mySettings.getTaskNames(), mySettings.getExecutionName(),
-                                                                    DEFAULT_TASK_PREFIX, DEFAULT_TASK_POSTFIX
+    return AbstractExternalSystemTaskConfigurationType.generateName(
+      myProject,
+      mySettings.getExternalSystemId(), mySettings.getExternalProjectPath(),
+      mySettings.getTaskNames(), mySettings.getExecutionName(),
+      DEFAULT_TASK_PREFIX, DEFAULT_TASK_POSTFIX
     );
   }
 
@@ -377,7 +372,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     return StringUtil.nullize(allVMParameters.getParametersString());
   }
 
-  protected BuildView createBuildView(DefaultBuildDescriptor buildDescriptor, ExecutionConsole executionConsole) {
+  protected @NotNull BuildView createBuildView(DefaultBuildDescriptor buildDescriptor, ExecutionConsole executionConsole) {
     ExternalSystemRunConfigurationViewManager viewManager = myProject.getService(ExternalSystemRunConfigurationViewManager.class);
     return new BuildView(myProject, executionConsole, buildDescriptor, "build.toolwindow.run.selection.state", viewManager) {
       @Override
