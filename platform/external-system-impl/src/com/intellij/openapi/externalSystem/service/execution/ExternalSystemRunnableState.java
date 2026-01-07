@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.BuildBundle;
 import com.intellij.build.BuildConsoleUtils;
+import com.intellij.build.BuildDescriptor;
 import com.intellij.build.BuildEventDispatcher;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.BuildTreeFilters;
@@ -26,7 +27,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.execution.filters.Filter;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputType;
@@ -86,7 +86,6 @@ import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.function.Supplier;
 
@@ -237,27 +236,17 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
     final ExecutionConsole consoleView =
       consoleManager.attachExecutionConsole(myProject, task, myEnv, processHandler);
-    AnAction[] customActions, restartActions, contextActions;
     if (consoleView == null) {
-      customActions = AnAction.EMPTY_ARRAY;
-      restartActions = AnAction.EMPTY_ARRAY;
-      contextActions = AnAction.EMPTY_ARRAY;
       Disposer.register(myProject, processHandler);
     }
     else {
       Disposer.register(myProject, consoleView);
       Disposer.register(consoleView, processHandler);
-      customActions = consoleManager.getCustomActions(myProject, task, myEnv);
-      restartActions = consoleManager.getRestartActions(consoleView);
-      contextActions = consoleManager.getCustomContextActions(myProject, task, myEnv);
     }
-    DefaultBuildDescriptor buildDescriptor =
-      new DefaultBuildDescriptor(task.getId(), processHandler.getExecutionName(), task.getExternalProjectPath(), System.currentTimeMillis())
-        .withNavigateToError(ObjectUtils.notNull(myEnv.getUserData(NAVIGATE_TO_ERROR_KEY), ThreeState.UNSURE));
+
+    var buildDescriptor = createBuildDescriptor(task, processHandler, consoleManager, consoleView);
 
     Class<? extends BuildProgressListener> progressListenerClazz = task.getUserData(PROGRESS_LISTENER_KEY);
-    Filter[] filters = consoleManager.getCustomExecutionFilters(myProject, task, myEnv);
-    Arrays.stream(filters).forEach(buildDescriptor::withExecutionFilter);
     final BuildProgressListener progressListener =
       progressListenerClazz != null ? myProject.getService(progressListenerClazz)
                                     : createBuildView(buildDescriptor, consoleView);
@@ -267,8 +256,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     runConfigurationExtensionManager.attachExtensionsToProcess(myConfiguration, processHandler, runnerSettings);
     BackgroundTaskUtil.executeOnPooledThread(processHandler, () -> {
       var progressIndicator = ObjectUtils.notNull(myEnv.getUserData(PROGRESS_INDICATOR_KEY), () -> new EmptyProgressIndicator());
-      executeTask(task, progressIndicator, processHandler, progressListener, consoleManager, consoleView, buildDescriptor,
-                  customActions, restartActions, contextActions);
+      executeTask(task, progressIndicator, processHandler, progressListener, buildDescriptor, consoleManager, consoleView);
     });
     ExecutionConsole executionConsole = progressListener instanceof ExecutionConsole ? (ExecutionConsole)progressListener : consoleView;
     DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -283,8 +271,28 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
     DefaultExecutionResult executionResult = new DefaultExecutionResult(
       executionConsole, processHandler, actionGroup.getChildren(ActionManager.getInstance()));
-    executionResult.setRestartActions(restartActions);
+    executionResult.setRestartActions(buildDescriptor.getRestartActions().toArray(AnAction.EMPTY_ARRAY));
     return executionResult;
+  }
+
+  private @NotNull DefaultBuildDescriptor createBuildDescriptor(
+    @NotNull ExternalSystemExecuteTaskTask task,
+    @NotNull ExternalSystemProcessHandler processHandler,
+    @NotNull ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler> consoleManager,
+    @Nullable ExecutionConsole consoleView
+  ) {
+    var taskId = task.getId();
+    var externalProjectPath = task.getExternalProjectPath();
+    return new DefaultBuildDescriptor(taskId, processHandler.getExecutionName(), externalProjectPath, System.currentTimeMillis())
+      .withNavigateToError(ObjectUtils.notNull(myEnv.getUserData(NAVIGATE_TO_ERROR_KEY), ThreeState.UNSURE))
+      .withExecutionFilters(consoleManager.getCustomExecutionFilters(myProject, task, myEnv))
+      .withProcessHandler(processHandler, null)
+      .withContentDescriptor(() -> myContentDescriptor)
+      .withRestartAction(new TaskRerunAction(task))
+      .withActions(consoleView == null ? AnAction.EMPTY_ARRAY : consoleManager.getCustomActions(myProject, task, myEnv))
+      .withRestartActions(consoleView == null ? AnAction.EMPTY_ARRAY : consoleManager.getRestartActions(consoleView))
+      .withContextActions(consoleView == null ? AnAction.EMPTY_ARRAY : consoleManager.getCustomContextActions(myProject, task, myEnv))
+      .withExecutionEnvironment(myEnv);
   }
 
   private @NotNull @Nls String getExecutionName(@NotNull ProjectSystemId externalSystemId) {
@@ -305,13 +313,10 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     @NotNull ProgressIndicator indicator,
     @NotNull ExternalSystemProcessHandler processHandler,
     @Nullable BuildProgressListener progressListener,
+    @NotNull BuildDescriptor buildDescriptor,
     @NotNull ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler> consoleManager,
-    @Nullable ExecutionConsole consoleView,
-    @NotNull DefaultBuildDescriptor buildDescriptor,
-    AnAction[] customActions,
-    AnAction[] restartActions,
-    AnAction[] contextActions
-) {
+    @Nullable ExecutionConsole consoleView
+  ) {
     final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
     final String settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings);
     final String greeting = ExternalSystemBundle.message("run.text.starting.task", startDateTime, settingsDescription) + "\n";
@@ -322,16 +327,6 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         @Override
         public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
           if (progressListener != null) {
-            buildDescriptor
-              .withProcessHandler(processHandler, view -> ExternalSystemRunConfiguration
-                .foldGreetingOrFarewell(consoleView, greeting, true))
-              .withContentDescriptor(() -> myContentDescriptor)
-              .withRestartAction(new TaskRerunAction(task))
-              .withActions(customActions)
-              .withRestartActions(restartActions)
-              .withContextActions(contextActions)
-              .withExecutionEnvironment(myEnv);
-
             var eventMessage = BuildBundle.message("build.status.running");
             var viewSettingsProvider = ObjectUtils.doIfCast(consoleView, BuildViewSettingsProvider.class, BuildViewSettingsProviderAdapter::new);
             progressListener.onEvent(id,
