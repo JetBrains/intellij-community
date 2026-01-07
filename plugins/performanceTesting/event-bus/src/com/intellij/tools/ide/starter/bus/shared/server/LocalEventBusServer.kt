@@ -87,7 +87,9 @@ object LocalEventBusServer : EventBusServer {
     }
     catch (bind: BindException) {
       LOG.info("Port $port is busy. Trying use another")
+      val savedPortIndex = currentPortIndex
       endServer()
+      currentPortIndex = savedPortIndex
       if (!updatePort()) throw BindException("All ports from ports pool are busy")
       startServer()
     }
