@@ -54,7 +54,7 @@
   <actions>
     <group id="ComposeToolsGroup" searchable="false">
       <action id="JewelToolwindow" class="com.intellij.devkit.compose.demo.dialog.JewelToolwindowAction"
-              icon="com.intellij.devkit.compose.icons.DevkitComposeIcons.ComposeToolWindow"/>
+              icon="com.intellij.devkit.compose.icons.DevkitComposeIcons.JewelToolWindow"/>
       <action id="JewelComponentShowcaseDialog" class="com.intellij.devkit.compose.demo.dialog.ComponentShowcaseDialogAction"
               icon="com.intellij.devkit.core.icons.DevkitCoreIcons.Items"/>
       <action id="JewelWizardDialog" class="com.intellij.devkit.compose.demo.dialog.JewelWizardDialogAction"/>
