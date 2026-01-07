@@ -62,6 +62,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.openapi.wm.ex.WelcomeScreenTabService;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -843,6 +844,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       Content content = contents[0];
       selectID = content.getUserData(ID_KEY);
       selectSubID = content.getUserData(SUB_ID_KEY);
+    }
+
+    // welcome screen pane must be opened no matter the saved result
+    @Nullable String welcomeScreenPaneId = WelcomeScreenTabService.Companion.getInstance(project).getProjectPaneToActivate();
+    if (welcomeScreenPaneId != null) {
+      selectID = welcomeScreenPaneId;
+      selectSubID = null;
     }
 
     if (selectID != null) {

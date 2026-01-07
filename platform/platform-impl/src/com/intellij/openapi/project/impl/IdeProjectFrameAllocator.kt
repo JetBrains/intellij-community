@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.ex.WelcomeScreenTabService
 import com.intellij.openapi.wm.impl.*
 import com.intellij.platform.diagnostic.telemetry.impl.getTraceActivity
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
@@ -163,6 +164,7 @@ internal class IdeProjectFrameAllocator(
               projectFrameHelper.toolWindowPane
             }
             toolWindowManager.init(pane = toolWindowPane, reopeningEditorJob = reopeningEditorJob, taskListDeferred = taskListDeferred)
+            WelcomeScreenTabService.getInstance(project).openProjectView(toolWindowManager)
           }
         }
       }

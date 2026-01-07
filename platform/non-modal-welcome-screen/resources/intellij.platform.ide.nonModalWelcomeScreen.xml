@@ -18,6 +18,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.openapi.wm.ex.WelcomeScreenTabService"
+                    serviceImplementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabServiceImpl"
+                    overrides="true"/>
     <postStartupActivity implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenProjectActivity"/>
 
     <noProjectStateHandler implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenNoProjectStateHandler" order="first"/>
