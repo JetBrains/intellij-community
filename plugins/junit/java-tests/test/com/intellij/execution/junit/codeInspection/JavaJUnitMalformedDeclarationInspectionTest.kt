@@ -2414,5 +2414,38 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+
+    fun `test malformed before and after suite requires Suite annotation highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.junit.platform.suite.api.*;
+
+      class MySuite {
+        @BeforeSuite
+        static void <error descr="Method 'before' annotated with '@BeforeSuite' requires the containing class to be annotated with '@Suite'">before</error>() {}
+      
+        @AfterSuite
+        static void <error descr="Method 'after' annotated with '@AfterSuite' requires the containing class to be annotated with '@Suite'">after</error>() {}
+      }
+    """.trimIndent())
+    }
+
+    fun `test malformed before suite requires Suite annotation quickfix`() {
+      myFixture.testQuickFix(JvmLanguage.JAVA, """
+      import org.junit.platform.suite.api.*;
+
+      class MySuite {
+        @BeforeSuite
+        static void befo<caret>re() {}
+      }
+    """.trimIndent(), """
+      import org.junit.platform.suite.api.*;
+
+      @Suite
+      class MySuite {
+        @BeforeSuite
+        static void before() {}
+      }
+    """.trimIndent(), "Annotate class 'MySuite' as '@Suite'", testPreview = true)
+    }
   }
 }

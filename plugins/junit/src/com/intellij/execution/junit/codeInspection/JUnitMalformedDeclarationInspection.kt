@@ -205,7 +205,8 @@ private class JUnitMalformedSignatureVisitor(
     shouldBeStatic = true,
     shouldBeVoidType = true,
     validVisibility = ::notPrivate,
-    validParameters = { _ -> emptyList() }
+    validParameters = { _ -> emptyList() },
+    requiredClassAnnotation = ORG_JUNIT_PLATFORM_SUITE_API_SUITE
   )
 
   private val junit4TestProblem = AnnotatedSignatureProblem(
@@ -1105,6 +1106,7 @@ private class JUnitMalformedSignatureVisitor(
     private val shouldBeSubTypeOf: List<String>? = null,
     private val validVisibility: ((UDeclaration) -> UastVisibility?)? = null,
     private val validParameters: ((UMethod) -> List<UParameter>?)? = null,
+    private val requiredClassAnnotation: String? = null,
   ) {
     private fun modifierProblems(
       validVisibility: UastVisibility?, decVisibility: UastVisibility, isStatic: Boolean, isInstancePerClass: Boolean,
@@ -1191,6 +1193,12 @@ private class JUnitMalformedSignatureVisitor(
       return registerUProblem(element, message, quickFix)
     }
 
+    private fun getContainingClass(element: UElement): PsiClass? {
+      val containingClass = element.getContainingUClass()?.javaPsi ?: return null
+      if (containingClass.name != "Companion") return containingClass
+      return containingClass.containingClass
+    }
+
     fun check(holder: ProblemsHolder, element: UMethod) {
       if (!isApplicable(element)) return
       val javaPsi = element.javaPsi.asSafely<PsiMethod>() ?: return
@@ -1198,6 +1206,18 @@ private class JUnitMalformedSignatureVisitor(
       val annotation = annotations
                          .firstOrNull { AnnotationUtil.isAnnotated(javaPsi, it, CHECK_HIERARCHY) }
                          ?.substringAfterLast('.') ?: return
+      
+      if (requiredClassAnnotation != null) {
+        val containingClass = getContainingClass(element)
+        if (containingClass != null && !AnnotationUtil.isAnnotated(containingClass, requiredClassAnnotation, CHECK_HIERARCHY)) {
+          val message = JUnitBundle.message("jvm.inspections.junit.malformed.requires.class.annotation.descriptor", 
+                                            annotation, requiredClassAnnotation.substringAfterLast('.'))
+          val actions = createAddAnnotationActions(containingClass, annotationRequest(requiredClassAnnotation))
+          val quickFixes = IntentionWrapper.wrapToQuickFixes(actions, element.javaPsi.containingFile).toTypedArray()
+          return holder.registerUProblem(element, message, *quickFixes)
+        }
+      }
+      
       val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
       val elementIsStatic = alternatives.any { it.isStatic }
       val visibility = validVisibility?.invoke(element)

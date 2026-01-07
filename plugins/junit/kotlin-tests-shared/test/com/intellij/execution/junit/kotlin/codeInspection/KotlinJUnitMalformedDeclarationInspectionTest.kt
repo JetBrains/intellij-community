@@ -2277,6 +2277,46 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
       """.trimIndent())
   }
 
+  fun `test malformed before and after suite requires Suite annotation highlighting`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      class MySuite {
+        companion object {
+          @JvmStatic
+          @org.junit.platform.suite.api.BeforeSuite
+          fun <error descr="Method 'before' annotated with '@BeforeSuite' requires the containing class to be annotated with '@Suite'">before</error>() {}
+      
+          @JvmStatic
+          @org.junit.platform.suite.api.AfterSuite
+          fun <error descr="Method 'after' annotated with '@AfterSuite' requires the containing class to be annotated with '@Suite'">after</error>() {}
+        }
+      }
+      """.trimIndent())
+  }
+
+  fun `test malformed before suite requires Suite annotation quickfix`() {
+    myFixture.testQuickFix(
+      JvmLanguage.KOTLIN, """
+      class MySuite {
+        companion object {
+          @JvmStatic
+          @org.junit.platform.suite.api.BeforeSuite
+          fun befo<caret>re() {}
+        }
+      }
+      """.trimIndent(), """
+      import org.junit.platform.suite.api.Suite
+      
+      @Suite
+      class MySuite {
+        companion object {
+          @JvmStatic
+          @org.junit.platform.suite.api.BeforeSuite
+          fun before() {}
+        }
+      }
+      """.trimIndent(), "Annotate as @Suite", testPreview = true)
+  }
+
   // Unconstructable test case
   fun testPlain() {
     myFixture.testHighlighting(
