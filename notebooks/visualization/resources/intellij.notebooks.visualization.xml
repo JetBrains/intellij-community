@@ -109,6 +109,10 @@
                                         implementationClass="com.intellij.notebooks.visualization.PythonCellSelectionModelProvider"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <notebooks.ui.cellCaretTracker implementation="com.intellij.notebooks.visualization.NotebookCellCaretTrackerImpl"/>
+  </extensions>
+
   <extensions defaultExtensionNs="org.intellij.markdown">
     <markdownCompatibilityChecker implementation="com.intellij.notebooks.visualization.JupyterMarkdownCompatibilityChecker"/>
   </extensions>

@@ -1,1 +1,7 @@
-<idea-plugin visibility="internal" package="com.intellij.notebooks.ui"/>
+<idea-plugin visibility="internal" package="com.intellij.notebooks.ui">
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.notebooks.ui.cellCaretTracker"
+                    interface="com.intellij.notebooks.ui.editor.actions.command.mode.NotebookCellCaretTracker"
+                    dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>
