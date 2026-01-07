@@ -300,7 +300,7 @@ object Utils {
     val fastTrackTime = getFastTrackMaxTime(fastTrack, place, uiKind is ActionUiKind.Toolbar, true)
     val edtDispatcher =
       if (fastTrackTime > 0) AltEdtDispatcher.apply { switchToQueue() }
-      else if (isLockRequiredForProcessing(group)) Dispatchers.EDT[CoroutineDispatcher]!!
+      else if (isLockRequired(group)) Dispatchers.EDT[CoroutineDispatcher]!!
       else Dispatchers.UI[CoroutineDispatcher]!!
     val updater = ActionUpdater(presentationFactory, asyncDataContext, place, uiKind, edtDispatcher)
     val deferred = async(edtDispatcher, CoroutineStart.UNDISPATCHED) {
@@ -314,10 +314,10 @@ object Utils {
     deferred.await()
   }
 
-  fun isLockRequiredForProcessing(action: AnAction): Boolean {
+  fun isLockRequired(action: AnAction): Boolean {
     if (action.actionUpdateThread == ActionUpdateThread.EDT
-        && Registry.`is`("actions.update.edt.actions.without.rw.lock", false)
-        && Registry.`is`("actions.allow.running.without.rw.lock", false)) {
+        && Registry.`is`("actions.allow.update.and.perform.without.rw.lock", false)
+        && Registry.`is`("actions.update.and.perform.edt.actions.without.rw.lock", false)) {
       return false
     }
     return action.templatePresentation.isRWLockRequired

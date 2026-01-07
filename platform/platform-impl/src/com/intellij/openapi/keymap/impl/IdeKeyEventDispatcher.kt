@@ -538,7 +538,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
 
     fireBeforeShortcutTriggered(shortcut, actions, context)
 
-    val isRwLockRequired = actions.any(Utils::isLockRequiredForProcessing)
+    val isRwLockRequired = actions.any(Utils::isLockRequired)
 
     val chosen = if (isRwLockRequired) {
       WriteIntentReadAction.compute {

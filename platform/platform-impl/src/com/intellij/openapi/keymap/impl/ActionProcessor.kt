@@ -25,7 +25,7 @@ abstract class ActionProcessor {
 
   open fun performAction(inputEvent: InputEvent, action: AnAction, event: AnActionEvent) {
     inputEvent.consume()
-    if (Utils.isLockRequiredForProcessing(action)) {
+    if (Utils.isLockRequired(action)) {
       WriteIntentReadAction.run {
         doPerformActionOrShowPopup(action, event, null)
       }

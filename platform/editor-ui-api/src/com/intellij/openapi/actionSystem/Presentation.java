@@ -68,8 +68,8 @@ public final class Presentation implements Cloneable {
   private static final int IS_APPLICATION_SCOPE = 0x100;
   private static final int IS_PREFER_INJECTED_PSI = 0x200;
   private static final int IS_ENABLED_IN_MODAL_CONTEXT = 0x400;
+  private static final int IS_RW_LOCK_REQUIRED = 0x800;
   private static final int IS_TEMPLATE = 0x1000;
-  private static final int IS_RW_LOCK_REQUIRED = 0x2000;
 
   private int myFlags = IS_ENABLED | IS_VISIBLE | IS_DISABLE_GROUP_IF_EMPTY | IS_RW_LOCK_REQUIRED;
   private @NotNull Supplier<@ActionDescription String> descriptionSupplier = NULL_STRING;
@@ -457,14 +457,14 @@ public final class Presentation implements Cloneable {
    */
   @ApiStatus.Experimental
   public boolean isRWLockRequired() {
-    if (!Registry.is("actions.allow.running.without.rw.lock")) {
+    if (!Registry.is("actions.allow.update.and.perform.without.rw.lock")) {
       return true;
     }
     return BitUtil.isSet(myFlags, IS_RW_LOCK_REQUIRED);
   }
 
   /**
-   * For an action presentation sets whether the action requires {@link <a href="https://jb.gg/ij-platform-threading">the Read-Write lock</a>} for update and perform.
+   * For an action presentation sets whether the action requires {@link <a href="https://jb.gg/ij-platform-threading">the Read-Write lock</a>}.
    * <p>
    * <ul>
    *   <li>If {@code true}, the action is updated in read action and performed in write-intent read action on the EDT.
@@ -479,6 +479,9 @@ public final class Presentation implements Cloneable {
    */
   @ApiStatus.Experimental
   public void setRWLockRequired(boolean rwLockRequired) {
+    if (!isTemplate()) {
+      LOG.error("setRWLockRequired() should be called only for template presentations");
+    }
     myFlags = BitUtil.set(myFlags, IS_RW_LOCK_REQUIRED, rwLockRequired);
   }
 

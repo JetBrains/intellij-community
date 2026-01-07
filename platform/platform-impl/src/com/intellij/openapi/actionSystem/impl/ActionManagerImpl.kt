@@ -1207,7 +1207,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   // inlining here to reduce the number of service stacktraces
   @Suppress("NOTHING_TO_INLINE")
   inline fun runInWriteIntentConditionally(action: AnAction, runnable: Runnable) {
-    if (Utils.isLockRequiredForProcessing(action)) {
+    if (Utils.isLockRequired(action)) {
       WriteIntentReadAction.run(runnable)
     } else {
       runnable.run()
@@ -1416,8 +1416,19 @@ private suspend fun tryToExecuteSuspend(action: AnAction,
   val event = AnActionEvent(wrappedContext, presentation, place, uiKind, inputEvent, 0, actionManager)
 
   //todo fix all clients and move locks into them
-  writeIntentReadAction {
+  runOnEdtWithConditionalWriteIntentSuspending(action) {
     doPerformAction(action, event, callback)
+  }
+}
+
+private suspend fun runOnEdtWithConditionalWriteIntentSuspending(action: AnAction, computation: suspend () -> Unit) {
+  val dispatcher = if (Utils.isLockRequired(action)) {
+    Dispatchers.EDT
+  } else {
+    Dispatchers.UI
+  }
+  withContext(dispatcher) {
+    computation()
   }
 }
 

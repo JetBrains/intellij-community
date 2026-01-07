@@ -1350,10 +1350,12 @@
     <registryKey key="jdk.downloader.show.other.arch" defaultValue="false" description="Show download options for JDKs targeting a different architecture"/>
     <registryKey key="sdk.download.consent" defaultValue="false" description="Prompts before downloading SDKs if false"/>
 
-    <registryKey defaultValue="true" description="Whether an action can run without a write-intent lock"
-                 key="actions.allow.running.without.rw.lock"/>
-    <registryKey defaultValue="true" description="Whether actions with UpdateThread == EDT can run without write-intent lock"
-                 key="actions.update.edt.actions.without.rw.lock"/>
+    <registryKey defaultValue="true"
+                 description="Indicates whether the platform is allowed to update actions without the read lock and perform actions without the write-intent lock. Disabling this flag makes the IDE acquiring locks in both these cases"
+                 key="actions.allow.update.and.perform.without.rw.lock"/>
+    <registryKey defaultValue="true"
+                 description="Whether actions with `getActionUpdateThread() == EDT` are automatically updated without read lock and performed without the write lock."
+                 key="actions.update.and.perform.edt.actions.without.rw.lock"/>
 
     <smartSelectProvider implementation="com.intellij.ui.tree.TreeSmartSelectProvider"/>
 

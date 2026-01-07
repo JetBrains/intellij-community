@@ -18,7 +18,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil.ALWAYS_VISIBLE_GROUP
 import com.intellij.openapi.actionSystem.ex.ActionUtil.HIDE_DISABLED_CHILDREN
 import com.intellij.openapi.actionSystem.ex.ActionUtil.SUPPRESS_SUBMENU
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.actionSystem.impl.Utils.isLockRequiredForProcessing
+import com.intellij.openapi.actionSystem.impl.Utils.isLockRequired
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -354,7 +354,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     val children = try {
       retryOnAwaitSharedData(opElement, maxAwaitSharedDataRetries) {
         ActionUpdaterInterceptor.getGroupChildren(group, event) {
-          callAction(opElement, group.actionUpdateThread, isLockRequiredForProcessing(group)) {
+          callAction(opElement, group.actionUpdateThread, isLockRequired(group)) {
             group.getChildren(event).apply {
               ensureNotNullChildren(opElement, this as Array<AnAction?>)
             }.asList()
@@ -529,7 +529,7 @@ internal class ActionUpdater @JvmOverloads constructor(
               AnActionResult.PERFORMED
             }
             else -> {
-              callAction(opElement, action.actionUpdateThread, isLockRequiredForProcessing(action)) {
+              callAction(opElement, action.actionUpdateThread, isLockRequired(action)) {
                 ActionUtil.updateAction(action, event)
               }
             }
@@ -669,7 +669,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       val opCur = currentThreadContext()[OpElement]
       val sessionKey = SessionKey(opName, action)
       val opElement = OpElement.next(opCur, opCur?.action, OP_sessionData, updater.place, sessionKey)
-      val canRunOnEdtWithoutLocks = Registry.`is`("actions.update.edt.actions.without.rw.lock") && updateThread == ActionUpdateThread.EDT
+      val canRunOnEdtWithoutLocks = Registry.`is`("actions.update.and.perform.edt.actions.without.rw.lock") && updateThread == ActionUpdateThread.EDT
       return runBlockingForActionExpand(opElement) {
         updater.callAction(opElement, updateThread, !canRunOnEdtWithoutLocks) { supplier.get() }
       }
