@@ -66,8 +66,9 @@ interface TerminalCommandBlock : TerminalBlockBase {
    *
    * Can be null if the command was not started to execute.
    * For example, if a user is typing a command now.
-   * Or if the command was meaningless and shell just printed the new prompt.
+   * Or if the command text was blank and shell just printed the new prompt.
    * Or if the user aborted the command typing by pressing Ctrl+C.
+   * If command was executed, but produced no output, then this offset will be the same as [endOffset].
    *
    * Always check that this offset is in the bounds of the regular [TerminalOutputModel] before accessing the text.
    * Because when the output model starts trimming the start of the output (because of reaching the max length),
