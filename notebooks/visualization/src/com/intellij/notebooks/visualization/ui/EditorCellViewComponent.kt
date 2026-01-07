@@ -29,12 +29,12 @@ abstract class EditorCellViewComponent : NotebookCellController {
     child.parent = null
   }
 
-  fun onViewportChange() {
-    _children.forEach { it.onViewportChange() }
-    doViewportChange()
+  fun onUpdateIfInVisibleRect() {
+    _children.forEach { it.onUpdateIfInVisibleRect() }
+    doUpdateIfInVisibleRect()
   }
 
-  open fun doViewportChange(): Unit = Unit
+  open fun doUpdateIfInVisibleRect(): Unit = Unit
 
   abstract fun calculateBounds(): Rectangle
 

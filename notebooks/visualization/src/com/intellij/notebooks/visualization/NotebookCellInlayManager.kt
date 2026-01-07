@@ -113,7 +113,7 @@ class NotebookCellInlayManager private constructor(
   private fun addViewportChangeListener() {
     editor.scrollPane.viewport.addChangeListener {
       notebook.cells.forEach {
-        it.onViewportChange()
+        it.updateIfInVisibleRect()
       }
     }
   }

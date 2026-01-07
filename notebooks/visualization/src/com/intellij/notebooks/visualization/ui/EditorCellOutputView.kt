@@ -83,7 +83,7 @@ class EditorCellOutputView internal constructor(
     toDispose?.let { Disposer.dispose(it) }
   }
 
-  override fun doViewportChange() {
+  override fun doUpdateIfInVisibleRect() {
     val component = component.mainComponent as? NotebookOutputInlayShowable ?: return
     if (component !is JComponent) return
     val componentRect = SwingUtilities.convertRectangle(component, component.bounds, editor.scrollPane.viewport.view)
