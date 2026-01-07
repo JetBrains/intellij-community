@@ -345,13 +345,19 @@ com.intellij.util.TripleFunction
 com.intellij.util.containers.ConcurrentIntObjectMap
 - com.intellij.util.containers.IntObjectMap
 - a:cacheOrGet(I,java.lang.Object):java.lang.Object
+- a:compute(I,com.intellij.util.containers.ConcurrentIntObjectMap$IntObjectToObjectFunction):java.lang.Object
+- a:computeIfAbsent(I,java.util.function.IntFunction):java.lang.Object
+- a:computeIfPresent(I,com.intellij.util.containers.ConcurrentIntObjectMap$IntObjectToObjectFunction):java.lang.Object
 - a:elements():java.util.Enumeration
 - a:getOrDefault(I,java.lang.Object):java.lang.Object
+- a:merge(I,java.lang.Object,java.util.function.BiFunction):java.lang.Object
 - a:putIfAbsent(I,java.lang.Object):java.lang.Object
 - a:remove(I,java.lang.Object):Z
 - a:replace(I,java.lang.Object):java.lang.Object
 - a:replace(I,java.lang.Object,java.lang.Object):Z
 - a:size():I
+com.intellij.util.containers.ConcurrentIntObjectMap$IntObjectToObjectFunction
+- a:apply(I,java.lang.Object):java.lang.Object
 com.intellij.util.containers.ConcurrentList
 - java.util.List
 - a:addAllAbsent(java.util.Collection):I
@@ -359,6 +365,9 @@ com.intellij.util.containers.ConcurrentList
 com.intellij.util.containers.ConcurrentLongObjectMap
 - a:cacheOrGet(J,java.lang.Object):java.lang.Object
 - a:clear():V
+- a:compute(J,com.intellij.util.containers.ConcurrentLongObjectMap$LongObjectToObjectFunction):java.lang.Object
+- a:computeIfAbsent(J,java.util.function.LongFunction):java.lang.Object
+- a:computeIfPresent(J,com.intellij.util.containers.ConcurrentLongObjectMap$LongObjectToObjectFunction):java.lang.Object
 - a:containsKey(J):Z
 - a:containsValue(java.lang.Object):Z
 - a:elements():java.util.Iterator
@@ -368,6 +377,7 @@ com.intellij.util.containers.ConcurrentLongObjectMap
 - a:getOrDefault(J,java.lang.Object):java.lang.Object
 - a:isEmpty():Z
 - a:keys():J[]
+- a:merge(J,java.lang.Object,java.util.function.BiFunction):java.lang.Object
 - a:put(J,java.lang.Object):java.lang.Object
 - a:putIfAbsent(J,java.lang.Object):java.lang.Object
 - a:remove(J):java.lang.Object
@@ -376,6 +386,8 @@ com.intellij.util.containers.ConcurrentLongObjectMap
 - a:replace(J,java.lang.Object,java.lang.Object):Z
 - a:size():I
 - a:values():java.util.Collection
+com.intellij.util.containers.ConcurrentLongObjectMap$LongObjectToObjectFunction
+- a:apply(J,java.lang.Object):java.lang.Object
 com.intellij.util.containers.Convertor
 - java.util.function.Function
 - sf:SELF:com.intellij.util.containers.Convertor$IntoSelf

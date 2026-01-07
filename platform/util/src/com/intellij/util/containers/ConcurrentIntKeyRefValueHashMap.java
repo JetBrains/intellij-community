@@ -1,13 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
-import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.IntFunction;
 import java.util.function.Supplier;
+
+import static com.intellij.reference.SoftReference.deref;
 
 /**
  * Base class for concurrent key:int -> (weak/soft) value:V map
@@ -95,20 +98,20 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
   public V put(int key, @NotNull V value) {
     IntReference<V> ref = myMap.put(key, createReference(key, value, myQueue));
     processQueue();
-    return SoftReference.deref(ref);
+    return deref(ref);
   }
 
   @Override
   public V get(int key) {
     IntReference<V> ref = myMap.get(key);
-    return SoftReference.deref(ref);
+    return deref(ref);
   }
 
   @Override
   public V remove(int key) {
     IntReference<V> ref = myMap.remove(key);
     processQueue();
-    return SoftReference.deref(ref);
+    return deref(ref);
   }
 
   private static @NotNull IncorrectOperationException pointlessContainsKey() {
@@ -284,5 +287,37 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
       result.add(enumeration.nextElement());
     }
     return result;
+  }
+
+  @Override
+  public V compute(int key, IntObjectToObjectFunction<? super V, ? extends V> remappingFunction) {
+    IntReference<V> result = myMap.compute(
+      key, (k, v) -> createReference(k, remappingFunction.apply(k, deref(v)), myQueue));
+    processQueue();
+    return deref(result);
+  }
+
+  @Override
+  public V computeIfAbsent(int key, IntFunction<? extends V> mappingFunction) {
+    IntReference<V> result = myMap.computeIfAbsent(
+      key, (k) -> createReference(k, mappingFunction.apply(k), myQueue));
+    processQueue();
+    return deref(result);
+  }
+
+  @Override
+  public V computeIfPresent(int key, IntObjectToObjectFunction<? super V, ? extends V> remappingFunction) {
+    IntReference<V> result = myMap.computeIfPresent(
+      key, (k, v) -> createReference(k, remappingFunction.apply(k, deref(v)), myQueue));
+    processQueue();
+    return deref(result);
+  }
+
+  @Override
+  public V merge(int key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+    IntReference<V> result = myMap.merge(
+      key, createReference(key, value, myQueue), (v1, v2) -> createReference(key, remappingFunction.apply(deref(v1), deref(v2)), myQueue));
+    processQueue();
+    return deref(result);
   }
 }
