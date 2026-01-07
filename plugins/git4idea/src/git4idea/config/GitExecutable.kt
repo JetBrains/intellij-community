@@ -211,7 +211,7 @@ sealed class GitExecutable {
           }
         }?.asNioPath()?.pathString
       })
-      if (executableContext.isWithNoTty) setupNoTtyExecution(commandLine, wait = false, setSidPath = {
+      if (isLocal && executableContext.isWithNoTty) setupNoTtyExecution(commandLine, wait = false, setSidPath = {
         GitConfigurationCache.getInstance().computeCachedValue(SetSidKey(eel.descriptor)) {
           runBlockingCancellable {
             listOf("setsid", "/usr/bin/setsid").map {
