@@ -12,7 +12,13 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 @ApiStatus.Internal
 @Service
-@State(name = "ReworkedTerminalUsage", storages = [Storage(value = "terminal.xml", roamingType = RoamingType.DISABLED)])
+@State(
+  name = "ReworkedTerminalUsage",
+  storages = [
+    Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED),
+    Storage(value = "terminal.xml", roamingType = RoamingType.DISABLED, deprecated = true)
+  ]
+)
 class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalStorage.State> {
   private val feedbackNotificationShown = AtomicBoolean()
   private val enterKeyPressedTimes = AtomicInteger()
