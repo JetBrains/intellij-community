@@ -322,6 +322,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     final String greeting = ExternalSystemBundle.message("run.text.starting.task", startDateTime, settingsDescription) + "\n";
     processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
 
+    var dataContext = BuildConsoleUtils.getDataContext(task.getId(), progressListener, consoleView);
     try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false)) {
       ExternalSystemTaskNotificationListener taskListener = new ExternalSystemTaskNotificationListener() {
         @Override
@@ -353,7 +354,6 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
           var title = processHandler.getExecutionName() + " " + BuildBundle.message("build.status.failed");
           var externalSystemId = id.getProjectSystemId();
           var externalProjectPath = mySettings.getExternalProjectPath();
-          var dataContext = BuildConsoleUtils.getDataContext(id, progressListener, consoleView);
           var eventResult = createFailureResult(title, exception, externalSystemId, myProject, externalProjectPath, dataContext);
           eventDispatcher.onEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
           processHandler.notifyProcessTerminated(1);
