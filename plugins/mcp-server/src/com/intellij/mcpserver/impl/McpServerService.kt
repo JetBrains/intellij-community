@@ -6,7 +6,6 @@ import com.intellij.mcpserver.impl.util.network.*
 import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
-import com.intellij.mcpserver.stdio.IJ_MCP_ALLOWED_TOOLS
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.util.findMostRelevantProject
 import com.intellij.openapi.application.*
@@ -76,10 +75,7 @@ class McpServerService(val cs: CoroutineScope) {
      */
     RESPECT_GLOBAL_SETTINGS,
   }
-  class McpSessionOptions(
-    val commandExecutionMode: AskCommandExecutionMode,
-    val toolFilter: McpToolFilter = McpToolFilter.AllowAll
-  )
+  class McpSessionOptions(val commandExecutionMode: AskCommandExecutionMode)
 
   companion object {
     fun getInstance(): McpServerService = service()
@@ -254,23 +250,6 @@ class McpServerService(val cs: CoroutineScope) {
       }) { applicationCall, transport ->
         // this is added because now a Kotlin MCP client doesn't support header adjusting for each request, only for initial one, see McpStdioRunner
         val projectPath = applicationCall.request.headers[IJ_MCP_SERVER_PROJECT_PATH]
-        val authToken = if (authCheck) applicationCall.request.headers[IJ_MCP_AUTH_TOKEN] else null
-
-        // Check for tool filter from header (for stdio/CLI usage)
-        val allowedToolsFromHeader = applicationCall.request.headers[IJ_MCP_ALLOWED_TOOLS]
-        val headerFilter = allowedToolsFromHeader?.let { toolsStr ->
-          val tools = toolsStr.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
-          if (tools.isNotEmpty()) McpToolFilter.AllowList(tools) else McpToolFilter.AllowAll
-        }
-
-        // Merge filters: auth-based session options take precedence over header
-        val baseSessionOptions = getSessionOptions(authToken)
-        // if no header provided, use the existing filter from sessionOptions
-        val sessionOptions = if (headerFilter != null) {
-          McpSessionOptions(baseSessionOptions.commandExecutionMode, headerFilter)
-        } else {
-          baseSessionOptions
-        }
         val mcpServer = Server(
           Implementation(
             name = "${ApplicationNamesInfo.getInstance().fullProductName} MCP Server",
@@ -296,14 +275,11 @@ class McpServerService(val cs: CoroutineScope) {
         launch {
           var previousTools: List<McpTool>? = null
           mcpTools.collectLatest { updatedTools ->
-            // Apply session-specific filter
-            val filteredTools = updatedTools.filter { sessionOptions.toolFilter.shouldInclude(it.descriptor.name) }
-
             previousTools?.forEach { previousTool ->
               mcpServer.removeTool(previousTool.descriptor.name)
             }
-            mcpServer.addTools(filteredTools.map { it.mcpToolToRegisteredTool(mcpServer, session, projectPath) })
-            previousTools = filteredTools
+            mcpServer.addTools(updatedTools.map { it.mcpToolToRegisteredTool(mcpServer, session, projectPath) })
+            previousTools = updatedTools
           }
         }
         return@mcpPatched session
@@ -311,17 +287,14 @@ class McpServerService(val cs: CoroutineScope) {
     }.start(wait = false)
   }
 
-  private fun getMcpTools(filter: McpToolFilter = McpToolFilter.AllowAll): List<McpTool> {
-    val allTools = McpToolsProvider.EP.extensionList.flatMap {
-      try {
-        it.getTools()
-      }
-      catch (e: Exception) {
-        logger.error("Cannot load tools for $it", e)
-        emptyList()
-      }
+  private fun getMcpTools() = McpToolsProvider.EP.extensionList.flatMap {
+    try {
+      it.getTools()
     }
-    return allTools.filter { filter.shouldInclude(it.descriptor.name) }
+    catch (e: Exception) {
+      logger.error("Cannot load tools for $it", e)
+      emptyList()
+    }
   }
 
   private fun McpTool.mcpToolToRegisteredTool(server: Server, session: ServerSession, projectPathFromInitialRequest: String?): RegisteredTool {
