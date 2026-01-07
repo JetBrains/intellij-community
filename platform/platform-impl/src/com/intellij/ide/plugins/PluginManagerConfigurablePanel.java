@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -37,7 +37,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.updateSettings.impl.PluginAutoUpdateListener;
-import com.intellij.openapi.updateSettings.impl.PluginAutoUpdateService;
 import com.intellij.openapi.updateSettings.impl.UpdateOptions;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource;
@@ -248,7 +247,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     }
   }
 
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myCardPanel;
   }
 

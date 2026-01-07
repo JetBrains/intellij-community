@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -95,7 +95,7 @@ public final class PluginManagerConfigurable
   }
 
   @Override
-  public @Nullable JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     PluginManagerConfigurablePanel panel = createPanelIfNeeded();
 
     try {
@@ -108,11 +108,11 @@ public final class PluginManagerConfigurable
     return panel.getComponent();
   }
 
-  private PluginManagerConfigurablePanel createPanelIfNeeded() {
+  private @NotNull PluginManagerConfigurablePanel createPanelIfNeeded() {
     return createPanelIfNeeded(null);
   }
 
-  private PluginManagerConfigurablePanel createPanelIfNeeded(@Nullable String searchQuery) {
+  private @NotNull PluginManagerConfigurablePanel createPanelIfNeeded(@Nullable String searchQuery) {
     if (myPanel == null) {
       myPanel = new PluginManagerConfigurablePanel();
       myPanel.init(searchQuery);
