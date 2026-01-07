@@ -279,6 +279,8 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
           }
 
           assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
+          assert(ideContext.coroutineContext.isActive) { "Lambda task coroutine context should be active" }
+
           withContext(ideContext.coroutineContext + Dispatchers.Default + CoroutineName("Lambda task: ${lambda.stepName}") + clientIdContextToRunLambda()) {
             runLogged(lambda.stepName, 10.minutes) {
               val urls = lambda.classPath.map { Path(it).toUri().toURL() }
