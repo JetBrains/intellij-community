@@ -1,14 +1,9 @@
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.PySingleStarParameter;
-import com.jetbrains.python.psi.PySlashParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
