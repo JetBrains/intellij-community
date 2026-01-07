@@ -347,7 +347,9 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     @Nullable
     @Override
     public T get() {
-      SlowOperations.assertSlowOperationsAreAllowed();
+      if (!isDone()) {
+        SlowOperations.assertSlowOperationsAreAllowed();
+      }
       return super.get();
     }
 
@@ -355,7 +357,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     @Override
     public T get(long timeout, @NotNull TimeUnit unit) {
       // allow the 'get-if-finished-fast' pattern
-      if (unit.toMillis(timeout) > 50) {
+      if (!isDone() && unit.toMillis(timeout) > 50) {
         SlowOperations.assertSlowOperationsAreAllowed();
       }
       return super.get(timeout, unit);
