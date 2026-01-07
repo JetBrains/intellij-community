@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable
 
 import com.intellij.ide.DataManager
@@ -214,7 +214,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : Di
     val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.add.title"))
     if (dlg.showAndGet()) {
       val items = mappingTableModel.items.toMutableList()
-      items.add(createRegisteredInfo(dlg.mapping))
+      items.add(createRegisteredInfo(dlg.getMapping()))
       setDisplayedMappings(items)
     }
   }
@@ -246,10 +246,10 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : Di
     val info = mappingTable.getRow(row) as? RecordInfo.RegisteredMappingInfo ?: return
 
     val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.remove.title"))
-    dlg.mapping = info.mapping
+    dlg.setMapping(info.mapping)
     if (dlg.showAndGet()) {
       val items = mappingTableModel.items.toMutableList()
-      items[row] = createRegisteredInfo(dlg.mapping)
+      items[row] = createRegisteredInfo(dlg.getMapping())
       setDisplayedMappings(items)
     }
   }
