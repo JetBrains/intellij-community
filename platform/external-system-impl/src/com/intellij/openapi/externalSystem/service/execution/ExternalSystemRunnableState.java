@@ -12,9 +12,9 @@ import com.intellij.build.BuildViewSettingsProviderAdapter;
 import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.WeakFilterableSupplier;
 import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.FinishBuildEvent;
+import com.intellij.build.events.StartBuildEvent;
 import com.intellij.build.events.impl.FailureResultImpl;
-import com.intellij.build.events.impl.FinishBuildEventImpl;
-import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
@@ -63,6 +63,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.task.RunConfigurationTaskState;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
@@ -333,9 +334,6 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
           if (progressListener != null) {
             AnAction rerunTaskAction = new ExternalSystemRunConfiguration.MyTaskRerunAction(progressListener, myEnv, myContentDescriptor);
-            BuildViewSettingsProvider viewSettingsProvider =
-              consoleView instanceof BuildViewSettingsProvider ?
-              new BuildViewSettingsProviderAdapter((BuildViewSettingsProvider)consoleView) : null;
             buildDescriptor
               .withProcessHandler(processHandler, view -> ExternalSystemRunConfiguration
                 .foldGreetingOrFarewell(consoleView, greeting, true))
@@ -345,9 +343,14 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
               .withRestartActions(restartActions)
               .withContextActions(contextActions)
               .withExecutionEnvironment(myEnv);
+
+            var eventMessage = BuildBundle.message("build.status.running");
+            var viewSettingsProvider = ObjectUtils.doIfCast(consoleView, BuildViewSettingsProvider.class, BuildViewSettingsProviderAdapter::new);
             progressListener.onEvent(id,
-                                     new StartBuildEventImpl(buildDescriptor, BuildBundle.message("build.status.running"))
-                                       .withBuildViewSettingsProvider(viewSettingsProvider));
+              StartBuildEvent.builder(eventMessage, buildDescriptor)
+                .withBuildViewSettings(viewSettingsProvider)
+                .build()
+            );
           }
         }
 
@@ -366,29 +369,30 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         @Override
         public void onFailure(@NotNull String projectPath, @NotNull ExternalSystemTaskId id, @NotNull Exception exception) {
           if (progressListener != null) {
-            var eventTime = System.currentTimeMillis();
             var eventMessage = BuildBundle.message("build.status.failed");
             var title = executionName + " " + BuildBundle.message("build.status.failed");
             var externalSystemId = id.getProjectSystemId();
             var externalProjectPath = mySettings.getExternalProjectPath();
             var dataContext = BuildConsoleUtils.getDataContext(id, progressListener, consoleView);
             var eventResult = createFailureResult(title, exception, externalSystemId, myProject, externalProjectPath, dataContext);
-            eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, eventTime, eventMessage, eventResult));
+            eventDispatcher.onEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
           }
           processHandler.notifyProcessTerminated(1);
         }
 
         @Override
         public void onCancel(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
-          eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
-                                                               BuildBundle.message("build.status.cancelled"), new FailureResultImpl()));
+          var eventMessage = BuildBundle.message("build.status.cancelled");
+          var eventResult = new FailureResultImpl();
+          eventDispatcher.onEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
           processHandler.notifyProcessTerminated(1);
         }
 
         @Override
         public void onSuccess(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
-          eventDispatcher.onEvent(id, new FinishBuildEventImpl(
-            id, null, System.currentTimeMillis(), BuildBundle.message("build.event.message.successful"), new SuccessResultImpl()));
+          var eventMessage = BuildBundle.message("build.event.message.successful");
+          var eventResult = new SuccessResultImpl();
+          eventDispatcher.onEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
         }
 
         @Override
@@ -425,10 +429,9 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       task.execute(indicator, taskListener);
       Throwable taskError = task.getError();
       if (taskError != null && !(taskError instanceof Exception)) {
-        FinishBuildEventImpl failureEvent = new FinishBuildEventImpl(task.getId(), null, System.currentTimeMillis(),
-                                                                     BuildBundle.message("build.status.failed"),
-                                                                     new FailureResultImpl(taskError));
-        eventDispatcher.onEvent(task.getId(), failureEvent);
+        var eventMessage = BuildBundle.message("build.status.failed");
+        var eventResult = new FailureResultImpl(taskError);
+        eventDispatcher.onEvent(task.getId(), FinishBuildEvent.builder(task.getId(), eventMessage, eventResult).build());
       }
     }
   }
