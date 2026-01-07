@@ -1131,12 +1131,11 @@
 - a:getPriority():com.intellij.polySymbols.PolySymbol$Priority
 *a:com.intellij.polySymbols.utils.PolySymbolScopeWithCache
 - com.intellij.polySymbols.query.PolySymbolScope
-- <init>(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.util.UserDataHolder,java.lang.Object):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.util.UserDataHolder,java.lang.Object):V
 - a:createPointer():com.intellij.model.Pointer
 - equals(java.lang.Object):Z
 - getCodeCompletions(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
 - pf:getDataHolder():com.intellij.openapi.util.UserDataHolder
-- pf:getFramework():java.lang.String
 - pf:getKey():java.lang.Object
 - p:getMatchingSymbols(com.intellij.polySymbols.PolySymbolKind,java.lang.String,java.util.Set):java.util.List
 - getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
