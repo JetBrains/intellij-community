@@ -311,58 +311,6 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
           true
         }
 
-        session.projectsNames.setSuspend(sessionBgtDispatcher) { _, _ ->
-          ProjectManagerEx.getOpenProjects().map { it.name }.also {
-            LOG.info("Projects: ${it.joinToString(", ", "[", "]")}")
-          }
-        }
-
-        suspend fun waitProjectInitialisedOrDisposed(project: Project) {
-          runLogged("Wait project '${project.name}' is initialised or disposed", 10.seconds) {
-            while (!(project.isInitialized || project.isDisposed)) {
-              delay(1.seconds)
-            }
-          }
-        }
-
-        suspend fun leaveAllModals(throwErrorIfModal: Boolean) {
-          withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
-            repeat(10) {
-              if (ModalityState.current() == ModalityState.nonModal()) {
-                return@withContext
-              }
-              delay(1.seconds)
-            }
-            if (throwErrorIfModal) {
-              LOG.error("Unexpected modality: " + ModalityState.current())
-            }
-            LaterInvocator.forceLeaveAllModals("LambdaTestHost - leaveAllModals")
-            repeat(10) {
-              if (ModalityState.current() == ModalityState.nonModal()) {
-                return@withContext
-              }
-              delay(1.seconds)
-            }
-            LOG.error("Failed to close modal dialog: " + ModalityState.current())
-          }
-        }
-
-        session.closeAllOpenedProjects.setSuspend(sessionBgtDispatcher) { _, _ ->
-          leaveAllModals(throwErrorIfModal = true)
-
-          ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
-          withContext(Dispatchers.EDT + NonCancellable) {
-            writeIntentReadAction {
-              ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
-            }
-          }
-        }
-
-
-        session.projectsAreInitialised.setSuspend(sessionBgtDispatcher) { _, _ ->
-          ProjectManagerEx.getOpenProjects().map { it.isInitialized }.all { true }
-        }
-
         LOG.info("Test session ready!")
         session.ready.value = true
       }
