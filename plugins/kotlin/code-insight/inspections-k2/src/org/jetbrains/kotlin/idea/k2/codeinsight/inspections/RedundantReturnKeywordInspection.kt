@@ -67,6 +67,15 @@ internal class RedundantReturnKeywordInspection : KotlinApplicableInspectionBase
         return normalizedTopMostOwner.parent is KtReturnExpression
     }
 
+    /**
+     * When a `return` is unreachable,
+     * [org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.KotlinUnreachableCodeInspection]
+     * already suggests a quick fix removing `return`, so [RedundantReturnKeywordInspection] does not trigger,
+     * avoiding duplicate fixes.
+     *
+     * @see org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.RedundantReturnKeyword.testUnreachableReturn
+     * @see org.jetbrains.kotlin.idea.k2.inspections.tests.K2LocalInspectionTestGenerated.RedundantReturnKeyword.testUnreachableThrow
+     */
     @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtReturnExpression): Unit? =
         element.diagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
