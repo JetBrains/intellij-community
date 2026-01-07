@@ -199,14 +199,17 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   private static int fixOffset(Document document, int caretOffset) {
-    // the initially computed indent includes everything before the caret,
-    // so we have to trim the '-' prefix and following ws
     CharSequence sequence = document.getCharsSequence();
-    int offset = 0;
-    while (sequence.charAt(caretOffset - 1 + offset) != '-') {
-      offset--;
+    int lineStartOffset = DocumentUtil.getLineStartOffset(caretOffset, document);
+    int dashPos = -1;
+    for (int i = lineStartOffset; i < caretOffset; i++) {
+      if (sequence.charAt(i) == '-') {
+        dashPos = i;
+        break;
+      }
     }
-    return offset - 1;
+    if (dashPos == -1) return 0;
+    return dashPos - caretOffset;
   }
 
   private static String adjustListItems(List<String> lines, int indent, boolean isTargetLineEmptyItem) {

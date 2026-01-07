@@ -178,6 +178,10 @@ public abstract class YAMLPasteTest extends BasePlatformTestCase {
     doTest("- item1\nitem2\n- item3", ".severalLinesSomeWithoutDashes");
   }
 
+  public void testPasteLinesIntoSequenceItemWithDashInside() {
+    doTest("- item1\n- item2\n- item3");
+  }
+
   public void testPasteLinesIntoFilledSequence() {
     doTest("just-text");
   }
