@@ -144,7 +144,7 @@ public interface Application extends ComponentManager {
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
-   * @throws E re-frown from ThrowableComputable
+   * @throws E re-thrown from ThrowableComputable
    * @see CoroutinesKt#readAction
    * @see CoroutinesKt#readActionBlocking
    */
@@ -188,7 +188,7 @@ public interface Application extends ComponentManager {
    *
    * @param computation the computation to run
    * @return the result returned by the computation.
-   * @throws E re-frown from ThrowableComputable
+   * @throws E re-thrown from ThrowableComputable
    * @see CoroutinesKt#edtWriteAction
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
@@ -216,7 +216,7 @@ public interface Application extends ComponentManager {
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
-   * @throws E re-frown from ThrowableComputable
+   * @throws E re-thrown from ThrowableComputable
    */
   @ApiStatus.Experimental
   default <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
