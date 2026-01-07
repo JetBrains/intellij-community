@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.execution.CommandLineUtil;
@@ -98,11 +98,10 @@ public final class ShellEnvironmentReader {
     else {
       command.add(reader + " > '" + OUTPUT_PLACEHOLDER + "'");
     }
-    if (shFile != null) {
-      command.add(shFile.toString());
-      if (args != null) {
-        command.addAll(args);
-      }
+    // positional parameters for the '-c' script ($0, etc.)
+    if (shFile != null && args != null) {
+      command.add(shell);
+      command.addAll(args);
     }
 
     var processBuilder = new ProcessBuilder(command);
