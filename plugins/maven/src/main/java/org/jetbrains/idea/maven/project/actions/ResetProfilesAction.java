@@ -29,6 +29,7 @@ public class ResetProfilesAction extends MavenAction {
 
     MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e.getDataContext());
     if (manager == null) return false;
+    if (!manager.isMavenizedProject()) return false;
 
     if (manager.getAvailableProfiles().isEmpty()) return false;
 

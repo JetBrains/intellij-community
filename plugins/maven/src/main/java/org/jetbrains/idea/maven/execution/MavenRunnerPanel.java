@@ -24,8 +24,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.stream.IntStream;
 
 public class MavenRunnerPanel {
@@ -121,9 +121,11 @@ public class MavenRunnerPanel {
     c.gridwidth = 1;
 
     JPanel propertiesPanel = new JPanel(new BorderLayout());
-    propertiesPanel.setBorder(IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.runner.properties"), false));
+    propertiesPanel.setBorder(
+      IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.runner.properties"), false));
 
-    propertiesPanel.add(mySkipTestsCheckBox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.skip.tests")), BorderLayout.NORTH);
+    propertiesPanel.add(mySkipTestsCheckBox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.skip.tests")),
+                        BorderLayout.NORTH);
 
     collectProperties();
     propertiesPanel.add(myPropertiesPanel = new MavenPropertiesPanel(myProperties), BorderLayout.CENTER);
@@ -141,12 +143,14 @@ public class MavenRunnerPanel {
   }
 
   private void collectProperties() {
-    MavenProjectsManager s = MavenProjectsManager.getInstance(myProject);
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(myProject);
     Map<String, String> result = new LinkedHashMap<>();
 
-    for (MavenProject each : s.getProjects()) {
-      Properties properties = each.getProperties();
-      result.putAll((Map)properties);
+    if (manager.isMavenizedProject()) {
+      for (MavenProject each : manager.getProjects()) {
+        Properties properties = each.getProperties();
+        result.putAll((Map)properties);
+      }
     }
 
     myProperties = result;
@@ -173,7 +177,8 @@ public class MavenRunnerPanel {
     data.setSkipTests(mySkipTestsCheckBox.isSelected());
     if (myTargetName == null) {
       data.setJreName(myJdkCombo.getSelectedValue());
-    } else {
+    }
+    else {
       data.setJreName(StringUtil.notNullize(myTargetJdkCombo.getItem(), MavenRunnerSettings.USE_PROJECT_JDK));
     }
     data.setMavenProperties(myPropertiesPanel.getDataAsMap());
@@ -227,7 +232,8 @@ public class MavenRunnerPanel {
         targetItems.forEach(myTargetJdkCombo::addItem);
       }
       myJdkLabel.setLabelFor(myTargetJdkCombo);
-    } else {
+    }
+    else {
       myJdkLabel.setLabelFor(myJdkCombo);
     }
   }

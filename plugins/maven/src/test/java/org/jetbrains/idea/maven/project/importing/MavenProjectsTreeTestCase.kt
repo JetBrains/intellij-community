@@ -27,15 +27,11 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
       return myTree!!
     }
 
-  @Throws(Exception::class)
-  override fun setUpInWriteAction() {
-    super.setUpInWriteAction()
-    myTree = MavenProjectsManager.getInstance(project).getProjectsTree()
-  }
 
   override fun setUp() {
     super.setUp()
     mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
+    myTree = MavenProjectsManager.getInstance(project).getProjectsTree()
   }
 
   override fun tearDown() {

@@ -114,7 +114,10 @@ public final class MavenIndexUtils {
       return Collections.emptyList();
     }
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    Set<MavenRemoteRepository> repositories = projectsManager.getRemoteRepositories();
+    Set<MavenRemoteRepository> repositories = new HashSet<>();
+    if (projectsManager.isMavenizedProject()) {
+      repositories.addAll(projectsManager.getRemoteRepositories());
+    }
 
     Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(repositories);
     for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensionList()) {
@@ -147,7 +150,8 @@ public final class MavenIndexUtils {
     if (local != null) {
       all.add(local);
     }
-    all.addAll(ContainerUtil.map(getRemoteRepositoriesNoResolve(project), rr -> new MavenRepositoryInfo(rr.getId(), rr.getName(), rr.getUrl(), RepositoryKind.REMOTE)));
+    all.addAll(ContainerUtil.map(getRemoteRepositoriesNoResolve(project),
+                                 rr -> new MavenRepositoryInfo(rr.getId(), rr.getName(), rr.getUrl(), RepositoryKind.REMOTE)));
     return all;
   }
 

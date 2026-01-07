@@ -7,6 +7,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -19,6 +20,8 @@ import org.jetbrains.idea.maven.utils.Strings;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final char SEPARATOR = ',';
@@ -37,10 +40,12 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
   public MavenIgnoredFilesConfigurable(Project project) {
     myManager = MavenProjectsManager.getInstance(project);
     myIgnoredFilesPatternsPanel.setBorder(
-      IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.ignored.tooltip"), false, JBUI.insetsTop(8)).setShowLine(false));
+      IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.ignored.tooltip"), false, JBUI.insetsTop(8))
+        .setShowLine(false));
 
     myIgnoredFilesPanel.setBorder(
-      IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.ignored.title"), false, JBUI.insetsTop(8)).setShowLine(false));
+      IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.ignored.title"), false, JBUI.insetsTop(8))
+        .setShowLine(false));
   }
 
   private void createUIComponents() {
@@ -70,8 +75,9 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
     myOriginallyIgnoredFilesPaths = myManager.getIgnoredFilesPaths();
     myOriginallyIgnoredFilesPatterns = Strings.detokenize(myManager.getIgnoredFilesPatterns(), SEPARATOR);
 
+    List<VirtualFile> projectsFiles = myManager.isInitialized() ? myManager.getProjectsFiles() : Collections.emptyList();
     MavenUIUtil.setElements(myIgnoredFilesPathsChooser,
-                            MavenUtil.collectPaths(myManager.getProjectsFiles()),
+                            MavenUtil.collectPaths(projectsFiles),
                             myOriginallyIgnoredFilesPaths,
                             (o1, o2) -> FileUtil.comparePaths(o1, o2));
     myIgnoredFilesPattersEditor.setText(myOriginallyIgnoredFilesPatterns);

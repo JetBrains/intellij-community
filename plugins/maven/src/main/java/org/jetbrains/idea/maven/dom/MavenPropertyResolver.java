@@ -37,6 +37,7 @@ public final class MavenPropertyResolver {
 
     MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(projectDom.getManager().getProject());
 
+    if (!mavenProjectsManager.isInitialized()) return text;
     MavenProject mavenProject = mavenProjectsManager.findProject(file);
 
     var additionalPropertySource = new AdditionalPropertySourceImpl(mavenProject, projectDom);

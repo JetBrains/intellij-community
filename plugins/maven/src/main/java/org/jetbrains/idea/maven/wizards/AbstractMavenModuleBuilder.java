@@ -85,8 +85,10 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     var project = moduleModel.getProject();
     var contentEntryPath = getContentEntryPath();
     if (null == contentEntryPath) return;
-    var mavenProjectsTree = MavenProjectsManager.getInstance(project).getProjectsTree();
-    mavenProjectsTree.removeIgnoredFilesPaths(List.of(contentEntryPath + "/pom.xml"));
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+    if (manager.isInitialized()) {
+      manager.removeIgnoredFilesPaths(List.of(contentEntryPath + "/pom.xml"));
+    }
   }
 
   @Override

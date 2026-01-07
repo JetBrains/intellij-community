@@ -24,6 +24,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.junit.Test
 import java.util.*
@@ -1741,6 +1742,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testCollectingProfilesFromParentsAfterResolve() = runBlocking {
+    projectsManager.initForTests()
     val parent1 = createModulePom("parent1",
                                   """
                       <groupId>test</groupId>

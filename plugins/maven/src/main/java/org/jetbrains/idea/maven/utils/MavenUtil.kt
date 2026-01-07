@@ -222,6 +222,7 @@ object MavenUtil {
   }
 
 
+
   @JvmStatic
   fun invokeAndWaitWriteAction(p: Project, r: Runnable) {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
@@ -1726,7 +1727,9 @@ object MavenUtil {
     }
 
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-    if (mavenProjectsManager.findProject(file) != null) return true
+    if (mavenProjectsManager.isMavenizedProject) {
+      if (mavenProjectsManager.findProject(file) != null) return true
+    }
 
     return ReadAction.compute<Boolean, RuntimeException>(ThrowableComputable {
       if (project.isDisposed()) return@ThrowableComputable false

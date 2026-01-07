@@ -26,6 +26,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.MergingQueueUtil;
@@ -76,7 +77,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private final MavenEmbeddersManager myEmbeddersManager;
 
-  private final @NotNull MavenProjectsTree myProjectsTree = new MavenProjectsTree(getProject());
+  private final MavenProjectsTree myProjectsTree = new MavenProjectsTree(getProject());
   private final AtomicReference<MavenProjectManagerWatcher> myWatcherRef = new AtomicReference<>(null);
   private volatile Exception myWatcherCreationTrace;
 
@@ -171,11 +172,17 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return getProjectsTree().getFilterConfigCrc(projectFileIndex);
   }
 
+
   @TestOnly
   public void initForTests() {
-    initProjectsTree();
-    doInit();
+    //revise when porting to kotlin
+    runInBackgroundBlocking(() -> {
+      initProjectsTree();
+      doInit();
+    });
   }
+
+  protected abstract void runInBackgroundBlocking(Runnable r);
 
   private void doInit() {
     initLock.lock();
@@ -259,15 +266,20 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     initLock.lock();
     try {
       if (projectsTreeInitialized.get()) return;
-      Path path = getProjectsTreeFile();
-      myProjectsTree.read(path);
-      applyStateToTree(myProjectsTree, this);
-      myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
+      doInitTree();
     }
     finally {
       projectsTreeInitialized.set(true);
       initLock.unlock();
     }
+  }
+
+  @RequiresReadLockAbsence
+  private void doInitTree() {
+    Path path = getProjectsTreeFile();
+    myProjectsTree.read(path);
+    applyStateToTree(myProjectsTree, this);
+    myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
   }
 
   private void applyTreeToState() {
@@ -392,7 +404,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return myEmbeddersManager;
   }
 
-  private boolean isInitialized() {
+  public boolean isInitialized() {
     return !initLock.isLocked() && isInitialized.get();
   }
 
@@ -439,7 +451,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public @NotNull MavenExplicitProfiles getExplicitProfiles() {
-    return getProjectsTree().getExplicitProfiles();
+    return new MavenExplicitProfiles(getWorkspaceSettings().enabledProfiles, getWorkspaceSettings().disabledProfiles);
   }
 
   public @NotNull Collection<String> getAvailableProfiles() {
@@ -554,7 +566,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public @NotNull List<String> getIgnoredFilesPaths() {
-    return getProjectsTree().getIgnoredFilesPaths();
+    return new ArrayList<>(getState().ignoredFiles);
   }
 
   public void setIgnoredFilesPaths(@NotNull List<String> paths) {
@@ -579,7 +591,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public @NotNull List<String> getIgnoredFilesPatterns() {
-    return getProjectsTree().getIgnoredFilesPatterns();
+    return new ArrayList<>(getState().ignoredPathMasks);
   }
 
   public void setIgnoredFilesPatterns(@NotNull List<String> patterns) {
@@ -623,7 +635,11 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
-    getProjectsTree().setExplicitProfiles(profiles);
+    getWorkspaceSettings().setEnabledProfiles(profiles.getEnabledProfiles());
+    getWorkspaceSettings().setDisabledProfiles(profiles.getDisabledProfiles());
+    if(isInitialized()){
+      getProjectsTree().setExplicitProfiles(profiles);
+    }
   }
 
   @ApiStatus.Internal

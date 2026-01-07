@@ -67,6 +67,7 @@ class MavenProjectsTree(val project: Project) {
   @Volatile
   private var myIgnoredFilesPatternsCache: Pattern? = null
 
+  @Transient
   private var myExplicitProfiles: MavenExplicitProfiles = MavenExplicitProfiles.NONE
   private val myTemporarilyRemovedExplicitProfiles = MavenExplicitProfiles(HashSet(), HashSet())
 

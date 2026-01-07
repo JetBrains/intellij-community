@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedGroupIdArtifact
 import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 
@@ -150,7 +151,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testResolvingByRelativePathWithProperties() = runBlockingNoSync {
-
+    projectsManager.initForTests()
     val parent = createModulePom("parent",
                                  """
                                            <groupId>test</groupId>

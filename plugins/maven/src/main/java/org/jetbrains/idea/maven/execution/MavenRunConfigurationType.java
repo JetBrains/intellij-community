@@ -118,9 +118,12 @@ public final class MavenRunConfigurationType implements ConfigurationType, DumbA
   }
 
   private static @Nullable String getMavenProjectName(final Project project, final MavenRunnerParameters runnerParameters) {
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(runnerParameters.getWorkingDirPath() + "/pom.xml");
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+    if (!manager.isMavenizedProject()) return null;
+    final VirtualFile virtualFile =
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(runnerParameters.getWorkingDirPath() + "/pom.xml");
     if (virtualFile != null) {
-      MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(virtualFile);
+      MavenProject mavenProject = manager.findProject(virtualFile);
       if (mavenProject != null) {
         if (!StringUtil.isEmptyOrSpaces(mavenProject.getMavenId().getArtifactId())) {
           return mavenProject.getMavenId().getArtifactId();
@@ -219,7 +222,7 @@ public final class MavenRunConfigurationType implements ConfigurationType, DumbA
   }
 
   public static class MavenRunConfigurationFactory extends ConfigurationFactory {
-    public MavenRunConfigurationFactory(ConfigurationType type) {super(type);}
+    public MavenRunConfigurationFactory(ConfigurationType type) { super(type); }
 
     @Override
     public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
@@ -245,6 +248,9 @@ public final class MavenRunConfigurationType implements ConfigurationType, DumbA
       Project project = cfg.getProject();
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
 
+      if (!projectsManager.isMavenizedProject()) {
+        return cfg;
+      }
       List<MavenProject> projects = projectsManager.getProjects();
       if (projects.size() != 1) {
         return cfg;

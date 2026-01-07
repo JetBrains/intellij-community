@@ -52,7 +52,7 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   override fun findAllParents(): List<MavenProject> {
     val project = context.project ?: return emptyList()
     val projectsManager = MavenProjectsManager.getInstance(project)
-    return projectsManager.projects
+    return if(projectsManager.isInitialized) projectsManager.projects else emptyList()
   }
 
   override fun ValidationInfoBuilder.validateGroupId(): ValidationInfo? {

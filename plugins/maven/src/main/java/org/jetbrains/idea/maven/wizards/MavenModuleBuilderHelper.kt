@@ -3,10 +3,7 @@ package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.util.EditorHelper
 import com.intellij.openapi.GitSilentFileAdderProvider
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -53,6 +50,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.NioFiles
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
 open class MavenModuleBuilderHelper(
@@ -78,7 +76,12 @@ open class MavenModuleBuilderHelper(
   open fun doConfigure(project: Project, root: VirtualFile, isInteractive: Boolean) {
     trigger(project, MavenActionsUsagesCollector.CREATE_MAVEN_PROJECT)
 
-    val psiFiles = if (myAggregatorProject != null) arrayOf(getPsiFile(project, myAggregatorProject.file)) else PsiFile.EMPTY_ARRAY
+    val psiFiles = if (myAggregatorProject != null) {
+      ReadAction.compute<Array<PsiFile?>, Throwable> { arrayOf(getPsiFile(project, myAggregatorProject.file)) }
+    }
+    else {
+      PsiFile.EMPTY_ARRAY
+    }
 
     val pom = WriteCommandAction.writeCommandAction(project, *psiFiles).withName(myCommandName).compute<VirtualFile?, RuntimeException> {
       val vcsFileAdder = GitSilentFileAdderProvider.create(project)

@@ -91,6 +91,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   private @Nullable String getRootProjectPath() {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(getProject());
+    if (!projectsManager.isInitialized()) return null;
     MavenProject rootProject = ContainerUtil.getFirstItem(projectsManager.getRootProjects());
     return ObjectUtils.doIfNotNull(rootProject, it -> it.getDirectory());
   }

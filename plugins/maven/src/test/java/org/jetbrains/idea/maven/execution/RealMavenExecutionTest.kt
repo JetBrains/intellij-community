@@ -56,6 +56,7 @@ class RealMavenExecutionTest : MavenExecutionTest() {
   @Test
   fun testProjectWithVmOptionsWithoutVMOptions() = runBlocking {
     useProject("mavenProjectWithVmOptionsInEnforcer")
+    importProjectAsync()
     val executionInfo = execute(MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("compile"), emptyList()))
     assertExecFailed()
   }
@@ -64,6 +65,7 @@ class RealMavenExecutionTest : MavenExecutionTest() {
   fun testProjectWithVmOptionsWithVMOptions() = runBlocking {
     assumeVersionAtLeast("3.6.3")
     useProject("mavenProjectWithVmOptionsInEnforcer")
+    importProjectAsync()
     val executionInfo = execute(
       MavenRunnerParameters(true,
                             projectPath.toCanonicalPath(), null as String?,
@@ -80,6 +82,7 @@ class RealMavenExecutionTest : MavenExecutionTest() {
   @Test
   fun testProjectWithMavenWrapper() = runBlocking {
     useProject("mavenWithWrapper")
+    importProjectAsync()
     MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.mavenHomeType = MavenWrapper
     val executionInfo = execute(
       MavenRunnerParameters(true,
