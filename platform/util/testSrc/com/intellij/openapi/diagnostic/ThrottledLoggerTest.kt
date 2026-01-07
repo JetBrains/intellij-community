@@ -66,21 +66,6 @@ class ThrottledLoggerTest {
   }
 
   /**
-   * Tests that zero throttle period means no throttling (every call logs).
-   */
-  @Test
-  fun testZeroThrottlePeriodLogsEveryCall() {
-    val testLogger = TestLogger()
-    val throttledLogger = ThrottledLogger(testLogger, 0)
-
-    throttledLogger.info("message 1")
-    throttledLogger.info("message 2")
-    throttledLogger.info("message 3")
-
-    assertEquals(3, testLogger.infoCount.get(), "With zero throttle, all messages should log")
-  }
-
-  /**
    * Tests basic throttling behavior: first message logs, subsequent messages within
    * throttle period are suppressed, messages after period logs again.
    */
@@ -209,9 +194,13 @@ class ThrottledLoggerTest {
       ThrottledLogger(testLogger, -1)
     }
 
-    // Zero and positive values should be valid
-    assertDoesNotThrow {
+    // Zero values should be throw
+    assertThrows(IllegalArgumentException::class.java) {
       ThrottledLogger(testLogger, 0)
+    }
+
+    // Positive values should be valid
+    assertDoesNotThrow {
       ThrottledLogger(testLogger, 1000)
     }
   }

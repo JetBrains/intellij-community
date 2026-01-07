@@ -30,8 +30,8 @@ public final class ThrottledLogger {
 
   public ThrottledLogger(@NotNull Logger logger, long ignoreRepeatedMessagesInMs) {
     this.logger = logger;
-    if (ignoreRepeatedMessagesInMs < 0) {
-      throw new IllegalArgumentException("ignoreRepeatedMessagesInMs(=" + ignoreRepeatedMessagesInMs + ") must be >= 0");
+    if (ignoreRepeatedMessagesInMs <= 0) {
+      throw new IllegalArgumentException("ignoreRepeatedMessagesInMs(=" + ignoreRepeatedMessagesInMs + ") must be > 0");
     }
     this.ignoreRepeatedMessagesInMs = ignoreRepeatedMessagesInMs;
   }
@@ -97,8 +97,6 @@ public final class ThrottledLogger {
   }
 
   private boolean shouldThrottle() {
-    if (ignoreRepeatedMessagesInMs == 0) return false;
-
     long nowMs = System.currentTimeMillis();
     long lastLoggedAt = lastLoggedAtMsHolder.get();
 
