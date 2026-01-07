@@ -15,6 +15,10 @@
 
     <editorTypedHandler implementationClass="com.intellij.codeInsight.inline.completion.InlineCompletionTypedHandler"
                         id="inline.completion" order="after lookup"/>
+
+    <editorCompletionConfigurable
+      instance="com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurable"
+      id="editor.preferences.completion.inline"/>
   </extensions>
 
   <extensionPoints>
