@@ -16,6 +16,7 @@
 package com.jetbrains.python.codeInsight.controlflow;
 
 import com.google.common.collect.Lists;
+import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.controlflow.TransparentInstruction;
@@ -54,7 +55,14 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   public PyControlFlow buildControlFlow(final @NotNull ScopeOwner owner) {
-    return new PyControlFlow(myBuilder.build(this, owner));
+    ControlFlow flow = myBuilder.build(this, owner);
+    Instruction[] instructions = flow.getInstructions();
+    for (int i = 0; i < instructions.length; i++) {
+      if (i != instructions[i].num()) {
+        throw new IllegalStateException();
+      }
+    }
+    return new PyControlFlow(instructions);
   }
 
   protected @NotNull ControlFlowBuilder getBuilder() {
