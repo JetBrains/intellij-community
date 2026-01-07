@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
@@ -385,13 +385,11 @@ class CombinedDiffViewer(
     hidden: ArrayList<CombinedBlockId>,
   ) {
     val currentBlock = blockState.currentBlock
-    val totalVisible = getBlocksAroundCurrent(currentBlock)
+    val blocksAroundCurrent = getBlocksAroundCurrent(currentBlock)
+    val viewportVisible = inViewport + afterViewport + beforeViewport
+    val totalVisible = (blocksAroundCurrent + viewportVisible).distinct()
 
-    val blocksToHide =
-      hidden.filter { it !in totalVisible } +
-      inViewport.filter { it !in totalVisible } +
-      beforeViewport.filter { it !in totalVisible } +
-      afterViewport.filter { it !in totalVisible }
+    val blocksToHide = hidden.filter { it !in totalVisible }
 
     if (blocksToHide.isNotEmpty()) {
       blockListeners.multicaster.blocksHidden(blocksToHide)
