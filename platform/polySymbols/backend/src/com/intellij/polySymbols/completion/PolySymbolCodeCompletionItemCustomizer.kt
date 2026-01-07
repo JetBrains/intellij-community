@@ -2,8 +2,8 @@
 package com.intellij.polySymbols.completion
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
 

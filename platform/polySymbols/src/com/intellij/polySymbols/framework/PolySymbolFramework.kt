@@ -11,6 +11,8 @@ import com.intellij.polySymbols.query.PolySymbolNamesProvider
 import com.intellij.psi.PsiElement
 import javax.swing.Icon
 
+typealias FrameworkId = String
+
 abstract class PolySymbolFramework {
 
   lateinit var id: String
@@ -42,7 +44,8 @@ abstract class PolySymbolFramework {
     fun get(id: String): PolySymbolFramework = WEB_FRAMEWORK_EP.findSingle(id) ?: UnregisteredWebFramework(id)
 
     @JvmStatic
-    fun inLocation(location: VirtualFile, project: Project): PolySymbolFramework? = PolyContext.get(KIND_FRAMEWORK, location, project)?.let { get(it) }
+    fun inLocation(location: VirtualFile, project: Project): PolySymbolFramework? =
+      PolyContext.get(KIND_FRAMEWORK, location, project)?.let { get(it) }
 
     @JvmStatic
     fun inLocation(location: PsiElement): PolySymbolFramework? = PolyContext.get(KIND_FRAMEWORK, location)?.let { get(it) }

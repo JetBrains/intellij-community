@@ -2,6 +2,7 @@
 package com.intellij.polySymbols
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.impl.PolySymbolOriginImpl
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import javax.swing.Icon

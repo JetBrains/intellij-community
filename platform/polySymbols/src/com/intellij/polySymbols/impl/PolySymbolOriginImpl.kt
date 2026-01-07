@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.impl
 
-import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolySymbolOrigin
+import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import javax.swing.Icon
 

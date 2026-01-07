@@ -8,7 +8,6 @@ import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.context.PolyContext
@@ -17,6 +16,7 @@ import com.intellij.polySymbols.context.PolyContextKindRules
 import com.intellij.polySymbols.context.PolyContextKindRules.DisablementRules
 import com.intellij.polySymbols.context.PolyContextKindRules.EnablementRules
 import com.intellij.polySymbols.context.PolyContextRulesProvider
+import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConversionRulesProvider
