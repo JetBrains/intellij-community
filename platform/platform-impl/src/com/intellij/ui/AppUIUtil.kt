@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.ui
 
@@ -44,6 +44,7 @@ import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.io.URLUtil
 import com.intellij.util.system.OS
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
 import org.jetbrains.annotations.ApiStatus
@@ -173,7 +174,12 @@ internal fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, req
   else {
     if (upscale) appInfo.applicationSvgIconUrl else appInfo.smallApplicationSvgIconUrl
   }
-  return JBImageIcon(loadAppIconImage(svgUrl, scaleContext, size) ?: error("Can't load '${svgUrl}'"))
+  val iconImage = loadAppIconImage(svgUrl, scaleContext, size)
+  if (iconImage == null) {
+    LOG.error("Can't load '${svgUrl}'")
+    return EmptyIcon.create(size)
+  }
+  return JBImageIcon(iconImage)
 }
 
 fun findAppIcon(): String? {
