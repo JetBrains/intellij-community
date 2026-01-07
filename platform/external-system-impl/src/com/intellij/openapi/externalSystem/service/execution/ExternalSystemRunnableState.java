@@ -324,88 +324,10 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
     var dataContext = BuildConsoleUtils.getDataContext(task.getId(), progressListener, consoleView);
     try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false)) {
-      ExternalSystemTaskNotificationListener taskListener = new ExternalSystemTaskNotificationListener() {
-        @Override
-        public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
-          var eventMessage = BuildBundle.message("build.status.running");
-          var viewSettingsProvider = ObjectUtils.doIfCast(consoleView, BuildViewSettingsProvider.class, BuildViewSettingsProviderAdapter::new);
-          progressListener.onEvent(id,
-            StartBuildEvent.builder(eventMessage, buildDescriptor)
-              .withBuildViewSettings(viewSettingsProvider)
-              .build()
-          );
-        }
-
-        @Override
-        public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType outputType) {
-          if (consoleView != null) {
-            consoleManager.onOutput(consoleView, processHandler, text, outputType);
-          }
-          else {
-            processHandler.notifyTextAvailable(text, outputType);
-          }
-          eventDispatcher.setStdOut(outputType.isStdout());
-          eventDispatcher.append(text);
-        }
-
-        @Override
-        public void onFailure(@NotNull String projectPath, @NotNull ExternalSystemTaskId id, @NotNull Exception exception) {
-          var eventMessage = BuildBundle.message("build.status.failed");
-          var title = processHandler.getExecutionName() + " " + BuildBundle.message("build.status.failed");
-          var externalSystemId = id.getProjectSystemId();
-          var externalProjectPath = mySettings.getExternalProjectPath();
-          var eventResult = createFailureResult(title, exception, externalSystemId, myProject, externalProjectPath, dataContext);
-          eventDispatcher.onEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
-          processHandler.notifyProcessTerminated(1);
-        }
-
-        @Override
-        public void onCancel(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
-          var eventMessage = BuildBundle.message("build.status.cancelled");
-          var eventResult = new FailureResultImpl();
-          eventDispatcher.onEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
-          processHandler.notifyProcessTerminated(1);
-        }
-
-        @Override
-        public void onSuccess(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
-          var eventMessage = BuildBundle.message("build.event.message.successful");
-          var eventResult = new SuccessResultImpl();
-          eventDispatcher.onEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
-        }
-
-        @Override
-        public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
-          if (consoleView != null) {
-            consoleManager.onStatusChange(consoleView, event);
-          }
-          if (event instanceof ExternalSystemBuildEvent) {
-            eventDispatcher.onEvent(event.getId(), ((ExternalSystemBuildEvent)event).getBuildEvent());
-          }
-          else if (event instanceof ExternalSystemTaskExecutionEvent) {
-            BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
-            eventDispatcher.onEvent(event.getId(), buildEvent);
-          }
-        }
-
-        @Override
-        public void onEnd(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
-          final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
-          final String farewell = ExternalSystemBundle.message("run.text.ended.task", endDateTime, settingsDescription);
-          processHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
-          ExternalSystemRunConfiguration.foldGreetingOrFarewell(consoleView, farewell, false);
-          processHandler.notifyProcessTerminated(0);
-        }
-
-        @Override
-        public void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
-          RunConfigurationTaskState taskState = myConfiguration.getUserData(RunConfigurationTaskState.getKEY());
-          if (taskState != null && consoleView != null) {
-            taskState.processExecutionResult(processHandler, consoleView);
-          }
-        }
-      };
-      task.execute(indicator, taskListener);
+      task.execute(indicator, new ExternalSystemTaskEventMulticaster(
+        processHandler, eventDispatcher, buildDescriptor, dataContext,
+        consoleManager, consoleView, settingsDescription
+      ));
       Throwable taskError = task.getError();
       if (taskError != null && !(taskError instanceof Exception)) {
         var eventMessage = BuildBundle.message("build.status.failed");
@@ -508,6 +430,114 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     @Override
     protected @NotNull ExecutionEnvironmentProxy getEnvironmentProxy(@NotNull AnActionEvent event) {
       return new BackendExecutionEnvironmentProxy(myEnv);
+    }
+  }
+
+  private class ExternalSystemTaskEventMulticaster implements ExternalSystemTaskNotificationListener {
+
+    private final @NotNull ExternalSystemProcessHandler myProcessHandler;
+    private final @NotNull BuildEventDispatcher myEventDispatcher;
+    private final @NotNull BuildDescriptor myBuildDescriptor;
+    private final @NotNull DataContext myDataContext;
+    private final @NotNull ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler> myConsoleManager;
+    private final @Nullable ExecutionConsole myConsoleView;
+    private final @NotNull String mySettingsDescription;
+
+    private ExternalSystemTaskEventMulticaster(
+      @NotNull ExternalSystemProcessHandler processHandler,
+      @NotNull BuildEventDispatcher eventDispatcher,
+      @NotNull BuildDescriptor buildDescriptor,
+      @NotNull DataContext dataContext,
+      @NotNull ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler> consoleManager,
+      @Nullable ExecutionConsole consoleView,
+      @NotNull String settingsDescription
+    ) {
+      myProcessHandler = processHandler;
+      myEventDispatcher = eventDispatcher;
+      myBuildDescriptor = buildDescriptor;
+      myDataContext = dataContext;
+      myConsoleManager = consoleManager;
+      myConsoleView = consoleView;
+      mySettingsDescription = settingsDescription;
+    }
+
+    @Override
+    public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
+      var eventMessage = BuildBundle.message("build.status.running");
+      var viewSettingsProvider = ObjectUtils.doIfCast(myConsoleView, BuildViewSettingsProvider.class, BuildViewSettingsProviderAdapter::new);
+      myEventDispatcher.onEvent(id,
+        StartBuildEvent.builder(eventMessage, myBuildDescriptor)
+          .withBuildViewSettings(viewSettingsProvider)
+          .build()
+      );
+    }
+
+    @Override
+    public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType outputType) {
+      if (myConsoleView != null) {
+        myConsoleManager.onOutput(myConsoleView, myProcessHandler, text, outputType);
+      }
+      else {
+        myProcessHandler.notifyTextAvailable(text, outputType);
+      }
+      myEventDispatcher.setStdOut(outputType.isStdout());
+      myEventDispatcher.append(text);
+    }
+
+    @Override
+    public void onFailure(@NotNull String projectPath, @NotNull ExternalSystemTaskId id, @NotNull Exception exception) {
+      var eventMessage = BuildBundle.message("build.status.failed");
+      var title = myProcessHandler.getExecutionName() + " " + BuildBundle.message("build.status.failed");
+      var externalSystemId = id.getProjectSystemId();
+      var externalProjectPath = mySettings.getExternalProjectPath();
+      var eventResult = createFailureResult(title, exception, externalSystemId, myProject, externalProjectPath, myDataContext);
+      myEventDispatcher.onEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
+      myProcessHandler.notifyProcessTerminated(1);
+    }
+
+    @Override
+    public void onCancel(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
+      var eventMessage = BuildBundle.message("build.status.cancelled");
+      var eventResult = new FailureResultImpl();
+      myEventDispatcher.onEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
+      myProcessHandler.notifyProcessTerminated(1);
+    }
+
+    @Override
+    public void onSuccess(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
+      var eventMessage = BuildBundle.message("build.event.message.successful");
+      var eventResult = new SuccessResultImpl();
+      myEventDispatcher.onEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
+    }
+
+    @Override
+    public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+      if (myConsoleView != null) {
+        myConsoleManager.onStatusChange(myConsoleView, event);
+      }
+      if (event instanceof ExternalSystemBuildEvent buildEvent) {
+        myEventDispatcher.onEvent(event.getId(), buildEvent.getBuildEvent());
+      }
+      else if (event instanceof ExternalSystemTaskExecutionEvent taskExecutionEvent) {
+        myEventDispatcher.onEvent(event.getId(), convert(taskExecutionEvent));
+      }
+    }
+
+    @Override
+    public void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
+      RunConfigurationTaskState taskState = myConfiguration.getUserData(RunConfigurationTaskState.getKEY());
+      if (taskState != null && myConsoleView != null) {
+        taskState.processExecutionResult(myProcessHandler, myConsoleView);
+      }
+    }
+
+    @Override
+    public void onEnd(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
+      final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+      final String farewell = ExternalSystemBundle.message("run.text.ended.task", endDateTime, mySettingsDescription);
+      myProcessHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
+      ExternalSystemRunConfiguration.foldGreetingOrFarewell(myConsoleView, farewell, false);
+      myProcessHandler.notifyProcessTerminated(0);
     }
   }
 }
