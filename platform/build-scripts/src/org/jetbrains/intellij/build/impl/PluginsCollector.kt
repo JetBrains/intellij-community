@@ -12,6 +12,7 @@ import org.jdom.Element
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuiltinModulesFileData
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
+import org.jetbrains.intellij.build.PluginDistribution
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.findFileInModuleSources
@@ -30,6 +31,7 @@ fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData,
       if (layouts.size == 2 && layouts.get(0).bundlingRestrictions != layouts.get(1).bundlingRestrictions) {
         layouts.retainAll { it.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
       }
+      layouts.retainAll { it.bundlingRestrictions.includeInDistribution != PluginDistribution.CROSS_PLATFORM_DIST_ONLY }
       pluginsToPublish.addAll(layouts)
       if (layouts.size > 1) {
         Span.current().addEvent("Module '${descriptor.mainModule}' have ${layouts.size} layouts: $layouts")
