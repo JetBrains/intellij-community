@@ -69,5 +69,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.indices.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.coverage.tests" scope="RUNTIME" />
   </component>
 </module>

@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.trackers.AbstractP
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.scope.AbstractCombinedSourceAndClassRootsScopeContainsTest
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.scope.AbstractCombinedSourceAndClassRootsScopeStructureTest
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.coverage.AbstractKotlinCoverageOutputFilesTest
 import org.jetbrains.kotlin.idea.fir.AbstractK2JsBasicCompletionLegacyStdlibTest
 import org.jetbrains.kotlin.idea.fir.actions.AbstractK2AddImportActionTest
 import org.jetbrains.kotlin.idea.fir.actions.AbstractK2BytecodeToolWindowTest
@@ -426,6 +427,12 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
         }
         testClass<AbstractFirMultiModuleRenameTest> {
             model("refactoring/renameMultiModule", pattern = TEST, flatten = true)
+        }
+    }
+
+    testGroup("coverage/tests") {
+        testClass<AbstractKotlinCoverageOutputFilesTest> {
+            model("outputFiles")
         }
     }
 

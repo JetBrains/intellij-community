@@ -26,7 +26,6 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-tooling/tests",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1",
     "//plugins/kotlin/compiler-reference-index/tests",
-    "//plugins/kotlin/coverage/tests",
     "//plugins/kotlin/j2k/k1.new/tests",
     "//plugins/kotlin/j2k/shared/tests",
     "//plugins/kotlin/jps/graphImplementationTests",
