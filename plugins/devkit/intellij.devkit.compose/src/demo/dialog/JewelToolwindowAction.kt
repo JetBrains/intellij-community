@@ -41,7 +41,7 @@ internal class JewelToolwindowAction : DumbAwareAction() {
         id = TOOLWINDOW_ID,
         anchor = ToolWindowAnchor.BOTTOM,
         component = null,
-        icon = DevkitComposeIcons.ComposeToolWindow,
+        icon = DevkitComposeIcons.JewelToolWindow,
         contentFactory = com.intellij.devkit.compose.demo.JewelDemoToolWindowFactory(),
         stripeTitle = DevkitComposeBundle.messagePointer("jewel.toolwindow.title"),
       )
