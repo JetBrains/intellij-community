@@ -2208,6 +2208,26 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
     """.trimIndent())
   }
 
+  fun `test malformed before and after suite should be of type void highlighting`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      @org.junit.platform.suite.api.Suite
+      @org.junit.platform.suite.api.SelectClasses(MyTest::class)
+      class MySuite {
+        companion object {
+          @JvmStatic
+          @org.junit.platform.suite.api.BeforeSuite
+          fun <error descr="Method 'before' annotated with '@BeforeSuite' should be of type 'void'">before</error>(): Int = 0
+          
+          @JvmStatic
+          @org.junit.platform.suite.api.AfterSuite
+          fun <error descr="Method 'after' annotated with '@AfterSuite' should be of type 'void'">after</error>(): Int = 0
+        }
+      }
+      
+      class MyTest {}
+    """.trimIndent())
+  }
+
   // Unconstructable test case
   fun testPlain() {
     myFixture.testHighlighting(

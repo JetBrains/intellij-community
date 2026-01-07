@@ -2203,6 +2203,22 @@ class JavaJUnitMalformedDeclarationInspectionTest {
     """.trimIndent())
     }
 
+    fun `test malformed before and after suite should be of type void highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      @org.junit.platform.suite.api.Suite
+      @org.junit.platform.suite.api.SelectClasses({MyTest.class})
+      class MySuite {
+        @org.junit.platform.suite.api.BeforeSuite
+        public static int <error descr="Method 'before' annotated with '@BeforeSuite' should be of type 'void'">before</error>() { return 0; }
+        
+        @org.junit.platform.suite.api.AfterSuite
+        public static int <error descr="Method 'after' annotated with '@AfterSuite' should be of type 'void'">after</error>() { return 0; }
+      }
+      
+      class MyTest {}
+    """.trimIndent())
+    }
+
     // Unconstructable test case
     fun testPlain() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
