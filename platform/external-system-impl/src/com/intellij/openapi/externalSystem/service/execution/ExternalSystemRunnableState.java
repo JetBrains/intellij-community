@@ -58,7 +58,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -66,7 +65,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.task.RunConfigurationTaskState;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
@@ -271,10 +269,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     var runConfigurationExtensionManager = ExternalSystemRunConfigurationExtensionManager.getInstance();
     runConfigurationExtensionManager.attachExtensionsToProcess(myConfiguration, processHandler, runnerSettings);
     BackgroundTaskUtil.executeOnPooledThread(processHandler, () -> {
-      var progressIndicator = myEnv.getUserData(PROGRESS_INDICATOR_KEY);
-      if (progressIndicator == null) {
-        progressIndicator = new EmptyProgressIndicator();
-      }
+      var progressIndicator = ObjectUtils.notNull(myEnv.getUserData(PROGRESS_INDICATOR_KEY), () -> new EmptyProgressIndicator());
       executeTask(task, executionName, progressIndicator, processHandler, progressListener, consoleManager, consoleView, buildDescriptor,
                   customActions, restartActions, contextActions);
     });
@@ -319,15 +314,6 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
                            AnAction[] customActions,
                            AnAction[] restartActions,
                            AnAction[] contextActions) {
-    if (indicator instanceof ProgressIndicatorEx indicatorEx) {
-      indicatorEx.addStateDelegate(new AbstractProgressIndicatorExBase() {
-        @Override
-        public void cancel() {
-          super.cancel();
-          task.cancel();
-        }
-      });
-    }
     final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
     final String settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings);
     final String greeting = ExternalSystemBundle.message("run.text.starting.task", startDateTime, settingsDescription) + "\n";
