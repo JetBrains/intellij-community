@@ -133,6 +133,7 @@ public final class AttachDirectoryUtils {
     ModuleRootModificationUtil.updateModel(module, model -> {
       if (add) {
         for (VirtualFile file : files) {
+          AttachDirectoryStatisticsKt.logFilesOnDiskCount(project, file);
           model.addContentEntry(file);
         }
       }
