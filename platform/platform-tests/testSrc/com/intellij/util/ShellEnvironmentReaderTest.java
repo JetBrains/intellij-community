@@ -1,6 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.util.system.OS;
@@ -16,7 +20,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -66,6 +71,27 @@ public class ShellEnvironmentReaderTest {
     var command = ShellEnvironmentReader.shellCommand("/bin/sh", file, List.of("arg_value"));
     assertThatThrownBy(() -> ShellEnvironmentReader.readEnvironment(command, timeout))
       .isInstanceOf(IOException.class);
+  }
+
+  @Test void pythonVirtualEnv(@TempDir Path tempDir) throws IOException, ExecutionException {
+    assumeFalse(OS.CURRENT == OS.Windows);
+
+    var python = PathEnvironmentVariableUtil.findInPath("python3").toPath();
+    assumeTrue(python != null);
+
+    var vEnv = tempDir.resolve(".venv");
+    var output = ExecUtil.execAndGetOutput(new GeneralCommandLine(python.toString(), "-m", "venv", vEnv.toString()).withRedirectErrorStream(true));
+    assertThat(output.getExitCode())
+      .withFailMessage(() -> "ec=" + output.getExitCode() + "; stdout=" + output.getStdout())
+      .isEqualTo(0);
+
+    var activate = vEnv.resolve("bin/activate");
+    assertThat(activate).isRegularFile();
+
+    var command = ShellEnvironmentReader.shellCommand("/bin/bash", activate, null);
+    var result = ShellEnvironmentReader.readEnvironment(command, TIMEOUT_MILLIS);
+    var path = result.first.get("PATH");
+    assertThat(path).contains(vEnv.resolve("bin").toString());
   }
 
   @Test void winShellEnv() throws Exception {
