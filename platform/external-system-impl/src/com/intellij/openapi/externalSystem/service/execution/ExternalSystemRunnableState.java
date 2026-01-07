@@ -56,6 +56,7 @@ import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecut
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -257,11 +258,15 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       var greeting = ExternalSystemBundle.message("run.text.starting.task", startDateTime, settingsDescription) + "\n";
       processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
       try (var eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false)) {
-        task.execute(progressIndicator, new ExternalSystemTaskEventMulticaster(
-          processHandler, eventDispatcher, buildDescriptor, dataContext,
-          consoleManager, consoleView, settingsDescription
-        ));
-        handleTaskResult(task, eventDispatcher);
+        ExternalSystemTelemetryUtil.runWithSpan(mySettings.getExternalSystemId(), "ExternalSystemTaskExecution", _ ->
+          task.execute(progressIndicator, new ExternalSystemTaskEventMulticaster(
+            processHandler, eventDispatcher, buildDescriptor, dataContext,
+            consoleManager, consoleView, settingsDescription
+          ))
+        );
+        ExternalSystemTelemetryUtil.runWithSpan(mySettings.getExternalSystemId(), "ExternalSystemTaskResultProcessing", _ ->
+          handleTaskResult(task, eventDispatcher)
+        );
       }
     });
 
