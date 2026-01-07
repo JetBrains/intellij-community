@@ -28,10 +28,7 @@ import com.intellij.util.PathUtil
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonIdeLanguageCustomization
 import com.jetbrains.python.Result
-import com.jetbrains.python.inspections.PyAsyncFileInspectionRunner
-import com.jetbrains.python.inspections.PyInspection
-import com.jetbrains.python.inspections.PyInspectionExtension
-import com.jetbrains.python.inspections.PyInspectionVisitor
+import com.jetbrains.python.inspections.*
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.impl.PyBuiltinCache
@@ -42,6 +39,7 @@ import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.ui.PyUiUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -55,11 +53,17 @@ class PyInterpreterInspection : PyInspection(), DumbAware {
   private val asyncFileInspectionRunner = PyAsyncFileInspectionRunner(
     PyPsiBundle.message("INSP.interpreter.checking.existing.environments")
   ) { module ->
-    buildList {
+    val moduleCreateInfo = module.getModuleInfo()
+    val fixes = buildList {
       val sdkName = ProjectRootManager.getInstance(module.project).projectSdkName
-      getSuitableSdkFix(sdkName, module)?.let { add(it) }
+      getSuitableSdkFix(sdkName, module, moduleCreateInfo)?.let { add(it) }
       add(ConfigureInterpreterFix())
     }
+    val shouldCache = when (moduleCreateInfo) {
+      is ModuleCreateInfo.SameAs -> false
+      is ModuleCreateInfo.CreateSdkInfoWrapper, null -> true
+    }
+    InspectionRunnerResult(fixes, shouldCache)
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
@@ -102,7 +106,9 @@ private class PyInterpreterInspectionVisitor(
   }
 }
 
-private suspend fun getSuitableSdkFix(name: String?, module: Module): LocalQuickFix? = withContext(Dispatchers.Default) {
+private suspend fun getSuitableSdkFix(
+  name: String?, module: Module, moduleCreateInfo: ModuleCreateInfo?,
+): LocalQuickFix? = withContext(Dispatchers.Default) {
   // this method is based on com.jetbrains.python.sdk.PySdkExtKt.suggestAssociatedSdkName
   // please keep it in sync with the mentioned method and com.jetbrains.python.PythonSdkConfigurator.configureSdk
 
@@ -116,7 +122,7 @@ private suspend fun getSuitableSdkFix(name: String?, module: Module): LocalQuick
 
   val context = UserDataHolderBase()
 
-  when (val r = module.getQuickFixBySdkSuggestion()) {
+  when (val r = module.getQuickFixBySdkSuggestion(moduleCreateInfo)) {
     is FindQuickFixResult.SdkAppliedAutomatically -> return@withContext null
     FindQuickFixResult.NoSuggestion -> Unit
     is FindQuickFixResult.ShowUserFix -> return@withContext r.fix
@@ -260,20 +266,22 @@ private class UseDetectedInterpreterFix(
 @Service(Service.Level.PROJECT)
 private class MyService(val scope: CoroutineScope)
 
-private suspend fun Module.getQuickFixBySdkSuggestion(): FindQuickFixResult = when (val i = getModuleInfo()) {
+private suspend fun Module.getQuickFixBySdkSuggestion(i: ModuleCreateInfo?): FindQuickFixResult = when (i) {
   is ModuleCreateInfo.CreateSdkInfoWrapper -> {
     when (val createSdkInfo = i.createSdkInfo) {
       is CreateSdkInfo.ExistingEnv -> {
         logger.trace { "$this: Files already exist, just create sn SDK" }
-        when (val creationResult = createSdkInfo.sdkCreator(false)) {
+        when (val creationResult = createSdkInfo.createSdkWithoutConfirmation()) {
           is Result.Failure -> {
             logger.warn("Can't create SDK for $this : ${creationResult.error}")
             FindQuickFixResult.NoSuggestion
           }
           is Result.Success -> {
-            val sdk = creationResult.result!!
+            val sdk = creationResult.result
             logger.trace { "$this: sdk $sdk created" }
             pythonSdk = sdk // SDK can't be null
+            project.pySdkService.persistSdk(sdk)
+            sdk.setAssociationToModule(this)
             FindQuickFixResult.SdkAppliedAutomatically(sdk)
           }
         }
@@ -293,7 +301,7 @@ private suspend fun Module.getQuickFixBySdkSuggestion(): FindQuickFixResult = wh
       FindQuickFixResult.SdkAppliedAutomatically(parentModuleSdk)
     } ?:
     // Try to find SDK for parent otherwise
-    when (val parentResult = i.parentModule.getQuickFixBySdkSuggestion()) {
+    when (val parentResult = i.parentModule.getQuickFixBySdkSuggestion(i.parentModule.getModuleInfo())) {
       is FindQuickFixResult.SdkAppliedAutomatically -> {
         val parentModuleSdk = parentResult.sdk
         logger.trace { "$this: Parent has SDK $parentModuleSdk" }
@@ -301,7 +309,7 @@ private suspend fun Module.getQuickFixBySdkSuggestion(): FindQuickFixResult = wh
         FindQuickFixResult.SdkAppliedAutomatically(parentModuleSdk)
       }
       FindQuickFixResult.NoSuggestion, is FindQuickFixResult.ShowUserFix -> {
-        logger.trace { "$this: Parent has can't be created ($parentResult), so is our" }
+        logger.trace { "$this: Parent SDK can't be created ($parentResult), so is ours" }
         parentResult
       }
     }

@@ -18,7 +18,6 @@ import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.sdk.destructured
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
@@ -63,9 +62,7 @@ internal class HatchExistingEnvironmentSelector<P : PathHolder>(
       else -> {
         val (project, module) = moduleOrProject.destructured
         val workingDirectory = resolveHatchWorkingDirectory(project, module).getOr { return it }
-        environment.createSdk(workingDirectory).onSuccess { sdk ->
-          module?.let { module -> sdk.setAssociationToModule(module) }
-        }
+        environment.createSdk(workingDirectory)
       }
     }.onSuccess {
       when (val pathHolder = model.hatchViewModel.hatchExecutable.get()?.pathHolder) {

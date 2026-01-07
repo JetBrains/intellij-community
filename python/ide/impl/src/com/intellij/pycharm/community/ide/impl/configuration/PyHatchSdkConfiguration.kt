@@ -14,8 +14,10 @@ import com.intellij.python.hatch.getHatchService
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createSdk
+import com.jetbrains.python.onSuccess
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.configuration.*
+import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 
 internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
@@ -75,7 +77,8 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
         .getOr { return@runWithModalBlockingOrInBackground it }
       when (defaultEnv) {
         is PythonVirtualEnvironment.Existing -> defaultEnv
-        is PythonVirtualEnvironment.NotExisting, null -> return@runWithModalBlockingOrInBackground PyResult.localizedError(PyCharmCommunityCustomizationBundle.message("sdk.could.not.find.valid.hatch.environment"))
+        is PythonVirtualEnvironment.NotExisting, null -> return@runWithModalBlockingOrInBackground PyResult.localizedError(
+          PyCharmCommunityCustomizationBundle.message("sdk.could.not.find.valid.hatch.environment"))
       }
     }
     else {
@@ -83,7 +86,9 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
     }
 
     val hatchVenv = HatchVirtualEnvironment(HatchEnvironment.DEFAULT, environment)
-    val sdk = hatchVenv.createSdk(hatchService.getWorkingDirectoryPath())
+    val sdk = hatchVenv.createSdk(hatchService.getWorkingDirectoryPath()).onSuccess { sdk ->
+      sdk.setAssociationToModule(module)
+    }
     sdk
   }
 
