@@ -44,9 +44,10 @@ abstract class AbstractKotlinTestFinder : TestFinder {
     protected abstract fun isResolvable(classOrObject: KtClassOrObject): Boolean
 
     override fun findSourceElement(from: PsiElement): PsiElement? {
-        from.parentsWithSelf.filterIsInstance<KtClassOrObject>().firstOrNull { !it.isLocal }?.let {
-            return if (!isResolvable(it)) null else it
-        }
+        from.parentsWithSelf
+            .filterIsInstance<KtClassOrObject>()
+            .firstOrNull { !it.isLocal && isResolvable(it) }
+            ?.let { return it }
 
         from.parentsWithSelf.firstNotNullOfOrNull {
             if (it is KtNamedFunction && it.isTopLevel || it is KtProperty && it.isTopLevel) {
