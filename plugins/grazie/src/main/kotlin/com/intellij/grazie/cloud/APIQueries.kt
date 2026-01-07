@@ -139,7 +139,13 @@ object APIQueries {
       result
     } catch (e: ContinuousSSEException.PrematureEnd) {
       thisLogger().warn(e)
-      throw TranslationUnavailableException()
+      throw PrematureEndException()
+    } catch (e: ContinuousSSEException.Error) {
+      thisLogger().warn(e)
+      throw ErrorException()
+    } catch (e: ContinuousSSEException) {
+      thisLogger().warn(e)
+      throw TaskServerException()
     } catch (e: HTTPStatusException.AccessProhibited) {
       thisLogger().info("Authorisation error in Grazie functionality", e)
       null
@@ -189,4 +195,6 @@ interface Rephraser {
   fun rephrase(text: String, range: IJTextRange, language: Language, project: Project): List<String>?
 }
 
-class TranslationUnavailableException : RuntimeException()
+open class TaskServerException: RuntimeException()
+class PrematureEndException : TaskServerException()
+class ErrorException : TaskServerException()

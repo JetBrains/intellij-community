@@ -9,6 +9,7 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.grazie.GrazieBundle;
 import com.intellij.grazie.cloud.APIQueries;
 import com.intellij.grazie.cloud.GrazieCloudConnector;
+import com.intellij.grazie.cloud.TaskServerException;
 import com.intellij.grazie.detection.LangDetector;
 import com.intellij.grazie.ide.fus.GrazieFUSCounter;
 import com.intellij.grazie.ide.ui.PaddedListCellRenderer;
@@ -102,8 +103,8 @@ public class RephraseAction extends IntentionAndQuickFixAction {
         int rangeLength = textRange.getLength();
         GrazieFUSCounter.INSTANCE.reportRephraseRequested(iso, content.length(), rangeLength, wordRangeCount);
         TextRange wordBoundRange = Text.alignToWordBounds(textRange, content.toString());
-        List<String> rephrasedSentences = APIQueries.getRephraser().rephrase(content.toString(), wordBoundRange, iso, project);
-        if (rephrasedSentences == null) {
+        List<String> rephrasedSentences = rephrase(content, wordBoundRange, iso, project);
+        if (rephrasedSentences.isEmpty()) {
           return new SuggestionsWithLanguage(iso, Collections.emptyList(), content.length(), rangeLength, wordRangeCount);
         }
 
@@ -195,6 +196,15 @@ public class RephraseAction extends IntentionAndQuickFixAction {
       rh.dispose();
     }
     highlighter.set(null);
+  }
+
+  private static @NotNull List<String> rephrase(TextContent content, TextRange wordBoundRange, Language iso, Project project) {
+    try {
+      List<String> rephrased = APIQueries.getRephraser().rephrase(content.toString(), wordBoundRange, iso, project);
+      return rephrased == null ? Collections.emptyList() : rephrased;
+    } catch (TaskServerException e) {
+      return Collections.emptyList();
+    }
   }
 
   private record ListItem(TextRange fileRange, String replacement) {
