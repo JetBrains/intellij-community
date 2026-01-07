@@ -22,7 +22,10 @@ import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
+import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.executeStep
@@ -35,6 +38,7 @@ import org.jetbrains.intellij.build.impl.NoDuplicateZipArchiveOutputStream
 import org.jetbrains.intellij.build.impl.PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginRepositorySpec
+import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.buildHelpPlugin
 import org.jetbrains.intellij.build.impl.buildKeymapPlugin
 import org.jetbrains.intellij.build.impl.dir
@@ -55,6 +59,7 @@ import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.collections.flatten
 
 internal suspend fun buildNonBundledPlugins(
   pluginsToPublish: Set<PluginLayout>,
@@ -105,69 +110,86 @@ private suspend fun buildNonBundledPlugins(
   val pluginSpecs = ConcurrentLinkedQueue<PluginRepositorySpec>()
   val isPluginArchiveEnabled = !context.isStepSkipped(BuildOptions.ARCHIVE_PLUGINS)
   val prepareCustomPluginRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins && isPluginArchiveEnabled
-  val plugins = pluginsToPublish.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)
   val isPluginValidationEnabled = !isUpdateFromSources && !context.isStepSkipped(BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED)
   val json: Lazy<JSON> = lazy { JSON.std.without(JSON.Feature.USE_FIELDS) }
-  val mappings = buildPlugins(
-    moduleOutputPatcher = moduleOutputPatcher,
-    plugins = plugins,
-    os = null,
-    targetDir = stageDir,
-    state = state,
-    buildPlatformJob = buildPlatformLibJob,
-    searchableOptionSet = searchableOptionSet,
-    descriptorCacheContainer = descriptorCacheContainer,
-    context = context,
-  ) { plugin, pluginDirOrFile ->
-    val pluginVersion = if (plugin.mainModule == BUILT_IN_HELP_MODULE_NAME) {
-      context.buildNumber
-    }
-    else {
-      val outputProvider = context.outputProvider
-      plugin.versionEvaluator.evaluate(
-        pluginXmlSupplier = { getUnprocessedPluginXmlContent(outputProvider.findRequiredModule(plugin.mainModule), outputProvider).decodeToString() },
-        ideBuildVersion = context.pluginBuildNumber,
-        context = context,
-      ).pluginVersion
+  val pluginDirs = getOsSpecificNonBundledPluginsDirs(context)
+  val mappings = pluginDirs.mapNotNull { (os, arch, targetDir) ->
+    val filteredPlugins = pluginsToPublish.filter {
+      satisfiesOsArchRestrictions(plugin = it, osFamily = os, arch = arch)
+    }.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)
+
+    Span.current().addEvent("build non-bundled plugins")
+      .setAttribute("os", os?.osId ?: "all")
+      .setAttribute("arch", arch?.name ?: "all")
+      .setAttribute("count", filteredPlugins.size.toLong())
+      .setAttribute("outDir", targetDir.toString())
+
+    if (filteredPlugins.isEmpty()) {
+      return@mapNotNull null
     }
 
-    val targetDirectory = if (context.pluginAutoPublishList.test(plugin)) {
-      context.nonBundledPluginsToBePublished
-    }
-    else {
-      context.nonBundledPlugins
-    }
-    val destFile = targetDirectory.resolve("${plugin.directoryName}-$pluginVersion.zip")
-    val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
-    pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
+    buildPlugins(
+      moduleOutputPatcher = moduleOutputPatcher,
+      plugins = filteredPlugins,
+      os = os,
+      targetDir = targetDir,
+      state = state,
+      buildPlatformJob = buildPlatformLibJob,
+      searchableOptionSet = searchableOptionSet,
+      descriptorCacheContainer = descriptorCacheContainer,
+      context = context,
+    ) { plugin, pluginDirOrFile ->
+      val pluginVersion = if (plugin.mainModule == BUILT_IN_HELP_MODULE_NAME) {
+        context.buildNumber
+      }
+      else {
+        val outputProvider = context.outputProvider
+        plugin.versionEvaluator.evaluate(
+          pluginXmlSupplier = { getUnprocessedPluginXmlContent(outputProvider.findRequiredModule(plugin.mainModule), outputProvider).decodeToString() },
+          ideBuildVersion = context.pluginBuildNumber,
+          context = context,
+        ).pluginVersion
+      }
 
-    val entries = handleCustomPlatformSpecificAssets(layout = plugin, targetPlatform = null, context = context, pluginDir = pluginDirOrFile, isDevMode = true)
+      val targetDirectory = if (context.pluginAutoPublishList.test(plugin)) {
+        context.nonBundledPluginsToBePublished
+      }
+      else {
+        context.nonBundledPlugins
+      }
+      val destFile = targetDirectory.resolve("${plugin.directoryName}-$pluginVersion.zip")
+      val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
+      pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
 
-    if (isPluginArchiveEnabled) {
-      archivePlugin(
-        optimizedZip = !plugin.enableSymlinksAndExecutableResources,
-        source = pluginDirOrFile,
-        target = destFile,
-        compress = compressPluginArchive,
-        withBlockMap = compressPluginArchive,
-        context = context,
-        json = json,
-      )
+      val entries = handleCustomPlatformSpecificAssets(layout = plugin, targetPlatform = null, context = context, pluginDir = pluginDirOrFile, isDevMode = true)
 
-      if (isPluginValidationEnabled) {
-        spanBuilder("plugin validation").use { span ->
-          if (Files.notExists(destFile)) {
-            span.addEvent("doesn't exist, skipped", Attributes.of(AttributeKey.stringKey("path"), "$destFile"))
-          }
-          else {
-            validatePlugin(file = destFile, context = context, span = span)
+      if (isPluginArchiveEnabled) {
+        archivePlugin(
+          optimizedZip = !plugin.enableSymlinksAndExecutableResources,
+          source = pluginDirOrFile,
+          target = destFile,
+          compress = compressPluginArchive,
+          withBlockMap = compressPluginArchive,
+          context = context,
+          json = json,
+        )
+
+        if (isPluginValidationEnabled) {
+          spanBuilder("plugin validation").use { span ->
+            if (Files.notExists(destFile)) {
+              span.addEvent("doesn't exist, skipped", Attributes.of(AttributeKey.stringKey("path"), "$destFile"))
+            }
+            else {
+              validatePlugin(file = destFile, context = context, span = span)
+            }
           }
         }
       }
-    }
 
-    entries
-  }
+      entries
+    }
+  }.flatten()
+
 
   val helpPlugin = buildHelpPlugin(context.pluginBuildNumber, context)
   if (helpPlugin != null) {
@@ -210,6 +232,44 @@ private suspend fun buildNonBundledPlugins(
   }
 
   return mappings
+}
+
+private fun getOsSpecificNonBundledPluginsDirs(context: BuildContext): List<Triple<OsFamily?, JvmArchitecture?, Path>> {
+  val stageDir = nonBundledPluginsStageDir(context)
+  val supportedWithNullArch = buildList {
+    addAll(SUPPORTED_DISTRIBUTIONS.map { it.os to it.arch })
+
+    // Add each unique OS with null architecture
+    SUPPORTED_DISTRIBUTIONS.map { it.os }.toSet().forEach { os ->
+      add(os to null)
+    }
+
+    // Add platform-independent (all OS and architectures)
+    add(null to null)
+  }
+  return supportedWithNullArch.map {
+    val os = it.first
+    val arch = it.second
+    if (os == null && arch == null) {
+      Triple(null, null, stageDir)
+    } else {
+      val archName = arch?.name ?: "all"
+      val path = stageDir.resolve("dist.${os!!.distSuffix}.$archName")
+      Triple(os, arch, path)
+    }
+  }.sortedBy { it.first }
+}
+
+private fun satisfiesOsArchRestrictions(plugin: PluginLayout, osFamily: OsFamily?, arch: JvmArchitecture?): Boolean {
+  val supportedOs = plugin.bundlingRestrictions.supportedOs
+  val supportedArch = plugin.bundlingRestrictions.supportedArch
+  return when {
+    osFamily == null && arch == null && plugin.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE -> true
+    osFamily == null && supportedOs != OsFamily.ALL -> false
+    osFamily != null && (supportedOs == OsFamily.ALL || !supportedOs.contains(osFamily)) -> false
+    arch == null && supportedArch != JvmArchitecture.ALL -> false
+    else -> arch == null || supportedArch.contains(arch) && supportedArch.size == 1
+  }
 }
 
 private suspend fun archivePlugin(
