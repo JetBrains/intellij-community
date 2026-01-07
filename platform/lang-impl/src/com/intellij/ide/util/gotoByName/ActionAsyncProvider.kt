@@ -337,16 +337,23 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
 
       if (provider is OptionsSearchTopHitProvider && !pattern.startsWith(commandAccelerator)) {
         val prefix = commandAccelerator + provider.getId() + " "
-        provider.consumeTopHits(pattern = prefix + pattern, collector = collector, project = project)
+        runCatching {
+          provider.consumeTopHits(pattern = prefix + pattern, collector = collector, project = project)
+        }.getOrLogException(LOG)
       }
       else if (project != null && provider is ProjectLevelProvidersAdapter) {
-        provider.consumeAllTopHits(
-          pattern = pattern,
-          collector = { collector.accept(it) },
-          project = project,
-        )
+        runCatching {
+          provider.consumeAllTopHits(
+            pattern = pattern,
+            collector = { collector.accept(it) },
+            project = project,
+          )
+        }.getOrLogException(LOG)
       }
-      provider.consumeTopHits(pattern, collector, project)
+
+      runCatching {
+        provider.consumeTopHits(pattern, collector, project)
+      }.getOrLogException(LOG)
     }
 
     val matchedValues = collector.result.mapConcurrent { item ->
