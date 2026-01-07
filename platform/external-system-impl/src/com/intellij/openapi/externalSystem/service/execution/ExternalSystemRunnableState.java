@@ -229,7 +229,6 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     }
 
     final String executionName = getExecutionName(externalSystemId);
-
     final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(task, executionName);
     final ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler>
       consoleManager = getConsoleManagerFor(task);
@@ -251,7 +250,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       contextActions = consoleManager.getCustomContextActions(myProject, task, myEnv);
     }
     DefaultBuildDescriptor buildDescriptor =
-      new DefaultBuildDescriptor(task.getId(), executionName, task.getExternalProjectPath(), System.currentTimeMillis());
+      new DefaultBuildDescriptor(task.getId(), processHandler.getExecutionName(), task.getExternalProjectPath(), System.currentTimeMillis());
 
     ThreeState navigateToError = myEnv.getUserData(NAVIGATE_TO_ERROR_KEY);
     if (navigateToError != null) {
@@ -270,7 +269,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     runConfigurationExtensionManager.attachExtensionsToProcess(myConfiguration, processHandler, runnerSettings);
     BackgroundTaskUtil.executeOnPooledThread(processHandler, () -> {
       var progressIndicator = ObjectUtils.notNull(myEnv.getUserData(PROGRESS_INDICATOR_KEY), () -> new EmptyProgressIndicator());
-      executeTask(task, executionName, progressIndicator, processHandler, progressListener, consoleManager, consoleView, buildDescriptor,
+      executeTask(task, progressIndicator, processHandler, progressListener, consoleManager, consoleView, buildDescriptor,
                   customActions, restartActions, contextActions);
     });
     ExecutionConsole executionConsole = progressListener instanceof ExecutionConsole ? (ExecutionConsole)progressListener : consoleView;
@@ -303,17 +302,18 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     );
   }
 
-  private void executeTask(@NotNull ExternalSystemExecuteTaskTask task,
-                           @Nls String executionName,
-                           @NotNull ProgressIndicator indicator,
-                           @NotNull ExternalSystemProcessHandler processHandler,
-                           @Nullable BuildProgressListener progressListener,
-                           @NotNull ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler> consoleManager,
-                           @Nullable ExecutionConsole consoleView,
-                           @NotNull DefaultBuildDescriptor buildDescriptor,
-                           AnAction[] customActions,
-                           AnAction[] restartActions,
-                           AnAction[] contextActions) {
+  private void executeTask(
+    @NotNull ExternalSystemExecuteTaskTask task,
+    @NotNull ProgressIndicator indicator,
+    @NotNull ExternalSystemProcessHandler processHandler,
+    @Nullable BuildProgressListener progressListener,
+    @NotNull ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler> consoleManager,
+    @Nullable ExecutionConsole consoleView,
+    @NotNull DefaultBuildDescriptor buildDescriptor,
+    AnAction[] customActions,
+    AnAction[] restartActions,
+    AnAction[] contextActions
+) {
     final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
     final String settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings);
     final String greeting = ExternalSystemBundle.message("run.text.starting.task", startDateTime, settingsDescription) + "\n";
@@ -360,7 +360,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         public void onFailure(@NotNull String projectPath, @NotNull ExternalSystemTaskId id, @NotNull Exception exception) {
           if (progressListener != null) {
             var eventMessage = BuildBundle.message("build.status.failed");
-            var title = executionName + " " + BuildBundle.message("build.status.failed");
+            var title = processHandler.getExecutionName() + " " + BuildBundle.message("build.status.failed");
             var externalSystemId = id.getProjectSystemId();
             var externalProjectPath = mySettings.getExternalProjectPath();
             var dataContext = BuildConsoleUtils.getDataContext(id, progressListener, consoleView);
