@@ -52,8 +52,9 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "org.jetbrains.vuejs",
         iconDirectory = "icons",
       )
-      "intellij.platform.split" -> IntellijIconClassGeneratorModuleConfig(
-        packageName = "com.jetbrains.rd.platform.codeWithMe.icons",
+      "intellij.remoteDev.icons" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.remoteDev.icons",
+        className = "JetBrainsClientIcons"
       )
       "intellij.properties.psi" -> IntellijIconClassGeneratorModuleConfig(
         className = "PropertiesIcons",
