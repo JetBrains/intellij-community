@@ -11,9 +11,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
-import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.data.AbstractDataGetter;
 import com.intellij.vcs.log.data.VcsLogData;
 import git4idea.GitUtil;
@@ -51,7 +52,7 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
   @Override
   public void actionPerformedAfterChecks(@NotNull CoroutineScope scope, @NotNull SingleCommitEditingData commitEditingData) {
     Project project = commitEditingData.getProject();
-    VcsShortCommitDetails commit = commitEditingData.getSelectedCommit();
+    VcsCommitMetadata commit = commitEditingData.getSelectedCommit();
     LocalChangeList targetList;
     if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
       ChangeListChooser chooser = new MyChangeListChooser(project, GitBundle.message("git.undo.action.select.target.changelist.title"));
@@ -73,7 +74,7 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
 
   private static void resetInBackground(@NotNull VcsLogData data,
                                         @NotNull GitRepository repository,
-                                        @NotNull VcsShortCommitDetails commit,
+                                        @NotNull VcsCommitMetadata commit,
                                         @Nullable LocalChangeList targetChangeList) {
     Project project = repository.getProject();
     new Task.Backgroundable(project, GitBundle.message("git.undo.action.undoing.last.commit.process"), true) {
@@ -99,7 +100,7 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
         presentation.notificationSuccess = "git.undo.action.successful.notification.message";
         presentation.notificationFailure = "git.undo.action.failed.notification.title";
 
-        Map<GitRepository, String> targetCommits = singletonMap(repository, commit.getParents().get(0).asString());
+        Map<GitRepository, String> targetCommits = singletonMap(repository, commit.getParents().getFirst().asString());
         new GitResetOperation(project, targetCommits, SOFT, indicator, presentation).execute();
 
         if (targetChangeList != null) {
@@ -110,6 +111,15 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
               changeListManager.moveChangesTo(targetChangeList, changes.toArray(Change.EMPTY_CHANGE_ARRAY));
             }
           );
+        }
+      }
+
+      @Override
+      public void onSuccess() {
+        // IJPL-224933 "Undo commit" should install the commit's message to the Changes' message
+        var workflowHandler = ChangesViewWorkflowManager.getInstance(project).getCommitWorkflowHandler();
+        if (workflowHandler != null) {
+          workflowHandler.setCommitMessage(commit.getFullMessage());
         }
       }
     }.queue();
