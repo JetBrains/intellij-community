@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <idea-plugin visibility="public">
   <dependencies>
     <!--todo temporary disabled until it will be a backend module-->

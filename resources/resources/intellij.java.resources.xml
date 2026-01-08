@@ -1,7 +1,6 @@
-<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.regexp"/>
     <module name="intellij.platform.backend"/>
   </dependencies>
-
 </idea-plugin>

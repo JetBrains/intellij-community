@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.groovy.copyright
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.maddyhome.idea.copyright.pattern.CopyrightVariablesProvider
@@ -12,7 +13,7 @@ class GroovyCopyrightVariablesProvider : CopyrightVariablesProvider() {
   override fun collectVariables(
     context: MutableMap<String?, Any?>,
     project: Project?,
-    module: com.intellij.openapi.module.Module?,
+    module: Module?,
     file: PsiFile,
   ) {
     if (file !is GroovyFile) return
