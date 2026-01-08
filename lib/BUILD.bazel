@@ -1978,17 +1978,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps.fastutil/intellij-deps-fastutil-8.5.16-jb1.jar_copy",
-  src = "@org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_16-jb1_http//file",
-  out = "org.jetbrains.intellij.deps.fastutil/intellij-deps-fastutil-8.5.16-jb1.jar",
+  name = "org.jetbrains.intellij.deps.fastutil/intellij-deps-fastutil-8.5.18-jb1.jar_copy",
+  src = "@org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_18-jb1_http//file",
+  out = "org.jetbrains.intellij.deps.fastutil/intellij-deps-fastutil-8.5.18-jb1.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "fastutil-min",
-  jar = "@org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_16-jb1_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_16-jb1-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_18-jb1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_18-jb1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -17350,25 +17350,25 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.guardsquare/proguard-base-7.6.1.jar_copy",
-  src = "@com_guardsquare-proguard-base-7_6_1_http//file",
-  out = "com.guardsquare/proguard-base-7.6.1.jar",
+  name = "com.guardsquare/proguard-base-7.8.2.jar_copy",
+  src = "@com_guardsquare-proguard-base-7_8_2_http//file",
+  out = "com.guardsquare/proguard-base-7.8.2.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "com.guardsquare/proguard-core-9.1.7.jar_copy",
-  src = "@com_guardsquare-proguard-core-9_1_7_http//file",
-  out = "com.guardsquare/proguard-core-9.1.7.jar",
+  name = "com.guardsquare/proguard-core-9.2.0.jar_copy",
+  src = "@com_guardsquare-proguard-core-9_2_0_http//file",
+  out = "com.guardsquare/proguard-core-9.2.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.kotlin/kotlin-metadata-jvm-2.0.0.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_0_0_http//file",
-  out = "org.jetbrains.kotlin/kotlin-metadata-jvm-2.0.0.jar",
+  name = "org.jetbrains.kotlin/kotlin-metadata-jvm-2.2.0.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_0_http//file",
+  out = "org.jetbrains.kotlin/kotlin-metadata-jvm-2.2.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -17408,9 +17408,9 @@ copy_file(
 java_library(
   name = "platform-build_scripts-code_optimizer-proguard",
   exports = [
-    ":com_guardsquare-proguard-base-7_6_1_http_import",
-    ":com_guardsquare-proguard-core-9_1_7_http_import",
-    ":org_jetbrains_kotlin-kotlin-metadata-jvm-2_0_0_http_import",
+    ":com_guardsquare-proguard-base-7_8_2_http_import",
+    ":com_guardsquare-proguard-core-9_2_0_http_import",
+    ":org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_0_http_import",
     ":org_jetbrains-annotations-26_0_1_http_import",
     ":org_apache_logging_log4j-log4j-api-2_24_2_http_import",
     ":org_apache_logging_log4j-log4j-core-2_24_2_http_import",
@@ -17420,21 +17420,21 @@ java_library(
 )
 
 jvm_import(
-  name = "com_guardsquare-proguard-base-7_6_1_http_import",
-  jar = "@com_guardsquare-proguard-base-7_6_1_http//file",
-  source_jar = "@com_guardsquare-proguard-base-7_6_1-sources_http//file"
+  name = "com_guardsquare-proguard-base-7_8_2_http_import",
+  jar = "@com_guardsquare-proguard-base-7_8_2_http//file",
+  source_jar = "@com_guardsquare-proguard-base-7_8_2-sources_http//file"
 )
 
 jvm_import(
-  name = "com_guardsquare-proguard-core-9_1_7_http_import",
-  jar = "@com_guardsquare-proguard-core-9_1_7_http//file",
-  source_jar = "@com_guardsquare-proguard-core-9_1_7-sources_http//file"
+  name = "com_guardsquare-proguard-core-9_2_0_http_import",
+  jar = "@com_guardsquare-proguard-core-9_2_0_http//file",
+  source_jar = "@com_guardsquare-proguard-core-9_2_0-sources_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_kotlin-kotlin-metadata-jvm-2_0_0_http_import",
-  jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_0_0_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_0_0-sources_http//file"
+  name = "org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_0_http_import",
+  jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_0_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_0-sources_http//file"
 )
 
 jvm_import(

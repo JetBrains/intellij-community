@@ -1407,17 +1407,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_16-jb1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.16-jb1/intellij-deps-fastutil-8.5.16-jb1.jar",
-  sha256 = "63aca730b99bb849f4efb87e61765a050b4a46c7d3f2969054e49439cb0132f8",
-  downloaded_file_path = "intellij-deps-fastutil-8.5.16-jb1.jar"
+  name = "org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_18-jb1_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.18-jb1/intellij-deps-fastutil-8.5.18-jb1.jar",
+  sha256 = "fdb9053d8584253099300e0196fc0d3ec5b828535b0f39b0f97cf66f629df356",
+  downloaded_file_path = "intellij-deps-fastutil-8.5.18-jb1.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_16-jb1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.16-jb1/intellij-deps-fastutil-8.5.16-jb1-sources.jar",
-  sha256 = "ac312a8e1216c71a9c33bd500743b18935ed2092e0db042a8fe728ff047e18b3",
-  downloaded_file_path = "intellij-deps-fastutil-8.5.16-jb1-sources.jar"
+  name = "org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_18-jb1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.18-jb1/intellij-deps-fastutil-8.5.18-jb1-sources.jar",
+  sha256 = "65223a891cb0b1ad3f444794a00ee458bf31780658b54c2d41192ad4cf3ece67",
+  downloaded_file_path = "intellij-deps-fastutil-8.5.18-jb1-sources.jar"
 )
 
 http_file(
@@ -13734,24 +13734,24 @@ http_file(
 )
 
 http_file(
-  name = "com_guardsquare-proguard-base-7_6_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/guardsquare/proguard-base/7.6.1/proguard-base-7.6.1.jar",
-  sha256 = "c2650e666c3443781dc5e9eaee5de8721593f00be44e9d87cec761406357c770",
-  downloaded_file_path = "proguard-base-7.6.1.jar"
+  name = "com_guardsquare-proguard-base-7_8_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/guardsquare/proguard-base/7.8.2/proguard-base-7.8.2.jar",
+  sha256 = "177b00e0a07a82917d1f9ec7911bcbfc2194faa71cf940debd3bbdd3dcf8f9c0",
+  downloaded_file_path = "proguard-base-7.8.2.jar"
 )
 
 http_file(
-  name = "com_guardsquare-proguard-core-9_1_7_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/guardsquare/proguard-core/9.1.7/proguard-core-9.1.7.jar",
-  sha256 = "db06fa9f6b43bb7d386420f854f41aa55a11023de36bad68e043c3ac3f33b8d5",
-  downloaded_file_path = "proguard-core-9.1.7.jar"
+  name = "com_guardsquare-proguard-core-9_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/guardsquare/proguard-core/9.2.0/proguard-core-9.2.0.jar",
+  sha256 = "485fff6cd365ffcd60a433b2108405dab44999901fab6be3197a797eeed1e989",
+  downloaded_file_path = "proguard-core-9.2.0.jar"
 )
 
 http_file(
-  name = "org_jetbrains_kotlin-kotlin-metadata-jvm-2_0_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.0.0/kotlin-metadata-jvm-2.0.0.jar",
-  sha256 = "ad8f1c7dbc5ac46f5cbd2d2e5de39c56c9db65dd7de716a84e01ce208758aee6",
-  downloaded_file_path = "kotlin-metadata-jvm-2.0.0.jar"
+  name = "org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.0/kotlin-metadata-jvm-2.2.0.jar",
+  sha256 = "501222ae7d63527e55f2e5e645f18d4eff2c19074c85b9bc055866e3ed2b17bf",
+  downloaded_file_path = "kotlin-metadata-jvm-2.2.0.jar"
 )
 
 http_file(
@@ -13783,24 +13783,24 @@ http_file(
 )
 
 http_file(
-  name = "com_guardsquare-proguard-base-7_6_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/guardsquare/proguard-base/7.6.1/proguard-base-7.6.1-sources.jar",
-  sha256 = "9aed0e666f457f755e0756176821ef1d31a928790450e8e18f5bb6dcd4a9bac5",
-  downloaded_file_path = "proguard-base-7.6.1-sources.jar"
+  name = "com_guardsquare-proguard-base-7_8_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/guardsquare/proguard-base/7.8.2/proguard-base-7.8.2-sources.jar",
+  sha256 = "fb8900f21280df636a831090628641763d02cbbc193818f18c461b5f6e70eea3",
+  downloaded_file_path = "proguard-base-7.8.2-sources.jar"
 )
 
 http_file(
-  name = "com_guardsquare-proguard-core-9_1_7-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/guardsquare/proguard-core/9.1.7/proguard-core-9.1.7-sources.jar",
-  sha256 = "495063fbf5a1989435ee15ed6c6caf39b7dc7af22dd495e38fc7e6e7c00f1fcc",
-  downloaded_file_path = "proguard-core-9.1.7-sources.jar"
+  name = "com_guardsquare-proguard-core-9_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/guardsquare/proguard-core/9.2.0/proguard-core-9.2.0-sources.jar",
+  sha256 = "3de75d58352c925e4a2629f8b039925fc558de3e0a3e9a45a95523ac9dadaf16",
+  downloaded_file_path = "proguard-core-9.2.0-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_kotlin-kotlin-metadata-jvm-2_0_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.0.0/kotlin-metadata-jvm-2.0.0-sources.jar",
-  sha256 = "11cc619a970e643786053993b53286b6a0dc7f1bd787d99ed506c8d21e558424",
-  downloaded_file_path = "kotlin-metadata-jvm-2.0.0-sources.jar"
+  name = "org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.0/kotlin-metadata-jvm-2.2.0-sources.jar",
+  sha256 = "2ab97ab16e203e715633593c480bcf0ac1cc151e54cd2adaaa7dca1085835ede",
+  downloaded_file_path = "kotlin-metadata-jvm-2.2.0-sources.jar"
 )
 
 http_file(
