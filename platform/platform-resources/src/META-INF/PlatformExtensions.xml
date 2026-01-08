@@ -1861,7 +1861,7 @@
     <idePerformanceListener implementation="com.intellij.diagnostic.FusFreezeReporter"/>
 
     <applicationActivity implementation="com.intellij.internal.DumpPluginDescriptorsOnAppStartTrigger"/>
-    <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.PluginInitializationErrorReporterStartupTrigger"/>
+    <applicationActivity implementation="com.intellij.ide.plugins.PluginInitializationErrorReporterStartupTrigger"/>
 
     <registryKey key="search.everywhere.footer.extended.info"
                  defaultValue="true"
