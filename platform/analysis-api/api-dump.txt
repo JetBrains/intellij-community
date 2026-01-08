@@ -56,7 +56,7 @@ com.intellij.codeInsight.completion.LookupElementListPresenter
 c:com.intellij.codeInsight.completion.PlainPrefixMatcher
 - sf:ALWAYS_TRUE:com.intellij.codeInsight.completion.PrefixMatcher
 a:com.intellij.codeInsight.completion.PrefixMatcher
-- getMatchingFragments(java.lang.String):java.util.List
+- getMatchingFragments(java.lang.String,java.lang.String):java.util.List
 com.intellij.codeInsight.daemon.ChangeLocalityDetector
 - a:getChangeHighlightingDirtyScopeFor(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 a:com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
