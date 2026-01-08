@@ -721,10 +721,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   private static @NotNull List<PyClassType> evaluateSuperClassesAsTypeHints(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
     List<PyClassType> results = new ArrayList<>();
     for (PyExpression superClassExpression : getSuperClassExpressions(pyClass)) {
-      PsiFile containingFile = superClassExpression.getContainingFile();
-      if (containingFile instanceof PyExpressionCodeFragment) {
-        containingFile.putUserData(FRAGMENT_OWNER, pyClass);
-      }
       PyType type = Ref.deref(getType(superClassExpression, context));
       if (type instanceof PyClassType classType) {
         results.add(classType);
@@ -751,12 +747,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       return resolvesToQualifiedNames(s.getOperand(), context.myContext, GENERIC);
     });
     return StreamEx.of(genericAsSuperClass != null ? Collections.singletonList(genericAsSuperClass) : parameterizedSuperClassExpressions)
-      .peek(expr -> {
-        PsiFile containingFile = expr.getContainingFile();
-        if (containingFile instanceof PyExpressionCodeFragment) {
-          containingFile.putUserData(FRAGMENT_OWNER, cls);
-        }
-      })
       .map(PySubscriptionExpression::getIndexExpression)
       .flatMap(e -> {
         final PyTupleExpression tupleExpr = as(e, PyTupleExpression.class);
@@ -786,12 +776,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       return List.of(pyClass.getSuperClassExpressions());
     }
     return CachedValuesManager.getCachedValue(pyClass, () -> CachedValueProvider.Result.create(
-      (ContainerUtil.mapNotNull(classStub.getSuperClassesText(),
-                                x -> PyUtil.createExpressionFromFragment(x, pyClass.getContainingFile()))),
+      ContainerUtil.mapNotNull(classStub.getSuperClassesText(), x -> toExpression(x, pyClass)),
       PsiModificationTracker.MODIFICATION_COUNT)
     );
   }
-
 
   private static @NotNull List<PyTypeParameterType> collectTypeParametersFromTypeAliasStatement(@NotNull PyTypeAliasStatement typeAliasStatement,
                                                                                                 @NotNull Context context) {
