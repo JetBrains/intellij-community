@@ -7,7 +7,9 @@ import com.intellij.execution.wsl.WslIjentAvailabilityService
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
@@ -138,5 +140,14 @@ object WslUsagesCollector : CounterUsagesCollector() {
         Path.of(projectPathStr).startsWith(distroPath)
       }
     }
+
+  internal class LogProjectOpenedActivity: ProjectActivity {
+    override suspend fun execute(project: Project) {
+      runCatching { logProjectOpened(project) }.onFailure {
+        thisLogger().warn(it)
+      }
+    }
+
+  }
 }
 

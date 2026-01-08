@@ -786,7 +786,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       (project.serviceAsync<StartupManager>() as StartupManagerImpl).runPostStartupActivities()
     }
     LifecycleUsageTriggerCollector.onProjectOpened(project)
-    WslUsagesCollector.logProjectOpened(project)
 
     options.callback?.projectOpened(project, module ?: project.serviceAsync<ModuleManager>().modules.firstOrNull())
 
