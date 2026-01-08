@@ -24,7 +24,7 @@ class SampleTest {
   @WithProject(TestAppProject::class)
   @TestTemplate
   fun `serialized test`(ide: IdeWithLambda) = runBlocking {
-    ide.apply {
+    ide {
       runInFrontend {
         Logger.getInstance("test").warn("Projects: " + getProjects().joinToString { it.name })
       }
@@ -34,7 +34,6 @@ class SampleTest {
         openFile("src/SomeClass.java", waitForReadyState = false, requireFocus = false)
       }
     }
-    Unit
   }
 
 
@@ -50,7 +49,7 @@ class SampleTest {
   @WithProject(HelloWorldProject::class)
   // BackgroundRunWithLambda must be the last parameter
   fun `simple parameterized test`(param: Int, str: String, ide: IdeWithLambda) = runBlocking {
-    ide.apply {
+    ide {
       runInFrontend {
         Logger.getInstance("test")
           .warn("Param: $param $str Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
@@ -61,7 +60,6 @@ class SampleTest {
           .warn("Param: $param $str Backend Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
       }
     }
-    Unit
   }
 
   data class CustomParam(val param: Int, val str: String) : Serializable
@@ -77,7 +75,7 @@ class SampleTest {
   @MethodSource("customParamProvider")
   // BackgroundRunWithLambda must be the last parameter
   fun `custom parameterized test`(param: CustomParam, ide: IdeWithLambda) = runBlocking {
-    ide.apply {
+    ide {
       runInFrontend {
         Logger.getInstance("test")
           .warn("Param: $param Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
@@ -88,7 +86,6 @@ class SampleTest {
           .warn("Param: $param Backend Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
       }
     }
-    Unit
   }
 }
 

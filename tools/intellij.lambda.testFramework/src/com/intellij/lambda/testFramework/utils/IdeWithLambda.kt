@@ -128,4 +128,8 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
   suspend inline fun afterAll(testClassName: String) {
     forEachSession("After each container") { it.afterAll.startSuspending(testClassName) }
   }
+
+  suspend inline operator fun invoke(block: suspend IdeWithLambda.() -> Unit) {
+    block()
+  }
 }
