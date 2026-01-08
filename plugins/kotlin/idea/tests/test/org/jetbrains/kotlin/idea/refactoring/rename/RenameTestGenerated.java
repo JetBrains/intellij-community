@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename;
 
@@ -243,6 +243,11 @@ public class RenameTestGenerated extends AbstractK1RenameTest {
     @TestMetadata("dataClassValuePropertyWithJava/dataClassPropertyWithJava.test")
     public void testDataClassValuePropertyWithJava_DataClassPropertyWithJava() throws Exception {
         runTest("testData/refactoring/rename/dataClassValuePropertyWithJava/dataClassPropertyWithJava.test");
+    }
+
+    @TestMetadata("destrVariable/destrVar.test")
+    public void testDestrVariable_DestrVar() throws Exception {
+        runTest("testData/refactoring/rename/destrVariable/destrVar.test");
     }
 
     @TestMetadata("enumGetEntriesFromJava/enumValueOf.test")

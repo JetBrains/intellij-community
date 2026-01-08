@@ -109,11 +109,17 @@ fun checkDeclarationNewNameConflicts(
     fun getPotentialConflictCandidates(symbol: KaDeclarationSymbol, declaration: KtNamedDeclaration, newName: Name): Sequence<KaDeclarationSymbol> {
         val containingSymbol = symbol.containingDeclaration ?: findPackage(declaration.containingKtFile.packageFqName)
 
-        if (symbol is KaValueParameterSymbol || symbol is KaContextParameterSymbol) {
-            val functionLikeSymbol = containingSymbol as KaFunctionSymbol
-            val locals = functionLikeSymbol.psi?.descendantsOfType<KtVariableDeclaration>()?.filter { it.nameAsName == newName }
-                ?.mapNotNull { it.symbol } ?: emptySequence()
-            return functionLikeSymbol.valueParameters.filter { it.name == newName }.asSequence() + locals
+        if (symbol is KaValueParameterSymbol || symbol is KaContextParameterSymbol || symbol is KaLocalVariableSymbol) {
+            val functionLikeSymbol = containingSymbol as? KaFunctionSymbol ?: return emptySequence()
+            val functionPsi = functionLikeSymbol.psi
+
+            val locals = functionPsi?.descendantsOfType<KtVariableDeclaration>()
+                ?.filter { it.nameAsName == newName }
+                ?.map { it.symbol } ?: emptySequence()
+            val destructuringEntries = functionPsi?.descendantsOfType<KtDestructuringDeclarationEntry>()
+                ?.filter { it.nameAsName == newName }
+                ?.map { it.symbol } ?: emptySequence()
+            return functionLikeSymbol.valueParameters.filter { it.name == newName }.asSequence() + locals + destructuringEntries
         }
 
         if (symbol is KaTypeParameterSymbol) {
@@ -161,7 +167,7 @@ fun checkDeclarationNewNameConflicts(
                     if (it.name != newName.asString()) return@mapNotNull null
                     val isAccepted = when (symbol) {
                         is KaClassSymbol -> it is KtClassOrObject
-                        is KaPropertySymbol, is KaJavaFieldSymbol, is KaLocalVariableSymbol -> it is KtProperty
+                        is KaPropertySymbol, is KaJavaFieldSymbol -> it is KtProperty || it is KtDestructuringDeclarationEntry
                         is KaFunctionSymbol -> it is KtNamedFunction
                         else -> false
                     }
@@ -341,7 +347,7 @@ fun registerRetargetJobOnPotentialCandidates(
                 if (it == declaration || it.name != name) return@mapNotNull null
                 val isAccepted = when (declarationSymbol) {
                     is KaClassSymbol -> it is KtClassOrObject
-                    is KaPropertySymbol, is KaJavaFieldSymbol, is KaLocalVariableSymbol -> it is KtProperty
+                    is KaPropertySymbol, is KaJavaFieldSymbol, is KaLocalVariableSymbol -> it is KtProperty || it is KtDestructuringDeclarationEntry
                     is KaFunctionSymbol -> it is KtNamedFunction
                     else -> false
                 }
