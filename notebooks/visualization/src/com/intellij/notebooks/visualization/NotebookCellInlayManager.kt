@@ -472,7 +472,8 @@ class NotebookCellInlayManager private constructor(
     return cells.getOrNull(interval.ordinal)
   }
 
-  fun getCell(pointer: NotebookIntervalPointer): EditorCell {
-    return getCell(pointer.get()!!)
+  fun getCell(pointer: NotebookIntervalPointer): EditorCell? {
+    val interval = pointer.get() ?: return null
+    return getCellOrNull(interval)
   }
 }
