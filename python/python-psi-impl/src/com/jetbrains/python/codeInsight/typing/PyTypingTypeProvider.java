@@ -1421,7 +1421,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   private static @Nullable PyExpression toExpression(@NotNull String contents, @NotNull PsiElement anchor) {
     final PsiFile file = FileContextUtil.getContextFile(anchor);
     if (file == null) return null;
-    PyExpression fragment = PyUtil.createExpressionFromFragment(contents, file);
+    PyExpression fragment = PyUtil.createExpressionFromFragment(contents, anchor);
     if (fragment != null) {
       fragment.getContainingFile().putUserData(FRAGMENT_OWNER, anchor);
     }

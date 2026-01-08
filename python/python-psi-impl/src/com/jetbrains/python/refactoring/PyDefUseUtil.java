@@ -51,18 +51,20 @@ public final class PyDefUseUtil {
                                                          boolean acceptTypeAssertions,
                                                          boolean acceptImplicitImports,
                                                          @NotNull TypeEvalContext context) {
-    return getLatestDefs(ControlFlowCache.getControlFlow(block), varName, anchor, acceptTypeAssertions, acceptImplicitImports, context);
+    return getLatestDefs(ControlFlowCache.getControlFlow(block), block, varName, anchor, acceptTypeAssertions, acceptImplicitImports,
+                         context);
   }
 
 
   public static @NotNull List<Instruction> getLatestDefs(@NotNull PyControlFlow controlFlow,
+                                                         @NotNull ScopeOwner scopeOwner,
                                                          @NotNull String varName,
                                                          @NotNull PsiElement anchor,
                                                          boolean acceptTypeAssertions,
                                                          boolean acceptImplicitImports,
                                                          @NotNull TypeEvalContext context) {
     final Instruction[] instructions = controlFlow.getInstructions();
-    int startNum = findStartInstructionId(anchor, controlFlow);
+    int startNum = findStartInstructionId(anchor, controlFlow, scopeOwner);
     if (startNum < 0) {
       return Collections.emptyList();
     }
@@ -152,13 +154,19 @@ public final class PyDefUseUtil {
     return varQname.getComponentCount() > elementQname.getComponentCount() && varQname.matchesPrefix(elementQname);
   }
 
-  private static int findStartInstructionId(@NotNull PsiElement startAnchor, @NotNull PyControlFlow flow) {
+  private static int findStartInstructionId(@NotNull PsiElement startAnchor, @NotNull PyControlFlow flow, @NotNull ScopeOwner scopeOwner) {
     PsiElement realCfgAnchor = startAnchor;
     final PyAugAssignmentStatement augAssignment = PyAugAssignmentStatementNavigator.getStatementByTarget(startAnchor);
     if (augAssignment != null) {
       realCfgAnchor = augAssignment;
     }
-    int instr = flow.getInstruction(realCfgAnchor);
+    int instr = -1;
+    for (PsiElement element = realCfgAnchor; element != null && element != scopeOwner; element = element.getParent()) {
+      instr = flow.getInstruction(element);
+      if (instr >= 0) {
+        break;
+      }
+    }
     if (instr < 0) {
       return instr;
     }

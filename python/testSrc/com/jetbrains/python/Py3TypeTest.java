@@ -983,7 +983,7 @@ public class Py3TypeTest extends PyTestCase {
              if (a := input()) in ("abba", False):
                  expr = a
              """);
-    
+
     // PY-83625
     doTest("Literal[\"b\", \"c\"]",
            """
@@ -4341,8 +4341,16 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-74257
   public void testNotProperlyImportedQualifiedNameInTypeHint() {
-    doMultiFileTest("Any", """
-      from lib import f
+    // TODO lib.py can be unstubbed
+    //doMultiFileTest("Any", """
+    //  from lib import f
+    //
+    //  expr = f()
+    //  """);
+    doTest("Any", """
+      import pkg
+      
+      def f() -> "pkg.subpkg.mod.MyClass": ...
       
       expr = f()
       """);
@@ -4706,6 +4714,88 @@ public class Py3TypeTest extends PyTestCase {
           x = p.upper() if isinstance(p, str) else "bar"
           p.attr
       expr = conditional
+      """);
+  }
+
+  // PY-86223
+  public void testQuotedTypeParameterInTypeHint() {
+    doTest("T", """
+      def foo[T](p: "T"):
+          expr = p
+      """
+    );
+  }
+
+  // PY-86223
+  public void testGenericTypeWithQuotedTypeParameterInTypeHint() {
+    doTest("list[T]", """
+      def foo[T](p: list["T"]):
+          expr = p
+      """
+    );
+  }
+
+  // PY-86223
+  public void testQuotedGenericTypeWithTypeParameterInTypeHint() {
+    doTest("list[T]", """
+      def foo[T](p: "list[T]"):
+          expr = p
+      """
+    );
+  }
+
+  // PY-86223
+  public void testQuotedReferenceToLocalClassInTypeHint() {
+    doTest("tuple[A, B]", """
+      def outer():
+          class A: ...
+      
+          def inner(a: "A", b: "B"):
+              expr = (a, b)
+      
+          class B: ...
+      """
+    );
+  }
+
+  public void testQuotedForwardReferenceInTypeHint() {
+    doTest("MyClass", """
+      def foo(x: "MyClass"):
+          expr = x
+      
+      class MyClass: ...
+      """
+    );
+  }
+
+  public void testGenericTypeWithQuotedForwardReferenceInTypeHint() {
+    doTest("list[MyClass]", """
+      def foo(x: list["MyClass"]):
+          expr = x
+      
+      class MyClass: ...
+      """
+    );
+  }
+
+  public void testQuotedGenericTypeWithForwardReferenceInTypeHint() {
+    doTest("list[MyClass]", """
+      def foo(x: "list[MyClass]"):
+          expr = x
+      
+      class MyClass: ...
+      """
+    );
+  }
+
+  public void testIncompleteQualifiedNameClashesWithLocalVariable() {
+    doTest("str", """
+      class MyClass:
+          foo = 'spam'
+      
+      def f(foo):
+          _ = foo.illegal
+          expr = MyClass.foo
       """);
   }
 

@@ -4243,6 +4243,17 @@ public class PyTypeTest extends PyTestCase {
             """);
   }
 
+  public void testQuotedForwardReferenceInTypeComment() {
+    doTest("MyClass", """
+      def foo(x):
+          # type: (MyClass) -> None
+          expr = x
+      
+      class MyClass: ...
+      """
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

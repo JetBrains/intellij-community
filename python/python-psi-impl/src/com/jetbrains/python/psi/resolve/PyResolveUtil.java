@@ -421,8 +421,11 @@ public final class PyResolveUtil {
     if (PyiUtil.isInsideStub(element)) {
       return true;
     }
-    // Forward references are allowed in annotations according to PEP 563
     PsiFile file = element.getContainingFile();
+    if (file instanceof PyExpressionCodeFragment) {
+      return true;
+    }
+    // Forward references are allowed in annotations according to PEP 563
     if (file instanceof PyFile pyFile) {
       boolean nonEagerEvaluationEnabled = pyFile.hasImportFromFuture(FutureFeature.ANNOTATIONS) ||
                                           pyFile.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON314);
