@@ -11,9 +11,6 @@
     reason: <- intellij.javaFX.community
   contentModules:
   - name: intellij.javaFX.properties
-- name: lib/modules/intellij.javaFX.css.intellilang.jar
-  contentModules:
-  - name: intellij.javaFX.css.intellilang
 - name: lib/modules/intellij.javaFX.css.jar
   contentModules:
   - name: intellij.javaFX.css
