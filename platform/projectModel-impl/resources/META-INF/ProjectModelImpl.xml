@@ -16,7 +16,7 @@
                     dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.openapi.components.PathMacroManager"
+    <projectService serviceInterface="com.intellij.openapi.components.PathMacroManager" open="true"
                     serviceImplementation="com.intellij.openapi.components.impl.ProjectPathMacroManager"/>
     <projectService serviceInterface="com.intellij.openapi.roots.impl.ModifiableModelCommitterService"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableModelCommitterServiceBridge"/>
@@ -32,14 +32,15 @@
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridgeProvider"/>
     <!-- Global Workspace Model -->
     <applicationService serviceInterface="com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer"
-                        serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl"/>
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl"
+                        open="true"/>
     <!-- Global or Custom Workspace Model Libraries -->
     <workspace.bridgeInitializer
       implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalAndCustomLibraryTableBridgeInitializer"/>
 
-    <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
+    <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade" open="true"
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexFacade"/>
-    <projectService serviceInterface="com.intellij.openapi.roots.ProjectFileIndex"
+    <projectService serviceInterface="com.intellij.openapi.roots.ProjectFileIndex" open="true"
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexImpl"/>
     <projectService serviceInterface="com.intellij.workspaceModel.ide.EntitiesOrphanage"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.EntitiesOrphanageImpl"/>
@@ -49,7 +50,7 @@
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl"
                     serviceInterface="com.intellij.workspaceModel.ide.JpsProjectLoadingManager"/>
 
-    <projectService serviceInterface="com.intellij.openapi.module.AutomaticModuleUnloader"
+    <projectService serviceInterface="com.intellij.openapi.module.AutomaticModuleUnloader" open="true"
                     serviceImplementation="com.intellij.openapi.module.DummyAutomaticModuleUnloader"/>
     <projectService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex" 
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleDependencyIndexImpl"/>
@@ -60,11 +61,12 @@
     <workspaceModel.preUpdateHandler implementation="com.intellij.workspaceModel.ide.impl.ModulePreUpdateHandler"/>
     <workspaceModel.serializerHook implementation="com.intellij.workspaceModel.ide.impl.RemoveTransientJpsEntities"/>
 
-    <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
+    <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex" open="true"
                     serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl" preload="true"/>
 
     <moduleService serviceInterface="com.intellij.openapi.roots.ModuleFileIndex"
-                   serviceImplementation="com.intellij.openapi.roots.impl.ModuleFileIndexImpl"/>
+                   serviceImplementation="com.intellij.openapi.roots.impl.ModuleFileIndexImpl"
+                   open="true"/>
 
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.ContentRootFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.SourceRootFileIndexContributor"/>

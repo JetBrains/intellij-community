@@ -20,7 +20,7 @@
                      implementationClass="com.intellij.structuralsearch.inspection.SSBasedInspection"/>
     <structuralsearch.profile implementation="com.intellij.structuralsearch.XmlStructuralSearchProfile"/>
     <projectService serviceImplementation="com.intellij.structuralsearch.plugin.ui.ConfigurationManager"/>
-    <applicationService serviceImplementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateBuilder"/>
+    <applicationService serviceImplementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateBuilder" open="true"/>
     <applicationService serviceImplementation="com.intellij.structuralsearch.plugin.ui.ConfigurationManager$ConfigurationManagerState"/>
 
     <typedHandler implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTypedHandler"/>

@@ -57,10 +57,10 @@
   </xi:include>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
+    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager" open="true"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>
 
-    <applicationService serviceImplementation="com.intellij.ide.RecentProjectListActionProvider"/>
+    <applicationService serviceImplementation="com.intellij.ide.RecentProjectListActionProvider" open="true"/>
 
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
@@ -68,13 +68,13 @@
     <projectOpenProcessor implementation="com.intellij.platform.FolderProjectOpenProcessor"/>
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor" order="last"/>
 
-    <projectService serviceImplementation="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"/>
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"/>
-    <projectService serviceImplementation="com.intellij.usages.impl.rules.DirectoryGroupingRule"/>
-    <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory"
+    <projectService serviceImplementation="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper" open="true"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService" open="true"/>
+    <projectService serviceImplementation="com.intellij.usages.impl.rules.DirectoryGroupingRule" open="true"/>
+    <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory" open="true"
                     serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringFactoryImpl"/>
-    <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
-    <projectService serviceInterface="com.intellij.ide.bookmark.BookmarksManager"
+    <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager" open="true"/>
+    <projectService serviceInterface="com.intellij.ide.bookmark.BookmarksManager" open="true"
                     serviceImplementation="com.intellij.ide.bookmark.BookmarksManagerImpl"/>
     <bookmarkProvider implementation="com.intellij.ide.favoritesTreeView.AbstractUrlBookmarkProvider" order="first"/>
     <bookmarkProvider implementation="com.intellij.ide.bookmark.providers.LineBookmarkProvider" order="last"/>
@@ -93,7 +93,7 @@
     <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil$ImplService"
                         serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil$ImplServiceImpl"/>
     <multiHostInjector id="adapter" implementation="com.intellij.psi.impl.source.tree.injected.LanguageInjectionPerformerAdapter" order="last"/>
-    <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider"
+    <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider" open="true"
                         serviceImplementation="com.intellij.openapi.roots.PlatformModifiableModelsProvider"/>
 
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler" id="copyFilesOrDirectories"/>

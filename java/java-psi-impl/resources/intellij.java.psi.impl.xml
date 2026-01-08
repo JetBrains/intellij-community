@@ -79,9 +79,9 @@
                         serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
     <applicationService serviceInterface="com.intellij.psi.PsiSubstitutorFactory"
                         serviceImplementation="com.intellij.psi.impl.PsiSubstitutorFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService"
+    <applicationService serviceInterface="com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService" open="true"
                         serviceImplementation="com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService$DefaultImpl"/>
-    <applicationService serviceInterface="com.intellij.psi.JavaModuleGraphHelper"
+    <applicationService serviceInterface="com.intellij.psi.JavaModuleGraphHelper" open="true"
                         serviceImplementation="com.intellij.psi.DumbJavaModuleGraphHelper"/>
 
     <projectService serviceInterface="com.intellij.psi.SmartTypePointerManager"

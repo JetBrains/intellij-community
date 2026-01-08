@@ -11,7 +11,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService
-      serviceInterface="com.intellij.openapi.fileEditor.FileEditorManager"
+      serviceInterface="com.intellij.openapi.fileEditor.FileEditorManager" open="true"
       serviceImplementation="com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl"
       testServiceImplementation="com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl"
       headlessImplementation="com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl"
@@ -33,30 +33,30 @@
 
     <vfs.asyncListener implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRootWatcher"/>
     <projectService
-      serviceInterface="com.intellij.openapi.module.ModuleManager"
+      serviceInterface="com.intellij.openapi.module.ModuleManager" open="true"
       serviceImplementation="com.intellij.openapi.module.EmptyModuleManager"/>
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher"/>
 
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.WindowDressingStartupActivity" />
 
-    <applicationService serviceInterface="com.intellij.openapi.command.undo.UndoManager"
+    <applicationService serviceInterface="com.intellij.openapi.command.undo.UndoManager" open="true"
                         serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="notHeadless"/>
 
-    <projectService serviceInterface="com.intellij.openapi.command.undo.UndoManager"
+    <projectService serviceInterface="com.intellij.openapi.command.undo.UndoManager" open="true"
                     serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="notHeadless"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.command.impl.ForeignCommandProcessor" preload="notHeadless"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.command.impl.cmd.CmdIdService" preload="notHeadless"/>
+    <applicationService serviceImplementation="com.intellij.openapi.command.impl.cmd.CmdIdService" open="true" preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.ide.ui.LafManager"
                         serviceImplementation="com.intellij.ide.ui.laf.LafManagerImpl"
                         headlessImplementation="com.intellij.ide.ui.laf.HeadlessLafManagerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.ide.ui.ThemeListProvider"
+    <applicationService serviceInterface="com.intellij.ide.ui.ThemeListProvider" open="true"
                         serviceImplementation="com.intellij.ide.ui.laf.ThemeListProviderImpl"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorSchemesSorter"
+    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorSchemesSorter" open="true"
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorSchemesSorterImpl"/>
 
     <applicationService serviceInterface="com.intellij.ide.environment.EnvironmentService"
@@ -66,7 +66,7 @@
     <applicationService serviceInterface="com.intellij.openapi.wm.WindowManager"
                         serviceImplementation="com.intellij.openapi.wm.impl.WindowManagerImpl"
                         headlessImplementation="com.intellij.openapi.wm.impl.TestWindowManager" preload="notHeadless"/>
-    <applicationService serviceInterface="com.intellij.toolWindow.DefaultToolWindowLayoutProvider"
+    <applicationService serviceInterface="com.intellij.toolWindow.DefaultToolWindowLayoutProvider" open="true"
                         serviceImplementation="com.intellij.toolWindow.IntellijPlatformDefaultToolWindowLayoutProvider"/>
     <defaultToolWindowLayout
       id="DefaultToolWindowLayoutPlatformExtension"
@@ -82,9 +82,9 @@
                         serviceImplementation="com.intellij.openapi.wm.impl.FocusManagerImpl"
                         headlessImplementation="com.intellij.openapi.wm.impl.IdeFocusManagerHeadless" preload="notHeadless"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionManager"
+    <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionManager" open="true"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.ide.DataManager"
+    <applicationService serviceInterface="com.intellij.ide.DataManager" open="true"
                         serviceImplementation="com.intellij.ide.impl.DataManagerImpl"
                         testServiceImplementation="com.intellij.ide.impl.HeadlessDataManager"/>
     <postStartupActivity implementation="com.intellij.codeInsight.actions.ReaderModeEditorSettingsListener"/>
@@ -99,10 +99,10 @@
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.CurrentEditorProvider"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.ClientCurrentEditorProvider"
                         client="remote"/>
-    <applicationService serviceInterface="com.intellij.openapi.fileEditor.CompositeTabIconHolderCreator"
+    <applicationService serviceInterface="com.intellij.openapi.fileEditor.CompositeTabIconHolderCreator" open="true"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.CompositeTabIconHolderCreatorImpl"/>
 
-    <projectService serviceInterface="com.intellij.openapi.wm.ToolWindowManager"
+    <projectService serviceInterface="com.intellij.openapi.wm.ToolWindowManager" open="true"
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl"
                     testServiceImplementation="com.intellij.toolWindow.ToolWindowHeadlessManagerImpl"
                     headlessImplementation="com.intellij.toolWindow.ToolWindowHeadlessManagerImpl" preload="notHeadless"/>
@@ -127,10 +127,10 @@
       defaultValue="false"
     />
 
-    <projectService serviceInterface="com.intellij.toolWindow.ToolWindowStripeManager"
+    <projectService serviceInterface="com.intellij.toolWindow.ToolWindowStripeManager" open="true"
                     serviceImplementation="com.intellij.toolWindow.ToolWindowStripeManagerImpl"/>
 
-    <projectService serviceInterface="com.intellij.openapi.wm.impl.ToolWindowManagerState"
+    <projectService serviceInterface="com.intellij.openapi.wm.impl.ToolWindowManagerState" open="true"
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerStateImpl"/>
 
     <nonLockedIdeEventQueueDispatcher implementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyEventDispatcher"/>
@@ -139,12 +139,12 @@
                         serviceImplementation="com.intellij.openapi.project.configuration.EmptyLoggingService"
                         headlessImplementation="com.intellij.openapi.project.configuration.HeadlessLoggingServiceImpl"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.client.ClientSessionsManager"
+    <applicationService serviceInterface="com.intellij.openapi.client.ClientSessionsManager" open="true"
                         serviceImplementation="com.intellij.openapi.client.ClientAppSessionsManager"/>
-    <projectService serviceInterface="com.intellij.openapi.client.ClientSessionsManager"
+    <projectService serviceInterface="com.intellij.openapi.client.ClientSessionsManager" open="true"
                     serviceImplementation="com.intellij.openapi.client.ClientProjectSessionsManager"/>
 
-    <projectService serviceInterface="com.intellij.openapi.fileEditor.ex.IdeDocumentHistory"
+    <projectService serviceInterface="com.intellij.openapi.fileEditor.ex.IdeDocumentHistory" open="true"
                     serviceImplementation="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl" preload="await"/>
     
     <applicationService serviceImplementation="com.intellij.ide.actionMacro.ActionMacroManager"/>
@@ -170,7 +170,7 @@
       serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl" />
 
     <applicationService
-      serviceInterface="com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo"
+      serviceInterface="com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo" open="true"
       serviceImplementation="com.intellij.formatting.visualLayer.PlatformVirtualFormattingInlaysInfo" />
 
     <applicationService serviceInterface="com.intellij.refactoring.RefactoringUiService" serviceImplementation="com.intellij.refactoring.RefactoringUiServiceImpl"/>
@@ -178,15 +178,16 @@
     <projectService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater"
                     serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl" preload="await"/>
 
-    <projectService serviceImplementation="com.intellij.ide.navigationToolbar.rider.RiderMainToolbarRootPaneManager"/>
+    <projectService serviceImplementation="com.intellij.ide.navigationToolbar.rider.RiderMainToolbarRootPaneManager" open="true"/>
 
     <idePerformanceListener implementation="com.intellij.diagnostic.IdeaFreezeReporter"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingComponent"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.editor.impl.inspector.InspectionsSettingContentService" serviceImplementation="com.intellij.openapi.editor.impl.inspector.InspectionsSettingContentServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.editor.impl.inspector.InspectionsSettingContentService" open="true"
+                        serviceImplementation="com.intellij.openapi.editor.impl.inspector.InspectionsSettingContentServiceImpl"/>
 
-    <applicationService serviceInterface="com.intellij.codeInsight.actions.ReaderModeDefaultsOverride"
+    <applicationService serviceInterface="com.intellij.codeInsight.actions.ReaderModeDefaultsOverride" open="true"
                         serviceImplementation="com.intellij.codeInsight.actions.ReaderModeDefaultsOverrideImpl" />
 
     <applicationService serviceInterface="com.intellij.util.gist.GistManager"

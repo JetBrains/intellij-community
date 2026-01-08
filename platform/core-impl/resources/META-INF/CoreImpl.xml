@@ -62,9 +62,9 @@
                     serviceImplementation="com.intellij.psi.impl.PsiManagerImpl" preload="true"/>
     <projectService serviceInterface="com.intellij.psi.SmartPointerManager"
                     serviceImplementation="com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl"/>
-    <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory"
+    <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory" open="true"
                     serviceImplementation="com.intellij.psi.impl.file.PsiDirectoryFactoryImpl"/>
-    <projectService serviceInterface="com.intellij.pom.PomModel"
+    <projectService serviceInterface="com.intellij.pom.PomModel" open="true"
                     serviceImplementation="com.intellij.pom.core.impl.PomModelImpl"/>
 
     <projectService serviceInterface="com.intellij.psi.util.CachedValuesManager"

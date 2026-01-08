@@ -22,12 +22,12 @@
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker"/>
-    <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.SdkDetector"/>
+    <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.SdkDetector" open="true"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.SdkPopupFactory"
                         serviceImplementation="com.intellij.openapi.roots.ui.configuration.PlatformSdkPopupFactory"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.SdkLookup"
+    <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.SdkLookup" open="true"
                         serviceImplementation="com.intellij.openapi.roots.ui.configuration.SdkLookupImpl"/>
 
     <registryKey key="sdk.detector.enabled" defaultValue="true" description="Toggles SDK detection features"/>
@@ -76,11 +76,11 @@
     <backgroundPostStartupActivity implementation="com.intellij.facet.FacetTypeFeatureCollector"/>
     <registerToolWindowTaskProvider implementation="com.intellij.facet.impl.ui.FacetDependentToolWindowManager"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
+    <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager" open="true"
                         serviceImplementation="com.intellij.openapi.module.impl.ModuleTypeManagerImpl"/>
 
     <applicationService
-      serviceImplementation="com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider"/>
+      serviceImplementation="com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider" open="true"/>
 
     <projectService serviceInterface="com.intellij.facet.FacetModificationTrackingService"
                     serviceImplementation="com.intellij.facet.impl.FacetModificationTrackingServiceImpl"/>
@@ -106,7 +106,7 @@
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.SdkIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.LibraryIndexableIteratorHandler"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
+    <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable" open="true"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.projectRoots.SdkTableProjectViewProvider"

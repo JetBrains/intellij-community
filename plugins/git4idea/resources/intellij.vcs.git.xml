@@ -751,7 +751,7 @@
                     serviceImplementation="git4idea.branch.GitBranchesUIHandlerImpl"/>
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
-    <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
+    <applicationService serviceInterface="git4idea.commands.GitHttpAuthService" open="true"
                         serviceImplementation="git4idea.commands.GitHttpAuthServiceImpl"/>
     <httpRequestHandler implementation="git4idea.commands.GitAskPassExternalProcessRest"/>
     <httpRequestHandler implementation="git4idea.rebase.GitRebaseEditorExternalProcessRest"/>
@@ -761,7 +761,7 @@
     <applicationService serviceInterface="git4idea.commands.Git"
                         serviceImplementation="git4idea.commands.GitImpl"/>
     <applicationService serviceImplementation="git4idea.config.GitExecutableManager"/>
-    <applicationService serviceImplementation="git4idea.DialogManager"/>
+    <applicationService serviceImplementation="git4idea.DialogManager" open="true"/>
     <applicationService serviceImplementation="git4idea.log.GitExternalLogTabsProperties"/>
 
     <applicationService serviceImplementation="git4idea.index.ui.GitStageUiApplicationSettings"/>
@@ -900,7 +900,7 @@
 
     <projectService serviceInterface="git4idea.commands.GitCommandOutputPrinter"
                     serviceImplementation="git4idea.commands.GitCommandOutputConsolePrinter"/>
-    <projectService serviceInterface="git4idea.ui.branch.dashboard.BranchesDashboardFilteringLogic"
+    <projectService serviceInterface="git4idea.ui.branch.dashboard.BranchesDashboardFilteringLogic" open="true"
                     serviceImplementation="git4idea.ui.branch.dashboard.DefaultBranchDashboardFilteringLogic"/>
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFoldingImpl"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>

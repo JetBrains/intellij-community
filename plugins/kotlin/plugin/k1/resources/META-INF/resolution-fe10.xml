@@ -28,7 +28,8 @@
             serviceImplementation="org.jetbrains.kotlin.resolve.DummyCodeAnalyzerInitializer"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.kdoc.KDocLinkResolutionService"
-            serviceImplementation="org.jetbrains.kotlin.idea.kdoc.IdeKDocLinkResolutionService"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.kdoc.IdeKDocLinkResolutionService"
+            open="true"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.resolve.lazy.ProbablyNothingCallableNames"
             serviceImplementation="org.jetbrains.kotlin.idea.project.ProbablyNothingCallableNamesImpl"/>

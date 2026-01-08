@@ -410,9 +410,9 @@
                     serviceImplementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl"/>
     <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleManager"
                     serviceImplementation="com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl"/>
-    <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
+    <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager" open="true"
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManagerImpl"/>
-    <projectService serviceInterface="com.intellij.codeInsight.ExternalAnnotationsManager"
+    <projectService serviceInterface="com.intellij.codeInsight.ExternalAnnotationsManager" open="true"
                     serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"
                     serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
@@ -451,7 +451,8 @@
                     serviceImplementation="com.intellij.facet.impl.ui.FacetEditorsStateManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.DefaultJdkConfigurator"
-                        serviceImplementation="com.intellij.openapi.projectRoots.impl.DefaultJdkConfiguratorImpl"/>
+                        serviceImplementation="com.intellij.openapi.projectRoots.impl.DefaultJdkConfiguratorImpl"
+                        open="true"/>
 
     <applicationService serviceInterface="com.intellij.facet.ui.FacetEditorsFactory"
                         serviceImplementation="com.intellij.facet.impl.ui.FacetEditorsFactoryImpl"/>

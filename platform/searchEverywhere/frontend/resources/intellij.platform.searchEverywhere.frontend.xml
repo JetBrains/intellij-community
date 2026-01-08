@@ -27,6 +27,7 @@
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextTabFactory"/>
 
     <applicationService serviceInterface="com.intellij.platform.searchEverywhere.frontend.SeTabsCustomizer"
-                        serviceImplementation="com.intellij.platform.searchEverywhere.frontend.SeDefaultTabsCustomizer"/>"
+                        serviceImplementation="com.intellij.platform.searchEverywhere.frontend.SeDefaultTabsCustomizer"
+                        open="true"/>"
   </extensions>
 </idea-plugin>

@@ -4,7 +4,7 @@
                 factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory"
                 secondary="false"
                 canCloseContents="true"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.terminal.DefaultTerminalRunnerFactory"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.terminal.DefaultTerminalRunnerFactory" open="true"/>
 
     <projectConfigurable groupId="tools"
                          bundle="messages.IdeBundle"
@@ -19,7 +19,7 @@
                         serviceImplementation="org.jetbrains.plugins.terminal.settings.impl.TerminalLocalOptionsImpl"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalFontSettingsService"/>
 
-    <projectService serviceInterface="org.jetbrains.plugins.terminal.block.reworked.TerminalPortForwardingUiProvider"
+    <projectService serviceInterface="org.jetbrains.plugins.terminal.block.reworked.TerminalPortForwardingUiProvider" open="true"
                     serviceImplementation="org.jetbrains.plugins.terminal.block.reworked.TerminalNoPortForwardingUiProvider"/>
 
     <rdct.remoteSettingProvider implementation="org.jetbrains.plugins.terminal.TerminalRemoteSettingsInfoProvider"/>

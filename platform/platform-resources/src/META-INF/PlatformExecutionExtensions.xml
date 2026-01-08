@@ -7,7 +7,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.execution.RunManager"
+    <projectService serviceInterface="com.intellij.execution.RunManager" open="true"
                     serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
     <projectPreInit implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer" order="after moduleBridgeLoaderService"/>
     <pathMacroFilter implementation="com.intellij.execution.configuration.RunConfigurationPathMacroFilter"/>
@@ -47,7 +47,7 @@
     <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
                         serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>
     <actionConfigurationCustomizer implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryActionConfigurationTuner"/>
-    <applicationService serviceInterface="com.intellij.execution.impl.NewRunConfigurationTreePopupFactory"
+    <applicationService serviceInterface="com.intellij.execution.impl.NewRunConfigurationTreePopupFactory" open="true"
                         serviceImplementation="com.intellij.execution.impl.DefaultNewRunConfigurationTreePopupFactory"/>
     <projectService serviceInterface="com.intellij.execution.ui.RunContentManager"
                     serviceImplementation="com.intellij.execution.ui.RunContentManagerImpl"/>
@@ -58,9 +58,9 @@
     <runAnything.executionProvider id="RunAnythingRunConfigurationProvider"
                                    implementation="com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider"/>
 
-    <projectService serviceInterface="com.intellij.execution.AdditionalRunningOptions"
+    <projectService serviceInterface="com.intellij.execution.AdditionalRunningOptions" open="true"
                     serviceImplementation="com.intellij.execution.EmptyAdditionalRunningOptions"/>
-    <projectService serviceInterface="com.intellij.execution.ExecutionManager"
+    <projectService serviceInterface="com.intellij.execution.ExecutionManager" open="true"
                     serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager"
                     serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
@@ -86,7 +86,7 @@
 
     <notificationGroup id="Test Runner" displayType="NONE" bundle="messages.TestRunnerBundle" key="notification.group.test.runner"/>
 
-    <projectService serviceImplementation="com.intellij.execution.configurations.RunConfigurationVcsSupport"/>
+    <projectService serviceImplementation="com.intellij.execution.configurations.RunConfigurationVcsSupport" open="true"/>
 
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
   </extensions>

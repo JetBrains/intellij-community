@@ -67,7 +67,7 @@
     </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="com.intellij.codeInsight.completion.InternalCompletionSettings"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.completion.InternalCompletionSettings" open="true"/>
     <applicationService serviceInterface="com.intellij.lang.documentation.ClientDocumentationSettings"
                         serviceImplementation="com.intellij.lang.documentation.LocalDocumentationSettings"
                         client="local" />

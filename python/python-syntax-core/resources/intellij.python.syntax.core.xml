@@ -10,7 +10,8 @@
     <moduleService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings$ModuleService"/>
     <applicationService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings$AppService"/>
     <applicationService serviceInterface="com.jetbrains.python.PythonCodeStyleService"
-                        serviceImplementation="com.jetbrains.python.PythonCodeStyleServiceImpl"/>
+                        serviceImplementation="com.jetbrains.python.PythonCodeStyleServiceImpl"
+                        open="true"/>
 
     <lang.formatter language="Python" implementationClass="com.jetbrains.python.formatter.PythonFormattingModelBuilder"/>
     <preFormatProcessor implementation="com.jetbrains.python.formatter.PyPreFormatProcessor"/>

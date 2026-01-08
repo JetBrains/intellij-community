@@ -28,7 +28,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.StartupWizardService"
+    <applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.StartupWizardService" open="true"
                         serviceImplementation="com.intellij.ide.startup.importSettings.data.DisabledStartupWizardPages"/>
 
     <transferSettings.thirdPartyProductSettingsTransfer id="VSCodeSettingsTransfer"

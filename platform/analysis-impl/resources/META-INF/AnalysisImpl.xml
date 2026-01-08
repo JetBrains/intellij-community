@@ -35,7 +35,7 @@
     </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.profile.codeInspection.InspectionProjectProfileManager"
+    <projectService serviceInterface="com.intellij.profile.codeInspection.InspectionProjectProfileManager" open="true"
       serviceImplementation="com.intellij.profile.codeInspection.ProjectInspectionProfileManager" preload="notHeadless"/>
     <projectService serviceInterface="com.intellij.packageDependencies.DependencyValidationManager"
                     serviceImplementation="com.intellij.packageDependencies.DependencyValidationManagerImpl"/>
@@ -47,7 +47,7 @@
     <applicationService serviceImplementation="com.intellij.codeInsight.CodeInsightSettings" client="all"/>
     <applicationSettings service="com.intellij.codeInsight.CodeInsightSettings"/>
 
-    <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService"
+    <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService" open="true"
                         serviceImplementation="com.intellij.codeInsight.completion.BaseCompletionService"/>
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginUtil"
                         serviceImplementation="com.intellij.ide.plugins.PluginUtilImpl"/>
@@ -61,7 +61,7 @@
                         serviceImplementation="com.intellij.codeInsight.template.TemplateBuilderFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.modcommand.ModCommandService"
                         serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandServiceImpl"/>
-    <applicationService serviceInterface="com.intellij.modcommand.ModCommandExecutor"
+    <applicationService serviceInterface="com.intellij.modcommand.ModCommandExecutor" open="true"
                         serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandBatchExecutorImpl"/>
 
     <projectService serviceInterface="com.intellij.psi.impl.cache.CacheManager"
@@ -70,7 +70,7 @@
                     serviceImplementation="com.intellij.psi.impl.search.PsiSearchHelperImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.ResolveScopeManager"
                     serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.module.impl.ModuleScopeProviderFactory"
+    <projectService serviceInterface="com.intellij.openapi.module.impl.ModuleScopeProviderFactory" open="true"
                     serviceImplementation="com.intellij.openapi.module.impl.scopes.ModuleScopeProviderFactoryImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.editor.LazyRangeMarkerFactory"

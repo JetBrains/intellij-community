@@ -40,7 +40,7 @@
                         serviceImplementation="com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl"/>
     <applicationSettings service="com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil"
+    <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil" open="true"
                         serviceImplementation="com.intellij.xdebugger.impl.XDebuggerUtilImpl"/>
 
     <execution.inlineResumeCreator implementation="com.intellij.xdebugger.impl.runToolbar.XDebuggerInlineResumeCreator" order="first"/>
@@ -109,7 +109,7 @@
 
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
 
-    <projectService serviceImplementation="com.intellij.xdebugger.impl.frame.XDebuggerExecutionStackDescriptionService" />
+    <projectService serviceImplementation="com.intellij.xdebugger.impl.frame.XDebuggerExecutionStackDescriptionService" open="true" />
     <postStartupActivity implementation="com.intellij.xdebugger.impl.hotswap.HotSwapManagerInitActivity"/>
     <projectService serviceInterface="com.intellij.xdebugger.hotswap.HotSwapSessionManager"
                     serviceImplementation="com.intellij.xdebugger.impl.hotswap.HotSwapSessionManagerImpl"/>
@@ -125,14 +125,14 @@
     <advancedSetting id="debugger.inlay.run.to.cursor" default="true"
                      groupKey="group.advanced.settings.debugger" bundle="messages.XDebuggerBundle"/>
 
-    <projectService serviceInterface="com.intellij.xdebugger.impl.RunToCursorService"
+    <projectService serviceInterface="com.intellij.xdebugger.impl.RunToCursorService" open="true"
                     serviceImplementation="com.intellij.xdebugger.impl.DefaultRunToCursorService"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.xdebugger.impl.settings.XDebuggerSettingsStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerPerformanceCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.hotswap.HotSwapStatistics"/>
 
-    <applicationService serviceInterface="com.intellij.xdebugger.attach.XAttachRecentItemsMatcher"
+    <applicationService serviceInterface="com.intellij.xdebugger.attach.XAttachRecentItemsMatcher" open="true"
                         serviceImplementation="com.intellij.xdebugger.impl.actions.DefaultAttachRecentItemsMatcher"/>
 
     <gutterMarkPreprocessor implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointGutterIconMerge"/>

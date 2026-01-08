@@ -17,15 +17,15 @@
                              bundle="messages.IdeBundle"/>
 
     <daemon.changeLocalityDetector implementation="com.intellij.ide.todo.MultiLineTodoLocalityDetector"/>
-    <projectService serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper"/>
-    <projectService serviceImplementation="com.intellij.ide.todo.TodoView" client="all"/>
+    <projectService serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper" open="true"/>
+    <projectService serviceImplementation="com.intellij.ide.todo.TodoView" open="true" client="all"/>
 
-    <projectService serviceInterface="com.intellij.psi.impl.cache.TodoCacheManager"
+    <projectService serviceInterface="com.intellij.psi.impl.cache.TodoCacheManager" open="true"
                     serviceImplementation="com.intellij.psi.impl.cache.impl.EmptyTodoCacheManager"/>
 
     <toolWindow id="TODO" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowTodo"
                 factoryClass="com.intellij.ide.todo.TodoToolWindowFactory" canCloseContents="true"/>
-    <projectService serviceImplementation="com.intellij.ide.todo.TodoViewChangesSupport"/>
+    <projectService serviceImplementation="com.intellij.ide.todo.TodoViewChangesSupport" open="true"/>
   </extensions>
 
   <actions>

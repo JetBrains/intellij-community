@@ -7,7 +7,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.platform.backend.workspace.WorkspaceModel"
+    <projectService serviceInterface="com.intellij.platform.backend.workspace.WorkspaceModel" open="true"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl"/>
 
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceEntitiesLifecycleActivity"/>

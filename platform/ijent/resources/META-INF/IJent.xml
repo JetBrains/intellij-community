@@ -6,11 +6,11 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
-      serviceInterface="com.intellij.platform.ijent.spi.IjentSessionProvider"
+      serviceInterface="com.intellij.platform.ijent.spi.IjentSessionProvider" open="true"
       serviceImplementation="com.intellij.platform.ijent.spi.DefaultIjentSessionProvider"/>
 
     <applicationService
-      serviceInterface="com.intellij.platform.ijent.IjentExecFileProvider"
+      serviceInterface="com.intellij.platform.ijent.IjentExecFileProvider" open="true"
       serviceImplementation="com.intellij.platform.ijent.DefaultIjentExecFileProvider"/>
 
   </extensions>

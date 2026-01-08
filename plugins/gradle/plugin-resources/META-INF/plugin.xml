@@ -157,17 +157,17 @@
     <externalSystemTaskNotificationListener
       implementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager$TaskNotificationLayoutParametersCacheCleanupListener"/>
 
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager" open="true"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager"
                         serviceImplementation="org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManagerImpl"/>
 
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.execution.SystemPropertiesAdjuster"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSystemSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.execution.SystemPropertiesAdjuster" open="true"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSystemSettings" open="true"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilitySupportUpdater"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettingsMigration$LegacyDefaultGradleProjectSettings"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings" open="true"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleImportHintService"
                     configurationSchemaKey="importHint.gradle" />
