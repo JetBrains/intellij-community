@@ -25,7 +25,6 @@ import com.intellij.util.lateinitVal
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
@@ -52,11 +51,6 @@ internal sealed class HatchUIError(message: String) : MessageError(message) {
             hatchExecutablePath)
   )
 
-  class HatchExecutionFailure(execError: ExecError) : HatchUIError(
-    message("sdk.create.custom.hatch.error.execution.failed",
-            execError.asCommand
-    )
-  )
 }
 
 internal fun String.toPath(): PyResult<Path> {

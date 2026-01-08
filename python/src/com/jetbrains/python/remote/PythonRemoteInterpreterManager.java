@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.remote;
 
-import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -32,15 +31,6 @@ public abstract class PythonRemoteInterpreterManager {
 
   public static @Nullable PythonRemoteInterpreterManager getInstance() {
     return ContainerUtil.getFirstItem(EP_NAME.getExtensionList());
-  }
-
-  public static void addUnbuffered(@NotNull ParamsGroup exeGroup) {
-    for (String param : exeGroup.getParametersList().getParameters()) {
-      if ("-u".equals(param)) {
-        return;
-      }
-    }
-    exeGroup.addParameter("-u");
   }
 
   /**
@@ -88,11 +78,5 @@ public abstract class PythonRemoteInterpreterManager {
     }
 
     return newPathMapper;
-  }
-
-  public static class PyHelpersNotReadyException extends RuntimeException {
-    public PyHelpersNotReadyException(Throwable cause) {
-      super("Python helpers are not copied yet to the remote host. Please wait until remote interpreter initialization finishes.", cause);
-    }
   }
 }
