@@ -4,6 +4,7 @@ package com.intellij.vcs.log.data
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData.*
@@ -28,6 +29,8 @@ import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Consumer
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 private val LOG = Logger.getInstance(VcsLogRefresherImpl::class.java)
 
@@ -208,15 +211,15 @@ internal class VcsLogRefresherImpl(
     tracer.trace(Initializing) {
       LOG.debug("Loading the first block")
       val commitCountRequirements = SimpleLogProviderRequirements(recentCommitCount)
-      val data = loadRecentData(providers.keys.associateWith { commitCountRequirements })
-      LOG.trace("First block loaded")
+      val (data, loadTime) = measureTimedValue { loadRecentData(providers.keys.associateWith { commitCountRequirements }) }
+      LOG.trace { "First block loaded in ${loadTime.inWholeMilliseconds} ms" }
       checkCanceled()
-      val compoundList = multiRepoJoin(data.commits).take(recentCommitCount)
-      LOG.trace("First block joined")
+      val (compoundList, joinTime) = measureTimedValue { multiRepoJoin(data.commits).take(recentCommitCount) }
+      LOG.trace { "First block joined in ${joinTime.inWholeMilliseconds} ms" }
       checkCanceled()
-      VcsLogGraphDataFactory.buildData(compoundList, data.refs, providers, storage, false).also {
-        LOG.trace("First block built")
-      }
+      val (result, buildTime) = measureTimedValue { VcsLogGraphDataFactory.buildData(compoundList, data.refs, providers, storage, false) }
+      LOG.trace { "First block built in ${buildTime.inWholeMilliseconds} ms" }
+      result
     }
 
   private suspend fun loadUpdatedDataPack(
@@ -230,12 +233,15 @@ internal class VcsLogRefresherImpl(
       val currentRefs = dataPack.refsModel.refsByRoot
       var commitCount = recentCommitCount
       repeat(2) {
-        val currentAttemptData = loadRecentData(prepareRequirements(roots, commitCount, currentRefs))
-        LOG.trace("Recent log loaded")
+        val (currentAttemptData, loadTime) = measureTimedValue {
+          loadRecentData(prepareRequirements(roots, commitCount, currentRefs))
+        }
+        LOG.trace { "Recent log loaded in ${loadTime.inWholeMilliseconds} ms" }
         checkCanceled()
         refreshSessionData.put(currentAttemptData)
 
-        val compoundLog = multiRepoJoin(refreshSessionData.commits)
+        val (compoundLog, joinTime) = measureTimedValue { multiRepoJoin(refreshSessionData.commits) }
+        LOG.trace { "Recent log joined in ${joinTime.inWholeMilliseconds} ms" }
         checkCanceled()
         val allNewRefs = currentRefs.toMutableMap().apply {
           replaceAll { root, refs ->
@@ -243,11 +249,12 @@ internal class VcsLogRefresherImpl(
           }
         }
         val joinedFullLog = join(permanentGraph.allCommits.toList(), compoundLog, currentRefs, allNewRefs)
-        LOG.trace("Recent log joined")
         if (joinedFullLog != null) {
-          return@trace VcsLogGraphDataFactory.buildData(joinedFullLog, allNewRefs, providers, storage, true).also {
-            LOG.trace("Recent log built")
+          val (result, buildTime) = measureTimedValue {
+            VcsLogGraphDataFactory.buildData(joinedFullLog, allNewRefs, providers, storage, true)
           }
+          LOG.trace { "Recent log built in ${buildTime.inWholeMilliseconds} ms" }
+          return@trace result
         }
         commitCount *= 5
       }
@@ -259,15 +266,15 @@ internal class VcsLogRefresherImpl(
   private suspend fun loadFullLog(): VcsLogGraphData =
     tracer.trace(LoadingFullLog) {
       LOG.debug("Loading the full log")
-      val logInfo = readFullLogFromVcs()
-      LOG.trace("Full log loaded")
+      val (logInfo, loadTime) = measureTimedValue { readFullLogFromVcs() }
+      LOG.trace { "Full log loaded in ${loadTime.inWholeMilliseconds} ms" }
       checkCanceled()
-      val graphCommits = multiRepoJoin(logInfo.commits)
-      LOG.trace("Full log joined")
+      val (graphCommits, joinTime) = measureTimedValue { multiRepoJoin(logInfo.commits) }
+      LOG.trace { "Full log joined in ${joinTime.inWholeMilliseconds} ms" }
       checkCanceled()
-      VcsLogGraphDataFactory.buildData(graphCommits, logInfo.refs, providers, storage, true).also {
-        LOG.trace("Full log built")
-      }
+      val (result, buildTime) = measureTimedValue { VcsLogGraphDataFactory.buildData(graphCommits, logInfo.refs, providers, storage, true) }
+      LOG.trace { "Full log built in ${buildTime.inWholeMilliseconds} ms" }
+      result
     }
 
   private suspend fun loadSmallDataPack(): VcsLogGraphData =
@@ -276,13 +283,13 @@ internal class VcsLogRefresherImpl(
       LOG.debug("Loading a small datapack for $commitCount commits")
       try {
         val requirements = prepareRequirements(providers.keys, commitCount, null)
-        val data = loadRecentData(requirements)
-        LOG.trace("Small pack loaded")
-        val compoundList = multiRepoJoin(data.commits).take(commitCount)
-        LOG.trace("Small pack joined")
-        VcsLogGraphDataFactory.buildOverlayData(compoundList, data.refs, providers, storage).also {
-          LOG.trace("Small pack built")
-        }
+        val (data, loadTime) = measureTimedValue { loadRecentData(requirements) }
+        LOG.trace { "Small pack loaded in ${loadTime.inWholeMilliseconds} ms" }
+        val (compoundList, joinTime) = measureTimedValue { multiRepoJoin(data.commits).take(commitCount) }
+        LOG.trace { "Small pack joined in ${joinTime.inWholeMilliseconds} ms" }
+        val (result, buildTime) = measureTimedValue { VcsLogGraphDataFactory.buildOverlayData(compoundList, data.refs, providers, storage) }
+        LOG.trace { "Small pack built in ${buildTime.inWholeMilliseconds} ms" }
+        return@trace result
       }
       catch (ce: CancellationException) {
         throw ce
@@ -309,23 +316,27 @@ internal class VcsLogRefresherImpl(
       LOG.debug("Loading the recent data by requirements $requirements")
       val refreshSessionData = RefreshSessionData()
       for ((root, requirements) in requirements) {
-        LOG.trace("Loading recent data for root $root with requirements $requirements")
+        LOG.trace { "Loading recent data for root $root with requirements $requirements" }
         val provider = requireNotNull(providers[root]) { "Cannot find provider for root $root" }
         tracer.trace(ReadingRecentCommitsInRoot) {
           it.setAttribute("rootName", root.getName())
-          val data = withContext(Dispatchers.IO) {
-            coroutineToIndicator {
-              provider.readFirstBlock(root, requirements)
+          val (data, readTime) = measureTimedValue {
+            withContext(Dispatchers.IO) {
+              coroutineToIndicator {
+                provider.readFirstBlock(root, requirements)
+              }
             }
           }
-          LOG.trace("Recent data loaded")
+          LOG.trace { "Recent data loaded in ${readTime.inWholeMilliseconds} ms" }
           checkCanceled()
-          val commits = tracer.trace(CompactingCommits) {
-            data.commits.map {
-              compactCommit(it, root)
+          val (commits, compactTime) = measureTimedValue {
+            tracer.trace(CompactingCommits) {
+              data.commits.map {
+                compactCommit(it, root)
+              }
             }
           }
-          LOG.trace("Recent commits compacted")
+          LOG.trace { "Recent commits compacted in ${compactTime.inWholeMilliseconds} ms" }
           checkCanceled()
           refreshSessionData.put(root, commits, CompressedRefs(data.refs, storage))
 
@@ -335,13 +346,15 @@ internal class VcsLogRefresherImpl(
               add(metadata.committer)
             }
           }
-          LOG.trace("Storing recent data: ${commits.size} commits, ${users.size} users")
-          commitDataConsumer?.storeData(root, commits, users)
-          commitDataConsumer?.storeRecentDetails(data.commits)
+          val storeTime = measureTime {
+            commitDataConsumer?.storeData(root, commits, users)
+            commitDataConsumer?.storeRecentDetails(data.commits)
+          }
+          LOG.trace { "Stored recent data: ${commits.size} commits, ${users.size} users in ${storeTime.inWholeMilliseconds} ms" }
         }
       }
-      LOG.trace("Recent data flushing")
-      commitDataConsumer?.onAllDataLoaded(onFullReload = false)
+      val flushTime = measureTime { commitDataConsumer?.onAllDataLoaded(onFullReload = false) }
+      LOG.trace { "Recent data flushed in ${flushTime.inWholeMilliseconds} ms" }
       refreshSessionData
     }
 
@@ -353,22 +366,25 @@ internal class VcsLogRefresherImpl(
         tracer.trace(ReadingAllCommitsInRoot) { span ->
           span.setAttribute("rootName", root.getName())
           val graphCommits = mutableListOf<GraphCommit<Int>>()
-          val data = withContext(Dispatchers.IO) {
-            coroutineToIndicator {
-              provider.readAllHashes(root) {
-                graphCommits.add(compactCommit(it, root))
+          val (data, readTime) = measureTimedValue {
+            withContext(Dispatchers.IO) {
+              coroutineToIndicator {
+                provider.readAllHashes(root) {
+                  graphCommits.add(compactCommit(it, root))
+                }
               }
             }
           }
-          LOG.trace("Full data loaded and compacted")
+          LOG.trace { "Full data loaded and compacted in ${readTime.inWholeMilliseconds} ms" }
           refreshSessionData.put(root, graphCommits, CompressedRefs(data.refs, storage))
 
-          LOG.trace("Storing full data: ${graphCommits.size} commits, ${data.users.size} users")
-          commitDataConsumer?.storeData(root, graphCommits, data.users)
+          val storeTime = measureTime { commitDataConsumer?.storeData(root, graphCommits, data.users) }
+          LOG.trace { "Stored full data: ${graphCommits.size} commits, ${data.users.size} users in ${storeTime.inWholeMilliseconds} ms" }
         }
       }
       LOG.trace("Full data flushing")
-      commitDataConsumer?.onAllDataLoaded(onFullReload = true)
+      val flushTime = measureTime { commitDataConsumer?.onAllDataLoaded(onFullReload = true) }
+      LOG.trace { "Full data flushed in ${flushTime.inWholeMilliseconds} ms" }
       refreshSessionData
     }
 
