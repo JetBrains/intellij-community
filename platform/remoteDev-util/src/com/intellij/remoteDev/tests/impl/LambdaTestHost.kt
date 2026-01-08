@@ -12,13 +12,13 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.idea.AppMode
-import com.intellij.openapi.application.*
-import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.setSuspend
 import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.impl.utils.SerializedLambdaWithIdeContextHelper
@@ -279,9 +279,16 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
           }
 
           assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
-          assert(ideContext.coroutineContext.isActive) { "Lambda task coroutine context should be active" }
 
-          withContext(ideContext.coroutineContext + Dispatchers.Default + CoroutineName("Lambda task: ${lambda.stepName}") + clientIdContextToRunLambda()) {
+          val scopeToUse = if (lambda.globalTestScope) {
+            getLambdaIdeContext()
+          }
+          else {
+            assert(ideContext.coroutineContext.isActive) { "Lambda task coroutine context should be active" }
+            ideContext
+          }
+
+          withContext(scopeToUse.coroutineContext + Dispatchers.Default + CoroutineName("Lambda task: ${lambda.stepName}") + clientIdContextToRunLambda()) {
             runLogged(lambda.stepName, 10.minutes) {
               val urls = lambda.classPath.map { Path(it).toUri().toURL() }
               URLClassLoader(urls.toTypedArray(), testModuleDescriptor?.pluginClassLoader ?: this::class.java.classLoader).use { cl ->
@@ -289,9 +296,10 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
                   val params = lambda.parametersBase64.map {
                     loader.decodeObject<String>(it, classLoader = cl) ?: error("Parameter $it is not serializable")
                   }
-                  val serializableConsumer = loader.getSuspendingSerializableConsumer<LambdaIdeContext, Any>(lambda.serializedDataBase64, classLoader = cl)
+                  val serializableConsumer =
+                    loader.getSuspendingSerializableConsumer<LambdaIdeContext, Any>(lambda.serializedDataBase64, classLoader = cl)
                   val result = with(serializableConsumer) {
-                    with(ideContext) {
+                    with(scopeToUse) {
                       runSerializedLambda(params)
                     }
                   }

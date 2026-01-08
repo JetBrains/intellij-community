@@ -26,6 +26,7 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
     name: String,
     timeout: Duration = 1.minutes,
     parameters: List<Serializable> = emptyList(),
+    globalTestScope: Boolean = false,
     lambdaConsumer: SerializedLambdaWithIdeContextHelper.SuspendingSerializableConsumer<T, R>,
   ): R? {
     val protocol = this@runGetResult.protocol
@@ -41,7 +42,8 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
         LambdaRdSerialized(name,
                            serializedLambda.serializedDataBase64,
                            serializedLambda.classPath.map { it.canonicalPath },
-                           serializedLambda.parametersBase64)
+                           serializedLambda.parametersBase64,
+                           globalTestScope)
 
       return runLogged(lambdaRdSerialized.stepName, timeout) {
         val returnValueBase64 = runSerializedLambda.startSuspending(protocol.lifetime, lambdaRdSerialized)
@@ -75,18 +77,23 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
   suspend inline fun runInBackendGetResult(
     name: String = defaultStepName(),
     parameters: List<Serializable> = emptyList(),
+    globalTestScope: Boolean = false,
     lambdaConsumer: SerializedLambdaWithIdeContextHelper.SuspendingSerializableConsumer<LambdaBackendContext, Serializable>,
   ): Serializable {
-    return (backendRdSession ?: rdSession).runGetResult(name, parameters = parameters, lambdaConsumer = lambdaConsumer)
+    return (backendRdSession ?: rdSession).runGetResult(name,
+                                                        parameters = parameters,
+                                                        lambdaConsumer = lambdaConsumer,
+                                                        globalTestScope = globalTestScope)
            ?: error("Run hasn't returned a Serializable result")
   }
 
   suspend inline fun runInBackend(
     name: String = defaultStepName(),
     parameters: List<Serializable> = emptyList(),
+    globalTestScope: Boolean = false,
     lambdaConsumer: SerializedLambdaWithIdeContextHelper.SuspendingSerializableConsumer<LambdaBackendContext, Any?>,
   ) {
-    runInBackendGetResult(name, parameters) { parameters ->
+    runInBackendGetResult(name, parameters, globalTestScope) { parameters ->
       with(lambdaConsumer) {
         runSerializedLambda(parameters)
       }

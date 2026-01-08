@@ -50,6 +50,7 @@ object LambdaTestModel : Ext(LambdaTestRoot) {
     field("serializedDataBase64", string)
     field("classPath", immutableList(string))
     field("parametersBase64", immutableList(string))
+    field("globalTestScope", bool)
   }
 
   private val LambdaRdTestSession = classdef {

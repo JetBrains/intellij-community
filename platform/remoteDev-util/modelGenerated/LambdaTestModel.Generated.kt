@@ -55,7 +55,7 @@ class LambdaTestModel private constructor(
         
         private val __LambdaRdTestSessionNullableSerializer = LambdaRdTestSession.nullable()
         
-        const val serializationHash = 1942119749681934124L
+        const val serializationHash = 7766307017172391987L
         
     }
     override val serializersOwner: ISerializersOwner get() = LambdaTestModel
@@ -132,7 +132,8 @@ data class LambdaRdSerialized (
     val stepName: String,
     val serializedDataBase64: String,
     val classPath: List<String>,
-    val parametersBase64: List<String>
+    val parametersBase64: List<String>,
+    val globalTestScope: Boolean
 ) : IPrintable {
     //companion
     
@@ -146,7 +147,8 @@ data class LambdaRdSerialized (
             val serializedDataBase64 = buffer.readString()
             val classPath = buffer.readList { buffer.readString() }
             val parametersBase64 = buffer.readList { buffer.readString() }
-            return LambdaRdSerialized(stepName, serializedDataBase64, classPath, parametersBase64)
+            val globalTestScope = buffer.readBool()
+            return LambdaRdSerialized(stepName, serializedDataBase64, classPath, parametersBase64, globalTestScope)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdSerialized)  {
@@ -154,6 +156,7 @@ data class LambdaRdSerialized (
             buffer.writeString(value.serializedDataBase64)
             buffer.writeList(value.classPath) { v -> buffer.writeString(v) }
             buffer.writeList(value.parametersBase64) { v -> buffer.writeString(v) }
+            buffer.writeBool(value.globalTestScope)
         }
         
         
@@ -173,6 +176,7 @@ data class LambdaRdSerialized (
         if (serializedDataBase64 != other.serializedDataBase64) return false
         if (classPath != other.classPath) return false
         if (parametersBase64 != other.parametersBase64) return false
+        if (globalTestScope != other.globalTestScope) return false
         
         return true
     }
@@ -183,6 +187,7 @@ data class LambdaRdSerialized (
         __r = __r*31 + serializedDataBase64.hashCode()
         __r = __r*31 + classPath.hashCode()
         __r = __r*31 + parametersBase64.hashCode()
+        __r = __r*31 + globalTestScope.hashCode()
         return __r
     }
     //pretty print
@@ -193,6 +198,7 @@ data class LambdaRdSerialized (
             print("serializedDataBase64 = "); serializedDataBase64.print(printer); println()
             print("classPath = "); classPath.print(printer); println()
             print("parametersBase64 = "); parametersBase64.print(printer); println()
+            print("globalTestScope = "); globalTestScope.print(printer); println()
         }
         printer.print(")")
     }
