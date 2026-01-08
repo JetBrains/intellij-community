@@ -80,8 +80,14 @@ internal class GitWorkingTreeDialog(
 
   private data class BranchWithWorkingTree(val branch: GitBranch, val workingTree: GitWorkingTree?)
 
-  private fun GitStandardLocalBranch.toBranchWithWorkingTree(): BranchWithWorkingTree =
-    BranchWithWorkingTree(this, branchToWorkingTreeMap[this])
+  private fun GitBranch.toBranchWithWorkingTree(): BranchWithWorkingTree {
+    return if (this is GitStandardLocalBranch) {
+      BranchWithWorkingTree(this, branchToWorkingTreeMap[this])
+    }
+    else {
+      BranchWithWorkingTree(this, null)
+    }
+  }
 
   override fun createCenterPanel(): JComponent {
     return panel {

@@ -141,7 +141,7 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
     REBASE_START_USING_LOG_EVENT.log(project, *eventPairs)
   }
 
-  fun logCreateWorktreeActionInvoked(e: AnActionEvent, branch: GitStandardLocalBranch?): StructuredIdeActivity {
+  fun logCreateWorktreeActionInvoked(e: AnActionEvent, branch: GitReference?): StructuredIdeActivity {
     return WORKING_TREE_CREATION_ACTIVITY.started(e.project) {
       listOf(EventFields.ActionPlace.with(e.place), WITH_PROVIDED_BRANCH.with(branch != null))
     }

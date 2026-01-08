@@ -18,9 +18,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.vcs.git.actions.GitSingleRefActions
 import fleet.util.safeAs
+import git4idea.GitBranch
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitOperationsCollector
-import git4idea.GitStandardLocalBranch
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
@@ -45,7 +45,7 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
 
     e.presentation.isEnabledAndVisible = true
     e.presentation.icon = computeIcon(e)
-    val localBranchFromContext = getLocalBranchFromContext(e, singleRepository)
+    val localBranchFromContext = getBranchFromContext(e, singleRepository)
     if (localBranchFromContext == null) {
       e.presentation.text = GitBundle.message("action.Git.CreateNewWorkingTree.text")
       e.presentation.description = GitBundle.message("action.Git.CreateNewWorkingTree.description")
@@ -69,12 +69,12 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val repository = GitWorkingTreesService.getRepoForWorkingTreesSupport(project) ?: return
-    val localBranchFromContext = getLocalBranchFromContext(e, repository)
-    val ideActivity = GitOperationsCollector.logCreateWorktreeActionInvoked(e, localBranchFromContext)
+    val branchFromContext = getBranchFromContext(e, repository)
+    val ideActivity = GitOperationsCollector.logCreateWorktreeActionInvoked(e, branchFromContext)
     e.coroutineScope.launch(Dispatchers.Default) {
       val preDialogData = readAction {
         val initialParentPath = computeInitialParentPath(project, repository)
-        GitWorkingTreePreDialogData(project, repository, ideActivity, localBranchFromContext, initialParentPath)
+        GitWorkingTreePreDialogData(project, repository, ideActivity, branchFromContext, initialParentPath)
       }
 
       withContext(Dispatchers.UiWithModelAccess) {
@@ -89,14 +89,14 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
     }
   }
 
-  private fun getLocalBranchFromContext(e: AnActionEvent, repository: GitRepository?): GitStandardLocalBranch? {
+  private fun getBranchFromContext(e: AnActionEvent, repository: GitRepository?): GitBranch? {
     val explicitRefFromCtx = e.getData(GitSingleRefActions.SELECTED_REF_DATA_KEY)
     val ref = when {
       explicitRefFromCtx != null -> explicitRefFromCtx
       e.getData(GitBranchActionsDataKeys.USE_CURRENT_BRANCH) == true -> repository?.currentBranch
       else -> null
     }
-    return ref.safeAs<GitStandardLocalBranch>()
+    return ref.safeAs<GitBranch>()
   }
 
   /**
