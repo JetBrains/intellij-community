@@ -7,6 +7,12 @@ import com.intellij.openapi.util.NlsActions
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Represents additional information associated with search results or items in Search Everywhere.
+ * It's supposed to be rendered at the bottom panel of the Search Everywhere popup
+ *
+ * See [SeExtendedInfoBuilder]
+ */
 @ApiStatus.Experimental
 @Serializable
 sealed interface SeExtendedInfo {
@@ -19,6 +25,9 @@ sealed interface SeExtendedInfo {
   val modifiers: Int?
 }
 
+/**
+ * Builder for [SeExtendedInfo]
+ */
 @ApiStatus.Experimental
 class SeExtendedInfoBuilder {
   var text: String? = null
