@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.codevision
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.utils.codeVision.CodeVisionTestCase
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.io.File
@@ -14,6 +15,7 @@ abstract class AbstractKotlinCodeVisionProviderTest :
 
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }
+        ConfigLibraryUtil.configureKotlinRuntime(module)
     }
 
     fun doTest(testPath: String) { // named according to the convention imposed by GenerateTests

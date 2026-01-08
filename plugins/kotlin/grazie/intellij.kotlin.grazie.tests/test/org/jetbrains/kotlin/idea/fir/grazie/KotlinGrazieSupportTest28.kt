@@ -6,14 +6,20 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContentTest
 import com.intellij.grazie.text.TextExtractor
+import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 class KotlinGrazieSupportTest28 : GrazieTestBase(), ExpectedPluginModeProvider {
     override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }
+    }
+
+    override fun getProjectDescriptor(): LightProjectDescriptor {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
     override val additionalEnabledRules: Set<String> = setOf("UPPERCASE_SENTENCE_START")
