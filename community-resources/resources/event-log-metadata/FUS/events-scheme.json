@@ -11228,16 +11228,22 @@
       "event_id" : [ "{enum#__event_id}" ],
       "event_data" : {
         "action_id" : [ "{enum:git4idea.rebase.abort|git4idea.rebase.continue|git4idea.rebase.retry|git4idea.rebase.resolve|git4idea.rebase.stage.and.retry|git.gpg.agent.configuration.success.manual.action|git.gpg.agent.configuration.propose.manual.action|git.gpg.agent.configuration.propose.suggestion.manual.action|git.gpg.agent.configuration.propose.configure.action|git.gpg.agent.configuration.propose.suggestion.configure.action}", "{util#action}" ],
+        "backend_batch_size" : [ "{regexp#integer}" ],
+        "backend_change_reason" : [ "{enum:INIT|COMMAND|UNDO_SPY_COMMAND|DOCUMENT_CHANGE|SELECTION_CHANGE|CARET_CHANGE|OTHER|UNKNOWN}" ],
+        "backend_change_reason_extra" : [ "{util#BackendChangeReasonExtra}" ],
         "cancelled_requests" : [ "{regexp#integer}" ],
         "column_change" : [ "{regexp#integer}" ],
+        "current_file" : [ "{util#current_file}" ],
         "duration_ms" : [ "{regexp#integer}" ],
         "file_type" : [ "{util#file_type}" ],
         "is_initial_change" : [ "{enum#boolean}" ],
+        "lang" : [ "{util#lang}" ],
         "line_change" : [ "{regexp#integer}" ],
         "offset_change" : [ "{regexp#integer}" ],
         "plugin" : [ "{util#plugin}" ],
         "plugin_type" : [ "{util#plugin_type}" ],
         "plugin_version" : [ "{util#plugin_version}" ],
+        "processing_batch_size" : [ "{regexp#integer}" ],
         "rebase_session_type" : [ "{enum:RESPONSE_HANDLING|BACKEND_CHANGE|RECOVERY|RETRY|OTHER}" ],
         "recovery_reason" : [ "{util#class_name}" ],
         "redone_requests" : [ "{regexp#integer}" ],
@@ -15277,5 +15283,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6613"
+  "version" : "6614"
 }
