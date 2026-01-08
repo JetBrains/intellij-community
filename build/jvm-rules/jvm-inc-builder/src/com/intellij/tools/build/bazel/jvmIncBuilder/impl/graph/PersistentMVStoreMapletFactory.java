@@ -25,9 +25,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 // suitable for relatively small amounts of stored data
@@ -185,7 +183,9 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
     private final Object2IntMap<String> myToIntMap = new Object2IntOpenHashMap<>();
     private final Int2ObjectMap<String> myToStringMap = new Int2ObjectOpenHashMap<>();
     private final MVMap<String, Integer> myStoreMap;
-    private Object2IntMap<String> myDelta = new Object2IntOpenHashMap<>();
+
+    record EnumeratorEntry(String str, int num) {}
+    private List<EnumeratorEntry> myDelta = new ArrayList<>();
 
     MVSEnumerator(MVStore store) {
       myStoreMap = store.openMap("string-table");
@@ -198,8 +198,14 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
     }
 
     @Override
-    public synchronized String toString(int num) {
-      return myToStringMap.get(num);
+    public synchronized String toString(int num) throws IOException {
+      String str = myToStringMap.get(num);
+      if (str == null) {
+        throw new IOException(
+          "Mapping for number " + num + " does not exist. Current string table size: " + myToStringMap.size() + " entries."
+        );
+      }
+      return str;
     }
 
     @Override
@@ -209,21 +215,23 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
       if (num == currentSize) { // not in map yet
         myToIntMap.put(str, num);
         myToStringMap.put(num, str);
-        myDelta.put(str, num);
+        myDelta.add(new EnumeratorEntry(str, num));
       }
       return num;
     }
 
     public boolean flush() {
-      Object2IntMap<String> delta;
+      List<EnumeratorEntry> delta;
       synchronized (this) {
         if (myDelta.isEmpty()) {
           return false;
         }
         delta = myDelta;
-        myDelta = new Object2IntOpenHashMap<>();
+        myDelta = new ArrayList<>();
       }
-      myStoreMap.putAll(delta);
+      for (EnumeratorEntry entry : delta) {
+        myStoreMap.put(entry.str, entry.num);
+      }
       return true;
     }
   }

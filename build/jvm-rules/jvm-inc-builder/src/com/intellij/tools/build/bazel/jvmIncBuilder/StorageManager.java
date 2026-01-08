@@ -115,13 +115,21 @@ public class StorageManager implements CloseableExt {
     int maxBuilderThreads = Math.min(8, Runtime.getRuntime().availableProcessors());
     var containerFactory = new PersistentMVStoreMapletFactory(filePath, maxBuilderThreads);
 
-    if (isKotlinCriDataGenerationEnabled) {
-      return new DependencyGraphImpl(
-        containerFactory,
-        DependencyGraphImpl.IndexFactory.create(LookupsIndex::new)
-      );
-    } else {
-      return new DependencyGraphImpl(containerFactory);
+    try {
+      if (isKotlinCriDataGenerationEnabled) {
+        return new DependencyGraphImpl(
+          containerFactory,
+          DependencyGraphImpl.IndexFactory.create(LookupsIndex::new)
+        );
+      }
+      else {
+        return new DependencyGraphImpl(containerFactory);
+      }
+    }
+    catch (Throwable e) {
+      // treat any unexpected exception on graph initialization as graph storage corruption
+      // the calling logic will decide on the way the error is handled
+      throw new IOException(e);
     }
   }
 
