@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExecutor
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ExplainInfo
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutput
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputType
-import org.jetbrains.kotlin.idea.util.JavaParametersBuilder
+import com.intellij.execution.JavaParametersBuilder
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path

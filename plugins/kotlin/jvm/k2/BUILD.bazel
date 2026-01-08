@@ -28,7 +28,6 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/util/coroutines",
     "//plugins/kotlin/base/util",
-    "//plugins/kotlin/idea",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/psi",
     "//platform/execution",

@@ -1,8 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution
 
-package org.jetbrains.kotlin.idea.util
-
-import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -33,7 +31,7 @@ class JavaParametersBuilder(private val project: Project) {
     /**
      * This method is partially copied from IDEA sources but doesn't check presence of dynamic.classpath property
      * because we want to shorten command line for scratches and repl anyway
-     * @see [com.intellij.execution.ShortenCommandLine.getDefaultMethod]
+     * @see [ShortenCommandLine.getDefaultMethod]
      */
     private fun getDefaultShortenCommandLineMethod(rootPath: String?): ShortenCommandLine {
         return if (rootPath != null && JdkUtil.isModularRuntime(rootPath)) {

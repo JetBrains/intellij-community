@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.LOG
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.printDebugMessage
-import org.jetbrains.kotlin.idea.util.JavaParametersBuilder
+import com.intellij.execution.JavaParametersBuilder
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
