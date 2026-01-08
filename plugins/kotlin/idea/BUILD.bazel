@@ -90,7 +90,6 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/scripting/scripting.k1",
     "//platform/util/progress",
-    "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//plugins/kotlin/highlighting/highlighting-k1:kotlin-highlighting-k1",

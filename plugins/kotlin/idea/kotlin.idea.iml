@@ -71,7 +71,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="kotlin.base.scripting.k1" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
-    <orderEntry type="module" module-name="intellij.kotlin.base.externalSystem" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.highlighting.shared" />
     <orderEntry type="module" module-name="kotlin.highlighting.k1" exported="" />
