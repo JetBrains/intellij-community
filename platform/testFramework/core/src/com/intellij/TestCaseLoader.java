@@ -376,9 +376,6 @@ public class TestCaseLoader {
   // called reflectively from `com.intellij.tests.JUnit5TeamCityRunner.CommonTestClassesFilter`
   @SuppressWarnings("unused")
   public static boolean isClassNameIncluded(String className) {
-    if (!INCLUDE_ALL_UNCONVENTIONALLY_NAMED_TESTS && !ClassFinder.isSuitableTestClassName(className, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS)) {
-      return false;
-    }
     if ("_FirstInSuiteTest".equals(className) || "_LastInSuiteTest".equals(className)) {
       return false;
     }

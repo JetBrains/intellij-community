@@ -1498,6 +1498,23 @@ private fun publishTestDiscovery(messages: BuildMessages, file: String?) {
 }
 
 private val COMMUNITY_AGGREGATOR_JPS_MODULES_ALLOWLIST = setOf(
+  "intellij.devkit.kotlin.tests",
+  "intellij.devkit.themes.tests",
+  "intellij.gradle.java.toml.tests",
+  "intellij.gradle.tests",
+  "intellij.java.dumb.completion.tests",
+  "intellij.kotlin.common.tests",
+  "intellij.platform.jewel.markdown.testing",
+  "intellij.platform.lang.testEntities",
+  "intellij.platform.remoteServers.targetsIntegrationTests",
+  "intellij.platform.workspace.storage.testEntities",
+  "intellij.python.test.env.common",
+  "intellij.python.test.env.conda",
+  "intellij.python.test.env.core",
+  "intellij.python.test.env.junit4",
+  "intellij.python.test.env.plain",
+  "intellij.python.test.env.uv",
+  "intellij.terminal.completion.tests",
   // no tests
   "kotlin.jvm-debugger.testFramework",
 )
