@@ -21,7 +21,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.analysis.platform" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.util.test-generator-api" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.scripting-support" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.maven.tests" scope="TEST" />

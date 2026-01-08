@@ -67,7 +67,6 @@ jvm_library(
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/jvm-debugger/base/util",
     "//plugins/kotlin/jvm-debugger/core",
     "//plugins/kotlin/jvm-debugger/coroutines",

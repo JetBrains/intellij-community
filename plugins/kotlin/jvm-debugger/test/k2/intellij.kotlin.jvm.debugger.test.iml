@@ -35,7 +35,6 @@
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.base.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.coroutines" scope="TEST" />
