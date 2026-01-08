@@ -13,6 +13,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     "//plugins/devkit",
+    "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
     "//plugins/devkit/devkit-tests:testFramework",
   ]
 )

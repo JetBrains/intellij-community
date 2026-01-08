@@ -47,6 +47,14 @@
                      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.UsePlatformProcessAwaitExitInspection"
                      key="inspection.use.platform.process.await.exit.display.name"/>
 
+    <localInspection language="UAST" shortName="InstanceIElementTypeField"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupBundle="messages.DevKitBundle"
+                     key="inspection.instance.ielement.type.field.display.name"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.InstanceIElementTypeFieldInspection"/>
+
     <localInspection language="kotlin"
                      projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitBundle"

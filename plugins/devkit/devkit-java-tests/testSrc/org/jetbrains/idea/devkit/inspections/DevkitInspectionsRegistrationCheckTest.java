@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalInspectionEP;
@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase {
 
-  private static final int EXPECTED_INSPECTIONS_NUMBER = 89;
+  private static final int EXPECTED_INSPECTIONS_NUMBER = 90;
 
   /**
    * Inspections that are finished and intentionally disabled.
