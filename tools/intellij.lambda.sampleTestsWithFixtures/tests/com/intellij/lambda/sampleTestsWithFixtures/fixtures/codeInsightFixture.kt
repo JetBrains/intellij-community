@@ -1,36 +1,34 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lambda.sampleTestsWithFixtures.util
+package com.intellij.lambda.sampleTestsWithFixtures.fixtures
 
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.trustedProjects.impl.TrustedProjectStartupDialog
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.util.Disposer
 import com.intellij.remoteDev.tests.LambdaBackendContext
+import com.intellij.remoteDev.tests.LambdaIdeContext
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 
+context(context: LambdaIdeContext)
+val codeInsightFixture: CodeInsightTestFixtureImpl
+  get() = newTestFixture<CodeInsightTestFixtureImpl> {
+    val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder("Test")
+    CodeInsightTestFixtureImpl(projectBuilder.fixture, TempDirTestFixtureImpl())
+  }
+
 context(lambdaBackendContext: LambdaBackendContext)
-suspend fun openNewProjectAndEditor(relativePath: String) {
-  val disposable = Disposer.newDisposable("Dialog setup")
-  TrustedProjectStartupDialog.setDialogChoiceInTests(OpenUntrustedProjectChoice.TRUST_AND_OPEN, disposable)
+suspend fun CodeInsightTestFixtureImpl.openNewProjectAndEditor(relativePath: String) {
+  TrustedProjectStartupDialog.setDialogChoiceInTests(OpenUntrustedProjectChoice.TRUST_AND_OPEN, lambdaBackendContext.globalDisposable)
   GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_SAME_WINDOW
 
-  val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder("Test")
-  val codeInsightFixture = CodeInsightTestFixtureImpl(projectBuilder.fixture, TempDirTestFixtureImpl())
-  lambdaBackendContext.addAfterEachCleanup {
-    codeInsightFixture.tearDown()
-    Disposer.dispose(disposable)
-  }
-  codeInsightFixture.setUp()
   writeAction {
-    codeInsightFixture.openFileInEditor(
-      codeInsightFixture
-        .addFileToProject(
-          relativePath,
-          // language=java
-          """
+    openFileInEditor(
+      addFileToProject(
+        relativePath,
+        // language=java
+        """
             package com.example;
 
             class Foo {
@@ -44,8 +42,8 @@ suspend fun openNewProjectAndEditor(relativePath: String) {
               private short unboxedS = 0;
             }
             """
-            .trimIndent(),
-        )
+          .trimIndent(),
+      )
         .virtualFile
     )
   }

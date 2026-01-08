@@ -5,8 +5,10 @@ import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 
-internal class TestFixtureImpl<T>(
+@ApiStatus.Internal
+class TestFixtureImpl<T>(
   private val debugString: String,
   initializer: TestFixtureInitializer<T>,
 ) : TestFixture<T> {

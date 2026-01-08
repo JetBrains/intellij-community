@@ -7,7 +7,6 @@ import com.intellij.lambda.testFramework.frameworkLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.isFocusAncestor
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.LambdaBackendContext
 import com.intellij.remoteDev.tests.LambdaIdeContext
@@ -108,11 +107,7 @@ suspend fun Project.waitHasNoVisibleFrame(timeout: Duration = 1.minutes) {
 context(lambdaBackendContext: LambdaBackendContext)
 suspend fun openProject(projectPath: Path): Project {
   frameworkLogger.info("Opening project at $projectPath")
-  val disposable = Disposer.newDisposable("Dialog setup")
-  lambdaBackendContext.addAfterEachCleanup {
-    Disposer.dispose(disposable)
-  }
-  TrustedProjectStartupDialog.setDialogChoiceInTests(OpenUntrustedProjectChoice.TRUST_AND_OPEN, disposable)
+  TrustedProjectStartupDialog.setDialogChoiceInTests(OpenUntrustedProjectChoice.TRUST_AND_OPEN, lambdaBackendContext.globalDisposable)
   val projectManager = ProjectManagerEx.getInstanceEx()
   val project = projectManager.openProjectAsync(
     projectIdentityFile = projectPath,

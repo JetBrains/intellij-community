@@ -1,7 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lambda.sampleTestsWithFixtures
 
-import com.intellij.lambda.sampleTestsWithFixtures.util.openNewProjectAndEditor
+import com.intellij.lambda.sampleTestsWithFixtures.fixtures.codeInsightFixture
+import com.intellij.lambda.sampleTestsWithFixtures.fixtures.openNewProjectAndEditor
 import com.intellij.lambda.testFramework.junit.RunInMonolithAndSplitMode
 import com.intellij.lambda.testFramework.testApi.editor.*
 import com.intellij.lambda.testFramework.testApi.getProjects
@@ -21,7 +22,7 @@ class SampleTest {
       val editorName = "Foo.java"
 
       runInBackend("Open project via fixture") {
-        openNewProjectAndEditor("/src/com/example/$editorName")
+        codeInsightFixture.openNewProjectAndEditor("/src/com/example/$editorName")
       }
 
       runInFrontend("Open File in Project") {
