@@ -689,7 +689,7 @@ abstract class ComponentManagerImpl(
     }
     catch (cde: ContainerDisposedException) {
       if (createIfNeeded) {
-        throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause = cde)
+        throwAlreadyDisposedIfNotUnderIndicatorOrJob(serviceClass, cause = cde)
         throw ProcessCanceledException(cde)
       }
       else {
@@ -707,7 +707,7 @@ abstract class ComponentManagerImpl(
           return null
         }
       }
-      rethrowCEasPCE {
+      rethrowCEasPCE(serviceClass) {
         // fast path
         holder.tryGetInstance()?.let {
           return it as T
@@ -1566,7 +1566,7 @@ internal fun getOrCreateInstanceBlocking(holder: InstanceHolder, debugString: St
   // container scope might be canceled
   // => holder is initialized with CE
   // => caller should get PCE
-  rethrowCEasPCE {
+  rethrowCEasPCE(keyClass?:holder) {
     val instance = holder.tryGetInstance()
     if (instance != null) {
       return instance
@@ -1600,7 +1600,7 @@ private fun doGetOrCreateInstanceBlocking(holder: InstanceHolder, keyClass: Clas
     }
   }
   catch (e: ProcessCanceledException) {
-    throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause = e)
+    throwAlreadyDisposedIfNotUnderIndicatorOrJob(keyClass?:holder, cause = e)
     throw e
   }
 }
@@ -1691,7 +1691,7 @@ private inline fun <X> ignoreDisposal(x: () -> X): X? {
   }
 }
 
-private inline fun <X> rethrowCEasPCE(action: () -> X): X {
+private inline fun <X> rethrowCEasPCE(self: Any, action: () -> X): X {
   try {
     return action()
   }
@@ -1699,15 +1699,15 @@ private inline fun <X> rethrowCEasPCE(action: () -> X): X {
     throw e
   }
   catch (e: CancellationException) {
-    throwAlreadyDisposedIfNotUnderIndicatorOrJob(e)
+    throwAlreadyDisposedIfNotUnderIndicatorOrJob(self, e)
     throw CeProcessCanceledException(e)
   }
 }
 
-private fun throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause: Throwable) {
+private fun throwAlreadyDisposedIfNotUnderIndicatorOrJob(self:Any, cause: Throwable) {
   if (!isUnderIndicatorOrJob()) {
     // in useInstanceContainer=false AlreadyDisposedException was thrown instead
-    throw AlreadyDisposedException("Container is already disposed").initCause(cause)
+    throw AlreadyDisposedException("Container $self is already disposed").initCause(cause)
   }
 }
 
