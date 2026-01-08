@@ -9,19 +9,17 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.configurable.SuggestedVcsComparator;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.dialog.VcsDialogUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-
-import static com.intellij.openapi.util.SystemInfo.isMac;
 
 public final class StartUseVcsDialog extends DialogWrapper {
 
@@ -39,6 +37,7 @@ public final class StartUseVcsDialog extends DialogWrapper {
     myVcsCombo.setRenderer(SimpleListCellRenderer.create("", AbstractVcs::getDisplayName));
 
     setTitle(VcsBundle.message("dialog.enable.version.control.integration.title"));
+    setOKButtonText(ApplicationBundle.message("button.enable"));
 
     init();
   }
@@ -66,17 +65,6 @@ public final class StartUseVcsDialog extends DialogWrapper {
     ++gb.gridx;
 
     mainPanel.add(VcsDialogUtils.getMorePluginsLink(mainPanel), gb);
-
-    String path = isMac ? VcsBundle.message("vcs.settings.path.mac") : VcsBundle.message("vcs.settings.path");
-    JLabel helpText = new JLabel(VcsBundle.message("dialog.enable.version.control.integration.hint.text") + path);
-    helpText.setUI(new MultiLineLabelUI());
-    helpText.setForeground(NamedColorUtil.getInactiveTextColor());
-
-    gb.anchor = GridBagConstraints.NORTHWEST;
-    gb.gridx = 0;
-    ++gb.gridy;
-    gb.gridwidth = 3;
-    mainPanel.add(helpText, gb);
 
     JPanel wrapper = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
