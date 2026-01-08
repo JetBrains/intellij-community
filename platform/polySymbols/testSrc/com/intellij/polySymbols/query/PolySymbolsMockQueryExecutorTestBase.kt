@@ -9,12 +9,14 @@ import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.polySymbols.context.impl.PolyContextProviderExtensionPoint
+import com.intellij.polySymbols.documentation.PolySymbolDocumentationCustomizer
+import com.intellij.polySymbols.framework.PolySymbolFramework
 import com.intellij.polySymbols.framework.PolySymbolFramework.Companion.KIND_FRAMEWORK
 import com.intellij.polySymbols.html.HtmlSymbolMatchCustomizer
 import com.intellij.polySymbols.query.impl.CustomElementsManifestMockScopeImpl
 import com.intellij.polySymbols.query.impl.PolySymbolMockQueryExecutorFactory
 import com.intellij.polySymbols.query.impl.WebTypesMockScopeImpl
-import com.intellij.polySymbols.webTypes.filters.PolySymbolMatchPrefixFilter
+import com.intellij.polySymbols.webTypes.WebTypesSymbolBase
 import com.intellij.polySymbols.webTypes.impl.PolySymbolFilterEP
 import com.intellij.testFramework.UsefulTestCase
 import java.io.File
@@ -32,7 +34,7 @@ abstract class PolySymbolsMockQueryExecutorTestBase : UsefulTestCase() {
     application.registerService(ClientDocumentationSettings::class.java, LocalDocumentationSettings())
     application.extensionArea.registerExtensionPoint(
       "com.intellij.polySymbols.webTypes.filter",
-      "com.intellij.polySymbols.webTypes.impl.PolySymbolsFilterEP",
+      "com.intellij.polySymbols.webTypes.impl.PolySymbolFilterEP",
       ExtensionPoint.Kind.BEAN_CLASS, true)
     application.extensionArea.registerExtensionPoint(
       "com.intellij.polySymbols.webTypes.symbolFactory",
@@ -49,18 +51,31 @@ abstract class PolySymbolsMockQueryExecutorTestBase : UsefulTestCase() {
       true
     )
     application.extensionArea.registerExtensionPoint(
+      "com.intellij.polySymbols.documentationCustomizer",
+      PolySymbolDocumentationCustomizer::class.java.name,
+      ExtensionPoint.Kind.BEAN_CLASS,
+      true
+    )
+    application.extensionArea.registerExtensionPoint(
       "com.intellij.polySymbols.matchCustomizerFactory",
       PolySymbolMatchCustomizerFactory::class.java.name,
       ExtensionPoint.Kind.INTERFACE,
       true
     )
+    application.extensionArea.registerExtensionPoint(
+      "com.intellij.polySymbols.framework",
+      PolySymbolFramework::class.java.name,
+      ExtensionPoint.Kind.BEAN_CLASS,
+      true
+    )
+
     val mockPluginDescriptor = DefaultPluginDescriptor(PluginId.getId("mock"),
-                                                       PolySymbolMatchPrefixFilter::class.java.classLoader)
+                                                       WebTypesSymbolBase::class.java.classLoader)
     application.extensionArea.getExtensionPoint<PolySymbolFilterEP>("com.intellij.polySymbols.webTypes.filter")
       .registerExtension(
         PolySymbolFilterEP().also {
           it.name = "match-prefix"
-          it.implementation = "com.intellij.polySymbols.webTypes.filters.PolySymbolsMatchPrefixFilter"
+          it.implementation = "com.intellij.polySymbols.webTypes.filters.PolySymbolMatchPrefixFilter"
           it.pluginDescriptor = mockPluginDescriptor
         },
         mockPluginDescriptor, testRootDisposable)

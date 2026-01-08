@@ -1,7 +1,7 @@
 [
  {
   matchedName: "html/attributes/foo-FOO-BAR",
-  origin: "framework-web-types@0.1.0 (<none>)",
+  origin: "web-components@1.0.0 (<none>)",
   attrValue: {
    kind: EXPRESSION,
    type: STRING,

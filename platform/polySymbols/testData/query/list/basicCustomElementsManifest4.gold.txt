@@ -1,7 +1,7 @@
 [
  {
   matchedName: "js/events/disabled-changed",
-  origin: "basic@null (<none>)",
+  origin: "basic (<none>)",
   type: "Event",
   complete: true,
   priority: NORMAL,

@@ -3,7 +3,6 @@
   matchedName: "html/slots/abaa",
   origin: "test-lib@2.0.0-rc.24 (vue)",
   complete: true,
-  description: "<p>The patterned slot",
   priority: NORMAL,
   segments: [
    {

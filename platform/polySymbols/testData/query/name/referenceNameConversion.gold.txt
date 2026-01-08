@@ -1,7 +1,7 @@
 [
  {
   matchedName: "html/attributes/foo-baz",
-  origin: "framework-web-types@0.1.0 (@polymer/polymer)",
+  origin: "web-components@1.0.0 (@polymer/polymer)",
   attrValue: {
    kind: EXPRESSION,
    type: COMPLEX,

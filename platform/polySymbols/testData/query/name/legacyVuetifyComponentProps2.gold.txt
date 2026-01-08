@@ -1,7 +1,7 @@
 [
  {
   matchedName: "html/attributes/allowOverflow",
-  origin: "vue@3.0.0 (vue)",
+  origin: "vuetify@1.3.2 (vue)",
   attrValue: {
    type: OF_MATCH,
    default: "true",

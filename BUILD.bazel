@@ -395,6 +395,7 @@ jvm_library(
     "//plugins/git4idea/terminal",
     "//plugins/git4idea/terminal:terminal_test_lib",
     "//platform/instanceContainer:instanceContainer-tests_test_lib",
+    "//platform/polySymbols:polySymbols-tests_test_lib",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main` end
