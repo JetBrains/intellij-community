@@ -18,6 +18,7 @@ import java.util.*
 
 fun ProblemFix.Part.Change.ijRange(): TextRange = TextRange(range.start, range.endExclusive)
 fun ai.grazie.text.TextRange.ijRange(): TextRange = TextRange(start, endExclusive)
+fun ai.grazie.rules.tree.TextRange.ijRange(): TextRange = TextRange(start, end)
 fun TextRange.aiRange(): ai.grazie.text.TextRange = ai.grazie.text.TextRange(startOffset, endOffset)
 
 fun String.trimToNull(): String? = trim().takeIf(String::isNotBlank)

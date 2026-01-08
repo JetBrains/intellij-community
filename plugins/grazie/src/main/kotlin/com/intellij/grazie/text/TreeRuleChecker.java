@@ -528,7 +528,7 @@ public final class TreeRuleChecker {
   }
 
   private static boolean touchesUnknownFragments(TextContent text, ai.grazie.rules.tree.TextRange range, ai.grazie.rules.Rule rule) {
-    var ruleRangeInText = toIdeaRange(range);
+    var ruleRangeInText = ijRange(range);
     if (ruleRangeInText.getEndOffset() > text.length()) {
       LOG.error(
         "Invalid match range " + ruleRangeInText + " for rule " + rule + " in a text of length " + text.length(),
@@ -539,10 +539,6 @@ public final class TreeRuleChecker {
       return true;
     }
     return false;
-  }
-
-  public static TextRange toIdeaRange(ai.grazie.rules.tree.TextRange reported) {
-    return new TextRange(reported.start(), reported.end());
   }
 
   public static class TreeProblem extends GrazieProblem {

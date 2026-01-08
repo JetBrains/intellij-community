@@ -32,10 +32,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.io.computeDetached
 import io.ktor.client.plugins.HttpRequestTimeoutException
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import com.intellij.openapi.util.TextRange as IJTextRange
@@ -60,28 +57,38 @@ object APIQueries {
   @Volatile
   @JvmStatic
   var rephraser: Rephraser = object : Rephraser {
-    override fun rephrase(text: String, range: IJTextRange, language: Language, project: Project): List<String>? =
+    override fun rephrase(text: String, ranges: List<IJTextRange>, language: Language, project: Project): List<Pair<IJTextRange, List<String>>>? =
       request(project, null) {
-        val taskClient = GrazieCloudConnector.api()?.tasksWithStreamData() ?: return@request null
-        val taskCall = if (text.length < 100) {
-          val contentPrefix = text.take(range.startOffset)
-          val contentSuffix = text.drop(range.endOffset)
-          RewriteSelectionV2TaskDescriptor.createCallData(
-            RewriteSelectionV2TaskParams(
-              contentPrefix, contentSuffix, language.englishName, range.substring(text))
-          )
+        coroutineScope {
+          ranges.map {
+            async { rephrase(text, it, language) }
+          }.awaitAll().filterNotNull()
         }
-        else {
-          RewriteFullTaskDescriptor.createCallData(
-            RewriteFullTaskParams(text, language.englishName)
-          )
-        }
-        taskClient.executeV2(taskCall)
-          .text { it.content }
-          .split("<rephrasing>")
-          .filter { it.isNotBlank() }
-          .map { it.trim() }
       }
+
+    private suspend fun rephrase(text: String, range: IJTextRange, language: Language): Pair<IJTextRange, List<String>>? {
+      val taskClient = GrazieCloudConnector.api()?.tasksWithStreamData() ?: return null
+      val taskCall = if (range.startOffset == 0 && range.length == text.length) {
+        RewriteFullTaskDescriptor.createCallData(
+          RewriteFullTaskParams(text, language.englishName)
+        )
+      }
+      else {
+        val contentPrefix = text.take(range.startOffset)
+        val contentSuffix = text.drop(range.endOffset)
+        RewriteSelectionV2TaskDescriptor.createCallData(
+          RewriteSelectionV2TaskParams(
+            contentPrefix, contentSuffix, language.englishName, range.substring(text))
+        )
+      }
+      return range to taskClient.executeV2(taskCall)
+        .text { it.content }
+        .split("<rephrasing>")
+        .filter { it.isNotBlank() }
+        .map { it.trim() }
+        .distinct()
+        .filter { it != text }
+    }
   }
 
   @JvmStatic
@@ -192,7 +199,7 @@ interface Translator {
 }
 
 interface Rephraser {
-  fun rephrase(text: String, range: IJTextRange, language: Language, project: Project): List<String>?
+  fun rephrase(text: String, ranges: List<IJTextRange>, language: Language, project: Project): List<Pair<IJTextRange, List<String>>>?
 }
 
 open class TaskServerException: RuntimeException()
