@@ -420,7 +420,9 @@ com.intellij.codeInspection.lang.RefManagerExtension
 - shouldProcessExternalFile(com.intellij.psi.PsiFile):Z
 - a:visitElement(com.intellij.psi.PsiElement):V
 com.intellij.codeInspection.options.LocMessage
+- s:empty():com.intellij.codeInspection.options.LocMessage
 - a:label():java.lang.String
+- s:of(java.lang.String):com.intellij.codeInspection.options.LocMessage
 - splitLabel():com.intellij.codeInspection.options.LocMessage$PrefixSuffix
 com.intellij.codeInspection.options.OptRegularComponent
 - com.intellij.codeInspection.options.OptComponent
