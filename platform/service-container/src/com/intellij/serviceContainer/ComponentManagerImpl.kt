@@ -1185,6 +1185,7 @@ abstract class ComponentManagerImpl(
     if (!containerState.compareAndSet(ContainerState.DISPOSED, ContainerState.DISPOSE_COMPLETED)) {
       throw IllegalStateException("Expected current state is DISPOSED, but actual state is ${containerState.get()} ($this)")
     }
+    pluginServicesStore.clearPotentialLeaks()
   }
 
   override fun stopServicePreloading() {
@@ -1420,6 +1421,11 @@ private class PluginServicesStore {
 
   fun removeDynamicServices(descriptor: IdeaPluginDescriptor): List<InstanceHolder> {
     return dynamicServices.remove(descriptor)?.toList() ?: java.util.List.of()
+  }
+
+  fun clearPotentialLeaks() {
+    dynamicServices.clear()
+    regularServices.clear()
   }
 }
 
