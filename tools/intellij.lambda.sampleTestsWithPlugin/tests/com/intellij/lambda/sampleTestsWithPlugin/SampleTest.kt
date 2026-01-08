@@ -2,41 +2,28 @@
 package com.intellij.lambda.sampleTestsWithPlugin
 
 import com.intellij.lambda.testFramework.junit.RunInMonolithAndSplitMode
-import com.intellij.lambda.testFramework.starter.UltimateTestCases.JpsEmptyProject
+import com.intellij.lambda.testFramework.junit.WithProject
+import com.intellij.lambda.testFramework.project.HelloWorldProject
+import com.intellij.lambda.testFramework.project.TestAppProject
 import com.intellij.lambda.testFramework.testApi.editor.openFile
 import com.intellij.lambda.testFramework.testApi.getProject
 import com.intellij.lambda.testFramework.testApi.getProjects
 import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
-import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
-import org.assertj.core.api.Assumptions
 import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.io.Serializable
 import java.util.stream.Stream
-import kotlin.io.path.createFile
-import kotlin.io.path.exists
 
 @RunInMonolithAndSplitMode
 class SampleTest {
+  @WithProject(TestAppProject::class)
   @TestTemplate
   fun `serialized test`(ide: IdeWithLambda) = runBlocking {
-    Assumptions.assumeThat(ide.isRemoteDev)
-      .describedAs("works in both modes if headless is turned off for monolith in com.intellij.lambda.testFramework.starter.NewContextWithLambdaKt.newContextWithLambda" +
-                   "as ProjectManager returns empty projects list in headless IJPL-221229")
-      // TODO: https://youtrack.jetbrains.com/issue/AT-3645/Lambda-tests-possibility-to-use-RunInMonolithAndSplitMode-annotation-on-test-methods
-      .isTrue
-    JpsEmptyProject.projectInfo.projectDir.resolve("src").resolve("FormattingExamplesExpected.java").let {
-      if (!it.exists()) {
-        it.parent.createDirectories()
-        it.createFile()
-      }
-    }
     ide.apply {
       runInFrontend {
         Logger.getInstance("test").warn("Projects: " + getProjects().joinToString { it.name })
@@ -44,7 +31,7 @@ class SampleTest {
 
       runInBackend {
         Logger.getInstance("test").warn("backend Projects: " + getProject())
-        openFile("src/FormattingExamplesExpected.java", waitForReadyState = false, requireFocus = false)
+        openFile("src/SomeClass.java", waitForReadyState = false, requireFocus = false)
       }
     }
     Unit
@@ -60,6 +47,7 @@ class SampleTest {
 
   @ParameterizedTest
   @MethodSource("simpleParamProvider")
+  @WithProject(HelloWorldProject::class)
   // BackgroundRunWithLambda must be the last parameter
   fun `simple parameterized test`(param: Int, str: String, ide: IdeWithLambda) = runBlocking {
     ide.apply {
