@@ -37,9 +37,16 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Consent>> {
   private final Collection<ConsentStateSupplier> consentMapping = new ArrayList<>();
   private final boolean myPreferencesMode;
+  private final boolean myIsJetBrainsVendor;
 
   public ConsentSettingsUi(boolean preferencesMode) {
+    this(preferencesMode, false);
+  }
+
+  @ApiStatus.Internal
+  public ConsentSettingsUi(boolean preferencesMode, boolean isJetBrainsVendor) {
     myPreferencesMode = preferencesMode;
+    myIsJetBrainsVendor = isJetBrainsVendor;
     setLayout(new GridLayout(1, 1));
   }
 
@@ -53,8 +60,9 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       return;
     }
 
-    JBScrollPane scrollPane = new JBScrollPane(ConsentSettingsBodyKt.createConsentSettings(consentMapping, myPreferencesMode, consents),
-                                               VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    JBScrollPane scrollPane =
+      new JBScrollPane(ConsentSettingsBodyKt.createConsentSettings(consentMapping, myPreferencesMode, myIsJetBrainsVendor, consents),
+                       VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setBorder(JBUI.Borders.empty());
     add(scrollPane);
   }
