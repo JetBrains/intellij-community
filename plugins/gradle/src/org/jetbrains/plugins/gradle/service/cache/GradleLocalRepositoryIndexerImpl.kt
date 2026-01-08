@@ -15,6 +15,7 @@ import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.util.application
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -170,7 +171,10 @@ open class GradleLocalRepositoryIndexerImpl : GradleLocalRepositoryIndexer {
 
 @ApiStatus.Internal
 @TestOnly
-class GradleLocalRepositoryIndexerTestImpl(eelDescriptor: EelDescriptor, gavList: List<String>) : GradleLocalRepositoryIndexerImpl() {
+class GradleLocalRepositoryIndexerTestImpl(
+  eelDescriptor: EelDescriptor? = null,
+  gavList: List<String> = emptyList(),
+) : GradleLocalRepositoryIndexerImpl() {
 
   constructor(eelDescriptor: EelDescriptor, vararg gavArgs: String) : this(eelDescriptor, gavArgs.toList())
 
@@ -200,8 +204,10 @@ class GradleLocalRepositoryIndexerTestImpl(eelDescriptor: EelDescriptor, gavList
       }
 
     val indexSnapshot = IndexSnapshot(group2Artifacts, module2Versions)
-    val ref = indices.computeIfAbsent(eelDescriptor) { AtomicReference(IndexSnapshot.EMPTY) }
-    ref.set(indexSnapshot)
+    eelDescriptor?.let {
+      val ref = indices.computeIfAbsent(eelDescriptor) { AtomicReference(IndexSnapshot.EMPTY) }
+      ref.set(indexSnapshot)
+    }
   }
 
   override fun launchIndexUpdate(project: Project) {} // do nothing
