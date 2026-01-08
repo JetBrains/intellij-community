@@ -122,6 +122,7 @@ jvm_library(
     "//libraries/gson",
     "//libraries/guava",
     "//platform/forms_rt:java-guiForms-rt",
+    "//plugins/repository-search",
   ]
 )
 
