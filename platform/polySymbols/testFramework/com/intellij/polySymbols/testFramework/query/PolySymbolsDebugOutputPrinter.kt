@@ -80,16 +80,18 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
       else {
         printProperty(level, "matchedName", source.qualifiedName.toString())
       }
+
+      val documentation = source.getDocumentationTarget(null)
+        .asSafely<PolySymbolDocumentationTarget>()
+        ?.documentation
+
       printProperty(level,
                     "origin",
-                    "${source.origin.library}@${source.origin.version} (${(source.origin as? WebTypesJsonOrigin)?.framework ?: "<none>"})")
+                    "${documentation?.library} (${(source.origin as? WebTypesJsonOrigin)?.framework ?: "<none>"})")
       printProperty(level, "source", (source as? PsiSourcedPolySymbol)?.source)
       printProperty(level, "type", source.origin.typeSupport?.typeProperty?.let { source[it] })
       printProperty(level, "attrValue", source.htmlAttributeValue)
       printProperty(level, "complete", source.completeMatch)
-      val documentation = source.getDocumentationTarget(null)
-        .asSafely<PolySymbolDocumentationTarget>()
-        ?.documentation
       if (documentation != null) {
         printProperty(level, "description", documentation.description?.ellipsis(45))
         printProperty(level, "docUrl", documentation.docUrl)

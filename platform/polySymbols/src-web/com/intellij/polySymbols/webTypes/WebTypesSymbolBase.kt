@@ -257,6 +257,11 @@ open class WebTypesSymbolBase : WebTypesSymbol {
             .distinctBy { it.key }
             .associateBy({ it.key }, { symbol.base.jsonOrigin.renderDescription(it.value) })
         )
+        .library(
+          symbol.base.jsonOrigin.library?.let { lib ->
+            lib + (symbol.base.jsonOrigin.version?.takeIf { it != "0.0.0" }?.let { "@$it" } ?: "")
+          }
+        )
         .build()
     }
 

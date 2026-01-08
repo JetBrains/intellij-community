@@ -14,9 +14,12 @@ import javax.swing.Icon
 @Internal
 interface WebTypesJsonOrigin : PolySymbolOrigin {
   val framework: @NlsSafe FrameworkId?
-    get() = null
 
   val defaultIcon: Icon?
+
+  val library: @NlsSafe String?
+
+  val version: @NlsSafe String?
 
   fun resolveSourceSymbol(source: SourceBase, cacheHolder: UserDataHolderEx): PsiElement?
   fun resolveSourceLocation(source: SourceBase): WebTypesSymbol.Location?

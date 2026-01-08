@@ -5,11 +5,9 @@ import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 
 internal data class PolySymbolOriginImpl(
-  override val library: String?,
-  override val version: String?,
   override val typeSupport: PolySymbolTypeSupport?,
 ) : PolySymbolOrigin {
   companion object {
-    val empty = PolySymbolOriginImpl(null, null, null)
+    val empty = PolySymbolOriginImpl(null)
   }
 }

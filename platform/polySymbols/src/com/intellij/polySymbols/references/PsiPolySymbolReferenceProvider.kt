@@ -25,9 +25,9 @@ interface PsiPolySymbolReferenceProvider<T : PsiExternalReferenceHost> {
   companion object {
 
     @JvmStatic
-    fun unresolvedSymbol(kind: PolySymbolKind, name: String, framework: String? = null): PolySymbolMatch =
+    fun unresolvedSymbol(kind: PolySymbolKind, name: String): PolySymbolMatch =
       PolySymbolMatch.create(
-        name, kind, PolySymbolOrigin.create(framework),
+        name, kind, PolySymbolOrigin.empty(),
         PolySymbolNameSegment.create(0, name.length, problem = MatchProblem.UNKNOWN_SYMBOL)
       )
   }

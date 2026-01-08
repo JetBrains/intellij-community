@@ -41,6 +41,5 @@ fun printMatches(matches: List<PolySymbol>, printer: DebugOutputPrinter = PolySy
     matches.sortedWith(
       compareBy<PolySymbol> { it.priority ?: PolySymbol.Priority.NORMAL }
         .thenBy { it.name }
-        .thenBy { it.origin.library ?: "" }
     )
   )

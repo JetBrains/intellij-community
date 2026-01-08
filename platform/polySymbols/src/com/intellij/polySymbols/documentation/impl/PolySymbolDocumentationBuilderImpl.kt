@@ -24,11 +24,7 @@ internal class PolySymbolDocumentationBuilderImpl(
   override var docUrl: String? = null
   override var apiStatus: PolySymbolApiStatus? = symbol.apiStatus
   override var defaultValue: String? = null
-  override var library: String? = symbol.origin.takeIf { it.library != null }
-    ?.let { context ->
-      context.library +
-      if (context.version?.takeIf { it != "0.0.0" } != null) "@${context.version}" else ""
-    }
+  override var library: String? = null
   override var icon: Icon? = symbol.icon?.takeIf { symbol[PROP_DOC_HIDE_ICON] != true }
   override var descriptionSections: MutableMap<@Nls String, @Nls String> = mutableMapOf()
   override var footnote: @Nls String? = null

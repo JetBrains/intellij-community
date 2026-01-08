@@ -10,7 +10,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 interface CustomElementsJsonOrigin : PolySymbolOrigin {
-  override val library: String
+  val library: String
+
+  val version: String?
 
   fun resolveSourceSymbol(source: SourceReference, cacheHolder: UserDataHolderEx): PsiElement?
 

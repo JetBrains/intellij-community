@@ -21,6 +21,9 @@ interface CustomElementsSymbol : PolySymbol, PolySymbolScope {
     PolySymbolDocumentationTarget.create(this, location) { symbol, _ ->
       description = symbol.description
       defaultValue = symbol.defaultValue
+      library = (symbol.origin as? CustomElementsJsonOrigin)?.let { origin ->
+        library + (origin.version?.takeIf { it != "0.0.0" }?.let { "@$it" } ?: "")
+      }
     }
 
   override fun createPointer(): Pointer<out CustomElementsSymbol>

@@ -68,8 +68,8 @@ abstract class CustomElementsManifestScopeBase :
 
   protected class CustomElementsManifestJsonOriginImpl(
     override val library: String,
+    override val version: String?,
     private val project: Project,
-    override val version: String? = null,
     override val typeSupport: PolySymbolTypeSupport? = null,
     private val sourceSymbolResolver: (source: SourceReference, cacheHolder: UserDataHolderEx) -> PsiElement? = { _, _ -> null },
   ) : CustomElementsJsonOrigin {
@@ -81,7 +81,7 @@ abstract class CustomElementsManifestScopeBase :
       DocMarkdownToHtmlConverter.convert(project, description)
 
     override fun toString(): String {
-      return "$library@$version"
+      return library
     }
 
   }
