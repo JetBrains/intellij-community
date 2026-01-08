@@ -13,6 +13,9 @@ class CommunityPluginModelTest {
     val communityPath = Path.of(PlatformTestUtil.getCommunityPath())
     val options = PluginValidationOptions(
       skipUnresolvedOptionalContentModules = true,
+      // There are a number of platform services that are overridden in ultimate only. Instead of declaring all of them here, we
+      // only perform the check once in UltimatePluginModelTest
+      skipServicesOverridesCheck = true,
       referencedPluginIdsOfExternalPlugins = setOf(
         //these modules are defined in the ultimate part
         "com.intellij.marketplace",
