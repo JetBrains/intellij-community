@@ -2,22 +2,13 @@
 package com.intellij.polySymbols
 
 import com.intellij.polySymbols.impl.PolySymbolOriginImpl
-import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import javax.swing.Icon
 
 interface PolySymbolOrigin {
 
-  val typeSupport: PolySymbolTypeSupport?
-    get() = null
-
   fun loadIcon(path: String): Icon? = null
 
   companion object {
-    @JvmStatic
-    fun create(
-      typeSupport: PolySymbolTypeSupport? = null,
-    ): PolySymbolOrigin =
-      PolySymbolOriginImpl(typeSupport)
 
     @JvmStatic
     fun empty(): PolySymbolOrigin =

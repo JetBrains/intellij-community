@@ -16,6 +16,7 @@ import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.html.htmlAttributeValue
 import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport.Companion.PROP_TYPE_SUPPORT
 import com.intellij.polySymbols.utils.merge
 import com.intellij.polySymbols.webTypes.WebTypesSymbol.Companion.PROP_NO_DOC
 import com.intellij.polySymbols.webTypes.impl.WebTypesJsonContributionAdapter
@@ -56,11 +57,12 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     when (property) {
       PROP_HTML_ATTRIBUTE_VALUE -> attributeValue as T?
       PROP_DOC_HIDE_ICON -> property.tryCast(icon == base.jsonOrigin.defaultIcon)
-      origin.typeSupport?.typeProperty -> {
+      PROP_TYPE_SUPPORT -> property.tryCast(base.jsonOrigin.typeSupport)
+      base.jsonOrigin.typeSupport?.typeProperty -> {
         property.tryCast(
           (base.contribution.type)
             ?.let { base.jsonOrigin.typeSupport?.resolve(it.mapToTypeReferences()) }
-          ?: superContributions.asSequence().mapNotNull { it[property] }.firstOrNull()
+          ?: superContributions.firstNotNullOfOrNull { it[property] }
         )
       }
       else -> property.tryCast(contributionProperties[property.name])

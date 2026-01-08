@@ -202,13 +202,9 @@
 - s:values():com.intellij.polySymbols.PolySymbolNameSegment$MatchProblem[]
 *:com.intellij.polySymbols.PolySymbolOrigin
 - *sf:Companion:com.intellij.polySymbols.PolySymbolOrigin$Companion
-- s:create(com.intellij.polySymbols.utils.PolySymbolTypeSupport):com.intellij.polySymbols.PolySymbolOrigin
 - s:empty():com.intellij.polySymbols.PolySymbolOrigin
-- getTypeSupport():com.intellij.polySymbols.utils.PolySymbolTypeSupport
 - loadIcon(java.lang.String):javax.swing.Icon
 *f:com.intellij.polySymbols.PolySymbolOrigin$Companion
-- f:create(com.intellij.polySymbols.utils.PolySymbolTypeSupport):com.intellij.polySymbols.PolySymbolOrigin
-- bs:create$default(com.intellij.polySymbols.PolySymbolOrigin$Companion,com.intellij.polySymbols.utils.PolySymbolTypeSupport,I,java.lang.Object):com.intellij.polySymbols.PolySymbolOrigin
 - f:empty():com.intellij.polySymbols.PolySymbolOrigin
 *:com.intellij.polySymbols.PolySymbolProperty
 - *sf:Companion:com.intellij.polySymbols.PolySymbolProperty$Companion
@@ -461,6 +457,7 @@
 - com.intellij.polySymbols.query.PolySymbolScope
 - *sf:Companion:com.intellij.polySymbols.customElements.CustomElementsSymbol$Companion
 - a:createPointer():com.intellij.model.Pointer
+- get(com.intellij.polySymbols.PolySymbolProperty):java.lang.Object
 - getDefaultValue():java.lang.String
 - getDescription():java.lang.String
 - getDocumentationTarget(com.intellij.psi.PsiElement):com.intellij.platform.backend.documentation.DocumentationTarget
@@ -1180,9 +1177,12 @@
 - a:addSymbol(com.intellij.polySymbols.PolySymbol):V
 - a:addSymbols(java.util.List):V
 *:com.intellij.polySymbols.utils.PolySymbolTypeSupport
+- *sf:Companion:com.intellij.polySymbols.utils.PolySymbolTypeSupport$Companion
+- sf:PROP_TYPE_SUPPORT:com.intellij.polySymbols.PolySymbolProperty
 - a:getTypeProperty():com.intellij.polySymbols.PolySymbolProperty
 - a:resolve(java.util.List):java.lang.Object
 - a:withEvaluationLocation(com.intellij.psi.PsiElement,kotlin.jvm.functions.Function0):java.lang.Object
+*f:com.intellij.polySymbols.utils.PolySymbolTypeSupport$Companion
 *:com.intellij.polySymbols.utils.PolySymbolTypeSupport$TypeReference
 - *sf:Companion:com.intellij.polySymbols.utils.PolySymbolTypeSupport$TypeReference$Companion
 - a:getModule():java.lang.String

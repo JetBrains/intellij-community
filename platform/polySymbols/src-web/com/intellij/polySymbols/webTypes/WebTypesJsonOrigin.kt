@@ -6,6 +6,7 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.framework.FrameworkId
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.webTypes.json.SourceBase
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -20,6 +21,8 @@ interface WebTypesJsonOrigin : PolySymbolOrigin {
   val library: @NlsSafe String?
 
   val version: @NlsSafe String?
+
+  val typeSupport: PolySymbolTypeSupport?
 
   fun resolveSourceSymbol(source: SourceBase, cacheHolder: UserDataHolderEx): PsiElement?
   fun resolveSourceLocation(source: SourceBase): WebTypesSymbol.Location?

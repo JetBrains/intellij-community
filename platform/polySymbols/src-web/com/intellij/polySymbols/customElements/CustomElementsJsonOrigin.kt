@@ -3,9 +3,10 @@ package com.intellij.polySymbols.customElements
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderEx
-import com.intellij.psi.PsiElement
 import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.customElements.json.SourceReference
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -13,6 +14,8 @@ interface CustomElementsJsonOrigin : PolySymbolOrigin {
   val library: String
 
   val version: String?
+
+  val typeSupport: PolySymbolTypeSupport?
 
   fun resolveSourceSymbol(source: SourceReference, cacheHolder: UserDataHolderEx): PsiElement?
 

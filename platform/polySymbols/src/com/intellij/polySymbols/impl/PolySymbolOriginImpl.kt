@@ -2,12 +2,9 @@
 package com.intellij.polySymbols.impl
 
 import com.intellij.polySymbols.PolySymbolOrigin
-import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 
-internal data class PolySymbolOriginImpl(
-  override val typeSupport: PolySymbolTypeSupport?,
-) : PolySymbolOrigin {
+internal class PolySymbolOriginImpl : PolySymbolOrigin {
   companion object {
-    val empty = PolySymbolOriginImpl(null)
+    val empty = PolySymbolOriginImpl()
   }
 }

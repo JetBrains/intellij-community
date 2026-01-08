@@ -6,8 +6,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.polySymbols.query.PolySymbolScope
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport.Companion.PROP_TYPE_SUPPORT
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
 
@@ -24,6 +26,12 @@ interface CustomElementsSymbol : PolySymbol, PolySymbolScope {
       library = (symbol.origin as? CustomElementsJsonOrigin)?.let { origin ->
         library + (origin.version?.takeIf { it != "0.0.0" }?.let { "@$it" } ?: "")
       }
+    }
+
+  override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
+    when (property) {
+      PROP_TYPE_SUPPORT -> property.tryCast((origin as CustomElementsJsonOrigin).typeSupport)
+      else -> super.get(property)
     }
 
   override fun createPointer(): Pointer<out CustomElementsSymbol>
