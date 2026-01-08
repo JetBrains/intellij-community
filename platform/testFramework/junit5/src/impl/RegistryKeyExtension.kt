@@ -5,8 +5,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.RegistryKeyAppLevel
-import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.getTyped
-import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.putTyped
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.get
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.set
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
@@ -27,13 +27,13 @@ internal class RegistryKeyExtension : AbstractInvocationInterceptor(), BeforeAll
     if (annotation != null) {
       val registryValue = Registry.get(annotation.key)
       val oldValue = registryValue.asString()
-      context.getStore(ExtensionContext.Namespace.GLOBAL).putTyped(typedKey, RegistryValueHolder(registryValue, oldValue))
+      context[typedKey] = RegistryValueHolder(registryValue, oldValue)
       registryValue.setValue(annotation.value)
     }
   }
 
   override fun afterAll(context: ExtensionContext) {
-    val regValue = context.getStore(ExtensionContext.Namespace.GLOBAL).getTyped(typedKey) ?: return
+    val regValue = context[typedKey] ?: return
     regValue.value.setValue(regValue.oldValue)
   }
 
