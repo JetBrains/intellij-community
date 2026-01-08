@@ -114,14 +114,22 @@ fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEv
 }
 
 /**
- * If element is a subelement of the folder excplicitly marked as test root -- use it
+ * If an element is a subelement of the folder explicitly marked as test root -- use it
+ *
+ * @param findSource if true, will also check if an element is a subelement of the source root, then use it as working dir
  */
-private fun getExplicitlyConfiguredTestRoot(element: PsiFileSystemItem): VirtualFile? {
+private fun getExplicitlyConfiguredTestRoot(element: PsiFileSystemItem, findSource: Boolean = false): VirtualFile? {
   val vfDirectory = element.virtualFile
   val module = ModuleUtil.findModuleForPsiElement(element) ?: return null
-  return ModuleRootManager.getInstance(module).getSourceRoots(JavaSourceRootType.TEST_SOURCE).firstOrNull {
-    VfsUtil.isAncestor(it, vfDirectory, false)
+  val manager = ModuleRootManager.getInstance(module)
+  val findSourceByType = {type: JavaSourceRootType -> manager.getSourceRoots(type).firstOrNull { VfsUtil.isAncestor(it, vfDirectory, false) } }
+
+  findSourceByType(JavaSourceRootType.TEST_SOURCE)?.let { return it }
+  if (findSource) {
+    findSourceByType(JavaSourceRootType.SOURCE)?.let { return it }
   }
+
+  return null
 }
 
 private fun isTestFolder(
@@ -263,8 +271,7 @@ object PyTestsLocator : SMTestLocator {
 abstract class PyTestExecutionEnvironment<T : PyAbstractTestConfiguration>(
   configuration: T,
   environment: ExecutionEnvironment,
-)
-  : PythonTestCommandLineStateBase<T>(configuration, environment) {
+) : PythonTestCommandLineStateBase<T>(configuration, environment) {
 
   override fun getTestLocator(): SMTestLocator = PyTestsLocator
 
@@ -311,8 +318,7 @@ private const val DEFAULT_PATH = ""
  */
 data class ConfigurationTarget(
   @ConfigField("runcfg.python_tests.config.target") override var target: String,
-  @ConfigField(
-    "runcfg.python_tests.config.targetType") override var targetType: PyRunTargetVariant,
+  @ConfigField("runcfg.python_tests.config.targetType") override var targetType: PyRunTargetVariant,
 ) : TargetWithVariant {
   fun copyTo(dst: ConfigurationTarget) {
     // TODO:  do we have such method it in Kotlin?
@@ -876,7 +882,7 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
      * Inspect file relative imports, find farthest and return folder with imported file
      */
     private fun getDirectoryForFileToBeImportedFrom(file: PyFile, module: Module?): PsiDirectory? {
-      getExplicitlyConfiguredTestRoot(file)?.let {
+      getExplicitlyConfiguredTestRoot(file, true)?.let {
         return file.manager.findDirectory(it)
       }
 
