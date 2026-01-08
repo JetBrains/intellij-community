@@ -294,8 +294,7 @@ enum class JavaFeature {
    * JEP 530
    * @see PRIMITIVE_TYPES_IN_PATTERNS
    */
-  //todo change to 26_PREVIEW
-  PATTERNS_WITH_TIGHTENED_DOMINANCE(LanguageLevel.JDK_X, "feature.patterns.with.tightened.dominance"),
+  PATTERNS_WITH_TIGHTENED_DOMINANCE(LanguageLevel.JDK_26_PREVIEW, "feature.patterns.with.tightened.dominance"),
 
 
   VALHALLA_VALUE_CLASSES(LanguageLevel.JDK_X, "feature.valhalla.value.classes"),
