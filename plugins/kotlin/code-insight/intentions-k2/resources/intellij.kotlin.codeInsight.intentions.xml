@@ -2,6 +2,7 @@
   <dependencies>
     <module name="intellij.kotlin.refactorings"/>
     <module name="intellij.kotlin.searching"/>
+    <module name="intellij.kotlin.codeInsight"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
