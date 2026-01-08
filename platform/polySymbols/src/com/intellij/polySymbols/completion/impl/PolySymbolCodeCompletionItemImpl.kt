@@ -104,7 +104,8 @@ internal data class PolySymbolCodeCompletionItemImpl(
             result
         if (restartCompletionOnAnyPrefixChange) {
           result.restartCompletionOnAnyPrefixChange()
-        } else if (restartCompletionOnPrefixChange.isNotEmpty()) {
+        }
+        else if (restartCompletionOnPrefixChange.isNotEmpty()) {
           restartCompletionOnPrefixChange.forEach { prefix -> result.restartCompletionOnPrefixChange(prefix) }
         }
         result.addElement(it)
@@ -236,7 +237,6 @@ internal data class PolySymbolCodeCompletionItemImpl(
     override var aliases: Set<String> = emptySet()
     override var icon: Icon? = symbol?.let {
       it.icon
-      ?: it.origin.defaultIcon
       ?: PolySymbolDefaultIconProvider.get(it.kind)
     }
     private var typeTextStatic: String? = null

@@ -6,6 +6,7 @@
 - com.intellij.navigation.NavigatableSymbol
 - com.intellij.polySymbols.utils.PolySymbolPrioritizedScope
 - *sf:Companion:com.intellij.polySymbols.PolySymbol$Companion
+- sf:PROP_DOC_HIDE_ICON:com.intellij.polySymbols.PolySymbolProperty
 - sf:PROP_DOC_HIDE_PATTERN:com.intellij.polySymbols.PolySymbolProperty
 - sf:PROP_HIDE_FROM_COMPLETION:com.intellij.polySymbols.PolySymbolProperty
 - sf:PROP_IJ_TEXT_ATTRIBUTES_KEY:com.intellij.polySymbols.PolySymbolProperty
@@ -201,16 +202,15 @@
 - s:values():com.intellij.polySymbols.PolySymbolNameSegment$MatchProblem[]
 *:com.intellij.polySymbols.PolySymbolOrigin
 - *sf:Companion:com.intellij.polySymbols.PolySymbolOrigin$Companion
-- s:create(java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.polySymbols.utils.PolySymbolTypeSupport):com.intellij.polySymbols.PolySymbolOrigin
+- s:create(java.lang.String,java.lang.String,com.intellij.polySymbols.utils.PolySymbolTypeSupport):com.intellij.polySymbols.PolySymbolOrigin
 - s:empty():com.intellij.polySymbols.PolySymbolOrigin
-- getDefaultIcon():javax.swing.Icon
 - getLibrary():java.lang.String
 - getTypeSupport():com.intellij.polySymbols.utils.PolySymbolTypeSupport
 - getVersion():java.lang.String
 - loadIcon(java.lang.String):javax.swing.Icon
 *f:com.intellij.polySymbols.PolySymbolOrigin$Companion
-- f:create(java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.polySymbols.utils.PolySymbolTypeSupport):com.intellij.polySymbols.PolySymbolOrigin
-- bs:create$default(com.intellij.polySymbols.PolySymbolOrigin$Companion,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.polySymbols.utils.PolySymbolTypeSupport,I,java.lang.Object):com.intellij.polySymbols.PolySymbolOrigin
+- f:create(java.lang.String,java.lang.String,com.intellij.polySymbols.utils.PolySymbolTypeSupport):com.intellij.polySymbols.PolySymbolOrigin
+- bs:create$default(com.intellij.polySymbols.PolySymbolOrigin$Companion,java.lang.String,java.lang.String,com.intellij.polySymbols.utils.PolySymbolTypeSupport,I,java.lang.Object):com.intellij.polySymbols.PolySymbolOrigin
 - f:empty():com.intellij.polySymbols.PolySymbolOrigin
 *:com.intellij.polySymbols.PolySymbolProperty
 - *sf:Companion:com.intellij.polySymbols.PolySymbolProperty$Companion

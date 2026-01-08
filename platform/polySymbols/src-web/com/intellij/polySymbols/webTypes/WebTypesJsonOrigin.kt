@@ -9,11 +9,14 @@ import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.webTypes.json.SourceBase
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus.Internal
+import javax.swing.Icon
 
 @Internal
 interface WebTypesJsonOrigin : PolySymbolOrigin {
   val framework: @NlsSafe FrameworkId?
     get() = null
+
+  val defaultIcon: Icon?
 
   fun resolveSourceSymbol(source: SourceBase, cacheHolder: UserDataHolderEx): PsiElement?
   fun resolveSourceLocation(source: SourceBase): WebTypesSymbol.Location?
