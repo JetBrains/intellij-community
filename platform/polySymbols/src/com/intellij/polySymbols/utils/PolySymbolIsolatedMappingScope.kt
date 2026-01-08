@@ -7,7 +7,6 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
-import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.framework.FrameworkId

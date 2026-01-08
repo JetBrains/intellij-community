@@ -3,15 +3,13 @@ package com.intellij.polySymbols.customElements
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderEx
-import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.customElements.json.SourceReference
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus.Internal
-import javax.swing.Icon
+import org.jetbrains.annotations.ApiStatus
 
-@Internal
-interface CustomElementsJsonOrigin : PolySymbolOrigin {
+@ApiStatus.Internal
+interface CustomElementsJsonOrigin {
   val library: String
 
   val version: String?

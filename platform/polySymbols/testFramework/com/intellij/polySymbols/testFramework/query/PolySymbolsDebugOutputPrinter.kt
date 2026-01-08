@@ -18,7 +18,6 @@ import com.intellij.polySymbols.utils.PolySymbolTypeSupport.Companion.PROP_TYPE_
 import com.intellij.polySymbols.utils.completeMatch
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.polySymbols.utils.qualifiedName
-import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.polySymbols.webTypes.WebTypesSymbol
 import com.intellij.util.applyIf
 import com.intellij.util.asSafely
@@ -88,7 +87,7 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
 
       printProperty(level,
                     "origin",
-                    "${documentation?.library} (${(source.origin as? WebTypesJsonOrigin)?.framework ?: "<none>"})")
+                    "${documentation?.library} (${(source as? WebTypesSymbol)?.origin?.framework ?: "<none>"})")
       printProperty(level, "source", (source as? PsiSourcedPolySymbol)?.source)
       printProperty(level, "type", source[PROP_TYPE_SUPPORT]?.typeProperty?.let { source[it] })
       printProperty(level, "attrValue", source.htmlAttributeValue)

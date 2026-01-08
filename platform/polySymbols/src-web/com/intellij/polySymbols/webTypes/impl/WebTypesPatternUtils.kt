@@ -153,9 +153,10 @@ private class WebTypesComplexPatternConfigProvider(
           }
           else {
             val lastContribution = stack.peek() as PolySymbol
-            listOf(PolySymbolMatch.create(listResult.name, listResult.segments,
-                                          PolySymbolKind[lastContribution.namespace, SPECIAL_MATCHED_CONTRIB],
-                                          lastContribution.origin))
+            listOf(PolySymbolMatch.create(
+              listResult.name, listResult.segments,
+              PolySymbolKind[lastContribution.namespace, SPECIAL_MATCHED_CONTRIB]
+            ))
           }
         }
       ?: emptyList()
@@ -175,9 +176,10 @@ private class WebTypesComplexPatternConfigProvider(
           }
           else {
             val lastContribution = stack.peek() as PolySymbol
-            sequenceOf(PolySymbolMatch.create(name, matchResult.segments,
-                                              PolySymbolKind[lastContribution.namespace, SPECIAL_MATCHED_CONTRIB],
-                                              lastContribution.origin))
+            sequenceOf(PolySymbolMatch.create(
+              name, matchResult.segments,
+              PolySymbolKind[lastContribution.namespace, SPECIAL_MATCHED_CONTRIB]
+            ))
           }
         }
       ?: emptyList()

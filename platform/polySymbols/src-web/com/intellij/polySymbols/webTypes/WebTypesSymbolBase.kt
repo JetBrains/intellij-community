@@ -23,6 +23,7 @@ import com.intellij.polySymbols.webTypes.impl.WebTypesJsonContributionAdapter
 import com.intellij.polySymbols.webTypes.impl.wrap
 import com.intellij.polySymbols.webTypes.json.*
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 open class WebTypesSymbolBase : WebTypesSymbol {
@@ -117,7 +118,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     base.rootScope
-      .getSymbols(base.contributionForQuery, this.origin as WebTypesJsonOrigin, kind, params)
+      .getSymbols(base.contributionForQuery, base.jsonOrigin, kind, params)
       .toList()
 
   final override fun getCodeCompletions(
@@ -132,7 +133,8 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   final override val kind: PolySymbolKind
     get() = base.kind
 
-  final override val origin: PolySymbolOrigin
+  @get:ApiStatus.Internal
+  final override val origin: WebTypesJsonOrigin
     get() = base.jsonOrigin
 
   final override val name: String
@@ -166,7 +168,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
       }
 
   final override val apiStatus: PolySymbolApiStatus
-    get() = base.contribution.toApiStatus(origin as WebTypesJsonOrigin)
+    get() = base.contribution.toApiStatus(base.jsonOrigin)
 
   final override val extension: Boolean
     get() = base.contribution.extension == true
@@ -208,7 +210,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
 
   internal class WebTypesSymbolWithPattern(private val jsonPattern: NamePatternRoot) : WebTypesSymbolBase(), PolySymbolWithPattern {
     override val pattern: PolySymbolPattern
-      get() = jsonPattern.wrap(base.contribution.name, origin as WebTypesJsonOrigin)
+      get() = jsonPattern.wrap(base.contribution.name, base.jsonOrigin)
   }
 
   private inner class HtmlAttributeValueImpl(private val value: HtmlAttributeValue) : PolySymbolHtmlAttributeValue {

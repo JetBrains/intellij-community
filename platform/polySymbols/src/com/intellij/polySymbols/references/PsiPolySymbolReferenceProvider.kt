@@ -6,7 +6,6 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.PolySymbolNameSegment.MatchProblem
-import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.query.PolySymbolMatch
 
 interface PsiPolySymbolReferenceProvider<T : PsiExternalReferenceHost> {
@@ -27,8 +26,7 @@ interface PsiPolySymbolReferenceProvider<T : PsiExternalReferenceHost> {
     @JvmStatic
     fun unresolvedSymbol(kind: PolySymbolKind, name: String): PolySymbolMatch =
       PolySymbolMatch.create(
-        name, kind, PolySymbolOrigin.empty(),
-        PolySymbolNameSegment.create(0, name.length, problem = MatchProblem.UNKNOWN_SYMBOL)
+        name, kind, PolySymbolNameSegment.create(0, name.length, problem = MatchProblem.UNKNOWN_SYMBOL)
       )
   }
 

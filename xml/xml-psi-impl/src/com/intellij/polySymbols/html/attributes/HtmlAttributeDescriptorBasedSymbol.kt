@@ -7,7 +7,10 @@ import com.intellij.documentation.mdn.getHtmlMdnAttributeDocumentation
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolModifier
+import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.html.*
 import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolQueryStack
@@ -44,9 +47,6 @@ internal class HtmlAttributeDescriptorBasedSymbol private constructor(
     get() = HTML_ATTRIBUTES
 
   override val name: String = descriptor.name
-
-  override val origin: PolySymbolOrigin
-    get() = PolySymbolOrigin.Companion.empty()
 
   override val priority: PolySymbol.Priority
     get() = PolySymbol.Priority.LOW
@@ -121,8 +121,6 @@ internal class HtmlAttributeDescriptorBasedSymbol private constructor(
 
 
   private class HtmlAttributeValueSymbol(override val name: @NlsSafe String) : PolySymbol {
-    override val origin: PolySymbolOrigin
-      get() = PolySymbolOrigin.empty()
 
     override val kind: PolySymbolKind
       get() = HTML_ATTRIBUTE_VALUES

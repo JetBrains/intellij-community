@@ -459,7 +459,7 @@ class PolySymbolQueryExecutorImpl(
       pattern
         .list(this, PolySymbolQueryStack(context + queryScope), params)
         .map {
-          PolySymbolMatch.create(it.name, it.segments, kind, origin)
+          PolySymbolMatch.create(it.name, it.segments, kind)
         }
     else
       listOf(this)

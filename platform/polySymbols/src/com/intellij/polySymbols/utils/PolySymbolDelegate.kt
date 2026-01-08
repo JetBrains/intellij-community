@@ -24,8 +24,6 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolScope {
 
   override val psiContext: PsiElement?
     get() = delegate.psiContext
-  override val origin: PolySymbolOrigin
-    get() = delegate.origin
   override val kind: PolySymbolKind
     get() = delegate.kind
   override val queryScope: List<PolySymbolScope>

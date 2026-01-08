@@ -4,7 +4,6 @@ package com.intellij.polySymbols.impl
 import com.intellij.model.Pointer
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
-import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 
 @Internal
-abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin : PolySymbolOrigin> : StaticPolySymbolScope {
+abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin> : StaticPolySymbolScope {
 
   private val namesProviderCache: MutableMap<PolySymbolNamesProvider, NameProvidersCache> =
     ContainerUtil.createConcurrentSoftKeySoftValueMap()

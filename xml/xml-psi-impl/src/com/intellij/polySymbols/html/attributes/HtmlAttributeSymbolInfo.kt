@@ -1,14 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.html.attributes
 
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.html.attributes.impl.HtmlAttributeEnumConstValueSymbol
 import com.intellij.polySymbols.html.attributes.impl.HtmlAttributeSymbolInfoImpl
-import com.intellij.psi.PsiElement
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolOrigin
-import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -65,31 +64,36 @@ interface HtmlAttributeSymbolInfo {
 
   fun withPriority(priority: PolySymbol.Priority): HtmlAttributeSymbolInfo
 
-  fun with(name: String = this.name,
-           symbol: PolySymbol = this.symbol,
-           acceptsNoValue: Boolean = this.acceptsNoValue,
-           acceptsValue: Boolean = this.acceptsValue,
-           enumValues: List<PolySymbolCodeCompletionItem>? = this.enumValues,
-           strictEnumValues: Boolean = this.strictEnumValues,
-           type: Any? = this.type,
-           icon: Icon? = this.icon,
-           required: Boolean = this.required,
-           defaultValue: String? = this.defaultValue,
-           priority: PolySymbol.Priority = this.priority): HtmlAttributeSymbolInfo
+  fun with(
+    name: String = this.name,
+    symbol: PolySymbol = this.symbol,
+    acceptsNoValue: Boolean = this.acceptsNoValue,
+    acceptsValue: Boolean = this.acceptsValue,
+    enumValues: List<PolySymbolCodeCompletionItem>? = this.enumValues,
+    strictEnumValues: Boolean = this.strictEnumValues,
+    type: Any? = this.type,
+    icon: Icon? = this.icon,
+    required: Boolean = this.required,
+    defaultValue: String? = this.defaultValue,
+    priority: PolySymbol.Priority = this.priority,
+  ): HtmlAttributeSymbolInfo
 
   companion object {
 
     @JvmStatic
-    fun createEnumConstValueSymbol(origin: PolySymbolOrigin,
-                                   matchedName: String,
-                                   source: PsiElement?): PsiSourcedPolySymbol =
-      HtmlAttributeEnumConstValueSymbol(origin, matchedName, source)
+    fun createEnumConstValueSymbol(
+      matchedName: String,
+      source: PsiElement?,
+    ): PsiSourcedPolySymbol =
+      HtmlAttributeEnumConstValueSymbol(matchedName, source)
 
     @JvmStatic
-    fun create(name: String,
-               queryExecutor: PolySymbolQueryExecutor,
-               symbol: PolySymbol,
-               context: PsiElement): HtmlAttributeSymbolInfo =
+    fun create(
+      name: String,
+      queryExecutor: PolySymbolQueryExecutor,
+      symbol: PolySymbol,
+      context: PsiElement,
+    ): HtmlAttributeSymbolInfo =
       HtmlAttributeSymbolInfoImpl.create(name, queryExecutor, symbol, context)
 
     @JvmStatic
@@ -104,7 +108,7 @@ interface HtmlAttributeSymbolInfo {
       icon: Icon? = null,
       required: Boolean = false,
       defaultValue: String? = null,
-      priority: PolySymbol.Priority = PolySymbol.Priority.NORMAL
+      priority: PolySymbol.Priority = PolySymbol.Priority.NORMAL,
     ): HtmlAttributeSymbolInfo = HtmlAttributeSymbolInfoImpl(
       name, symbol, acceptsNoValue, acceptsValue, enumValues,
       strictEnumValues, type, icon, required, defaultValue, priority

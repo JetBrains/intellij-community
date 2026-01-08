@@ -78,13 +78,6 @@ import javax.swing.Icon
 interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
 
   /**
-   * Specifies where this symbol comes from. Besides descriptive information like
-   * framework, library, version or default icon, it also provides an interface to
-   * load symbol types and icons.
-   **/
-  val origin: PolySymbolOrigin
-
-  /**
    * Describes which group of symbols (kind) within the particular language
    * or concept (namespace) the symbol belongs to.
    */

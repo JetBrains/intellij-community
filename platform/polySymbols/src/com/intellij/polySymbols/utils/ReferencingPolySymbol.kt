@@ -4,7 +4,6 @@ package com.intellij.polySymbols.utils
 import com.intellij.model.Pointer
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
-import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.patterns.ComplexPatternOptions
 import com.intellij.polySymbols.patterns.PolySymbolPattern
@@ -19,7 +18,6 @@ import com.intellij.polySymbols.query.PolySymbolWithPattern
 class ReferencingPolySymbol private constructor(
   override val kind: PolySymbolKind,
   override val name: String,
-  override val origin: PolySymbolOrigin,
   vararg references: PolySymbolKind,
   override val priority: PolySymbol.Priority?,
   private val location: List<PolySymbolQualifiedName> = emptyList(),
@@ -31,13 +29,12 @@ class ReferencingPolySymbol private constructor(
     fun create(
       kind: PolySymbolKind,
       name: String,
-      origin: PolySymbolOrigin,
       vararg kinds: PolySymbolKind,
       priority: PolySymbol.Priority? = null,
       location: List<PolySymbolQualifiedName> = emptyList(),
     ): ReferencingPolySymbol =
       ReferencingPolySymbol(
-        kind, name, origin, *kinds, priority = priority, location = location
+        kind, name, *kinds, priority = priority, location = location
       )
   }
 
@@ -62,7 +59,6 @@ class ReferencingPolySymbol private constructor(
     other is ReferencingPolySymbol
     && other.kind == kind
     && other.name == name
-    && other.origin == origin
     && other.priority == priority
     && other.location == location
     && other.references == references
@@ -70,7 +66,6 @@ class ReferencingPolySymbol private constructor(
   override fun hashCode(): Int {
     var result = kind.hashCode()
     result = 31 * result + name.hashCode()
-    result = 31 * result + origin.hashCode()
     result = 31 * result + priority.hashCode()
     result = 31 * result + location.hashCode()
     result = 31 * result + references.hashCode()

@@ -6,15 +6,14 @@ import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.html.HtmlFrameworkSymbolsSupport.Companion.PROP_HTML_FRAMEWORK_ID
-import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
+import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 import com.intellij.polySymbols.webTypes.WebTypesSymbol
-import com.intellij.util.asSafely
 
 val PolySymbol.framework: FrameworkId?
   get() =
     when (this) {
       is HtmlFrameworkSymbol -> this.framework
-      else -> this.origin.asSafely<WebTypesJsonOrigin>()?.framework
+      else -> unwrapMatchedSymbols().firstNotNullOfOrNull { (it as? WebTypesSymbol)?.origin?.framework }
               ?: this[PROP_HTML_FRAMEWORK_ID]
     }
 

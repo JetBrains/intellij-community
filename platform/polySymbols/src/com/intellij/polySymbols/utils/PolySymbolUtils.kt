@@ -60,8 +60,7 @@ fun List<PolySymbol>.asSingleSymbol(force: Boolean = false): PolySymbol? =
     if (!force && any { it.kind != first.kind })
       null
     else
-      PolySymbolMatch.create(first.name, first.kind, first.origin,
-                             PolySymbolNameSegment.create(0, first.name.length, sortSymbolsByPriority()))
+      PolySymbolMatch.create(first.name, first.kind, PolySymbolNameSegment.create(0, first.name.length, sortSymbolsByPriority()))
   }
 
 fun PolySymbol.withMatchedName(matchedName: String): PolySymbol =
@@ -70,7 +69,7 @@ fun PolySymbol.withMatchedName(matchedName: String): PolySymbol =
       nameSegments[0].withRange(0, matchedName.length)
     else
       PolySymbolNameSegment.create(0, matchedName.length, this)
-    PolySymbolMatch.create(matchedName, kind, origin, nameSegment)
+    PolySymbolMatch.create(matchedName, kind, nameSegment)
   }
   else this
 
@@ -81,7 +80,7 @@ fun PolySymbol.withMatchedKind(kind: PolySymbolKind): PolySymbol =
       nameSegments[0].withRange(0, matchedName.length)
     else
       PolySymbolNameSegment.create(0, matchedName.length, this)
-    PolySymbolMatch.create(matchedName, kind, origin, nameSegment)
+    PolySymbolMatch.create(matchedName, kind, nameSegment)
   }
   else this
 
@@ -160,7 +159,7 @@ fun PolySymbol.match(
             null
           }
           else {
-            PolySymbolMatch.create(nameToMatch, matchResult.segments, kind, origin)
+            PolySymbolMatch.create(nameToMatch, matchResult.segments, kind)
           }
         }
     }

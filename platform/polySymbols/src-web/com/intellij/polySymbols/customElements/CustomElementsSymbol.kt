@@ -11,9 +11,13 @@ import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport.Companion.PROP_TYPE_SUPPORT
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 interface CustomElementsSymbol : PolySymbol, PolySymbolScope {
+
+  @get:ApiStatus.Internal
+  val origin: CustomElementsJsonOrigin
 
   val description: @Nls String? get() = null
 
@@ -23,14 +27,14 @@ interface CustomElementsSymbol : PolySymbol, PolySymbolScope {
     PolySymbolDocumentationTarget.create(this, location) { symbol, _ ->
       description = symbol.description
       defaultValue = symbol.defaultValue
-      library = (symbol.origin as? CustomElementsJsonOrigin)?.let { origin ->
+      library = symbol.origin.let { origin ->
         library + (origin.version?.takeIf { it != "0.0.0" }?.let { "@$it" } ?: "")
       }
     }
 
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
     when (property) {
-      PROP_TYPE_SUPPORT -> property.tryCast((origin as CustomElementsJsonOrigin).typeSupport)
+      PROP_TYPE_SUPPORT -> property.tryCast(origin.typeSupport)
       else -> super.get(property)
     }
 

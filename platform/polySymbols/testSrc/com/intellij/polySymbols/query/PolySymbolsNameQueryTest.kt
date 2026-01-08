@@ -397,8 +397,6 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
         ): List<PolySymbol> {
           return if (qualifiedName.kind == HTML_ATTRIBUTES) {
             listOf(object : PolySymbol {
-              override val origin: PolySymbolOrigin
-                get() = PolySymbolOrigin.empty()
               override val kind: PolySymbolKind
                 get() = HTML_ATTRIBUTES
               override val name: String

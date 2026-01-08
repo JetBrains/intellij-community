@@ -5,7 +5,10 @@ import com.intellij.documentation.mdn.MdnSymbolDocumentation
 import com.intellij.documentation.mdn.getDomEventDocumentation
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolModifier
+import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolDescriptor
 import com.intellij.polySymbols.html.attributes.asHtmlSymbol
 import com.intellij.polySymbols.html.elements.HtmlElementSymbolDescriptor
@@ -182,9 +185,6 @@ class HtmlSymbolQueryScopeContributor : PolySymbolQueryScopeContributor {
       get() = JS_EVENTS
 
     override val name: String = descriptor.name.substring(2)
-
-    override val origin: PolySymbolOrigin
-      get() = PolySymbolOrigin.empty()
 
     override val priority: PolySymbol.Priority
       get() = PolySymbol.Priority.LOW

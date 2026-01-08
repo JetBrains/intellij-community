@@ -8,7 +8,6 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
-import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.html.HTML_ELEMENTS
 import com.intellij.polySymbols.html.StandardHtmlSymbol
 import com.intellij.psi.PsiElement
@@ -35,9 +34,6 @@ internal class HtmlElementDescriptorBasedSymbol(
     get() = HTML_ELEMENTS
 
   override val name: String = descriptor.name
-
-  override val origin: PolySymbolOrigin
-    get() = PolySymbolOrigin.Companion.empty()
 
   override val priority: PolySymbol.Priority
     get() = PolySymbol.Priority.LOW
