@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -10,6 +11,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class PyCellUtil {
+
+  public static final class CellRange {
+    public final TextRange textRange;
+    public final Boolean lastCell;
+
+    public CellRange(TextRange textRange, Boolean lastCell) {
+      this.textRange = textRange;
+      this.lastCell = lastCell;
+    }
+  }
 
   public static boolean hasCells(@NotNull PsiFile file) {
     PsiElement el = file.getFirstChild();
@@ -63,7 +74,22 @@ public final class PyCellUtil {
     return StringUtil.trim(text.toString());
   }
 
-  public static PsiElement findNextCell(PsiElement startElement) {
+  public static CellRange getCellTextRangeIncludingSeparators(@NotNull PsiElement element) {
+    PsiElement el = element;
+    while (el != null && !isBlockCell(el)) {
+      el = PsiTreeUtil.prevLeaf(el);
+    }
+
+    int startOffset = el == null ? element.getContainingFile().getFirstChild().getTextOffset() : el.getTextRange().getStartOffset();
+
+    PsiElement nextCell = findNextCell(element);
+    int endOffset = nextCell == null ? element.getContainingFile().getLastChild().getTextRange().getEndOffset()
+                                     : nextCell.getTextRange().getStartOffset();
+
+    return new CellRange(new TextRange(startOffset, endOffset), nextCell == null);
+  }
+
+  public static @Nullable PsiElement findNextCell(PsiElement startElement) {
     PsiElement el = PsiTreeUtil.nextLeaf(PsiTreeUtil.getDeepestFirst(startElement));
     while (el != null) {
       if (isBlockCell(el)) {
@@ -74,7 +100,19 @@ public final class PyCellUtil {
     return null;
   }
 
-  public static PsiElement findPrevCell(PsiElement startElement) {
+  public static @Nullable PsiElement findSeparatorOfPrevCell(PsiElement startElement) {
+    PsiElement currentCellSeparator = PsiTreeUtil.prevLeaf(PsiTreeUtil.getDeepestFirst(startElement));
+    while (currentCellSeparator != null && !isBlockCell(currentCellSeparator)) {
+      currentCellSeparator = PsiTreeUtil.prevLeaf(currentCellSeparator);
+    }
+
+    if (currentCellSeparator == null) return null;
+
+    return findPrevCell(currentCellSeparator);
+  }
+
+  // Not a prev cell, but only a cell separator that is over the startElement (it could be in the same cell).
+  public static @Nullable PsiElement findPrevCell(PsiElement startElement) {
     PsiElement el = PsiTreeUtil.prevLeaf(PsiTreeUtil.getDeepestFirst(startElement));
     while (el != null) {
       if (isBlockCell(el)) {
