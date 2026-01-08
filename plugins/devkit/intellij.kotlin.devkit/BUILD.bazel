@@ -40,7 +40,6 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//xml/xml-analysis-api:analysis",
     "//java/java-analysis-api:analysis",
-    "//plugins/kotlin/code-insight/intentions-shared:kotlin-code-insight-intentions-shared",
     "//plugins/kotlin/code-insight/utils",
     "@lib//:kotlinc-analysis-api-provided",
     "@lib//:kotlinc-kotlin-compiler-common-provided",

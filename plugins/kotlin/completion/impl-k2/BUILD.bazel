@@ -48,7 +48,6 @@ jvm_library(
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
-    "//plugins/kotlin/base/fir/code-insight:kotlin-codeInsight-base",
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
     "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
