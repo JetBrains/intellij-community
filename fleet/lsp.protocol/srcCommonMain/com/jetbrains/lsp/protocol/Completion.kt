@@ -232,6 +232,7 @@ interface CompletionOptions: WorkDoneProgressOptions { /**
     )
 }
 
+@Suppress("unused")
 @Serializable
 data class CompletionRegistrationOptionsImpl(
     override val triggerCharacters: List<String>?,
@@ -670,10 +671,18 @@ data class CompletionItem(
                 }
             }
         }
+
+      companion object {
+        fun emptyAtPosition(position: Position): Edit {
+          val range = Range(position, position)
+          return InsertReplace(InsertReplaceEdit("", range, range))
+        }
+      }
     }
 }
 
 // todo: custom serializer needed
+@Suppress("unused")
 @Serializable
 @JvmInline
 value class TextEditOrInsertReplaceEdit private constructor(val edit: JsonElement) {
