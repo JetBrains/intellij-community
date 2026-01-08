@@ -35,7 +35,10 @@ object BazelRunfiles {
     // On Windows there could be no runfiles tree, so we need to use manifest only
     if (runfilesManifestOnly || runfileManifest.exists) {
       val resolved = Path.of(runfileManifest.get(manifestKey))
-      check(resolved.exists()) { "Unable to find dependency ($RUNFILES_MANIFEST_ONLY_ENV_NAME=1) '${label.asLabel}' at $resolved" }
+      check(resolved.exists()) {
+        "Unable to find dependency ($RUNFILES_MANIFEST_ONLY_ENV_NAME=${runfilesManifestOnly}) '${label.asLabel}' at $resolved\n" +
+        "Check `data` attribute of your target to make sure it's included there"
+      }
       return resolved
     }
 
