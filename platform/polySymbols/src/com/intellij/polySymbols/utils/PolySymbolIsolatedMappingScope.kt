@@ -9,7 +9,6 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.query.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
@@ -19,11 +18,6 @@ import com.intellij.util.applyIf
 
 abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
   protected val mappings: Map<PolySymbolKind, PolySymbolKind>,
-  /**
-   * Allows to optimize for symbols with a particular [PolySymbolOrigin.framework].
-   * If `null` all symbols will be accepted and scope will be queried in all contexts.
-   */
-  protected val framework: FrameworkId?,
   /**
    * Location for which the isolated query executor should be built.
    */
@@ -39,7 +33,7 @@ abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
     params: PolySymbolCodeCompletionQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbolCodeCompletionItem> {
-    if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
+    if (!params.queryExecutor.allowResolve)
       return emptyList()
     val sourceKind = mappings[qualifiedName.kind] ?: return emptyList()
     var result: List<PolySymbolCodeCompletionItem> = emptyList()
@@ -58,7 +52,7 @@ abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
     params: PolySymbolNameMatchQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbol> {
-    if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
+    if (!params.queryExecutor.allowResolve)
       return emptyList()
     val sourceKind = mappings[qualifiedName.kind] ?: return emptyList()
     var result: List<PolySymbol> = emptyList()
@@ -79,7 +73,7 @@ abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
     params: PolySymbolListSymbolsQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbol> {
-    if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
+    if (!params.queryExecutor.allowResolve)
       return emptyList()
     val sourceKind = mappings[kind] ?: return emptyList()
     var result: List<PolySymbol> = emptyList()
@@ -103,11 +97,10 @@ abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
     || (other != null
         && other is PolySymbolIsolatedMappingScope<*>
         && other::class.java == this::class.java
-        && other.framework == framework
         && other.location == location)
 
   override fun hashCode(): Int =
-    31 * framework.hashCode() + location.hashCode()
+    location.hashCode()
 
   private val subQuery by lazy(LazyThreadSafetyMode.PUBLICATION) {
     getCachedSubQueryExecutorAndScope().first

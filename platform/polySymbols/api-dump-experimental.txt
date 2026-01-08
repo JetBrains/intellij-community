@@ -325,7 +325,6 @@
 *f:com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemInsertHandler$Companion
 *:com.intellij.polySymbols.context.PolyContext
 - *sf:Companion:com.intellij.polySymbols.context.PolyContext$Companion
-- sf:KIND_FRAMEWORK:java.lang.String
 - sf:PKG_MANAGER_NODE_PACKAGES:java.lang.String
 - sf:PKG_MANAGER_RUBY_GEMS:java.lang.String
 - sf:PKG_MANAGER_SYMFONY_BUNDLES:java.lang.String
@@ -337,7 +336,6 @@
 - a:get(java.lang.String):java.lang.String
 - s:get(java.lang.String,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.lang.String
 - s:get(java.lang.String,com.intellij.psi.PsiElement):java.lang.String
-- getFramework():java.lang.String
 *f:com.intellij.polySymbols.context.PolyContext$Companion
 - f:create(java.util.Map):com.intellij.polySymbols.context.PolyContext
 - f:empty():com.intellij.polySymbols.context.PolyContext
@@ -567,6 +565,7 @@
 - f:create(com.intellij.polySymbols.PolySymbol,com.intellij.psi.PsiElement,kotlin.jvm.functions.Function3):com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 *a:com.intellij.polySymbols.framework.PolySymbolFramework
 - *sf:Companion:com.intellij.polySymbols.framework.PolySymbolFramework$Companion
+- sf:KIND_FRAMEWORK:java.lang.String
 - <init>():V
 - sf:get(java.lang.String):com.intellij.polySymbols.framework.PolySymbolFramework
 - sf:getAll():java.util.List
@@ -585,6 +584,8 @@
 - f:getAll():java.util.List
 - f:inLocation(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.polySymbols.framework.PolySymbolFramework
 - f:inLocation(com.intellij.psi.PsiElement):com.intellij.polySymbols.framework.PolySymbolFramework
+*f:com.intellij.polySymbols.framework.PolySymbolFrameworkKt
+- sf:getFramework(com.intellij.polySymbols.context.PolyContext):java.lang.String
 *f:com.intellij.polySymbols.html.HtmlSymbolKinds
 - sf:HTML_ATTRIBUTES:com.intellij.polySymbols.PolySymbolKind
 - sf:HTML_ATTRIBUTE_VALUES:com.intellij.polySymbols.PolySymbolKind
@@ -825,7 +826,6 @@
 - codeCompletionQuery(java.util.List,I,kotlin.jvm.functions.Function1):java.util.List
 - a:createPointer():com.intellij.model.Pointer
 - a:getContext():com.intellij.polySymbols.context.PolyContext
-- getFramework():java.lang.String
 - a:getKeepUnresolvedTopLevelReferences():Z
 - a:getLocation():com.intellij.psi.PsiElement
 - a:getNamesProvider():com.intellij.polySymbols.query.PolySymbolNamesProvider
@@ -882,7 +882,6 @@
 - a:addRootScopes(java.util.List):com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory$PolySymbolQueryExecutorBuilder
 - a:allowResolve(Z):com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory$PolySymbolQueryExecutorBuilder
 - a:create():com.intellij.polySymbols.query.PolySymbolQueryExecutor
-- a:setFramework(java.lang.String):com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory$PolySymbolQueryExecutorBuilder
 *:com.intellij.polySymbols.query.PolySymbolQueryExecutorListener
 - *sf:Companion:com.intellij.polySymbols.query.PolySymbolQueryExecutorListener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
@@ -892,7 +891,6 @@
 *:com.intellij.polySymbols.query.PolySymbolQueryParams
 - accept(com.intellij.polySymbols.PolySymbol):Z
 - a:getExcludeModifiers():java.util.List
-- getFramework():java.lang.String
 - a:getQueryExecutor():com.intellij.polySymbols.query.PolySymbolQueryExecutor
 - a:getRequiredModifiers():java.util.List
 *:com.intellij.polySymbols.query.PolySymbolQueryParams$Builder
@@ -1100,11 +1098,10 @@
 - f:unwrapAllDelegates(com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.PolySymbol
 *a:com.intellij.polySymbols.utils.PolySymbolIsolatedMappingScope
 - com.intellij.polySymbols.query.PolySymbolScope
-- <init>(java.util.Map,java.lang.String,com.intellij.psi.PsiElement):V
+- <init>(java.util.Map,com.intellij.psi.PsiElement):V
 - pa:acceptSymbol(com.intellij.polySymbols.PolySymbol):Z
 - f:equals(java.lang.Object):Z
 - getCodeCompletions(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List
-- pf:getFramework():java.lang.String
 - pf:getLocation():com.intellij.psi.PsiElement
 - pf:getMappings():java.util.Map
 - getMatchingSymbols(com.intellij.polySymbols.PolySymbolQualifiedName,com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams,com.intellij.polySymbols.query.PolySymbolQueryStack):java.util.List

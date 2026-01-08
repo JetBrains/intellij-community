@@ -8,6 +8,7 @@ import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.framework.FrameworkId
+import com.intellij.polySymbols.framework.framework
 import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.*
 import com.intellij.util.containers.ContainerUtil

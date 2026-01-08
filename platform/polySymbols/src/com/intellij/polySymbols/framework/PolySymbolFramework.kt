@@ -6,12 +6,15 @@ import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
+import com.intellij.polySymbols.framework.PolySymbolFramework.Companion.KIND_FRAMEWORK
 import com.intellij.polySymbols.query.PolySymbolNamesProvider
 import com.intellij.psi.PsiElement
 import javax.swing.Icon
 
 typealias FrameworkId = String
+
+val PolyContext.framework: FrameworkId?
+  get() = this[KIND_FRAMEWORK]
 
 abstract class PolySymbolFramework {
 
@@ -39,6 +42,8 @@ abstract class PolySymbolFramework {
     private val WEB_FRAMEWORK_EP = object : KeyedExtensionCollector<PolySymbolFramework, String>("com.intellij.polySymbols.framework") {
       val all get() = extensions.asSequence().map { it.instance }
     }
+
+    const val KIND_FRAMEWORK: String = "framework"
 
     @JvmStatic
     fun get(id: String): PolySymbolFramework = WEB_FRAMEWORK_EP.findSingle(id) ?: UnregisteredWebFramework(id)

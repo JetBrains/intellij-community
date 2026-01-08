@@ -12,8 +12,6 @@ internal open class MatchParameters(
   constructor(name: String, params: PolySymbolNameMatchQueryParams)
     : this(name, params.queryExecutor)
 
-  val framework: String? get() = queryExecutor.framework
-
   override fun toString(): String =
-    "match: $name (framework: $framework)"
+    "match: $name (context: ${queryExecutor.context})"
 }

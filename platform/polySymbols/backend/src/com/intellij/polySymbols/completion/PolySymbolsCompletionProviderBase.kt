@@ -13,7 +13,7 @@ import com.intellij.openapi.util.getAndUpdateUserData
 import com.intellij.patterns.StandardPatterns
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer.Companion.customizeItems
-import com.intellij.polySymbols.framework.FrameworkId
+import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.query.PolySymbolScope
@@ -88,7 +88,7 @@ abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionPro
     ) {
       processPolySymbolCodeCompletionItems(
         queryExecutor.codeCompletionQuery(kind, name, position).additionalScope(queryContext).run(),
-        result, kind, name, queryExecutor.framework, location, providedNames, filter, consumer
+        result, kind, name, queryExecutor.context, location, providedNames, filter, consumer
       )
     }
 
@@ -98,7 +98,7 @@ abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionPro
       result: CompletionResultSet,
       kind: PolySymbolKind,
       name: String,
-      framework: FrameworkId?,
+      context: PolyContext,
       location: PsiElement,
       providedNames: MutableSet<String>? = null,
       filter: ((PolySymbolCodeCompletionItem) -> Boolean)? = null,
@@ -109,7 +109,7 @@ abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionPro
       symbols
         .asSequence()
         .distinctBy { Triple(it.offset, it.name, it.completeAfterInsert) }
-        .customizeItems(framework, kind, location)
+        .customizeItems(context, kind, location)
         .filter { item ->
           (filter == null || filter(item))
           && item.offset <= prefixLength

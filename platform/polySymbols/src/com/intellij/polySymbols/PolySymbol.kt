@@ -237,7 +237,7 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
 
   /**
    * Return `true` if the symbol should be present in the query results
-   * in the particular context. By default, the current symbol framework is checked.
+   * in the particular context.
    */
   fun matchContext(context: PolyContext): Boolean =
     true

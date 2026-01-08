@@ -4,8 +4,8 @@ package com.intellij.polySymbols.html
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer
+import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
-import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.psi.PsiElement
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
@@ -14,12 +14,12 @@ import org.jetbrains.annotations.ApiStatus
 class HtmlCodeCompletionItemCustomizer : PolySymbolCodeCompletionItemCustomizer {
   override fun customize(
     item: PolySymbolCodeCompletionItem,
-    framework: FrameworkId?,
+    context: PolyContext,
     kind: PolySymbolKind,
     location: PsiElement,
   ): PolySymbolCodeCompletionItem =
     when (kind) {
-      HTML_ELEMENTS -> item.withTypeText{
+      HTML_ELEMENTS -> item.withTypeText {
         item.symbol
           ?.getDocumentationTarget(null)
           ?.asSafely<PolySymbolDocumentationTarget>()

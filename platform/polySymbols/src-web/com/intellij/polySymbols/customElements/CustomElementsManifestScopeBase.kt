@@ -9,7 +9,6 @@ import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContextKindRules
 import com.intellij.polySymbols.customElements.json.*
-import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConversionRulesProvider
@@ -59,7 +58,7 @@ abstract class CustomElementsManifestScopeBase :
 
   override fun getContextRules(): MultiMap<PolyContextKind, PolyContextKindRules> = MultiMap.empty()
 
-  override fun getNameConversionRulesProvider(framework: FrameworkId): PolySymbolNameConversionRulesProvider =
+  override fun getNameConversionRulesProvider(context: PolyContext): PolySymbolNameConversionRulesProvider? =
     object : PolySymbolNameConversionRulesProvider {
       override fun getNameConversionRules(): PolySymbolNameConversionRules = PolySymbolNameConversionRules.empty()
       override fun createPointer(): Pointer<out PolySymbolNameConversionRulesProvider> = Pointer.hardPointer(this)

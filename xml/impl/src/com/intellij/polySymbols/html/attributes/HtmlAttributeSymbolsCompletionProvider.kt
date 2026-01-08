@@ -5,13 +5,14 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.XmlAttributeInsertHandler
 import com.intellij.codeInsight.completion.XmlTagInsertHandler
-import com.intellij.polySymbols.html.HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors
-import com.intellij.polySymbols.html.HtmlFrameworkSymbolsSupport
-import com.intellij.polySymbols.html.StandardHtmlSymbol
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
+import com.intellij.polySymbols.framework.framework
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
+import com.intellij.polySymbols.html.HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors
+import com.intellij.polySymbols.html.HtmlFrameworkSymbolsSupport
+import com.intellij.polySymbols.html.StandardHtmlSymbol
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.utils.asSingleSymbol
@@ -38,7 +39,7 @@ class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase
 
     val providedAttributes = tag.attributes.asSequence().mapNotNull { it.name }.toMutableSet()
 
-    val attributesFilter = HtmlFrameworkSymbolsSupport.get(queryExecutor.framework)
+    val attributesFilter = HtmlFrameworkSymbolsSupport.get(queryExecutor.context.framework)
       .getAttributeNameCodeCompletionFilter(tag)
 
     val filteredOutStandardSymbols = getStandardHtmlAttributeDescriptors(tag)

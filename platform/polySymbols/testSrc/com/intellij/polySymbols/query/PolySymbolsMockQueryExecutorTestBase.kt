@@ -8,15 +8,15 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.testFramework.UsefulTestCase
-import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.polySymbols.context.impl.PolyContextProviderExtensionPoint
+import com.intellij.polySymbols.framework.PolySymbolFramework.Companion.KIND_FRAMEWORK
 import com.intellij.polySymbols.html.HtmlSymbolMatchCustomizer
 import com.intellij.polySymbols.query.impl.CustomElementsManifestMockScopeImpl
 import com.intellij.polySymbols.query.impl.PolySymbolMockQueryExecutorFactory
 import com.intellij.polySymbols.query.impl.WebTypesMockScopeImpl
 import com.intellij.polySymbols.webTypes.filters.PolySymbolMatchPrefixFilter
 import com.intellij.polySymbols.webTypes.impl.PolySymbolFilterEP
+import com.intellij.testFramework.UsefulTestCase
 import java.io.File
 
 abstract class PolySymbolsMockQueryExecutorTestBase : UsefulTestCase() {

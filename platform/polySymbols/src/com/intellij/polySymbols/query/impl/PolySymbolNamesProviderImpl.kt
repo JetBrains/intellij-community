@@ -5,9 +5,10 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
+import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.css.NAMESPACE_CSS
-import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.framework.PolySymbolFramework
+import com.intellij.polySymbols.framework.framework
 import com.intellij.polySymbols.html.NAMESPACE_HTML
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConverter
@@ -18,7 +19,7 @@ import java.util.*
 
 @ApiStatus.Internal
 class PolySymbolNamesProviderImpl(
-  private val framework: FrameworkId?,
+  private val context: PolyContext,
   private val configuration: List<PolySymbolNameConversionRules>,
   private val modificationTracker: ModificationTracker,
 ) : PolySymbolNamesProvider {
@@ -31,7 +32,7 @@ class PolySymbolNamesProviderImpl(
 
   private val renameProviders: Map<PolySymbolKind, PolySymbolNameConverter>
 
-  private val polySymbolFramework get() = framework?.let { PolySymbolFramework.get(it) }
+  private val polySymbolFramework get() = context.framework?.let { PolySymbolFramework.get(it) }
 
   init {
     val canonicalNamesProviders = mutableMapOf<PolySymbolKind, PolySymbolNameConverter>()
@@ -54,18 +55,18 @@ class PolySymbolNamesProviderImpl(
     Pointer.hardPointer(this)
 
   override fun hashCode(): Int =
-    framework.hashCode() * 31 + configuration.hashCode()
+    context.hashCode() * 31 + configuration.hashCode()
 
   override fun equals(other: Any?): Boolean =
     other is PolySymbolNamesProviderImpl
-    && other.framework == framework
+    && other.context == context
     && other.configuration == configuration
 
   override fun getModificationCount(): Long =
     modificationTracker.modificationCount
 
   override fun withRules(rules: List<PolySymbolNameConversionRules>): PolySymbolNamesProvider =
-    PolySymbolNamesProviderImpl(framework, rules + configuration, modificationTracker)
+    PolySymbolNamesProviderImpl(context, rules + configuration, modificationTracker)
 
   override fun getNames(qualifiedName: PolySymbolQualifiedName, target: PolySymbolNamesProvider.Target): List<String> =
     when (target) {

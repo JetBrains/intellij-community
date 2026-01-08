@@ -4,6 +4,7 @@ package com.intellij.polySymbols.query
 import com.intellij.model.Pointer
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.context.PolyContext
+import com.intellij.polySymbols.framework.framework
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.testFramework.query.doTest
 import com.intellij.polySymbols.testFramework.query.printMatches

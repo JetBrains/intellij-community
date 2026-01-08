@@ -6,10 +6,6 @@ import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.query.impl.AbstractQueryParamsBuilderImpl
 
 sealed interface PolySymbolQueryParams {
-
-  val framework: String?
-    get() = queryExecutor.framework
-
   val queryExecutor: PolySymbolQueryExecutor
 
   val requiredModifiers: List<PolySymbolModifier>

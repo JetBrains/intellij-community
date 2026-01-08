@@ -11,12 +11,13 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.polySymbols.context.PolyContextKindRules
 import com.intellij.polySymbols.context.PolyContextKindRules.DisablementRules
 import com.intellij.polySymbols.context.PolyContextKindRules.EnablementRules
 import com.intellij.polySymbols.context.PolyContextRulesProvider
 import com.intellij.polySymbols.framework.FrameworkId
+import com.intellij.polySymbols.framework.PolySymbolFramework.Companion.KIND_FRAMEWORK
+import com.intellij.polySymbols.framework.framework
 import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConversionRulesProvider
@@ -44,8 +45,8 @@ abstract class WebTypesScopeBase :
 
   abstract override fun createPointer(): Pointer<out WebTypesScopeBase>
 
-  override fun getNameConversionRulesProvider(framework: FrameworkId): PolySymbolNameConversionRulesProvider {
-    return WebTypesSymbolNameConversionRulesProvider(framework, this, nameConversionRulesCache)
+  override fun getNameConversionRulesProvider(context: PolyContext): PolySymbolNameConversionRulesProvider? {
+    return context.framework?.let { WebTypesSymbolNameConversionRulesProvider(it, this, nameConversionRulesCache) }
   }
 
   override fun getContextRules(): MultiMap<PolyContextKind, PolyContextKindRules> = contextRulesCache.value

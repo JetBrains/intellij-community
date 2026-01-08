@@ -8,8 +8,6 @@ import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
-import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.psi.PsiElement
 
 /**
@@ -28,8 +26,6 @@ interface PolySymbolQueryExecutor : ModificationTracker {
   val location: PsiElement?
 
   val context: PolyContext
-
-  val framework: FrameworkId? get() = context[KIND_FRAMEWORK]
 
   @get:JvmName("allowResolve")
   val allowResolve: Boolean

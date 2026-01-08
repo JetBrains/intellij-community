@@ -10,14 +10,10 @@ import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.context.impl.PolyContextImpl
 import com.intellij.polySymbols.context.impl.PolyContextProviderExtensionCollector
 import com.intellij.polySymbols.context.impl.findPolyContext
-import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
 
 interface PolyContext {
-
-  val framework: FrameworkId?
-    get() = this[KIND_FRAMEWORK]
 
   operator fun get(kind: PolyContextKind): PolyContextName?
 
@@ -28,9 +24,6 @@ interface PolyContext {
     @JvmField
     val POLY_SYMBOLS_CONTEXT_EP: KeyedExtensionCollector<PolyContextProvider, String> =
       PolyContextProviderExtensionCollector(ExtensionPointName("com.intellij.polySymbols.context"))
-
-    @JvmField
-    val KIND_FRAMEWORK: String = "framework"
 
     @JvmField
     val VALUE_NONE: String = "none"

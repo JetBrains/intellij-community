@@ -5,6 +5,7 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.framework.FrameworkId
+import com.intellij.polySymbols.framework.framework
 import com.intellij.polySymbols.html.HtmlFrameworkSymbolsSupport.Companion.PROP_HTML_FRAMEWORK_ID
 import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 import com.intellij.polySymbols.webTypes.WebTypesSymbol

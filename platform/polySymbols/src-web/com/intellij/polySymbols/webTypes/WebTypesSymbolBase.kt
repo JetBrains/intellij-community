@@ -11,6 +11,7 @@ import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.documentation.PolySymbolDocumentation
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationProvider
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
+import com.intellij.polySymbols.framework.framework
 import com.intellij.polySymbols.html.PROP_HTML_ATTRIBUTE_VALUE
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.html.htmlAttributeValue
