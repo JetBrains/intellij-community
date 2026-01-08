@@ -7,6 +7,7 @@
     <module name="intellij.kotlin.gradle.codeInsight.common"/>
     <module name="intellij.kotlin.projectWizard.idea"/>
     <module name="intellij.kotlin.base.externalSystem"/>
+    <module name="intellij.kotlin.runConfigurations.jvm"/>
   </dependencies>
 
   <extensionPoints>
