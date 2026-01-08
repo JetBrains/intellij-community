@@ -16,7 +16,6 @@ import com.intellij.debugger.engine.evaluation.expression.UnsupportedExpressionE
 import com.intellij.debugger.engine.evaluation.statistics.JavaDebuggerEvaluatorStatisticsCollector;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.LogCapture;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -396,13 +395,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         buf.append("\n");
       }
       if (!buf.isEmpty()) {
-        var msg = buf.toString();
-
-        var session = debugProcess.getSession();
-        var xPosition = myXBreakpoint.getSourcePosition();
-        LogCapture.getInstance(myProject).captureBreakpointLogs(msg, session, xPosition);
-
-        debugProcess.printToConsole(msg);
+        debugProcess.printToConsole(buf.toString());
       }
     }
     if (isRemoveAfterHit()) {
