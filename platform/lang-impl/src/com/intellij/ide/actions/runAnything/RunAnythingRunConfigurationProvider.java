@@ -6,11 +6,10 @@ import com.intellij.execution.actions.ChooseRunConfigurationPopup.ItemWrapper;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FList;
+import com.intellij.util.text.matching.MatchedFragment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -44,7 +43,7 @@ public final class RunAnythingRunConfigurationProvider extends com.intellij.ide.
     TreeMap<Integer, ItemWrapper> map = new TreeMap<>(Comparator.reverseOrder());
     for (ItemWrapper<?> wrapper : list) {
       String name = wrapper.getText();
-      List<TextRange> fragments = matcher.match(name);
+      @Nullable List<@NotNull MatchedFragment> fragments = matcher.match(name);
       if (fragments != null) {
         int rest = fragments.isEmpty() ? 0 : name.length() - fragments.getLast().getEndOffset();
         map.put(matcher.matchingDegree(name, false, fragments) - rest, wrapper);

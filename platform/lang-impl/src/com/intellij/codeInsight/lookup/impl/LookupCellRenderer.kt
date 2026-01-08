@@ -38,6 +38,7 @@ import com.intellij.util.IconUtil.cropIcon
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
+import com.intellij.util.text.matching.MatchedFragment
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -198,7 +199,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     fun getGrayedForeground(@Suppress("UNUSED_PARAMETER") isSelected: Boolean): Color = UIUtil.getContextHelpForeground()
 
     @JvmStatic
-    fun getMatchingFragmentList(prefix: String, name: String): List<TextRange>? {
+    fun getMatchingFragmentList(prefix: String, name: String): List<MatchedFragment>? {
       return NameUtil.buildMatcher("*$prefix").build().match(name)
     }
 
@@ -470,18 +471,19 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     val prefix = if (item is EmptyLookupItem) "" else lookup.itemPattern(item)
     if (prefix.isNotEmpty()) {
       val itemMatcher = lookup.itemMatcher(item)
-      var ranges: List<TextRange>? = itemMatcher.getMatchingFragments(name) ?: getMatchingFragmentList(prefix, name)
+      var ranges: List<MatchedFragment>? = itemMatcher.getMatchingFragments(name) ?: getMatchingFragmentList(prefix, name)
       if (ranges == null) {
         val startIndex = item.lookupString.indexOf(name)
         if (startIndex != -1) {
           ranges = getMatchingFragmentList(prefix, item.lookupString)
-            ?.map { TextRange((it.startOffset - startIndex).coerceIn(0, name.length), (it.endOffset - startIndex).coerceIn(0, name.length)) }
+            ?.map { MatchedFragment((it.startOffset - startIndex).coerceIn(0, name.length), (it.endOffset - startIndex).coerceIn(0, name.length)) }
             ?.filter { it.length != 0 }
         }
       }
-      if (ranges != null && ranges.isNotEmpty()) {
+      if (!ranges.isNullOrEmpty()) {
+        val colored = ranges.map { TextRange.create(it.startOffset, it.endOffset) }
         val highlighted = SimpleTextAttributes(style, MATCHED_FOREGROUND_COLOR)
-        SpeedSearchUtil.appendColoredFragments(nameComponent, name, ranges, base, highlighted)
+        SpeedSearchUtil.appendColoredFragments(nameComponent, name, colored, base, highlighted)
         renderItemNameDecoration(nameComponent, itemNameDecorations)
         return
       }

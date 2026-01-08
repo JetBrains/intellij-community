@@ -8,7 +8,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
+import com.intellij.util.text.matching.MatchedFragment;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -114,14 +116,15 @@ public final class SpeedSearchUtil {
       return;
     }
 
-    final Iterable<TextRange> iterable = ((MinusculeMatcher)matcher).match(text);
+    final @Nullable List<@NotNull MatchedFragment> iterable = ((MinusculeMatcher)matcher).match(text);
     component.setDynamicSearchMatchHighlighting(iterable != null);
     if (iterable != null) {
       final Color fg = attributes.getFgColor();
       final int style = attributes.getStyle();
       final SimpleTextAttributes plain = new SimpleTextAttributes(style, fg);
       final SimpleTextAttributes highlighted = new SimpleTextAttributes(selectedBg, fg, null, style | SimpleTextAttributes.STYLE_SEARCH_MATCH);
-      appendColoredFragments(component, text, iterable, plain, highlighted);
+      List<TextRange> ranges = ContainerUtil.map(iterable, f -> new TextRange(f.getStartOffset(), f.getEndOffset()));
+      appendColoredFragments(component, text, ranges, plain, highlighted);
     }
     else {
       component.append(text, attributes);

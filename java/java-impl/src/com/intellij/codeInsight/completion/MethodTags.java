@@ -16,6 +16,7 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
+import com.intellij.util.text.matching.MatchedFragment;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,9 +141,9 @@ public final class MethodTags {
     private void highlightLast(@NotNull LookupElementPresentation presentation, int start) {
       List<LookupElementPresentation.TextFragment> fragments = presentation.getTailFragments();
       LookupElementPresentation.TextFragment lastFragment = fragments.getLast();
-      Iterable<TextRange> ranges = LookupCellRenderer.getMatchingFragmentList(myPrefix, lastFragment.text);
+      List<MatchedFragment> ranges = LookupCellRenderer.getMatchingFragmentList(myPrefix, lastFragment.text);
       if (ranges != null) {
-        for (TextRange nextHighlightedRange : ranges) {
+        for (MatchedFragment nextHighlightedRange : ranges) {
           presentation.decorateTailItemTextRange(
             new TextRange(start + nextHighlightedRange.getStartOffset(), start + nextHighlightedRange.getEndOffset()),
             LookupElementPresentation.LookupItemDecoration.HIGHLIGHT_MATCHED);

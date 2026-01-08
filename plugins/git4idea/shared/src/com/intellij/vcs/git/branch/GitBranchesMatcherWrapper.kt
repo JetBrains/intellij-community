@@ -4,6 +4,7 @@ package com.intellij.vcs.git.branch
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.util.containers.FList
+import com.intellij.util.text.matching.MatchedFragment
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -14,19 +15,19 @@ class GitBranchesMatcherWrapper(private val delegate: MinusculeMatcher) : Minusc
   override val pattern: String
     get() = delegate.pattern
 
-  override fun match(name: String): List<TextRange>? = delegate.match(name)
+  override fun match(name: String): List<MatchedFragment>? = delegate.match(name)
 
   @Deprecated("use match(String)", replaceWith = ReplaceWith("match(name)"))
   override fun matchingFragments(name: String): FList<TextRange>? = delegate.matchingFragments(name)
 
-  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<TextRange>?): Int {
+  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<MatchedFragment>?): Int {
     val degree = delegate.matchingDegree(name, valueStartCaseMatch, fragments)
     return fragments?.firstOrNull()?.startOffset?.let { degree + MATCH_OFFSET - it } ?: degree
   }
 
-  @Deprecated("use matchingDegree(String, Boolean, List<TextRange>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)"))
+  @Deprecated("use matchingDegree(String, Boolean, List<MatchedFragment>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments.map { MatchedFragment(it.startOffset, it.endOffset) })"))
   override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
-    return matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)
+    return matchingDegree(name, valueStartCaseMatch, fragments?.map { MatchedFragment(it.startOffset, it.endOffset) })
   }
 
   companion object {

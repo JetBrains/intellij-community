@@ -3,6 +3,8 @@ package com.intellij.psi.codeStyle
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.FList
+import com.intellij.util.text.matching.MatchedFragment
+import com.intellij.util.text.matching.undeprecate
 
 class PreferStartMatchMatcherWrapper(private val myDelegateMatcher: MinusculeMatcher) : MinusculeMatcher() {
   override val pattern: String
@@ -13,11 +15,11 @@ class PreferStartMatchMatcherWrapper(private val myDelegateMatcher: MinusculeMat
     return myDelegateMatcher.matchingFragments(name)
   }
 
-  override fun match(name: String): List<TextRange>? {
+  override fun match(name: String): List<MatchedFragment>? {
     return myDelegateMatcher.match(name)
   }
 
-  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<TextRange>?): Int {
+  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<MatchedFragment>?): Int {
     val degree = myDelegateMatcher.matchingDegree(name, valueStartCaseMatch, fragments)
     return when {
       fragments.isNullOrEmpty() -> degree
@@ -26,13 +28,13 @@ class PreferStartMatchMatcherWrapper(private val myDelegateMatcher: MinusculeMat
     }
   }
 
-  @Deprecated("use matchingDegree(String, Boolean, List<TextRange>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments.toList())"))
+  @Deprecated("use matchingDegree(String, Boolean, List<MatchedFragment>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments.map { MatchedFragment(it.startOffset, it.endOffset) })"))
   override fun matchingDegree(
     name: String,
     valueStartCaseMatch: Boolean,
     fragments: FList<out TextRange>?,
   ): Int {
-    return matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)
+    return matchingDegree(name, valueStartCaseMatch, fragments?.undeprecate())
   }
 
   private companion object {

@@ -4,7 +4,9 @@ package com.intellij.psi.codeStyle
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.FList
 import com.intellij.util.text.matching.KeyboardLayoutConverter
+import com.intellij.util.text.matching.MatchedFragment
 import com.intellij.util.text.matching.MatchingMode
+import com.intellij.util.text.matching.deprecated
 import kotlin.jvm.JvmStatic
 
 /**
@@ -27,22 +29,22 @@ class AllOccurrencesMatcher private constructor(
   override val pattern: String
     get() = delegate.pattern
 
-  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<TextRange>?): Int {
+  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<MatchedFragment>?): Int {
     return delegate.matchingDegree(name, valueStartCaseMatch, fragments)
   }
 
-  @Deprecated("use matchingDegree(String, Boolean, List<TextRange>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)"))
+  @Deprecated("use matchingDegree(String, Boolean, List<MatchedFragment>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments.map { MatchedFragment(it.startOffset, it.endOffset) })"))
   override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
     return delegate.matchingDegree(name, valueStartCaseMatch, fragments)
   }
 
-  override fun match(name: String): List<TextRange>? {
+  override fun match(name: String): List<MatchedFragment>? {
     var match = delegate.match(name)
     return if (!match.isNullOrEmpty()) {
-      val allMatchesReversed = mutableListOf<List<TextRange>>()
+      val allMatchesReversed = mutableListOf<List<MatchedFragment>>()
       var lastOffset = 0
       while (!match.isNullOrEmpty()) {
-        val matchWithAbsoluteOffset = match.map { it.shiftRight(lastOffset) }
+        val matchWithAbsoluteOffset = match.map { it.copy(startOffset = it.startOffset + lastOffset, endOffset = it.endOffset + lastOffset) }
         allMatchesReversed.add(matchWithAbsoluteOffset)
         lastOffset = matchWithAbsoluteOffset.last().endOffset
         match = delegate.match(name.substring(lastOffset))
@@ -56,7 +58,7 @@ class AllOccurrencesMatcher private constructor(
 
   @Deprecated("use match(String)", replaceWith = ReplaceWith("match(name)"))
   override fun matchingFragments(name: String): FList<TextRange>? {
-    return match(name)?.asReversed()?.let(FList<TextRange>::createFromReversed)
+    return match(name)?.deprecated()
   }
 
   override fun toString(): String {

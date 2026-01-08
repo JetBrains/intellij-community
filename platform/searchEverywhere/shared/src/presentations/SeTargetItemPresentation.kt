@@ -2,7 +2,6 @@
 package com.intellij.platform.searchEverywhere.presentations
 
 import com.intellij.ide.rpc.util.TextRangeId
-import com.intellij.ide.rpc.util.toRpc
 import com.intellij.ide.ui.colors.ColorId
 import com.intellij.ide.ui.colors.color
 import com.intellij.ide.ui.colors.rpcId
@@ -12,12 +11,12 @@ import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.text.matching.MatchedFragment
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
@@ -70,8 +69,8 @@ class SeTargetItemPresentationBuilder {
     return this
   }
 
-  fun withPresentableTextMatchedRanges(ranges: List<TextRange>?): SeTargetItemPresentationBuilder {
-    this.presentableTextMatchedRanges = ranges?.map { it.toRpc() }
+  fun withPresentableTextMatchedRanges(ranges: List<MatchedFragment>?): SeTargetItemPresentationBuilder {
+    this.presentableTextMatchedRanges = ranges?.map { TextRangeId(it.startOffset, it.endOffset) }
     return this
   }
 
@@ -95,8 +94,8 @@ class SeTargetItemPresentationBuilder {
     return this
   }
 
-  fun withContainerTextMatchedRanges(ranges: List<TextRange>?): SeTargetItemPresentationBuilder {
-    this.containerTextMatchedRanges = ranges?.map { it.toRpc() }
+  fun withContainerTextMatchedRanges(ranges: List<MatchedFragment>?): SeTargetItemPresentationBuilder {
+    this.containerTextMatchedRanges = ranges?.map { TextRangeId(it.startOffset, it.endOffset) }
     return this
   }
 
@@ -159,7 +158,7 @@ class SeTargetItemPresentationBuilder {
     )
 
   companion object {
-    private fun MinusculeMatcher.calcMatchedRanges(text: String?): List<TextRange>? {
+    private fun MinusculeMatcher.calcMatchedRanges(text: String?): List<MatchedFragment>? {
       text ?: return null
       return match(text)
     }

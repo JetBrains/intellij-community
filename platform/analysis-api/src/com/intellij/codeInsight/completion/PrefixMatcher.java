@@ -3,7 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.util.text.matching.MatchedFragment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,7 +131,7 @@ public abstract class PrefixMatcher {
   /**
    * @return a list of text ranges in the given name that match the prefix.
    */
-  public @Nullable List<@NotNull TextRange> getMatchingFragments(@NotNull String name) {
+  public @Nullable List<@NotNull MatchedFragment> getMatchingFragments(@NotNull String name) {
     return null;
   }
 }

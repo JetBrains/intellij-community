@@ -27,6 +27,7 @@ a:com.intellij.psi.codeStyle.MinusculeMatcher
 - a:getPattern():java.lang.String
 - sf:isStartMatch(java.lang.Iterable):Z
 - isStartMatch(java.lang.String):Z
+- sf:isStartMatch(java.util.List):Z
 - match(java.lang.String):java.util.List
 - matches(java.lang.String):Z
 - matchingDegree(java.lang.String):I
@@ -36,6 +37,7 @@ a:com.intellij.psi.codeStyle.MinusculeMatcher
 - matchingFragments(java.lang.String):com.intellij.util.containers.FList
 f:com.intellij.psi.codeStyle.MinusculeMatcher$Companion
 - f:isStartMatch(java.lang.Iterable):Z
+- f:isStartMatch(java.util.List):Z
 f:com.intellij.psi.codeStyle.NameUtil
 - s:buildMatcher(java.lang.String):com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
 - s:buildMatcher(java.lang.String,I,Z,Z):com.intellij.util.text.Matcher
@@ -106,6 +108,20 @@ f:com.intellij.util.text.matching.KeyboardLayoutUtil
 - <init>():V
 - s:getAsciiForChar(C):java.lang.Character
 - s:storeAsciiForChar(I,C,I,I):V
+f:com.intellij.util.text.matching.MatchedFragment
+- <init>(I,I,I):V
+- b:<init>(I,I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():I
+- f:component2():I
+- f:component3():I
+- f:copy(I,I,I):com.intellij.util.text.matching.MatchedFragment
+- bs:copy$default(com.intellij.util.text.matching.MatchedFragment,I,I,I,I,java.lang.Object):com.intellij.util.text.matching.MatchedFragment
+- equals(java.lang.Object):Z
+- f:getEndOffset():I
+- f:getErrorCount():I
+- f:getLength():I
+- f:getStartOffset():I
+- hashCode():I
 e:com.intellij.util.text.matching.MatchingMode
 - java.lang.Enum
 - sf:FIRST_LETTER:com.intellij.util.text.matching.MatchingMode

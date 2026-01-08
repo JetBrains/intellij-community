@@ -7,6 +7,7 @@ package com.intellij.tasks.actions
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader.getTransparentIcon
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.tasks.LocalTask
 import com.intellij.tasks.TaskManager
@@ -40,7 +41,7 @@ internal fun getTaskCellRenderer(project: Project) = listCellRenderer<Any> {
           foreground = greyForeground
         }
         speedSearch {
-          ranges = matcher?.match(task.presentableName)
+          ranges = matcher?.match(task.presentableName)?.map { TextRange(it.startOffset, it.endOffset) }
         }
       }
     }

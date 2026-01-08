@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.text.matching
 
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.AllOccurrencesMatcher.Companion.create
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.util.text.Matcher
 import com.intellij.util.text.matching.KeyboardLayoutConverter
+import com.intellij.util.text.matching.MatchedFragment
 import com.intellij.util.text.matching.MatchingMode
 import org.jetbrains.annotations.NonNls
 import org.junit.jupiter.api.Test
@@ -468,20 +468,20 @@ class NameUtilMatchingTest {
     @NonNls var sample = "NoClassDefFoundException"
     //                    0 2    7  10   15    21
     assertEquals(NameUtil.buildMatcher("ncldfou*ion", MatchingMode.IGNORE_CASE).match(sample),
-                 listOf(TextRange.from(0, 1), TextRange.from(2, 2), TextRange.from(7, 1), TextRange.from(10, 3), TextRange.from(21, 3)))
+                 listOf(MatchedFragment(0, 1), MatchedFragment(2, 4), MatchedFragment(7, 8), MatchedFragment(10, 13), MatchedFragment(21, 24)))
 
     sample = "doGet(HttpServletRequest, HttpServletResponse):void"
     //        0                     22
     assertEquals(NameUtil.buildMatcher("d*st", MatchingMode.IGNORE_CASE).match(sample),
-                 listOf(TextRange.from(0, 1), TextRange.from(22, 2)))
+                 listOf(MatchedFragment(0, 1), MatchedFragment(22, 24)))
     assertEquals(NameUtil.buildMatcher("doge*st", MatchingMode.IGNORE_CASE).match(sample),
-                 listOf(TextRange.from(0, 4), TextRange.from(22, 2)))
+                 listOf(MatchedFragment(0, 4), MatchedFragment(22, 24)))
 
     sample = "_test"
     assertEquals(NameUtil.buildMatcher("_", MatchingMode.IGNORE_CASE).match(sample),
-                 listOf(TextRange.from(0, 1)))
+                 listOf(MatchedFragment(0, 1)))
     assertEquals(NameUtil.buildMatcher("_t", MatchingMode.IGNORE_CASE).match(sample),
-                 listOf(TextRange.from(0, 2)))
+                 listOf(MatchedFragment(0, 2)))
   }
 
   @Test
@@ -489,7 +489,7 @@ class NameUtilMatchingTest {
     @NonNls val sample = "SWUPGRADEHDLRFSPR7TEST"
     //                    0        9  12
     assertEquals(NameUtil.buildMatcher("SWU*H*R", MatchingMode.IGNORE_CASE).match(sample),
-                 listOf(TextRange.from(0, 3), TextRange.from(9, 1), TextRange.from(12, 1)))
+                 listOf(MatchedFragment(0, 3), MatchedFragment(9, 10), MatchedFragment(12, 13)))
   }
 
   @Test
@@ -497,7 +497,7 @@ class NameUtilMatchingTest {
     val sample = "getCurrentUser"
     //            0   4     10
     assertEquals(NameUtil.buildMatcher("getCU", MatchingMode.IGNORE_CASE).match(sample),
-                 listOf(TextRange.from(0, 4), TextRange.from(10, 1)))
+                 listOf(MatchedFragment(0, 4), MatchedFragment(10, 11)))
   }
 
   @Test
@@ -645,7 +645,7 @@ class NameUtilMatchingTest {
   fun testMatchingAllOccurrences() {
     val text = "some text"
     val matcher = create("*e", MatchingMode.IGNORE_CASE, "", KeyboardLayoutConverter.noop)
-    assertEquals(matcher.match(text), listOf(TextRange(3, 4), TextRange(6, 7)))
+    assertEquals(matcher.match(text), listOf(MatchedFragment(3, 4), MatchedFragment(6, 7)))
   }
 
   @Test

@@ -4,6 +4,7 @@ package com.intellij.codeInspection.actions
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.icons.AllIcons
 import com.intellij.lang.Language
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
@@ -27,7 +28,7 @@ internal fun cellRenderer(): ListCellRenderer<Any?> = listCellRenderer<Any?> {
       icon(tool.icon)
       text(tool.displayName) {
         speedSearch {
-          ranges = matcher?.match(tool.displayName)
+          ranges = matcher?.match(tool.displayName)?.map { TextRange.create(it.startOffset, it.endOffset) }
         }
       }
 
@@ -37,7 +38,7 @@ internal fun cellRenderer(): ListCellRenderer<Any?> = listCellRenderer<Any?> {
         align = LcrInitParams.Align.RIGHT
         attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, greyForeground)
         speedSearch {
-          ranges = matcher?.match(pathText)
+          ranges = matcher?.match(pathText)?.map { TextRange.create(it.startOffset, it.endOffset) }
         }
       }
     }

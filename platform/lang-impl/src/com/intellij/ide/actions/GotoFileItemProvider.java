@@ -33,6 +33,7 @@ import com.intellij.util.UriUtil;
 import com.intellij.util.containers.*;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.ProcessorWithThrottledCancellationCheck;
+import com.intellij.util.text.matching.MatchedFragment;
 import com.intellij.util.text.matching.MatchingMode;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
@@ -396,7 +397,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       ProgressManager.checkCanceled();
 
       String qualifier = Objects.requireNonNull(getParentPath(item));
-      List<TextRange> fragments = qualifierMatcher.match(qualifier);
+      List<MatchedFragment> fragments = qualifierMatcher.match(qualifier);
       if (fragments != null) {
         int gapPenalty = fragments.isEmpty() ? 0 : qualifier.length() - fragments.getLast().getEndOffset();
         int exactMatchScore = isExactMatch(item, completePattern) ? EXACT_MATCH_DEGREE : 0;

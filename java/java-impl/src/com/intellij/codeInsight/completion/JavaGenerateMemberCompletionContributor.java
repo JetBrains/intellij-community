@@ -15,7 +15,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -27,6 +26,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.matching.MatchedFragment;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -323,12 +323,11 @@ public final class JavaGenerateMemberCompletionContributor {
       if (!myPrefix.contains(" ")) return true;
 
       String signature = element.getLookupString();
-      List<TextRange> fragments = matchingFragments(signature);
+      List<MatchedFragment> fragments = matchingFragments(signature);
       return fragments == null || !ContainerUtil.exists(fragments, f -> isMiddleMatch(signature, f));
-
     }
 
-    private static boolean isMiddleMatch(String signature, TextRange fragment) {
+    private static boolean isMiddleMatch(String signature, MatchedFragment fragment) {
       int start = fragment.getStartOffset();
       return start > 0 &&
              Character.isJavaIdentifierPart(signature.charAt(start)) &&

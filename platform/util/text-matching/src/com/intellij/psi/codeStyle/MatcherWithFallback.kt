@@ -3,6 +3,9 @@ package com.intellij.psi.codeStyle
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.FList
+import com.intellij.util.text.matching.MatchedFragment
+import com.intellij.util.text.matching.deprecated
+import com.intellij.util.text.matching.undeprecate
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -18,7 +21,7 @@ open class MatcherWithFallback internal constructor(
            myFallbackMatcher != null && myFallbackMatcher.matches(name)
   }
 
-  override fun match(name: String): List<TextRange>? {
+  override fun match(name: String): List<MatchedFragment>? {
     val mainRanges = myMainMatcher.match(name)
     val useMainRanges = !mainRanges.isNullOrEmpty() || myFallbackMatcher == null
     return if (useMainRanges) mainRanges else myFallbackMatcher.match(name)
@@ -26,7 +29,7 @@ open class MatcherWithFallback internal constructor(
 
   @Deprecated("use match(String)", replaceWith = ReplaceWith("match(name)"))
   override fun matchingFragments(name: String): FList<TextRange>? {
-    return match(name)?.asReversed()?.let(FList<TextRange>::createFromReversed)
+    return match(name)?.deprecated()
   }
 
   override fun matchingDegree(name: String, valueStartCaseMatch: Boolean): Int {
@@ -41,7 +44,7 @@ open class MatcherWithFallback internal constructor(
     }
   }
 
-  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<TextRange>?): Int {
+  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<MatchedFragment>?): Int {
     val mainRanges = myMainMatcher.match(name)
     val useMainRanges = !mainRanges.isNullOrEmpty() || myFallbackMatcher == null
 
@@ -53,9 +56,9 @@ open class MatcherWithFallback internal constructor(
     }
   }
 
-  @Deprecated("use matchingDegree(String, Boolean, List<TextRange>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)"))
+  @Deprecated("use matchingDegree(String, Boolean, List<MatchedFragment>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments.map { MatchedFragment(it.startOffset, it.endOffset) })"))
   override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
-    return matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)
+    return matchingDegree(name, valueStartCaseMatch, fragments?.undeprecate())
   }
 
   override fun toString(): String {

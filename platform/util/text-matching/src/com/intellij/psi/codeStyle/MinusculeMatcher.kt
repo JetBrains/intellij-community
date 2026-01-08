@@ -4,6 +4,9 @@ package com.intellij.psi.codeStyle
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.FList
 import com.intellij.util.text.Matcher
+import com.intellij.util.text.matching.MatchedFragment
+import com.intellij.util.text.matching.deprecated
+import com.intellij.util.text.matching.undeprecate
 import kotlin.jvm.JvmStatic
 
 /**
@@ -23,8 +26,8 @@ abstract class MinusculeMatcher protected constructor() : Matcher {
     return match(name) != null
   }
 
-  open fun match(name: String): List<TextRange>? {
-    return matchingFragments(name) as List<TextRange>?
+  open fun match(name: String): List<MatchedFragment>? {
+    return matchingFragments(name)?.undeprecate()
   }
 
   @Deprecated("use match(String)", ReplaceWith("match(name)"))
@@ -32,14 +35,13 @@ abstract class MinusculeMatcher protected constructor() : Matcher {
     throw UnsupportedOperationException()
   }
 
-
-  @Deprecated("use matchingDegree(String, Boolean, List<TextRange>)", ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)"))
+  @Deprecated("use matchingDegree(String, Boolean, List<MatchedFragment>)", ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments.map { MatchedFragment(it.startOffset, it.endOffset) })"))
   open fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
     throw UnsupportedOperationException()
   }
 
-  open fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<TextRange>?): Int {
-    return matchingDegree(name, valueStartCaseMatch, fragments?.asReversed()?.let(FList<TextRange>::createFromReversed))
+  open fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<MatchedFragment>?): Int {
+    return matchingDegree(name, valueStartCaseMatch, fragments?.deprecated())
   }
 
   open fun matchingDegree(name: String, valueStartCaseMatch: Boolean): Int {
@@ -56,9 +58,16 @@ abstract class MinusculeMatcher protected constructor() : Matcher {
   }
 
   companion object {
+    @Deprecated("use isStartMatch(List<MatchedFragment>)", ReplaceWith("isStartMatch(fragments as List<MatchedFragment>)"))
     @JvmStatic
     fun isStartMatch(fragments: Iterable<TextRange>): Boolean {
       val iterator = fragments.iterator()
+      return !iterator.hasNext() || iterator.next().startOffset == 0
+    }
+
+    @JvmStatic
+    fun isStartMatch(sortedFragments: List<MatchedFragment>): Boolean {
+      val iterator = sortedFragments.iterator()
       return !iterator.hasNext() || iterator.next().startOffset == 0
     }
   }

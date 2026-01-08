@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesTreeModel.Companion.create
@@ -117,7 +118,7 @@ private open class PresentableChangeNode(presentableChange: PresentableChange, p
     super.render(tree, renderer, selected, expanded, hasFocus)
     val speedSearch = TreeSpeedSearch.getSupply(tree)
     if (speedSearch?.isPopupActive != true) {
-      val matchedFragments = activityMatcher?.match(renderer.getCharSequence(true).toString())
+      val matchedFragments = activityMatcher?.match(renderer.getCharSequence(true).toString())?.map { TextRange.create(it.startOffset, it.endOffset) }
       SpeedSearchUtil.applySpeedSearchHighlighting(renderer, matchedFragments, selected)
     }
   }

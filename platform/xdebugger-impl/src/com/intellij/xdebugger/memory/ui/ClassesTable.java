@@ -17,6 +17,8 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.matching.MatchedFragment;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -562,10 +564,12 @@ public class ClassesTable extends JBTable implements UiDataProvider, Disposable 
       String presentation = ((TypeInfo)value).name();
       append(" ");
       if (isSelected) {
-        List<TextRange> textRanges = myMatcher.match(presentation);
-        if (textRanges != null) {
+        @Nullable List<@NotNull MatchedFragment> fragments = myMatcher.match(presentation);
+        if (fragments != null) {
           SimpleTextAttributes attributes = new SimpleTextAttributes(getBackground(), getForeground(), null,
                                                                      SimpleTextAttributes.STYLE_SEARCH_MATCH);
+
+          Iterable<TextRange> textRanges = ContainerUtil.map(fragments, f -> TextRange.create(f.getStartOffset(), f.getEndOffset()));
           SpeedSearchUtil.appendColoredFragments(this, presentation, textRanges,
                                                  SimpleTextAttributes.REGULAR_ATTRIBUTES, attributes);
         }
