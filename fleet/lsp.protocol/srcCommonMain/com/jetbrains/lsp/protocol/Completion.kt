@@ -345,7 +345,7 @@ data class CompletionList(
 ) {
 
     companion object {
-        val EMPTY_COMPLETE: CompletionList = CompletionList(
+        val EMPTY: CompletionList = CompletionList(
             isIncomplete = false,
             itemDefaults = null,
             items = emptyList(),
