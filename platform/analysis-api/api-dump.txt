@@ -751,6 +751,8 @@ com.intellij.openapi.fileEditor.FileEditorManagerListener$Before
 - sf:FILE_EDITOR_MANAGER:com.intellij.util.messages.Topic
 - beforeFileClosed(com.intellij.openapi.fileEditor.FileEditorManager,com.intellij.openapi.vfs.VirtualFile):V
 - beforeFileOpened(com.intellij.openapi.fileEditor.FileEditorManager,com.intellij.openapi.vfs.VirtualFile):V
+e:com.intellij.openapi.fileEditor.FileEditorPolicy
+- sf:HIDE_OTHER_EDITORS:com.intellij.openapi.fileEditor.FileEditorPolicy
 com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EMPTY_ARRAY:com.intellij.openapi.fileEditor.FileEditorProvider[]
