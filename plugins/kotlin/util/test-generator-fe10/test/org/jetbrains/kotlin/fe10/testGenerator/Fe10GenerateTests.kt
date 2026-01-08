@@ -483,6 +483,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "namedLambdaContextParameter",
                     "useWithIndex", // Intention-based inspection in K1, covered by the intention tests
                     "receiverShadowedByContextParameter",
+                    "destructingNameMismatch", // K2-only
                     "removeRedundantCallsOfConversionMethods", // K2 compiler diagnostic
                 )
             )

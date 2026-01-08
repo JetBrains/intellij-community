@@ -8076,6 +8076,45 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/destructingNameMismatch")
+    public static class DestructingNameMismatch extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("matchProp.kt")
+        public void testMatchProp() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/matchProp.kt");
+        }
+
+        @TestMetadata("matchPropLambdaCollision.kt")
+        public void testMatchPropLambdaCollision() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/matchPropLambdaCollision.kt");
+        }
+
+        @TestMetadata("matchPropVarCollision.kt")
+        public void testMatchPropVarCollision() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/matchPropVarCollision.kt");
+        }
+
+        @TestMetadata("mismatchLambda.kt")
+        public void testMismatchLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/mismatchLambda.kt");
+        }
+
+        @TestMetadata("valueUsed.kt")
+        public void testValueUsed() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/valueUsed.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue")
     public static class ExplicitlyIgnoreReturnValue extends AbstractHighLevelQuickFixTest {
         @java.lang.Override
