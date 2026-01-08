@@ -49,20 +49,23 @@ final class PostUpdateTasks {
     try {
       LOG.info("updateUninstallerSection for: " + targetPath);
       var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
-      var baseKey = "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+      var nodes = List.of("Software", "Software\\WOW6432Node");
       for (var rootKey : rootKeys) {
-        for (var key : getRegistryGetKeys(rootKey, baseKey)) {
-          try {
-            var location = Advapi32Util.registryGetStringValue(rootKey, baseKey + '\\' + key, "InstallLocation");
-            if (targetPath.equalsIgnoreCase(location)) {
-              LOG.info("key: " + formatKey(rootKey, baseKey, key));
-              Advapi32Util.registrySetStringValue(rootKey, baseKey + '\\' + key, "DisplayName", nameAndVersion);
-              Advapi32Util.registrySetStringValue(rootKey, baseKey + '\\' + key, "DisplayVersion", buildNumber);
-              return;
+        for (var node : nodes) {
+          var baseKey = node + "\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+          for (var key : getRegistryGetKeys(rootKey, baseKey)) {
+            try {
+              var location = Advapi32Util.registryGetStringValue(rootKey, baseKey + '\\' + key, "InstallLocation");
+              if (targetPath.equalsIgnoreCase(location)) {
+                LOG.info("key: " + formatKey(rootKey, baseKey, key));
+                Advapi32Util.registrySetStringValue(rootKey, baseKey + '\\' + key, "DisplayName", nameAndVersion);
+                Advapi32Util.registrySetStringValue(rootKey, baseKey + '\\' + key, "DisplayVersion", buildNumber);
+                return;
+              }
             }
-          }
-          catch (Win32Exception e) {
-            LOG.log(Level.FINE, e, () -> "updateUninstallerSection: " + formatKey(rootKey, baseKey, key));
+            catch (Win32Exception e) {
+              LOG.log(Level.FINE, e, () -> "updateUninstallerSection: " + formatKey(rootKey, baseKey, key));
+            }
           }
         }
       }
@@ -76,26 +79,29 @@ final class PostUpdateTasks {
     try {
       LOG.info("updateManufacturerSection for: " + targetPath);
       var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
-      var baseKey = "Software\\JetBrains";
+      var nodes = List.of("Software", "Software\\WOW6432Node");
       for (var rootKey : rootKeys) {
-        for (var productKey : getRegistryGetKeys(rootKey, baseKey)) {
-          for (var buildKey : getRegistryGetKeys(rootKey, baseKey + '\\' + productKey)) {
-            try {
-              var oldKey = baseKey + '\\' + productKey + '\\' + buildKey;
-              var location = Advapi32Util.registryGetStringValue(rootKey, oldKey, "");
-              if (targetPath.equalsIgnoreCase(location)) {
-                LOG.info("key: " + formatKey(rootKey, oldKey));
-                var newKey = baseKey + '\\' + (united ? stripCeSuffixes(productKey) : productKey) + '\\' + buildNumber;
-                Advapi32Util.registryCreateKey(rootKey, newKey);
-                for (var entry : Advapi32Util.registryGetValues(rootKey, oldKey).entrySet()) {
-                  Advapi32Util.registrySetStringValue(rootKey, newKey, entry.getKey(), entry.getValue().toString());
+        for (var node : nodes) {
+          var baseKey = node + "\\JetBrains";
+          for (var productKey : getRegistryGetKeys(rootKey, baseKey)) {
+            for (var buildKey : getRegistryGetKeys(rootKey, baseKey + '\\' + productKey)) {
+              try {
+                var oldKey = baseKey + '\\' + productKey + '\\' + buildKey;
+                var location = Advapi32Util.registryGetStringValue(rootKey, oldKey, "");
+                if (targetPath.equalsIgnoreCase(location)) {
+                  LOG.info("key: " + formatKey(rootKey, oldKey));
+                  var newKey = baseKey + '\\' + (united ? stripCeSuffixes(productKey) : productKey) + '\\' + buildNumber;
+                  Advapi32Util.registryCreateKey(rootKey, newKey);
+                  for (var entry : Advapi32Util.registryGetValues(rootKey, oldKey).entrySet()) {
+                    Advapi32Util.registrySetStringValue(rootKey, newKey, entry.getKey(), entry.getValue().toString());
+                  }
+                  Advapi32Util.registryDeleteKey(rootKey, oldKey);
+                  return;
                 }
-                Advapi32Util.registryDeleteKey(rootKey, oldKey);
-                return;
               }
-            }
-            catch (Win32Exception e) {
-              LOG.log(Level.FINE, e, () -> "updateManufacturerSection: " + formatKey(rootKey, baseKey, productKey, buildKey));
+              catch (Win32Exception e) {
+                LOG.log(Level.FINE, e, () -> "updateManufacturerSection: " + formatKey(rootKey, baseKey, productKey, buildKey));
+              }
             }
           }
         }
