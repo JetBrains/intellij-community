@@ -25,15 +25,15 @@ public abstract class CodeFoldingManager {
 
   public abstract @Nullable FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset);
 
-  public abstract FoldRegion[] getFoldRegionsAtOffset(@NotNull Editor editor, int offset);
+  public abstract @NotNull FoldRegion @NotNull [] getFoldRegionsAtOffset(@NotNull Editor editor, int offset);
 
-  public abstract CodeFoldingState saveFoldingState(@NotNull Editor editor);
+  public abstract @NotNull CodeFoldingState saveFoldingState(@NotNull Editor editor);
 
   public abstract void restoreFoldingState(@NotNull Editor editor, @NotNull CodeFoldingState state);
 
   public abstract void writeFoldingState(@NotNull CodeFoldingState state, @NotNull Element element);
 
-  public abstract CodeFoldingState readFoldingState(@NotNull Element element, @NotNull Document document);
+  public abstract @NotNull CodeFoldingState readFoldingState(@NotNull Element element, @NotNull Document document);
 
   public abstract void releaseFoldings(@NotNull Editor editor);
 

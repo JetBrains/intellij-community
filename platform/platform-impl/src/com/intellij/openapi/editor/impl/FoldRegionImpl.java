@@ -126,7 +126,9 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
       int oldEnd = intervalEnd();
       int changeStart = e.getOffset();
       int changeEnd = e.getOffset() + e.getOldLength();
-      if (changeStart < oldEnd && changeEnd > oldStart) myDocumentRegionWasChanged = true;
+      if (changeStart < oldEnd && changeEnd > oldStart) {
+        myDocumentRegionWasChanged = true;
+      }
     }
     super.changedUpdateImpl(e);
     if (isValid()) {

@@ -92,7 +92,7 @@ abstract class FoldRegionsTree {
     return updateCachedAndSortOffsets(visibleRegions, true);
   }
 
-  private static FoldRegion @NotNull [] toFoldArray(@NotNull List<FoldRegion> topLevels) {
+  private static @NotNull FoldRegion @NotNull [] toFoldArray(@NotNull List<FoldRegion> topLevels) {
     return topLevels.isEmpty() ? FoldRegion.EMPTY_ARRAY : topLevels.toArray(FoldRegion.EMPTY_ARRAY);
   }
 
@@ -101,7 +101,7 @@ abstract class FoldRegionsTree {
     updateCachedAndSortOffsets(cachedData.visibleRegions, false);
   }
 
-  private CachedData updateCachedAndSortOffsets(FoldRegion @Nullable [] visibleRegions, boolean fromRebuild) {
+  private CachedData updateCachedAndSortOffsets(@NotNull FoldRegion @Nullable [] visibleRegions, boolean fromRebuild) {
     if (!isFoldingEnabled()) {
       return null;
     }
@@ -215,8 +215,10 @@ abstract class FoldRegionsTree {
     return cachedData.visibleRegions;
   }
 
-  FoldRegion @Nullable [] fetchTopLevel() {
-    if (!isFoldingEnabled()) return null;
+  @NotNull FoldRegion @Nullable [] fetchTopLevel() {
+    if (!isFoldingEnabled()) {
+      return null;
+    }
     CachedData cachedData = ensureAvailableData();
     return cachedData.topLevelRegions;
   }
@@ -225,7 +227,7 @@ abstract class FoldRegionsTree {
     return region.getStartOffset() < offset && offset < region.getEndOffset();
   }
 
-  FoldRegion @NotNull [] fetchCollapsedAt(int offset) {
+  @NotNull FoldRegion @NotNull [] fetchCollapsedAt(int offset) {
     if (!isFoldingEnabled()) return FoldRegion.EMPTY_ARRAY;
     List<FoldRegion> allCollapsed = new ArrayList<>();
     myMarkerTree.processContaining(offset, region->{
@@ -246,7 +248,7 @@ abstract class FoldRegionsTree {
     });
   }
 
-  FoldRegion @NotNull [] fetchAllRegions() {
+  @NotNull FoldRegion @NotNull [] fetchAllRegions() {
     if (!isFoldingEnabled()) return FoldRegion.EMPTY_ARRAY;
     List<FoldRegion> regions = new ArrayList<>();
     myMarkerTree.processOverlappingWith(0, Integer.MAX_VALUE, new CommonProcessors.CollectProcessor<>(regions));
@@ -254,8 +256,10 @@ abstract class FoldRegionsTree {
   }
 
 
-  List<FoldRegion> fetchOverlapping(int startOffset, int endOffset) {
-    if (!isFoldingEnabled()) return Collections.emptyList();
+  @NotNull List<FoldRegion> fetchOverlapping(int startOffset, int endOffset) {
+    if (!isFoldingEnabled()) {
+      return Collections.emptyList();
+    }
     List<FoldRegion> regions = new ArrayList<>();
     myMarkerTree.processOverlappingWith(startOffset, endOffset, new CommonProcessors.CollectProcessor<>(regions));
     return regions;
@@ -347,8 +351,8 @@ abstract class FoldRegionsTree {
   }
 
   private final class CachedData {
-    private final FoldRegion[] visibleRegions;  // all foldings outside collapsed regions
-    private final FoldRegion[] topLevelRegions; // all visible regions which are collapsed
+    private final @NotNull FoldRegion[] visibleRegions;  // all foldings outside collapsed regions
+    private final @NotNull FoldRegion[] topLevelRegions; // all visible regions which are collapsed
     private final int[] topStartOffsets;
     private final int[] topEndOffsets;
     private final int[] topFoldedLines;
@@ -365,8 +369,8 @@ abstract class FoldRegionsTree {
       topCustomYAdjustment = null;
     }
 
-    private CachedData(FoldRegion @NotNull [] visibleRegions,
-                       FoldRegion @NotNull [] topLevelRegions,
+    private CachedData(@NotNull FoldRegion @NotNull [] visibleRegions,
+                       @NotNull FoldRegion @NotNull [] topLevelRegions,
                        int @NotNull [] topStartOffsets,
                        int @NotNull [] topEndOffsets,
                        int @NotNull [] topFoldedLines,

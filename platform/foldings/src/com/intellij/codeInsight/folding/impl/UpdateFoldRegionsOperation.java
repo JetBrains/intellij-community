@@ -86,8 +86,8 @@ final class UpdateFoldRegionsOperation implements Runnable {
 
     Map<TextRange, Boolean> rangeToExpandStatusMap = removeInvalidRegions(info, foldingModel);
 
-    Map<FoldRegion, Boolean> shouldExpand = new HashMap<>();
-    Map<FoldingGroup, Boolean> groupExpand = new HashMap<>();
+    Set<FoldRegion> shouldExpand = new HashSet<>();
+    Set<FoldingGroup> groupExpand = new HashSet<>();
     List<FoldRegion> newRegions = addNewRegions(info, foldingModel, rangeToExpandStatusMap, shouldExpand, groupExpand);
     if (CodeFoldingManagerImpl.isAsyncFoldingUpdater(myEditor)) {
       Map<TextRange, Boolean> postponedExpansionMap = CodeFoldingManagerImpl.getAsyncExpandStatusMap(myEditor);
@@ -104,24 +104,21 @@ final class UpdateFoldRegionsOperation implements Runnable {
   }
 
   private static void applyExpandStatus(@NotNull List<? extends FoldRegion> newRegions,
-                                        @NotNull Map<FoldRegion, Boolean> shouldExpand,
-                                        @NotNull Map<FoldingGroup, Boolean> groupExpand) {
-    for (final FoldRegion region : newRegions) {
-      final FoldingGroup group = region.getGroup();
-      final Boolean expanded = group == null ? shouldExpand.get(region) : groupExpand.get(group);
-
-      if (expanded != null) {
-        region.setExpanded(expanded.booleanValue());
-      }
+                                        @NotNull Set<? extends FoldRegion> shouldExpand,
+                                        @NotNull Set<? extends FoldingGroup> groupExpand) {
+    for (FoldRegion region : newRegions) {
+      FoldingGroup group = region.getGroup();
+      boolean expanded = group == null ? shouldExpand.contains(region) : groupExpand.contains(group);
+      region.setExpanded(expanded);
     }
   }
 
   private @NotNull List<FoldRegion> addNewRegions(@NotNull EditorFoldingInfo info,
                                                   @NotNull FoldingModelEx foldingModel,
                                                   @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap,
-                                                  @NotNull Map<FoldRegion, Boolean> shouldExpand,
-                                                  @NotNull Map<FoldingGroup, Boolean> groupExpand) {
-    List<FoldRegion> newRegions = new ArrayList<>();
+                                                  @NotNull Set<? super FoldRegion> shouldExpand,
+                                                  @NotNull Set<? super FoldingGroup> groupExpand) {
+    List<FoldRegion> newRegions = new ArrayList<>(myRegionInfos.size());
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
     for (FoldingUpdate.RegionInfo regionInfo : myRegionInfos) {
       ProgressManager.checkCanceled();
@@ -171,12 +168,13 @@ final class UpdateFoldRegionsOperation implements Runnable {
       }
       else {
         boolean expandStatus = shouldExpandNewRegion(range, rangeToExpandStatusMap, regionInfo.collapsedByDefault);
-        if (group == null) {
-          shouldExpand.put(region, expandStatus);
-        }
-        else {
-          final Boolean alreadyExpanded = groupExpand.get(group);
-          groupExpand.put(group, alreadyExpanded == null ? expandStatus : alreadyExpanded.booleanValue() || expandStatus);
+        if (expandStatus) {
+          if (group == null) {
+            shouldExpand.add(region);
+          }
+          else {
+            groupExpand.add(group);
+          }
         }
       }
     }
@@ -190,8 +188,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
                                                       @Nullable FoldingGroup group,
                                                       boolean shouldNeverExpand) {
     FoldRegion region = null;
-    Boolean zombieExpand = null;
-    
+
     FoldRegion zombieFoldRegion = foldingModel.getFoldRegion(range.getStartOffset(), range.getEndOffset());
     if (zombieFoldRegion != null && ZOMBIE_REGION_KEY.isIn(zombieFoldRegion)) {
       // check zombie for reuse to avoid blinking
@@ -215,8 +212,8 @@ final class UpdateFoldRegionsOperation implements Runnable {
     return region;
   } 
 
-  private boolean shouldExpandNewRegion(TextRange range,
-                                        Map<TextRange, Boolean> rangeToExpandStatusMap,
+  private boolean shouldExpandNewRegion(@NotNull TextRange range,
+                                        @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap,
                                         boolean collapsedByDefault) {
     if (myApplyDefaultState != ApplyDefaultStateMode.NO) {
       // Considering that this code is executed only on initial fold regions construction on editor opening.
@@ -234,12 +231,13 @@ final class UpdateFoldRegionsOperation implements Runnable {
   }
 
   private @NotNull Map<TextRange, Boolean> removeInvalidRegions(@NotNull EditorFoldingInfo info, @NotNull FoldingModelEx foldingModel) {
-    Map<TextRange, Boolean> rangeToExpandStatusMap = new HashMap<>();
+    FoldRegion[] allFoldRegions = foldingModel.getAllFoldRegions();
+    Map<TextRange, Boolean> rangeToExpandStatusMap = HashMap.newHashMap(allFoldRegions.length);
     List<FoldRegion> toRemove = new ArrayList<>();
     Ref<FoldingUpdate.RegionInfo> infoRef = Ref.create();
     Set<FoldingGroup> processedGroups = new HashSet<>();
     List<FoldingUpdate.RegionInfo> matchedInfos = new ArrayList<>();
-    for (FoldRegion region : foldingModel.getAllFoldRegions()) {
+    for (FoldRegion region : allFoldRegions) {
       FoldingGroup group = region.getGroup();
       if (group != null && !processedGroups.add(group)) continue;
 
@@ -295,19 +293,20 @@ final class UpdateFoldRegionsOperation implements Runnable {
       }
     }
 
-    for (final FoldRegion region : toRemove) {
+    for (FoldRegion region : toRemove) {
       foldingModel.removeFoldRegion(region);
       info.removeRegion(region);
     }
     return rangeToExpandStatusMap;
   }
 
-  private boolean shouldRemoveRegion(@NotNull FoldRegion region, @NotNull EditorFoldingInfo info,
-                                     @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap, @NotNull Ref<? super FoldingUpdate.RegionInfo> matchingInfo) {
+  private boolean shouldRemoveRegion(@NotNull FoldRegion region,
+                                     @NotNull EditorFoldingInfo info,
+                                     @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap,
+                                     @NotNull Ref<? super FoldingUpdate.RegionInfo> matchingInfo) {
     matchingInfo.set(null);
     if (UPDATE_REGION.get(region) == Boolean.TRUE) {
-      rangeToExpandStatusMap.put(region.getTextRange(),
-                                 region.isExpanded());
+      rangeToExpandStatusMap.put(region.getTextRange(), region.isExpanded());
       return true;
     }
     PsiElement element = info.getPsiElement(region);
@@ -318,7 +317,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
     }
     boolean forceKeepRegion = myKeepCollapsedRegions && !region.isExpanded() && !regionOrGroupCanBeRemovedWhenCollapsed(region);
     Boolean storedCollapsedByDefault = CodeFoldingManagerImpl.getCollapsedByDef(region);
-    final Collection<FoldingUpdate.RegionInfo> regionInfos;
+    Collection<FoldingUpdate.RegionInfo> regionInfos;
     if (element != null && !(regionInfos = myElementsToFoldMap.get(element)).isEmpty()) {
       FoldingUpdate.RegionInfo[] array = regionInfos.toArray(new FoldingUpdate.RegionInfo[0]);
       for (FoldingUpdate.RegionInfo regionInfo : array) {

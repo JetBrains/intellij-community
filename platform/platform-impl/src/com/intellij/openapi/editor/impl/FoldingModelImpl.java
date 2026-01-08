@@ -64,9 +64,9 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   private TextAttributes myFoldTextAttributes;
   private boolean myIsFoldingEnabled = true;
-  private boolean myIsBatchFoldingProcessing = false;
-  private boolean myDoNotCollapseCaret = false;
-  private boolean myFoldRegionsProcessed = false;
+  private boolean myIsBatchFoldingProcessing;
+  private boolean myDoNotCollapseCaret;
+  private boolean myFoldRegionsProcessed;
   private boolean myDocumentChangeProcessed = true;
   private boolean myRegionWidthChanged;
   private boolean myRegionHeightChanged;
@@ -97,8 +97,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     boolean neverExpands
   ) {
     assertIsDispatchThreadForEditor();
-    if (!myIsBatchFoldingProcessing) {
-      LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
+    if (!LOG.assertTrue(myIsBatchFoldingProcessing, "Fold regions must be added or removed inside batchFoldProcessing() only.")) {
       return null;
     }
     if (!isFoldingEnabled() ||
@@ -215,13 +214,13 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  public FoldRegion @NotNull [] getAllFoldRegions() {
+  public @NotNull FoldRegion @NotNull [] getAllFoldRegions() {
     EditorThreading.assertInteractionAllowed();
     return myFoldTree.fetchAllRegions();
   }
 
   @Override
-  public FoldRegion @Nullable [] fetchTopLevel() {
+  public @NotNull FoldRegion @Nullable [] fetchTopLevel() {
     return myFoldTree.fetchTopLevel();
   }
 
@@ -417,7 +416,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       }));
   }
 
-  void onPlaceholderTextChanged(FoldRegionImpl region) {
+  void onPlaceholderTextChanged(@NotNull FoldRegionImpl region) {
     if (!myIsBatchFoldingProcessing) {
       LOG.error("Fold regions must be changed inside batchFoldProcessing() only");
     }
@@ -431,7 +430,9 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
                                 boolean moveCaret,
                                 boolean adjustScrollingPosition) {
     assertIsDispatchThreadForEditor();
-    if (myEditor.getInlayModel().isInBatchMode()) LOG.error("Folding operations shouldn't be performed during inlay batch update");
+    if (myEditor.getInlayModel().isInBatchMode()) {
+      LOG.error("Folding operations shouldn't be performed during inlay batch update");
+    }
 
     boolean oldDontCollapseCaret = myDoNotCollapseCaret;
     myDoNotCollapseCaret |= dontCollapseCaret;
@@ -554,7 +555,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     return myFoldTree.getTotalHeightOfFoldedBlockInlays();
   }
 
-  FoldRegion @NotNull [] fetchCollapsedAt(int offset) {
+  @NotNull FoldRegion @NotNull [] fetchCollapsedAt(int offset) {
     return myFoldTree.fetchCollapsedAt(offset);
   }
 
@@ -596,7 +597,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     myIsComplexDocumentChange = complexDocumentChange;
   }
 
-  void addAffectedCustomRegions(CustomFoldRegionImpl customFoldRegion) {
+  void addAffectedCustomRegions(@NotNull CustomFoldRegionImpl customFoldRegion) {
     myAffectedCustomRegions.add(customFoldRegion);
   }
 
@@ -828,7 +829,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     return dumpState();
   }
 
-  private static void assertOurRegion(FoldRegion region) {
+  private static void assertOurRegion(@NotNull FoldRegion region) {
     if (!(region instanceof FoldRegionImpl)) {
       throw new IllegalArgumentException("Only regions created by this instance of FoldingModel are accepted");
     }
@@ -992,11 +993,11 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   private record SavedCaretPosition(LogicalPosition position, long docStamp) {
 
-    SavedCaretPosition(Caret caret) {
+    SavedCaretPosition(@NotNull Caret caret) {
       this(caret.getLogicalPosition(), caret.getEditor().getDocument().getModificationStamp());
     }
 
-    private boolean isUpToDate(Editor editor) {
+    private boolean isUpToDate(@NotNull Editor editor) {
       return docStamp == editor.getDocument().getModificationStamp();
     }
   }

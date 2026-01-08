@@ -5,7 +5,10 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.InlayModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.*;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.FoldingKeys;
+import com.intellij.openapi.editor.impl.FoldingModelInternal;
+import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IntPair;
@@ -38,7 +41,7 @@ final class EditorCoordinateMapper {
     mySoftWrapModel = myView.getSoftWrapModel();
   }
 
-  int[] visualLineToYRange(int line) {
+  int @NotNull [] visualLineToYRange(int line) {
     if (line < 0) line = 0;
     int offset = line >= myView.getVisibleLineCount() ? myDocument.getTextLength() + 1 : visualLineToOffset(line);
     int lineHeight = myView.getLineHeight();

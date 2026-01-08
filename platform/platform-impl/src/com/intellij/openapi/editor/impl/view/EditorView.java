@@ -118,7 +118,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   @RequiresEdt
-  public int[] visualLineToYRange(int line) {
+  public int @NotNull [] visualLineToYRange(int line) {
     assertNotInBulkMode();
     return myMapper.visualLineToYRange(line);
   }

@@ -39,7 +39,7 @@ public final class FoldingUtil {
     return result;
   }
 
-  public static FoldRegion[] getFoldRegionsAtOffset(Editor editor, int offset) {
+  public static @NotNull FoldRegion @NotNull [] getFoldRegionsAtOffset(@NotNull Editor editor, int offset) {
     List<FoldRegion> list = new ArrayList<>();
     FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     for (FoldRegion region : allRegions) {
@@ -54,7 +54,7 @@ public final class FoldingUtil {
   }
 
   @ApiStatus.Internal
-  public static boolean caretInsideRange(final Editor editor, final TextRange range) {
+  public static boolean caretInsideRange(@NotNull Editor editor, @NotNull TextRange range) {
     final int offset = editor.getCaretModel().getOffset();
     return range.contains(offset) && range.getStartOffset() != offset;
   }
@@ -76,7 +76,7 @@ public final class FoldingUtil {
   /**
    * Iterates fold region tree in a depth-first order (pre-order)
    */
-  public static Iterator<FoldRegion> createFoldTreeIterator(@NotNull Editor editor) {
+  public static @NotNull Iterator<FoldRegion> createFoldTreeIterator(@NotNull Editor editor) {
     final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     return new Iterator<>() {
       private int sectionStart;
