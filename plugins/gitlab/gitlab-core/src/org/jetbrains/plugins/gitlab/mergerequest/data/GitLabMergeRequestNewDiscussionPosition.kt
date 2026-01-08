@@ -6,7 +6,8 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.diff.impl.patch.withoutContext
 import git4idea.changes.GitTextFilePatchWithHistory
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.DiffPathsInput
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.DiffPathsInputDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.LineRangeDTO
 
 data class GitLabMergeRequestNewDiscussionPosition(
   val baseSha: String,
@@ -14,7 +15,8 @@ data class GitLabMergeRequestNewDiscussionPosition(
   val oldLineIndex: Int?,
   val headSha: String,
   val newLineIndex: Int?,
-  val paths: DiffPathsInput,
+  val paths: DiffPathsInputDTO,
+  val lineRange: LineRangeDTO? = null,
 ) : GitLabNotePosition.WithLine {
   override val parentSha: String get() = baseSha
   override val sha: String get() = headSha
@@ -45,7 +47,7 @@ data class GitLabMergeRequestNewDiscussionPosition(
         lineBefore,
         headSha,
         lineAfter,
-        DiffPathsInput(pathBefore, pathAfter)
+        DiffPathsInputDTO(pathBefore, pathAfter)
       )
       return positionInput
     }

@@ -5,31 +5,36 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.jetbrains.plugins.gitlab.api.GitLabRestId
 import org.jetbrains.plugins.gitlab.api.GitLabRestIdData
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.LineRangeDTO
+import java.util.*
 
-data class GitLabMergeRequestDraftNoteRestDTO(
+data class GitLabNoteRestDTO(
   @JsonProperty("id")
-  private val _id: Long,
-  val note: String,
-  val authorId: Long,
-  @JsonProperty("discussion_id")
-  private val _discussionId: String?,
-  val position: Position
+  private val _id: String,
+  val author: GitLabUserRestDTO,
+  val body: String,
+  val createdAt: Date,
+  @SinceGitLab("10.8")
+  val position: Position?,
+  val resolvable: Boolean,
+  @SinceGitLab("10.8")
+  val resolved: Boolean,
+  val system: Boolean,
 ) {
   @JsonIgnore
-  val id: GitLabRestId = GitLabRestIdData(_id.toString()) // No domain, because draft notes are not yet part of the GQL API.
-  @JsonIgnore
-  val discussionId: GitLabRestId? = _discussionId?.let { GitLabRestIdData(it, "Discussion") }
+  val id: GitLabRestId = GitLabRestIdData(_id, "DiffNote")
 
   data class Position(
     val baseSha: String?,
-    val headSha: String?,
-    val startSha: String?,
+    val headSha: String,
+    val startSha: String,
     val positionType: String,
     val newPath: String?,
     val newLine: Int?,
     val oldPath: String?,
     val oldLine: Int?,
+    @SinceGitLab("13.2")
     val lineRange: LineRangeDTO? = null,
   )
 }

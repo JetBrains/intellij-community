@@ -3,18 +3,18 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.async.*
 import com.intellij.collaboration.util.CodeReviewDomainEntity
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.gitlab.api.*
-import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.addDraftReplyNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.changeMergeRequestDiscussionResolve
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.createReplyNote
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.getNoteAwardEmoji
 import java.util.*
 
 @CodeReviewDomainEntity
@@ -50,11 +50,11 @@ class LoadedGitLabDiscussion(
   glMetadata: GitLabServerMetadata?,
   private val glProject: GitLabProjectCoordinates,
   private val currentUser: GitLabUserDTO,
-  private val eventSink: suspend (Change<GitLabDiscussionDTO>) -> Unit,
+  private val eventSink: suspend (Change<GitLabDiscussionRestDTO>) -> Unit,
   private val draftNotesEventSink: suspend (Change<GitLabMergeRequestDraftNoteRestDTO>) -> Unit,
   private val mr: GitLabMergeRequest,
-  discussionData: GitLabDiscussionDTO,
-  draftNotes: Flow<List<GitLabMergeRequestDraftNote>>
+  discussionData: GitLabDiscussionRestDTO,
+  draftNotes: Flow<List<GitLabMergeRequestDraftNote>>,
 ) : GitLabMergeRequestDiscussion {
   init {
     require(discussionData.notes.isNotEmpty()) { "Discussion with empty notes" }
@@ -62,14 +62,17 @@ class LoadedGitLabDiscussion(
 
   private val dataState = MutableStateFlow(discussionData)
 
-  override val id: GitLabGid = discussionData.id
+  override val id: GitLabRestId = discussionData.id
   override val createdAt: Date = discussionData.createdAt
 
   private val cs = parentCs.childScope(this::class)
+  private val emojiMapDeferred: Deferred<Map<String, String>> = cs.async(start = CoroutineStart.LAZY) {
+    service<GitLabEmojiService>().emojis.await().associateBy({ it.name }, { it.moji })
+  }
 
   private val operationsGuard = Mutex()
 
-  private val noteEvents = MutableSharedFlow<GitLabNoteEvent<GitLabNoteDTO>>()
+  private val noteEvents = MutableSharedFlow<GitLabNoteEvent<GitLabNoteRestDTO>>()
   private val loadedNotes = dataState.transformLatest { discussionData ->
     coroutineScope {
       val notesData = discussionData.notes.toMutableList()
@@ -101,8 +104,24 @@ class LoadedGitLabDiscussion(
   override val notes: StateFlow<List<GitLabMergeRequestNote>> =
     loadedNotes
       .mapDataToModel(
-        GitLabNoteDTO::id,
-        { note -> MutableGitLabMergeRequestNote(this, api, mr, currentUser, noteEvents::emit, note) },
+        GitLabNoteRestDTO::id,
+        { note ->
+          MutableGitLabMergeRequestNote(this, api, glProject, mr, id, currentUser, noteEvents::emit, note).also {
+            launch {
+              runCatching {
+                val emojiMap = emojiMapDeferred.await()
+                val emojis = withContext(Dispatchers.IO) {
+                  api.rest.getNoteAwardEmoji(glProject, mr.iid, note.id.restId).body()
+                }
+                it.setEmojis(emojis.map { emoji -> GitLabAwardEmojiRestDTO.fromRestDTO(emoji, emojiMap) })
+              }.onFailure { e ->
+                if (e !is CancellationException) {
+                  LOG.warn("Failed to load award emoji for note ${note.id}", e)
+                }
+              }
+            }
+          }
+        },
         MutableGitLabMergeRequestNote::update
       ).combine(draftNotes) { notes, draftNotes ->
         notes + draftNotes
@@ -119,8 +138,8 @@ class LoadedGitLabDiscussion(
   override val resolvable: StateFlow<Boolean> =
     loadedNotes.mapState { it.firstOrNull()?.resolvable ?: false }
 
-  // a little cheat that simplifies the implementation
-  override val resolveAllowed: Boolean = discussionData.notes.first().userPermissions.resolveNote
+  // a little cheat that simplifies the implementation - we're assuming that if a user can create notes, they can also resolve discussions
+  override val resolveAllowed: Boolean = mr.details.value.userPermissions.createNote
 
   override val resolved: StateFlow<Boolean> =
     loadedNotes.mapState { it.firstOrNull()?.resolved ?: false }
@@ -130,7 +149,7 @@ class LoadedGitLabDiscussion(
       operationsGuard.withLock {
         val resolved = resolved.first()
         val result = withContext(Dispatchers.IO) {
-          api.graphQL.changeMergeRequestDiscussionResolve(id.gid, !resolved).getResultOrThrow()
+          api.rest.changeMergeRequestDiscussionResolve(glProject, mr.iid, id.restId, !resolved).body()
         }
         noteEvents.emit(GitLabNoteEvent.Changed(result.notes))
         if (mr.details.value.targetProject.onlyAllowMergeIfAllDiscussionsAreResolved) {
@@ -142,12 +161,12 @@ class LoadedGitLabDiscussion(
 
   override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {
-      val newDiscussion = withContext(Dispatchers.IO) {
-        api.graphQL.createReplyNote(mr.gid, id.gid, body).getResultOrThrow()
+      val note = withContext(Dispatchers.IO) {
+        api.rest.createReplyNote(glProject, mr.iid, id.restId, body).body()
       }
 
       withContext(NonCancellable) {
-        noteEvents.emit(GitLabNoteEvent.Added(newDiscussion))
+        noteEvents.emit(GitLabNoteEvent.Added(note))
       }
     }
   }
@@ -155,7 +174,7 @@ class LoadedGitLabDiscussion(
   override suspend fun addDraftNote(body: String) {
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        api.rest.addDraftReplyNote(glProject, mr.iid, id.guessRestId(), body).body()
+        api.rest.addDraftReplyNote(glProject, mr.iid, id.restId, body).body()
       }?.also {
         withContext(NonCancellable) {
           draftNotesEventSink(AddedLast(it))
@@ -164,10 +183,15 @@ class LoadedGitLabDiscussion(
     }
   }
 
-  fun update(data: GitLabDiscussionDTO) {
+  fun update(data: GitLabDiscussionRestDTO) {
     dataState.value = data
   }
 
   override fun toString(): String =
     "LoadedGitLabDiscussion(id='$id', createdAt=$createdAt)"
+
+  companion object {
+    internal val LOG = Logger.getInstance(LoadedGitLabDiscussion::class.java)
+  }
+
 }

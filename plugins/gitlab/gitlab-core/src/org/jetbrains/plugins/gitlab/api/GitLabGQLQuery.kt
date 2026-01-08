@@ -15,8 +15,6 @@ enum class GitLabGQLQuery(val filePath: String) {
   FIND_MERGE_REQUESTS("graphql/query/findProjectMergeRequests.graphql"),
   @SinceGitLab("14.7")
   GET_MERGE_REQUEST_COMMITS("graphql/query/getMergeRequestCommits.graphql"),
-  @SinceGitLab("12.3")
-  GET_MERGE_REQUEST_DISCUSSIONS("graphql/query/getMergeRequestDiscussions.graphql"),
   @SinceGitLab("12.0")
   GET_PROJECT("graphql/query/getProject.graphql"),
   @SinceGitLab("13.1", note = "No exact version")
@@ -34,23 +32,10 @@ enum class GitLabGQLQuery(val filePath: String) {
   @SinceGitLab("14.3")
   GET_MEMBER_NAMESPACES_OLD("graphql/query/getMemberNamespacesOld.graphql"),
 
-  @SinceGitLab("13.1", note = "Different ID type until 13.6, should work")
-  TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE("graphql/query/toggleMergeRequestDiscussionResolve.graphql"),
-
-  @SinceGitLab("12.1", note = "Different ID type until 13.6, should work")
-  CREATE_NOTE("graphql/query/createNote.graphql"),
-  @SinceGitLab("12.1", note = "Different ID type until 13.6, should work")
-  CREATE_DIFF_NOTE("graphql/query/createDiffNote.graphql"),
-  @SinceGitLab("12.1", note = "Different ID type until 13.6, should work")
-  CREATE_REPLY_NOTE("graphql/query/createReplyNote.graphql"),
   @SinceGitLab("13.3.1")
   CREATE_SNIPPET("graphql/query/createSnippet.graphql"),
-  @SinceGitLab("12.1", note = "Different ID type until 13.6, should work")
-  UPDATE_NOTE("graphql/query/updateNote.graphql"),
   @SinceGitLab("13.3.1", note = "Different ID type until 13.6, should work")
   UPDATE_SNIPPET_BLOB("graphql/query/updateSnippetBlob.graphql"),
-  @SinceGitLab("12.1", note = "Different ID type until 13.6, should work")
-  DESTROY_NOTE("graphql/query/destroyNote.graphql"),
 
   @SinceGitLab("13.10")
   MERGE_REQUEST_ACCEPT("graphql/query/mergeRequestAccept.graphql"),

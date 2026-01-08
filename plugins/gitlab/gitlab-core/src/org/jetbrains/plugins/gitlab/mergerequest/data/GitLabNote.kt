@@ -15,7 +15,7 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabAwardEmojiDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import java.util.*
@@ -77,26 +77,29 @@ interface GitLabMergeRequestDraftNote : GitLabMergeRequestNote, MutableGitLabNot
 class MutableGitLabMergeRequestNote(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
-  mr: GitLabMergeRequest,
+  private val project: GitLabProjectCoordinates,
+  private val mr: GitLabMergeRequest,
+  private val discussionId: GitLabRestId,
   private val currentUser: GitLabUserDTO,
-  private val eventSink: suspend (GitLabNoteEvent<GitLabNoteDTO>) -> Unit,
-  noteData: GitLabNoteDTO
+  private val eventSink: suspend (GitLabNoteEvent<GitLabNoteRestDTO>) -> Unit,
+  noteData: GitLabNoteRestDTO,
 ) : GitLabMergeRequestNote, MutableGitLabNote {
 
   private val cs = parentCs.childScope(this::class)
 
   private val operationsGuard = Mutex()
 
-  override val id: GitLabGid = noteData.id
-  override val author: GitLabUserDTO = noteData.author
+  override val id: GitLabRestId = noteData.id
+  override val author: GitLabUserDTO = GitLabUserDTO.fromRestDTO(noteData.author)
   override val createdAt: Date = noteData.createdAt
-  override val canAdmin: Boolean = noteData.userPermissions.adminNote
+  override val canAdmin: Boolean = noteData.author.id == currentUser.id.substringAfterLast('/')
   override val canReact: Boolean = !noteData.system
 
   private val data = MutableStateFlow(noteData)
-  override val body: StateFlow<String> = data.mapState(cs, GitLabNoteDTO::body)
-  override val resolved: StateFlow<Boolean> = data.mapState(cs, GitLabNoteDTO::resolved)
-  override val awardEmoji: StateFlow<List<GitLabAwardEmojiDTO>> = data.mapState(cs) { it.emojis.filterNotNull() }
+  override val body: StateFlow<String> = data.mapState(cs, GitLabNoteRestDTO::body)
+  override val resolved: StateFlow<Boolean> = data.mapState(cs, GitLabNoteRestDTO::resolved)
+  private val _awardEmoji = MutableStateFlow<List<GitLabAwardEmojiDTO>>(emptyList())
+  override val awardEmoji: StateFlow<List<GitLabAwardEmojiDTO>> = _awardEmoji.asStateFlow()
   override val position: StateFlow<GitLabNotePosition?> = data.mapState(cs) {
     it.position?.let(GitLabNotePosition::from)
   }
@@ -109,7 +112,7 @@ class MutableGitLabMergeRequestNote(
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          api.graphQL.updateNote(id.gid, newText).getResultOrThrow()
+          api.rest.updateNote(project, mr.iid, discussionId.restId, id.restId, newText).body()
         }
       }
       data.update { it.copy(body = newText) }
@@ -120,7 +123,7 @@ class MutableGitLabMergeRequestNote(
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          api.graphQL.deleteNote(id.gid).getResultOrThrow()
+          api.rest.deleteNote(project, mr.iid, discussionId.restId, id.restId).body()
         }
       }
       eventSink(GitLabNoteEvent.Deleted(id))
@@ -134,15 +137,19 @@ class MutableGitLabMergeRequestNote(
   override suspend fun toggleReaction(reaction: GitLabReaction) {
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        val id = id.gid
+        val id = id.guessGid() ?: return@withContext
         val awardEmojiTogglePayload = api.graphQL.awardEmojiToggle(id, reaction.name).body()
         updateEmojisLocally(reaction, awardEmojiTogglePayload)
       }
     }
   }
 
-  fun update(item: GitLabNoteDTO) {
+  fun update(item: GitLabNoteRestDTO) {
     data.value = item
+  }
+
+  fun setEmojis(updatedEmojis: List<GitLabAwardEmojiDTO>) {
+    _awardEmoji.value = updatedEmojis
   }
 
   private fun updateEmojisLocally(reaction: GitLabReaction, awardEmojiTogglePayload: AwardEmojiTogglePayload) {
@@ -155,7 +162,7 @@ class MutableGitLabMergeRequestNote(
       updatedEmojis.removeIf { it.name == reaction.name && it.user.id == currentUser.id }
     }
 
-    data.update { it.copy(emojis = updatedEmojis) }
+    setEmojis(updatedEmojis)
   }
 
   override fun toString(): String =
@@ -179,7 +186,7 @@ class GitLabMergeRequestDraftNoteImpl(
   private val operationsGuard = Mutex()
 
   override val id: GitLabRestId = noteData.id
-  override val discussionId: GitLabRestId? = noteData.discussionId
+  override val discussionId: GitLabId? = noteData.discussionId
 
   private val data = MutableStateFlow(noteData)
   override val body: StateFlow<String> = data.mapState(cs, GitLabMergeRequestDraftNoteRestDTO::note)
@@ -267,10 +274,10 @@ private fun Flow<GitLabNotePosition?>.mapPosition(mr: GitLabMergeRequest): Flow<
     }
   }
 
-class GitLabSystemNote(noteData: GitLabNoteDTO) : GitLabNote {
+class GitLabSystemNote(noteData: GitLabNoteRestDTO) : GitLabNote {
 
-  override val id: GitLabGid = noteData.id
-  override val author: GitLabUserDTO = noteData.author
+  override val id: GitLabRestId = noteData.id
+  override val author: GitLabUserDTO = GitLabUserDTO.fromRestDTO(noteData.author)
   override val createdAt: Date = noteData.createdAt
 
   private val _body = MutableStateFlow(noteData.body)

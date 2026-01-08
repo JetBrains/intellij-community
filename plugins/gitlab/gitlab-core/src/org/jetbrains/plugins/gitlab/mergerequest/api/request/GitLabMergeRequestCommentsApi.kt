@@ -7,31 +7,28 @@ import com.intellij.collaboration.api.data.orDefault
 import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.graphql.loadResponse
+import com.intellij.collaboration.api.json.loadJsonValue
+import com.intellij.collaboration.util.resolveRelative
 import org.jetbrains.plugins.gitlab.api.*
+import org.jetbrains.plugins.gitlab.api.dto.GitLabAwardEmojiRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionRestDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
+import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
+import java.net.URI
+import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-@SinceGitLab("12.3")
-suspend fun GitLabApi.GraphQL.loadMergeRequestDiscussions(project: GitLabProjectCoordinates,
-                                                          mrIid: String,
-                                                          pagination: GraphQLRequestPagination? = null)
-  : GraphQLConnectionDTO<GitLabDiscussionDTO>? {
-  val parameters = pagination.orDefault().asParameters() + mapOf(
-    "projectId" to project.projectPath.fullPath(),
-    "mriid" to mrIid
-  )
-  val request = gitLabQuery(GitLabGQLQuery.GET_MERGE_REQUEST_DISCUSSIONS, parameters)
-  return withErrorStats(GitLabGQLQuery.GET_MERGE_REQUEST_DISCUSSIONS) {
-    loadResponse<DiscussionConnection>(request, "project", "mergeRequest", "discussions").body()
-  }
+@SinceGitLab("10.6")
+suspend fun GitLabApi.Rest.loadMergeRequestDiscussions(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
+): HttpResponse<out List<GitLabDiscussionRestDTO>> {
+  val uri = getMergeRequestDiscussionsUri(project, mrIid)
+  return loadList(GitLabApiRequestName.REST_GET_MERGE_REQUEST_DISCUSSIONS, uri.toString())
 }
 
-private class DiscussionConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabDiscussionDTO>)
-  : GraphQLConnectionDTO<GitLabDiscussionDTO>(pageInfo, nodes)
 
 @SinceGitLab("14.7")
 suspend fun GitLabApi.GraphQL.loadMergeRequestCommits(
@@ -52,111 +49,127 @@ suspend fun GitLabApi.GraphQL.loadMergeRequestCommits(
 private class CommitConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabCommitDTO>)
   : GraphQLConnectionDTO<GitLabCommitDTO>(pageInfo, nodes)
 
-@SinceGitLab("13.1", note = "Different ID type until 13.6, should work")
-suspend fun GitLabApi.GraphQL.changeMergeRequestDiscussionResolve(
-  discussionId: String,
-  resolved: Boolean
-): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabDiscussionDTO>?> {
-  val parameters = mapOf(
-    "discussionId" to discussionId,
-    "resolved" to resolved
-  )
-  val request = gitLabQuery(GitLabGQLQuery.TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE, parameters)
-  return withErrorStats(GitLabGQLQuery.TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE) {
-    loadResponse<ResolveResult>(request, "discussionToggleResolve")
-  }
-}
+@SinceGitLab("10.6")
+fun getMergeRequestDiscussionsUri(project: GitLabProjectCoordinates, mrIid: String): URI =
+  project.restApiUri
+    .resolveRelative("merge_requests")
+    .resolveRelative(mrIid)
+    .resolveRelative("discussions")
 
-private class ResolveResult(discussion: GitLabDiscussionDTO, errors: List<String>?)
-  : GitLabGraphQLMutationResultDTO<GitLabDiscussionDTO>(errors) {
-  override val value = discussion
-}
-
-@SinceGitLab("12.1", note = "Different ID type until 13.6, should work")
-suspend fun GitLabApi.GraphQL.updateNote(
+@SinceGitLab("8.9")
+suspend fun GitLabApi.Rest.getNoteAwardEmoji(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
   noteId: String,
-  newText: String
-): HttpResponse<out GitLabGraphQLMutationResultDTO<Unit>?> {
-  val parameters = mapOf(
-    "noteId" to noteId,
-    "body" to newText
-  )
-  val request = gitLabQuery(GitLabGQLQuery.UPDATE_NOTE, parameters)
-  return withErrorStats(GitLabGQLQuery.UPDATE_NOTE) {
-    loadResponse<GitLabGraphQLMutationResultDTO.Empty>(request, "updateNote")
+): HttpResponse<out List<GitLabAwardEmojiRestDTO>> {
+  val uri = project.restApiUri
+    .resolveRelative("merge_requests")
+    .resolveRelative(mrIid)
+    .resolveRelative("notes")
+    .resolveRelative(noteId)
+    .resolveRelative("award_emoji")
+  return loadList(GitLabApiRequestName.REST_GET_NOTE_AWARD_EMOJI, uri.toString())
+}
+
+@SinceGitLab("10.6")
+suspend fun GitLabApi.Rest.addNote(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
+  body: String,
+): HttpResponse<out GitLabDiscussionRestDTO> {
+  val params = mapOf("body" to body)
+  val uri = getMergeRequestDiscussionsUri(project, mrIid).withParams(params)
+  val request = request(uri).POST(HttpRequest.BodyPublishers.noBody()).build()
+  return withErrorStats(GitLabApiRequestName.REST_CREATE_MERGE_REQUEST_NOTE) {
+    loadJsonValue(request)
   }
 }
 
-@SinceGitLab("12.1", note = "Different ID type until 13.6, should work")
-suspend fun GitLabApi.GraphQL.deleteNote(
-  noteId: String
-): HttpResponse<out GitLabGraphQLMutationResultDTO<Unit>?> {
-  val parameters = mapOf(
-    "noteId" to noteId
-  )
-  val request = gitLabQuery(GitLabGQLQuery.DESTROY_NOTE, parameters)
-  return withErrorStats(GitLabGQLQuery.DESTROY_NOTE) {
-    loadResponse<GitLabGraphQLMutationResultDTO.Empty>(request, "destroyNote")
-  }
-}
-
-@SinceGitLab("12.1", note = "Different ID type until 13.6, should work")
-suspend fun GitLabApi.GraphQL.addNote(
-  mergeRequestGid: String,
-  body: String
-): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabDiscussionDTO>?> {
-  val parameters = mapOf(
-    "noteableId" to mergeRequestGid,
-    "body" to body
-  )
-  val request = gitLabQuery(GitLabGQLQuery.CREATE_NOTE, parameters)
-  return withErrorStats(GitLabGQLQuery.CREATE_NOTE) {
-    loadResponse<CreateNoteResult>(request, "createNote")
-  }
-}
-
-@SinceGitLab("12.1", note = "Different ID type until 13.6, should work")
-suspend fun GitLabApi.GraphQL.addDiffNote(
-  mergeRequestGid: String,
+@SinceGitLab("13.2")
+suspend fun GitLabApi.Rest.addDiffNote(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
   position: GitLabDiffPositionInput,
-  body: String
-): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabDiscussionDTO>?> {
-  val parameters = mapOf(
-    "noteableId" to mergeRequestGid,
-    "position" to position,
-    "body" to body
-  )
-  val request = gitLabQuery(GitLabGQLQuery.CREATE_DIFF_NOTE, parameters)
-  return withErrorStats(GitLabGQLQuery.CREATE_DIFF_NOTE) {
-    loadResponse<CreateNoteResult>(request, "createDiffNote")
+  body: String,
+): HttpResponse<out GitLabDiscussionRestDTO> {
+  val params = mapOf("body" to body) + createPositionParameters(position)
+  val uri = getMergeRequestDiscussionsUri(project, mrIid).withParams(params)
+  val request = request(uri).POST(HttpRequest.BodyPublishers.noBody()).build()
+  return withErrorStats(GitLabApiRequestName.REST_CREATE_MERGE_REQUEST_DIFF_NOTE) {
+    loadJsonValue(request)
   }
 }
 
-private class CreateNoteResult(note: NoteHolder?, errors: List<String>?)
-  : GitLabGraphQLMutationResultDTO<GitLabDiscussionDTO>(errors) {
-  override val value = note?.discussion
-}
-
-private class NoteHolder(val discussion: GitLabDiscussionDTO)
-
-@SinceGitLab("12.1", note = "Different ID type until 13.6, should work")
-suspend fun GitLabApi.GraphQL.createReplyNote(
-  mergeRequestGid: String,
+@SinceGitLab("10.6")
+suspend fun GitLabApi.Rest.createReplyNote(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
   discussionId: String,
-  body: String
-): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabNoteDTO>?> {
-  val parameters = mapOf(
-    "noteableId" to mergeRequestGid,
-    "discussionId" to discussionId,
-    "body" to body
-  )
-  val request = gitLabQuery(GitLabGQLQuery.CREATE_REPLY_NOTE, parameters)
-  return withErrorStats(GitLabGQLQuery.CREATE_REPLY_NOTE) {
-    loadResponse<CreateReplyNoteResult>(request, "createNote")
+  body: String,
+): HttpResponse<out GitLabNoteRestDTO> {
+  val params = mapOf("body" to body)
+  val uri = getMergeRequestDiscussionsUri(project, mrIid)
+    .resolveRelative(discussionId)
+    .resolveRelative("notes")
+    .withParams(params)
+  val request = request(uri).POST(HttpRequest.BodyPublishers.noBody()).build()
+  return withErrorStats(GitLabApiRequestName.REST_CREATE_MERGE_REQUEST_DISCUSSION_NOTE) {
+    loadJsonValue(request)
   }
 }
 
-private class CreateReplyNoteResult(note: GitLabNoteDTO?, errors: List<String>?)
-  : GitLabGraphQLMutationResultDTO<GitLabNoteDTO>(errors) {
-  override val value = note
+@SinceGitLab("10.6")
+suspend fun GitLabApi.Rest.updateNote(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
+  discussionId: String,
+  noteId: String,
+  body: String,
+): HttpResponse<out GitLabNoteRestDTO> {
+  val params = mapOf("body" to body)
+  val uri = getMergeRequestDiscussionsUri(project, mrIid)
+    .resolveRelative(discussionId)
+    .resolveRelative("notes")
+    .resolveRelative(noteId)
+    .withParams(params)
+  val request = request(uri).PUT(HttpRequest.BodyPublishers.noBody()).build()
+  return withErrorStats(GitLabApiRequestName.REST_UPDATE_MERGE_REQUEST_DISCUSSION_NOTE) {
+    loadJsonValue(request)
+  }
 }
+
+@SinceGitLab("10.6")
+suspend fun GitLabApi.Rest.deleteNote(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
+  discussionId: String,
+  noteId: String,
+): HttpResponse<out Unit> {
+  val uri = getMergeRequestDiscussionsUri(project, mrIid)
+    .resolveRelative(discussionId)
+    .resolveRelative("notes")
+    .resolveRelative(noteId)
+  val request = request(uri).DELETE().build()
+  return withErrorStats(GitLabApiRequestName.REST_DELETE_MERGE_REQUEST_DISCUSSION_NOTE) {
+    sendAndAwaitCancellable(request)
+  }
+}
+
+@SinceGitLab("10.8")
+suspend fun GitLabApi.Rest.changeMergeRequestDiscussionResolve(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
+  discussionId: String,
+  resolved: Boolean,
+): HttpResponse<out GitLabDiscussionRestDTO> {
+  val params = mapOf("resolved" to resolved.toString())
+  val uri = getMergeRequestDiscussionsUri(project, mrIid)
+    .resolveRelative(discussionId)
+    .withParams(params)
+  val request = request(uri).PUT(HttpRequest.BodyPublishers.noBody()).build()
+  return withErrorStats(GitLabApiRequestName.REST_UPDATE_MERGE_REQUEST_DISCUSSION) {
+    loadJsonValue(request)
+  }
+}
+
+

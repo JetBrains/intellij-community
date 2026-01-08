@@ -3,13 +3,12 @@ package org.jetbrains.plugins.gitlab.mergerequest.api.request
 
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
-import com.intellij.collaboration.util.withQuery
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.LineRangeDTO
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
-import java.net.URLEncoder
 import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse
 
@@ -121,7 +120,7 @@ suspend fun GitLabApi.Rest.addDraftNote(
   }
 }
 
-private fun createPositionParameters(position: GitLabDiffPositionInput): Map<String, String> =
+internal fun createPositionParameters(position: GitLabDiffPositionInput): Map<String, String> =
   listOfNotNull(
     "position[base_sha]" to position.baseSha,
     "position[head_sha]" to position.headSha,
@@ -131,6 +130,7 @@ private fun createPositionParameters(position: GitLabDiffPositionInput): Map<Str
     position.paths.newPath?.let { "position[new_path]" to it },
     position.paths.oldPath?.let { "position[old_path]" to it },
     "position[position_type]" to "text",
+    *lineRangeParameters(position.lineRange)
   ).toMap()
 
 private fun createPositionParameters(position: GitLabMergeRequestDraftNoteRestDTO.Position): Map<String, String> {
@@ -142,9 +142,22 @@ private fun createPositionParameters(position: GitLabMergeRequestDraftNoteRestDT
     position.oldPath?.let { "position[old_path]" to it },
     position.oldLine?.let { "position[old_line]" to it.toString() },
     position.newLine?.let { "position[new_line]" to it.toString() },
+    *lineRangeParameters(position.lineRange),
     "position[position_type]" to position.positionType,
   ).toMap()
 
   // If there's no position info (just position type), don't pass it to GitLab.
   return if (result.size == 1) mapOf() else result
 }
+
+private fun lineRangeParameters(lineRange: LineRangeDTO?): Array<Pair<String, String>> =
+  listOfNotNull(
+    lineRange?.start?.lineCode?.let { "position[line_range][start][line_code]" to it },
+    lineRange?.start?.type?.let { "position[line_range][start][type]" to it },
+    lineRange?.start?.oldLine?.let { "position[line_range][start][old_line]" to it.toString() },
+    lineRange?.start?.newLine?.let { "position[line_range][start][new_line]" to it.toString() },
+    lineRange?.end?.lineCode?.let { "position[line_range][end][line_code]" to it },
+    lineRange?.end?.type?.let { "position[line_range][end][type]" to it },
+    lineRange?.end?.oldLine?.let { "position[line_range][end][old_line]" to it.toString() },
+    lineRange?.end?.newLine?.let { "position[line_range][end][new_line]" to it.toString() }
+  ).toTypedArray()

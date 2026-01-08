@@ -13,13 +13,10 @@ import kotlinx.coroutines.test.runTest
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabEdition
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
-import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceLabelEventDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceMilestoneEventDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceStateEventDTO
+import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.api.loadUpdatableJsonList
 import org.jetbrains.plugins.gitlab.api.request.*
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.DiffPathsInput
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.DiffPathsInputDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
@@ -96,11 +93,18 @@ class GitLabApiTest : GitLabApiTestCase() {
   }
 
   @Test
-  fun `GQL loadMergeRequestDiscussions works as expected`() = runTest {
-    checkVersion(after(v(12, 3)))
+  fun `REST loadMergeRequestDiscussions works as expected`() = runTest {
+    checkVersion(after(v(10, 6)))
 
     requiresAuthentication { api ->
-      val discussions = api.graphQL.loadMergeRequestDiscussions(glTest1Coordinates, "2")?.nodes
+      val uri = getMergeRequestDiscussionsUri(glTest1Coordinates, "2")
+      val discussions = ApiPageUtil.createPagesFlowByLinkHeader(uri) {
+        api.rest.loadUpdatableJsonList<GitLabDiscussionRestDTO>(
+          GitLabApiRequestName.REST_GET_MERGE_REQUEST_DISCUSSIONS, it
+        )
+      }
+        .map { it.body() }
+        .fold(listOf<GitLabDiscussionRestDTO>()) { l, r -> l + (r ?: listOf()) }
 
       assertNotNull(discussions)
       assertTrue(discussions.size >= 2)
@@ -111,137 +115,167 @@ class GitLabApiTest : GitLabApiTestCase() {
   }
 
   @Test
-  fun `REST and GQL read, create, update, delete note works`() = runTest {
-    checkVersion(after(v(12, 3)))
+  fun `REST read, create, update, delete note works`() = runTest {
+    checkVersion(after(v(10, 6)))
 
     requiresAuthentication { api ->
       val randomId = Random.nextLong()
       val initialBody = "This is a new comment! ID=$randomId"
-      val addNoteResult = api.graphQL.addNote(volatileProjectMr1Gid, initialBody).body()
-
+      val addNoteResult = api.rest.addNote(volatileProjectCoordinates, volatileProjectMr1Iid, initialBody)
       assertNotNull(addNoteResult)
-      addNoteResult.assertNoErrors()
-      val addNoteResultValue = addNoteResult.value
+      val addNoteResultValue = addNoteResult.body()
       assertNotNull(addNoteResultValue)
 
       val nextBody = "Changed comment! ID=$randomId"
 
-      val updateNoteResult = api.graphQL.updateNote(addNoteResultValue.notes[0].id.gid, nextBody).body()
-      updateNoteResult.assertNoErrors()
+      val updateNoteResult = api.rest.updateNote(volatileProjectCoordinates,
+                                                 volatileProjectMr1Iid,
+                                                 addNoteResultValue.id.toString(),
+                                                 addNoteResultValue.notes.first().id.toString(),
+                                                 nextBody)
+      assertNotNull(updateNoteResult)
 
       // Check body changed
       // NOTE: WILL NOT WORK ON A CONSTANTLY RUNNING SERVER BECAUSE OF PAGINATION
-      val updatedNote = api.graphQL.loadMergeRequestDiscussions(volatileProjectCoordinates, volatileProjectMr1Iid)
-        ?.nodes?.find { it.id == addNoteResultValue.id }
-
+      val discussions = api.rest.loadMergeRequestDiscussions(volatileProjectCoordinates, volatileProjectMr1Iid).body()
+      val updatedNote = discussions.find { it.id.toString() == addNoteResultValue.id.toString() }
       assertNotNull(updatedNote)
+
       assertEquals(nextBody, updatedNote.notes[0].body)
 
-      val deleteNoteResult = api.graphQL.deleteNote(addNoteResultValue.notes[0].id.gid).body()
-      deleteNoteResult.assertNoErrors()
-
+      val deleteNoteResult = api.rest.deleteNote(volatileProjectCoordinates,
+                                                 volatileProjectMr1Iid,
+                                                 updatedNote.id.toString(),
+                                                 updatedNote.notes.first().id.toString()).body()
+      assertNotNull(deleteNoteResult)
       // Check is deleted
-      val deletedNote = api.graphQL.loadMergeRequestDiscussions(volatileProjectCoordinates, volatileProjectMr1Iid)
-        ?.nodes?.find { it.id == addNoteResultValue.id }
+      val deletedNote = api.rest.loadMergeRequestDiscussions(volatileProjectCoordinates, volatileProjectMr1Iid).body()
+        .find { it.id.toString() == addNoteResultValue.id.toString() }
+
       assertNull(deletedNote)
     }
   }
 
   @Test
-  fun `GQL create and delete diff note works`() = runTest {
-    checkVersion(after(v(12, 1)))
+  fun `REST create and delete diff note works`() = runTest {
+    checkVersion(after(v(13, 2)))
 
     requiresAuthentication { api ->
       val randomId = Random.nextLong()
       val initialBody = "This is a diff note! ID=$randomId"
-      val addNoteResult = api.graphQL.addDiffNote(
-        volatileProjectMr1Gid,
+      val addNoteResult = api.rest.addDiffNote(
+        volatileProjectCoordinates,
+        volatileProjectMr1Iid,
         GitLabDiffPositionInput("bd857928", "bd857928", 1, "063282e5", 1,
-                                DiffPathsInput("README.md", null)),
+                                DiffPathsInputDTO("README.md", null)),
         initialBody
       ).body()
-      addNoteResult.assertNoErrors()
-
-      val deleteNoteResult = api.graphQL.deleteNote(addNoteResult!!.value!!.notes[0].id.gid).body()
-      deleteNoteResult.assertNoErrors()
+      assertNotNull(addNoteResult)
+      val deleteNoteResult = api.rest.deleteNote(volatileProjectCoordinates,
+                                                 volatileProjectMr1Iid,
+                                                 addNoteResult.id.toString(),
+                                                 addNoteResult.notes[0].id.toString()).body()
+      assertNotNull(deleteNoteResult)
     }
   }
 
   @Test
-  fun `GQL create reply note works`() = runTest {
-    checkVersion(after(v(12, 1)))
+  fun `REST create reply note works`() = runTest {
+    checkVersion(after(v(10, 6)))
 
     requiresAuthentication { api ->
       val randomId = Random.nextLong()
       val initialBody = "This is a note! ID=$randomId"
-      val addNoteResult = api.graphQL.addNote(
-        volatileProjectMr1Gid,
+      val addNoteResult = api.rest.addNote(
+        volatileProjectCoordinates,
+        volatileProjectMr1Iid,
         initialBody
       ).body()
-      addNoteResult.assertNoErrors()
+      assertNotNull(addNoteResult)
 
       val replyBody = "This is a reply! ID=$randomId"
-      val addNoteResult2 = api.graphQL.createReplyNote(
-        volatileProjectMr1Gid,
-        addNoteResult!!.value!!.id.gid,
+      val addNoteResult2 = api.rest.createReplyNote(
+        volatileProjectCoordinates,
+        volatileProjectMr1Iid,
+        addNoteResult.id.toString(),
         replyBody
       ).body()
-      addNoteResult2.assertNoErrors()
+      assertNotNull(addNoteResult2)
 
       // NOTE: WILL NOT WORK ON A CONSTANTLY RUNNING SERVER BECAUSE OF PAGINATION
-      val result = api.graphQL.loadMergeRequestDiscussions(volatileProjectCoordinates, volatileProjectMr1Iid)
-      val discussion = result?.nodes?.find { addNoteResult.value!!.notes[0].body.contains(randomId.toString()) }
+      val result = api.rest.loadMergeRequestDiscussions(volatileProjectCoordinates, volatileProjectMr1Iid).body()
+      assertNotNull(result)
+
+      val discussion = result.find { addNoteResult.notes[0].body.contains(randomId.toString()) }
       assertNotNull(discussion)
 
-      val deleteNoteResult1 = api.graphQL.deleteNote(discussion.notes[0].id.gid).body()
-      deleteNoteResult1.assertNoErrors()
-      val deleteNoteResult2 = api.graphQL.deleteNote(discussion.notes[1].id.gid).body()
-      deleteNoteResult2.assertNoErrors()
+      val deleteNoteResult1 =
+        api.rest.deleteNote(volatileProjectCoordinates, volatileProjectMr1Iid, discussion.id.toString(), discussion.notes[0].id.toString())
+          .body()
+      assertNotNull(deleteNoteResult1)
+      val deleteNoteResult2 =
+        api.rest.deleteNote(volatileProjectCoordinates, volatileProjectMr1Iid, discussion.id.toString(), discussion.notes[1].id.toString())
+          .body()
+      assertNotNull(deleteNoteResult2)
     }
   }
 
   @Test
-  fun `GQL resolve works`() = runTest {
-    checkVersion(after(v(12, 1)))
+  fun `REST resolve works`() = runTest {
+    checkVersion(after(v(13, 2)))
 
     requiresAuthentication { api ->
       val randomId = Random.nextLong()
       val initialBody = "This is a diff note! ID=$randomId"
-      val addNoteResult = api.graphQL.addDiffNote(
-        volatileProjectMr1Gid,
+      val addNoteResult = api.rest.addDiffNote(
+        volatileProjectCoordinates,
+        volatileProjectMr1Iid,
         GitLabDiffPositionInput("bd857928", "bd857928", 1, "063282e5", 1,
-                                DiffPathsInput("README.md", null)),
+                                DiffPathsInputDTO("README.md", null)),
         initialBody
       ).body()
-      addNoteResult.assertNoErrors()
+      assertNotNull(addNoteResult)
 
       val replyBody = "This is a reply! ID=$randomId"
-      val addNoteResult2 = api.graphQL.createReplyNote(
-        volatileProjectMr1Gid,
-        addNoteResult!!.value!!.id.gid,
+      val addNoteResult2 = api.rest.createReplyNote(
+        volatileProjectCoordinates,
+        volatileProjectMr1Iid,
+        addNoteResult.id.toString(),
         replyBody
       ).body()
-      addNoteResult2.assertNoErrors()
+      assertNotNull(addNoteResult2)
 
       // NOTE: WILL NOT WORK ON A CONSTANTLY RUNNING SERVER BECAUSE OF PAGINATION
-      val result1 = api.graphQL.loadMergeRequestDiscussions(volatileProjectCoordinates, volatileProjectMr1Iid)
-      val discussion1 = result1?.nodes?.find { addNoteResult.value!!.notes[0].body.contains(randomId.toString()) }
+      val result1 = api.rest.loadMergeRequestDiscussions(volatileProjectCoordinates, volatileProjectMr1Iid).body()
+      assertNotNull(result1)
+
+      val discussion1 = result1.find { addNoteResult.notes[0].body.contains(randomId.toString()) }
       assertNotNull(discussion1)
       assertFalse(discussion1.notes[0].resolved)
 
-      val resolveNoteResult = api.graphQL.changeMergeRequestDiscussionResolve(discussion1.replyId.gid, true).body()
-      resolveNoteResult.assertNoErrors()
+      val resolveNoteResult =
+        api.rest.changeMergeRequestDiscussionResolve(volatileProjectCoordinates, volatileProjectMr1Iid, discussion1.id.toString(), true)
+          .body()
+      assertNotNull(resolveNoteResult)
 
       // Confirm is now resolved
-      val result2 = api.graphQL.loadMergeRequestDiscussions(volatileProjectCoordinates, volatileProjectMr1Iid)
-      val discussion2 = result2?.nodes?.find { addNoteResult.value!!.notes[0].body.contains(randomId.toString()) }
+      val result2 = api.rest.loadMergeRequestDiscussions(volatileProjectCoordinates, volatileProjectMr1Iid).body()
+      assertNotNull(result2)
+
+      val discussion2 = result2.find { addNoteResult.notes[0].body.contains(randomId.toString()) }
       assertNotNull(discussion2)
       assertTrue(discussion2.notes[0].resolved)
 
-      val deleteNoteResult1 = api.graphQL.deleteNote(discussion2.notes[0].id.gid).body()
-      deleteNoteResult1.assertNoErrors()
-      val deleteNoteResult2 = api.graphQL.deleteNote(discussion2.notes[1].id.gid).body()
-      deleteNoteResult2.assertNoErrors()
+      val deleteNoteResult1 = api.rest.deleteNote(volatileProjectCoordinates,
+                                                  volatileProjectMr1Iid,
+                                                  discussion2.id.toString(),
+                                                  discussion2.notes[0].id.toString()).body()
+      assertNotNull(deleteNoteResult1)
+      val deleteNoteResult2 = api.rest.deleteNote(volatileProjectCoordinates,
+                                                  volatileProjectMr1Iid,
+                                                  discussion2.id.toString(),
+                                                  discussion2.notes[1].id.toString()).body()
+      assertNotNull(deleteNoteResult2)
     }
   }
 

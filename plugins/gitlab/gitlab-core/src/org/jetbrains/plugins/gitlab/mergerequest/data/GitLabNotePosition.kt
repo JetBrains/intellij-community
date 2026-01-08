@@ -5,7 +5,7 @@ import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteRestDTO
 
 sealed interface GitLabNotePosition {
   val parentSha: String
@@ -38,14 +38,14 @@ sealed interface GitLabNotePosition {
     private val LOG = logger<GitLabNotePosition>()
 
     @Suppress("DuplicatedCode")
-    fun from(position: GitLabNoteDTO.Position): GitLabNotePosition? {
-      if (position.diffRefs.baseSha == null) {
+    fun from(position: GitLabNoteRestDTO.Position): GitLabNotePosition? {
+      if (position.baseSha == null) {
         LOG.debug("Missing merge base in note position: $position")
         return null
       }
 
-      val parentSha = position.diffRefs.baseSha
-      val sha = position.diffRefs.headSha
+      val parentSha = position.baseSha
+      val sha = position.headSha
 
       return when (position.positionType) {
         "text" -> Text(parentSha, sha, position.oldPath, position.newPath, position.oldLine?.dec(), position.newLine?.dec())
