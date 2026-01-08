@@ -85,6 +85,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/deprecatedSymbolUsage", pattern = pattern, isIgnored = false)
             model("$idea/quickfix/equalityNotApplicable", pattern = pattern)
             model("$idea/quickfix/destructingShortForm", pattern = pattern)
+            model("$idea/quickfix/destructingNameMismatch", pattern = pattern)
             model("$idea/quickfix/explicitlyIgnoreReturnValue", pattern = pattern)
             model("$idea/quickfix/expressions", pattern = pattern)
             model("$idea/quickfix/final", pattern = pattern)
