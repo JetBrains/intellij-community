@@ -17,8 +17,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
-import com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
 import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesSerializers
 import com.intellij.platform.workspace.jps.serialization.impl.JpsSdkEntitySerializer
@@ -32,6 +32,7 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetImpl
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jps.util.JpsPathUtil
 import java.util.function.Function
 
 
@@ -56,7 +57,7 @@ class SdkBridgeImpl(
 
   override fun getVersionString(): String? = sdkEntityBuilder.version
 
-  override fun getHomePath(): String? = sdkEntityBuilder.homePath?.url
+  override fun getHomePath(): String? = JpsPathUtil.urlToPath(sdkEntityBuilder.homePath?.url)
 
   override fun getHomeDirectory(): VirtualFile? {
     val homePath = getHomePath()
