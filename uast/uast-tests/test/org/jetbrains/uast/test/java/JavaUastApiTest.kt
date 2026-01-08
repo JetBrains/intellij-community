@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.java
 
+import com.intellij.platform.uast.testFramework.env.findElementByText
+import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor
 import com.intellij.psi.util.PsiTreeUtil
@@ -8,8 +10,6 @@ import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
-import com.intellij.platform.uast.testFramework.env.findElementByText
-import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.junit.Assert
@@ -324,5 +324,56 @@ class JavaUastApiTest : AbstractJavaUastTest() {
     )
     // IDEA-336319: TYPE_USE should not be applicable to UMethod
     TestCase.assertEquals(0, count)
+  }
+
+  @Test
+  fun testLambdaFunctionalInterfaceType() {
+    // IDEA-383770
+    val file = myFixture.configureByText(
+      "MyClass.java",
+      """
+        package com.example
+
+        public class Message {
+            public int what;
+        }
+
+        class Looper {}
+
+        class Handler {
+            public interface Callback {
+                boolean handleMessage(Message msg);
+            }
+
+            Handler() {}
+
+            Handler(Callback callback) {}
+
+            Handler(Looper looper) {}
+        }
+
+        final class MyClass {
+            public static void foo() {
+                Handler handler =
+                    new Handler(
+                        msg -> {
+                            if (msg.what == 1) {
+                                return true;
+                            }
+                            return false;
+                        });
+            }
+        }
+      """.trimIndent()
+    )
+    val uFile = file.toUElementOfType<UFile>()!!
+    uFile.accept(
+      object : AbstractUastVisitor() {
+        override fun visitLambdaExpression(node: ULambdaExpression): Boolean {
+          TestCase.assertEquals("com.example.Handler.Callback", node.functionalInterfaceType?.canonicalText)
+          return super.visitLambdaExpression(node)
+        }
+      }
+    )
   }
 }
