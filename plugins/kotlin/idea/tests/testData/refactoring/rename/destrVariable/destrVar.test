@@ -1,0 +1,8 @@
+{
+  "type": "AUTO_DETECT",
+  "mainFile": "DestrVarRename.kt",
+  "newName": "productName",
+  "withRuntime": "true",
+  "hint": "Parameter 'productName' is already declared in function 'test'",
+  "enabledInK2": true
+}
