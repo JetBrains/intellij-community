@@ -19,6 +19,5 @@
     <orderEntry type="module" module-name="intellij.kotlin.plugin.updater" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" />
   </component>
 </module>

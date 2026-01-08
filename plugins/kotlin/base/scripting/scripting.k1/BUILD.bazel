@@ -65,6 +65,7 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//plugins/kotlin/preferences",
   ]
 )
 
@@ -131,6 +132,7 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//plugins/kotlin/preferences",
   ]
 )
 ### auto-generated section `build kotlin.base.scripting.k1` end
