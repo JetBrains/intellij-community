@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.ide.konan
 
@@ -61,15 +61,12 @@ class NativeDefinitionsFile(viewProvider: FileViewProvider) : PsiFileBase(viewPr
 
 class NativeDefinitionsLexerAdapter : FlexAdapter(NativeDefinitionsLexer(null as Reader?))
 
-private object NativeDefinitionsTokenSets {
-    val COMMENTS: TokenSet = TokenSet.create(NativeDefinitionsTypes.COMMENT)
-}
+private val COMMENTS: TokenSet = TokenSet.create(NativeDefinitionsTypes.COMMENT)
+private val FILE = IFileElementType(NativeDefinitionsLanguage.INSTANCE)
 
 class NativeDefinitionsParserDefinition : ParserDefinition {
-    private val FILE = IFileElementType(NativeDefinitionsLanguage.INSTANCE)
-
     override fun getWhitespaceTokens(): TokenSet = TokenSet.WHITE_SPACE
-    override fun getCommentTokens(): TokenSet = NativeDefinitionsTokenSets.COMMENTS
+    override fun getCommentTokens(): TokenSet = COMMENTS
     override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
     override fun getFileNodeType(): IFileElementType = FILE
 
