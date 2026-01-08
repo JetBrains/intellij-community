@@ -86,9 +86,9 @@ class PyOverloadsInspection : PyInspection() {
       }
 
       if (implementation != null) {
-        functions
+        overloads
           .asSequence()
-          .filter { isIncompatibleOverload(implementation, it) }
+          .filter { !PyUtil.isSignatureCompatibleTo(implementation, it, myTypeEvalContext) }
           .forEach {
             registerProblem(it.nameIdentifier,
                             PyPsiBundle.message("INSP.overloads.this.overload.signature.not.compatible.with.implementation",
@@ -144,12 +144,6 @@ class PyOverloadsInspection : PyInspection() {
           it == PyKnownDecorator.TYPING_OVERRIDE || it == PyKnownDecorator.TYPING_EXTENSIONS_OVERRIDE
         }
       }
-    }
-
-    private fun isIncompatibleOverload(implementation: PyFunction, overload: PyFunction): Boolean {
-      return implementation != overload &&
-             PyiUtil.isOverload(overload, myTypeEvalContext) &&
-             !PyUtil.isSignatureCompatibleTo(implementation, overload, myTypeEvalContext)
     }
   }
 
