@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeActionUtil;
@@ -205,7 +206,9 @@ final class CommandBuilder {
       if (editorProvider instanceof ForeignEditorProvider foreignEditorProvider) {
         return foreignEditorProvider.originator();
       }
-      return UndoDocumentUtil.getDocReference(undoProject, editorProvider);
+      return Cancellation.computeInNonCancelableSection( // fixes flaky `CompletionRestartTest`
+        () -> UndoDocumentUtil.getDocReference(undoProject, editorProvider)
+      );
     }
     return null;
   }
