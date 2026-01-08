@@ -15,7 +15,7 @@ import org.junit.jupiter.api.extension.*
  * - Tolerates absence of a started IDE (no-op).
  * - Logs failures but does not fail the test to avoid masking the original result.
  */
-class BackgroundLambdaCleanupAfterEach : BeforeAllCallback, BeforeEachCallback, AfterEachCallback, AfterAllCallback {
+class BackgroundLambdaDefaultCallbacks : BeforeAllCallback, BeforeEachCallback, AfterEachCallback, AfterAllCallback {
   override fun beforeAll(context: ExtensionContext) {
     runLifecycleCallback("Before all", context.requiredTestClass.name) {
       ide.beforeAll(context.requiredTestClass.name)

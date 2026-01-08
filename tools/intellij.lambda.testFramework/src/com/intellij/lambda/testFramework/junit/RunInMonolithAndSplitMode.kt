@@ -21,7 +21,7 @@ import java.lang.annotation.Inherited
   ConfigureCoroutineCancellationTimeout::class,
   MonolithAndSplitModeTestTemplateProvider::class,
   MonolithAndSplitModeInvocationInterceptor::class,
-  BackgroundLambdaCleanupAfterEach::class,
+  BackgroundLambdaDefaultCallbacks::class,
   IdeWithLambdaParameterResolver::class,
 )
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
