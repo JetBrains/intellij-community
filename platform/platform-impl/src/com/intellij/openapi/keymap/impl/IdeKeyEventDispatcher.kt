@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.client.ClientSystemInfo
@@ -64,6 +65,7 @@ import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.util.*
+import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.plaf.basic.ComboPopup
 import javax.swing.text.JTextComponent
@@ -537,10 +539,12 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
 
     fireBeforeShortcutTriggered(shortcut, actions, context)
 
-    val chosen = Utils.runUpdateSessionForInputEvent(
-      actions, e, wrappedContext, place, processor, presentationFactory
-    ) { rearranged, updater, events ->
-      doUpdateActionsInner(rearranged, updater, events, dumb, wouldBeEnabledIfNotDumb)
+    val chosen = runInReadActionConditionally(actions) {
+      Utils.runUpdateSessionForInputEvent(
+        actions, e, wrappedContext, place, processor, presentationFactory
+      ) { rearranged, updater, events ->
+        doUpdateActionsInner(rearranged, updater, events, dumb, wouldBeEnabledIfNotDumb)
+      }
     }
     val doPerform = chosen != null && !this@IdeKeyEventDispatcher.context.secondStrokeActions.contains(chosen.action)
 
@@ -572,6 +576,16 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       }
     }
     return chosen != null
+  }
+
+  // inlining here to reduce the number of service stacktraces
+  @Suppress("NOTHING_TO_INLINE")
+  private inline fun <T> runInReadActionConditionally(actions: List<AnAction>, supplier: Supplier<T>): T {
+    return if (actions.any(Utils::isLockRequired)) {
+      ReadAction.compute<T, Throwable>(supplier::get)
+    } else {
+      supplier.get()
+    }
   }
 
   /**
