@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
@@ -81,8 +82,11 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   private var lastSampling = System.nanoTime()
   private var currentEdtEventChecker: FreezeCheckerTask? = null
   private val jitWatcher = JitWatcher()
-  private val unresponsiveIntervalLazy by lazy {
+  private val edtUnresponsiveIntervalLazy: RegistryValue by lazy {
     RegistryManager.getInstance().get("performance.watcher.unresponsive.interval.ms")
+  }
+  private val pooledUnresponsiveIntervalLazy: RegistryValue by lazy {
+    RegistryManager.getInstance().get("performance.watcher.pooled.unresponsive.interval.ms")
   }
 
   private val isActive: Boolean = !ApplicationManager.getApplication().isHeadlessEnvironment
@@ -115,15 +119,22 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     })
   }
 
-  override fun startEdtSampling() {
+  override fun startSampling() {
     if (!isActive) {
       return
     }
 
+    startEdtSampling()
+
+    CoroutineDispatcherWatcher(Dispatchers.Default, coroutineScope, ::pooledUnresponsiveInterval).watchDispatcher()
+    CoroutineDispatcherWatcher(Dispatchers.IO, coroutineScope, ::pooledUnresponsiveInterval).watchDispatcher()
+  }
+
+  private fun startEdtSampling() {
     LOG.debug("EDT sampling started")
     coroutineScope.launch(CoroutineName("EDT sampling")) {
       try {
-        val samplingIntervalMs = samplingInterval
+        val samplingIntervalMs = edtSamplingInterval
         @Suppress("KotlinConstantConditions")
         if (samplingIntervalMs <= 0) {
           return@launch
@@ -239,8 +250,14 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   /** defines the freeze (ms)  */
   override val unresponsiveInterval: Int
     get() {
-      val value = unresponsiveIntervalLazy.asInteger()
+      val value = edtUnresponsiveIntervalLazy.asInteger()
       return if (value <= 0) 0 else value.coerceIn(500, 20000)
+    }
+
+  private val pooledUnresponsiveInterval: Int
+    get() {
+      val value = pooledUnresponsiveIntervalLazy.asInteger()
+      return if (value <= 0) 0 else value.coerceIn(500, 180000)
     }
 
   override fun smokeAndMirrors(name: @NonNls String): AccessToken {
@@ -459,6 +476,61 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       return "$activityName took ${currentTime - startMillis}ms; general responsiveness: ${
         watcher.generalApdex.summarizePerformanceSince(startGeneralSnapshot)
       }; EDT responsiveness: ${watcher.swingApdex.summarizePerformanceSince(startSwingSnapshot)}"
+    }
+  }
+}
+
+private class CoroutineDispatcherWatcher(
+  private val dispatcher: CoroutineDispatcher,
+  private val coroutineScope: CoroutineScope,
+  private val getUnresponsiveIntervalMs: () -> Int,
+) {
+  private var lastSampleNs = System.nanoTime()
+
+  fun watchDispatcher() {
+    startPooledThreadSampling()
+    startPooledThreadWatcher()
+  }
+
+  private fun startPooledThreadSampling() {
+    LOG.debug("$dispatcher thread sampling started")
+    coroutineScope.launch(CoroutineName("$dispatcher sampling") + dispatcher) {
+      try {
+        while (true) {
+          delay(pooledSamplingInterval)
+          lastSampleNs = System.nanoTime()
+        }
+      }
+      finally {
+        LOG.debug("$dispatcher sampling stopped")
+      }
+    }
+  }
+
+  private fun startPooledThreadWatcher() {
+    LOG.debug("$dispatcher thread watcher started")
+    @Suppress("OPT_IN_USAGE")
+    coroutineScope.launch(CoroutineName("$dispatcher watcher") + blockingDispatcher) {
+      try {
+        var lastReportedNs = 0L
+
+        while (true) {
+          delay(pooledSamplingInterval)
+
+          val unresponsiveIntervalMs = getUnresponsiveIntervalMs()
+          if (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastSampleNs) <= unresponsiveIntervalMs ||
+              TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastReportedNs) <= unresponsiveIntervalMs) {
+            continue
+          }
+
+          val file = PerformanceWatcher.getInstance().dumpThreads("$dispatcher", true, true)
+          LOG.info("Thread pool exhaustion: ${dispatcher} is not responding for $unresponsiveIntervalMs ms." + if (file == null) "" else "; thread dump is saved to '$file'")
+          lastReportedNs = System.nanoTime()
+        }
+      }
+      finally {
+        LOG.debug("$dispatcher watcher stopped")
+      }
     }
   }
 }
@@ -694,7 +766,8 @@ private fun ageInDays(file: Path): Long =
   (System.currentTimeMillis() - Files.getLastModifiedTime(file).toMillis()).toDuration(DurationUnit.MILLISECONDS).inWholeDays
 
 /** for [PerformanceListener.uiResponded] events (ms)  */
-private const val samplingInterval = 1000L
+private const val edtSamplingInterval = 1000L
+private const val pooledSamplingInterval = 1000L
 
 private fun buildName(): String = ApplicationInfo.getInstance().build.asString()
 

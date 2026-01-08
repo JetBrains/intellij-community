@@ -98,7 +98,7 @@ open class IdeStarter : ModernApplicationStarter() {
 
       app.serviceAsync<PerformanceWatcher>()
       // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
-      PerformanceWatcher.getInstance().startEdtSampling()
+      PerformanceWatcher.getInstance().startSampling()
 
       if (Registry.`is`("ide.enable.edt.lock.load.monitor")) {
         app.serviceAsync<EdtLockLoadMonitorService>().initialize()
