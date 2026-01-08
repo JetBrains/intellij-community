@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit6;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -18,7 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.intellij.junit6.ServiceMessageUtil.replaceAttributes;
+import static com.intellij.junit6.ServiceMessageUtil.normalizedTestOutput;
 
 @DisplayName("junit 6 navigation features: location strings, etc")
 public class JUnit6NavigationTest extends AbstractTestFrameworkCompilingIntegrationTest {
@@ -42,10 +42,9 @@ public class JUnit6NavigationTest extends AbstractTestFrameworkCompilingIntegrat
     assertEmpty(output.err);
 
     String messages = output.messages.stream().filter(m -> m.getAttributes().containsKey("locationHint"))
-      .map(m -> m.getAttributes().get("locationHint").startsWith("file://")
-                ? replaceAttributes(m, Map.of("locationHint", "file://##path##"))
-                : m.asString())
-      .map(m -> m.replaceAll("##teamcity\\[", "##TC["))
+      .map(m -> normalizedTestOutput(m, m.getAttributes().get("locationHint").startsWith("file://")
+                                          ? Map.of("locationHint", "file://##path##")
+                                          : Map.of()))
       .collect(Collectors.joining("\n"));
 
     assertEquals("""

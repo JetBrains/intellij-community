@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit6;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.intellij.junit6.ServiceMessageUtil.replaceAttributes;
+import static com.intellij.junit6.ServiceMessageUtil.normalizedTestOutput;
 
 @SuppressWarnings("SSBasedInspection")
 public class JUnit6EventsTest extends AbstractTestFrameworkCompilingIntegrationTest {
@@ -46,13 +46,7 @@ public class JUnit6EventsTest extends AbstractTestFrameworkCompilingIntegrationT
     assertEmpty(output.err);
 
     String tests = output.messages.stream().filter(m -> m instanceof BaseTestMessage)
-      .map(m -> replaceAttributes(m, Map.of(
-        "timestamp", "##timestamp##",
-        "duration", "##duration##",
-        "details", "##details##"
-      )))
-      .map(m -> m.replaceAll("##teamcity\\[", "##TC["))
-      .map(s -> s.replaceAll("timestamp = [0-9\\-:.T]+", "timestamp = ##timestamp##"))
+      .map(m -> normalizedTestOutput(m, Map.of("details", "##details##")))
       .collect(Collectors.joining("\n"));
 
     assertEquals("""
@@ -73,8 +67,7 @@ public class JUnit6EventsTest extends AbstractTestFrameworkCompilingIntegrationT
     String test = output.messages.stream().filter(BaseTestMessage.class::isInstance)
       .map(BaseTestMessage.class::cast)
       .filter(m -> m.getTestName().equals("Class Configuration"))
-      .map(m -> replaceAttributes(m, Map.of("details", "##details##")))
-      .map(m -> m.replaceAll("##teamcity\\[", "##TC["))
+      .map(m -> normalizedTestOutput(m, Map.of("details", "##details##")))
       .collect(Collectors.joining("\n"));
     assertEquals("""
                    ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' name='Class Configuration' nodeId='|[engine:junit-jupiter|]/|[class:com.intellij.junit6.testData.MyTestClass|]/|[test-factory:brokenStream()|]' parentNodeId='0' locationHint='java:test://com.intellij.junit6.testData.MyTestClass/brokenStream' metainfo='']
@@ -88,14 +81,10 @@ public class JUnit6EventsTest extends AbstractTestFrameworkCompilingIntegrationT
     assertEmpty(output.err);
 
     String tests = output.messages.stream().filter(m -> m instanceof BaseTestMessage)
-      .map(m -> replaceAttributes(m, Map.of(
-        "timestamp", "##timestamp##",
-        "duration", "##duration##",
+      .map(m -> normalizedTestOutput(m, Map.of(
         "message", "##message##",
         "details", "##details##"
       )))
-      .map(m -> m.replaceAll("##teamcity\\[", "##TC["))
-      .map(s -> s.replaceAll("timestamp = [0-9\\-:.T]+", "timestamp = ##timestamp##"))
       .collect(Collectors.joining("\n"));
 
     assertEquals("""

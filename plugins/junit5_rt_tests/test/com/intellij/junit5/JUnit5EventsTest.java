@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import com.intellij.junit5.testData.AnnotationsTestClass;
@@ -55,7 +55,7 @@ public class JUnit5EventsTest {
                               ##TC[testFailed id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' message='message2|nComparison Failure: ' expected='expected2' actual='actual2' details='TRACE']
                               ##TC[testFailed id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' message='2 errors (2 failures)|n\torg.opentest4j.AssertionFailedError: message1|n\torg.opentest4j.AssertionFailedError: message2' details='TRACE']
                               ##TC[testFinished id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0']
-                              """.replace("${timestamp}", reportEntry.getTimestamp().toString()), builder.getFormattedOutput());
+                              """.replace("${timestamp}", reportEntry.getTimestamp().toString()), builder.getNormalizedTestOutput());
   }
 
   @Test
@@ -87,7 +87,7 @@ public class JUnit5EventsTest {
         ##TC[testStarted id='|[engine:engine|]/|[class:testClass|]/|[method:test2|]' name='test2 display name' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:test2|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' locationHint='file:///directory/test2.java:12']
         ##TC[testStarted id='|[engine:engine|]/|[class:testClass|]/|[method:test3|]' name='test3 display name' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:test3|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' locationHint='java:test://MyTestClass/test4Method' metainfo='java.lang.String,java.util.List']
         ##TC[testStarted id='|[engine:engine|]/|[class:testClass|]/|[method:test4|]' name='test4 display name' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:test4|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest']
-        """, builder.getFormattedOutput());
+        """, builder.getNormalizedTestOutput());
   }
 
   @Test
@@ -112,7 +112,7 @@ public class JUnit5EventsTest {
                               ##TC[testStarted id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='Class Configuration' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' locationHint='java:test://com.intellij.junit5.testData.MyTestClass/brokenStream' metainfo='']
                               ##TC[testFailed id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='Class Configuration' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' error='true' message='' details='TRACE']
                               ##TC[testFinished id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='Class Configuration' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]']
-                              """, builder.getFormattedOutput());
+                              """, builder.getNormalizedTestOutput());
   }
 
   @Test
@@ -138,7 +138,7 @@ public class JUnit5EventsTest {
                               ##TC[treeEnded]
                               ##TC[testSuiteStarted id='|[engine:secondEngine|]/|[class:testClass|]' name='MyTestClass' nodeId='|[engine:secondEngine|]/|[class:testClass|]' parentNodeId='|[engine:engine|]/|[suite:suiteClass|]' locationHint='java:suite://com.intellij.junit5.testData.MyTestClass']
                               ##TC[testSuiteFinished id='|[engine:secondEngine|]/|[class:testClass|]' name='MyTestClass' nodeId='|[engine:secondEngine|]/|[class:testClass|]' parentNodeId='|[engine:engine|]/|[suite:suiteClass|]']
-                              """, builder.getFormattedOutput());
+                              """, builder.getNormalizedTestOutput());
   }
 
   @Test
@@ -161,7 +161,7 @@ public class JUnit5EventsTest {
                               ##TC[testSuiteStarted id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='brokenStream()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' locationHint='java:test://com.intellij.junit5.testData.MyTestClass/brokenStream' metainfo='']
                               ##TC[testIgnored id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='brokenStream()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]']
                               ##TC[testSuiteFinished id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='brokenStream()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]']
-                              """, builder.getFormattedOutput());
+                              """, builder.getNormalizedTestOutput());
   }
 
   @Test
@@ -192,6 +192,6 @@ public class JUnit5EventsTest {
                               ##TC[rootName name='testClass' location='java:suite://testClass']
                               ##TC[testStarted id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='|[test|'s method|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' locationHint='java:test://com.intellij.junit5.testData.AnnotationsTestClass/test1' metainfo='']
                               ##TC[testFinished id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='|[test|'s method|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0']
-                              """, builder.getFormattedOutput());
+                              """, builder.getNormalizedTestOutput());
   }
 }
