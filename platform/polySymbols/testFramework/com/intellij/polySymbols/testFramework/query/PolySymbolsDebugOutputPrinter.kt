@@ -11,6 +11,7 @@ import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.html.htmlAttributeValue
 import com.intellij.polySymbols.js.PROP_JS_SYMBOL_KIND
+import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolWithPattern
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.testFramework.DebugOutputPrinter
@@ -18,6 +19,7 @@ import com.intellij.polySymbols.utils.PolySymbolTypeSupport.Companion.PROP_TYPE_
 import com.intellij.polySymbols.utils.completeMatch
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.polySymbols.utils.qualifiedName
+import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 import com.intellij.polySymbols.webTypes.WebTypesSymbol
 import com.intellij.util.applyIf
 import com.intellij.util.asSafely
@@ -85,14 +87,17 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
         .asSafely<PolySymbolDocumentationTarget>()
         ?.documentation
 
+      val framework = (source as? WebTypesSymbol)?.origin?.framework
+                      ?: (source as? PolySymbolMatch)?.unwrapMatchedSymbols()?.firstNotNullOfOrNull { (it as? WebTypesSymbol)?.origin?.framework }
+                      ?: "<none>"
       printProperty(level,
                     "origin",
-                    "${documentation?.library} (${(source as? WebTypesSymbol)?.origin?.framework ?: "<none>"})")
+                    "${documentation?.library} ($framework)")
       printProperty(level, "source", (source as? PsiSourcedPolySymbol)?.source)
       printProperty(level, "type", source[PROP_TYPE_SUPPORT]?.typeProperty?.let { source[it] })
       printProperty(level, "attrValue", source.htmlAttributeValue)
       printProperty(level, "complete", source.completeMatch)
-      if (documentation != null) {
+      if (documentation != null && source !is PolySymbolMatch) {
         printProperty(level, "description", documentation.description?.ellipsis(45))
         printProperty(level, "docUrl", documentation.docUrl)
         printProperty(level, "descriptionSections", documentation.descriptionSections.takeIf { it.isNotEmpty() })

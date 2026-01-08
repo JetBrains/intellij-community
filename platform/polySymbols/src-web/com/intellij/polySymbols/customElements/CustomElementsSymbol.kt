@@ -27,9 +27,7 @@ interface CustomElementsSymbol : PolySymbol, PolySymbolScope {
     PolySymbolDocumentationTarget.create(this, location) { symbol, _ ->
       description = symbol.description
       defaultValue = symbol.defaultValue
-      library = symbol.origin.let { origin ->
-        library + (origin.version?.takeIf { it != "0.0.0" }?.let { "@$it" } ?: "")
-      }
+      library = symbol.origin.library + (symbol.origin.version?.takeIf { it != "0.0.0" }?.let { "@$it" } ?: "")
     }
 
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
