@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.actions;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsActions;
@@ -59,8 +60,11 @@ public abstract class DvcsQuickListContentProvider implements VcsQuickListConten
   }
 
   protected static void add(String actionName, ActionManager manager, List<? super AnAction> actions) {
-    final AnAction action = manager.getAction(actionName);
-    assert action != null : "Can not find action " + actionName;
+    AnAction action = manager.getAction(actionName);
+    if (action == null) {
+      Logger.getInstance(DvcsQuickListContentProvider.class).error("Can not find action " + actionName);
+      return;
+    }
     actions.add(action);
   }
 }
