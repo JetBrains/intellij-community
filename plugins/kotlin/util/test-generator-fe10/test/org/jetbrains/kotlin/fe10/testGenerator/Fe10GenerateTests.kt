@@ -82,8 +82,6 @@ import org.jetbrains.kotlin.idea.internal.AbstractBytecodeToolWindowMultiplatfor
 import org.jetbrains.kotlin.idea.internal.AbstractBytecodeToolWindowTest
 import org.jetbrains.kotlin.idea.kdoc.AbstractKDocHighlightingTest
 import org.jetbrains.kotlin.idea.kdoc.AbstractKDocTypingTest
-import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenInspectionTest
-import org.jetbrains.kotlin.idea.maven.configuration.AbstractMavenConfigureProjectByChangingFileTest
 import org.jetbrains.kotlin.idea.navigation.*
 import org.jetbrains.kotlin.idea.navigationToolbar.AbstractKotlinNavBarTest
 import org.jetbrains.kotlin.idea.parameterInfo.AbstractParameterInfoTest
@@ -1283,20 +1281,6 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
 
         testClass<AbstractScriptDefinitionsOrderTest> {
             model("script/definition/order", pattern = DIRECTORY, isRecursive = false)
-        }
-    }
-
-    testGroup("maven/tests") {
-        testClass<AbstractMavenConfigureProjectByChangingFileTest> {
-            model("configurator/jvm", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestWithMaven")
-        }
-
-        testClass<AbstractKotlinMavenInspectionTest> {
-            val mavenInspections = "maven-inspections"
-            val pattern = Patterns.forRegex("^([\\w\\-]+).xml$")
-            testDataRoot.resolve(mavenInspections).listFiles()!!.onEach { check(it.isDirectory) }.sorted().forEach {
-                model("$mavenInspections/${it.name}", pattern = pattern, flatten = true)
-            }
         }
     }
 

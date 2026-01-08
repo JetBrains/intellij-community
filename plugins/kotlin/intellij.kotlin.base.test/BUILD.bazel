@@ -90,6 +90,8 @@ jvm_library(
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/navbar/testFramework",
     "//java/java-impl-inspections:impl-inspections",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/migration",
   ],
   runtime_deps = [":base-test"]
 )

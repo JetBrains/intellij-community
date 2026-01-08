@@ -30,7 +30,7 @@ abstract class KotlinMavenImportingTestCase : MavenMultiVersionImportingTestCase
     }
 
     override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
+        get() = KotlinPluginMode.K2
 
     protected fun assertKotlinSources(moduleName: String, vararg expectedSources: String) {
         doAssertContentFolders(moduleName, SourceKotlinRootType, *expectedSources)

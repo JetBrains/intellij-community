@@ -76,5 +76,7 @@
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.navbar.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.impl.inspections" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.migration" scope="TEST" />
   </component>
 </module>

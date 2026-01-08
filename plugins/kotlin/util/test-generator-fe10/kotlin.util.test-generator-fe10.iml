@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.scripting-support" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.maven.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.k1" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.cli" scope="TEST" />

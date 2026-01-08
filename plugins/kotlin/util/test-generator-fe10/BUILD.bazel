@@ -27,7 +27,6 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/test:test_test_lib",
     "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/scripting-support:scripting-support_test_lib",
-    "//plugins/kotlin/maven/tests:tests_test_lib",
     "//java/testFramework",
     "//plugins/kotlin/gradle/gradle-java/k1",
     "//plugins/kotlin/gradle/gradle-java/k1:k1_test_lib",

@@ -55,6 +55,8 @@ import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTe
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirMultiModuleRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameTest
+import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenInspectionTest
+import org.jetbrains.kotlin.idea.maven.configuration.AbstractMavenConfigureProjectByChangingFileTest
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.j2k.k2.*
 import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK2QuickFixTest
@@ -433,6 +435,20 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     testGroup("coverage/tests") {
         testClass<AbstractKotlinCoverageOutputFilesTest> {
             model("outputFiles")
+        }
+    }
+
+    testGroup("maven/tests") {
+        testClass<AbstractMavenConfigureProjectByChangingFileTest> {
+            model("configurator/jvm", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestWithMaven")
+        }
+
+        testClass<AbstractKotlinMavenInspectionTest> {
+            val mavenInspections = "maven-inspections"
+            val pattern = Patterns.forRegex("^([\\w\\-]+).xml$")
+            testDataRoot.resolve(mavenInspections).listFiles()!!.onEach { check(it.isDirectory) }.sorted().forEach {
+                model("$mavenInspections/${it.name}", pattern = pattern, flatten = true)
+            }
         }
     }
 

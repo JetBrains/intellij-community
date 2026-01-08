@@ -17,7 +17,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.eval4j" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.native.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.kotlin.maven.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="RUNTIME" />
