@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -87,7 +88,12 @@ public abstract class EditorAction extends AnAction implements DumbAware, LightE
         LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, inputEvent.getWhen());
       }
     }
-    actionPerformed(editor, dataContext);
+    // Some editor actions have `actionUpdateThread == EDT`, but they still work with document in their `perform`.
+    // As part of IJPL-223881, such actions do not run in write-intent lock;
+    // but as of now, we are not ready to liberate the editor actions from write-intent.
+    WriteIntentReadAction.run(() -> {
+      actionPerformed(editor, dataContext);
+    });
   }
 
   public final void actionPerformed(Editor editor, @NotNull DataContext dataContext) {

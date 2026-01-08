@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
@@ -538,31 +537,6 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
 
     fireBeforeShortcutTriggered(shortcut, actions, context)
 
-    val isRwLockRequired = actions.any(Utils::isLockRequired)
-
-    val chosen = if (isRwLockRequired) {
-      WriteIntentReadAction.compute {
-        updateAndRunActionSynchronously(actions, e, wrappedContext, place, processor, presentationFactory, dumb, wouldBeEnabledIfNotDumb, project, shortcut)
-      }
-    }
-    else {
-      updateAndRunActionSynchronously(actions, e, wrappedContext, place, processor, presentationFactory, dumb, wouldBeEnabledIfNotDumb, project, shortcut)
-    }
-    return chosen != null
-  }
-
-  private fun updateAndRunActionSynchronously(
-    actions: List<AnAction>,
-    e: InputEvent,
-    wrappedContext: DataContext,
-    place: String,
-    processor: ActionProcessor,
-    presentationFactory: PresentationFactory,
-    dumb: Boolean,
-    wouldBeEnabledIfNotDumb: MutableList<AnAction>,
-    project: Project?,
-    shortcut: Shortcut,
-  ): UpdateResult? {
     val chosen = Utils.runUpdateSessionForInputEvent(
       actions, e, wrappedContext, place, processor, presentationFactory
     ) { rearranged, updater, events ->
@@ -597,7 +571,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
         }
       }
     }
-    return chosen
+    return chosen != null
   }
 
   /**
