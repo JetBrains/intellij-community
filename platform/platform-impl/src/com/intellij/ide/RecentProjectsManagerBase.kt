@@ -54,6 +54,7 @@ import com.intellij.ui.win.createWinDockDelegate
 import com.intellij.util.PathUtilRt
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.createParentDirectories
+import com.intellij.util.text.nullize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -77,6 +78,7 @@ import kotlin.collections.Map.Entry
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -1053,6 +1055,8 @@ private suspend fun fireLastProjectsReopenedEvent(activeProject: Project) {
 
 private fun isUseProjectFrameAsSplash() = Registry.`is`("ide.project.frame.as.splash")
 
+private const val IDEA_PROJECT_FILE_EXTENSION = ".ipr"
+
 private fun readProjectName(path: String): String {
   if (!RecentProjectsManagerBase.isFileSystemPath(path)) {
     return path
@@ -1069,8 +1073,9 @@ private fun readProjectName(path: String): String {
   // Avoid greedy I/O under non-local projects. For example, in the case of WSL:
   //	1.	it may trigger Ijent initialization for each recent project
   //	2.	with Ijent disabled, performance may degrade further — 9P is very slow and could lead to UI freezes
-  if (file.getEelDescriptor() != LocalEelDescriptor) {
-    return path
+  val eelDescriptor = file.getEelDescriptor()
+  if (eelDescriptor != LocalEelDescriptor) {
+    return file.name.removeSuffix(IDEA_PROJECT_FILE_EXTENSION).nullize()?.let { it + " (" + eelDescriptor.name + ")" } ?: path
   }
 
   return ProjectStorePathManager.getInstance()
@@ -1114,7 +1119,7 @@ private fun validateRecentProjects(modCounter: LongAdder, map: MutableMap<String
 
 internal fun getProjectNameOnlyByPath(path: String): String {
   val name = PathUtilRt.getFileName(path)
-  return if (path.endsWith(".ipr")) FileUtilRt.getNameWithoutExtension(name) else name
+  return if (path.endsWith(IDEA_PROJECT_FILE_EXTENSION)) FileUtilRt.getNameWithoutExtension(name) else name
 }
 
 @JvmInline
