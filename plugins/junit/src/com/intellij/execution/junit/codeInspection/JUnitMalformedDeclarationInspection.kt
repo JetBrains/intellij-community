@@ -85,6 +85,7 @@ private class JUnitMalformedSignatureVisitor(
     checkUnconstructableClass(node)
     checkMalformedNestedClass(node)
     checkMalformedParameterized(node)
+    checkSuiteAnnotation(node)
     return true
   }
 
@@ -514,6 +515,26 @@ private class JUnitMalformedSignatureVisitor(
         val message = JUnitBundle.message("jvm.inspections.junit.malformed.test.combination.descriptor", argAnnText, testAnnText)
         return holder.registerUProblem(decl, message)
       }
+    }
+  }
+
+  private fun checkSuiteAnnotation(aClass: UClass) {
+    val javaClass = aClass.javaPsi
+
+    if (javaClass.hasModifierProperty(PsiModifier.ABSTRACT)) return
+    if (javaClass.isInterface) return
+    val suiteAnnotation = javaClass.getAnnotation(ORG_JUNIT_PLATFORM_SUITE_API_SUITE) ?: return
+    val failIfNoTestsValue = suiteAnnotation.findAttributeValue(SuiteHelper.SUITE_ATTRIBUTE_NAME)
+    if (failIfNoTestsValue != null && failIfNoTestsValue.asSafely<PsiLiteralExpression>()?.value == false) return
+    if (MetaAnnotationUtil.isMetaAnnotatedInHierarchy(javaClass, SUITE_SELECTOR_ANNOTATIONS)) return
+
+    if (SuiteHelper.hasFailIfNoTestsAttribute(suiteAnnotation)) {
+      holder.registerUProblem(aClass,
+                              JUnitBundle.message("jvm.inspections.junit.malformed.suite.no.selectors.descriptor"),
+                              AddFailIfNoTestsAttributeFix())
+    }  else {
+      holder.registerUProblem(aClass,
+                              JUnitBundle.message("jvm.inspections.junit.malformed.suite.no.selectors.descriptor"))
     }
   }
 
@@ -1462,6 +1483,34 @@ private class JUnitMalformedSignatureVisitor(
         actions.add { jvmMethod -> createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic, false)) }
       }
       return actions
+    }
+  }
+
+  private class SuiteHelper {
+    companion object {
+      const val SUITE_ATTRIBUTE_NAME = "failIfNoTests"
+      fun hasFailIfNoTestsAttribute(annotation: PsiAnnotation) = annotation.resolveAnnotationType()?.findMethodsByName(SUITE_ATTRIBUTE_NAME) != null
+    }
+  }
+
+  private class AddFailIfNoTestsAttributeFix : CompositeModCommandQuickFix() {
+    override fun getFamilyName(): String = JUnitBundle.message("jvm.inspections.junit.malformed.suite.no.selectors.quickfix")
+
+    override fun getName(): String = JUnitBundle.message("jvm.inspections.junit.malformed.suite.no.selectors.quickfix")
+
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+      val javaDeclaration = getUParentForIdentifier(element)?.asSafely<UClass>() ?: return
+      applyFixes(project, javaDeclaration.javaPsi, element.containingFile ?: return)
+    }
+
+    override fun getActions(project: Project): List<(JvmModifiersOwner) -> List<IntentionAction>> {
+      return listOf({ jvmClass ->
+                      if (jvmClass !is PsiClass) return@listOf emptyList()
+                      val annotation = jvmClass.getAnnotation(ORG_JUNIT_PLATFORM_SUITE_API_SUITE) ?: return@listOf emptyList()
+                      if (!SuiteHelper.hasFailIfNoTestsAttribute(annotation)) return@listOf emptyList()
+                      val value = constantAttribute(SuiteHelper.SUITE_ATTRIBUTE_NAME, "false")
+                      return@listOf createChangeAnnotationAttributeActions(annotation, 0, value, name, familyName)
+                    })
     }
   }
 

@@ -2426,4 +2426,50 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
       }
     """.trimIndent())
   }
+
+  fun `test suite without selectors highlighting`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+      import org.junit.platform.suite.api.Suite
+
+      @Suite
+      class <error descr="Suite does not select any tests (no selector annotations)">MySuite1</error>
+      
+      @Suite(failIfNoTests = true)
+      class <error descr="Suite does not select any tests (no selector annotations)">MySuite2</error>
+      
+      @Suite(failIfNoTests = false)
+      class MySuite3
+    """.trimIndent())
+  }
+
+  fun `test suite with selector no highlighting`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+      import org.junit.platform.suite.api.*
+
+      @Suite
+      @SelectClasses
+      class MySuite1
+      
+      @Suite
+      @SelectPackages("com.example")
+      class MySuite2
+    """.trimIndent())
+  }
+
+  fun `test suite without selectors quickfix`() {
+    myFixture.testQuickFix(
+      JvmLanguage.KOTLIN, """
+      import org.junit.platform.suite.api.Suite
+
+      @Suite
+      class My<caret>Suite
+    """.trimIndent(), """
+      import org.junit.platform.suite.api.Suite
+
+      @Suite(failIfNoTests = false)
+      class MySuite
+    """.trimIndent(), "Set failIfNoTests = false", testPreview = true)
+  }
 }
