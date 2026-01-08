@@ -23,6 +23,7 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.hover.HoverListener
+import com.intellij.ui.util.preferredHeight
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
@@ -187,8 +188,8 @@ internal class ComboBoxWithBrowseButtonEditor<T, P : PathHolder>(
 
 class ManualPathEntryDialog(
   title: @NlsContexts.DialogTitle String,
-  width: Int,
-  val targetEnvironmentConfiguration: TargetEnvironmentConfiguration,
+  private val width: Int,
+  private val targetEnvironmentConfiguration: TargetEnvironmentConfiguration,
 ) : DialogWrapper(null) {
 
   var path: String = ""
@@ -196,7 +197,6 @@ class ManualPathEntryDialog(
 
   init {
     this.title = title
-    setSize(width, size.height)
     isResizable = false
     init()
   }
@@ -217,6 +217,8 @@ class ManualPathEntryDialog(
           }
           .focused()
       }
+    }.also {
+      it.preferredSize = JBUI.size(width, it.preferredHeight)
     }
   }
 }
