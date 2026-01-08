@@ -25,6 +25,7 @@ import java.awt.*
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
 import javax.swing.SwingUtilities
+import kotlin.math.max
 import kotlin.math.min
 
 internal class ComponentAreaPopupContext(
@@ -269,8 +270,13 @@ internal class ComponentAreaPopupContext(
         it.x += componentLocation.x
         it.y += componentLocation.y
       }
-      if (TextRange(popupLocation.y, popupLocation.y + popupSize.height)
-          .intersectsStrict(componentActiveArea.y, componentActiveArea.y + componentActiveArea.height)) {
+      val popupStartOffset = popupLocation.y
+      val popupEndOffset = popupLocation.y + popupSize.height
+      val componentActiveAreaStartOffset = componentActiveArea.y
+      val componentActiveAreaEndOffset = componentActiveArea.y + componentActiveArea.height
+
+      // if popup area and component active area intersect
+      if (max(popupStartOffset, componentActiveAreaStartOffset) < min(popupEndOffset, componentActiveAreaEndOffset)) {
         // reposition popup above the component
         popupLocation.y = componentActiveArea.y - popupSize.height - 4
         popup.setLocation(popupLocation)
