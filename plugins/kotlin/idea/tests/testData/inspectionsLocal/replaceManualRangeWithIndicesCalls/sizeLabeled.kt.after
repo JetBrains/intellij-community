@@ -5,9 +5,9 @@ fun main() {
 
 fun <T> List<T>.doubled(): List<T> {
     val result = mutableListOf<T>()
-    for (i in this@doubled.indices) {
-        result.add(this@doubled[i])
-        result.add(this@doubled[i])
+    for (element in this@doubled) {
+        result.add(element)
+        result.add(element)
     }
     return result
 }

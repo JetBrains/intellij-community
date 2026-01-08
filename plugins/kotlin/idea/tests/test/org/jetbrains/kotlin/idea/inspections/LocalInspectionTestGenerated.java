@@ -14351,6 +14351,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/asReceiver.kt");
         }
 
+        @TestMetadata("complexReceiver.kt")
+        public void testComplexReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/complexReceiver.kt");
+        }
+
         @TestMetadata("forNotTarget.kt")
         public void testForNotTarget() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/forNotTarget.kt");
@@ -14381,6 +14386,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/indexInLvalue.kt");
         }
 
+        @TestMetadata("lastIndex.kt")
+        public void testLastIndex() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/lastIndex.kt");
+        }
+
         @TestMetadata("lengthLiteralConstant.kt")
         public void testLengthLiteralConstant() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/lengthLiteralConstant.kt");
@@ -14394,11 +14404,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
         @TestMetadata("map.kt")
         public void testMap() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/map.kt");
-        }
-
-        @TestMetadata("multidimensionalArray.kt")
-        public void testMultidimensionalArray() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/multidimensionalArray.kt");
         }
 
         @TestMetadata("multidimensionalArray2.kt")
