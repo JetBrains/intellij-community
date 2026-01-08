@@ -1864,19 +1864,19 @@ jvm_import(
 
 jvm_import(
   name = "grazie-tests-ai-grazie-spell-hunspell-de",
-  jar = "@ai_grazie_spell-hunspell-de-0_2_318_http//file",
+  jar = "@ai_grazie_spell-hunspell-de-0_2_327_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "grazie-tests-ai-grazie-spell-hunspell-ru",
-  jar = "@ai_grazie_spell-hunspell-ru-0_2_318_http//file",
+  jar = "@ai_grazie_spell-hunspell-ru-0_2_327_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "grazie-tests-ai-grazie-spell-hunspell-uk",
-  jar = "@ai_grazie_spell-hunspell-uk-0_2_318_http//file",
+  jar = "@ai_grazie_spell-hunspell-uk-0_2_327_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -5186,7 +5186,7 @@ java_library(
 
 jvm_import(
   name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-hunspell-en",
-  jar = "@ai_grazie_spell-hunspell-en-0_2_318_http//file",
+  jar = "@ai_grazie_spell-hunspell-en-0_2_327_http//file",
   visibility = ["//visibility:public"]
 )
 
