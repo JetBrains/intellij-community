@@ -98,7 +98,7 @@ abstract class PerformanceWatcher {
   abstract fun dumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, stripDump: Boolean): Path?
 
   @Internal
-  abstract fun startEdtSampling()
+  abstract fun startSampling()
 
   /**
    * Enter EDT pumping phase that shall be reported as UI freeze regardless
