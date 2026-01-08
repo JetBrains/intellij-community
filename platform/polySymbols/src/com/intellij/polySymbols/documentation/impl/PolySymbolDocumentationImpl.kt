@@ -4,11 +4,9 @@ import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.polySymbols.PolySymbolApiStatus
-import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.PolySymbolsBundle
 import com.intellij.polySymbols.documentation.PolySymbolDocumentation
 import com.intellij.polySymbols.impl.scaleToHeight
-import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
@@ -74,7 +72,7 @@ internal data class PolySymbolDocumentationImpl(
   override fun withHeader(header: @Nls String?): PolySymbolDocumentation =
     copy(header = header)
 
-  override fun build(origin: PolySymbolOrigin): DocumentationResult {
+  override fun build(iconProvider: (String) -> Icon?): DocumentationResult {
     val url2ImageMap = mutableMapOf<String, Image>()
 
     @Suppress("HardCodedStringLiteral")
@@ -85,7 +83,7 @@ internal data class PolySymbolDocumentationImpl(
       .appendSections()
       .appendFootnote()
       .toString()
-      .loadLocalImages(origin, url2ImageMap)
+      .loadLocalImages(iconProvider, url2ImageMap)
     return DocumentationResult.documentation(contents).images(url2ImageMap).externalUrl(docUrl)
       .definitionDetails(definitionDetails)
   }
@@ -193,12 +191,12 @@ internal data class PolySymbolDocumentationImpl(
 
   private val imgSrcRegex = Regex("<img [^>]*src\\s*=\\s*['\"]([^'\"]+)['\"]")
 
-  private fun String.loadLocalImages(origin: PolySymbolOrigin, url2ImageMap: MutableMap<String, Image>): String {
+  private fun String.loadLocalImages(iconProvider: (String) -> Icon?, url2ImageMap: MutableMap<String, Image>): String {
     val replaces = imgSrcRegex.findAll(this)
       .mapNotNull { it.groups[1] }
       .filter { !it.value.contains(':') }
       .mapNotNull { group ->
-        origin.loadIcon(group.value)
+        iconProvider(group.value)
           ?.let { IconUtil.toBufferedImage(it, true) }
           ?.let {
             val url = "https://img${url2ImageMap.size}"

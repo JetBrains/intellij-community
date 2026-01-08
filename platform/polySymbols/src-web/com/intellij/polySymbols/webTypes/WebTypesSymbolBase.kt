@@ -140,7 +140,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
 
   override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
     if (this[PROP_NO_DOC] != true)
-      PolySymbolDocumentationTarget.create(this, location, WebTypesSymbolDocumentationProvider)
+      PolySymbolDocumentationTarget.create(this, location, WebTypesSymbolDocumentationProvider(this))
     else
       null
 
@@ -230,7 +230,11 @@ open class WebTypesSymbolBase : WebTypesSymbol {
 
   }
 
-  private object WebTypesSymbolDocumentationProvider : PolySymbolDocumentationProvider<WebTypesSymbolBase> {
+  private class WebTypesSymbolDocumentationProvider(private val symbol: WebTypesSymbolBase) :
+    PolySymbolDocumentationProvider<WebTypesSymbolBase> {
+
+    override fun loadIcon(path: String): Icon? =
+      symbol.base.jsonOrigin.loadIcon(path)
 
     override fun createDocumentation(symbol: WebTypesSymbolBase, location: PsiElement?): PolySymbolDocumentation {
       val superContributionDocs = symbol.superContributions

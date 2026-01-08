@@ -6,8 +6,6 @@ import javax.swing.Icon
 
 interface PolySymbolOrigin {
 
-  fun loadIcon(path: String): Icon? = null
-
   companion object {
 
     @JvmStatic

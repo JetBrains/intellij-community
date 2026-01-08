@@ -203,7 +203,6 @@
 *:com.intellij.polySymbols.PolySymbolOrigin
 - *sf:Companion:com.intellij.polySymbols.PolySymbolOrigin$Companion
 - s:empty():com.intellij.polySymbols.PolySymbolOrigin
-- loadIcon(java.lang.String):javax.swing.Icon
 *f:com.intellij.polySymbols.PolySymbolOrigin$Companion
 - f:empty():com.intellij.polySymbols.PolySymbolOrigin
 *:com.intellij.polySymbols.PolySymbolProperty
@@ -482,7 +481,7 @@
 *:com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - *sf:Companion:com.intellij.polySymbols.documentation.PolySymbolDocumentation$Companion
 - appendFootnote(java.lang.String):com.intellij.polySymbols.documentation.PolySymbolDocumentation
-- a:build(com.intellij.polySymbols.PolySymbolOrigin):com.intellij.platform.backend.documentation.DocumentationResult
+- a:build(kotlin.jvm.functions.Function1):com.intellij.platform.backend.documentation.DocumentationResult
 - s:builder(com.intellij.polySymbols.PolySymbol,com.intellij.psi.PsiElement):com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
 - s:create(com.intellij.polySymbols.PolySymbol,com.intellij.psi.PsiElement,kotlin.jvm.functions.Function1):com.intellij.polySymbols.documentation.PolySymbolDocumentation
 - a:getApiStatus():com.intellij.polySymbols.PolySymbolApiStatus
@@ -560,6 +559,7 @@
 *:com.intellij.polySymbols.documentation.PolySymbolDocumentationProvider
 - computePresentation(com.intellij.polySymbols.PolySymbol):com.intellij.platform.backend.presentation.TargetPresentation
 - a:createDocumentation(com.intellij.polySymbols.PolySymbol,com.intellij.psi.PsiElement):com.intellij.polySymbols.documentation.PolySymbolDocumentation
+- loadIcon(java.lang.String):javax.swing.Icon
 *:com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 - com.intellij.platform.backend.documentation.DocumentationTarget
 - *sf:Companion:com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget$Companion

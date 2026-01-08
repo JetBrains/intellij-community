@@ -8,6 +8,7 @@ import com.intellij.polySymbols.customElements.json.SourceReference
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus.Internal
+import javax.swing.Icon
 
 @Internal
 interface CustomElementsJsonOrigin : PolySymbolOrigin {

@@ -24,6 +24,7 @@ interface WebTypesJsonOrigin : PolySymbolOrigin {
 
   val typeSupport: PolySymbolTypeSupport?
 
+  fun loadIcon(path: String): Icon? = null
   fun resolveSourceSymbol(source: SourceBase, cacheHolder: UserDataHolderEx): PsiElement?
   fun resolveSourceLocation(source: SourceBase): WebTypesSymbol.Location?
   fun renderDescription(description: String): @NlsSafe String
