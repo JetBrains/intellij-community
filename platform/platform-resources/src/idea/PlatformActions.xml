@@ -1892,7 +1892,8 @@
       <reference ref="MainToolbarQuickActionsRaw"/>
     </group>
 
-    <action id="UndoDumpAction" internal="true" class="com.intellij.ide.actions.UndoDumpAction"/>
+    <action id="UndoDumpAction" internal="true" class="com.intellij.ide.actions.UndoDumpHistoryAction"/>
+    <action id="UndoClearAction" internal="true" class="com.intellij.ide.actions.UndoClearHistoryAction"/>
 
     <action id="DisableMinimap" class="com.intellij.ide.minimap.actions.DisableMinimapAction"/>
     <action id="ToggleMinimap" class="com.intellij.ide.minimap.actions.ToggleMinimapAction"/>

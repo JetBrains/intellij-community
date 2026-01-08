@@ -285,7 +285,7 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
-  protected void clearStacks(@Nullable FileEditor editor) {
+  public void clearStacks(@Nullable FileEditor editor) {
     for (UndoClientState state : getAllClientStates()) {
       state.clearStacks(editor);
     }
