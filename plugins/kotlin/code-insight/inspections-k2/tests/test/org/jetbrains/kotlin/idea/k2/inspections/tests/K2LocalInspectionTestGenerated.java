@@ -17904,6 +17904,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantReturnKeyword/complexTailOuter.kt");
         }
 
+        @TestMetadata("elvis.kt")
+        public void testElvis() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantReturnKeyword/elvis.kt");
+        }
+
+        @TestMetadata("elvisReturnNull.kt")
+        public void testElvisReturnNull() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantReturnKeyword/elvisReturnNull.kt");
+        }
+
         @TestMetadata("explicitReturnUnit.kt")
         public void testExplicitReturnUnit() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantReturnKeyword/explicitReturnUnit.kt");

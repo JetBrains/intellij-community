@@ -11,12 +11,14 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
 
@@ -128,6 +130,14 @@ private fun findOwner(expression: KtExpression): KtExpression? {
                 is KtWhenEntry -> parent.parent as? KtWhenExpression
                 else -> null
             }
+        }
+
+        // Handle Elvis operator: return value ?: return "default"
+        // BUT exclude: return value ?: return null (handled by RedundantElvisReturnNullInspection)
+        is KtBinaryExpression -> container.takeIf {
+            it.operationToken == KtTokens.ELVIS
+                && it.right === normalizedExpression
+                && !(normalizedExpression as? KtReturnExpression)?.returnedExpression.isNullExpression()
         }
 
         else -> null

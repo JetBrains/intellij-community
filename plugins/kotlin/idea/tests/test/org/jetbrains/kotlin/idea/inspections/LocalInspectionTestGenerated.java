@@ -11274,6 +11274,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/redundantReturnKeyword/complexTailOuter.kt");
         }
 
+        @TestMetadata("elvis.kt")
+        public void testElvis() throws Exception {
+            runTest("testData/inspectionsLocal/redundantReturnKeyword/elvis.kt");
+        }
+
+        @TestMetadata("elvisReturnNull.kt")
+        public void testElvisReturnNull() throws Exception {
+            runTest("testData/inspectionsLocal/redundantReturnKeyword/elvisReturnNull.kt");
+        }
+
         @TestMetadata("explicitReturnUnit.kt")
         public void testExplicitReturnUnit() throws Exception {
             runTest("testData/inspectionsLocal/redundantReturnKeyword/explicitReturnUnit.kt");
