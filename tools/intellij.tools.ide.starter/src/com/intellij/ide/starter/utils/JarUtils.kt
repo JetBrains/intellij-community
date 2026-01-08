@@ -1,12 +1,10 @@
-package com.intellij.ide.starter.junit5
+package com.intellij.ide.starter.utils
 
 import java.net.URI
 import java.net.URL
 import java.nio.file.FileSystems
 import java.nio.file.Files
-import java.nio.file.Files.*
 import java.nio.file.Path
-import java.nio.file.Path.of
 import java.nio.file.StandardCopyOption
 
 object JarUtils {
@@ -15,21 +13,21 @@ object JarUtils {
     val targetDir = tempDir.resolve(resourceName)
     val resourceUrl = JarUtils::class.java.classLoader.getResource(resourceName)
                       ?: throw IllegalStateException("Resource not found: $resourceName")
-    createDirectories(targetDir)
+      Files.createDirectories(targetDir)
     when (resourceUrl.protocol) {
       "jar" -> {
         extractFromJar(resourceUrl, resourceName, targetDir)
       }
       "file" -> {
-        val resourceDir = of(resourceUrl.toURI())
-        if (isDirectory(resourceDir)) {
-          walk(resourceDir)
-            .filter { isRegularFile(it) }
+        val resourceDir = Path.of(resourceUrl.toURI())
+        if (Files.isDirectory(resourceDir)) {
+          Files.walk(resourceDir)
+            .filter { Files.isRegularFile(it) }
             .forEach { filePath ->
               val relativePath = resourceDir.relativize(filePath)
               val targetFile = targetDir.resolve(relativePath)
-              createDirectories(targetFile.parent)
-              copy(filePath, targetFile, StandardCopyOption.REPLACE_EXISTING)
+                Files.createDirectories(targetFile.parent)
+                Files.copy(filePath, targetFile, StandardCopyOption.REPLACE_EXISTING)
             }
         }
         else {
