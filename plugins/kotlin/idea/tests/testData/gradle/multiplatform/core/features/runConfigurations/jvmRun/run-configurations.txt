@@ -1,7 +1,7 @@
 MODULES
 project.commonMain
     fqName: commonMain.main
-    name: commonMain [jvm]
+    name: commonMain.CommonMain [jvm]
     type: Gradle
     tasks: [jvmRun]
     scriptParameters: -DmainClass=commonMain.CommonMainKt --quiet
@@ -13,7 +13,7 @@ project.iosMain
 
 project.jvmMain
     fqName: jvmMain.main
-    name: jvmMain [jvm]
+    name: jvmMain.JvmMain [jvm]
     type: Gradle
     tasks: [jvmRun]
     scriptParameters: -DmainClass=jvmMain.JvmMainKt --quiet
