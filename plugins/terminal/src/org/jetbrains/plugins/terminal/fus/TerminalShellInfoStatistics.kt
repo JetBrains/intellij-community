@@ -157,6 +157,9 @@ object TerminalShellInfoStatistics {
     return AllowedItemsResourceWeakRefStorage(TerminalShellInfoStatistics::class.java, path).items
   }
 
+  /**
+   * @param shellCommand shell command line to extract the shell name from
+   */
   fun getShellNameForStat(shellCommand: String?): String {
     if (shellCommand == null) return UNSPECIFIED_SHELL_NAME
     val command = ParametersListUtil.parse(shellCommand, false, OS.CURRENT != OS.Windows)
