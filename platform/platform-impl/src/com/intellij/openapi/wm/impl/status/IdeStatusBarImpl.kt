@@ -10,6 +10,8 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.Stat
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.application.impl.islands.isIjpl217440
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
@@ -57,7 +59,6 @@ import com.intellij.ui.util.height
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EdtInvocationManager
-import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
@@ -126,6 +127,7 @@ open class IdeStatusBarImpl @Internal constructor(
 
   private val progressFlow = MutableSharedFlow<ProgressSetChangeEvent>(replay = 1, extraBufferCapacity = Int.MAX_VALUE)
 
+  // todo remove with isIjpl217440 property
   internal var borderPainter: BorderPainter = DefaultBorderPainter()
 
   companion object {
@@ -555,7 +557,9 @@ open class IdeStatusBarImpl @Internal constructor(
   override fun paintChildren(g: Graphics) {
     effectRenderer.paintBackground(g)
     super.paintChildren(g)
-    borderPainter.paintAfterChildren(this, g)
+    if (!isIjpl217440) {
+      borderPainter.paintAfterChildren(this, g)
+    }
   }
 
   private fun dispatchMouseEvent(e: MouseEvent): Boolean {
@@ -635,7 +639,7 @@ open class IdeStatusBarImpl @Internal constructor(
   }
 
   override fun getComponentGraphics(g: Graphics): Graphics {
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g))
+    return InternalUICustomization.runGlobalCGTransformWithInactiveFrameSupport(this, super.getComponentGraphics(g))
   }
 
   override fun removeWidget(id: String) {

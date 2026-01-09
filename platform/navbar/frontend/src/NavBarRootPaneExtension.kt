@@ -15,6 +15,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.application.impl.islands.isIjpl217440
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.openapi.wm.StatusBar
@@ -31,7 +32,6 @@ import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -100,7 +100,7 @@ internal class NavBarRootPaneExtension : IdeRootPaneNorthExtension {
   // used externally
   abstract class NavBarWrapperPanel(layout: LayoutManager?) : JPanel(layout), UISettingsListener {
     override fun getComponentGraphics(graphics: Graphics): Graphics {
-      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
+      return InternalUICustomization.runGlobalCGTransformWithInactiveFrameSupport(this, super.getComponentGraphics(graphics))
     }
   }
 }
@@ -276,6 +276,7 @@ internal open class MyNavBarWrapperPanel(private val project: Project, useAsComp
   }
 }
 
+// todo remove with isIjpl217440 property
 internal class MyTopNavBarWrapperPanel(project: Project, useAsComponent: Boolean) :
   MyNavBarWrapperPanel(project, useAsComponent), BorderPainterHolder {
 
@@ -283,7 +284,9 @@ internal class MyTopNavBarWrapperPanel(project: Project, useAsComponent: Boolean
 
   override fun paintChildren(g: Graphics) {
     super.paintChildren(g)
-    borderPainter.paintAfterChildren(this, g)
+    if (!isIjpl217440) {
+      borderPainter.paintAfterChildren(this, g)
+    }
   }
 }
 

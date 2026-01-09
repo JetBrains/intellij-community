@@ -13,6 +13,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.application.impl.islands.isIjpl217440
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
@@ -159,9 +160,12 @@ internal class MacToolbarFrameHeader(
     return CustomWindowHeaderUtil.getPreferredWindowHeaderHeight(view is CompactHeaderView)
   }
 
+  // todo remove with isIjpl217440 property
   override fun paint(g: Graphics) {
     super.paint(g)
-    borderPainter.paintAfterChildren(this, g)
+    if (!isIjpl217440) {
+      borderPainter.paintAfterChildren(this, g)
+    }
   }
 
   override fun paintComponent(g: Graphics) {

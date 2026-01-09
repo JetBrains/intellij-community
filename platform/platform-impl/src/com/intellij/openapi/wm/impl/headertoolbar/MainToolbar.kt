@@ -29,6 +29,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.application.impl.islands.isIjpl217440
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -48,7 +49,6 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import com.intellij.util.ui.showingScope
@@ -181,7 +181,9 @@ class MainToolbar(
     }
   }
 
-  override fun getComponentGraphics(g: Graphics): Graphics = JBSwingUtilities.runGlobalCGTransform(this, g)
+  override fun getComponentGraphics(g: Graphics): Graphics {
+    return InternalUICustomization.runGlobalCGTransformWithInactiveFrameSupport(this, g)
+  }
 
   suspend fun init(customTitleBar: WindowDecorations.CustomTitleBar? = null) {
     val schema = CustomActionsSchema.getInstanceAsync()
@@ -301,9 +303,12 @@ class MainToolbar(
     }
   }
 
+  // todo remove with isIjpl217440 property
   override fun paintChildren(g: Graphics) {
     super.paintChildren(g)
-    borderPainter.paintAfterChildren(this, g)
+    if (!isIjpl217440) {
+      borderPainter.paintAfterChildren(this, g)
+    }
   }
 
   private fun installClickListener(popupHandler: PopupHandler, customTitleBar: WindowDecorations.CustomTitleBar?) {

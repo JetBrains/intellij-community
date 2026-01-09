@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.*
@@ -53,6 +54,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.TabPainterAdapter
 import com.intellij.util.ui.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.HierarchyEvent
@@ -70,7 +72,21 @@ private data class WindowBackgroundComponentData(val origOpaque: Boolean, val or
 
 private val WINDOW_BACKGROUND_COMPONENT_KEY: Key<WindowBackgroundComponentData> = Key.create("Islands.WINDOW_BACKGROUND_COMPONENT_KEY")
 
+/**
+ * After removing isIjpl217440 property
+ * * Re3move from registry.properties
+ * * Check all places, marked with: todo remove with isIjpl217440 property
+ * * Remove inactiveAlphaInStatusBar property from everywhere including themes
+ */
+@get:ApiStatus.Internal
+val isIjpl217440: Boolean
+  get() = Registry.`is`("idea.islands.ijpl217440.enabled")
+
+internal val islandsInactiveAlpha: Float
+  get() = JBUI.getFloat("Island.inactiveAlpha", 0.5f)
+
 internal class IslandsUICustomization : InternalUICustomization() {
+
   private val isIslandsAvailable = ExperimentalUI.isNewUI()
 
   private var isManyIslandEnabledCache: Boolean? = null
@@ -582,12 +598,14 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun configureMainFrameChildren(component: Component, install: Boolean) {
-    when (component) {
-      is IdeStatusBarImpl -> {
-        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
-      }
-      is BorderPainterHolder -> {
-        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
+    if (!isIjpl217440) {
+      when (component) {
+        is IdeStatusBarImpl -> {
+          component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
+        }
+        is BorderPainterHolder -> {
+          component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
+        }
       }
     }
 
@@ -1060,6 +1078,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
       return IdeBackgroundUtil.getOriginalGraphics(graphics)
     }
     return graphics
+  }
+
+  override fun inactiveFrameGraphics(graphics: Graphics, component: Component): Graphics {
+    return if (isManyIslandEnabled && isIjpl217440)
+      IslandsInactiveFrameGraphics2D(graphics as Graphics2D, component)
+    else super.inactiveFrameGraphics(graphics, component)
   }
 
   override fun backgroundImageGraphics(component: JComponent, graphics: Graphics): Graphics {

@@ -4,6 +4,8 @@ package com.intellij.toolWindow
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.openapi.application.impl.BorderPainterHolder
+import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.application.impl.islands.isIjpl217440
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsSafe
@@ -109,9 +111,16 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
   open fun createBorder():Border = JBUI.Borders.empty()
   open fun getBorderColor(): Color? = JBUI.CurrentTheme.ToolWindow.borderColor()
 
+  // todo remove with isIjpl217440 property
   override fun paint(g: Graphics) {
     super.paint(g)
-    borderPainter.paintAfterChildren(this, g)
+    if (!isIjpl217440) {
+      borderPainter.paintAfterChildren(this, g)
+    }
+  }
+
+  override fun getComponentGraphics(graphics: Graphics?): Graphics? {
+    return InternalUICustomization.runGlobalCGTransformWithInactiveFrameSupport(this, graphics as Graphics2D)
   }
 
   internal abstract fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe
@@ -175,9 +184,9 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
   }
 
   internal class StripeV2(private val toolBar: ToolWindowToolbar,
-                          paneId: String,
-                          override val anchor: ToolWindowAnchor,
-                          override val split: Boolean = false,
+    paneId: String,
+    override val anchor: ToolWindowAnchor,
+    override val split: Boolean = false,
                           layout : LayoutManager = VerticalFlowLayout(0, 0)
   ) : AbstractDroppableStripe(paneId, layout) {
     var bottomAnchorDropAreaComponent: JComponent? = null
@@ -234,6 +243,10 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
         return bounds.contains(screenPoint)
       }
       return super.containsPoint(screenPoint)
+    }
+
+    override fun getComponentGraphics(graphics: Graphics?): Graphics {
+      return InternalUICustomization.runGlobalCGTransformWithInactiveFrameSupport(this, graphics as Graphics2D)
     }
 
     private fun getFirstVisibleToolWindowSize(width: Boolean): Int {

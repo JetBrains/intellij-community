@@ -33,7 +33,6 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -393,7 +392,7 @@ internal class ToolbarFrameHeader(
   }
 
   override fun getComponentGraphics(graphics: Graphics): Graphics {
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
+    return InternalUICustomization.runGlobalCGTransformWithInactiveFrameSupport(this, super.getComponentGraphics(graphics))
   }
 
   override fun updateActive() {

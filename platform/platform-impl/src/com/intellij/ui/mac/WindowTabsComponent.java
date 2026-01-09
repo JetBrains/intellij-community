@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.BorderPainterHolder;
 import com.intellij.openapi.application.impl.InternalUICustomization;
+import com.intellij.openapi.application.impl.islands.IslandsUICustomizationKt;
 import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -71,6 +72,7 @@ public final class WindowTabsComponent extends JBTabsImpl implements BorderPaint
   private final Disposable myParentDisposable;
   private final Map<IdeFrameImpl, Integer> myIndexes = new HashMap<>();
 
+  // todo remove with isIjpl217440 property
   private BorderPainter borderPainter = new DefaultBorderPainter();
 
   public WindowTabsComponent(@NotNull IdeFrameImpl nativeWindow, @Nullable Project project, @NotNull Disposable parentDisposable) {
@@ -141,10 +143,13 @@ public final class WindowTabsComponent extends JBTabsImpl implements BorderPaint
     return new Dimension(super.getPreferredSize().width, JBUI.scale(TAB_HEIGHT));
   }
 
+  // todo remove with isIjpl217440 property
   @Override
   public void paintChildren(Graphics g) {
     super.paintChildren(g);
-    borderPainter.paintAfterChildren(this, g);
+    if (!IslandsUICustomizationKt.isIjpl217440()) {
+      borderPainter.paintAfterChildren(this, g);
+    }
   }
 
   @Override

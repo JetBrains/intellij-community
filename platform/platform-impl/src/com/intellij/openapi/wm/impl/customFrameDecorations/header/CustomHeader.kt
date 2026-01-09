@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.BorderPainterHolder
+import com.intellij.openapi.application.impl.islands.isIjpl217440
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.NlsActions
@@ -290,9 +291,12 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
     closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
   }
 
+  // todo remove with isIjpl217440 property
   override fun paint(g: Graphics) {
     super.paint(g)
-    borderPainter.paintAfterChildren(this, g)
+    if (!isIjpl217440) {
+      borderPainter.paintAfterChildren(this, g)
+    }
   }
 
   override fun getAccessibleContext(): AccessibleContext {

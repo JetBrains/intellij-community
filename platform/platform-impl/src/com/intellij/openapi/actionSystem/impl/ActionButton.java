@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.*;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.impl.InternalUICustomization;
+import com.intellij.openapi.application.impl.islands.IslandsUICustomizationKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -472,12 +473,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return KeymapUtil.getFirstKeyboardShortcutText(myAction);
   }
 
+  // todo remove with isIjpl217440 property
   private final InternalUICustomization myCustomization = InternalUICustomization.getInstance();
 
   @Override
   public void paintComponent(Graphics g) {
     jComponentPaint(g);
-    if (myCustomization != null) {
+    if (myCustomization != null && !IslandsUICustomizationKt.isIjpl217440()) {
       g = myCustomization.preserveGraphics(g);
     }
     paintButtonLook(g);
