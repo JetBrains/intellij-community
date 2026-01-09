@@ -27,7 +27,8 @@ final class RestoreConfigurationAction
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     RunDashboardRunConfigurationNode node = project == null ? null : getTarget(e);
-    boolean enabled = node != null && !RunManager.getInstance(project).hasSettings(node.getConfigurationSettings());
+    // TODO [nikita.katkov] re-enable action
+    boolean enabled = node != null && node.getConfigurationSettings() != null && !RunManager.getInstance(project).hasSettings(node.getConfigurationSettings());
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(enabled);
     boolean popupPlace = e.isFromContextMenu();
