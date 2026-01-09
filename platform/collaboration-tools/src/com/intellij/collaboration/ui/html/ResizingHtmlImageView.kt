@@ -4,8 +4,8 @@ package com.intellij.collaboration.ui.html
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.util.containers.ComparatorUtil.min
 import com.intellij.util.ui.JBImageToolkit
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import java.awt.*
@@ -18,6 +18,7 @@ import javax.swing.event.DocumentEvent
 import javax.swing.text.*
 import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLDocument
+import kotlin.math.min
 import kotlin.properties.Delegates.observable
 
 private val loadingIcon: Icon
@@ -25,6 +26,8 @@ private val loadingIcon: Icon
 
 private val notLoadedIcon: Icon
   get() = AllIcons.FileTypes.Image
+
+private const val MAX_IMAGE_HEIGHT = 500
 
 /**
  * Custom image view to be used with [com.intellij.util.ui.ExtendableHTMLViewFactory]
@@ -72,15 +75,20 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
     val state = loader.state
     if (axis == X_AXIS && state is ImageLoader.State.Loaded) {
       preferenceChanged(null, false, true)
-      val imageWidth = state.dimension.width.toFloat()
-      val imageHeight = state.dimension.height.toFloat()
+      val imageWidth = state.dimension.width.toFloat().coerceAtLeast(1f)
+      val imageHeight = state.dimension.height.toFloat().coerceAtLeast(1f)
 
-      val width = min(len, imageWidth).coerceAtLeast(1f)
+      val maxHeight = JBUI.scale(MAX_IMAGE_HEIGHT).toFloat()
+      if (imageWidth <= len && imageHeight <= maxHeight) {
+        return SizedImageView(state.image, imageWidth, imageHeight)
+      }
 
-      val scale = (width / imageWidth).coerceAtMost(1f)
-      val height = (imageHeight * scale).coerceAtLeast(1f)
+      val scale = min(len / imageWidth, maxHeight / imageHeight).coerceAtMost(1f)
 
-      return SizedImageView(state.image, width, height)
+      val newWidth = (imageWidth * scale).coerceAtLeast(1f)
+      val newHeight = (imageHeight * scale).coerceAtLeast(1f)
+
+      return SizedImageView(state.image, newWidth, newHeight)
     }
     else {
       return this
