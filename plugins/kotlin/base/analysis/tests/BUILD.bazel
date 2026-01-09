@@ -23,7 +23,6 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/projectModel-api:projectModel",
-    "//plugins/kotlin/plugin/k1",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//java/testFramework",
