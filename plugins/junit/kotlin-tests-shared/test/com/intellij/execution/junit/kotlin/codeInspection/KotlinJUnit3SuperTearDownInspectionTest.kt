@@ -1,12 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
 import com.intellij.junit.testFramework.JUnit3SuperTearDownInspectionTestBase
+import com.intellij.junit.testFramework.JUnitLibrary
+import com.intellij.junit.testFramework.JUnitProjectDescriptor
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
@@ -15,7 +19,7 @@ import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 abstract class KotlinJUnit3SuperTearDownInspectionTest : JUnit3SuperTearDownInspectionTestBase(), ExpectedPluginModeProvider {
 
-  protected open class KotlinJUnitProjectDescriptor : JUnitProjectDescriptor() {
+  protected open class KotlinJUnitProjectDescriptor : JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT3) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
       ConfigLibraryUtil.addLibrary(model, "KotlinJavaRuntime") {
@@ -25,7 +29,7 @@ abstract class KotlinJUnit3SuperTearDownInspectionTest : JUnit3SuperTearDownInsp
     }
   }
 
-  override fun getProjectDescriptor(): JUnitProjectDescriptor = KotlinJUnitProjectDescriptor()
+  override fun getProjectDescriptor(): LightProjectDescriptor = KotlinJUnitProjectDescriptor()
 
   override fun setUp() {
     setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }

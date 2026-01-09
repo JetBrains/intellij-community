@@ -1,12 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit.testFramework
 
+import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.execution.junit.codeInspection.JUnitMalformedDeclarationInspection
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.writeText
@@ -18,22 +16,9 @@ import com.intellij.testFramework.utils.vfs.createFile
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.jps.model.java.JavaResourceRootType
 
-abstract class JUnitMalformedDeclarationInspectionTestBase(protected val junit5Version: String = JUNIT5_LATEST) : JvmInspectionTestBase() {
-  override val inspection: JUnitMalformedDeclarationInspection = JUnitMalformedDeclarationInspection()
-
-  protected open class JUnitProjectDescriptor(
-    languageLevel: LanguageLevel,
-    private val junit5Version: String
-  ) : ProjectDescriptor(languageLevel) {
-    override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-      super.configureModule(module, model, contentEntry)
-      model.addJUnit3Library()
-      model.addJUnit4Library()
-      model.addJUnit5Library(junit5Version)
-    }
-  }
-
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, junit5Version)
+abstract class JUnitMalformedDeclarationInspectionTestBase(protected vararg val versions: JUnitLibrary) : JvmInspectionTestBase() {
+  override val inspection: InspectionProfileEntry = JUnitMalformedDeclarationInspection()
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, *versions)
 
   protected fun addAutomaticExtension(text: String) {
     val servicesDir = createServiceResourceDir()
@@ -50,11 +35,5 @@ abstract class JUnitMalformedDeclarationInspectionTestBase(protected val junit5V
       val metaInf = resourceRoot.createDirectory("META-INF")
       metaInf.createDirectory("services")
     })
-  }
-
-  protected companion object {
-    const val JUNIT5_7_0: String = "5.7.0"
-    const val JUNIT5_LATEST: String = "5.14.1"
-    const val JUNIT6_LATEST: String = "6.0.0"
   }
 }

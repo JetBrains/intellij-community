@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
+import com.intellij.junit.testFramework.JUnitLibrary
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
-abstract class KotlinJUnitMalformedDeclarationInspectionTestV57 : KotlinJUnitMalformedDeclarationInspectionTestBase(JUNIT5_7_0) {
+abstract class KotlinJUnitMalformedDeclarationInspectionTestV57 : KotlinJUnitMalformedDeclarationInspectionTestBase(JUnitLibrary.JUNIT5_7_0) {
   fun `test malformed extension make public quickfix`() {
     myFixture.testQuickFix(
       JvmLanguage.KOTLIN, """

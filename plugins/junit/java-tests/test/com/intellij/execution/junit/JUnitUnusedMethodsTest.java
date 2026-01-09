@@ -2,20 +2,26 @@
 package com.intellij.execution.junit;
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil;
+import com.intellij.junit.testFramework.JUnitLibrary;
+import com.intellij.junit.testFramework.JUnitProjectDescriptor;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class JUnitUnusedMethodsTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.addClass("package org.junit; public @interface Test {}");
-    myFixture.addClass("package org.junit.runners; public class Parameterized { public @interface Parameters {} public @interface Parameter {}}");
-    myFixture.addClass("package org.junit.runner; public @interface RunWith {Class value();}");
-    JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
     myFixture.enableInspections(new UnusedDeclarationInspection(true));
   }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return new JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT4, JUnitLibrary.JUNIT5);
+  }
+
 
   public void testRecognizeNestedAbstractClass() {
     myFixture.configureByText("ExampleTest.java", """
@@ -70,9 +76,6 @@ public class JUnitUnusedMethodsTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   public void testBeforeSuiteIsImplicitUsage() {
-    myFixture.addClass("package org.junit.platform.suite.api; public @interface Suite {}");
-    myFixture.addClass("package org.junit.platform.suite.api; public @interface BeforeSuite {}");
-    myFixture.addClass("package org.junit.platform.suite.api; public @interface AfterSuite {}");
     myFixture.configureByText("MySuite.java", """
       import org.junit.platform.suite.api.*;
       

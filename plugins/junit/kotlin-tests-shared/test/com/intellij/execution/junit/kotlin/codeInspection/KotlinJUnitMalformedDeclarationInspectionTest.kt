@@ -1,9 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
+import com.intellij.junit.testFramework.JUnitLibrary
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
-abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalformedDeclarationInspectionTestBase(JUNIT5_LATEST) {
+abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalformedDeclarationInspectionTestBase(JUnitLibrary.JUNIT3, JUnitLibrary.JUNIT4, JUnitLibrary.JUNIT5) {
   abstract val pluginVersion: String
 
   /* Malformed extensions */
@@ -1189,7 +1190,7 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
           fun foo(param: String) { }
 
           companion object {
-              private${if(pluginVersion == "K1") " final" else ""} val parameters: MutableCollection<Arguments> = TODO("initialize me")
+              private${if (pluginVersion == "K1") " final" else ""} val parameters: MutableCollection<Arguments> = TODO("initialize me")
           }
       }
     """.trimIndent(), "Add 'val' property 'parameters' to 'Test'")

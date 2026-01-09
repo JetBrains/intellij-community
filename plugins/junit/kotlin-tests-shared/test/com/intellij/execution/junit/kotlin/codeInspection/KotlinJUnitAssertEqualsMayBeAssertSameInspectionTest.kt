@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
 import com.intellij.junit.testFramework.JUnitAssertEqualsMayBeAssertSameInspectionTestBase
@@ -6,10 +6,7 @@ import com.intellij.junit.testFramework.addJUnit4Library
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
@@ -23,10 +20,9 @@ private val ktProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDe
   }
 }
 
-abstract class KotlinJUnitAssertEqualsMayBeAssertSameInspectionTest : JUnitAssertEqualsMayBeAssertSameInspectionTestBase(), ExpectedPluginModeProvider {
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return ktProjectDescriptor
-  }
+abstract class KotlinJUnitAssertEqualsMayBeAssertSameInspectionTest : JUnitAssertEqualsMayBeAssertSameInspectionTestBase(),
+                                                                      ExpectedPluginModeProvider {
+  override fun getProjectDescriptor() = ktProjectDescriptor
 
   override fun setUp() {
     setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }

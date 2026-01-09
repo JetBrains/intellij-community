@@ -26,6 +26,10 @@ fun ModifiableRootModel.addHamcrestLibrary() {
   PsiTestUtil.addLibrary(this, "hamcrest-library", libraryJar.parent, libraryJar.name)
 }
 
+fun ModifiableRootModel.addJUnitPioneerLibrary(version: String = "2.3.0") {
+  MavenDependencyUtil.addFromMaven(this, "org.junit-pioneer:junit-pioneer:$version")
+}
+
 fun ModifiableRootModel.addJUnit5Library(version: String = "5.12.0") {
   MavenDependencyUtil.addFromMaven(this, "org.junit.jupiter:junit-jupiter-api:$version")
   MavenDependencyUtil.addFromMaven(this, "org.junit.jupiter:junit-jupiter-params:$version")

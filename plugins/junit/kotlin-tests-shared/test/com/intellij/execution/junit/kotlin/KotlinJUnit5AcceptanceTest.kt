@@ -1,20 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin
 
 import com.intellij.codeInsight.TestFrameworks
 import com.intellij.execution.junit.JUnitConfiguration
-import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil
+import com.intellij.junit.testFramework.JUnitLibrary
+import com.intellij.junit.testFramework.JUnitMalformedDeclarationInspectionTestBase
 import com.intellij.psi.PsiClassOwner
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.jupiter.api.Assertions
 
-abstract class KotlinJUnit5AcceptanceTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+abstract class KotlinJUnit5AcceptanceTest : JUnitMalformedDeclarationInspectionTestBase(JUnitLibrary.JUNIT5), ExpectedPluginModeProvider {
   override fun setUp() {
     setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
-    JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture)
     ConfigLibraryUtil.configureKotlinRuntime(module)
   }
 

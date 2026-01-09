@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
+import com.intellij.junit.testFramework.JUnitLibrary
 import com.intellij.junit.testFramework.JUnitMalformedDeclarationInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import org.intellij.lang.annotations.Language
@@ -9,7 +10,7 @@ import org.junit.runner.RunWith
 
 @RunWith(Enclosed::class)
 class JavaJUnitMalformedDeclarationInspectionTest {
-  class V57 : JUnitMalformedDeclarationInspectionTestBase(JUNIT5_7_0) {
+  class V57 : JUnitMalformedDeclarationInspectionTestBase(JUnitLibrary.JUNIT5_7_0) {
     fun `test malformed private highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class A {
@@ -31,7 +32,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
     }
   }
 
-  class Latest : JUnitMalformedDeclarationInspectionTestBase(JUNIT5_LATEST) {
+  class Latest : JUnitMalformedDeclarationInspectionTestBase(JUnitLibrary.JUNIT3, JUnitLibrary.JUNIT4, JUnitLibrary.JUNIT5) {
     /* Malformed extensions */
     fun `test nested method source annotation no highlighting`() {
       myFixture.addClass("""

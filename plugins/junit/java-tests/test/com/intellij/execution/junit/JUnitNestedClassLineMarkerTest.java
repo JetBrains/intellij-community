@@ -1,16 +1,19 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil;
+import com.intellij.junit.testFramework.JUnitLibrary;
+import com.intellij.junit.testFramework.JUnitProjectDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +24,7 @@ import java.util.Set;
 
 public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   private final Set<RunnerAndConfigurationSettings> myTempSettings = new HashSet<>();
+
   @Override
   protected void tearDown() throws Exception {
     try {
@@ -38,9 +42,8 @@ public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureT
   }
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return new JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT5);
   }
 
   public void testNestedClassInAbstractOuter() {
@@ -74,7 +77,7 @@ public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureT
     assertEquals(JUnitConfiguration.TEST_METHOD, data.TEST_OBJECT);
     assertEquals("ConcreteTest", data.MAIN_CLASS_NAME);
   }
-  
+
   public void testAbstractOuterWithSingleInheritorInNested() {
     myFixture.configureByText("MyTest.java",
                               """
@@ -91,7 +94,7 @@ public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureT
     assertEquals(JUnitConfiguration.TEST_METHOD, data.TEST_OBJECT);
     assertEquals("TemplateTest$ConcreteTest", data.MAIN_CLASS_NAME);
   }
-  
+
   public void testMethodInStaticNestedInheritorClassInAbstractOuter() {
     myFixture.configureByText("MyTest.java",
                               """
@@ -113,7 +116,7 @@ public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureT
     assertEquals("TemplateTest$NestedTests", data.MAIN_CLASS_NAME);
     assertEquals("myTest", data.METHOD_NAME);
   }
-  
+
   public void testMethodInNestedClassInAbstractOuter() {
     myFixture.configureByText("MyTest.java",
                               """
@@ -152,7 +155,7 @@ public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureT
     assertEquals("TemplateTest$NestedTests", data.MAIN_CLASS_NAME);
     assertEquals("myTest", data.METHOD_NAME);
   }
-  
+
   public void testMethodInNestedInheritorClassInAbstractOuter() {
     myFixture.configureByText("MyTest.java",
                               """
