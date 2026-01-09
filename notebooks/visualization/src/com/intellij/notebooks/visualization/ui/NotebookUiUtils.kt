@@ -7,21 +7,17 @@ import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 
 object NotebookUiUtils {
+  /**
+   * Editor consists of 2 Content and Gutter.
+   * getEditorPoint returns point only if the mouse is over the editor content or gutter.
+   */
   fun getEditorPoint(editorImpl: EditorImpl, e: MouseEvent): Point? {
-    val component = if (SwingUtilities.isDescendingFrom(e.component, editorImpl.contentComponent)) {
-      editorImpl.contentComponent
-    }
-    else if (SwingUtilities.isDescendingFrom(e.component, editorImpl.gutterComponentEx)) {
-      editorImpl.gutterComponentEx
-    }
-    else {
-      null
-    }
-    return if (component != null) {
-      SwingUtilities.convertPoint(e.component, e.point, component)
-    }
-    else {
-      null
-    }
+    val pointOnEditor = SwingUtilities.convertPoint(e.component, e.point, editorImpl.contentComponent)
+    if (editorImpl.contentComponent.contains(pointOnEditor)) return pointOnEditor
+
+    val pointOnGutter = SwingUtilities.convertPoint(e.component, e.point, editorImpl.gutterComponentEx)
+    if (editorImpl.gutterComponentEx.contains(pointOnGutter)) return pointOnGutter
+
+    return null
   }
 }

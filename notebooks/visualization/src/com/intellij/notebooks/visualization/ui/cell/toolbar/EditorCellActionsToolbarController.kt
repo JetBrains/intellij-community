@@ -115,7 +115,9 @@ internal class EditorCellActionsToolbarController(
   }
 
   private fun removeToolbar() = toolbar?.let {
+    val toolbarBounds = it.bounds
     editor.contentComponent.remove(it)
+    editor.contentComponent.repaint(toolbarBounds)
     toolbar = null
   }
 

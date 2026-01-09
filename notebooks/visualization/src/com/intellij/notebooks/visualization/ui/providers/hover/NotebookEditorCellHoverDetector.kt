@@ -67,9 +67,8 @@ class NotebookEditorCellHoverDetector(private val manager: NotebookCellInlayMana
   }
 
   private fun updateMouseOverCell(e: MouseEvent) {
-    NotebookUiUtils.getEditorPoint(editor, e)?.let { point ->
-      updateMouseOverCell(point)
-    }
+    val point = NotebookUiUtils.getEditorPoint(editor, e)
+    updateMouseOverCell(if (point != null) manager.getCellByPoint(point) else null)
   }
 
   private fun setupScrollPane() {
@@ -79,8 +78,7 @@ class NotebookEditorCellHoverDetector(private val manager: NotebookCellInlayMana
     Disposer.register(this, Disposable { scrollPane.viewport.removeChangeListener(scrollChange) })
   }
 
-  private fun updateMouseOverCell(point: Point) {
-    val newCell = manager.getCellByPoint(point)
+  private fun updateMouseOverCell(newCell: EditorCell?) {
     val prevCell = mouseOverCell
     if (prevCell != newCell) {
       mouseOverCell = newCell
@@ -88,6 +86,10 @@ class NotebookEditorCellHoverDetector(private val manager: NotebookCellInlayMana
       prevCell?.isHovered?.set(false)
       editor.notebookEditor.hoveredCell.set(newCell)
     }
+  }
+
+  private fun updateMouseOverCell(point: Point) {
+    updateMouseOverCell(manager.getCellByPoint(point))
   }
 
   companion object {
