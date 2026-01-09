@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.g
 import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.application
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.VcsDisposable
 import com.intellij.vcs.changes.viewModel.ChangesViewProxy
@@ -37,6 +36,9 @@ class ChangesViewCommitPanel internal constructor(
   private val progressPanel = CommitProgressPanel(project, this, commitMessage.editorField)
   private val commitActions = commitActionsPanel.createActions()
   private var rootComponent: JComponent? = null
+
+  @ApiStatus.Internal
+  var postCommitRefreshCallback: (() -> Unit)? = null
 
   init {
     Disposer.register(this, commitMessage)
@@ -95,14 +97,9 @@ class ChangesViewCommitPanel internal constructor(
 
   override val commitProgressUi: CommitProgressUi get() = progressPanel
 
-  override fun endExecution(): Unit = closeEditorPreviewIfEmpty()
-
-  private fun closeEditorPreviewIfEmpty() {
-    val changesViewManager = ChangesViewManager.getInstance(project) as? ChangesViewManager ?: return
-    ChangesViewManager.getInstanceEx(project).scheduleRefresh {
-      application.invokeLater {
-        changesViewManager.closeEditorPreview(true)
-      }
+  override fun endExecution() {
+    changesView.scheduleRefreshNow {
+      postCommitRefreshCallback?.invoke()
     }
   }
 

@@ -770,7 +770,6 @@ f:com.intellij.openapi.vcs.changes.ChangesViewManager
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.vcs.changes.ChangesViewEx
 - sf:Companion:com.intellij.openapi.vcs.changes.ChangesViewManager$Companion
-- f:closeEditorPreview(Z):V
 - sf:createTextStatusFactory(java.lang.String,Z):com.intellij.openapi.util.Factory
 - f:diffPreviewChanged(Z):V
 - dispose():V

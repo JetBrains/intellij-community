@@ -128,10 +128,6 @@ class ChangesViewManager internal constructor(private val project: Project, priv
     changesView?.setGrouping(groupingKey)
   }
 
-  fun closeEditorPreview(onlyIfEmpty: Boolean) {
-    toolWindowPanel?.closeEditorPreview(onlyIfEmpty)
-  }
-
   override fun resetViewImmediatelyAndRefreshLater() {
     changesView?.resetViewImmediatelyAndRefreshLater()
   }
@@ -297,19 +293,20 @@ class ChangesViewManager internal constructor(private val project: Project, priv
       }
     }
 
-    fun closeEditorPreview(onlyIfEmpty: Boolean) {
-      if (onlyIfEmpty && editorDiffPreview.hasContent()) return
-      editorDiffPreview.closePreview()
+    private fun closeEditorPreviewIfEmpty() {
+      if (!editorDiffPreview.hasContent()) editorDiffPreview.closePreview()
     }
 
     fun setCommitUi(commitUi: ChangesViewCommitPanel?) {
       if (commitUi != null) {
         commitUi.registerRootComponent(this)
+        commitUi.postCommitRefreshCallback = { closeEditorPreviewIfEmpty() }
         commitPanel = commitUi
         commitPanelSplitter.setSecondComponent(commitUi.getComponent())
       }
       else {
         commitPanelSplitter.setSecondComponent(null)
+        commitPanel?.postCommitRefreshCallback = null
         commitPanel = null
       }
       configureToolbars()
