@@ -8,6 +8,11 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a Java expression.
+ * <p>
+ * To evaluate a constant expression, use {@link PsiConstantEvaluationHelper}
+ *
+ * @see com.intellij.psi.util.ConstantExpressionUtil
+ * @see com.siyeh.ig.psiutils.ExpressionUtils
  */
 public interface PsiExpression extends PsiAnnotationMemberValue, PsiCaseLabelElement {
   /**

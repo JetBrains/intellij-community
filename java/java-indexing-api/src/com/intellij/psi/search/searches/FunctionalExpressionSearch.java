@@ -13,6 +13,10 @@ import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/// Search that can find [PsiFunctionalExpression]s.
+///
+/// To display a functional expression as a string in the UI,
+/// consider using [com.intellij.psi.presentation.java.ClassPresentationUtil#getFunctionalExpressionPresentation].
 public final class FunctionalExpressionSearch extends ExtensibleQueryFactory<PsiFunctionalExpression, FunctionalExpressionSearch.SearchParameters> {
   private static final FunctionalExpressionSearch INSTANCE = new FunctionalExpressionSearch();
 
