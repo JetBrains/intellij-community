@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,18 +39,22 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
               "PathAnnotationInspection"
     ).sorted().toList();
 
-  /**
-   * Validates all DevKit inspections that are disabled by default match the expected known set.
-   */
-  public void testKnownDisabledByDefaultInspections() {
-    List<LocalInspectionEP> devkitInspections = ContainerUtil.filter(LocalInspectionEP.LOCAL_INSPECTION.getExtensionList(), ep -> {
-      return "DevKit".equals(ep.getPluginDescriptor().getPluginId().getIdString());
-    });
+  public void testNumberOfKnownDevKitInspections() {
+    List<LocalInspectionEP> devkitInspections = getDevKitInspections();
     assertEquals(
-      "Mismatch in total inspections, check classpath in test run configuration (intellij.devkit.plugin.main)",
+      """
+        Mismatch in total number of DevKit inspections.
+        * If you've just added a DevKit inspection, then just increment DevkitInspectionsRegistrationCheckTest#EXPECTED_INSPECTIONS_NUMBER.
+        * Otherwise, check classpath in test run configuration (intellij.devkit.plugin.main)""",
       EXPECTED_INSPECTIONS_NUMBER, devkitInspections.size()
     );
+  }
 
+    /**
+     * Validates all DevKit inspections that are disabled by default match the expected known set.
+     */
+  public void testKnownDisabledByDefaultInspections() {
+    List<LocalInspectionEP> devkitInspections = getDevKitInspections();
     List<LocalInspectionEP> disabledInspections = ContainerUtil.filter(devkitInspections, ep -> !ep.enabledByDefault);
     List<String> disabledInspectionShortNames = new ArrayList<>(ContainerUtil.map(disabledInspections, ep -> ep.getShortName()));
     Collections.sort(disabledInspectionShortNames);
@@ -60,5 +65,12 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
     Collections.sort(allKnownDisabledInspections);
 
     assertSameElements("Mismatch in known WIP inspections", disabledInspectionShortNames, allKnownDisabledInspections);
+  }
+
+  private static @NotNull List<LocalInspectionEP> getDevKitInspections() {
+    List<LocalInspectionEP> devkitInspections = ContainerUtil.filter(LocalInspectionEP.LOCAL_INSPECTION.getExtensionList(), ep -> {
+      return "DevKit".equals(ep.getPluginDescriptor().getPluginId().getIdString());
+    });
+    return devkitInspections;
   }
 }
