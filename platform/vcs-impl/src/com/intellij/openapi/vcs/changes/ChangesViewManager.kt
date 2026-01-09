@@ -50,13 +50,15 @@ private const val CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager
 class ChangesViewManager internal constructor(private val project: Project, private val cs: CoroutineScope) : ChangesViewEx, Disposable {
   internal var changesView: ChangesViewProxy? = null
     private set
-  private var toolWindowPanel: ChangesViewToolWindowPanel? = null
 
   @RequiresEdt
-  private fun initChangesView(): ChangesViewProxy {
+  @ApiStatus.Internal
+  override fun getOrCreateCommitChangesView(): ChangesViewProxy {
     return changesView ?: run {
       val activity = StartUpMeasurer.startActivity("ChangesViewPanel initialization")
-      val view = ChangesViewProxy.create(project, cs)
+      val view = ChangesViewProxy.create(project, cs).also {
+        Disposer.register(this@ChangesViewManager, it)
+      }
       activity.end()
       view
     }.also {
@@ -64,40 +66,9 @@ class ChangesViewManager internal constructor(private val project: Project, priv
     }
   }
 
-  @RequiresEdt
-  private fun initToolWindowPanel(): ChangesViewToolWindowPanel {
-    return toolWindowPanel ?: run {
-      val activity = StartUpMeasurer.startActivity("ChangesViewToolWindowPanel initialization")
-
-      val changesView = initChangesView()
-      val panel = ChangesViewToolWindowPanel(project, changesView)
-      Disposer.register(this, panel)
-
-      fun updateCommitWorkflow() {
-        val workflow = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
-        panel.setCommitUi(workflow?.ui)
-      }
-      updateCommitWorkflow()
-      project.getMessageBus().connect(panel)
-        .subscribe(ChangesViewWorkflowManager.TOPIC, ChangesViewWorkflowListener { updateCommitWorkflow() })
-
-      Disposer.register(panel, Disposable {
-        // Content is removed from TW
-        this.changesView = null
-        toolWindowPanel = null
-      })
-      Disposer.register(panel, changesView)
-
-      activity.end()
-      panel
-    }.also {
-      toolWindowPanel = it
-    }
-  }
-
-  @ApiStatus.Internal
-  override fun getOrCreateCommitChangesView(): ChangesViewProxy {
-    return initChangesView()
+  private fun disposeCommitChangesView() {
+    changesView?.let { Disposer.dispose(it) }
+    changesView = null
   }
 
   override fun dispose() {
@@ -144,12 +115,27 @@ class ChangesViewManager internal constructor(private val project: Project, priv
 
   internal class ContentProvider(private val project: Project) : ChangesViewContentProvider {
     override fun initTabContent(content: Content) {
+      val activity = StartUpMeasurer.startActivity("ChangesViewToolWindowPanel initialization")
       val viewManager = getInstance(project) as ChangesViewManager
-      val panel = viewManager.initToolWindowPanel()
+      val changesView = viewManager.getOrCreateCommitChangesView()
+      val panel = ChangesViewToolWindowPanel(project, changesView)
+
+      fun updateCommitWorkflow() {
+        val workflow = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
+        panel.setCommitUi(workflow?.ui)
+      }
+      updateCommitWorkflow()
+      project.getMessageBus().connect(panel)
+        .subscribe(ChangesViewWorkflowManager.TOPIC, ChangesViewWorkflowListener { updateCommitWorkflow() })
+
+      Disposer.register(panel, Disposable {
+        viewManager.disposeCommitChangesView()
+      })
 
       content.setHelpId(ChangesListView.HELP_ID)
-      content.setComponent(panel)
-      content.setPreferredFocusableComponent(panel.getPreferredFocusedComponent())
+      content.setComponent(panel) // panel disposed with content
+      content.setPreferredFocusableComponent(changesView.getPreferredFocusedComponent())
+      activity.end()
     }
   }
 
@@ -345,8 +331,6 @@ class ChangesViewManager internal constructor(private val project: Project, priv
         }
       })
     }
-
-    fun getPreferredFocusedComponent(): JComponent = changesView.getPreferredFocusedComponent()
 
     companion object {
       private fun registerShortcuts(component: JComponent) {
