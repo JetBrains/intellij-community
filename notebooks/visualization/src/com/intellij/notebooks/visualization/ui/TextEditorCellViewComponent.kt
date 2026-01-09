@@ -22,8 +22,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.asDisposable
 import com.intellij.util.cancelOnDispose
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.awt.Dimension
 import java.awt.Rectangle
@@ -50,8 +51,10 @@ class TextEditorCellViewComponent(private val cell: EditorCell) : EditorCellView
   private val gutterIconStickToFirstVisibleLine
     get() = Registry.`is`("jupyter.run.cell.button.sticks.first.visible.line")
 
-  private val coroutineScope = NotebookVisualizationCoroutine.Utils.edtScope.childScope("TextEditorCellViewComponent").also {
-    Disposer.register(this, it.asDisposable())
+  private val coroutineScope = NotebookVisualizationCoroutine.Utils.edtScope.childScope("TextEditorCellViewComponent").also { scope ->
+    Disposer.register(this@TextEditorCellViewComponent) {
+      scope.cancel(CancellationException("Disposed TextEditorCellViewComponent"))
+    }
   }
 
   init {

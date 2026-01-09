@@ -11,10 +11,13 @@ class NotebookSettings : PersistentStateComponent<NotebookSettings>, Cloneable {
   var outputMaxHeightInEditorLines: Int = -1
 
   /**
-   * Top-right cell corner toolbar visibility for the selected cell.
+   * Top-right-cell-corner-toolbar visibility for the selected cell.
    * Toolbar will be in any case visible for the hovered cell.
    */
   var showToolbarForSelectedCell: Boolean = false
+
+  /** The top-right-cell-corner-toolbar will always be visible for the large cells and will stick to the editor top. */
+  var cellToolbarStickyVisible: Boolean = true
 
   override fun getState(): NotebookSettings = this
 

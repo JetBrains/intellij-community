@@ -19,8 +19,8 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.asDisposable
 import com.intellij.util.cancelOnDispose
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.debounce
 import org.intellij.lang.annotations.Language
@@ -29,6 +29,7 @@ import java.awt.Rectangle
 import java.time.Duration
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
+import kotlin.math.max
 import kotlin.time.toKotlinDuration
 
 /** Position of the floating toolbar in cells top right corner. */
@@ -38,8 +39,10 @@ internal class EditorCellActionsToolbarController(
   private val editor = cell.editor
   private var toolbar: JupyterCellActionsToolbar? = null
   private var showToolbarJob: Job? = null
-  private val coroutineScope = NotebookVisualizationCoroutine.Utils.scope.childScope("EditorCellActionsToolbarManager").also {
-    Disposer.register(this, it.asDisposable())
+  private val coroutineScope = NotebookVisualizationCoroutine.Utils.scope.childScope("EditorCellActionsToolbarManager").also { scope ->
+    Disposer.register(this@EditorCellActionsToolbarController) {
+      scope.cancel(CancellationException("Disposed EditorCellActionsToolbarController"))
+    }
   }
 
   private val targetComponent: JComponent?
@@ -55,6 +58,12 @@ internal class EditorCellActionsToolbarController(
         }
       }
     }.cancelOnDispose(this)
+
+    editor.scrollingModel.addVisibleAreaListener {
+      if (!NotebookSettings.getInstance().cellToolbarStickyVisible) return@addVisibleAreaListener
+      val targetComponent = toolbar?.targetComponent ?: return@addVisibleAreaListener
+      updateToolbarPosition(targetComponent)
+    }
 
     cell.isSelected.afterDistinctChange(this) {
       updateToolbarVisibility()
@@ -168,7 +177,14 @@ internal class EditorCellActionsToolbarController(
     val xCoordinate = panelLocationInEditor.x + xOffset
     val yCoordinate = panelLocationInEditor.y + yOffset
 
-    return Rectangle(xCoordinate, yCoordinate, toolbarWidth, toolbarHeight)
+    val correctedY = if (NotebookSettings.getInstance().cellToolbarStickyVisible) {
+      max(yCoordinate, editor.contentComponent.visibleRect.y + JBUI.scale(2))
+    }
+    else {
+      yCoordinate
+    }
+
+    return Rectangle(xCoordinate, correctedY, toolbarWidth, toolbarHeight)
   }
 
   companion object {

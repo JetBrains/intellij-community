@@ -14,6 +14,8 @@ interface NotebookEditor {
 
   /** Updated by NotebookEditorCellHoverDetector. Used to show cell action toolbar and cell selection marker in the gutter. */
   val hoveredCell: AtomicProperty<EditorCell?>
+
+  /** Updated by JupyterAIManyCellsCodeGenerationInteraction. */
   val singleFileDiffMode: AtomicProperty<Boolean>
 }
 
