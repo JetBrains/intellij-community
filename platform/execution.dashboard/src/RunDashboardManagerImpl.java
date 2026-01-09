@@ -603,8 +603,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
   }
 
-  private @NotNull RunDashboardService doAttachServiceRunContentDescriptor(@NotNull RunnerAndConfigurationSettings settings,
-                                                                           @NotNull RunContentDescriptorId descriptorId) {
+  private @Nullable RunDashboardService doAttachServiceRunContentDescriptor(@NotNull RunnerAndConfigurationSettings settings,
+                                                                            @NotNull RunContentDescriptorId descriptorId) {
     List<RunDashboardService> settingsServices = getServices(settings);
     if (settingsServices == null) {
       RunDashboardServiceImpl newService = new RunDashboardServiceImpl(RunDashboardCoroutineScopeProvider.getInstance(myProject).getCs(),
@@ -613,6 +613,10 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       settingsServices = new SmartList<>(newService);
       myServices.add(settingsServices);
       return newService;
+    }
+
+    if (ContainerUtil.find(settingsServices, service -> descriptorId.equals(service.getDescriptorId())) != null) {
+      return null;
     }
 
     RunDashboardService service = settingsServices.get(0);
