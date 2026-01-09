@@ -9,7 +9,7 @@ import java.awt.Graphics2D
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
 
-/** Floating toolbar appearing for selected and hovered cell in the top right corner of cell.*/
+/** Floating toolbar appearing for selected and hovered cell in the top right corner of the cell.*/
 @ApiStatus.Internal
 class JupyterCellActionsToolbar(
   // PY-72283
