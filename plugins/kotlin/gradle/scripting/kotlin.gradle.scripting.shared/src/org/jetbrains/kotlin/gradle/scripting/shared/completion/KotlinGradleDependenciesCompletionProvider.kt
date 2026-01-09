@@ -6,6 +6,9 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.util.ProcessingContext
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.idea.completion.api.*
@@ -23,6 +26,10 @@ private val exclude = setOf(
 internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         if (!useDependencyCompletionService()) {
+            return
+        }
+
+        if (parameters.isAndroidProject()) {
             return
         }
 
@@ -155,6 +162,11 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     }
 
     private fun String.isBeingCompleted(): Boolean = this.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)
+
+    private fun CompletionParameters.isAndroidProject(): Boolean {
+        val snapshot = this.originalFile.manager.project.workspaceModel.currentSnapshot
+        return snapshot.entities<FacetEntity>().any { it.name == "Android" }
+    }
 }
 
 /*private object TopLevelLookupStringProvider : (DependencyCompletionResult) -> String {
