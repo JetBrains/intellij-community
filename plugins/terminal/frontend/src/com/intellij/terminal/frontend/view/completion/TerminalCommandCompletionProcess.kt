@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.patterns.ElementPattern
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.impl.toRelative
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -194,6 +195,7 @@ internal class TerminalCommandCompletionProcess(
     cancel()
 
     TerminalCommandCompletionService.getInstance(project).invokeCompletion(
+      context.terminalView,
       context.editor,
       context.outputModel,
       context.shellIntegration,
@@ -242,6 +244,7 @@ internal class TerminalCommandCompletionProcess(
 
 internal data class TerminalCommandCompletionContext(
   val project: Project,
+  val terminalView: TerminalView,
   val editor: Editor,
   val outputModel: TerminalOutputModel,
   val shellIntegration: TerminalShellIntegration,

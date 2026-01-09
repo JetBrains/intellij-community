@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionService
 import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
@@ -42,6 +43,7 @@ import kotlin.math.abs
  * Logic of mouse event handling is copied from [com.jediterm.terminal.model.JediTerminal]
  */
 internal open class TerminalEventsHandlerImpl(
+  private val terminalView: TerminalView,
   private val sessionModel: TerminalSessionModel,
   private val editor: EditorEx,
   private val encodingManager: TerminalKeyEncodingManager,
@@ -422,7 +424,13 @@ internal open class TerminalEventsHandlerImpl(
         && LookupManager.getActiveLookup(editor) == null
         && outputModel.getTextAfterCursor().isBlank()
     ) {
-      TerminalCommandCompletionService.getInstance(project).invokeCompletion(editor, outputModel, shellIntegration, isAutoPopup = true)
+      TerminalCommandCompletionService.getInstance(project).invokeCompletion(
+        terminalView,
+        editor,
+        outputModel,
+        shellIntegration,
+        isAutoPopup = true
+      )
     }
   }
 

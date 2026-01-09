@@ -34,6 +34,7 @@ internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(),
       }
 
       TerminalCommandCompletionService.getInstance(project).invokeCompletion(
+        view,
         editor,
         view.activeOutputModel(),
         shellIntegration,

@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellSuggestionType
+import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.impl.toRelative
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
@@ -74,6 +75,7 @@ class TerminalCommandCompletionService(
 
   @RequiresEdt
   fun invokeCompletion(
+    terminalView: TerminalView,
     editor: Editor,
     outputModel: TerminalOutputModel,
     shellIntegration: TerminalShellIntegration,
@@ -92,6 +94,7 @@ class TerminalCommandCompletionService(
 
     val context = TerminalCommandCompletionContext(
       project = project,
+      terminalView = terminalView,
       editor = editor,
       outputModel = outputModel,
       shellIntegration = shellIntegration,
