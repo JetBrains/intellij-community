@@ -51,7 +51,7 @@ class PowerShellCompletionContributor : CompletionContributor(), DumbAware {
     // PowerShell's completion generator receives typed prefix directly, so we can create a dummy context
     val runtimeContext = completionServices.runtimeContextProvider.getContext(listOf(""))
 
-    val completionResult: CompletionResult? = runBlockingCancellable {
+    val completionResult: PowerShellCompletionResult? = runBlockingCancellable {
       completionServices.dataGeneratorsExecutor.execute(runtimeContext, powerShellCompletionGenerator(command, caretPosition))
     }
 
@@ -100,7 +100,7 @@ class PowerShellCompletionContributor : CompletionContributor(), DumbAware {
   private fun CompletionItemInfo.toLookupElement(): LookupElement {
     var text = presentableText ?: lookupString
     // Add file separator to directories to make it consistent with command spec completion and other shells
-    if (type == CompletionResultType.PROVIDER_CONTAINER && !text.endsWith(File.separatorChar)) {
+    if (type == PowerShellCompletionResultType.PROVIDER_CONTAINER && !text.endsWith(File.separatorChar)) {
       text += File.separatorChar
     }
     return LookupElementBuilder.create(lookupString)
@@ -113,10 +113,10 @@ class PowerShellCompletionContributor : CompletionContributor(), DumbAware {
 
   private fun getIconForItem(item: CompletionItemInfo): Icon {
     return when (item.type) {
-      CompletionResultType.COMMAND, CompletionResultType.METHOD -> TerminalIcons.Command
-      CompletionResultType.PARAMETER_NAME -> TerminalIcons.Option
-      CompletionResultType.PROVIDER_CONTAINER -> AllIcons.Nodes.Folder
-      CompletionResultType.PROVIDER_ITEM -> TerminalCompletionUtil.getFileIcon(item.lookupString)
+      PowerShellCompletionResultType.COMMAND, PowerShellCompletionResultType.METHOD -> TerminalIcons.Command
+      PowerShellCompletionResultType.PARAMETER_NAME -> TerminalIcons.Option
+      PowerShellCompletionResultType.PROVIDER_CONTAINER -> AllIcons.Nodes.Folder
+      PowerShellCompletionResultType.PROVIDER_ITEM -> TerminalCompletionUtil.getFileIcon(item.lookupString)
       else -> TerminalIcons.Other
     }
   }
@@ -178,7 +178,7 @@ class PowerShellCompletionContributor : CompletionContributor(), DumbAware {
    * Inserts the file separator after the completed item if it is a directory.
    */
   private fun LookupElementBuilder.insertFileSeparatorIfNeeded(itemInfo: CompletionItemInfo): LookupElementBuilder {
-    if (itemInfo.type == CompletionResultType.PROVIDER_CONTAINER) {
+    if (itemInfo.type == PowerShellCompletionResultType.PROVIDER_CONTAINER) {
       return withInsertHandler { context, item ->
         insertHandler?.handleInsert(context, item) // call existing insert handler first
         DocumentUtil.writeInRunUndoTransparentAction {
@@ -195,7 +195,7 @@ class PowerShellCompletionContributor : CompletionContributor(), DumbAware {
     /** String to pass to the Lookup. It will be inserted initially by the platform completion logic. */
     val lookupString: String,
     val presentableText: String?,
-    val type: CompletionResultType,
+    val type: PowerShellCompletionResultType,
     val replacementIndex: Int,
     /** The initial completion string proposed by PowerShell */
     val replacementString: String
