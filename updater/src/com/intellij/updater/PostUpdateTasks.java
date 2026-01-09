@@ -39,6 +39,7 @@ final class PostUpdateTasks {
 
   static void updateWindowsRegistry(Path targetDir, String nameAndVersion, String buildNumber, boolean united) {
     var targetPath = targetDir.toString();
+    LOG.info("path: " + targetPath + "; name/version: " + nameAndVersion + "; build: " + buildNumber + "; united: " + united);
     updateUninstallerSection(targetPath, nameAndVersion, buildNumber);
     updateManufacturerSection(targetPath, buildNumber, united);
     if (united) {
@@ -48,7 +49,6 @@ final class PostUpdateTasks {
 
   private static void updateUninstallerSection(String targetPath, String nameAndVersion, String buildNumber) {
     try {
-      LOG.info("path: " + targetPath + "; name/version: " + nameAndVersion + "; buildNumber: " + buildNumber);
       var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
       var nodes = List.of("Software", "Software\\WOW6432Node");
       for (var rootKey : rootKeys) {
@@ -81,7 +81,6 @@ final class PostUpdateTasks {
 
   private static void updateManufacturerSection(String targetPath, String buildNumber, boolean united) {
     try {
-      LOG.info("path: " + targetPath + "; buildNumber: " + buildNumber + "; united: " + united);
       var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
       var nodes = List.of("Software", "Software\\WOW6432Node");
       for (var rootKey : rootKeys) {
@@ -121,7 +120,6 @@ final class PostUpdateTasks {
 
   private static void updateContextMenuEntries(String targetPath) {
     try {
-      LOG.info("path: " + targetPath);
       var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
       var updated = false;
       for (var rootKey : rootKeys) {
@@ -213,7 +211,7 @@ final class PostUpdateTasks {
   }
 
   static void updateWindowsShortcuts(Path targetDir, String nameAndVersion) {
-    LOG.info("path: " + targetDir + "; nameAndVersion: " + nameAndVersion);
+    LOG.info("path: " + targetDir + "; name/version: " + nameAndVersion);
     try {
       var desktop = getFolderPath(ShlObj.CSIDL_DESKTOPDIRECTORY, () -> Path.of(System.getProperty("user.home"), "Desktop"));
       var commonDesktop = getFolderPath(ShlObj.CSIDL_COMMON_DESKTOPDIRECTORY, () -> Path.of(System.getenv("PUBLIC"), "Desktop"));
