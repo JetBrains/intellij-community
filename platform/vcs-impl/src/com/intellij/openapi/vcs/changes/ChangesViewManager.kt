@@ -74,7 +74,13 @@ class ChangesViewManager internal constructor(private val project: Project, priv
       val panel = ChangesViewToolWindowPanel(project, changesView)
       Disposer.register(this, panel)
 
-      panel.updateCommitWorkflow()
+      fun updateCommitWorkflow() {
+        val workflow = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
+        panel.setCommitUi(workflow?.ui)
+      }
+      updateCommitWorkflow()
+      project.getMessageBus().connect(panel)
+        .subscribe(ChangesViewWorkflowManager.TOPIC, ChangesViewWorkflowListener { updateCommitWorkflow() })
 
       Disposer.register(panel, Disposable {
         // Content is removed from TW
@@ -88,11 +94,6 @@ class ChangesViewManager internal constructor(private val project: Project, priv
     }.also {
       toolWindowPanel = it
     }
-  }
-
-  init {
-    project.getMessageBus().connect(this)
-      .subscribe(ChangesViewWorkflowManager.TOPIC, ChangesViewWorkflowListener { updateCommitWorkflow() })
   }
 
   @ApiStatus.Internal
@@ -125,10 +126,6 @@ class ChangesViewManager internal constructor(private val project: Project, priv
 
   override fun setGrouping(groupingKey: String) {
     changesView?.setGrouping(groupingKey)
-  }
-
-  private fun updateCommitWorkflow() {
-    toolWindowPanel?.updateCommitWorkflow()
   }
 
   fun closeEditorPreview(onlyIfEmpty: Boolean) {
@@ -214,7 +211,6 @@ class ChangesViewManager internal constructor(private val project: Project, priv
     private val progressLabel = Wrapper()
 
     private var commitPanel: ChangesViewCommitPanel? = null
-    private var commitWorkflowHandler: ChangesViewCommitWorkflowHandler? = null
 
     private var isDisposed = false
 
@@ -306,30 +302,20 @@ class ChangesViewManager internal constructor(private val project: Project, priv
       editorDiffPreview.closePreview()
     }
 
-    fun updateCommitWorkflow() {
-      if (isDisposed) return
-
-      val newWorkflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
-      if (commitWorkflowHandler == newWorkflowHandler) return
-
-      if (newWorkflowHandler != null) {
-        val newCommitPanel = newWorkflowHandler.ui
-        newCommitPanel.registerRootComponent(this)
-        commitPanelSplitter.setSecondComponent(newCommitPanel.getComponent())
-
-        commitWorkflowHandler = newWorkflowHandler
-        commitPanel = newCommitPanel
+    fun setCommitUi(commitUi: ChangesViewCommitPanel?) {
+      if (commitUi != null) {
+        commitUi.registerRootComponent(this)
+        commitPanel = commitUi
+        commitPanelSplitter.setSecondComponent(commitUi.getComponent())
       }
       else {
         commitPanelSplitter.setSecondComponent(null)
-
-        commitWorkflowHandler = null
         commitPanel = null
       }
       configureToolbars()
     }
 
-    fun configureToolbars() {
+    private fun configureToolbars() {
       val isToolbarHorizontal = CommitModeManager.isCommitToolWindowEnabled(project)
       changesView.setToolbarHorizontal(isToolbarHorizontal)
     }
