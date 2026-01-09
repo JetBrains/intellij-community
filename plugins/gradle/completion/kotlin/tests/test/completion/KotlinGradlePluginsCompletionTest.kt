@@ -25,6 +25,13 @@ internal class KotlinGradlePluginsCompletionTest : AbstractKotlinGradleCompletio
 
     @ParameterizedTest
     @BaseGradleVersionSource
+    @TestMetadata("versionCatalogs/aliasArgumentEmptyInput")
+    fun `test completion for an empty input`(gradleVersion: GradleVersion) =
+        // TODO adjust sorting
+        verifyVersionCatalogCompletion(gradleVersion)
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
     @TestMetadata("versionCatalogs/aliasArgumentCatalogNames")
     fun `test catalog name completion`(gradleVersion: GradleVersion) =
         // TODO adjust sorting

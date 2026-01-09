@@ -19,7 +19,7 @@ import org.jetbrains.plugins.gradle.service.resolve.getVersionCatalogFiles
 internal class KotlinGradleVersionCatalogCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         val element = parameters.position
-        val input = getInput(parameters).ifBlank { return }
+        val input = getInput(parameters)
 
         when {
             insideScriptBlockPattern(PLUGINS).accepts(element) ->

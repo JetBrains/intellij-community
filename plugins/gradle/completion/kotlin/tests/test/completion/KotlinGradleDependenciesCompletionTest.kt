@@ -55,9 +55,16 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
 
     @ParameterizedTest
     @BaseGradleVersionSource
+    @TestMetadata("versionCatalogs/scopeArgumentEmptyInput")
+    fun `test completion in a scope argument for an empty input`(gradleVersion: GradleVersion) =
+        // TODO adjust sorting: catalog names should be on top
+        verifyVersionCatalogCompletion(gradleVersion)
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
     @TestMetadata("versionCatalogs/scopeArgumentCatalogNames")
     fun `test catalog name completion in a scope argument`(gradleVersion: GradleVersion) =
-        // TODO adjust sorting
+        // TODO adjust sorting: catalog names should be on top
         verifyVersionCatalogCompletion(gradleVersion)
 
     @ParameterizedTest
