@@ -421,6 +421,13 @@ class NotebookCellInlayManager private constructor(
       event.changes.filterIsInstance<NotebookIntervalPointersEvent.OnInserted>().forEach { change ->
         fixInlaysOffsetsAfterNewCellInsert(change, ctx)
       }
+      val changedEvents = event.changes.filterIsInstance<NotebookIntervalPointersEvent.OnEdited>()
+      if (changedEvents.size > 1) {
+        changedEvents.forEach { event ->
+          val cell = notebook.cells.getOrNull(event.intervalAfter.ordinal) ?: return@forEach
+          cell.checkAndRebuildInlays()
+        }
+      }
     }
   }
 
