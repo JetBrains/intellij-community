@@ -37,6 +37,7 @@ import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
+import com.intellij.util.BazelEnvironmentUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -364,13 +365,6 @@ public final class AsyncStacksUtils {
     }
   }
 
-  /**
-   * returns true if Bazel-test specific env variables are set
-   */
-  private static Boolean isBazelTestRun() {
-    return System.getenv("TEST_SRCDIR") != null && System.getenv("TEST_UNDECLARED_OUTPUTS_DIR") != null;
-  }
-
   private static @Nullable Path getAgentArtifactPath(@Nullable Project project, @Nullable Disposable disposable) {
     if (PluginManagerCore.isRunningFromSources() && !AppMode.isRunningFromDevBuild()) {
       return getArtifactPathForDownloadedAgent(project, disposable);
@@ -395,7 +389,7 @@ public final class AsyncStacksUtils {
       // the agent artifact provided by Bazel via runfiles, so we use ServiceLoader to find that provider
       // on the tests classpath and resolve the agent from there. Outside Bazel (regular production/dev runs), we
       // keep using the standard resolution path that downloads the dependency if needed.
-      if (PluginManagerCore.isUnitTestMode && isBazelTestRun()) {
+      if (PluginManagerCore.isUnitTestMode && BazelEnvironmentUtil.isBazelTestRun()) {
         ServiceLoader<TestDebuggerAgentArtifactsProvider> providerClasses = ServiceLoader.load(TestDebuggerAgentArtifactsProvider.class);
         var iterator = providerClasses.iterator();
         if (!iterator.hasNext()) {

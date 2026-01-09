@@ -39,6 +39,7 @@ import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.pom.java.JavaRelease;
+import com.intellij.util.BazelEnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -452,9 +453,7 @@ public final class JavaSdkImpl extends JavaSdk {
       pathsChecked.add(path);
     }
     if (root == null) {
-      // Bazel-provided test dependencies, from runfiles tree
-      String testSrcDir = System.getenv("TEST_SRCDIR");
-      if (testSrcDir != null && !testSrcDir.isBlank()) {
+      if (BazelEnvironmentUtil.isBazelTestRun()) {
         ServiceLoader<TestJdkAnnotationsFilesProvider> providerClasses = ServiceLoader.load(TestJdkAnnotationsFilesProvider.class);
         var iterator = providerClasses.iterator();
         if (!iterator.hasNext()) {

@@ -14,7 +14,7 @@ object BazelEnvironmentUtil {
    */
   @JvmStatic
   fun isBazelTestRun(): Boolean {
-    return listOf("TEST_TMPDIR", "RUNFILES_DIR", "JAVA_RUNFILES")
-      .all { System.getenv(it) != null }
+    return listOf("TEST_TMPDIR", "RUNFILES_DIR", "JAVA_RUNFILES", "TEST_SRCDIR")
+      .all { System.getenv(it) != null } && System.getenv("BAZEL_TEST") == "1"
   }
 }
