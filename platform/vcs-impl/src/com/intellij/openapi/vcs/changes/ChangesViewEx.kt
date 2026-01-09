@@ -3,8 +3,8 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.vcs.changes.viewModel.ChangesViewProxy
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowUi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 
@@ -21,7 +21,7 @@ interface ChangesViewEx : ChangesViewI {
 
   @RequiresEdt
   @ApiStatus.Internal
-  fun createCommitPanel(): ChangesViewCommitWorkflowUi
+  fun getOrCreateCommitChangesView(): ChangesViewProxy
 
   @get:Deprecated("Use {@link ChangesViewWorkflowManager#getCommitWorkflowHandler}.")
   val commitWorkflowHandler: ChangesViewCommitWorkflowHandler?
