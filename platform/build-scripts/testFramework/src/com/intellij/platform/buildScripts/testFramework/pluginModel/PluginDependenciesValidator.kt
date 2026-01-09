@@ -29,11 +29,13 @@ import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamCo
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader
 import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
 import com.intellij.platform.plugins.testFramework.isModuleSetPath
 import com.intellij.platform.plugins.testFramework.loadRawPluginDescriptorInTest
 import com.intellij.platform.plugins.testFramework.resolveModuleSetPath
 import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.util.SystemProperties
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.jps.model.JpsProject
@@ -318,7 +320,23 @@ class PluginDependenciesValidator private constructor(
     val pathResolver = LoadFromSourcePathResolver(pluginLayout, customConfigFileToModule, embeddedContentModules, xIncludeLoader)
     val dataLoader = LoadFromSourceDataLoader(mainPluginModule = mainModule) 
     loadPluginSubDescriptors(descriptor, pathResolver, loadingContext = loadingContext, dataLoader = dataLoader, pluginDir = pluginDir, pool = zipPool)
-    descriptor.jarFiles = (pluginLayout.jpsModulesInClasspath + embeddedContentModules.map { it.name }).map { getModuleOutputDir(it) }
+
+    val nonEmbeddedContentModules = (
+      descriptor.content.modules.filter { it.defaultLoadingRule != ModuleLoadingRule.EMBEDDED }.map { it.moduleId.name } +
+      options.pluginVariantsWithDynamicIncludes.filter { it.pluginId == descriptor.pluginId }.flatMap { pluginVariant ->
+        val oldValue = System.setProperty(pluginVariant.systemPropertyKey, pluginVariant.systemPropertyValue.toString())
+        try {
+          loadRawPluginDescriptorInTest(pluginDescriptorPath, xIncludeLoader).contentModules.filter { it.loadingRule != ModuleLoadingRuleValue.EMBEDDED }.map { it.name }
+        }
+        finally {
+          SystemProperties.setProperty(pluginVariant.systemPropertyKey, oldValue)
+        }
+      }
+    ).toSet()
+
+    //non-embedded content modules with `package` attribute are included in the main plugin JAR, but they are loaded by different classloaders
+    val namesOfJpsModulesIncludedInPluginDescriptorModule = pluginLayout.jpsModulesInClasspath - nonEmbeddedContentModules + embeddedContentModules.map { it.name }
+    descriptor.jarFiles = namesOfJpsModulesIncludedInPluginDescriptorModule.map { getModuleOutputDir(it) }
     return descriptor
   }
 
