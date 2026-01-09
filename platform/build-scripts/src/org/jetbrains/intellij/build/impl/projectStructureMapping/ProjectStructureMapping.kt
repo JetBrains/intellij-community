@@ -127,14 +127,7 @@ private fun buildPluginContentReport(pluginToEntries: List<PluginBuildDescriptor
       fileToEntry.computeIfAbsent(presentablePath) { mutableListOf() }.add(entry)
     }
 
-    writer.writeStartObject()
-    writer.writeStringField("mainModule", plugin.layout.mainModule)
-    if (plugin.os != null) {
-      writer.writeStringField("os", plugin.os.osId)
-    }
-    if (plugin.arch != null) {
-      writer.writeStringField("arch", plugin.arch.name)
-    }
+    writePluginStart(writer, plugin)
 
     val contentModuleReason = "<- ${plugin.layout.mainModule} (plugin content)"
 
@@ -250,7 +243,7 @@ private fun buildPlatformContentReport(
         // duplicate, e.g. OS-specific plugin
         continue
       }
-      writer.writeString(plugin.layout.mainModule)
+      writePlugin(writer, plugin)
     }
   }
 
@@ -272,6 +265,22 @@ private fun buildPlatformContentReport(
   writer.writeEndArray()
   writer.close()
   return out.toByteArray()
+}
+
+private fun writePlugin(writer: JsonGenerator, plugin: PluginBuildDescriptor) {
+  writePluginStart(writer, plugin)
+  writer.writeEndObject()
+}
+
+private fun writePluginStart(writer: JsonGenerator, plugin: PluginBuildDescriptor) {
+  writer.writeStartObject()
+  writer.writeStringField("mainModule", plugin.layout.mainModule)
+  if (plugin.os != null) {
+    writer.writeStringField("os", plugin.os.osId)
+  }
+  if (plugin.arch != null) {
+    writer.writeStringField("arch", plugin.arch.name)
+  }
 }
 
 private fun groupPlatformEntries(
