@@ -12,9 +12,11 @@ import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -148,12 +150,64 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     if (!arrayComponentAnnotations.isEmpty()) {
       type = createArray(type, arrayComponentAnnotations, ellipsis);
     }
-
-    if (parent instanceof PsiModifierListOwner) {
-      type = JavaSharedImplUtil.applyAnnotations(type, ((PsiModifierListOwner)parent).getModifierList());
-    }
-
+    type = withAddedAnnotationsFromAncestorModifierListIfApplicable(type);
     return type;
+  }
+
+  /// Adds annotations from the ancestor modifier list if they apply to this PsiTypeElement.
+  /// For example, in
+  /// ``` @NonNull String[] method(); ```
+  /// `@NonNull` annotation applies to array component type `String` but not to `String[]` type.
+  /// However in
+  /// ``` @NonNull List<String> method(); ```
+  /// `@NonNull` annotation applies to `List<String>` type but not to `String` type.
+  ///
+  /// @param type must be a type representing this PsiTypeElementImpl
+  /// @return type argument with all applicable annotations from the ancestor modifier list added
+  private PsiType withAddedAnnotationsFromAncestorModifierListIfApplicable(PsiType type) {
+    PsiModifierListOwner modifierListOwner = getModifierListOwnerThatAffectsThisTypeElement(type);
+    if (modifierListOwner == null) return type;
+    PsiModifierList modifierList = modifierListOwner.getModifierList();
+    if (modifierList == null) return type;
+    PsiAnnotation[] annotations = modifierList.getAnnotations();
+    if (annotations.length == 0) return type;
+    return JavaSharedImplUtil.annotate(type, modifierList, annotations);
+  }
+
+  private @Nullable PsiModifierListOwner getModifierListOwnerThatAffectsThisTypeElement(PsiType type) {
+    PsiElement parent = getNonDummyContext(this);
+    if (parent instanceof PsiModifierListOwner) {
+      if (type instanceof PsiDisjunctionType || type instanceof PsiArrayType) {
+        return null;
+      }
+      else {
+        return (PsiModifierListOwner)parent;
+      }
+    }
+    if (isDeepestComponentInsideArrayType(parent) || isFirstExceptionTypeInsideMultiCatch(parent)) {
+      return ObjectUtils.tryCast(getNonDummyContext(parent), PsiModifierListOwner.class);
+    }
+    return null;
+  }
+
+  private static @Nullable PsiElement getNonDummyContext(PsiElement element) {
+    if (element == null) return null;
+    PsiElement context = element.getContext();
+    while (context instanceof JavaDummyHolder) {
+      context = context.getContext();
+    }
+    return context;
+  }
+
+  private boolean isFirstExceptionTypeInsideMultiCatch(PsiElement parent) {
+    return parent instanceof PsiTypeElement
+           && PsiTreeUtil.findSiblingBackward(this, JavaTokenType.OR, null) == null
+           && PsiTreeUtil.findSiblingForward(this, JavaTokenType.OR, null) != null;
+  }
+
+  private static boolean isDeepestComponentInsideArrayType(PsiElement parent) {
+    return parent instanceof PsiTypeElement
+           && PsiUtil.isJavaToken(parent.getLastChild(), TokenSet.create(JavaTokenType.RBRACKET, JavaTokenType.ELLIPSIS));
   }
 
   private PsiType createArray(PsiType elementType, List<TypeAnnotationProvider> providers, boolean ellipsis) {

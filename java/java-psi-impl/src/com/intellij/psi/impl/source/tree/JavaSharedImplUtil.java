@@ -89,43 +89,12 @@ public final class JavaSharedImplUtil {
 
   public static @NotNull PsiType createTypeFromStub(@NotNull PsiModifierListOwner owner, @NotNull TypeInfo typeInfo) {
     String typeText = typeInfo.annotatedText();
-    PsiType type = JavaPsiFacade.getInstance(owner.getProject()).getParserFacade().createTypeFromText(typeText, owner);
-    return applyAnnotations(type, owner.getModifierList());
+    return JavaPsiFacade.getInstance(owner.getProject()).getParserFacade().createTypeElementFromText(typeText, owner).getType();
   }
 
-  public static @NotNull PsiType applyAnnotations(@NotNull PsiType type, @Nullable PsiModifierList modifierList) {
-    if (modifierList != null) {
-      PsiAnnotation[] annotations = modifierList.getAnnotations();
-      if (annotations.length > 0) {
-        if (type instanceof PsiArrayType) {
-          Deque<PsiArrayType> types = new ArrayDeque<>();
-          do {
-            types.push((PsiArrayType)type);
-            type = ((PsiArrayType)type).getComponentType();
-          }
-          while (type instanceof PsiArrayType);
-          type = annotate(type, modifierList, annotations);
-          while (!types.isEmpty()) {
-            PsiArrayType t = types.pop();
-            type = t instanceof PsiEllipsisType ? new PsiEllipsisType(type, t.getAnnotations()) : new PsiArrayType(type, t.getAnnotations());
-          }
-          return type;
-        }
-        else if (type instanceof PsiDisjunctionType) {
-          List<PsiType> components = new ArrayList<>(((PsiDisjunctionType)type).getDisjunctions());
-          components.set(0, annotate(components.get(0), modifierList, annotations));
-          return ((PsiDisjunctionType)type).newDisjunctionType(components);
-        }
-        else {
-          return annotate(type, modifierList, annotations);
-        }
-      }
-    }
-
-    return type;
-  }
-
-  private static @NotNull PsiType annotate(@NotNull PsiType type, @NotNull PsiModifierList modifierList, PsiAnnotation @NotNull [] annotations) {
+  public static @NotNull PsiType annotate(@NotNull PsiType type,
+                                          @NotNull PsiModifierList modifierList,
+                                          PsiAnnotation @NotNull [] annotations) {
     TypeAnnotationProvider original =
       modifierList.getParent() instanceof PsiMethod ? type.getAnnotationProvider() : TypeAnnotationProvider.EMPTY;
     TypeAnnotationProvider provider = new FilteringTypeAnnotationProvider(annotations, original);
