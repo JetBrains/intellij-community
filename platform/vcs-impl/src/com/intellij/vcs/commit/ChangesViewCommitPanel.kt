@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.ChangeListChangesSupplier
@@ -144,7 +143,7 @@ class ChangesViewCommitPanel internal constructor(
 
   override suspend fun refreshChangesViewBeforeCommit() {
     val deferred = CompletableDeferred<Unit>()
-    ChangesViewManager.getInstanceEx(project).scheduleRefresh { deferred.complete(Unit) }
+    changesView.scheduleRefreshNow { deferred.complete(Unit) }
     deferred.await()
   }
 }
