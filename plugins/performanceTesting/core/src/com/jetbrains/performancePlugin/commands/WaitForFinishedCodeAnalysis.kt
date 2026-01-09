@@ -233,7 +233,6 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     val isStartedInDumbMode = runReadAction { DumbService.isDumb(project) }
     synchronized(stateLock) {
       for (editor in fileEditors) {
-        LOG.info("Daemon starting for ${editor.description}")
         val previousSessionStartTrace = sessions.put(editor, ExceptionWithTime.createForAnalysisStart(editor, isStartedInDumbMode))
         ExceptionWithTime.createIntersectionErrorIfNeeded(editor, previousSessionStartTrace)?.let { errors.add(it) }
         filesYetToStartHighlighting.remove(editor.file)
