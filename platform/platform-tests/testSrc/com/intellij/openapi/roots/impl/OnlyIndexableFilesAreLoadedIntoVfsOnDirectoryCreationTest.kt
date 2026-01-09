@@ -29,15 +29,6 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
   @RegisterExtension
   val rootDir: TempDirectoryExtension = TempDirectoryExtension()
 
-  private fun collectFilesInVfs(root: VirtualFile): Set<VirtualFile> {
-    val result = mutableSetOf<VirtualFile>()
-    visitChildrenInVfsRecursively(root) { file ->
-      result.add(file)
-      true
-    }
-    return result
-  }
-
   private fun findVirtualFile(path: Path): VirtualFile {
     return checkNotNull(VfsTestUtil.findFileByCaseSensitivePath(path.pathString)) {
       "VirtualFile not found for path: $path"
@@ -60,7 +51,7 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
       rootDir.newDirectoryPath("d1/d2/d3")
       delay(1.seconds) // wait for fs events to arrive
       RefreshQueue.getInstance().refresh(true, listOf(rootVirtualFile))
-      val filesInVfs = collectFilesInVfs(rootVirtualFile)
+      val filesInVfs = visitChildrenInVfsRecursively(rootVirtualFile).toList()
       assertThat(filesInVfs).hasSize(3)
     }
   }
