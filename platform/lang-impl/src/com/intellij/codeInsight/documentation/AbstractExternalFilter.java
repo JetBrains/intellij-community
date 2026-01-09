@@ -258,6 +258,10 @@ public abstract class AbstractExternalFilter {
       }
     }
 
+    if (data.toString().endsWith("<li>\n")) {
+      data.delete(data.length() - 5, data.length());
+    }
+
     data.append(HTML_CLOSE);
   }
 

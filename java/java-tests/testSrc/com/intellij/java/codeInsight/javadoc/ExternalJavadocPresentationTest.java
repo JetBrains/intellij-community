@@ -56,6 +56,11 @@ public class ExternalJavadocPresentationTest extends LightJavaCodeInsightTestCas
   public void testPackageSummaryJava8() {
     doTest("package-summary.html", "packageSummaryJava8/package-summary.html", "packageSummaryJava8/expected.html");
   }
+  
+  public void testEnum(){
+    doTest("#SAME_THREAD", "enum/24/ExecutionMode.html", "enum/24/ExecutionMode.expected.html");
+    doTest("#SAME_THREAD", "enum/junit-5-12-2/ExecutionMode.html", "enum/junit-5-12-2/ExecutionMode.expected.html");
+  }
 
   private void doTest(String url, String pageText, String expected) {
     doTest(url, pageText, expected, true);
