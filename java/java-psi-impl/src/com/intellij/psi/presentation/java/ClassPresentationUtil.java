@@ -41,10 +41,10 @@ public final class ClassPresentationUtil {
   }
 
   private static String getNameForElement(@NotNull PsiElement element, boolean qualified, boolean ignorePsiClassOwner) {
-    if (element instanceof PsiClass){
+    if (element instanceof PsiClass) {
       return getNameForClass((PsiClass)element, qualified);
     }
-    else if (element instanceof PsiMethod){
+    else if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
       String methodName = method.getName();
       return JavaPsiBundle.message("method.context.display", methodName, getContextName(method, qualified, false));
@@ -52,13 +52,13 @@ public final class ClassPresentationUtil {
     else if (element instanceof PsiClassOwner && ignorePsiClassOwner) {
       return null;
     }
-    else if (element instanceof PsiFile){
+    else if (element instanceof PsiFile) {
       return ((PsiFile)element).getName();
     }
     else if (element instanceof PsiField) {
       return ((PsiField)element).getName() + " in " + getContextName(element, qualified, false);
     }
-    else{
+    else {
       return null;
     }
   }
@@ -67,12 +67,10 @@ public final class ClassPresentationUtil {
     return getContextName(element, qualified, true);
   }
 
-  public static String getContextName(@NotNull PsiElement element,
-                                      boolean qualified,
-                                      boolean ignorePsiClassOwner) {
+  public static String getContextName(@NotNull PsiElement element, boolean qualified, boolean ignorePsiClassOwner) {
     PsiElement parent = PsiTreeUtil.getStubOrPsiParentOfType(element, PsiMember.class);
     if (parent == null) parent = element.getContainingFile();
-    while(true){
+    while (true) {
       if (parent == null) return null;
       String name = getNameForElement(parent, qualified, ignorePsiClassOwner);
       if (name != null) return name;
@@ -86,6 +84,6 @@ public final class ClassPresentationUtil {
     final String lambdaText = stub instanceof FunctionalExpressionStub
                               ? ((FunctionalExpressionStub<?>)stub).getPresentableText()
                               : PsiExpressionTrimRenderer.render(functionalExpression);
-    return JavaPsiBundle.message("class.context.display", lambdaText, getContextName(functionalExpression, qualified, false)) ;
+    return JavaPsiBundle.message("class.context.display", lambdaText, getContextName(functionalExpression, qualified, false));
   }
 }
