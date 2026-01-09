@@ -14,6 +14,7 @@ import com.intellij.debugger.engine.LightOrRealThreadInfo;
 import com.intellij.debugger.engine.RealThreadInfo;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -33,6 +34,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiField;
+import com.intellij.util.CoroutineScopeKt;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -55,6 +58,7 @@ import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.InvalidRequestStateException;
+import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -85,6 +89,8 @@ public class BreakpointManager {
 
   private final Project myProject;
   private final Map<String, String> myUIProperties = new LinkedHashMap<>();
+
+  private final EventDispatcher<BreakpointLogMessageListener> myLogMessageDispatcher = EventDispatcher.create(BreakpointLogMessageListener.class);
 
   public BreakpointManager(@NotNull Project project, @NotNull DebuggerManagerImpl debuggerManager) {
     myProject = project;
@@ -664,5 +670,17 @@ public class BreakpointManager {
 
   public String setProperty(String name, String value) {
     return myUIProperties.put(name, value);
+  }
+
+  public void addLogMessageListener(CoroutineScope scope, BreakpointLogMessageListener listener) {
+    addLogMessageListener(listener, CoroutineScopeKt.asDisposable(scope));
+  }
+
+  private void addLogMessageListener(BreakpointLogMessageListener listener, Disposable parentDisposable) {
+    myLogMessageDispatcher.addListener(listener, parentDisposable);
+  }
+
+  void multicastLogMessage(Breakpoint<?> breakpoint, String message, DebugProcessImpl debugProcess) {
+    myLogMessageDispatcher.getMulticaster().onLogMessage(breakpoint, message, debugProcess);
   }
 }

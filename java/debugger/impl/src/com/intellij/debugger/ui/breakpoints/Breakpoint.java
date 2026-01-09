@@ -100,6 +100,10 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return myProject;
   }
 
+  private @NotNull BreakpointManager getBreakpointManager() {
+    return DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
+  }
+
   protected @NotNull P getProperties() {
     return myXBreakpoint.getProperties();
   }
@@ -395,7 +399,9 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         buf.append("\n");
       }
       if (!buf.isEmpty()) {
-        debugProcess.printToConsole(buf.toString());
+        var msg = buf.toString();
+        getBreakpointManager().multicastLogMessage(this, msg, debugProcess);
+        debugProcess.printToConsole(msg);
       }
     }
     if (isRemoveAfterHit()) {
@@ -623,7 +629,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       }
 
       private void removeBreakpoint() {
-        AppUIUtil.invokeOnEdt(() -> DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(Breakpoint.this));
+        AppUIUtil.invokeOnEdt(() -> getBreakpointManager().removeBreakpoint(Breakpoint.this));
         debugProcess.removeDebugProcessListener(this);
       }
     });
