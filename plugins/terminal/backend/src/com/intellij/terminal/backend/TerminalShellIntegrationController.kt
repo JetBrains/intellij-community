@@ -32,6 +32,7 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
             else emptyMap()
             dispatcher.multicaster.aliasesReceived(TerminalAliasesInfo(aliases))
           }
+          "completion_finished" -> processCompletionFinishedEvent(args)
           else -> LOG.warn("Unknown shell integration event: $args")
         }
       }
@@ -75,6 +76,11 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
     }
   }
 
+  private fun processCompletionFinishedEvent(args: List<String>) {
+    val result = Param.RESULT.getDecodedValue(args.getOrNull(1))
+    dispatcher.multicaster.completionFinished(result)
+  }
+
   fun addListener(listener: TerminalShellIntegrationEventsListener) {
     dispatcher.addListener(listener)
   }
@@ -86,7 +92,8 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
   private enum class Param {
     COMMAND,
     EXIT_CODE,
-    CURRENT_DIRECTORY;
+    CURRENT_DIRECTORY,
+    RESULT;
 
     private val paramNameWithSeparator: String = "${paramName()}="
 

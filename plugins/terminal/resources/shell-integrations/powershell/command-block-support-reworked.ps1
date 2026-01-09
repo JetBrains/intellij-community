@@ -77,3 +77,20 @@ function Global:PSConsoleHostReadLine {
 
   return $Command
 }
+
+function Global:__JetBrainsIntellijSendCompletions {
+	$CommandText = ""
+	$CursorIndex = 0
+	[Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$CommandText, [ref]$CursorIndex)
+
+	$Completions = TabExpansion2 -inputScript $CommandText -cursorColumn $CursorIndex
+  if ($Completions -ne $null) {
+    $CompletionsJson = $Completions | ConvertTo-Json -Compress
+    $Result = Global:__JetBrainsIntellijOSC "completion_finished;result=$(Global:__JetBrainsIntellijEncode $CompletionsJson)"
+  	Write-Host -NoNewLine $Result
+  }
+}
+
+Set-PSReadLineKeyHandler -Chord 'F12,e' -ScriptBlock {
+	Global:__JetBrainsIntellijSendCompletions
+}

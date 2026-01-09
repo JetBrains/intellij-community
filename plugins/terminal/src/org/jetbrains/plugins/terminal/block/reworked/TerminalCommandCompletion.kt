@@ -32,7 +32,7 @@ object TerminalCommandCompletion {
   }
 
   fun isSupportedForShell(name: ShellName): Boolean {
-    return name == ShellName.ZSH || name == ShellName.BASH
+    return name == ShellName.ZSH || name == ShellName.BASH || ShellName.isPowerShell(name)
   }
 
   @TestOnly

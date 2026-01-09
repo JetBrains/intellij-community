@@ -40,4 +40,10 @@ interface TerminalShellIntegration {
    * Allows listening for command start and finish events.
    */
   fun addCommandExecutionListener(parentDisposable: Disposable, listener: TerminalCommandExecutionListener)
+
+  /**
+   * Allows listening for results of shell-based completion.
+   */
+  @ApiStatus.Internal
+  fun addShellBasedCompletionListener(parentDisposable: Disposable, listener: TerminalShellBasedCompletionListener)
 }
