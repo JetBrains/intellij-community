@@ -7,6 +7,7 @@ import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
@@ -111,11 +112,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     boolean isBlockTerminal =
       (isGenOneTerminalEnabled() && shellIntegration != null && shellIntegration.getCommandBlocks());
 
+    var commandLine = ParametersListUtil.join(command);
     if (isGenTwoTerminalEnabled()) {
-      ReworkedTerminalUsageCollector.logLocalShellStarted(myProject, command);
+      ReworkedTerminalUsageCollector.logLocalShellStarted(myProject, commandLine);
     }
     else {
-      TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command, isBlockTerminal);
+      TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, commandLine, isBlockTerminal);
     }
 
     try {
