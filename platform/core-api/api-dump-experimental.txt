@@ -301,8 +301,12 @@ a:com.intellij.openapi.progress.Task
 f:com.intellij.openapi.project.DumbKt
 - *sf:waitForSmartMode(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.openapi.project.DumbService
+- *sf:DUMB_MODE_BACKGROUNDABLE:com.intellij.util.messages.Topic
 - *a:getState():kotlinx.coroutines.flow.StateFlow
 - *a:suspendIndexingAndRun(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.openapi.project.DumbService$DumbModeListenerBackgroundable
+- enteredDumbMode():V
+- exitDumbMode():V
 *:com.intellij.openapi.project.DumbService$DumbState
 - a:isDumb():Z
 *:com.intellij.openapi.project.IncompleteDependenciesService

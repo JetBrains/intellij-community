@@ -55,6 +55,7 @@ import javax.swing.JComponent
 open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   private val myProject: Project,
   private val publisher: DumbModeListener,
+  private val publisherBackgroundable: DumbModeListenerBackgroundable,
   private val scope: CoroutineScope,
 ) : DumbService(), Disposable, ModificationTracker, DumbServiceBalloon.Service {
   private val _state = MutableStateFlow(DumbStateImpl(!myProject.isDefault, 0L, 0))
@@ -70,6 +71,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
 
   // in the beginning, we have dumb mode
   private val dumbModeListenerState: AtomicReference<DumbModeEventListenerState> = AtomicReference(DumbModeEventListenerState.ENTERED)
+  private val dumbModeListenerBackgroundableState: AtomicReference<DumbModeEventListenerState> =
+    AtomicReference(DumbModeEventListenerState.ENTERED)
 
   @Volatile
   private var isDisposed = false
@@ -175,7 +178,12 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     }
   }
 
-  constructor(project: Project, scope: CoroutineScope) : this(project, project.messageBus.syncPublisher<DumbModeListener>(DUMB_MODE), scope)
+  constructor(project: Project, scope: CoroutineScope) : this(
+    project,
+    project.messageBus.syncPublisher<DumbModeListener>(DUMB_MODE),
+    project.messageBus.syncPublisher<DumbModeListenerBackgroundable>(DUMB_MODE_BACKGROUNDABLE),
+    scope
+  )
 
   init {
     guiDumbTaskRunner = DumbServiceGuiExecutor(myProject, taskQueue, DumbTaskListener())
@@ -271,7 +279,13 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   @RequiresWriteLock
   private fun doIncrementStateCounter(): Boolean {
     val old = _state.getAndUpdate { it.incrementDumbCounter() }
-    return old.isSmart
+    val isStateChanged = old.isSmart
+    if (isStateChanged) {
+      runEnteredListeners(dumbModeListenerBackgroundableState) {
+        publisherBackgroundable.enteredDumbMode()
+      }
+    }
+    return isStateChanged
   }
 
   // We cannot make this function `suspend`, because we have a contract that if dumb task is queued from EDT, dumb service becomes dumb
@@ -336,7 +350,13 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   @RequiresWriteLock
   private fun doDecrementDumbCounter(): Boolean {
     val new = _state.updateAndGet { it.decrementDumbCounter() }
-    return new.isSmart
+    val isStateChanged = new.isSmart
+    if (isStateChanged) {
+      runExitedListeners(dumbModeListenerBackgroundableState) {
+        publisherBackgroundable.exitDumbMode()
+      }
+    }
+    return isStateChanged
   }
 
   // this method is not `suspend` for the sake of symmetry: incrementDumbCounter is not `suspend` as of now
@@ -378,19 +398,33 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     ThreadingAssertions.assertEventDispatchThread()
 
     when (desiredListenerState) {
-      DumbModeEventListenerState.ENTERED -> {
-        if (!dumbModeListenerState.compareAndSet(DumbModeEventListenerState.EXITED, desiredListenerState)) {
-          LOG.error("Unexpected listener state: dumb mode is going to be entered without exiting")
+      DumbModeEventListenerState.ENTERED -> runEnteredListeners(dumbModeListenerState) {
+        WriteIntentReadAction.run {
+          publisher.enteredDumbMode()
         }
-        runCatchingIgnorePCE { WriteIntentReadAction.run { publisher.enteredDumbMode() } }
       }
-      DumbModeEventListenerState.EXITED -> {
-        if (!dumbModeListenerState.compareAndSet(DumbModeEventListenerState.ENTERED, desiredListenerState)) {
-          LOG.error("Unexpected listener state: dumb mode is going to be exited without entering")
+      DumbModeEventListenerState.EXITED -> runExitedListeners(dumbModeListenerState) {
+        WriteIntentReadAction.run {
+          publisher.exitDumbMode()
         }
-        runCatchingIgnorePCE { WriteIntentReadAction.run { publisher.exitDumbMode() } }
       }
     }
+  }
+
+  private fun runEnteredListeners(listenerState: AtomicReference<DumbModeEventListenerState>, listenerInvocation: () -> Unit) {
+    if (!listenerState.compareAndSet(DumbModeEventListenerState.EXITED, DumbModeEventListenerState.ENTERED)) {
+      LOG.error("Unexpected listener state: dumb mode is going to be entered without exiting")
+    }
+    runCatchingIgnorePCE {
+      listenerInvocation()
+    }
+  }
+
+  private fun runExitedListeners(listenerState: AtomicReference<DumbModeEventListenerState>, listenerInvocation: () -> Unit) {
+    if (!listenerState.compareAndSet(DumbModeEventListenerState.ENTERED, DumbModeEventListenerState.EXITED)) {
+      LOG.error("Unexpected listener state: dumb mode is going to be exited without entering")
+    }
+    listenerInvocation()
   }
 
   override fun canRunSmart(): Boolean {

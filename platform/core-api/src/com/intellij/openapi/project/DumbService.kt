@@ -22,7 +22,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
@@ -478,18 +480,31 @@ abstract class DumbService {
   abstract fun runWithWaitForSmartModeDisabled(): AccessToken
 
   /**
+   * This listener is always invoked on EDT after dumb mode changes.
+   * There is no guarantee that this listener runs synchronously with modification of dumb mode status.
    * @see [DUMB_MODE]
    */
   interface DumbModeListener {
-    /**
-     * The event arrives to EDT thread.
-     */
+    @RequiresEdt
     fun enteredDumbMode() {}
 
-    /**
-     * The event arrives to EDT thread.
-     */
+    @RequiresEdt
     fun exitDumbMode() {}
+  }
+
+  /**
+   * This listener is always invoked in write action synchronously with the change of dumb mode status.
+   * The thread of invocation is undefined.
+   */
+  @ApiStatus.Experimental
+  interface DumbModeListenerBackgroundable {
+    @RequiresWriteLock
+    fun enteredDumbMode() {
+    }
+
+    @RequiresEdt
+    fun exitDumbMode() {
+    }
   }
 
   @ApiStatus.Internal
@@ -518,6 +533,12 @@ abstract class DumbService {
     @JvmField
     @Topic.ProjectLevel
     val DUMB_MODE: Topic<DumbModeListener> = Topic("dumb mode", DumbModeListener::class.java, Topic.BroadcastDirection.NONE)
+
+    @ApiStatus.Experimental
+    @JvmField
+    @Topic.ProjectLevel
+    val DUMB_MODE_BACKGROUNDABLE: Topic<DumbModeListenerBackgroundable> =
+      Topic("dumb mode backgroundable", DumbModeListenerBackgroundable::class.java, Topic.BroadcastDirection.NONE)
 
     @JvmStatic
     fun isDumb(project: Project): Boolean {
