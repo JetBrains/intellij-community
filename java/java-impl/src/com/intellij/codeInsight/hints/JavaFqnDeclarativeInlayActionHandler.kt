@@ -16,7 +16,6 @@ import com.intellij.util.concurrency.AppExecutorUtil
 public class JavaFqnDeclarativeInlayActionHandler : InlayActionHandler {
   public companion object {
     public const val HANDLER_NAME: String = "java.fqn.class"
-
   }
 
   override fun handleClick(editor: Editor, payload: InlayActionPayload) {
@@ -38,7 +37,7 @@ public class JavaFqnDeclarativeInlayActionHandler : InlayActionHandler {
  * Finds class to navigate to by [InlayActionPayload]
  */
 public fun findNavigationElement(project: Project, payload: InlayActionPayload): PsiClass? {
-  payload as StringInlayActionPayload
+  if (payload !is StringInlayActionPayload) return null
   val fqn = payload.text
   val facade = JavaPsiFacade.getInstance(project)
   return facade.findClass(fqn, GlobalSearchScope.allScope(project))
