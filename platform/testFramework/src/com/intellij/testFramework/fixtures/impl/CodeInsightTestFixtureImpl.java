@@ -996,7 +996,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void renameTarget(@NotNull RenameTarget renameTarget, @NotNull String newName) {
-    RenameKt.renameAndWait(getProject(), renameTarget, newName);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      RenameKt.renameAndWait(getProject(), renameTarget, newName);
+    });
   }
 
   @Override
