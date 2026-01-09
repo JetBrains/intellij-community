@@ -12,7 +12,6 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.fus.AcceptanceRateTracker
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
@@ -24,13 +23,11 @@ import com.intellij.grazie.utils.NaturalTextDetector.seemsNatural
 import com.intellij.grazie.utils.getTextDomain
 import com.intellij.grazie.utils.toProofreadingContext
 import com.intellij.lang.annotation.ProblemGroup
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
@@ -45,7 +42,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 
-private val problemsKey = Key.create<CachedResults>("grazie.text.problems")
 private val LOG = Logger.getInstance(CheckerRunner::class.java)
 
 class CheckerRunner(val text: TextContent) {
@@ -69,13 +65,7 @@ class CheckerRunner(val text: TextContent) {
 
     val context = text.toProofreadingContext()
     if (context.language == Language.UNKNOWN || HighlightingUtil.findInstalledLang(context.language) == null) return emptyList()
-
-    val configStamp = service<GrazieConfig>().modificationCount
-    var cachedProblems = getCachedProblems(configStamp)
-    if (cachedProblems != null) return cachedProblems
-    cachedProblems = filter(doRun(TextChecker.allCheckers(), context))
-    text.putUserData(problemsKey, CachedResults(configStamp, cachedProblems))
-    return cachedProblems
+    return filter(doRun(TextChecker.allCheckers(), context))
   }
 
   @Suppress("unused")
@@ -83,14 +73,6 @@ class CheckerRunner(val text: TextContent) {
   @ApiStatus.ScheduledForRemoval
   fun run(checkers: List<TextChecker>, consumer: (List<TextProblem>) -> Unit) {
     // No-op implementation to prevent NoSuchMethodError
-  }
-
-  private fun getCachedProblems(configStamp: Long): List<TextProblem>? {
-    val cache = text.getUserData(problemsKey)
-    if (cache != null && cache.configStamp == configStamp) {
-      return cache.problems
-    }
-    return null
   }
 
   /**
@@ -288,5 +270,3 @@ class CheckerRunner(val text: TextContent) {
     }
   }
 }
-
-private data class CachedResults(val configStamp: Long, val problems: List<TextProblem>)
