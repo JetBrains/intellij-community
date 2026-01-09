@@ -12,6 +12,7 @@ def gradleApiArtifactId = 'gradle-api'
 def gradleApiVersion = readGradleApiVersion(project)
 def patchedVersionName = gradleApiVersion + (findProperty('versionNameSuffix') ?: '')
 def gradleApiDepsDir = new File(buildDir, "tmp/gradleApiExpanded/$gradleApiVersion/build/apiDeps")
+def gradleSourcesDir = new File(buildDir, "tmp/gradleSourcesExpanded/$gradleApiVersion")
 
 private static String readGradleApiVersion(Project project) {
   def propertiesPath = project.projectDir.toPath().resolve("../dependencies.properties")
@@ -109,6 +110,52 @@ task gradleApiJar(type: Zip, dependsOn: expandGradleApiJar) {
   from gradleApiDepsDir
 }
 
+task downloadGradleSources() {
+  doLast {
+    def sourcesZipFile = new File(buildDir, "tmp/gradle-${gradleApiVersion}-src.zip")
+    if (!sourcesZipFile.exists()) {
+      sourcesZipFile.parentFile.mkdirs()
+      def distributions = org.gradle.util.GradleVersion.version(gradleApiVersion)
+                            .isSnapshot() ? "distributions-snapshots" : "distributions"
+      def sourcesUrl = "https://services.gradle.org/${distributions}/gradle-${gradleApiVersion}-src.zip"
+      println "Downloading Gradle sources from: $sourcesUrl"
+      new URI(sourcesUrl).toURL().withInputStream { input ->
+        sourcesZipFile.withOutputStream { output ->
+          output << input
+        }
+      }
+    }
+    gradleSourcesDir.mkdirs()
+    copy {
+      from zipTree(sourcesZipFile)
+      into gradleSourcesDir
+    }
+  }
+}
+
+task gradleApiSourcesJar(type: Zip, dependsOn: downloadGradleSources) {
+  archiveExtension = 'jar'
+  archiveBaseName = gradleApiArtifactId
+  archiveClassifier = 'sources'
+  version = patchedVersionName
+  duplicatesStrategy = DuplicatesStrategy.WARN
+
+  from(gradleSourcesDir) {
+    include "gradle-${gradleApiVersion}/**/src/main/java/org/gradle/**"
+    include "gradle-${gradleApiVersion}/**/src/main/groovy/org/gradle/**"
+
+    exclude "gradle-${gradleApiVersion}/platforms/documentation/**"
+    exclude "gradle-${gradleApiVersion}/testing/**"
+    exclude "gradle-${gradleApiVersion}/**/src/*Test/**"
+    exclude "gradle-${gradleApiVersion}/**/src/test/**"
+
+    eachFile { file ->
+      file.path = file.path.replaceFirst("gradle-${gradleApiVersion}/.*/src/main/(java|groovy)/", '')
+    }
+    includeEmptyDirs = false
+  }
+}
+
 publishing {
   publications {
     gradleApi(MavenPublication) {
@@ -117,6 +164,7 @@ publishing {
       version patchedVersionName
 
       artifact gradleApiJar
+      artifact gradleApiSourcesJar
     }
   }
   repositories {
