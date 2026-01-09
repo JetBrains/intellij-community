@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="IDEA (K2 Kotlin)" type="Application" factoryName="Application" singleton="true">
+  <configuration default="false" name="IDEA (K1 Kotlin)" type="Application" factoryName="Application" singleton="true">
     <option name="ALTERNATIVE_JRE_PATH" value="BUNDLED" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <log_file alias="idea.log" path="$PROJECT_DIR$/system/idea/log/idea.log" />
