@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.gradleJava.run
 
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
@@ -22,7 +23,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.plugins.gradle.model.GradleExtension
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
+import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_CONTAINER
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION
@@ -167,3 +170,24 @@ fun configureKmpJvmRunConfigurationFromMainFunction(
 }
 
 private const val quietParameter: String = "--quiet"
+
+fun getGradleExtensions(moduleDataNode: DataNode<*>): List<GradleExtension>? =
+    ExternalSystemApiUtil.find(moduleDataNode, GradleExtensionsDataService.KEY)?.data?.extensions
+
+internal enum class KotlinGradlePluginType {
+    Jvm,
+    Multiplatform;
+
+    companion object {
+
+        fun getPluginType(moduleDataNode: DataNode<*>): KotlinGradlePluginType? {
+            val kotlinExtension = getGradleExtensions(moduleDataNode)?.singleOrNull { it.name == "kotlin" }
+            return when (kotlinExtension?.typeFqn) {
+                "org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension" -> Jvm
+                "org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension" -> Multiplatform
+                else -> null
+            }
+        }
+    }
+
+}
