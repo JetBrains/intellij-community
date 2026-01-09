@@ -505,28 +505,31 @@ open class MergingUpdateQueue @JvmOverloads constructor(
 
     val active = isActive
     val updatesToReject = ArrayList<Update>()
-    synchronized(scheduledUpdates) {
-      try {
-        if (eatThisOrOthers(update, updatesToReject)) {
-          return@synchronized
-        }
+    try {
+      synchronized(scheduledUpdates) {
+        try {
+          if (eatThisOrOthers(update, updatesToReject)) {
+            return@synchronized
+          }
 
-        if (active && scheduledUpdates.isEmpty) {
-          restartTimer()
-        }
-        put(update, updatesToReject)
+          if (active && scheduledUpdates.isEmpty) {
+            restartTimer()
+          }
+          put(update, updatesToReject)
 
-        if (restartOnAdd) {
-          restartTimer()
+          if (restartOnAdd) {
+            restartTimer()
+          }
+        }
+        finally {
+          if (isEmpty) {
+            finishActivity()
+          }
         }
       }
-      finally {
-        if (isEmpty) {
-          finishActivity()
-        }
-      }
+    } finally {
+      updatesToReject.forEachGuaranteed(Update::setRejected)
     }
-    updatesToReject.forEachGuaranteed(Update::setRejected)
   }
 
   private fun eatThisOrOthers(update: Update, updatesToReject: MutableList<Update>): Boolean {
