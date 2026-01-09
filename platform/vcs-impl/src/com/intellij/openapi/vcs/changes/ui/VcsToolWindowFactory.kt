@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.ide.actions.ToolWindowEmptyStateAction
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -19,6 +20,7 @@ import com.intellij.openapi.vcs.ex.VcsActivationListener
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.vcs.impl.shared.ui.ToolWindowLazyContent
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.content.Content
@@ -99,6 +101,11 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   protected open fun setEmptyState(project: Project, state: StatusText) {
+  }
+
+  internal companion object {
+    fun canBeAvailableInProject(project: Project) = TrustedProjects.isProjectTrusted(project) &&
+                                                    !WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
   }
 }
 
