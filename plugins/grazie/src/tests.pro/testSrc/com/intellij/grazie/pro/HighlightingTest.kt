@@ -558,6 +558,18 @@ class HighlightingTest : BaseTestCase() {
     assertEquals(intentions[2].text, "Jim gets")
   }
 
+  @NeedsCloud
+  @Test
+  fun `test articles before url are ignored`() {
+    checkCloudAndLocal(
+      "a.java",
+      """
+        // If we know that @currentToken is a url, we will strictly use it (--url).
+        // If we know that @currentToken is an url, we will strictly use it (--url).
+      """.trimIndent()
+    )
+  }
+
   companion object {
     @JvmStatic
     fun enableLanguages(langs: Set<Lang>, project: Project, disposable: Disposable) {

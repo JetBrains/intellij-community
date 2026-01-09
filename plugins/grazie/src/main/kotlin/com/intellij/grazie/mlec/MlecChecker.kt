@@ -1,5 +1,6 @@
 package com.intellij.grazie.mlec
 
+import ai.grazie.gec.model.problem.ProblemFix
 import ai.grazie.gec.model.problem.SentenceWithProblems
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.locale
@@ -81,6 +82,20 @@ class MlecChecker : ExternalTextChecker() {
           }
         }
       }
+      .filterNot { isKnownMlecBug(it) }
+  }
+
+  private fun isKnownMlecBug(problem: GrazieProblem): Boolean {
+    if (problem.source.info.id.id == "mlec.en.grammar.article.incorrect") {
+      return problem.source.fixes.any { fix ->
+        val parts = fix.parts
+          .filterIsInstance<ProblemFix.Part.Change>()
+          .filter { part -> part.type == ProblemFix.Part.Change.ChangeType.REPLACE }
+        if (parts.isEmpty()) return@any false
+        parts.any { it.text.equals("an url", ignoreCase = true) }
+      }
+    }
+    return false
   }
 
   @Suppress("NonAsciiCharacters")

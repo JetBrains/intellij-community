@@ -194,7 +194,8 @@ private val nextWordPattern = Regex("\\s+(\\w+)")
 private val an_vs_a_exclusions = mapOf(
   "an" to listOf(
     Regex("xlsx", RegexOption.IGNORE_CASE),
-    Regex("mp3", RegexOption.IGNORE_CASE)
+    Regex("mp3", RegexOption.IGNORE_CASE),
+    Regex("url", RegexOption.IGNORE_CASE)
   ),
   "a" to listOf(
     Regex("uint.*", RegexOption.IGNORE_CASE),
