@@ -561,6 +561,7 @@
 
     <group id="Git.WorkingTrees.ToolwindowGroup.Popup" popup="true">
       <reference ref="Git.WorkingTrees.Open"/>
+      <separator/>
       <reference ref="Git.WorkingTrees.Remove"/>
     </group>
   </actions>
