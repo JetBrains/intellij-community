@@ -42,6 +42,9 @@ fun SimpleHtmlPane(
         p {
             padding: 0 0 0 0;
         }
+        p.custom_image {
+            padding: 4px 0 4px 0;
+        }
       """.trimIndent())
       .customStyleSheetProvider { additionalStyleSheet ?: StyleSheet() }
       .extensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP,

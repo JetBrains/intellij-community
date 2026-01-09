@@ -265,7 +265,7 @@ class GitLabMarkdownToHtmlConverter(
         super.renderLink(visitor, text, node, info)
         return
       }
-      visitor.consumeTagOpen(node, "p")
+      visitor.consumeTagOpen(node, "p", """class="custom_image"""")
       visitor.consumeTagOpen(node, "a", "href=\"${makeAbsoluteUrl(linkInfo.destination)}\"")
       super.renderLink(visitor, text, node, info)
       visitor.consumeTagClose("a")
