@@ -381,6 +381,7 @@ private fun tryLoadIcon(iconFile: Path): PluginLogoIconProvider? {
 private class PluginLogoLoader(private val coroutineScope: CoroutineScope) {
   @JvmField
   var prepareToLoad: MutableList<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>>? = null
+  private val dispatcher = Dispatchers.IO.limitedParallelism(4)
 
   fun startBatchMode() {
     assert(prepareToLoad == null)
@@ -400,7 +401,7 @@ private class PluginLogoLoader(private val coroutineScope: CoroutineScope) {
       return
     }
 
-    coroutineScope.launch(Dispatchers.IO) {
+    coroutineScope.launch(dispatcher) {
       for (info in loadInfo) {
         launch {
           val idPlugin = getIdForKey(descriptor = info.first)
