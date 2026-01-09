@@ -24,22 +24,18 @@ import java.util.*
 
 abstract class KaScriptModuleBase(
     override val project: Project,
-    open val virtualFile: VirtualFile,
+    protected open val virtualFile: VirtualFile,
 ) : KaScriptModule, KaModuleBase() {
+    protected open val snapshot: ImmutableEntityStorage by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        project.workspaceModel.currentSnapshot
+    }
+
     protected val virtualFileUrlManager: VirtualFileUrlManager
         get() = project.workspaceModel.getVirtualFileUrlManager()
-
-    protected val currentSnapshot: ImmutableEntityStorage
-        get() = project.workspaceModel.currentSnapshot
 
     private val scriptDefinition: ScriptDefinition by lazy {
         findScriptDefinition(project, KtFileScriptSource(file))
     }
-
-    protected val kotlinScriptEntity: KotlinScriptEntity?
-        get() = currentSnapshot.getVirtualFileUrlIndex()
-            .findEntitiesByUrl(virtualFile.toVirtualFileUrl(virtualFileUrlManager))
-            .filterIsInstance<KotlinScriptEntity>().firstOrNull()
 
     override val directDependsOnDependencies: List<KaModule> get() = emptyList()
 

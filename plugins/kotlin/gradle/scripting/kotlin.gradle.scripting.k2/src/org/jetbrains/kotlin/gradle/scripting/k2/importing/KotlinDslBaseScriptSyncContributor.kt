@@ -40,24 +40,20 @@ internal class KotlinDslBaseScriptSyncContributor : GradleSyncContributor {
             }
         }
 
-        val builder = storage.toBuilder()
-        builder.also { storage ->
-            val models = readAction {
-                FileEditorManager.getInstance(context.project).allEditors
-            }.filter {
-                it.file.name.endsWith(".gradle.kts")
-            }.map { fileEditor ->
-                GradleScriptModel(
-                    fileEditor.file, baseModel.compileClassPath.map { it.path }, listOf(), baseModel.implicitImports
-                )
-            }
-
-            GradleKotlinScriptEntityProvider.getInstance(context.project).updateStorage(
-                storage,
-                models,
-                definitions,
+        val models = readAction {
+            FileEditorManager.getInstance(context.project).allEditors
+        }.filter {
+            it.file.name.endsWith(".gradle.kts")
+        }.map { fileEditor ->
+            GradleScriptModel(
+                fileEditor.file, baseModel.compileClassPath.map { it.path }, listOf(), baseModel.implicitImports
             )
         }
-        return builder.toSnapshot()
+
+        return GradleKotlinScriptEntityProvider.getInstance(context.project).getUpdatedStorage(
+            storage.toBuilder(),
+            models,
+            definitions,
+        )
     }
 }

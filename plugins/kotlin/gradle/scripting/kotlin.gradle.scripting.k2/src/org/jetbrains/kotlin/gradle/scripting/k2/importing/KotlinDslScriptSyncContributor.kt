@@ -81,9 +81,7 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
             )
         )
 
-        GradleKotlinScriptEntityProvider.getInstance(project).updateStorage(scriptData, builder)
-
-        return builder.toSnapshot()
+        return GradleKotlinScriptEntityProvider.getInstance(project).getUpdatedStorage(scriptData, builder)
     }
 }
 

@@ -4,22 +4,21 @@ package org.jetbrains.kotlin.gradle.scripting.k2
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.ide.legacyBridge.findSnapshotModuleEntity
 import org.jetbrains.kotlin.gradle.scripting.k2.definition.withIdeKeys
 import org.jetbrains.kotlin.gradle.scripting.k2.importing.GradleScriptData
 import org.jetbrains.kotlin.gradle.scripting.k2.importing.GradleScriptModel
@@ -67,24 +66,21 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
         }
     }
 
-    fun updateStorage(
+    fun getUpdatedStorage(
         scriptData: GradleScriptData,
         storageToUpdate: MutableEntityStorage
-    ) {
+    ): ImmutableEntityStorage {
         val javaHome = scriptData.definitionsParams.javaHome
         val definitions = loadGradleDefinitions(scriptData.definitionsParams).map { it.withIdeKeys(project) }
-        val updatedStorage = MutableEntityStorage.create().apply {
-            updateStorage(this, scriptData.models, definitions, javaHome)
-        }
-        storageToUpdate.replaceBySource({ it is KotlinGradleScriptEntitySource }, updatedStorage)
+        return getUpdatedStorage(storageToUpdate, scriptData.models, definitions, javaHome)
     }
 
-    fun updateStorage(
+    fun getUpdatedStorage(
         storage: MutableEntityStorage,
         models: Collection<GradleScriptModel>,
         definitions: Collection<GradleScriptDefinition>,
         javaHome: String? = null
-    ) {
+    ): ImmutableEntityStorage {
         definitions.forEach {
             storage addEntity GradleScriptDefinitionEntity(
                 it.definitionId,
@@ -114,6 +110,8 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
             val configurationResult = refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
             storage.updateStorage(model.virtualFile, configurationResult, model.classpathModel)
         }
+
+        return storage.toSnapshot()
     }
 
     private fun String?.resolveSdk(): Sdk? {
@@ -177,17 +175,33 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
             this.configuration = configurationWrapper.configuration?.asEntity()
             this.reports = configurationResult.reports.map(ScriptDiagnostic::map).toMutableList()
             this.sdkId = configurationWrapper.configuration?.sdkId
-            this.relatedModuleIds = classpathModel?.getRelatedModules().orEmpty().toMutableList()
+            this.relatedModuleIds = classpathModel?.let { getRelatedModules(it) }.orEmpty().toMutableList()
         }
     }
 
-    private fun GradleBuildScriptClasspathModel.getRelatedModules(): Sequence<ModuleId> =
-        classpath.flatMap { it.classes + it.sources }.distinct().asSequence()
-            .mapNotNull { it.toNioPathOrNull() }
-            .mapNotNull { VirtualFileManager.getInstance().findFileByNioPath(it) }
-            .mapNotNull { ModuleUtilCore.findModuleForFile(it, project) }
-            .mapNotNull { it.findSnapshotModuleEntity()?.symbolicId }
-            .distinct()
+    private fun MutableEntityStorage.getRelatedModules(classpathModel: GradleBuildScriptClasspathModel): MutableSet<ModuleId> {
+
+        val virtualFileUrls = classpathModel.classpath.flatMap { it.sources }.mapNotNull {
+            it.toVirtualFileUrl(urlManager)
+        }.filter { it.virtualFile != null }
+
+        val result = mutableSetOf<ModuleId>()
+        for (url in virtualFileUrls) {
+            var current: VirtualFileUrl? = url
+            while (current != null && current.url != project.basePath) {
+                val moduleIds = getVirtualFileUrlIndex().findEntitiesByUrl(current)
+                        .filterIsInstance<ContentRootEntity>().map { it.module.symbolicId }.toSet()
+
+                if (result.addAll(moduleIds)) {
+                    break
+                }
+
+                current = current.parent
+            }
+        }
+
+        return result
+    }
 
     private fun MutableEntityStorage.getOrCreateScriptLibrary(
         jar: VirtualFileUrl, sources: Collection<VirtualFileUrl>
