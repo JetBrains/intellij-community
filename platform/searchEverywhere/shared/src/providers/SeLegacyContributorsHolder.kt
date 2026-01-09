@@ -18,7 +18,7 @@ import fleet.kernel.DurableEntityType
 import fleet.kernel.DurableRef
 import fleet.kernel.change
 import fleet.kernel.ref
-import fleet.kernel.shared
+import fleet.kernel.rebase.shared
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 

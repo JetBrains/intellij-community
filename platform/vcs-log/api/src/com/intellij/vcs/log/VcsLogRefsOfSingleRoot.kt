@@ -9,6 +9,9 @@ import java.util.function.IntConsumer
  */
 @ApiStatus.NonExtendable
 interface VcsLogRefsOfSingleRoot {
+  val branches: Sequence<VcsRef>
+  val tags: Sequence<VcsRef>
+
   fun contains(index: VcsLogCommitStorageIndex): Boolean
 
   /**
@@ -16,11 +19,9 @@ interface VcsLogRefsOfSingleRoot {
    */
   fun refsToCommit(index: VcsLogCommitStorageIndex): List<VcsRef>
 
-  fun getBranches(): Sequence<VcsRef>
-  fun getTags(): Sequence<VcsRef>
-  fun getRefs(): Sequence<VcsRef> = getBranches() + getTags()
-
   fun getRefsIndexes(): Collection<VcsLogCommitStorageIndex>
 
   fun forEachBranchIndex(consumer: IntConsumer)
 }
+
+val VcsLogRefsOfSingleRoot.allRefs: Sequence<VcsRef> get() = branches + tags

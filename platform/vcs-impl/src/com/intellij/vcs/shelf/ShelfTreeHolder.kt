@@ -25,6 +25,8 @@ import com.intellij.vcs.shelf.diff.ShelfDiffChangesState
 import com.intellij.vcs.shelf.diff.ShelvedPreviewProcessor
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.*
+import fleet.kernel.rebase.SharedChangeScope
+import fleet.kernel.rebase.shared
 import fleet.kernel.rete.Rete
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow

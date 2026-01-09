@@ -110,4 +110,9 @@ class FollowerTransactorMiddleware(
         }
     }
   }
+
+  context(cs: ChangeScope)
+  override fun initDb() {
+    registerInternalEntities()
+  }
 }

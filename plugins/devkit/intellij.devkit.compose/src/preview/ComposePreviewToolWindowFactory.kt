@@ -99,6 +99,9 @@ internal class ComposePreviewToolWindowFactory : ToolWindowFactory, DumbAware {
             provider.build(currentComposer, currentCompositeKeyHashCode)
           })
         }
+        catch (e: ComposeLocalContextException) {
+          wrapperPanel.displayMissingLocals(e)
+        }
         catch (e: Exception) {
           LOG.error("Unable to apply content for UI preview of $virtualFile", e)
         }

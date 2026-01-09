@@ -164,7 +164,7 @@ suspend fun <M, I> DiffViewerBase.showCodeReview(
   }
 }
 
-private typealias EditorCodeReviewRenderer = suspend (
+typealias EditorCodeReviewRenderer = suspend (
   editor: EditorEx,
   side: Side?,
   locationToLine: (DiffLineLocation) -> Int?,
@@ -172,7 +172,7 @@ private typealias EditorCodeReviewRenderer = suspend (
   lineToUnified: (Int) -> Pair<Int, Int>,
 ) -> Nothing
 
-private suspend fun DiffViewerBase.showCodeReview(editorRenderer: EditorCodeReviewRenderer): Nothing {
+suspend fun DiffViewerBase.showCodeReview(editorRenderer: EditorCodeReviewRenderer): Nothing {
   val viewer = this
   withContext(Dispatchers.EDT + CoroutineName("Code review diff UI")) {
     supervisorScope {
@@ -239,7 +239,7 @@ private suspend fun DiffViewerBase.showCodeReview(editorRenderer: EditorCodeRevi
   }
 }
 
-private suspend fun <I, M> EditorEx.showCodeReview(model: M, rendererFactory: RendererFactory<I, JComponent>): Nothing
+suspend fun <I, M> EditorEx.showCodeReview(model: M, rendererFactory: RendererFactory<I, JComponent>): Nothing
   where I : CodeReviewInlayModel, M : CodeReviewEditorModel<I> {
   val editor = this
   coroutineScope {

@@ -43,6 +43,22 @@ public class DefaultLightProjectDescriptor extends LightProjectDescriptor {
     return JAVA_MODULE_ENTITY_TYPE_ID_NAME;
   }
 
+  /**
+   * Returns the SDK for tests using this descriptor.
+   *
+   * <p><b>Default:</b> Returns {@link IdeaTestUtil#getMockJdk17()} (Mock JDK 1.7, Java 7).
+   *
+   * <p><b>Important:</b> Mock JDK 1.7 does NOT contain {@code java.nio.file.*} classes.
+   * If your test needs {@code Path}, {@code Paths}, or {@code Files}, create a custom
+   * descriptor with a higher JDK version:
+   * <pre>{@code
+   * private static final LightProjectDescriptor DESCRIPTOR =
+   *     new DefaultLightProjectDescriptor(IdeaTestUtil::getMockJdk11);
+   * }</pre>
+   *
+   * @return the SDK, defaults to Mock JDK 1.7 (Java 7)
+   * @see IdeaTestUtil#getMockJdk(com.intellij.util.lang.JavaVersion) for version mapping details
+   */
   @Override
   public Sdk getSdk() {
     return customSdk == null ? IdeaTestUtil.getMockJdk17() : customSdk.get();

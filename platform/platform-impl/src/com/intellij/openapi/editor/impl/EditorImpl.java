@@ -1249,7 +1249,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent.setOpaque(true);
 
     myScrollPane.setViewportView(myEditorComponent);
-    //myScrollPane.setBorder(null);
     myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
@@ -2583,7 +2582,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void borderChanged() {
-    myScrollPane.setBorder(myState.getMyBorder());
+    myScrollPane.doSetBorder(myState.getMyBorder());
   }
 
   @Override
@@ -5283,11 +5282,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @DirtyUI
   private final class MyScrollPane extends JBScrollPane {
+    private final boolean myInitialized;
     private JComponent myStatusComponent;
 
     private MyScrollPane() {
       super(0);
       setupCorners();
+      myInitialized = true;
     }
 
     @Override
@@ -5405,6 +5406,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     protected Layout createLayout() {
       return new MyScrollPaneLayout();
+    }
+
+    @Override
+    public void setBorder(Border border) {
+      if (myInitialized) {
+        EditorImpl.this.setBorder(border);
+      }
+      else {
+        doSetBorder(border);
+      }
+    }
+
+    private void doSetBorder(Border border) {
+      super.setBorder(border);
     }
   }
 

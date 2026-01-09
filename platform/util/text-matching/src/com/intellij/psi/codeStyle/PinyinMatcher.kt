@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.jvm.JvmStatic
 
 class PinyinMatcher internal constructor(override val pattern: String) : MinusculeMatcher() {
-  override fun matchingFragments(name: String): FList<TextRange>? {
+  override fun match(name: String): List<TextRange>? {
     val pattern = this.pattern
     val patternLength = pattern.length
     val nameLength = name.length
@@ -36,18 +36,19 @@ class PinyinMatcher internal constructor(override val pattern: String) : Minuscu
           continue@OUTER
         }
       }
-      return FList.singleton(TextRange.create(start, start + patternLength))
+      return listOf(TextRange.create(start, start + patternLength))
     }
     return null
   }
 
-  override fun matchingDegree(
-    name: String,
-    valueStartCaseMatch: Boolean,
-    fragments: FList<out TextRange>?,
-  ): Int {
-    return if (fragments != null && fragments.size == 1) {
-      val range = fragments.head
+  @Deprecated("use match(String)", replaceWith = ReplaceWith("match(name)"))
+  override fun matchingFragments(name: String): FList<TextRange>? {
+    return match(name)?.asReversed()?.let { FList.createFromReversed(it) }
+  }
+
+  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<TextRange>?): Int {
+    return if (!fragments.isNullOrEmpty()) {
+      val range = fragments.first()
       if (range.startOffset == 0) {
         return 500 + range.length
       }
@@ -63,6 +64,15 @@ class PinyinMatcher internal constructor(override val pattern: String) : Minuscu
     else {
       Int.MIN_VALUE
     }
+  }
+
+  @Deprecated("use matchingDegree(String, Boolean, List<TextRange>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)"))
+  override fun matchingDegree(
+    name: String,
+    valueStartCaseMatch: Boolean,
+    fragments: FList<out TextRange>?,
+  ): Int {
+    return matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)
   }
 
   companion object {

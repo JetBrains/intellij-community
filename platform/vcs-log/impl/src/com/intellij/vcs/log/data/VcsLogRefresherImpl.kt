@@ -8,10 +8,7 @@ import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
-import com.intellij.vcs.log.TimedVcsCommit
-import com.intellij.vcs.log.VcsLogProvider
-import com.intellij.vcs.log.VcsLogRefsOfSingleRoot
-import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.util.trace
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
@@ -63,7 +60,7 @@ internal class VcsLogRefresherImpl(
         _isBusy.value = true
         currentDataPack = runInitialRefresh()
 
-        refreshRequests.send(RefreshRequest.ReloadAll) // build/rebuild the full log in background
+        refreshRequests.send(RefreshRequest.ReloadAll) // build/rebuild the full  log in background
 
         handleRefreshRequests()
       }
@@ -314,7 +311,7 @@ internal class VcsLogRefresherImpl(
 
   private fun prepareRequirements(roots: Collection<VirtualFile>, commitCount: Int, prevRefs: Map<VirtualFile, VcsLogRefsOfSingleRoot>?) =
     roots.associateWith { root ->
-      val refs = prevRefs?.get(root)?.getRefs()?.toList()
+      val refs = prevRefs?.get(root)?.allRefs?.toList()
       if (refs == null) {
         RequirementsImpl(commitCount, true, listOf<VcsRef>(), false)
       }

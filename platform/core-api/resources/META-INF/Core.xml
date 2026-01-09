@@ -63,8 +63,8 @@
     <!--We need to define an extension point for Eel Provider here because it is used in GeneralCommandLine.
         If something unfortunate happens to GeneralCommandLine, we would need to remove this definition -->
     <extensionPoint name="eelProvider" interface="com.intellij.platform.eel.provider.EelProvider" dynamic="true"/>
-    <extensionPoint name="eelMachineProvider"
-                    interface="com.intellij.platform.eel.provider.EelMachineProvider" dynamic="true"/>
+    <extensionPoint name="eelMachineResolver"
+                    interface="com.intellij.platform.eel.provider.EelMachineResolver" dynamic="true"/>
     <extensionPoint name="iconProvider" interface="com.intellij.ide.IconProvider" dynamic="true"/>
     <extensionPoint name="inspection.basicVisitor" beanClass="com.intellij.psi.BasicInspectionVisitorBean" dynamic="true">
       <with attribute="class" implements="com.intellij.psi.PsiElementVisitor"/>

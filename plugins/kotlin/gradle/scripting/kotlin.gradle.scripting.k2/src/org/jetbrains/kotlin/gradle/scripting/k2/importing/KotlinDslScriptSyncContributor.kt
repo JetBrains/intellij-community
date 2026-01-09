@@ -65,6 +65,7 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
                 it.classPath,
                 it.sourcePath,
                 it.imports,
+                it.classpathModel
             )
         }
 
@@ -96,4 +97,5 @@ class GradleScriptModel(
     val classPath: List<String>,
     val sourcePath: List<String>,
     val imports: List<String>,
+    val classpathModel: GradleBuildScriptClasspathModel? = null,
 )

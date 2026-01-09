@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.List;
 
 public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> implements PsiParameter {
   private volatile PsiType myCachedType;
@@ -51,29 +52,44 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
       if (parameterIndex > -1) {
         PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(param, PsiLambdaExpression.class);
         if (lambdaExpression != null) {
-          PsiType functionalInterfaceType = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(param, false,
-                                                                                                              () -> LambdaUtil.getFunctionalInterfaceType(lambdaExpression, true));
-          if (functionalInterfaceType == null) {
-            Ref<PsiType> typeRef = Ref.create();
-            // Probably there are several candidates for the functional expression type but all of them have the same parameter type
-            LambdaUtil.processParentOverloads(lambdaExpression, t -> {
-              PsiType candidate = getTypeForFunctionalInterfaceType(lambdaExpression, t, parameterIndex);
-              PsiType prevType = typeRef.get();
-              if (prevType == null) {
-                typeRef.set(candidate);
+          PsiType type = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(param, false, () -> {
+            PsiElement parent = lambdaExpression.getParent();
+            if (parent instanceof PsiExpressionList) {
+              PsiElement gParent = parent.getParent();
+              if (gParent instanceof PsiAnonymousClass) {
+                gParent = gParent.getParent();
               }
-              else {
-                if (!(prevType instanceof PsiLambdaParameterType) && !prevType.equals(candidate)) {
-                  typeRef.set(new PsiLambdaParameterType(param));
-                }
+              List<?> overloadStack = MethodCandidateInfo.ourOverloadGuard.currentStack();
+              if (gParent instanceof PsiCall &&
+                  (overloadStack.contains(gParent) || overloadStack.contains(lambdaExpression))
+              ) {
+                return null;
               }
-            });
-            if (!typeRef.isNull()) {
-              return typeRef.get();
             }
-          }
-          PsiType lambdaParameterFromType = getTypeForFunctionalInterfaceType(lambdaExpression, functionalInterfaceType, parameterIndex);
-          if (lambdaParameterFromType != null) return lambdaParameterFromType;
+
+            PsiType functionalInterfaceType = LambdaUtil.getFunctionalInterfaceType(lambdaExpression, true);
+            if (functionalInterfaceType == null) {
+              Ref<PsiType> typeRef = Ref.create();
+              // Probably there are several candidates for the functional expression type but all of them have the same parameter type
+              LambdaUtil.processParentOverloads(lambdaExpression, t -> {
+                PsiType candidate = getTypeForFunctionalInterfaceType(lambdaExpression, t, parameterIndex);
+                PsiType prevType = typeRef.get();
+                if (prevType == null) {
+                  typeRef.set(candidate);
+                }
+                else {
+                  if (!(prevType instanceof PsiLambdaParameterType) && !prevType.equals(candidate)) {
+                    typeRef.set(new PsiLambdaParameterType(param));
+                  }
+                }
+              });
+              if (!typeRef.isNull()) {
+                return typeRef.get();
+              }
+            }
+            return getTypeForFunctionalInterfaceType(lambdaExpression, functionalInterfaceType, parameterIndex);
+          });
+          if (type != null) return type;
         }
       }
     }

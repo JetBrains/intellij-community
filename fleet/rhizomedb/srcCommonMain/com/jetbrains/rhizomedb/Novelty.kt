@@ -42,19 +42,23 @@ class MutableNovelty(
  * Novelty represents the difference between two DB snapshots: dbBefore and dbAfter.
  * Every retracted datom in Novelty is guaranteed to be present in dbBefore,
  * Every added datom in Novelty is guaranteed to be present in dbAfter.
- * */
+ */
 class Novelty internal constructor(
   internal val assertions: PersistentMap.Builder<EAT, Any>,
   internal val retractions: PersistentMap.Builder<EAT, Any>,
   internal val editor: Editor,
   internal var _size: Int,
 ) : ImmutableCollection<Datom> {
+  fun displayNovelty(): String =
+    "Novelty[assertions: ${assertions}, retractions: ${retractions}]"
 
   companion object {
-    val Empty = Novelty(assertions = persistentHashMapOf<EAT, Any>().builder(),
-                        retractions = persistentHashMapOf<EAT, Any>().builder(),
-                        editor = Editor(),
-                        _size = 0)
+    val Empty = Novelty(
+      assertions = persistentHashMapOf<EAT, Any>().builder(),
+      retractions = persistentHashMapOf<EAT, Any>().builder(),
+      editor = Editor(),
+      _size = 0
+    )
   }
 
   override fun contains(element: Datom): Boolean =
@@ -127,10 +131,12 @@ class Novelty internal constructor(
     mutable().apply { addAll(rhs) }.persistent()
 
   operator fun unaryMinus(): Novelty =
-    Novelty(assertions = retractions,
-            retractions = assertions,
-            editor = Editor(),
-            _size = _size)
+    Novelty(
+      assertions = retractions,
+      retractions = assertions,
+      editor = Editor(),
+      _size = _size
+    )
 
   private inline fun withMutableCopy(editor: Editor, body: Novelty.() -> Unit): Novelty =
     when {
@@ -158,20 +164,19 @@ class Novelty internal constructor(
             // the datom has not been retracted during this transaction, list it as a new assertion:
             assertions.addCardinalityAware(editor, eat, datom.value)
             _size++
-          }
-          else {
+          } else {
             _size--
             // normally one can't assert the same datom that was retracted already, because the T is unique,
             // however this might happen during the process of union with an inverted novelty
           }
         }
+
         false -> {
           if (!assertions.removeCardinalityAware(editor, eat, datom.value)) {
             // the datom has not been added during this transaction, list it as a new retraction:
             retractions.addCardinalityAware(editor, eat, datom.value)
             _size++
-          }
-          else {
+          } else {
             _size--
             // the datom has been added and retracted within the same tx,
             // meaning it must not be listed in the novelty,
@@ -182,8 +187,10 @@ class Novelty internal constructor(
     }
 }
 
-private class SetWithEditor(val set: PersistentSet.Builder<Any>,
-                            val editor: Editor) {
+private class SetWithEditor(
+  val set: PersistentSet.Builder<Any>,
+  val editor: Editor
+) {
   fun add(editor: Editor, any: Any): SetWithEditor =
     when {
       editor == this.editor -> this.also { set.add(any) }
@@ -210,6 +217,7 @@ private fun MutableMap<EAT, Any>.removeCardinalityAware(editor: Editor, eat: EAT
         null -> {
           false
         }
+
         else -> {
           val setPrime = (set as SetWithEditor).remove(editor, value)
           when {
@@ -218,6 +226,7 @@ private fun MutableMap<EAT, Any>.removeCardinalityAware(editor: Editor, eat: EAT
               remove(eat)
               true
             }
+
             else -> true
           }
         }
@@ -230,12 +239,14 @@ private fun MutableMap<EAT, Any>.addCardinalityAware(editor: Editor, eat: EAT, v
     Cardinality.One -> {
       put(eat, value)
     }
+
     Cardinality.Many -> {
       val set = this[eat]
       when {
         set == null -> {
           put(eat, SetWithEditor(persistentHashSetOf(value).builder(), editor))
         }
+
         else -> {
           val newSet = (set as SetWithEditor).add(editor, value)
           if (newSet !== set) {
@@ -261,6 +272,7 @@ fun Novelty.deduplicateValues(): Iterable<EAVa> = let { novelty ->
   val assertions = novelty.assertions().map { d -> EAV(d.eid, d.attr, d.value) }.toHashSet()
   val retractions = novelty.retractions().map { d -> EAV(d.eid, d.attr, d.value) }.toHashSet()
   (retractions.asSequence().filter { eav -> eav !in assertions }.map { EAVa(it.eid, it.attr, it.value, false) } +
-   assertions.asSequence().filter { eav -> eav !in retractions }.map { EAVa(it.eid, it.attr, it.value, true) }).toList()
+          assertions.asSequence().filter { eav -> eav !in retractions }
+            .map { EAVa(it.eid, it.attr, it.value, true) }).toList()
 }
 

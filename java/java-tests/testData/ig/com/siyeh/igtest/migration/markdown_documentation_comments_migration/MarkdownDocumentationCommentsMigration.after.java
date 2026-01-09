@@ -6,7 +6,7 @@ import java.util.HashMap;
 /// ___
 /// `System.out.println()`
 /// [java.util.ArrayList]
-/// [description][java.util.HashMap]
+/// [`description`][java.util.HashMap]
 /// @author Bas
 public class MarkdownDocumentationCommentsMigration {
   /// {@return a hash code value for this object} This method is
@@ -22,11 +22,11 @@ public class MarkdownDocumentationCommentsMigration {
   ///     This integer need not remain consistent from one execution of an
   ///     application to another execution of the same application.
   ///   - If two objects are equal according to the 
-  ///     [equals][#equals(Object)] method, then calling the 
+  ///     [`equals`][#equals(Object)] method, then calling the 
   ///     `hashCode` method on each of the two objects must produce the
   ///     same integer result.
   ///   - It is _not_ required that if two objects are unequal
-  ///     according to the [equals][#equals(Object)] method, then
+  ///     according to the [`equals`][#equals(Object)] method, then
   ///     calling the `hashCode` method on each of the two objects
   ///     must produce distinct integer results.  However, the programmer
   ///     should be aware that producing distinct integer results for
@@ -34,8 +34,8 @@ public class MarkdownDocumentationCommentsMigration {
   ///
   /// @implSpec As far as is reasonably practical, the `hashCode` method defined
   /// by class `Object` returns distinct integers for distinct objects.
-  /// @apiNote The [hash][Objects#hash(Object...)] and 
-  /// [hashCode][Objects#hashCode(Object)] methods of 
+  /// @apiNote The [`hash`][Objects#hash(Object...)] and 
+  /// [`hashCode`][Objects#hashCode(Object)] methods of 
   /// [Objects] can be used to help construct simple hash codes.
   /// @see Object#equals(Object)
   /// @see System#identityHashCode
@@ -88,12 +88,12 @@ public class MarkdownDocumentationCommentsMigration {
   ///
   /// In other words, under the reference equality equivalence
   /// relation, each equivalence class only has a single element.
-  /// @apiNote It is generally necessary to override the [hashCode][#hashCode()]
+  /// @apiNote It is generally necessary to override the [`hashCode`][#hashCode()]
   /// method whenever this method is overridden, so as to maintain the
   /// general contract for the `hashCode` method, which states
   /// that equal objects must have equal hash codes.
   ///
-  /// The two-argument [Objects.equals][Objects#equals(Object,
+  /// The two-argument [`Objects.equals`][Objects#equals(Object,
   /// Object)] method implements an equivalence relation
   /// on two possibly-null object references.
   /// @see #hashCode()
@@ -190,7 +190,7 @@ public class MarkdownDocumentationCommentsMigration {
   /// {@snippet lang = java:
   ///  getClass().getName() + '@' + Integer.toHexString(hashCode())
   /// }
-  /// The [Objects.toIdentityString][Objects#toIdentityString(Object)] method returns the string for an
+  /// The [`Objects.toIdentityString`][Objects#toIdentityString(Object)] method returns the string for an
   /// object equal to the string that would be returned if neither
   /// the `toString` nor `hashCode` methods were
   /// overridden by the object's class.
@@ -364,6 +364,10 @@ final class LookupWithIndentsBuilder {
 /// `One Sheep,
 /// Two Sheeps,
 /// ...zzz`
+/// [String][String]
+///
+/// [I am a string, but with a label][String]
+/// [String#copyValueOf(char[])][String#copyValueOf(char\[\])]
 ///
 /// `Single line code block with html tag`
 ///
@@ -438,12 +442,12 @@ class IntendedLists{
 ///  lines.
 ///   ](https://openjdk.org/jeps/467)
 ///
-/// Link to a type and insert [a line break here][java.time.OffsetDateTime]
+/// Link to a type and insert [`a line break here`][java.time.OffsetDateTime]
 class OhMyLinks {}
 
 /// I like my \*asteriks\* and \_underscores\_.
 ///
-/// And let's not forget about my friend the \`backticks\` !
+/// And let's not forget about my friend the \`backticks\` (and \~\~\~squigly lines\~\~\~) !
 ///
 /// Some fun things include:
 /// \## Title like structs
@@ -492,7 +496,7 @@ class Matcher {
   /// captured during the previous match: Each occurrence of
   /// `${`_name_`}` or `$`_g_
   /// will be replaced by the result of evaluating the corresponding
-  /// [group(name)][#group(String)] or [group(g)][#group(int)]
+  /// [`group(name)`][#group(String)] or [`group(g)`][#group(int)]
   /// respectively. For `$`_g_,
   /// the first number after the `$` is always treated as part of
   /// the group reference. Subsequent numbers are incorporated into g if
@@ -512,7 +516,7 @@ class Matcher {
   /// string.
   ///
   /// This method is intended to be used in a loop together with the
-  /// [appendTail][#appendTail(StringBuffer)] and [find][#find()]
+  /// [`appendTail`][#appendTail(StringBuffer)] and [`find`][#find()]
   /// methods.  The following code, for example, writes `one dog two dogs
   /// in the yard` to the standard-output stream: 
   ///

@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.List;
+
 public class CamelHumpMatcher extends PrefixMatcher {
   private final MinusculeMatcher myMatcher;
   private final MinusculeMatcher myCaseInsensitiveMatcher;
@@ -56,9 +58,9 @@ public class CamelHumpMatcher extends PrefixMatcher {
   @Override
   public boolean isStartMatch(@NotNull LookupElement element) {
     for (String s : CompletionUtil.iterateLookupStrings(element)) {
-      FList<TextRange> ranges = myCaseInsensitiveMatcher.matchingFragments(s);
+      List<TextRange> ranges = myCaseInsensitiveMatcher.match(s);
       if (ranges == null) continue;
-      if (ranges.isEmpty() || skipUnderscores(s) >= ranges.get(0).getStartOffset()) {
+      if (ranges.isEmpty() || skipUnderscores(s) >= ranges.getFirst().getStartOffset()) {
         return true;
       }
     }
@@ -180,16 +182,16 @@ public class CamelHumpMatcher extends PrefixMatcher {
     return matchingDegree(name, matchingFragments(name));
   }
 
-  public @Nullable FList<TextRange> matchingFragments(String string) {
-    return myMatcher.matchingFragments(string);
+  public @Nullable List<TextRange> matchingFragments(String string) {
+    return myMatcher.match(string);
   }
 
-  public int matchingDegree(String string, @Nullable FList<? extends TextRange> fragments) {
+  public int matchingDegree(String string, @Nullable List<? extends TextRange> fragments) {
     int underscoreEnd = skipUnderscores(string);
     if (underscoreEnd > 0) {
-      FList<TextRange> ciRanges = myCaseInsensitiveMatcher.matchingFragments(string);
+      List<TextRange> ciRanges = myCaseInsensitiveMatcher.match(string);
       if (ciRanges != null && !ciRanges.isEmpty()) {
-        int matchStart = ciRanges.get(0).getStartOffset();
+        int matchStart = ciRanges.getFirst().getStartOffset();
         if (matchStart > 0 && matchStart <= underscoreEnd) {
           return myCaseInsensitiveMatcher.matchingDegree(string.substring(matchStart), true) - 1;
         }

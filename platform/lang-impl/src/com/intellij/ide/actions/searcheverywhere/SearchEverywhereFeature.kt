@@ -12,13 +12,11 @@ import org.jetbrains.annotations.TestOnly
 object SearchEverywhereFeature {
   private const val PLATFORM_KEY = "search.everywhere.new.enabled"
   private const val RIDER_KEY = "search.everywhere.new.rider.enabled"
-  private const val CLION_KEY = "search.everywhere.new.clion.enabled"
   private const val CWM_CLIENT_KEY = "search.everywhere.new.cwm.client.enabled"
 
   private val registryKey: String get() =
     if (isGuest) CWM_CLIENT_KEY
     else if (PlatformUtils.isRider()) RIDER_KEY
-    else if (PlatformUtils.isCLion()) CLION_KEY
     else PLATFORM_KEY
 
   var isSplit: Boolean
@@ -35,6 +33,5 @@ object SearchEverywhereFeature {
   val allRegistryKeys: List<String>
   @TestOnly get() = listOf(PLATFORM_KEY,
                            RIDER_KEY,
-                           CLION_KEY,
                            CWM_CLIENT_KEY)
 }

@@ -440,7 +440,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     filter: VcsLogBranchFilter,
   ): Set<VcsLogCommitStorageIndex> {
     return mapRefsForRoots(refsModel, roots) { refs ->
-      refs.getBranches().filter { filter.matches(it.name) }.toList()
+      refs.branches.filter { filter.matches(it.name) }.toList()
     }.toReferencedCommitIndexes()
   }
 

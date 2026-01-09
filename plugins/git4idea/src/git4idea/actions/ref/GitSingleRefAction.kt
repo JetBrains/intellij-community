@@ -18,12 +18,13 @@ import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
+import git4idea.workingTrees.GitWorkingTreesUtil
 import java.util.function.Supplier
 import kotlin.reflect.KClass
 import kotlin.reflect.safeCast
 
 abstract class GitSingleRefAction<T : GitReference>(
-  dynamicText: Supplier<@NlsActions.ActionText String>
+  dynamicText: Supplier<@NlsActions.ActionText String>,
 ) : GitBranchActionToBeWrapped, DumbAwareAction(dynamicText) {
 
   @Suppress("UNCHECKED_CAST")
@@ -81,6 +82,26 @@ abstract class GitSingleRefAction<T : GitReference>(
         is GitLocalBranch -> it.currentBranch == ref
         is GitTag -> it.state == Repository.State.DETACHED && GitRefUtil.getCurrentReference(it) == ref
         else -> false
+      }
+    }
+
+    /**
+     * Only local branches are checked for working trees.
+     * Tags are immutable and therefore may be easily used in multiple working trees simultaneously.
+     *
+     * See also [GitWorkingTreesUtil.getWorkingTreeWithRef]
+     */
+    internal fun isCurrentRefInAnyRepoOrWorkingTree(
+      ref: GitReference,
+      repositories: List<GitRepository>,
+      checkOnlyNonCurrentWorkingTrees: Boolean = false,
+    ): Boolean {
+      if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled() || ref !is GitLocalBranch) {
+        return isCurrentRefInAnyRepo(ref, repositories)
+      }
+
+      return repositories.any { repository ->
+        GitWorkingTreesUtil.getWorkingTreeWithRef(ref, repository, checkOnlyNonCurrentWorkingTrees) != null
       }
     }
   }

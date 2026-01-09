@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.junit.testFramework.JUnitMalformedDeclarationInspectionTestBase
@@ -1515,6 +1515,9 @@ class JavaJUnitMalformedDeclarationInspectionTest {
 
         @org.junit.jupiter.api.Test
         void <error descr="Method 'nonRepeated' annotated with '@Test' should not declare parameter 'repetitionInfo'">nonRepeated</error>(org.junit.jupiter.api.RepetitionInfo repetitionInfo) { }
+        
+        @org.junit.jupiter.api.Test
+        void <error descr="Method 'nonRepeated' annotated with '@Test' should not declare parameters 'repetitionInfo' and 'a'">nonRepeated</error>(org.junit.jupiter.api.RepetitionInfo repetitionInfo, int a) { }
       }      
     """.trimIndent())
     }
@@ -1524,6 +1527,9 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       class WithBeforeEach {
         @org.junit.jupiter.api.BeforeAll
         void <error descr="Method 'beforeAllWithRepetitionInfo' annotated with '@BeforeAll' should be static and not declare parameter 'repetitionInfo'">beforeAllWithRepetitionInfo</error>(org.junit.jupiter.api.RepetitionInfo repetitionInfo) { }
+        
+        @org.junit.jupiter.api.AfterAll
+        void <error descr="Method 'afterAllWithRepetitionInfo' annotated with '@AfterAll' should be static and not declare parameters 'repetitionInfo' and 'a'">afterAllWithRepetitionInfo</error>(org.junit.jupiter.api.RepetitionInfo repetitionInfo, String a) { }
       }
     """.trimIndent())
     }
@@ -1546,6 +1552,9 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       class MainTest {
         @org.junit.Before
         String <error descr="Method 'before' annotated with '@Before' should be public, of type 'void' and not declare parameter 'i'">before</error>(int i) { return ""; }
+        
+        @org.junit.After
+        String <error descr="Method 'after' annotated with '@After' should be public, of type 'void' and not declare parameters 'a', 'b', 'c' and 'd'">after</error>(int a, boolean b, String c, char d) { return ""; }
       }
     """.trimIndent())
     }
@@ -1555,6 +1564,9 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       class MainTest {
         @org.junit.jupiter.api.BeforeEach
         String <error descr="Method 'beforeEach' annotated with '@BeforeEach' should be of type 'void' and not declare parameter 'i'">beforeEach</error>(int i) { return ""; }
+        
+        @org.junit.jupiter.api.AfterEach
+        String <error descr="Method 'afterEach' annotated with '@AfterEach' should be of type 'void' and not declare parameters 'i' and 'j'">afterEach</error>(int i, int j) { return ""; }
       }
     """.trimIndent())
     }
@@ -1658,6 +1670,9 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       class MainTest {
         @org.junit.jupiter.api.BeforeAll
         String <error descr="Method 'beforeAll' annotated with '@BeforeAll' should be static, of type 'void' and not declare parameter 'i'">beforeAll</error>(int i) { return ""; }
+        
+        @org.junit.jupiter.api.AfterAll
+        String <error descr="Method 'afterAll' annotated with '@AfterAll' should be static, of type 'void' and not declare parameters 'i', 'j' and 'k'">afterAll</error>(int i, int j, int k) { return ""; }
       }
     """.trimIndent())
     }
@@ -2056,6 +2071,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         @org.junit.Test public static void <error descr="Method 'testThree' annotated with '@Test' should be non-static">testThree</error>() {}
         @org.junit.Test public void <error descr="Method 'testFour' annotated with '@Test' should not declare parameter 'i'">testFour</error>(int i) {}
         @org.junit.Test public void testFive() {}
+        @org.junit.Test public void <error descr="Method 'testSix' annotated with '@Test' should not declare parameters 'i', 'j' and 'k'">testSix</error>(int i, int j, int k) {}
         @org.junit.Test public void testMock(@mockit.Mocked String s) {}
       }
     """.trimIndent(), "JUnit4TestMethodIsPublicVoidNoArg")
@@ -2085,6 +2101,9 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       class Foo {
           @org.junit.Test 
           public int <error descr="Method 'testMe' annotated with '@Test' should be of type 'void' and not declare parameter 'i'">testMe</error>(int i) { return -1; }
+          
+          @org.junit.Test 
+          public int <error descr="Method 'testMe' annotated with '@Test' should be of type 'void' and not declare parameters 'a', 'b' and 'c'">testMe</error>(int a, String b, boolean c) { return -1; }
       }
     """.trimIndent())
     }
@@ -2187,6 +2206,72 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       """.trimIndent())
     }
 
+    fun `test malformed before and after suite should be static highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      @org.junit.platform.suite.api.Suite
+      @org.junit.platform.suite.api.SelectClasses({MyTest.class})
+      class MySuite {
+        @org.junit.platform.suite.api.BeforeSuite
+        public void <error descr="Method 'before' annotated with '@BeforeSuite' should be static">before</error>() { }
+        
+        @org.junit.platform.suite.api.AfterSuite
+        public void <error descr="Method 'after' annotated with '@AfterSuite' should be static">after</error>() { }
+      }
+      
+      class MyTest {}
+    """.trimIndent())
+    }
+
+    fun `test malformed before and after suite should be of type void highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      @org.junit.platform.suite.api.Suite
+      @org.junit.platform.suite.api.SelectClasses({MyTest.class})
+      class MySuite {
+        @org.junit.platform.suite.api.BeforeSuite
+        public static int <error descr="Method 'before' annotated with '@BeforeSuite' should be of type 'void'">before</error>() { return 0; }
+        
+        @org.junit.platform.suite.api.AfterSuite
+        public static int <error descr="Method 'after' annotated with '@AfterSuite' should be of type 'void'">after</error>() { return 0; }
+      }
+      
+      class MyTest {}
+    """.trimIndent())
+    }
+
+    fun `test malformed before and after suite should be not private highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      @org.junit.platform.suite.api.Suite
+      @org.junit.platform.suite.api.SelectClasses({MyTest.class})
+      class MySuite {
+        @org.junit.platform.suite.api.BeforeSuite
+        private static void <error descr="Method 'before' annotated with '@BeforeSuite' should be public">before</error>() { }
+        
+        @org.junit.platform.suite.api.AfterSuite
+        public static void after1() { }
+        
+        @org.junit.platform.suite.api.AfterSuite
+        static void after2() { }
+      }
+      
+      class MyTest {}
+    """.trimIndent())
+    }
+
+    fun `test malformed before and after suite should not declare parameters highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      @org.junit.platform.suite.api.Suite
+      @org.junit.platform.suite.api.SelectClasses({MyTest.class})
+      class MySuite {
+        @org.junit.platform.suite.api.BeforeSuite
+        public static void <error descr="Method 'before' annotated with '@BeforeSuite' should not declare parameter 'a'">before</error>(int a) { }
+        
+        @org.junit.platform.suite.api.AfterSuite
+        public static void <error descr="Method 'after' annotated with '@AfterSuite' should not declare parameters 'test', 'suite' and 'a'">after</error>(MyTest test, MySuite suite, int a) { }
+      }
+      
+      class MyTest {}
+    """.trimIndent())
+    }
 
     // Unconstructable test case
     fun testPlain() {
@@ -2328,6 +2413,111 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         public void testMe() {}
       }
     """.trimIndent())
+    }
+
+    fun `test malformed before and after suite requires Suite annotation highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.junit.platform.suite.api.*;
+
+      class MySuite {
+        @BeforeSuite
+        static void <error descr="Method 'before' annotated with '@BeforeSuite' requires the containing class to be annotated with '@Suite'">before</error>() {}
+      
+        @AfterSuite
+        static void <error descr="Method 'after' annotated with '@AfterSuite' requires the containing class to be annotated with '@Suite'">after</error>() {}
+      }
+    """.trimIndent())
+    }
+
+    fun `test malformed before suite requires Suite annotation quickfix`() {
+      myFixture.testQuickFix(JvmLanguage.JAVA, """
+      import org.junit.platform.suite.api.*;
+
+      class MySuite {
+        @BeforeSuite
+        static void befo<caret>re() {}
+      }
+    """.trimIndent(), """
+      import org.junit.platform.suite.api.*;
+
+      @Suite
+      class MySuite {
+        @BeforeSuite
+        static void before() {}
+      }
+    """.trimIndent(), "Annotate class 'MySuite' as '@Suite'", testPreview = true)
+    }
+
+    fun `test suite without selectors highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.junit.platform.suite.api.Suite;
+
+      @Suite
+      class <error descr="Suite does not select any tests (no selector annotations)">MySuite1</error> {
+      }
+      
+      @Suite(failIfNoTests = true)
+      class <error descr="Suite does not select any tests (no selector annotations)">MySuite2</error> {
+      }
+      
+      @Suite(failIfNoTests = false)
+      class MySuite3 {
+      }
+    """.trimIndent())
+    }
+
+    fun `test suite with selector no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.junit.platform.suite.api.*;
+
+      @Suite
+      @SelectClasses({})
+      class MySuite1 {
+      }
+      
+      @Suite
+      @SelectPackages("com.example")
+      class MySuite2 {
+      }
+      
+      @Suite
+      abstract class MyAbstractSuite { }
+      
+      @Suite
+      interface MyInterfaceSuite { }
+      
+      @SelectPackages("com.example")
+      interface MySelector {
+      }
+      
+      @Suite
+      class MySuite3 implements MySelector {
+      }
+      
+      @SelectPackages("com.example")
+      @interface CustomSelector { }
+      
+      @Suite
+      @CustomSelector
+      class MySuite4 {
+      }
+    """.trimIndent())
+    }
+
+    fun `test suite without selectors quickfix`() {
+      myFixture.testQuickFix(JvmLanguage.JAVA, """
+      import org.junit.platform.suite.api.Suite;
+
+      @Suite
+      class My<caret>Suite {
+      }
+    """.trimIndent(), """
+      import org.junit.platform.suite.api.Suite;
+
+      @Suite(failIfNoTests = false)
+      class MySuite {
+      }
+    """.trimIndent(), "Set failIfNoTests = false", testPreview = true)
     }
   }
 }

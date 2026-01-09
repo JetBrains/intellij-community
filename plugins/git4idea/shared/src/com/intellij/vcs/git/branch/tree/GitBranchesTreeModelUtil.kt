@@ -168,7 +168,7 @@ internal fun <N> match(
     if (exceptFilter(node)) continue
 
     val name = nodeNameSupplier(node)
-    val matchingFragments = matcher.matchingFragments(name)
+    val matchingFragments = matcher.match(name)
     if (matchingFragments == null) continue
 
     result.add(node)

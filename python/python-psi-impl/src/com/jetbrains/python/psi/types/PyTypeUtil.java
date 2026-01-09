@@ -216,6 +216,7 @@ public final class PyTypeUtil {
     return Collectors.collectingAndThen(Collectors.toList(), PyUnionType::union);
   }
 
+  @ApiStatus.Experimental
   public static @NotNull Collector<@Nullable PyType, ?, @Nullable PyType> toUnsafeUnion() {
     return Collectors.collectingAndThen(Collectors.toList(), PyUnsafeUnionType::unsafeUnion);
   }

@@ -461,8 +461,10 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
             }
 
             String text = value == null ? "" : value.displayText;
-            FList<TextRange> ranges = currentMatcher == null ? FList.emptyList() : currentMatcher.matchingFragments(text);
-            SpeedSearchUtil.appendColoredFragments(this, text, ranges, SimpleTextAttributes.REGULAR_ATTRIBUTES, MATCHED);
+            List<TextRange> ranges = currentMatcher == null ? List.of() : currentMatcher.match(text);
+            if (ranges != null) {
+              SpeedSearchUtil.appendColoredFragments(this, text, ranges, SimpleTextAttributes.REGULAR_ATTRIBUTES, MATCHED);
+            }
             setIcon(value == null ? null : value.icon);
           }
         };

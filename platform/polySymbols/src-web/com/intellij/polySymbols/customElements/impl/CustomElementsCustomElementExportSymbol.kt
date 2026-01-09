@@ -2,13 +2,17 @@
 package com.intellij.polySymbols.customElements.impl
 
 import com.intellij.model.Pointer
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolApiStatus
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.polySymbols.customElements.CustomElementsSymbol
 import com.intellij.polySymbols.customElements.json.CustomElementExport
 import com.intellij.polySymbols.customElements.json.createPattern
 import com.intellij.polySymbols.customElements.json.toApiStatus
+import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.html.HTML_ELEMENTS
 import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.patterns.PolySymbolPattern

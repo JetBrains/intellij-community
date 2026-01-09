@@ -49,7 +49,6 @@ public final class PlatformUtils {
   public static final String GOIDE_PREFIX = "GoLand";
   public static final String FLEET_PREFIX = "FleetBackend";
   public static final String RUSTROVER_PREFIX = "RustRover";
-  public static final String GIT_CLIENT_PREFIX = "GitClient";
   public static final String MPS_PREFIX = "MPS";
   public static final String JETBRAINS_CLIENT_PREFIX = "JetBrainsClient";
   public static final String GATEWAY_PREFIX = "Gateway";
@@ -180,10 +179,6 @@ public final class PlatformUtils {
 
   public static boolean isGoIde() {
     return is(GOIDE_PREFIX);
-  }
-
-  public static boolean isGitClient() {
-    return is(GIT_CLIENT_PREFIX);
   }
 
   /**

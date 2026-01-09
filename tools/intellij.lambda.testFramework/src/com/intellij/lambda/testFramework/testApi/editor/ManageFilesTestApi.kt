@@ -7,11 +7,13 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.findOrCreateFile
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.remoteDev.tests.LambdaBackendContext
@@ -19,10 +21,14 @@ import com.intellij.remoteDev.tests.LambdaFrontendContext
 import com.intellij.remoteDev.tests.LambdaIdeContext
 import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
+import com.intellij.util.io.createDirectories
 import org.assertj.core.api.Assertions.assertThat
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.name
+import kotlin.io.path.pathString
+import kotlin.io.path.writeText
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -257,53 +263,31 @@ private fun doOpenFile(relativePath: String, project: Project) {
 }
 
 context(lambdaBackendContext: LambdaBackendContext)
-fun createFile(relativePath: String) {
+suspend fun createFile(relativePathString: String, fileContent: String? = null) {
   val project = getProject()
-  val command = Runnable {
-    ApplicationManager.getApplication().runWriteAction(object : Runnable {
-      override fun run() {
-        frameworkLogger.info("Creating file at $relativePath")
-        val basePath = project.basePath ?: error("Project base path is null, can't resolve relative path for file creation")
-        val projectBaseFile = File(basePath)
+  val createdFile = writeIntentReadAction {
+    frameworkLogger.info("Creating file at $relativePathString")
 
-        frameworkLogger.info("Project base canonical path=${projectBaseFile.canonicalPath}")
+    val basePath = project.basePath ?: error("Project base path is null, can't resolve relative path for file creation")
+    val projectBasePath = Path(basePath)
 
-        val fileToCreate = projectBaseFile.resolve(relativePath)
+    frameworkLogger.info("Project base canonical path=${projectBasePath.pathString}")
 
-        val directoriesToCreate = mutableListOf<File>()
-        var parentDir = fileToCreate.parentFile
+    val fileToCreate = projectBasePath.resolve(relativePathString)
+    assertThat(fileToCreate).doesNotExist()
 
-        frameworkLogger.info("Checking whether we need to create parent directories")
-        while (parentDir.canonicalPath != projectBaseFile.canonicalPath) {
-          val vfsParentDir = getVirtualFileOrNullByRelativePath(parentDir.path)
-          if (vfsParentDir?.exists() == true) {
-            if (vfsParentDir.isDirectory) {
-              frameworkLogger.info("Found directory at ${vfsParentDir.canonicalPath}")
-              break
-            }
-            error("Failed to create file at $relativePath because ${parentDir.canonicalPath} already exists and is not a directory.")
-          }
-
-          directoriesToCreate.add(parentDir)
-          parentDir = parentDir.parentFile
-        }
-
-        fun File.getParentVfsFile() = getVirtualFileOrNull(this.parentFile)
-                                      ?: error("Cannot find directory by path ${this.parentFile}")
-
-        directoriesToCreate.reversed().forEach {
-          frameworkLogger.info("Creating ${it}")
-          it.getParentVfsFile().createChildDirectory(this, it.name)
-        }
-
-        frameworkLogger.info("Creating file: $relativePath")
-        fileToCreate.getParentVfsFile().createChildData(this, fileToCreate.name)
-        getVirtualFileOrNull(fileToCreate) ?: error("Can't see file after creating it in VFS")
-        frameworkLogger.info("Successfully created file: $relativePath")
-      }
-    })
+    fileToCreate.parent.createDirectories()
+    fileToCreate.findOrCreateFile()
   }
-  CommandProcessor.getInstance().executeCommand(project, command, "createFile", null)
+  waitSuspending("Wait until VFS is refreshed and file is resolved", timeout = 15.seconds) {
+    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path(createdFile.pathString)) != null
+  }
+  frameworkLogger.info("Successfully created file for relative path: $relativePathString, full path: ${createdFile.pathString}")
+  if (fileContent != null) {
+    writeIntentReadAction {
+      createdFile.writeText(fileContent)
+    }
+  }
 }
 
 context(lambdaIdeContext: LambdaIdeContext)

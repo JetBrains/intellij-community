@@ -60,7 +60,6 @@ jvm_library(
     "//platform/execution-impl",
     "//plugins/kotlin/jsr223",
     "//plugins/kotlin/base/scripting/scripting.k1",
-    "//plugins/kotlin/base/scripting/scripting.shared",
     "//platform/execution",
     "//platform/lang-api:lang",
   ]

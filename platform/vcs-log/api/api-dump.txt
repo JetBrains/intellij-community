@@ -222,10 +222,11 @@ com.intellij.vcs.log.VcsLogRefsOfSingleRoot
 - a:contains(I):Z
 - a:forEachBranchIndex(java.util.function.IntConsumer):V
 - a:getBranches():kotlin.sequences.Sequence
-- getRefs():kotlin.sequences.Sequence
 - a:getRefsIndexes():java.util.Collection
 - a:getTags():kotlin.sequences.Sequence
 - a:refsToCommit(I):java.util.List
+f:com.intellij.vcs.log.VcsLogRefsOfSingleRootKt
+- sf:getAllRefs(com.intellij.vcs.log.VcsLogRefsOfSingleRoot):kotlin.sequences.Sequence
 com.intellij.vcs.log.VcsLogRevisionFilter
 - com.intellij.vcs.log.VcsLogBranchLikeFilter
 - getDisplayText():java.lang.String

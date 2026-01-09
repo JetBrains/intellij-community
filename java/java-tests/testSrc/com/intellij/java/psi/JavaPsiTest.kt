@@ -232,6 +232,19 @@ class JavaPsiTest : LightJavaCodeInsightFixtureTestCase() {
 
     assert("record A(String s, int i)" == clazz.text)
   }
+  
+  fun testAddCommentToEnumClass() {
+    val clazz = configureFile("public enum E {}").classes[0]
+    runCommand {
+      val docComment = JavaPsiFacade.getElementFactory(clazz.getProject()).createDocCommentFromText("/// Targets enum class")
+      clazz.addBefore(docComment, clazz.getFirstChild())
+    }
+
+    assertEquals("""
+      /// Targets enum class
+      public enum E {}
+    """.trimIndent(),clazz.text)
+  }
 
   fun testPermitsList() {
     val clazz = configureFile("class A permits B {}").classes[0]

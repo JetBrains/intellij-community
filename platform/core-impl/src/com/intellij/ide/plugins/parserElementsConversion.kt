@@ -72,6 +72,7 @@ fun ServiceElement.convert(): ServiceDescriptor = ServiceDescriptor(
   testServiceImplementation,
   headlessImplementation,
   overrides,
+  open,
   configurationSchemaKey,
   preload.convert(),
   client?.convert(),

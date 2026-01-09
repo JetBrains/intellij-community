@@ -861,36 +861,9 @@ public final class PyTypeChecker {
       }
     }
 
-    final var hasParamSpec = ContainerUtil.exists(expectedParameters, it -> (it.getType(context) instanceof PyParamSpecType));
-
-    // TODO Implement proper compatibility check for callable signatures, including positional- and keyword-only arguments, defaults, etc.
-    if (!hasParamSpec) {
-      boolean shouldAcceptUnlimitedPositionalArgs = ContainerUtil.exists(expectedParameters, PyCallableParameter::isPositionalContainer);
-      boolean canAcceptUnlimitedPositionalArgs = ContainerUtil.exists(actualParameters, PyCallableParameter::isPositionalContainer);
-      if (shouldAcceptUnlimitedPositionalArgs && !canAcceptUnlimitedPositionalArgs) return false;
-
-      boolean shouldAcceptArbitraryKeywordArgs = ContainerUtil.exists(expectedParameters, PyCallableParameter::isKeywordContainer);
-      boolean canAcceptArbitraryKeywordArgs = ContainerUtil.exists(actualParameters, PyCallableParameter::isKeywordContainer);
-      if (shouldAcceptArbitraryKeywordArgs && !canAcceptArbitraryKeywordArgs) return false;
-    }
-
-    List<PyType> expectedElementTypes = StreamEx.of(expectedParameters)
-      .filter(cp -> !(cp.getParameter() instanceof PySlashParameter || cp.getParameter() instanceof PySingleStarParameter))
-      .map(cp -> {
-        PyType argType = cp.getArgumentType(context);
-        if (cp.isPositionalContainer() && !(argType instanceof PyPositionalVariadicType)) {
-          return PyUnpackedTupleTypeImpl.createUnbound(argType);
-        }
-        return argType;
-      })
-      .toList();
-
-    final var expectedElementTypes2 =
-      ContainerUtil.filter(expectedElementTypes, type -> !(type instanceof PyParamSpecType));
-
-    PyTypeParameterMapping mapping = PyTypeParameterMapping.mapWithParameterList(ContainerUtil.subList(expectedElementTypes2, startIndex),
-                                                                                 ContainerUtil.subList(actualParameters, startIndex),
-                                                                                 context);
+    var mapping = PyCallableParameterMapping.mapCallableParameters(ContainerUtil.subList(expectedParameters, startIndex),
+                                                                   ContainerUtil.subList(actualParameters, startIndex),
+                                                                   context);
     if (mapping == null) {
       return false;
     }

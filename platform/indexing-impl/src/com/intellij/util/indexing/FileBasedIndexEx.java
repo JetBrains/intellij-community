@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -87,6 +87,10 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return TRACE_SHARED_INDEX_UPDATES;
   }
 
+  /** @return a filter(fileId) that accepts only fileIds that could be safely/reliably accessed.
+   *          E.g. during incremental indexing (=dumb-mode) files that are changed and not yet re-indexed -- can't be relied
+   *          upon, so they'll be rejected by this filter
+   */
   @ApiStatus.Internal
   public abstract @NotNull IntPredicate getAccessibleFileIdFilter(@Nullable Project project);
 

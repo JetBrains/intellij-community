@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions.workingTree
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -21,9 +21,8 @@ internal class ShowWorkingTreesAction : DumbAwareAction() {
 
   private fun shouldShow(e: AnActionEvent): Boolean {
     val project = e.project ?: return false
-    if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled()) return false
     if (ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) == null) return false
-    return GitWorkingTreesService.getInstance(project).getSingleRepositoryInProjectRootOrNull() != null
+    return GitWorkingTreesService.getRepoForWorkingTreesSupport(project) != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {

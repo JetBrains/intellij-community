@@ -7,9 +7,15 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionListener
 
+/**
+ * Represents information about an empty result in a Search Everywhere tab.
+ */
 @ApiStatus.Experimental
 class SeEmptyResultInfo(val chunks: List<SeEmptyResultInfoChunk>)
 
+/**
+ * Represents a chunk of information about an empty result in a Search Everywhere tab.
+ */
 @ApiStatus.Experimental
 class SeEmptyResultInfoChunk(
   val text: @Nls String,

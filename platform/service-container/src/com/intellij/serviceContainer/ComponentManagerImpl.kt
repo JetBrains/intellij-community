@@ -23,10 +23,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.ControlFlowException
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
@@ -68,11 +65,11 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-internal val LOG by lazy(LazyThreadSafetyMode.PUBLICATION) {
+internal val LOG: Logger by lazy(LazyThreadSafetyMode.PUBLICATION) {
   logger<ComponentManagerImpl>()
 }
 
-private val methodLookup = MethodHandles.lookup()
+private val methodLookup: MethodHandles.Lookup = MethodHandles.lookup()
 
 @JvmField
 @Internal
@@ -82,11 +79,11 @@ val emptyConstructorMethodType: MethodType = MethodType.methodType(Void.TYPE)
 @Internal
 val coroutineScopeMethodType: MethodType = MethodType.methodType(Void.TYPE, CoroutineScope::class.java)
 
-private val applicationMethodType = MethodType.methodType(Void.TYPE, Application::class.java)
-private val applicationAndScopeMethodType = MethodType.methodType(Void.TYPE, Application::class.java, CoroutineScope::class.java)
-private val componentManagerMethodType = MethodType.methodType(Void.TYPE, ComponentManager::class.java)
+private val applicationMethodType: MethodType = MethodType.methodType(Void.TYPE, Application::class.java)
+private val applicationAndScopeMethodType: MethodType = MethodType.methodType(Void.TYPE, Application::class.java, CoroutineScope::class.java)
+private val componentManagerMethodType: MethodType = MethodType.methodType(Void.TYPE, ComponentManager::class.java)
 
-private val defaultSupportedSignaturesOfLightServiceConstructors = java.util.List.of(
+private val defaultSupportedSignaturesOfLightServiceConstructors: List<MethodType> = java.util.List.of(
   emptyConstructorMethodType,
   coroutineScopeMethodType,
   applicationMethodType,
@@ -178,7 +175,7 @@ abstract class ComponentManagerImpl(
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val scopeHolder = ScopeHolder(
+  private val scopeHolder: ScopeHolder = ScopeHolder(
     parentScope = parentScope,
     additionalContext = (additionalContext + this.asContextElement()).let { context ->
       val clientIdContextElement = context[ClientIdContextElement.Key]
@@ -192,7 +189,7 @@ abstract class ComponentManagerImpl(
     get() = defaultSupportedSignaturesOfLightServiceConstructors
 
   @Suppress("LeakingThis")
-  private val serviceContainer = InstanceContainerImpl(
+  private val serviceContainer: InstanceContainerImpl = InstanceContainerImpl(
     scopeHolder = scopeHolder,
     containerName = "${debugString(true)} services",
     dynamicInstanceSupport = if (isLightServiceSupported) LightServiceInstanceSupport(
@@ -203,14 +200,14 @@ abstract class ComponentManagerImpl(
     ordered = false,
   )
 
-  private val componentContainer = InstanceContainerImpl(
+  private val componentContainer: InstanceContainerImpl = InstanceContainerImpl(
     scopeHolder = scopeHolder,
     containerName = "${debugString(true)} components",
     dynamicInstanceSupport = null,
     ordered = true,
   )
 
-  private val pluginServicesStore = PluginServicesStore()
+  private val pluginServicesStore: PluginServicesStore = PluginServicesStore()
 
   private fun registerDynamicInstanceForUnloading(instanceHolder: InstanceHolder) {
     val pluginDescriptor = (instanceHolder.instanceClass().classLoader as? PluginAwareClassLoader)?.pluginDescriptor
@@ -221,7 +218,7 @@ abstract class ComponentManagerImpl(
 
   @Suppress("LeakingThis")
   @JvmField
-  internal val dependencyResolver = ComponentManagerResolver(this)
+  internal val dependencyResolver: ComponentManagerResolver = ComponentManagerResolver(this)
 
   @JvmField
   protected val containerState: AtomicReference<ContainerState> = AtomicReference(ContainerState.PRE_INIT)
@@ -229,12 +226,12 @@ abstract class ComponentManagerImpl(
   protected val containerStateName: String
     get() = containerState.get().name
 
-  private val extensionArea = ExtensionsAreaImpl(this)
+  private val extensionArea: ExtensionsAreaImpl = ExtensionsAreaImpl(this)
 
   private var messageBus: MessageBusImpl? = null
 
   @Volatile
-  private var isServicePreloadingCancelled = false
+  private var isServicePreloadingCancelled: Boolean = false
 
   override fun debugString(): String = debugString(short = true)
 
@@ -652,18 +649,19 @@ abstract class ComponentManagerImpl(
     return getOrCreateInstanceBlocking(holder = adapter.holder, debugString = key.name, keyClass = key) as T
   }
 
-  private fun isDevelopmentTime(): Boolean {
-    return Thread.currentThread().contextClassLoader is DevTimeClassLoader
+  private fun isDevTimeService(serviceClass: Class<*>): Boolean {
+    // this class is loaded in isolated class loader, do not try to find service in our context
+    return serviceClass.classLoader is DevTimeClassLoader
   }
 
   final override fun <T : Any> getService(serviceClass: Class<T>): T? {
-    if (isDevelopmentTime()) return null
+    if (isDevTimeService(serviceClass)) return null
 
     return doGetService(serviceClass, true) ?: return postGetService(serviceClass, createIfNeeded = true)
   }
 
   final override suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
-    if (isDevelopmentTime()) {
+    if (isDevTimeService(keyClass)) {
       throw IllegalStateException("Getting services is not allowed from development tools threads")
     }
 
@@ -679,7 +677,7 @@ abstract class ComponentManagerImpl(
   protected open fun <T : Any> postGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? = null
 
   final override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>): T? {
-    if (isDevelopmentTime()) return null
+    if (isDevTimeService(serviceClass)) return null
 
     return doGetService(serviceClass, createIfNeeded = false) ?: postGetService(serviceClass, createIfNeeded = false)
   }
@@ -691,7 +689,7 @@ abstract class ComponentManagerImpl(
     }
     catch (cde: ContainerDisposedException) {
       if (createIfNeeded) {
-        throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause = cde)
+        throwAlreadyDisposedIfNotUnderIndicatorOrJob(serviceClass, cause = cde)
         throw ProcessCanceledException(cde)
       }
       else {
@@ -709,7 +707,7 @@ abstract class ComponentManagerImpl(
           return null
         }
       }
-      rethrowCEasPCE {
+      rethrowCEasPCE(serviceClass) {
         // fast path
         holder.tryGetInstance()?.let {
           return it as T
@@ -795,7 +793,7 @@ abstract class ComponentManagerImpl(
     clientKind: ClientKind?
   ) {
     val descriptor = ServiceDescriptor(serviceInterface.name, implementation.name, null, null, false,
-                                       null, PreloadMode.FALSE, clientKind, null)
+                                       false, null, PreloadMode.FALSE, clientKind, null)
     serviceContainer.registerInitializer(
       keyClass = serviceInterface,
       initializer = ServiceClassInstanceInitializer(
@@ -1187,6 +1185,7 @@ abstract class ComponentManagerImpl(
     if (!containerState.compareAndSet(ContainerState.DISPOSED, ContainerState.DISPOSE_COMPLETED)) {
       throw IllegalStateException("Expected current state is DISPOSED, but actual state is ${containerState.get()} ($this)")
     }
+    pluginServicesStore.clearPotentialLeaks()
   }
 
   override fun stopServicePreloading() {
@@ -1402,8 +1401,8 @@ abstract class ComponentManagerImpl(
 }
 
 private class PluginServicesStore {
-  private val regularServices = ConcurrentHashMap<IdeaPluginDescriptor, UnregisterHandle>()
-  private val dynamicServices = ConcurrentHashMap<IdeaPluginDescriptor, UList<InstanceHolder>>()
+  private val regularServices: ConcurrentMap<IdeaPluginDescriptor, UnregisterHandle> = ConcurrentHashMap()
+  private val dynamicServices: ConcurrentMap<IdeaPluginDescriptor, UList<InstanceHolder>> = ConcurrentHashMap()
 
   fun putServicesUnregisterHandle(descriptor: IdeaPluginDescriptor, handle: UnregisterHandle) {
     val prev = regularServices.put(descriptor, handle)
@@ -1422,6 +1421,11 @@ private class PluginServicesStore {
 
   fun removeDynamicServices(descriptor: IdeaPluginDescriptor): List<InstanceHolder> {
     return dynamicServices.remove(descriptor)?.toList() ?: java.util.List.of()
+  }
+
+  fun clearPotentialLeaks() {
+    dynamicServices.clear()
+    regularServices.clear()
   }
 }
 
@@ -1562,13 +1566,13 @@ private fun getInstanceBlocking(holder: InstanceHolder, debugString: String, cre
   }
 }
 
-private val forbidGetServiceEvenInNonCancellable = System.getProperty("idea.forbid.get.service.in.nc.static.init", "false").toBoolean()
+private val forbidGetServiceEvenInNonCancellable: Boolean = System.getProperty("idea.forbid.get.service.in.nc.static.init", "false").toBoolean()
 
 internal fun getOrCreateInstanceBlocking(holder: InstanceHolder, debugString: String, keyClass: Class<*>?): Any {
   // container scope might be canceled
   // => holder is initialized with CE
   // => caller should get PCE
-  rethrowCEasPCE {
+  rethrowCEasPCE(keyClass?:holder) {
     val instance = holder.tryGetInstance()
     if (instance != null) {
       return instance
@@ -1602,7 +1606,7 @@ private fun doGetOrCreateInstanceBlocking(holder: InstanceHolder, keyClass: Clas
     }
   }
   catch (e: ProcessCanceledException) {
-    throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause = e)
+    throwAlreadyDisposedIfNotUnderIndicatorOrJob(keyClass?:holder, cause = e)
     throw e
   }
 }
@@ -1629,7 +1633,7 @@ private fun checkOutsideClassInitializer(debugString: String, guiltyClassName: S
   }
 }
 
-private val expectedComponentsUsedByEelNio = setOf(
+private val expectedComponentsUsedByEelNio: Set<String> = setOf(
   "com.intellij.execution.wsl.WslIjentAvailabilityService",
 )
 
@@ -1649,7 +1653,7 @@ private fun isInsideClassInitializer(debugString: String): String? {
   }
 }
 
-private val logAccessInsideClinit = ThreadLocal.withInitial { true }
+private val logAccessInsideClinit: ThreadLocal<Boolean> = ThreadLocal.withInitial { true }
 
 private fun dontLogAccessInClinit(): AccessToken {
   // Logger itself also loads services, which results in SOE:
@@ -1693,7 +1697,7 @@ private inline fun <X> ignoreDisposal(x: () -> X): X? {
   }
 }
 
-private inline fun <X> rethrowCEasPCE(action: () -> X): X {
+private inline fun <X> rethrowCEasPCE(self: Any, action: () -> X): X {
   try {
     return action()
   }
@@ -1701,15 +1705,15 @@ private inline fun <X> rethrowCEasPCE(action: () -> X): X {
     throw e
   }
   catch (e: CancellationException) {
-    throwAlreadyDisposedIfNotUnderIndicatorOrJob(e)
+    throwAlreadyDisposedIfNotUnderIndicatorOrJob(self, e)
     throw CeProcessCanceledException(e)
   }
 }
 
-private fun throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause: Throwable) {
+private fun throwAlreadyDisposedIfNotUnderIndicatorOrJob(self:Any, cause: Throwable) {
   if (!isUnderIndicatorOrJob()) {
     // in useInstanceContainer=false AlreadyDisposedException was thrown instead
-    throw AlreadyDisposedException("Container is already disposed").initCause(cause)
+    throw AlreadyDisposedException("Container $self is already disposed").initCause(cause)
   }
 }
 

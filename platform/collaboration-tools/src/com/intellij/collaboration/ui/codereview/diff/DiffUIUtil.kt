@@ -11,6 +11,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 typealias DiffLineLocation = Pair<Side, Int>
+typealias DiffLineRange = Pair<DiffLineLocation, DiffLineLocation>
 
 @ApiStatus.Internal
 object DiffUIUtil {

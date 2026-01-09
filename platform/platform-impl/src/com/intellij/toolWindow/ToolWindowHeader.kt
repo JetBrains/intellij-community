@@ -229,7 +229,7 @@ abstract class ToolWindowHeader internal constructor(
     )
   }
 
-  internal fun manageWestPanelTabComponentAndToolbar(init: Boolean) {
+  private fun manageWestPanelTabComponentAndToolbar(init: Boolean) {
     if (init) {
       westPanel.setComponents(contentUi.tabComponent, sideComponent)
       contentUi.connectTabToolbar()

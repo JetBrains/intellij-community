@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.gradle.scripting.shared.importing
 
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleKotlinScriptConfigurationInputs
+import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
 
 data class KotlinDslScriptModel(
     val file: String,
@@ -11,7 +12,8 @@ data class KotlinDslScriptModel(
     val classPath: List<String>,
     val sourcePath: List<String>,
     val imports: List<String>,
-    val messages: List<Message>
+    val messages: List<Message>,
+    val classpathModel: GradleBuildScriptClasspathModel? = null
 ) {
     data class Message(
         val severity: Severity,

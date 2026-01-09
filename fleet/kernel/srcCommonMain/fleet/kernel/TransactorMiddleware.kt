@@ -11,6 +11,10 @@ interface TransactorMiddleware {
     override fun ChangeScope.performChange(next: ChangeScope.() -> Unit): Unit {
       return next()
     }
+
+    context(cs: ChangeScope)
+    override fun initDb() {
+    }
   }
 
   /**
@@ -22,8 +26,17 @@ interface TransactorMiddleware {
       override fun ChangeScope.performChange(next: ChangeScope.() -> Unit) {
         with(lhs) { performChange { with(rhs) { performChange(next) } } }
       }
+
+      context(cs: ChangeScope)
+      override fun initDb() {
+        lhs.initDb()
+        rhs.initDb()
+      }
     }
   }
 
   fun ChangeScope.performChange(next: ChangeScope.() -> Unit)
+
+  context(cs: ChangeScope)
+  fun initDb()
 }

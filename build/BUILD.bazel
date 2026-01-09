@@ -18,6 +18,14 @@ java_binary(
   name = "run_tests_build_target",
   runtime_deps = [":build"],
   main_class = "CommunityRunTestsBuildTarget",
+  jvm_flags = [
+    # Reduce output which is not strictly required to run tests, but keep it discoverable
+    # see org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter.Companion.getTempFile
+    "-Dintellij.build.console.exporter.to.temp.file=true",
+    # Reduce output which is not strictly required to run tests, but keep it discoverable
+    # it prints where all debug logs are in org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl.setDebugLogPath
+    "-Dintellij.build.console.messages.verbose=false",
+  ],
   add_opens = INTELLIJ_ADD_OPENS,
   data = ALL_COMMUNITY_TARGETS,
 )

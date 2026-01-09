@@ -4,6 +4,7 @@ package com.intellij.polySymbols.documentation.impl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbol.Companion.PROP_DOC_HIDE_ICON
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.documentation.PolySymbolDocumentation
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
@@ -28,7 +29,7 @@ internal class PolySymbolDocumentationBuilderImpl(
       context.library +
       if (context.version?.takeIf { it != "0.0.0" } != null) "@${context.version}" else ""
     }
-  override var icon: Icon? = symbol.icon
+  override var icon: Icon? = symbol.icon?.takeIf { symbol[PROP_DOC_HIDE_ICON] != true }
   override var descriptionSections: MutableMap<@Nls String, @Nls String> = mutableMapOf()
   override var footnote: @Nls String? = null
   override var header: @Nls String? = null

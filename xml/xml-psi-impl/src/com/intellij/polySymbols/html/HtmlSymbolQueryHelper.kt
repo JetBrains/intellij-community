@@ -29,7 +29,7 @@ object HtmlSymbolQueryHelper {
   ): PolySymbolScope =
     StandardHtmlAttributesScope(project, tagName)
 
-  private class StandardHtmlElementsScope(project: Project) : PolySymbolScopeWithCache<Project, Unit>(null, project, project, Unit) {
+  private class StandardHtmlElementsScope(project: Project) : PolySymbolScopeWithCache<Project, Unit>(project, project, Unit) {
 
     override fun initialize(consumer: (PolySymbol) -> Unit, cacheDependencies: MutableSet<Any>) {
       HtmlDescriptorUtils.getHtmlNSDescriptor(project)
@@ -49,7 +49,7 @@ object HtmlSymbolQueryHelper {
   }
 
   private class StandardHtmlAttributesScope(project: Project, tagName: String) :
-    PolySymbolScopeWithCache<Project, String>(null, project, project, tagName) {
+    PolySymbolScopeWithCache<Project, String>(project, project, tagName) {
 
     override fun initialize(consumer: (PolySymbol) -> Unit, cacheDependencies: MutableSet<Any>) {
       (HtmlDescriptorUtils.getStandardHtmlElementDescriptor(project, key)

@@ -1181,7 +1181,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           if (runJUnit5) {
             val failedClassesJUnit5 = failedClassesJUnit5List.let { if (Files.exists(it)) it.readLines() else emptyList() }
             if (failedClassesJUnit5.isNotEmpty()) {
-              messages.info("Will rerun JUnit 5 tests: $failedClassesJUnit5")
+              messages.warning("Will rerun JUnit 5 tests: $failedClassesJUnit5")
             }
             else {
               runJUnit5 = false
@@ -1191,7 +1191,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           if (runJUnit34) {
             val failedClassesJUnit34 = failedClassesJUnit34List.let { if (Files.exists(it)) it.readLines() else emptyList() }
             if (failedClassesJUnit34.isNotEmpty()) {
-              messages.info("Will rerun JUnit 3+4 tests: $failedClassesJUnit34")
+              messages.warning("Will rerun JUnit 3+4 tests: $failedClassesJUnit34")
             }
             else {
               runJUnit34 = false
@@ -1203,8 +1203,13 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         val hadTestFailures = (lastExitCode5 != 0 && lastExitCode5 != NO_TESTS_ERROR) ||
                               (lastExitCode34 != 0 && lastExitCode34 != NO_TESTS_ERROR)
         // On TeamCity test failures themselves control the build status, no need to report them as additional errors
-        if (hadTestFailures && !TeamCityHelper.isUnderTeamCity) {
-          throw RuntimeException("Tests failed (JUnit5 exit code: $lastExitCode5 ($NO_TESTS_ERROR), JUnit3+4 exit code: $lastExitCode34, $NO_TESTS_ERROR means no test for this test framework)")
+        if (!TeamCityHelper.isUnderTeamCity) {
+          if (hadTestFailures) {
+            throw RuntimeException("Tests failed (JUnit5 exit code: $lastExitCode5, JUnit3+4 exit code: $lastExitCode34, $NO_TESTS_ERROR means no test for this test framework)")
+          }
+          else {
+            println("*** All tests passed ***")
+          }
         }
       }
     }
@@ -1321,6 +1326,15 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val args = ArrayList<String>()
     args.add("-classpath")
     args.add(classpath.joinToString(separator = File.pathSeparator))
+
+    /*
+    TODO it's better to load byte buddy beforehand and prohibit dynamic agent loading
+    WARNING: A Java agent has been loaded dynamically (/var/folders/y2/wzcbjbb16rz5l119wsct9vwc0000gn/T/byteBuddyAgent3573542851707188859.jar)
+    WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+    WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+    WARNING: Dynamic loading of agents will be disallowed by default in a future release
+     */
+    args.add("-XX:+EnableDynamicAgentLoading")
 
     if (modulePath != null) {
       args.add("--module-path")

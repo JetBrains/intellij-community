@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.openapi.Disposable
@@ -43,6 +43,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
 import javax.swing.JComponent
 
@@ -57,8 +58,14 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
 
   private val initialDumbTaskRequiredForSmartModeSubmitted = AtomicBoolean(false)
 
-  // should only be accessed from EDT. This is to order synchronous and asynchronous publishing
-  private var lastPublishedState: DumbStateImpl = _state.value
+  // diagnostic state that helps to ensure balanced calls of listeners
+  private enum class DumbModeEventListenerState {
+    ENTERED,
+    EXITED,
+  }
+
+  // in the beginning, we have dumb mode
+  private val dumbModeListenerState: AtomicReference<DumbModeEventListenerState> = AtomicReference(DumbModeEventListenerState.ENTERED)
 
   @Volatile
   private var isDisposed = false
@@ -268,7 +275,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
         }
         dumbModeStartTrace = trace
         try {
-          publishDumbModeChangedEvent()
+          publishDumbModeChangedEvent(DumbModeEventListenerState.ENTERED)
         }
         catch (t: Throwable) {
           // in unit tests we may get here because of exception thrown from Log.error from catch block inside runCatchingIgnorePCE
@@ -296,28 +303,25 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
       if (exitDumb) {
         LOG.info("exit dumb mode [${project.name}]")
         dumbModeStartTrace = null
-        publishDumbModeChangedEvent()
+        publishDumbModeChangedEvent(DumbModeEventListenerState.EXITED)
       }
     }
   }
 
-  private fun publishDumbModeChangedEvent() {
+  private fun publishDumbModeChangedEvent(desiredListenerState: DumbModeEventListenerState) {
     ThreadingAssertions.assertEventDispatchThread()
-    val currentState = _state.value
-    if (lastPublishedState.modificationCounter >= currentState.modificationCounter) {
-      return // already published
-    }
 
-    // First change lastPublishedState, then publish. This is to address the situation that new event
-    // should be published while publishing current event
-    val wasDumb = lastPublishedState.isDumb
-    lastPublishedState = _state.value
-
-    if (wasDumb != currentState.isDumb) {
-      if (currentState.isDumb) {
+    when (desiredListenerState) {
+      DumbModeEventListenerState.ENTERED -> {
+        if (!dumbModeListenerState.compareAndSet(DumbModeEventListenerState.EXITED, desiredListenerState)) {
+          LOG.error("Unexpected listener state: dumb mode is going to be entered without exiting")
+        }
         runCatchingIgnorePCE { WriteIntentReadAction.run { publisher.enteredDumbMode() } }
       }
-      else {
+      DumbModeEventListenerState.EXITED -> {
+        if (!dumbModeListenerState.compareAndSet(DumbModeEventListenerState.ENTERED, desiredListenerState)) {
+          LOG.error("Unexpected listener state: dumb mode is going to be exited without entering")
+        }
         runCatchingIgnorePCE { WriteIntentReadAction.run { publisher.exitDumbMode() } }
       }
     }

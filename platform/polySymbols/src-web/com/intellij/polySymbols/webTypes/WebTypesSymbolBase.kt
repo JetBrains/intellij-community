@@ -5,6 +5,7 @@ import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbol.Companion.PROP_DOC_HIDE_ICON
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.documentation.PolySymbolDocumentation
@@ -54,6 +55,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
     when (property) {
       PROP_HTML_ATTRIBUTE_VALUE -> attributeValue as T?
+      PROP_DOC_HIDE_ICON -> property.tryCast(icon == base.jsonOrigin.defaultIcon)
       origin.typeSupport?.typeProperty -> {
         property.tryCast(
           (base.contribution.type)
@@ -141,7 +143,9 @@ open class WebTypesSymbolBase : WebTypesSymbol {
       null
 
   final override val icon: Icon?
-    get() = base.icon ?: superContributions.asSequence().mapNotNull { it.icon }.firstOrNull()
+    get() = base.icon
+            ?: superContributions.asSequence().mapNotNull { it.icon }.firstOrNull()
+            ?: base.jsonOrigin.defaultIcon
 
   final override val location: WebTypesSymbol.Location?
     // Should not reach to super contributions, because it can lead to stack overflow
@@ -196,7 +200,9 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     || superContributions.flatMap { it.queryScope }.any { it.isExclusiveFor(kind) }
 
   override fun matchContext(context: PolyContext): Boolean =
-    super.matchContext(context) && base.contribution.requiredContext.evaluate(context)
+    super.matchContext(context)
+    && (base.jsonOrigin.framework == null || context.framework == null || base.jsonOrigin.framework == context.framework)
+    && base.contribution.requiredContext.evaluate(context)
 
   internal class WebTypesSymbolWithPattern(private val jsonPattern: NamePatternRoot) : WebTypesSymbolBase(), PolySymbolWithPattern {
     override val pattern: PolySymbolPattern

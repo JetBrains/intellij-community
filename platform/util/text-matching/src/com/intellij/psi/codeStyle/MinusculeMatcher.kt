@@ -20,19 +20,30 @@ abstract class MinusculeMatcher protected constructor() : Matcher {
   abstract val pattern: String
 
   override fun matches(name: String): Boolean {
-    return matchingFragments(name) != null
+    return match(name) != null
   }
 
+  open fun match(name: String): List<TextRange>? {
+    return matchingFragments(name) as List<TextRange>?
+  }
+
+  @Deprecated("use match(String)", ReplaceWith("match(name)"))
   open fun matchingFragments(name: String): FList<TextRange>? {
     throw UnsupportedOperationException()
   }
 
+
+  @Deprecated("use matchingDegree(String, Boolean, List<TextRange>)", ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)"))
   open fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
     throw UnsupportedOperationException()
   }
 
+  open fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<TextRange>?): Int {
+    return matchingDegree(name, valueStartCaseMatch, fragments?.asReversed()?.let(FList<TextRange>::createFromReversed))
+  }
+
   open fun matchingDegree(name: String, valueStartCaseMatch: Boolean): Int {
-    return matchingDegree(name, valueStartCaseMatch, matchingFragments(name))
+    return matchingDegree(name, valueStartCaseMatch, match(name))
   }
 
   open fun matchingDegree(name: String): Int {
@@ -40,7 +51,7 @@ abstract class MinusculeMatcher protected constructor() : Matcher {
   }
 
   open fun isStartMatch(name: String): Boolean {
-    val fragments = matchingFragments(name)
+    val fragments = match(name)
     return fragments != null && isStartMatch(fragments)
   }
 

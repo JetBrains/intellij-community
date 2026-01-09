@@ -17,6 +17,7 @@ import com.intellij.polySymbols.testFramework.DebugOutputPrinter
 import com.intellij.polySymbols.utils.completeMatch
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.polySymbols.utils.qualifiedName
+import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.polySymbols.webTypes.WebTypesSymbol
 import com.intellij.util.applyIf
 import com.intellij.util.asSafely
@@ -79,7 +80,9 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
       else {
         printProperty(level, "matchedName", source.qualifiedName.toString())
       }
-      printProperty(level, "origin", "${source.origin.library}@${source.origin.version} (${source.origin.framework ?: "<none>"})")
+      printProperty(level,
+                    "origin",
+                    "${source.origin.library}@${source.origin.version} (${(source.origin as? WebTypesJsonOrigin)?.framework ?: "<none>"})")
       printProperty(level, "source", (source as? PsiSourcedPolySymbol)?.source)
       printProperty(level, "type", source.origin.typeSupport?.typeProperty?.let { source[it] })
       printProperty(level, "attrValue", source.htmlAttributeValue)

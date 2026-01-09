@@ -2,8 +2,7 @@ package com.intellij.ide.starter.driver.engine
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.impl.JmxHost
-import com.intellij.ide.starter.coroutine.perClassSupervisorScope
-import com.intellij.ide.starter.ide.IDERemDevTestContext
+import com.intellij.ide.starter.coroutine.CommonScope.perClassSupervisorScope
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.runner.IDECommandLine

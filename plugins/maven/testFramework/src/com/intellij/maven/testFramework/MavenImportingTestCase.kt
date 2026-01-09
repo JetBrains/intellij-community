@@ -3,8 +3,8 @@ package com.intellij.maven.testFramework
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.java.testFramework.backend.CompilerTestUtil
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
+import com.intellij.java.testFramework.backend.CompilerTestUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
@@ -42,6 +42,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.testFramework.*
 import com.intellij.testFramework.RunAll.Companion.runAll
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.Dispatchers
@@ -71,7 +72,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   private var myProjectsManager: MavenProjectsManager? = null
   private var myCodeStyleSettingsTracker: CodeStyleSettingsTracker? = null
-  private var myNotificationAware: AutoImportProjectNotificationAware? = null
+  private lateinit var myNotificationAware: AutoImportProjectNotificationAware
   private var myProjectTracker: AutoImportProjectTracker? = null
   private var isAutoReloadEnabled = false
   protected lateinit var myDisposable: Disposable
@@ -88,8 +89,14 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     super.setUp()
     myDisposable = Disposer.newDisposable(testRootDisposable)
     if (skipPluginResolution()) {
-      val pluginResolver = object: MavenPluginResolver {
-        override suspend fun resolvePlugins(mavenProjects: Collection<MavenProject>, forceUpdateSnapshots: Boolean, mavenEmbedderWrappers: MavenEmbedderWrappers, process: RawProgressReporter, eventHandler: MavenEventHandler): PluginResolutionResult {
+      val pluginResolver = object : MavenPluginResolver {
+        override suspend fun resolvePlugins(
+          mavenProjects: Collection<MavenProject>,
+          forceUpdateSnapshots: Boolean,
+          mavenEmbedderWrappers: MavenEmbedderWrappers,
+          process: RawProgressReporter,
+          eventHandler: MavenEventHandler,
+        ): PluginResolutionResult {
           MavenLog.LOG.warn("Plugin resolution skipped to speed up the test. It can be enabled using skipPluginResolution()=false")
           return PluginResolutionResult(emptySet())
         }
@@ -122,7 +129,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
                                                    CompilerTestUtil.deleteBuildSystemDirectory(project)
                                                  }, EmptyProgressIndicator())
 
-         },
+      },
       ThrowableRunnable<Throwable> { myProjectsManager = null },
       ThrowableRunnable<Throwable> { super.tearDown() },
       ThrowableRunnable<Throwable> {
@@ -460,15 +467,15 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   protected suspend fun assertHasPendingProjectForReload() {
     assertAutoReloadIsEnabled()
     awaitConfiguration()
-    assertTrue("Expected notification about pending projects for auto-reload", myNotificationAware!!.isNotificationVisible())
-    assertNotEmpty(myNotificationAware!!.getProjectsWithNotification())
+    assertTrue("Expected notification about pending projects for auto-reload", myNotificationAware.isNotificationVisible())
+    assertTrue(projectWithMavenNotificationExists)
   }
 
   protected suspend fun assertNoPendingProjectForReload() {
     assertAutoReloadIsEnabled()
     awaitConfiguration()
-    assertFalse(myNotificationAware!!.isNotificationVisible())
-    assertEmpty(myNotificationAware!!.getProjectsWithNotification())
+
+    assertFalse(projectWithMavenNotificationExists)
   }
 
   @RequiresBackgroundThread
@@ -742,4 +749,8 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   protected fun runWithoutStaticSync() {
     Registry.get("maven.preimport.project").setValue(false, testRootDisposable)
   }
+
+  private val projectWithMavenNotificationExists: Boolean
+    get() = myNotificationAware.getProjectsWithNotification().any { it.systemId == MavenUtil.SYSTEM_ID }
 }
+

@@ -118,7 +118,7 @@ internal class ProxySettingsUi(
         indent {
           row {
             pacUrlCheckBox = checkBox(UIBundle.message("proxy.pac.url.label")).component
-            pacUrlTextField = textField().align(AlignX.FILL).comment(UIBundle.message("proxy.pac.url.example")).component
+            pacUrlTextField = textField().align(AlignX.FILL).comment(UIBundle.message("proxy.pac.url.example")).enabledIf(pacUrlCheckBox.selected).component
           }
           row {
             clearPasswordsButton = button(UIBundle.message("proxy.pac.pw.clear.button")) {

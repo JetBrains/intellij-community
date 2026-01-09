@@ -967,7 +967,7 @@ public class JDParser {
   }
 
   /**
-   * Returns formatted JavaDoc tag description, according to selected configuration. Prefixs
+   * Returns formatted JavaDoc tag description, according to selected configuration. Prefixes
    * may be specified for the first lines and all subsequent lines. This distinction allows
    * partially manual formatting of the first line (by moving content from the description
    * to the first line prefix) and allow continuation lines to use different indentation.

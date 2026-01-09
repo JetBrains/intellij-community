@@ -16,7 +16,6 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createSdk
-import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
@@ -70,7 +69,12 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
     return Result.success(Unit)
   }
 
-  override suspend fun setupEnvSdk(moduleBasePath: Path, baseSdks: List<Sdk>, basePythonBinaryPath: P?, installPackages: Boolean): PyResult<Sdk> {
+  override suspend fun setupEnvSdk(
+    moduleBasePath: Path,
+    baseSdks: List<Sdk>,
+    basePythonBinaryPath: P?,
+    installPackages: Boolean,
+  ): PyResult<Sdk> {
     val hatchEnv = model.hatchViewModel.selectedEnvFromAvailable.get()?.hatchEnvironment
                    ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
     val basePythonBinaryEelPath = when (basePythonBinaryPath) {
@@ -89,9 +93,6 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
     ).getOr { return it }
 
     val hatchVirtualEnv = HatchVirtualEnvironment(hatchEnv, virtualEnvironment)
-    val createdSdk = hatchVirtualEnv.createSdk(hatchService.getWorkingDirectoryPath()).onSuccess {
-      HatchConfiguration.persistPathForTarget(hatchExecutablePath = hatchExecutablePath)
-    }
-    return createdSdk
+    return hatchVirtualEnv.createSdk(hatchService.getWorkingDirectoryPath())
   }
 }

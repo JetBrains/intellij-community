@@ -32,7 +32,7 @@ class TestComponentManager(
     assert(originalService === null) { "Service should not be created before preload: $originalService" }
 
     // empty descriptor, it is not used
-    val mockDescriptor = ServiceDescriptor(null, null, null, null, false, null, ServiceDescriptor.PreloadMode.TRUE, null, null)
+    val mockDescriptor = ServiceDescriptor(null, null, null, null, false, false, null, ServiceDescriptor.PreloadMode.TRUE, null, null)
     preloadService(mockDescriptor, clazz.name)
 
     val preloadedService = getServiceIfCreated(clazz)

@@ -60,7 +60,6 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="kotlin.jsr223" />
     <orderEntry type="module" module-name="kotlin.base.scripting.k1" />
-    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
   </component>

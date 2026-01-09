@@ -3,6 +3,7 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
@@ -31,6 +32,8 @@ import java.util.function.Function;
  * @see #getCachedValue(UserDataHolder, CachedValueProvider)
  */
 public abstract class CachedValuesManager {
+  private static final ThrottledLogger LOG = new ThrottledLogger(Logger.getInstance(CachedValuesManager.class), 5000);
+
   public static CachedValuesManager getManager(@NotNull Project project) {
     return project.getService(CachedValuesManager.class);
   }
@@ -79,7 +82,7 @@ public abstract class CachedValuesManager {
     if (StubBuildCachedValuesManager.isBuildingStubs()
         && !StubBuildCachedValuesManager.isComputingCachedValue()
         && (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal())) {
-      Logger.getInstance(getClass()).error("StubBuildCachedValuesManager should be used during stub building to improve performance");
+      LOG.warn("StubBuildCachedValuesManager should be used during stub building to improve performance");
     }
 
     if (dataHolder instanceof UserDataHolderEx) {

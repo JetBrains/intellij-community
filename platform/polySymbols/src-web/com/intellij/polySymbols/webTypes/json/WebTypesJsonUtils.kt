@@ -13,6 +13,7 @@ import com.intellij.polySymbols.context.PolyContext.Companion.PKG_MANAGER_RUBY_G
 import com.intellij.polySymbols.context.PolyContext.Companion.PKG_MANAGER_SYMFONY_BUNDLES
 import com.intellij.polySymbols.context.PolyContextKindRules
 import com.intellij.polySymbols.css.*
+import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.html.HTML_ELEMENTS
 import com.intellij.polySymbols.html.NAMESPACE_HTML

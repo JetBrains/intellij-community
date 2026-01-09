@@ -30,8 +30,8 @@ public final class ThrottledLogger {
 
   public ThrottledLogger(@NotNull Logger logger, long ignoreRepeatedMessagesInMs) {
     this.logger = logger;
-    if (ignoreRepeatedMessagesInMs < 0) {
-      throw new IllegalArgumentException("ignoreRepeatedMessagesInMs(=" + ignoreRepeatedMessagesInMs + ") must be >= 0");
+    if (ignoreRepeatedMessagesInMs <= 0) {
+      throw new IllegalArgumentException("ignoreRepeatedMessagesInMs(=" + ignoreRepeatedMessagesInMs + ") must be > 0");
     }
     this.ignoreRepeatedMessagesInMs = ignoreRepeatedMessagesInMs;
   }
@@ -45,12 +45,12 @@ public final class ThrottledLogger {
   }
 
   public void debug(String message, @Nullable Throwable t) {
-    if (!logger.isDebugEnabled() || isMuted()) return;
+    if (!logger.isDebugEnabled() || shouldThrottle()) return;
     logger.debug(message, t);
   }
 
   public void debug(@NotNull Supplier<String> messageSupplier) {
-    if (!logger.isDebugEnabled() || isMuted()) return;
+    if (!logger.isDebugEnabled() || shouldThrottle()) return;
     logger.debug(messageSupplier.get());
   }
 
@@ -59,12 +59,12 @@ public final class ThrottledLogger {
   }
 
   public void info(String message, @Nullable Throwable t) {
-    if (isMuted()) return;
+    if (shouldThrottle()) return;
     logger.info(message, t);
   }
 
   public void info(@NotNull Supplier<String> messageSupplier) {
-    if (isMuted()) return;
+    if (shouldThrottle()) return;
     logger.info(messageSupplier.get());
   }
 
@@ -73,12 +73,12 @@ public final class ThrottledLogger {
   }
 
   public void warn(String message, @Nullable Throwable t) {
-    if (isMuted()) return;
+    if (shouldThrottle()) return;
     logger.warn(message, t);
   }
 
   public void warn(@NotNull Supplier<String> messageSupplier) {
-    if (isMuted()) return;
+    if (shouldThrottle()) return;
     logger.warn(messageSupplier.get());
   }
 
@@ -87,18 +87,16 @@ public final class ThrottledLogger {
   }
 
   public void error(String message, @Nullable Throwable t) {
-    if (isMuted()) return;
+    if (shouldThrottle()) return;
     logger.error(message, t);
   }
 
   public void error(@NotNull Supplier<String> messageSupplier) {
-    if (isMuted()) return;
+    if (shouldThrottle()) return;
     logger.error(messageSupplier.get());
   }
 
-  private boolean isMuted() {
-    if (ignoreRepeatedMessagesInMs == 0) return false;
-
+  private boolean shouldThrottle() {
     long nowMs = System.currentTimeMillis();
     long lastLoggedAt = lastLoggedAtMsHolder.get();
 

@@ -6,7 +6,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.IntFunction;
 
 /**
  * DO NOT MODIFY. THIS FILE WAS PORTED FROM THE OTHER REPOSITORY AND SHOULD BE TREATED AS GENERATED
@@ -1110,6 +1112,458 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       }
       return removed;
   }
+
+    /**
+     * If the specified key is not already associated with a value,
+     * attempts to compute its value using the given mapping function
+     * and enters it into this map unless {@code null}.  The entire
+     * method invocation is performed atomically.  The supplied
+     * function is invoked exactly once per invocation of this method
+     * if the key is absent, else not at all.  Some attempted update
+     * operations on this map by other threads may be blocked while
+     * computation is in progress, so the computation should be short
+     * and simple.
+     *
+     * <p>The mapping function must not modify this map during computation.
+     *
+     * @param key key with which the specified value is to be associated
+     * @param mappingFunction the function to compute a value
+     * @return the current (existing or computed) value associated with
+     *         the specified key, or null if the computed value is null
+     * @throws NullPointerException if the specified key or mappingFunction
+     *         is null
+     * @throws IllegalStateException if the computation detectably
+     *         attempts a recursive update to this map that would
+     *         otherwise never complete
+     * @throws RuntimeException or Error if the mappingFunction does so,
+     *         in which case the mapping is left unestablished
+     */
+    @Override
+    public V computeIfAbsent(int key, IntFunction<? extends V> mappingFunction) {
+        if (mappingFunction == null)
+            throw new NullPointerException();
+        int h = spread(key);
+        V val = null;
+        int binCount = 0;
+        for (Node<V>[] tab = table;;) {
+            Node<V> f; int n, i, fh; int fk; V fv;
+            if (tab == null || (n = tab.length) == 0)
+                tab = initTable();
+            else if ((f = tabAt(tab, i = (n - 1) & h)) == null) {
+                Node<V> r = new ReservationNode<V>();
+                synchronized (r) {
+                    if (casTabAt(tab, i, r)) {
+                        binCount = 1;
+                        Node<V> node = null;
+                        try {
+                            if ((val = mappingFunction.apply(key)) != null)
+                                node = new Node<V>(h, key, val, null);
+                        } finally {
+                            setTabAt(tab, i, node);
+                        }
+                    }
+                }
+                if (binCount != 0)
+                    break;
+            }
+            else if ((fh = f.hash) == MOVED)
+                tab = helpTransfer(tab, f);
+            else if (fh == h    // check first node without acquiring lock
+                     && ((fk = f.key) == key || (key == fk))
+                     && (fv = f.val) != null)
+                return fv;
+            else {
+                boolean added = false;
+                synchronized (f) {
+                    if (tabAt(tab, i) == f) {
+                        if (fh >= 0) {
+                            binCount = 1;
+                            for (Node<V> e = f;; ++binCount) {
+                                int ek;
+                                if (e.hash == h &&
+                                    ((ek = e.key) == key ||
+                                     (key == ek))) {
+                                    val = e.val;
+                                    break;
+                                }
+                                Node<V> pred = e;
+                                if ((e = e.next) == null) {
+                                    if ((val = mappingFunction.apply(key)) != null) {
+                                        if (pred.next != null)
+                                            throw new IllegalStateException("Recursive update");
+                                        added = true;
+                                        pred.next = new Node<V>(h, key, val, null);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        else if (f instanceof TreeBin) {
+                            binCount = 2;
+                            TreeBin<V> t = (TreeBin<V>)f;
+                            TreeNode<V> r, p;
+                            if ((r = t.root) != null &&
+                                (p = r.findTreeNode(h, key)) != null)
+                                val = p.val;
+                            else if ((val = mappingFunction.apply(key)) != null) {
+                                added = true;
+                                t.putTreeVal(h, key, val);
+                            }
+                        }
+                        else if (f instanceof ReservationNode)
+                            throw new IllegalStateException("Recursive update");
+                    }
+                }
+                if (binCount != 0) {
+                    if (binCount >= TREEIFY_THRESHOLD)
+                        treeifyBin(tab, i);
+                    if (!added)
+                        return val;
+                    break;
+                }
+            }
+        }
+        if (val != null)
+            addCount(1L, binCount);
+        return val;
+    }
+
+    /**
+     * If the value for the specified key is present, attempts to
+     * compute a new mapping given the key and its current mapped
+     * value.  The entire method invocation is performed atomically.
+     * The supplied function is invoked exactly once per invocation of
+     * this method if the key is present, else not at all.  Some
+     * attempted update operations on this map by other threads may be
+     * blocked while computation is in progress, so the computation
+     * should be short and simple.
+     *
+     * <p>The remapping function must not modify this map during computation.
+     *
+     * @param key key with which a value may be associated
+     * @param remappingFunction the function to compute a value
+     * @return the new value associated with the specified key, or null if none
+     * @throws NullPointerException if the specified key or remappingFunction
+     *         is null
+     * @throws IllegalStateException if the computation detectably
+     *         attempts a recursive update to this map that would
+     *         otherwise never complete
+     * @throws RuntimeException or Error if the remappingFunction does so,
+     *         in which case the mapping is unchanged
+     */
+    @Override
+    public V computeIfPresent(int key, IntObjectToObjectFunction<? super V, ? extends V> remappingFunction) {
+        if (remappingFunction == null)
+            throw new NullPointerException();
+        int h = spread(key);
+        V val = null;
+        int delta = 0;
+        int binCount = 0;
+        for (Node<V>[] tab = table;;) {
+            Node<V> f; int n, i, fh;
+            if (tab == null || (n = tab.length) == 0)
+                tab = initTable();
+            else if ((f = tabAt(tab, i = (n - 1) & h)) == null)
+                break;
+            else if ((fh = f.hash) == MOVED)
+                tab = helpTransfer(tab, f);
+            else {
+                synchronized (f) {
+                    if (tabAt(tab, i) == f) {
+                        if (fh >= 0) {
+                            binCount = 1;
+                            for (Node<V> e = f, pred = null;; ++binCount) {
+                                int ek;
+                                if (e.hash == h &&
+                                    ((ek = e.key) == key ||
+                                     (key == ek))) {
+                                    val = remappingFunction.apply(key, e.val);
+                                    if (val != null)
+                                        e.val = val;
+                                    else {
+                                        delta = -1;
+                                        Node<V> en = e.next;
+                                        if (pred != null)
+                                            pred.next = en;
+                                        else
+                                            setTabAt(tab, i, en);
+                                    }
+                                    break;
+                                }
+                                pred = e;
+                                if ((e = e.next) == null)
+                                    break;
+                            }
+                        }
+                        else if (f instanceof TreeBin) {
+                            binCount = 2;
+                            TreeBin<V> t = (TreeBin<V>)f;
+                            TreeNode<V> r, p;
+                            if ((r = t.root) != null &&
+                                (p = r.findTreeNode(h, key)) != null) {
+                                val = remappingFunction.apply(key, p.val);
+                                if (val != null)
+                                    p.val = val;
+                                else {
+                                    delta = -1;
+                                    if (t.removeTreeNode(p))
+                                        setTabAt(tab, i, untreeify(t.first));
+                                }
+                            }
+                        }
+                        else if (f instanceof ReservationNode)
+                            throw new IllegalStateException("Recursive update");
+                    }
+                }
+                if (binCount != 0)
+                    break;
+            }
+        }
+        if (delta != 0)
+            addCount((long)delta, binCount);
+        return val;
+    }
+
+    /**
+     * Attempts to compute a mapping for the specified key and its
+     * current mapped value (or {@code null} if there is no current
+     * mapping). The entire method invocation is performed atomically.
+     * The supplied function is invoked exactly once per invocation of
+     * this method.  Some attempted update operations on this map by
+     * other threads may be blocked while computation is in progress,
+     * so the computation should be short and simple.
+     *
+     * <p>The remapping function must not modify this map during computation.
+     *
+     * @param key key with which the specified value is to be associated
+     * @param remappingFunction the function to compute a value
+     * @return the new value associated with the specified key, or null if none
+     * @throws NullPointerException if the specified key or remappingFunction
+     *         is null
+     * @throws IllegalStateException if the computation detectably
+     *         attempts a recursive update to this map that would
+     *         otherwise never complete
+     * @throws RuntimeException or Error if the remappingFunction does so,
+     *         in which case the mapping is unchanged
+     */
+    @Override
+    public V compute(int key, IntObjectToObjectFunction<? super V, ? extends V> remappingFunction) {
+      if (remappingFunction == null)
+            throw new NullPointerException();
+        int h = spread(key);
+        V val = null;
+        int delta = 0;
+        int binCount = 0;
+        for (Node<V>[] tab = table;;) {
+            Node<V> f; int n, i, fh;
+            if (tab == null || (n = tab.length) == 0)
+                tab = initTable();
+            else if ((f = tabAt(tab, i = (n - 1) & h)) == null) {
+                Node<V> r = new ReservationNode<V>();
+                synchronized (r) {
+                    if (casTabAt(tab, i, r)) {
+                        binCount = 1;
+                        Node<V> node = null;
+                        try {
+                            if ((val = remappingFunction.apply(key, null)) != null) {
+                                delta = 1;
+                                node = new Node<V>(h, key, val, null);
+                            }
+                        } finally {
+                            setTabAt(tab, i, node);
+                        }
+                    }
+                }
+                if (binCount != 0)
+                    break;
+            }
+            else if ((fh = f.hash) == MOVED)
+                tab = helpTransfer(tab, f);
+            else {
+                synchronized (f) {
+                    if (tabAt(tab, i) == f) {
+                        if (fh >= 0) {
+                            binCount = 1;
+                            for (Node<V> e = f, pred = null;; ++binCount) {
+                                int ek;
+                                if (e.hash == h &&
+                                    ((ek = e.key) == key ||
+                                     (key == ek))) {
+                                    val = remappingFunction.apply(key, e.val);
+                                    if (val != null)
+                                        e.val = val;
+                                    else {
+                                        delta = -1;
+                                        Node<V> en = e.next;
+                                        if (pred != null)
+                                            pred.next = en;
+                                        else
+                                            setTabAt(tab, i, en);
+                                    }
+                                    break;
+                                }
+                                pred = e;
+                                if ((e = e.next) == null) {
+                                    val = remappingFunction.apply(key, null);
+                                    if (val != null) {
+                                        if (pred.next != null)
+                                            throw new IllegalStateException("Recursive update");
+                                        delta = 1;
+                                        pred.next = new Node<V>(h, key, val, null);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        else if (f instanceof TreeBin) {
+                            binCount = 1;
+                            TreeBin<V> t = (TreeBin<V>)f;
+                            TreeNode<V> r, p;
+                            if ((r = t.root) != null)
+                                p = r.findTreeNode(h, key);
+                            else
+                                p = null;
+                            V pv = (p == null) ? null : p.val;
+                            val = remappingFunction.apply(key, pv);
+                            if (val != null) {
+                                if (p != null)
+                                    p.val = val;
+                                else {
+                                    delta = 1;
+                                    t.putTreeVal(h, key, val);
+                                }
+                            }
+                            else if (p != null) {
+                                delta = -1;
+                                if (t.removeTreeNode(p))
+                                    setTabAt(tab, i, untreeify(t.first));
+                            }
+                        }
+                        else if (f instanceof ReservationNode)
+                            throw new IllegalStateException("Recursive update");
+                    }
+                }
+                if (binCount != 0) {
+                    if (binCount >= TREEIFY_THRESHOLD)
+                        treeifyBin(tab, i);
+                    break;
+                }
+            }
+        }
+        if (delta != 0)
+            addCount((long)delta, binCount);
+        return val;
+    }
+
+    /**
+     * If the specified key is not already associated with a
+     * (non-null) value, associates it with the given value.
+     * Otherwise, replaces the value with the results of the given
+     * remapping function, or removes if {@code null}. The entire
+     * method invocation is performed atomically.  Some attempted
+     * update operations on this map by other threads may be blocked
+     * while computation is in progress, so the computation should be
+     * short and simple, and must not attempt to update any other
+     * mappings of this Map.
+     *
+     * @param key key with which the specified value is to be associated
+     * @param value the value to use if absent
+     * @param remappingFunction the function to recompute a value if present
+     * @return the new value associated with the specified key, or null if none
+     * @throws NullPointerException if the specified key or the
+     *         remappingFunction is null
+     * @throws RuntimeException or Error if the remappingFunction does so,
+     *         in which case the mapping is unchanged
+     */
+    public V merge(int key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+        if (value == null || remappingFunction == null)
+            throw new NullPointerException();
+        int h = spread(key);
+        V val = null;
+        int delta = 0;
+        int binCount = 0;
+        for (Node<V>[] tab = table;;) {
+            Node<V> f; int n, i, fh;
+            if (tab == null || (n = tab.length) == 0)
+                tab = initTable();
+            else if ((f = tabAt(tab, i = (n - 1) & h)) == null) {
+                if (casTabAt(tab, i, new Node<V>(h, key, value, null))) {
+                    delta = 1;
+                    val = value;
+                    break;
+                }
+            }
+            else if ((fh = f.hash) == MOVED)
+                tab = helpTransfer(tab, f);
+            else {
+                synchronized (f) {
+                    if (tabAt(tab, i) == f) {
+                        if (fh >= 0) {
+                            binCount = 1;
+                            for (Node<V> e = f, pred = null;; ++binCount) {
+                                int ek;
+                                if (e.hash == h &&
+                                    ((ek = e.key) == key ||
+                                     (key == ek))) {
+                                    val = remappingFunction.apply(e.val, value);
+                                    if (val != null)
+                                        e.val = val;
+                                    else {
+                                        delta = -1;
+                                        Node<V> en = e.next;
+                                        if (pred != null)
+                                            pred.next = en;
+                                        else
+                                            setTabAt(tab, i, en);
+                                    }
+                                    break;
+                                }
+                                pred = e;
+                                if ((e = e.next) == null) {
+                                    delta = 1;
+                                    val = value;
+                                    pred.next = new Node<V>(h, key, val, null);
+                                    break;
+                                }
+                            }
+                        }
+                        else if (f instanceof TreeBin) {
+                            binCount = 2;
+                            TreeBin<V> t = (TreeBin<V>)f;
+                            TreeNode<V> r = t.root;
+                            TreeNode<V> p = (r == null) ? null :
+                                r.findTreeNode(h, key);
+                            val = (p == null) ? value :
+                                remappingFunction.apply(p.val, value);
+                            if (val != null) {
+                                if (p != null)
+                                    p.val = val;
+                                else {
+                                    delta = 1;
+                                    t.putTreeVal(h, key, val);
+                                }
+                            }
+                            else if (p != null) {
+                                delta = -1;
+                                if (t.removeTreeNode(p))
+                                    setTabAt(tab, i, untreeify(t.first));
+                            }
+                        }
+                        else if (f instanceof ReservationNode)
+                            throw new IllegalStateException("Recursive update");
+                    }
+                }
+                if (binCount != 0) {
+                    if (binCount >= TREEIFY_THRESHOLD)
+                        treeifyBin(tab, i);
+                    break;
+                }
+            }
+        }
+        if (delta != 0)
+            addCount((long)delta, binCount);
+        return val;
+    }
 
   // Hashtable legacy methods
 

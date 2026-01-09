@@ -24,8 +24,8 @@ class PyProjectTomlCollectorTest(val project: Project) {
   ) = timeoutRunBlocking(context = Dispatchers.EDT) {
     val psiFile = PsiFileFactory.getInstance(project).createFileFromText(PY_PROJECT_TOML, TomlFileType, text)
 
-    val tools = PyProjectTomlCollector.findDeclaredTools(psiFile).map { it.fusName }
-    val backends = PyProjectTomlCollector.findBuildSystemRequiresTools(psiFile).map { it.fusName }
+    val tools = PyProjectTomlCollector.findDeclaredTools(psiFile)
+    val backends = PyProjectTomlCollector.findBuildSystemRequiresTools(psiFile)
     val dependencyGroups = PyProjectTomlCollector.findDependencyGroups(psiFile)
 
     UsefulTestCase.assertSameElements(tools, toolNames)

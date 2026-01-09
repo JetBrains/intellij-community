@@ -371,7 +371,6 @@
       implementation="com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureUsageProcessor" id="Python"/>
 
     <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PythonTracebackFilter"/>
-    <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PyRemoteAnalyzeStacktraceFilter"/>
 
     <internalFileTemplate name="Python Script"/>
     <internalFileTemplate name="Python Stub"/>
@@ -746,10 +745,6 @@
     <extensionPoint qualifiedName="Pythonid.remoteInterpreterManager"
                     interface="com.jetbrains.python.remote.PythonRemoteInterpreterManager"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.remoteSkeletonGeneratorFactory"
-                    interface="com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory" dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.remoteProcessStarterManager" interface="com.jetbrains.python.run.PyRemoteProcessStarterManager"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.remoteConsoleProcessCreator"
                     interface="com.jetbrains.python.console.PythonConsoleRemoteProcessCreator" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.breakpointHandler"
@@ -774,9 +769,6 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.packageManagerProvider"
                     interface="com.jetbrains.python.packaging.PyPackageManagerProvider"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.projectSynchronizerProvider"
-                    interface="com.jetbrains.python.remote.PyProjectSynchronizerProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.sshInterpreterManager" interface="com.jetbrains.python.remote.PythonSshInterpreterManager"
                     dynamic="true"/>

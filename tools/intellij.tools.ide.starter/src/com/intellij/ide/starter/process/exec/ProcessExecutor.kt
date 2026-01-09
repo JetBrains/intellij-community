@@ -2,7 +2,7 @@ package com.intellij.ide.starter.process.exec
 
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.logEnvVariables
-import com.intellij.ide.starter.coroutine.perClassSupervisorScope
+import com.intellij.ide.starter.coroutine.CommonScope.perClassSupervisorScope
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.getThrowableText
 import com.intellij.tools.ide.util.common.logError

@@ -8,6 +8,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.testFramework.teamCity.TeamCityPrinterKt;
+import com.intellij.teamcity.TeamCityClient;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestLoggerFactory;
@@ -125,7 +127,9 @@ public class TestAll implements Test {
 
   public static @Unmodifiable List<Path> getClassRoots() {
     return TeamCityLogger.block("Collecting tests from ...", () -> {
-      return doGetClassRoots();
+      List<Path> paths = doGetClassRoots();
+      saveTestRootsForDebug(paths);
+      return paths;
     });
   }
 
@@ -165,13 +169,13 @@ public class TestAll implements Test {
         })
         .collect(Collectors.toList());
 
-      System.out.println("Collecting tests from roots specified by jar.dependencies.to.tests property: " + testPaths);
+      System.out.println("Collecting tests from roots specified by jar.dependencies.to.tests system property");
       return testPaths;
     }
 
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
-      System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
+      System.out.println("Collecting tests from roots specified by test.roots system property");
       return ContainerUtil.map(testRoots.split(";"), Paths::get);
     }
     List<Path> roots = ExternalClasspathClassLoader.getRoots();
@@ -182,20 +186,21 @@ public class TestAll implements Test {
         roots = new ArrayList<>(roots);
         roots.removeAll(FileCollectionFactory.createCanonicalPathSet(excludeRoots));
       }
-
-      System.out.println("Collecting tests from roots specified by classpath.file property: " + roots);
+      System.out.println("Collecting tests from roots specified by " + ExternalClasspathClassLoader.CLASSPATH_FILE_PROPERTY + " system property");
       return roots;
     }
     else {
       ClassLoader loader = TestAll.class.getClassLoader();
       if (loader instanceof URLClassLoader) {
+        System.out.println("Collecting tests from TestAll class loader (" + URLClassLoader.class.getName() + ")");
         return ContainerUtil.map(getClassRoots(((URLClassLoader)loader).getURLs()), url -> Paths.get(url.toUri()));
       }
       if (loader instanceof UrlClassLoader) {
         List<Path> urls = ((UrlClassLoader)loader).getBaseUrls();
-        System.out.println("Collecting tests from " + urls);
+        System.out.println("Collecting tests from TestAll class loader (" + UrlClassLoader.class.getName() + ")");
         return urls;
       }
+      System.out.println("Collecting tests from java.class.path system property");
       return ContainerUtil.map(System.getProperty("java.class.path").split(File.pathSeparator), Paths::get);
     }
   }
@@ -211,6 +216,17 @@ public class TestAll implements Test {
     });
     System.out.println("Collecting tests from " + classLoaderRoots);
     return classLoaderRoots;
+  }
+
+  private static void saveTestRootsForDebug(@NotNull List<Path> paths) {
+    try {
+      Path tempFile = Files.createTempFile("TestAll-test-roots-path", ".txt");
+      System.out.println("Saving test roots for further debugging to " + tempFile);
+      Files.writeString(tempFile, String.join("\n", ContainerUtil.map(paths, Path::toString)));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

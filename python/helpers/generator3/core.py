@@ -19,7 +19,6 @@ if TYPE_CHECKING:
     GenerationStatusId = NewType('GenerationStatusId', str)
     GeneratorVersion = Tuple[int, int]
 
-# TODO: Move all CLR-specific functions to clr_tools
 quiet = False
 _parent_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -580,9 +579,6 @@ class SkeletonGenerator(object):
             msg = "Failed to process %r while %s: %s"
             args = mod_name, CURRENT_ACTION, str(value)
             report(msg, *args)
-            if sys.platform == 'cli':
-                import traceback
-                traceback.print_exc(file=sys.stderr)
             raise
 
 
@@ -668,18 +664,6 @@ def redo_module(module_name, module_file_name, cache_dir, output_dir):
     # sys.modules
     mod = sys.modules.get(module_name)
     mod_path = module_name.split('.')
-    if not mod and sys.platform == 'cli':
-        # "import System.Collections" in IronPython 2.7 doesn't actually put System.Collections in sys.modules
-        # instead, sys.modules['System'] get set to a Microsoft.Scripting.Actions.NamespaceTracker and Collections can be
-        # accessed as its attribute
-        mod = sys.modules[mod_path[0]]
-        for component in mod_path[1:]:
-            try:
-                mod = getattr(mod, component)
-            except AttributeError:
-                mod = None
-                report("Failed to find CLR module " + module_name)
-                break
     if mod:
         action("restoring")
         from generator3.module_redeclarator import ModuleRedeclarator

@@ -20,6 +20,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getParentOfType
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.fields.ExtendableTextComponent
@@ -47,11 +49,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
-import java.awt.event.ActionListener
-import java.awt.event.KeyEvent
-import javax.swing.Icon
-import javax.swing.JTextField
-import javax.swing.KeyStroke
+import java.awt.event.*
+import javax.swing.*
 import javax.swing.event.DocumentEvent
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -142,6 +141,16 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
         textInputFlow.value = text
       }
     })
+
+    createBrowseFolderListener(browseFolderDialogTitle, isFileSelectionMode)?.also {
+      addActionListener(it)
+    }
+
+    textField.addFocusListener(object : FocusAdapter() {
+      override fun focusLost(e: FocusEvent) {
+        validationAction.doValidate()
+      }
+    })
   }
 
   private fun registerPropertyCallbacks() {
@@ -188,6 +197,19 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
   fun initialize(scope: CoroutineScope) {
     this.scope = scope
     registerPropertyCallbacks()
+
+    val rootPane = this.getParentOfType<JRootPane>()
+    val topPanel = ComponentUtil.findParentByCondition(this) { it.parent !is JPanel }
+
+    listOfNotNull(topPanel, rootPane).forEach { component ->
+      component.addMouseListener(object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent?) {
+          if (!this@ValidatedPathField.isVisible) return
+          validationAction.doValidate()
+        }
+      })
+    }
+
 
     scope.launch(Dispatchers.UI) {
       textInputFlow

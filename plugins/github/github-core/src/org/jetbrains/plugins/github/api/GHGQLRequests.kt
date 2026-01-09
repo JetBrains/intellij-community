@@ -589,7 +589,7 @@ object GHGQLRequests {
 
       fun addThread(
         server: GithubServerPath, reviewId: String,
-        body: String, line: Int, side: Side, startLine: Int, fileName: String,
+        body: String, line: Int, side: Side, startLine: Int, startSide: Side, fileName: String,
       ): GQLQuery<GHPullRequestReviewThread> {
         val params = mutableMapOf("pullRequestReviewId" to reviewId,
                                   "path" to fileName,
@@ -597,7 +597,7 @@ object GHGQLRequests {
                                   "line" to line,
                                   "body" to body)
         if (startLine != line) {
-          params["startSide"] = side.name
+          params["startSide"] = startSide.name
           params["startLine"] = startLine
         }
 

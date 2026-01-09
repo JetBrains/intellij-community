@@ -1,0 +1,7 @@
+// WITH_STDLIB
+fun foo() {
+    val intArray = intArrayOf(1, 2, 3, 4, 5)
+    for (element in intArray) {
+        println(element)
+    }
+}

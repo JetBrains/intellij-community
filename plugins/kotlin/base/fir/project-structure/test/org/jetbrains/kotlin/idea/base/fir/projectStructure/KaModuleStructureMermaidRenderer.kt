@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.fir.projectStructure
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
+import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaLibraryFallbackDependenciesModuleImpl
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
 
 object KaModuleStructureMermaidRenderer {
@@ -125,6 +126,7 @@ object KaModuleStructureMermaidRenderer {
             append("<br />")
             append(targetPlatform.getTargetPlatformDescriptionForRendering())
         }
+        is KaLibraryFallbackDependenciesModuleImpl -> null
 
         else -> error("Unknown module type: ${this::class.java}")
     }

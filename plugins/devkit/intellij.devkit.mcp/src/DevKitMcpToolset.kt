@@ -11,10 +11,9 @@ import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiManager
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.util.parentOfType
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
@@ -100,27 +99,29 @@ class DevKitMcpToolset : McpToolset {
   ): Pair<List<Pair<T, List<SourceLocation>>>, Boolean> {
     val project = currentCoroutineContext().project
     val file = VirtualFileManager.getInstance().findFileByNioPath(project.resolveInProject(filePath)) ?: throw McpExpectedError("Virtual file not found")
-    val document = FileDocumentManager.getInstance().getDocument(file)
     val pointer = readAction {
+      val document = FileDocumentManager.getInstance().getDocument(file)
       val psiTree = PsiManager.getInstance(project).findFile(file) ?: throw McpExpectedError("PsiFile not found")
       val offset = document?.getLineStartOffset(line - 1)?.plus(column - 1) ?: throw McpExpectedError("Invalid line/column")
-      val element = psiTree.findElementAt(offset) ?: throw McpExpectedError("Element not found at the specified position")
-      val method = element.parentOfType<PsiMethod>() ?: throw McpExpectedError("No method found at the specified position")
+      val method = LockReqPsiOps.forLanguage(psiTree.language).extractTargetElement(psiTree, offset) ?: throw McpExpectedError("No method found at the specified position")
       SmartPointerManager.createPointer(method)
     }
 
     val list = Collections.synchronizedList(mutableListOf<Pair<T, List<SourceLocation>>>())
 
     val result = withTimeoutOrNull(timeout.milliseconds) {
-      LockReqAnalyzerParallelBFS().analyzeMethodStreaming(pointer, AnalysisConfig.forProject(project, requirementSet), project, object : LockReqConsumer {
-        override fun onPath(path: ExecutionPath) {
-          val lockType = mapper(path.lockRequirement.constraintType)
-          val locations = path.methodChain.map {
-            SourceLocation(it.containingClassName ?: "<null>", it.methodName)
+      @Suppress("HardCodedStringLiteral")
+      withBackgroundProgress(project, "Analyzing Locking Requirements usage for AI", true) {
+        LockReqAnalyzerParallelBFS().analyzeMethodStreaming(pointer, AnalysisConfig.forProject(project, requirementSet), project, object : LockReqConsumer {
+          override fun onPath(path: ExecutionPath) {
+            val lockType = mapper(path.lockRequirement.constraintType)
+            val locations = path.methodChain.map {
+              SourceLocation(it.containingClassName ?: "<null>", it.methodName)
+            }
+            list.add(lockType to locations)
           }
-          list.add(lockType to locations)
-        }
-      })
+        })
+      }
     }
     val timeout = result == null
     return list to timeout
@@ -145,13 +146,13 @@ class DevKitMcpToolset : McpToolset {
 
   @Serializable
   data class LockRequirements(
-    val reqs: List<LockRequirementUsage>,
+    val foundRequirements: List<LockRequirementUsage>,
     val timedOut: Boolean,
   )
 
   @Serializable
   data class ThreadingRequirements(
-    val reqs: List<ThreadingRequirementUsage>,
+    val foundRequirements: List<ThreadingRequirementUsage>,
     val timedOut: Boolean,
   )
 }

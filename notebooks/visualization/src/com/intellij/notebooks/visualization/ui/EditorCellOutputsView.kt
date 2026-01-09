@@ -10,7 +10,6 @@ import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFacto
 import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.executionCountHolder
 import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactoryGetter
 import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKey
-import com.intellij.notebooks.visualization.outputs.NotebookOutputInlayShowable
 import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
 import com.intellij.notebooks.visualization.outputs.impl.InnerComponent
 import com.intellij.notebooks.visualization.outputs.impl.SurroundingComponent
@@ -229,11 +228,6 @@ class EditorCellOutputsView(
     val component = result.component
     component.outputComponentFactory = factory
     component.executionCountHolder = result.executionCountHolder
-
-    val parent = parent
-    if (component is NotebookOutputInlayShowable && parent != null) {
-      component.shown = editor.scrollPane.viewport.viewRect.intersects(parent.calculateBounds())
-    }
 
     val disposable = result.disposable
     if (disposable != null) {

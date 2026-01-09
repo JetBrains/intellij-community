@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.inspections.tests;
 
@@ -819,6 +819,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/char.kt");
         }
 
+        @TestMetadata("customGetterRange.kt")
+        public void testCustomGetterRange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/customGetterRange.kt");
+        }
+
         @TestMetadata("double.kt")
         public void testDouble() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/double.kt");
@@ -897,6 +902,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("until2.kt")
         public void testUntil2() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/until2.kt");
+        }
+
+        @TestMetadata("varRange.kt")
+        public void testVarRange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/varRange.kt");
         }
     }
 
@@ -9677,6 +9687,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/asReceiver.kt");
         }
 
+        @TestMetadata("complexReceiver.kt")
+        public void testComplexReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/complexReceiver.kt");
+        }
+
         @TestMetadata("forNotTarget.kt")
         public void testForNotTarget() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/forNotTarget.kt");
@@ -9707,6 +9722,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/indexInLvalue.kt");
         }
 
+        @TestMetadata("lastIndex.kt")
+        public void testLastIndex() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/lastIndex.kt");
+        }
+
         @TestMetadata("lengthLiteralConstant.kt")
         public void testLengthLiteralConstant() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/lengthLiteralConstant.kt");
@@ -9720,11 +9740,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("map.kt")
         public void testMap() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/map.kt");
-        }
-
-        @TestMetadata("multidimensionalArray.kt")
-        public void testMultidimensionalArray() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/multidimensionalArray.kt");
         }
 
         @TestMetadata("multidimensionalArray2.kt")
@@ -12730,6 +12745,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("filterIsInstanceForMapNotNull.kt")
         public void testFilterIsInstanceForMapNotNull() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceForMapNotNull.kt");
+        }
+
+        @TestMetadata("filterIsInstanceForMapNotNull_arbitraryLHS.kt")
+        public void testFilterIsInstanceForMapNotNull_arbitraryLHS() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceForMapNotNull_arbitraryLHS.kt");
+        }
+
+        @TestMetadata("filterIsInstanceForMapNotNull_dotQualifiedLHS.kt")
+        public void testFilterIsInstanceForMapNotNull_dotQualifiedLHS() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceForMapNotNull_dotQualifiedLHS.kt");
+        }
+
+        @TestMetadata("filterIsInstanceForMapNotNull_namedLambda.kt")
+        public void testFilterIsInstanceForMapNotNull_namedLambda() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceForMapNotNull_namedLambda.kt");
         }
 
         @TestMetadata("filterIsInstanceReceiver.kt")

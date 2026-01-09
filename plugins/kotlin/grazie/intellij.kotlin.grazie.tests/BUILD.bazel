@@ -23,6 +23,7 @@ jvm_library(
     "//plugins/grazie/src/test:grazie-tests_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "//platform/core-api:core",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
   ],
   runtime_deps = [":kotlin-grazie-tests"]
 )

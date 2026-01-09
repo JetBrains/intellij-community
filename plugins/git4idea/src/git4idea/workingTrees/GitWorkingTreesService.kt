@@ -1,75 +1,107 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.workingTrees
 
+import com.intellij.dvcs.repo.repositoryId
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
-import com.intellij.platform.vcs.impl.shared.RepositoryId
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.repo.GitRepositoryModel
+import git4idea.GitRemoteBranch
+import git4idea.GitWorkingTree
+import git4idea.actions.workingTree.GitWorkingTreeDialogData
+import git4idea.commands.Git
+import git4idea.i18n.GitBundle
+import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlin.io.path.Path
 
 @Service(Service.Level.PROJECT)
 internal class GitWorkingTreesService(private val project: Project, val coroutineScope: CoroutineScope) {
 
   companion object {
-    private const val WORKING_TREE_TAB_CLOSED_BY_USER_PROPERTY: String = "Git.Working.Tree.Tab.closed.by.user"
+    private const val WORKING_TREE_TAB_STATUS_PROPERTY: String = "Git.Working.Tree.Tab.closed.by.user"
+    private const val WORKING_TREE_TAB_STATUS_OPENED_BY_USER: String = "opened"
+    private const val WORKING_TREE_TAB_STATUS_CLOSED_BY_USER: String = "closed"
 
     fun getInstance(project: Project): GitWorkingTreesService = project.getService(GitWorkingTreesService::class.java)
+
+    /**
+     * So far only the `single repository` case is supported for working trees
+     */
+    fun getRepoForWorkingTreesSupport(project: Project?): GitRepository? {
+      if (project == null) return null
+      if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled()) return null
+      val repositories = GitRepositoryManager.getInstance(project).repositories
+      return repositories.singleOrNull()
+    }
   }
 
-  /**
-   * So far only the case `single repository in project root` is supported for working trees
-   */
-  fun getSingleRepositoryInProjectRootOrNull(): GitRepositoryModel? {
-    val baseDirectories = project.getBaseDirectories()
-    if (baseDirectories.size != 1) {
-      return null
-    }
-    val projectRoot = baseDirectories.first()
-    val holder = GitRepositoriesHolder.getInstance(project)
-    if (!holder.initialized) {
-      return null
-    }
-    val repositoryModels = holder.getAll()
-    if (repositoryModels.isEmpty()) {
-      return null
-    }
-    if (repositoryModels.size > 1) {
-      return null
-    }
-
-    val model = repositoryModels[0]
-    val modelRoot = model.root.virtualFile ?: return null
-    if (modelRoot != projectRoot) {
-      return null
-    }
-    return model
+  fun repositoryToModel(repository: GitRepository): GitRepositoryModel? {
+    return GitRepositoriesHolder.getInstance(project).get(repository.repositoryId())
   }
 
   fun shouldWorkingTreesTabBeShown(): Boolean {
-    if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled()) {
-      return false
+    val repository = getRepoForWorkingTreesSupport(project) ?: return false
+    val value = PropertiesComponent.getInstance(project).getValue(WORKING_TREE_TAB_STATUS_PROPERTY)
+    return when (value) {
+      WORKING_TREE_TAB_STATUS_CLOSED_BY_USER -> false
+      WORKING_TREE_TAB_STATUS_OPENED_BY_USER -> true
+      else -> repository.workingTreeHolder.getWorkingTrees().size > 1
     }
-    if (getSingleRepositoryInProjectRootOrNull() == null) {
-      return false
-    }
-    return !PropertiesComponent.getInstance(project).getBoolean(WORKING_TREE_TAB_CLOSED_BY_USER_PROPERTY, false)
   }
 
   fun workingTreesTabOpenedByUser() {
-    PropertiesComponent.getInstance(project).unsetValue(WORKING_TREE_TAB_CLOSED_BY_USER_PROPERTY)
+    PropertiesComponent.getInstance(project).setValue(WORKING_TREE_TAB_STATUS_PROPERTY,
+                                                      WORKING_TREE_TAB_STATUS_OPENED_BY_USER)
   }
 
   fun workingTreesTabClosedByUser() {
-    PropertiesComponent.getInstance(project).setValue(WORKING_TREE_TAB_CLOSED_BY_USER_PROPERTY, true)
+    PropertiesComponent.getInstance(project).setValue(WORKING_TREE_TAB_STATUS_PROPERTY,
+                                                      WORKING_TREE_TAB_STATUS_CLOSED_BY_USER)
   }
 
-  fun reloadRepository(repositoryId: RepositoryId) {
-    val repositoryModel = GitRepositoriesHolder.getInstance(project).get(repositoryId) ?: return
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(repositoryModel.root) ?: return
-    repository.workingTreeHolder.reload()
+  class Result private constructor(
+    val success: Boolean,
+    val errorOutputAsHtmlString: @NlsSafe @NlsContexts.NotificationContent String,
+  ) {
+    companion object {
+      val SUCCESS = Result(true, "")
+
+      fun createFailure(@NlsContexts.NotificationContent errorOutputAsHtmlString: @NlsSafe String): Result {
+        return Result(false, errorOutputAsHtmlString)
+      }
+    }
+  }
+
+  suspend fun createWorkingTree(repository: GitRepository, data: GitWorkingTreeDialogData): Result {
+    return withBackgroundProgress(project, GitBundle.message("progress.title.creating.worktree"), cancellable = true) {
+      val newBranchName = when {
+        data.newBranchName != null -> data.newBranchName
+        data.sourceBranch is GitRemoteBranch -> data.sourceBranch.nameForRemoteOperations
+        else -> null
+      }
+      val commandResult = Git.getInstance().createWorkingTree(repository, data.workingTreePath, data.sourceBranch, newBranchName)
+      if (commandResult.success()) {
+        Result.SUCCESS
+      }
+      else {
+        Result.createFailure(commandResult.errorOutputAsHtmlString)
+      }
+    }
+  }
+
+  fun openWorkingTreeProject(tree: GitWorkingTree, cs: CoroutineScope) {
+    cs.launch(Dispatchers.Default) {
+      PlatformProjectOpenProcessor.getInstance().openProjectAndFile(Path(tree.path.path), false, OpenProjectTask.build())
+    }
   }
 }

@@ -1,6 +1,7 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.jvm.shared">
   <dependencies>
     <module name="intellij.kotlin.base.scripting.shared"/>
+    <module name="intellij.kotlin.runConfigurations.jvm"/>
   </dependencies>
   <extensionPoints>
     <extensionPoint

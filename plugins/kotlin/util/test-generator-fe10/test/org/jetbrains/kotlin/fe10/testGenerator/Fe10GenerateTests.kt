@@ -49,7 +49,6 @@ import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractSmartCompletio
 import org.jetbrains.kotlin.idea.configuration.gradle.AbstractGradleConfigureProjectByChangingFileTest
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractK1LiteralTextToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractLiteralKotlinToKotlinCopyPasteTest
-import org.jetbrains.kotlin.idea.coverage.AbstractKotlinCoverageOutputFilesTest
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentAutoImportTest
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentCompletionHandlerTest
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentCompletionTest
@@ -376,12 +375,6 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     testGroup("copyright/tests", category = CODE_INSIGHT) {
         testClass<AbstractUpdateKotlinCopyrightTest> {
             model("update", pattern = KT_OR_KTS, testMethodName = "doTest")
-        }
-    }
-
-    testGroup("coverage/tests") {
-        testClass<AbstractKotlinCoverageOutputFilesTest> {
-            model("outputFiles")
         }
     }
 

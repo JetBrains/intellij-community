@@ -105,7 +105,6 @@ internal class EditorConfigEncodingInspection : LocalInspectionTool() {
 
   private fun getMainPsi(psiFile: PsiFile): PsiFile {
     val baseLanguage = psiFile.viewProvider.baseLanguage
-    return psiFile.viewProvider.getPsi(baseLanguage)
+    return psiFile.viewProvider.getPsi(baseLanguage)!!
   }
-
 }

@@ -82,8 +82,14 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
     Arrays.sort(constructors, new Comparator<>() {
       @Override
       public int compare(PsiMethod c1, PsiMethod c2) {
-        final PsiMethod cc1 = CommonJavaRefactoringUtil.getChainedConstructor(c1);
-        final PsiMethod cc2 = CommonJavaRefactoringUtil.getChainedConstructor(c2);
+        PsiMethod cc1 = CommonJavaRefactoringUtil.getChainedConstructor(c1);
+        if (cc1 == c1) {
+          cc1 = null;
+        }
+        PsiMethod cc2 = CommonJavaRefactoringUtil.getChainedConstructor(c2);
+        if (cc2 == c2) {
+          cc2 = null;
+        }
         if (cc1 == c2) return 1;
         if (cc2 == c1) return -1;
         if (cc1 == null) {

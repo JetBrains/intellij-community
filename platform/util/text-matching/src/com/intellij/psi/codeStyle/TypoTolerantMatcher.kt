@@ -106,21 +106,27 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
     }
   }
 
-  private fun prependRange(ranges: FList<Range>, range: Range): FList<Range> {
-    val head = ranges.head
-    return if (head != null && head.startOffset == range.endOffset) {
-      ranges.tail.prepend(Range(range.startOffset, head.endOffset, range.errorCount + head.errorCount))
+  private fun appendRange(ranges: List<Range>, range: Range): List<Range> {
+    if (ranges.isEmpty()) {
+      return mutableListOf(range)
+    }
+
+    require(ranges is MutableList<Range>)
+    val last = ranges.last()
+    if (last.startOffset == range.endOffset) {
+      ranges[ranges.size - 1] = Range(range.startOffset, last.endOffset, range.errorCount + last.errorCount)
     }
     else {
-      ranges.prepend(range)
+      ranges.add(range)
     }
+    return ranges
   }
 
-  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
+  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<TextRange>?): Int {
     if (fragments == null) return Int.MIN_VALUE
     if (fragments.isEmpty()) return 0
 
-    val first = fragments.head
+    val first = fragments.first()
     val startMatch = first.startOffset == 0
     val valuedStartMatch = startMatch && valueStartCaseMatch
 
@@ -177,6 +183,11 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
            (if (finalMatch) 1 else 0)
   }
 
+  @Deprecated("use matchingDegree(String, Boolean, List<TextRange>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)"))
+  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
+    return matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)
+  }
+
   private fun evaluateCaseMatching(
     valuedStartMatch: Boolean,
     patternIndex: Int,
@@ -212,24 +223,20 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
     }
   }
 
-  override fun isStartMatch(name: String): Boolean {
-    val fragments = matchingFragments(name)
-    return fragments != null && isStartMatch(fragments)
-  }
-
-  override fun matches(name: String): Boolean {
-    return matchingFragments(name) != null
-  }
-
-  override fun matchingFragments(name: String): FList<TextRange>? {
+  override fun match(name: String): List<TextRange>? {
     return if (name.length >= myMinNameLength) {
       val ascii = AsciiUtils.isAscii(name)
-      Session(name, myTypoAware = false, ascii).matchingFragments() as FList<TextRange>?
-      ?: Session(name, myTypoAware = true, ascii).matchingFragments() as FList<TextRange>?
+      Session(name, myTypoAware = false, ascii).matchingFragments() as List<TextRange>?
+      ?: Session(name, myTypoAware = true, ascii).matchingFragments() as List<TextRange>?
     }
     else {
       null
     }
+  }
+
+  @Deprecated("use match(String)", replaceWith = ReplaceWith("match(name)"))
+  override fun matchingFragments(name: String): FList<TextRange>? {
+    return match(name)?.asReversed()?.let(FList<TextRange>::createFromReversed)
   }
 
   private inner class Session(
@@ -275,7 +282,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
       return errorState.length(myPattern)
     }
 
-    fun matchingFragments(): FList<Range>? {
+    fun matchingFragments(): List<Range>? {
       val length = myName.length
       if (length < myMinNameLength) {
         return null
@@ -301,7 +308,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
         }
       }
 
-      return matchWildcards(patternIndex = 0, nameIndex = 0, errorState = ErrorState())
+      return matchWildcards(patternIndex = 0, nameIndex = 0, errorState = ErrorState())?.asReversed()
     }
 
     /**
@@ -312,14 +319,14 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
       patternIndex: Int,
       nameIndex: Int,
       errorState: ErrorState,
-    ): FList<Range>? {
+    ): List<Range>? {
       var patternIndex = patternIndex
       if (nameIndex < 0) {
         return null
       }
       if (!isWildcard(patternIndex)) {
         return if (patternIndex == patternLength(errorState)) {
-          FList.emptyList()
+          emptyList()
         }
         else {
           matchFragment(patternIndex, nameIndex, errorState)
@@ -338,14 +345,14 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
                    (patternIndex < 2 || !isUpperCaseOrDigit(patternIndex - 2, errorState))) {
           val spaceIndex = myName.indexOf(' ', startIndex = nameIndex)
           if (spaceIndex >= 0) {
-            FList.singleton(Range(spaceIndex, spaceIndex + 1, errorCount = 0))
+            mutableListOf(Range(spaceIndex, spaceIndex + 1, errorCount = 0))
           }
           else {
             null
           }
         }
         else {
-          FList.emptyList()
+          emptyList()
         }
       }
 
@@ -370,7 +377,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
       nameIndex: Int,
       allowSpecialChars: Boolean,
       errorState: ErrorState,
-    ): FList<Range>? {
+    ): List<Range>? {
       val wordStartsOnly = !isPatternChar(patternIndex - 1, '*', errorState) && !isWordSeparator(patternIndex, errorState)
 
       var nameIndex = nameIndex
@@ -490,7 +497,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
       patternIndex: Int,
       nameIndex: Int,
       errorState: ErrorState,
-    ): FList<Range>? {
+    ): List<Range>? {
       val fragment = maxMatchingFragment(patternIndex, nameIndex, errorState)
       return fragment?.let { matchInsideFragment(patternIndex, nameIndex, it) }
     }
@@ -521,7 +528,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
       patternIndex: Int,
       nameIndex: Int,
       fragment: Fragment,
-    ): FList<Range>? {
+    ): List<Range>? {
       // exact middle matches have to be at least of length 3, to prevent too many irrelevant matches
       val minFragment = if (isMiddleMatch(patternIndex, nameIndex, fragment.errorState)) 3 else 1
       return improveCamelHumps(patternIndex, nameIndex, fragment.length, minFragment, fragment.errorState)
@@ -538,14 +545,14 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
       nameIndex: Int,
       fragmentLength: Int, minFragment: Int,
       errorState: ErrorState,
-    ): FList<Range>? {
+    ): List<Range>? {
       if (patternIndex + fragmentLength >= patternLength(errorState)) {
         val errors = errorState.countErrors(patternIndex, patternIndex + fragmentLength)
         return if (errors == fragmentLength) {
           null
         }
         else {
-          FList.singleton(Range(nameIndex, nameIndex + fragmentLength, errors))
+          mutableListOf(Range(nameIndex, nameIndex + fragmentLength, errors))
         }
       }
 
@@ -566,7 +573,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
             null
           }
           else {
-            prependRange(ranges, Range(nameIndex, nameIndex + i, errors))
+            appendRange(ranges, Range(nameIndex, nameIndex + i, errors))
           }
         }
         i--
@@ -584,7 +591,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
       maxFragment: Int,
       minFragment: Int,
       errorState: ErrorState,
-    ): FList<Range>? {
+    ): List<Range>? {
       for (i in minFragment..<maxFragment) {
         if (isUppercasePatternVsLowercaseNameChar(patternIndex + i, nameIndex + i, errorState)) {
           val ranges = findUppercaseMatchFurther(patternIndex + i, nameIndex + i, errorState.deriveFrom(patternIndex + i))
@@ -594,7 +601,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
               null
             }
             else {
-              prependRange(ranges, Range(nameIndex, nameIndex + i, errors))
+              appendRange(ranges, Range(nameIndex, nameIndex + i, errors))
             }
           }
         }
@@ -610,7 +617,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
       patternIndex: Int,
       nameIndex: Int,
       errorState: ErrorState,
-    ): FList<Range>? {
+    ): List<Range>? {
       val nextWordStart = indexOfWordStart(patternIndex, nameIndex, errorState)
       return matchWildcards(patternIndex, nextWordStart, errorState.deriveFrom(patternIndex))
     }

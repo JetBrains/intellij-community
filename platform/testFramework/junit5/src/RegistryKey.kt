@@ -21,3 +21,14 @@ import org.junit.jupiter.api.extension.ExtendWith
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
 @ExtendWith(RegistryKeyExtension::class)
 annotation class RegistryKey(val key: String, val value: String)
+
+/**
+ * Same as [Registry] but sets key in [org.junit.jupiter.api.extension.BeforeAllCallback],
+ * so can be used to configure services that start before the test (i.e. projectActivity)
+ */
+@TestOnly
+@Repeatable
+@TestApplication
+@Target(AnnotationTarget.CLASS)
+@ExtendWith(RegistryKeyExtension::class)
+annotation class RegistryKeyAppLevel(val key: String, val value: String)

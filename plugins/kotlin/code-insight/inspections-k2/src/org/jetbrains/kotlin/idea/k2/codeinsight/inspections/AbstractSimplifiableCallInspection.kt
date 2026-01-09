@@ -30,7 +30,8 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
-internal abstract class AbstractSimplifiableCallInspection : KotlinApplicableInspectionBase.Simple<KtExpression, AbstractSimplifiableCallInspection.Context>() {
+internal abstract class AbstractSimplifiableCallInspection :
+    KotlinApplicableInspectionBase.Simple<KtExpression, AbstractSimplifiableCallInspection.Context>() {
     class Context(
         val conversionName: String,
         val replacementCall: String,
@@ -108,8 +109,11 @@ internal abstract class AbstractSimplifiableCallInspection : KotlinApplicableIns
         context(_: KaSession)
         override fun analyze(callExpression: KtCallExpression): String? {
             val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
+            val lambdaParameterName: String? = lambdaExpression.singleLambdaParameterName()
             val statement = lambdaExpression.singleStatementOrNull() ?: return null
             if (statement !is KtBinaryExpressionWithTypeRHS) return null
+            val lhs = statement.left as? KtReferenceExpression ?: return null
+            if (lhs.text !in listOf("it", lambdaParameterName)) return null
             val rightTypeReference = statement.right ?: return null
             return "filterIsInstance<${rightTypeReference.text}>()"
         }
@@ -173,7 +177,6 @@ internal abstract class AbstractSimplifiableCallInspection : KotlinApplicableIns
         element: KtExpression,
         context: Context
     ): @InspectionMessage String = KotlinBundle.message("0.call.could.be.simplified.to.1", context.conversionName, context.replacementCall)
-
 
 
     override fun createQuickFix(

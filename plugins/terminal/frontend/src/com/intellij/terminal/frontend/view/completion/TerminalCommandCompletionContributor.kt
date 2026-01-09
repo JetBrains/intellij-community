@@ -60,7 +60,7 @@ internal suspend fun getCompletionSuggestions(context: TerminalCommandCompletion
   return TerminalCompletionResult(suggestions, prefix)
 }
 
-private fun expandAliases(
+private suspend fun expandAliases(
   parameters: TerminalCompletionParameters,
   tokens: List<String>,
   aliasesStorage: TerminalAliasesStorage?,
@@ -78,7 +78,11 @@ private fun expandAliases(
 /**
  * Used to support completion even if the real command is hidden behind the alias.
  */
-private fun expandAliases(tokens: List<String>, aliases: Map<String, String>, parameters: TerminalCompletionParameters): List<String> {
+private suspend fun expandAliases(
+  tokens: List<String>,
+  aliases: Map<String, String>,
+  parameters: TerminalCompletionParameters,
+): List<String> {
   // If there is only one token, we should not to expand it, because it is incomplete (e.g. `gi|`)
   if (aliases.isEmpty() || tokens.size < 2) {
     return tokens
@@ -98,7 +102,9 @@ private fun expandAliases(tokens: List<String>, aliases: Map<String, String>, pa
   if (!anyAliasFound) {
     return tokens  // command is not changed, so return initial tokens
   }
-  val expandedTokens = parameters.shellSupport.getCommandTokens(parameters.project, command.toString())
+  val expandedTokens = readAction {
+    parameters.shellSupport.getCommandTokens(parameters.project, command.toString())
+  }
   return (expandedTokens ?: completeTokens) + tokens.last() // add incomplete token to the end
 }
 

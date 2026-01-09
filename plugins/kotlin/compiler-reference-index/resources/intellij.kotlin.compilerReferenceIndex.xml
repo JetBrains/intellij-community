@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.search.refIndex">
+<idea-plugin package="org.jetbrains.kotlin.idea.search.refIndex" visibility="internal">
   <extensions defaultExtensionNs="com.intellij">
     <codeUsageScopeOptimizer implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinScopeOptimizer"/>
 

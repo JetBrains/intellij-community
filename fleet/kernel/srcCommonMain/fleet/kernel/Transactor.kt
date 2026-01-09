@@ -3,9 +3,6 @@ package fleet.kernel
 
 import com.jetbrains.rhizomedb.*
 import com.jetbrains.rhizomedb.impl.*
-import fleet.kernel.rebase.OfferContributorEntity
-import fleet.kernel.rebase.RemoteKernelConnectionEntity
-import fleet.kernel.rebase.WorkspaceClockEntity
 import fleet.multiplatform.shims.DispatcherPriority
 import fleet.multiplatform.shims.newSingleThreadCoroutineDispatcher
 import fleet.reporting.shared.runtime.currentSpan
@@ -319,9 +316,7 @@ suspend fun <T> withTransactor(
               context.run {
                 registerMixin(Durable)
                 registerRetractionRelations()
-                register(OfferContributorEntity)
-                register(RemoteKernelConnectionEntity)
-                register(WorkspaceClockEntity)
+                middleware.initDb()
               }
             }
           }
@@ -484,7 +479,7 @@ suspend fun <T> withTransactor(
                               duration = timedChange.duration,
                               location = changeTask.causeSpan)
                 val change = timedChange.value
-                Transactor.logger.trace { "[$transactor] broadcasting change $change" }
+                Transactor.logger.trace { "[$transactor] broadcasting change [${change.dbBefore.timestamp} -> ${change.dbAfter.timestamp}] $change" }
                 check(sharedFlow.tryEmit(
                   TransactorEvent.SequentialChange(
                     timestamp = ts++,

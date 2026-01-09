@@ -12,6 +12,8 @@ import java.nio.file.Paths;
 import java.util.*;
 
 public final class ExternalClasspathClassLoader {
+  public static final String CLASSPATH_FILE_PROPERTY = "classpath.file";
+
   private static List<Path> loadFilesPaths(String classpathFilePath) {
     try {
       Path file = Paths.get(classpathFilePath);
@@ -29,7 +31,7 @@ public final class ExternalClasspathClassLoader {
   }
 
   public static List<Path> getRoots() {
-    String classPathFilePath = System.getProperty("classpath.file");
+    String classPathFilePath = System.getProperty(CLASSPATH_FILE_PROPERTY);
     return classPathFilePath != null ? loadFilesPaths(classPathFilePath) : null;
   }
 

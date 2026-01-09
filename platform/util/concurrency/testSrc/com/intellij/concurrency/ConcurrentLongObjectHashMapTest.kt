@@ -66,6 +66,17 @@ class ConcurrentLongObjectHashMapTest {
   }
 
   @Test
+  fun `compute if absent`() {
+    val map = createFrom(1 to 2)
+    @Suppress("USELESS_CAST")
+    assertThat(map.computeIfAbsent(1) { 3 } as Int?).isEqualTo(2)
+    assertThat(map[1]).isEqualTo(2)
+    @Suppress("USELESS_CAST")
+    assertThat(map.computeIfAbsent(2) { 3 } as Int?).isEqualTo(3)
+    assertThat(map[2]).isEqualTo(3)
+  }
+
+  @Test
   fun replace() {
     val map = createFrom(1 to 2, 2 to 3)
     @Suppress("USELESS_CAST")

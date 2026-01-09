@@ -16,7 +16,7 @@ import kotlin.time.Duration.Companion.seconds
 class SampleTest {
   @TestTemplate
   fun `serialized test`(ide: IdeWithLambda) = runBlocking {
-    ide.apply {
+    ide {
       val toType = "//123"
       val editorName = "Foo.java"
 
@@ -37,13 +37,11 @@ class SampleTest {
         }
       }
     }
-
-    Unit
   }
 
   @TestTemplate
   fun serialized(ide: IdeWithLambda) = runBlocking {
-    ide.apply {
+    ide {
       runInBackend("get projects") {
         Logger.getInstance("test").warn("Projects: " + getProjects().joinToString { it.name })
       }
@@ -51,7 +49,6 @@ class SampleTest {
         Logger.getInstance("test").warn("Projects: " + getProjects().joinToString { it.name })
       }
     }
-    Unit
   }
 }
 

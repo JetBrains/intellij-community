@@ -8,68 +8,20 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.BridgeInitializer
 import com.intellij.platform.eel.EelMachine
-import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
 import com.intellij.platform.workspace.storage.*
+import com.intellij.util.ownsSdkEntry
 import com.intellij.workspaceModel.ide.impl.getInternalEnvironmentName
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.mutableSdkMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridgeRegistry
-import com.intellij.workspaceModel.ide.toPath
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.InvalidPathException
 import java.util.concurrent.ConcurrentHashMap
-
-/**
- * Determines whether this [EelMachine] owns the given [SdkEntity] based on its home path.
- *
- * Behavior depends on the per-environment model separation flag
- * (`ide.workspace.model.per.environment.model.separation`):
- *
- * - When separation is ON, ownership is determined by checking if the SDK's home path
- *   belongs to this machine via [EelMachine.ownsPath]. This ensures SDKs are attributed
- *   to the machine that actually owns the path (e.g., local OS, a particular WSL distribution,
- *   or a remote/container environment).
- * - When separation is OFF, returns `true` for all SDKs regardless of their home path,
- *   so SDKs from different environments are kept together in a single, shared global model
- *   (compatibility mode for IDEs that expect cross-environment SDK visibility).
- * - If `homePath` is `null`, cannot be converted to a path, or throws [InvalidPathException],
- *   the method checks if this machine is the [LocalEelMachine].
- *
- * The ownership determination is used to:
- * - decide which [com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel] instance
- *   (per environment) should store the SDK entity;
- * - filter which per-environment bridges should create/load SDK bridges, preventing unrelated
- *   environments from processing changes.
- *
- * @see com.intellij.platform.eel.EelMachine.ownsPath
- * @see com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
- */
-private fun EelMachine.ownsSdkEntry(sdkEntity: SdkEntity): Boolean {
-  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) {
-    return true
-  }
-
-  return try {
-    val nioPath = sdkEntity.homePath?.toPath()
-
-    return if (nioPath != null) {
-      ownsPath(nioPath)
-    }
-    else {
-      this == LocalEelMachine
-    }
-  }
-  catch (_: InvalidPathException) {
-    this == LocalEelMachine
-  }
-}
 
 internal class GlobalSdkBridgeInitializer : BridgeInitializer {
   override fun isEnabled(): Boolean = true

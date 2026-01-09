@@ -360,6 +360,9 @@ object FileSystem {
     }
   }
 
+  /**
+   * A directory is considered up to date if it was modified within the last day.
+   */
   private fun Path.isUpToDate(): Boolean {
     val lastModified = Files.getLastModifiedTime(this)
     val timeSinceLastModified = Duration.between(lastModified.toInstant(), Instant.now())

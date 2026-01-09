@@ -11,7 +11,7 @@ import com.intellij.platform.kernel.util.kernelCoroutineContext
 import com.intellij.platform.pasta.common.DocumentEntity
 import com.intellij.platform.util.coroutines.childScope
 import fleet.kernel.change
-import fleet.kernel.shared
+import fleet.kernel.rebase.shared
 import fleet.util.UID
 import kotlinx.coroutines.*
 

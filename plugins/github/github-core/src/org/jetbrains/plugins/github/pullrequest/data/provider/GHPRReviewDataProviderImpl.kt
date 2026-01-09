@@ -190,10 +190,10 @@ internal class GHPRReviewDataProviderImpl(parentCs: CoroutineScope,
     return comment
   }
 
-  override suspend fun createThread(reviewId: String, body: String, line: Int, side: Side, startLine: Int, fileName: String)
+  override suspend fun createThread(reviewId: String, body: String, line: Int, side: Side, startLine: Int, startSide: Side, fileName: String)
     : GHPullRequestReviewThread {
     try {
-      val thread = reviewService.addThread(reviewId, body, line, side, startLine, fileName)
+      val thread = reviewService.addThread(reviewId, body, line, side, startLine, startSide, fileName)
       withContext(NonCancellable) {
         updateThreads { it + thread }
         updateReview(reviewId) { it.copy(commentsCount = it.commentsCount + 1) }

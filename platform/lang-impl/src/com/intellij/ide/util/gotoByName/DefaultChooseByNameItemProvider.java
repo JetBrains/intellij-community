@@ -431,7 +431,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   }
 
   private static @Nullable MatchResult matchName(@NotNull MinusculeMatcher matcher, @NotNull String name) {
-    FList<TextRange> fragments = matcher.matchingFragments(name);
+    List<TextRange> fragments = matcher.match(name);
     return fragments != null ? new MatchResult(name, matcher.matchingDegree(name, false, fragments), MinusculeMatcher.isStartMatch(fragments)) : null;
   }
 

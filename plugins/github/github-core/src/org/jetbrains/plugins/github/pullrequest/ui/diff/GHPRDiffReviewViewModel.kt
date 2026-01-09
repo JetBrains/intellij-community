@@ -7,7 +7,6 @@ import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.getOrNull
-import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
@@ -24,13 +23,13 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
-import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.viewedStateComputationState
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
+import org.jetbrains.plugins.github.pullrequest.ui.comment.lineLocation
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.ranges
 
@@ -49,7 +48,6 @@ interface GHPRDiffReviewViewModel {
 
   fun requestNewComment(location: GHPRReviewCommentLocation, focus: Boolean)
   fun cancelNewComment(side: Side, lineIdx: Int)
-  fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange)
 
   val isViewedState: StateFlow<ComputedResult<Boolean>>
   fun setViewedState(isViewed: Boolean)
@@ -93,7 +91,7 @@ internal class GHPRDiffReviewViewModelImpl(
     threads.flatMapLatestEach { thread ->
       thread.mapping.mapState {
         if (!it.isVisible) return@mapState null
-        it.location
+        it.location?.lineLocation
       }
     }.map { it.filterNotNull().toSet() }
       .stateInNow(cs, emptySet())
@@ -132,18 +130,6 @@ internal class GHPRDiffReviewViewModelImpl(
 
   override fun cancelNewComment(side: Side, lineIdx: Int) =
     threadsVms.cancelNewComment(change, side, lineIdx)
-
-
-  override fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange) {
-    val newComment = threadsVms.newComments.value.firstOrNull {
-      when (val loc = it.position.value.location) {
-        is GHPRReviewCommentLocation.SingleLine -> loc.lineIdx == oldLineRange.end
-        is GHPRReviewCommentLocation.MultiLine -> loc.startLineIdx == oldLineRange.start && loc.lineIdx == oldLineRange.end
-      }
-    } ?: return
-    newComment.updateLineRange(newLineRange)
-    GHPRStatisticsCollector.logResizedComments(project)
-  }
 
   override val isViewedState: StateFlow<ComputedResult<Boolean>> =
     dataProvider.viewedStateData.viewedStateComputationState

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -26,8 +26,10 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.GitBranch;
 import git4idea.GitContentRevision;
 import git4idea.GitUtil;
+import git4idea.GitWorkingTree;
 import git4idea.branch.GitRebaseParams;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitExecutable;
@@ -47,6 +49,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static git4idea.GitUtil.COMMENT_CHAR;
@@ -840,6 +843,43 @@ public class GitImpl extends GitImplBase {
       LOG.warn(e);
       return null;
     }
+  }
+
+  @Override
+  public @NotNull GitCommandResult deleteWorkingTree(@NotNull Project project, @NotNull GitWorkingTree tree) {
+    GitLineHandler handler = new GitLineHandler(project, Paths.get(tree.getPath().getPath()), GitCommand.WORKTREE);
+    handler.setSilent(false);
+    handler.setStdoutSuppressed(false);
+    handler.setStderrSuppressed(false);
+    handler.addParameters(asList("remove", tree.getPath().getPath(), "--force"));
+    return Git.getInstance().runCommand(handler);
+  }
+
+  @Override
+  public @NotNull GitCommandResult listWorktrees(@NotNull GitRepository repository, GitLineHandlerListener @NotNull ... listeners) {
+    GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.WORKTREE);
+    handler.addParameters("list");
+    handler.addParameters("--porcelain");
+
+    addListeners(handler, listeners);
+    return Git.getInstance().runCommand(handler);
+  }
+
+  @Override
+  public @NotNull GitCommandResult createWorkingTree(@NotNull GitRepository repository,
+                                                     @NotNull FilePath workingTreePath,
+                                                     @NotNull GitBranch sourceBranch,
+                                                     @Nullable String newBranchName) {
+    GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.WORKTREE);
+    handler.setSilent(false);
+    handler.setStdoutSuppressed(false);
+    handler.setStderrSuppressed(false);
+    handler.addParameters("add");
+    if (newBranchName != null) {
+      handler.addParameters("-b", newBranchName);
+    }
+    handler.addParameters(workingTreePath.getPath(), sourceBranch.getName());
+    return Git.getInstance().runCommand(handler);
   }
 
   private static void addListeners(@NotNull GitLineHandler handler, GitLineHandlerListener @NotNull ... listeners) {

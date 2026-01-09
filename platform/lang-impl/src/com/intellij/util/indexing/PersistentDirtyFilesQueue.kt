@@ -23,12 +23,12 @@ import kotlin.io.path.outputStream
 
 @ApiStatus.Internal
 object PersistentDirtyFilesQueue {
+  const val QUEUES_DIR_NAME: String = "dirty-file-queues"
+
   private val isUnittestMode: Boolean
     get() = ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode
 
   private const val CURRENT_VERSION = 2L
-
-  const val QUEUES_DIR_NAME: String = "dirty-file-queues"
 
   @JvmStatic
   fun getQueuesDir(): Path = PathManager.getIndexRoot() / QUEUES_DIR_NAME

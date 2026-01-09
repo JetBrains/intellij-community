@@ -119,7 +119,8 @@ Installer build examples:
 #### Dockerized Build Environment
 To build installation packages inside a Docker container with preinstalled dependencies and tools, run the following command in `<IDEA_HOME>` directory (on Windows, use PowerShell):
 ```bash
-docker run --rm -it --user "$(id -u)" --volume "${PWD}:/community" "$(docker build --quiet . --target intellij_idea)"
+docker build . --target intellij_idea --tag intellij_idea_env
+docker run --rm --user "$(id -u)" --volume "${PWD}:/community" intellij_idea_env
 ```
 > [!NOTE]
 > 

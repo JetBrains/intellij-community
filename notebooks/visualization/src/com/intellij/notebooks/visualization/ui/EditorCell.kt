@@ -83,8 +83,8 @@ class EditorCell(
     view?.checkAndRebuildInlays()
   }
 
-  fun onViewportChange() {
-    view?.onViewportChanges()
+  fun updateIfInVisibleRect() {
+    view?.updateIfInVisibleRect()
   }
 
   fun updateOutputs(): Unit = editor.updateManager.update {

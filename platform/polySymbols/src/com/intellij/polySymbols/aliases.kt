@@ -1,6 +1,5 @@
 package com.intellij.polySymbols
 
-typealias FrameworkId = String
 typealias PolySymbolKindName = String
 typealias PolySymbolNamespace = String
 

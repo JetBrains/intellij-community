@@ -94,6 +94,9 @@ com.intellij.codeInsight.completion.CopyFileUpdateTask
 - a:ensureUpdatedAndGetNewOffsets():com.intellij.codeInsight.completion.OffsetsInFile
 f:com.intellij.codeInsight.completion.OffsetsInFile
 - f:replaceInCopy(com.intellij.psi.PsiFile,I,I,java.lang.String):com.intellij.codeInsight.completion.CopyFileUpdateTask
+c:com.intellij.codeInsight.completion.impl.CamelHumpMatcher
+- matchingDegree(java.lang.String,java.util.List):I
+- matchingFragments(java.lang.String):java.util.List
 c:com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 - sf:AUTOREPARSE_DELAY_DEFAULT:I
 com.intellij.codeInsight.daemon.ReferenceImporter

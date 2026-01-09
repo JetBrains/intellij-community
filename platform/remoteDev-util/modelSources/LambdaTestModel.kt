@@ -50,22 +50,20 @@ object LambdaTestModel : Ext(LambdaTestRoot) {
     field("serializedDataBase64", string)
     field("classPath", immutableList(string))
     field("parametersBase64", immutableList(string))
+    field("globalTestScope", bool)
   }
 
   private val LambdaRdTestSession = classdef {
     field("rdIdeType", LambdaRdIdeType)
     property("ready", bool.nullable)
     signal("sendException", LambdaRdTestSessionException).async
-    call("closeAllOpenedProjects", void, bool).async
     call("runLambda", LambdaRdTestActionParameters, void).async
     call("runSerializedLambda", LambdaRdSerialized, string).async
     call("beforeEach", string, void).async
     call("beforeAll", string, void).async
     call("afterEach", string, void).async
     call("afterAll", string, void).async
-    call("projectsNames", void, immutableList(string)).async
     call("isResponding", void, bool).async
-    call("projectsAreInitialised", void, bool).async
   }
 
   init {

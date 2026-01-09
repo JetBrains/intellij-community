@@ -92,6 +92,7 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "//platform/lang-api:lang",
     "//platform/execution",
+    "//plugins/kotlin/base/indices",
   ]
 )
 
@@ -181,6 +182,7 @@ jvm_library(
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/lang-api:lang",
     "//platform/execution",
+    "//plugins/kotlin/base/indices",
   ]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java` end

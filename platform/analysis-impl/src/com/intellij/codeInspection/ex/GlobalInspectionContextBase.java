@@ -228,6 +228,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
       @Override
       public void onSuccess() {
+        myProgressIndicator = new EmptyProgressIndicator();
         notifyInspectionsFinished(scope);
       }
 

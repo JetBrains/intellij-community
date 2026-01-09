@@ -323,6 +323,70 @@ def f(c):
     """);
   }
 
+  // PY-86019
+  public void testFunctionPattern() {
+    doTestByText("""
+                   def f():
+                       pass
+                   
+                   match 1:
+                       case <warning descr="Class pattern requires a class, but 'f' can be '() -> None'">f</warning>():
+                           pass
+                   """);
+  }
+
+  // PY-86019
+  public void testInstancePattern() {
+    doTestByText("""
+                   x = 1
+                   match 1:
+                       case <warning descr="Class pattern requires a class, but 'x' can be 'int'">x</warning>():
+                           pass
+                   """);
+  }
+
+  // PY-86019
+  public void testUnionOfClassesPattern() {
+    doTestByText("""
+                   class A: pass
+                   class B: pass
+                   
+                   def g(cond):
+                       if cond:
+                           c = A
+                       else:
+                           c = B
+                       match 1:
+                           case c():
+                               pass
+                   """);
+  }
+
+  // PY-86019
+  public void testUnionOfClassAndFunctionPattern() {
+    doTestByText("""
+                   class A: pass
+                   def f(): pass
+                   
+                   def g(cond):
+                       c = A if cond else f
+                       match 1:
+                           case <warning descr="Class pattern requires a class, but 'c' can be '() -> None'">c</warning>():
+                               pass
+                   """);
+  }
+
+  // PY-86019
+  public void testAnyPattern() {
+    doTestByText("""
+                   from typing import Any
+                   def g(c: Any):
+                       match 1:
+                           case c():
+                               pass
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

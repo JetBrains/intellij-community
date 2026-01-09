@@ -29,6 +29,9 @@ sealed interface SeItemData {
   fun fetchItemIfExists(): SeItem?
 }
 
+/**
+ * Factory for creating [SeItemData] instances
+ */
 @ApiStatus.Experimental
 class SeItemDataFactory {
   suspend fun createItemData(

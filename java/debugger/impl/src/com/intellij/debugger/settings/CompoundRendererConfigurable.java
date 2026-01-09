@@ -11,6 +11,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -128,7 +129,7 @@ class CompoundRendererConfigurable extends JPanel {
         updateContext(myClassNameField.getText());
       }
     });
-    ComponentValidator validator = new ComponentValidator(myProject).withValidator(() -> {
+    ComponentValidator validator = new ComponentValidator(JavaPluginDisposable.getInstance(myProject)).withValidator(() -> {
       String text = myClassNameField.getText();
       if (StringUtil.containsAnyChar(text, "<>")) {
         return new ValidationInfo(JavaDebuggerBundle.message("error.compound.renderer.configurable.fqn.generic"), editorTextField);

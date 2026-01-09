@@ -29,7 +29,7 @@
     <postStartupActivity implementation="com.intellij.platform.execution.serviceView.ServiceViewStartupActivity"/>
     <remote.customDataContextSerializer implementation="com.intellij.platform.execution.serviceView.ServiceViewDescriptorIdsSerializer"/>
     <uiDataRule implementation="com.intellij.platform.execution.serviceView.ServiceViewSelectionDataRule"/>
-    <uiDataRule id="ServiceViewProvidersDataRule" implementation="com.intellij.platform.execution.serviceView.ServiceViewProvidersDataRule"/>
+    <uiDataRule id="ServiceViewProvidersDataRule" implementation="com.intellij.platform.execution.serviceView.ServiceViewProvidersDataRule" order="last"/>
   </extensions>
   <actions>
     <group id="ServiceViewTreeToolbar">

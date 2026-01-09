@@ -34,6 +34,7 @@ suspend fun <T> runLogged(actionTitle: String, timeout: Duration? = null, action
       }
     }
     catch (e: CancellationException) {
+      LOG.warn("'$actionTitle': was CANCELLED on ${currentThreadContext()}")
       throw e
     }
     catch (e: Throwable) {

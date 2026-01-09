@@ -80,8 +80,10 @@ public class ClassElement extends CompositeElement implements Constants {
     }
 
     if (isEnum()) {
-      if (!ENUM_CONSTANT_LIST_ELEMENTS_BIT_SET.contains(first.getElementType())) {
-        ASTNode semicolonPlace = findEnumConstantListDelimiterPlace();
+      ASTNode maybeSemicolonPlace = findEnumConstantListDelimiterPlace();
+      if (!ENUM_CONSTANT_LIST_ELEMENTS_BIT_SET.contains(first.getElementType())
+          // if we are not inside the class itself, skip finding an element
+        && !(maybeSemicolonPlace != null && maybeSemicolonPlace.getElementType() == LBRACE)) {
         boolean commentsOrWhiteSpaces = true;
         for (ASTNode child = first; child != null; child = child.getTreeNext()) {
           if (!PsiImplUtil.isWhitespaceOrComment(child)) {
@@ -89,15 +91,15 @@ public class ClassElement extends CompositeElement implements Constants {
             break;
           }
         }
-        if (!commentsOrWhiteSpaces && (semicolonPlace == null || semicolonPlace.getElementType() != SEMICOLON)) {
+        if (!commentsOrWhiteSpaces && (maybeSemicolonPlace == null || maybeSemicolonPlace.getElementType() != SEMICOLON)) {
             final LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, ";", 0, 1,
                                                                           SharedImplUtil.findCharTableByTree(this), getManager());
-            addInternal(semicolon, semicolon, semicolonPlace, Boolean.FALSE);
-            semicolonPlace = semicolon;
+            addInternal(semicolon, semicolon, maybeSemicolonPlace, Boolean.FALSE);
+            maybeSemicolonPlace = semicolon;
         }
         for (ASTNode run = anchor; run != null; run = run.getTreeNext()) {
-          if (run == semicolonPlace) {
-            anchor = before.booleanValue() ? semicolonPlace.getTreeNext() : semicolonPlace;
+          if (run == maybeSemicolonPlace) {
+            anchor = before.booleanValue() ? maybeSemicolonPlace.getTreeNext() : maybeSemicolonPlace;
             if (anchor != null && PsiImplUtil.isWhitespaceOrComment(anchor)) {
               anchor = PsiTreeUtil.skipWhitespacesAndCommentsForward(anchor.getPsi()).getNode();
             }
@@ -307,6 +309,8 @@ public class ClassElement extends CompositeElement implements Constants {
     return candidate != null && candidate.getElementType() == SEMICOLON ? candidate : null;
   }
 
+  /// Returns the first semicolon node after an enum constant.
+  /// Defaults to the last non whitespace character if not present.
   public @Nullable ASTNode findEnumConstantListDelimiterPlace() {
     final ASTNode first = findChildByRole(ChildRole.LBRACE);
     if (first == null) return null;

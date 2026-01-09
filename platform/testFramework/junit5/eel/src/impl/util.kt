@@ -6,18 +6,10 @@ package com.intellij.platform.testFramework.junit5.eel.impl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelMachine
-import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.*
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.fs.createTemporaryDirectory
-import com.intellij.platform.eel.getOrThrow
-import com.intellij.platform.eel.provider.EelMachineProvider
-import com.intellij.platform.eel.provider.EelProvider
-import com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend
-import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.*
 import com.intellij.platform.testFramework.junit5.eel.fixture.IsolatedFileSystem
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystemProvider
@@ -102,16 +94,16 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
     }
   }
 
-  EelMachineProvider.EP_NAME.point.registerExtension(object : EelMachineProvider {
+  EelMachineResolver.EP_NAME.point.registerExtension(object : EelMachineResolver {
     override fun getResolvedEelMachine(eelDescriptor: EelDescriptor): EelMachine? {
       return if (eelDescriptor == descriptor) machine else null
     }
 
-    override suspend fun getEelMachine(eelDescriptor: EelDescriptor): EelMachine? {
+    override suspend fun resolveEelMachine(eelDescriptor: EelDescriptor): EelMachine? {
       return getResolvedEelMachine(eelDescriptor)
     }
 
-    override suspend fun getEelMachineByInternalName(internalName: String): EelMachine? {
+    override suspend fun resolveEelMachineByInternalName(internalName: String): EelMachine? {
       return if (internalName == machine.internalName) machine else null
     }
   }, disposable)

@@ -225,17 +225,14 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
         actions.add(actionManager.getAction(IdeActions.ACTION_RUN_TO_CURSOR))
       }
 
-      // TODO: RIDER-127831, Move RiderJumpToStatementAction to frontend, for fast update here
-      if (!SplitDebuggerMode.isSplitDebugger()) {
-        val extraActions = Utils.expandActionGroupSuspend(
-                                        actionManager.getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup,
-                                        PresentationFactory(),
-                                        DataManager.getInstance().getDataContext(editor.contentComponent),
-                                        ActionPlaces.EDITOR_HINT,
-                                        ActionUiKind.NONE,
-                                        false)
-        actions.addAll(extraActions)
-      }
+      val extraActions = Utils.expandActionGroupSuspend(
+        actionManager.getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup,
+        PresentationFactory(),
+        DataManager.getInstance().getDataContext(editor.contentComponent),
+        ActionPlaces.EDITOR_HINT,
+        ActionUiKind.NONE,
+        false)
+      actions.addAll(extraActions)
       showHint(editor, lineNumber, firstNonSpacePos, actions, lineY, hasVcsLineMarker)
     }
   }

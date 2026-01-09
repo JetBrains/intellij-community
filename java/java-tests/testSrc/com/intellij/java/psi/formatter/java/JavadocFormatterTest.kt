@@ -2361,4 +2361,20 @@ public class Test {
     doTextTest(before, after)
     doTextTest(after, after)
   }
+  
+  fun `test markdown inside tags`() {
+    // One line is misaligned on purpose. With Markdown the spaces have meaning
+    val before = """
+    public class Foo {
+        /// @param param Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of
+        ///              classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin
+        ///  professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words,
+        ///              consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical
+        ///              literature, discovered the undoubtable source
+        void foo(int param) {
+        }
+    }
+    """.trimIndent()
+    doTextTest(before, before)
+  }
 }

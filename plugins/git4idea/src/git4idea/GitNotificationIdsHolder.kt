@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
 import com.intellij.notification.impl.NotificationIdsHolder
@@ -129,6 +129,8 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       GPG_AGENT_CONFIGURATION_PROPOSE,
       GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION,
       MODAL_COMMIT_DEPRECATION,
+      WORKTREE_ADD_FAILED,
+      WORKTREE_COULD_NOT_CREATE_TARGET_DIR,
       WORKING_TREE_DELETED,
       WORKING_TREE_COULD_NOT_DELETE,
     )
@@ -259,6 +261,8 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val GPG_AGENT_CONFIGURATION_PROPOSE: String = "git.gpg.agent.configuration.propose"
     const val GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION: String = "git.gpg.agent.configuration.propose.suggestion"
     const val MODAL_COMMIT_DEPRECATION: String = "git.commit.modal.deprecation"
+    const val WORKTREE_ADD_FAILED: String = "git.worktree.add.failed"
+    const val WORKTREE_COULD_NOT_CREATE_TARGET_DIR: String = "git.worktree.could.not.create.target.dir"
     const val WORKING_TREE_DELETED: String = "git.working.tree.deleted"
     const val WORKING_TREE_COULD_NOT_DELETE: String = "git.working.tree.not.deleted"
   }

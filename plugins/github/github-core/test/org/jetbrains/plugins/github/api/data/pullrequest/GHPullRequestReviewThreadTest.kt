@@ -93,7 +93,7 @@ class GHPullRequestReviewThreadTest {
     })
 
     assertThat(thread.mapToRange(diffData, Side.RIGHT))
-      .isEqualTo(Side.LEFT to (9..14))
+      .isEqualTo((Side.LEFT to 9) to (Side.RIGHT to 16))
   }
 
   @Test
@@ -119,7 +119,7 @@ class GHPullRequestReviewThreadTest {
     })
 
     assertThat(thread.mapToRange(diffData, Side.LEFT))
-      .isEqualTo(Side.LEFT to (9..14))
+      .isEqualTo((Side.LEFT to 9) to (Side.LEFT to 14))
   }
 
   @Test
@@ -145,7 +145,7 @@ class GHPullRequestReviewThreadTest {
     })
 
     assertThat(thread.mapToRange(diffData, Side.RIGHT))
-      .isEqualTo(Side.LEFT to (9..14))
+      .isEqualTo((Side.LEFT to 9) to (Side.LEFT to 14))
   }
 
   @Test
@@ -157,7 +157,7 @@ class GHPullRequestReviewThreadTest {
       side = Side.RIGHT,
     )
 
-    val diffData = Util.mockDiffData(mapping = { commit, side, lineIndex ->
+    val diffData = Util.mockDiffData(mapping = { commit, _, lineIndex ->
       if (commit != Commit.Commit1) return@mockDiffData null
 
       when (lineIndex) {
@@ -168,11 +168,11 @@ class GHPullRequestReviewThreadTest {
     })
 
     assertThat(thread.mapToRange(diffData, Side.RIGHT))
-      .isEqualTo(Side.LEFT to (14..14))
+      .isEqualTo((Side.LEFT to 14) to (Side.LEFT to 14))
   }
 
   @Test
-  fun `mapToRange cannot recover from startLine and endLine failing to map to the same side 1`() {
+  fun `mapToRange can become cross-sided as startLine and endLine fail to map to the same side 1`() {
     val thread = Util.createPRThread(
       startLine = null, originalStartLine = 10,
       line = null, originalLine = 15,
@@ -186,18 +186,18 @@ class GHPullRequestReviewThreadTest {
       when (lineIndex) {
         // endLine can only be mapped to the RIGHT
         15 -> Side.RIGHT to (lineIndex + 1)
-        // startLine can only be mapped to the LEFt
+        // startLine can only be mapped to the LEFT
         10 -> Side.LEFT to (lineIndex - 1)
         else -> error("unexpected")
       }
     })
 
     assertThat(thread.mapToRange(diffData, Side.LEFT))
-      .isNull()
+      .isEqualTo((Side.LEFT to 9) to (Side.RIGHT to 16))
   }
 
   @Test
-  fun `mapToRange cannot recover from startLine and endLine failing to map to the same side 2`() {
+  fun `mapToRange can become cross-sided as startLine and endLine fail to map to the same side 2`() {
     val thread = Util.createPRThread(
       startLine = null, originalStartLine = 10,
       line = null, originalLine = 15,
@@ -218,7 +218,7 @@ class GHPullRequestReviewThreadTest {
     })
 
     assertThat(thread.mapToRange(diffData, Side.LEFT))
-      .isNull()
+      .isEqualTo((Side.RIGHT to 11) to (Side.LEFT to 14))
   }
 
   //region: Util

@@ -17,7 +17,6 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
 import com.intellij.ui.IconManager;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.JBIterable;
@@ -411,7 +410,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
           // but we will only be interested in explicit return statements.
           boolean oldCollectImplicitReturn = collectImplicitReturn;
           collectImplicitReturn = false;
-          walkCFG(ArrayUtil.indexOf(flow, exitInstruction.getBegin()));
+          walkCFG(exitInstruction.getBegin().num());
           collectImplicitReturn = oldCollectImplicitReturn;
           return ControlFlowUtil.Operation.CONTINUE;
         }

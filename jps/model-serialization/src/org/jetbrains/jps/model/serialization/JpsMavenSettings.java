@@ -18,11 +18,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
+import static com.intellij.openapi.util.text.StringUtil.nullize;
 
 @ApiStatus.Internal
 public final class JpsMavenSettings {
@@ -40,13 +43,6 @@ public final class JpsMavenSettings {
    * [<a href="https://maven.apache.org/ref/4.0.0-rc-1/api/maven-api-core/apidocs/constant-values.html#org.apache.maven.api.Constants.MAVEN_REPO_LOCAL">https://maven.apache.org/ref/4.0.0-rc-1/api/maven-api-core/apidocs</a>]
    */
   private static final String MAVEN_REPO_LOCAL = "maven.repo.local";
-
-  @SuppressWarnings("HttpUrlsUsage")
-  private static final List<Namespace> KNOWN_NAMESPACES = List.of(
-    Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.0.0"),
-    Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.1.0"),
-    Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.2.0")
-  );
 
   public static @NotNull File getUserMavenSettingsXml() {
     String defaultMavenFolder = SystemProperties.getUserHome() + File.separator + M2_DIR;
@@ -156,7 +152,8 @@ public final class JpsMavenSettings {
     return isValidMavenHome(defaultBrewPath) ? defaultBrewPath : null;
   }
 
-  private static @Nullable String getRepositoryFromSettings(final File file) {
+  @ApiStatus.Internal
+  public static @Nullable String getRepositoryFromSettings(final File file) {
     Element settingsXmlRoot;
     try {
       settingsXmlRoot = JDOMUtil.load(file);
@@ -165,11 +162,11 @@ public final class JpsMavenSettings {
       return null;
     }
 
-    Optional<String> maybeRepository = KNOWN_NAMESPACES.stream()
-      .map(it -> settingsXmlRoot.getChildText("localRepository", it))
-      .filter(it -> it != null && !isEmpty(it))
-      .findFirst();
-    return maybeRepository.orElse(null);
+    Element child = settingsXmlRoot.getChild("localRepository", null);
+    if (child == null || isUnknownNamespace(child.getNamespace())) {
+      return null;
+    }
+    return nullize(child.getText());
   }
 
   private static boolean isValidMavenHome(@Nullable String path) {
@@ -186,25 +183,25 @@ public final class JpsMavenSettings {
       return;
     }
 
-    Optional<Namespace> maybeNamespace = KNOWN_NAMESPACES.stream()
-      .filter(it -> settingsXmlRoot.getChild("servers", it) != null)
-      .findFirst();
-    if (maybeNamespace.isEmpty()) {
+    Element serversElement = settingsXmlRoot.getChild("servers", null);
+    if (serversElement == null || isUnknownNamespace(serversElement.getNamespace())) {
       return;
     }
-
-    Namespace namespace = maybeNamespace.get();
-    Element serversElement = settingsXmlRoot.getChild("servers", namespace);
-
-    for (Element serverElement : serversElement.getChildren("server", namespace)) {
-      String id = serverElement.getChildText("id", namespace);
-      String username = serverElement.getChildText("username", namespace);
-      String password = serverElement.getChildText("password", namespace);
+    for (Element serverElement : serversElement.getChildren("server", null)) {
+      String id = serverElement.getChildText("id", null);
+      String username = serverElement.getChildText("username", null);
+      String password = serverElement.getChildText("password", null);
 
       if (id != null && username != null && password != null) {
         output.put(id, new RemoteRepositoryAuthentication(username, password));
       }
     }
+  }
+
+  private static boolean isUnknownNamespace(@Nullable Namespace namespace) {
+    //noinspection HttpUrlsUsage
+    return namespace != null && isNotEmpty(namespace.getURI()) &&
+           !namespace.getURI().startsWith("http://maven.apache.org/SETTINGS/");
   }
 
   public static final class RemoteRepositoryAuthentication {

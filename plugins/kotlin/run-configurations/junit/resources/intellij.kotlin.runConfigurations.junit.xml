@@ -1,6 +1,7 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.junit">
   <dependencies>
     <plugin id="JUnit"/>
+    <module name="intellij.kotlin.runConfigurations.jvm"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

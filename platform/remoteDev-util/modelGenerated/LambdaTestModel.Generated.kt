@@ -55,7 +55,7 @@ class LambdaTestModel private constructor(
         
         private val __LambdaRdTestSessionNullableSerializer = LambdaRdTestSession.nullable()
         
-        const val serializationHash = 5004275015155801491L
+        const val serializationHash = 7766307017172391987L
         
     }
     override val serializersOwner: ISerializersOwner get() = LambdaTestModel
@@ -132,7 +132,8 @@ data class LambdaRdSerialized (
     val stepName: String,
     val serializedDataBase64: String,
     val classPath: List<String>,
-    val parametersBase64: List<String>
+    val parametersBase64: List<String>,
+    val globalTestScope: Boolean
 ) : IPrintable {
     //companion
     
@@ -146,7 +147,8 @@ data class LambdaRdSerialized (
             val serializedDataBase64 = buffer.readString()
             val classPath = buffer.readList { buffer.readString() }
             val parametersBase64 = buffer.readList { buffer.readString() }
-            return LambdaRdSerialized(stepName, serializedDataBase64, classPath, parametersBase64)
+            val globalTestScope = buffer.readBool()
+            return LambdaRdSerialized(stepName, serializedDataBase64, classPath, parametersBase64, globalTestScope)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdSerialized)  {
@@ -154,6 +156,7 @@ data class LambdaRdSerialized (
             buffer.writeString(value.serializedDataBase64)
             buffer.writeList(value.classPath) { v -> buffer.writeString(v) }
             buffer.writeList(value.parametersBase64) { v -> buffer.writeString(v) }
+            buffer.writeBool(value.globalTestScope)
         }
         
         
@@ -173,6 +176,7 @@ data class LambdaRdSerialized (
         if (serializedDataBase64 != other.serializedDataBase64) return false
         if (classPath != other.classPath) return false
         if (parametersBase64 != other.parametersBase64) return false
+        if (globalTestScope != other.globalTestScope) return false
         
         return true
     }
@@ -183,6 +187,7 @@ data class LambdaRdSerialized (
         __r = __r*31 + serializedDataBase64.hashCode()
         __r = __r*31 + classPath.hashCode()
         __r = __r*31 + parametersBase64.hashCode()
+        __r = __r*31 + globalTestScope.hashCode()
         return __r
     }
     //pretty print
@@ -193,6 +198,7 @@ data class LambdaRdSerialized (
             print("serializedDataBase64 = "); serializedDataBase64.print(printer); println()
             print("classPath = "); classPath.print(printer); println()
             print("parametersBase64 = "); parametersBase64.print(printer); println()
+            print("globalTestScope = "); globalTestScope.print(printer); println()
         }
         printer.print(")")
     }
@@ -286,16 +292,13 @@ class LambdaRdTestSession private constructor(
     val rdIdeType: LambdaRdIdeType,
     private val _ready: RdProperty<Boolean?>,
     private val _sendException: RdSignal<LambdaRdTestSessionException>,
-    private val _closeAllOpenedProjects: RdCall<Unit, Boolean>,
     private val _runLambda: RdCall<LambdaRdTestActionParameters, Unit>,
     private val _runSerializedLambda: RdCall<LambdaRdSerialized, String>,
     private val _beforeEach: RdCall<String, Unit>,
     private val _beforeAll: RdCall<String, Unit>,
     private val _afterEach: RdCall<String, Unit>,
     private val _afterAll: RdCall<String, Unit>,
-    private val _projectsNames: RdCall<Unit, List<String>>,
-    private val _isResponding: RdCall<Unit, Boolean>,
-    private val _projectsAreInitialised: RdCall<Unit, Boolean>
+    private val _isResponding: RdCall<Unit, Boolean>
 ) : RdBindableBase() {
     //companion
     
@@ -309,17 +312,14 @@ class LambdaRdTestSession private constructor(
             val rdIdeType = buffer.readEnum<LambdaRdIdeType>()
             val _ready = RdProperty.read(ctx, buffer, __BoolNullableSerializer)
             val _sendException = RdSignal.read(ctx, buffer, LambdaRdTestSessionException)
-            val _closeAllOpenedProjects = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _runLambda = RdCall.read(ctx, buffer, LambdaRdTestActionParameters, FrameworkMarshallers.Void)
             val _runSerializedLambda = RdCall.read(ctx, buffer, LambdaRdSerialized, FrameworkMarshallers.String)
             val _beforeEach = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Void)
             val _beforeAll = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Void)
             val _afterEach = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Void)
             val _afterAll = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Void)
-            val _projectsNames = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, __StringListSerializer)
             val _isResponding = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            val _projectsAreInitialised = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            return LambdaRdTestSession(rdIdeType, _ready, _sendException, _closeAllOpenedProjects, _runLambda, _runSerializedLambda, _beforeEach, _beforeAll, _afterEach, _afterAll, _projectsNames, _isResponding, _projectsAreInitialised).withId(_id)
+            return LambdaRdTestSession(rdIdeType, _ready, _sendException, _runLambda, _runSerializedLambda, _beforeEach, _beforeAll, _afterEach, _afterAll, _isResponding).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdTestSession)  {
@@ -327,35 +327,28 @@ class LambdaRdTestSession private constructor(
             buffer.writeEnum(value.rdIdeType)
             RdProperty.write(ctx, buffer, value._ready)
             RdSignal.write(ctx, buffer, value._sendException)
-            RdCall.write(ctx, buffer, value._closeAllOpenedProjects)
             RdCall.write(ctx, buffer, value._runLambda)
             RdCall.write(ctx, buffer, value._runSerializedLambda)
             RdCall.write(ctx, buffer, value._beforeEach)
             RdCall.write(ctx, buffer, value._beforeAll)
             RdCall.write(ctx, buffer, value._afterEach)
             RdCall.write(ctx, buffer, value._afterAll)
-            RdCall.write(ctx, buffer, value._projectsNames)
             RdCall.write(ctx, buffer, value._isResponding)
-            RdCall.write(ctx, buffer, value._projectsAreInitialised)
         }
         
         private val __BoolNullableSerializer = FrameworkMarshallers.Bool.nullable()
-        private val __StringListSerializer = FrameworkMarshallers.String.list()
         
     }
     //fields
     val ready: IProperty<Boolean?> get() = _ready
     val sendException: IAsyncSignal<LambdaRdTestSessionException> get() = _sendException
-    val closeAllOpenedProjects: RdCall<Unit, Boolean> get() = _closeAllOpenedProjects
     val runLambda: RdCall<LambdaRdTestActionParameters, Unit> get() = _runLambda
     val runSerializedLambda: RdCall<LambdaRdSerialized, String> get() = _runSerializedLambda
     val beforeEach: RdCall<String, Unit> get() = _beforeEach
     val beforeAll: RdCall<String, Unit> get() = _beforeAll
     val afterEach: RdCall<String, Unit> get() = _afterEach
     val afterAll: RdCall<String, Unit> get() = _afterAll
-    val projectsNames: RdCall<Unit, List<String>> get() = _projectsNames
     val isResponding: RdCall<Unit, Boolean> get() = _isResponding
-    val projectsAreInitialised: RdCall<Unit, Boolean> get() = _projectsAreInitialised
     //methods
     //initializer
     init {
@@ -364,31 +357,25 @@ class LambdaRdTestSession private constructor(
     
     init {
         _sendException.async = true
-        _closeAllOpenedProjects.async = true
         _runLambda.async = true
         _runSerializedLambda.async = true
         _beforeEach.async = true
         _beforeAll.async = true
         _afterEach.async = true
         _afterAll.async = true
-        _projectsNames.async = true
         _isResponding.async = true
-        _projectsAreInitialised.async = true
     }
     
     init {
         bindableChildren.add("ready" to _ready)
         bindableChildren.add("sendException" to _sendException)
-        bindableChildren.add("closeAllOpenedProjects" to _closeAllOpenedProjects)
         bindableChildren.add("runLambda" to _runLambda)
         bindableChildren.add("runSerializedLambda" to _runSerializedLambda)
         bindableChildren.add("beforeEach" to _beforeEach)
         bindableChildren.add("beforeAll" to _beforeAll)
         bindableChildren.add("afterEach" to _afterEach)
         bindableChildren.add("afterAll" to _afterAll)
-        bindableChildren.add("projectsNames" to _projectsNames)
         bindableChildren.add("isResponding" to _isResponding)
-        bindableChildren.add("projectsAreInitialised" to _projectsAreInitialised)
     }
     
     //secondary constructor
@@ -398,15 +385,12 @@ class LambdaRdTestSession private constructor(
         rdIdeType,
         RdProperty<Boolean?>(null, __BoolNullableSerializer),
         RdSignal<LambdaRdTestSessionException>(LambdaRdTestSessionException),
-        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<LambdaRdTestActionParameters, Unit>(LambdaRdTestActionParameters, FrameworkMarshallers.Void),
         RdCall<LambdaRdSerialized, String>(LambdaRdSerialized, FrameworkMarshallers.String),
         RdCall<String, Unit>(FrameworkMarshallers.String, FrameworkMarshallers.Void),
         RdCall<String, Unit>(FrameworkMarshallers.String, FrameworkMarshallers.Void),
         RdCall<String, Unit>(FrameworkMarshallers.String, FrameworkMarshallers.Void),
         RdCall<String, Unit>(FrameworkMarshallers.String, FrameworkMarshallers.Void),
-        RdCall<Unit, List<String>>(FrameworkMarshallers.Void, __StringListSerializer),
-        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
     )
     
@@ -419,16 +403,13 @@ class LambdaRdTestSession private constructor(
             print("rdIdeType = "); rdIdeType.print(printer); println()
             print("ready = "); _ready.print(printer); println()
             print("sendException = "); _sendException.print(printer); println()
-            print("closeAllOpenedProjects = "); _closeAllOpenedProjects.print(printer); println()
             print("runLambda = "); _runLambda.print(printer); println()
             print("runSerializedLambda = "); _runSerializedLambda.print(printer); println()
             print("beforeEach = "); _beforeEach.print(printer); println()
             print("beforeAll = "); _beforeAll.print(printer); println()
             print("afterEach = "); _afterEach.print(printer); println()
             print("afterAll = "); _afterAll.print(printer); println()
-            print("projectsNames = "); _projectsNames.print(printer); println()
             print("isResponding = "); _isResponding.print(printer); println()
-            print("projectsAreInitialised = "); _projectsAreInitialised.print(printer); println()
         }
         printer.print(")")
     }
@@ -438,16 +419,13 @@ class LambdaRdTestSession private constructor(
             rdIdeType,
             _ready.deepClonePolymorphic(),
             _sendException.deepClonePolymorphic(),
-            _closeAllOpenedProjects.deepClonePolymorphic(),
             _runLambda.deepClonePolymorphic(),
             _runSerializedLambda.deepClonePolymorphic(),
             _beforeEach.deepClonePolymorphic(),
             _beforeAll.deepClonePolymorphic(),
             _afterEach.deepClonePolymorphic(),
             _afterAll.deepClonePolymorphic(),
-            _projectsNames.deepClonePolymorphic(),
-            _isResponding.deepClonePolymorphic(),
-            _projectsAreInitialised.deepClonePolymorphic()
+            _isResponding.deepClonePolymorphic()
         )
     }
     //contexts

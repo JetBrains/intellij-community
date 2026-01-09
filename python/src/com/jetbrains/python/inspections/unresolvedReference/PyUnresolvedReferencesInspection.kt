@@ -152,10 +152,14 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       for (file in filesByName) {
         val containingDirectory = file.getParent() ?: continue
 
-        if (isAlreadySourceRoot(containingDirectory, module)) {
-          continue
+        val sourceRootStatus = getSourceRootStatus(containingDirectory, module)
+        // Explicit check for all values of enum in case someone adds a new one
+        when (sourceRootStatus) {
+          SourceRootStatus.NOT_SOURCE_ROOT -> Unit
+          SourceRootStatus.ALREADY_SOURCE_ROOT -> continue
+          SourceRootStatus.DOES_NOT_BELONG_TO_CONTENT_OF_PROVIDED_MODULE -> continue
         }
-        
+
         val resolveResult: List<PsiElement> = resolveInRoot(qname, containingDirectory, context)
         if (!resolveResult.isEmpty()) {
           if (Registry.`is`("python.source.root.suggest.quickfix.auto.apply")) {
@@ -167,10 +171,21 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       return null
     }
 
-    private fun isAlreadySourceRoot(virtualFile: VirtualFile, module: Module): Boolean {
+    private enum class SourceRootStatus {
+      ALREADY_SOURCE_ROOT,
+      NOT_SOURCE_ROOT,
+      DOES_NOT_BELONG_TO_CONTENT_OF_PROVIDED_MODULE
+    }
+
+    private fun getSourceRootStatus(virtualFile: VirtualFile, module: Module): SourceRootStatus {
       val model = ModuleRootManager.getInstance(module).modifiableModel
-      val entry = MarkRootsManager.findContentEntry(model, virtualFile) ?: return false
-      return entry.getSourceFolders().any { it.file == virtualFile }
+      val entry = MarkRootsManager.findContentEntry(model, virtualFile)
+                  ?: return SourceRootStatus.DOES_NOT_BELONG_TO_CONTENT_OF_PROVIDED_MODULE
+      val hasSourceRoot = entry.getSourceFolders().any { it.file == virtualFile }
+      if (hasSourceRoot) {
+        return SourceRootStatus.ALREADY_SOURCE_ROOT
+      }
+      return SourceRootStatus.NOT_SOURCE_ROOT
     }
 
     override fun getAddIgnoredIdentifierQuickFixes(qualifiedNames: List<QualifiedName>): List<LocalQuickFix> {

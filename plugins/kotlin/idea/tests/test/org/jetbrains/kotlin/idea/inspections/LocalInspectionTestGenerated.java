@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections;
 
@@ -1735,6 +1735,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             @TestMetadata("filterIsInstanceForMapNotNull.kt")
             public void testFilterIsInstanceForMapNotNull() throws Exception {
                 runTest("testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceForMapNotNull.kt");
+            }
+
+            @TestMetadata("filterIsInstanceForMapNotNull_arbitraryLHS.kt")
+            public void testFilterIsInstanceForMapNotNull_arbitraryLHS() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceForMapNotNull_arbitraryLHS.kt");
+            }
+
+            @TestMetadata("filterIsInstanceForMapNotNull_dotQualifiedLHS.kt")
+            public void testFilterIsInstanceForMapNotNull_dotQualifiedLHS() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceForMapNotNull_dotQualifiedLHS.kt");
+            }
+
+            @TestMetadata("filterIsInstanceForMapNotNull_namedLambda.kt")
+            public void testFilterIsInstanceForMapNotNull_namedLambda() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCall/filterIsInstanceForMapNotNull_namedLambda.kt");
             }
 
             @TestMetadata("filterIsInstanceReceiver.kt")
@@ -4964,6 +4979,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/emptyRange/char.kt");
         }
 
+        @TestMetadata("customGetterRange.kt")
+        public void testCustomGetterRange() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/customGetterRange.kt");
+        }
+
         @TestMetadata("double.kt")
         public void testDouble() throws Exception {
             runTest("testData/inspectionsLocal/emptyRange/double.kt");
@@ -5042,6 +5062,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
         @TestMetadata("until2.kt")
         public void testUntil2() throws Exception {
             runTest("testData/inspectionsLocal/emptyRange/until2.kt");
+        }
+
+        @TestMetadata("varRange.kt")
+        public void testVarRange() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/varRange.kt");
         }
     }
 
@@ -14341,6 +14366,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/asReceiver.kt");
         }
 
+        @TestMetadata("complexReceiver.kt")
+        public void testComplexReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/complexReceiver.kt");
+        }
+
         @TestMetadata("forNotTarget.kt")
         public void testForNotTarget() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/forNotTarget.kt");
@@ -14371,6 +14401,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/indexInLvalue.kt");
         }
 
+        @TestMetadata("lastIndex.kt")
+        public void testLastIndex() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/lastIndex.kt");
+        }
+
         @TestMetadata("lengthLiteralConstant.kt")
         public void testLengthLiteralConstant() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/lengthLiteralConstant.kt");
@@ -14384,11 +14419,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
         @TestMetadata("map.kt")
         public void testMap() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/map.kt");
-        }
-
-        @TestMetadata("multidimensionalArray.kt")
-        public void testMultidimensionalArray() throws Exception {
-            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/multidimensionalArray.kt");
         }
 
         @TestMetadata("multidimensionalArray2.kt")

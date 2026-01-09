@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -73,7 +73,9 @@ public final class JUnitUtil {
 
   private static final List<String> STATIC_CONFIGS = Arrays.asList(
     BEFORE_CLASS_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, PARAMETRIZED_PARAMETERS_ANNOTATION_NAME);
-  private static final List<String> STATIC_5_CONFIGS = Arrays.asList(BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME);
+  private static final List<String> STATIC_5_CONFIGS =
+    Arrays.asList(BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME,
+                  JUnitCommonClassNames.ORG_JUNIT_PLATFORM_SUITE_API_BEFORESUITE, JUnitCommonClassNames.ORG_JUNIT_PLATFORM_SUITE_API_AFTERSUITE);
 
   private static final Collection<String> CONFIGURATIONS_ANNOTATION_NAME =
     List.of(DATA_POINT, AFTER_ANNOTATION_NAME, BEFORE_ANNOTATION_NAME, AFTER_EACH_ANNOTATION_NAME, BEFORE_EACH_ANNOTATION_NAME,

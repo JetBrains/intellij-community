@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.editor
 
+import com.intellij.diff.util.LineRange
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -16,4 +17,12 @@ interface CodeReviewInlayModel : EditorMappedViewModel {
   val key: Any
   override val line: StateFlow<Int?>
   override val isVisible: StateFlow<Boolean>
+
+  interface Ranged : CodeReviewInlayModel {
+    val range: StateFlow<LineRange?>
+
+    interface Adjustable : Ranged {
+      fun adjustRange(newStart: Int? = null, newEnd: Int? = null)
+    }
+  }
 }

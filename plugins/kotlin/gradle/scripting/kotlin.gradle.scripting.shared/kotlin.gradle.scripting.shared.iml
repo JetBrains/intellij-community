@@ -46,5 +46,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" />
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" />
   </component>
 </module>

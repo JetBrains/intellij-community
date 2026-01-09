@@ -27,7 +27,7 @@ internal fun cellRenderer(): ListCellRenderer<Any?> = listCellRenderer<Any?> {
       icon(tool.icon)
       text(tool.displayName) {
         speedSearch {
-          ranges = matcher?.matchingFragments(tool.displayName)
+          ranges = matcher?.match(tool.displayName)
         }
       }
 
@@ -37,7 +37,7 @@ internal fun cellRenderer(): ListCellRenderer<Any?> = listCellRenderer<Any?> {
         align = LcrInitParams.Align.RIGHT
         attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, greyForeground)
         speedSearch {
-          ranges = matcher?.matchingFragments(pathText)
+          ranges = matcher?.match(pathText)
         }
       }
     }

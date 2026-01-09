@@ -3,8 +3,6 @@
 package org.jetbrains.kotlin.idea.completion.lookups.factories
 
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
-import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
@@ -405,12 +403,12 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
                 }
 
                 context.laterRunnable = if (insertLambda) Runnable {
-                    CodeCompletionHandlerBase(
-                        /* completionType = */ CompletionType.BASIC,
-                        /* invokedExplicitly = */ false,
-                        /* autopopup = */ true,
-                        /* synchronous = */ false,
-                    ).invokeCompletion(project, editor)
+                    // We schedule auto-popup after moving the caret into the lambda.
+                    // It needs to be auto-popup rather than invoking completion manually,
+                    // otherwise pressing space will cause completion to insert the item, which is
+                    // not always wanted, see: KTIJ-36825
+                    AutoPopupController.getInstance(project)
+                        .scheduleAutoPopup(editor)
                 } else Runnable {
                     AutoPopupController.getInstance(project)
                         .autoPopupParameterInfo(editor, offsetElement)

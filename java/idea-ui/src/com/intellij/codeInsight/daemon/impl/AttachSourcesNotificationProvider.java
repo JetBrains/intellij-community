@@ -8,6 +8,7 @@ import com.intellij.codeInsight.AttachSourcesProviderFilter;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -170,7 +171,7 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
 
         throw new RuntimeException(JavaUiBundle.message("can.t.find.library.for.0", file.getName()));
       })
-      .expireWith(project)
+      .expireWith(JavaPluginDisposable.getInstance(project))
       .expireWhen(() -> !file.isValid())
       .coalesceBy(file, project)
       .finishOnUiThread(ModalityState.current(), uiThreadAction)

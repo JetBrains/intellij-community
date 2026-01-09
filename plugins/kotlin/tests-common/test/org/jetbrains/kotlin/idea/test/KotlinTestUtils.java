@@ -272,6 +272,14 @@ public final class KotlinTestUtils {
     }
 
     public static void assertEqualsToFile(
+            @NotNull Path expectedFile,
+            @NotNull String actual,
+            @NotNull Function1<String, String> sanitizer
+    ) {
+        assertEqualsToFile("Actual data differs from file content", expectedFile.toFile(), actual, sanitizer);
+    }
+
+    public static void assertEqualsToFile(
             @NotNull String message,
             @NotNull File expectedFile,
             @NotNull String actual,

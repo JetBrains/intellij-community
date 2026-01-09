@@ -4,17 +4,22 @@ package org.jetbrains.kotlin.gradle.scripting.k2
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.legacyBridge.findSnapshotModuleEntity
 import org.jetbrains.kotlin.gradle.scripting.k2.definition.withIdeKeys
 import org.jetbrains.kotlin.gradle.scripting.k2.importing.GradleScriptData
 import org.jetbrains.kotlin.gradle.scripting.k2.importing.GradleScriptModel
@@ -36,6 +41,7 @@ import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.adjustByDefinition
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import org.jetbrains.kotlin.utils.addIfNotNull
+import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
 import java.io.File
 import java.util.function.Predicate
 import kotlin.script.experimental.api.*
@@ -56,7 +62,7 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
 
         val currentStorage = currentSnapshot.toBuilder()
         project.updateKotlinScriptEntities(KotlinGradleScriptEntitySource) { storage ->
-            currentStorage.updateStorage(virtualFile, configuration)
+            currentStorage.updateStorage(virtualFile, configuration, null)
             storage.applyChangesFrom(currentStorage)
         }
     }
@@ -91,7 +97,6 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
         }
 
         val javaHomePath = javaHome.resolveSdk()?.homePath?.let { File(it) }
-        val configurations = mutableMapOf<VirtualFile, ScriptCompilationConfigurationResult>()
 
         for (model in models) {
             val sourceCode = VirtualFileScriptSource(model.virtualFile)
@@ -106,10 +111,9 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
                 ide.dependenciesSources(JvmDependency(model.sourcePath.map { File(it) }))
             }.adjustByDefinition(definition)
 
-            configurations[model.virtualFile] = refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
+            val configurationResult = refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
+            storage.updateStorage(model.virtualFile, configurationResult, model.classpathModel)
         }
-
-        configurations.forEach { (virtualFile, configurationResult) -> storage.updateStorage(virtualFile, configurationResult) }
     }
 
     private fun String?.resolveSdk(): Sdk? {
@@ -122,7 +126,11 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
         }
     }
 
-    private fun MutableEntityStorage.updateStorage(virtualFile: VirtualFile, configurationResult: ScriptCompilationConfigurationResult) {
+    private fun MutableEntityStorage.updateStorage(
+        virtualFile: VirtualFile,
+        configurationResult: ScriptCompilationConfigurationResult,
+        classpathModel: GradleBuildScriptClasspathModel?
+    ) {
         val configurationWrapper = configurationResult.valueOrNull() ?: return
         if (getVirtualFileUrlIndex().findEntitiesByUrl(virtualFile.virtualFileUrl).any()) return
 
@@ -167,10 +175,19 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
             virtualFile.virtualFileUrl, dependencies, KotlinGradleScriptEntitySource
         ) {
             this.configuration = configurationWrapper.configuration?.asEntity()
-            this.reports = configurationResult.reports.map { it.toData() }.toMutableList()
+            this.reports = configurationResult.reports.map(ScriptDiagnostic::map).toMutableList()
             this.sdkId = configurationWrapper.configuration?.sdkId
+            this.relatedModuleIds = classpathModel?.getRelatedModules().orEmpty().toMutableList()
         }
     }
+
+    private fun GradleBuildScriptClasspathModel.getRelatedModules(): Sequence<ModuleId> =
+        classpath.flatMap { it.classes + it.sources }.distinct().asSequence()
+            .mapNotNull { it.toNioPathOrNull() }
+            .mapNotNull { VirtualFileManager.getInstance().findFileByNioPath(it) }
+            .mapNotNull { ModuleUtilCore.findModuleForFile(it, project) }
+            .mapNotNull { it.findSnapshotModuleEntity()?.symbolicId }
+            .distinct()
 
     private fun MutableEntityStorage.getOrCreateScriptLibrary(
         jar: VirtualFileUrl, sources: Collection<VirtualFileUrl>

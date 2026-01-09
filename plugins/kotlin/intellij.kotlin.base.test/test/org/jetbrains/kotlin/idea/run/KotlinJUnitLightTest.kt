@@ -33,6 +33,7 @@ import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.junit.JunitKotlinTestFrameworkProvider
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.psi.KtFunction
 import org.junit.Assert
@@ -59,6 +60,7 @@ abstract class KotlinJUnitLightTest : KotlinLightCodeInsightFixtureTestCaseBase(
 
     override fun setUp() {
         super.setUp()
+        ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
         myFixture.addClass("package junit.framework; public class TestCase {}")
         myFixture.addClass("package org.junit; public @interface Test {}")
         myFixture.addClass("package org.junit.platform.commons.annotation; public @interface Testable{}")

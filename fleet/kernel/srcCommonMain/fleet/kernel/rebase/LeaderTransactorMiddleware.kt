@@ -38,7 +38,8 @@ class LeaderTransactorMiddleware(
             effect.effect(context)
           }
           if (instructionsPair.sharedInstruction != null &&
-              instructionsPair.sharedNovelty.isNotEmpty()) {
+            instructionsPair.sharedNovelty.isNotEmpty()
+          ) {
             sharedInstructions.add(instructionsPair.sharedInstruction)
           }
         }
@@ -58,5 +59,10 @@ class LeaderTransactorMiddleware(
       WorkspaceClockEntity.tick(workspaceHand.clientId)
       meta[TransactionResultKey] = TransactionResult.TransactionApplied(transaction)
     }
+  }
+
+  context(cs: ChangeScope)
+  override fun initDb() {
+    registerInternalEntities()
   }
 }

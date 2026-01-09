@@ -15,10 +15,7 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyClassPatternImpl
 import com.jetbrains.python.psi.impl.PyPsiUtils
-import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyTupleType
-import com.jetbrains.python.psi.types.PyTypeChecker
-import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.*
 
 class PyPatternInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -49,7 +46,20 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
 
 
   override fun visitPyClassPattern(node: PyClassPattern) {
-    val classType = myTypeEvalContext.getType(node.classNameReference) as? PyClassType ?: return
+    val type = myTypeEvalContext.getType(node.classNameReference)
+    val types = PyTypeUtil.toStream(type).toList()
+    if (types.isNotEmpty() && types.none { PyTypeChecker.isUnknown(it, myTypeEvalContext) }) {
+      val invalidTypes = types.filter { it !is PyClassType || !it.isDefinition }
+      if (invalidTypes.isNotEmpty()) {
+        val invalidTypesUnion = PyUnionType.union(invalidTypes)
+        val invalidTypeName = PythonDocumentationProvider.getTypeName(invalidTypesUnion, myTypeEvalContext)
+        holder.problem(node.classNameReference,
+                       PyPsiBundle.message("INSP.patterns.not.a.class", node.classNameReference.text, invalidTypeName)).register()
+        return
+      }
+    }
+
+    val classType = type as? PyClassType ?: return
     val pyClass = classType.pyClass
     if (pyClass.name in PyClassPattern.SPECIAL_BUILTINS) return
 

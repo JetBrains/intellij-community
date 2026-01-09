@@ -27,7 +27,9 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
+import org.jetbrains.plugins.github.pullrequest.ui.comment.lineLocation
 import org.jetbrains.plugins.github.pullrequest.ui.review.DelegatingGHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
@@ -209,7 +211,7 @@ internal class GHPRDiffViewModelImpl(
   override fun showDiffAtComment(commentId: String) {
     val mapping = threadMappings.value[commentId] ?: return
     if (mapping.change == null) return
-    showChange(mapping.change, mapping.location?.let(DiffViewerScrollRequest::toLine))
+    showChange(mapping.change, mapping.location?.lineLocation?.let(DiffViewerScrollRequest::toLine))
     mappedThreads.value.find { it.id == commentId }?.requestFocus()
   }
 
@@ -247,7 +249,15 @@ private fun mapThreadToChange(
   val change = changeVm.change
   val isVisible = threadData.isVisible(viewOption)
   val diffData = changeVm.diffData ?: return GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, null)
-
-  val commentRange = threadData.mapToRange(diffData)
-  return GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, commentRange)
+  val sideToRange = threadData.mapToRange(diffData) ?: return GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, null)
+  val startLineLocation = sideToRange.first
+  val endLineLocation = sideToRange.second
+  val location = if (sideToRange.let { startLineLocation.second == endLineLocation.second }) {
+    GHPRReviewCommentLocation.SingleLine(endLineLocation.first, startLineLocation.second)
+  }
+  else {
+    GHPRReviewCommentLocation.MultiLine(startLineLocation.first, startLineLocation.second,
+                                        endLineLocation.first, endLineLocation.second)
+  }
+  return GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, location)
 }

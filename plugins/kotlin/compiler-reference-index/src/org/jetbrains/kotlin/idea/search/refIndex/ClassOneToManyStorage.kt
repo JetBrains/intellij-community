@@ -14,12 +14,14 @@ import kotlin.io.path.deleteIfExists
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
-open class ClassOneToManyStorage(storagePath: Path) {
+open class ClassOneToManyStorage(storagePath: Path, clean: Boolean = true) {
     init {
-        val storageName = storagePath.name
-        storagePath.parent.listDirectoryEntries("$storageName*").ifNotEmpty {
-            forEach { it.deleteIfExists() }
-            LOG.warn("'$storageName' was deleted")
+        if (clean) {
+            val storageName = storagePath.name
+            storagePath.parent.listDirectoryEntries("$storageName*").ifNotEmpty {
+                forEach { it.deleteIfExists() }
+                LOG.warn("'$storageName' was deleted")
+            }
         }
     }
 

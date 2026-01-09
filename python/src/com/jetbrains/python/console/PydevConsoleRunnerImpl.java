@@ -35,7 +35,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -75,7 +74,6 @@ import com.jetbrains.python.debugger.ValuesPolicy;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.remote.PyRemotePathMapper;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.run.*;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -383,11 +381,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     PythonExecution pythonConsoleScriptExecution =
       PydevConsoleCli.createPythonConsoleScriptInClientMode(ideServerPort, helpersAwareTargetRequest);
 
-    PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = getRemoteAdditionalData(mySdk);
-    PyRemotePathMapper pathMapper = remoteSdkAdditionalData != null
-                                    ? PydevConsoleRunnerUtil.getPathMapper(myProject, myConsoleSettings, remoteSdkAdditionalData)
-                                    : null;
-    PythonCommandLineState.initEnvironment(myProject, pythonConsoleScriptExecution, runParams, helpersAwareTargetRequest, pathMapper,
+    PythonCommandLineState.initEnvironment(myProject, pythonConsoleScriptExecution, runParams, helpersAwareTargetRequest, null,
                                            mySdk);
 
     if (myWorkingDirFunction != null) {
@@ -528,22 +522,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       modules = ModuleManager.getInstance(myProject).getModules();
     }
     PythonScripts.ensureProjectSdkAndModuleDirsAreOnTarget(targetEnvironmentRequest, myProject, modules);
-  }
-
-  @Contract("null -> null")
-  private static @Nullable PyRemoteSdkAdditionalDataBase getRemoteAdditionalData(@Nullable Sdk sdk) {
-    if (sdk == null) {
-      return null;
-    }
-    else {
-      SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
-      if (sdkAdditionalData instanceof PyRemoteSdkAdditionalDataBase) {
-        return (PyRemoteSdkAdditionalDataBase)sdkAdditionalData;
-      }
-      else {
-        return null;
-      }
-    }
   }
 
   public static int getRemotePortFromProcess(@NotNull Process process) throws ExecutionException {

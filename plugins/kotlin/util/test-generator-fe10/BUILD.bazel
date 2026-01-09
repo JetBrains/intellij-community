@@ -43,7 +43,6 @@ jvm_library(
     "//jps/jps-builders:build",
     "//plugins/kotlin/compiler-plugins/parcelize/tests:tests_test_lib",
     "//plugins/kotlin/compiler-reference-index/tests:tests_test_lib",
-    "//plugins/kotlin/coverage/tests:tests_test_lib",
     "//plugins/kotlin/copyright/tests:tests_test_lib",
     "//plugins/kotlin/uast/uast-kotlin/tests:tests_test_lib",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/tests:tests_test_lib",

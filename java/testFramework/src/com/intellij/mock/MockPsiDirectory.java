@@ -105,6 +105,7 @@ public class MockPsiDirectory extends MockPsiElement implements PsiDirectory {
   @Override
   public @Nullable PsiDirectory getParentDirectory() {
     final PsiPackage psiPackage = myPackage.getParentPackage();
+    //noinspection IncorrectParentDisposable
     return psiPackage == null ? null : new MockPsiDirectory(psiPackage, getProject());
   }
 

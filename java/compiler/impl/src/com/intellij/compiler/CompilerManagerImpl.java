@@ -7,6 +7,7 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.ide.IdleTracker;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
@@ -85,7 +86,7 @@ public class CompilerManagerImpl extends CompilerManager {
     myEventPublisher = project.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
     // predefined compilers
     for (ProjectExtensionPointName<?> ep : Arrays.asList(COMPILABLE_TYPE_EP, BackendCompiler.EP_NAME)) {
-      ep.addChangeListener(project, () -> {myCachedCompilableTypes = null;}, project);
+      ep.addChangeListener(project, () -> {myCachedCompilableTypes = null;}, JavaPluginDisposable.getInstance(project));
     }
     COMPILER_FACTORY_EP.getPoint(project).addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
@@ -118,7 +119,7 @@ public class CompilerManagerImpl extends CompilerManager {
     projectGeneratedSrcRoot.mkdirs();
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     myWatchRoots = lfs.addRootsToWatch(Collections.singletonList(FileUtil.toCanonicalPath(projectGeneratedSrcRoot.getPath())), true);
-    Disposer.register(project, () -> {
+    Disposer.register(JavaPluginDisposable.getInstance(project), () -> {
       final ExternalJavacManager manager = myExternalJavacManager;
       myExternalJavacManager = null;
       if (manager != null) {

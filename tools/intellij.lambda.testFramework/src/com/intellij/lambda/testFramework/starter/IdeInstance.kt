@@ -2,9 +2,7 @@ package com.intellij.lambda.testFramework.starter
 
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.splitMode
-import com.intellij.ide.starter.coroutine.perClassSupervisorScope
 import com.intellij.ide.starter.ide.isRemDevContext
-import com.intellij.ide.starter.junit5.cancelSupervisorScope
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
@@ -97,8 +95,6 @@ object IdeInstance {
     else {
       LOG.info("IDE wasn't started. Skipping stopping it.")
     }
-
-    cancelSupervisorScope(perClassSupervisorScope, "IDE was stopped/not running so cancelling it's scope as well")
   }
 
   fun publishArtifacts(): Unit = synchronized(this) {

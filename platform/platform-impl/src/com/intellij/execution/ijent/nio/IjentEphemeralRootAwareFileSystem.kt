@@ -13,6 +13,7 @@ import java.io.File
 import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileAttributeView
 import java.nio.file.attribute.UserPrincipalLookupService
 import java.nio.file.spi.FileSystemProvider
 import kotlin.io.path.Path
@@ -214,6 +215,10 @@ class IjentEphemeralRootAwareFileSystemProvider(
 
   override fun getScheme(): String? {
     return originalFsProvider.scheme
+  }
+
+  override fun <V : FileAttributeView?> getFileAttributeView(path: Path?, type: Class<V?>?, vararg options: LinkOption?): V? {
+    return super.getFileAttributeView(path, type, *options)
   }
 
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {

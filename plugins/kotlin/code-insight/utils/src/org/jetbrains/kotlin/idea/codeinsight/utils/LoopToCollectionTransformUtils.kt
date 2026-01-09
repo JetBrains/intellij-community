@@ -39,20 +39,20 @@ object LoopToCollectionTransformUtils {
     }
 
     /**
-     * Transforms an index-based loop to a collection-based loop by:
+     * Transforms an index-based loop to a collection-based loop with multiple array access usages by:
      * 1. Replacing the loop parameter with "element" 
-     * 2. Replacing array access expressions with direct element references
+     * 2. Replacing all array access expressions with direct element references
      * 3. Replacing the loop range with the collection expression
      * 
      * @param project the current project
-     * @param usageInfo information about the loop usage pattern
+     * @param usageInfos information about all loop usage patterns
      * @param loopParameter the original loop parameter
      * @param loopRange the original loop range
      * @param newLoopRange the new collection expression to iterate over
      */
     fun transformLoop(
         project: Project,
-        usageInfo: LoopUsageInfo,
+        usageInfos: List<LoopUsageInfo>,
         loopParameter: KtParameter,
         loopRange: KtExpression,
         newLoopRange: KtExpression
@@ -61,7 +61,11 @@ object LoopToCollectionTransformUtils {
         val newParameter = factory.createLoopParameter("element")
         val newReferenceExpression = factory.createExpression("element")
         
-        usageInfo.arrayAccessElement.replace(newReferenceExpression)
+        // Replace all array access expressions with direct element references
+        usageInfos.forEach { usageInfo ->
+            usageInfo.arrayAccessElement.replace(newReferenceExpression.copy())
+        }
+        
         loopParameter.replace(newParameter)
         loopRange.replace(newLoopRange)
     }

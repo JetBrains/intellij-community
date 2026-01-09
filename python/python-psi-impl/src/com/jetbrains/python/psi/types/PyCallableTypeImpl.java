@@ -1,12 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -91,31 +89,6 @@ public class PyCallableTypeImpl implements PyCallableType {
     PyExpression callee = location instanceof PyReferenceExpression re ? re.getQualifier() : null;
     PyClassType delegate = PyUtil.selectCallableTypeRuntimeClass(this, callee, typeEvalContext);
     return delegate != null ? delegate.getCompletionVariants(completionPrefix, location, context) : ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-  }
-
-  @Override
-  public @Nullable String getName() {
-    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(null);
-    return String.format("(%s) -> %s",
-                         myParameters != null ?
-                         StringUtil.join(myParameters,
-                                         param -> {
-                                           if (param != null) {
-                                             final StringBuilder builder = new StringBuilder();
-                                             final String name = param.getName();
-                                             final PyType type = param.getType(context);
-                                             if (name != null) {
-                                               builder.append(name);
-                                               builder.append(": ");
-                                             }
-                                             builder.append(type != null ? type.getName() : PyNames.UNKNOWN_TYPE);
-                                             return builder.toString();
-                                           }
-                                           return PyNames.UNKNOWN_TYPE;
-                                         },
-                                         ", ") :
-                         "...",
-                         myReturnType != null ? myReturnType.getName() : PyNames.UNKNOWN_TYPE);
   }
 
   @Override

@@ -5,17 +5,17 @@ import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderEx
-import com.intellij.psi.PsiElement
-import com.intellij.util.containers.MultiMap
 import com.intellij.polySymbols.PolyContextKind
-import com.intellij.polySymbols.FrameworkId
-import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContextKindRules
 import com.intellij.polySymbols.customElements.json.*
+import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConversionRulesProvider
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
+import com.intellij.psi.PsiElement
+import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -37,14 +37,16 @@ abstract class CustomElementsManifestScopeBase :
     removeRoot(manifest)
   }
 
-  override fun adaptAllRootContributions(root: CustomElementsManifest,
-                                         framework: FrameworkId?,
-                                         origin: CustomElementsJsonOrigin): Sequence<StaticSymbolContributionAdapter> =
+  override fun adaptAllRootContributions(
+    root: CustomElementsManifest,
+    origin: CustomElementsJsonOrigin,
+  ): Sequence<StaticSymbolContributionAdapter> =
     root.adaptAllContributions(origin, this)
 
-  override fun adaptAllContributions(contribution: Any,
-                                     framework: FrameworkId?,
-                                     origin: CustomElementsJsonOrigin): Sequence<StaticSymbolContributionAdapter> =
+  override fun adaptAllContributions(
+    contribution: Any,
+    origin: CustomElementsJsonOrigin,
+  ): Sequence<StaticSymbolContributionAdapter> =
     when (contribution) {
       is CustomElementsPackage -> contribution.adaptAllContributions(origin, this)
       is JavaScriptModule -> contribution.adaptAllContributions(origin, this)
@@ -71,8 +73,6 @@ abstract class CustomElementsManifestScopeBase :
     override val typeSupport: PolySymbolTypeSupport? = null,
     private val sourceSymbolResolver: (source: SourceReference, cacheHolder: UserDataHolderEx) -> PsiElement? = { _, _ -> null },
   ) : CustomElementsJsonOrigin {
-
-    override val framework: FrameworkId? = null
 
     override fun resolveSourceSymbol(source: SourceReference, cacheHolder: UserDataHolderEx): PsiElement? =
       sourceSymbolResolver(source, cacheHolder)

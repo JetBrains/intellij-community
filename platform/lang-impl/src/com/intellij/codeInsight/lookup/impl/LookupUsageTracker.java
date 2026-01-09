@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupListener;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeSchemaValidator;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -17,8 +18,10 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.ide.impl.DocumentationPopupListener;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.EditorKind;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IncompleteDependenciesService;
 import com.intellij.openapi.project.IncompleteDependenciesService.DependenciesState;
@@ -37,12 +40,13 @@ import static com.intellij.codeInsight.completion.BaseCompletionService.LOOKUP_E
 import static com.intellij.codeInsight.completion.CompletionData.LOOKUP_ELEMENT_PSI_REFERENCE;
 import static com.intellij.codeInsight.lookup.LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
 import static com.intellij.codeInsight.lookup.impl.LookupTypedHandler.CANCELLATION_CHAR;
+import static com.intellij.ide.actions.ToolwindowFusEventFields.TOOLWINDOW;
 
 @ApiStatus.Internal
 public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 39);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 40);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
@@ -78,6 +82,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
                                                                          SCHEMA,
                                                                          ALPHABETICALLY,
                                                                          EDITOR_KIND,
+                                                                         TOOLWINDOW,
                                                                          FINISH_TYPE,
                                                                          DURATION,
                                                                          SELECTED_INDEX,
@@ -268,6 +273,11 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       }
       data.add(ALPHABETICALLY.with(UISettings.getInstance().getSortLookupElementsLexicographically()));
       data.add(EDITOR_KIND.with(myLookup.getEditor().getEditorKind()));
+      var dataContext = EditorUtil.getEditorDataContext(myLookup.getEditor());
+      var toolwindow = PlatformDataKeys.TOOL_WINDOW.getData(dataContext);
+      data.add(TOOLWINDOW.with(
+        toolwindow != null ? toolwindow.getId() : null
+      ));
 
       // Quality
       data.add(FINISH_TYPE.with(finishType));

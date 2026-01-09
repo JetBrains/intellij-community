@@ -8,6 +8,7 @@ import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
 
 interface PsiUsage : Usage {
 
@@ -36,7 +37,7 @@ interface PsiUsage : Usage {
      */
     @JvmStatic
     fun textUsage(element: PsiElement, rangeInElement: TextRange): PsiUsage {
-      if (element is PsiFile) {
+      if (element is PsiFileSystemItem) {
         return textUsage(element, rangeInElement)
       }
       else {

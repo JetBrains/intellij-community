@@ -1,6 +1,6 @@
 package com.intellij.ide.starter.driver.driver.remoteDev
 
-import com.intellij.ide.starter.coroutine.perClassSupervisorScope
+import com.intellij.ide.starter.coroutine.CommonScope.perClassSupervisorScope
 import com.intellij.ide.starter.driver.engine.DriverOptions
 import com.intellij.ide.starter.driver.engine.remoteDev.XorgWindowManagerHandler
 import com.intellij.ide.starter.ide.IDETestContext

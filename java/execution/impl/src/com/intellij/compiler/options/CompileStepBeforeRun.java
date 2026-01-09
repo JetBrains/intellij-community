@@ -8,6 +8,7 @@ import com.intellij.execution.remote.RemoteConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -188,7 +189,7 @@ public final class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileSte
             );
             env.copyUserDataTo(context);
             return new Pair<>(context, projectTask);
-          }).expireWith(myProject).executeSynchronously();
+          }).expireWith(JavaPluginDisposable.getInstance(myProject)).executeSynchronously();
 
           ProjectTaskManagerImpl.putBuildOriginator(myProject, CompileStepBeforeRun.class);
 

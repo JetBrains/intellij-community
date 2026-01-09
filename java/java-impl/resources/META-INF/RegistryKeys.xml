@@ -114,6 +114,5 @@
                  description="Show 'Create java compact file' separately from all other classes"/>
     <registryKey key="compiler.external.javac.keep.alive.timeout" defaultValue="300000"
                  description="If not used for the specified period of time or longer, the IDE will shut down the cached javac compilation process"/>
-    <registryKey key="compiler.build.can.use.eel" defaultValue="true" description="Allow using Eel API to run build processes"/>
   </extensions>
 </idea-plugin>

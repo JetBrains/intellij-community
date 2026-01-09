@@ -3,6 +3,7 @@ package com.intellij.polySymbols.query
 
 import com.intellij.model.Pointer
 import com.intellij.polySymbols.*
+import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.testFramework.query.doTest
 import com.intellij.polySymbols.testFramework.query.printMatches
@@ -397,13 +398,14 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
           return if (qualifiedName.kind == HTML_ATTRIBUTES) {
             listOf(object : PolySymbol {
               override val origin: PolySymbolOrigin
-                get() = object : PolySymbolOrigin {
-                  override val framework: FrameworkId get() = "vue"
-                }
+                get() = PolySymbolOrigin.empty()
               override val kind: PolySymbolKind
                 get() = HTML_ATTRIBUTES
               override val name: String
                 get() = "bar"
+
+              override fun matchContext(context: PolyContext): Boolean =
+                context.framework == "vue"
 
               override fun createPointer(): Pointer<out PolySymbol> = Pointer.hardPointer(this)
 

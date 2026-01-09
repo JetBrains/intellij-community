@@ -15,6 +15,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 
 class KtTestMetadataNavigationTest : LightJavaCodeInsightFixtureTestCase() {
 
@@ -30,6 +31,7 @@ class KtTestMetadataNavigationTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun setUp() {
     super.setUp()
+    ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
     myFixture.addClass("""
       package org.junit.platform.commons.annotation;
       public @interface Testable {}

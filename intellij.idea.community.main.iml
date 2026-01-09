@@ -260,5 +260,6 @@
     <orderEntry type="module" module-name="intellij.terminal.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.terminal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.instanceContainer.tests" scope="TEST" />
   </component>
 </module>

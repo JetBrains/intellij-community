@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.runConfigurations.jvm">
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.runConfigurations.jvm">
   <dependencies>
     <module name="intellij.kotlin.base.scripting.shared"/>
   </dependencies>

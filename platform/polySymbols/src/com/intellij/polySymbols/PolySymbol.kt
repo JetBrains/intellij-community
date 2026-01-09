@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.polySymbols.PolySymbol.Companion.PROP_DOC_HIDE_ICON
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationCustomizer
 import com.intellij.polySymbols.query.*
@@ -106,8 +107,8 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
 
   /**
    * An optional icon associated with the symbol, which is going to be used across the IDE.
-   * If none is specified, a default icon of the origin will be used and if that’s not available,
-   * a default icon for symbol namespace and kind.
+   * To not show an icon in the documentation, for property [PROP_DOC_HIDE_ICON] return `true`.
+   * If no icon is provided, in code completion a default icon for symbol namespace and kind will be used.
    */
   val icon: Icon?
     get() = null
@@ -246,7 +247,7 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
    * in the particular context. By default, the current symbol framework is checked.
    */
   fun matchContext(context: PolyContext): Boolean =
-    origin.framework == null || context.framework == null || origin.framework == context.framework
+    true
 
   /**
    * Returns `true` if two symbols are the same or equivalent for resolve purposes.
@@ -318,6 +319,13 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
      */
     @JvmField
     val PROP_DOC_HIDE_PATTERN: PolySymbolProperty<Boolean> = PolySymbolProperty["doc-hide-pattern"]
+
+    /**
+     * If a symbol has an icon associated, it will be shown in the documentation in the definition section
+     * by default. Setting this property to `true` hides the icon.
+     */
+    @JvmField
+    val PROP_DOC_HIDE_ICON: PolySymbolProperty<Boolean> = PolySymbolProperty["doc-hide-icon"]
 
     /**
      * By default, all symbols show up in code completion.

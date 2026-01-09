@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoSupport
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
@@ -50,7 +51,7 @@ class KotlinCreateTestDialog(
     private class KotlinTestMemberInfo(memberInfo: MemberInfo): MemberInfo(memberInfo.member) {
         init {
             val unwrapped = (memberInfo.member as? KtLightMethod)?.unwrapped
-            if (unwrapped is KtNamedFunction) {
+            if (unwrapped is KtNamedDeclaration) {
                 displayName =
                     allowAnalysisOnEdt {
                         KotlinMemberInfoSupport.getInstance().renderMemberInfo(unwrapped)

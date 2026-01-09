@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.locking.impl
 
 import com.intellij.concurrency.currentThreadContext
@@ -153,7 +153,6 @@ private data class ExposedWritePermitData(
 class NestedLocksThreadingSupport : ThreadingSupport {
   companion object {
     private const val SPIN_TO_WAIT_FOR_LOCK: Int = 100
-    private val logger = Logger.getInstance(NestedLocksThreadingSupport::class.java)
   }
 
   /**
@@ -470,9 +469,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
      * same as [acquireReadPermit], but returns `null` if acquisition failed
      */
     fun tryAcquireReadPermit(): ReadPermit? {
-      val permit = runSuspendMaybeConsuming(false) {
-        thisLevelLock.tryAcquireReadActionPermit()
-      }
+      val permit = thisLevelLock.tryAcquireReadActionPermit()
       if (permit != null) {
         thisLevelPermit.set(permit)
       }
@@ -1667,36 +1664,47 @@ private class RunSuspend<T>(val job: Job?, val interceptor: PermitWaitingInterce
 
   fun await(): T {
     if (interceptor == null) {
-      synchronized(this) {
-        var interrupted = false
-        while (true) {
-          if (resultDeferred.isCompleted) {
-            if (interrupted) {
-              // Restore "interrupted" flag
-              Thread.currentThread().interrupt()
-            }
-            return resultDeferred.getOrThrow()
-          }
-          else {
-            try {
-              @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-              ((this as Object).wait())
-            }
-            catch (_: InterruptedException) {
-              // Suppress exception or token could be lost.
-              interrupted = true
-            }
-          }
-        }
-      }
+      return waitForDeferredWithoutInterceptor()
     } else {
       if (!resultDeferred.isCompleted) {
-        interceptor.consumer(resultDeferred)
+        try {
+          interceptor.consumer(resultDeferred)
+        } catch (e: Throwable) {
+          logger.error(e)
+          return waitForDeferredWithoutInterceptor()
+        }
       }
       return resultDeferred.getOrThrow() // consumer returns when `result` gets non-nullable value
     }
   }
+
+  private fun waitForDeferredWithoutInterceptor(): T {
+    synchronized(this) {
+      var interrupted = false
+      while (true) {
+        if (resultDeferred.isCompleted) {
+          if (interrupted) {
+            // Restore "interrupted" flag
+            Thread.currentThread().interrupt()
+          }
+          return resultDeferred.getOrThrow()
+        }
+        else {
+          try {
+            @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+            ((this as Object).wait())
+          }
+          catch (_: InterruptedException) {
+            // Suppress exception or token could be lost.
+            interrupted = true
+          }
+        }
+      }
+    }
+  }
 }
+
+private val logger = Logger.getInstance(NestedLocksThreadingSupport::class.java)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun <T> Deferred<T>.getOrThrow(): T {

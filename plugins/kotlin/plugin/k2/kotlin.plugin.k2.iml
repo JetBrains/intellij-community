@@ -114,10 +114,10 @@
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.serialization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.dataframe.maven" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.structuralSearch" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.structuralSearch" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.i18n" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.kotlin.injection" />
-    <orderEntry type="module" module-name="kotlin.base.injection" />
+    <orderEntry type="module" module-name="intellij.kotlin.injection" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.injection" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight.minimal" scope="RUNTIME" />

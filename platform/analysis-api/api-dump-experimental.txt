@@ -327,9 +327,6 @@ a:com.intellij.openapi.fileEditor.FileEditorManager
 - *:getSelectedTextEditorWithRemotes():com.intellij.openapi.editor.Editor[]
 - *:isFileOpenWithRemotes(com.intellij.openapi.vfs.VirtualFile):Z
 - *:requestOpenFile(com.intellij.openapi.vfs.VirtualFile):V
-e:com.intellij.openapi.fileEditor.FileEditorPolicy
-- java.lang.Enum
-- *sf:HIDE_OTHER_EDITORS:com.intellij.openapi.fileEditor.FileEditorPolicy
 c:com.intellij.openapi.fileEditor.OpenFileDescriptor
 - com.intellij.openapi.fileEditor.FileEditorNavigatable
 - java.lang.Comparable

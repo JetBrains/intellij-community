@@ -11,9 +11,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.getAndUpdateUserData
 import com.intellij.patterns.StandardPatterns
-import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer.Companion.customizeItems
+import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.query.PolySymbolScope

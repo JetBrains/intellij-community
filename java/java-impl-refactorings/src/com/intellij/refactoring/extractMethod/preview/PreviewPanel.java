@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.ide.IdeBundle;
@@ -15,7 +15,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.ui.*;
@@ -70,7 +69,6 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, UiDataProvid
     Disposer.register(this, usageModelTracker);
     usageModelTracker.addListener(isPropertyChange -> updateLater(), this);
 
-    Disposer.register(processor.getProject(), this);
     Disposer.register(this, myTree);
     Disposer.register(this, myDiffPanel);
   }

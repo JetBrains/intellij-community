@@ -536,6 +536,10 @@
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
+
+    <!-- test frameworks integration -->
+    <testDiffProvider language="kotlin" implementationClass="com.intellij.execution.testframework.JvmTestDiffProvider"/>
+    <testFinder implementation="org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration.KotlinTestFinder"/>
   </extensions>
 
   <!-- Copy-paste -->

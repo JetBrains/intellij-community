@@ -23,6 +23,7 @@ public final class ServiceDescriptor {
                            String testServiceImplementation,
                            String headlessImplementation,
                            boolean overrides,
+                           boolean open,
                            @Nullable String configurationSchemaKey,
                            @NotNull PreloadMode preload,
                            @Nullable ClientKind client,
@@ -32,6 +33,7 @@ public final class ServiceDescriptor {
     this.testServiceImplementation = testServiceImplementation;
     this.headlessImplementation = headlessImplementation;
     this.overrides = overrides;
+    this.open = open;
     this.configurationSchemaKey = configurationSchemaKey;
     this.preload = preload;
     this.client = client;
@@ -74,6 +76,12 @@ public final class ServiceDescriptor {
    */
   @Attribute
   public final boolean overrides;
+
+  /**
+   * Allows this service to be overridden.
+   */
+  @Attribute
+  public final boolean open;
 
   /**
    * Cannot be specified as part of {@link State} because to get annotation, class must be loaded, but it cannot be done for performance reasons.
@@ -124,6 +132,7 @@ public final class ServiceDescriptor {
            ", testServiceImplementation='" + testServiceImplementation + '\'' +
            ", headlessImplementation='" + headlessImplementation + '\'' +
            ", overrides=" + overrides +
+           ", open=" + open +
            ", configurationSchemaKey='" + configurationSchemaKey + '\'' +
            ", preload=" + preload +
            ", client=" + client +

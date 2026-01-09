@@ -4,6 +4,7 @@ package com.intellij.openapi.compiler.options;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.ide.IdeBundle;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -56,7 +57,7 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
     ExcludeEntryDescription[] descriptions = myConfiguration.getExcludeEntryDescriptions();
     disposeMyDescriptions();
     for (ExcludeEntryDescription description : descriptions) {
-      myExcludeEntryDescriptions.add(description.copy(myProject));
+      myExcludeEntryDescriptions.add(description.copy(JavaPluginDisposable.getInstance(myProject)));
     }
     ((AbstractTableModel)myExcludedEntriesPanel.myExcludedTable.getModel()).fireTableDataChanged();
   }
@@ -77,7 +78,7 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
   public void apply() {
     myConfiguration.removeAllExcludeEntryDescriptions();
     for (ExcludeEntryDescription description : myExcludeEntryDescriptions) {
-      myConfiguration.addExcludeEntryDescription(description.copy(myProject));
+      myConfiguration.addExcludeEntryDescription(description.copy(JavaPluginDisposable.getInstance(myProject)));
     }
   }
 
@@ -167,10 +168,10 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
         }
         ExcludeEntryDescription description;
         if (chosenFile.isDirectory()) {
-          description = new ExcludeEntryDescription(chosenFile, true, false, myProject);
+          description = new ExcludeEntryDescription(chosenFile, true, false, JavaPluginDisposable.getInstance(myProject));
         }
         else {
-          description = new ExcludeEntryDescription(chosenFile, false, true, myProject);
+          description = new ExcludeEntryDescription(chosenFile, false, true, JavaPluginDisposable.getInstance(myProject));
         }
         myExcludeEntryDescriptions.add(selected, description);
         selected++;

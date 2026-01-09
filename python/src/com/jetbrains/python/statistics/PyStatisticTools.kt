@@ -3,7 +3,6 @@ package com.jetbrains.python.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
-import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -15,7 +14,6 @@ import com.jetbrains.python.hatch.sdk.isHatch
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isVirtualEnv
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
@@ -152,7 +150,6 @@ val Sdk.executionType: InterpreterTarget
   get() =
     when (val additionalData = sdkAdditionalData) {
       is PyTargetAwareAdditionalData -> additionalData.executionType
-      is PyRemoteSdkAdditionalDataBase -> additionalData.executionType
       else -> LOCAL
     }
 
@@ -187,11 +184,3 @@ private val PyTargetAwareAdditionalData.executionType: InterpreterTarget
       }
     } ?: REMOTE_UNKNOWN
 
-private val PyRemoteSdkAdditionalDataBase.executionType: InterpreterTarget
-  get() = remoteConnectionType.let { type ->
-    when {
-      type == null -> "Remote_null"
-      getPluginInfo(type.javaClass).isDevelopedByJetBrains() -> "Remote_${type.name?.replace(' ', '_')}"
-      else -> "third_party"
-    }.let { name -> InterpreterTarget.values().firstOrNull { it.value == name } ?: REMOTE_UNKNOWN }
-  }

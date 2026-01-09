@@ -25,7 +25,6 @@ jvm_library(
     "//plugins/kotlin/plugin-updater",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
-    "//plugins/kotlin/base/scripting/scripting.shared",
   ]
 )
 ### auto-generated section `build intellij.kotlin.preferences` end

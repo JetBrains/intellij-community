@@ -16,6 +16,7 @@ import com.intellij.debugger.engine.evaluation.expression.UnsupportedExpressionE
 import com.intellij.debugger.engine.evaluation.statistics.JavaDebuggerEvaluatorStatisticsCollector;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.LogCapture;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -27,6 +28,7 @@ import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.ui.impl.watch.CompilingEvaluatorImpl;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.icons.AllIcons;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -228,7 +230,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         breakpoint.emitBreakpointChanged();
       })
       .coalesceBy(myProject, this)
-      .expireWith(myProject)
+      .expireWith(JavaPluginDisposable.getInstance(myProject))
       .submit(RELOAD_EXECUTOR);
   }
 
@@ -394,7 +396,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         buf.append("\n");
       }
       if (!buf.isEmpty()) {
-        debugProcess.printToConsole(buf.toString());
+        var msg = buf.toString();
+
+        var session = debugProcess.getSession();
+        var xPosition = myXBreakpoint.getSourcePosition();
+        LogCapture.getInstance(myProject).captureBreakpointLogs(msg, session, xPosition);
+
+        debugProcess.printToConsole(msg);
       }
     }
     if (isRemoveAfterHit()) {

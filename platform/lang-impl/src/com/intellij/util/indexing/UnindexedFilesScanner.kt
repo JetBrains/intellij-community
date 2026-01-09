@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
@@ -32,6 +32,8 @@ import com.intellij.util.gist.GistManagerImpl
 import com.intellij.util.indexing.FilesFilterScanningHandler.IdleFilesFilterScanningHandler
 import com.intellij.util.indexing.FilesFilterScanningHandler.UpdatingFilesFilterScanningHandler
 import com.intellij.util.indexing.IndexingProgressReporter.CheckPauseOnlyProgressIndicator
+import com.intellij.util.indexing.UnindexedFilesScanner.Companion.SCANNING_DISPATCHER
+import com.intellij.util.indexing.UnindexedFilesScanner.Companion.SCANNING_PARALLELISM
 import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.dependencies.ScanningRequestToken
@@ -172,10 +174,7 @@ class UnindexedFilesScanner (
    * We may not have information about whether it's a full update or not, in which case we return null
    */
   override fun isFullIndexUpdate(): Boolean? {
-    val parameters = scanningParameters.getCompletedSafe()
-    if (parameters == null) {
-      return null
-    }
+    val parameters = scanningParameters.getCompletedSafe() ?: return null
     return parameters is ScanningIterators && parameters.isFullIndexUpdate()
   }
 
@@ -220,15 +219,14 @@ class UnindexedFilesScanner (
     }
 
     LOG.assertTrue(!(startCondition != null && oldTask.startCondition != null), "Merge of two start conditions is not implemented")
-    val mergedHideProgress: Boolean?
-    if (shouldHideProgressInSmartMode == null) {
-      mergedHideProgress = oldTask.shouldHideProgressInSmartMode
+    val mergedHideProgress = if (shouldHideProgressInSmartMode == null) {
+      oldTask.shouldHideProgressInSmartMode
     }
     else if (oldTask.shouldHideProgressInSmartMode != null) {
-      mergedHideProgress = (shouldHideProgressInSmartMode && oldTask.shouldHideProgressInSmartMode)
+      (shouldHideProgressInSmartMode && oldTask.shouldHideProgressInSmartMode)
     }
     else {
-      mergedHideProgress = shouldHideProgressInSmartMode
+      shouldHideProgressInSmartMode
     }
 
     val triggerA = forceReindexingTrigger
@@ -244,13 +242,13 @@ class UnindexedFilesScanner (
     }
     return UnindexedFilesScanner(
       project,
-      false,
-      false,
-      startCondition ?: oldTask.startCondition,
-      mergedHideProgress,
-      mergedPredicate,
-      forceCheckingForOutdatedIndexesUsingFileModCount || oldTask.forceCheckingForOutdatedIndexesUsingFileModCount,
-      mergedParameters,
+      onProjectOpen = false,
+      isIndexingFilesFilterUpToDate = false,
+      startCondition = startCondition ?: oldTask.startCondition,
+      shouldHideProgressInSmartMode = mergedHideProgress,
+      forceReindexingTrigger = mergedPredicate,
+      forceCheckingForOutdatedIndexesUsingFileModCount = forceCheckingForOutdatedIndexesUsingFileModCount || oldTask.forceCheckingForOutdatedIndexesUsingFileModCount,
+      scanningParameters = mergedParameters,
     )
   }
 
@@ -431,7 +429,7 @@ class UnindexedFilesScanner (
 
       val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
 
-      LOG.info("Scanning of " + project.name + " uses " + UnindexedFilesUpdater.getNumberOfScanningThreads() + " scanning threads")
+      LOG.info("Scanning of [" + project.name + "] uses " + UnindexedFilesUpdater.getNumberOfScanningThreads() + " scanning threads")
       progressReporter.setText(IndexingBundle.message("progress.indexing.scanning"))
       progressReporter.setSubTasksCount(providers.size)
 
@@ -742,10 +740,10 @@ class UnindexedFilesScanner (
 
   private fun getLogScanningCompletedStageMessage(): String {
     val statistics = scanningHistory.scanningStatistics
-    val numberOfScannedFiles = statistics.map(JsonScanningStatistics::numberOfScannedFiles).sum()
-    val numberOfFilesForIndexing = statistics.map(JsonScanningStatistics::numberOfFilesForIndexing).sum()
-    return "Scanning completed for " + scanningHistory.project.name + '.' +
-           " Number of scanned files: " + numberOfScannedFiles + "; number of files for indexing: " + numberOfFilesForIndexing
+    val numberOfScannedFiles = statistics.sumOf(JsonScanningStatistics::numberOfScannedFiles)
+    val numberOfFilesForIndexing = statistics.sumOf(JsonScanningStatistics::numberOfFilesForIndexing)
+    return "Scanning completed for [${scanningHistory.project.name}]. " +
+           "Number of scanned files: $numberOfScannedFiles; number of files for indexing: $numberOfFilesForIndexing"
   }
 
   companion object {

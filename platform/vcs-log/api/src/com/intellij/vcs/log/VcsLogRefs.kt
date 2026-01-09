@@ -44,16 +44,14 @@ interface VcsLogRefs {
 }
 
 val VcsLogRefs.allRefs: Sequence<VcsRef>
-  get() = refsByRoot.values.asSequence().flatMap(VcsLogRefsOfSingleRoot::getRefs)
+  get() = refsByRoot.values.asSequence().flatMap { it.allRefs }
 
 val VcsLogRefs.branches: List<VcsRef>
-  get() = refsByRoot.values.flatMapTo(mutableListOf()) {
-    it.getBranches()
-  }
+  get() = refsByRoot.values.flatMapTo(mutableListOf()) { rootRefs -> rootRefs.branches }
 
 @ApiStatus.Obsolete
 fun VcsLogRefs.allRefsStream(): Stream<VcsRef> =
-  refsByRoot.values.asSequence().flatMap(VcsLogRefsOfSingleRoot::getRefs).asStream()
+  refsByRoot.values.asSequence().flatMap { it.allRefs }.asStream()
 
 fun VcsLogRefs.refsToCommit(root: VirtualFile, index: VcsLogCommitStorageIndex): List<VcsRef> =
   refsByRoot[root]?.refsToCommit(index) ?: emptyList()

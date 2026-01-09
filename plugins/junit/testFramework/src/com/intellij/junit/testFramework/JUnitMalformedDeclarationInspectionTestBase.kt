@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit.testFramework
 
 import com.intellij.execution.junit.codeInspection.JUnitMalformedDeclarationInspection
@@ -54,7 +54,7 @@ abstract class JUnitMalformedDeclarationInspectionTestBase(protected val junit5V
 
   protected companion object {
     const val JUNIT5_7_0: String = "5.7.0"
-    const val JUNIT5_LATEST: String = "5.13.4"
+    const val JUNIT5_LATEST: String = "5.14.1"
     const val JUNIT6_LATEST: String = "6.0.0"
   }
 }

@@ -28,6 +28,7 @@ abstract class AbstractInplaceRenameTest : KotlinLightCodeInsightFixtureTestCase
     override fun setUp() {
         super.setUp()
         myFixture.addClass("interface JavaInterface { void foo(); } ")
+        myFixture.addFileToProject("KotlinInterface.kt", "interface KotlinInterface")
     }
 
     open fun doTest(unused: String) {
@@ -41,7 +42,8 @@ abstract class AbstractInplaceRenameTest : KotlinLightCodeInsightFixtureTestCase
     }
 
     protected fun doTestWithoutIgnoreDirective(unused: String) {
-        val file = myFixture.configureByFile(fileName())
+        val fileName = fileName()
+        val file = myFixture.configureByFile(fileName)
         val newName = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// NEW_NAME: ")
         val dataContext = createTextEditorBasedDataContext(project, editor, editor.caretModel.currentCaret)
         val renameDirective =
@@ -83,9 +85,9 @@ abstract class AbstractInplaceRenameTest : KotlinLightCodeInsightFixtureTestCase
                 }
 
                 val nameSuffix = getAfterFileNameSuffix()
-                var afterFile = dataFile("${fileName()}${nameSuffix ?: ""}.after")
+                var afterFile = dataFile("$fileName${nameSuffix ?: ""}.after")
                 if (nameSuffix != null && !afterFile.exists()) {
-                    afterFile = dataFile("${fileName()}.after")
+                    afterFile = dataFile("$fileName.after")
                 }
                 myFixture.checkResultByFile(afterFile)
             } catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {

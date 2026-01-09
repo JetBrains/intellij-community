@@ -116,6 +116,7 @@ object PluginXmlConst {
   const val SERVICE_EP_HEADLESS_IMPLEMENTATION_ATTR: String = "headlessImplementation"
   const val SERVICE_EP_CONFIGURATION_SCHEMA_KEY_ATTR: String = "configurationSchemaKey"
   const val SERVICE_EP_OVERRIDES_ATTR: String = "overrides"
+  const val SERVICE_EP_OPEN_ATTR: String = "open"
   const val SERVICE_EP_PRELOAD_ATTR: String = "preload"
   const val SERVICE_EP_PRELOAD_TRUE_VALUE: String = "true"
   const val SERVICE_EP_PRELOAD_FALSE_VALUE: String = "false"

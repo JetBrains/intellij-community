@@ -5,8 +5,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Pair;
 import com.intellij.remote.RemoteConnectionCredentialsWrapper;
 import com.intellij.remote.RemoteCredentials;
 import com.intellij.remote.RemoteSdkProperties;
@@ -14,11 +12,9 @@ import com.intellij.util.PathMappingSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * This service provides functionality for SSH remote interpreters. It is
@@ -36,15 +32,6 @@ public interface PythonSshInterpreterManager {
     @NotNull RemoteSdkProperties sdkProperties,
     @NotNull List<PathMappingSettings.PathMapping> mapping
   );
-
-  /**
-   * Creates form to browse remote box. You need to show it to user using a dialog.
-   *
-   * @return a pair of (user-chosen path supplier, panel to be displayed), or {@code null} if remote SDK can't be browsed.
-   * @throws ExecutionException   credentials can't be obtained due to remote server error
-   * @throws InterruptedException credentials can't be obtained due to remote server error
-   */
-  @Nullable Pair<Supplier<String>, JPanel> createServerBrowserForm(@NotNull Sdk remoteSdk) throws ExecutionException, InterruptedException;
 
   @NotNull RemoteCredentials getRemoteCredentials(
     @NotNull RemoteConnectionCredentialsWrapper wrapper,

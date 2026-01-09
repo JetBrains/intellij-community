@@ -1015,8 +1015,8 @@ public class PyTypingTest extends PyTestCase {
   }
 
   // PY-21864
-  public void testLocalVariableAnnotationAheadOfTimeOnlyFirstHintConsidered() {
-    doTest("int",
+  public void testLocalVariableAnnotationAheadOfTimeMostRecentHintConsidered() {
+    doTest("str",
            """
              x: int
              x = foo()

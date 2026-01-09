@@ -11,9 +11,9 @@ import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.util.CharUtils
 import com.pty4j.windows.conpty.WinConPtyProcess
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -82,7 +82,7 @@ private suspend fun awaitTextBufferCondition(
       assertCondition()
     }
   }
-  catch (e: CancellationException) {
+  catch (e: TimeoutCancellationException) {
     System.err.println(e.message)
     assertCondition()
     Assertions.fail(e)

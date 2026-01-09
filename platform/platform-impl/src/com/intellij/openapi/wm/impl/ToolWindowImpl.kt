@@ -669,11 +669,6 @@ import kotlin.math.abs
 
   override fun setTabsSplittingAllowed(allowed: Boolean) {
     tabsSplittingAllowed = allowed
-
-    val header = decorator?.header ?: return
-    if (header.isShowing) {
-      header.manageWestPanelTabComponentAndToolbar(true)
-    }
   }
 
   fun fireActivated(source: ToolWindowEventSource) {

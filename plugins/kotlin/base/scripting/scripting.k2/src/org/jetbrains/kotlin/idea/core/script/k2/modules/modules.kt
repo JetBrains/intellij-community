@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.k2.modules
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptDiagnostic.Severity
 import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.api.SourceCode.Position
 
 data class ScriptingHostConfigurationEntity(val data: ByteArray) {
     override fun equals(other: Any?): Boolean {
@@ -47,15 +48,51 @@ data class ScriptCompilationConfigurationEntity(val data: ByteArray) {
 data class ScriptDiagnosticData(
     val code: Int,
     val message: String,
-    val severity: Severity = Severity.ERROR,
-    val sourcePath: String? = null,
-    val location: SourceCode.Location? = null,
-    val exceptionMessage: String? = null
+    val severity: SeverityData,
+    val sourcePath: String?,
+    val locationData: LocationData?,
+    val exceptionMessage: String?,
 ) {
-    fun toScriptDiagnostic(): ScriptDiagnostic = ScriptDiagnostic(
-        code, message, severity, sourcePath, location, Throwable(exceptionMessage)
+    fun map(): ScriptDiagnostic = ScriptDiagnostic(
+        code, message, severity.map(), sourcePath, locationData?.map(), Throwable(exceptionMessage)
     )
 }
 
-fun ScriptDiagnostic.toData(): ScriptDiagnosticData =
-    ScriptDiagnosticData(code, message, severity, sourcePath, location, exception?.message)
+fun ScriptDiagnostic.map(): ScriptDiagnosticData = ScriptDiagnosticData(
+    code = code,
+    message = message,
+    severity = severity.map(),
+    sourcePath = sourcePath,
+    locationData = location?.map(),
+    exceptionMessage = message,
+)
+
+enum class SeverityData { DEBUG, INFO, WARNING, ERROR, FATAL }
+
+private fun SeverityData.map(): Severity = when (this) {
+    SeverityData.DEBUG -> Severity.DEBUG
+    SeverityData.INFO -> Severity.INFO
+    SeverityData.WARNING -> Severity.WARNING
+    SeverityData.ERROR -> Severity.ERROR
+    SeverityData.FATAL -> Severity.FATAL
+}
+
+private fun Severity.map(): SeverityData = when (this) {
+    Severity.DEBUG -> SeverityData.DEBUG
+    Severity.INFO -> SeverityData.INFO
+    Severity.WARNING -> SeverityData.WARNING
+    Severity.ERROR -> SeverityData.ERROR
+    Severity.FATAL -> SeverityData.FATAL
+}
+
+data class PositionData(val line: Int, val col: Int, val absolutePos: Int? = null) {
+    fun map(): Position = Position(line, col, absolutePos)
+}
+
+private fun Position.map(): PositionData = PositionData(line, col, absolutePos)
+
+data class LocationData(val start: PositionData, val end: PositionData? = null) {
+    fun map(): SourceCode.Location = SourceCode.Location(start.map(), end?.map())
+}
+
+private fun SourceCode.Location.map(): LocationData = LocationData(start.map(), end?.map())

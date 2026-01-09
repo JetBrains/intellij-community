@@ -101,10 +101,14 @@ public final class DefaultRawTypedHandler implements TypedActionHandlerEx {
     }
     CommandProcessorEx commandProcessorEx = (CommandProcessorEx)CommandProcessor.getInstance();
     Project project = myCurrentCommandToken.getProject();
+    if (!isCommandRestartSupported(project)) {
+      return;
+    }
     commandProcessorEx.finishCommand(myCurrentCommandToken, null);
     myCurrentCommandToken = commandProcessorEx.startCommand(project, "", null, UndoConfirmationPolicy.DEFAULT);
   }
 
+  // TODO: remove this
   @NlsContexts.Command
   private static @NotNull String commandName(@Nullable Project project) {
     UndoManager undoManager = project == null ? UndoManager.getGlobalInstance() : UndoManager.getInstance(project);
@@ -112,5 +116,10 @@ public final class DefaultRawTypedHandler implements TypedActionHandlerEx {
       return "";
     }
     return EditorBundle.message("typing.in.editor.command.name");
+  }
+
+  private static boolean isCommandRestartSupported(@Nullable Project project) {
+    UndoManager undoManager = project == null ? UndoManager.getGlobalInstance() : UndoManager.getInstance(project);
+    return ((UndoManagerImpl) undoManager).isCommandRestartSupported();
   }
 }

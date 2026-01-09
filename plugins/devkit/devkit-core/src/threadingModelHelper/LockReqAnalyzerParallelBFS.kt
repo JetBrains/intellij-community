@@ -219,7 +219,11 @@ class LockReqAnalyzerParallelBFS {
   }
 
   fun reportCurrentlyProcessedMethod(holder: MutableList<MethodSignature>, rawReporter: RawProgressReporter) {
-    val presentableName = holder.getOrNull(0) ?: return
+    val presentableName = try {
+      holder[0]
+    } catch (_: IndexOutOfBoundsException) {
+      return
+    }
     val qualifiedName = presentableName.containingClassName + "." + presentableName.methodName
     rawReporter.details(DevKitBundle.message("progress.details.analyzing.method.during.lock.requirement.search", qualifiedName))
   }

@@ -7,6 +7,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -420,7 +421,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
         public void configureAnnotations() {
         }
       };
-      Disposer.register(project, entryPointsManager);
+      Disposer.register(JavaPluginDisposable.getInstance(project), entryPointsManager);
 
       ((EntryPointsManagerBase)entryPointsManager).addAllPersistentEntries(EntryPointsManagerBase.getInstance(project));
     }

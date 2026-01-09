@@ -129,13 +129,13 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
 
-      private @NotNull String getRefName(String default_name) {
+      private @NotNull String getRefName(String defaultName) {
         PyReferenceExpression ref = getImportReferenceExpression();
         if (ref != null) {
           String refName = ref.getName();
           if (refName != null) return refName;
         }
-        return default_name;
+        return defaultName;
       }
 
       @Override
@@ -146,13 +146,13 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
       @Override
       public String getLocationString() {
         PyElement elt = PsiTreeUtil.getParentOfType(PyImportElementImpl.this, PyImportStatement.class, PyFromImportStatement.class);
-        final StringBuilder buf = new StringBuilder("| ");
+        final StringBuilder buf = new StringBuilder();
         if (elt != null) { // always? who knows :)
           if (elt instanceof PyFromImportStatement) { // from ... import ...
             buf.append("from ");
-            PyReferenceExpression imp_src = ((PyFromImportStatement)elt).getImportSource();
-            if (imp_src != null) {
-              buf.append(PyPsiUtils.toPath(imp_src));
+            PyReferenceExpression impSrc = ((PyFromImportStatement)elt).getImportSource();
+            if (impSrc != null) {
+              buf.append(PyPsiUtils.toPath(impSrc));
             }
             else {
               buf.append("<?>");
@@ -168,9 +168,9 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
           buf.append("import?.. ");
         }
         // are we the name or the 'as'?
-        PyTargetExpression as_part = getAsNameElement();
-        if (as_part != null) {
-          buf.append(" as ").append(as_part.getName());
+        PyTargetExpression asPart = getAsNameElement();
+        if (asPart != null) {
+          buf.append(" as ").append(asPart.getName());
         }
         return buf.toString();
       }

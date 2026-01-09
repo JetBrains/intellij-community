@@ -1,5 +1,5 @@
-from typing import Any, List
+from typing import Any
 
 
 def func():
-    var: [List[Any]] = []
+    var: [list[Any]] = []

@@ -27,6 +27,10 @@ sealed interface TestPhasedModel : TestModel {
     override val phase = GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE
   }
 
+  class ScriptModelPhase : TestPhasedModel {
+    override val phase = GradleModelFetchPhase.SCRIPT_MODEL_PHASE
+  }
+
   companion object {
 
     fun getModelClass(phase: GradleModelFetchPhase): Class<out TestPhasedModel> {
@@ -36,6 +40,7 @@ sealed interface TestPhasedModel : TestModel {
         GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE -> ProjectSourceSetPhase::class.java
         GradleModelFetchPhase.PROJECT_SOURCE_SET_DEPENDENCY_PHASE -> ProjectDependencyPhase::class.java
         GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE -> AdditionalModelPhase::class.java
+        GradleModelFetchPhase.SCRIPT_MODEL_PHASE -> ScriptModelPhase::class.java
         else -> throw NoWhenBranchMatchedException("Unexpected $phase in tests")
       }
     }

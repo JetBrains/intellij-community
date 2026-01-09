@@ -336,8 +336,6 @@ c:com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 - isStartMatch(com.intellij.codeInsight.lookup.LookupElement):Z
 - isStartMatch(java.lang.String):Z
 - matchingDegree(java.lang.String):I
-- matchingDegree(java.lang.String,com.intellij.util.containers.FList):I
-- matchingFragments(java.lang.String):com.intellij.util.containers.FList
 - prefixMatches(com.intellij.codeInsight.lookup.LookupElement):Z
 - prefixMatches(java.lang.String):Z
 f:com.intellij.codeInsight.completion.impl.CompletionSorterImpl

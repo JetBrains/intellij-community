@@ -575,7 +575,7 @@ private object TestCases {
       GHGQLRequests.PullRequest.Review.addComment(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT, DUMMY_TEXT),
       GHGQLRequests.PullRequest.Review.deleteComment(DUMMY_SERVER_PATH, DUMMY_TEXT),
       GHGQLRequests.PullRequest.Review.updateComment(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT),
-      GHGQLRequests.PullRequest.Review.addThread(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT, DUMMY_NUMBER.toInt(), DUMMY_SIDE, DUMMY_NUMBER.toInt(), DUMMY_TEXT),
+      GHGQLRequests.PullRequest.Review.addThread(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT, DUMMY_NUMBER.toInt(), DUMMY_SIDE, DUMMY_NUMBER.toInt(), DUMMY_SIDE, DUMMY_TEXT),
       GHGQLRequests.PullRequest.Review.resolveThread(DUMMY_SERVER_PATH, DUMMY_TEXT),
       GHGQLRequests.PullRequest.Review.unresolveThread(DUMMY_SERVER_PATH, DUMMY_TEXT),
     )

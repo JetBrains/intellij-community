@@ -69,6 +69,7 @@ jvm_library(
     "//plugins/kotlin/intellij.kotlin.base.test:base-test",
     "//plugins/kotlin/test-framework",
     "//plugins/kotlin/base/indices/tests",
+    "//plugins/kotlin/coverage/tests",
   ]
 )
 ### auto-generated section `build kotlin.fir-all-tests` end

@@ -60,9 +60,6 @@ internal fun List<PolySymbolCodeCompletionItem>.applyIcons(symbol: PolySymbol) =
   if (symbol.icon != null) {
     map { item -> if (item.icon == null) item.withIcon(symbol.icon) else item }
   }
-  else if (symbol.origin.defaultIcon != null) {
-    map { item -> if (item.icon == null) item.withIcon(symbol.origin.defaultIcon) else item }
-  }
   else {
     this
   }
