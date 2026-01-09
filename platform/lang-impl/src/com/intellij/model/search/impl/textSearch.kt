@@ -79,6 +79,13 @@ private fun isApplicableOccurrence(
   strings: Boolean,
   plainText: Boolean
 ): Boolean {
+  val leaf = occurrence.element
+  if (TemplateLanguageUtil.isInsideTemplateFile(occurrence.element)) {
+    if (leaf.containingFile.findElementAt(leaf.textRange.startOffset + occurrence.offsetInElement) != leaf) {
+      return false
+    }
+  }
+
   var isComment = false
   var isString = false
   for ((element, offsetInElement) in occurrence.walkUp()) {
