@@ -2,6 +2,7 @@
 package com.intellij.grazie
 
 import ai.grazie.nlp.langs.Language
+import ai.grazie.nlp.langs.LanguageISO
 import ai.grazie.rules.settings.TextStyle
 import ai.grazie.rules.tree.Parameter
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -20,10 +21,12 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.remote.GrazieRemote.isAvailableLocally
 import com.intellij.grazie.rule.RuleIdeClient
+import com.intellij.grazie.spellcheck.hunspell.HunspellDictionary
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.application
@@ -121,6 +124,14 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
 
     val processing: Processing
       get() = explicitlyChosenProcessing ?: if (GrazieCloudConnector.isCloudEnabledByDefault()) Cloud else Local
+
+    val dictionaries: List<HunspellDictionary>
+      get() = enabledLanguages
+        .filter { it.iso != LanguageISO.EN && it.jLanguage != null }
+        .mapNotNull {
+          ProgressManager.checkCanceled()
+          it.dictionary
+        }
 
     override fun increment(): State = copy(version = version.next() ?: error("Attempt to increment latest version $version"))
 
