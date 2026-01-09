@@ -15,7 +15,6 @@ import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.util.application
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -153,7 +152,7 @@ open class GradleLocalRepositoryIndexerImpl : GradleLocalRepositoryIndexer {
       ref.set(indexSnapshot)
     }
     catch (e: IOException) {
-      LOG.error(e)
+      LOG.warn(e)
     }
     finally {
       LOG.info("Gradle GAV index updated in ${System.currentTimeMillis() - startTime} millis")
