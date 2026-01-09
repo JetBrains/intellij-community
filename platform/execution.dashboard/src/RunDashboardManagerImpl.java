@@ -527,8 +527,10 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         result.add(syncedServices);
       }
       for (List<RunDashboardService> oldServices : myServices) {
-        RunDashboardService oldService = oldServices.get(0);
-        if (oldService.getDescriptorId() != null && !settingsList.contains(oldService.getConfigurationSettings())) {
+        RunDashboardService oldService = oldServices.getFirst();
+        RunContentDescriptorId descriptorId = oldService.getDescriptorId();
+        RunContentDescriptor descriptor = descriptorId == null ? null : getDescriptorById(descriptorId, myProject);
+        if (descriptor != null && !settingsList.contains(oldService.getConfigurationSettings())) {
           if (!updateServiceSettings(myProject, result, oldServices)) {
             result.add(oldServices);
           }
