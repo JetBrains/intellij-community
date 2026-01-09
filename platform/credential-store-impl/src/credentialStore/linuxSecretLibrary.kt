@@ -14,6 +14,7 @@ import java.util.function.Supplier
 private const val SECRET_SCHEMA_DONT_MATCH_NAME = 2
 private const val SECRET_SCHEMA_ATTRIBUTE_STRING = 0
 private const val DBUS_ERROR_SERVICE_UNKNOWN = 2
+private const val ERROR_SPAWNING_COMMAND_LINE = 1
 private const val SECRET_ERROR_IS_LOCKED = 2
 
 // explicitly create a pointer to be explicitly disposing it to avoid sensitive data in the memory
@@ -170,6 +171,9 @@ internal class SecretCredentialStore private constructor(schemeName: String) : C
       }
       if (error.domain == SECRET_ERROR && error.code == SECRET_ERROR_IS_LOCKED) {
         LOG.warn("Cancelled storage unlock: ${error.message}")
+      }
+      if (error.code == ERROR_SPAWNING_COMMAND_LINE) {
+        LOG.warn("$method error code ${error.code}, error message ${error.message}")
       }
       else {
         LOG.error("$method error code ${error.code}, error message ${error.message}")
