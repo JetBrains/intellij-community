@@ -28,7 +28,7 @@ private fun Collection<Change>.toPartialAwareSet() =
 @ApiStatus.Internal
 class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
-  override val ui: ChangesViewCommitWorkflowUi
+  override val ui: ChangesViewCommitPanel,
 ) : NonModalCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>(),
     CommitAuthorListener,
     ProjectCloseListener {

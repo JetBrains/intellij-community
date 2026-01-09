@@ -96,9 +96,8 @@ class ChangesViewManager internal constructor(private val project: Project, priv
   }
 
   @ApiStatus.Internal
-  override fun createCommitPanel(): ChangesViewCommitWorkflowUi {
-    val changesView = initChangesView()
-    return ChangesViewCommitPanel(project, changesView)
+  override fun getOrCreateCommitChangesView(): ChangesViewProxy {
+    return initChangesView()
   }
 
   override fun dispose() {
@@ -314,7 +313,7 @@ class ChangesViewManager internal constructor(private val project: Project, priv
       if (commitWorkflowHandler == newWorkflowHandler) return
 
       if (newWorkflowHandler != null) {
-        val newCommitPanel = newWorkflowHandler.ui as ChangesViewCommitPanel
+        val newCommitPanel = newWorkflowHandler.ui
         newCommitPanel.registerRootComponent(this)
         commitPanelSplitter.setSecondComponent(newCommitPanel.getComponent())
 
