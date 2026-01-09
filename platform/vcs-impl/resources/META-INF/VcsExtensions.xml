@@ -168,11 +168,9 @@
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.vcs.actions.VcsColorsPageFactory"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ChangesViewI"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.ChangesViewManager"
-                    testServiceImplementation="com.intellij.openapi.vcs.changes.DummyChangesView"/>
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ChangesViewManager"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesViewContentI"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager"
-                    testServiceImplementation="com.intellij.openapi.vcs.changes.ui.DummyChangesViewContentManager"/>
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager"/>
 
     <toolWindow id="Commit" anchor="left" icon="AllIcons.Toolwindows.ToolWindowCommit"
                 factoryClass="com.intellij.openapi.vcs.changes.ui.CommitToolWindowFactory"/>
