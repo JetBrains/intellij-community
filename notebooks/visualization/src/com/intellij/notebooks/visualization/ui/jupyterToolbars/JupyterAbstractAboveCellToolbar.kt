@@ -32,7 +32,7 @@ abstract class JupyterAbstractAboveCellToolbar(
   init {
     isOpaque = false
     targetComponent = toolbarTargetComponent
-    cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)
+    cursor = Cursor.getDefaultCursor()
     val borderColor = when (NewUiValue.isEnabled()) {
       true -> JBColor.namedColor("Editor.Toolbar.borderColor", JBColor.border())
       else -> JBColor.GRAY

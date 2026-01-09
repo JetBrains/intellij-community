@@ -11,10 +11,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBEmptyBorder
-import java.awt.BorderLayout
-import java.awt.Component
-import java.awt.Graphics
-import java.awt.Graphics2D
+import java.awt.*
 import javax.swing.JPanel
 
 /**
@@ -29,6 +26,7 @@ class NotebookBelowLastCellPanel(
 
   init {
     if (editor.isOrdinaryNotebookEditor()) {
+      cursor = Cursor.getDefaultCursor()
       isOpaque = false
       border = HighlightableTopBorder(editor.notebookAppearance.cellBorderHeight)
 
