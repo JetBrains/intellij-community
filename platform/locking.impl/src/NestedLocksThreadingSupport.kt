@@ -1792,7 +1792,12 @@ private class RunSuspend<T>(val job: Job?, val interceptor: PermitWaitingInterce
         try {
           interceptor.consumer(resultDeferred)
         } catch (e: Throwable) {
-          logger.error(e)
+          val safeException = if (Logger.shouldRethrow(e)) {
+            RuntimeException(e)
+          } else {
+            e
+          }
+          logger.error(safeException)
           return waitForDeferredWithoutInterceptor()
         }
       }
