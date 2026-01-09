@@ -42,8 +42,8 @@ abstract class JupyterAbstractAboveCellToolbar(
     putClientProperty(SelectClickedCellEventHelper.SKIP_CLICK_PROCESSING_FOR_CELL_SELECTION, true)
   }
 
-  override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
-    super.actionsUpdated(forced, newVisibleActions)
+  override fun actionsUpdated(forceRebuild: Boolean, newVisibleActions: List<AnAction>) {
+    super.actionsUpdated(forceRebuild, newVisibleActions)
     actionsUpdatedCallback?.invoke()
   }
 

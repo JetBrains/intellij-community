@@ -8,20 +8,22 @@ import com.intellij.notebooks.visualization.ui.jupyterToolbars.JupyterAddNewCell
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBEmptyBorder
-import java.awt.FlowLayout
+import java.awt.BorderLayout
+import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D
 import javax.swing.JPanel
 
 /**
- * Basically, this panel consists only of
- * * an "add new cell" toolbar
- * * a highlightable border to show drop destination
+ * Basically, this panel consists only of an "add new cell" toolbar
+ * and highlightable border to show drop destination.
  */
 class NotebookBelowLastCellPanel(
   val editor: EditorImpl,
-) : JPanel(FlowLayout(FlowLayout.CENTER)), DropHighlightable {
+) : JPanel(BorderLayout()), DropHighlightable {
 
   private var isHighlighted = false
 
@@ -29,8 +31,14 @@ class NotebookBelowLastCellPanel(
     if (editor.isOrdinaryNotebookEditor()) {
       isOpaque = false
       border = HighlightableTopBorder(editor.notebookAppearance.cellBorderHeight)
+
       val actionGroup = ActionManager.getInstance().getAction("Jupyter.CreateNewCellsPanel") as ActionGroup
-      add(JupyterAddNewCellToolbar(actionGroup, toolbarTargetComponent = this))
+
+      add(panel {
+        row {
+          cell(JupyterAddNewCellToolbar(actionGroup, toolbarTargetComponent = this@NotebookBelowLastCellPanel)).align(Align.CENTER)
+        }
+      }, BorderLayout.CENTER)
     }
   }
 
@@ -45,7 +53,7 @@ class NotebookBelowLastCellPanel(
   }
 
   private inner class HighlightableTopBorder(private val borderHeight: Int) : JBEmptyBorder(borderHeight, 0, 0, 0) {
-    override fun paintBorder(c: java.awt.Component?, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+    override fun paintBorder(c: Component?, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
       super.paintBorder(c, g, x, y, width, height)
       if (isHighlighted) {
         val g2d = g as Graphics2D
