@@ -120,10 +120,6 @@ class ChangesViewManager internal constructor(private val project: Project, priv
     changesView?.selectChanges(changes.toList())
   }
 
-  override fun updateProgressComponent(progress: List<Supplier<JComponent?>>) {
-    toolWindowPanel?.updateProgressComponent(progress)
-  }
-
   override fun setGrouping(groupingKey: String) {
     changesView?.setGrouping(groupingKey)
   }
@@ -217,6 +213,13 @@ class ChangesViewManager internal constructor(private val project: Project, priv
       vcsConfiguration = VcsConfiguration.getInstance(project)
 
       registerShortcuts(this)
+
+      busConnection.subscribe(ChangeListListener.TOPIC, object : ChangeListListener {
+        override fun changedFileStatusChanged() {
+          val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
+          updateProgressComponent(changeListManager.additionalUpdateInfo)
+        }
+      })
 
       subscribeOnCommitModeChange(busConnection, CommitModeManager.CommitModeListener { configureToolbars() })
       configureToolbars()

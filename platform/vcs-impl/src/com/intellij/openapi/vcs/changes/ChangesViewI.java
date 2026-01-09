@@ -18,15 +18,12 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.List;
-import java.util.function.Supplier;
 
 public interface ChangesViewI {
   void scheduleRefresh();
   void selectFile(VirtualFile vFile);
   void selectChanges(@NotNull List<? extends Change> changes);
-  void updateProgressComponent(@NotNull List<Supplier<JComponent>> progress);
 
   void setGrouping(@NotNull String groupingKey);
 }
