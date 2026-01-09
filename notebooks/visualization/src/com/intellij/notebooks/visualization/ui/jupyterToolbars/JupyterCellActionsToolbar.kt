@@ -3,7 +3,6 @@ package com.intellij.notebooks.visualization.ui.jupyterToolbars
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics2D
 import java.awt.geom.RoundRectangle2D
@@ -34,8 +33,4 @@ class JupyterCellActionsToolbar(
     g2d.clip(shape)
     g2d.fill(shape)
   }
-
-  override fun getArcSize(): Int = JBUI.scale(8)
-  override fun getHorizontalPadding(): Int = JBUI.scale(4)
-  override fun getVerticalPadding(): Int = JBUI.scale(1)
 }

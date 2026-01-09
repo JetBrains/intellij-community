@@ -2,7 +2,6 @@ package com.intellij.notebooks.visualization.ui.jupyterToolbars
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -14,8 +13,4 @@ class JupyterAddNewCellToolbar(
   toolbarTargetComponent: JComponent,
   place: String = ActionPlaces.EDITOR_INLAY,
   actionsUpdatedCallback: (() -> Unit)? = null,
-) : JupyterAbstractAboveCellToolbar(actionGroup, toolbarTargetComponent, place, actionsUpdatedCallback) {
-
-  override fun getArcSize(): Int = JBUI.scale(16)
-  override fun getHorizontalPadding(): Int = JBUI.scale(3)
-}
+) : JupyterAbstractAboveCellToolbar(actionGroup, toolbarTargetComponent, place, actionsUpdatedCallback)
