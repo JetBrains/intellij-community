@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
@@ -52,6 +53,7 @@ public fun PopupContainer(
                             borderColor = colors.border,
                         )
                         .background(colors.background, popupShape)
+                        .clip(popupShape)
             ) {
                 content()
             }
