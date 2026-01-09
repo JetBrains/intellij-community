@@ -79,7 +79,7 @@ public final class ClassPresentationUtil {
     }
   }
 
-  public static @Nls String getFunctionalExpressionPresentation(PsiFunctionalExpression functionalExpression, boolean qualified) {
+  public static @Nls @NotNull String getFunctionalExpressionPresentation(PsiFunctionalExpression functionalExpression, boolean qualified) {
     final StubElement<?> stub = ((StubBasedPsiElementBase<?>)functionalExpression).getGreenStub();
     final String lambdaText = stub instanceof FunctionalExpressionStub
                               ? ((FunctionalExpressionStub<?>)stub).getPresentableText()
