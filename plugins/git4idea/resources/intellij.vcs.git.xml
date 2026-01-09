@@ -955,10 +955,6 @@
 
   <extensions defaultExtensionNs="Git4Idea">
     <gitRawAnnotationProvider implementation="git4idea.annotate.GitAnnotationProvider$DefaultGitAnnotationProvider"/>
-
-    <gitRepoIconProvider implementation="git4idea.ui.ColorManagerRepoIconProvider"/>
-
-    <gitFetchHandler implementation="git4idea.repo.GitRepositoryTagsHolderFetchHandler"/>
   </extensions>
 
   <extensionPoints>
