@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class PsiAugmentProvider implements PossiblyDumbAware {
   private static final Logger LOG = Logger.getInstance(PsiAugmentProvider.class);
   public static final ExtensionPointName<PsiAugmentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lang.psiAugmentProvider");
-  private static final @NotNull NotNullLazyValue<ExtensionPoint<PsiAugmentProvider>> EP = NotNullLazyValue.lazy(() -> EP_NAME.getPoint());
   @SuppressWarnings("rawtypes")
   private /* non-static */ final Key<CachedValue<Map<Class, List>>> myCacheKey = Key.create(getClass().getName());
 
@@ -243,7 +242,7 @@ public abstract class PsiAugmentProvider implements PossiblyDumbAware {
   }
 
   private static void forEach(Project project, Processor<? super PsiAugmentProvider> processor) {
-    for (PsiAugmentProvider provider : EP.getValue().getExtensionList()) {
+    for (PsiAugmentProvider provider : EP_NAME.getExtensionList()) {
       if (DumbService.getInstance(project).isUsableInCurrentContext(provider)) {
         try {
           boolean goOn = processor.process(provider);
