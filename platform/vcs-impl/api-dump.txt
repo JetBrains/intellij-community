@@ -765,7 +765,6 @@ com.intellij.openapi.vcs.changes.ChangesViewI
 - a:selectChanges(java.util.List):V
 - a:selectFile(com.intellij.openapi.vfs.VirtualFile):V
 - a:setGrouping(java.lang.String):V
-- a:updateProgressComponent(java.util.List):V
 f:com.intellij.openapi.vcs.changes.ChangesViewManager
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.vcs.changes.ChangesViewEx
@@ -783,7 +782,6 @@ f:com.intellij.openapi.vcs.changes.ChangesViewManager
 - selectChanges(java.util.List):V
 - selectFile(com.intellij.openapi.vfs.VirtualFile):V
 - setGrouping(java.lang.String):V
-- updateProgressComponent(java.util.List):V
 f:com.intellij.openapi.vcs.changes.ChangesViewManager$Companion
 - f:createTextStatusFactory(java.lang.String,Z):com.intellij.openapi.util.Factory
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewI

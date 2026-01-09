@@ -60,8 +60,6 @@ private class OnChangeListsUpdate(private val panel: CommitChangesViewWithToolba
 
   override fun changedFileStatusChanged() {
     panel.scheduleRefresh()
-    val changeListManager = ChangeListManagerImpl.getInstanceImpl(panel.project)
-    ChangesViewManager.getInstance(panel.project).updateProgressComponent(changeListManager.getAdditionalUpdateInfo())
   }
 }
 
