@@ -1230,8 +1230,8 @@ fun <T : CommandChain> T.disableKotlinNotification(): T = apply {
   addCommand("${CMD_PREFIX}disableKotlinNotification")
 }
 
-fun <T : CommandChain> T.scrollEditor(): T = apply {
-  addCommand("${CMD_PREFIX}scrollEditor")
+fun <T : CommandChain> T.scrollEditor(scrollDelay: Int = 100): T = apply {
+  addCommand("${CMD_PREFIX}scrollEditor $scrollDelay")
 }
 
 
