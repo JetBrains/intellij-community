@@ -155,14 +155,27 @@ class TerminalCommandCompletionService(
   }
 
   private suspend fun getCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCompletionResult? {
-    val commandSpecCompletionResult = getCommandSpecCompletionSuggestions(context)
-    val powershellCompletionResult = if (!context.isAutoPopup && ShellName.isPowerShell(context.shellName)) {
+    val commandSpecResult = getCommandSpecCompletionSuggestions(context)
+    val powershellResult = if (!context.isAutoPopup && ShellName.isPowerShell(context.shellName)) {
       getPowerShellCompletionSuggestions(context)
     }
     else null
 
-    // todo: merge powershell suggestions to command spec ones
-    return commandSpecCompletionResult
+    return if (commandSpecResult != null && commandSpecResult.suggestions.isNotEmpty()
+               && powershellResult != null && powershellResult.suggestions.isNotEmpty()) {
+      if (commandSpecResult.prefix == powershellResult.prefix) {
+        val suggestions = (powershellResult.suggestions + commandSpecResult.suggestions).distinctBy { it.name }
+        TerminalCompletionResult(suggestions, commandSpecResult.prefix)
+      }
+      else if (powershellResult.prefix.length > commandSpecResult.prefix.length) {
+        powershellResult
+      }
+      else commandSpecResult
+    }
+    else if (powershellResult != null && powershellResult.suggestions.isNotEmpty()) {
+      powershellResult
+    }
+    else commandSpecResult
   }
 
   private val TerminalCommandCompletionContext.shellName: ShellName
