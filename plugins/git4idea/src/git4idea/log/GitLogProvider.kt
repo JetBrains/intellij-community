@@ -3,6 +3,8 @@ package git4idea.log
 
 import com.intellij.dvcs.repo.getRepositoryUnlessFresh
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -25,7 +27,10 @@ import com.intellij.vcs.log.data.VcsLogSorter
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.impl.print.GraphColorGetterByNodeFactory
-import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.impl.LogDataImpl
+import com.intellij.vcs.log.impl.VcsActivityKey
+import com.intellij.vcs.log.impl.VcsIndexableLogProvider
+import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.util.UserNameRegex
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcs.log.visible.filters.hasLowerBound
@@ -57,8 +62,20 @@ import kotlin.math.min
 class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexableLogProvider {
   private val repositoryManager: GitRepositoryManager = GitRepositoryManager.getInstance(project)
   private val refSorter: VcsLogRefManager = GitRefManager(project, repositoryManager)
-  private val vcsObjectsFactory: VcsLogObjectsFactory = project.getService(VcsLogObjectsFactory::class.java)
   private val tracer = TelemetryManager.getInstance().getTracer(VcsScope)
+
+  override suspend fun readRecentCommits(
+    root: VirtualFile,
+    requirements: VcsLogProvider.Requirements,
+    refsLoadingPolicy: VcsLogProvider.RefsLoadingPolicy,
+  ): VcsLogProvider.DetailedLogData {
+    return if (GitLogExperimentalProvider.isEnabled) {
+      project.serviceAsync<GitLogExperimentalProvider>().readRecentCommits(root, requirements, refsLoadingPolicy)
+    }
+    else {
+      super.readRecentCommits(root, requirements, refsLoadingPolicy)
+    }
+  }
 
   @Throws(VcsException::class)
   override fun readFirstBlock(root: VirtualFile, requirements: VcsLogProvider.Requirements): VcsLogProvider.DetailedLogData {
@@ -86,7 +103,12 @@ class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexabl
     var branches: Set<VcsRef> = emptySet()
 
     if (isRefreshRefs) {
-      branches = readBranches(repository)
+      val vcsObjectsFactory = project.service<VcsLogObjectsFactory>()
+      branches = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(ReadingBranches.name)
+        .setAttribute("rootName", repository.root.name).use {
+          repository.update()
+          vcsObjectsFactory.createBranchesRefs(repository)
+        }
       addNewElements(allRefs, branches)
     }
 
@@ -193,26 +215,6 @@ class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexabl
   @Throws(VcsException::class)
   override fun readMetadata(root: VirtualFile, hashes: List<String>, consumer: Consumer<in VcsCommitMetadata>) {
     GitLogUtil.collectMetadata(project, root, hashes, consumer::consume)
-  }
-
-  private fun readBranches(repository: GitRepository): Set<VcsRef> {
-    return tracer.spanBuilder(ReadingBranches.name).setAttribute("rootName", repository.root.name).use {
-      repository.update()
-      val repoInfo = repository.info
-      val root = repository.root
-      val refs = HashSet<VcsRef>(repoInfo.localBranchesWithHashes.size + repoInfo.remoteBranchesWithHashes.size)
-      repoInfo.localBranchesWithHashes.forEach { (branch, hash) ->
-        refs.add(vcsObjectsFactory.createRef(hash, branch.name, GitRefManager.LOCAL_BRANCH, root))
-      }
-      repoInfo.remoteBranchesWithHashes.forEach { (branch, hash) ->
-        refs.add(vcsObjectsFactory.createRef(hash, branch.nameForLocalOperations, GitRefManager.REMOTE_BRANCH, root))
-      }
-      val currentRevision = repoInfo.currentRevision
-      if (currentRevision != null) { // null => fresh repository
-        refs.add(vcsObjectsFactory.createRef(HashImpl.build(currentRevision), GitUtil.HEAD, GitRefManager.HEAD, root))
-      }
-      refs
-    }
   }
 
   override val supportedVcs: VcsKey

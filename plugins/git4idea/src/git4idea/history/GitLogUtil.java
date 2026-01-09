@@ -47,7 +47,7 @@ public final class GitLogUtil {
    */
   public static final List<String> LOG_ALL = List.of(GitUtil.HEAD, "--branches", "--remotes", "--tags");
   public static final String STDIN = "--stdin";
-  static final GitLogParser.GitLogOption[] COMMIT_METADATA_OPTIONS = {
+  public static final GitLogParser.GitLogOption[] COMMIT_METADATA_OPTIONS = {
     HASH, PARENTS,
     COMMIT_TIME, COMMITTER_NAME, COMMITTER_EMAIL,
     AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL,
@@ -266,7 +266,7 @@ public final class GitLogUtil {
     });
   }
 
-  static @NotNull VcsCommitMetadata createMetadata(@NotNull VirtualFile root, @NotNull GitLogRecord record,
+  public static @NotNull VcsCommitMetadata createMetadata(@NotNull VirtualFile root, @NotNull GitLogRecord record,
                                                    @NotNull VcsLogObjectsFactory factory) {
     List<Hash> parents = ContainerUtil.map(record.getParentsHashes(), factory::createHash);
     return factory.createCommitMetadata(factory.createHash(record.getHash()), parents, record.getCommitTime(), root, record.getSubject(),

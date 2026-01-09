@@ -12,6 +12,7 @@ import git4idea.GitUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitLineHandlerListener;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +24,8 @@ import java.util.function.Consumer;
  * It does not store output in order to save memory.
  * Parsed records are passed to the specified {@link Consumer}.
  */
-class GitLogOutputSplitter<R extends GitLogRecord> implements GitLineHandlerListener {
+@ApiStatus.Internal
+public class GitLogOutputSplitter<R extends GitLogRecord> implements GitLineHandlerListener {
   private final @NotNull GitLineHandler myHandler;
   private final @NotNull GitLogParser<R> myParser;
   private final @NotNull Consumer<? super R> myRecordConsumer;
@@ -31,7 +33,7 @@ class GitLogOutputSplitter<R extends GitLogRecord> implements GitLineHandlerList
   private final @NotNull @Nls StringBuilder myErrors = new StringBuilder();
   private @Nullable VcsException myException = null;
 
-  GitLogOutputSplitter(@NotNull GitLineHandler handler,
+  public GitLogOutputSplitter(@NotNull GitLineHandler handler,
                        @NotNull GitLogParser<R> parser,
                        @NotNull Consumer<? super R> recordConsumer) {
     myHandler = handler;
