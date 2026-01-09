@@ -101,7 +101,10 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   public static final DataKey<BuildTreeConsoleView> COMPONENT_KEY = DataKey.create("BuildTreeConsoleView");
 
   private static final @NonNls String TREE = "tree";
-  private static final @NonNls String SPLITTER_PROPERTY = "BuildView.Splitter.Proportion";
+  @ApiStatus.Internal
+  public static final @NonNls String SPLITTER_PROPERTY = "BuildView.Splitter.Proportion";
+  @ApiStatus.Internal
+  public static final float SPLITTER_DEFAULT_PROPORTION = 0.33f;
 
   @Service(Service.Level.PROJECT)
   private static final class ScopeHolder {
@@ -140,7 +143,8 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   private final OccurenceNavigator myOccurrenceNavigatorSupport;
   private final Set<BuildEvent> myDeferredEvents = ConcurrentCollectionFactory.createConcurrentSet();
 
-  private final boolean mySplitImplementation = Registry.is("build.toolwindow.split.tree", false);
+  private final boolean mySplitImplementation = Registry.is("build.toolwindow.split.tree", false) ||
+                                                Registry.is("build.toolwindow.split", false);
 
   public BuildTreeConsoleView(@NotNull Project project,
                               @NotNull BuildDescriptor buildDescriptor,
@@ -204,7 +208,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     }
 
     myPanel.setLayout(new BorderLayout());
-    OnePixelSplitter myThreeComponentsSplitter = new OnePixelSplitter(SPLITTER_PROPERTY, 0.33f);
+    OnePixelSplitter myThreeComponentsSplitter = new OnePixelSplitter(SPLITTER_PROPERTY, SPLITTER_DEFAULT_PROPORTION);
     myThreeComponentsSplitter.setFirstComponent(treeComponent);
     List<Filter> filters = myBuildDescriptor.getExecutionFilters();
     myConsoleViewHandler = new ConsoleViewHandler(myProject, myTree, myBuildProgressRootNode, this,
@@ -1117,6 +1121,15 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
 
   void selectNode(@NotNull ExecutionNode node) {
     myConsoleViewHandler.setNodeIfChanged(node);
+  }
+
+  BuildViewId getBuildViewId() {
+    return mySplitImplementation ? myTreeVm.getId() : null;
+  }
+
+  @NotNull
+  JComponent getConsoleComponent() {
+    return myConsoleViewHandler.getComponent();
   }
 
   private static final class ConsoleViewHandler implements Disposable {

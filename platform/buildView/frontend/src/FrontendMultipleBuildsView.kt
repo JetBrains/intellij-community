@@ -18,7 +18,6 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.OnePixelDivider
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.ToolWindow
@@ -57,14 +56,14 @@ internal class FrontendMultipleBuildsView(
   private val id = buildContent.id
   private val name = buildContent.name
   private val buildMap = mutableMapOf<BuildId, FrontendBuildInfo>()
-  private val viewMap = mutableMapOf<FrontendBuildInfo, BuildView>()
+  private val viewMap = mutableMapOf<FrontendBuildInfo, FrontendBuildView>()
   private val toolbarActions = DefaultActionGroup()
   private val threeComponentsSplitter = createSplitter()
   private val buildListModel = DefaultListModel<FrontendBuildInfo>()
   private val buildList = createList()
   private val content: Content = createContent(id, buildContent.isPinned)
   private val focusWatcher = FocusWatcher()
-  private var activeView: BuildView? = null
+  private var activeView: FrontendBuildView? = null
   private var locked = false
 
   init {
@@ -165,7 +164,7 @@ internal class FrontendMultipleBuildsView(
     buildList.setFixedCellHeight(JBUI.scale(UIUtil.LIST_FIXED_CELL_HEIGHT * 2))
   }
 
-  private fun setActiveView(view: BuildView?) {
+  private fun setActiveView(view: FrontendBuildView?) {
     if (activeView === view) {
       return
     }
@@ -176,20 +175,20 @@ internal class FrontendMultipleBuildsView(
       content.preferredFocusableComponent = null
     }
     else {
-      threeComponentsSplitter.secondComponent = view.component
-      content.setPreferredFocusedComponent(Computable { view.preferredFocusableComponent })
+      threeComponentsSplitter.secondComponent = view
+      content.preferredFocusableComponent = view
       if (focusWatcher.focused) {
-        view.preferredFocusableComponent?.requestFocusInWindow() // todo check IJPL-172285
+        view.requestFocusInWindow() // todo check IJPL-172285
       }
     }
   }
 
-  private fun configureToolbar(view: BuildView?) {
+  private fun configureToolbar(view: FrontendBuildView?) {
     toolbarActions.removeAll()
     if (view != null) {
-      toolbarActions.addAll(*view.createConsoleActions())
+      // todo view-dependent actions
       toolbarActions.add(PinBuildViewAction())
-      toolbarActions.add(createFilteringActionsGroup(WeakFilterableSupplier(view)))
+      toolbarActions.add(view.createFilteringActionGroup())
     }
   }
 
@@ -199,7 +198,7 @@ internal class FrontendMultipleBuildsView(
         val info = FrontendBuildInfo(event)
         buildMap[event.buildId] = info
         buildListModel.addElement(info)
-        val buildView = BuildView(project, info, "build.toolwindow.${name}.selection.state", MyViewManager)
+        val buildView = FrontendBuildView(project, scope, event.treeViewId, event.consoleComponent)
         viewMap[info] = buildView
         Disposer.register(this, buildView)
         if (activeView == null) {
@@ -243,9 +242,13 @@ internal class FrontendMultipleBuildsView(
       is BuildViewEvent.BuildRemoved -> {
         val info = buildMap.remove(event.buildId) ?: return
         buildListModel.removeElement(info)
-        Disposer.dispose(viewMap.remove(info)!!)
+        val buildView = viewMap.remove(info)!!
+        Disposer.dispose(buildView)
         if (buildListModel.size == 1) {
           setBuildListVisible(false)
+        }
+        if (buildView === activeView) {
+          setActiveView(null)
         }
       }
     }
@@ -304,10 +307,10 @@ internal class FrontendMultipleBuildsView(
       val range = if (next) index..<buildListModel.size() else index downTo 0
       return range.firstNotNullOfOrNull { i ->
         val buildInfo = buildListModel.getElementAt(i)
-        val buildView: BuildView? = viewMap[buildInfo]
+        val buildView: FrontendBuildView? = viewMap[buildInfo]
         if (buildView == null) return@firstNotNullOfOrNull null
         if (i != index) {
-          val eventView = buildView.eventView
+          val eventView = buildView.treeView
           if (eventView == null) return@firstNotNullOfOrNull null
           eventView.clearTreeSelection()
         }
@@ -428,10 +431,5 @@ internal class FrontendMultipleBuildsView(
     override fun getStartTime() = startTime
 
     override fun toString() = "Build[$id/$title]"
-  }
-
-  private object MyViewManager : ViewManager {
-    override fun isConsoleEnabledByDefault() = false
-    override fun isBuildContentView() = true
   }
 }

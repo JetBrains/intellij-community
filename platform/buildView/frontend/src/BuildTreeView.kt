@@ -3,6 +3,7 @@ package com.intellij.platform.buildView.frontend
 
 import com.intellij.build.*
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.OccurenceNavigatorSupport
 import com.intellij.ide.actions.OccurenceNavigatorActionBase
 import com.intellij.ide.nls.NlsMessages
@@ -56,8 +57,12 @@ import javax.swing.tree.*
 
 private val LOG = fileLogger()
 
-internal class BuildTreeView(private val project: Project, parentScope: CoroutineScope, private val buildViewId: BuildViewId)
-  : JPanel(), UiDataProvider, ComponentContainer {
+internal class BuildTreeView(
+  private val project: Project,
+  parentScope: CoroutineScope,
+  private val buildViewId: BuildViewId,
+  private val backendNavigationAndFiltering: Boolean = true,
+) : JPanel(), UiDataProvider, ComponentContainer {
   private val uiScope = parentScope.childScope("BuildTreeView", Dispatchers.UI + ModalityState.any().asContextElement())
   private val model = BuildTreeViewModelProxy.getInstance(buildViewId)
 
@@ -80,6 +85,18 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
 
   private val occurenceNavigatorSupport = MyOccurenceNavigatorSupport(tree)
 
+  internal var showingSuccessful: Boolean
+    get() = filteringState.showSuccessful
+    set(value) {
+      handleFilteringStateChange(filteringState.copy(showSuccessful = value))
+    }
+
+  internal var showingWarnings: Boolean
+    get() = filteringState.showWarnings
+    set(value) {
+      handleFilteringStateChange(filteringState.copy(showWarnings = value))
+    }
+
   // A factor which can correct for the difference between frontend's and backend's clocks,
   // in case we need to display a duration of a process, for which we know the start timestamp on the backend.
   // It doesn't include the connection latency, but that seems acceptable in our case.
@@ -98,15 +115,17 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
         handleTreeEvent(event, nodeMap)
       }
     }
-    uiScope.launch(Dispatchers.EDT /* Navigatable-s might expect WIL to be taken */) {
-      model.getNavigationFlow().collect {
-        handleNavigation(it.forward)
+    if (backendNavigationAndFiltering) {
+      uiScope.launch(Dispatchers.EDT /* Navigatable-s might expect WIL to be taken */) {
+        model.getNavigationFlow().collect {
+          handleNavigation(it.forward)
+        }
       }
-    }
-    uiScope.launch {
-      navigationContext.collect {
-        LOG.debug { "Navigation context: $it" }
-        model.onNavigationContextChange(it)
+      uiScope.launch {
+        navigationContext.collect {
+          LOG.debug { "Navigation context: $it" }
+          model.onNavigationContextChange(it)
+        }
       }
     }
   }
@@ -219,7 +238,7 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
         val nodeId = event.nodeId
         if (nodeId == null) {
           LOG.debug { "Clearing selection" }
-          tree.clearSelection()
+          clearTreeSelection()
         }
         else {
           val node = nodeMap[nodeId]
@@ -239,7 +258,9 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
         }
       }
       is BuildTreeFilteringState -> {
-        handleFilteringStateChange(event)
+        if (backendNavigationAndFiltering) {
+          handleFilteringStateChange(event)
+        }
       }
     }
   }
@@ -292,10 +313,12 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
   }
 
   private fun updateNavigationContext() {
-    val hasPrevNode = occurenceNavigatorSupport.hasPreviousOccurence()
-    val hasNextNode = occurenceNavigatorSupport.hasNextOccurence()
-    val hasAnyNode = hasNextNode || hasPrevNode || (tree.selectionPath?.lastPathComponent as? MyNode)?.occurrenceNavigatable != null
-    navigationContext.value = BuildTreeNavigationContext(hasPrevNode, hasNextNode, hasAnyNode)
+    if (backendNavigationAndFiltering) {
+      val hasPrevNode = occurenceNavigatorSupport.hasPreviousOccurence()
+      val hasNextNode = occurenceNavigatorSupport.hasNextOccurence()
+      val hasAnyNode = hasNextNode || hasPrevNode || (tree.selectionPath?.lastPathComponent as? MyNode)?.occurrenceNavigatable != null
+      navigationContext.value = BuildTreeNavigationContext(hasPrevNode, hasNextNode, hasAnyNode)
+    }
   }
 
   fun maybeExpand(path: TreePath?): Boolean {
@@ -335,6 +358,26 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
     val selectedNodes = TreeUtil.collectSelectedObjects(tree) { (it?.lastPathComponent as? MyNode)?.content }.filterNotNull()
     val navigatables = selectedNodes.flatMap { it.navigatables }.map { it.navigatable() }
     return if (navigatables.isEmpty()) null else navigatables.toTypedArray()
+  }
+
+  internal fun clearTreeSelection() {
+    tree.clearSelection()
+  }
+
+  internal fun hasNextOccurence(): Boolean {
+    return occurenceNavigatorSupport.hasNextOccurence()
+  }
+
+  internal fun hasPreviousOccurence(): Boolean {
+    return occurenceNavigatorSupport.hasPreviousOccurence()
+  }
+
+  internal fun goNextOccurence(): OccurenceNavigator.OccurenceInfo? {
+    return occurenceNavigatorSupport.goNextOccurence()
+  }
+
+  internal fun goPreviousOccurence(): OccurenceNavigator.OccurenceInfo? {
+    return occurenceNavigatorSupport.goPreviousOccurence()
   }
 
   private class MyOccurenceNavigatorSupport(tree: JTree) : OccurenceNavigatorSupport(tree) {

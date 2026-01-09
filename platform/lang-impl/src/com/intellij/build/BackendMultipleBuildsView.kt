@@ -2,6 +2,7 @@
 package com.intellij.build
 
 import com.intellij.build.events.*
+import com.intellij.ide.rpc.setupTransfer
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
@@ -121,9 +122,13 @@ class BackendMultipleBuildsView(
 
         buildView.onEvent(buildId, event)
 
+        val treeViewId = buildView.eventView?.buildViewId
+        val consoleComponent = buildView.consoleComponent.setupTransfer(buildView)
+
         viewManager.onBuildStart(buildInfo)
         viewModel.onBuildStarted(this, id, buildInfo.title, buildInfo.startTime, event.message,
-                                 buildInfo.isAutoFocusContent, buildInfo.isActivateToolWindowWhenAdded)
+                                 buildInfo.isAutoFocusContent, buildInfo.isActivateToolWindowWhenAdded,
+                                 treeViewId, consoleComponent)
       }
       else {
         if (!isFirstErrorShown &&

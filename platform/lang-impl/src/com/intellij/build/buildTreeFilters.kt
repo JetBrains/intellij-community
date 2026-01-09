@@ -48,7 +48,8 @@ internal fun install(filterable: Filterable<ExecutionNode>) {
   WarningsToggleAction.install(filterable)
 }
 
-internal open class FilterToggleAction(
+@ApiStatus.Internal
+open class FilterToggleAction(
   @NlsContexts.Command text: String,
   private val stateKey: String?,
   private val filterableRef: Supplier<Filterable<ExecutionNode>?>,
@@ -100,26 +101,36 @@ private fun install(
   }
 }
 
-internal class SuccessfulStepsToggleAction(filterable: Supplier<Filterable<ExecutionNode>?>) :
-  FilterToggleAction(LangBundle.message("build.tree.filters.show.successful"), STATE_KEY, filterable, SUCCESSFUL_STEPS_FILTER, false), DumbAware {
+@ApiStatus.Internal
+class SuccessfulStepsToggleAction(filterable: Supplier<Filterable<ExecutionNode>?>) :
+  FilterToggleAction(LangBundle.message("build.tree.filters.show.successful"),
+                     STATE_KEY, filterable, SUCCESSFUL_STEPS_FILTER, DEFAULT_STATE), DumbAware {
 
   companion object {
-    private const val STATE_KEY = "build.toolwindow.show.successful.steps.selection.state"
+    @ApiStatus.Internal
+    const val STATE_KEY: String = "build.toolwindow.show.successful.steps.selection.state"
+    @ApiStatus.Internal
+    const val DEFAULT_STATE: Boolean = false
 
     fun install(filterable: Filterable<ExecutionNode>) {
-      install(filterable, SUCCESSFUL_STEPS_FILTER, STATE_KEY, false)
+      install(filterable, SUCCESSFUL_STEPS_FILTER, STATE_KEY, DEFAULT_STATE)
     }
   }
 }
 
-internal class WarningsToggleAction(filterable: Supplier<Filterable<ExecutionNode>?>) :
-  FilterToggleAction(LangBundle.message("build.tree.filters.show.warnings"), STATE_KEY, filterable, WARNINGS_FILTER, true), DumbAware {
+@ApiStatus.Internal
+class WarningsToggleAction(filterable: Supplier<Filterable<ExecutionNode>?>) :
+  FilterToggleAction(LangBundle.message("build.tree.filters.show.warnings"),
+                     STATE_KEY, filterable, WARNINGS_FILTER, DEFAULT_STATE), DumbAware {
 
   companion object {
-    private const val STATE_KEY = "build.toolwindow.show.warnings.selection.state"
+    @ApiStatus.Internal
+    const val STATE_KEY: String = "build.toolwindow.show.warnings.selection.state"
+    @ApiStatus.Internal
+    const val DEFAULT_STATE: Boolean = true
 
     fun install(filterable: Filterable<ExecutionNode>) {
-      install(filterable, WARNINGS_FILTER, STATE_KEY, true)
+      install(filterable, WARNINGS_FILTER, STATE_KEY, DEFAULT_STATE)
     }
   }
 }

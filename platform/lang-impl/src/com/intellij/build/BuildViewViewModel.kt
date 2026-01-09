@@ -2,6 +2,7 @@
 package com.intellij.build
 
 import com.intellij.build.events.BuildEventsNls
+import com.intellij.ide.rpc.ComponentDirectTransferId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -27,10 +28,13 @@ class BuildViewViewModel(scope: CoroutineScope) : FlowWithHistory<BuildViewEvent
     message: @BuildEventsNls.Message String,
     requestFocus: Boolean,
     activateToolWindow: Boolean,
+    treeViewId: BuildViewId?,
+    consoleComponent: ComponentDirectTransferId,
   ) {
     updateHistoryAndEmit {
       val viewState = viewStates.computeIfAbsent(view) { ViewState() }
-      BuildViewEvent.BuildStarted(view.toDto(), buildId, title, startTime, message, requestFocus, activateToolWindow).also {
+      BuildViewEvent.BuildStarted(view.toDto(), buildId, title, startTime, message, requestFocus, activateToolWindow,
+                                  treeViewId, consoleComponent).also {
         viewState.buildMap[buildId] = BuildState(it.copy(requestFocus = false, activateToolWindow = false))
       }
     }

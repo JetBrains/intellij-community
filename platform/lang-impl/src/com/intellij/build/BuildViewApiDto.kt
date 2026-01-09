@@ -2,6 +2,7 @@
 package com.intellij.build
 
 import com.intellij.build.events.BuildEventsNls
+import com.intellij.ide.rpc.ComponentDirectTransferId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.rpc.Id
@@ -23,6 +24,8 @@ sealed interface BuildViewEvent {
     val message: @BuildEventsNls.Message String,
     val requestFocus: Boolean,
     val activateToolWindow: Boolean,
+    val treeViewId: BuildViewId?,
+    val consoleComponent: ComponentDirectTransferId,
   ) : BuildViewEvent
 
   @Serializable
