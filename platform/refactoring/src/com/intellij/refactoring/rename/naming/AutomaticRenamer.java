@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiNamedElementWithCustomPresentation;
 import com.intellij.psi.SyntheticElement;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
@@ -106,11 +107,15 @@ public abstract class AutomaticRenamer {
     LOG.assertTrue(myRenames.remove(element) != null);
   }
 
+  protected static String getPresentationName(PsiNamedElement element) {
+    return element instanceof PsiNamedElementWithCustomPresentation custom ? custom.getPresentationName() : element.getName();
+  }
+
   protected void suggestAllNames(final String oldClassName, String newClassName) {
     final NameSuggester suggester = new NameSuggester(oldClassName, newClassName);
     for (int varIndex = myElements.size() - 1; varIndex >= 0; varIndex--) {
       final PsiNamedElement element = myElements.get(varIndex);
-      final String name = element.getName();
+      final String name = getPresentationName(element);
       if (!myRenames.containsKey(element) && name != null) {
         String newName = suggestNameForElement(element, suggester, newClassName, oldClassName);
         if (!newName.equals(name)) {
@@ -127,7 +132,7 @@ public abstract class AutomaticRenamer {
   }
 
   protected String suggestNameForElement(PsiNamedElement element, NameSuggester suggester, String newClassName, String oldClassName) {
-    String name = element.getName();
+    String name = getPresentationName(element);
     if (oldClassName.equals(name)) {
       return newClassName;
     }

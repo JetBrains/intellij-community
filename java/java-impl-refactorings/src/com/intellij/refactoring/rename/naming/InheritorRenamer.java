@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2026 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,12 @@ import com.intellij.refactoring.RefactoringBundle;
 public class InheritorRenamer extends AutomaticRenamer {
   public InheritorRenamer(PsiClass aClass, String newClassName) {
     for (final PsiClass inheritor : ClassInheritorsSearch.search(aClass).findAll()) {
-      if (inheritor.getName() != null) {
+      if (getPresentationName(inheritor) != null) {
         myElements.add(inheritor);
       }
     }
 
-    suggestAllNames(aClass.getName(), newClassName);
+    suggestAllNames(getPresentationName(aClass), newClassName);
   }
 
   @Override
