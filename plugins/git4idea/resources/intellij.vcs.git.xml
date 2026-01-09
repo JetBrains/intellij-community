@@ -261,7 +261,7 @@
       <action class="git4idea.actions.branch.GitPullBranchAction$WithRebase"/>
       <action class="git4idea.actions.branch.GitPullBranchAction$WithMerge"/>
       <separator/>
-      <group class="git4idea.actions.tag.GitPushTagsActionGroup"/>
+      <group id="Git.Push.Tags" class="git4idea.actions.tag.GitPushTagsActionGroup"/>
       <separator/>
       <action class="git4idea.actions.branch.GitRenameBranchAction" id="Git.Rename.Local.Branch"/>
       <action class="git4idea.actions.ref.GitDeleteRefAction"/>
