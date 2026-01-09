@@ -76,6 +76,9 @@ internal class TerminalShellIntegrationEventsHandler(
       is TerminalAliasesReceivedEvent -> {
         aliasesStorage.setAliasesInfo(event.aliases)
       }
+      is TerminalCompletionFinishedEvent -> {
+        getIntegrationOrThrow().onCompletionFinished(event.result)
+      }
       else -> {
         // do nothing
       }

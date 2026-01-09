@@ -227,6 +227,10 @@ internal fun createTerminalOutputFlow(
     override fun aliasesReceived(aliases: TerminalAliasesInfo) {
       collectAndSendEvents(contentUpdate = null, otherEvent = TerminalAliasesReceivedEvent(aliases))
     }
+
+    override fun completionFinished(result: String) {
+      collectAndSendEvents(contentUpdate = null, otherEvent = TerminalCompletionFinishedEvent(result))
+    }
   })
 
   val workingDirectoryTrackingScope = coroutineScope.childScope("Working directory tracking")

@@ -18,7 +18,7 @@ internal data class TerminalCompletionResult(
   val prefix: String,
 )
 
-internal suspend fun getCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCompletionResult? {
+internal suspend fun getCommandSpecCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCompletionResult? {
   val shellSupport = TerminalShellSupport.findByShellType(ShellType.ZSH) ?: return null
 
   val commandText = context.commandText

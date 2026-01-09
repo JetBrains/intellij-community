@@ -28,6 +28,9 @@ import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
+import org.jetbrains.plugins.terminal.session.ShellName
+import org.jetbrains.plugins.terminal.session.guessShellName
+import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
@@ -150,6 +153,21 @@ class TerminalCommandCompletionService(
       }
     }
   }
+
+  private suspend fun getCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCompletionResult? {
+    val commandSpecCompletionResult = getCommandSpecCompletionSuggestions(context)
+    val powershellCompletionResult = if (!context.isAutoPopup && ShellName.isPowerShell(context.shellName)) {
+      getPowerShellCompletionSuggestions(context)
+    }
+    else null
+
+    // todo: merge powershell suggestions to command spec ones
+    return commandSpecCompletionResult
+  }
+
+  private val TerminalCommandCompletionContext.shellName: ShellName
+    // Startup options should be initialized at this point
+    get() = terminalView.startupOptionsDeferred.getNow()?.guessShellName() ?: ShellName.of("unknown")
 
   private fun submitSuggestions(
     process: TerminalCommandCompletionProcess,

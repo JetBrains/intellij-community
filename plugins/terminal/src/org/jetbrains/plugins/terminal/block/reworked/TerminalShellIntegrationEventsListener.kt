@@ -18,4 +18,6 @@ interface TerminalShellIntegrationEventsListener : EventListener {
   fun promptFinished() {}
 
   fun aliasesReceived(aliases: TerminalAliasesInfo) {}
+
+  fun completionFinished(result: String) {}
 }

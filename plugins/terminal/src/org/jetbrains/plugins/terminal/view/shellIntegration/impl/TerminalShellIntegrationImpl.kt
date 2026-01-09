@@ -33,6 +33,12 @@ class TerminalShellIntegrationImpl(
   private val mutableOutputStatus = MutableStateFlow<TerminalOutputStatus>(WaitingForPrompt)
   override val outputStatus: StateFlow<TerminalOutputStatus> = mutableOutputStatus.asStateFlow()
 
+  private val completionListeners = DisposableWrapperList<TerminalShellBasedCompletionListener>()
+
+  override fun addShellBasedCompletionListener(parentDisposable: Disposable, listener: TerminalShellBasedCompletionListener) {
+    completionListeners.add(listener, parentDisposable)
+  }
+
   fun onPromptStarted(offset: TerminalOffset) {
     blocksModel.startNewBlock(offset)
     mutableOutputStatus.value = WaitingForPrompt
@@ -63,6 +69,12 @@ class TerminalShellIntegrationImpl(
 
     val block = blocksModel.activeBlock as TerminalCommandBlock
     fireCommandExecutionListeners(TerminalCommandFinishedEventImpl(outputModel, block))
+  }
+
+  fun onCompletionFinished(result: String) {
+    fireListenersAndLogAllExceptions(completionListeners, LOG, "Exception during handling completion finished event") {
+      it.completionFinished(result)
+    }
   }
 
   fun restoreFromState(blocksModelState: TerminalBlocksModelState) {
