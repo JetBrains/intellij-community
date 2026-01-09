@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Factory
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
@@ -128,18 +127,6 @@ class ChangesViewManager internal constructor(private val project: Project, priv
     changesView?.resetViewImmediatelyAndRefreshLater()
   }
 
-  val isDiffPreviewAvailable: Boolean
-    get() = toolWindowPanel?.splitterDiffPreview != null ||
-            Registry.get("show.diff.preview.as.editor.tab.with.single.click").asBoolean()
-
-  fun diffPreviewChanged(state: Boolean) {
-    toolWindowPanel?.apply {
-      val preview = splitterDiffPreview ?: editorDiffPreview
-      DiffPreview.setPreviewVisible(preview, state)
-      updatePanelLayout()
-    }
-  }
-
   internal class ContentPreloader(private val project: Project) : ChangesViewContentProvider.Preloader {
     override fun preloadTabContent(content: Content) {
       ChangesViewCommitTabTitleUpdater(project, ChangesViewContentManager.LOCAL_CHANGES).init(content)
@@ -190,15 +177,17 @@ class ChangesViewManager internal constructor(private val project: Project, priv
   private class ChangesViewToolWindowPanel(
     private val project: Project,
     private val changesView: ChangesViewProxy,
-  ) : SimpleToolWindowPanel(false, true), Disposable {
+  ) : SimpleToolWindowPanel(false, true),
+      ChangesViewController,
+      Disposable {
     private val vcsConfiguration: VcsConfiguration
 
     private val mainPanelContent: Wrapper
     private val contentPanel: BorderLayoutPanel
 
     private val commitPanelSplitter: ChangesViewCommitPanelSplitter
-    val editorDiffPreview: ChangesViewEditorDiffPreview
-    var splitterDiffPreview: ChangesViewSplitterDiffPreview? = null
+    private val editorDiffPreview: ChangesViewEditorDiffPreview
+    private var splitterDiffPreview: ChangesViewSplitterDiffPreview? = null
 
     private val progressLabel = Wrapper()
 
@@ -248,7 +237,7 @@ class ChangesViewManager internal constructor(private val project: Project, priv
       splitterDiffPreview = null
     }
 
-    fun updatePanelLayout() {
+    private fun updatePanelLayout() {
       if (isDisposed) return
 
       val isVertical = ChangesViewContentManager.isToolWindowTabVertical(project, ChangesViewContentManager.LOCAL_CHANGES)
@@ -296,6 +285,15 @@ class ChangesViewManager internal constructor(private val project: Project, priv
       }
     }
 
+    override val isDiffPreviewAvailable: Boolean
+      get() = splitterDiffPreview != null
+
+    override fun toggleDiffPreview(state: Boolean) {
+      val preview = splitterDiffPreview ?: editorDiffPreview
+      DiffPreview.setPreviewVisible(preview, state)
+      updatePanelLayout()
+    }
+
     private fun closeEditorPreviewIfEmpty() {
       if (!editorDiffPreview.hasContent()) editorDiffPreview.closePreview()
     }
@@ -328,13 +326,14 @@ class ChangesViewManager internal constructor(private val project: Project, priv
 
     override fun uiDataSnapshot(sink: DataSink) {
       super.uiDataSnapshot(sink)
-      sink.set<DiffPreview>(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW, editorDiffPreview)
+      sink[DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW] = editorDiffPreview
+      sink[ChangesViewController.DATA_KEY] = this
 
       // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
       DataSink.uiDataSnapshot(sink, commitPanel)
     }
 
-    fun updateProgressComponent(progress: List<Supplier<JComponent?>>) {
+    private fun updateProgressComponent(progress: List<Supplier<JComponent?>>) {
       invokeLaterIfNeeded(nonModal(), { isDisposed }, Runnable {
         val components = progress.mapNotNull { it.get() }
         if (!components.isEmpty()) {
@@ -403,5 +402,17 @@ class ChangesViewManager internal constructor(private val project: Project, priv
         VcsBundle.message("local.changes.tab")
       }
     }
+  }
+}
+
+@ApiStatus.Internal
+interface ChangesViewController {
+  val isDiffPreviewAvailable: Boolean
+
+  fun toggleDiffPreview(state: Boolean)
+
+  companion object {
+    @JvmField
+    val DATA_KEY: DataKey<ChangesViewController> = DataKey.create("ChangesViewController")
   }
 }
