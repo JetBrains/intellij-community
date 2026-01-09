@@ -10,15 +10,16 @@ interface SelfManagedControllerFactory {
   fun createController(editorCell: EditorCell): SelfManagedCellController?
 
   companion object {
-    private val EP: ExtensionPointName<SelfManagedControllerFactory> = ExtensionPointName.create<SelfManagedControllerFactory>("org.jetbrains.plugins.notebooks.notebookCellSelfManagedController")
+    private val EP: ExtensionPointName<SelfManagedControllerFactory> =
+      ExtensionPointName.create("org.jetbrains.plugins.notebooks.notebookCellSelfManagedController")
 
     fun createControllers(cellView: EditorCellView): List<SelfManagedCellController> {
       return createExternalControllers(cellView)
     }
 
     private fun createExternalControllers(cellView: EditorCellView): List<SelfManagedCellController> = EP.extensionList.mapNotNull {
-      it.createController(cellView.cell)?.also {
-        Disposer.register(cellView, it)
+      it.createController(cellView.cell)?.also { controller ->
+        Disposer.register(cellView, controller)
       }
     }
   }

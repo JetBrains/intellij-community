@@ -9,6 +9,10 @@ interface NotebookEditor {
   fun inlayClicked(clickedCell: NotebookCellLines.Interval, ctrlPressed: Boolean, shiftPressed: Boolean, mouseButton: Int)
   val editorPositionKeeper: NotebookPositionKeeper
 
+  /** Updated by JupyterAboveCellToolbarManager. When set, we are hiding the cell action toolbar in the top right corner. */
+  val addCellToolbarShown: AtomicProperty<Boolean>
+
+  /** Updated by NotebookEditorCellHoverDetector. Used to show cell action toolbar and cell selection marker in the gutter. */
   val hoveredCell: AtomicProperty<EditorCell?>
   val singleFileDiffMode: AtomicProperty<Boolean>
 }

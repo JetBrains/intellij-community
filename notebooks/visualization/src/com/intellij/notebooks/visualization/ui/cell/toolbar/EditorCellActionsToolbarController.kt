@@ -65,6 +65,9 @@ internal class EditorCellActionsToolbarController(
     editor.notebookEditor.singleFileDiffMode.afterDistinctChange(this) {
       updateToolbarVisibility()
     }
+    editor.notebookEditor.addCellToolbarShown.afterDistinctChange(this) {
+      updateToolbarVisibility()
+    }
     updateToolbarVisibility()
   }
 
@@ -74,8 +77,9 @@ internal class EditorCellActionsToolbarController(
   }
 
   private fun updateToolbarVisibility() {
-    val shouldBeVisible = editor.notebookEditor.singleFileDiffMode.get()
-                            .not() && ((cell.isSelected.get() && NotebookSettings.getInstance().showToolbarForSelectedCell) || cell.isHovered.get())
+    val shouldBeVisible = editor.notebookEditor.singleFileDiffMode.get().not() &&
+                          editor.notebookEditor.addCellToolbarShown.get().not() &&
+                          ((cell.isSelected.get() && NotebookSettings.getInstance().showToolbarForSelectedCell) || cell.isHovered.get())
     if (shouldBeVisible)
       showToolbar()
     else
