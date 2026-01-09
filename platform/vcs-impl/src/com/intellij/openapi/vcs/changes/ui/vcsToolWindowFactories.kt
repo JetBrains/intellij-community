@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ToolWindowEmptyStateAction.rebuildContentUi
-import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
@@ -13,7 +12,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.merge.MergeConflictManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.ui.IconManager
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
@@ -58,8 +56,7 @@ private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
     }
   }
 
-  override fun isAvailable(project: Project) =
-    TrustedProjects.isProjectTrusted(project) && !WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
+  override fun isAvailable(project: Project) = canBeAvailableInProject(project)
 
   private fun showInStripeWithoutActiveVcs(project: Project): Boolean {
     return shouldShowWithoutActiveVcs.asBoolean() || ProjectLevelVcsManager.getInstance(project).hasAnyMappings()
@@ -78,8 +75,7 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
   }
 
   override fun isAvailable(project: Project): Boolean =
-    TrustedProjects.isProjectTrusted(project) &&
-    !WelcomeScreenProjectProvider.isWelcomeScreenProject(project) &&
+    canBeAvailableInProject(project) &&
     ProjectLevelVcsManager.getInstance(project).hasAnyMappings() &&
     ChangesViewContentManager.isCommitToolWindowShown(project)
 
