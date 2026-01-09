@@ -111,6 +111,8 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
 
     cached = buildExtensions(stringKey, key);
 
+    if (!myEpListenerAdded.get()) return cached;
+
     synchronized (lock) {
       List<T> recent = cache.get(stringKey);
       if (recent != null) {
@@ -296,6 +298,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     public void areaReplaced(@NotNull ExtensionsArea area) {
       synchronized (lock) {
         cache = Java11Shim.INSTANCE.mapOf();
+        myEpListenerAdded.set(false);
         tracker.incModificationCount();
       }
     }
