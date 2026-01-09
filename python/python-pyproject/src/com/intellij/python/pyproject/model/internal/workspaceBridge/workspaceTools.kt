@@ -14,11 +14,8 @@ import com.intellij.python.common.tools.ToolId
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.internal.PyProjectTomlBundle
 import com.intellij.python.pyproject.model.internal.pyProjectToml.FSWalkInfoWithToml
-import com.intellij.python.pyproject.model.internal.pyProjectToml.getProjectStructureDefault
-import com.intellij.python.pyproject.model.spi.ProjectName
-import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
-import com.intellij.python.pyproject.model.spi.Tool
-import com.intellij.python.pyproject.model.spi.WorkspaceName
+import com.intellij.python.pyproject.model.internal.pyProjectToml.getPEP621Deps
+import com.intellij.python.pyproject.model.spi.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.findFacet
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.findSdkEntity
 import com.intellij.workspaceModel.ide.isEqualOrParentOf
@@ -168,21 +165,30 @@ private suspend fun generatePyProjectTomlEntries(
   val entriesByName = entries.associateBy { it.name }
   val namesByDir = entries.associate { Pair(it.root, it.name) }
   val allNames = entriesByName.keys
+  var dependencies = getPEP621Deps(entriesByName, namesByDir)
   for (tool in Tool.EP.extensionList) {
-    val (dependencies, workspaceMembers) = tool.getProjectStructure(entriesByName, namesByDir)
-                                           ?: getProjectStructureDefault(entriesByName, namesByDir)
-    for ((name, deps) in dependencies) {
-      val orphanNames = deps - allNames
-      assert(orphanNames.isEmpty()) { "Tool $tool retuned wrong project names ${orphanNames.joinToString(", ")}" }
-      val entity = entriesByName[name] ?: error("Tool $tool returned broken name $name")
-      entity.dependencies.addAll(deps)
-      if (deps.isNotEmpty()) {
+    // Tool provides deps and workspace members
+    val toolSpecificInfo = tool.getProjectStructure(entriesByName, namesByDir)
+    // Tool-agnostic pep621 deps
+    if (toolSpecificInfo != null) {
+      dependencies += toolSpecificInfo.dependencies
+      for (entityName in toolSpecificInfo.dependencies.map.keys) {
+        val entity = entriesByName[entityName] ?: error("returned broken name $entityName")
         entity.relationsWithTools.add(PyProjectTomlToolRelation.SimpleRelation(tool.id))
       }
     }
+    val workspaceMembers = toolSpecificInfo?.membersToWorkspace ?: emptyMap()
+
     for ((member, workspace) in workspaceMembers) {
       entriesByName[member]!!.relationsWithTools.add(PyProjectTomlToolRelation.WorkspaceMember(tool.id, workspace))
+      entriesByName[workspace]!!.relationsWithTools.add(PyProjectTomlToolRelation.SimpleRelation(tool.id))
     }
+  }
+  for ((name, deps) in dependencies.map) {
+    val orphanNames = deps - allNames
+    assert(orphanNames.isEmpty()) { "wrong project names ${orphanNames.joinToString(", ")}" }
+    val entity = entriesByName[name] ?: error("returned broken name $name")
+    entity.dependencies.addAll(deps)
   }
   return@withContext Pair(entries.toSet(), allExcludeDirs)
 }

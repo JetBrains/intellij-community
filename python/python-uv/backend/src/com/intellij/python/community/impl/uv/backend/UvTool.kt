@@ -7,10 +7,7 @@ import com.intellij.openapi.util.getPathMatcher
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
 import com.intellij.python.community.impl.uv.common.UV_UI_INFO
-import com.intellij.python.pyproject.model.spi.ProjectName
-import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
-import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
-import com.intellij.python.pyproject.model.spi.Tool
+import com.intellij.python.pyproject.model.spi.*
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.venvReader.Directory
@@ -24,7 +21,6 @@ import java.nio.file.PathMatcher
 import kotlin.io.path.relativeTo
 
 
-
 internal class UvTool : Tool {
 
   override val id: ToolId = UV_TOOL_ID
@@ -35,7 +31,10 @@ internal class UvTool : Tool {
 
   override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> = emptySet()
 
-  override suspend fun getProjectStructure(entries: Map<ProjectName, PyProjectTomlProject>, rootIndex: Map<Directory, ProjectName>): ProjectStructureInfo = withContext(Dispatchers.Default) {
+  override suspend fun getProjectStructure(
+    entries: Map<ProjectName, PyProjectTomlProject>,
+    rootIndex: Map<Directory, ProjectName>,
+  ): ProjectStructureInfo = withContext(Dispatchers.Default) {
     val workspaces = entries.mapNotNull { (name, entry) ->
       val matchers = getWorkspaceMembers(entry.pyProjectToml.toml) ?: return@mapNotNull null
       Pair(entry.root, Pair(matchers, name))
@@ -77,7 +76,7 @@ internal class UvTool : Tool {
 
     }
     return@withContext ProjectStructureInfo(
-      dependencies = dependencies,
+      dependencies = ProjectDependencies(dependencies),
       membersToWorkspace = memberToWorkspace.map { (member, workspaces) ->
         val workspaceCount = workspaces.size
         assert(workspaceCount != 0) { "Workspace can't be empty for $member" }

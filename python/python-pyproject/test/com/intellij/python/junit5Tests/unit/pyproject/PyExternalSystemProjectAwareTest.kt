@@ -14,6 +14,7 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions
@@ -58,7 +59,9 @@ class PyExternalSystemProjectAwareTest {
     }
     Assertions.assertEquals(members.size, files.size, "Wrong number of toml files")
 
-    sut.reloadProjectImpl()
+    launch {
+      sut.reloadProjectImpl()
+    }
 
     val m = Mutex(locked = true)
     projectFixture.get().messageBus.connect(disposable).subscribe(MODEL_REBUILD, ModelRebuiltListener { project ->

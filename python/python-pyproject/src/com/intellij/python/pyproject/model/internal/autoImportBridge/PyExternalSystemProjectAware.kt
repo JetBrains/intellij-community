@@ -23,10 +23,14 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-internal class PyExternalSystemProjectAware private constructor(
+@ApiStatus.Internal
+@VisibleForTesting
+class PyExternalSystemProjectAware private constructor(
   private val project: Project,
   private val projectRootDir: Path,
 ) : ExternalSystemProjectAware {
@@ -50,41 +54,43 @@ internal class PyExternalSystemProjectAware private constructor(
   }
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
-    reloadProjectImpl()
+    project.service<PyExternalSystemProjectAwareService>().scope.launchTracked {
+      reloadProjectImpl()
+    }
   }
 
-  internal fun reloadProjectImpl() {
-    project.service<PyExternalSystemProjectAwareService>().scope.launchTracked {
-      writeAction {
-        // We might get stale files otherwise
-        FileDocumentManager.getInstance().saveAllDocuments()
-      }
+  @ApiStatus.Internal
+  @VisibleForTesting
+  suspend fun reloadProjectImpl() {
+    writeAction {
+      // We might get stale files otherwise
+      FileDocumentManager.getInstance().saveAllDocuments()
+    }
 
-      project.messageBus.syncAndPreloadPublisher(PROJECT_AWARE_TOPIC).apply {
-        try {
-          this.onProjectReloadStart()
-          val files = walkFileSystemWithTomlContent(projectRootDir).getOr {
-            if (log.isTraceEnabled) {
-              log.warn("Can't access $projectRootDir", it.error)
-            }
-            this.onProjectReloadFinish(ExternalSystemRefreshStatus.FAILURE)
-            return@launchTracked
+    project.messageBus.syncAndPreloadPublisher(PROJECT_AWARE_TOPIC).apply {
+      try {
+        this.onProjectReloadStart()
+        val files = walkFileSystemWithTomlContent(projectRootDir).getOr {
+          if (log.isTraceEnabled) {
+            log.warn("Can't access $projectRootDir", it.error)
           }
-          rebuildProjectModel(project, files)
-          this.onProjectReloadFinish(ExternalSystemRefreshStatus.SUCCESS)
-          // Even though we have no entities, we still "rebuilt" the model
-          withContext(Dispatchers.Default) {
-            project.messageBus.syncPublisher(MODEL_REBUILD).modelRebuilt(project)
-          }
-        }
-        catch (e: CancellationException) {
-          this.onProjectReloadFinish(ExternalSystemRefreshStatus.CANCEL)
-          throw e
-        }
-        catch (e: Exception) {
           this.onProjectReloadFinish(ExternalSystemRefreshStatus.FAILURE)
-          throw e
+          return
         }
+        rebuildProjectModel(project, files)
+        this.onProjectReloadFinish(ExternalSystemRefreshStatus.SUCCESS)
+        // Even though we have no entities, we still "rebuilt" the model
+        withContext(Dispatchers.Default) {
+          project.messageBus.syncPublisher(MODEL_REBUILD).modelRebuilt(project)
+        }
+      }
+      catch (e: CancellationException) {
+        this.onProjectReloadFinish(ExternalSystemRefreshStatus.CANCEL)
+        throw e
+      }
+      catch (e: Exception) {
+        this.onProjectReloadFinish(ExternalSystemRefreshStatus.FAILURE)
+        throw e
       }
     }
   }
@@ -94,7 +100,9 @@ internal class PyExternalSystemProjectAware private constructor(
     /**
      * [project] can't be default, be sure to check it
      */
-    internal suspend fun create(project: Project): PyExternalSystemProjectAware {
+    @ApiStatus.Internal
+    @VisibleForTesting
+    suspend fun create(project: Project): PyExternalSystemProjectAware {
       assert(!project.isDefault) { "Default project not supported" }
       val baseDir = withContext(Dispatchers.IO) {
         // guessPath doesn't work: it returns first module path

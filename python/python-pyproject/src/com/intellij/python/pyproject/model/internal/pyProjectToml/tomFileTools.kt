@@ -3,8 +3,8 @@ package com.intellij.python.pyproject.model.internal.pyProjectToml
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.pyproject.model.spi.ProjectDependencies
 import com.intellij.python.pyproject.model.spi.ProjectName
-import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
@@ -84,10 +84,10 @@ internal suspend fun walkFileSystemNoTomlContent(
 }
 
 
-suspend fun getProjectStructureDefault(
+suspend fun getPEP621Deps(
   entries: Map<ProjectName, PyProjectTomlProject>,
   rootIndex: Map<Directory, ProjectName>,
-): ProjectStructureInfo = withContext(Dispatchers.Default) {
+): ProjectDependencies = withContext(Dispatchers.Default) {
   val deps = entries.asSequence().associate { (name, entry) ->
     val deps = getDependenciesFromToml(entry.pyProjectToml).mapNotNull { dir ->
       rootIndex[dir] ?: run {
@@ -97,7 +97,7 @@ suspend fun getProjectStructureDefault(
     }.toSet()
     Pair(name, deps)
   }
-  ProjectStructureInfo(dependencies = deps, membersToWorkspace = emptyMap()) // No workspace info (yet)
+  ProjectDependencies(deps)  // No workspace info (yet)
 }
 
 private val logger = fileLogger()
