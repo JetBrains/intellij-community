@@ -335,6 +335,9 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
   private fun scheduleFetchInitialState(project: Project) {
     val synchronizationScope = RunDashboardCoroutineScopeProvider.getInstance(project).cs.childScope("RunDashboardServiceSynchronizer")
     synchronizationScope.launch {
+      subscribeToBackendConfigurationTypesUpdates()
+    }
+    synchronizationScope.launch {
       subscribeToBackendSettingsUpdates()
     }
     synchronizationScope.launch {
@@ -345,9 +348,6 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
     }
     synchronizationScope.launch {
       subscribeToBackendCustomizationsUpdates()
-    }
-    synchronizationScope.launch {
-      subscribeToBackendConfigurationTypesUpdates()
     }
     synchronizationScope.launch {
       subscribeToBackendAvailableConfigurationUpdates()
