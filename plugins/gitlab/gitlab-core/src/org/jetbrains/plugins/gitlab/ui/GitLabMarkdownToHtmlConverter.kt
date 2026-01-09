@@ -265,9 +265,11 @@ class GitLabMarkdownToHtmlConverter(
         super.renderLink(visitor, text, node, info)
         return
       }
+      visitor.consumeTagOpen(node, "p")
       visitor.consumeTagOpen(node, "a", "href=\"${makeAbsoluteUrl(linkInfo.destination)}\"")
       super.renderLink(visitor, text, node, info)
       visitor.consumeTagClose("a")
+      visitor.consumeTagClose("p")
       node.findChildOfType(MARKDOWN_IMAGE_SETTINGS)?.let { linkNode ->
         val textInNode = linkNode.getTextInNode(text)
         val closingIndex = textInNode.indexOf('}')
