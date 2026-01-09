@@ -4,11 +4,29 @@ module(
 )
 
 bazel_dep(name = "bazel_skylib", version = "1.8.1")
-bazel_dep(name = "bazel_worker_api", version = "0.0.4")
+bazel_dep(name = "bazel_worker_api", version = "0.0.9")
 bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
 bazel_dep(name = "rules_java", version = "8.14.0")
 bazel_dep(name = "rules_kotlin", version = "2.2.0")
 bazel_dep(name = "rules_python", version = "1.6.3")
+bazel_dep(name = "toolchains_protoc", version = "0.6.0")
+bazel_dep(name = "rules_apple", version = "4.3.3") # added explicitly to fix `No 'swiftc' executable found in $PATH` error
+bazel_dep(name = "rules_swift", version = "3.4.1") # same as above
+
+protoc_java_version = "4.33.0"
+protobuf_version = ".".join(protoc_java_version.split(".")[-2:]) # Last 2 parts
+
+bazel_dep(name = "protobuf", version = protobuf_version)
+
+protoc = use_extension("@toolchains_protoc//protoc:extensions.bzl", "protoc")
+protoc.toolchain(
+    version = "v" + protobuf_version,
+)
+use_repo(protoc, "toolchains_protoc_hub")
+
+register_toolchains("@toolchains_protoc_hub//:all")
+
+register_toolchains("//:all")
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 
@@ -22,6 +40,20 @@ register_toolchains(
     "@zig_sdk//libc_aware/toolchain/...",
     dev_dependency = True,
 )  # `dev_dependency = True` to avoid registering toolchains in modules using that module
+
+http_file(
+  name = "protobuf-java_http",
+  downloaded_file_path = "protobuf-java-{}.jar".format(protoc_java_version),
+  sha256 = "6c50b4323a101dfd7b8aea209337ac49ecf5d8e33e0b210b196fc654291ed2cc",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/{}/protobuf-java-{}.jar".format(protoc_java_version, protoc_java_version)
+)
+
+http_file(
+    name = "protobuf-java-sources_http",
+    downloaded_file_path = "protobuf-java-{}-sources.jar".format(protoc_java_version),
+    sha256 = "64e061477f46624978960d0fed6b562eb6de1307c95337c4e0ae7d079dbb6dfc",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/{}/protobuf-java-{}-sources.jar".format(protoc_java_version, protoc_java_version)
+)
 
 http_file(
     name = "annotations_http",
@@ -504,20 +536,6 @@ http_file(
     downloaded_file_path = "opentelemetry-semconv-1.32.0-sources.jar",
     sha256 = "bf46ed1a8210c3d90f33e88b49fed158d69897cc48a3005d3bd418ea576ec8d4",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/semconv/opentelemetry-semconv/1.32.0/opentelemetry-semconv-1.32.0-sources.jar",
-)
-
-http_file(
-    name = "protobuf-java_http",
-    downloaded_file_path = "protobuf-java-4.30.2.jar",
-    sha256 = "0f3a4e9264db07cec429f2a68a66030e9b7487277b76863cdd0e9238cece249b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.30.2/protobuf-java-4.30.2.jar",
-)
-
-http_file(
-    name = "protobuf-java-sources_http",
-    downloaded_file_path = "protobuf-java-4.30.2-sources.jar",
-    sha256 = "250fca364649ed76febb83baedf565e3f8e3060356d62ff35b09d8b190597e4c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.30.2/protobuf-java-4.30.2-sources.jar",
 )
 
 http_file(

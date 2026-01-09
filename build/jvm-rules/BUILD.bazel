@@ -3,6 +3,22 @@ load("@rules_java//java:defs.bzl", "java_import")
 load("@rules_kotlin//kotlin:core.bzl", _kt_kotlinc_options = "kt_kotlinc_options")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
 load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_javac_options", "kt_kotlinc_options")
+load("@protobuf//bazel/toolchains:proto_lang_toolchain.bzl", "proto_lang_toolchain")
+
+# See https://github.com/aspect-build/toolchains_protoc (this has been already upstreamed to @protobuf, but it's not yet released)
+proto_lang_toolchain(
+    name = "protoc_java_toolchain",
+    command_line = "--java_out=%s",
+    progress_message = "Generating Java proto_library %{label}",
+    toolchain_type = "@protobuf//bazel/private:java_toolchain_type",
+)
+
+jvm_import(
+  name = "protobuf_java",
+  jar = "@protobuf-java_http//file",
+  source_jar = "@protobuf-java-sources_http//file",
+  visibility = ["//visibility:public"],
+)
 
 _kt_kotlinc_options(
     name = "rules_jvm_bootstrap_kotlinc_options",
