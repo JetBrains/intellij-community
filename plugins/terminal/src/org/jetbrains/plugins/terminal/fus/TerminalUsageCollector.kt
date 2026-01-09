@@ -128,10 +128,10 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  fun triggerLocalShellStarted(project: Project, shellCommand: List<String>, isBlockTerminal: Boolean) {
+  fun triggerLocalShellStarted(project: Project, shellCommand: String, isBlockTerminal: Boolean) {
     localExecEvent.log(project,
                        Version.parseVersion(SystemInfo.OS_VERSION)?.toCompactString() ?: "unknown",
-                       TerminalShellInfoStatistics.getShellNameForStat(shellCommand.firstOrNull()),
+                       TerminalShellInfoStatistics.getShellNameForStat(shellCommand),
                        isBlockTerminal)
     if (isBlockTerminal) {
       val propertiesComponent = PropertiesComponent.getInstance()
