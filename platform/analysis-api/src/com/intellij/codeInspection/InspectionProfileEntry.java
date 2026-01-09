@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -364,6 +364,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
 
   /**
    * DO NOT OVERRIDE this method.
+   * It does not have any effect on local inspections that are registered via plugin.xml.
+   * <p>
+   * Specify <code>enabledByDefault="true/false"</code> in your inspection registration tag instead.
    *
    * @see InspectionEP#enabledByDefault
    */
