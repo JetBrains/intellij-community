@@ -159,6 +159,7 @@ class TerminalViewImpl(
     val alternateBufferModel = MutableTerminalOutputModelImpl(alternateBufferEditor.document, maxOutputLength = 0)
     val alternateBufferModelController = TerminalOutputModelControllerImpl(alternateBufferModel)
     val alternateBufferEventsHandler = TerminalEventsHandlerImpl(
+      terminalView = this,
       sessionModel,
       alternateBufferEditor,
       encodingManager,
@@ -207,6 +208,7 @@ class TerminalViewImpl(
     outputEditor.putUserData(TerminalTypeAhead.KEY, outputModelController)
 
     outputEditorEventsHandler = TerminalEventsHandlerImpl(
+      terminalView = this,
       sessionModel,
       outputEditor,
       encodingManager,
