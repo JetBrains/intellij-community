@@ -422,7 +422,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
           if (extension !is CustomComponentExtensionWithSwingRenderer<*>) {
             throw IllegalStateException("Component does not implement ")
           }
-          cell(extension.render(component, context.project))
+          cell(extension.render(component, context.controller, context.project))
         }
 
         is OptCheckboxPanel, is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested component: ${component.javaClass}") }
@@ -471,6 +471,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
       is OptString -> splitLabel.splitLabel()
       is OptNumber -> splitLabel.splitLabel()
       is OptDropdown -> splitLabel.splitLabel()
+      is OptCustom -> splitLabel.splitLabel()
       else -> null
     }
 

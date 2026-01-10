@@ -433,6 +433,9 @@ com.intellij.codeInspection.options.LocMessage
 - a:label():java.lang.String
 - s:of(java.lang.String):com.intellij.codeInspection.options.LocMessage
 - splitLabel():com.intellij.codeInspection.options.LocMessage$PrefixSuffix
+f:com.intellij.codeInspection.options.OptCustom
+- <init>(java.lang.String,java.lang.String,com.intellij.codeInspection.options.LocMessage):V
+- splitLabel():com.intellij.codeInspection.options.LocMessage
 com.intellij.codeInspection.options.OptRegularComponent
 - com.intellij.codeInspection.options.OptComponent
 - prefix(java.lang.String):com.intellij.codeInspection.options.OptRegularComponent

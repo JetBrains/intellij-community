@@ -40,14 +40,14 @@ public class OptCustomTest extends LightPlatform4TestCase {
         }
 
         @Override
-        public @NotNull JComponent render(String data, @NotNull Project project) {
+        public @NotNull JComponent render(String data, @NotNull OptionController controller, @NotNull Project project) {
           return new JLabel(data);
         }
       }, getTestRootDisposable());
     CustomComponentExtension.EP_NAME.getPoint().registerExtension(
       new CustomComponentExtensionWithSwingRenderer<Void>("y") {
         @Override
-        public @NotNull JComponent render(Void data, @NotNull Project project) {
+        public @NotNull JComponent render(Void data, @NotNull OptionController controller, @NotNull Project project) {
           return new JButton("3");
         }
       }, getTestRootDisposable());

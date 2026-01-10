@@ -3,6 +3,7 @@ package com.intellij.codeInsight.options;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInspection.ex.impl.EntryPointsManagerImpl;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.ui.CustomComponentExtensionWithSwingRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.ui.DependencyConfigurable;
@@ -16,7 +17,7 @@ public final class JavaInspectionButtons extends CustomComponentExtensionWithSwi
   }
 
   @Override
-  public @NotNull JComponent render(ButtonKind data, @NotNull Project project) {
+  public @NotNull JComponent render(ButtonKind data, @NotNull OptionController controller, @NotNull Project project) {
     if (project.isDefault()) {
       // Do not provide button for default project
       return new JPanel();
