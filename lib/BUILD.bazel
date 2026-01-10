@@ -17988,128 +17988,14 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-copy_file(
-  name = "org.jetbrains.kotlin/kotlin-compiler-embeddable-2.0.21.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21_http//file",
-  out = "org.jetbrains.kotlin/kotlin-compiler-embeddable-2.0.21.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.kotlin/kotlin-script-runtime-2.0.21.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-script-runtime-2_0_21_http//file",
-  out = "org.jetbrains.kotlin/kotlin-script-runtime-2.0.21.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.kotlin/kotlin-reflect-1.6.10.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-reflect-1_6_10_http//file",
-  out = "org.jetbrains.kotlin/kotlin-reflect-1.6.10.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.kotlin/kotlin-daemon-embeddable-2.0.21.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http//file",
-  out = "org.jetbrains.kotlin/kotlin-daemon-embeddable-2.0.21.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.intellij.deps/trove4j-1.0.20200330.jar_copy",
-  src = "@org_jetbrains_intellij_deps-trove4j-1_0_20200330_http//file",
-  out = "org.jetbrains.intellij.deps/trove4j-1.0.20200330.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm-1.6.4.jar_copy",
-  src = "@org_jetbrains_kotlinx-kotlinx-coroutines-core-jvm-1_6_4_http//file",
-  out = "org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm-1.6.4.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
 java_library(
   name = "platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-api",
   exports = [
     ":io_gitlab_arturbosch_detekt-detekt-api-1_23_8_http_import",
-    ":org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21_http_import",
-    ":org_jetbrains_kotlin-kotlin-script-runtime-2_0_21_http_import",
-    ":org_jetbrains_kotlin-kotlin-reflect-1_6_10_http_import",
-    ":org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http_import",
-    ":org_jetbrains_intellij_deps-trove4j-1_0_20200330_http_import",
-    ":org_jetbrains_kotlinx-kotlinx-coroutines-core-jvm-1_6_4_http_import",
     ":io_gitlab_arturbosch_detekt-detekt-psi-utils-1_23_8_http_import",
     ":io_gitlab_arturbosch_detekt-detekt-utils-1_23_8_http_import",
     ":dev_drewhamilton_poko-poko-annotations-jvm-0_17_1_http_import",
   ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21_http_import",
-  jar = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21-sources_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_kotlin-kotlin-script-runtime-2_0_21_http_import",
-  jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_0_21_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_0_21-sources_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_kotlin-kotlin-reflect-1_6_10_http_import",
-  jar = "@org_jetbrains_kotlin-kotlin-reflect-1_6_10_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-reflect-1_6_10-sources_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http_import",
-  jar = "@org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21-sources_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_intellij_deps-trove4j-1_0_20200330_http_import",
-  jar = "@org_jetbrains_intellij_deps-trove4j-1_0_20200330_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-trove4j-1_0_20200330-sources_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_kotlinx-kotlinx-coroutines-core-jvm-1_6_4_http_import",
-  jar = "@org_jetbrains_kotlinx-kotlinx-coroutines-core-jvm-1_6_4_http//file",
-  source_jar = "@org_jetbrains_kotlinx-kotlinx-coroutines-core-jvm-1_6_4-sources_http//file"
-)
-
-copy_file(
-  name = "org.jetbrains.kotlin/kotlin-stdlib-2.0.21.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-stdlib-2_0_21_http//file",
-  out = "org.jetbrains.kotlin/kotlin-stdlib-2.0.21.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains/annotations-13.0.jar_copy",
-  src = "@org_jetbrains-annotations-13_0_http//file",
-  out = "org.jetbrains/annotations-13.0.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "org.jetbrains.kotlin/kotlin-reflect-2.0.21.jar_copy",
-  src = "@org_jetbrains_kotlin-kotlin-reflect-2_0_21_http//file",
-  out = "org.jetbrains.kotlin/kotlin-reflect-2.0.21.jar",
-  allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -18214,19 +18100,11 @@ java_library(
   exports = [
     ":io_gitlab_arturbosch_detekt-detekt-core-1_23_8_http_import",
     ":io_gitlab_arturbosch_detekt-detekt-api-1_23_8_http_import",
-    ":org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21_http_import",
-    ":org_jetbrains_kotlin-kotlin-script-runtime-2_0_21_http_import",
-    ":org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http_import",
-    ":org_jetbrains_intellij_deps-trove4j-1_0_20200330_http_import",
-    ":org_jetbrains_kotlinx-kotlinx-coroutines-core-jvm-1_6_4_http_import",
     ":dev_drewhamilton_poko-poko-annotations-jvm-0_17_1_http_import",
     ":io_gitlab_arturbosch_detekt-detekt-parser-1_23_8_http_import",
     ":io_github_davidburstrom_contester-contester-breakpoint-0_2_0_http_import",
     ":io_gitlab_arturbosch_detekt-detekt-tooling-1_23_8_http_import",
-    ":org_jetbrains_kotlin-kotlin-stdlib-2_0_21_http_import",
-    ":org_jetbrains-annotations-13_0_http_import",
     ":org_snakeyaml-snakeyaml-engine-2_7_http_import",
-    ":org_jetbrains_kotlin-kotlin-reflect-2_0_21_http_import",
     ":io_gitlab_arturbosch_detekt-detekt-metrics-1_23_8_http_import",
     ":io_gitlab_arturbosch_detekt-detekt-psi-utils-1_23_8_http_import",
     ":io_gitlab_arturbosch_detekt-detekt-report-html-1_23_8_http_import",
@@ -18244,24 +18122,6 @@ java_library(
     ":io_gitlab_arturbosch_detekt-detekt-utils-1_23_8_http_import",
   ],
   visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org_jetbrains_kotlin-kotlin-stdlib-2_0_21_http_import",
-  jar = "@org_jetbrains_kotlin-kotlin-stdlib-2_0_21_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-stdlib-2_0_21-sources_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains-annotations-13_0_http_import",
-  jar = "@org_jetbrains-annotations-13_0_http//file",
-  source_jar = "@org_jetbrains-annotations-13_0-sources_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_kotlin-kotlin-reflect-2_0_21_http_import",
-  jar = "@org_jetbrains_kotlin-kotlin-reflect-2_0_21_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-reflect-2_0_21-sources_http//file"
 )
 
 jvm_import(
@@ -18340,6 +18200,38 @@ copy_file(
   name = "io.gitlab.arturbosch.detekt/detekt-test-1.23.8.jar_copy",
   src = "@io_gitlab_arturbosch_detekt-detekt-test-1_23_8_http//file",
   out = "io.gitlab.arturbosch.detekt/detekt-test-1.23.8.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.kotlin/kotlin-compiler-embeddable-2.0.21.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21_http//file",
+  out = "org.jetbrains.kotlin/kotlin-compiler-embeddable-2.0.21.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.kotlin/kotlin-script-runtime-2.0.21.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-script-runtime-2_0_21_http//file",
+  out = "org.jetbrains.kotlin/kotlin-script-runtime-2.0.21.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.kotlin/kotlin-daemon-embeddable-2.0.21.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http//file",
+  out = "org.jetbrains.kotlin/kotlin-daemon-embeddable-2.0.21.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.intellij.deps/trove4j-1.0.20200330.jar_copy",
+  src = "@org_jetbrains_intellij_deps-trove4j-1_0_20200330_http//file",
+  out = "org.jetbrains.intellij.deps/trove4j-1.0.20200330.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -18443,6 +18335,30 @@ jvm_import(
 )
 
 jvm_import(
+  name = "org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21_http_import",
+  jar = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_kotlin-kotlin-script-runtime-2_0_21_http_import",
+  jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_0_21_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_0_21-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http_import",
+  jar = "@org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps-trove4j-1_0_20200330_http_import",
+  jar = "@org_jetbrains_intellij_deps-trove4j-1_0_20200330_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-trove4j-1_0_20200330-sources_http//file"
+)
+
+jvm_import(
   name = "io_gitlab_arturbosch_detekt-detekt-test-utils-1_23_8_http_import",
   jar = "@io_gitlab_arturbosch_detekt-detekt-test-utils-1_23_8_http//file",
   source_jar = "@io_gitlab_arturbosch_detekt-detekt-test-utils-1_23_8-sources_http//file"
@@ -18488,6 +18404,16 @@ jvm_import(
   name = "org_jetbrains_kotlin-kotlin-scripting-jvm-2_0_21_http_import",
   jar = "@org_jetbrains_kotlin-kotlin-scripting-jvm-2_0_21_http//file",
   source_jar = "@org_jetbrains_kotlin-kotlin-scripting-jvm-2_0_21-sources_http//file"
+)
+
+java_library(
+  name = "platform-jewel-detekt_plugin-jetbrains-kotlin-compiler-embeddable",
+  exports = [
+    ":org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21_http_import",
+    ":org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http_import",
+    ":org_jetbrains_intellij_deps-trove4j-1_0_20200330_http_import",
+  ],
+  visibility = ["//visibility:public"]
 )
 
 copy_file(

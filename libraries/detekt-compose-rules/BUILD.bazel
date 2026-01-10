@@ -1,3 +1,11 @@
+# Build detekt-compose-rules-binary_deploy.jar to get plugin binary
+java_binary(
+    name = "detekt-compose-rules-binary",
+    main_class = "NoMainClass",
+    visibility = ["//visibility:public"],
+    runtime_deps = ["detekt-compose-rules"],
+)
+
 ### auto-generated section `build intellij.libraries.detekt.compose.rules` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
