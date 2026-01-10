@@ -20,6 +20,7 @@ data class GitFileStatus(val index: StatusCode,
   fun isUntracked() = isUntracked(index) || isUntracked(workTree)
   fun isIgnored() = isIgnored(index) || isIgnored(workTree)
   fun isTracked() = !isIgnored(index) && !isUntracked(index)
+  fun isNotChanged() = index == ' ' && workTree == ' ' && origPath == null
 
   fun getStagedStatus(): FileStatus? = if (isIgnored(index) || isUntracked(index) || isConflicted()) null else getFileStatus(index)
   fun getUnStagedStatus(): FileStatus? = if (isIgnored(workTree) || isUntracked(workTree) || isConflicted()) null
