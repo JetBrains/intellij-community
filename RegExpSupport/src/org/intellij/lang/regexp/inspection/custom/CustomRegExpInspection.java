@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.application.ApplicationManager;
@@ -115,6 +116,10 @@ public final class CustomRegExpInspection extends LocalInspectionTool implements
                                       : new LocalQuickFix[] {new CustomRegExpQuickFix(findManager, model, text, result)};
           final ProblemDescriptor descriptor =
             manager.createProblemDescriptor(element, warningRange, problemDescriptor, GENERIC_ERROR_OR_WARNING, isOnTheFly, fix);
+          descriptor.setProblemGroup(new ProblemGroup() {
+            @Override
+            public String getProblemName() { return uuid; }
+          });
           descriptors.add(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, uuid));
           result = findManager.findString(text, result.getEndOffset(), model, vFile);
         }
@@ -135,12 +140,7 @@ public final class CustomRegExpInspection extends LocalInspectionTool implements
       }
       final String suppressId = configuration.getSuppressId();
       final String name = configuration.getName();
-      if (suppressId == null) {
-        HighlightDisplayKey.register(shortName, () -> name, SHORT_NAME, null, configuration);
-      }
-      else {
-        HighlightDisplayKey.register(shortName, () -> name, suppressId, SHORT_NAME, configuration);
-      }
+      HighlightDisplayKey.register(shortName, () -> name, StringUtil.isEmpty(suppressId) ? SHORT_NAME : suppressId, null, configuration);
     }, ModalityState.nonModal());
   }
 
