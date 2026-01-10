@@ -3,6 +3,7 @@
     <module name="intellij.python.processOutput.impl"/>
     <module name="intellij.python.community.impl.venv._test"/>
     <module name="intellij.python.community.junit5Tests.framework._test"/>
+    <module name="intellij.python.test.env.junit5"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.kotlinTest"/>
     <!-- endregion -->

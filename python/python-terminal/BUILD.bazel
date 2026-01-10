@@ -55,13 +55,12 @@ jvm_library(
     "//python/testFramework",
     "//platform/eel-provider",
     "//libraries/hamcrest",
-    "//python/setup-test-environment:community-testFramework-testEnv",
     "//python/python-venv:community-impl-venv",
     "//python/python-venv:community-impl-venv_test_lib",
-    "//python/junit5Tests-framework/conda:conda_test_lib",
     "@lib//:junit5Params",
     "@lib//:junit5Pioneer",
     "//platform/testFramework/common",
+    "//python/python-test-env/junit5:junit5_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.terminal` end

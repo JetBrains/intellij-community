@@ -6,47 +6,47 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.python.community.testFramework.testEnv.EnvTagsKt;
+import com.intellij.python.test.env.common.PredefinedPyEnvironments;
+import com.intellij.python.test.env.core.PyEnvironmentFactory;
+import com.intellij.python.test.env.core.PythonVersionKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.tools.sdkTools.PySdkTools;
-import com.jetbrains.python.tools.sdkTools.SdkCreationType;
-import com.jetbrains.python.venvReader.VirtualEnvReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.nio.file.Path;
 import java.util.*;
 
 
 public class PyEnvTaskRunner {
   private static final Logger LOG = Logger.getInstance(PyEnvTaskRunner.class);
-  private final List<String> myRoots;
+  @NotNull private final PyEnvironmentFactory myFactory;
+  private final @Nullable String myPythonVersionFilter;
   @Nullable
   private final LoggingRule myLoggingRule;
 
   /**
-   * @param loggingRule to be passed by {@link PyEnvTestCase}.
-   *                    {@link LoggingRule#startLogging(Disposable, Iterable)} will be called
-   *                    if task has {@link PyExecutionFixtureTestTask#getClassesToEnableDebug()}
+   * @param factory             factory creates test environment instances
+   * @param pythonVersionFilter pythonVersionFilter
+   * @param loggingRule         to be passed by {@link PyEnvTestCase}.
+   *                            {@link LoggingRule#startLogging(Disposable, Iterable)} will be called
+   *                            if task has {@link PyExecutionFixtureTestTask#getClassesToEnableDebug()}
    */
-  public PyEnvTaskRunner(List<String> roots, @Nullable final LoggingRule loggingRule) {
-    myRoots = roots;
+  public PyEnvTaskRunner(@NotNull PyEnvironmentFactory factory,
+                         @Nullable String pythonVersionFilter,
+                         @Nullable final LoggingRule loggingRule) {
+    myFactory = factory;
+    myPythonVersionFilter = pythonVersionFilter;
     myLoggingRule = loggingRule;
   }
 
   /**
    * Runs test on all interpreters.
    *
-   * @param skipOnFlavors optional array of interpreter flavors to skip
-   *
+   * @param skipOnFlavors      optional array of interpreter flavors to skip
    * @param tagsRequiredByTest optional array of tags to run tests on interpreters with these tags only
    */
   public void runTask(@NotNull final PyTestTask testTask,
@@ -55,26 +55,33 @@ public class PyEnvTaskRunner {
                       final String @NotNull ... tagsRequiredByTest) {
     boolean wasExecuted = false;
 
-    List<String> passedRoots = new ArrayList<>();
+    List<String> passedEnvironments = new ArrayList<>();
 
     final Set<String> requiredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiredByTest));
 
-    for (String root : getMinimalSetOfTestEnvs(requiredTags)) {
-      final boolean shouldRun = shouldRun(root, testTask);
-      if (!shouldRun) {
-        LOG.warn(String.format("Skipping %s (should run: %s)", root, shouldRun));
-        continue;
-      }
+    // Get all environments from strategy and filter them
+    List<? extends PyTestEnvironment> allEnvironments = getAllEnvironments();
+    List<PyTestEnvironment> environments = getMinimalSetOfTestEnvs(allEnvironments, requiredTags);
 
-      LOG.warn(String.format("Running on root %s", root));
+    if (environments.isEmpty()) {
+      LOG.warn("No matching environments found for tags: " + requiredTags);
+      return;
+    }
+
+    LOG.warn(String.format("Found %d matching environments", environments.size()));
+
+    for (PyTestEnvironment environment : environments) {
+      final String envDescription = environment.getDescription();
+
+      LOG.warn(String.format("Running on environment: %s", envDescription));
 
       try {
         testTask.setUp(testName);
         wasExecuted = true;
-        final Path executable = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(root));
-        assert executable != null : "No executable in " + root;
 
-        final Sdk sdk = getSdk(executable.toString(), testTask);
+        // Prepare SDK for this environment
+        final Sdk sdk = environment.prepareSdk();
+
         if (skipOnFlavors != null) {
           final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
           if (ContainerUtil.exists(skipOnFlavors, o -> o.isInstance(flavor))) {
@@ -92,33 +99,37 @@ public class PyEnvTaskRunner {
           if (myLoggingRule != null) {
             final PyExecutionFixtureTestTask execTask = ObjectUtils.tryCast(testTask, PyExecutionFixtureTestTask.class);
             if (execTask != null) {
-              // Fill be disabled automatically on project disposing.
+              // Will be disabled automatically on project disposing.
               myLoggingRule.startLogging(execTask.getProject(), execTask.getClassesToEnableDebug());
             }
           }
 
+          testTask.runTestOn(sdk.getHomePath(), sdk);
 
-          testTask.runTestOn(executable.toString(), sdk);
-
-          passedRoots.add(root);
+          passedEnvironments.add(envDescription);
         }
         else {
-          LOG.warn(String.format("Skipping root %s", root));
+          LOG.warn(String.format("Skipping environment %s (language level %s not supported)", envDescription, languageLevel));
         }
       }
       catch (final RuntimeException | Error ex) {
         // Runtime and error are logged including environment info
-        LOG.warn(formatCollectionToString(passedRoots, "Tests passed environments") +
-                 "Test failed on " +
-                 getEnvType() +
-                 " environment " +
-                 root);
+        LOG.warn(formatCollectionToString(passedEnvironments, "Tests passed environments") +
+                 "Test failed on environment " + envDescription);
         throw ex;
       }
       catch (final Exception e) {
         throw new PyEnvWrappingException(e);
       }
       finally {
+        // Clean up environment resources
+        try {
+          environment.close();
+        }
+        catch (final Exception e) {
+          LOG.error("Failed to close environment: " + envDescription, e);
+        }
+
         try {
           // Teardown should be called on the main thread because fixture teardown checks for
           // thread leaks, and blocked main thread is considered as leaked.
@@ -134,52 +145,35 @@ public class PyEnvTaskRunner {
       LOG.warn("test " +
                testName +
                " was not executed.\n" +
-               formatCollectionToString(myRoots, "All roots") +
-               "\n" +
-               formatCollectionToString(requiredTags, "Required tags in tags.txt in root"));
+               "Required tags: " + requiredTags);
     }
   }
 
-  protected boolean shouldRun(String root, PyTestTask task) {
-    return true;
+  private List<? extends PyTestEnvironment> getAllEnvironments() {
+    return PyEnvTestCase.ALL_ENVIRONMENTS
+      .stream()
+      .map(e -> new ProviderTestEnvironment(myFactory, e.getSpec(), PredefinedPyEnvironments.Companion.getENVIRONMENTS_TO_TAGS().get(e)))
+      .filter(e -> myPythonVersionFilter == null || PythonVersionKt.matches(e.getPythonVersion(), myPythonVersionFilter))
+      .toList();
   }
 
   /**
-   * Get SDK by executable*
-   */
-  @NotNull
-  protected Sdk getSdk(@NotNull final String executable, @NotNull final PyTestTask testTask) {
-    try {
-      final VirtualFile url = VfsUtil.findFileByIoFile(new File(executable), true);
-      assert url != null : "No file " + executable;
-      return PySdkTools.createTempSdk(url, SdkCreationType.EMPTY_SDK, null, null);
-    }
-    catch (Exception ex) {
-      throw new RuntimeException(ex);
-    }
-  }
-
-  protected String getEnvType() {
-    return "local";
-  }
-
-  /**
-   * Given the path to a test environment root folder, collects and provides information about this environment.
+   * Wrapper for PyTestEnvironment that provides ordering and filtering logic.
    * <p>
-   *  Instances of this class are ordered by the number of tags they provide. Typically, fewer tags
-   *  mean fewer packages installed inside the environment. If two environments have the same Python version
-   *  and both are suitable for a test, we prefer the one with fewer numbers of packages
-   *  since it can improve performance when code inside is involved.
+   * Instances of this class are ordered by the number of tags they provide. Typically, fewer tags
+   * mean fewer packages installed inside the environment. If two environments have the same Python version
+   * and both are suitable for a test, we prefer the one with fewer numbers of packages
+   * since it can improve performance when code inside is involved.
    */
   private static class EnvInfo implements Comparable<EnvInfo> {
-    @NotNull final String root;
+    @NotNull final PyTestEnvironment environment;
     @NotNull final List<String> tags;
     @Nullable final String pythonVersion;
 
-    EnvInfo(@NotNull String root) {
-      this.root = root;
-      tags = EnvTagsKt.loadEnvTags(Path.of(root)).stream().toList();
-      pythonVersion = ContainerUtil.find(tags, tag -> tag.matches("^python\\d\\.\\d+$"));
+    EnvInfo(@NotNull PyTestEnvironment environment) {
+      this.environment = environment;
+      this.tags = new ArrayList<>(environment.getTags());
+      this.pythonVersion = ContainerUtil.find(tags, tag -> tag.matches("^python\\d\\.\\d+$"));
     }
 
     @Override
@@ -188,20 +182,22 @@ public class PyEnvTaskRunner {
     }
   }
 
-  private @NotNull List<String> getMinimalSetOfTestEnvs(@NotNull Set<String> requiredTags) {
-    var pq = new PriorityQueue<>(ContainerUtil.map(myRoots, root -> new EnvInfo(root)));
+  private static @NotNull List<PyTestEnvironment> getMinimalSetOfTestEnvs(@NotNull List<? extends PyTestEnvironment> allEnvironments,
+                                                                          @NotNull Set<String> requiredTags) {
+    var pq = new PriorityQueue<>(ContainerUtil.map(allEnvironments, env -> new EnvInfo(env)));
     var addedPythonVersions = new HashSet<String>();
-    var result = new ArrayList<String>();
+    var result = new ArrayList<PyTestEnvironment>();
+
     while (!pq.isEmpty()) {
       var envInfo = pq.poll();
       if (isSuitableForTags(envInfo.tags, requiredTags)) {
         if (envInfo.pythonVersion == null) {
-          result.add(envInfo.root);
+          result.add(envInfo.environment);
         }
         else {
           if (!addedPythonVersions.contains(envInfo.pythonVersion)) {
             addedPythonVersions.add(envInfo.pythonVersion);
-            result.add(envInfo.root);
+            result.add(envInfo.environment);
           }
         }
       }

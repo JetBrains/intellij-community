@@ -103,6 +103,7 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//libraries/kotlinx/coroutines/test",
     "//libraries/kotlin/reflect",
+    "//python/python-test-env/junit5:junit5_test_lib",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

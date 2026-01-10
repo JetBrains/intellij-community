@@ -360,13 +360,10 @@ jvm_library(
     "//python/python-sdk:sdk_test_lib",
     "//platform/statistics:statistics_test_lib",
     "//platform/backend/observation:observation_test_lib",
-    "//python/python-venv:community-impl-venv_test_lib",
     "//python/python-exec-service:community-execService_test_lib",
     "//python/services/system-python:system-python_test_lib",
     "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
     "//python/python-pyproject:pyproject_test_lib",
-    "//python/python-exec-service/execService.python:execService.python_test_lib",
-    "//python/interpreters:interpreters_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.community.impl` end
@@ -441,6 +438,8 @@ jvm_library(
     "//jupyter:notebooks-jupyter-core",
     "//python/python-grazie:grazie",
     "//platform/forms_rt:java-guiForms-rt",
+    "//python/python-test-env/common",
+    "//python/services/shared",
   ]
 )
 
@@ -529,8 +528,6 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//libraries/kotlin/reflect",
     "//platform/todo",
-    "//python/setup-test-environment:community-testFramework-testEnv",
-    "//python/setup-test-environment/conda",
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/external-system-impl:externalSystem-tests_test_lib",
@@ -547,6 +544,24 @@ jvm_library(
     "//platform/execution",
     "@lib//:jet_check",
     "//platform/forms_rt:java-guiForms-rt",
+    "//python/python-test-env/common",
+    "//python/python-test-env/common:common_test_lib",
+    "//python/python-test-env/junit4:junit4_test_lib",
+    "//python/python-test-env/junit5:junit5_test_lib",
+    "//platform/testFramework/junit5/eel",
+    "//platform/testFramework/junit5/eel:eel_test_lib",
+    "//platform/eel-provider",
+    "//python/python-exec-service/execService.python",
+    "//python/services/internal-impl:python-community-services-internal-impl",
+    "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
+    "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+    "//python/services/shared",
+    "//python/services/shared:shared_test_lib",
+    "//python/python-venv:community-impl-venv",
+    "//python/python-venv:community-impl-venv_test_lib",
+    "//python/services/system-python",
+    "//python/services/system-python:system-python_test_lib",
+    "//python/interpreters",
   ],
   runtime_deps = [":python-community-tests"]
 )

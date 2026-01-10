@@ -517,7 +517,7 @@ class SkeletonGenerator(object):
         status = self.reuse_or_generate_skeleton(mod_name, mod_path, sdk_skeleton_state)
         control_message('generation_result', {
             'module_name': mod_name,
-            'module_origin': get_module_origin(mod_path, mod_name),
+            'module_origin': get_module_origin(mod_path, mod_name).replace('%', '%%'),
             'generation_status': status
         })
         if mod_path:

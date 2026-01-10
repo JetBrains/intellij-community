@@ -5,9 +5,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
-import com.intellij.python.community.testFramework.testEnv.EnvTagsKt;
-import com.intellij.python.community.testFramework.testEnv.PyEnvTestSettings;
+import com.intellij.python.test.env.common.PredefinedPyEnvironments;
+import com.intellij.python.test.env.junit4.JUnit4FactoryHolder;
 import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
@@ -17,15 +16,21 @@ import com.jetbrains.LoggingRule;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.rules.TestWatcher;
 
-import java.io.File;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.*;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 /**
@@ -43,7 +48,6 @@ public abstract class PyEnvTestCase {
   @NotNull
   protected static final PyEnvTestSettings SETTINGS = PyEnvTestSettings.Companion.fromEnvVariables();
 
-
   /**
    * Rule used to capture debug logging and display it if test failed.
    * See also {@link PyExecutionFixtureTestTask#getClassesToEnableDebug()} and
@@ -59,11 +63,6 @@ public abstract class PyEnvTestCase {
   private final String @Nullable [] myRequiredTags;
 
   /**
-   * Environments and tags they provide.
-   */
-  public static final Map<String, List<String>> envTags = new HashMap<>();
-
-  /**
    * TODO: Move to {@link EnvTestTagsRequired} as well?
    */
 
@@ -75,6 +74,22 @@ public abstract class PyEnvTestCase {
   static {
     LOG.info("Using following config\n" + SETTINGS.reportConfiguration());
   }
+
+  /**
+   * All predefined environments used by PyEnvTestCase by default
+   */
+  public static final List<PredefinedPyEnvironments> ALL_ENVIRONMENTS = List.of(
+    VENV_2_7,
+    VENV_3_8_FULL,
+    VENV_3_9,
+    VENV_3_10,
+    VENV_3_11,
+    VENV_3_12,
+    VENV_3_12_DJANGO,
+    VENV_3_13,
+    VENV_3_14
+  );
+
 
   /**
    * Escape test output to prevent python test be processed as test result
@@ -116,17 +131,10 @@ public abstract class PyEnvTestCase {
   @NotNull
   private static Collection<String> getAvailableTags() {
     final Collection<String> allAvailableTags = new HashSet<>();
-    for (List<String> tags : envTags.values()) {
+    for (@NotNull Set<@NotNull String> tags : Companion.getENVIRONMENTS_TO_TAGS().values()) {
       allAvailableTags.addAll(tags);
     }
     return allAvailableTags;
-  }
-
-  @BeforeClass
-  public static void collectTagsForEnvs() {
-    for (final String pythonRoot : getDefaultPythonRoots()) {
-      envTags.put(pythonRoot, EnvTagsKt.loadEnvTags(Path.of(pythonRoot)).stream().toList());
-    }
   }
 
   /**
@@ -155,36 +163,13 @@ public abstract class PyEnvTestCase {
   private void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
     Assume.assumeFalse("Running under teamcity but not by Env configuration. Test seems to be launched by accident, skip it.",
                        UsefulTestCase.IS_UNDER_TEAMCITY && !SETTINGS.isEnvConfiguration());
-    List<String> roots = getPythonRoots();
-
-    /*
-     * <p>
-     * {@link org.junit.AssumptionViolatedException} here means this test must be <strong>skipped</strong>.
-     * TeamCity supports this (if not you should create and issue about that).
-     * Idea does not support it for JUnit 3, while JUnit 4 must be supported.
-     * </p>
-     *<p>
-     * It this error brakes your test, please <strong>do not</strong> revert. Instead, do the following:
-     * <ol>
-     *   <li>Make sure {@link com.jetbrains.env.python} tests are <strong>excluded</strong> from your configuration (unless you are
-     *   PyCharm developer)</li>
-     *   <li>Check that your environment supports {@link AssumptionViolatedException}.
-     *   JUnit 4 was created about 10 years ago, so fixing environment is much better approach than hacky "return;" here.
-     *   </li>
-     * </ol>
-     *</p>
-     */
-    Assume.assumeFalse(testName +
-                       ": environments are not defined. Skipping. \nChecks logs for settings that lead to this situation",
-                       roots.isEmpty());
-
-    doRunTests(testTask, testName, roots);
+    doRunTests(testTask, testName);
   }
 
-  protected void doRunTests(PyTestTask testTask, String testName, List<String> roots) {
+  protected void doRunTests(PyTestTask testTask, String testName) {
     Assume.assumeFalse("Tests launched in remote SDK mode, and this test is not remote", SETTINGS.useRemoteSdk());
 
-    PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots, myLoggingRule);
+    PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(JUnit4FactoryHolder.INSTANCE.getOrCreate(), SETTINGS.getPythonVersion(), myLoggingRule);
 
     final EnvTestTagsRequired classAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
     EnvTestTagsRequired methodAnnotation;
@@ -206,7 +191,7 @@ public abstract class PyEnvTestCase {
 
 
     if (firstAnnotation != null) {
-      Assume.assumeFalse("Test skipped on this os", Arrays.stream(firstAnnotation.skipOnOSes()).anyMatch(TestEnv::isThisOs));
+      Assume.assumeFalse("Test skipped on this os", ContainerUtil.exists(firstAnnotation.skipOnOSes(), TestEnv::isThisOs));
       skipOnFlavors = firstAnnotation.skipOnFlavors();
     }
     else {
@@ -226,21 +211,6 @@ public abstract class PyEnvTestCase {
     else {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
-  }
-
-  public static List<String> getDefaultPythonRoots() {
-    return ContainerUtil.map(SETTINGS.getPythons(), File::getAbsolutePath);
-  }
-
-  /**
-   * @return list of pythons to run tests against
-   */
-  @NotNull
-  protected List<@NotNull String> getPythonRoots() {
-    var roots = getDefaultPythonRoots();
-    // It is ok to access these pythons
-    VfsRootAccess.allowRootAccess(myDisposable, ArrayUtil.toStringArray(roots));
-    return roots;
   }
 
   private final Disposable myDisposable = Disposer.newDisposable();

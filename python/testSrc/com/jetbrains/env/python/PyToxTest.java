@@ -7,16 +7,21 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.python.test.env.core.CachingPyEnvironmentFactory;
+import com.intellij.python.test.env.core.PyEnvironment;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.env.*;
 import com.jetbrains.python.testing.tox.PyToxConfiguration;
 import com.jetbrains.python.testing.tox.PyToxConfigurationFactory;
 import com.jetbrains.python.testing.tox.PyToxTestTools;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
+import kotlinx.coroutines.Dispatchers;
 import org.assertj.core.api.Condition;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -25,6 +30,8 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.intellij.python.test.env.common.PyEnvironmentFactoriesKt.createPyEnvironmentFactory;
+import static kotlinx.coroutines.BuildersKt.runBlocking;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -34,8 +41,16 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @EnvTestTagsRequired(tags = "python3.8")
 public final class PyToxTest extends PyEnvTestCase {
+
+  private List<String> myRoots;
+
   public PyToxTest() {
     super("tox");
+  }
+
+  @Before
+  public void setUp() throws Exception {
+    myRoots = getEnvironmentRoots();
   }
 
   /**
@@ -44,7 +59,7 @@ public final class PyToxTest extends PyEnvTestCase {
   @Test
   public void testToxSimpleRun() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxSimpleRun/", 2,
-                                                     () -> new MyTestProcessRunner(),
+                                                     () -> createTestProcessRunner(),
                                                      Collections.singletonList(
                                                        Pair.create("py39", new InterpreterExpectations("", true))
                                                      ),
@@ -57,7 +72,7 @@ public final class PyToxTest extends PyEnvTestCase {
   @Test
   public void testToxPyTest() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxPyTest/", 1,
-                                                     () -> new MyTestProcessRunner(),
+                                                     () -> createTestProcessRunner(),
                                                      Arrays.asList(
                                                        Pair.create("py39", new InterpreterExpectations("", true)),
                                                        Pair.create("py38", new InterpreterExpectations("Assertion", false))
@@ -70,7 +85,7 @@ public final class PyToxTest extends PyEnvTestCase {
   @Test
   public void testToxPyTestXDist() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxPyTestXDist/", 1,
-                                                     () -> new MyTestProcessRunner(),
+                                                     () -> createTestProcessRunner(),
                                                      Arrays.asList(
                                                        Pair.create("py38", new InterpreterExpectations("", false)),
                                                        Pair.create("py39", new InterpreterExpectations("", true))
@@ -95,7 +110,7 @@ public final class PyToxTest extends PyEnvTestCase {
   @Test
   public void testToxPyTestPy3k() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxPyTestPy3k/", 1,
-                                                     () -> new MyTestProcessRunner(),
+                                                     () -> createTestProcessRunner(),
                                                      Collections.singletonList(
                                                        Pair.create("py38", new InterpreterExpectations("", true))
                                                      ),
@@ -109,7 +124,7 @@ public final class PyToxTest extends PyEnvTestCase {
   @Test
   public void testToxUnitTest() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxUnitTest/", 1,
-                                                     () -> new MyTestProcessRunner(),
+                                                     () -> createTestProcessRunner(),
                                                      Arrays.asList(
                                                        Pair.create("py39", new InterpreterExpectations("", true)),
                                                        Pair.create("py38", new InterpreterExpectations("Assertion", false))
@@ -124,7 +139,7 @@ public final class PyToxTest extends PyEnvTestCase {
   @Test
   public void textToxOneInterpreter() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxOneInterpreter/", 0,
-                                                     () -> new MyTestProcessRunner(),
+                                                     () -> createTestProcessRunner(),
                                                      Arrays.asList(
                                                        Pair.create("py39", new InterpreterExpectations("ython 3.9", true)),
                                                        Pair.create("py38", new InterpreterExpectations("", false))
@@ -140,7 +155,7 @@ public final class PyToxTest extends PyEnvTestCase {
   @Test
   public void testDoubleRun() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxDoubleRun/", 1,
-                                                     () -> new MyTestProcessRunner(),
+                                                     () -> createTestProcessRunner(),
                                                      Collections.singletonList(
                                                        Pair.create("py39", new InterpreterExpectations("", true))
                                                      ),
@@ -154,7 +169,7 @@ public final class PyToxTest extends PyEnvTestCase {
   @Test
   public void testToxSuccessTest() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxSuccess/", 1,
-                                                     () -> new MyTestProcessRunner(),
+                                                     () -> createTestProcessRunner(),
                                                      Arrays.asList(
                                                        Pair.create("py39", new InterpreterExpectations("I am 3.9", true)),
                                                        // Should have output
@@ -170,7 +185,7 @@ public final class PyToxTest extends PyEnvTestCase {
   @Test
   public void testEnvRerun() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxConcreteEnv/", 0,
-                                                     () -> new MyTestProcessRunner(1),
+                                                     () -> createTestProcessRunner(1),
                                                      Arrays.asList(
                                                        //26 and 39 only used for first time, they aren't used after rerun
                                                        Pair.create("py39", new InterpreterExpectations("", true, 1)),
@@ -178,6 +193,27 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      ),
                                                      Integer.MAX_VALUE)
     );
+  }
+
+  private @NotNull MyTestProcessRunner createTestProcessRunner() {
+    return createTestProcessRunner(0);
+  }
+
+  private MyTestProcessRunner createTestProcessRunner(int timesToRerunFailedTests) {
+    return new MyTestProcessRunner(timesToRerunFailedTests, myRoots);
+  }
+
+  private static List<String> getEnvironmentRoots() {
+    CachingPyEnvironmentFactory factory = createPyEnvironmentFactory();
+    return ContainerUtil.map(PyEnvTestCase.ALL_ENVIRONMENTS, e -> {
+      try {
+        PyEnvironment environment = runBlocking(Dispatchers.getIO(), (scope, continuation) -> factory.createEnvironment(e.getSpec(), continuation));
+        return environment.getEnvPath().toString();
+      } catch (InterruptedException ex) {
+        Thread.currentThread().interrupt();
+        return null;
+      }
+    });
   }
 
 
@@ -192,7 +228,7 @@ public final class PyToxTest extends PyEnvTestCase {
         @NotNull
         @Override
         protected PyAbstractTestProcessRunner<PyToxConfiguration> createProcessRunner() {
-          return new MyTestProcessRunner() {
+          return new MyTestProcessRunner(0, myRoots) {
             @Override
             protected void configurationCreatedAndWillLaunch(@NotNull final PyToxConfiguration configuration) throws IOException {
               super.configurationCreatedAndWillLaunch(configuration);
@@ -229,7 +265,7 @@ public final class PyToxTest extends PyEnvTestCase {
         @NotNull
         @Override
         protected PyAbstractTestProcessRunner<PyToxConfiguration> createProcessRunner() {
-          return new RunnerWithArguments(envsToRun, "-v");
+          return new RunnerWithArguments(myRoots, envsToRun, "-v");
         }
 
         @Override
@@ -264,7 +300,7 @@ public final class PyToxTest extends PyEnvTestCase {
         @NotNull
         @Override
         protected PyAbstractTestProcessRunner<PyToxConfiguration> createProcessRunner() {
-          return new RunnerWithArguments(new String[]{"py39"}, "--", "--version");
+          return new RunnerWithArguments(myRoots, new String[]{"py39"}, "--", "--version");
         }
 
         @Override
@@ -451,22 +487,22 @@ public final class PyToxTest extends PyEnvTestCase {
   }
 
   private static class MyTestProcessRunner extends PyAbstractTestProcessRunner<PyToxConfiguration> {
-    private MyTestProcessRunner() {
-      this(0);
-    }
 
-    private MyTestProcessRunner(final int timesToRerunFailedTests) {
+    private final List<String> myRoots;
+
+    private MyTestProcessRunner(int timesToRerunFailedTests, List<String> roots) {
       super(PyToxConfigurationFactory.INSTANCE, PyToxConfiguration.class, timesToRerunFailedTests);
+      myRoots = roots;
     }
 
     @Override
     protected void configurationCreatedAndWillLaunch(@NotNull PyToxConfiguration configuration) throws IOException {
       super.configurationCreatedAndWillLaunch(configuration);
-      fixPathForTox(configuration);
+      fixPathForTox(configuration, myRoots);
     }
   }
 
-  private static void fixPathForTox(final @NotNull PyToxConfiguration configuration) {
+  private static void fixPathForTox(final @NotNull PyToxConfiguration configuration, List<String> envRoots) {
     // To help tox with all interpreters, we add all our environments to path
     // Envs should have binaries like "python2.7" (with version included),
     // and tox will find em: see tox_get_python_executable @ interpreters.py
@@ -474,7 +510,7 @@ public final class PyToxTest extends PyEnvTestCase {
     //On linux we also need shared libs from Anaconda, so we add it to LD_LIBRARY_PATH
     final List<String> roots = new ArrayList<>();
     final List<String> libs = new ArrayList<>();
-    for (final String root : getDefaultPythonRoots()) {
+    for (final String root : envRoots) {
       File bin = new File(root, "/bin/");
       roots.add(bin.exists() ? bin.getAbsolutePath() : root);
       File lib = new File(root, "/lib/");
@@ -522,11 +558,13 @@ public final class PyToxTest extends PyEnvTestCase {
   private static class RunnerWithArguments extends PyAbstractTestProcessRunner<PyToxConfiguration> {
     private final String[] myEnvsToRun;
     private final String[] myArgs;
+    private final List<String> myRoots;
 
-    RunnerWithArguments(final String @NotNull [] envsToRun, final String @NotNull ... args) {
+    RunnerWithArguments(final List<String> roots, final String @NotNull [] envsToRun, final String @NotNull ... args) {
       super(PyToxConfigurationFactory.INSTANCE, PyToxConfiguration.class, 0);
       myEnvsToRun = envsToRun;
       myArgs = args;
+      myRoots = roots;
     }
 
     @Override
@@ -534,7 +572,7 @@ public final class PyToxTest extends PyEnvTestCase {
       super.configurationCreatedAndWillLaunch(configuration);
       PyToxTestTools.setArguments(configuration, myArgs);
       PyToxTestTools.setRunOnlyEnvs(configuration, myEnvsToRun);
-      fixPathForTox(configuration);
+      fixPathForTox(configuration, myRoots);
     }
   }
 }

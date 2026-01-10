@@ -9,4 +9,4 @@ internal data class FSWalkInfoWithToml(val tomlFiles: Map<Path, PyProjectToml>, 
 
 
 // Files only
-internal data class FsWalkInfoNoToml(val rawTomlFiles: List<Path>, val excludedDirs: List<Directory>)
+data class FsWalkInfoNoToml(val rawTomlFiles: List<Path>, val excludedDirs: List<Directory>)

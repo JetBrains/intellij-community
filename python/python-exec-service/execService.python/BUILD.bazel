@@ -27,43 +27,4 @@ jvm_library(
     "//python/python-sdk:sdk",
   ]
 )
-
-jvm_library(
-  name = "execService.python_test_lib",
-  visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  associates = [":execService.python"],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//python/python-exec-service:community-execService",
-    "//python/python-exec-service:community-execService_test_lib",
-    "//python/openapi:community",
-    "//python/openapi:community_test_lib",
-    "@lib//:jetbrains-annotations",
-    "//libraries/kotlinx/coroutines/core",
-    "//platform/eel",
-    "//platform/eel-provider",
-    "//python/impl.helperLocator:community-helpersLocator",
-    "@lib//:junit5",
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
-    "//platform/testFramework/junit5/eel",
-    "//platform/testFramework/junit5/eel:eel_test_lib",
-    "@lib//:junit5Params",
-    "//platform/util",
-    "//platform/core-api:core",
-    "//python/python-sdk:sdk",
-    "//python/python-sdk:sdk_test_lib",
-  ]
-)
 ### auto-generated section `build intellij.python.community.execService.python` end
-
-### auto-generated section `test intellij.python.community.execService.python` start
-load("@community//build:tests-options.bzl", "jps_test")
-
-jps_test(
-  name = "execService.python_test",
-  runtime_deps = [":execService.python_test_lib"]
-)
-### auto-generated section `test intellij.python.community.execService.python` end

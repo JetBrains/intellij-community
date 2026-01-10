@@ -89,8 +89,6 @@ jvm_library(
     "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//python/python-venv:community-impl-venv",
-    "//python/python-venv:community-impl-venv_test_lib",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//platform/indexing-api:indexing",

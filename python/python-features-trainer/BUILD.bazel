@@ -90,6 +90,8 @@ jvm_library(
     "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
     "//python/pluginCore:community-plugin",
     "//libraries/stream",
+    "//python/python-test-env/junit5:junit5_test_lib",
+    "//python/python-test-env/common:common_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.featuresTrainer` end

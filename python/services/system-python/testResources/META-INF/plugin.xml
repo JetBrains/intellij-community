@@ -4,9 +4,6 @@
     <plugin id="com.intellij.modules.python"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.python.junit5Tests.env.systemPython.SystemPythonRootsFixer"/>
-  </extensions>
-  <extensions defaultExtensionNs="Pythonid">
-    <systemPythonProvider implementation="com.intellij.python.junit5Tests.env.systemPython.impl.EnvTestPythonProvider"/>
+    <applicationInitializedListener implementation="com.intellij.python.junit5Tests.env.systemPython.impl.SystemPythonRootsFixer"/>
   </extensions>
 </idea-plugin>

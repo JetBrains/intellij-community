@@ -42,7 +42,7 @@ internal suspend fun walkFileSystemWithTomlContent(root: Directory): Result<FSWa
  * Walks down [root], returns all [PY_PROJECT_TOML] and [FsWalkInfoNoToml.excludedDirs] (started with dot).
  * [IOException] is returned if [root] is inaccessible
  */
-internal suspend fun walkFileSystemNoTomlContent(
+suspend fun walkFileSystemNoTomlContent(
   root: Directory,
 ): Result<FsWalkInfoNoToml, IOException> {
   val excludedDirs = ArrayList<Directory>(10)

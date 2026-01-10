@@ -4,7 +4,10 @@ package com.jetbrains.env.python.conda
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinaryToExec
-import com.intellij.python.community.testFramework.testEnv.conda.TypeConda
+import com.intellij.python.test.env.common.PredefinedPyEnvironments
+import com.intellij.python.test.env.common.createEnvironment
+import com.intellij.python.test.env.conda.CondaPyEnvironment
+import com.intellij.python.test.env.junit4.JUnit4FactoryHolder
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.add.v2.Version
 import com.jetbrains.python.sdk.add.v2.conda.getCondaVersion
@@ -37,15 +40,16 @@ class LocalCondaRule : ExternalResource() {
 
   override fun before() {
     super.before()
-    val (_, autoCloseable, condaPathEnv) = runBlocking { TypeConda.createSdkClosableEnv().getOrElse { throw AssumptionViolatedException("No conda found, run gradle script to install test env") } }
-
-    condaPath = Path.of(condaPathEnv.fullCondaPathOnTarget)
+    val env = runBlocking {
+      JUnit4FactoryHolder.getOrCreate().createEnvironment(PredefinedPyEnvironments.CONDA).unwrap<CondaPyEnvironment>() ?: error("No conda found")
+    }
+    condaPath = env.condaExecutable
     if (!condaPath.isExecutable()) {
       throw AssumptionViolatedException("$condaPath is not executable")
     }
     condaVersion = runBlocking { BinOnEel(condaPath).getCondaVersion().getOrThrow() }
 
-    this.autoCloseable = autoCloseable
+    this.autoCloseable = env
   }
 
   override fun after() {

@@ -6,9 +6,9 @@
     <module name="intellij.libraries.testcontainers"/>
     <module name="intellij.platform.testFramework"/>
     <module name="intellij.platform.testFramework.junit5"/>
-    <module name="intellij.python.community.testFramework.testEnv"/>
     <module name="intellij.python.community.impl.poetry.common"/>
     <module name="intellij.platform.testFramework.junit5.projectStructure"/>
     <module name="intellij.platform.lang.core"/>
+    <module name="intellij.python.psi.impl"/>
   </dependencies>
 </idea-plugin>

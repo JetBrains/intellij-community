@@ -11,10 +11,7 @@ jvm_library(
   name = "community-junit5Tests-framework",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  exports = [
-    "//libraries/system-stubs-jupiter",
-    "//python/setup-test-environment:community-testFramework-testEnv",
-  ],
+  exports = ["//libraries/system-stubs-jupiter"],
   runtime_deps = ["//python/pluginCore:community-plugin"]
 )
 
@@ -60,7 +57,6 @@ jvm_library(
     "//python/openapi:community",
     "//python/openapi:community_test_lib",
     "//python/pipenv",
-    "//python/setup-test-environment:community-testFramework-testEnv",
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
     "//python/python-poetry/common",
@@ -70,10 +66,7 @@ jvm_library(
     "//platform/lang-core",
     "//platform/util/jdom",
   ],
-  exports = [
-    "//libraries/system-stubs-jupiter",
-    "//python/setup-test-environment:community-testFramework-testEnv",
-  ],
+  exports = ["//libraries/system-stubs-jupiter"],
   runtime_deps = [":community-junit5Tests-framework"]
 )
 ### auto-generated section `build intellij.python.community.junit5Tests.framework` end

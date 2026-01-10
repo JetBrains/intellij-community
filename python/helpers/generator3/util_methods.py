@@ -345,6 +345,10 @@ def report(msg, *data):
 
 def say(msg, *data):
     """Say something at info level (stdout)"""
+    sys.stderr.write(msg)
+    sys.stderr.write("\n")
+    sys.stderr.write(str(data))
+    sys.stderr.write("\n")
     sys.stdout.write(msg % data)
     sys.stdout.write("\n")
     sys.stdout.flush()

@@ -1,5 +1,0 @@
-<idea-plugin>
-  <dependencies>
-    <module name="intellij.python.community.testFramework.testEnv"/>
-  </dependencies>
-</idea-plugin>

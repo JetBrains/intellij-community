@@ -1,0 +1,82 @@
+### auto-generated section `build intellij.python.test.env.junit5` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "junit5_test_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "junit5",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["//python/python-test-env/core"],
+  runtime_deps = [
+    "@lib//:jetbrains-annotations",
+    "//python/python-test-env/core",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//python/python-test-env/common",
+    "//python/openapi:community",
+    "//platform/projectModel-api:projectModel",
+    "//platform/execution",
+    "//libraries/junit5",
+  ]
+)
+
+jvm_library(
+  name = "junit5_test_lib",
+  module_name = "intellij.python.test.env.junit5",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":junit5_test_resources"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//python/python-test-env/core",
+    "//python/python-test-env/core:core_test_lib",
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "@lib//:kotlinx-coroutines-core",
+    "//python/python-test-env/common",
+    "//python/python-test-env/common:common_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//python/python-test-env/plain:plain_test_lib",
+    "//platform/core-api:core",
+    "//python/python-poetry/common",
+    "//python/pipenv",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+    "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+    "//python:python-community-impl",
+    "//python:python-community-impl_test_lib",
+    "//platform/execution",
+    "//python/python-test-env/conda:conda_test_lib",
+    "//python/python-venv:community-impl-venv",
+    "//python/python-venv:community-impl-venv_test_lib",
+    "//python/testFramework",
+    "//libraries/junit5",
+    "//platform/testFramework/common",
+    "//python/services/system-python",
+    "//python/services/system-python:system-python_test_lib",
+  ],
+  exports = [
+    "//python/python-test-env/core",
+    "//python/python-test-env/core:core_test_lib",
+  ],
+  runtime_deps = [":junit5"]
+)
+### auto-generated section `build intellij.python.test.env.junit5` end
+
+### auto-generated section `test intellij.python.test.env.junit5` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "junit5_test",
+  runtime_deps = [":junit5_test_lib"]
+)
+### auto-generated section `test intellij.python.test.env.junit5` end

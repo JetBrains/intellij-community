@@ -36,22 +36,15 @@ jvm_library(
 
 jvm_library(
   name = "community-impl-venv_test_lib",
+  module_name = "intellij.python.community.impl.venv",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  srcs = glob([], allow_empty = True),
   resources = [":community-impl-venv_test_resources"],
-  associates = [":community-impl-venv"],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-annotations",
-    "//python/openapi:community",
+  runtime_deps = [
+    ":community-impl-venv",
     "//python/openapi:community_test_lib",
-    "//python/python-exec-service:community-execService",
     "//python/python-exec-service:community-execService_test_lib",
-    "//libraries/kotlinx/coroutines/core",
-    "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
-    "//platform/projectModel-api:projectModel",
-    "//platform/util",
     "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
     "//platform/testFramework/common",
     "//platform/testFramework/junit5",
@@ -59,19 +52,9 @@ jvm_library(
     "@lib//:junit5",
     "//platform/ide-core-impl",
     "//platform/execution",
-    "//platform/core-api:core",
-    "//python/python-exec-service/execService.python",
-    "//python/python-exec-service/execService.python:execService.python_test_lib",
-    "//platform/eel-provider",
+    "//platform/lang-impl",
+    "//platform/lang-core",
+    "//python/testFramework",
   ]
 )
 ### auto-generated section `build intellij.python.community.impl.venv` end
-
-### auto-generated section `test intellij.python.community.impl.venv` start
-load("@community//build:tests-options.bzl", "jps_test")
-
-jps_test(
-  name = "community-impl-venv_test",
-  runtime_deps = [":community-impl-venv_test_lib"]
-)
-### auto-generated section `test intellij.python.community.impl.venv` end

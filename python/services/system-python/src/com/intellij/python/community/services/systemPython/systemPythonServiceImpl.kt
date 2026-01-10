@@ -45,7 +45,7 @@ internal suspend fun getCacheTimeout(): Duration? =
 @State(name = "SystemPythonService", storages = [Storage("systemPythonService.xml", roamingType = RoamingType.LOCAL)],
        allowLoadInTests = true)
 @Internal
-internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonService, SimplePersistentStateComponent<MyServiceState>(MyServiceState()) {
+class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonService, SimplePersistentStateComponent<MyServiceState>(MyServiceState()) {
   private val findPythonsMutex = Mutex()
   private val _cacheImpl: CompletableDeferred<Cache<EelDescriptor, SystemPython>?> = CompletableDeferred()
   private suspend fun cache() = _cacheImpl.await()
