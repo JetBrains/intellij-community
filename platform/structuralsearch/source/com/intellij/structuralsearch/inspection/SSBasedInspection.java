@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -193,12 +194,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       }
       final String suppressId = configuration.getSuppressId();
       final String name = configuration.getName();
-      if (suppressId == null) {
-        HighlightDisplayKey.register(shortName, () -> name, SHORT_NAME, null, configuration);
-      }
-      else {
-        HighlightDisplayKey.register(shortName, () -> name, suppressId, SHORT_NAME, configuration);
-      }
+      HighlightDisplayKey.register(shortName, () -> name, StringUtil.isEmpty(suppressId) ? SHORT_NAME : suppressId, null, configuration);
     }, ModalityState.nonModal());
   }
 
@@ -340,19 +336,22 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
     private void registerProblem(@NotNull MatchResult matchResult, @NotNull Configuration configuration, @NotNull ProblemsHolder holder) {
       final PsiElement element = matchResult.getMatch();
-      PsiFile containingFile = element.getContainingFile();
-      PsiFile templateFile = PsiUtilCore.getTemplateLanguageFile(containingFile);
+      final PsiFile containingFile = element.getContainingFile();
+      final PsiFile templateFile = PsiUtilCore.getTemplateLanguageFile(containingFile);
       if (!element.isPhysical() || holder.getFile() != containingFile && holder.getFile() != templateFile) {
         return;
       }
       final LocalQuickFix fix = createQuickFix(element.getProject(), matchResult, configuration);
       final Configuration mainConfiguration = getMainConfiguration(configuration);
       final String name = ObjectUtils.notNull(mainConfiguration.getProblemDescriptor(), mainConfiguration.getName());
-      final InspectionManager manager = holder.getManager();
       final ProblemDescriptor descriptor =
-        manager.createProblemDescriptor(element, name, fix, GENERIC_ERROR_OR_WARNING, holder.isOnTheFly());
-      final String toolName = configuration.getUuid();
-      holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, toolName));
+        holder.getManager().createProblemDescriptor(element, name, fix, GENERIC_ERROR_OR_WARNING, holder.isOnTheFly());
+      final String uuid = mainConfiguration.getUuid();
+      descriptor.setProblemGroup(new ProblemGroup() {
+        @Override
+        public String getProblemName() { return uuid; }
+      });
+      holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, uuid));
     }
 
     @Override

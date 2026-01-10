@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.CommonBundle
@@ -83,8 +83,8 @@ open class HighlightingProblem(
 
   override val group: String?
     get() {
-      val id = info?.inspectionToolId ?: return null
-      return HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.findById(id))
+      val id = info?.problemGroup?.problemName ?: info?.inspectionToolId ?: return null
+      return HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.find(id))
     }
 
   override val contextGroup: CodeInsightContext?
