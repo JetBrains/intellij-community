@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -310,37 +310,56 @@ public final class TypedHandler extends TypedActionHandlerBase {
     }
   }
 
+  /**
+   * @return true if auto-popup should be invoked according to deprecated {@link CompletionContributor#invokeAutoPopup)}.
+   */
   private static boolean isAutoPopup(@NotNull Editor editor, @NotNull PsiFile file, char charTyped) {
     final int offset = editor.getCaretModel().getOffset() - 1;
-    if (offset >= 0) {
-      PsiElement element;
-      Language language;
-      if (file instanceof PsiFileWithOneLanguage) {
-        element = null;
-        language = file.getLanguage();
-      }
-      else {
-        element = file.findElementAt(offset);
-        if (element == null) {
-          return false;
-        }
-        language = element.getLanguage();
-      }
+    if (offset < 0) {
+      return false;
+    }
 
-      for (CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(language, file.getProject())) {
-        if (element == null) {
-          element = file.findElementAt(offset);
-          if (element == null) {
-            return false;
-          }
-        }
-        if (contributor.invokeAutoPopup(element, charTyped)) {
-          LOG.debug(contributor + " requested completion autopopup when typing '" + charTyped + "'");
-          return true;
-        }
+    PsiElement element;
+    Language language;
+    if (file instanceof PsiFileWithOneLanguage) {
+      language = file.getLanguage();
+
+      // we know the language, so let's try to avoid inferring the element at caret
+      // because there might be no contributors, so inferring element would be a waste of time.
+      element = null;
+    }
+    else {
+      element = file.findElementAt(offset);
+      if (element == null) {
+        return false;
+      }
+      language = element.getLanguage();
+    }
+
+    List<CompletionContributor> contributors = CompletionContributor.forLanguageHonorDumbness(language, file.getProject());
+    if (contributors.isEmpty()) {
+      return false;
+    }
+
+    if (element == null) {
+      // file is PsiFileWithOneLanguage, and there are contributors => we have to infer element.
+      element = file.findElementAt(offset);
+      if (element == null) {
+        return false;
       }
     }
-    return false;
+
+    PsiElement finalElement = element;
+    CompletionContributor contributor = ContainerUtil.find(contributors, c -> c.invokeAutoPopup(finalElement, charTyped));
+    if (contributor == null) {
+      return false;
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(contributor + " requested completion autopopup when typing '" + charTyped + "'");
+    }
+
+    return true;
   }
 
   private static boolean isInsideStringLiteral(@NotNull Editor editor, @NotNull PsiFile file) {
