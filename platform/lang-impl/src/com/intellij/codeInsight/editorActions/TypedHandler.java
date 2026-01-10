@@ -297,6 +297,10 @@ public final class TypedHandler extends TypedActionHandlerBase {
     }
   }
 
+  /**
+   * Note: If you want to implement autopopup for an arbitrary character, consider adding your own {@link TypedHandlerDelegate}
+   *       and implement {@link TypedHandlerDelegate#checkAutoPopup}
+   */
   public static void autoPopupCompletion(@NotNull Editor editor, char charTyped, @NotNull Project project, @NotNull PsiFile file) {
     boolean allowSlashes = Boolean.TRUE.equals(editor.getUserData(AutoPopupController.ALLOW_AUTO_POPUP_FOR_SLASHES_IN_PATHS));
     if (charTyped == '.' || (allowSlashes && charTyped == '/') || isAutoPopup(editor, file, charTyped)) {
