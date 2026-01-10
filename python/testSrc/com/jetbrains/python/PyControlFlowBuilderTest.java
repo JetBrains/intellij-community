@@ -544,6 +544,11 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTest();
   }
 
+  // PY-72253
+  public void testControlFlowIsAbruptAfterRaisingCallee() {
+    doTest();
+  }
+
   // TODO migrate this test class to Python 3 SDK by default to make this test work
   // PY-53703
   //public void testControlFlowIsAbruptAfterNever() {
