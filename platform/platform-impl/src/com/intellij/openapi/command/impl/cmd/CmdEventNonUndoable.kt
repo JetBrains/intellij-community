@@ -18,6 +18,10 @@ internal class CmdEventNonUndoable(
     return false
   }
 
+  override fun isForeign(): Boolean {
+    return false
+  }
+
   override fun withNameAndGroupId(name: String?, groupId: Any?): CmdEvent {
     throw UnsupportedOperationException("withNameAndGroupId")
   }

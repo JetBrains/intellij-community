@@ -14,6 +14,7 @@ internal class CmdEventImmutable(
   private val groupId: Any?,
   private val confirmationPolicy: UndoConfirmationPolicy,
   private val recordOriginator: Boolean,
+  private val isForeign: Boolean,
   private val meta: CmdMeta,
 ) : CmdEvent {
   override fun id(): CommandId = id
@@ -23,6 +24,7 @@ internal class CmdEventImmutable(
   override fun confirmationPolicy(): UndoConfirmationPolicy = confirmationPolicy
   override fun recordOriginalDocument(): Boolean = recordOriginator
   override fun isTransparent(): Boolean = false
+  override fun isForeign(): Boolean = isForeign
   override fun meta(): CmdMeta = meta
   override fun withNameAndGroupId(name: String?, groupId: Any?): CmdEvent {
     throw UnsupportedOperationException("withNameAndGroupId")

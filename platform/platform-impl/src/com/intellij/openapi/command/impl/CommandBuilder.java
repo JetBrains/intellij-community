@@ -180,7 +180,8 @@ final class CommandBuilder {
       isTransparent(),
       isForcedGlobal,
       isGlobal(),
-      isValid
+      isValid,
+      cmdEvent.isForeign()
     );
     reset();
     return performedCommand;
@@ -290,6 +291,9 @@ final class CommandBuilder {
 
     @Override
     public boolean isTransparent() { throw new UnsupportedOperationException(); }
+
+    @Override
+    public boolean isForeign() { throw new UnsupportedOperationException(); }
 
     @Override
     public @NotNull CmdMeta meta() { throw new UnsupportedOperationException(); }

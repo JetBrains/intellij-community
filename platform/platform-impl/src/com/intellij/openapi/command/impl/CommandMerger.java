@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.CommandProcessor;
@@ -65,6 +65,9 @@ public final class CommandMerger {
   }
 
   @Nullable UndoCommandFlushReason shouldFlush(@NotNull PerformedCommand performedCommand) {
+    if (isPartialForeignCommand(performedCommand)) {
+      return null;
+    }
     //noinspection ConstantValue
     if (!isCompatible(performedCommand.commandId())) {
       return createFlushReason("INCOMPATIBLE_COMMAND", performedCommand);
@@ -390,6 +393,10 @@ public final class CommandMerger {
       return true;
     }
     return commandIds.getFirst().isCompatible(commandId);
+  }
+
+  private boolean isPartialForeignCommand(@NotNull PerformedCommand performedCommand) {
+    return performedCommand.isForeign() && !commandIds.isEmpty() && commandIds.getLast().equals(performedCommand.commandId());
   }
 
   private static boolean isMergeGlobalCommandsAllowed() {

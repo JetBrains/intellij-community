@@ -38,6 +38,10 @@ internal class CmdEventImpl(
     return false
   }
 
+  override fun isForeign(): Boolean {
+    return false
+  }
+
   override fun withNameAndGroupId(name: @Command String?, groupId: Any?): CmdEvent {
     return CmdEvent.create(
       id(),
@@ -46,6 +50,7 @@ internal class CmdEventImpl(
       groupId,
       confirmationPolicy(),
       recordOriginalDocument(),
+      isForeign(),
       meta(),
     )
   }

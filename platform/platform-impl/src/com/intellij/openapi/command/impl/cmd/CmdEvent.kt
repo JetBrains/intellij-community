@@ -16,6 +16,7 @@ interface CmdEvent {
   fun confirmationPolicy(): UndoConfirmationPolicy
   fun recordOriginalDocument(): Boolean
   fun isTransparent(): Boolean
+  fun isForeign(): Boolean
   fun meta(): CmdMeta
   fun withNameAndGroupId(name: @Command String?, groupId: Any?): CmdEvent
 
@@ -26,8 +27,8 @@ interface CmdEvent {
     }
 
     @JvmStatic
-    fun createTransparent(id: CommandId, meta: CmdMeta): CmdEvent {
-      return CmdEventTransparent(null, id, meta)
+    fun createTransparent(id: CommandId, isForeign: Boolean, meta: CmdMeta): CmdEvent {
+      return CmdEventTransparent(null, isForeign, id, meta)
     }
 
     @JvmStatic
@@ -43,6 +44,7 @@ interface CmdEvent {
       groupId: Any?,
       confirmationPolicy: UndoConfirmationPolicy,
       recordOriginator: Boolean,
+      isForeign: Boolean,
       commandMeta: CmdMeta,
     ): CmdEvent {
       return CmdEventImmutable(
@@ -52,6 +54,7 @@ interface CmdEvent {
         groupId,
         confirmationPolicy,
         recordOriginator,
+        isForeign,
         commandMeta,
       )
     }

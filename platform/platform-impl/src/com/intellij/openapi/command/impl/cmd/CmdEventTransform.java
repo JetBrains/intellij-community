@@ -26,7 +26,7 @@ public final class CmdEventTransform {
     CommandId commandId = getCommandId(isTransparent, isStart);
     CmdMeta meta = CmdMeta.createMutable();
     return isTransparent
-           ? CmdEvent.createTransparent(commandId, meta)
+           ? CmdEvent.createTransparent(commandId, false, meta)
            : CmdEvent.create(event, commandId, meta);
   }
 
