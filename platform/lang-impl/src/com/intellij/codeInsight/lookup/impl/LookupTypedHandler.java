@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -81,6 +81,9 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
     }
   }
 
+  /**
+   * @return true if `charTyped` was consumed by lookup and other typed handlers should not be invoked.
+   */
   private static boolean beforeCharTyped(char charTyped,
                                          @NotNull Project project,
                                          @NotNull Editor originalEditor,
