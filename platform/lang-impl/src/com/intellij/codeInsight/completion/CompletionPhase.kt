@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments.CommittingState.*
@@ -195,7 +195,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
        *
        * @param editor          editor where we start completion
        * @param completionType  completion type
-       * @param condition       condition to check before starting the completion process.
+       * @param condition       condition for the state of the file. If the condition is not met after committing the document, completion will not be started.
        * @param project         the current project
        * @param prevIndicator   the completion indicator, if any. The indicator exists if completion was already started and we restart it with new parameters.
        */
