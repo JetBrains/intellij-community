@@ -120,6 +120,7 @@ internal fun InputField(
         modifier =
             modifier
                 .hoverable(hoverInteractionSource)
+                .thenIf(enabled && !readOnly) { hideCursorOnTyping() }
                 .then(backgroundModifier)
                 .thenIf(!undecorated && hasNoOutline) {
                     focusOutline(state = inputFieldState, outlineShape = shape, alignment = Stroke.Alignment.Center)
@@ -216,6 +217,7 @@ internal fun InputField(
         modifier =
             modifier
                 .hoverable(hoverInteractionSource)
+                .thenIf(enabled && !readOnly) { hideCursorOnTyping() }
                 .then(backgroundModifier)
                 .thenIf(!undecorated && hasNoOutline) {
                     focusOutline(state = inputFieldState, outlineShape = shape, alignment = Stroke.Alignment.Center)

@@ -37,6 +37,7 @@ jvm_library(
     "//libraries/compose-runtime-desktop",
     "//platform/jewel/foundation",
     "//libraries/jbr",
+    "@lib//:jna",
   ],
   plugins = ["@lib//:compose-plugin"]
 )
