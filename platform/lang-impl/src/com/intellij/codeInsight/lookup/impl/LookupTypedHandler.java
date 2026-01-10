@@ -136,6 +136,9 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
     return true;
   }
 
+  /**
+   * Adds the given character to the lookup prefix, sends corresponding events, and adds the char to the document honoring multiple carets.
+   */
   private static void addCharToPrefix(char charTyped,
                                       @NotNull Editor originalEditor,
                                       @NotNull Editor editor,
