@@ -17,9 +17,9 @@ import com.intellij.psi.util.QualifiedName
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
+import com.intellij.ui.util.preferredHeight
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerManager
@@ -35,6 +35,7 @@ import com.jetbrains.python.debugger.variablesview.usertyperenderers.codeinsight
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import java.awt.BorderLayout
+import java.awt.Dimension
 import java.awt.event.ActionListener
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -48,7 +49,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
 
   private val CONFIGURABLE_ID = "debugger.dataViews.python.type.renderers"
 
-  private val PANEL_SPLIT_PROPORTION = 0.3f
+  private val PANEL_SPLIT_PROPORTION = 0.32f
 
   private val myMainPanel: JPanel = JPanel(BorderLayout())
   private var myCurrentRenderer: PyUserNodeRenderer? = null
@@ -286,10 +287,30 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
     private lateinit var myRbExpressionValueRenderer: JRadioButton
     private lateinit var myRbDefaultChildrenRenderer: JRadioButton
     private lateinit var myRbListChildrenRenderer: JRadioButton
-    private val myTypeNameTextField = TextFieldWithCompletion(myProject, TypeNameCompletionProvider(myProject), "",
-                                                              true, true, true)
-    private val myNodeValueExpressionEditor = XDebuggerExpressionEditor(myProject, PyDebuggerEditorsProvider(), "NodeValueExpression", null,
-                                                                        XExpressionImpl.EMPTY_EXPRESSION, false, false, true)
+
+    private var myTypeNamePanel: JPanel
+    private var mySubclassPanel: JPanel
+    private val myTypeNameTextField = TextFieldWithCompletion(
+      myProject,
+      TypeNameCompletionProvider(myProject),
+      "",
+      true,
+      true,
+      true
+    )
+    private var myTypeNameValidator: ComponentValidator
+    private var myEnableSubclassMatching: JCheckBox
+
+    private val myNodeValueExpressionEditor = XDebuggerExpressionEditor(
+      myProject,
+      PyDebuggerEditorsProvider(),
+      "NodeValueExpression",
+      null,
+      XExpressionImpl.EMPTY_EXPRESSION,
+      true,
+      false,
+      true
+    )
     private val myChildrenRenderersListEditor: JComponent
     private val myChildrenListEditorTableModel: ChildrenListEditorTableModel
     private val myChildrenListEditorTable: JBTable
@@ -298,8 +319,25 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       myChildrenListEditorTableModel = ChildrenListEditorTableModel()
       myChildrenListEditorTable = JBTable(myChildrenListEditorTableModel)
       myChildrenRenderersListEditor = createChildrenListEditor()
+      myChildrenRenderersListEditor.preferredSize = Dimension(Int.MAX_VALUE, (myChildrenRenderersListEditor.preferredHeight * 1.4f).toInt())
 
-      setupTypeNameEditor()
+      myEnableSubclassMatching = JCheckBox(PyBundle.message("form.debugger.variables.view.user.type.renderers.enable.subclass.matching"))
+
+      myNodeValueExpressionEditor.component.preferredSize = Dimension(Int.MAX_VALUE, myNodeValueExpressionEditor.component.preferredHeight * 2)
+      myNodeValueExpressionEditor.component.revalidate()
+      myNodeValueExpressionEditor.component.repaint()
+
+      myTypeNamePanel = JPanel(BorderLayout())
+      mySubclassPanel = JPanel(BorderLayout(JBUI.scale(5), 0))
+
+      mySubclassPanel.add(myEnableSubclassMatching, BorderLayout.CENTER)
+      mySubclassPanel.add(ContextHelpLabel.create(PyBundle.message("form.debugger.variables.view.user.type.renderers.help.no.builtin.superclass")), BorderLayout.EAST)
+      myTypeNamePanel.add(myTypeNameTextField, BorderLayout.CENTER)
+      myTypeNamePanel.add(mySubclassPanel, BorderLayout.EAST)
+
+      myTypeNameValidator = setupTypeNameEditor()
+      myTypeNameValidator.revalidate()
+
       myPanel = createSettingsPanel()
       setupPanelComponents()
       add(myPanel, BorderLayout.NORTH)
@@ -307,28 +345,30 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
 
     private fun createSettingsPanel(): JPanel {
       return panel {
-        row(PyBundle.message("form.debugger.variables.view.user.type.renderers.name")) {
-          myRendererNameTextField = textField()
-            .align(AlignX.FILL)
-            .component
-        }
-        row {
-          cell(myTypeNameTextField)
-            .label(PyBundle.message("form.debugger.variables.view.user.type.renderers.apply.renderer.to.objects.of.type"), LabelPosition.TOP)
-            .align(AlignX.FILL)
-        }
-        buttonsGroup(PyBundle.message("form.debugger.variables.view.user.type.renderers.when.rendering.node")) {
-          row {
-            myRbDefaultValueRenderer = radioButton(
-              PyBundle.message("form.debugger.variables.view.user.type.renderers.use.default.renderer"))
+        group(PyBundle.message("form.debugger.variables.view.user.type.renderers.title")) {
+          row(PyBundle.message("form.debugger.variables.view.user.type.renderers.name")) {
+            myRendererNameTextField = textField()
+              .align(AlignX.FILL)
               .component
           }
-          row {
-            myRbExpressionValueRenderer = radioButton(
-              PyBundle.message("form.debugger.variables.view.user.type.renderers.use.following.expression"))
-              .component
+          row(PyBundle.message("form.debugger.variables.view.user.type.renderers.apply.renderer.to.objects.of.type")) {
+            cell(myTypeNamePanel)
+              .align(AlignX.FILL)
+              .comment(PyBundle.message("form.debugger.variables.view.user.type.renderers.apply.renderer.comment"))
           }
-          indent {
+        }
+        group {
+          buttonsGroup(PyBundle.message("form.debugger.variables.view.user.type.renderers.when.rendering.node")) {
+            row {
+              myRbDefaultValueRenderer = radioButton(
+                PyBundle.message("form.debugger.variables.view.user.type.renderers.use.default.renderer"))
+                .component
+            }
+            row {
+              myRbExpressionValueRenderer = radioButton(
+                PyBundle.message("form.debugger.variables.view.user.type.renderers.use.following.expression"))
+                .component
+            }
             row {
               cell(myNodeValueExpressionEditor.component)
                 .align(AlignX.FILL)
@@ -336,18 +376,18 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
             }
           }
         }
-        buttonsGroup(PyBundle.message("form.debugger.variables.view.user.type.renderers.when.expanding.node")) {
-          row {
-            myRbDefaultChildrenRenderer = radioButton(
-              PyBundle.message("form.debugger.variables.view.user.type.renderers.use.default.renderer"))
-              .component
-          }
-          row {
-            myRbListChildrenRenderer = radioButton(
-              PyBundle.message("form.debugger.variables.view.user.type.renderers.use.list.of.expressions"))
-              .component
-          }
-          indent {
+        group {
+          buttonsGroup(PyBundle.message("form.debugger.variables.view.user.type.renderers.when.expanding.node")) {
+            row {
+              myRbDefaultChildrenRenderer = radioButton(
+                PyBundle.message("form.debugger.variables.view.user.type.renderers.use.default.renderer"))
+                .component
+            }
+            row {
+              myRbListChildrenRenderer = radioButton(
+                PyBundle.message("form.debugger.variables.view.user.type.renderers.use.list.of.expressions"))
+                .component
+            }
             row {
               cell(myChildrenRenderersListEditor)
                 .align(AlignX.FILL)
@@ -372,16 +412,21 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       })
     }
 
-    private fun setupTypeNameEditor() {
+    private fun setupTypeNameEditor(): ComponentValidator {
       val myTypeNameFieldValidator = ComponentValidator(this).withValidator(
         Supplier<ValidationInfo?> {
           val text: String = myTypeNameTextField.text
-          return@Supplier if (!isValidTypeName(text)) {
-            ValidationInfo(PyBundle.message("form.debugger.variables.view.user.type.renderers.class.not.found"),
-                           myTypeNameTextField)
-          }
-          else {
-            null
+          return@Supplier when {
+            text.isBlank() ->
+              ValidationInfo(PyBundle.message("form.debugger.variables.view.user.type.renderers.empty.target"),
+                             myTypeNameTextField)
+            !isValidTypeName(text) ->
+              ValidationInfo(PyBundle.message("form.debugger.variables.view.user.type.renderers.class.not.found"),
+                             myTypeNameTextField)
+            myEnableSubclassMatching.isSelected && isPythonBuiltin(text) ->
+              ValidationInfo(PyBundle.message("form.debugger.variables.view.user.type.renderers.builtin.superclass"),
+                             myTypeNameTextField)
+            else -> null
           }
         }).installOn(myTypeNameTextField)
 
@@ -390,12 +435,23 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
           myTypeNameFieldValidator.revalidate()
         }
       })
-
       myTypeNameTextField.addDocumentListener(object : DocumentListener {
         override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
           updateSelfType()
         }
       })
+      myEnableSubclassMatching.addActionListener(ActionListener { e ->
+        when (e.source) {
+          myEnableSubclassMatching -> {
+            myTypeNameFieldValidator.revalidate()
+          }
+        }
+      })
+      return myTypeNameFieldValidator
+    }
+
+    private fun isPythonBuiltin(typeName: String): Boolean {
+      return PyTypeNameResolver(myProject).isPythonBuiltinsModule(typeName)
     }
 
     private fun isValidTypeName(typeName: String): Boolean {
@@ -417,6 +473,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       val offset = contextText.indexOf("def")
       val srcPosition = XSourcePositionImpl.createByOffset(contextWithSelf.virtualFile, offset)
       myNodeValueExpressionEditor.setSourcePosition(srcPosition)
+      myTypeNameValidator.revalidate()
     }
 
     private fun setupRadioButtons() {
@@ -439,6 +496,9 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
                                               true
                                             }, false, null)
             }
+          }
+          myRbDefaultValueRenderer, myRbExpressionValueRenderer -> {
+            myNodeValueExpressionEditor.setEnabled(myRbExpressionValueRenderer.isSelected)
           }
         }
       }
@@ -468,6 +528,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       myCurrentRenderer?.let {
         return it.name != myRendererNameTextField.text ||
                it.toType != myTypeNameTextField.text ||
+               it.subclassMatch != myEnableSubclassMatching.isSelected ||
                it.valueRenderer.isDefault != myRbDefaultValueRenderer.isSelected ||
                it.valueRenderer.expression != myNodeValueExpressionEditor.expression.expression ||
                it.childrenRenderer.isDefault != myRbDefaultChildrenRenderer.isSelected ||
@@ -481,6 +542,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       myCurrentRenderer?.let {
         it.name = myRendererNameTextField.text
         it.toType = myTypeNameTextField.text
+        it.subclassMatch = myEnableSubclassMatching.isSelected
         it.valueRenderer.isDefault = myRbDefaultValueRenderer.isSelected
         it.valueRenderer.expression = myNodeValueExpressionEditor.expression.expression
         it.childrenRenderer.isDefault = myRbDefaultChildrenRenderer.isSelected
@@ -532,6 +594,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       myCurrentRenderer?.let {
         myRendererNameTextField.text = it.name
         myTypeNameTextField.text = it.toType
+        myEnableSubclassMatching.isSelected = it.subclassMatch
         myNodeValueExpressionEditor.expression = XExpressionImpl.fromText(it.valueRenderer.expression)
         myAppendDefaultChildrenCheckBox.isSelected = it.childrenRenderer.appendDefaultChildren
         resetRadioButtons(it)
