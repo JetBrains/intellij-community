@@ -277,14 +277,6 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
-  public void resetOriginalDocument() {
-    UndoClientState state = getClientState();
-    if (state != null) {
-      state.resetOriginalDocument();
-    }
-  }
-
-  @ApiStatus.Internal
   public void clearStacks(@Nullable FileEditor editor) {
     for (UndoClientState state : getAllClientStates()) {
       state.clearStacks(editor);

@@ -2,7 +2,6 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.*;
-import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 
-@Experimental
 @Internal
 public enum UndoableActionType {
   START_MARK,
@@ -18,7 +16,6 @@ public enum UndoableActionType {
   MENTION_ONLY,
   EDITOR_CHANGE,
   NON_UNDOABLE,
-  RESET_ORIGINATOR, // TODO: its a hacky way
   GLOBAL,
   OTHER,
   ;
@@ -37,7 +34,6 @@ public enum UndoableActionType {
       case MENTION_ONLY -> new MentionOnlyUndoableAction(docRefs.toArray(DocumentReference.EMPTY_ARRAY));
       case EDITOR_CHANGE -> new MockEditorChangeAction(first(docRefs));
       case NON_UNDOABLE -> new NonUndoableAction(first(docRefs), isGlobal);
-      case RESET_ORIGINATOR -> ResetOriginatorAction.INSTANCE;
       case GLOBAL -> new MockGlobalUndoableAction(docRefs);
       case OTHER -> new MockUndoableAction(docRefs, isGlobal);
     };

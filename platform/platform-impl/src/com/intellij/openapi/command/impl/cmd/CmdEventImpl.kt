@@ -39,7 +39,7 @@ internal class CmdEventImpl(
   }
 
   override fun withNameAndGroupId(name: @Command String?, groupId: Any?): CmdEvent {
-    return CmdEvent.createImmutable(
+    return CmdEvent.create(
       id(),
       project(),
       name,

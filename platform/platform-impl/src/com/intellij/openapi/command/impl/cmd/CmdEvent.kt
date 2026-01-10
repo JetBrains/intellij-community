@@ -36,7 +36,7 @@ interface CmdEvent {
     }
 
     @JvmStatic
-    fun createImmutable(
+    fun create(
       commandId: CommandId,
       commandProject: Project?,
       commandName: @Command String?,

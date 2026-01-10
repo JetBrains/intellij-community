@@ -180,7 +180,9 @@ final class UndoClientState implements Disposable {
   void commandFinished(@NotNull CmdEvent cmdFinishEvent) {
     PerformedCommand performedCommand = commandBuilder.commandFinished(cmdFinishEvent);
     commitCommand(performedCommand);
-    notifyUndoSpy(performedCommand);
+    for (UndoableAction action : performedCommand.undoableActions()) {
+      sharedState.addAction(action);
+    }
   }
 
   void commandFakeFinished(@NotNull CmdEvent cmdFakeFinishEvent) {
@@ -197,16 +199,6 @@ final class UndoClientState implements Disposable {
       compactIfNeeded();
     }
     commandMerger.mergeWithPerformedCommand(performedCommand);
-  }
-
-  private void notifyUndoSpy(@NotNull PerformedCommand performedCommand) {
-    for (UndoableAction action : performedCommand.undoableActions()) {
-      sharedState.addAction(action);
-      UndoSpy undoSpy = UndoSpy.getInstance();
-      if (undoSpy != null) {
-        undoSpy.undoableActionAdded(project, action, UndoableActionType.forAction(action));
-      }
-    }
   }
 
   boolean isInsideCommand() {
@@ -260,10 +252,6 @@ final class UndoClientState implements Disposable {
     commandMerger.invalidateActionsFor(ref);
     undoStacksHolder.invalidateActionsFor(ref);
     redoStacksHolder.invalidateActionsFor(ref);
-  }
-
-  void resetOriginalDocument() {
-    commandBuilder.resetOriginalDocument();
   }
 
   boolean isUndoInProgress() {

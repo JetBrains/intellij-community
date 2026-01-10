@@ -6,14 +6,15 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.CommandProcessorEx
 import com.intellij.openapi.command.impl.cmd.CmdEvent
 import com.intellij.openapi.command.impl.cmd.CmdIdService
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 
-@ApiStatus.Experimental
 @ApiStatus.Internal
 class ForeignCommandProcessor {
   private val currentCommand = AtomicReference<CmdEvent>()
@@ -51,10 +52,28 @@ class ForeignCommandProcessor {
       if (token == null) {
         throw ForeignCommandException("unexpected state: no command token to finish")
       }
+      applyCmdMeta(cmdFinishEvent)
       currentCommand.set(cmdFinishEvent)
       token.close()
     } finally {
       currentCommand.set(null)
+    }
+  }
+
+  private fun applyCmdMeta(cmdFinishEvent: CmdEvent) {
+    for (undoMeta in cmdFinishEvent.meta().undoMeta()) {
+      val undoProject = undoMeta.undoProject()
+      val undoManager = undoManager(undoProject)
+      for (actionMeta in undoMeta.undoableActions()) {
+        val actionType = actionMeta.type()
+        val affectedDocuments = actionMeta.affectedDocuments()
+        val isGlobal = actionMeta.isGlobal()
+        val undoableAction = UndoableActionType.getAction(actionType, affectedDocuments, isGlobal)
+        undoManager.undoableActionPerformed(undoableAction)
+      }
+      if (undoMeta.isForcedGlobal()) {
+        undoManager.markCurrentCommandAsGlobal()
+      }
     }
   }
 
@@ -107,6 +126,15 @@ class ForeignCommandProcessor {
     if (currentCommand() == null) {
       throw ForeignCommandException("cannot finish foreign command without starting it")
     }
+  }
+
+  private fun undoManager(project: Project?): UndoManagerImpl {
+    val undoManager = if (project == null) {
+      UndoManager.getGlobalInstance()
+    } else {
+      UndoManager.getInstance(project)
+    }
+    return undoManager as UndoManagerImpl
   }
 
   private fun commandProcessor(): CommandProcessorEx {

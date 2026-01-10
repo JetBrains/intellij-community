@@ -3,10 +3,7 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.command.impl.cmd.CmdEvent;
-import com.intellij.openapi.command.impl.cmd.CmdMeta;
-import com.intellij.openapi.command.impl.cmd.MutableCmdMeta;
-import com.intellij.openapi.command.impl.cmd.UndoMeta;
+import com.intellij.openapi.command.impl.cmd.*;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeActionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,13 +75,8 @@ final class CommandBuilder {
     this.isInsideCommand = true;
     UndoSpy undoSpy = UndoSpy.getInstance();
     if (undoSpy != null && cmdStartEvent.meta() instanceof MutableCmdMeta mutableMeta) {
-      mutableMeta.addUndoMeta(
-        UndoMeta.create(
-          undoProject,
-          editorProvider.getCurrentEditor(undoProject),
-          originalDocument
-        )
-      );
+      UndoMeta undoMeta = UndoMeta.create(undoProject, editorProvider.getCurrentEditor(undoProject));
+      mutableMeta.addUndoMeta(undoMeta);
     }
   }
 
@@ -130,10 +123,6 @@ final class CommandBuilder {
   void resetOriginalDocument() {
     assertInsideCommand();
     originalDocument = null;
-    UndoSpy undoSpy = UndoSpy.getInstance();
-    if (undoSpy != null) {
-      undoSpy.undoableActionAdded(undoProject, ResetOriginatorAction.INSTANCE, UndoableActionType.RESET_ORIGINATOR);
-    }
   }
 
   @NotNull PerformedCommand commandFinished(@NotNull CmdEvent cmdFinishEvent) {
@@ -144,6 +133,11 @@ final class CommandBuilder {
     this.editorStateAfter = currentEditorState();
     if (originalDocument != null && hasActions() && !isTransparent() && affectedDocuments.affectsOnlyPhysical()) {
       addDocumentAsAffected(Objects.requireNonNull(originalDocument));
+    }
+    UndoSpy undoSpy = UndoSpy.getInstance();
+    if (undoSpy != null &&  cmdFinishEvent.meta() instanceof MutableCmdMeta mutableMeta) {
+      UndoMeta undoMeta = createUndoMeta();
+      mutableMeta.addUndoMeta(undoMeta);
     }
     return buildAndReset();
   }
@@ -203,14 +197,32 @@ final class CommandBuilder {
 
   private @Nullable DocumentReference originalDocument() {
     if (undoProject != null && undoProject == cmdEvent.project()) {
-      if (editorProvider instanceof ForeignEditorProvider foreignEditorProvider) {
-        return foreignEditorProvider.originator();
+      if (editorProvider instanceof ForeignEditorProvider) {
+        return null;
       }
       return Cancellation.computeInNonCancelableSection( // fixes flaky `CompletionRestartTest`
         () -> UndoDocumentUtil.getDocReference(undoProject, editorProvider)
       );
     }
     return null;
+  }
+
+  private @NotNull UndoMeta createUndoMeta() {
+    var actions = ContainerUtil.map(
+      undoableActions,
+      a -> ActionMeta.create(
+        UndoableActionType.forAction(a),
+        a.getAffectedDocuments(),
+        a.isGlobal()
+      )
+    );
+    UndoMeta undoMeta = UndoMeta.create(
+      undoProject,
+      editorProvider.getCurrentEditor(undoProject),
+      actions,
+      isForcedGlobal
+    );
+    return undoMeta;
   }
 
   private boolean isTransparent() {
