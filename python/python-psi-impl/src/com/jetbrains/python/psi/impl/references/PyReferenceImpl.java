@@ -275,7 +275,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         else if (resolvedOwner instanceof PyClass && !(referenceAnchor instanceof PyTargetExpression)) {
           resolveInParentScope = () -> PyResolveUtil.parentScopeForUnresolvedClassLevelName((PyClass)resolvedOwner, referencedName);
         }
-        else if (instructions.isEmpty() && allInOwnScopeComprehensions(resolvedElements)) {
+        else if (instructions.isEmpty() && ContainerUtil.and(resolvedElements, this::isInOwnScopeComprehension)) {
           resolveInParentScope = () -> ScopeUtil.getScopeOwner(resolvedOwner);
         }
         else {
@@ -344,10 +344,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
                                                             @NotNull ScopeOwner resolvedOwner,
                                                             @NotNull PsiElement referenceAnchor) {
     return PyDefUseUtil.getLatestDefs(resolvedOwner, referencedName, referenceAnchor, false, true, myContext.getTypeEvalContext());
-  }
-
-  private boolean allInOwnScopeComprehensions(@NotNull Collection<PsiElement> elements) {
-    return StreamEx.of(elements).allMatch(this::isInOwnScopeComprehension);
   }
 
   private static boolean allowsForwardOutgoingReferencesInClass(@NotNull PyQualifiedExpression element) {
