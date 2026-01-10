@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -237,6 +238,14 @@ public final class MoveClassesOrPackagesUtil {
 
       file = moveDestination.findFile(file.getName());
 
+      // Invalidate file properties to ensure FileIndex is updated for the new source root.
+      // Accept all files to ensure the moved file's properties are fully refreshed.
+      if (file != null) {
+        VirtualFile movedFile = file.getVirtualFile();
+        if (movedFile != null) {
+          PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(movedFile, __ -> true);
+        }
+      }
     }
 
     if (newPackage != null && file instanceof PsiClassOwner && !FileTypeUtils.isInServerPageFile(file) &&
