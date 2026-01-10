@@ -123,10 +123,14 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
 
   override val editorComponent: EditorComponentImpl
     get() = when {
-      data.xpath.contains("EditorCompositePanel") -> driver.cast(
-        editor(topLevelEditorSearchPattern).component,
-        EditorComponentImpl::class
-      )
+      data.xpath.contains("EditorCompositePanel") -> {
+        // Increase timeout from the default 15 seconds to 30 seconds to handle slower CI environments.
+        // The default timeout is resulting in too many flaky tests.
+        driver.cast(
+          editor(topLevelEditorSearchPattern).waitFound(30.seconds).component,
+          EditorComponentImpl::class
+        )
+      }
       else -> super.editorComponent
     }
 
