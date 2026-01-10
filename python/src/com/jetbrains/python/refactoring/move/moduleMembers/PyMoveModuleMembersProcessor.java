@@ -7,6 +7,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
@@ -26,6 +27,7 @@ import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -83,7 +85,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
       usagesByElement.putValue(((MyUsageInfo)usage).myMovedElement, usage);
     }
     boolean isNamespace = ContainerUtil.all(mySourceFiles, PyNamespacePackageUtil::isInNamespacePackage);
-    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
       final PyFile destination = PyClassRefactoringUtil.getOrCreateFile(myDestination, myProject, isNamespace);
       CommonRefactoringUtil.checkReadOnlyStatus(myProject, destination);
       final LinkedHashSet<PsiFile> optimizeImportsTargets = Sets.newLinkedHashSet(mySourceFiles);
@@ -126,12 +128,31 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
       for (PsiFile file : optimizeImportsTargets) {
         PyClassRefactoringUtil.optimizeImports(file);
       }
-    }), getRefactoringName(), null);
+    }, getRefactoringName(), null);
   }
 
   @Override
   protected @NotNull String getCommandName() {
     return getRefactoringName();
+  }
+
+  @Override
+  protected @Nullable String getRefactoringId() {
+    return "refactoring.python.move.module.members";
+  }
+
+  @Override
+  protected @Nullable RefactoringEventData getBeforeData() {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElements(ContainerUtil.mapNotNull(myElements, SmartPsiElementPointer::getElement));
+    return data;
+  }
+
+  @Override
+  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElements(ContainerUtil.mapNotNull(myElements, SmartPsiElementPointer::getElement));
+    return data;
   }
 
   private static class MyUsageInfo extends UsageInfo {
