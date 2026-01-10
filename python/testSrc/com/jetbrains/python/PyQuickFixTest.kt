@@ -1177,6 +1177,18 @@ class PyQuickFixTest : PyTestCase() {
     )
   }
 
+  fun testImplementAbstractNestedIndentation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37) {
+      doInspectionTest(
+        "ImplementAbstractNestedIndentation.py",
+        PyAbstractClassInspection::class.java,
+        PyBundle.message("QFIX.NAME.implement.methods"),
+        true,
+        true
+      )
+    }
+  }
+
   fun testRemovingUnderscoresInNumericLiterals() {
     myFixture.configureByText(PythonFileType.INSTANCE, "1_0_0")
 
