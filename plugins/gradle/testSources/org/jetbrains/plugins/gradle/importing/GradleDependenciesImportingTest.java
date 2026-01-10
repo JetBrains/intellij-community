@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.RunAll;
 import com.intellij.util.ArrayUtil;
@@ -29,6 +30,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
@@ -481,6 +483,44 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
       assertEquals("Wrong library dependency", depP2Jar.getUrl(), libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
     }
+  }
+
+  @Test
+  public void testLocalFileDepsImportedAsModuleLibraries_nonExistentPath() throws Exception {
+    Registry.get("gradle.phased.sync.bridge.disabled").setValue(true, getTestRootDisposable());
+
+    var jarPath = "deps/dep.jar";
+    var expectedPath = JpsPathUtil.getLibraryRootUrl(getProjectPath(jarPath));
+
+    String config = createBuildScriptBuilder()
+      .allprojects(p -> {
+        p
+          .withJavaPlugin()
+          .addImplementationDependency(p.code("files('" + jarPath + "')"));
+      })
+      .generate();
+
+      importProject(config);
+
+      assertModules("project", "project.main", "project.test");
+
+      var moduleLibDeps = getModuleLibDeps("project.main", "Gradle: dep.jar");
+      assertEquals("Should have a single module level dependency", 1, moduleLibDeps.size());
+
+      var libDep = moduleLibDeps.getFirst();
+      assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
+      assertEquals("URLs must be in the correct format", expectedPath, libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
+
+      // Try another import attempt and make sure it doesn't throw anything
+      importProject();
+      assertModules("project", "project.main", "project.test");
+
+      moduleLibDeps = getModuleLibDeps("project.main", "Gradle: dep.jar");
+      assertEquals("Should have a single module level dependency", 1, moduleLibDeps.size());
+
+      libDep = moduleLibDeps.getFirst();
+      assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
+      assertEquals("URLs must be in the correct format", expectedPath, libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
   }
 
   @Test
