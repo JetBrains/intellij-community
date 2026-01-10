@@ -3,9 +3,9 @@ module(
     version = "0.1",
 )
 
-bazel_dep(name = "rules_java", version = "8.14.0")
-bazel_dep(name = "rules_kotlin", version = "2.2.0")
-bazel_dep(name = "rules_jvm_external", version = "6.7")
+bazel_dep(name = "rules_java", version = "9.3.0")
+bazel_dep(name = "rules_kotlin", version = "2.2.2")
+bazel_dep(name = "rules_jvm_external", version = "6.9")
 
 # https://github.com/JetBrains/rules_jvm_external/commits/no-windows-check
 # https://github.com/JetBrains/rules_jvm_external/commit/4d575639286760f67ae1ce416c4e922dc269851c
@@ -55,7 +55,7 @@ register_toolchains(
     dev_dependency = True,
 )  # `dev_dependency = True` to avoid registering toolchains in modules using that module
 
-bazel_dep(name = "rules_python", version = "1.6.3")
+bazel_dep(name = "rules_python", version = "1.7.0")
 
 # Use custom remote_java_tools_windows with vc_redist .dll files due to https://github.com/bazelbuild/rules_java/issues/316
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")

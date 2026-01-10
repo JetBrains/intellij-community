@@ -1,10 +1,10 @@
 module(name = "community")
 
-bazel_dep(name = "bazel_features", version = "1.32.0")
-bazel_dep(name = "bazel_skylib", version = "1.8.1")
+bazel_dep(name = "bazel_features", version = "1.39.0")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "rules_kotlin", version = "2.2.0")
-bazel_dep(name = "rules_java", version = "8.14.0")
+bazel_dep(name = "rules_kotlin", version = "2.2.2")
+bazel_dep(name = "rules_java", version = "9.3.0")
 bazel_dep(name = "rules_jvm", version = "0.0.1")
 bazel_dep(name = "lib")
 local_path_override(
@@ -41,7 +41,7 @@ register_toolchains(
     dev_dependency = True,
 )  # `dev_dependency = True` to avoid registering toolchains in modules using that module, see https://github.com/bazel-contrib/toolchains_llvm/issues/569
 
-bazel_dep(name = "rules_python", version = "1.6.3")
+bazel_dep(name = "rules_python", version = "1.7.0")
 
 kotlin_test_deps = use_repo_rule("//plugins/kotlin:kotlin_test_dependencies.bzl", "kotlin_test_deps")
 kotlin_test_deps(name = "kotlin_test_deps")
@@ -52,13 +52,6 @@ http_file(
     sha256 = "ba7a0aa7bbb813acab3b0edf36c0a15449f41896993c97e0d133fa4ea0a3e6d9",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.79/debugger-agent-1.79.jar",
 )
-
-# GraalVM
-# git_override(
-#     module_name = "rules_graalvm",
-#     remote = "https://github.com/develar/rules_graalvm",
-#     commit = "9d12232f7798df7087952314600f1ee0f4e4f9f7",
-# )
 
 jbr_toolchains = use_extension("@community//build:jbr-toolchains.bzl", "jbr_toolchains")
 
