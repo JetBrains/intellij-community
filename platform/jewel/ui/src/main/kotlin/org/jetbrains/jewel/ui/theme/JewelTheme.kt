@@ -61,6 +61,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalSelectableLazyColumnStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSimpleListItemStyleStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSliderStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSpeedSearchStyle
+import org.jetbrains.jewel.ui.component.styling.LocalTableStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
@@ -78,6 +79,7 @@ import org.jetbrains.jewel.ui.component.styling.SliderStyle
 import org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle
 import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TabStyle
+import org.jetbrains.jewel.ui.component.styling.TableStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
@@ -195,6 +197,9 @@ public val JewelTheme.Companion.speedSearchStyle: SpeedSearchStyle
 
 public val JewelTheme.Companion.searchMatchStyle: SearchMatchStyle
     @Composable @ReadOnlyComposable get() = LocalSearchMatchStyle.current
+
+public val JewelTheme.Companion.tableStyle: TableStyle
+    @Composable @ReadOnlyComposable get() = LocalTableStyle.current
 
 @Composable
 public fun BaseJewelTheme(theme: ThemeDefinition, styling: ComponentStyling, content: @Composable () -> Unit) {

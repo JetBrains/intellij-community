@@ -27,6 +27,7 @@ f:org.jetbrains.jewel.samples.showcase.ShowcaseIcons$Components
 - f:getSegmentedControls():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getSlider():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getSplitlayout():org.jetbrains.jewel.ui.icon.PathIconKey
+- f:getTable():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getTabs():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getTextArea():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getTextField():org.jetbrains.jewel.ui.icon.PathIconKey
@@ -103,13 +104,16 @@ f:org.jetbrains.jewel.samples.showcase.views.KeyBinding$Companion
 f:org.jetbrains.jewel.samples.showcase.views.ViewInfo
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.samples.showcase.views.ViewInfo$Companion
-- <init>(java.lang.String,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.samples.showcase.views.KeyBinding,kotlin.jvm.functions.Function2):V
+- b:<init>(java.lang.String,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.samples.showcase.views.KeyBinding,kotlin.jvm.functions.Function2):V
 - b:<init>(java.lang.String,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.samples.showcase.views.KeyBinding,kotlin.jvm.functions.Function2,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.samples.showcase.views.KeyBinding,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2):V
+- b:<init>(java.lang.String,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.samples.showcase.views.KeyBinding,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - equals(java.lang.Object):Z
 - f:getContent():kotlin.jvm.functions.Function2
 - f:getIconKey():org.jetbrains.jewel.ui.icon.IconKey
 - f:getKeyboardShortcut():org.jetbrains.jewel.samples.showcase.views.KeyBinding
 - f:getTitle():java.lang.String
+- f:getTitlebarMenu():kotlin.jvm.functions.Function2
 - hashCode():I
 f:org.jetbrains.jewel.samples.showcase.views.ViewInfo$Companion
 f:org.jetbrains.jewel.samples.showcase.views.ViewInfoKt
