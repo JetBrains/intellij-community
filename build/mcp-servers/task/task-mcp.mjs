@@ -4,48 +4,78 @@
 import {createMcpServer} from './mcp-rpc.mjs'
 import {bd, bdJson} from './bd-client.mjs'
 
-// 5 smart tools: task_status, task_epic, task_progress, task_decompose, task_done
+// Parse notes into structured sections
+function parseNotes(notes) {
+  const sections = {completed: [], in_progress: '', next: '', decisions: []}
+  if (!notes) return sections
+
+  for (const line of notes.split('\n')) {
+    if (line.startsWith('COMPLETED:')) {
+      sections.completed.push(line.replace('COMPLETED:', '').trim())
+    } else if (line.startsWith('IN PROGRESS:')) {
+      sections.in_progress = line.replace('IN PROGRESS:', '').trim()
+    } else if (line.startsWith('NEXT:')) {
+      sections.next = line.replace('NEXT:', '').trim()
+    } else if (line.startsWith('KEY DECISION:')) {
+      sections.decisions.push(line.replace('KEY DECISION:', '').trim())
+    }
+  }
+  return sections
+}
+
+// Build notes string from sections
+function buildNotes(sections) {
+  const parts = []
+  for (const item of sections.completed) parts.push(`COMPLETED: ${item}`)
+  if (sections.in_progress) parts.push(`IN PROGRESS: ${sections.in_progress}`)
+  if (sections.next) parts.push(`NEXT: ${sections.next}`)
+  for (const item of sections.decisions) parts.push(`KEY DECISION: ${item}`)
+  return parts.join('\n')
+}
+
+// 5 action-driven tools
 const tools = [
   {
     name: 'task_status',
-    description: 'Get current task state. No args = overview (in-progress + ready). With id = full issue details.',
+    description: 'Get state and next action. Pass user_request for new tasks.',
     inputSchema: {
       type: 'object',
       properties: {
-        id: {type: 'string', description: 'Optional: specific issue ID for full details'}
+        id: {type: 'string', description: 'Issue ID for full details'},
+        user_request: {type: 'string', description: 'User task description ($ARGUMENTS from /task command)'}
       }
     }
   },
   {
     name: 'task_epic',
-    description: 'Create new epic or resume existing. Returns epic details.',
+    description: 'Create new epic or resume existing. Returns action for next step.',
     inputSchema: {
       type: 'object',
       properties: {
         title: {type: 'string', description: 'Epic title (required for new)'},
         description: {type: 'string', description: 'WHAT and WHY (required for new)'},
-        resume: {type: 'string', description: 'Resume existing epic by ID instead of creating'}
+        resume: {type: 'string', description: 'Resume existing by ID'}
       }
     }
   },
   {
     name: 'task_progress',
-    description: 'Update progress notes. Auto-appends to existing notes.',
+    description: 'Update progress notes. Returns action to continue.',
     inputSchema: {
       type: 'object',
       properties: {
-        id: {type: 'string', description: 'Issue ID to update'},
-        completed: {type: 'string', description: 'What was completed (appends to COMPLETED)'},
-        working_on: {type: 'string', description: 'Current work (replaces IN PROGRESS)'},
-        next: {type: 'string', description: 'Next action (replaces NEXT)'},
-        decision: {type: 'string', description: 'Key decision made (appends to KEY DECISIONS)'}
+        id: {type: 'string', description: 'Issue ID'},
+        completed: {type: 'string', description: 'What was completed (appends)'},
+        working_on: {type: 'string', description: 'Current work (replaces)'},
+        next: {type: 'string', description: 'Next action (replaces)'},
+        decision: {type: 'string', description: 'Key decision (appends)'}
       },
       required: ['id']
     }
   },
   {
     name: 'task_decompose',
-    description: 'Decompose epic into sub-issues. Creates all sub-issues with dependencies in one call.',
+    description: 'Create sub-issues under epic. Returns action for approval flow.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -55,27 +85,23 @@ const tools = [
           items: {
             type: 'object',
             properties: {
-              title: {type: 'string', description: 'Sub-issue title'},
+              title: {type: 'string'},
               description: {type: 'string', description: 'WHAT and WHY'},
               acceptance: {type: 'string', description: 'Testable outcomes'},
               design: {type: 'string', description: 'Technical approach'},
-              depends_on: {
-                type: 'array',
-                items: {type: 'integer'},
-                description: 'Indices (0-based) of sub-issues this depends on'
-              }
+              depends_on: {type: 'array', items: {type: 'integer'}, description: '0-based indices'}
             },
             required: ['title', 'description', 'acceptance', 'design']
           }
         },
-        update_epic_acceptance: {type: 'string', description: 'Update epic acceptance criteria'}
+        update_epic_acceptance: {type: 'string', description: 'Update epic acceptance'}
       },
       required: ['epic_id', 'sub_issues']
     }
   },
   {
     name: 'task_done',
-    description: 'Complete issue and get next ready. Auto-updates epic progress.',
+    description: 'Close issue. Returns action for next work or epic closure.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -90,119 +116,108 @@ const tools = [
 const toolHandlers = {
   task_status: (args) => {
     if (args.id) {
-      // Full details for specific issue
-      return bdJson(['show', args.id])
+      const issue = bdJson(['show', args.id])
+      // For specific issue, provide contextual action
+      if (issue.status === 'in_progress') {
+        const notes = parseNotes(issue.notes)
+        issue.action = notes.next
+          ? `Continue: ${notes.next}`
+          : `Work on this issue. When done: task_done(id="${args.id}", summary="...")`
+      }
+      return issue
     }
 
     // Overview: in-progress + ready
     const inProgressList = bdJson(['list', '--status', 'in_progress'])
     const readyList = bdJson(['ready', '--limit', '10'])
+    const inProgress = inProgressList.issues?.[0] || null
+    const ready = readyList.issues || []
 
-    let suggestion
-    if (inProgressList.issues?.length > 0) {
-      const current = inProgressList.issues[0]
-      suggestion = `Continue ${current.id}: ${current.title}`
-    }
-    else if (readyList.issues?.length > 0) {
-      suggestion = 'Pick from ready list'
-    }
-    else {
-      suggestion = 'Create epic'
+    let action
+    if (inProgress) {
+      if (args.user_request) {
+        // Conflict: has in-progress but user provided new task
+        action = `In-progress: ${inProgress.id} "${inProgress.title}". New request provided. AskUserQuestion: continue current or create new epic?`
+      } else {
+        const notes = parseNotes(inProgress.notes)
+        action = notes.next
+          ? `Continue: ${notes.next}`
+          : `Resume ${inProgress.id}: ${inProgress.title}. Update: task_progress(id="${inProgress.id}", working_on="...")`
+      }
+    } else if (args.user_request) {
+      // No in-progress, user provided task - create epic
+      action = `Create epic: task_epic(title="[summarize request]", description="USER REQUEST: ${args.user_request}")`
+    } else if (ready.length > 0) {
+      action = `Start ${ready[0].id}: ${ready[0].title}. Run: task_epic(resume="${ready[0].id}")`
+    } else {
+      action = 'No tasks. Ask user what to work on.'
     }
 
-    return {
-      in_progress: inProgressList.issues?.[0] || null,
-      ready: readyList.issues || [],
-      suggestion
-    }
+    return {in_progress: inProgress, ready, action}
   },
 
   task_epic: (args) => {
     if (args.resume) {
-      // Resume existing issue (any type - epic, task, etc. are all valid)
       const issue = bdJson(['show', args.resume])
       bd(['update', args.resume, '--status', 'in_progress'])
-      return {id: args.resume, title: issue.title, type: issue.type, is_new: false}
+
+      // Check if has sub-issues
+      const hasChildren = issue.children && issue.children.length > 0
+      const action = hasChildren
+        ? `Check sub-issues: task_status(id="${args.resume}")`
+        : `Explore codebase, then: task_decompose(epic_id="${args.resume}", sub_issues=[...])`
+
+      return {id: args.resume, title: issue.title, type: issue.type, is_new: false, action}
     }
 
-    // Create new epic
     if (!args.title || !args.description) {
       throw new Error('title and description required for new epic')
     }
+
     const id = bd(['create', '--title', args.title, '--type', 'epic', '--description', args.description, '--acceptance', 'PENDING', '--design', 'PENDING', '--silent'])
     bd(['update', id, '--status', 'in_progress'])
-    return {id, title: args.title, is_new: true}
+
+    return {
+      id,
+      title: args.title,
+      is_new: true,
+      action: `Explore codebase, then: task_decompose(epic_id="${id}", sub_issues=[...])`
+    }
   },
 
   task_progress: (args) => {
-    // Get existing notes
     const issue = bdJson(['show', args.id])
-    const existingNotes = issue.notes || ''
+    const sections = parseNotes(issue.notes)
 
-    // Parse existing sections
-    const sections = {
-      completed: [],
-      in_progress: '',
-      next: '',
-      decisions: []
-    }
+    // Apply updates
+    if (args.completed) sections.completed.push(args.completed)
+    if (args.working_on !== undefined) sections.in_progress = args.working_on
+    if (args.next !== undefined) sections.next = args.next
+    if (args.decision) sections.decisions.push(args.decision)
 
-    for (const line of existingNotes.split('\n')) {
-      if (line.startsWith('COMPLETED:')) {
-        sections.completed.push(line.replace('COMPLETED:', '').trim())
-      }
-      else if (line.startsWith('IN PROGRESS:')) {
-        sections.in_progress = line.replace('IN PROGRESS:', '').trim()
-      }
-      else if (line.startsWith('NEXT:')) {
-        sections.next = line.replace('NEXT:', '').trim()
-      }
-      else if (line.startsWith('KEY DECISION:')) {
-        sections.decisions.push(line.replace('KEY DECISION:', '').trim())
-      }
-    }
-
-    // Apply updates (append for completed/decisions, replace for in_progress/next)
-    if (args.completed) {
-      sections.completed.push(args.completed)
-    }
-    if (args.working_on !== undefined) {
-      sections.in_progress = args.working_on
-    }
-    if (args.next !== undefined) {
-      sections.next = args.next
-    }
-    if (args.decision) {
-      sections.decisions.push(args.decision)
-    }
-
-    // Build new notes
-    const parts = []
-    for (const item of sections.completed) {
-      parts.push(`COMPLETED: ${item}`)
-    }
-    if (sections.in_progress) {
-      parts.push(`IN PROGRESS: ${sections.in_progress}`)
-    }
-    if (sections.next) {
-      parts.push(`NEXT: ${sections.next}`)
-    }
-    for (const item of sections.decisions) {
-      parts.push(`KEY DECISION: ${item}`)
-    }
-
-    const newNotes = parts.join('\n')
+    const newNotes = buildNotes(sections)
     bd(['update', args.id, '--notes', newNotes])
-    return {success: true, notes: newNotes}
+
+    // Determine action
+    let action
+    if (sections.next) {
+      action = `Continue: ${sections.next}`
+    } else if (sections.in_progress) {
+      action = `Working on: ${sections.in_progress}. When done: task_done(id="${args.id}", summary="...")`
+    } else {
+      action = `Update next step or complete: task_done(id="${args.id}", summary="...")`
+    }
+
+    return {success: true, notes: newNotes, action}
   },
 
   task_decompose: (args) => {
-    // Validate depends_on indices before creating anything
+    // Validate depends_on indices
     args.sub_issues.forEach((sub, i) => {
       if (sub.depends_on) {
         for (const depIdx of sub.depends_on) {
           if (depIdx < 0 || depIdx >= i) {
-            throw new Error(`Invalid depends_on[${depIdx}] in sub_issue[${i}]: must reference earlier sub-issue (0 to ${i - 1})`)
+            throw new Error(`Invalid depends_on[${depIdx}] in sub_issue[${i}]: must reference 0 to ${i - 1}`)
           }
         }
       }
@@ -217,82 +232,63 @@ const toolHandlers = {
     // Add dependencies
     args.sub_issues.forEach((sub, i) => {
       if (sub.depends_on) {
-        sub.depends_on.forEach(depIdx => {
-          bd(['dep', 'add', ids[i], ids[depIdx]])
-        })
+        sub.depends_on.forEach(depIdx => bd(['dep', 'add', ids[i], ids[depIdx]]))
       }
     })
 
-    // Update epic acceptance if provided
     if (args.update_epic_acceptance) {
       bd(['update', args.epic_id, '--acceptance', args.update_epic_acceptance])
     }
 
-    return {ids, epic_id: args.epic_id}
+    return {
+      ids,
+      epic_id: args.epic_id,
+      action: 'Sub-issues created. Write plan file (epic ID pointer), then ExitPlanMode for approval.'
+    }
   },
 
   task_done: (args) => {
-    // Close the issue
     bd(['close', args.id, '--reason', args.summary])
 
-    // Get issue info to find parent
     let epicStatus = null
     let nextReady = null
-    let error = null
+    let parentId = null
 
     try {
       const issue = bdJson(['show', args.id])
-      if (issue.parent) {
-        // Get sibling ready issues
-        const readyList = bdJson(['ready', '--parent', issue.parent])
+      parentId = issue.parent
+
+      if (parentId) {
+        const readyList = bdJson(['ready', '--parent', parentId])
         nextReady = readyList.issues?.[0] || null
 
-        // Get epic status
-        const epicIssue = bdJson(['show', issue.parent])
+        const epicIssue = bdJson(['show', parentId])
         const children = epicIssue.children || []
-        const completed = children.filter(c => c.status === 'closed').length + 1 // +1 for just closed
-        epicStatus = {
-          completed,
-          remaining: children.length - completed
-        }
+        const completed = children.filter(c => c.status === 'closed').length + 1
+        epicStatus = {completed, remaining: children.length - completed}
       }
-    }
-    catch (e) {
-      error = `Failed to get next/status: ${e.message}`
+    } catch (e) {
+      // Continue with partial info
     }
 
-    const result = {
-      closed: {id: args.id},
-      next_ready: nextReady,
-      epic_status: epicStatus
-    }
-    if (error) {
-      result.error = error
-    }
-    
-    // Add actionable suggestion for next steps
-    if (epicStatus?.remaining === 0 && epicStatus?.completed > 0) {
-      try {
-        const issue = bdJson(['show', args.id])
-        if (issue.parent) {
-          result.suggestion = `All sub-issues complete! Call task_done(id="${issue.parent}", summary="...") to close epic`
-        }
-      } catch (e) {
-        // Ignore - we already have the closed issue info
-      }
+    // Determine action
+    let action
+    if (epicStatus?.remaining === 0 && parentId) {
+      action = `ALL SUB-ISSUES DONE. Close epic NOW: task_done(id="${parentId}", summary="...")`
     } else if (nextReady) {
-      result.suggestion = `Continue with ${nextReady.id}: ${nextReady.title}`
+      action = `Next: ${nextReady.id} - ${nextReady.title}. Start: task_progress(id="${nextReady.id}", working_on="...")`
+    } else if (parentId) {
+      action = `Check for more work: task_status(id="${parentId}")`
+    } else {
+      action = 'Epic closed. Check task_status() for more work.'
     }
-    
-    return result
+
+    return {closed: {id: args.id}, next_ready: nextReady, epic_status: epicStatus, action}
   }
 }
 
 createMcpServer({
-  serverInfo: {
-    name: 'task',
-    version: '1.0.0'
-  },
+  serverInfo: {name: 'task', version: '2.0.0'},
   tools,
   toolHandlers
 })
