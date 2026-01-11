@@ -42,6 +42,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSplitButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalPopupAdTextStyle
 import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalRadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalScrollbarStyle
@@ -58,6 +59,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTransparentIconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalUndecoratedDropdownStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.component.styling.PopupAdTextStyle
 import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
@@ -73,6 +75,7 @@ import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
+import org.jetbrains.jewel.ui.component.styling.fallbackPopupAdTextStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSearchMatchStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSpeedSearchStyle
 
@@ -99,6 +102,7 @@ public class DefaultComponentStyling(
     public val linkStyle: LinkStyle,
     public val menuStyle: MenuStyle,
     public val outlinedButtonStyle: ButtonStyle,
+    public val popupAdTextStyle: PopupAdTextStyle,
     public val popupContainerStyle: PopupContainerStyle,
     public val outlinedSplitButtonStyle: SplitButtonStyle,
     public val radioButtonStyle: RadioButtonStyle,
@@ -115,6 +119,82 @@ public class DefaultComponentStyling(
     public val speedSearchStyle: SpeedSearchStyle,
     public val searchMatchStyle: SearchMatchStyle,
 ) : ComponentStyling {
+    @Deprecated("Use the variant with popupAdTextStyle.", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        checkboxStyle: CheckboxStyle,
+        chipStyle: ChipStyle,
+        circularProgressStyle: CircularProgressStyle,
+        defaultBannerStyle: DefaultBannerStyles,
+        comboBoxStyle: ComboBoxStyle,
+        defaultButtonStyle: ButtonStyle,
+        defaultDropdownStyle: DropdownStyle,
+        defaultSplitButtonStyle: SplitButtonStyle,
+        defaultTabStyle: TabStyle,
+        dividerStyle: DividerStyle,
+        editorTabStyle: TabStyle,
+        groupHeaderStyle: GroupHeaderStyle,
+        horizontalProgressBarStyle: HorizontalProgressBarStyle,
+        iconButtonStyle: IconButtonStyle,
+        transparentIconButtonStyle: IconButtonStyle,
+        inlineBannerStyle: InlineBannerStyles,
+        lazyTreeStyle: LazyTreeStyle,
+        linkStyle: LinkStyle,
+        menuStyle: MenuStyle,
+        outlinedButtonStyle: ButtonStyle,
+        popupContainerStyle: PopupContainerStyle,
+        outlinedSplitButtonStyle: SplitButtonStyle,
+        radioButtonStyle: RadioButtonStyle,
+        scrollbarStyle: ScrollbarStyle,
+        segmentedControlButtonStyle: SegmentedControlButtonStyle,
+        segmentedControlStyle: SegmentedControlStyle,
+        selectableLazyColumnStyle: SelectableLazyColumnStyle,
+        simpleListItemStyle: SimpleListItemStyle,
+        sliderStyle: SliderStyle,
+        textAreaStyle: TextAreaStyle,
+        textFieldStyle: TextFieldStyle,
+        tooltipStyle: TooltipStyle,
+        undecoratedDropdownStyle: DropdownStyle,
+        speedSearchStyle: SpeedSearchStyle,
+        searchMatchStyle: SearchMatchStyle,
+    ) : this(
+        checkboxStyle,
+        chipStyle,
+        circularProgressStyle,
+        defaultBannerStyle,
+        comboBoxStyle,
+        defaultButtonStyle,
+        defaultDropdownStyle,
+        defaultSplitButtonStyle,
+        defaultTabStyle,
+        dividerStyle,
+        editorTabStyle,
+        groupHeaderStyle,
+        horizontalProgressBarStyle,
+        iconButtonStyle,
+        transparentIconButtonStyle,
+        inlineBannerStyle,
+        lazyTreeStyle,
+        linkStyle,
+        menuStyle,
+        outlinedButtonStyle,
+        popupAdTextStyle = fallbackPopupAdTextStyle(),
+        popupContainerStyle,
+        outlinedSplitButtonStyle,
+        radioButtonStyle,
+        scrollbarStyle,
+        segmentedControlButtonStyle,
+        segmentedControlStyle,
+        selectableLazyColumnStyle,
+        simpleListItemStyle,
+        sliderStyle,
+        textAreaStyle,
+        textFieldStyle,
+        tooltipStyle,
+        undecoratedDropdownStyle,
+        speedSearchStyle,
+        searchMatchStyle,
+    )
+
     @Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.HIDDEN)
     public constructor(
         checkboxStyle: CheckboxStyle,
@@ -171,6 +251,7 @@ public class DefaultComponentStyling(
         linkStyle,
         menuStyle,
         outlinedButtonStyle,
+        popupAdTextStyle = fallbackPopupAdTextStyle(),
         popupContainerStyle,
         outlinedSplitButtonStyle,
         radioButtonStyle,
@@ -243,6 +324,7 @@ public class DefaultComponentStyling(
         linkStyle,
         menuStyle,
         outlinedButtonStyle,
+        popupAdTextStyle = fallbackPopupAdTextStyle(),
         popupContainerStyle,
         outlinedSplitButtonStyle,
         radioButtonStyle,
@@ -285,6 +367,7 @@ public class DefaultComponentStyling(
             LocalLinkStyle provides linkStyle,
             LocalMenuStyle provides menuStyle,
             LocalOutlinedButtonStyle provides outlinedButtonStyle,
+            LocalPopupAdTextStyle provides popupAdTextStyle,
             LocalPopupContainerStyle provides popupContainerStyle,
             LocalOutlinedSplitButtonStyle provides outlinedSplitButtonStyle,
             LocalRadioButtonStyle provides radioButtonStyle,
@@ -328,6 +411,7 @@ public class DefaultComponentStyling(
         if (linkStyle != other.linkStyle) return false
         if (menuStyle != other.menuStyle) return false
         if (outlinedButtonStyle != other.outlinedButtonStyle) return false
+        if (popupAdTextStyle != other.popupAdTextStyle) return false
         if (popupContainerStyle != other.popupContainerStyle) return false
         if (outlinedSplitButtonStyle != other.outlinedSplitButtonStyle) return false
         if (radioButtonStyle != other.radioButtonStyle) return false
@@ -368,6 +452,7 @@ public class DefaultComponentStyling(
         result = 31 * result + linkStyle.hashCode()
         result = 31 * result + menuStyle.hashCode()
         result = 31 * result + outlinedButtonStyle.hashCode()
+        result = 31 * result + popupAdTextStyle.hashCode()
         result = 31 * result + popupContainerStyle.hashCode()
         result = 31 * result + outlinedSplitButtonStyle.hashCode()
         result = 31 * result + radioButtonStyle.hashCode()
@@ -408,6 +493,7 @@ public class DefaultComponentStyling(
             "linkStyle=$linkStyle, " +
             "menuStyle=$menuStyle, " +
             "outlinedButtonStyle=$outlinedButtonStyle, " +
+            "popupAdTextStyle=$popupAdTextStyle, " +
             "popupContainerStyle=$popupContainerStyle, " +
             "outlinedSplitButtonStyle=$outlinedSplitButtonStyle, " +
             "radioButtonStyle=$radioButtonStyle, " +
