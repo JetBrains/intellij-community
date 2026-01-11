@@ -1477,6 +1477,7 @@
           <abbreviation value="uii"/>
           <mouse-shortcut keymap="$default" keystroke="control alt button1"/>
         </action>
+        <action id="ToggleComposeLayoutBounds" internal="true" class="com.intellij.internal.inspector.compose.ToggleComposeLayoutBoundsAction" />
         <action id="CopyUiLabel" internal="true" class="com.intellij.internal.inspector.CopyUiLabelAction">
           <mouse-shortcut keymap="$default" keystroke="control alt button3"/>
           <mouse-shortcut keymap="$default" keystroke="control alt shift button3"/>
