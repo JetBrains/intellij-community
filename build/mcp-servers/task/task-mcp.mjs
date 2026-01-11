@@ -2,15 +2,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import {createMcpServer} from './mcp-rpc.mjs'
-import {bd, bdJson} from './bd-client.mjs'
+import {bd, bdJson, bdShowOne} from './bd-client.mjs'
 
-// Parse notes into structured sections
+// Parse notes into structured sections (preserves unknown lines)
 function parseNotes(notes) {
-  const sections = {completed: [], in_progress: '', next: '', decisions: []}
+  const sections = {findings: [], completed: [], in_progress: '', next: '', decisions: [], other: []}
   if (!notes) return sections
 
   for (const line of notes.split('\n')) {
-    if (line.startsWith('COMPLETED:')) {
+    if (line.startsWith('FINDING:')) {
+      sections.findings.push(line.replace('FINDING:', '').trim())
+    } else if (line.startsWith('COMPLETED:')) {
       sections.completed.push(line.replace('COMPLETED:', '').trim())
     } else if (line.startsWith('IN PROGRESS:')) {
       sections.in_progress = line.replace('IN PROGRESS:', '').trim()
@@ -18,6 +20,9 @@ function parseNotes(notes) {
       sections.next = line.replace('NEXT:', '').trim()
     } else if (line.startsWith('KEY DECISION:')) {
       sections.decisions.push(line.replace('KEY DECISION:', '').trim())
+    } else if (line.trim()) {
+      // Preserve non-empty lines that don't match known prefixes
+      sections.other.push(line)
     }
   }
   return sections
@@ -26,6 +31,9 @@ function parseNotes(notes) {
 // Build notes string from sections
 function buildNotes(sections) {
   const parts = []
+  // Preserve unknown lines at the top
+  for (const item of (sections.other || [])) parts.push(item)
+  for (const item of sections.findings) parts.push(`FINDING: ${item}`)
   for (const item of sections.completed) parts.push(`COMPLETED: ${item}`)
   if (sections.in_progress) parts.push(`IN PROGRESS: ${sections.in_progress}`)
   if (sections.next) parts.push(`NEXT: ${sections.next}`)
@@ -65,10 +73,12 @@ const tools = [
       type: 'object',
       properties: {
         id: {type: 'string', description: 'Issue ID'},
+        finding: {type: 'string', description: 'Discovery during exploration - files, patterns, dependencies (appends)'},
         completed: {type: 'string', description: 'What was completed (appends)'},
         working_on: {type: 'string', description: 'Current work (replaces)'},
         next: {type: 'string', description: 'Next action (replaces)'},
-        decision: {type: 'string', description: 'Key decision (appends)'}
+        decision: {type: 'string', description: 'Key decision made (appends)'},
+        status: {type: 'string', enum: ['in_progress', 'blocked', 'deferred'], description: 'Set status (in_progress to resume blocked/deferred)'}
       },
       required: ['id']
     }
@@ -116,33 +126,53 @@ const tools = [
 const toolHandlers = {
   task_status: (args) => {
     if (args.id) {
-      const issue = bdJson(['show', args.id])
-      // For specific issue, provide contextual action
+      const issue = bdShowOne(args.id)
+      if (!issue) {
+        return {error: `Issue ${args.id} not found`}
+      }
+      // For specific issue, provide contextual action based on status
+      const notes = parseNotes(issue.notes)
       if (issue.status === 'in_progress') {
-        const notes = parseNotes(issue.notes)
         issue.action = notes.next
           ? `Continue: ${notes.next}`
           : `Work on this issue. When done: task_done(id="${args.id}", summary="...")`
+      } else if (issue.status === 'open') {
+        issue.action = `Start: task_epic(resume="${args.id}") or task_progress(id="${args.id}", working_on="...")`
+      } else if (issue.status === 'blocked') {
+        issue.action = `Blocked. To unblock: task_progress(id="${args.id}", status="in_progress")`
+      } else if (issue.status === 'deferred') {
+        issue.action = `Deferred. To resume: task_progress(id="${args.id}", status="in_progress")`
       }
       return issue
     }
 
-    // Overview: in-progress + ready
+    // Overview: in-progress + ready + blocked
     const inProgressList = bdJson(['list', '--status', 'in_progress'])
+    const blockedList = bdJson(['list', '--status', 'blocked'])
     const readyList = bdJson(['ready', '--limit', '10'])
-    const inProgress = inProgressList.issues?.[0] || null
-    const ready = readyList.issues || []
+    const inProgress = inProgressList.length > 0 ? inProgressList : null
+    const blocked = blockedList || []
+    const ready = readyList || []
 
     let action
     if (inProgress) {
-      if (args.user_request) {
-        // Conflict: has in-progress but user provided new task
-        action = `In-progress: ${inProgress.id} "${inProgress.title}". New request provided. AskUserQuestion: continue current or create new epic?`
+      if (inProgress.length > 1) {
+        // Multiple in-progress: let user select
+        const items = inProgress.map(i => `${i.id}: ${i.title}`).join(', ')
+        if (args.user_request) {
+          action = `Multiple in-progress: ${items}. New request: "${args.user_request}". AskUserQuestion: which to resume, or create new epic?`
+        } else {
+          action = `Multiple in-progress: ${items}. AskUserQuestion: which to resume?`
+        }
+      } else if (args.user_request) {
+        // Single in-progress + new request: conflict
+        action = `In-progress: ${inProgress[0].id} "${inProgress[0].title}". New request provided. AskUserQuestion: continue current or create new epic?`
       } else {
-        const notes = parseNotes(inProgress.notes)
+        // Single in-progress: resume
+        const notes = parseNotes(inProgress[0].notes)
         action = notes.next
           ? `Continue: ${notes.next}`
-          : `Resume ${inProgress.id}: ${inProgress.title}. Update: task_progress(id="${inProgress.id}", working_on="...")`
+          : `Resume ${inProgress[0].id}: ${inProgress[0].title}. Update: task_progress(id="${inProgress[0].id}", working_on="...")`
       }
     } else if (args.user_request) {
       // No in-progress, user provided task - create epic
@@ -153,12 +183,15 @@ const toolHandlers = {
       action = 'No tasks. Ask user what to work on.'
     }
 
-    return {in_progress: inProgress, ready, action}
+    return {in_progress: inProgress, blocked: blocked.length > 0 ? blocked : undefined, ready, action}
   },
 
   task_epic: (args) => {
     if (args.resume) {
-      const issue = bdJson(['show', args.resume])
+      const issue = bdShowOne(args.resume)
+      if (!issue) {
+        return {error: `Issue ${args.resume} not found`}
+      }
       bd(['update', args.resume, '--status', 'in_progress'])
 
       // Check if has sub-issues
@@ -186,21 +219,33 @@ const toolHandlers = {
   },
 
   task_progress: (args) => {
-    const issue = bdJson(['show', args.id])
+    const issue = bdShowOne(args.id)
+    if (!issue) {
+      return {error: `Issue ${args.id} not found`}
+    }
     const sections = parseNotes(issue.notes)
 
     // Apply updates
+    if (args.finding) sections.findings.push(args.finding)
     if (args.completed) sections.completed.push(args.completed)
     if (args.working_on !== undefined) sections.in_progress = args.working_on
     if (args.next !== undefined) sections.next = args.next
     if (args.decision) sections.decisions.push(args.decision)
 
     const newNotes = buildNotes(sections)
-    bd(['update', args.id, '--notes', newNotes])
+    const updateArgs = ['update', args.id, '--notes', newNotes]
+    if (args.status) updateArgs.push('--status', args.status)
+    bd(updateArgs)
 
     // Determine action
     let action
-    if (sections.next) {
+    if (args.status === 'blocked' || args.status === 'deferred') {
+      action = `Issue ${args.status}. Pick next: task_status()`
+    } else if (args.status === 'in_progress') {
+      action = sections.next
+        ? `Resumed. Continue: ${sections.next}`
+        : `Resumed. Update: task_progress(id="${args.id}", working_on="...")`
+    } else if (sections.next) {
       action = `Continue: ${sections.next}`
     } else if (sections.in_progress) {
       action = `Working on: ${sections.in_progress}. When done: task_done(id="${args.id}", summary="...")`
@@ -208,7 +253,7 @@ const toolHandlers = {
       action = `Update next step or complete: task_done(id="${args.id}", summary="...")`
     }
 
-    return {success: true, notes: newNotes, action}
+    return {success: true, notes: newNotes, status: args.status || issue.status, action}
   },
 
   task_decompose: (args) => {
@@ -253,19 +298,23 @@ const toolHandlers = {
     let epicStatus = null
     let nextReady = null
     let parentId = null
+    let epicTitle = null
 
     try {
-      const issue = bdJson(['show', args.id])
+      const issue = bdShowOne(args.id)
       parentId = issue.parent
 
       if (parentId) {
         const readyList = bdJson(['ready', '--parent', parentId])
-        nextReady = readyList.issues?.[0] || null
+        nextReady = readyList[0] || null
 
-        const epicIssue = bdJson(['show', parentId])
-        const children = epicIssue.children || []
-        const completed = children.filter(c => c.status === 'closed').length + 1
-        epicStatus = {completed, remaining: children.length - completed}
+        const epicIssue = bdShowOne(parentId)
+        if (epicIssue) {
+          epicTitle = epicIssue.title
+          const children = epicIssue.children || []
+          const completed = children.filter(c => c.status === 'closed').length + 1
+          epicStatus = {completed, remaining: children.length - completed}
+        }
       }
     } catch (e) {
       // Continue with partial info
@@ -274,7 +323,9 @@ const toolHandlers = {
     // Determine action
     let action
     if (epicStatus?.remaining === 0 && parentId) {
-      action = `ALL SUB-ISSUES DONE. Close epic NOW: task_done(id="${parentId}", summary="...")`
+      action = epicTitle
+        ? `ALL SUB-ISSUES DONE. Close epic "${epicTitle}" NOW: task_done(id="${parentId}", summary="...")`
+        : `ALL SUB-ISSUES DONE. Close epic NOW: task_done(id="${parentId}", summary="...")`
     } else if (nextReady) {
       action = `Next: ${nextReady.id} - ${nextReady.title}. Start: task_progress(id="${nextReady.id}", working_on="...")`
     } else if (parentId) {

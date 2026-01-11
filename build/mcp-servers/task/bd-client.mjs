@@ -16,3 +16,13 @@ export function bdJson(args) {
   const result = bd([...args, '--json'])
   return JSON.parse(result)
 }
+
+// bd show returns array, this extracts single issue (null if not found)
+export function bdShowOne(id) {
+  try {
+    const result = bdJson(['show', id])
+    return result[0] || null
+  } catch (e) {
+    return null
+  }
+}
