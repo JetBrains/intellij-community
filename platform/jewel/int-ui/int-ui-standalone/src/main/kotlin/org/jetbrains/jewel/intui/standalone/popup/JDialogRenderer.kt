@@ -310,7 +310,6 @@ private fun JPopupImpl(
                 is MouseEvent -> {
                     if (shouldDismissPopup(event, dialog, currentProperties)) {
                         currentOnDismissRequest?.invoke()
-                        event.consume()
                     }
                 }
                 is WindowEvent -> {
