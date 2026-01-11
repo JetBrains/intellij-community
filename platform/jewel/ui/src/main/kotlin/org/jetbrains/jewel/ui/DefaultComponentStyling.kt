@@ -8,6 +8,7 @@ import androidx.compose.runtime.Stable
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.ContextMenuRepresentation
 import org.jetbrains.jewel.ui.component.TextContextMenu
+import org.jetbrains.jewel.ui.component.styling.BadgeStyle
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
@@ -22,6 +23,7 @@ import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.InlineBannerStyles
 import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
+import org.jetbrains.jewel.ui.component.styling.LocalBadgeStyle
 import org.jetbrains.jewel.ui.component.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.LocalChipStyle
 import org.jetbrains.jewel.ui.component.styling.LocalCircularProgressStyle
@@ -73,12 +75,14 @@ import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
+import org.jetbrains.jewel.ui.component.styling.fallbackBadgeStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSearchMatchStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSpeedSearchStyle
 
 @Stable
 @GenerateDataFunctions
 public class DefaultComponentStyling(
+    public val badgeStyle: BadgeStyle,
     public val checkboxStyle: CheckboxStyle,
     public val chipStyle: ChipStyle,
     public val circularProgressStyle: CircularProgressStyle,
@@ -115,6 +119,82 @@ public class DefaultComponentStyling(
     public val speedSearchStyle: SpeedSearchStyle,
     public val searchMatchStyle: SearchMatchStyle,
 ) : ComponentStyling {
+    @Deprecated("Use the variant with badgeStyle.", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        checkboxStyle: CheckboxStyle,
+        chipStyle: ChipStyle,
+        circularProgressStyle: CircularProgressStyle,
+        defaultBannerStyle: DefaultBannerStyles,
+        comboBoxStyle: ComboBoxStyle,
+        defaultButtonStyle: ButtonStyle,
+        defaultDropdownStyle: DropdownStyle,
+        defaultSplitButtonStyle: SplitButtonStyle,
+        defaultTabStyle: TabStyle,
+        dividerStyle: DividerStyle,
+        editorTabStyle: TabStyle,
+        groupHeaderStyle: GroupHeaderStyle,
+        horizontalProgressBarStyle: HorizontalProgressBarStyle,
+        iconButtonStyle: IconButtonStyle,
+        transparentIconButtonStyle: IconButtonStyle,
+        inlineBannerStyle: InlineBannerStyles,
+        lazyTreeStyle: LazyTreeStyle,
+        linkStyle: LinkStyle,
+        menuStyle: MenuStyle,
+        outlinedButtonStyle: ButtonStyle,
+        popupContainerStyle: PopupContainerStyle,
+        outlinedSplitButtonStyle: SplitButtonStyle,
+        radioButtonStyle: RadioButtonStyle,
+        scrollbarStyle: ScrollbarStyle,
+        segmentedControlButtonStyle: SegmentedControlButtonStyle,
+        segmentedControlStyle: SegmentedControlStyle,
+        selectableLazyColumnStyle: SelectableLazyColumnStyle,
+        simpleListItemStyle: SimpleListItemStyle,
+        sliderStyle: SliderStyle,
+        textAreaStyle: TextAreaStyle,
+        textFieldStyle: TextFieldStyle,
+        tooltipStyle: TooltipStyle,
+        undecoratedDropdownStyle: DropdownStyle,
+        speedSearchStyle: SpeedSearchStyle,
+        searchMatchStyle: SearchMatchStyle,
+    ) : this(
+        badgeStyle = fallbackBadgeStyle(),
+        checkboxStyle,
+        chipStyle,
+        circularProgressStyle,
+        defaultBannerStyle,
+        comboBoxStyle,
+        defaultButtonStyle,
+        defaultDropdownStyle,
+        defaultSplitButtonStyle,
+        defaultTabStyle,
+        dividerStyle,
+        editorTabStyle,
+        groupHeaderStyle,
+        horizontalProgressBarStyle,
+        iconButtonStyle,
+        transparentIconButtonStyle,
+        inlineBannerStyle,
+        lazyTreeStyle,
+        linkStyle,
+        menuStyle,
+        outlinedButtonStyle,
+        popupContainerStyle,
+        outlinedSplitButtonStyle,
+        radioButtonStyle,
+        scrollbarStyle,
+        segmentedControlButtonStyle,
+        segmentedControlStyle,
+        selectableLazyColumnStyle,
+        simpleListItemStyle,
+        sliderStyle,
+        textAreaStyle,
+        textFieldStyle,
+        tooltipStyle,
+        undecoratedDropdownStyle,
+        speedSearchStyle,
+        searchMatchStyle,
+    )
+
     @Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.HIDDEN)
     public constructor(
         checkboxStyle: CheckboxStyle,
@@ -151,6 +231,7 @@ public class DefaultComponentStyling(
         tooltipStyle: TooltipStyle,
         undecoratedDropdownStyle: DropdownStyle,
     ) : this(
+        badgeStyle = fallbackBadgeStyle(),
         checkboxStyle,
         chipStyle,
         circularProgressStyle,
@@ -223,6 +304,7 @@ public class DefaultComponentStyling(
         tooltipStyle: TooltipStyle,
         undecoratedDropdownStyle: DropdownStyle,
     ) : this(
+        badgeStyle = fallbackBadgeStyle(),
         checkboxStyle,
         chipStyle,
         circularProgressStyle,
@@ -263,6 +345,7 @@ public class DefaultComponentStyling(
     @Composable
     override fun styles(): Array<out ProvidedValue<*>> =
         arrayOf(
+            LocalBadgeStyle provides badgeStyle,
             LocalCheckboxStyle provides checkboxStyle,
             LocalChipStyle provides chipStyle,
             LocalCircularProgressStyle provides circularProgressStyle,
@@ -308,6 +391,7 @@ public class DefaultComponentStyling(
 
         other as DefaultComponentStyling
 
+        if (badgeStyle != other.badgeStyle) return false
         if (checkboxStyle != other.checkboxStyle) return false
         if (chipStyle != other.chipStyle) return false
         if (circularProgressStyle != other.circularProgressStyle) return false
@@ -348,7 +432,8 @@ public class DefaultComponentStyling(
     }
 
     override fun hashCode(): Int {
-        var result = checkboxStyle.hashCode()
+        var result = badgeStyle.hashCode()
+        result = 31 * result + checkboxStyle.hashCode()
         result = 31 * result + chipStyle.hashCode()
         result = 31 * result + circularProgressStyle.hashCode()
         result = 31 * result + defaultBannerStyle.hashCode()
@@ -388,6 +473,7 @@ public class DefaultComponentStyling(
 
     override fun toString(): String =
         "DefaultComponentStyling(" +
+            "badgeStyle=$badgeStyle, " +
             "checkboxStyle=$checkboxStyle, " +
             "chipStyle=$chipStyle, " +
             "circularProgressStyle=$circularProgressStyle, " +
