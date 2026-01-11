@@ -107,6 +107,26 @@ com.intellij.conversion.ConversionResult
 - a:postStartupActivity(com.intellij.openapi.project.Project):V
 com.intellij.diagnostic.WindowsDefenderChecker$Extension
 - a:getPaths(com.intellij.openapi.project.Project,java.nio.file.Path):java.util.Collection
+f:com.intellij.diagnostic.logs.LogCategory
+- sf:Companion:com.intellij.diagnostic.logs.LogCategory$Companion
+- <init>(java.lang.String,com.intellij.diagnostic.logs.DebugLogLevel):V
+- f:component1():java.lang.String
+- f:component2():com.intellij.diagnostic.logs.DebugLogLevel
+- f:copy(java.lang.String,com.intellij.diagnostic.logs.DebugLogLevel):com.intellij.diagnostic.logs.LogCategory
+- bs:copy$default(com.intellij.diagnostic.logs.LogCategory,java.lang.String,com.intellij.diagnostic.logs.DebugLogLevel,I,java.lang.Object):com.intellij.diagnostic.logs.LogCategory
+- equals(java.lang.Object):Z
+- f:getCategory():java.lang.String
+- f:getLevel():com.intellij.diagnostic.logs.DebugLogLevel
+- hashCode():I
+bf:com.intellij.diagnostic.logs.LogCategory$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.diagnostic.logs.LogCategory$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.diagnostic.logs.LogCategory
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.diagnostic.logs.LogCategory):V
+f:com.intellij.diagnostic.logs.LogCategory$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 com.intellij.execution.RunManagerListener
 - java.util.EventListener
 - sf:TOPIC:com.intellij.util.messages.Topic
