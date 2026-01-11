@@ -244,3 +244,11 @@ public val LocalDefaultButtonStyle: ProvidableCompositionLocal<ButtonStyle> = st
 public val LocalOutlinedButtonStyle: ProvidableCompositionLocal<ButtonStyle> = staticCompositionLocalOf {
     error("No outlined ButtonStyle provided. Have you forgotten the theme?")
 }
+
+public val LocalDefaultSlimButtonStyle: ProvidableCompositionLocal<ButtonStyle> = staticCompositionLocalOf {
+    error("No default slim ButtonStyle provided. Have you forgotten the theme?")
+}
+
+public val LocalOutlinedSlimButtonStyle: ProvidableCompositionLocal<ButtonStyle> = staticCompositionLocalOf {
+    error("No outlined slim ButtonStyle provided. Have you forgotten the theme?")
+}
