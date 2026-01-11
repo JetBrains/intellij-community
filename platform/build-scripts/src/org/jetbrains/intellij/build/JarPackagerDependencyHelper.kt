@@ -34,7 +34,7 @@ internal class JarPackagerDependencyHelper(private val outputProvider: ModuleOut
   }
 
   fun isTestPluginModule(moduleName: String, module: JpsModule?): Boolean {
-    if (!useTestSourceEnabled) {
+    if (!outputProvider.useTestCompilationOutput) {
       return false
     }
 

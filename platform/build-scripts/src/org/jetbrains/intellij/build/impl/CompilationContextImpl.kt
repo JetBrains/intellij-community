@@ -170,7 +170,7 @@ class CompilationContextImpl internal constructor(
   val global: JpsGlobal
     get() = model.global
 
-  override val outputProvider: ModuleOutputProvider = JpsModuleOutputProvider(project)
+  override val outputProvider: ModuleOutputProvider = JpsModuleOutputProvider(project, useTestCompilationOutput = options.useTestCompilationOutput)
 
   override var classesOutputDirectory: Path
     get() = Path.of(JpsPathUtil.urlToPath(JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl))

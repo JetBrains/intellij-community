@@ -44,6 +44,12 @@ data class BuildOptions(
   @JvmField var isInDevelopmentMode: Boolean = getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null && System.getenv("GITHUB_ACTIONS") == null),
   @JvmField var useCompiledClassesFromProjectOutput: Boolean = getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode),
 
+  /**
+   * In addition to production compilation sources, allow various functions to use and traverse test output.
+   * It is necessary. e.g., to run tests in a dev-build-provided environment.
+   */
+  var useTestCompilationOutput: Boolean = getBooleanProperty(USE_TEST_COMPILATION_OUTPUT_PROPERTY, defaultValue = USE_TEST_COMPILATION_OUTPUT_DEFAULT_VALUE),
+
   @JvmField val cleanOutDir: Boolean = getBooleanProperty(CLEAN_OUTPUT_DIRECTORY_PROPERTY, true),
 
   @JvmField var classOutDir: String? = System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY),
@@ -242,6 +248,13 @@ data class BuildOptions(
      * By default, a build cleans up the output directory before compilation. Use this property to change the behavior.
      */
     const val CLEAN_OUTPUT_DIRECTORY_PROPERTY: String = "intellij.build.clean.output.root"
+
+    /**
+     * In addition to production compilation sources, allow various functions to use and traverse test output.
+     * It is necessary. e.g., to run tests in a dev-build-provided environment.
+     */
+    const val USE_TEST_COMPILATION_OUTPUT_PROPERTY: String = "idea.build.pack.test.source.enabled"
+    const val USE_TEST_COMPILATION_OUTPUT_DEFAULT_VALUE: Boolean = false
 
     /**
      * If `false` build scripts compile project classes to a special output directory (to not interfere with the default project output if

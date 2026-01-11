@@ -506,6 +506,9 @@ private fun createTestModuleOutputProvider(project: JpsProject): ModuleOutputPro
     override fun findRequiredModule(name: String): JpsModule = 
       findModule(name) ?: error("Module not found: $name")
 
+    override val useTestCompilationOutput: Boolean
+      get() = true
+
     override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
       throw UnsupportedOperationException("Not needed for this test")
     }
