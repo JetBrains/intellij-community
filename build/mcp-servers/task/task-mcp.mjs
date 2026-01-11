@@ -1,214 +1,275 @@
+#!/usr/bin/env node
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-#!/usr/bin/env node
-
 import {createMcpServer} from './mcp-rpc.mjs'
-import {bd, bdJson, escape} from './bd-client.mjs'
+import {bd, bdJson} from './bd-client.mjs'
 
+// 5 smart tools: task_status, task_epic, task_progress, task_decompose, task_done
 const tools = [
   {
-    name: 'task_create_epic',
-    description: 'Create a new epic for planning and tracking a multi-step task. Automatically sets status to in_progress. Use for new user requests that need exploration and decomposition.',
+    name: 'task_status',
+    description: 'Get current task state. No args = overview (in-progress + ready). With id = full issue details.',
     inputSchema: {
       type: 'object',
       properties: {
-        title: { type: 'string', description: 'Short summary of the epic (50 chars max)' },
-        description: { type: 'string', description: 'WHAT to build and WHY - the user request and business context' },
-        acceptance: { type: 'string', description: "Testable success criteria. Use 'PENDING' if unknown yet." },
-        design: { type: 'string', description: "Technical approach (HOW). Use 'PENDING' if unknown yet." }
-      },
-      required: ['title', 'description']
+        id: {type: 'string', description: 'Optional: specific issue ID for full details'}
+      }
     }
   },
   {
-    name: 'task_update_progress',
-    description: 'Update progress notes on an issue. Formats as COMPLETED/IN PROGRESS/NEXT sections. Call frequently to track work state.',
+    name: 'task_epic',
+    description: 'Create new epic or resume existing. Returns epic details.',
     inputSchema: {
       type: 'object',
       properties: {
-        id: { type: 'string', description: 'Issue ID to update' },
-        completed: {
-          type: 'array',
-          items: { type: 'string' },
-          description: 'List of completed items to add to COMPLETED section'
-        },
-        in_progress: { type: 'string', description: 'Current work for IN PROGRESS section' },
-        next: { type: 'string', description: 'Next action for NEXT section' },
-        key_decision: { type: 'string', description: 'Important decision made (optional)' }
+        title: {type: 'string', description: 'Epic title (required for new)'},
+        description: {type: 'string', description: 'WHAT and WHY (required for new)'},
+        resume: {type: 'string', description: 'Resume existing epic by ID instead of creating'}
+      }
+    }
+  },
+  {
+    name: 'task_progress',
+    description: 'Update progress notes. Auto-appends to existing notes.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: {type: 'string', description: 'Issue ID to update'},
+        completed: {type: 'string', description: 'What was completed (appends to COMPLETED)'},
+        working_on: {type: 'string', description: 'Current work (replaces IN PROGRESS)'},
+        next: {type: 'string', description: 'Next action (replaces NEXT)'},
+        decision: {type: 'string', description: 'Key decision made (appends to KEY DECISIONS)'}
       },
       required: ['id']
     }
   },
   {
     name: 'task_decompose',
-    description: 'Decompose an epic into sub-issues. Creates all sub-issues in one call with proper dependencies. Use after exploration when ready to break down work.',
+    description: 'Decompose epic into sub-issues. Creates all sub-issues with dependencies in one call.',
     inputSchema: {
       type: 'object',
       properties: {
-        epic_id: { type: 'string', description: 'Parent epic ID' },
+        epic_id: {type: 'string', description: 'Parent epic ID'},
         sub_issues: {
           type: 'array',
           items: {
             type: 'object',
             properties: {
-              title: { type: 'string', description: "Sub-issue title (e.g., 'Step 1: Create API endpoint')" },
-              description: { type: 'string', description: 'WHAT and WHY for this sub-issue' },
-              acceptance: { type: 'string', description: 'Testable outcomes for this sub-issue' },
-              design: { type: 'string', description: 'Technical approach (HOW)' },
+              title: {type: 'string', description: 'Sub-issue title'},
+              description: {type: 'string', description: 'WHAT and WHY'},
+              acceptance: {type: 'string', description: 'Testable outcomes'},
+              design: {type: 'string', description: 'Technical approach'},
               depends_on: {
                 type: 'array',
-                items: { type: 'integer' },
+                items: {type: 'integer'},
                 description: 'Indices (0-based) of sub-issues this depends on'
               }
             },
             required: ['title', 'description', 'acceptance', 'design']
-          },
-          description: 'Array of sub-issues to create'
+          }
         },
-        update_epic_acceptance: {
-          type: 'string',
-          description: "Update epic's acceptance criteria (now that we know the full scope)"
-        }
+        update_epic_acceptance: {type: 'string', description: 'Update epic acceptance criteria'}
       },
       required: ['epic_id', 'sub_issues']
     }
   },
   {
-    name: 'task_list',
-    description: "List issues filtered by status. Use status='in_progress' to find current work, status='ready' for available tasks.",
+    name: 'task_done',
+    description: 'Complete issue and get next ready. Auto-updates epic progress.',
     inputSchema: {
       type: 'object',
       properties: {
-        status: {
-          type: 'string',
-          enum: ['in_progress', 'ready', 'all'],
-          description: 'Filter by status'
-        },
-        parent: { type: 'string', description: 'Filter by parent epic ID' }
-      }
-    }
-  },
-  {
-    name: 'task_ready',
-    description: 'Get issues ready to be worked on. Optionally filter by parent epic. Use to pick next task.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        parent: { type: 'string', description: 'Filter by parent epic ID' },
-        limit: { type: 'integer', description: 'Max results to return (default 10)' }
-      }
-    }
-  },
-  {
-    name: 'task_show',
-    description: 'Get complete issue details including description, acceptance criteria, design, and notes. Use to understand task requirements before working.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', description: 'Issue ID to retrieve' }
+        id: {type: 'string', description: 'Issue to close'},
+        summary: {type: 'string', description: 'What was accomplished'}
       },
-      required: ['id']
-    }
-  },
-  {
-    name: 'task_close',
-    description: 'Close an issue. Provide reason summarizing outcome. Use after completing work or when cancelling.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', description: 'Issue ID to close' },
-        reason: { type: 'string', description: 'Summary of what was done or why cancelled' }
-      },
-      required: ['id', 'reason']
-    }
-  },
-  {
-    name: 'task_add_comment',
-    description: "Add comment to an issue. Use for scope changes, blockers, or important context that doesn't fit in notes.",
-    inputSchema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', description: 'Issue ID to comment on' },
-        message: { type: 'string', description: 'Comment text' }
-      },
-      required: ['id', 'message']
+      required: ['id', 'summary']
     }
   }
 ]
 
 const toolHandlers = {
-  task_create_epic: (args) => {
-    const acceptance = args.acceptance || 'PENDING: Define after exploration'
-    const design = args.design || 'PENDING: Define after exploration'
-    const id = bd(`create --title="${escape(args.title)}" --type=epic --description="${escape(args.description)}" --acceptance="${escape(acceptance)}" --design="${escape(design)}" --silent`)
-    bd(`update ${id} --status=in_progress`)
-    return { id, title: args.title }
+  task_status: (args) => {
+    if (args.id) {
+      // Full details for specific issue
+      return bdJson(['show', args.id])
+    }
+
+    // Overview: in-progress + ready
+    const inProgressList = bdJson(['list', '--status', 'in_progress'])
+    const readyList = bdJson(['ready', '--limit', '10'])
+
+    let suggestion
+    if (inProgressList.issues?.length > 0) {
+      const current = inProgressList.issues[0]
+      suggestion = `Continue ${current.id}: ${current.title}`
+    }
+    else if (readyList.issues?.length > 0) {
+      suggestion = 'Pick from ready list'
+    }
+    else {
+      suggestion = 'Create epic'
+    }
+
+    return {
+      in_progress: inProgressList.issues?.[0] || null,
+      ready: readyList.issues || [],
+      suggestion
+    }
   },
 
-  task_update_progress: (args) => {
+  task_epic: (args) => {
+    if (args.resume) {
+      // Resume existing issue (any type - epic, task, etc. are all valid)
+      const issue = bdJson(['show', args.resume])
+      bd(['update', args.resume, '--status', 'in_progress'])
+      return {id: args.resume, title: issue.title, type: issue.type, is_new: false}
+    }
+
+    // Create new epic
+    if (!args.title || !args.description) {
+      throw new Error('title and description required for new epic')
+    }
+    const id = bd(['create', '--title', args.title, '--type', 'epic', '--description', args.description, '--acceptance', 'PENDING', '--design', 'PENDING', '--silent'])
+    bd(['update', id, '--status', 'in_progress'])
+    return {id, title: args.title, is_new: true}
+  },
+
+  task_progress: (args) => {
+    // Get existing notes
+    const issue = bdJson(['show', args.id])
+    const existingNotes = issue.notes || ''
+
+    // Parse existing sections
+    const sections = {
+      completed: [],
+      in_progress: '',
+      next: '',
+      decisions: []
+    }
+
+    for (const line of existingNotes.split('\n')) {
+      if (line.startsWith('COMPLETED:')) {
+        sections.completed.push(line.replace('COMPLETED:', '').trim())
+      }
+      else if (line.startsWith('IN PROGRESS:')) {
+        sections.in_progress = line.replace('IN PROGRESS:', '').trim()
+      }
+      else if (line.startsWith('NEXT:')) {
+        sections.next = line.replace('NEXT:', '').trim()
+      }
+      else if (line.startsWith('KEY DECISION:')) {
+        sections.decisions.push(line.replace('KEY DECISION:', '').trim())
+      }
+    }
+
+    // Apply updates (append for completed/decisions, replace for in_progress/next)
+    if (args.completed) {
+      sections.completed.push(args.completed)
+    }
+    if (args.working_on !== undefined) {
+      sections.in_progress = args.working_on
+    }
+    if (args.next !== undefined) {
+      sections.next = args.next
+    }
+    if (args.decision) {
+      sections.decisions.push(args.decision)
+    }
+
+    // Build new notes
     const parts = []
-    if (args.completed?.length) {
-      parts.push(`COMPLETED: ${args.completed.join(', ')}`)
+    for (const item of sections.completed) {
+      parts.push(`COMPLETED: ${item}`)
     }
-    if (args.in_progress) {
-      parts.push(`IN PROGRESS: ${args.in_progress}`)
+    if (sections.in_progress) {
+      parts.push(`IN PROGRESS: ${sections.in_progress}`)
     }
-    if (args.next) {
-      parts.push(`NEXT: ${args.next}`)
+    if (sections.next) {
+      parts.push(`NEXT: ${sections.next}`)
     }
-    if (args.key_decision) {
-      parts.push(`KEY DECISION: ${args.key_decision}`)
+    for (const item of sections.decisions) {
+      parts.push(`KEY DECISION: ${item}`)
     }
-    const notes = parts.join('\n')
-    bd(`update ${args.id} --notes="${escape(notes)}"`)
-    return { success: true }
+
+    const newNotes = parts.join('\n')
+    bd(['update', args.id, '--notes', newNotes])
+    return {success: true, notes: newNotes}
   },
 
   task_decompose: (args) => {
+    // Validate depends_on indices before creating anything
+    args.sub_issues.forEach((sub, i) => {
+      if (sub.depends_on) {
+        for (const depIdx of sub.depends_on) {
+          if (depIdx < 0 || depIdx >= i) {
+            throw new Error(`Invalid depends_on[${depIdx}] in sub_issue[${i}]: must reference earlier sub-issue (0 to ${i - 1})`)
+          }
+        }
+      }
+    })
+
     const ids = []
     for (const sub of args.sub_issues) {
-      const id = bd(`create --title="${escape(sub.title)}" --parent=${args.epic_id} --type=task --description="${escape(sub.description)}" --acceptance="${escape(sub.acceptance)}" --design="${escape(sub.design)}" --silent`)
+      const id = bd(['create', '--title', sub.title, '--parent', args.epic_id, '--type', 'task', '--description', sub.description, '--acceptance', sub.acceptance, '--design', sub.design, '--silent'])
       ids.push(id)
     }
+
     // Add dependencies
     args.sub_issues.forEach((sub, i) => {
       if (sub.depends_on) {
         sub.depends_on.forEach(depIdx => {
-          bd(`dep add ${ids[i]} ${ids[depIdx]}`)
+          bd(['dep', 'add', ids[i], ids[depIdx]])
         })
       }
     })
+
     // Update epic acceptance if provided
     if (args.update_epic_acceptance) {
-      bd(`update ${args.epic_id} --acceptance="${escape(args.update_epic_acceptance)}"`)
+      bd(['update', args.epic_id, '--acceptance', args.update_epic_acceptance])
     }
-    return { ids, epic_id: args.epic_id }
+
+    return {ids, epic_id: args.epic_id}
   },
 
-  task_list: (args) => {
-    const statusArg = args.status ? `--status=${args.status}` : ''
-    const parentArg = args.parent ? `--parent=${args.parent}` : ''
-    return bdJson(`list ${statusArg} ${parentArg}`.trim())
-  },
+  task_done: (args) => {
+    // Close the issue
+    bd(['close', args.id, '--reason', args.summary])
 
-  task_ready: (args) => {
-    const parentArg = args.parent ? `--parent=${args.parent}` : ''
-    const limitArg = args.limit ? `--limit=${args.limit}` : ''
-    return bdJson(`ready ${parentArg} ${limitArg}`.trim())
-  },
+    // Get issue info to find parent
+    let epicStatus = null
+    let nextReady = null
+    let error = null
 
-  task_show: (args) => {
-    return bdJson(`show ${args.id}`)
-  },
+    try {
+      const issue = bdJson(['show', args.id])
+      if (issue.parent) {
+        // Get sibling ready issues
+        const readyList = bdJson(['ready', '--parent', issue.parent])
+        nextReady = readyList.issues?.[0] || null
 
-  task_close: (args) => {
-    bd(`close ${args.id} --reason="${escape(args.reason)}"`)
-    return { success: true }
-  },
+        // Get epic status
+        const epicIssue = bdJson(['show', issue.parent])
+        const children = epicIssue.children || []
+        const completed = children.filter(c => c.status === 'closed').length + 1 // +1 for just closed
+        epicStatus = {
+          completed,
+          remaining: children.length - completed
+        }
+      }
+    }
+    catch (e) {
+      error = `Failed to get next/status: ${e.message}`
+    }
 
-  task_add_comment: (args) => {
-    bd(`comments add ${args.id} "${escape(args.message)}"`)
-    return { success: true }
+    const result = {
+      closed: {id: args.id},
+      next_ready: nextReady,
+      epic_status: epicStatus
+    }
+    if (error) {
+      result.error = error
+    }
+    return result
   }
 }
 

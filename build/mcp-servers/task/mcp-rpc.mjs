@@ -27,6 +27,9 @@ export function createMcpServer(config) {
   function handleRequest(request) {
     const { id, method, params } = request;
 
+    // Notifications have no id - don't respond
+    if (id === undefined) return;
+
     try {
       switch (method) {
         case 'initialize':
