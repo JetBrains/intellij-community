@@ -269,6 +269,21 @@ const toolHandlers = {
     if (error) {
       result.error = error
     }
+    
+    // Add actionable suggestion for next steps
+    if (epicStatus?.remaining === 0 && epicStatus?.completed > 0) {
+      try {
+        const issue = bdJson(['show', args.id])
+        if (issue.parent) {
+          result.suggestion = `All sub-issues complete! Call task_done(id="${issue.parent}", summary="...") to close epic`
+        }
+      } catch (e) {
+        // Ignore - we already have the closed issue info
+      }
+    } else if (nextReady) {
+      result.suggestion = `Continue with ${nextReady.id}: ${nextReady.title}`
+    }
+    
     return result
   }
 }
