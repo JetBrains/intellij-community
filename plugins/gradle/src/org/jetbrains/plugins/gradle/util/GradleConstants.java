@@ -49,6 +49,7 @@ public final class GradleConstants {
   public static final String OFFLINE_MODE_CMD_OPTION = "--offline";
   public static final String INIT_SCRIPT_CMD_OPTION = "--init-script";
   public static final String INCLUDE_BUILD_CMD_OPTION = "--include-build";
+  public static final String NO_BUILD_CACHE_CMD_OPTION = "--no-build-cache";
 
   public static final String GRADLE_SOURCE_SET_MODULE_TYPE_KEY = "sourceSet";
 
