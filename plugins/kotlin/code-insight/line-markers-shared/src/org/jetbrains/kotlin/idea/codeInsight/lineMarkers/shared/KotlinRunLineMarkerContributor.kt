@@ -34,6 +34,8 @@ internal class KotlinRunLineMarkerContributor : RunLineMarkerContributor() {
         if (module.isTestModule) return null
         if (!module.platform.idePlatformKind.tooling.acceptsAsEntryPoint(function)) return null
 
+        if (KotlinRunLineMarkerHider.shouldHideRunLineMarker(element)) return null
+
         val icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.TestStateRun)
         return Info(icon, ExecutorAction.getActions(Int.MAX_VALUE), null)
     }
