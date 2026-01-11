@@ -9,6 +9,7 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
@@ -19,7 +20,6 @@ import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.inspections.runInspection
 import org.jetbrains.kotlin.idea.maven.inspections.KotlinMavenPluginPhaseInspection
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.utils.keysToMap
 import java.io.File
 
@@ -36,7 +36,7 @@ abstract class AbstractKotlinMavenInspectionTest : KotlinMavenImportingTestCase(
 
         createPomFile(fileName)
         importProject()
-        project.allModules().forEach {
+        project.modules.forEach {
             setupJdkForModule(it.name)
         }
 
@@ -160,7 +160,7 @@ abstract class AbstractKotlinMavenInspectionTest : KotlinMavenImportingTestCase(
     }
 
     private fun mkJavaFile() {
-        val contentEntry = getContentRoots(project.allModules().single().name).single()
+        val contentEntry = getContentRoots(project.modules.single().name).single()
         val sourceFolder =
             contentEntry.getSourceFolders(JavaSourceRootType.SOURCE).singleOrNull() ?: contentEntry.getSourceFolders(SourceKotlinRootType)
                 .singleOrNull()
@@ -169,7 +169,7 @@ abstract class AbstractKotlinMavenInspectionTest : KotlinMavenImportingTestCase(
             javaFile.viewProvider.document!!.setText("class Test {}\n")
         }
 
-        assertTrue(FileTypeIndex.containsFileOfType(JavaFileType.INSTANCE, project.allModules().single().moduleScope))
+        assertTrue(FileTypeIndex.containsFileOfType(JavaFileType.INSTANCE, project.modules.single().moduleScope))
     }
 
     private data class SimplifiedProblemDescription(val text: String, val elementText: String)
