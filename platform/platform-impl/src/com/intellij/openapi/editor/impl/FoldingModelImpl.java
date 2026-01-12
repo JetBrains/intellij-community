@@ -388,7 +388,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @ApiStatus.Internal
-  public FoldRegion @Nullable [] fetchVisible() {
+  public @NotNull FoldRegion @Nullable [] fetchVisible() {
     return myFoldTree.fetchVisible();
   }
 
@@ -955,8 +955,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   private final class MyFoldRegionsTree extends FoldRegionsTree {
-
-    MyFoldRegionsTree(@NotNull RangeMarkerTree<FoldRegionImpl> markerTree) {
+    MyFoldRegionsTree(@NotNull RangeMarkerTree<? extends FoldRegionImpl> markerTree) {
       super(markerTree);
     }
 
