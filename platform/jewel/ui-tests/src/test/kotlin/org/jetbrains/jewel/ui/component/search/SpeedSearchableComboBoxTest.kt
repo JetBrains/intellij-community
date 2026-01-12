@@ -27,6 +27,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -37,6 +38,7 @@ import org.jetbrains.jewel.ui.component.interactions.performKeyPress
 import org.junit.Rule
 
 @Suppress("ImplicitUnitReturnType")
+@OptIn(ExperimentalCoroutinesApi::class)
 class SpeedSearchableComboBoxTest {
     @get:Rule val rule = createComposeRule()
 
@@ -138,20 +140,20 @@ class SpeedSearchableComboBoxTest {
     @Test
     fun `on arrow up or down, navigate to the next and previous occurrences`() = runComposeTest {
         comboBox.performClick()
-        comboBox.performKeyPress("Item 9", rule = this)
-        onComboBoxItem("Item 9").assertIsDisplayed().assertIsSelected()
+        comboBox.performKeyPress("1", rule = this)
+        onComboBoxItem("Item 1").assertIsDisplayed().assertIsSelected()
 
         comboBox.performKeyPress(Key.DirectionDown, rule = this)
-        onComboBoxItem("Item 19").assertIsDisplayed().assertIsSelected()
+        onComboBoxItem("Item 10").assertIsDisplayed().assertIsSelected()
 
         comboBox.performKeyPress(Key.DirectionDown, rule = this)
-        onComboBoxItem("Item 29").assertIsDisplayed().assertIsSelected()
+        onComboBoxItem("Item 11").assertIsDisplayed().assertIsSelected()
 
         comboBox.performKeyPress(Key.DirectionUp, rule = this)
-        onComboBoxItem("Item 19").assertIsDisplayed().assertIsSelected()
+        onComboBoxItem("Item 10").assertIsDisplayed().assertIsSelected()
 
         comboBox.performKeyPress(Key.DirectionUp, rule = this)
-        onComboBoxItem("Item 9").assertIsDisplayed().assertIsSelected()
+        onComboBoxItem("Item 1").assertIsDisplayed().assertIsSelected()
     }
 
     @Test
@@ -177,23 +179,23 @@ class SpeedSearchableComboBoxTest {
     @Test
     fun `should keep text when navigating through matches`() = runComposeTest {
         comboBox.performClick()
-        comboBox.performKeyPress("Item 9", rule = this)
-        onComboBoxItem("Item 9").assertIsDisplayed().assertIsSelected()
+        comboBox.performKeyPress("Item 1", rule = this)
+        onComboBoxItem("Item 1").assertIsDisplayed().assertIsSelected()
 
         comboBox.performKeyPress(Key.DirectionDown, rule = this)
-        onComboBoxItem("Item 19").assertIsDisplayed().assertIsSelected()
+        onComboBoxItem("Item 10").assertIsDisplayed().assertIsSelected()
         onSpeedSearchAreaInput.assertExists().assertIsDisplayed()
 
         comboBox.performKeyPress(Key.DirectionDown, rule = this)
-        onComboBoxItem("Item 29").assertIsDisplayed().assertIsSelected()
+        onComboBoxItem("Item 11").assertIsDisplayed().assertIsSelected()
         onSpeedSearchAreaInput.assertExists().assertIsDisplayed()
 
         comboBox.performKeyPress(Key.DirectionUp, rule = this)
-        onComboBoxItem("Item 19").assertIsDisplayed().assertIsSelected()
+        onComboBoxItem("Item 10").assertIsDisplayed().assertIsSelected()
         onSpeedSearchAreaInput.assertExists().assertIsDisplayed()
 
         comboBox.performKeyPress(Key.DirectionUp, rule = this)
-        onComboBoxItem("Item 9").assertIsDisplayed().assertIsSelected()
+        onComboBoxItem("Item 1").assertIsDisplayed().assertIsSelected()
         onSpeedSearchAreaInput.assertExists().assertIsDisplayed()
     }
 
