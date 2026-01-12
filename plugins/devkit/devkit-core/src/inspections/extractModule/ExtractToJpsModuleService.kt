@@ -2,6 +2,8 @@
 package org.jetbrains.idea.devkit.inspections.extractModule
 
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.ide.extractModule.ExtractModuleService
+import com.intellij.ide.extractModule.TargetModuleCreator
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaSourceRoots
 import com.intellij.openapi.application.EDT
@@ -9,7 +11,10 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModulePackageIndex
@@ -21,6 +26,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
@@ -76,6 +83,30 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
         updateReferencesInDependenciesTags(filesThatDependOnDescriptor, data.originalContentModuleName, data.newModuleName)
       }
     }
+    if (data.packageDirectory != null) {
+      val newSourceRootPath = withContext(Dispatchers.IO) {
+        Path(data.newModuleDirectoryPath).resolve(SRC_DIRECTORY_NAME).createDirectories()
+      }
+      val newSourceRootDirectory = writeAction {
+        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newSourceRootPath)
+      }
+      withContext(Dispatchers.EDT) {
+        val packagePsiDirectory = PsiManager.getInstance(project).findDirectory(data.packageDirectory)
+        val createdModule = ModuleManager.getInstance(project).findModuleByName(data.newModuleName)
+        if (createdModule != null && packagePsiDirectory != null && newSourceRootDirectory != null) {
+          val creator = object : TargetModuleCreator {
+            override fun createExtractedModule(originalModule: Module, directory: PsiDirectory): TargetModuleCreator.ExtractedModuleData {
+              return TargetModuleCreator.ExtractedModuleData(module = createdModule, directoryToMoveClassesTo = newSourceRootDirectory)
+            }
+          }
+          project.service<ExtractModuleService>().analyzeDependenciesAndCreateModuleInBackground(packagePsiDirectory, data.originalModule, creator)
+        }
+        else {
+          LOG.error("Cannot move classes to module '${data.newModuleName}': createdModule = $createdModule, packagePsiDirectory = $packagePsiDirectory, newSourceRootDirectory = $newSourceRootDirectory")
+        }
+      }
+    }
+    project.scheduleSave()
   }
 
   private fun updateReferencesInDependenciesTags(
@@ -127,7 +158,7 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
             ),
             if (data.packageName != null) {
               SourceRootEntity(
-                url = moduleDir.append("src"),
+                url = moduleDir.append(SRC_DIRECTORY_NAME),
                 rootTypeId = JAVA_SOURCE_ROOT_ENTITY_TYPE_ID,
                 entitySource = entitySource,
               ) {
@@ -161,9 +192,7 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
     val packageDirectory =
       if (packageName != null) ModulePackageIndex.getInstance(originalModule).getDirectoriesByPackageName(packageName, false).firstOrNull()
       else null
-    val newModuleName =
-      if (packageDirectory != null) packageName!!.removePrefix("com.")
-      else descriptor.nameWithoutExtension
+    val newModuleName = descriptor.nameWithoutExtension
     val newModuleDirectoryPath = contentRoot.path + "/" + newModuleName.removePrefix(originalModule.name + ".")
     return ExtractToContentModuleData(
       descriptor = descriptor,
@@ -178,7 +207,9 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
   }
 }
 
+private val LOG = logger<ExtractToJpsModuleService>()
 private const val RESOURCES_DIR_NAME = "resources"
+private const val SRC_DIRECTORY_NAME = "src"
 
 internal data class ExtractToContentModuleData(
   val descriptor: VirtualFile,
