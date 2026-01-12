@@ -41,6 +41,7 @@ import com.intellij.platform.testFramework.io.ExternalResourcesChecker.reportUna
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.RunAll.Companion.runAll
+import com.intellij.testFramework.common.ThreadLeakTracker
 import com.intellij.util.SmartList
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.currentJavaVersion
@@ -112,6 +113,7 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
 
   private val removedSdks: MutableList<Sdk> = SmartList<Sdk>()
   private val myTestDisposable by lazy { Disposer.newDisposable() }
+  private val myLongRunningThreadsDisposable by lazy { Disposer.newDisposable() }
   private val deprecationError = Ref.create<Couple<String>?>()
   private val deprecationTextBuilder = StringBuilder()
 
@@ -156,6 +158,12 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
     installGradleJvmConfigurator()
     installExecutionDeprecationChecker()
     originalGradleUserHome = this.gradleUserHome
+    ignoreGradleLongRunningThreads()
+  }
+
+  private fun ignoreGradleLongRunningThreads() {
+    ThreadLeakTracker.longRunningThreadCreated(myLongRunningThreadsDisposable, "File lock request listener")
+    ThreadLeakTracker.longRunningThreadCreated(myLongRunningThreadsDisposable, "File lock release action executor")
   }
 
   @Throws(Exception::class)
@@ -171,7 +179,8 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
       //super.setUpInWriteAction() wasn't called
       runAll(
         { Disposer.dispose(myTestDisposable) },
-        { super.tearDown() }
+        { super.tearDown() },
+        { Disposer.dispose(myLongRunningThreadsDisposable)}
       )
       return
     }
@@ -196,7 +205,8 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
       { tearDownGradleVmOptions() },
       { resetGradleUserHomeIfNeeded() },
       { Disposer.dispose(myTestDisposable) },
-      { super.tearDown() }
+      { super.tearDown() },
+      { Disposer.dispose(myLongRunningThreadsDisposable)}
     )
   }
 
