@@ -309,8 +309,8 @@ public sealed class TypeEvalContext {
       Pair.create(element, this),
       false,
       () -> {
-        var provider = TypeEvalExternalTypeProvider.EP_NAME.getExtensionList().stream().filter(TypeEvalExternalTypeProvider::isAvailable).findFirst().orElse(null);
-        if (provider != null) {
+        // Try external providers first
+        for (var provider : TypeEvalExternalTypeProvider.EP_NAME.getExtensionList()) {
           try {
             var provided = provider.provideType(element, this);
             if (provided != null) {
@@ -325,7 +325,6 @@ public sealed class TypeEvalContext {
           catch (Exception e) {
             logger.warn("Exception during external type provider " + provider.getClass().getName(), e);
           }
-          return null;
         }
 
         PyType type = element.getType(this, Key.INSTANCE);
