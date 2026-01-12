@@ -36,7 +36,6 @@ jvm_library(
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
     "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
-    "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared",
     "//plugins/kotlin/fir",
     "//plugins/gradle:gradle-tests",
     "//xml/xml-psi-api:psi",
@@ -93,8 +92,6 @@ jvm_library(
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
     "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
-    "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared",
-    "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared_test_lib",
     "//plugins/kotlin/fir",
     "//plugins/gradle:gradle-tests",
     "//plugins/gradle:gradle-tests_test_lib",
@@ -127,6 +124,8 @@ jvm_library(
     "//plugins/kotlin/kotlin.searching",
     "//plugins/kotlin/run-configurations/junit",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+    "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared",
+    "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared_test_lib",
   ],
   runtime_deps = [":tests"]
 )

@@ -56,6 +56,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/service-container",
     "//platform/service-container:service-container_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ],
   runtime_deps = [":kotlin-completion-tests-shared"]
 )
