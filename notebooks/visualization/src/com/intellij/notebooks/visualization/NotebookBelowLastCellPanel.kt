@@ -36,7 +36,7 @@ class NotebookBelowLastCellPanel(
         row {
           cell(JupyterAddNewCellToolbar(actionGroup, toolbarTargetComponent = this@NotebookBelowLastCellPanel)).align(Align.CENTER)
         }
-      }, BorderLayout.CENTER)
+      }.apply { isOpaque = false }, BorderLayout.CENTER)
     }
   }
 
