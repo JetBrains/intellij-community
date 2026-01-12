@@ -1,4 +1,4 @@
-// "Replace with 'putIfAbsent' method call" "true"
+// "Replace with 'putIfAbsent()' call" "true"
 
 import java.util.HashMap;
 import java.util.Map;

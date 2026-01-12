@@ -1,4 +1,4 @@
-// "Replace the loop with 'List.replaceAll'" "false"
+// "Replace loop with 'List.replaceAll()'" "false"
 import java.util.List;
 
 class Main {
