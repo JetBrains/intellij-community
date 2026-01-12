@@ -327,11 +327,13 @@ object PluginManagerCore {
 
   @Suppress("LoggingSimilarMessage")
   private fun preparePluginErrors(
-    pluginLoadingErrors: Map<PluginId, PluginNonLoadReason>,
+    pluginNonLoadReasons: Map<PluginId, PluginNonLoadReason>,
     descriptorLoadingErrors: List<PluginDescriptorLoadingError>,
     duplicateModuleMap: Map<PluginId, List<PluginMainDescriptor>>,
     cycleErrors: List<PluginLoadingError>,
   ): List<PluginLoadingError> {
+    // name shadowing is intended
+    val pluginNonLoadReasons = pluginNonLoadReasons.filterValues { it !is PluginIsMarkedDisabled }
     val globalErrors = ArrayList<PluginLoadingError>().apply {
       for (descriptorLoadingError in descriptorLoadingErrors) {
         add(PluginLoadingError(
@@ -356,12 +358,12 @@ object PluginManagerCore {
       }
       addAll(cycleErrors)
     }
-    if (pluginLoadingErrors.isEmpty() && globalErrors.isEmpty()) {
+    if (pluginNonLoadReasons.isEmpty() && globalErrors.isEmpty()) {
       return emptyList()
     }
 
     // the log includes all messages, not only those which need to be reported to the user
-    val loadingErrors = pluginLoadingErrors.values
+    val loadingErrors = pluginNonLoadReasons.values
     val logMessage =
       "Problems found loading plugins:\n  " +
       (globalErrors.asSequence().map { it.htmlMessage.toString() } + loadingErrors.asSequence().map { it.logMessage })
@@ -681,7 +683,7 @@ object PluginManagerCore {
 
     pluginsState.addPluginNonLoadReasons(pluginNonLoadReasons.filter { it.value !is PluginIsMarkedDisabled })
     val errorList = preparePluginErrors(
-      pluginLoadingErrors = pluginNonLoadReasons,
+      pluginNonLoadReasons = pluginNonLoadReasons,
       descriptorLoadingErrors = descriptorLoadingErrors,
       duplicateModuleMap = duplicateModuleMap ?: emptyMap(),
       cycleErrors = cycleErrors
