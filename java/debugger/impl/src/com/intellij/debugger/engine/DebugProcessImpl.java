@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -1916,11 +1916,20 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         else {
           // some VMs (like IBM VM 1.4.2 bundled with WebSphere) does not resume threads on dispose() like it should
           try {
-            virtualMachineProxy.addedSuspendAllContext();
-            virtualMachineProxy.resume();
+            try {
+              virtualMachineProxy.addedSuspendAllContext();
+              virtualMachineProxy.resume();
+            }
+            finally {
+              virtualMachineProxy.dispose();
+            }
           }
-          finally {
-            virtualMachineProxy.dispose();
+          catch (VMDisconnectedException e) {
+            // if java process is terminated asynchronously with StopCommand execution
+            //  we may receive VMDisconnectedException on dispose()
+            //  in this case we should close the process instead of waiting for VMDeathEvent (since it won't appear)
+            closeCurrentProcess(false);
+            throw e;
           }
         }
       }
