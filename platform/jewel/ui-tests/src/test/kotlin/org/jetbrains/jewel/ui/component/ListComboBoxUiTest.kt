@@ -46,12 +46,14 @@ import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import junit.framework.TestCase.assertEquals
 import kotlin.test.assertTrue
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.styling.default
+import org.jetbrains.jewel.intui.standalone.styling.defaultWithRowCount
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.ui.component.interactions.performKeyPress
 import org.jetbrains.jewel.ui.component.styling.ComboBoxMetrics
@@ -61,8 +63,12 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
-@OptIn(ExperimentalTestApi::class)
+const val NUMBER_OF_ROWS = 5
+val COMBOBOX_TOTAL_VERTICAL_PADDING = 16.dp
+val LIST_ITEM_DEFAULT_HEIGHT = 24.dp
+
 @Suppress("LargeClass")
+@OptIn(ExperimentalTestApi::class)
 class ListComboBoxUiTest {
     @get:Rule val composeRule = createComposeRule()
 
@@ -1033,6 +1039,37 @@ class ListComboBoxUiTest {
     }
 
     @Test
+    fun `popup height should be calculated based on maxPopupRowCount`() {
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = List(20) { "Item $it" }, // More items than maxPopupRowCount
+                    selectedIndex = 0,
+                    onSelectedItemChange = {},
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    style =
+                        ComboBoxStyle(
+                            colors = JewelTheme.comboBoxStyle.colors,
+                            metrics =
+                                ComboBoxMetrics.defaultWithRowCount(
+                                    maxPopupRowCount = 5, // Show only 5 rows
+                                    popupContentPadding = PaddingValues(vertical = 8.dp),
+                                ),
+                            icons = JewelTheme.comboBoxStyle.icons,
+                        ),
+                    itemKeys = { index: Int, _: String -> index },
+                )
+            }
+        }
+
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertIsDisplayed()
+
+        val expectedHeight = (LIST_ITEM_DEFAULT_HEIGHT * NUMBER_OF_ROWS) + COMBOBOX_TOTAL_VERTICAL_PADDING
+        popupMenu.assertHeightIsEqualTo(expectedHeight)
+    }
+
+    @Test
     fun `popup height must be at least as big as the combo box height`() {
         composeRule.setContent {
             IntUiTheme {
@@ -1046,7 +1083,8 @@ class ListComboBoxUiTest {
                             colors = JewelTheme.comboBoxStyle.colors,
                             metrics =
                                 ComboBoxMetrics.default(
-                                    popupContentPadding = PaddingValues(vertical = 8.dp)
+                                    popupContentPadding = PaddingValues(vertical = 8.dp),
+                                    maxPopupHeight = Dp.Unspecified,
                                 ), // Small size on theme
                             icons = JewelTheme.comboBoxStyle.icons,
                         ),
@@ -1167,7 +1205,7 @@ class ListComboBoxUiTest {
                 updatePointerTo(center)
                 advanceEventTime()
 
-                // Press and release in a short period (no advance), like a tap event from macos trackpad
+                // Press and release in a short period (no advance), like a tap event from macOS trackpad
                 press(MouseButton.Primary)
                 release(MouseButton.Primary)
             }
