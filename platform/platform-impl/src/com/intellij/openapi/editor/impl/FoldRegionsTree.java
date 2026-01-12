@@ -7,21 +7,23 @@ import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.IntPair;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 abstract class FoldRegionsTree {
-  private final RangeMarkerTree<FoldRegionImpl> myMarkerTree;
-  private volatile @NotNull CachedData myCachedData = new CachedData();
+  private final @NotNull RangeMarkerTree<? extends FoldRegionImpl> myMarkerTree;
+  private volatile CachedData myCachedData;
 
-  private static final Comparator<FoldRegion> BY_END_OFFSET = Comparator.comparingInt(RangeMarker::getEndOffset);
+  private static final Comparator<? super FoldRegion> BY_END_OFFSET = Comparator.comparingInt(region -> region.getEndOffset());
   private static final Comparator<? super FoldRegion> BY_END_OFFSET_REVERSE = Collections.reverseOrder(BY_END_OFFSET);
 
-  FoldRegionsTree(@NotNull RangeMarkerTree<FoldRegionImpl> markerTree) {
+  FoldRegionsTree(@NotNull RangeMarkerTree<? extends FoldRegionImpl> markerTree) {
     myMarkerTree = markerTree;
   }
 
@@ -31,11 +33,14 @@ abstract class FoldRegionsTree {
   }
 
   void clearCachedValues() {
-    myCachedData = new CachedData();
+    myCachedData = null;
   }
 
   void clearCachedInlayValues() {
-    myCachedData.topFoldedInlaysHeightValid = false;
+    CachedData data = myCachedData;
+    if (data != null) {
+      myCachedData = data.clearCachedInlayValues();
+    }
   }
 
   protected abstract boolean isFoldingEnabled();
@@ -46,7 +51,7 @@ abstract class FoldRegionsTree {
 
   protected abstract int getLineHeight();
 
-  CachedData rebuild() {
+  @NotNull CachedData rebuild() {
     List<FoldRegion> visible = new ArrayList<>(myMarkerTree.size());
 
     SweepProcessor.Generator<FoldRegionImpl> generator = processor -> myMarkerTree.processOverlappingWith(0, Integer.MAX_VALUE, processor);
@@ -97,18 +102,18 @@ abstract class FoldRegionsTree {
   }
 
   void updateCachedOffsets() {
-    CachedData cachedData = myCachedData;
-    updateCachedAndSortOffsets(cachedData.visibleRegions, false);
+    if (isFoldingEnabled()) {
+      CachedData data = myCachedData;
+      if (data == null) {
+        rebuild();
+      }
+      else {
+        updateCachedAndSortOffsets(data.visibleRegions, false);
+      }
+    }
   }
 
-  private CachedData updateCachedAndSortOffsets(@NotNull FoldRegion @Nullable [] visibleRegions, boolean fromRebuild) {
-    if (!isFoldingEnabled()) {
-      return null;
-    }
-    if (visibleRegions == null) {
-      return rebuild();
-    }
-
+  private @NotNull CachedData updateCachedAndSortOffsets(@NotNull FoldRegion @NotNull [] visibleRegions, boolean fromRebuild) {
     List<FoldRegion> topLevel = new ArrayList<>(visibleRegions.length/2);
 
     for (FoldRegion region : visibleRegions) {
@@ -147,7 +152,7 @@ abstract class FoldRegionsTree {
       customYAdjustment[i] = currentCustomYAdjustment;
     }
 
-    CachedData data = new CachedData(visibleRegions, topLevelRegions, startOffsets, endOffsets, foldedLines, customYAdjustment);
+    CachedData data = new CachedData(visibleRegions, topLevelRegions, startOffsets, endOffsets, foldedLines, customYAdjustment, computeTopFoldedInlaysHeight(topLevelRegions, startOffsets, endOffsets));
     myCachedData = data;
     return data;
   }
@@ -162,7 +167,9 @@ abstract class FoldRegionsTree {
     //   currently supported
     int length = end - start;
     return myMarkerTree.processOverlappingWith(start, end, region -> {
-      if (region == toIgnore || !region.isValid()) return true;
+      if (region == toIgnore || !region.isValid()) {
+        return true;
+      }
 
       int rStart = region.getStartOffset();
       int rEnd = region.getEndOffset();
@@ -173,21 +180,19 @@ abstract class FoldRegionsTree {
       if (overlapLength == 0) {
         return !(custom || rCustom);
       }
-      else if (overlapLength < length && overlapLength < rLength) {
+      if (overlapLength < length && overlapLength < rLength) {
         return false;
       }
-      else if (length == rLength){
+      if (length == rLength){
         return custom != rCustom;
       }
-      else {
-        return start != rStart && end != rEnd || (length < rLength ? (!custom || rCustom) : (!rCustom || custom));
-      }
+      return start != rStart && end != rEnd || (length < rLength ? (!custom || rCustom) : (!rCustom || custom));
     });
   }
 
-  private CachedData ensureAvailableData() {
+  private @Nullable CachedData ensureAvailableDataIfPossible() {
     CachedData cachedData = myCachedData;
-    if (!cachedData.isAvailable() && ApplicationManager.getApplication().isDispatchThread()) {
+    if (cachedData == null && ApplicationManager.getApplication().isDispatchThread()) {
       return rebuild();
     }
     return cachedData;
@@ -195,22 +200,28 @@ abstract class FoldRegionsTree {
 
   @Nullable
   FoldRegion fetchOutermost(int offset) {
-    if (!isFoldingEnabled()) return null;
-    CachedData cachedData = ensureAvailableData();
-
-    int[] starts = cachedData.topStartOffsets;
-    int[] ends = cachedData.topEndOffsets;
-    if (starts == null || ends == null) {
+    if (!isFoldingEnabled()) {
+      return null;
+    }
+    CachedData cachedData = ensureAvailableDataIfPossible();
+    if (cachedData == null) {
       return null;
     }
 
+    int[] starts = cachedData.topStartOffsets;
+    int[] ends = cachedData.topEndOffsets;
     int i = ObjectUtils.binarySearch(0, ends.length, mid-> ends[mid] < offset ? -1 : starts[mid] > offset ? 1 : 0);
     return i < 0 ? null : cachedData.topLevelRegions[i];
   }
 
-  FoldRegion @Nullable [] fetchVisible() {
-    if (!isFoldingEnabled()) return null;
-    CachedData cachedData = ensureAvailableData();
+  @NotNull FoldRegion @Nullable [] fetchVisible() {
+    if (!isFoldingEnabled()) {
+      return null;
+    }
+    CachedData cachedData = ensureAvailableDataIfPossible();
+    if (cachedData == null) {
+      return null;
+    }
 
     return cachedData.visibleRegions;
   }
@@ -219,7 +230,10 @@ abstract class FoldRegionsTree {
     if (!isFoldingEnabled()) {
       return null;
     }
-    CachedData cachedData = ensureAvailableData();
+    CachedData cachedData = ensureAvailableDataIfPossible();
+    if (cachedData == null) {
+      return null;
+    }
     return cachedData.topLevelRegions;
   }
 
@@ -228,7 +242,9 @@ abstract class FoldRegionsTree {
   }
 
   @NotNull FoldRegion @NotNull [] fetchCollapsedAt(int offset) {
-    if (!isFoldingEnabled()) return FoldRegion.EMPTY_ARRAY;
+    if (!isFoldingEnabled()) {
+      return FoldRegion.EMPTY_ARRAY;
+    }
     List<FoldRegion> allCollapsed = new ArrayList<>();
     myMarkerTree.processContaining(offset, region->{
       if (!region.isExpanded() && containsStrict(region, offset)) {
@@ -240,7 +256,9 @@ abstract class FoldRegionsTree {
   }
 
   boolean intersectsRegion(int startOffset, int endOffset) {
-    if (!isFoldingEnabled()) return true;
+    if (!isFoldingEnabled()) {
+      return true;
+    }
     return !myMarkerTree.processAll(region -> {
       boolean contains1 = containsStrict(region, startOffset);
       boolean contains2 = containsStrict(region, endOffset);
@@ -249,7 +267,9 @@ abstract class FoldRegionsTree {
   }
 
   @NotNull FoldRegion @NotNull [] fetchAllRegions() {
-    if (!isFoldingEnabled()) return FoldRegion.EMPTY_ARRAY;
+    if (!isFoldingEnabled()) {
+      return FoldRegion.EMPTY_ARRAY;
+    }
     List<FoldRegion> regions = new ArrayList<>();
     myMarkerTree.processOverlappingWith(0, Integer.MAX_VALUE, new CommonProcessors.CollectProcessor<>(regions));
     return toFoldArray(regions);
@@ -265,43 +285,58 @@ abstract class FoldRegionsTree {
     return regions;
   }
 
-  private void forEach(@NotNull Consumer<? super FoldRegion> consumer) {
-    myMarkerTree.processAll(region -> { consumer.consume(region); return true; });
-  }
-
   int getFoldedLinesCountBefore(int offset) {
-    if (!isFoldingEnabled()) return 0;
-    CachedData cachedData = ensureAvailableData();
+    if (!isFoldingEnabled()) {
+      return 0;
+    }
+    CachedData cachedData = ensureAvailableDataIfPossible();
+    if (cachedData == null) {
+      return 0;
+    }
     int idx = getLastTopLevelIndexBefore(cachedData, offset);
-    if (idx == -1) return 0;
-    assert cachedData.topFoldedLines != null;
+    if (idx == -1) {
+      return 0;
+    }
     return cachedData.topFoldedLines[idx];
   }
 
   int getTotalNumberOfFoldedLines() {
-    if (!isFoldingEnabled()) return 0;
-    CachedData cachedData = ensureAvailableData();
+    if (!isFoldingEnabled()) {
+      return 0;
+    }
+    CachedData cachedData = ensureAvailableDataIfPossible();
+    if (cachedData == null) {
+      return 0;
+    }
     int[] foldedLines = cachedData.topFoldedLines;
-
-    if (foldedLines == null || foldedLines.length == 0) return 0;
+    if (foldedLines.length == 0) {
+      return 0;
+    }
     return foldedLines[foldedLines.length - 1];
   }
 
   int getHeightOfFoldedBlockInlaysBefore(int idx) {
-    if (!isFoldingEnabled()) return 0;
-    CachedData cachedData = ensureAvailableData();
-    if (idx == -1) return 0;
-    cachedData.ensureInlayDataAvailable();
+    if (!isFoldingEnabled() || idx == -1) {
+      return 0;
+    }
+    CachedData cachedData = ensureInlayDataAvailableIfPossible();
+    if (cachedData == null) {
+      return 0;
+    }
     int[] topFoldedInlaysHeight = cachedData.topFoldedInlaysHeight;
-    return topFoldedInlaysHeight == null ? 0 : topFoldedInlaysHeight[idx];
+    return topFoldedInlaysHeight.length <= idx || topFoldedInlaysHeight == CachedData.NOT_YET_COMPUTED ? 0 : topFoldedInlaysHeight[idx];
   }
 
   int getTotalHeightOfFoldedBlockInlays() {
-    if (!isFoldingEnabled()) return 0;
-    CachedData cachedData = ensureAvailableData();
-    cachedData.ensureInlayDataAvailable();
+    if (!isFoldingEnabled()) {
+      return 0;
+    }
+    CachedData cachedData = ensureInlayDataAvailableIfPossible();
+    if (cachedData == null) {
+      return 0;
+    }
     int[] foldedInlaysHeight = cachedData.topFoldedInlaysHeight;
-    return foldedInlaysHeight == null || foldedInlaysHeight.length == 0 ? 0 : foldedInlaysHeight[foldedInlaysHeight.length - 1];
+    return foldedInlaysHeight.length == 0 || foldedInlaysHeight == CachedData.NOT_YET_COMPUTED ? 0 : foldedInlaysHeight[foldedInlaysHeight.length - 1];
   }
 
   /**
@@ -309,8 +344,13 @@ abstract class FoldRegionsTree {
    */
   @NotNull
   IntPair getCustomRegionsYAdjustment(int offset, int idx) {
-    if (!isFoldingEnabled()) return new IntPair(0,0);
-    CachedData cachedData = ensureAvailableData();
+    if (!isFoldingEnabled()) {
+      return new IntPair(0,0);
+    }
+    CachedData cachedData = ensureAvailableDataIfPossible();
+    if (cachedData == null) {
+      return new IntPair(0,0);
+    }
     int prevAdjustment = idx == -1 ? 0 : cachedData.topCustomYAdjustment[idx];
     int curAdjustment = idx + 1 < cachedData.topStartOffsets.length && cachedData.topStartOffsets[idx + 1] == offset
                         ? cachedData.topCustomYAdjustment[idx + 1] - prevAdjustment : 0;
@@ -318,16 +358,18 @@ abstract class FoldRegionsTree {
   }
 
   int getLastTopLevelIndexBefore(int offset) {
-    if (!isFoldingEnabled()) return -1;
-    CachedData cachedData = ensureAvailableData();
+    if (!isFoldingEnabled()) {
+      return -1;
+    }
+    CachedData cachedData = ensureAvailableDataIfPossible();
+    if (cachedData == null) {
+      return -1;
+    }
     return getLastTopLevelIndexBefore(cachedData, offset);
   }
 
   private static int getLastTopLevelIndexBefore(@NotNull CachedData cachedData, int offset) {
     int[] endOffsets = cachedData.topEndOffsets;
-
-    if (endOffsets == null) return -1;
-
     offset--; // end offsets are decremented in cache
     int i = Arrays.binarySearch(endOffsets, offset);
     return i < 0 ? - i - 2 : i;
@@ -347,62 +389,53 @@ abstract class FoldRegionsTree {
   }
 
   void clearDocumentRangesModificationStatus() {
-    forEach(region -> ((FoldRegionImpl)region).resetDocumentRegionChanged());
+    myMarkerTree.processAll(region -> { region.resetDocumentRegionChanged(); return true; });
   }
 
-  private final class CachedData {
-    private final @NotNull FoldRegion[] visibleRegions;  // all foldings outside collapsed regions
-    private final @NotNull FoldRegion[] topLevelRegions; // all visible regions which are collapsed
-    private final int[] topStartOffsets;
-    private final int[] topEndOffsets;
-    private final int[] topFoldedLines;
-    private final int[] topCustomYAdjustment;
-    private int[] topFoldedInlaysHeight;
-    private boolean topFoldedInlaysHeightValid;
-
-    private CachedData() {
-      visibleRegions = null;
-      topLevelRegions = null;
-      topStartOffsets = null;
-      topEndOffsets = null;
-      topFoldedLines = null;
-      topCustomYAdjustment = null;
+  /**
+   * @param visibleRegions  all foldings outside collapsed regions
+   * @param topLevelRegions all visible regions which are collapsed
+   * @param topFoldedInlaysHeight {@link #NOT_YET_COMPUTED} means this field is invalid, all other values mean it's computed and valid
+   */
+  private record CachedData(@NotNull FoldRegion @NotNull [] visibleRegions,
+                            @NotNull FoldRegion @NotNull [] topLevelRegions,
+                            int @NotNull [] topStartOffsets,
+                            int @NotNull [] topEndOffsets,
+                            int @NotNull [] topFoldedLines,
+                            int @NotNull [] topCustomYAdjustment,
+                            int @NotNull [] topFoldedInlaysHeight) {
+    private static final int[] NOT_YET_COMPUTED = new int[1]; // do not inline, needs unique identity
+    private @NotNull CachedData clearCachedInlayValues() {
+      return topFoldedInlaysHeight == NOT_YET_COMPUTED ? this :
+        new CachedData(visibleRegions, topLevelRegions, topStartOffsets, topEndOffsets, topFoldedLines, topCustomYAdjustment, NOT_YET_COMPUTED);
     }
-
-    private CachedData(@NotNull FoldRegion @NotNull [] visibleRegions,
-                       @NotNull FoldRegion @NotNull [] topLevelRegions,
-                       int @NotNull [] topStartOffsets,
-                       int @NotNull [] topEndOffsets,
-                       int @NotNull [] topFoldedLines,
-                       int @NotNull [] topCustomYAdjustment) {
-      this.visibleRegions = visibleRegions;
-      this.topLevelRegions = topLevelRegions;
-      this.topStartOffsets = topStartOffsets;
-      this.topEndOffsets = topEndOffsets;
-      this.topFoldedLines = topFoldedLines;
-      this.topCustomYAdjustment = topCustomYAdjustment;
-      ensureInlayDataAvailable();
+  }
+  private @Nullable CachedData ensureInlayDataAvailableIfPossible() {
+    CachedData data = ensureAvailableDataIfPossible();
+    if (data == null) {
+      return null;
     }
-
-    private boolean isAvailable() {
-      return visibleRegions != null;
+    if (data.topFoldedInlaysHeight != CachedData.NOT_YET_COMPUTED || !ApplicationManager.getApplication().isDispatchThread()) {
+      return data;
     }
+    int[] topFoldedInlaysHeight = computeTopFoldedInlaysHeight(data.topLevelRegions, data.topStartOffsets, data.topEndOffsets);
+    CachedData newData = new CachedData(data.visibleRegions, data.topLevelRegions, data.topStartOffsets, data.topEndOffsets,
+                                        data.topFoldedLines, data.topCustomYAdjustment, topFoldedInlaysHeight);
+    myCachedData = newData;
+    return newData;
+  }
 
-    private void ensureInlayDataAvailable() {
-      if (topFoldedInlaysHeightValid || !ApplicationManager.getApplication().isDispatchThread()) return;
-      topFoldedInlaysHeightValid = true;
-      if (hasBlockInlays()) {
-        int count = topLevelRegions.length;
-        topFoldedInlaysHeight = ArrayUtil.newIntArray(count);
-        int inlaysHeightSum = 0;
-        for (int i = 0; i < count; i++) {
-          inlaysHeightSum += getFoldedBlockInlaysHeight(topStartOffsets[i], topEndOffsets[i] + 1);
-          topFoldedInlaysHeight[i] = inlaysHeightSum;
-        }
-      }
-      else {
-        topFoldedInlaysHeight = null;
-      }
+  private int @NotNull [] computeTopFoldedInlaysHeight(@NotNull FoldRegion[] topLevelRegions,
+                                                       int @NotNull [] topStartOffsets,
+                                                       int @NotNull [] topEndOffsets) {
+    int[] topFoldedInlaysHeight;
+    int count = hasBlockInlays() ? topLevelRegions.length : 0;
+    topFoldedInlaysHeight = ArrayUtil.newIntArray(count);
+    int inlaysHeightSum = 0;
+    for (int i = 0; i < count; i++) {
+      inlaysHeightSum += getFoldedBlockInlaysHeight(topStartOffsets[i], topEndOffsets[i] + 1);
+      topFoldedInlaysHeight[i] = inlaysHeightSum;
     }
+    return topFoldedInlaysHeight;
   }
 }
