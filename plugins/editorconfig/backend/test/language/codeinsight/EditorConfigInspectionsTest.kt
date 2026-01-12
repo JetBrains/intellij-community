@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.editorconfig.common.EditorConfigBundle
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
@@ -114,14 +115,17 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
     EditorConfigValueCorrectnessInspection::class
   )
 
+  @PerformanceUnitTest
   fun testHeaderProcessingPerformance() {
     doTestPerf(EditorConfigNoMatchingFilesInspection::class)
   }
 
+  @PerformanceUnitTest
   fun testHeaderProcessingPerformance2() {
     doTestPerf(EditorConfigPatternRedundancyInspection::class)
   }
 
+  @PerformanceUnitTest
   fun testHeaderProcessingPerformance3() {
     doTestPerf(EditorConfigHeaderUniquenessInspection::class)
   }

@@ -3,6 +3,7 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
@@ -187,6 +188,7 @@ public class ContainerUtilTest {
     assertEquals("abccba", log.toString());
   }
 
+  @PerformanceUnitTest
   @Test
   public void testLockFreeSingleThreadPerformance() {
     List<Object> stock = new CopyOnWriteArrayList<>();
@@ -239,6 +241,7 @@ public class ContainerUtilTest {
     }
   }
 
+  @PerformanceUnitTest
   @Test
   public void testCOWListPerformanceAdd() {
     List<Object> list = ContainerUtil.createLockFreeCopyOnWriteList();

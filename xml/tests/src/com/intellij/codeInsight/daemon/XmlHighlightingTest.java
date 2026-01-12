@@ -42,6 +42,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.InspectionsKt;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.Processor;
@@ -1230,6 +1231,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     });
   }
 
+  @PerformanceUnitTest
   public void testBigPrologHighlightingPerformance() {
     configureByText(XmlFileType.INSTANCE,
                     "<!DOCTYPE rules [\n" +

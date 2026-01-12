@@ -19,6 +19,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NonNls;
@@ -184,11 +185,13 @@ public abstract class XmlParsingTestBase extends ParsingTestCase {
     }
   }
 
+  @PerformanceUnitTest
   public void testPerformance1() throws Exception {
     //noinspection SpellCheckingInspection
     doTestPerformance("pallada.xml");
   }
 
+  @PerformanceUnitTest
   public void testPerformance2() throws Exception {
     doTestPerformance("performance2.xml");
   }

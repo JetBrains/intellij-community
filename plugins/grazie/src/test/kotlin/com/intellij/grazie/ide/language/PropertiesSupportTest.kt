@@ -6,6 +6,7 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import java.nio.charset.StandardCharsets
 
@@ -81,6 +82,7 @@ class PropertiesSupportTest : GrazieTestBase() {
     myFixture.checkHighlighting()
   }
 
+  @PerformanceUnitTest
   fun `test properties typos spellcheck performance`() {
     Benchmark.newBenchmark("Highlight typos in i18n.properties file") {
       runHighlightTestForFile("ide/language/properties/i18n.properties")

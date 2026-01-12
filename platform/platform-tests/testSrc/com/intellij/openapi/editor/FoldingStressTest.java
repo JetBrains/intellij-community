@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
 public class FoldingStressTest extends LightPlatformTestCase {
@@ -81,6 +82,7 @@ public class FoldingStressTest extends LightPlatformTestCase {
     foldRegion.setExpanded(false);
   }
 
+  @PerformanceUnitTest
   public void testRestoreManyFoldRegionsPerformance() {
     int N = 100_000;
     DocumentImpl doc = new DocumentImpl(StringUtil.repeat("x", N));

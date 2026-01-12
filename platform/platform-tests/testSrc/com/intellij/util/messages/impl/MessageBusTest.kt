@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.LoggedErrorProcessorEnabler
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.MessageBus
@@ -376,6 +377,7 @@ class MessageBusTest : MessageBusOwner {
     assertEvents("handler3:t12", "uoe", "handler2:t12")
   }
 
+  @PerformanceUnitTest
   @Test
   fun manyChildrenCreationDeletionPerformance() {
     Benchmark.newBenchmark("Child bus creation/deletion") {

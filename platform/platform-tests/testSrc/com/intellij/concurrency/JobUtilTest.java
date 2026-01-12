@@ -31,10 +31,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.Timings;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
@@ -67,6 +64,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     Assume.assumeTrue("Too low parallelism: " + parallelism + ", but I need at least 4, I give up", parallelism >= 4);
   }
 
+  @PerformanceUnitTest
   public void testUnbalancedTaskJobUtilPerformance() {
     int N = 10_000;
     List<Integer> things = new ArrayList<>(N);

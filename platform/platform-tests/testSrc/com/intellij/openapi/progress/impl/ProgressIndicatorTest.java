@@ -18,10 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.testFramework.BombedProgressIndicator;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.TestLoggerKt;
+import com.intellij.testFramework.*;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -344,6 +341,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     assertFalse(checkCanceledCalled);
   }
 
+  @PerformanceUnitTest
   public void testProgressPerformance() {
     Benchmark.newBenchmark("executeProcessUnderProgress", () -> {
       EmptyProgressIndicator indicator = new EmptyProgressIndicator();

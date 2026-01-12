@@ -16,6 +16,7 @@
 package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -110,6 +111,7 @@ public class TokenSetTest {
   }
 
 
+  @PerformanceUnitTest
   @Test
   public void performance() {
     final IElementType[] elementTypes = IElementType.enumerate(IElementType.TRUE);

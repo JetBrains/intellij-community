@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.IntObjectCache;
@@ -211,6 +212,7 @@ public class PersistentBTreeEnumeratorTest {
     assertEquals(0, pageFastHitDiff);
   }
 
+  @PerformanceUnitTest
   @Test
   public void testSmallEnumeratorTryEnumeratePerformance() throws IOException {
     List<String> data = Arrays.asList("qwe", "asd", "zxc", "123");
@@ -315,6 +317,7 @@ public class PersistentBTreeEnumeratorTest {
     assertEquals(0, pageHitDiff);
   }
 
+  @PerformanceUnitTest
   @Test
   public void testPerformance() throws IOException {
     IntObjectCache<String> stringCache = new IntObjectCache<>(2000);

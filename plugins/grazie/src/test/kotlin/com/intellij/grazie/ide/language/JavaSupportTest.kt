@@ -15,6 +15,7 @@ import com.intellij.spellchecker.dictionary.Loader
 import com.intellij.spellchecker.settings.SpellCheckerSettings
 import com.intellij.testFramework.DumbModeTestUtils.runInDumbModeSynchronously
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import java.util.function.Consumer
@@ -56,12 +57,14 @@ class JavaSupportTest : GrazieTestBase() {
     myFixture.checkResultByFile("ide/language/java/AccidentalMerge_after.java")
   }
 
+  @PerformanceUnitTest
   fun `test long comment performance`() {
     Benchmark.newBenchmark("highlighting") {
       runHighlightTestForFile("ide/language/java/LongCommentPerformance.java")
     }.setup { psiManager.dropPsiCaches() }.start()
   }
 
+  @PerformanceUnitTest
   fun `test performance with many line comments`() {
     val text = "// this is a single line comment\n".repeat(5000)
     myFixture.configureByText("a.java", text)
@@ -209,6 +212,7 @@ class JavaSupportTest : GrazieTestBase() {
     myFixture.checkHighlighting()
   }
 
+  @PerformanceUnitTest
   fun `test performance on typos by word-level spellchecker`() {
     // German is not enabled on purpose to disable suggestion-based typo detection
     Benchmark.newBenchmark("word-level spellchecking performance") {

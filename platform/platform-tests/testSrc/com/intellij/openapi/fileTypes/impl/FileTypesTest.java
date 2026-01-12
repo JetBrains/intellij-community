@@ -1600,6 +1600,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     }
   }
 
+  @PerformanceUnitTest
   public void testIsFileOfTypeMustNotQueryAllFileTypesIdentifiableByVirtualFileForPerformanceReasons() throws IOException {
     Disposable disposable = Disposer.newDisposable();
     try {

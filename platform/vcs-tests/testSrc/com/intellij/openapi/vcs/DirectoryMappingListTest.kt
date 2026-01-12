@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
@@ -325,6 +326,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     assertMappedRoot("$rootPath/parent/child/dir/subChild/subSubChild/file", "$rootPath/parent/child/dir/subChild/subSubChild")
   }
 
+  @PerformanceUnitTest
   fun testPerformanceFewRootsFilePaths() {
     val roots = listOf(
       "$rootPath/parent/module1",
@@ -349,6 +351,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     }.start()
   }
 
+  @PerformanceUnitTest
   fun testPerformanceManyRootsFilePaths() {
     val roots = (0..1000).map { "$rootPath/parent/module$it" } +
                 "$rootPath/parent"
@@ -372,6 +375,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     }.start()
   }
 
+  @PerformanceUnitTest
   fun testPerformanceNestedRootsFilePaths() {
     var path = "$rootPath/parent"
     val roots = mutableListOf<String>()
@@ -399,6 +403,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     }.start()
   }
 
+  @PerformanceUnitTest
   fun testPerformanceFewRootsVirtualFiles() {
     val roots = listOf(
       "$rootPath/parent/module1",
@@ -423,6 +428,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     }.start()
   }
 
+  @PerformanceUnitTest
   fun testPerformanceManyRootsVirtualFiles() {
     val roots = (0..1000).map { "$rootPath/parent/module$it" } +
                 "$rootPath/parent"
@@ -446,6 +452,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     }.start()
   }
 
+  @PerformanceUnitTest
   fun testPerformanceNestedRootsVirtualFiles() {
     var path = "$rootPath/parent"
     val roots = mutableListOf<String>()

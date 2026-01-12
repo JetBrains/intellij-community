@@ -4,6 +4,7 @@ package com.intellij.xml;
 import com.intellij.platform.syntax.lexer.Lexer;
 import com.intellij.platform.syntax.util.lexer.FilterLexer;
 import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.syntax.LexerTestCase;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
@@ -47,10 +48,12 @@ public class XmlLexerTest extends LexerTestCase {
   }
 
 
+  @PerformanceUnitTest
   public void testPerformance1() throws IOException {
     doTestPerformance("pallada.xml");
   }
 
+  @PerformanceUnitTest
   public void testPerformance2() throws IOException {
     doTestPerformance("performance2.xml");
   }

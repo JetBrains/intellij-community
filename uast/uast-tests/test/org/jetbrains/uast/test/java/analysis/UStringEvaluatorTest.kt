@@ -9,6 +9,7 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.asSafely
 import junit.framework.TestCase
@@ -460,6 +461,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     }
   )
 
+  @PerformanceUnitTest
   fun `test many assignments performance`() {
     val updateTimes = 500
     val file = myFixture.configureByText("MyFile.java", """

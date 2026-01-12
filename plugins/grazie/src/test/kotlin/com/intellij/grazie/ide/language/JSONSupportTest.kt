@@ -4,6 +4,7 @@ package com.intellij.grazie.ide.language
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 class JSONSupportTest : GrazieTestBase() {
@@ -13,6 +14,7 @@ class JSONSupportTest : GrazieTestBase() {
     runHighlightTestForFile("ide/language/json/Example.json")
   }
 
+  @PerformanceUnitTest
   fun `test json typos spellcheck performance`() {
     Benchmark.newBenchmark("Highlight typos in i18n.json file") {
       runHighlightTestForFile("ide/language/json/i18n.json")

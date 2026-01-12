@@ -23,6 +23,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.ExternalChangeActionUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
@@ -66,10 +67,12 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
   private volatile Throwable exception;
 
+  @PerformanceUnitTest
   public void testRead50Write50LockPerformance() throws NoSuchMethodException {
     runReadWrites(500_000, 500_000);
   }
 
+  @PerformanceUnitTest
   public void testRead100Write0LockPerformance() throws NoSuchMethodException {
     runReadWrites(5_000_000, 0);
   }

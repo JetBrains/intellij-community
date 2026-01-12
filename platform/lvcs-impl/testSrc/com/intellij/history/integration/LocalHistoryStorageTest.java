@@ -6,6 +6,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.io.storage.AbstractStorage;
 
@@ -36,6 +37,7 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
     }
   }
 
+  @PerformanceUnitTest
   public void testChangesAccumulationPerformance() throws IOException {
     VirtualFile f = WriteAction.compute(
       () -> VirtualFileManager.getInstance().findFileByUrl("temp:///").createChildData(null, "testChangesAccumulationPerformance.txt")

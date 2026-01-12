@@ -8,6 +8,7 @@ import com.intellij.openapi.util.IntRef
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding
 import com.intellij.testFramework.LexerTestCase
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import junit.framework.TestCase
 import org.jetbrains.annotations.NonNls
@@ -488,6 +489,7 @@ NUMBER ('0yabc0')
 """)
   }
 
+  @PerformanceUnitTest
   fun testKeywordLexerPerformance() {
     val count = 3000
     val keywords = mutableListOf<String>()

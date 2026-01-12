@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.injection.Injectable
 import com.intellij.psi.util.parents
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
@@ -1022,6 +1023,7 @@ abstract class AbstractYamlMultilineInjectionTest(val async: Boolean) : BasePlat
     myInjectionFixture.assertInjectedContent("abc: \\\n\\\n\n")
   }
 
+  @PerformanceUnitTest
   fun testLargeInjectionTypingPerformance() {
 
     val size = 100
@@ -1063,6 +1065,7 @@ abstract class AbstractYamlMultilineInjectionTest(val async: Boolean) : BasePlat
     |""".trimMargin())
   }
 
+  @PerformanceUnitTest
   fun testLargeInjectionReformattingPerformance() {
     val size = 2000
     val rootsDepth = 10

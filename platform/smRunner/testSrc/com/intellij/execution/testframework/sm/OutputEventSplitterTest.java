@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.hamcrest.core.IsCollectionContaining;
@@ -368,6 +369,7 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
     }
   }
 
+  @PerformanceUnitTest
   public void testPerformanceWithLotsOfFragments() {
     Benchmark.newBenchmark("Flushing lot's of fragments", mySplitter::flush)
       .setup(() -> {
@@ -378,6 +380,7 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
       .start();
   }
 
+  @PerformanceUnitTest
   public void testPerformanceSimple() {
     String testStarted = ServiceMessageBuilder.testStarted("myTest").toString() + "\n";
     mySplitter = new OutputEventSplitter() {

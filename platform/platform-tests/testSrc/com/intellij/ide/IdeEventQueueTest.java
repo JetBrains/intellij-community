@@ -8,10 +8,7 @@ import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.LoggedErrorProcessor;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.TestLoggerKt;
+import com.intellij.testFramework.*;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
@@ -37,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.intellij.platform.locking.impl.IntelliJLockingUtil.getGlobalThreadingSupport;
 
 public class IdeEventQueueTest extends LightPlatformTestCase {
+  @PerformanceUnitTest
   public void testManyEventsStressPerformance() {
     int N = 100000;
     Benchmark.newBenchmark("Event queue dispatch", () -> {

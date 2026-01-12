@@ -1115,6 +1115,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertFalse(m.isValid());
   }
 
+  @PerformanceUnitTest
   public void testRangeHighlighterLinesInRangeForLongLinePerformance() {
     final int N = 50000;
     Document document = EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol('x', 2 * N));
@@ -1321,6 +1322,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }
   }
 
+  @PerformanceUnitTest
   public void testGetOffsetPerformance() {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     List<RangeMarker> markers = new ArrayList<>();
@@ -1344,6 +1346,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }).start();
   }
 
+  @PerformanceUnitTest
   public void testGetOffsetDuringModificationsPerformance() {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     List<RangeMarker> markers = new ArrayList<>();
@@ -1369,6 +1372,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }).start();
   }
 
+  @PerformanceUnitTest
   public void testDocModificationPerformance() {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     List<RangeMarker> markers = new ArrayList<>();
@@ -1390,6 +1394,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }
   }
 
+  @PerformanceUnitTest
   public void testRMInsertDisposePerformance() {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     int N = 1_000_000;
@@ -1407,6 +1412,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }).start();
   }
 
+  @PerformanceUnitTest
   public void testProcessOverlappingPerformance() {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     int N = 100_000;

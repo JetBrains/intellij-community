@@ -1077,6 +1077,7 @@ public class FileEncodingTest implements TestDialog {
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
   }
 
+  @PerformanceUnitTest
   @Test
   public void testEncodingReDetectionRequestsOnDocumentChangeAreBatchedToImprovePerformance() throws IOException {
     VirtualFile file = createTempFile("txt", NO_BOM, "xxx", StandardCharsets.US_ASCII);

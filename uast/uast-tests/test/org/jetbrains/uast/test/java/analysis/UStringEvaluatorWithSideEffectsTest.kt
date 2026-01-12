@@ -6,6 +6,7 @@ import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PartiallyKnownString
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import junit.framework.TestCase
 import org.jetbrains.uast.UReturnExpression
@@ -491,6 +492,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
+  @PerformanceUnitTest
   fun `test many appends performance`() {
     val size = 250
     val file = myFixture.configureByText("MyFile.java", """

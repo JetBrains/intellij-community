@@ -14,6 +14,7 @@ import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.inspection.SSBasedInspection;
 import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.PairProcessor;
@@ -67,6 +68,7 @@ public class SSBasedInspectionTest extends SSBasedInspectionTestCase {
     doTest("System.out.println();", "stdout", "System.out.println(\"Hello World!\");");
   }
 
+  @PerformanceUnitTest
   public void testChainedMethodCallsPerformance() {
     final StringBuilder source = new StringBuilder("""
                                                      public class ChainedMethodCallsPerformance {

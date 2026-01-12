@@ -403,6 +403,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     }));
   }
 
+  @PerformanceUnitTest
   public void testCancellationPerformance() {
     Benchmark.newBenchmark("NBRA cancellation", () -> {
       WriteAction.run(() -> {

@@ -19,6 +19,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,7 @@ public class XmlEditorTest extends LightJavaCodeInsightTestCase {
     return "/xml/tests/testData/editor/" + getTestName(true) + (isOriginal ? ".xml" : "_after.xml") ;
   }
 
+  @PerformanceUnitTest
   public void testEnterPerformance() {
     configureByFile(getTestFilePath(true));
     for (int i = 0; i < 3; i++) {

@@ -626,6 +626,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertFalse(pointer.isValid());
   }
 
+  @PerformanceUnitTest
   @Test
   public void testThreadsPerformance() throws Exception {
     VirtualFile vTemp = getVirtualTempRoot();
@@ -1178,6 +1179,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(p3.isValid());
   }
 
+  @PerformanceUnitTest
   @Test
   public void testRawGetPerformance() {
     VirtualFile vTemp = getVirtualTempRoot();

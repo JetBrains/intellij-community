@@ -242,6 +242,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     }
   }
 
+  @PerformanceUnitTest
   fun testPerformance() {
     withCycleConsoleNoFolding(100) { console: ConsoleViewImpl ->
       Benchmark.newBenchmark("console print") {
@@ -257,6 +258,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     }
   }
 
+  @PerformanceUnitTest
   fun testLargeConsolePerformance() {
     withCycleConsoleNoFolding(UISettings.getInstance().consoleCycleBufferSizeKb) { console: ConsoleViewImpl ->
       Benchmark.newBenchmark("console print") {
@@ -270,6 +272,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     }
   }
 
+  @PerformanceUnitTest
   fun testPerformanceOfMergeableTokens() {
     withCycleConsoleNoFolding(1000) { console: ConsoleViewImpl ->
       Benchmark.newBenchmark("console print with mergeable tokens") {
@@ -659,6 +662,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     assertEquals(expectedText, console.text)
   }
 
+  @PerformanceUnitTest
   fun testBackspacePerformance() {
     val nCopies = 10000
     val `in` = StringUtil.repeat("\na\nb\bc", nCopies)

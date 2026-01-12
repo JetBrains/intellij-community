@@ -2,6 +2,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.ide.browsers.OpenUrlHyperlinkInfo;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
@@ -104,6 +105,7 @@ public class UrlFilterTest extends BasePlatformTestCase {
     assertFileHyperlink("file:C:/path/to/file.txt", 0, 24, "C:/path/to/file.txt", -1, -1);
   }
 
+  @PerformanceUnitTest
   public void testPerformanceSimple() {
     List<LinkInfo> expected = List.of(new FileLinkInfo(7, 30, "/home/file.txt", 3, -1),
                                       new FileLinkInfo(34, 62, "/home/result.txt", 3, 30));

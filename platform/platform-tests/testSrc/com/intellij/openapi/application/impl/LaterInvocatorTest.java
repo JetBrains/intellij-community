@@ -616,6 +616,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   @IgnoreJUnit3
+  @PerformanceUnitTest
   public void testSwingThroughIdeEventQueuePerformance() {
     int N = 1_000_000;
 
@@ -636,6 +637,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   @IgnoreJUnit3
+  @PerformanceUnitTest
   public void testApplicationInvokeLaterPerformance() {
     int N = 1_000_000;
     AtomicInteger counter = new AtomicInteger();
@@ -655,6 +657,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   @IgnoreJUnit3
+  @PerformanceUnitTest
   public void testApplicationInvokeLaterInModalContextPerformance() {
     int N = 1_000_000;
     AtomicInteger counter = new AtomicInteger();

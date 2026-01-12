@@ -70,6 +70,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     }
   }
 
+  @PerformanceUnitTest
   public void testContainerCreateDeletePerformance() {
     Benchmark.newBenchmark(getTestName(false), () -> {
       Disposable parent = Disposer.newDisposable();
@@ -80,6 +81,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     }).start();
   }
 
+  @PerformanceUnitTest
   public void testMultipleCreatePointerWithTheSameUrlPerformance() throws IOException {
     VirtualFilePointerListener listener = new VirtualFilePointerListener() {
     };
@@ -98,6 +100,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
       .start();
   }
 
+  @PerformanceUnitTest
   public void testMultipleCreatePointerWithTheSameFilePerformance() throws IOException {
     VirtualFilePointerListener listener = new VirtualFilePointerListener() {
     };
@@ -117,6 +120,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
       .start();
   }
 
+  @PerformanceUnitTest
   public void testManyPointersUpdatePerformance() throws IOException {
     VirtualFilePointerListener listener = new VirtualFilePointerListener() {
     };
@@ -146,6 +150,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     });
   }
 
+  @PerformanceUnitTest
   public void testUpdatePerformanceOfFewLongPointers() throws IOException {
     VirtualFile root = TempFileSystem.getInstance().findFileByPath("/");
     for (int i = 0; i < 20; i++) {

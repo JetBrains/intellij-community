@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
@@ -729,6 +730,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertThat(newDirFile.toNioPath()).isNotNull().isEqualTo(newDir);
   }
 
+  @PerformanceUnitTest
   @Test
   public void testFindFileByUrlPerformance() {
     var virtualFileManager = VirtualFileManager.getInstance();

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.highlighting
 
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
@@ -178,6 +179,7 @@ class YAMLIncompatibleTypesInspectionTest : BasePlatformTestCase() {
     """.trimIndent())
   }
 
+  @PerformanceUnitTest
   fun testVeryLargeArrayPerformance() {
     myFixture.configureByText("test.yaml", """
       top4:

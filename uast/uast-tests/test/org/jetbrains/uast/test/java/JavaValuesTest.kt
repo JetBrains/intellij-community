@@ -7,6 +7,7 @@ import org.jetbrains.uast.UParameter
 import org.jetbrains.uast.UVariable
 import org.jetbrains.uast.evaluation.SimpleEvaluatorExtension
 import com.intellij.platform.uast.testFramework.common.ValuesTestBase
+import com.intellij.testFramework.PerformanceUnitTest
 import org.jetbrains.uast.values.UBooleanConstant
 import org.jetbrains.uast.values.UValue
 import org.junit.Test
@@ -176,6 +177,7 @@ class JavaValuesTest : AbstractJavaValuesTest(), ValuesTestBase {
   @Test
   fun testWhileWithReturn() = doTest("Simple/WhileWithReturn.java")
 
+  @PerformanceUnitTest
   @Test
   fun testPerformanceLoopWithReassignment() = doTest("Performance/LoopWithReassignment.java")
 

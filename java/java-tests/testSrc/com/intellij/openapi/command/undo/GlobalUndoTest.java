@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import kotlin.text.Charsets;
@@ -997,6 +998,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     assertEquals("public class TestClass1 {\n}public class Aaa {}\n", editor.getDocument().getText());
   }
 
+  @PerformanceUnitTest
   public void testPerformance() {
     WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
       @Override
