@@ -17,7 +17,7 @@ interface GradleTestFixtureBuilder {
 
     fun create(
       projectName: String,
-      javaVersionRestriction: JavaVersionRestriction = JavaVersionRestriction.NO,
+      javaVersionRestriction: JavaVersionRestriction = JavaVersionRestriction.DEFAULT,
       configure: FileTestFixture.Builder.(GradleVersion) -> Unit
     ): GradleTestFixtureBuilder {
       return object : GradleTestFixtureBuilder {
