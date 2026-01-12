@@ -2,7 +2,6 @@
 package com.intellij.grazie
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.grazie.GrazieDynamic.getLangDynamicFolder
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.GrazieRemote.isAvailableLocally
@@ -11,7 +10,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.spellchecker.SpellCheckerManager
 import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus
 
@@ -36,18 +34,10 @@ object GraziePlugin {
       }
 
       GrazieScope.coroutineScope().async {
-        val newLanguages = newState.enabledLanguages.filterHunspell()
-        val prevLanguages = prevState.enabledLanguages.filterHunspell()
-
+        // preload dictionaries, so they're available when needed
+        val isNotEmpty = newState.dictionaries.isNotEmpty()
         ProjectManager.getInstance().openProjects.forEach { project ->
-          val manager = SpellCheckerManager.getInstance(project)
-          newLanguages.forEach { language -> manager.spellChecker!!.addDictionary(language.dictionary!!) }
-          (prevLanguages - newLanguages).forEach { language ->
-            val dicPath = getLangDynamicFolder(language).resolve(language.hunspellRemote!!.file).toString()
-            manager.removeDictionary(dicPath)
-          }
-
-          if (project.isInitialized && project.isOpen) {
+          if (project.isInitialized && project.isOpen && isNotEmpty) {
             DaemonCodeAnalyzer.getInstance(project).restart("Hunspell.update")
           }
         }
