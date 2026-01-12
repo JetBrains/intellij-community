@@ -493,7 +493,7 @@ object Utils {
         }
       })
     }
-    if (shallAbortActionUpdateDueToProhibitingWriteAction()) {
+    if (shallAbortActionUpdateDueToProhibitingWriteAction(listOf(group))) {
       throw ProcessCanceledException()
     }
     val menuComponent = (uiKind as? ActualActionUiKind)?.component
@@ -982,14 +982,19 @@ object Utils {
     }
   }
 
-  private fun shallAbortActionUpdateDueToProhibitingWriteAction(): Boolean {
+  /**
+   * If a set of actions needs to be updated in read action, then we must make sure that no write action is going to run.
+   * If actions do not require lock access, then we can freely update them even when a background write action is in progress
+   */
+  private fun shallAbortActionUpdateDueToProhibitingWriteAction(actions: List<AnAction>): Boolean {
     val applicationEx = ApplicationManagerEx.getApplicationEx()
-    return ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx) &&
+    return actions.any(Utils::isLockRequired) &&
+           ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx) &&
            !applicationEx.isBackgroundWriteActionRunningOrPending
   }
 
-  private fun <R> runWithPotemkinOverlayProgress(contextComponent: Component?, block: suspend CoroutineScope.() -> R): R? {
-    if (shallAbortActionUpdateDueToProhibitingWriteAction()) {
+  private fun <R> runWithPotemkinOverlayProgress(actions: List<AnAction>, contextComponent: Component?, block: suspend CoroutineScope.() -> R): R? {
+    if (shallAbortActionUpdateDueToProhibitingWriteAction(actions)) {
       LOG.error("Actions cannot be updated when write-action is running or pending on EDT")
       return null
     }
@@ -1069,7 +1074,7 @@ object Utils {
       suspend (AnAction) -> Presentation,
       Map<Presentation, AnActionEvent>,
     ) -> T,
-  ): T? = runWithPotemkinOverlayProgress(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) {
+  ): T? = runWithPotemkinOverlayProgress(actions, dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) {
     withContext(CoroutineName("runUpdateSessionForInputEvent")) {
       checkAsyncDataContext(dataContext, place)
       val start = System.nanoTime()
