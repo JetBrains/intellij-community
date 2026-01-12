@@ -135,6 +135,10 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
     return allFiles;
   }
 
+  public static Collection<VirtualFile> findDescriptorsWithReferenceInDependenciesTag(GlobalSearchScope scope, String moduleNameOrPluginId) {
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, moduleNameOrPluginId, scope);
+  }
+
   public static Collection<VirtualFile> findFilesIncludingContentModule(Project project, VirtualFile file) {
     return findFilesIncludingContentModule(file, GlobalSearchScopesCore.projectProductionScope(project));
   }
