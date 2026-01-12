@@ -18,7 +18,7 @@ import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
-import git4idea.workingTrees.GitWorkingTreesUtil
+import git4idea.workingTrees.GitWorkingTreesBackendUtil
 import java.util.function.Supplier
 import kotlin.reflect.KClass
 import kotlin.reflect.safeCast
@@ -89,19 +89,19 @@ abstract class GitSingleRefAction<T : GitReference>(
      * Only local branches are checked for working trees.
      * Tags are immutable and therefore may be easily used in multiple working trees simultaneously.
      *
-     * See also [GitWorkingTreesUtil.getWorkingTreeWithRef]
+     * See also [GitWorkingTreesBackendUtil.getWorkingTreeWithRef]
      */
     internal fun isCurrentRefInAnyRepoOrWorkingTree(
       ref: GitReference,
       repositories: List<GitRepository>,
       checkOnlyNonCurrentWorkingTrees: Boolean = false,
     ): Boolean {
-      if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled() || ref !is GitLocalBranch) {
+      if (!GitWorkingTreesBackendUtil.isWorkingTreesFeatureEnabled() || ref !is GitLocalBranch) {
         return isCurrentRefInAnyRepo(ref, repositories)
       }
 
       return repositories.any { repository ->
-        GitWorkingTreesUtil.getWorkingTreeWithRef(ref, repository, checkOnlyNonCurrentWorkingTrees) != null
+        GitWorkingTreesBackendUtil.getWorkingTreeWithRef(ref, repository, checkOnlyNonCurrentWorkingTrees) != null
       }
     }
   }
