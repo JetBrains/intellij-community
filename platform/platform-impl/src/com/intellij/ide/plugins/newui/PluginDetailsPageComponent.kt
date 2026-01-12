@@ -564,9 +564,13 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     val customizationModel = pluginManagerCustomizer.getDisableButtonCustomizationModel(pluginModel, uiModel, installedDescriptorForMarketplace, modalityState)
                              ?: return
     enableDisableController?.setOptions(customizationModel.additionalActions)
-    val visible = customizationModel.isVisible && customizationModel.text == null && restartButton?.isVisible != true
+    val visible = customizationModel.isVisible && customizationModel.text == null
+                  && (customizationModel.additionalActions.isNotEmpty() || restartButton?.isVisible != true)
     component.isVisible = visible
     component.isEnabled = visible
+    if (restartButton?.isVisible == true && visible) {
+      restartButton?.isVisible = false
+    }
     if (customizationModel.text != null && restartButton?.isVisible != true) {
       enableDisableController?.setText(customizationModel.text)
       gearButton?.isVisible = true
