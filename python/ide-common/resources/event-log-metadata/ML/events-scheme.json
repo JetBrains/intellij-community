@@ -3359,7 +3359,7 @@
       "from" : "1"
     } ],
     "rules" : {
-      "event_id" : [ "{enum:session|provider_finished|diff_finished}" ],
+      "event_id" : [ "{enum:session|provider_finished|diff_finished|model_request_sent}" ],
       "event_data" : {
         "accepted_diffs" : [ "{regexp#integer}" ],
         "accepted_jumps" : [ "{regexp#integer}" ],
@@ -3407,6 +3407,9 @@
     }, {
       "event" : "diff_finished",
       "fields" : [ "anonymous_id", "completion_id" ]
+    }, {
+      "event" : "model_request_sent",
+      "fields" : [ "anonymous_id" ]
     }, {
       "event" : "session",
       "fields" : [ "anonymous_id" ]
@@ -3637,5 +3640,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6568"
+  "version" : "6633"
 }
