@@ -239,11 +239,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     .add(LITERALSTRING, LITERALSTRING_EXT)
     .build();
 
-  // Type hints in PSI stubs, type comments and "escaped" string annotations are represented as PyExpressionCodeFragments
-  // created from the corresponding text fragments. This key points to the closest definition in the original file
-  // they belong to.
-  // TODO Make this the result of PyExpressionCodeFragment.getContext()
-  private static final Key<PsiElement> FRAGMENT_OWNER = Key.create("PY_FRAGMENT_OWNER");
   private static final Key<Context> TYPE_HINT_EVAL_CONTEXT = Key.create("TYPE_HINT_EVAL_CONTEXT");
 
   @Override
@@ -276,7 +271,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     if (typeHint == null) {
       String paramTypeCommentHint = param.getTypeCommentAnnotation();
       if (paramTypeCommentHint != null) {
-        typeHint = toExpression(paramTypeCommentHint, param);
+        typeHint = PyUtil.createExpressionFromFragment(paramTypeCommentHint, param);
       }
     }
     if (typeHint == null) {
@@ -776,7 +771,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       return List.of(pyClass.getSuperClassExpressions());
     }
     return CachedValuesManager.getCachedValue(pyClass, () -> CachedValueProvider.Result.create(
-      ContainerUtil.mapNotNull(classStub.getSuperClassesText(), x -> toExpression(x, pyClass)),
+      ContainerUtil.mapNotNull(classStub.getSuperClassesText(), x -> PyUtil.createExpressionFromFragment(x, pyClass)),
       PsiModificationTracker.MODIFICATION_COUNT)
     );
   }
@@ -1349,7 +1344,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     var annotation = getAnnotationValue(owner, context);
     if (annotation instanceof PyStringLiteralExpression stringLiteralExpression) {
       final var annotationText = stringLiteralExpression.getStringValue();
-      annotation = toExpression(annotationText, owner);
+      annotation = PyUtil.createExpressionFromFragment(annotationText, owner);
       if (annotation == null) return Collections.emptyList();
     }
 
@@ -1361,7 +1356,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     }
 
     final String typeCommentValue = owner.getTypeCommentAnnotation();
-    final PyExpression typeComment = typeCommentValue == null ? null : toExpression(typeCommentValue, owner);
+    final PyExpression typeComment = typeCommentValue == null ? null : PyUtil.createExpressionFromFragment(typeCommentValue, owner);
     if (typeComment instanceof PySubscriptionExpression pySubscriptionExpression) {
       return resolveToQualifiedNames(pySubscriptionExpression.getOperand(), context);
     }
@@ -1412,20 +1407,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     else {
       final String annotationText = owner.getAnnotationValue();
       if (annotationText != null) {
-        return toExpression(annotationText, owner);
+        return PyUtil.createExpressionFromFragment(annotationText, owner);
       }
     }
     return null;
-  }
-
-  private static @Nullable PyExpression toExpression(@NotNull String contents, @NotNull PsiElement anchor) {
-    final PsiFile file = FileContextUtil.getContextFile(anchor);
-    if (file == null) return null;
-    PyExpression fragment = PyUtil.createExpressionFromFragment(contents, anchor);
-    if (fragment != null) {
-      fragment.getContainingFile().putUserData(FRAGMENT_OWNER, anchor);
-    }
-    return fragment;
   }
 
   public static @Nullable Ref<PyType> getStringBasedType(@NotNull String contents,
@@ -1436,7 +1421,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   private static @Nullable Ref<PyType> getStringBasedType(@NotNull String contents, @NotNull PsiElement anchor, @NotNull Context context) {
     return doPreventingRecursion(Pair.create(anchor, contents), true, () -> {
-      final PyExpression expr = toExpression(contents, anchor);
+      final PyExpression expr = PyUtil.createExpressionFromFragment(contents, anchor);
       return expr != null ? getType(expr, context) : null;
     });
   }
@@ -1453,7 +1438,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   private static @Nullable Ref<PyType> getVariableTypeCommentType(@NotNull String contents,
                                                                   @NotNull PsiElement element,
                                                                   @NotNull Context context) {
-    final PyExpression expr = PyPsiUtils.flattenParens(toExpression(contents, element));
+    final PyExpression expr = PyPsiUtils.flattenParens(PyUtil.createExpressionFromFragment(contents, element));
     if (expr != null) {
       if (element instanceof PyTargetExpression target && expr instanceof PyTupleExpression) {
         // Such syntax is specific to "# type:" comments, unpacking in type hints is not allowed anywhere else
@@ -1891,7 +1876,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   private static @NotNull PsiElement getStubRetainedTypeHintContext(@NotNull PsiElement typeHintExpression) {
     PsiFile containingFile = typeHintExpression.getContainingFile();
     // Values from PSI stubs and regular type comments
-    PsiElement fragmentOwner = containingFile.getUserData(FRAGMENT_OWNER);
+    PsiElement fragmentOwner = containingFile.getContext();
     if (fragmentOwner != null) {
       return fragmentOwner;
     }
@@ -2129,7 +2114,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
           }
           else {
             String assignedTypeText = typeAliasStatement.getTypeExpressionText();
-            assignedValue = assignedTypeText != null ? toExpression(assignedTypeText, typeAliasStatement) : null;
+            assignedValue = assignedTypeText != null ? PyUtil.createExpressionFromFragment(assignedTypeText, typeAliasStatement) : null;
           }
           if (assignedValue != null) {
             elements.add(Pair.create(typeAliasStatement, assignedValue));
@@ -2161,7 +2146,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     final QualifiedName qualifiedName = expression.asQualifiedName();
     final PyFile pyFile = as(FileContextUtil.getContextFile(expression), PyFile.class);
 
-    PsiElement anchor = expression.getContainingFile().getUserData(FRAGMENT_OWNER);
+    PsiElement anchor = expression.getContainingFile().getContext();
     ScopeOwner scopeOwner;
 
     if (anchor == null) {
@@ -2373,7 +2358,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     }
     String typeCommentAnnotation = targetExpression.getTypeCommentAnnotation();
     if (typeCommentAnnotation != null) {
-      PyExpression commentValue = toExpression(typeCommentAnnotation, targetExpression);
+      PyExpression commentValue = PyUtil.createExpressionFromFragment(typeCommentAnnotation, targetExpression);
       if (commentValue instanceof PyReferenceExpression) {
         return resolvesToQualifiedNames(commentValue, context, TYPE_ALIAS, TYPE_ALIAS_EXT);
       }
