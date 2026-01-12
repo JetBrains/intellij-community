@@ -382,7 +382,10 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     // Otherwise, decrement the counter under write action because this will change dumb state
     if (tryDecrementDumbCounter()) {
       val exitDumb = application.runWriteAction(Computable(::doDecrementDumbCounter))
-      proceedWithPublishingOfDecrementEvents(exitDumb)
+      // for rationale for this `invokeLater`, see explanation in `incrementDumbCounterBlocking`
+      application.invokeLater {
+        proceedWithPublishingOfDecrementEvents(exitDumb)
+      }
     }
   }
 
