@@ -297,7 +297,22 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
       // If already dumb - just increment the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
       // Otherwise, increment the counter under write action because this will change dumb state
       val enteredDumb = application.runWriteAction(Computable(::doIncrementStateCounter))
-      proceedWithPublishingOfIncrementEvents(enteredDumb, trace)
+      // here we are forcing the execution of listeners in a separate EDT event
+      // consider the following situation:
+      // ```
+      // (bgt)
+      //(1) bgWa { exitDumbMode() } -> (2) invokeLater { (3) runExitedListners() }
+      //
+      // edt
+      //(4) edtWa { enterDumbMode() } -> (5) runEnteredListeners()
+      // ```
+      // If 4 and 5 are executed synchronously, there can be order 1-2-4-5-3, and `runEnteredListeners` will be invoked before `runExitedListeners`.
+      // This would lead to repeated calls to `runEnteredListeners`, which is not permitted by the contract of these listeners.
+      // The forced `invokeLater` will ensure that published requests for exit will be executed before new requests for enter.
+      // This works given that `invokeLater` is fair, which is true.
+      application.invokeLater {
+        proceedWithPublishingOfIncrementEvents(enteredDumb, trace)
+      }
     }
 
     LOG.assertTrue(state.value.isDumb, "Should be dumb")
@@ -385,10 +400,10 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
       // `runWriteActionWithCheckInWriteIntent` is a glorified 'if' statement that provides atomic transition to background write action if the condition is true
       val isNowSmart = getGlobalThreadingSupport().runWriteActionWithCheckInWriteIntent(::tryDecrementDumbCounter) {
         doDecrementDumbCounter()
-      }
-      if (isNowSmart != null) {
+      } ?: false
+      if (isNowSmart) {
         withContext(Dispatchers.EDT) {
-          proceedWithPublishingOfDecrementEvents(isNowSmart)
+          proceedWithPublishingOfDecrementEvents(true)
         }
       }
     }
@@ -396,17 +411,14 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
 
   private fun publishDumbModeChangedEvent(desiredListenerState: DumbModeEventListenerState) {
     ThreadingAssertions.assertEventDispatchThread()
+    ThreadingAssertions.assertWriteIntentReadAccess()
 
     when (desiredListenerState) {
       DumbModeEventListenerState.ENTERED -> runEnteredListeners(dumbModeListenerState) {
-        WriteIntentReadAction.run {
-          publisher.enteredDumbMode()
-        }
+        publisher.enteredDumbMode()
       }
       DumbModeEventListenerState.EXITED -> runExitedListeners(dumbModeListenerState) {
-        WriteIntentReadAction.run {
-          publisher.exitDumbMode()
-        }
+        publisher.exitDumbMode()
       }
     }
   }
@@ -424,7 +436,9 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     if (!listenerState.compareAndSet(DumbModeEventListenerState.ENTERED, DumbModeEventListenerState.EXITED)) {
       LOG.error("Unexpected listener state: dumb mode is going to be exited without entering")
     }
-    listenerInvocation()
+    runCatchingIgnorePCE {
+      listenerInvocation()
+    }
   }
 
   override fun canRunSmart(): Boolean {
