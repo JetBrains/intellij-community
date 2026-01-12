@@ -8,7 +8,6 @@ import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.lang.LanguageImportStatements
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.executeCommand
@@ -16,12 +15,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
@@ -41,7 +38,6 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.resolve.ImportPath
 import java.io.IOException
 import java.net.URI
-import java.nio.file.Path
 import java.util.*
 import java.util.jar.Manifest
 import kotlin.time.Duration.Companion.seconds
@@ -163,7 +159,6 @@ object CodeWriter {
 
         if (!formatCode) return@runWriteActionWithCancellableProgressInDispatchThread
 
-        val copiedEditorconfig = copyEditorConfigIfIntellij(project, genFolder)
         for ((i, file) in generatedFiles.withIndex()) {
           DumbService.getInstance(project).completeJustSubmittedTasks()
           indicator.fraction = 0.25 + 0.7 * i / generatedFiles.size
@@ -172,19 +167,8 @@ object CodeWriter {
           PsiDocumentManager.getInstance(file.project).doPostponedOperationsAndUnblockDocument(file.viewProvider.document!!)
           CodeStyleManager.getInstance(project).reformat(file)
         }
-        copiedEditorconfig?.delete(CodeWriter)
       }
     }
-  }
-
-  private fun copyEditorConfigIfIntellij(project: Project, genFolder: VirtualFile): VirtualFile? {
-    if (!IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
-      return null
-    }
-    val editorconfigFile =
-      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(Path.of(PathManager.getHomePath(), "community", ".editorconfig"))!!
-    val copied = VfsUtil.copyFile(this, editorconfigFile, genFolder)
-    return copied
   }
 
   private fun addCopyright(file: KtFile, ktClasses: HashMap<String, KtClassOrObject>) {
