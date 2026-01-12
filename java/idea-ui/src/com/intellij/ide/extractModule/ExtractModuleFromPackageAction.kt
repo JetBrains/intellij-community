@@ -24,7 +24,8 @@ class ExtractModuleFromPackageAction : AnAction() {
     if (!dialog.showAndGet()) return
 
     project.service<ExtractModuleService>()
-      .analyzeDependenciesAndCreateModuleInBackground(directory, module, dialog.moduleName, dialog.targetSourceRootPath)
+      .analyzeDependenciesAndCreateModuleInBackground(directory, module,
+                                                      TargetModuleCreatorImpl(dialog.moduleName, dialog.targetSourceRootPath))
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.mapWithProgress
@@ -25,8 +26,6 @@ import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiManager
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil
 import com.intellij.task.ProjectTaskManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -79,6 +78,13 @@ internal suspend fun compilerOutputPathForTests(module: Module): List<Path> = re
   compilerOutputs(module, includeTests = true) - compilerOutputs(module, includeTests = false)
 }
 
+interface TargetModuleCreator {
+  @RequiresWriteLock
+  fun createExtractedModule(originalModule: Module, directory: PsiDirectory): ExtractedModuleData
+
+  class ExtractedModuleData(val module: Module, val directoryToMoveClassesTo: VirtualFile?)
+}
+
 @Service(Service.Level.PROJECT)
 class ExtractModuleService(
   private val project: Project,
@@ -88,8 +94,7 @@ class ExtractModuleService(
   fun analyzeDependenciesAndCreateModuleInBackground(
     directory: PsiDirectory,
     module: Module,
-    moduleName: @NlsSafe String,
-    targetSourceRootPath: String?,
+    targetModuleCreator: TargetModuleCreator,
   ) {
     ProjectTaskManager.getInstance(project).buildAllModules().onSuccess {
       if (it.isAborted || it.hasErrors()) {
@@ -98,7 +103,7 @@ class ExtractModuleService(
 
       coroutineScope.launch {
         withBackgroundProgress(project, JavaUiBundle.message("progress.title.extract.module.from.package", directory.name)) {
-          analyzeDependenciesAndCreateModule(directory, module, moduleName, targetSourceRootPath)
+          analyzeDependenciesAndCreateModule(directory, module, targetModuleCreator)
         }
       }
     }
@@ -108,8 +113,7 @@ class ExtractModuleService(
   private suspend fun analyzeDependenciesAndCreateModule(
     directory: PsiDirectory,
     module: Module,
-    moduleName: @NlsSafe String,
-    targetSourceRootPath: String?,
+    targetModuleCreator: TargetModuleCreator,
   ) {
     reportSequentialProgress(6) { progressReporter ->
       val usedModules = LinkedHashSet<Module>()
@@ -178,7 +182,7 @@ class ExtractModuleService(
         val dependenciesToRemove = dependencyCleaner.findDependenciesToRemove(moduleFileProcessor)
         progressReporter.itemStep(JavaUiBundle.message("progress.step.extract.module.extracting"))
         writeAction {
-          extractModule(directory, module, moduleName, usedModules, usedLibraries, targetSourceRootPath, packageDependentModules)
+          extractModule(directory, module, targetModuleCreator, usedModules, usedLibraries, packageDependentModules)
           dependencyCleaner.removeDependencies(dependenciesToRemove)
         }
       }
@@ -255,40 +259,15 @@ class ExtractModuleService(
   private fun extractModule(
     directory: PsiDirectory,
     module: Module,
-    moduleName: @NlsSafe String,
+    targetModuleCreator: TargetModuleCreator,
     usedModules: Set<Module>,
     usedLibraries: Set<Library>,
-    targetSourceRootPath: String?,
     packageDependentModules: List<DependentModule>,
   ) {
-    val packagePrefix = JavaDirectoryService.getInstance().getPackage(directory)?.qualifiedName ?: ""
-    val targetSourceRoot = targetSourceRootPath?.let { VfsUtil.createDirectories(it) }
-    val (contentRoot, imlFileDirectory) = if (targetSourceRoot != null) {
-      val parent = targetSourceRoot.parent
-      if (parent in ModuleRootManager.getInstance(module).contentRoots) targetSourceRoot to module.moduleNioFile.parent
-      else parent to parent.toNioPath()
-    }
-    else {
-      directory.virtualFile to module.moduleNioFile.parent
-    }
-
-    val newModule = ModuleManager.getInstance(module.project).newModule(imlFileDirectory.resolve("$moduleName.iml"),
-                                                                        JAVA_MODULE_ENTITY_TYPE_ID_NAME)
-
+    val extractedModuleData = targetModuleCreator.createExtractedModule(module, directory)
+    val newModule = extractedModuleData.module
+    val directoryToMoveClassesTo = extractedModuleData.directoryToMoveClassesTo
     ModuleRootModificationUtil.updateModel(newModule) { model ->
-      if (ModuleRootManager.getInstance(module).isSdkInherited) {
-        model.inheritSdk()
-      }
-      else {
-        model.sdk = ModuleRootManager.getInstance(module).sdk
-      }
-      val contentEntry = model.addContentEntry(contentRoot)
-      if (targetSourceRoot != null) {
-        contentEntry.addSourceFolder(targetSourceRoot, false)
-      }
-      else {
-        contentEntry.addSourceFolder(directory.virtualFile, false, packagePrefix)
-      }
       val moduleDependencies = JavaProjectDependenciesAnalyzer.removeDuplicatingDependencies(usedModules)
       moduleDependencies.forEach { model.addModuleOrderEntry(it) }
       val exportedLibraries = HashSet<Library>()
@@ -320,17 +299,17 @@ class ExtractModuleService(
       }
     }
 
-    if (targetSourceRoot != null) {
-      val targetDirectory = VfsUtil.createDirectoryIfMissing(targetSourceRoot, packagePrefix.replace('.', '/'))
-      MoveClassesOrPackagesUtil.moveDirectoryRecursively(directory,
-                                                         PsiManager.getInstance(module.project).findDirectory(targetDirectory.parent))
+    if (directoryToMoveClassesTo != null) {
+      for (child in directory.virtualFile.children) {
+        child.move(this, directoryToMoveClassesTo)
+      }
     }
     SaveAndSyncHandler.getInstance().scheduleProjectSave(module.project)
   }
 
   @TestOnly
   suspend fun extractModuleFromDirectory(directory: PsiDirectory, module: Module, moduleName: @NlsSafe String, targetSourceRoot: String?) {
-    analyzeDependenciesAndCreateModule(directory, module, moduleName, targetSourceRoot)
+    analyzeDependenciesAndCreateModule(directory, module, TargetModuleCreatorImpl(moduleName, targetSourceRoot))
   }
 }
 
@@ -358,5 +337,51 @@ private fun <R> withClassRoot(classRoot: Path, block: (root: Path) -> R): R {
       }
     }
     else -> error("Unsupported classes output root: $classRoot")
+  }
+}
+
+internal class TargetModuleCreatorImpl(
+  private val moduleName: String,
+  private val targetSourceRootPath: String?,
+) : TargetModuleCreator {
+  override fun createExtractedModule(originalModule: Module, directory: PsiDirectory): TargetModuleCreator.ExtractedModuleData {
+    val packagePrefix = JavaDirectoryService.getInstance().getPackage(directory)?.qualifiedName ?: ""
+
+    val targetSourceRoot = targetSourceRootPath?.let { VfsUtil.createDirectories(it) }
+    val (contentRoot, imlFileDirectory) = if (targetSourceRoot != null) {
+      val parent = targetSourceRoot.parent
+      if (parent in ModuleRootManager.getInstance(originalModule).contentRoots) targetSourceRoot to originalModule.moduleNioFile.parent
+      else parent to parent.toNioPath()
+    }
+    else {
+      directory.virtualFile to originalModule.moduleNioFile.parent
+    }
+
+    val newModule = ModuleManager.getInstance(originalModule.project).newModule(imlFileDirectory.resolve("$moduleName.iml"),
+                                                                        JAVA_MODULE_ENTITY_TYPE_ID_NAME)
+
+    ModuleRootModificationUtil.updateModel(newModule) { model ->
+      if (ModuleRootManager.getInstance(originalModule).isSdkInherited) {
+        model.inheritSdk()
+      }
+      else {
+        model.sdk = ModuleRootManager.getInstance(originalModule).sdk
+      }
+      val contentEntry = model.addContentEntry(contentRoot)
+      if (targetSourceRoot != null) {
+        contentEntry.addSourceFolder(targetSourceRoot, false)
+      }
+      else {
+        contentEntry.addSourceFolder(directory.virtualFile, false, packagePrefix)
+      }
+    }
+
+    val directoryToMoveClassesTo =
+      if (targetSourceRoot != null) {
+        VfsUtil.createDirectoryIfMissing(targetSourceRoot, packagePrefix.replace('.', '/'))
+      }
+      else null
+
+    return TargetModuleCreator.ExtractedModuleData(newModule, directoryToMoveClassesTo)
   }
 }
