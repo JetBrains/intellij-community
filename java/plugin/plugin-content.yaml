@@ -1,8 +1,3 @@
-- name: lib/completion-ranking-java.jar
-  library: completion-ranking-java
-  module: intellij.java.impl
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0/completion-ranking-java-0.jar
 - name: lib/debugger-memory-agent.jar
   library: debugger-memory-agent
   module: intellij.java.debugger.memory.agent
@@ -13,10 +8,9 @@
   files:
   - name: $PROJECT_DIR$/community/lib/ecj-4.jar
   reason: withProjectLibrary
-- name: lib/frontend-split/java-frontend.jar
+- name: lib/java-impl.jar
   modules:
-  - name: intellij.java.frontend.split
-- name: lib/java-impl-frontend.jar
+  - name: intellij.java.plugin
   contentModules:
   - name: intellij.java.syntax
   - name: intellij.java.frontback.psi
@@ -24,46 +18,8 @@
   - name: intellij.java.psi
   - name: intellij.java.psi.impl
   - name: intellij.java.frontback.impl
-  - name: intellij.platform.uast
-  - name: intellij.java.uast
   - name: intellij.java.debugger.impl.shared
   - name: intellij.java.execution.impl.shared
-- name: lib/java-impl.jar
-  modules:
-  - name: intellij.java.plugin
-  contentModules:
-  - name: intellij.java.indexing
-  - name: intellij.platform.uast.ide
-  - name: intellij.java.compiler
-  - name: intellij.java.analysis
-  - name: intellij.java
-  - name: intellij.java.resources
-  - name: intellij.java.execution
-  - name: intellij.jvm.analysis
-  - name: intellij.jsp
-  - name: intellij.java.resources.en
-  - name: intellij.java.debugger
-  - name: intellij.java.codeserver.core
-  - name: intellij.java.codeserver.highlighting
-  - name: intellij.jsp.spi
-  - name: intellij.java.indexing.impl
-  - name: intellij.java.analysis.impl
-  - name: intellij.java.structureView
-  - name: intellij.java.impl
-  - name: intellij.java.impl.refactorings
-  - name: intellij.java.compiler.impl
-  - name: intellij.java.typeMigration
-  - name: intellij.java.impl.inspections
-  - name: intellij.jvm.analysis.refactoring
-  - name: intellij.jvm.analysis.quickFix
-  - name: intellij.uiDesigner
-  - name: intellij.java.manifest
-  - name: intellij.java.ui
-  - name: intellij.java.execution.impl
-  - name: intellij.java.debugger.impl
-  - name: intellij.java.debugger.memory.agent
-  - name: intellij.java.uast.ide
-  - name: intellij.java.debugger.impl.backend
 - name: lib/javac2.jar
   modules:
   - name: intellij.java.compiler.antTasks
@@ -98,18 +54,52 @@
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2/kotlin-metadata-jvm-2.jar
   reason: withProjectLibrary
-- name: lib/modules/intellij.debugger.jvm.advanced.java.jar
+- name: lib/modules/intellij.java.analysis.impl.jar
   contentModules:
-  - name: intellij.debugger.jvm.advanced.java
+  - name: intellij.java.analysis.impl
+- name: lib/modules/intellij.java.analysis.jar
+  contentModules:
+  - name: intellij.java.analysis
 - name: lib/modules/intellij.java.backend.jar
   contentModules:
   - name: intellij.java.backend
+- name: lib/modules/intellij.java.backend.split.jar
+  contentModules:
+  - name: intellij.java.backend.split
+- name: lib/modules/intellij.java.codeserver.core.jar
+  contentModules:
+  - name: intellij.java.codeserver.core
+- name: lib/modules/intellij.java.codeserver.highlighting.jar
+  contentModules:
+  - name: intellij.java.codeserver.highlighting
+- name: lib/modules/intellij.java.compiler.impl.jar
+  contentModules:
+  - name: intellij.java.compiler.impl
+  library: netty-codec-protobuf
+  files:
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4/netty-codec-protobuf-4.jar
+  reason: <- intellij.java.compiler.impl
+- name: lib/modules/intellij.java.compiler.jar
+  contentModules:
+  - name: intellij.java.compiler
 - name: lib/modules/intellij.java.copyright.jar
   contentModules:
   - name: intellij.java.copyright
+- name: lib/modules/intellij.java.debugger.impl.backend.jar
+  contentModules:
+  - name: intellij.java.debugger.impl.backend
 - name: lib/modules/intellij.java.debugger.impl.frontend.jar
   contentModules:
   - name: intellij.java.debugger.impl.frontend
+- name: lib/modules/intellij.java.debugger.impl.jar
+  contentModules:
+  - name: intellij.java.debugger.impl
+- name: lib/modules/intellij.java.debugger.jar
+  contentModules:
+  - name: intellij.java.debugger
+- name: lib/modules/intellij.java.debugger.memory.agent.jar
+  contentModules:
+  - name: intellij.java.debugger.memory.agent
 - name: lib/modules/intellij.java.duplicates.analysis.jar
   contentModules:
   - name: intellij.java.duplicates.analysis
@@ -125,21 +115,54 @@
 - name: lib/modules/intellij.java.execution.impl.frontend.jar
   contentModules:
   - name: intellij.java.execution.impl.frontend
+- name: lib/modules/intellij.java.execution.impl.jar
+  contentModules:
+  - name: intellij.java.execution.impl
+- name: lib/modules/intellij.java.execution.jar
+  contentModules:
+  - name: intellij.java.execution
 - name: lib/modules/intellij.java.featuresTrainer.jar
   contentModules:
   - name: intellij.java.featuresTrainer
+- name: lib/modules/intellij.java.frontend.split.jar
+  contentModules:
+  - name: intellij.java.frontend.split
+- name: lib/modules/intellij.java.impl.inspections.jar
+  contentModules:
+  - name: intellij.java.impl.inspections
+- name: lib/modules/intellij.java.impl.jar
+  contentModules:
+  - name: intellij.java.impl
+    libraries:
+      completion-ranking-java:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0/completion-ranking-java-0.jar
+- name: lib/modules/intellij.java.impl.refactorings.jar
+  contentModules:
+  - name: intellij.java.impl.refactorings
+- name: lib/modules/intellij.java.indexing.impl.jar
+  contentModules:
+  - name: intellij.java.indexing.impl
+- name: lib/modules/intellij.java.indexing.jar
+  contentModules:
+  - name: intellij.java.indexing
 - name: lib/modules/intellij.java.jam.impl.jar
   contentModules:
   - name: intellij.java.jam.impl
 - name: lib/modules/intellij.java.jam.jar
   contentModules:
   - name: intellij.java.jam
+- name: lib/modules/intellij.java.jar
+  contentModules:
+  - name: intellij.java
 - name: lib/modules/intellij.java.langInjection.jar
   contentModules:
   - name: intellij.java.langInjection
 - name: lib/modules/intellij.java.langInjection.jps.jar
   contentModules:
   - name: intellij.java.langInjection.jps
+- name: lib/modules/intellij.java.manifest.jar
+  contentModules:
+  - name: intellij.java.manifest
 - name: lib/modules/intellij.java.performancePlugin.jar
   contentModules:
   - name: intellij.java.performancePlugin
@@ -152,12 +175,33 @@
 - name: lib/modules/intellij.java.remoteServers.jar
   contentModules:
   - name: intellij.java.remoteServers
+- name: lib/modules/intellij.java.resources.en.jar
+  contentModules:
+  - name: intellij.java.resources.en
+- name: lib/modules/intellij.java.resources.jar
+  contentModules:
+  - name: intellij.java.resources
 - name: lib/modules/intellij.java.structuralSearch.jar
   contentModules:
   - name: intellij.java.structuralSearch
+- name: lib/modules/intellij.java.structureView.jar
+  contentModules:
+  - name: intellij.java.structureView
 - name: lib/modules/intellij.java.terminal.jar
   contentModules:
   - name: intellij.java.terminal
+- name: lib/modules/intellij.java.typeMigration.jar
+  contentModules:
+  - name: intellij.java.typeMigration
+- name: lib/modules/intellij.java.uast.ide.jar
+  contentModules:
+  - name: intellij.java.uast.ide
+- name: lib/modules/intellij.java.uast.jar
+  contentModules:
+  - name: intellij.java.uast
+- name: lib/modules/intellij.java.ui.jar
+  contentModules:
+  - name: intellij.java.ui
 - name: lib/modules/intellij.java.ultimate.icons.jar
   contentModules:
   - name: intellij.java.ultimate.icons
@@ -167,12 +211,33 @@
 - name: lib/modules/intellij.java.vcs.jar
   contentModules:
   - name: intellij.java.vcs
+- name: lib/modules/intellij.jsp.jar
+  contentModules:
+  - name: intellij.jsp
+- name: lib/modules/intellij.jsp.spi.jar
+  contentModules:
+  - name: intellij.jsp.spi
 - name: lib/modules/intellij.jvm.analysis.impl.jar
   contentModules:
   - name: intellij.jvm.analysis.impl
+- name: lib/modules/intellij.jvm.analysis.jar
+  contentModules:
+  - name: intellij.jvm.analysis
+- name: lib/modules/intellij.jvm.analysis.quickFix.jar
+  contentModules:
+  - name: intellij.jvm.analysis.quickFix
+- name: lib/modules/intellij.jvm.analysis.refactoring.jar
+  contentModules:
+  - name: intellij.jvm.analysis.refactoring
 - name: lib/modules/intellij.jvm.dfa.analysis.ui.jar
   contentModules:
   - name: intellij.jvm.dfa.analysis.ui
+- name: lib/modules/intellij.platform.uast.ide.jar
+  contentModules:
+  - name: intellij.platform.uast.ide
+- name: lib/modules/intellij.platform.uast.jar
+  contentModules:
+  - name: intellij.platform.uast
 - name: lib/modules/intellij.profiler.ultimate.jar
   contentModules:
   - name: intellij.profiler.ultimate
@@ -180,11 +245,9 @@
       jmc-flightrecorder:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jmc-flightrecorder/8/jmc-flightrecorder-8.jar
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jmc-common/8/jmc-common-8.jar
-- name: lib/netty-codec-protobuf.jar
-  library: netty-codec-protobuf
-  files:
-  - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4/netty-codec-protobuf-4.jar
-  reason: <- intellij.java.compiler.impl
+- name: lib/modules/intellij.uiDesigner.jar
+  contentModules:
+  - name: intellij.uiDesigner
 - name: lib/rt/debugger-agent.jar
   library: debugger-agent
   module: intellij.java.debugger.agent.holder

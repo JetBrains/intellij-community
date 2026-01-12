@@ -3,6 +3,7 @@
 
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.PluginManagerCore.JAVA_PLUGIN_ALIAS_ID
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.containers.Java11Shim
 import java.util.*
@@ -14,6 +15,8 @@ private val RIDER_ALIAS_ID = PluginId.getId("com.intellij.modules.rider")
 private val RIDER_MODULE_ID = PluginModuleId("intellij.rider", PluginModuleId.JETBRAINS_NAMESPACE)
 private val JSON_ALIAS_ID = PluginId.getId("com.intellij.modules.json")
 private val JSON_BACKEND_MODULE_ID = PluginModuleId("intellij.json.backend", PluginModuleId.JETBRAINS_NAMESPACE)
+private val JAVA_BACKEND_MODULE_ID = PluginModuleId("intellij.java.backend", PluginModuleId.JETBRAINS_NAMESPACE)
+
 
 internal class ModulesWithDependencies(
   @JvmField val modules: List<PluginModuleDescriptor>,
@@ -71,6 +74,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
       }
       else {
         dependenciesCollector.add(implicitDep)
+        moduleIdToModule.get(JAVA_BACKEND_MODULE_ID)?.let { dependenciesCollector.add(it) }
       }
     }
 
@@ -96,6 +100,10 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
       }
 
       /* Compatibility Layer */
+
+      if (doesDependOnPluginAlias(module, JAVA_PLUGIN_ALIAS_ID)) {
+        moduleIdToModule.get(JAVA_BACKEND_MODULE_ID)?.let { dependenciesCollector.add(it) }
+      }
 
       if (doesDependOnPluginAlias(module, RIDER_ALIAS_ID)) {
         moduleIdToModule.get(RIDER_MODULE_ID)?.let { dependenciesCollector.add(it) }

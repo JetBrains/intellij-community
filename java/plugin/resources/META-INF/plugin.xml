@@ -68,6 +68,8 @@
 
     <module name="intellij.java.backend" required-if-available="intellij.platform.backend"/>
 
+    <module name="intellij.java.frontend.split" required-if-available="intellij.platform.frontend.split"/>
+    <module name="intellij.java.backend.split"/>
 
     <module name="intellij.java.debugger.impl.shared" loading="embedded"/>
     <module name="intellij.java.execution.impl.shared" loading="embedded"/>
