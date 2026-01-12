@@ -37,7 +37,6 @@ jvm_library(
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/base/jps",
     "//plugins/kotlin/base/kdoc",
-    "//plugins/kotlin/base/obsolete-compat",
     "//plugins/kotlin/base/platforms",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/project-model",

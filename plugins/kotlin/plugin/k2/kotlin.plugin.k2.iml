@@ -25,7 +25,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.kdoc" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.obsolete-compat" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.platforms" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectModel" scope="RUNTIME" />
