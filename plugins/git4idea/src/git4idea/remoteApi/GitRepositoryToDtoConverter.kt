@@ -18,6 +18,7 @@ import git4idea.branch.GitTagType
 import git4idea.repo.GitBranchTrackInfo
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
+import git4idea.repo.tags
 import git4idea.ui.branch.GitBranchManager
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -40,7 +41,7 @@ internal object GitRepositoryToDtoConverter {
       revision = repository.currentRevision?.let { GitHash(it) },
       localBranches = repoInfo.localBranchesWithHashes.keys,
       remoteBranches = repoInfo.remoteBranchesWithHashes.keys.filterIsInstance<GitStandardRemoteBranch>().toSet(),
-      tags = repository.tagHolder.getTags().keys,
+      tags = repository.tagsHolder.tags,
       workingTrees = repository.workingTreeHolder.getWorkingTrees(),
       recentBranches = repository.branches.recentCheckoutBranches,
       operationState = convertOperationState(repository),

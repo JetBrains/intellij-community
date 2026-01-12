@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remoteApi
 
+import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.repo.repositoryId
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -9,6 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.vcs.impl.shared.RepositoryId
+import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.vcs.git.ref.GitFavoriteRefs
 import com.intellij.vcs.git.ref.GitRefUtil
 import com.intellij.vcs.git.ref.GitReferenceName
@@ -17,10 +19,16 @@ import com.intellij.vcs.git.rpc.GitRepositoryEvent
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScoped
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
 import git4idea.branch.GitRefType
+import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryIdCache
 import git4idea.repo.GitRepositoryManager
+import git4idea.repo.GitRepositoryTagsHolder
+import git4idea.repo.GitTagsHolderListener
+import git4idea.repo.tags
 import git4idea.ui.branch.GitBranchManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -48,6 +56,7 @@ class GitRepositoryApiImpl : GitRepositoryApi {
       }
 
       messageBusConnection.subscribe(GitRepositoryFrontendSynchronizer.TOPIC, synchronizer)
+      synchronizer.handleTagsVisibilityUpdates(this, messageBusConnection)
     }
 
   override suspend fun forceSync(projectId: ProjectId): Unit = projectScoped(projectId) { project ->
@@ -107,12 +116,30 @@ class GitRepositoryApiImpl : GitRepositoryApi {
       channel.trySend(GitRepositoryEvent.RepositoryStateUpdated(repository.repositoryId(), repositoryState))
     }
 
-    override fun tagsLoaded(repository: GitRepository) {
+    fun handleTagsVisibilityUpdates(cs: CoroutineScope, messageBusConnection: SimpleMessageBusConnection) {
+      messageBusConnection.subscribe(GitRepositoryTagsHolder.TAGS_UPDATED, GitTagsHolderListener {
+        tagsUpdated(it)
+      })
+      messageBusConnection.subscribe(GitVcsSettings.GitVcsSettingsListener.TOPIC, object : GitVcsSettings.GitVcsSettingsListener {
+        override fun pathToGitChanged() {}
+
+        override fun branchGroupingSettingsChanged(key: GroupingKey, state: Boolean) {}
+
+        override fun showTagsChanged(value: Boolean) {
+          if (value) {
+            cs.launch { getAllRepositories(project).forEach { tagsUpdated(it) } }
+          }
+        }
+      })
+    }
+
+    private fun tagsUpdated(repository: GitRepository) {
       if (!isRepositoryValid(repository)) return
+      if (!GitVcsSettings.getInstance(project).showTags()) return
 
       LOG.debug("Tags were loaded for ${repository.root}. Updating tags state")
 
-      val tagsState = repository.tagHolder.getTags().keys
+      val tagsState = repository.tagsHolder.tags
       channel.trySend(GitRepositoryEvent.TagsLoaded(repository.repositoryId(), tagsState))
     }
 

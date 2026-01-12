@@ -148,7 +148,7 @@ internal class GitRepositoryUpdater(
       repository.update()
     }
     if (tagChanged || packedRefsChanged || reftableChanged) {
-      repository.tagHolder.reload()
+      repository.tagsHolder.reload()
       BackgroundTaskUtil.syncPublisher(repository.project, GitRepository.GIT_REPO_CHANGE).repositoryChanged(repository)
     }
     if (configChanged) {

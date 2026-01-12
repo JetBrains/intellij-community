@@ -21,6 +21,7 @@ import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import git4idea.GitUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryTagsHolderImpl
 import git4idea.test.*
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.runBlocking
@@ -89,7 +90,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     branchManager.setFavorite(GitTagType, repo, "c-tag", true)
 
     repo.update()
-    repo.tagHolder.ensureUpToDateForTests()
+    (repo.tagsHolder as? GitRepositoryTagsHolderImpl)?.updateForTests()
 
     compareWithSnapshot(buildTestTree())
   }
@@ -214,7 +215,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
       repo.git("tag $it")
     }
     if (ensureTags) {
-      repo.tagHolder.ensureUpToDateForTests()
+      (repo.tagsHolder as? GitRepositoryTagsHolderImpl)?.updateForTests()
     }
   }
 

@@ -124,7 +124,8 @@ public final class GitRefUtil {
     else {
       String currentRevision = repository.getCurrentRevision();
       if (currentRevision != null) {
-        return repository.getTagHolder().getTag(currentRevision);
+        List<GitTag> tags = GitRepositoryTagsHolderKt.getTagsForCommit(repository.getTagsHolder(), currentRevision);
+        return ContainerUtil.getFirstItem(tags);
       }
     }
     return null;

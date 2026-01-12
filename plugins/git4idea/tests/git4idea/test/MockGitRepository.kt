@@ -23,8 +23,8 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
     @JvmName("state_") get
   var remotes: Collection<GitRemote> = emptyList()
     @JvmName("remotes_") get
-  var tagHolder: GitTagHolder? = null
-    @JvmName("tagHolder_") get
+  var tagsHolder: GitRepositoryTagsHolder = GitRepositoryTagsHolderImpl(this)
+    @JvmName("tagsHolder_") get
   var branchTrackInfos: Collection<GitBranchTrackInfo> = emptyList()
     @JvmName("branchTrackInfos_") get
   var remoteBranchesWithHashes:Map<GitRemoteBranch, Hash> = emptyMap()
@@ -140,8 +140,10 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
   }
 
   override fun getTagHolder(): GitTagHolder {
-    return tagHolder ?: GitTagHolder(this)
+    error("Use getTagsHolder")
   }
+
+  override fun getTagsHolder(): GitRepositoryTagsHolder = tagsHolder
 
   override fun getWorkingTreeHolder(): GitWorkingTreeHolder {
     return workingTreeHolder ?: GitWorkingTreeHolder(this)

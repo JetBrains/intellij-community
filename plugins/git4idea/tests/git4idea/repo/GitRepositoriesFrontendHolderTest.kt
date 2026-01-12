@@ -176,7 +176,7 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
   fun `test tags can be hidden`() {
     val tagName = "hello"
     repo.git("tag $tagName")
-    repo.tagHolder.ensureUpToDateForTests()
+    (repo.tagsHolder as? GitRepositoryTagsHolderImpl)?.updateForTests()
 
     val holder = GitRepositoriesHolder.getInstance(project)
     runBlocking {
@@ -196,7 +196,7 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
   fun `test tags can be hidden and shown`() {
     val tagName = "hello"
     repo.git("tag $tagName")
-    repo.tagHolder.ensureUpToDateForTests()
+    (repo.tagsHolder as? GitRepositoryTagsHolderImpl)?.updateForTests()
 
     val holder = GitRepositoriesHolder.getInstance(project)
     runBlocking {

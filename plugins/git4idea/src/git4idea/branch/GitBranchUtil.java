@@ -260,10 +260,6 @@ public final class GitBranchUtil {
     return collectCommon(repositories.stream().map(repository -> repository.getBranches().getRemoteBranches()));
   }
 
-  public static @NotNull List<GitTag> getCommonTags(@NotNull Collection<? extends GitRepository> repositories) {
-    return collectCommon(repositories.stream().map(repository -> repository.getTagHolder().getTags().keySet()));
-  }
-
   public static @NotNull <T> List<T> collectCommon(@NotNull Stream<? extends Collection<T>> groups) {
     return collectCommon(groups, null);
   }

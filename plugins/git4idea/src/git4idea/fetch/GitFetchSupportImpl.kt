@@ -136,7 +136,6 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
         val successFetchesMap = succeedResults.groupBy({ it.fetchSpec.repository }, { it.fetchSpec.remote })
         if (successFetchesMap.isNotEmpty()) {
           GitFetchHandler.afterSuccessfulFetch(project, successFetchesMap, progressManager.progressIndicator ?: EmptyProgressIndicator())
-          successFetchesMap.keys.forEach { it.tagHolder.reload() }
         }
         activity.finished()
         FetchResultImpl(project, VcsNotifier.getInstance(project), mergedResults)

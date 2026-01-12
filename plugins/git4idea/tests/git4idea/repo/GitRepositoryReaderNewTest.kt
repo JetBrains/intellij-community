@@ -19,15 +19,11 @@ import com.intellij.dvcs.repo.Repository.State
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.Executor.*
-import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitLocalBranch
-import git4idea.GitTag
 import git4idea.GitUtil
 import git4idea.branch.GitBranchUtil
 import git4idea.config.GitExecutableManager
-import git4idea.config.GitVcsSettings
 import git4idea.config.GitVersionSpecialty
 import git4idea.test.*
 import git4idea.test.GitScenarios.conflict
@@ -213,32 +209,6 @@ abstract class GitRepositoryReaderNewTest(val usingReftable: Boolean) : GitPlatf
     val state = readState()
     assertEquals(GitLocalBranch(branch), state.currentBranch)
     assertNull(state.currentRevision)
-  }
-
-  fun `test tags loading`() {
-    try {
-      makeCommit("file.txt")
-
-      GitVcsSettings.getInstance(myProject).getState().showTags = true
-
-      git("tag -a v1.4 -m tag_message")
-      git("tag v2.0")
-      val annotated_hash = HashImpl.build(git("rev-parse v1.4"))
-      val not_annotated_hash = HashImpl.build(git("rev-parse HEAD"))
-
-      val tagHolder = repo.tagHolder
-      tagHolder.ensureUpToDateForTests()
-
-      val tags = tagHolder.getTags()
-      val expected = mapOf(
-        GitTag("v1.4") to annotated_hash,
-        GitTag("v2.0") to not_annotated_hash
-      )
-      VcsTestUtil.assertEqualCollections(tags.entries, expected.entries)
-    }
-    finally {
-      GitVcsSettings.getInstance(myProject).getState().showTags = false
-    }
   }
 
   fun `test fresh repository`() {

@@ -27,12 +27,14 @@ import git4idea.branch.GitBranchesTreeTestContext.Companion.ORIGIN
 import git4idea.branch.GitBranchesTreeTestContext.Companion.branchInfo
 import git4idea.branch.GitBranchesTreeTestContext.Companion.tagInfo
 import git4idea.repo.GitBranchTrackInfo
-import git4idea.repo.GitTagHolder
+import git4idea.repo.GitRepositoryTagsHolder
+import git4idea.repo.GitRepositoryTagsHolderImpl
 import git4idea.test.MockGitRepository
 import git4idea.test.MockGitRepositoryModel
 import git4idea.ui.branch.dashboard.*
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchActionsBuilder
 import git4idea.ui.branch.dashboard.BranchesTreeSelection.Companion.getSelectedRepositories
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.mockito.Mockito
 import javax.swing.tree.TreePath
 import kotlin.reflect.KClass
@@ -122,9 +124,14 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     repo1.currentBranch = null
     repo1.state = Repository.State.DETACHED
     select(BranchesTreeNodeMatchers.typeMatcher<BranchNodeDescriptor.Tag>())
-    val tagsHolderMock = Mockito.mock<GitTagHolder>()
-    repo1.tagHolder = tagsHolderMock
-    Mockito.`when`(tagsHolderMock.getTag(repo1.currentRevision!!)).thenReturn(GitTag("tag"))
+    val tagsHolderMock = Mockito.mock<GitRepositoryTagsHolder>()
+    val currentRevisionHash = HashImpl.build(repo1.currentRevision!!)
+    val tagsState = GitRepositoryTagsHolderImpl.LoadedState(
+      tagsToCommitHashes = mapOf(GitTag("tag") to currentRevisionHash),
+      commitHashesToTags = mapOf(currentRevisionHash to listOf(GitTag("tag")))
+    )
+    Mockito.`when`(tagsHolderMock.state).thenReturn(MutableStateFlow(tagsState))
+    repo1.tagsHolder = tagsHolderMock
 
     assertActions(expected = listOf(
       isEnabledAndVisible<GitShowDiffWithRefAction>(),

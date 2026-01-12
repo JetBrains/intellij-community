@@ -7,6 +7,7 @@ import com.intellij.dvcs.branch.DvcsBranchManager.DvcsBranchManagerListener
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
@@ -30,6 +31,7 @@ import git4idea.repo.*
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -157,7 +159,16 @@ abstract class BranchesDashboardTreeModelBase(
         }
       }
     })
-    project.messageBus.connect(this).subscribe(GitTagHolder.GIT_TAGS_LOADED, GitTagLoaderListener {
+    GitRepositoryManager.getInstance(project).repositories.forEach { repository ->
+      repository.coroutineScope.launch {
+        repository.tagsHolder.state.collectLatest {
+          withContext(Dispatchers.UiWithModelAccess) {
+            updateBranchesTree()
+          }
+        }
+      }
+    }
+    project.messageBus.connect(this).subscribe(GitRepositoryTagsHolder.TAGS_UPDATED, GitTagsHolderListener {
       runInEdt {
         updateBranchesTree()
       }

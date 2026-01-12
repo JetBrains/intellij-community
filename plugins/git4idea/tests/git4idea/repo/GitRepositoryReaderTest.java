@@ -14,12 +14,9 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitLocalBranch;
 import git4idea.GitReference;
-import git4idea.GitTag;
-import git4idea.config.GitVcsSettings;
 import git4idea.test.GitPlatformTest;
 import git4idea.test.TestDataUtil;
 import junit.framework.TestCase;
-import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
@@ -28,7 +25,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
@@ -118,26 +114,6 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
     assertEqualBranches(readCurrentBranch(myTempDir), state.getCurrentBranch(), state.getLocalBranches().get(state.getCurrentBranch()));
     assertReferences(state.getLocalBranches(), readRefs(myTempDir, RefType.LOCAL_BRANCH));
     assertReferences(state.getRemoteBranches(), readRefs(myTempDir, RefType.REMOTE_BRANCH));
-  }
-
-  @Test
-  public void testTags() throws Exception {
-    Assume.assumeTrue(Registry.is("git.read.branches.from.disk")); // not a valid git repository
-
-    try {
-      GitVcsSettings.getInstance(myProject).getState().setShowTags(true);
-      GitRepository repo = Mockito.mock(GitRepository.class);
-      Mockito.when(repo.getProject()).thenReturn(myProject);
-      Mockito.when(repo.getRepositoryFiles()).thenReturn(myRepoFiles);
-      Mockito.when(repo.getCoroutineScope()).thenReturn(GlobalScope.INSTANCE);
-      GitTagHolder holder = new GitTagHolder(repo);
-      holder.ensureUpToDateForTests$intellij_vcs_git();
-      Map<GitTag, Hash> tags = holder.getTags();
-      assertReferences(tags, readRefs(myTempDir, RefType.TAG));
-    }
-    finally {
-      GitVcsSettings.getInstance(myProject).getState().setShowTags(false);
-    }
   }
 
   private static void assertEqualBranches(@NotNull Branch expected, @NotNull GitLocalBranch actual, @NotNull Hash hash) {

@@ -18,6 +18,7 @@ import git4idea.branch.GitRefType
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRefUtil.getCurrentTag
 import git4idea.repo.GitRepository
+import git4idea.repo.tags
 import git4idea.ui.branch.GitBranchManager
 import it.unimi.dsi.fastutil.ints.IntSet
 
@@ -66,8 +67,8 @@ internal object BranchesDashboardUtil {
 
     val tags = mutableMapOf<GitTag, MutableList<GitRepository>>()
     repositories.forEach { repo ->
-      for (tag in repo.tagHolder.getTags()) {
-        tags.computeIfAbsent(tag.key) { mutableListOf() }.add(repo)
+      for (tag in repo.tagsHolder.tags) {
+        tags.computeIfAbsent(tag) { mutableListOf() }.add(repo)
       }
     }
     val gitBranchManager = project.service<GitBranchManager>()

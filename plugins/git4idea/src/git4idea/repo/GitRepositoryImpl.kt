@@ -47,6 +47,7 @@ class GitRepositoryImpl private constructor(
   private val untrackedFilesHolder: GitUntrackedFilesHolder
   private val resolvedFilesHolder: GitResolvedMergeConflictsFilesHolder
   private val tagHolder: GitTagHolder
+  private val tagsHolder: GitRepositoryTagsHolder
   private val workingTreeHolder: GitWorkingTreeHolder
 
   @Volatile
@@ -70,6 +71,8 @@ class GitRepositoryImpl private constructor(
     Disposer.register(this, resolvedFilesHolder)
 
     tagHolder = GitTagHolder(this)
+    tagsHolder = GitRepositoryTagsHolderImpl(this)
+
     workingTreeHolder = GitWorkingTreeHolder(this)
     repoInfo = readRepoInfo()
   }
@@ -101,6 +104,10 @@ class GitRepositoryImpl private constructor(
 
   override fun getTagHolder(): GitTagHolder {
     return tagHolder
+  }
+
+  override fun getTagsHolder(): GitRepositoryTagsHolder {
+    return tagsHolder
   }
 
   override fun getWorkingTreeHolder(): GitWorkingTreeHolder {
@@ -251,7 +258,7 @@ class GitRepositoryImpl private constructor(
         val updater = GitRepositoryUpdater(this, this.repositoryFiles)
         updater.installListeners()
         notifyIfRepoChanged(this, null, initialRepoInfo)
-        tagHolder.reload()
+        tagsHolder.reload()
         workingTreeHolder.reload()
         this.untrackedFilesHolder.invalidate()
         this.resolvedConflictsFilesHolder.invalidate()
