@@ -15,7 +15,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -311,12 +310,11 @@ public sealed class TypeEvalContext {
       Pair.create(element, this),
       false,
       () -> {
-        var externalTypeProvider =
-          ContainerUtil.find(TypeEvalExternalTypeProvider.EP_NAME.getExtensionList(), TypeEvalExternalTypeProvider::isAvailable);
-        if (!isInsideExternalTypeProviderCall && externalTypeProvider != null) {
+        var provider = TypeEvalExternalTypeProvider.EP_NAME.getExtensionList().stream().filter(TypeEvalExternalTypeProvider::isAvailable).findFirst().orElse(null);
+        if (!isInsideExternalTypeProviderCall && provider != null) {
           try {
             isInsideExternalTypeProviderCall = true;
-            var provided = externalTypeProvider.provideType(element, this);
+            var provided = provider.provideType(element, this);
             isInsideExternalTypeProviderCall = false;
             if (provided != null) {
               var type = provided.get();
@@ -328,7 +326,7 @@ public sealed class TypeEvalContext {
             throw e;
           }
           catch (Exception e) {
-            logger.warn("Exception during external type provider " + externalTypeProvider.getClass().getName(), e);
+            logger.warn("Exception during external type provider " + provider.getClass().getName(), e);
           }
         }
 
