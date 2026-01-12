@@ -77,7 +77,7 @@ class Outer(Generic[T]):
     class AlsoBad:
         x: list[T]  # E
 
-        def __init__(self, x: list[T]) -> None:
+        def __init__(self, x: list[T]) -> None:  # E?
             self.x = x
 
     class Inner(Iterable[S]):  # OK

@@ -168,5 +168,6 @@ class Foo7(Generic[DefaultIntT]):
     attr: DefaultIntT
 
 
-assert_type(Foo7.meth, Callable[[Foo7[int]], Foo7[int]])
+foo7 = Foo7()
+assert_type(Foo7.meth(foo7), Foo7[int])
 assert_type(Foo7().attr, int)
