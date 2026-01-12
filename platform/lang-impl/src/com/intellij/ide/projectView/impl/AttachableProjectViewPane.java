@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.AttachDirectoryStatisticsKt;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
@@ -100,6 +101,7 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
     final Module module = modules[0];
     ModuleRootModificationUtil.updateModel(module, model -> {
       for (VirtualFile file : dirs) {
+        AttachDirectoryStatisticsKt.logFilesOnDiskCount(myProject, file);
         model.addContentEntry(file);
       }
     });

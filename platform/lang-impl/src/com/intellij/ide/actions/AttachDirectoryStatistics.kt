@@ -18,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.nio.file.Paths
+import kotlin.math.min
 
 internal object AttachDirectoryUsagesCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup(
@@ -59,6 +60,8 @@ internal object AttachDirectoryUsagesCollector : CounterUsagesCollector() {
   private val ATTACHED_DIRECTORY_EVENT = GROUP.registerEvent(
     eventId = "attached.directory",
     eventField1 = EventFields.LogarithmicInt("files_count"),
+    eventField2 = EventFields.Int("files_count_limit"),
+    eventField3 = EventFields.Boolean("limit_reached"),
     description = "Reports the file count under an attached directory"
   )
 
@@ -72,7 +75,7 @@ internal object AttachDirectoryUsagesCollector : CounterUsagesCollector() {
 
   @JvmStatic
   fun logAttachedDirectoryFilesCount(filesCount: Int) {
-    ATTACHED_DIRECTORY_EVENT.log(filesCount)
+    ATTACHED_DIRECTORY_EVENT.log(filesCount, FILES_COUNT_LIMIT, filesCount == FILES_COUNT_LIMIT)
   }
 
   @JvmStatic
@@ -99,17 +102,14 @@ private class FileCountLogger(private val cs: CoroutineScope) {
 
   private fun countFilesOnDisk(root: VirtualFile): Int {
     var count = 0
-    VfsUtilCore.iterateChildrenRecursively((root as NewVirtualFile).asCacheAvoiding(), null) { file ->
-      if (!file.isDirectory) {
-        count++
-      }
-      count < FILES_COUNT_THRESHOLD
+    VfsUtilCore.iterateChildrenRecursively((root as NewVirtualFile).asCacheAvoiding(), null) {
+      ++count < FILES_COUNT_LIMIT
     }
-    return count
+    return min(count, FILES_COUNT_LIMIT)
   }
 }
 
-private const val FILES_COUNT_THRESHOLD: Int = 1_000_000
+private const val FILES_COUNT_LIMIT: Int = 1_000_000
 
 internal fun logFilesOnDiskCount(project: Project, root: VirtualFile) {
   project.service<FileCountLogger>().logFilesOnDiskCount(root)
