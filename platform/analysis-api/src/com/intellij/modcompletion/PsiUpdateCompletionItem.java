@@ -52,8 +52,6 @@ public abstract class PsiUpdateCompletionItem<T> implements ModCompletionItem {
       updater.moveCaretTo(updatedCaretPos);
       update(actionContext.withOffset(updatedCaretPos)
                .withSelection(TextRange.create(completionStart, updatedCaretPos)), insertionContext, updater);
-      int offset = updater.getCaretOffset();
-      updater.select(TextRange.create(offset, offset));
     });
   }
 
