@@ -1,6 +1,5 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <plugin id="com.intellij.java"/>
     <module name="intellij.java.backend"/>
     <module name="intellij.platform.testFramework"/>
   </dependencies>
