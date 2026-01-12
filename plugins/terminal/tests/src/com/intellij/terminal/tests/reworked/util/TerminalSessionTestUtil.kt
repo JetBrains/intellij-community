@@ -119,18 +119,28 @@ internal object TerminalSessionTestUtil {
   }
 
   fun getShellPaths(): List<Path> {
-    return listOf(
+    val traditionalUnixShells = listOf(
       "/bin/zsh",
       "/urs/bin/zsh",
       "/urs/local/bin/zsh",
       "/opt/homebrew/bin/zsh",
       "/bin/bash",
-      "/opt/homebrew/bin/bash",
+      "/opt/homebrew/bin/bash"
+    ).mapNotNull { path ->
+      Path.of(path).takeIf { Files.isRegularFile(it) }
+    }
+
+    return traditionalUnixShells + getPowerShellPaths()
+  }
+
+  fun getPowerShellPaths(): List<Path> {
+    return listOf(
+      "powershell",
       "powershell.exe",
+      "pwsh",
       "pwsh.exe"
     ).mapNotNull {
-      val path = Path.of(it)
-      if (Files.isRegularFile(path)) path else PathEnvironmentVariableUtil.findInPath(it)?.toPath()
+      PathEnvironmentVariableUtil.findInPath(it)?.toPath()
     }
   }
 
