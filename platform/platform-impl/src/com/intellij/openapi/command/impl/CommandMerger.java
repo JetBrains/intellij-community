@@ -104,8 +104,9 @@ public final class CommandMerger {
   }
 
   void mergeWithPerformedCommand(@NotNull PerformedCommand performedCommand) {
+    boolean isPartial = isPartialForeignCommand(performedCommand);
     mergeState(performedCommand);
-    if (!performedCommand.isTransparent() && hasActions()) {
+    if (!performedCommand.isTransparent() && (hasActions() || isPartial)) {
       Object groupId = performedCommand.groupId();
       if (groupId != SoftReference.dereference(lastGroupId)) {
         lastGroupId = groupId == null ? null : new WeakReference<>(groupId);
