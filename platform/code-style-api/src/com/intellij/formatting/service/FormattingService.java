@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.service;
 
 import com.intellij.formatting.FormattingRangesInfo;
@@ -15,7 +15,7 @@ import java.util.Set;
 /**
  * Base class for any kind of formatting tools, both built-in and external. The default implementation is {@code CoreFormattingService}
  * based on {@link com.intellij.formatting.FormattingDocumentModel}. Alternative implementations are searched using
- * {@link #canFormat(PsiFile)} method and features supported by a tool {@link #getFeatures()}.
+ * {@link #canFormat(PsiFile, Feature...)} method and features supported by a tool {@link #getFeatures()}.
  * <p>
  * For integration with external command line formatting tools consider using {@link AsyncDocumentFormattingService}.
  */
@@ -53,6 +53,10 @@ public interface FormattingService {
    * @param file The PSI file to check service availability for.
    * @return True if the service can be used to format the file, false otherwise.
    */
+  default boolean canFormat(@NotNull PsiFile file, @NotNull Feature @NotNull ... features) {
+    return canFormat(file);
+  }
+
   boolean canFormat(@NotNull PsiFile file);
 
   /**

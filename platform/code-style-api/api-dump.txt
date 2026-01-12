@@ -334,6 +334,7 @@ com.intellij.formatting.service.FormattingNotificationService
 com.intellij.formatting.service.FormattingService
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:canFormat(com.intellij.psi.PsiFile):Z
+- canFormat(com.intellij.psi.PsiFile,com.intellij.formatting.service.FormattingService$Feature[]):Z
 - a:formatElement(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z):com.intellij.psi.PsiElement
 - a:formatElement(com.intellij.psi.PsiElement,Z):com.intellij.psi.PsiElement
 - a:formatRanges(com.intellij.psi.PsiFile,com.intellij.formatting.FormattingRangesInfo,Z,Z):V

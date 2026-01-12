@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.service;
 
 import com.intellij.formatting.FormatTextRanges;
+import com.intellij.formatting.service.FormattingService.Feature;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -23,11 +24,15 @@ public final class FormattingServiceUtil {
   }
 
   public static @NotNull FormattingService findService(@NotNull PsiFile file, boolean isExplicit, boolean isCompleteFile) {
+    ArrayList<Feature> features = new ArrayList<>();
+    if (!isExplicit) features.add(Feature.AD_HOC_FORMATTING);
+    if (!isCompleteFile) features.add(Feature.FORMAT_FRAGMENTS);
+
     FormattingService formattingService = ContainerUtil.find(
       FormattingService.EP_NAME.getExtensionList(),
-      s -> (isExplicit || s.getFeatures().contains(FormattingService.Feature.AD_HOC_FORMATTING)) &&
-           (isCompleteFile || s.getFeatures().contains(FormattingService.Feature.FORMAT_FRAGMENTS)) &&
-           s.canFormat(file)
+      s -> (isExplicit || s.getFeatures().contains(Feature.AD_HOC_FORMATTING)) &&
+           (isCompleteFile || s.getFeatures().contains(Feature.FORMAT_FRAGMENTS)) &&
+           s.canFormat(file, features.toArray(new Feature[0]))
     );
     LOG.assertTrue(formattingService != null,
                    "At least 1 formatting service which can handle PsiFile " + file.getName() + " should be registered.");
@@ -41,7 +46,7 @@ public final class FormattingServiceUtil {
   public static @NotNull FormattingService findImportsOptimizingService(@NotNull PsiFile file) {
     FormattingService importsOptimizer = ContainerUtil.find(
       FormattingService.EP_NAME.getExtensionList(),
-      s -> s.getFeatures().contains(FormattingService.Feature.OPTIMIZE_IMPORTS) && s.canFormat(file)
+      s -> s.getFeatures().contains(Feature.OPTIMIZE_IMPORTS) && s.canFormat(file, Feature.OPTIMIZE_IMPORTS)
     );
     LOG.assertTrue(importsOptimizer != null,
                    "At least 1 formatting service which can optimize imports in PsiFile " + file.getName() + " should be registered.");
