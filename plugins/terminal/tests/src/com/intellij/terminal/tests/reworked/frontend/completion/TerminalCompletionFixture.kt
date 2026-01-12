@@ -24,6 +24,7 @@ import com.intellij.terminal.tests.block.util.TestCommandSpecsProvider
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
@@ -38,6 +39,7 @@ import org.jetbrains.plugins.terminal.view.TerminalCursorOffsetChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 import org.junit.Assume
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.VK_UNDEFINED
@@ -51,7 +53,7 @@ internal class TerminalCompletionFixture(
   session: TerminalSession,
   private val coroutineScope: CoroutineScope,
 ) {
-  private val view: TerminalViewImpl
+  val view: TerminalViewImpl
 
   val outputModel: MutableTerminalOutputModel
     get() = view.activeOutputModel() as MutableTerminalOutputModel
@@ -70,6 +72,8 @@ internal class TerminalCompletionFixture(
 
   suspend fun awaitShellIntegrationFeaturesInitialized() {
     view.shellIntegrationFeaturesInitJob.join()
+    val shellIntegration = view.shellIntegrationDeferred.await()
+    shellIntegration.outputStatus.first { it == TerminalOutputStatus.TypingCommand }
   }
 
   suspend fun type(text: String) {
