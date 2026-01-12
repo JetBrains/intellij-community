@@ -183,8 +183,9 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     resultSet.restartCompletionOnPrefixChange(
       StandardPatterns.string().with(object : PatternCondition<String>("add filter for command completion") {
         override fun accepts(t: String, context: ProcessingContext?): Boolean {
-          return (!isReadOnly && commandCompletionType.suffix + t ==
-                  commandCompletionFactory.suffix() + (commandCompletionFactory.filterSuffix()?.toString() ?: "")) ||
+          val fullSuffix = commandCompletionFactory.suffix() + (commandCompletionFactory.filterSuffix()?.toString() ?: "")
+          return (!isReadOnly &&
+                  (commandCompletionType.suffix + t == fullSuffix) || t.endsWith(fullSuffix)) ||
                  (isReadOnly && (commandCompletionType.suffix + t == (commandCompletionFactory.filterSuffix()?.toString() ?: "")))
         }
       }))

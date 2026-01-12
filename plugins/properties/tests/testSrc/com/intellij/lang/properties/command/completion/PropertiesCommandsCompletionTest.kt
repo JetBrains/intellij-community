@@ -2,6 +2,7 @@
 package com.intellij.lang.properties.command.completion
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.lang.properties.PropertiesFileType
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.registry.Registry
@@ -37,6 +38,21 @@ class PropertiesCommandsCompletionTest : LightFixtureCompletionTestCase() {
       a.b.c    =  some.strange .<caret>
       """.trimIndent())
     val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Reformat", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    myFixture.checkResult("""
+        a.b.c=some.strange 
+        """.trimIndent())
+  }
+
+  fun testDoubleDot() {
+    myFixture.configureByText(PropertiesFileType.INSTANCE, """
+      a.b.c.<caret>    =  some.strange 
+      """.trimIndent())
+    myFixture.completeBasic()
+    myFixture.type('.')
+    val l = LookupManager.getActiveLookup(myFixture.editor)!!
+    val elements = l.items
     selectItem(elements.first { element -> element.lookupString.contains("Reformat", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
