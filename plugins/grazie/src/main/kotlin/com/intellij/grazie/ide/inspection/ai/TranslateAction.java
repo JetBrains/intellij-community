@@ -11,7 +11,7 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.grazie.GrazieBundle;
 import com.intellij.grazie.cloud.APIQueries;
 import com.intellij.grazie.cloud.GrazieCloudConnector;
-import com.intellij.grazie.cloud.TranslationUnavailableException;
+import com.intellij.grazie.cloud.PrematureEndException;
 import com.intellij.grazie.detection.LangDetector;
 import com.intellij.grazie.ide.fus.GrazieFUSCounter;
 import com.intellij.grazie.ide.ui.PaddedListCellRenderer;
@@ -166,7 +166,7 @@ public class TranslateAction implements IntentionAction, CustomizableIntentionAc
   ) {
     try {
       tryTranslate(project, editor, file, toTranslate, from, target);
-    } catch (TranslationUnavailableException e) {
+    } catch (PrematureEndException e) {
       IdeUiService.getInstance().showErrorHint(editor, GrazieBundle.message("intention.translate.unavailable"));
     }
   }
