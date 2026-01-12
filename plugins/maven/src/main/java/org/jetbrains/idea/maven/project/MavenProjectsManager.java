@@ -185,16 +185,16 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   protected abstract void runInBackgroundBlocking(Runnable r);
 
   private void doInit() {
+    if (isInitialized.get()) return;
     initLock.lock();
     try {
-      if (isInitialized.getAndSet(true)) {
-        return;
-      }
+      if (isInitialized.get()) return;
       initPreloadMavenServices();
       initWorkers();
       updateTabTitles();
     }
     finally {
+      isInitialized.set(true);
       initLock.unlock();
     }
   }
@@ -637,7 +637,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
     getWorkspaceSettings().setEnabledProfiles(profiles.getEnabledProfiles());
     getWorkspaceSettings().setDisabledProfiles(profiles.getDisabledProfiles());
-    if(isInitialized()){
+    if (isInitialized()) {
       getProjectsTree().setExplicitProfiles(profiles);
     }
   }
