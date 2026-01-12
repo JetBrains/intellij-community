@@ -2,8 +2,11 @@ package com.intellij.terminal.tests.reworked.frontend.completion
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.tests.reworked.frontend.completion.TerminalCompletionFixture.Companion.doWithCompletionFixture
 import com.intellij.terminal.tests.reworked.frontend.completion.TerminalCompletionPopupTest.Companion.MAX_ITEMS_COUNT
+import com.intellij.terminal.tests.reworked.util.EchoingTerminalSession
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -68,9 +71,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test completions list filtered on typing`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test completions list filtered on typing`() = doTest { fixture ->
     fixture.type("test_cmd ")
     fixture.callCompletionPopup()
     assertEquals(true, fixture.isLookupActive())
@@ -87,9 +88,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test selection returns to original item after down and up actions`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test selection returns to original item after down and up actions`() = doTest { fixture ->
     fixture.type("test_cmd ")
     fixture.callCompletionPopup()
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
@@ -106,9 +105,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test completion list is re-filtered when caret moves over prefix to the left, right`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test completion list is re-filtered when caret moves over prefix to the left, right`() = doTest { fixture ->
     fixture.type("test_cmd ")
     fixture.callCompletionPopup()
 
@@ -136,9 +133,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test lookup remains active when caret moves into text typed before call popup`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test lookup remains active when caret moves into text typed before call popup`() = doTest { fixture ->
     fixture.type("test_cmd st")
     fixture.callCompletionPopup()
 
@@ -152,9 +147,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test completion list is correctly re-filtered after pressing backspace`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test completion list is correctly re-filtered after pressing backspace`() = doTest { fixture ->
     fixture.type("test_cmd st")
     fixture.callCompletionPopup()
 
@@ -174,9 +167,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test completion popup is reopened on any prefix change when suggestions count reach the limit`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test completion popup is reopened on any prefix change when suggestions count reach the limit`() = doTest { fixture ->
     fixture.type("test_cmd build a")
     fixture.callCompletionPopup()
     fixture.awaitLookupElementsSatisfy { items ->
@@ -215,9 +206,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test completion popup closes on empty prefix after pressing backspace`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test completion popup closes on empty prefix after pressing backspace`() = doTest { fixture ->
     fixture.type("test_cmd st")
     fixture.callCompletionPopup()
 
@@ -230,9 +219,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test completion popup closes on empty prefix after pressing left`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test completion popup closes on empty prefix after pressing left`() = doTest { fixture ->
     fixture.type("test_cmd st")
     fixture.callCompletionPopup()
 
@@ -245,9 +232,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test completion popup closes on pressing left when completion called on empty prefix`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test completion popup closes on pressing left when completion called on empty prefix`() = doTest { fixture ->
     fixture.type("test_cmd show ")
     fixture.callCompletionPopup()
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
@@ -259,9 +244,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test completion popup closes on non-matching prefix`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test completion popup closes on non-matching prefix`() = doTest { fixture ->
     fixture.type("test_cmd st")
     fixture.callCompletionPopup()
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
@@ -272,9 +255,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test completion popup closes when single item is fully typed`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test completion popup closes when single item is fully typed`() = doTest { fixture ->
     fixture.type("test_cmd st")
     fixture.callCompletionPopup()
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
@@ -285,9 +266,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test completion popup closes when any text appears below the line with cursor`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test completion popup closes when any text appears below the line with cursor`() = doTest { fixture ->
     fixture.type("test_cmd st")
     fixture.callCompletionPopup()
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
@@ -298,9 +277,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test exact match for directory item is placed first (Unix separator)`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test exact match for directory item is placed first (Unix separator)`() = doTest { fixture ->
     fixture.type("test_cmd start plat")
     fixture.callCompletionPopup()
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
@@ -312,9 +289,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test exact match for directory item is placed first (Windows separator)`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test exact match for directory item is placed first (Windows separator)`() = doTest { fixture ->
     fixture.type("test_cmd start sha")
     fixture.callCompletionPopup()
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
@@ -326,22 +301,17 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test terminal LookupElement#object is ShellCompletionSuggestion`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test terminal LookupElement#object is ShellCompletionSuggestion`() = doTest { fixture ->
     fixture.type("test_cmd st")
     fixture.callCompletionPopup()
     val elements = fixture.getLookupElements()
     assertThat(elements)
       .isNotEmpty
       .allMatch { it.`object` is ShellCompletionSuggestion }
-    Unit
   }
 
   @Test
-  fun `test TerminalCommandCompletion#LAST_SELECTED_ITEM_KEY is updated in the lookup on selected item change`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test TerminalCommandCompletion#LAST_SELECTED_ITEM_KEY is updated in the lookup on selected item change`() = doTest { fixture ->
     fixture.type("test_cmd st")
     fixture.callCompletionPopup()
 
@@ -369,20 +339,22 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     assertThat(lastSelectedItem)
       .isNotNull
       .isEqualTo(secondSelectedItem)
-
-    Unit
   }
 
-  private suspend fun createFixture(): TerminalCompletionFixture {
-    val fixture = TerminalCompletionFixture(project, testRootDisposable)
-    fixture.mockTestShellCommand(testCommandSpec)
-    fixture.setCompletionOptions(
-      showPopupAutomatically = false,
-      showingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS,
-      parentDisposable = testRootDisposable
-    )
-    fixture.awaitShellIntegrationFeaturesInitialized()
-    return fixture
+  private fun doTest(block: suspend (TerminalCompletionFixture) -> Unit) = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixtureScope = childScope("TerminalCompletionFixture")
+    val session = EchoingTerminalSession(fixtureScope.childScope("EchoingTerminalSession"))
+    doWithCompletionFixture(project, session, fixtureScope) { fixture ->
+      fixture.mockTestShellCommand(testCommandSpec)
+      fixture.setCompletionOptions(
+        showPopupAutomatically = false,
+        showingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS,
+        parentDisposable = testRootDisposable
+      )
+      fixture.awaitShellIntegrationFeaturesInitialized()
+
+      block(fixture)
+    }
   }
 
   companion object {
