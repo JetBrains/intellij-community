@@ -1,6 +1,9 @@
 package com.intellij.terminal.tests.reworked.frontend.completion
 
 import com.intellij.openapi.application.EDT
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.tests.reworked.frontend.completion.TerminalCompletionFixture.Companion.doWithCompletionFixture
+import com.intellij.terminal.tests.reworked.util.EchoingTerminalSession
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
@@ -59,9 +62,7 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test completion item inserted on insert suggestion action`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test completion item inserted on insert suggestion action`() = doTest { fixture ->
     fixture.type("test_cmd st")
     fixture.callCompletionPopup()
     val lookup = fixture.getActiveLookup() ?: error("No active lookup")
@@ -77,9 +78,7 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test single matching completion item inserted automatically on invoking completion action`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test single matching completion item inserted automatically on invoking completion action`() = doTest { fixture ->
     fixture.type("test_cmd status single")
     fixture.callCompletionPopup(waitForPopup = false)
 
@@ -89,9 +88,7 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test Enter key event is sent after inserting fully matching completion item`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test Enter key event is sent after inserting fully matching completion item`() = doTest { fixture ->
     fixture.type("test_cmd start a")
     fixture.callCompletionPopup()
     val lookup = fixture.getActiveLookup() ?: error("No active lookup")
@@ -107,9 +104,7 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test Enter key event is sent after inserting directory name without file separator (Unix)`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test Enter key event is sent after inserting directory name without file separator (Unix)`() = doTest { fixture ->
     fixture.type("test_cmd stop plat")
     fixture.callCompletionPopup()
     val lookup = fixture.getActiveLookup() ?: error("No active lookup")
@@ -125,9 +120,7 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test Enter key event is sent after inserting directory name without file separator (Windows)`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
+  fun `test Enter key event is sent after inserting directory name without file separator (Windows)`() = doTest { fixture ->
     fixture.type("test_cmd stop sha")
     fixture.callCompletionPopup()
     val lookup = fixture.getActiveLookup() ?: error("No active lookup")
@@ -143,38 +136,30 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test cursor placed correctly after inserting suggestion with custom cursor position`() {
-    timeoutRunBlocking(context = Dispatchers.EDT) {
-      val fixture = createFixture()
+  fun `test cursor placed correctly after inserting suggestion with custom cursor position`() = doTest { fixture ->
+    fixture.type("test_cmd with-cursor-double sugg")
+    fixture.callCompletionPopup()
+    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+    assertThat(lookup.items.map { it.lookupString })
+      .hasSameElementsAs(listOf("suggestion", "suggestion().after"))
+    assertThat(lookup.currentItem?.lookupString)
+      .isEqualTo("suggestion().after")
 
-      fixture.type("test_cmd with-cursor-double sugg")
-      fixture.callCompletionPopup()
-      val lookup = fixture.getActiveLookup() ?: error("No active lookup")
-      assertThat(lookup.items.map { it.lookupString })
-        .hasSameElementsAs(listOf("suggestion", "suggestion().after"))
-      assertThat(lookup.currentItem?.lookupString)
-        .isEqualTo("suggestion().after")
+    fixture.insertSelectedItem()
 
-      fixture.insertSelectedItem()
-
-      val expectedText = "test_cmd with-cursor-double suggestion().after"
-      val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong() - 7) // cursor is between parentheses
-      fixture.assertOutputModelState(expectedText, expectedCursorOffset)
-    }
+    val expectedText = "test_cmd with-cursor-double suggestion().after"
+    val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong() - 7) // cursor is between parentheses
+    fixture.assertOutputModelState(expectedText, expectedCursorOffset)
   }
 
   @Test
-  fun `test cursor placed correctly after auto-inserting single suggestion with custom cursor position`() {
-    timeoutRunBlocking(context = Dispatchers.EDT) {
-      val fixture = createFixture()
+  fun `test cursor placed correctly after auto-inserting single suggestion with custom cursor position`() = doTest { fixture ->
+    fixture.type("test_cmd with-cursor-single sugg")
+    fixture.callCompletionPopup(waitForPopup = false)
 
-      fixture.type("test_cmd with-cursor-single sugg")
-      fixture.callCompletionPopup(waitForPopup = false)
-
-      val expectedText = "test_cmd with-cursor-single suggestion().after"
-      val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong() - 7) // cursor is between parentheses
-      fixture.assertOutputModelState(expectedText, expectedCursorOffset)
-    }
+    val expectedText = "test_cmd with-cursor-single suggestion().after"
+    val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong() - 7) // cursor is between parentheses
+    fixture.assertOutputModelState(expectedText, expectedCursorOffset)
   }
 
   private suspend fun TerminalCompletionFixture.assertOutputModelState(
@@ -198,15 +183,19 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
       .isTrue
   }
 
-  private suspend fun createFixture(): TerminalCompletionFixture {
-    val fixture = TerminalCompletionFixture(project, testRootDisposable)
-    fixture.mockTestShellCommand(testCommandSpec)
-    fixture.setCompletionOptions(
-      showPopupAutomatically = false,
-      showingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS,
-      parentDisposable = testRootDisposable
-    )
-    fixture.awaitShellIntegrationFeaturesInitialized()
-    return fixture
+  private fun doTest(block: suspend (TerminalCompletionFixture) -> Unit) = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixtureScope = childScope("TerminalCompletionFixture")
+    val session = EchoingTerminalSession(fixtureScope.childScope("EchoingTerminalSession"))
+    doWithCompletionFixture(project, session, fixtureScope) { fixture ->
+      fixture.mockTestShellCommand(testCommandSpec)
+      fixture.setCompletionOptions(
+        showPopupAutomatically = false,
+        showingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS,
+        parentDisposable = testRootDisposable
+      )
+      fixture.awaitShellIntegrationFeaturesInitialized()
+
+      block(fixture)
+    }
   }
 }

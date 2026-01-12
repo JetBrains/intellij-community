@@ -1,6 +1,9 @@
 package com.intellij.terminal.tests.reworked.frontend.completion
 
 import com.intellij.openapi.application.EDT
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.tests.reworked.frontend.completion.TerminalCompletionFixture.Companion.doWithCompletionFixture
+import com.intellij.terminal.tests.reworked.util.EchoingTerminalSession
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
@@ -42,109 +45,106 @@ internal class TerminalAutoCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test completion popup shows automatically on typing subcommand name (mode always)`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture(TerminalCommandCompletionShowingMode.ALWAYS)
+  fun `test completion popup shows automatically on typing subcommand name (mode always)`() {
+    doTest(TerminalCommandCompletionShowingMode.ALWAYS) { fixture ->
+      fixture.type("test_cmd st")
+      fixture.awaitNewCompletionPopupOpened()
 
-    fixture.type("test_cmd st")
-    fixture.awaitNewCompletionPopupOpened()
-
-    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
-    assertThat(lookup.items.map { it.lookupString })
-      .hasSameElementsAs(listOf("start", "status", "stop"))
-    Unit
+      val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+      assertThat(lookup.items.map { it.lookupString })
+        .hasSameElementsAs(listOf("start", "status", "stop"))
+    }
   }
 
   @Test
-  fun `test completion popup shows automatically on typing option name (mode always)`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture(TerminalCommandCompletionShowingMode.ALWAYS)
+  fun `test completion popup shows automatically on typing option name (mode always)`() {
+    doTest(TerminalCommandCompletionShowingMode.ALWAYS) { fixture ->
+      fixture.type("test_cmd start --long")
+      fixture.awaitNewCompletionPopupOpened()
 
-    fixture.type("test_cmd start --long")
-    fixture.awaitNewCompletionPopupOpened()
-
-    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
-    assertThat(lookup.items.map { it.lookupString })
-      .hasSameElementsAs(listOf("--long-opt1", "--long-opt2"))
-    Unit
+      val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+      assertThat(lookup.items.map { it.lookupString })
+        .hasSameElementsAs(listOf("--long-opt1", "--long-opt2"))
+    }
   }
 
   @Test
-  fun `test completion popup shows automatically on typing argument name (mode always)`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture(TerminalCommandCompletionShowingMode.ALWAYS)
+  fun `test completion popup shows automatically on typing argument name (mode always)`() {
+    doTest(TerminalCommandCompletionShowingMode.ALWAYS) { fixture ->
+      fixture.type("test_cmd status ser")
+      fixture.awaitNewCompletionPopupOpened()
 
-    fixture.type("test_cmd status ser")
-    fixture.awaitNewCompletionPopupOpened()
-
-    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
-    assertThat(lookup.items.map { it.lookupString })
-      .hasSameElementsAs(listOf("server", "server-db"))
-    Unit
+      val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+      assertThat(lookup.items.map { it.lookupString })
+        .hasSameElementsAs(listOf("server", "server-db"))
+    }
   }
 
   @Test
-  fun `test completion popup doesn't show automatically in context with subcommand suggestions (mode only parameters)`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture(TerminalCommandCompletionShowingMode.ONLY_PARAMETERS)
-
-    fixture.type("test_cmd st")
-    fixture.awaitPendingRequestsProcessed()
-    assertThat(fixture.isLookupActive()).isFalse()
-    Unit
+  fun `test completion popup doesn't show automatically in context with subcommand suggestions (mode only parameters)`() {
+    doTest(TerminalCommandCompletionShowingMode.ONLY_PARAMETERS) { fixture ->
+      fixture.type("test_cmd st")
+      fixture.awaitPendingRequestsProcessed()
+      assertThat(fixture.isLookupActive()).isFalse()
+    }
   }
 
   @Test
-  fun `test completion popup shows automatically on typing option name (mode only parameters)`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture(TerminalCommandCompletionShowingMode.ALWAYS)
+  fun `test completion popup shows automatically on typing option name (mode only parameters)`() {
+    doTest(TerminalCommandCompletionShowingMode.ALWAYS) { fixture ->
+      fixture.type("test_cmd start --long")
+      fixture.awaitNewCompletionPopupOpened()
 
-    fixture.type("test_cmd start --long")
-    fixture.awaitNewCompletionPopupOpened()
-
-    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
-    assertThat(lookup.items.map { it.lookupString })
-      .hasSameElementsAs(listOf("--long-opt1", "--long-opt2"))
-    Unit
+      val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+      assertThat(lookup.items.map { it.lookupString })
+        .hasSameElementsAs(listOf("--long-opt1", "--long-opt2"))
+    }
   }
 
   @Test
-  fun `test completion popup shows automatically on typing argument name (mode only parameters)`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture(TerminalCommandCompletionShowingMode.ONLY_PARAMETERS)
+  fun `test completion popup shows automatically on typing argument name (mode only parameters)`() {
+    doTest(TerminalCommandCompletionShowingMode.ONLY_PARAMETERS) { fixture ->
+      fixture.type("test_cmd status ser")
+      fixture.awaitNewCompletionPopupOpened()
 
-    fixture.type("test_cmd status ser")
-    fixture.awaitNewCompletionPopupOpened()
-
-    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
-    assertThat(lookup.items.map { it.lookupString })
-      .hasSameElementsAs(listOf("server", "server-db"))
-    Unit
+      val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+      assertThat(lookup.items.map { it.lookupString })
+        .hasSameElementsAs(listOf("server", "server-db"))
+    }
   }
 
   @Test
-  fun `test completion popup doesn't show option suggestions automatically on typing '-'`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture(TerminalCommandCompletionShowingMode.ONLY_PARAMETERS)
-
-    fixture.type("test_cmd stop -")
-    fixture.awaitPendingRequestsProcessed()
-    assertThat(fixture.isLookupActive()).isFalse()
-    Unit
+  fun `test completion popup doesn't show option suggestions automatically on typing '-'`() {
+    doTest(TerminalCommandCompletionShowingMode.ONLY_PARAMETERS) { fixture ->
+      fixture.type("test_cmd stop -")
+      fixture.awaitPendingRequestsProcessed()
+      assertThat(fixture.isLookupActive()).isFalse()
+    }
   }
 
   @Test
-  fun `test completion popup doesn't show automatically on typing short option`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture(TerminalCommandCompletionShowingMode.ONLY_PARAMETERS)
-
-    fixture.type("test_cmd stop -a")
-    fixture.awaitPendingRequestsProcessed()
-    assertThat(fixture.isLookupActive()).isFalse()
-    Unit
+  fun `test completion popup doesn't show automatically on typing short option`() {
+    doTest(TerminalCommandCompletionShowingMode.ONLY_PARAMETERS) { fixture ->
+      fixture.type("test_cmd stop -a")
+      fixture.awaitPendingRequestsProcessed()
+      assertThat(fixture.isLookupActive()).isFalse()
+    }
   }
 
-  private suspend fun createFixture(mode: TerminalCommandCompletionShowingMode): TerminalCompletionFixture {
-    val fixture = TerminalCompletionFixture(project, testRootDisposable)
-    fixture.mockTestShellCommand(testCommandSpec)
-    fixture.setCompletionOptions(
-      showPopupAutomatically = true,
-      showingMode = mode,
-      parentDisposable = testRootDisposable
-    )
-    fixture.awaitShellIntegrationFeaturesInitialized()
-    return fixture
-  }
+  private fun doTest(mode: TerminalCommandCompletionShowingMode, block: suspend (TerminalCompletionFixture) -> Unit) =
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      val fixtureScope = childScope("TerminalCompletionFixture")
+      val session = EchoingTerminalSession(fixtureScope.childScope("EchoingTerminalSession"))
+      doWithCompletionFixture(project, session, fixtureScope) { fixture ->
+        fixture.mockTestShellCommand(testCommandSpec)
+        fixture.setCompletionOptions(
+          showPopupAutomatically = true,
+          showingMode = mode,
+          parentDisposable = testRootDisposable
+        )
+        fixture.awaitShellIntegrationFeaturesInitialized()
+
+        block(fixture)
+      }
+    }
 }
