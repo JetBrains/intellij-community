@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.types
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Ref
+import com.intellij.psi.PsiElement
 import com.jetbrains.python.psi.PyTypedElement
 
 /**
