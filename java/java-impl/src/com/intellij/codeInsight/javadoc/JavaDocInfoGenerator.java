@@ -3335,12 +3335,20 @@ public class JavaDocInfoGenerator {
     for (int i =0; i < dataElements.length; i++) {
       PsiElement dataElement = dataElements[i];
       result.add(dataElement);
+      PsiElement nextSibling = dataElement.getNextSibling();
       if (i != dataElements.length - 1 
           && dataElement.getNode().getElementType() == JavaDocTokenType.DOC_COMMENT_DATA 
-          && dataElement.getNextSibling() instanceof PsiWhiteSpace
+          && nextSibling instanceof PsiWhiteSpace
           // Don't fetch next whitespace if the next data element is equivalent to one
           && !(dataElements[i + 1] instanceof LeafPsiElement leaf && Strings.isEmptyOrSpaces(leaf.getChars()))) {
-        result.add(dataElement.getNextSibling());
+        result.add(nextSibling);
+        
+        // Markdown comments interpret an empty line as a paragraph break
+        PsiElement newLineStart = nextSibling.getNextSibling();
+        if (newLineStart == null) continue;
+        PsiElement newLineContent =  newLineStart.getNextSibling();
+        if (!(newLineContent instanceof PsiWhiteSpace)) continue;
+        result.add(newLineContent);
       }
     }
     return result.toArray(PsiElement.EMPTY_ARRAY);
