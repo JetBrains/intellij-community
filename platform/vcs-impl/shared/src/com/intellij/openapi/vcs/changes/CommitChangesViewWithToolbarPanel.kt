@@ -17,10 +17,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ChangesViewModifier.ChangesViewModifierListener
-import com.intellij.openapi.vcs.changes.ui.ChangesListView
-import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.ide.navigation.NavigationOptions
@@ -241,7 +238,7 @@ private class ChangesViewInputHandler(
   private fun handleEnterOrDoubleClick(requestFocus: Boolean): Boolean {
     if (!performHoverAction()) {
       val diffPreviewOnDoubleClickOrEnter = changesView.project.service<CommitToolWindowViewModel>().diffPreviewOnDoubleClickOrEnter
-      if (diffPreviewOnDoubleClickOrEnter) {
+      if (diffPreviewOnDoubleClickOrEnter && changesView.selectedDiffableNode != null) {
         diffRequests.tryEmit(ChangesViewDiffAction.PERFORM_DIFF to ClientId.current)
       }
       else {

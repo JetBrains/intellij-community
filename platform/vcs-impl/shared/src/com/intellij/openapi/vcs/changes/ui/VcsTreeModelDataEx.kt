@@ -12,6 +12,10 @@ fun ChangesBrowserNode<*>.findChangeListNode(): ChangesBrowserChangeListNode? = 
 @ApiStatus.Internal
 fun ChangesBrowserNode<*>.findAmendNode(): EditedCommitNode? = findParentOfType()
 
+val ChangesListView.selectedDiffableNode: Any?
+  @ApiStatus.Internal
+  get() = selectedChanges.firstOrNull() ?: selectedUnversionedFiles.firstOrNull()
+
 private fun ChangesBrowserNode<*>.findParent(predicate: (ChangesBrowserNode<*>) -> Boolean): ChangesBrowserNode<*>? {
   var currentNode: ChangesBrowserNode<*>? = this
   while (currentNode != null) {
