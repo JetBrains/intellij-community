@@ -264,8 +264,10 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
     changePluginsStateAndReport(pluginsToDisable, false)
     changePluginsStateAndReport(pluginsToEnable, true)
 
-    LOG.info("Installing plugins: $pluginsToInstall")
-    PluginManagerProxy.getInstance().createInstaller().installPlugins(pluginsToInstall)
+    if (pluginsToInstall.isNotEmpty()) {
+      LOG.info("Installing plugins: $pluginsToInstall")
+      PluginManagerProxy.getInstance().createInstaller().installPlugins(pluginsToInstall)
+    }
   }
 
   private fun changePluginsStateAndReport(plugins: Set<PluginId>, enable: Boolean) {
@@ -289,9 +291,11 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
               pluginsReqRestart.add(plugin.name)
             }
           }
-          LOG.warn("The $actionName for the following plugins require restart: " + pluginsReqRestart.joinToString())
-          val restartReason = if (enable) RestartForPluginEnable(pluginsReqRestart) else RestartForPluginDisable(pluginsReqRestart)
-          SettingsSyncEvents.getInstance().fireRestartRequired(restartReason)
+          if (pluginsReqRestart.isNotEmpty()) {
+            LOG.warn("The $actionName for the following plugins require restart: " + pluginsReqRestart.joinToString())
+            val restartReason = if (enable) RestartForPluginEnable(pluginsReqRestart) else RestartForPluginDisable(pluginsReqRestart)
+            SettingsSyncEvents.getInstance().fireRestartRequired(restartReason)
+          }
         }
       }
       catch (ex: Exception) {

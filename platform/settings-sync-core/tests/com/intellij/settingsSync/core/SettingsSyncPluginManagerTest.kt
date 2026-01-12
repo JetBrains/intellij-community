@@ -542,6 +542,18 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     assertFalse(SettingsSyncSettings.getInstance().isSubcategoryEnabled(SettingsCategory.PLUGINS, weirdPlugin.idString))
   }
 
+  @Test
+  fun `test restart require message`() {
+    val reason1 = RestartForPluginEnable(listOf("PluginA"))
+    assertEquals("Restart the IDE to enable plugin: PluginA", reason1.getSingleReasonNotificationMessage())
+
+    val reason2 = RestartForPluginEnable(listOf("PluginA", "PluginB"))
+    assertEquals("Restart the IDE to enable plugins: PluginA, PluginB", reason2.getSingleReasonNotificationMessage())
+
+    val reason3 = RestartForPluginEnable(listOf("PluginA", "PluginB", "PluginC"))
+    assertEquals("Restart the IDE to enable plugins: PluginA, PluginB...", reason3.getSingleReasonNotificationMessage())
+  }
+
   private fun restart_required_base(installedBefore: Boolean, enabledBefore: Boolean, enabledInPush: Boolean) = runTest {
     val restartRequiredRef = AtomicReference<RestartReason>()
     SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {

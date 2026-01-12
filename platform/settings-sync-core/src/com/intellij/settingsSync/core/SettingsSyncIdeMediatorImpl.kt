@@ -103,6 +103,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
 
   private fun mergeRestartReasons(): List<RestartReason> {
       return restartRequiredReasons.groupBy { it::class.java }.mapNotNull { (clazz, reasons) ->
+        if (reasons.isEmpty()) return@mapNotNull null
         when (clazz) {
             RestartForPluginInstall::class.java -> RestartForPluginInstall(reasons.flatMap { (it as RestartForPluginInstall).plugins })
             RestartForPluginEnable::class.java -> RestartForPluginEnable(reasons.flatMap { (it as RestartForPluginEnable).plugins })
