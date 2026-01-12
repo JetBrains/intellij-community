@@ -1,6 +1,6 @@
 #  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import numpy as np
-from _pydevd_bundle.tables.images.pydevd_image_loader import (save_image_to_storage, GRAYSCALE_MODE, RGB_MODE, RGBA_MODE)
+from _pydevd_bundle.custom.tables.images.pydevd_image_loader import (save_image_to_storage, GRAYSCALE_MODE, RGB_MODE, RGBA_MODE)
 
 MAX_PIXELS = 144_000_000
 MAX_DIMENSION = 15_000

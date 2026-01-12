@@ -17416,6 +17416,85 @@ class GetTableArguments(BaseSchema):
                 "INSPECTIONS"
             ]
         },
+        "parametersJson": {
+            "type": "GetTableOptionalParameters"
+        }
+    }
+    __refs__ = set(['parametersJson'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, threadId, frameId, commandType, command=None, parametersJson=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param ['string', 'integer'] threadId: Thread identifier where the frame/expression should be evaluated.
+        :param ['string', 'integer'] frameId: Frame identifier within the given thread.
+        :param string commandType: 
+        :param string command: Python expression that evaluates to the table-like object (e.g., variable name or expression).
+        :param GetTableOptionalParameters parametersJson: 
+        """
+        self.threadId = threadId
+        self.frameId = frameId
+        self.commandType = commandType
+        self.command = command
+        if parametersJson is None:
+            self.parametersJson = GetTableOptionalParameters()
+        else:
+            self.parametersJson = GetTableOptionalParameters(update_ids_from_dap=update_ids_from_dap, **parametersJson) if parametersJson.__class__ !=  GetTableOptionalParameters else parametersJson
+        if update_ids_from_dap:
+            self.threadId = self._translate_id_from_dap(self.threadId)
+            self.frameId = self._translate_id_from_dap(self.frameId)
+        self.kwargs = kwargs
+    
+    
+    @classmethod
+    def update_dict_ids_from_dap(cls, dct):
+        if 'threadId' in dct:
+            dct['threadId'] = cls._translate_id_from_dap(dct['threadId'])
+        if 'frameId' in dct:
+            dct['frameId'] = cls._translate_id_from_dap(dct['frameId'])
+        return dct
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        threadId = self.threadId
+        frameId = self.frameId
+        commandType = self.commandType
+        command = self.command
+        parametersJson = self.parametersJson
+        if update_ids_to_dap:
+            if threadId is not None:
+                threadId = self._translate_id_to_dap(threadId)
+            if frameId is not None:
+                frameId = self._translate_id_to_dap(frameId)
+        dct = {
+            'threadId': threadId,
+            'frameId': frameId,
+            'commandType': commandType,
+        }
+        if command is not None:
+            dct['command'] = command
+        if parametersJson is not None:
+            dct['parametersJson'] = parametersJson.to_dict(update_ids_to_dap=update_ids_to_dap)
+        dct.update(self.kwargs)
+        return dct    
+    
+    @classmethod
+    def update_dict_ids_to_dap(cls, dct):
+        if 'threadId' in dct:
+            dct['threadId'] = cls._translate_id_to_dap(dct['threadId'])
+        if 'frameId' in dct:
+            dct['frameId'] = cls._translate_id_to_dap(dct['frameId'])
+        return dct
+
+
+@register
+class GetTableOptionalParameters(BaseSchema):
+    """
+    Optional parameters for 'getTable' / 'getTableImage' operations.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
         "start": {
             "type": [
                 "integer",
@@ -17436,78 +17515,61 @@ class GetTableArguments(BaseSchema):
                 "null"
             ],
             "description": "Optional backend-specific format hint (e.g., 'json', 'csv', dtype/precision hints)."
+        },
+        "offset": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "description": "Optional offset for image operations."
+        },
+        "imageId": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "description": "Optional image id for image operations."
         }
     }
     __refs__ = set()
 
     __slots__ = list(__props__.keys()) + ['kwargs']
 
-    def __init__(self, threadId, frameId, commandType, command=None, start=None, end=None, format=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+    def __init__(self, start=None, end=None, format=None, offset=None, imageId=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
-        :param ['string', 'integer'] threadId: Thread identifier where the frame/expression should be evaluated.
-        :param ['string', 'integer'] frameId: Frame identifier within the given thread.
-        :param string commandType: 
-        :param string command: Python expression that evaluates to the table-like object (e.g., variable name or expression).
         :param ['integer', 'null'] start: Optional start row index (inclusive) for slice operations.
         :param ['integer', 'null'] end: Optional end row index (exclusive) for slice operations.
         :param ['string', 'null'] format: Optional backend-specific format hint (e.g., 'json', 'csv', dtype/precision hints).
+        :param ['integer', 'null'] offset: Optional offset for image operations.
+        :param ['string', 'null'] imageId: Optional image id for image operations.
         """
-        self.threadId = threadId
-        self.frameId = frameId
-        self.commandType = commandType
-        self.command = command
         self.start = start
         self.end = end
         self.format = format
-        if update_ids_from_dap:
-            self.threadId = self._translate_id_from_dap(self.threadId)
-            self.frameId = self._translate_id_from_dap(self.frameId)
+        self.offset = offset
+        self.imageId = imageId
         self.kwargs = kwargs
-    
-    
-    @classmethod
-    def update_dict_ids_from_dap(cls, dct):
-        if 'threadId' in dct:
-            dct['threadId'] = cls._translate_id_from_dap(dct['threadId'])
-        if 'frameId' in dct:
-            dct['frameId'] = cls._translate_id_from_dap(dct['frameId'])
-        return dct
+
 
     def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
-        threadId = self.threadId
-        frameId = self.frameId
-        commandType = self.commandType
-        command = self.command
         start = self.start
         end = self.end
         format = self.format  # noqa (assign to builtin)
-        if update_ids_to_dap:
-            if threadId is not None:
-                threadId = self._translate_id_to_dap(threadId)
-            if frameId is not None:
-                frameId = self._translate_id_to_dap(frameId)
+        offset = self.offset
+        imageId = self.imageId
         dct = {
-            'threadId': threadId,
-            'frameId': frameId,
-            'commandType': commandType,
         }
-        if command is not None:
-            dct['command'] = command
         if start is not None:
             dct['start'] = start
         if end is not None:
             dct['end'] = end
         if format is not None:
             dct['format'] = format
+        if offset is not None:
+            dct['offset'] = offset
+        if imageId is not None:
+            dct['imageId'] = imageId
         dct.update(self.kwargs)
-        return dct    
-    
-    @classmethod
-    def update_dict_ids_to_dap(cls, dct):
-        if 'threadId' in dct:
-            dct['threadId'] = cls._translate_id_to_dap(dct['threadId'])
-        if 'frameId' in dct:
-            dct['frameId'] = cls._translate_id_to_dap(dct['frameId'])
         return dct
 
 
@@ -17593,6 +17655,181 @@ class GetTableResponse(BaseSchema):
             self.body = GetTableResponseBody()
         else:
             self.body = GetTableResponseBody(update_ids_from_dap=update_ids_from_dap, **body) if body.__class__ !=  GetTableResponseBody else body
+        self.seq = seq
+        self.message = message
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        request_seq = self.request_seq
+        success = self.success
+        command = self.command
+        body = self.body
+        seq = self.seq
+        message = self.message
+        dct = {
+            'type': type,
+            'request_seq': request_seq,
+            'success': success,
+            'command': command,
+            'body': body.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'seq': seq,
+        }
+        if message is not None:
+            dct['message'] = message
+        dct.update(self.kwargs)
+        return dct
+
+
+@register_request('getTableImage')
+@register
+class GetTableImageRequest(BaseSchema):
+    """
+    Retrieve tabular data as an image
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "request"
+            ]
+        },
+        "command": {
+            "type": "string",
+            "enum": [
+                "getTableImage"
+            ]
+        },
+        "arguments": {
+            "type": "GetTableArguments"
+        }
+    }
+    __refs__ = set(['arguments'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, arguments, seq=-1, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param string command: 
+        :param GetTableArguments arguments: 
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        """
+        self.type = 'request'
+        self.command = 'getTableImage'
+        if arguments is None:
+            self.arguments = GetTableArguments()
+        else:
+            self.arguments = GetTableArguments(update_ids_from_dap=update_ids_from_dap, **arguments) if arguments.__class__ !=  GetTableArguments else arguments
+        self.seq = seq
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        command = self.command
+        arguments = self.arguments
+        seq = self.seq
+        dct = {
+            'type': type,
+            'command': command,
+            'arguments': arguments.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'seq': seq,
+        }
+        dct.update(self.kwargs)
+        return dct
+
+
+@register_response('getTableImage')
+@register
+class GetTableImageResponse(BaseSchema):
+    """
+    Response to 'getTableImage' request.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "response"
+            ]
+        },
+        "request_seq": {
+            "type": "integer",
+            "description": "Sequence number of the corresponding request."
+        },
+        "success": {
+            "type": "boolean",
+            "description": "Outcome of the request.\nIf True, the request was successful and the `body` attribute may contain the result of the request.\nIf the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`)."
+        },
+        "command": {
+            "type": "string",
+            "enum": [
+                "getTableImage"
+            ]
+        },
+        "message": {
+            "type": "string",
+            "description": "Contains the raw error in short form if `success` is false.\nThis raw error might be interpreted by the client and is not shown in the UI.\nSome predefined values exist.",
+            "_enum": [
+                "cancelled",
+                "notStopped"
+            ],
+            "enumDescriptions": [
+                "the request was cancelled.",
+                "the request may be retried once the adapter is in a 'stopped' state."
+            ]
+        },
+        "body": {
+            "type": "object",
+            "properties": {
+                "result": {
+                    "type": "string",
+                    "description": "Opaque string payload with the result of the getTableImage operation."
+                }
+            }
+        }
+    }
+    __refs__ = set(['body'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, request_seq, success, body, seq=-1, message=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param integer request_seq: Sequence number of the corresponding request.
+        :param boolean success: Outcome of the request.
+        If true, the request was successful and the `body` attribute may contain the result of the request.
+        If the value is false, the attribute `message` contains the error in short form and the `body` may contain additional information (see `ErrorResponse.body.error`).
+        :param string command: 
+        :param GetTableImageResponseBody body: 
+        :param integer seq: Sequence number of the message (also known as message ID). The `seq` for the first message sent by a client or debug adapter is 1, and for each subsequent message is 1 greater than the previous message sent by that actor. `seq` can be used to order requests, responses, and events, and to associate requests with their corresponding responses. For protocol messages of type `request` the sequence number can be used to cancel the request.
+        :param string message: Contains the raw error in short form if `success` is false.
+        This raw error might be interpreted by the client and is not shown in the UI.
+        Some predefined values exist.
+        """
+        self.type = 'response'
+        self.request_seq = request_seq
+        self.success = success
+        self.command = 'getTableImage'
+        if body is None:
+            self.body = GetTableImageResponseBody()
+        else:
+            self.body = GetTableImageResponseBody(update_ids_from_dap=update_ids_from_dap, **body) if body.__class__ !=  GetTableImageResponseBody else body
         self.seq = seq
         self.message = message
         self.kwargs = kwargs
@@ -20648,6 +20885,42 @@ class GetTableResponseBody(BaseSchema):
     def __init__(self, result=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string result: Opaque string payload with the result of the getTable operation.
+        """
+        self.result = result
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        result = self.result
+        dct = {
+        }
+        if result is not None:
+            dct['result'] = result
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class GetTableImageResponseBody(BaseSchema):
+    """
+    "body" of GetTableImageResponse
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "result": {
+            "type": "string",
+            "description": "Opaque string payload with the result of the getTableImage operation."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, result=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string result: Opaque string payload with the result of the getTableImage operation.
         """
         self.result = result
         self.kwargs = kwargs

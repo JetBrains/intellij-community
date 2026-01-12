@@ -39,7 +39,7 @@ internal class PyDebuggerEvaluator(private val myProject: Project, private val m
         // todo: think on getting results from EXEC
         val value = myDebugProcess.evaluate(expression, !isExpression, doTrunc)
         if (value.isErrorOnEval) {
-          callback.errorOccurred("{" + value.getType() + "}" + value.value) //NON-NLS
+          callback.errorOccurred("{" + value.type + "}" + value.value) //NON-NLS
         }
         else {
           callback.evaluated(value)

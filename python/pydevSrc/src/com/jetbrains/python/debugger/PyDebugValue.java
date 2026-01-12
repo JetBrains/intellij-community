@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 
 import static com.jetbrains.python.debugger.PyDebugValueGroupsKt.*;
 
-public class PyDebugValue extends XNamedValue {
+public class PyDebugValue extends XNamedValue implements PyXDebugValue {
   protected static final Logger LOG = Logger.getInstance(PyDebugValue.class);
   private static final String ARRAY = "Array";
   private static final String DATA_FRAME = "DataFrame";
@@ -107,12 +107,13 @@ public class PyDebugValue extends XNamedValue {
                       @Nullable String typeQualifier,
                       final @Nullable String value,
                       @Nullable String shape,
+                      @Nullable String arrayElementType,
                       boolean isReturnedVal,
                       boolean isIPythonHidden,
                       boolean errorOnEval,
                       @Nullable String typeRendererId,
                       final @NotNull PyFrameAccessor frameAccessor) {
-    this(name, type, typeQualifier, value, EVALUATOR_POSTFIXES.containsKey(type), shape, isReturnedVal, isIPythonHidden, errorOnEval, typeRendererId, null,
+    this(name, type, typeQualifier, value, EVALUATOR_POSTFIXES.containsKey(type), shape, arrayElementType, isReturnedVal, isIPythonHidden, errorOnEval, typeRendererId, null,
          frameAccessor);
   }
 
@@ -218,6 +219,7 @@ public class PyDebugValue extends XNamedValue {
     myTempName = tempName;
   }
 
+  @Override
   public @Nullable String getType() {
     return myType;
   }
@@ -551,10 +553,14 @@ public class PyDebugValue extends XNamedValue {
     node.setFullValueEvaluator(new PyNumericContainerValueEvaluator(linkText, myFrameAccessor, treeName));
   }
 
-  private static void addViewAsImageLink(XValueNodeEx valueNode) {
+  protected static void addViewAsImageLink(XValueNodeEx valueNode) {
     PyDebugValue debugValue = (PyDebugValue)valueNode.getXValue();
     if (!checkAndShowViewAsImageOnScreen(debugValue))
       return;
+    addViewAsImageHyperlink(valueNode);
+  }
+
+  protected static void addViewAsImageHyperlink(XValueNodeEx valueNode) {
     String viewAsImageText = PydevBundle.message("pydev.view.as.image");
     valueNode.addAdditionalHyperlink(new XDebuggerTreeNodeHyperlink(viewAsImageText) {
       @Override
@@ -577,7 +583,7 @@ public class PyDebugValue extends XNamedValue {
     });
   }
 
-  private static boolean checkAndShowViewAsImageOnScreen(PyDebugValue debugValue) {
+  protected static boolean checkAndShowViewAsImageOnScreen(PyDebugValue debugValue) {
       return Registry.is("actions.show.as.image.visibility", false)
              && !PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)
              && checkAndEnableViewAsImageVisibility(debugValue);
@@ -697,10 +703,12 @@ public class PyDebugValue extends XNamedValue {
     }
   }
 
+  @Override
   public @NotNull PyFrameAccessor getFrameAccessor() {
     return myFrameAccessor;
   }
 
+  @Override
   public void setFrameAccessor(@NotNull PyFrameAccessor frameAccessor) {
     myFrameAccessor = frameAccessor;
   }

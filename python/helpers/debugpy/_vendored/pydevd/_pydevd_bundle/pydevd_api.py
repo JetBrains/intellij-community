@@ -25,7 +25,7 @@ from _pydevd_bundle.pydevd_comm import (
     internal_get_exception_details_json,
     internal_step_in_thread,
     internal_smart_step_into,
-    InternalTableCommand
+    InternalTableCommand, InternalTableImageStartCommand, InternalTableImageChunkCommand
 )
 from _pydevd_bundle.pydevd_comm_constants import (
     CMD_THREAD_SUSPEND,
@@ -344,6 +344,14 @@ class PyDevdAPI(object):
 
     def request_get_table(self, py_db, seq, thread_id, frame_id, init_command, command_type, start_index, end_index, format):
         int_cmd = InternalTableCommand(seq, thread_id, frame_id, init_command, command_type, start_index, end_index, format)
+        py_db.post_internal_command(int_cmd, thread_id)
+
+    def request_get_image_start(self, py_db, seq, thread_id, frame_id, init_command, command_type):
+        int_cmd = InternalTableImageStartCommand(seq, thread_id, frame_id, init_command, command_type)
+        py_db.post_internal_command(int_cmd, thread_id)
+
+    def request_get_image_load_chunk(self, py_db, seq, thread_id, frame_id, init_command, command_type, offset, image_id):
+        int_cmd = InternalTableImageChunkCommand(seq, thread_id, frame_id, init_command, command_type, offset, image_id)
         py_db.post_internal_command(int_cmd, thread_id)
 
     def request_load_full_value(self, py_db, seq, thread_id, frame_id, vars):
