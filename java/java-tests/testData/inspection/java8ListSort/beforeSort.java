@@ -1,4 +1,4 @@
-// "Replace with List.sort" "true"
+// "Replace with 'List.sort()'" "true"
 import java.util.Collections;
 import java.util.List;
 

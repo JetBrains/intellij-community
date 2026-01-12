@@ -1,4 +1,4 @@
-// "Replace with 'merge' method call" "true"
+// "Replace with 'merge()' call" "true"
 import java.util.Map;
 
 public class Main {
