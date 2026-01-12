@@ -53,5 +53,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.preferences" />
     <orderEntry type="module" module-name="intellij.kotlin.base.statistics" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.resources" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

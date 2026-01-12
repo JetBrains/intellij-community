@@ -56,6 +56,8 @@ jvm_library(
     "//plugins/kotlin/preferences",
     "//plugins/kotlin/base/statistics",
     "//platform/lang-api:lang",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/core-ui",
   ]
 )
 ### auto-generated section `build kotlin.j2k.shared` end

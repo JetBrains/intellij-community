@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.codeInsight.navigation.activateFileWithPsiElement
@@ -45,7 +44,6 @@ import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
 import org.jetbrains.kotlin.j2k.*
-import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.defaultSettings
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
@@ -65,7 +63,7 @@ class JavaToKotlinAction : AnAction() {
             enableExternalCodeProcessing: Boolean = true,
             askExternalCodeProcessing: Boolean = true,
             forceUsingOldJ2k: Boolean = false,
-            settings: ConverterSettings = defaultSettings
+            settings: ConverterSettings = ConverterSettings.Companion.defaultSettings
         ): List<KtFile> {
             val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return emptyList() }
             var converterResult: FilesResult? = null
@@ -90,7 +88,7 @@ class JavaToKotlinAction : AnAction() {
                 }
 
                 // TODO: Support K2 J2K in FUS
-                J2KFusCollector.log(ConversionType.FILES, j2kKind == K1_NEW, conversionTime, linesCount, javaFiles.size)
+                J2KFusCollector.log(ConversionType.FILES, j2kKind == J2kConverterExtension.Kind.K1_NEW, conversionTime, linesCount, javaFiles.size)
             }
 
             // Perform user interaction first to avoid interrupting J2K in the middle of conversion and breaking "undo"
@@ -235,7 +233,7 @@ class JavaToKotlinAction : AnAction() {
                 enableExternalCodeProcessing,
                 askExternalCodeProcessing,
                 forceUsingOldJ2k,
-                defaultSettings
+                ConverterSettings.Companion.defaultSettings
             )
         }
     }
