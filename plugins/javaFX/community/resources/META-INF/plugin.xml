@@ -27,5 +27,6 @@
 
   <dependencies>
     <plugin id="com.intellij.java"/>
+    <module name="intellij.java.backend"/>
   </dependencies>
 </idea-plugin>

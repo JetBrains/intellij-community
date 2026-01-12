@@ -5,7 +5,7 @@
     <module name="intellij.platform.jewel.samples.showcase"/>
     <module name="intellij.platform.compose.markdown"/>
     <module name="intellij.platform.jewel.markdown.extensions.images"/>
-    <plugin id="com.intellij.java"/>
+    <module name="intellij.java.backend"/>
     <plugin id="com.intellij.gradle"/>
     <plugin id="org.jetbrains.kotlin"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->

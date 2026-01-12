@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JetBrainsProductProperties
@@ -30,6 +31,9 @@ abstract class PyCharmPropertiesBase(enlargeWelcomeScreen: Boolean) : JetBrainsP
       "intellij.platform.testFramework.teamCity",
       "intellij.platform.testFramework",
     ))
+
+    productLayout.compatiblePluginsToIgnore = productLayout.compatiblePluginsToIgnore.addAll(
+      persistentListOf("intellij.java.plugin"))
   }
 
   override suspend fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {
