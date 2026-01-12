@@ -53,7 +53,7 @@ object KaModuleStructureTxtRenderer {
                 appendLine("sourceModuleKind: ${module.sourceModuleKind}")
                 appendLine("stableModuleName: ${module.stableModuleName}")
             }
-            is KaLibraryFallbackDependenciesModuleImpl -> {}
+            is KaLibraryFallbackDependenciesModule -> {}
 
             else -> error("Unknown module type: ${module::class.java}")
         }
@@ -67,7 +67,7 @@ object KaModuleStructureTxtRenderer {
                 if (dependencies.isEmpty()) {
                     appendLine("<empty>")
                 } else {
-                    dependencies.map { "${it.getKaModuleClass()}(${it.getOneLineModuleDescriptionForRendering()})" }
+                    dependencies.map { "${it.getKaModuleClass()}(${getOneLineModuleDescriptionForRendering(it)})" }
                         .sorted() // todo the order is unstable for moduleinfo-based impl, should be fixed as a part of KTIJ-31422
                         .forEach { appendLine(it) }
                 }

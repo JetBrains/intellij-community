@@ -1,13 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k2.modules.impl
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
+import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
@@ -19,234 +20,276 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntit
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScriptLibraryEntityData): KotlinScriptLibraryEntity, WorkspaceEntityBase(dataSource) {
+internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScriptLibraryEntityData) : KotlinScriptLibraryEntity,
+    WorkspaceEntityBase(dataSource) {
 
-private companion object {
+    private companion object {
 
-private val connections = listOf<ConnectionId>()
+        private val connections = listOf<ConnectionId>()
 
-}
-override val symbolicId: KotlinScriptLibraryEntityId = super.symbolicId
+    }
 
-override val classes: List<VirtualFileUrl>
-get() {
-readField("classes")
-return dataSource.classes
-}
-override val sources: List<VirtualFileUrl>
-get() {
-readField("sources")
-return dataSource.sources
-}
+    override val symbolicId: KotlinScriptLibraryEntityId = super.symbolicId
 
-override val entitySource: EntitySource
-get() {
-readField("entitySource")
-return dataSource.entitySource
-}
+    override val classes: List<VirtualFileUrl>
+        get() {
+            readField("classes")
+            return dataSource.classes
+        }
+    override val usedInScripts: Set<VirtualFileUrl>
+        get() {
+            readField("usedInScripts")
+            return dataSource.usedInScripts
+        }
+    override var sources: Set<VirtualFileUrl> = dataSource.sources
 
-override fun connectionIdList(): List<ConnectionId> {
-return connections
-}
+    override val entitySource: EntitySource
+        get() {
+            readField("entitySource")
+            return dataSource.entitySource
+        }
+
+    override fun connectionIdList(): List<ConnectionId> {
+        return connections
+    }
 
 
-internal class Builder(result: KotlinScriptLibraryEntityData?): ModifiableWorkspaceEntityBase<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityData>(result), KotlinScriptLibraryEntityBuilder {
-internal constructor(): this(KotlinScriptLibraryEntityData())
+    internal class Builder(result: KotlinScriptLibraryEntityData?) :
+        ModifiableWorkspaceEntityBase<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityData>(result), KotlinScriptLibraryEntityBuilder {
+        internal constructor() : this(KotlinScriptLibraryEntityData())
 
-override fun applyToBuilder(builder: MutableEntityStorage){
-if (this.diff != null){
-if (existsInBuilder(builder)){
-this.diff = builder
-return
-}
-else{
-error("Entity KotlinScriptLibraryEntity is already created in a different builder")
-}
-}
-this.diff = builder
-addToBuilder()
-this.id = getEntityData().createEntityId()
+        override fun applyToBuilder(builder: MutableEntityStorage) {
+            if (this.diff != null) {
+                if (existsInBuilder(builder)) {
+                    this.diff = builder
+                    return
+                } else {
+                    error("Entity KotlinScriptLibraryEntity is already created in a different builder")
+                }
+            }
+            this.diff = builder
+            addToBuilder()
+            this.id = getEntityData().createEntityId()
 // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
 // Builder may switch to snapshot at any moment and lock entity data to modification
-this.currentEntityData = null
-index(this, "classes", this.classes)
-index(this, "sources", this.sources)
+            this.currentEntityData = null
+            index(this, "classes", this.classes)
+            index(this, "usedInScripts", this.usedInScripts)
+            index(this, "sources", this.sources)
 // Process linked entities that are connected without a builder
-processLinkedEntities(builder)
-checkInitialization() // TODO uncomment and check failed tests
-}
+            processLinkedEntities(builder)
+            checkInitialization() // TODO uncomment and check failed tests
+        }
 
-private fun checkInitialization(){
-val _diff = diff
-if (!getEntityData().isEntitySourceInitialized()){
-error("Field WorkspaceEntity#entitySource should be initialized")
-}
-if (!getEntityData().isClassesInitialized()){
-error("Field KotlinScriptLibraryEntity#classes should be initialized")
-}
-if (!getEntityData().isSourcesInitialized()){
-error("Field KotlinScriptLibraryEntity#sources should be initialized")
-}
-}
-override fun connectionIdList(): List<ConnectionId>{
-return connections
-}
-override fun afterModification(){
-val collection_classes = getEntityData().classes
-if (collection_classes is MutableWorkspaceList<*>){
-collection_classes.cleanModificationUpdateAction()
-}
-val collection_sources = getEntityData().sources
-if (collection_sources is MutableWorkspaceList<*>){
-collection_sources.cleanModificationUpdateAction()
-}
-}
-// Relabeling code, move information from dataSource to this builder
-override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?){
-dataSource as KotlinScriptLibraryEntity
-if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-if (this.classes != dataSource.classes) this.classes = dataSource.classes.toMutableList()
-if (this.sources != dataSource.sources) this.sources = dataSource.sources.toMutableList()
-updateChildToParentReferences(parents)
-}
+        private fun checkInitialization() {
+            val _diff = diff
+            if (!getEntityData().isEntitySourceInitialized()) {
+                error("Field WorkspaceEntity#entitySource should be initialized")
+            }
+            if (!getEntityData().isClassesInitialized()) {
+                error("Field KotlinScriptLibraryEntity#classes should be initialized")
+            }
+            if (!getEntityData().isUsedInScriptsInitialized()) {
+                error("Field KotlinScriptLibraryEntity#usedInScripts should be initialized")
+            }
+        }
 
-        
-override var entitySource: EntitySource
-get() = getEntityData().entitySource
-set(value) {
-checkModificationAllowed()
-getEntityData(true).entitySource = value
-changedProperty.add("entitySource")
+        override fun connectionIdList(): List<ConnectionId> {
+            return connections
+        }
 
-}
+        override fun afterModification() {
+            val collection_classes = getEntityData().classes
+            if (collection_classes is MutableWorkspaceList<*>) {
+                collection_classes.cleanModificationUpdateAction()
+            }
+            val collection_usedInScripts = getEntityData().usedInScripts
+            if (collection_usedInScripts is MutableWorkspaceSet<*>) {
+                collection_usedInScripts.cleanModificationUpdateAction()
+            }
+            val collection_sources = getEntityData().sources
+            if (collection_sources is MutableWorkspaceSet<*>) {
+                collection_sources.cleanModificationUpdateAction()
+            }
+        }
+
+        // Relabeling code, move information from dataSource to this builder
+        override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+            dataSource as KotlinScriptLibraryEntity
+            if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+            if (this.classes != dataSource.classes) this.classes = dataSource.classes.toMutableList()
+            if (this.usedInScripts != dataSource.usedInScripts) this.usedInScripts = dataSource.usedInScripts.toMutableSet()
+            if (this.sources != dataSource.sources) this.sources = dataSource.sources.toMutableSet()
+            updateChildToParentReferences(parents)
+        }
+
+
+        override var entitySource: EntitySource
+            get() = getEntityData().entitySource
+            set(value) {
+                checkModificationAllowed()
+                getEntityData(true).entitySource = value
+                changedProperty.add("entitySource")
+
+            }
         private val classesUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
-        val _diff = diff
-if (_diff != null) index(this, "classes", value)
-        changedProperty.add("classes")
+            val _diff = diff
+            if (_diff != null) index(this, "classes", value)
+            changedProperty.add("classes")
         }
         override var classes: MutableList<VirtualFileUrl>
-        get() {
-        val collection_classes = getEntityData().classes
-        if (collection_classes !is MutableWorkspaceList) return collection_classes
-        if (diff == null || modifiable.get()) {
-        collection_classes.setModificationUpdateAction(classesUpdater)
-        } else {
-        collection_classes.cleanModificationUpdateAction()
+            get() {
+                val collection_classes = getEntityData().classes
+                if (collection_classes !is MutableWorkspaceList) return collection_classes
+                if (diff == null || modifiable.get()) {
+                    collection_classes.setModificationUpdateAction(classesUpdater)
+                } else {
+                    collection_classes.cleanModificationUpdateAction()
+                }
+                return collection_classes
+            }
+            set(value) {
+                checkModificationAllowed()
+                getEntityData(true).classes = value
+                classesUpdater.invoke(value)
+            }
+        private val usedInScriptsUpdater: (value: Set<VirtualFileUrl>) -> Unit = { value ->
+            val _diff = diff
+            if (_diff != null) index(this, "usedInScripts", value)
+            changedProperty.add("usedInScripts")
         }
-        return collection_classes
+        override var usedInScripts: MutableSet<VirtualFileUrl>
+            get() {
+                val collection_usedInScripts = getEntityData().usedInScripts
+                if (collection_usedInScripts !is MutableWorkspaceSet) return collection_usedInScripts
+                if (diff == null || modifiable.get()) {
+                    collection_usedInScripts.setModificationUpdateAction(usedInScriptsUpdater)
+                } else {
+                    collection_usedInScripts.cleanModificationUpdateAction()
+                }
+                return collection_usedInScripts
+            }
+            set(value) {
+                checkModificationAllowed()
+                getEntityData(true).usedInScripts = value
+                usedInScriptsUpdater.invoke(value)
+            }
+        private val sourcesUpdater: (value: Set<VirtualFileUrl>) -> Unit = { value ->
+            val _diff = diff
+            if (_diff != null) index(this, "sources", value)
+            changedProperty.add("sources")
         }
-        set(value) {
-        checkModificationAllowed()
-        getEntityData(true).classes = value
-        classesUpdater.invoke(value)
-        }
-        private val sourcesUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
-        val _diff = diff
-if (_diff != null) index(this, "sources", value)
-        changedProperty.add("sources")
-        }
-        override var sources: MutableList<VirtualFileUrl>
-        get() {
-        val collection_sources = getEntityData().sources
-        if (collection_sources !is MutableWorkspaceList) return collection_sources
-        if (diff == null || modifiable.get()) {
-        collection_sources.setModificationUpdateAction(sourcesUpdater)
-        } else {
-        collection_sources.cleanModificationUpdateAction()
-        }
-        return collection_sources
-        }
-        set(value) {
-        checkModificationAllowed()
-        getEntityData(true).sources = value
-        sourcesUpdater.invoke(value)
-        }
+        override var sources: MutableSet<VirtualFileUrl>
+            get() {
+                val collection_sources = getEntityData().sources
+                if (collection_sources !is MutableWorkspaceSet) return collection_sources
+                if (diff == null || modifiable.get()) {
+                    collection_sources.setModificationUpdateAction(sourcesUpdater)
+                } else {
+                    collection_sources.cleanModificationUpdateAction()
+                }
+                return collection_sources
+            }
+            set(value) {
+                checkModificationAllowed()
+                getEntityData(true).sources = value
+                sourcesUpdater.invoke(value)
+            }
 
-override fun getEntityClass(): Class<KotlinScriptLibraryEntity> = KotlinScriptLibraryEntity::class.java
-}
+        override fun getEntityClass(): Class<KotlinScriptLibraryEntity> = KotlinScriptLibraryEntity::class.java
+    }
 
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptLibraryEntity>(){
-lateinit var classes: MutableList<VirtualFileUrl>
-lateinit var sources: MutableList<VirtualFileUrl>
+internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptLibraryEntity>() {
+    lateinit var classes: MutableList<VirtualFileUrl>
+    lateinit var usedInScripts: MutableSet<VirtualFileUrl>
+    var sources: MutableSet<VirtualFileUrl> = setOf<VirtualFileUrl>().toMutableWorkspaceSet()
 
-internal fun isClassesInitialized(): Boolean = ::classes.isInitialized
-internal fun isSourcesInitialized(): Boolean = ::sources.isInitialized
+    internal fun isClassesInitialized(): Boolean = ::classes.isInitialized
+    internal fun isUsedInScriptsInitialized(): Boolean = ::usedInScripts.isInitialized
 
-override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<KotlinScriptLibraryEntity>{
-val modifiable = KotlinScriptLibraryEntityImpl.Builder(null)
-modifiable.diff = diff
-modifiable.id = createEntityId()
-return modifiable
-}
+    override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<KotlinScriptLibraryEntity> {
+        val modifiable = KotlinScriptLibraryEntityImpl.Builder(null)
+        modifiable.diff = diff
+        modifiable.id = createEntityId()
+        return modifiable
+    }
 
-@OptIn(EntityStorageInstrumentationApi::class)
-override fun createEntity(snapshot: EntityStorageInstrumentation): KotlinScriptLibraryEntity{
-val entityId = createEntityId()
-return snapshot.initializeEntity(entityId){
-val entity = KotlinScriptLibraryEntityImpl(this)
-entity.snapshot = snapshot
-entity.id = entityId
-entity
-}
-}
+    @OptIn(EntityStorageInstrumentationApi::class)
+    override fun createEntity(snapshot: EntityStorageInstrumentation): KotlinScriptLibraryEntity {
+        val entityId = createEntityId()
+        return snapshot.initializeEntity(entityId) {
+            val entity = KotlinScriptLibraryEntityImpl(this)
+            entity.snapshot = snapshot
+            entity.id = entityId
+            entity
+        }
+    }
 
-override fun getMetadata(): EntityMetadata{
-return MetadataStorageImpl.getMetadataByTypeFqn("org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity") as EntityMetadata
-}
+    override fun getMetadata(): EntityMetadata {
+        return MetadataStorageImpl.getMetadataByTypeFqn("org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity") as EntityMetadata
+    }
 
-override fun clone(): KotlinScriptLibraryEntityData{
-val clonedEntity = super.clone()
-clonedEntity as KotlinScriptLibraryEntityData
-clonedEntity.classes = clonedEntity.classes.toMutableWorkspaceList()
-clonedEntity.sources = clonedEntity.sources.toMutableWorkspaceList()
-return clonedEntity
-}
+    override fun clone(): KotlinScriptLibraryEntityData {
+        val clonedEntity = super.clone()
+        clonedEntity as KotlinScriptLibraryEntityData
+        clonedEntity.classes = clonedEntity.classes.toMutableWorkspaceList()
+        clonedEntity.usedInScripts = clonedEntity.usedInScripts.toMutableWorkspaceSet()
+        clonedEntity.sources = clonedEntity.sources.toMutableWorkspaceSet()
+        return clonedEntity
+    }
 
-override fun getEntityInterface(): Class<out WorkspaceEntity>{
-return KotlinScriptLibraryEntity::class.java
-}
+    override fun getEntityInterface(): Class<out WorkspaceEntity> {
+        return KotlinScriptLibraryEntity::class.java
+    }
 
-override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*>{
-return KotlinScriptLibraryEntity(classes, sources, entitySource)
-}
+    override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
+        return KotlinScriptLibraryEntity(classes, usedInScripts, entitySource) {
+            this.sources = this@KotlinScriptLibraryEntityData.sources.toMutableWorkspaceSet()
+        }
+    }
 
-override fun getRequiredParents(): List<Class<out WorkspaceEntity>>{
-val res = mutableListOf<Class<out WorkspaceEntity>>()
-return res
-}
+    override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+        val res = mutableListOf<Class<out WorkspaceEntity>>()
+        return res
+    }
 
-override fun equals(other: Any?): Boolean{
-if (other == null) return false
-if (this.javaClass != other.javaClass) return false
-other as KotlinScriptLibraryEntityData
-if (this.entitySource != other.entitySource) return false
-if (this.classes != other.classes) return false
-if (this.sources != other.sources) return false
-return true
-}
+    override fun equals(other: Any?): Boolean {
+        if (other == null) return false
+        if (this.javaClass != other.javaClass) return false
+        other as KotlinScriptLibraryEntityData
+        if (this.entitySource != other.entitySource) return false
+        if (this.classes != other.classes) return false
+        if (this.usedInScripts != other.usedInScripts) return false
+        if (this.sources != other.sources) return false
+        return true
+    }
 
-override fun equalsIgnoringEntitySource(other: Any?): Boolean{
-if (other == null) return false
-if (this.javaClass != other.javaClass) return false
-other as KotlinScriptLibraryEntityData
-if (this.classes != other.classes) return false
-if (this.sources != other.sources) return false
-return true
-}
+    override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+        if (other == null) return false
+        if (this.javaClass != other.javaClass) return false
+        other as KotlinScriptLibraryEntityData
+        if (this.classes != other.classes) return false
+        if (this.usedInScripts != other.usedInScripts) return false
+        if (this.sources != other.sources) return false
+        return true
+    }
 
-override fun hashCode(): Int{
-var result = entitySource.hashCode()
-result = 31 * result + classes.hashCode()
-result = 31 * result + sources.hashCode()
-return result
-}
-override fun hashCodeIgnoringEntitySource(): Int{
-var result = javaClass.hashCode()
-result = 31 * result + classes.hashCode()
-result = 31 * result + sources.hashCode()
-return result
-}
+    override fun hashCode(): Int {
+        var result = entitySource.hashCode()
+        result = 31 * result + classes.hashCode()
+        result = 31 * result + usedInScripts.hashCode()
+        result = 31 * result + sources.hashCode()
+        return result
+    }
+
+    override fun hashCodeIgnoringEntitySource(): Int {
+        var result = javaClass.hashCode()
+        result = 31 * result + classes.hashCode()
+        result = 31 * result + usedInScripts.hashCode()
+        result = 31 * result + sources.hashCode()
+        return result
+    }
 }

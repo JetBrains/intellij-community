@@ -53,17 +53,53 @@ internal abstract class AbstractGradleKotlinProjectStructureTest : AbstractGradl
                 txt to mermaid
             }
 
+            val gradleLocalPath = getGradleLocalRepoPath(project).invariantSeparatorsPathString.removeSuffix("/")
+            val javaHome = getJavaHomePath(project).invariantSeparatorsPathString.removeSuffix("/")
+            val projectPath = getBaseProjectPath(project).invariantSeparatorsPathString.removeSuffix("/")
+            val userHome = Path(System.getProperty("user.home")).invariantSeparatorsPathString.removeSuffix("/")
+
+            /**
+             * jar:///home/neon/.m2/repository/org/jetbrains/annotations/13.0/annotations-13.0.jar!/
+             * =>
+             * jar:///MAVEN_REPOSITORY/org/jetbrains/annotations/13.0/annotations-13.0.jar!/
+             */
+            fun String.replaceLocalPathWithPlaceholder(): String =
+                replace(gradleLocalPath, GRADLE_IML_PLACEHOLDER, ignoreCase = false)
+                    .replace(javaHome, JAVA_HOME_PLACEHOLDER, ignoreCase = false)
+                    .replace(projectPath, PROJECT_IML_PLACEHOLDER, ignoreCase = false)
+                    .replace(userHome, USER_HOME_PLACEHOLDER, ignoreCase = false)
+//                    .replaceTransformHash()
+//                    .replaceAccessorsHash()
+
             val testDataFilePath = dataFile().toPath()
             KotlinTestUtils.assertEqualsToFile(
                 testDataFilePath.resolveSibling(testDataFilePath.nameWithoutExtension + ".txt"),
                 txt
-            ) { replaceLocalPathWithPlaceholder(it, project) }
+            ) { it.replaceLocalPathWithPlaceholder() }
 
             KotlinTestUtils.assertEqualsToFile(
                 testDataFilePath.resolveSibling(testDataFilePath.nameWithoutExtension + ".mmd"),
                 mermaid
-            ) { replaceLocalPathWithPlaceholder(it, project) }
+            ) { it.replaceLocalPathWithPlaceholder() }
         }
+    }
+
+    private fun String.replaceTransformHash(): String {
+        val transformsIndex = indexOf("/transforms/")
+        val transformedIndex = indexOf("/transformed/")
+
+        return if (transformsIndex != -1 && transformedIndex != -1 && transformsIndex < transformedIndex) {
+            removeRange(transformsIndex, transformedIndex)
+        } else this
+    }
+
+    private fun String.replaceAccessorsHash(): String {
+        val transformsIndex = indexOf("/accessors/")
+        val transformedIndex = indexOf("/classes/")
+
+        return if (transformsIndex != -1 && transformedIndex != -1 && transformsIndex < transformedIndex) {
+            removeRange(transformsIndex, transformedIndex)
+        } else this
     }
 
     @OptIn(KaExperimentalApi::class)
@@ -111,23 +147,6 @@ internal abstract class AbstractGradleKotlinProjectStructureTest : AbstractGradl
         forEach(::visit)
 
         return result.toList()
-    }
-
-    /**
-     * jar:///home/neon/.m2/repository/org/jetbrains/annotations/13.0/annotations-13.0.jar!/
-     * =>
-     * jar:///MAVEN_REPOSITORY/org/jetbrains/annotations/13.0/annotations-13.0.jar!/
-     */
-    private fun replaceLocalPathWithPlaceholder(input: String, project: Project): String {
-        val gradleLocalPath = getGradleLocalRepoPath(project).invariantSeparatorsPathString.removeSuffix("/")
-        val javaHome = getJavaHomePath(project).invariantSeparatorsPathString.removeSuffix("/")
-        val projectPath = getBaseProjectPath(project).invariantSeparatorsPathString.removeSuffix("/")
-        val userHome = Path(System.getProperty("user.home")).invariantSeparatorsPathString.removeSuffix("/")
-        return input
-            .replace(gradleLocalPath, GRADLE_IML_PLACEHOLDER, ignoreCase = false)
-            .replace(javaHome, JAVA_HOME_PLACEHOLDER, ignoreCase = false)
-            .replace(projectPath, PROJECT_IML_PLACEHOLDER, ignoreCase = false)
-            .replace(userHome, USER_HOME_PLACEHOLDER, ignoreCase = false)
     }
 
     private fun getGradleLocalRepoPath(project: Project): Path {

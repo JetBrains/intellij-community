@@ -21,11 +21,13 @@ import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolut
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.modifyKotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.isNonScript
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
+import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import java.io.File
@@ -56,6 +58,7 @@ class MainKtsEntityProvider(
         virtualFile: VirtualFile,
         definition: ScriptDefinition
     ) {
+        val scriptUrl = virtualFile.virtualFileUrl
         val mainKtsConfiguration = resolveMainKtsConfiguration(virtualFile, definition)
         val scriptsToResolve = mainKtsConfiguration.importedScripts - visitedScripts.keys()
         if (scriptsToResolve.isNotEmpty()) {
@@ -63,19 +66,31 @@ class MainKtsEntityProvider(
             KotlinScriptResolutionService.getInstance(project).process(scriptsToResolve)
         }
 
-        fun MutableEntityStorage.updatedStorage() {
+        fun updateStorage(storage: MutableEntityStorage) {
             val configuration = mainKtsConfiguration.valueOrNull()?.configuration ?: return
             val definition = findScriptDefinition(project, VirtualFileScriptSource(virtualFile))
 
-            val libraryIds = generateScriptLibraryEntities(configuration, definition, project)
-            libraryIds.filterNot {
-                this.contains(it)
-            }.forEach { (classes, sources) ->
-                this addEntity KotlinScriptLibraryEntity(classes, sources, MainKtsKotlinScriptEntitySource)
+            val libraryIds = generateScriptLibraryEntities(project, configuration, definition).toList()
+            for ((id, sources) in libraryIds) {
+                val existingLibrary = storage.resolve(id)
+                if (existingLibrary == null) {
+                    storage addEntity KotlinScriptLibraryEntity(
+                        classes = id.classes,
+                        usedInScripts = setOf(scriptUrl),
+                        entitySource = MainKtsKotlinScriptEntitySource
+                    ) {
+                        this.sources += sources
+                    }
+                } else {
+                    storage.modifyKotlinScriptLibraryEntity(existingLibrary) {
+                        this.sources += sources
+                        this.usedInScripts += scriptUrl
+                    }
+                }
             }
 
-            this addEntity KotlinScriptEntity(
-                virtualFile.virtualFileUrl, libraryIds.toList(), MainKtsKotlinScriptEntitySource
+            storage addEntity KotlinScriptEntity(
+                scriptUrl, libraryIds.map { it.first }, MainKtsKotlinScriptEntitySource
             ) {
                 this.configuration = configuration.asEntity()
                 this.sdkId = configuration.sdkId
@@ -84,11 +99,13 @@ class MainKtsEntityProvider(
 
         project.updateKotlinScriptEntities(MainKtsKotlinScriptEntitySource) {
             val builder = it.toSnapshot().toBuilder()
-            if (builder.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFile.virtualFileUrl).none()) {
-                builder.updatedStorage()
+            if (builder.getVirtualFileUrlIndex().findEntitiesByUrl(scriptUrl).none()) {
+                updateStorage(builder)
                 it.applyChangesFrom(builder)
             }
         }
+
+        project.service<ScriptReportSink>().attachReports(virtualFile, mainKtsConfiguration.reports)
     }
 
     private suspend fun resolveMainKtsConfiguration(

@@ -127,6 +127,7 @@ object KaModuleStructureMermaidRenderer {
             append(targetPlatform.getTargetPlatformDescriptionForRendering())
         }
         is KaLibraryFallbackDependenciesModuleImpl -> null
+        is KaLibraryFallbackDependenciesModule -> null
 
         else -> error("Unknown module type: ${this::class.java}")
     }

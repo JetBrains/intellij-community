@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.allDirectDependencies
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
@@ -31,7 +30,7 @@ internal fun Project.getAllKaModules(): List<KaModule> = buildSet {
 
 internal val kaModulesComparatorForStableRendering =
     compareBy<KaModule> { it.getKaModuleClass() }
-        .thenBy { it.getOneLineModuleDescriptionForRendering() }
+        .thenBy { getOneLineModuleDescriptionForRendering(it) }
         .thenBy { it.targetPlatform.getTargetPlatformDescriptionForRendering() }
 
 internal fun getAllKaModules(modules: Collection<Module>): List<KaModule> =

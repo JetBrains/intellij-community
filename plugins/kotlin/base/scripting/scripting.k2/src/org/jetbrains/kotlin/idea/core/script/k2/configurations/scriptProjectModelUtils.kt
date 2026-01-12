@@ -3,45 +3,49 @@ package org.jetbrains.kotlin.idea.core.script.k2.configurations
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.io.URLUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import kotlin.collections.orEmpty
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.JvmDependency
-import kotlin.script.experimental.util.PropertiesCollection
 
+/**
+ * Generates a sequence of script library entities based on the provided script compilation configuration,
+ * script definition, and project. The method determines dependencies and resolves them into a sequence of
+ * library entities and associated source files URLs.
+ *
+ * @param configuration the script compilation configuration containing dependency information.
+ * @param definition the script definition providing additional compilation configuration details.
+ * @param project the current project within which the script library entities are generated.
+ * @return a sequence of pairs, where each pair contains a KotlinScriptLibraryEntityId and a list of associated
+ *         source files URLs for the library entity.
+ */
 fun generateScriptLibraryEntities(
+    project: Project,
     configuration: ScriptCompilationConfiguration,
-    definition: ScriptDefinition,
-    project: Project
-): Sequence<KotlinScriptLibraryEntityId> = sequence {
+    definition: ScriptDefinition
+): Sequence<Pair<KotlinScriptLibraryEntityId, List<VirtualFileUrl>>> = sequence {
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
 
-    val classes = configuration.getOrEmpty(ScriptCompilationConfiguration.dependencies)
-        .toVirtualFileUrls(virtualFileUrlManager)
-        .toList()
+    val (classes, sources) = configuration.getDependencyUrls(virtualFileUrlManager)
 
-    if (configuration.isUberDependencyAllowed()) {
-        val sources = configuration.getOrEmpty(ScriptCompilationConfiguration.ide.dependenciesSources)
-            .toVirtualFileUrls(virtualFileUrlManager)
-            .toList()
-
-        yield(KotlinScriptLibraryEntityId(classes, sources))
+    val isUberDependencyAllowed = classes.size + sources.size <= 20
+    if (isUberDependencyAllowed) {
+        yield(KotlinScriptLibraryEntityId(classes) to sources)
     } else {
-        val definitionLibraryId = createDefinitionLibraryId(definition, project)
-        yield(definitionLibraryId)
+        val (definitionClasses, definitionSources) = definition.compilationConfiguration.getDependencyUrls(virtualFileUrlManager)
+        yield(KotlinScriptLibraryEntityId(definitionClasses) to definitionSources)
 
-        val definitionLibraryRoots = definitionLibraryId.classes.toSet()
+        val definitionLibraryRoots = definitionClasses.toSet()
 
         for (url in classes) {
             if (definitionLibraryRoots.contains(url)) continue
 
-            yield(KotlinScriptLibraryEntityId(url))
+            yield(KotlinScriptLibraryEntityId(url) to listOf())
         }
     }
 }
@@ -55,30 +59,10 @@ fun String.toVirtualFileUrl(fileUrlManager: VirtualFileUrlManager): VirtualFileU
     return fileUrlManager.getOrCreateFromUrl(url)
 }
 
-private fun ScriptCompilationConfiguration.isUberDependencyAllowed(): Boolean {
-    return getOrEmpty(ScriptCompilationConfiguration.dependencies).size + getOrEmpty(ScriptCompilationConfiguration.ide.dependenciesSources).size < 20
-}
-
-@ApiStatus.Internal
-private fun createDefinitionLibraryId(definition: ScriptDefinition, project: Project): KotlinScriptLibraryEntityId {
-    val urlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
-
-    val classes = definition.compilationConfiguration[ScriptCompilationConfiguration.dependencies].orEmpty()
-        .toVirtualFileUrls(urlManager)
+private fun Iterable<ScriptDependency>.toVirtualFileUrls(urlManager: VirtualFileUrlManager): List<VirtualFileUrl> =
+    asSequence().filterIsInstance<JvmDependency>().flatMap { it.classpath }.map { it.path }.sorted().map { it.toVirtualFileUrl(urlManager) }
         .toList()
 
-    val sources = definition.compilationConfiguration[ScriptCompilationConfiguration.ide.dependenciesSources].orEmpty()
-        .toVirtualFileUrls(urlManager)
-        .toList()
-
-    return KotlinScriptLibraryEntityId(classes, sources)
-}
-
-private fun Iterable<ScriptDependency>.toVirtualFileUrls(urlManager: VirtualFileUrlManager): Sequence<VirtualFileUrl> = asSequence()
-    .filterIsInstance<JvmDependency>()
-    .flatMap { it.classpath }
-    .map { it.path }
-    .sorted()
-    .map { it.toVirtualFileUrl(urlManager) }
-
-private fun <T> PropertiesCollection.getOrEmpty(key: PropertiesCollection.Key<List<T>>): List<T> = get(key).orEmpty()
+fun ScriptCompilationConfiguration.getDependencyUrls(manager: VirtualFileUrlManager): Pair<List<VirtualFileUrl>, List<VirtualFileUrl>> =
+    get(ScriptCompilationConfiguration.dependencies).orEmpty()
+        .toVirtualFileUrls(manager) to get(ScriptCompilationConfiguration.ide.dependenciesSources).orEmpty().toVirtualFileUrls(manager)

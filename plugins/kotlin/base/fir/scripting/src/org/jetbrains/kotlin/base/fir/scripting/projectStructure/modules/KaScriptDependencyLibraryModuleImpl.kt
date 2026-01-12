@@ -8,6 +8,7 @@ import com.intellij.workspaceModel.ide.toPath
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId
@@ -34,7 +35,7 @@ class KaScriptDependencyLibraryModuleImpl(
         get() = JvmPlatforms.unspecifiedJvmPlatform
 
     override val libraryName: String
-        get() = entity.classes.singleOrNull()?.presentableUrl ?: entity.symbolicId.presentableName
+        get() = entity.symbolicId.presentableName
 
     @KaExperimentalApi
     override val binaryVirtualFiles: Collection<VirtualFile>
@@ -46,6 +47,9 @@ class KaScriptDependencyLibraryModuleImpl(
     override val librarySources: KaLibrarySourceModule? by lazy(LazyThreadSafetyMode.PUBLICATION) {
         KaScriptDependencyLibrarySourceModuleImpl(this)
     }
+
+    override val directRegularDependencies: List<KaModule>
+        get() = super.directRegularDependencies + KaScriptDependencyLibraryFallbackDependenciesModule(this)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

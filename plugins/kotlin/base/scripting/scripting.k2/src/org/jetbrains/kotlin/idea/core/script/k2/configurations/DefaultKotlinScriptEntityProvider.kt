@@ -7,15 +7,19 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.toBuilder
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.core.script.k2.asEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.modifyKotlinScriptLibraryEntity
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
@@ -27,15 +31,15 @@ import kotlin.script.experimental.jvm.jvm
 
 @Service(Service.Level.PROJECT)
 class DefaultKotlinScriptEntityProvider(
-    override val project: Project,
-    val coroutineScope: CoroutineScope
+    override val project: Project, val coroutineScope: CoroutineScope
 ) : KotlinScriptEntityProvider(project) {
     override suspend fun updateWorkspaceModel(
-        virtualFile: VirtualFile,
-        definition: ScriptDefinition
+        virtualFile: VirtualFile, definition: ScriptDefinition
     ) {
         val configuration = definition.getInitialConfiguration()
         val scriptSource = VirtualFileScriptSource(virtualFile)
+        val scriptUrl = virtualFile.virtualFileUrl
+        if (project.workspaceModel.currentSnapshot.containsScriptEntity(scriptUrl)) return
 
         val result = smartReadAction(project) {
             try {
@@ -43,27 +47,33 @@ class DefaultKotlinScriptEntityProvider(
             } catch (e: Throwable) {
                 ResultWithDiagnostics.Failure(
                     ScriptDiagnostic(
-                        code = unspecifiedError,
-                        exception = e,
-                        message = "Failed to refine script",
-                        sourcePath = scriptSource.locationId
+                        code = unspecifiedError, exception = e, message = "Failed to refine script", sourcePath = scriptSource.locationId
                     )
                 )
             }
         }
 
-        fun MutableEntityStorage.updatedStorage() {
+        fun updateStorage(storage: MutableEntityStorage) {
             val configuration = result.valueOrNull()?.configuration ?: return
+            val definition = findScriptDefinition(project, VirtualFileScriptSource(virtualFile))
 
-            val libraryIds = generateScriptLibraryEntities(configuration, definition, project)
-            libraryIds.filterNot {
-                this.contains(it)
-            }.forEach { (classes, sources) ->
-                this addEntity KotlinScriptLibraryEntity(classes, sources, DefaultScriptEntitySource)
+            val libraryIds = generateScriptLibraryEntities(project, configuration, definition).toList()
+            for ((id, sources) in libraryIds) {
+                val existingLibrary = storage.resolve(id)
+                if (existingLibrary == null) {
+                    storage addEntity KotlinScriptLibraryEntity(id.classes, setOf(scriptUrl), DefaultScriptEntitySource) {
+                        this.sources += sources
+                    }
+                } else {
+                    storage.modifyKotlinScriptLibraryEntity(existingLibrary) {
+                        this.sources += sources
+                        this.usedInScripts += scriptUrl
+                    }
+                }
             }
 
-            this addEntity KotlinScriptEntity(
-                virtualFile.virtualFileUrl, libraryIds.toList(), DefaultScriptEntitySource
+            storage addEntity KotlinScriptEntity(
+                scriptUrl, libraryIds.map { it.first }, DefaultScriptEntitySource
             ) {
                 this.configuration = configuration.asEntity()
                 this.sdkId = configuration.sdkId
@@ -71,10 +81,8 @@ class DefaultKotlinScriptEntityProvider(
         }
 
         project.updateKotlinScriptEntities(DefaultScriptEntitySource) {
-            val builder = it.toSnapshot().toBuilder()
-            if (builder.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFile.virtualFileUrl).none()) {
-                builder.updatedStorage()
-                it.applyChangesFrom(builder)
+            if (!it.containsScriptEntity(scriptUrl)) {
+                updateStorage(it)
             }
         }
 
@@ -100,5 +108,9 @@ class DefaultKotlinScriptEntityProvider(
         fun getInstance(project: Project): DefaultKotlinScriptEntityProvider = project.service()
     }
 }
+
+private fun EntityStorage.containsScriptEntity(url: VirtualFileUrl) = getVirtualFileUrlIndex()
+    .findEntitiesByUrl(url)
+    .filterIsInstance<KotlinScriptEntity>().any()
 
 object DefaultScriptEntitySource : EntitySource

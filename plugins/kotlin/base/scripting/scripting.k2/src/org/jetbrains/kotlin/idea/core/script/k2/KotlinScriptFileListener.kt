@@ -16,6 +16,7 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.toBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.scripting.definitions.isNonScript
 
@@ -51,7 +52,7 @@ class KotlinScriptModuleManager(private val project: Project, private val corout
         val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
 
         val modulesToRemove = scripts.flatMap {
-            builder.getVirtualFileUrlIndex().findEntitiesByUrl(it.toVirtualFileUrl(fileUrlManager))
+            builder.getVirtualFileUrlIndex().findEntitiesByUrl(it.toVirtualFileUrl(fileUrlManager)).filterIsInstance<KotlinScriptEntity>()
         }
 
         if (modulesToRemove.isEmpty()) return
