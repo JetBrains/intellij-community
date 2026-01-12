@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.takeOrElse
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -43,6 +44,7 @@ import org.jetbrains.jewel.ui.component.ProvideSearchMatchState
 import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.SpeedSearchScope
 import org.jetbrains.jewel.ui.component.SpeedSearchState
+import org.jetbrains.jewel.ui.component.calculatePopupHeight
 import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
 import org.jetbrains.jewel.ui.component.takeIfInBoundsOrZero
 import org.jetbrains.jewel.ui.disabledAppearance
@@ -67,7 +69,8 @@ import org.jetbrains.jewel.ui.theme.popupContainerStyle
  * @param itemKeys A function that returns a stable, unique key for each item. Defaults to the item value itself.
  * @param enabled Whether the combo box is interactive.
  * @param outline The [Outline] to draw around the combo box.
- * @param maxPopupHeight The maximum height of the popup. Defaults to [Dp.Unspecified] (unconstrained).
+ * @param maxPopupHeight The maximum height for the popup. If unspecified, the height is automatically calculated based
+ *   on [org.jetbrains.jewel.ui.component.styling.ComboBoxMetrics.maxPopupRowCount].
  * @param maxPopupWidth The maximum width of the popup. Defaults to [Dp.Unspecified] (unconstrained).
  * @param style The visual style configuration for the combo box.
  * @param textStyle The text style used for both the label and popup items.
@@ -79,7 +82,7 @@ import org.jetbrains.jewel.ui.theme.popupContainerStyle
 @ExperimentalJewelApi
 @ApiStatus.Experimental
 public fun SpeedSearchScope.SpeedSearchableComboBox(
-    @Nls items: List<String>,
+    items: List<@Nls String>,
     selectedIndex: Int,
     onSelectedItemChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -96,6 +99,15 @@ public fun SpeedSearchScope.SpeedSearchableComboBox(
         rememberSelectableLazyListState(selectedIndex.takeIfInBoundsOrZero(items.indices)),
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
+    val effectiveMaxPopupHeight =
+        maxPopupHeight.takeOrElse {
+            calculatePopupHeight(
+                itemCount = items.size,
+                maxPopupRowCount = style.metrics.maxPopupRowCount,
+                popupContentPadding = style.metrics.popupContentPadding,
+            )
+        }
+
     SpeedSearchableComboBoxImpl(
         items = items,
         selectedIndex = selectedIndex,
@@ -106,7 +118,7 @@ public fun SpeedSearchScope.SpeedSearchableComboBox(
         popupModifier = popupModifier,
         enabled = enabled,
         outline = outline,
-        maxPopupHeight = maxPopupHeight,
+        maxPopupHeight = effectiveMaxPopupHeight,
         maxPopupWidth = maxPopupWidth,
         style = style,
         onPopupVisibleChange = onPopupVisibleChange,
@@ -174,7 +186,8 @@ public fun SpeedSearchScope.SpeedSearchableComboBox(
  * @param popupModifier The [Modifier] to apply to the popup container.
  * @param enabled Whether the combo box is interactive.
  * @param outline The [Outline] to draw around the combo box.
- * @param maxPopupHeight The maximum height of the popup. Defaults to [Dp.Unspecified] (unconstrained).
+ * @param maxPopupHeight The maximum height for the popup. If unspecified, the height is automatically calculated based
+ *   on [org.jetbrains.jewel.ui.component.styling.ComboBoxMetrics.maxPopupRowCount].
  * @param maxPopupWidth The maximum width of the popup. Defaults to [Dp.Unspecified] (unconstrained).
  * @param style The visual style configuration for the combo box.
  * @param onPopupVisibleChange Called when the popup is shown or hidden.
@@ -207,6 +220,15 @@ public fun <T : Any> SpeedSearchScope.SpeedSearchableComboBox(
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
     itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
+    val effectiveMaxPopupHeight =
+        maxPopupHeight.takeOrElse {
+            calculatePopupHeight(
+                itemCount = items.size,
+                maxPopupRowCount = style.metrics.maxPopupRowCount,
+                popupContentPadding = style.metrics.popupContentPadding,
+            )
+        }
+
     SpeedSearchableComboBoxImpl(
         items = items,
         selectedIndex = selectedIndex,
@@ -217,7 +239,7 @@ public fun <T : Any> SpeedSearchScope.SpeedSearchableComboBox(
         popupModifier = popupModifier,
         enabled = enabled,
         outline = outline,
-        maxPopupHeight = maxPopupHeight,
+        maxPopupHeight = effectiveMaxPopupHeight,
         maxPopupWidth = maxPopupWidth,
         style = style,
         onPopupVisibleChange = onPopupVisibleChange,
