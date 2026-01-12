@@ -297,10 +297,6 @@ public sealed class TypeEvalContext {
     return Registry.is("python.use.separated.libraries.type.cache") && isLibraryElement(element);
   }
 
-  private static boolean isExternalTypeProviderApplicable(PyTypedElement element) {
-    return element instanceof PyInstantTypeProvider;
-  }
-
   public @Nullable PyType getType(final @NotNull PyTypedElement element) {
     if (canDelegateToLibraryContext(element)) {
       var context = getLibraryContext(element.getProject());
@@ -315,26 +311,24 @@ public sealed class TypeEvalContext {
       Pair.create(element, this),
       false,
       () -> {
-        if (!isExternalTypeProviderApplicable(element) && !isInsideExternalTypeProviderCall) {
-          var externalTypeProvider =
-            ContainerUtil.find(TypeEvalExternalTypeProvider.EP_NAME.getExtensionList(), TypeEvalExternalTypeProvider::isAvailable);
-          if (externalTypeProvider != null) {
-            try {
-              isInsideExternalTypeProviderCall = true;
-              var provided = externalTypeProvider.provideType(element, this);
-              isInsideExternalTypeProviderCall = false;
-              if (provided != null) {
-                var type = provided.get();
-                myExternalEvaluated.put(element, type == null ? PyNullType.INSTANCE : type);
-                return type;
-              }
+        var externalTypeProvider =
+          ContainerUtil.find(TypeEvalExternalTypeProvider.EP_NAME.getExtensionList(), TypeEvalExternalTypeProvider::isAvailable);
+        if (!isInsideExternalTypeProviderCall && externalTypeProvider != null) {
+          try {
+            isInsideExternalTypeProviderCall = true;
+            var provided = externalTypeProvider.provideType(element, this);
+            isInsideExternalTypeProviderCall = false;
+            if (provided != null) {
+              var type = provided.get();
+              myExternalEvaluated.put(element, type == null ? PyNullType.INSTANCE : type);
+              return type;
             }
-            catch (ProcessCanceledException e) {
-              throw e;
-            }
-            catch (Exception e) {
-              logger.warn("Exception during external type provider " + externalTypeProvider.getClass().getName(), e);
-            }
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (Exception e) {
+            logger.warn("Exception during external type provider " + externalTypeProvider.getClass().getName(), e);
           }
         }
 
