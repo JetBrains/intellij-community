@@ -54,6 +54,12 @@
 
     <action id="NotebookResetCellOutputSizeAction"
             class="com.intellij.notebooks.visualization.outputs.action.NotebookResetCellOutputSizeAction"/>
+
+    <action id="CellToolbarStickyVisibilityToggleAction"
+            class="com.intellij.notebooks.visualization.ui.cell.toolbar.CellToolbarStickyVisibilityToggleAction"/>
+
+    <action id="ShowToolbarForSelectedCellToggleAction"
+            class="com.intellij.notebooks.visualization.ui.cell.toolbar.ShowToolbarForSelectedCellToggleAction"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

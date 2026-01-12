@@ -30,7 +30,7 @@ class DecoratedEditor private constructor(
 ) : NotebookEditor, Disposable.Default {
   override val hoveredCell: AtomicProperty<EditorCell?> = AtomicProperty(null)
   override val singleFileDiffMode: AtomicProperty<Boolean> = AtomicProperty(false)
-  override val addCellToolbarShown: AtomicProperty<Boolean> = AtomicProperty(false)
+  override val cellAddToolbarShown: AtomicProperty<Boolean> = AtomicProperty(false)
 
   override val editorPositionKeeper: NotebookPositionKeeper = NotebookPositionKeeper(editorImpl).also {
     Disposer.register(this, it)
