@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins
 
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.asDynamicTests
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
@@ -54,15 +53,6 @@ class CommunityPluginModelTest {
       )
     )
     val result = validatePluginModel(communityPath, options)
-    
-    if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
-      val out = communityPath.resolve(System.getProperty("plugin.graph.out", "docs/plugin-graph/plugin-graph.local.json"))
-      result.writeGraph(out, communityPath)
-      println()
-      println("Graph is written to $out")
-      println("Drop file to https://plugingraph.ij.pages.jetbrains.team/ to visualize.")
-    }
-    
     return result.namedFailures.asDynamicTests("problems in plugin configuration")
   }
 }

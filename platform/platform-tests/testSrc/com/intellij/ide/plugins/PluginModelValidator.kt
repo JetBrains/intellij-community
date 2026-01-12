@@ -136,10 +136,6 @@ class PluginValidationResult internal constructor(
     }
     return stringWriter.buffer
   }
-
-  fun writeGraph(outFile: Path, projectHomePath: Path) {
-    PluginGraphWriter(pluginIdToInfo, projectHomePath).write(outFile)
-  }
 }
 
 /**
