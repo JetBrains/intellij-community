@@ -22,6 +22,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util",
   ],
-  exports = ["//java/java-psi-api:psi"]
+  exports = ["//java/java-psi-api:psi"],
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.platform.uast` end

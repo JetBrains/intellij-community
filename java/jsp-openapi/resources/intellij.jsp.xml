@@ -2,9 +2,7 @@
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
 
-    <!--todo temporary disabled until it will be a backend module-->
-
-    <!--<module name="intellij.java.psi"/>-->
+    <module name="intellij.java.psi"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.xml.psi"/>
 

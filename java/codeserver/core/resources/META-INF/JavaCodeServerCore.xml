@@ -1,9 +1,8 @@
 <idea-plugin visibility="public">
   <extensions defaultExtensionNs="com.intellij">
     <javaModuleSystem implementation="com.intellij.java.codeserver.core.JavaPlatformModuleSystem"/>
-    <!--todo temporary disabled see backend, should be enabled after moving to backend part-->
-    <!--<applicationService serviceInterface="com.intellij.psi.JavaModuleGraphHelper"-->
-    <!--                    serviceImplementation="com.intellij.java.codeserver.core.JavaPsiModuleUtil$Helper"-->
-    <!--                    overrides="true"/>-->
+    <applicationService serviceInterface="com.intellij.psi.JavaModuleGraphHelper"
+                        serviceImplementation="com.intellij.java.codeserver.core.JavaPsiModuleUtil$Helper"
+                        overrides="true"/>
   </extensions>
 </idea-plugin>

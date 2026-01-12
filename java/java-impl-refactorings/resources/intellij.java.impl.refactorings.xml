@@ -1,26 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <idea-plugin visibility="public">
   <dependencies>
-    <!--todo temporary disabled until it will be a backend module-->
-
-    <!--  &lt;!&ndash;<module name="intellij.java.indexing"/>&ndash;&gt;-->
+    <module name="intellij.java.indexing"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.diff"/>
     <module name="intellij.platform.lang"/>
-  <!--  &lt;!&ndash;<module name="intellij.java.psi"/>&ndash;&gt;-->
-  <!--  <module name="intellij.platform.core.impl"/>-->
-  <!--  <module name="intellij.platform.lang.core"/>-->
-  <!--  <module name="intellij.platform.lang.impl"/>-->
-  <!--  <module name="intellij.platform.ide.impl"/>-->
-  <!--  <module name="intellij.platform.projectModel"/>-->
-  <!--  &lt;!&ndash;<module name="intellij.java"/>&ndash;&gt;-->
-  <!--  &lt;!&ndash;<module name="intellij.java.psi.impl"/>&ndash;&gt;-->
-  <!--  &lt;!&ndash;<module name="intellij.java.impl"/>&ndash;&gt;-->
-  <!--  &lt;!&ndash;<module name="intellij.jsp"/>&ndash;&gt;-->
+    <module name="intellij.java.psi"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.jsp"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.xml.psi"/>
-  <!--  &lt;!&ndash;<module name="intellij.java.codeserver.core"/>&ndash;&gt;-->
+    <module name="intellij.java.codeserver.core"/>
 
     <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>

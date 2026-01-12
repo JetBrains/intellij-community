@@ -22,6 +22,7 @@ jvm_library(
     "//java/java-psi-impl:psi-impl",
     "//platform/util",
   ],
-  exports = ["//uast/uast-common:uast"]
+  exports = ["//uast/uast-common:uast"],
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.java.uast` end
