@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs
 
 import com.intellij.ide.IdeCoreBundle
@@ -61,14 +61,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
 
   internal fun execute(session: RefreshSessionImpl) {
     if (session.isAsynchronous) {
-      if (isVfsRefreshInBackgroundWriteActionAllowed() && session.modality == ModalityState.nonModal()) {
-        queueAsyncSessionWithCoroutines(session)
-      }
-      else {
-        // An asynchronous refresh launched under old modal progress (`runProcessWithProgressSynchronously`) can outlive its modality state
-        // This violates the structured concurrency principles that are behind coroutine-based refresh, hence we fall back to old NBRA-based refresh.
-        queueSession(session, session.modality)
-      }
+      doQueueSession(session)
     }
     else if (EDT.isCurrentThreadEdt() || ApplicationManager.getApplication().isWriteAccessAllowed) {
       (TransactionGuard.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
@@ -79,8 +72,19 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
       LOG.error("Do not perform a synchronous refresh under read lock (causes deadlocks if there are events to fire)")
     }
     else {
-      queueSession(session, session.modality)
+      doQueueSession(session)
       session.waitFor()
+    }
+  }
+
+  private fun doQueueSession(session: RefreshSessionImpl) {
+    if (isVfsRefreshInBackgroundWriteActionAllowed() && session.modality == ModalityState.nonModal()) {
+      queueSessionWithCoroutines(session)
+    }
+    else {
+      // An asynchronous refresh launched under old modal progress (`runProcessWithProgressSynchronously`) can outlive its modality state
+      // This violates the structured concurrency principles that are behind coroutine-based refresh, hence we fall back to old NBRA-based refresh.
+      queueSession(session, session.modality)
     }
   }
 
@@ -155,10 +159,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
   /**
    * This session is queued asynchronously with suspending read action and background write action
    */
-  private fun queueAsyncSessionWithCoroutines(session: RefreshSessionImpl) {
-    check(session.isAsynchronous) {
-      "Only asynchronous sessions can be queued with coroutines"
-    }
+  private fun queueSessionWithCoroutines(session: RefreshSessionImpl) {
     check(session.modality == ModalityState.nonModal()) {
       "Only sessions in non-modal context can be queued with coroutines. " +
       "If you need to run your sessions with non-trivial modality, consider using `launchOnShow` for the component and `launch` for the session."
@@ -186,6 +187,10 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
         myRefreshIndicator.checkCanceled()
         val (events, changeAppliers) = collectChangeAppliersInReadAction(session, events, evQueuedAt, evTimeInQueue, evRetries, evListenerTime)
         if (events.isEmpty() && session.myFinishRunnable == null) {
+          // someone may be waiting for this refresh synchronously on session's semaphore
+          // at the same time, we'd like to avoid issuing a write action if nothing was changed
+          // so we close a semaphore here instead of running a pointless write action.
+          session.terminate()
           return@readAndBackgroundWriteAction value(Unit)
         }
         writeAction {
@@ -249,7 +254,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     t = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t)
     VfsUsageCollector.logEventProcessing(evTimeInQueue.toLong(), TimeUnit.NANOSECONDS.toMillis(evListenerTime.toLong()), evRetries.toInt(), t, events.size)
   }
-
+  
   private fun processEvents(session: RefreshSessionImpl, modality: ModalityState, events: Collection<VFileEvent>) {
     if (Registry.`is`("vfs.async.event.processing", true) && !events.isEmpty()) {
       val evQueuedAt = System.nanoTime()

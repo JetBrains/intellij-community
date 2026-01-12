@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.openapi.Disposable
@@ -47,14 +47,16 @@ class VfsRefreshTest {
 
   @Test
   @RegistryKey("vfs.refresh.use.background.write.action", "true")
-  fun `suspending refresh calls listeners on background threads`(): Unit = bulkFileListenerTestStub(false) { virtualFile ->
+  fun `suspending refresh calls listeners on background threads`(): Unit = bulkFileListenerTestStub { virtualFile ->
     RefreshQueue.getInstance().refresh(false, listOf(virtualFile))
   }
 
   @Test
-  fun `regular synchronous refresh calls listeners on EDT threads`(): Unit = bulkFileListenerTestStub(true) { virtualFile ->
+  @RegistryKey("vfs.refresh.use.background.write.action", "true")
+  fun `regular synchronous refresh calls listeners on background threads`(): Unit = bulkFileListenerTestStub { virtualFile ->
     RefreshQueue.getInstance().refresh(false, false, null, listOf(virtualFile))
   }
+
   @Test
   fun `parallelization guard stress test`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     val map = ConcurrentHashMap<Any, Pair<Semaphore, Int>>()
@@ -78,12 +80,13 @@ class VfsRefreshTest {
 
   @Test
   @RegistryKey("vfs.refresh.use.background.write.action", "true")
-  fun `suspending refresh calls async listeners on background threads`(): Unit = asyncFileListenerTestStub(false) { virtualFile ->
+  fun `suspending refresh calls async listeners on background threads`(): Unit = asyncFileListenerTestStub { virtualFile ->
     RefreshQueue.getInstance().refresh(false, listOf(virtualFile))
   }
 
   @Test
-  fun `regular synchronous refresh calls async listeners on EDT`(): Unit = asyncFileListenerTestStub(true) { virtualFile ->
+  @RegistryKey("vfs.refresh.use.background.write.action", "true")
+  fun `regular synchronous refresh calls async listeners on background`(): Unit = asyncFileListenerTestStub { virtualFile ->
     RefreshQueue.getInstance().refresh(false, false, null, listOf(virtualFile))
   }
 
@@ -156,7 +159,7 @@ class VfsRefreshTest {
     }
   }
 
-  fun bulkFileListenerTestStub(bgListenersShouldRunOnEdt: Boolean, refresh: suspend (VirtualFile) -> Unit) = refreshTestStub(
+  fun bulkFileListenerTestStub(refresh: suspend (VirtualFile) -> Unit) = refreshTestStub(
     { disposable, counter ->
       application.messageBus.connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
         override fun before(events: List<VFileEvent>) {
@@ -171,12 +174,12 @@ class VfsRefreshTest {
       })
       application.messageBus.connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
         override fun before(events: List<VFileEvent>) {
-          assertThat(EDT.isCurrentThreadEdt()).isEqualTo(bgListenersShouldRunOnEdt)
+          assertThat(EDT.isCurrentThreadEdt()).isFalse
           counter.incrementAndGet()
         }
 
         override fun after(events: List<VFileEvent>) {
-          assertThat(EDT.isCurrentThreadEdt()).isEqualTo(bgListenersShouldRunOnEdt)
+          assertThat(EDT.isCurrentThreadEdt()).isFalse
           counter.incrementAndGet()
         }
       })
@@ -185,7 +188,7 @@ class VfsRefreshTest {
     })
 
 
-  fun asyncFileListenerTestStub(bgListenersShouldRunOnEdt: Boolean, refresh: suspend (VirtualFile) -> Unit) = refreshTestStub(
+  fun asyncFileListenerTestStub(refresh: suspend (VirtualFile) -> Unit) = refreshTestStub(
     { disposable, counter ->
       VirtualFileManager.getInstance().addAsyncFileListener(
         {
@@ -205,12 +208,12 @@ class VfsRefreshTest {
         {
           object : AsyncFileListener.ChangeApplier {
             override fun beforeVfsChange() {
-              assertThat(EDT.isCurrentThreadEdt()).isEqualTo(bgListenersShouldRunOnEdt)
+              assertThat(EDT.isCurrentThreadEdt()).isFalse
               counter.incrementAndGet()
             }
 
             override fun afterVfsChange() {
-              assertThat(EDT.isCurrentThreadEdt()).isEqualTo(bgListenersShouldRunOnEdt)
+              assertThat(EDT.isCurrentThreadEdt()).isFalse
               counter.incrementAndGet()
             }
           }
