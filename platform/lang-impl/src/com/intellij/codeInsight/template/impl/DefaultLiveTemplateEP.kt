@@ -26,11 +26,4 @@ internal class DefaultLiveTemplateEP {
   @Attribute
   @JvmField
   var hidden: Boolean = false
-
-  /**
-   * `true` if it is necessary to use the parent loader
-   */
-  @Attribute
-  @JvmField
-  var useParentLoader: Boolean = false
 }

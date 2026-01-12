@@ -502,7 +502,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
 
         try {
           ClassLoader pluginClassLoader = pluginDescriptor.getClassLoader();
-          readDefTemplate(file, !ep.hidden, pluginClassLoader, PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor), ep.useParentLoader);
+          readDefTemplate(file, !ep.hidden, pluginClassLoader, PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor));
         }
         catch (Exception e) {
           LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
@@ -539,23 +539,15 @@ public final class TemplateSettings implements PersistentStateComponent<Template
                                boolean registerTemplate,
                                @NotNull ClassLoader loader,
                                PluginInfo info) throws JDOMException {
-    readDefTemplate(defTemplate, registerTemplate, loader, info, false);
-  }
-
-    private void readDefTemplate(@NotNull String defTemplate,
-                               boolean registerTemplate,
-                               @NotNull ClassLoader loader,
-                               PluginInfo info,
-                               boolean useParentLoader) throws JDOMException {
     String pluginId = info.getId();
     Element element;
     try {
       byte[] data;
       if (defTemplate.startsWith("/")) {
-        data = ResourceUtil.getResourceAsBytes(appendExt(defTemplate.substring(1)), loader, useParentLoader);
+        data = ResourceUtil.getResourceAsBytes(appendExt(defTemplate.substring(1)), loader);
       }
       else {
-        data = ResourceUtil.getResourceAsBytes(appendExt(defTemplate), loader, useParentLoader);
+        data = ResourceUtil.getResourceAsBytes(appendExt(defTemplate), loader);
       }
       if (data == null) {
         LOG.error(new PluginException("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info,

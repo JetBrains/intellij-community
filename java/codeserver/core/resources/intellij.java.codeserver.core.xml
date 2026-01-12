@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="public">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="internal">
   <dependencies>
     <!--todo temporary disabled until it will be a backend module-->
     <!--<module name="intellij.java.frontback.psi"/>-->
