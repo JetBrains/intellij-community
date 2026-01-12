@@ -18,6 +18,7 @@
         "dumb_start" : [ "{enum#boolean}" ],
         "duration_ms" : [ "{regexp#integer}" ],
         "enable" : [ "{enum#boolean}" ],
+        "file_type" : [ "{util#file_type}" ],
         "incomplete_dependencies_mode" : [ "{enum:COMPLETE|INCOMPLETE}" ],
         "input_event" : [ "{util#shortcut}" ],
         "isSubmenu" : [ "{enum#boolean}" ],
@@ -2134,5 +2135,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6625"
+  "version" : "6626"
 }
