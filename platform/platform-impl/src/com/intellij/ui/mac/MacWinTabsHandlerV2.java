@@ -13,7 +13,6 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.JBSwingUtilities;
 import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
@@ -37,7 +36,7 @@ public final class MacWinTabsHandlerV2 extends MacWinTabsHandler {
     JPanel tabsContainer = new JPanel(new BorderLayout()) {
       @Override
       protected Graphics getComponentGraphics(Graphics g) {
-        return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
+        return InternalUICustomization.runGlobalCGTransformWithInactiveFrameSupport(this, super.getComponentGraphics(g));
       }
     };
 

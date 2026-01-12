@@ -286,7 +286,7 @@
       "borderWidth": 5,
       "borderWidth.compact": 4,
       "borderColor": "container-tool-window-bg",
-      "inactiveAlpha": 0.44,
+      "inactiveAlpha": 0.56,
       "inactiveAlphaInStatusBar": {
         "os.mac": 0.2,
         "os.windows": 0.2,

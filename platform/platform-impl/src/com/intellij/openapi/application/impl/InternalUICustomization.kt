@@ -54,6 +54,7 @@ open class InternalUICustomization {
       return result
     }
 
+    @JvmStatic
     fun runGlobalCGTransformWithInactiveFrameSupport(component: JComponent, graphics: Graphics): Graphics {
       if (graphics is Graphics2DDelegate) {
         return graphics

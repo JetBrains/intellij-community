@@ -113,6 +113,11 @@ public final class WindowTabsComponent extends JBTabsImpl implements BorderPaint
     this.borderPainter = painter;
   }
 
+  @Override
+  protected @NotNull Graphics getComponentGraphics(@NotNull Graphics graphics) {
+    return InternalUICustomization.runGlobalCGTransformWithInactiveFrameSupport(this, graphics);
+  }
+
   private static @NotNull Insets getContentInsets() {
     InternalUICustomization customization = InternalUICustomization.getInstance();
     if (customization != null) {

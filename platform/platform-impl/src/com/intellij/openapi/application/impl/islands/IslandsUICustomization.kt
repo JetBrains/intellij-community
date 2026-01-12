@@ -83,7 +83,11 @@ val isIjpl217440: Boolean
   get() = Registry.`is`("idea.islands.ijpl217440.enabled")
 
 internal val islandsInactiveAlpha: Float
-  get() = JBUI.getFloat("Island.inactiveAlpha", 0.5f)
+  get() {
+    return if (isIjpl217440)
+      JBUI.getFloat("Island.inactiveAlpha", 0.5f)
+    else 0.44f
+  }
 
 internal class IslandsUICustomization : InternalUICustomization() {
 
@@ -536,11 +540,11 @@ internal class IslandsUICustomization : InternalUICustomization() {
           return
         }
 
-        val alphaKey = if (component is IdeStatusBarImpl) "Island.inactiveAlphaInStatusBar" else "Island.inactiveAlpha"
+        val alpha = if (component is IdeStatusBarImpl) JBUI.getFloat("Island.inactiveAlphaInStatusBar", 0.5f) else islandsInactiveAlpha
 
         g as Graphics2D
         g.color = getMainBackgroundColor()
-        g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, JBUI.getFloat(alphaKey, 0.5f))
+        g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha)
 
         if (component is ToolWindowPane) {
           val extraBorder = JBUI.scale(4)
