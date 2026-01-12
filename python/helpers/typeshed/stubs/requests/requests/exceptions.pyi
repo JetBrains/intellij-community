@@ -1,3 +1,4 @@
+from json import JSONDecodeError as CompatJSONDecodeError
 from typing import Any
 
 from urllib3.exceptions import HTTPError as BaseHTTPError
@@ -13,7 +14,7 @@ class RequestException(OSError):
     ) -> None: ...
 
 class InvalidJSONError(RequestException): ...
-class JSONDecodeError(InvalidJSONError): ...
+class JSONDecodeError(InvalidJSONError, CompatJSONDecodeError): ...
 
 class HTTPError(RequestException):
     request: Request | PreparedRequest | Any
