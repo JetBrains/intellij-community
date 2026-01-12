@@ -25,9 +25,17 @@ suspend fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesF
   val minimal = System.getProperty("intellij.build.minimal").toBoolean()
   val descriptorMap = collectPluginDescriptors(skipImplementationDetails = !minimal, skipBundled = true, honorCompatiblePluginsToIgnore = true, context = context)
   val descriptorMapWithBundled = collectPluginDescriptors(skipImplementationDetails = true, skipBundled = false, honorCompatiblePluginsToIgnore = true, context = context)
-
+  val bundledPluginIds = descriptorMapWithBundled.values
+    .asSequence().map { it.id }
+    .minus(descriptorMap.values.asSequence().map { it.id }.toSet())
+    .toSet()
   for (descriptor in descriptorMap.values) {
-    if (isPluginCompatible(plugin = descriptor, availableModulesAndPlugins = availableModulesAndPlugins, nonCheckedModules = descriptorMapWithBundled)) {
+    if (isPluginCompatible(
+        plugin = descriptor,
+        availableModulesAndPlugins = availableModulesAndPlugins,
+        nonCheckedModules = descriptorMapWithBundled,
+        bundledPluginIds = bundledPluginIds,
+      )) {
       val layouts = descriptor.pluginLayouts.toMutableList()
       if (layouts.size == 2 && layouts.get(0).bundlingRestrictions != layouts.get(1).bundlingRestrictions) {
         layouts.retainAll { it.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
@@ -45,6 +53,7 @@ private fun isPluginCompatible(
   plugin: PluginDescriptor,
   availableModulesAndPlugins: MutableSet<String>,
   nonCheckedModules: MutableMap<String, PluginDescriptor>,
+  bundledPluginIds: Set<String>,
 ): Boolean {
   nonCheckedModules.remove(plugin.id)
   for (declaredModule in plugin.declaredModules) {
@@ -58,7 +67,7 @@ private fun isPluginCompatible(
     }
 
     val requiredPlugin = nonCheckedModules[requiredDependency]
-    if (requiredPlugin != null && isPluginCompatible(requiredPlugin, availableModulesAndPlugins, nonCheckedModules)) {
+    if (requiredPlugin != null && isPluginCompatible(requiredPlugin, availableModulesAndPlugins, nonCheckedModules, bundledPluginIds)) {
       continue
     }
 
@@ -66,7 +75,8 @@ private fun isPluginCompatible(
     return false
   }
   for (incompatiblePlugin in plugin.incompatiblePlugins) {
-    if (availableModulesAndPlugins.contains(incompatiblePlugin)) {
+    if (bundledPluginIds.contains(incompatiblePlugin)) {
+      Span.current().addEvent("${plugin.id} is not compatible because it is incompatible with a bundled plugin: $incompatiblePlugin")
       return false
     }
   }
