@@ -6,8 +6,8 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationBundle
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlinx.serialization.compiler.diagnostic.SerializationErrors
@@ -21,7 +21,7 @@ internal class JsonRedundantDefaultQuickFix(expression: KtCallExpression) : Kotl
 
     override fun getFamilyName(): String = text
 
-    override fun getText(): String = KotlinSerializationBundle.message("replace.with.default.json.format")
+    override fun getText(): String = KotlinBundle.message("replace.with.default.json.format")
 
     object Factory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {

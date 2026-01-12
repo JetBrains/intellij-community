@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaCompilerPluginDiagnos
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.KotlinIntroducePropertyHandler
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
@@ -38,7 +37,7 @@ internal object JsonFormatRedundantFixFactory {
     ) : KotlinQuickFixAction<KtCallExpression>(element) {
 
         override fun startInWriteAction(): Boolean = false
-        override fun getText(): String = KotlinSerializationBundle.message("extract.json.to.property")
+        override fun getText(): String = KotlinBundle.message("extract.json.to.property")
         override fun getFamilyName(): String = text
 
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {

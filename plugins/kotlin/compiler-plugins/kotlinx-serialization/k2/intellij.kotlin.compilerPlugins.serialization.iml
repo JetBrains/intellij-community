@@ -36,7 +36,6 @@
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" />
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />

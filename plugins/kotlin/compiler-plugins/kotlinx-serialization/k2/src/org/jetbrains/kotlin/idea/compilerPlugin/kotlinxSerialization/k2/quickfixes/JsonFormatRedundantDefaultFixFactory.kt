@@ -5,8 +5,8 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaCompilerPluginDiagnostic0
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationBundle
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlinx.serialization.compiler.fir.checkers.FirSerializationErrors
 import java.util.Collections.emptyList
@@ -26,7 +26,7 @@ internal object JsonFormatRedundantDefaultFixFactory {
         element: KtCallExpression,
     ) : PsiUpdateModCommandAction<KtCallExpression>(element) {
 
-        override fun getFamilyName(): String = KotlinSerializationBundle.message("replace.with.default.json.format")
+        override fun getFamilyName(): String = KotlinBundle.message("replace.with.default.json.format")
 
         override fun invoke(
             context: ActionContext,
