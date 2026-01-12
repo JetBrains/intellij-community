@@ -47,7 +47,6 @@ public sealed class TypeEvalContext {
   }
 
   private final @NotNull TypeEvalConstraints myConstraints;
-  private boolean isInsideExternalTypeProviderCall = false;
 
   private List<String> myTrace;
   private String myTraceIndent = "";
@@ -311,11 +310,9 @@ public sealed class TypeEvalContext {
       false,
       () -> {
         var provider = TypeEvalExternalTypeProvider.EP_NAME.getExtensionList().stream().filter(TypeEvalExternalTypeProvider::isAvailable).findFirst().orElse(null);
-        if (!isInsideExternalTypeProviderCall && provider != null) {
+        if (provider != null) {
           try {
-            isInsideExternalTypeProviderCall = true;
             var provided = provider.provideType(element, this);
-            isInsideExternalTypeProviderCall = false;
             if (provided != null) {
               var type = provided.get();
               myExternalEvaluated.put(element, type == null ? PyNullType.INSTANCE : type);
@@ -328,6 +325,7 @@ public sealed class TypeEvalContext {
           catch (Exception e) {
             logger.warn("Exception during external type provider " + provider.getClass().getName(), e);
           }
+          return null;
         }
 
         PyType type = element.getType(this, Key.INSTANCE);
