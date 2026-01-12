@@ -20,6 +20,9 @@ import java.util.List;
 
 /**
  * Represents a Java class or interface.
+ * <p>
+ * To display the class name in the UI, taking into account the context where the class is defined,
+ * consider using {@link com.intellij.psi.presentation.java.ClassPresentationUtil#getNameForClass}.
  *
  * @see PsiJavaFile#getClasses()
  */
