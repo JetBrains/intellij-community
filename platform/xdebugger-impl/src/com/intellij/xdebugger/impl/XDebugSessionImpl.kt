@@ -284,18 +284,28 @@ class XDebugSessionImpl @JvmOverloads constructor(
       myRunToCursorActionAllowed.value = value
     }
 
-  fun addRestartActions(vararg restartActions: AnAction?) {
-    Collections.addAll<AnAction?>(this.restartActions, *restartActions)
+  fun addRestartActions(vararg restartActions: AnAction) {
+    safeAddAll(this.restartActions, *restartActions)
   }
 
-  fun addExtraActions(vararg extraActions: AnAction?) {
-    Collections.addAll<AnAction?>(this.extraActions, *extraActions)
+  fun addExtraActions(vararg extraActions: AnAction) {
+    safeAddAll(this.extraActions, *extraActions)
   }
 
   // used externally
   @Suppress("unused")
-  fun addExtraStopActions(vararg extraStopActions: AnAction?) {
-    Collections.addAll<AnAction?>(this.extraStopActions, *extraStopActions)
+  fun addExtraStopActions(vararg extraStopActions: AnAction) {
+    safeAddAll(this.extraStopActions, *extraStopActions)
+  }
+
+  private fun <T> safeAddAll(collection: MutableList<T>, vararg elements: T) {
+    for (e in elements) {
+      if (e == null) {
+        LOG.error("Null element found in safeAddAll: ${elements.toList()}")
+        continue
+      }
+      collection.add(e)
+    }
   }
 
   override fun rebuildViews() {
