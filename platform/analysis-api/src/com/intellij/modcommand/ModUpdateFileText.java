@@ -3,8 +3,10 @@ package com.intellij.modcommand;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -53,6 +55,39 @@ public record ModUpdateFileText(@NotNull VirtualFile file, @NotNull String oldTe
       offset = leanRight ? range.adjustForwardLeanRight(offset) : range.adjustForward(offset);
     }
     return offset;
+  }
+
+  /**
+   * Returns equivalent {@link ModUpdateFileText} with shrinked fragments if they contained the same before/after text at their end.
+   * <p>
+   * For example, we had old text "example" and new text "bye" and 
+   * a single fragment covering the whole text (offset = 0, oldLength = 7, newLength = 3).
+   * The result of {@code shrinkFragments()} will be a fragment (offset = 0, oldLength = 6, newLength = 2), as 'e' at the end is not changed.
+   * </p>
+   * 
+   * @return equivalent {@link ModUpdateFileText} with shrinked fragments.
+   */
+  public ModUpdateFileText shrinkFragments() {
+    List<Fragment> changed = null;
+    int diff = 0;
+    for (Fragment range : updatedRanges) {
+      int oldLen = range.oldLength;
+      int newLen = range.newLength;
+      while (oldLen > 0 && newLen > 0 && oldText.charAt(range.offset+diff+oldLen-1)==newText.charAt(range.offset+newLen-1)) {
+        oldLen--;
+        newLen--;
+      }
+      if (oldLen != range.oldLength) {
+        if (changed == null) changed = new ArrayList<>();
+        range = new Fragment(range.offset, oldLen, newLen);
+      }
+      if (changed != null) {
+        changed.add(range);
+      }
+      diff += range.oldLength - range.newLength;
+    }
+    if (changed == null) return this;
+    return new ModUpdateFileText(file, oldText, newText, ContainerUtil.concat(updatedRanges.subList(0, updatedRanges.size() - changed.size()), changed));
   }
 
   /**

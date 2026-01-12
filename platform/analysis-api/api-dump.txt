@@ -709,6 +709,7 @@ com.intellij.modcommand.ModTemplateBuilder
 - a:finishAt(I):com.intellij.modcommand.ModTemplateBuilder
 - a:onTemplateFinished(java.util.function.Function):com.intellij.modcommand.ModTemplateBuilder
 f:com.intellij.modcommand.ModUpdateFileText
+- shrinkFragments():com.intellij.modcommand.ModUpdateFileText
 - translateOffset(I,Z):I
 f:com.intellij.modcommand.Presentation$HighlightRange
 - <init>(com.intellij.openapi.util.TextRange,com.intellij.modcommand.Presentation$HighlightingKind):V
