@@ -896,8 +896,6 @@
                         preloaderClassName="git4idea.workingTrees.ui.GitWorkingTreesContentPreloader"
                         isInCommitToolWindow="false"/>
     <statistics.actionCustomPlaceAllowlist places="GitWorkingTreeToolWindowTabToolbar"/>
-    <registryKey key="git.enable.working.trees.feature" defaultValue="false" restartRequired="true"
-                 description="Enables the 'Working Trees' feature, see https://youtrack.jetbrains.com/issue/IJPL-204771"/>
 
     <projectService serviceInterface="git4idea.commands.GitCommandOutputPrinter"
                     serviceImplementation="git4idea.commands.GitCommandOutputConsolePrinter"/>

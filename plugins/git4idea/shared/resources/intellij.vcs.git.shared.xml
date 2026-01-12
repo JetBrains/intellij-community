@@ -45,5 +45,8 @@
     <rdct.remoteSettingProvider implementation="git4idea.config.GitRemoteSettingsInfoProvider"/>
 
     <postStartupActivity implementation="com.intellij.vcs.git.GitDataHoldersInitializer"/>
+
+    <registryKey key="git.enable.working.trees.feature" defaultValue="false" restartRequired="true"
+                 description="Enables the 'Working Trees' feature, see https://youtrack.jetbrains.com/issue/IJPL-204771"/>
   </extensions>
 </idea-plugin>

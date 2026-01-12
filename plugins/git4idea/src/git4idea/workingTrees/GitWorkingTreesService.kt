@@ -39,7 +39,7 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
      */
     fun getRepoForWorkingTreesSupport(project: Project?): GitRepository? {
       if (project == null) return null
-      if (!GitWorkingTreesBackendUtil.isWorkingTreesFeatureEnabled()) return null
+      if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled()) return null
       val repositories = GitRepositoryManager.getInstance(project).repositories
       return repositories.singleOrNull()
     }

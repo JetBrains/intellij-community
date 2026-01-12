@@ -19,6 +19,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.workingTrees.GitWorkingTreesBackendUtil
+import git4idea.workingTrees.GitWorkingTreesUtil
 import java.util.function.Supplier
 import kotlin.reflect.KClass
 import kotlin.reflect.safeCast
@@ -96,7 +97,7 @@ abstract class GitSingleRefAction<T : GitReference>(
       repositories: List<GitRepository>,
       checkOnlyNonCurrentWorkingTrees: Boolean = false,
     ): Boolean {
-      if (!GitWorkingTreesBackendUtil.isWorkingTreesFeatureEnabled() || ref !is GitLocalBranch) {
+      if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled() || ref !is GitLocalBranch) {
         return isCurrentRefInAnyRepo(ref, repositories)
       }
 
