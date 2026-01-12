@@ -99,6 +99,7 @@ const tools = [
               description: {type: 'string', description: 'WHAT and WHY'},
               acceptance: {type: 'string', description: 'Testable outcomes'},
               design: {type: 'string', description: 'Technical approach'},
+              type: {type: 'string', description: 'Issue type (task|bug|feature|chore)'},
               depends_on: {type: 'array', items: {type: 'integer'}, description: '0-based indices'}
             },
             required: ['title', 'description', 'acceptance', 'design']
@@ -107,6 +108,38 @@ const tools = [
         update_epic_acceptance: {type: 'string', description: 'Update epic acceptance'}
       },
       required: ['epic_id', 'sub_issues']
+    }
+  },
+  {
+    name: 'task_create',
+    description: 'Create a non-epic issue (task/bug/feature). Returns action for next step.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        title: {type: 'string', description: 'Issue title'},
+        description: {type: 'string', description: 'WHAT and WHY'},
+        type: {type: 'string', description: 'Issue type (task|bug|feature|chore)', default: 'task'},
+        parent: {type: 'string', description: 'Optional parent epic ID'},
+        acceptance: {type: 'string', description: 'Testable outcomes'},
+        design: {type: 'string', description: 'Technical approach'},
+        priority: {type: 'string', description: 'Priority (0-4 or P0-P4)'},
+        depends_on: {type: 'string', description: 'Optional dependency: new issue depends on this ID'},
+        dep_type: {type: 'string', description: 'Dependency type (e.g. discovered-from)'}
+      },
+      required: ['title']
+    }
+  },
+  {
+    name: 'task_dep_add',
+    description: 'Add dependency: child depends on parent (child needs parent).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        child: {type: 'string', description: 'Dependent issue ID'},
+        parent: {type: 'string', description: 'Required issue ID'},
+        type: {type: 'string', description: 'Dependency type (e.g. discovered-from)'}
+      },
+      required: ['child', 'parent']
     }
   },
   {
@@ -123,67 +156,97 @@ const tools = [
   }
 ]
 
+// Compute action string for a specific issue based on status
+function computeAction(issue, notes) {
+  const id = issue.id
+  if (issue.status === 'in_progress') {
+    return notes.next
+      ? `Continue: ${notes.next}`
+      : `Work on this issue. When done: task_done(id="${id}", summary="...")`
+  }
+  if (issue.status === 'open') {
+    return issue.type === 'epic'
+      ? `Start: task_epic(resume="${id}")`
+      : `Start: task_progress(id="${id}", working_on="...")`
+  }
+  if (issue.status === 'blocked') {
+    return `Blocked. To unblock: task_progress(id="${id}", status="in_progress")`
+  }
+  if (issue.status === 'deferred') {
+    return `Deferred. To resume: task_progress(id="${id}", status="in_progress")`
+  }
+  return `Check status: task_status(id="${id}")`
+}
+
 const toolHandlers = {
   task_status: (args) => {
+    // Specific issue query - return minimal details
     if (args.id) {
       const issue = bdShowOne(args.id)
       if (!issue) {
         return {error: `Issue ${args.id} not found`}
       }
-      // For specific issue, provide contextual action based on status
       const notes = parseNotes(issue.notes)
-      if (issue.status === 'in_progress') {
-        issue.action = notes.next
-          ? `Continue: ${notes.next}`
-          : `Work on this issue. When done: task_done(id="${args.id}", summary="...")`
-      } else if (issue.status === 'open') {
-        issue.action = `Start: task_epic(resume="${args.id}") or task_progress(id="${args.id}", working_on="...")`
-      } else if (issue.status === 'blocked') {
-        issue.action = `Blocked. To unblock: task_progress(id="${args.id}", status="in_progress")`
-      } else if (issue.status === 'deferred') {
-        issue.action = `Deferred. To resume: task_progress(id="${args.id}", status="in_progress")`
+      return {
+        id: issue.id,
+        title: issue.title,
+        status: issue.status,
+        type: issue.type,
+        next: notes.next || undefined,
+        working_on: notes.in_progress || undefined,
+        action: computeAction(issue, notes)
       }
-      return issue
     }
 
-    // Overview: in-progress + ready + blocked
-    const inProgressList = bdJson(['list', '--status', 'in_progress'])
-    const blockedList = bdJson(['list', '--status', 'blocked'])
-    const readyList = bdJson(['ready', '--limit', '10'])
-    const inProgress = inProgressList.length > 0 ? inProgressList : null
-    const blocked = blockedList || []
-    const ready = readyList || []
+    // Overview query - selection-oriented responses
+    const inProgress = bdJson(['list', '--status', 'in_progress'])
+    const ready = bdJson(['ready', '--limit', '5'])
 
-    let action
-    if (inProgress) {
-      if (inProgress.length > 1) {
-        // Multiple in-progress: let user select
-        const items = inProgress.map(i => `${i.id}: ${i.title}`).join(', ')
-        if (args.user_request) {
-          action = `Multiple in-progress: ${items}. New request: "${args.user_request}". AskUserQuestion: which to resume, or create new epic?`
-        } else {
-          action = `Multiple in-progress: ${items}. AskUserQuestion: which to resume?`
+    // No in-progress issues
+    if (inProgress.length === 0) {
+      if (args.user_request) {
+        return {action: `Create epic: task_epic(title="[summarize]", description="USER REQUEST: ${args.user_request}")`}
+      }
+      if (ready.length > 0) {
+        return {
+          action: 'AskUserQuestion: Pick a task to start',
+          options: ready.map(r => ({id: r.id, title: r.title, type: r.type}))
         }
-      } else if (args.user_request) {
-        // Single in-progress + new request: conflict
-        action = `In-progress: ${inProgress[0].id} "${inProgress[0].title}". New request provided. AskUserQuestion: continue current or create new epic?`
-      } else {
-        // Single in-progress: resume
-        const notes = parseNotes(inProgress[0].notes)
-        action = notes.next
-          ? `Continue: ${notes.next}`
-          : `Resume ${inProgress[0].id}: ${inProgress[0].title}. Update: task_progress(id="${inProgress[0].id}", working_on="...")`
       }
-    } else if (args.user_request) {
-      // No in-progress, user provided task - create epic
-      action = `Create epic: task_epic(title="[summarize request]", description="USER REQUEST: ${args.user_request}")`
-    } else if (ready.length > 0) {
-      action = `Start ${ready[0].id}: ${ready[0].title}. Run: task_epic(resume="${ready[0].id}")`
-    } else {
-      action = 'No tasks. Ask user what to work on.'
+      return {action: 'No tasks. Ask user what to work on.'}
     }
 
-    return {in_progress: inProgress, blocked: blocked.length > 0 ? blocked : undefined, ready, action}
+    // Single in-progress, no new request - just continue
+    if (inProgress.length === 1 && !args.user_request) {
+      const issue = inProgress[0]
+      const notes = parseNotes(issue.notes)
+      if (notes.next) {
+        return {id: issue.id, title: issue.title, action: `Continue: ${notes.next}`}
+      }
+      return {
+        action: `AskUserQuestion: Working on "${issue.title}". What to do?`,
+        options: [
+          {id: issue.id, label: 'Continue working'},
+          {id: 'done', label: 'Mark done'},
+          {id: 'block', label: 'Block/defer'}
+        ]
+      }
+    }
+
+    // Multiple in-progress OR conflict with user_request - user must select
+    const question = args.user_request
+      ? `AskUserQuestion: "${args.user_request}" - which task?`
+      : 'AskUserQuestion: Which task to work on?'
+    return {
+      action: question,
+      options: [
+        ...inProgress.map(i => {
+          const notes = parseNotes(i.notes)
+          return {id: i.id, title: i.title, next: notes.next || undefined}
+        }),
+        {id: 'new', title: 'Start new task'}
+      ]
+    }
   },
 
   task_epic: (args) => {
@@ -194,11 +257,19 @@ const toolHandlers = {
       }
       bd(['update', args.resume, '--status', 'in_progress'])
 
-      // Check if has sub-issues
-      const hasChildren = issue.children && issue.children.length > 0
-      const action = hasChildren
-        ? `Check sub-issues: task_status(id="${args.resume}")`
-        : `Explore codebase, then: task_decompose(epic_id="${args.resume}", sub_issues=[...])`
+      let action
+      if (issue.type === 'epic') {
+        // Check if has sub-issues
+        const hasChildren = issue.children && issue.children.length > 0
+        action = hasChildren
+          ? `Check sub-issues: task_status(id="${args.resume}")`
+          : `Explore codebase, then: task_decompose(epic_id="${args.resume}", sub_issues=[...])`
+      } else {
+        const notes = parseNotes(issue.notes)
+        action = notes.next
+          ? `Continue: ${notes.next}`
+          : `Work on this issue: task_progress(id="${args.resume}", working_on="...")`
+      }
 
       return {id: args.resume, title: issue.title, type: issue.type, is_new: false, action}
     }
@@ -270,7 +341,8 @@ const toolHandlers = {
 
     const ids = []
     for (const sub of args.sub_issues) {
-      const id = bd(['create', '--title', sub.title, '--parent', args.epic_id, '--type', 'task', '--description', sub.description, '--acceptance', sub.acceptance, '--design', sub.design, '--silent'])
+      const subType = sub.type || 'task'
+      const id = bd(['create', '--title', sub.title, '--parent', args.epic_id, '--type', subType, '--description', sub.description, '--acceptance', sub.acceptance, '--design', sub.design, '--silent'])
       ids.push(id)
     }
 
@@ -290,6 +362,39 @@ const toolHandlers = {
       epic_id: args.epic_id,
       action: 'Sub-issues created. Write plan file (epic ID pointer), then ExitPlanMode for approval.'
     }
+  },
+
+  task_create: (args) => {
+    if (!args.title) {
+      throw new Error('title required for new issue')
+    }
+    const issueType = args.type || 'task'
+    const createArgs = ['create', '--title', args.title, '--type', issueType, '--silent']
+    if (args.description) createArgs.push('--description', args.description)
+    if (args.acceptance) createArgs.push('--acceptance', args.acceptance)
+    if (args.design) createArgs.push('--design', args.design)
+    if (args.parent) createArgs.push('--parent', args.parent)
+    if (args.priority) createArgs.push('--priority', args.priority)
+
+    const id = bd(createArgs)
+    if (args.depends_on) {
+      const depArgs = ['dep', 'add', id, args.depends_on]
+      if (args.dep_type) depArgs.push('--type', args.dep_type)
+      bd(depArgs)
+    }
+    return {
+      id,
+      title: args.title,
+      type: issueType,
+      action: `Created ${id}. If starting now: task_progress(id="${id}", working_on="...")`
+    }
+  },
+
+  task_dep_add: (args) => {
+    const depArgs = ['dep', 'add', args.child, args.parent]
+    if (args.type) depArgs.push('--type', args.type)
+    bd(depArgs)
+    return {success: true, action: `Dependency added. Continue: task_status(id="${args.child}")`}
   },
 
   task_done: (args) => {
@@ -312,7 +417,7 @@ const toolHandlers = {
         if (epicIssue) {
           epicTitle = epicIssue.title
           const children = epicIssue.children || []
-          const completed = children.filter(c => c.status === 'closed').length + 1
+          const completed = children.filter(c => c.status === 'closed').length
           epicStatus = {completed, remaining: children.length - completed}
         }
       }
@@ -331,7 +436,7 @@ const toolHandlers = {
     } else if (parentId) {
       action = `Check for more work: task_status(id="${parentId}")`
     } else {
-      action = 'Epic closed. Check task_status() for more work.'
+      action = 'Issue closed. Check task_status() for more work.'
     }
 
     return {closed: {id: args.id}, next_ready: nextReady, epic_status: epicStatus, action}
