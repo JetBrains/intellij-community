@@ -10,6 +10,10 @@ interface GitBackendTelemetrySpan : VcsBackendTelemetrySpan, GitTelemetrySpan {
   enum class Repository : GitBackendTelemetrySpan {
     ReadGitRepositoryInfo {
       override fun getName() = "git-reading-repo-info"
+    },
+
+    RunGitCommand {
+      override fun getName() = "git-run-command"
     }
   }
 

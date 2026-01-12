@@ -22,6 +22,8 @@ import com.intellij.openapi.vcs.VcsEnvCustomizer.VcsExecutableContext;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
+import com.intellij.platform.vcs.impl.shared.telemetry.VcsScopeKt;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ThrowableConsumer;
@@ -30,6 +32,8 @@ import git4idea.GitVcs;
 import git4idea.config.GitExecutable;
 import git4idea.config.GitExecutableContext;
 import git4idea.config.GitExecutableManager;
+import git4idea.telemetry.GitBackendTelemetrySpan;
+import io.opentelemetry.api.trace.SpanBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -408,22 +412,28 @@ public abstract class GitHandler {
   }
 
   void runInCurrentThread() throws IOException {
-    try {
-      start();
-      if (isStarted()) {
-        try {
-          if (myInputProcessor != null) {
-            myInputProcessor.consume(myProcess.getOutputStream());
+    SpanBuilder spanBuilder = VcsScopeKt.getVcsTracer().spanBuilder(GitBackendTelemetrySpan.Repository.RunGitCommand.getName())
+      .setAttribute("git.command", myCommand.name())
+      .setAttribute("working.directory", getDirectoryPathForLogging());
+
+    TraceUtil.runWithSpanThrows(spanBuilder, span -> {
+      try {
+        start();
+        if (isStarted()) {
+          try {
+            if (myInputProcessor != null) {
+              myInputProcessor.consume(myProcess.getOutputStream());
+            }
+          }
+          finally {
+            waitForProcess();
           }
         }
-        finally {
-          waitForProcess();
-        }
       }
-    }
-    finally {
-      logTime();
-    }
+      finally {
+        logTime();
+      }
+    });
   }
 
   private void logTime() {
@@ -456,9 +466,7 @@ public abstract class GitHandler {
 
     try {
       myStartTime = System.currentTimeMillis();
-      String logDirectoryPath = myProject != null
-                                ? GitImplBase.stringifyWorkingDir(myProject.getBasePath(), myCommandLine.getWorkingDirectory())
-                                : myCommandLine.getWorkDirectory().getPath();
+      String logDirectoryPath = getDirectoryPathForLogging();
       if (!mySilent) {
         LOG.info("[" + logDirectoryPath + "] " + printableCommandLine());
       }
@@ -487,6 +495,12 @@ public abstract class GitHandler {
       }
       myListeners.getMulticaster().startFailed(t);
     }
+  }
+
+  private @NotNull String getDirectoryPathForLogging() {
+    return myProject != null
+           ? GitImplBase.stringifyWorkingDir(myProject.getBasePath(), myCommandLine.getWorkingDirectory())
+           : myCommandLine.getWorkDirectory().getPath();
   }
 
   private void prepareEnvironment() {
