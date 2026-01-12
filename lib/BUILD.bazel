@@ -3553,8 +3553,8 @@ jvm_import(
 
 jvm_import(
   name = "jediterm-core",
-  jar = "@org_jetbrains_jediterm-jediterm-core-3_57_http//file",
-  source_jar = "@org_jetbrains_jediterm-jediterm-core-3_57_http//file",
+  jar = "@org_jetbrains_jediterm-jediterm-core-3_59_http//file",
+  source_jar = "@org_jetbrains_jediterm-jediterm-core-3_59_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -5762,8 +5762,8 @@ jvm_import(
 
 jvm_import(
   name = "libraries-jediterm-ui-jediterm-ui",
-  jar = "@org_jetbrains_jediterm-jediterm-ui-3_57_http//file",
-  source_jar = "@org_jetbrains_jediterm-jediterm-ui-3_57_http//file",
+  jar = "@org_jetbrains_jediterm-jediterm-ui-3_59_http//file",
+  source_jar = "@org_jetbrains_jediterm-jediterm-ui-3_59_http//file",
   visibility = ["//visibility:public"]
 )
 
