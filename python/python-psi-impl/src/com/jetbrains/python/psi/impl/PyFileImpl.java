@@ -48,7 +48,7 @@ import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.function.Function;
 
-public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
+public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression, PyInstantTypeProvider {
   protected volatile @Nullable PyType myType;
 
   //private volatile Boolean myAbsoluteImportEnabled;

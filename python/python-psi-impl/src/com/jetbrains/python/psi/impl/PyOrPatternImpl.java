@@ -4,13 +4,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyOrPattern;
+import com.jetbrains.python.psi.PyWrapperTypeProvider;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyOrPatternImpl extends PyElementImpl implements PyOrPattern {
+public class PyOrPatternImpl extends PyElementImpl implements PyOrPattern, PyWrapperTypeProvider {
   public PyOrPatternImpl(ASTNode astNode) {
     super(astNode);
   }

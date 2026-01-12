@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PySetCompExpression;
+import com.jetbrains.python.psi.PyWrapperTypeProvider;
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 
 
-public class PySetCompExpressionImpl extends PyComprehensionElementImpl implements PySetCompExpression {
+public class PySetCompExpressionImpl extends PyComprehensionElementImpl implements PySetCompExpression, PyWrapperTypeProvider {
   public PySetCompExpressionImpl(ASTNode astNode) {
     super(astNode);
   }

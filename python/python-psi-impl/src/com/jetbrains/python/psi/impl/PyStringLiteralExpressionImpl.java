@@ -31,7 +31,7 @@ import javax.swing.*;
 import java.util.List;
 
 public class PyStringLiteralExpressionImpl extends PyElementImpl
-  implements PyStringLiteralExpression, PsiLiteralValue, ContributedReferenceHost {
+  implements PyStringLiteralExpression, PsiLiteralValue, ContributedReferenceHost, PyInstantTypeProvider {
 
   private volatile @Nullable String myStringValue;
   private volatile @Nullable List<TextRange> myValueTextRanges;

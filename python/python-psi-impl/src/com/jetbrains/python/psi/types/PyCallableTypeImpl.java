@@ -92,6 +92,11 @@ public class PyCallableTypeImpl implements PyCallableType {
   }
 
   @Override
+  public String toString() {
+    return "PyCallableType: " + getName();
+  }
+
+  @Override
   public boolean isBuiltin() {
     return false;
   }

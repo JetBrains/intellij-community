@@ -42,7 +42,7 @@
                     interface="com.jetbrains.python.documentation.PythonDocumentationQuickInfoProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.typeEvalExternalTypeProvider"
-                    interface="com.jetbrains.python.psi.types.TypeEvalExternalTypeProvider"
+                    interface="com.jetbrains.python.psi.types.external.ExternalPyTypeResolverProvider"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
