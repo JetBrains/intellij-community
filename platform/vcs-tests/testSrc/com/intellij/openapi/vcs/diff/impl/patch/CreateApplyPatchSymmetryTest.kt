@@ -108,11 +108,19 @@ class CreateApplyPatchSymmetryTest : HeavyDiffTestCase() {
                         SimpleContentRevision("b\n", filePath, "2"))
     val patches = IdeaTextPatchBuilder.buildPatch(project, listOf(change), basePath, false)
 
-    val includeFullCommitMessage = booleanArrayOf(false)
-    val hasFullCommitMessage = booleanArrayOf(false)
+    val includeFullCommitMessage = booleanArrayOf(false, true)
+    val hasFullCommitMessage = booleanArrayOf(false, true)
     for (includeFull in includeFullCommitMessage) {
       for (hasFull in hasFullCommitMessage) {
-        val commitContext = if (includeFull || hasFull) CommitContext() else null
+        val commitContext = if (includeFull || hasFull) {
+          CommitContext().apply {
+            if (hasFull) putUserData(PatchWriter.FULL_COMMIT_MESSAGE_KEY, "subject\n\nbody")
+            if (includeFull) putUserData(PatchWriter.INCLUDE_FULL_COMMIT_MESSAGE_KEY, true)
+          }
+        }
+        else {
+          null
+        }
 
         val tempDir = Files.createTempDirectory("patch-writer-test")
         try {

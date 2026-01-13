@@ -9,6 +9,7 @@ import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -34,6 +35,8 @@ import static com.intellij.openapi.vcs.VcsType.distributed;
 public final class PatchWriter {
   public static final Key<Boolean> STANDARD_PATCH_FORMAT_KEY =
     Key.create("com.intellij.openapi.vcs.changes.patch.PatchWriter.STANDARD_PATCH_FORMAT_KEY");
+  public static final Key<String> FULL_COMMIT_MESSAGE_KEY =
+    Key.create("com.intellij.openapi.vcs.changes.patch.PatchWriter.FULL_COMMIT_MESSAGE_KEY");
   public static final Key<Boolean> INCLUDE_FULL_COMMIT_MESSAGE_KEY =
     Key.create("com.intellij.openapi.vcs.changes.patch.PatchWriter.INCLUDE_FULL_COMMIT_MESSAGE_KEY");
 
@@ -76,7 +79,10 @@ public final class PatchWriter {
     String lineSeparator = CodeStyle.getSettings(project).getLineSeparator();
     boolean includeFullCommitMessage = commitContext != null && Boolean.TRUE.equals(commitContext.getUserData(INCLUDE_FULL_COMMIT_MESSAGE_KEY));
     if (includeFullCommitMessage) {
-      throw new UnsupportedOperationException("Full commit message is not implemented yet");
+      String fullCommitMessage = commitContext.getUserData(FULL_COMMIT_MESSAGE_KEY);
+      if (!StringUtil.isEmptyOrSpaces(fullCommitMessage)) {
+        commitMessage = fullCommitMessage;
+      }
     }
     UnifiedDiffWriter.writeCommitMessageHeader(project, writer, lineSeparator, commitMessage);
     UnifiedDiffWriter.write(project, basePath, patches, writer, lineSeparator, commitContext, null);
