@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.PlatformUtils
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.JBUI
@@ -31,6 +32,7 @@ import java.time.Duration
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.time.toKotlinDuration
 
 /** Position of the floating toolbar in cells top right corner. */
@@ -178,22 +180,30 @@ internal class EditorCellActionsToolbarController(
 
     val panelRoofHeight = panelHeight - delimiterSize
 
-    val xOffset = (panelWidth - toolbarWidth - (panelWidth * RELATIVE_Y_OFFSET_RATIO)).toInt()
+    val xOffset = panelWidth - toolbarWidth - (panelWidth * RELATIVE_Y_OFFSET_RATIO).toInt()
     val yOffset = panelHeight - panelRoofHeight - (toolbarHeight / 2)
 
     val panelLocationInEditor = SwingUtilities.convertPoint(panel, Point(0, 0), editor.contentComponent)
 
-    val xCoordinate = panelLocationInEditor.x + xOffset
-    val yCoordinate = panelLocationInEditor.y + yOffset
+    var xCoordinate = panelLocationInEditor.x + xOffset
+    var yCoordinate = panelLocationInEditor.y + yOffset
 
-    val correctedY = if (NotebookSettings.getInstance().cellToolbarStickyVisible) {
-      max(yCoordinate, editor.contentComponent.visibleRect.y + JBUI.scale(2))
-    }
-    else {
-      yCoordinate
+    // We have also EditorInspectionsActionToolbar in the top right editor corner, and we want to protect from overlap.
+    val statusComponent = (editor.scrollPane as? JBScrollPane)?.statusComponent
+    if (statusComponent != null && xCoordinate + toolbarWidth > panelWidth - statusComponent.width) {
+      xCoordinate = panelWidth - statusComponent.width - toolbarWidth + editor.scrollPane.verticalScrollBar.width
     }
 
-    return Rectangle(xCoordinate, correctedY, toolbarWidth, toolbarHeight)
+    if (NotebookSettings.getInstance().cellToolbarStickyVisible) {
+      yCoordinate = max(yCoordinate, editor.contentComponent.visibleRect.y + JBUI.scale(2))
+
+      val bounds = cell.view?.calculateBounds()
+      if (bounds != null) {
+        yCoordinate = min(yCoordinate, bounds.y + bounds.height - toolbarHeight - JBUI.scale(4))
+      }
+    }
+
+    return Rectangle(xCoordinate, yCoordinate, toolbarWidth, toolbarHeight)
   }
 
   companion object {
