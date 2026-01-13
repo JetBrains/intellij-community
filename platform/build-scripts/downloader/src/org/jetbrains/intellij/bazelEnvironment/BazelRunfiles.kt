@@ -13,6 +13,8 @@ object BazelRunfiles {
    */
   val isRunningFromBazel: Boolean = System.getenv(JAVA_RUNFILES_ENV_NAME) != null
 
+  private val runfileManifest = BazelRunfilesManifest()
+
   @JvmStatic
   fun getFileByLabel(label: BazelLabel): Path {
     val repoEntry = bazelTestRepoMapping.getOrElse(label.repo) {
@@ -31,8 +33,8 @@ object BazelRunfiles {
     }
 
     // On Windows there could be no runfiles tree, so we need to use manifest only
-    if (runfilesManifestOnly || BazelRunfilesManifest.exists) {
-      val resolved = Path.of(BazelRunfilesManifest.get(manifestKey))
+    if (runfilesManifestOnly || runfileManifest.exists) {
+      val resolved = Path.of(runfileManifest.get(manifestKey))
       check(resolved.exists()) { "Unable to find dependency ($RUNFILES_MANIFEST_ONLY_ENV_NAME=1) '${label.asLabel}' at $resolved" }
       return resolved
     }
@@ -61,8 +63,8 @@ object BazelRunfiles {
     val (root1, root2) = if (runfilesManifestOnly) {
       val root1key = "community+/${relativePath}"
       val root2key = "_main/${relativePath}"
-      Path.of(BazelRunfilesManifest.get(root1key)) to
-        Path.of(BazelRunfilesManifest.get(root2key))
+      Path.of(runfileManifest.get(root1key)) to
+        Path.of(runfileManifest.get(root2key))
     } else {
       bazelJavaRunfilesPath.resolve("community+").resolve(relativePath) to
         bazelJavaRunfilesPath.resolve("_main").resolve(relativePath)
@@ -89,7 +91,11 @@ object BazelRunfiles {
   // Cache it to avoid repeated env lookups and branching cost in hot paths.
   private val runfilesManifestOnly: Boolean by lazy {
     val v = System.getenv(RUNFILES_MANIFEST_ONLY_ENV_NAME)
-    v != null && v.isNotBlank() && v == "1"
+    (v != null && v.isNotBlank() && v == "1").also {
+      if (it) {
+        require(runfileManifest.exists) { "$RUNFILES_MANIFEST_ONLY_ENV_NAME=1, but ${runfileManifest.manifestFile} not found." }
+      }
+    }
   }
 
   /**
@@ -120,8 +126,8 @@ object BazelRunfiles {
   val bazelTestRepoMapping: Map<String, RepoMappingEntry> by lazy {
     val repoMappingFile = when {
       bazelJavaRunfilesPath.resolve("_repo_mapping").exists() -> bazelJavaRunfilesPath.resolve("_repo_mapping")
-      Path.of(BazelRunfilesManifest.get("_repo_mapping")).exists() ->
-        Path.of(BazelRunfilesManifest.get("_repo_mapping"))
+      Path.of(runfileManifest.get("_repo_mapping")).exists() ->
+        Path.of(runfileManifest.get("_repo_mapping"))
       else -> error("repo_mapping file not found.")
     }
     repoMappingFile.useLines { lines ->

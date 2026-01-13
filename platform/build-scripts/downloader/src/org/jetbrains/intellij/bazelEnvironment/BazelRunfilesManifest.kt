@@ -6,19 +6,24 @@ import kotlin.io.path.exists
 import kotlin.io.path.useLines
 import kotlin.math.max
 
-object BazelRunfilesManifest {
-  // https://fuchsia.googlesource.com/fuchsia/+/HEAD/build/bazel/BAZEL_RUNFILES.md?format%2F%2F#how-runfiles-libraries-really-work
-  private const val RUNFILES_MANIFEST_FILE_ENV_NAME = "RUNFILES_MANIFEST_FILE"
+class BazelRunfilesManifest(val manifestFile: String? = System.getenv(RUNFILES_MANIFEST_FILE_ENV_NAME)) {
+  private companion object {
+    // https://fuchsia.googlesource.com/fuchsia/+/HEAD/build/bazel/BAZEL_RUNFILES.md?format%2F%2F#how-runfiles-libraries-really-work
+    const val RUNFILES_MANIFEST_FILE_ENV_NAME: String = "RUNFILES_MANIFEST_FILE"
+  }
 
   val exists: Boolean by lazy {
-    val env = System.getenv(RUNFILES_MANIFEST_FILE_ENV_NAME) ?: return@lazy false
-    Path.of(env).exists()
+    manifestFile ?: return@lazy false
+    Path.of(manifestFile).exists()
+  }
+
+  val manifest: Path by lazy {
+    require(manifestFile != null && exists) { "RUNFILES_MANIFEST_FILE is not set or does not exist: $manifestFile" }
+    Path.of(manifestFile)
   }
 
   private val bazelRunFilesManifest: Map<String, String> by lazy {
-    val file = Path.of(System.getenv(RUNFILES_MANIFEST_FILE_ENV_NAME))
-    require(file.exists()) { "RUNFILES_MANIFEST_FILE does not exist: $file" }
-    file.useLines { lines ->
+    manifest.useLines { lines ->
       lines
         .filter { it.isNotBlank() && it.isNotEmpty() }
         .map { parseManifestEntry(it) }
@@ -65,8 +70,7 @@ object BazelRunfilesManifest {
 
     // Normalize and split into path segments without using regex; ignore empty segments
     val partsList: List<List<String>> = paths
-      .map { it.trim('/') }
-      .map { p -> if (p.isEmpty()) emptyList() else p.split('/').filter { it.isNotEmpty() } }
+      .map { p -> if (p.isEmpty()) emptyList() else p.split('/') }
 
     if (partsList.isEmpty()) return ""
 
@@ -77,7 +81,7 @@ object BazelRunfilesManifest {
     for (i in 0 until minLength) {
       val segment = partsList[0][i]
       if (partsList.any { it[i] != segment }) break
-      if (sb.isNotEmpty()) sb.append('/')
+      if (i > 0) sb.append('/')
       sb.append(segment)
     }
     return sb.toString()
