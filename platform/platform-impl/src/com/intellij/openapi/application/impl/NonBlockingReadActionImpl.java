@@ -911,7 +911,6 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     for (Submission<?> task : ourTasksForTestMode) {
       TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
         waitForTask(task);
-        return Unit.INSTANCE;
       });
     }
   }

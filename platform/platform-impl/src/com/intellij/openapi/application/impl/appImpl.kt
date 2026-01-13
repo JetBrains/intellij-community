@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
@@ -135,15 +135,15 @@ object TestOnlyThreading {
    * Please note that in tests it is more appropriate to use [com.intellij.testFramework.PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue]
    */
   @JvmStatic
-  fun <T> releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action: () -> T): T {
+  fun releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action: Runnable) {
     val application = ApplicationManager.getApplication()
     if (application == null) {
-      return action()
+      return action.run()
     }
     if (application.isWriteIntentLockAcquired) {
-      return getGlobalThreadingSupport().releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action)
+      return getGlobalThreadingSupport().releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action::run)
     } else {
-      return action()
+      return action.run()
     }
   }
 }

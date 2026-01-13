@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
@@ -81,7 +81,6 @@ import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.context.Context;
-import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -533,7 +532,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     do {
       TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
         EDT.dispatchAllInvocationEvents();
-        return Unit.INSTANCE;
       });
       // refresh will fire write actions interfering with highlighting
       // heavy ops are bad, but VFS refresh is ok
@@ -546,13 +544,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       }
       TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
         EDT.dispatchAllInvocationEvents();
-        return Unit.INSTANCE;
       });
     }
     ((GistManagerImpl)GistManager.getInstance()).clearQueueInTests();
     TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
       EDT.dispatchAllInvocationEvents();
-      return Unit.INSTANCE;
     });
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion(); // wait for async editor loading
 
@@ -622,7 +618,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           }
           TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
             EDT.dispatchAllInvocationEvents();
-            return Unit.INSTANCE;
           });
           progress.checkCanceled();
           return progress.isRunning();

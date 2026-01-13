@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,7 +19,6 @@ import com.intellij.util.TestTimeOut;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -252,7 +251,6 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
 
       assertTrue("NonLockedEventDispatcher should have been called", dispatcherCalled.get());
       assertFalse("NonLockedEventDispatcher should not have write intent access", hasWriteIntentAccess.get());
-      return Unit.INSTANCE;
     });
   }
 
@@ -283,7 +281,6 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
 
       assertTrue("Regular EventDispatcher should have been called", dispatcherCalled.get());
       assertTrue("Regular EventDispatcher should have write intent access", hasWriteIntentAccess.get());
-      return Unit.INSTANCE;
     });
   }
 }

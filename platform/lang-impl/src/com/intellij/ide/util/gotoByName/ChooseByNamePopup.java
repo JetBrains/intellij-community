@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.google.common.util.concurrent.UncheckedTimeoutException;
@@ -30,8 +30,10 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import kotlin.Unit;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -497,7 +499,6 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     while (!semaphore.waitFor(10) && System.currentTimeMillis() - start < 20_000) {
       TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
         UIUtil.dispatchAllInvocationEvents();
-        return Unit.INSTANCE;
       });
     }
     if (!semaphore.waitFor(10)) {

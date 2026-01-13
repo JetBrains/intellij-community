@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.ThreadContext;
@@ -81,7 +81,6 @@ import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.AssertionFailedError;
-import kotlin.Unit;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.Promise;
 import org.junit.AssumptionViolatedException;
@@ -370,7 +369,6 @@ public final class PlatformTestUtil {
       TimeoutUtil.sleep(5);
       TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
         UIUtil.dispatchAllInvocationEvents();
-        return Unit.INSTANCE;
       });
     }
   }
@@ -404,7 +402,6 @@ public final class PlatformTestUtil {
       if (promise.getState() == Promise.State.PENDING) {
         TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
           UIUtil.dispatchAllInvocationEvents();
-          return Unit.INSTANCE;
         });
       }
       try {
@@ -538,7 +535,6 @@ public final class PlatformTestUtil {
             eventQueue.dispatchEvent(event);
           }
         }
-        return Unit.INSTANCE;
       });
       return null;
     });
@@ -1422,7 +1418,6 @@ public final class PlatformTestUtil {
     var documentCommitThread = DocumentCommitThread.getInstance();
     TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
       documentCommitThread.waitForAllCommits(timeout, timeUnit);
-      return Unit.INSTANCE;
     });
     // some callbacks on document commit might require EDT. So we forcibly dispatch pending events to run these callbacks
     dispatchAllInvocationEventsInIdeEventQueue();

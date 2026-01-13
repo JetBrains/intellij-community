@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.find.ngrams.TrigramIndex;
@@ -36,7 +36,6 @@ import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.IgnoredTraverseEntry;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -184,13 +183,11 @@ public final class LeakHunter {
       if (EDT.isCurrentThreadEdt()) {
         TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
           UIUtil.dispatchAllInvocationEvents();
-          return Unit.INSTANCE;
         });
         while (DumbService.getInstance(project).isDumb()) {
           DumbService.getInstance(project).waitForSmartMode(100L);
           TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
             UIUtil.dispatchAllInvocationEvents();
-            return Unit.INSTANCE;
           });
         }
       }
