@@ -18,6 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.NotDirectoryException
 import java.nio.file.Path
@@ -173,13 +174,19 @@ class VirtualEnvReader private constructor(
    * Looks for python binary among directory entries
    */
   @RequiresBackgroundThread
-  private fun findInterpreter(dir: Path): PythonBinary? {
-    val pythonNames = when (forcedOs ?: dir.getEelDescriptor().osFamily) {
-      EelOsFamily.Posix -> POSIX_BINS
-      EelOsFamily.Windows -> WIN_BINS
-    }
-    return try {
-      dir.listDirectoryEntries().firstOrNull { it.name.lowercase() in pythonNames && it.isRegularFile() }
+  private fun findInterpreter(dir: Path): PythonBinary? =
+    try {
+      Files.newDirectoryStream(dir).use { stream ->
+        val pythonNames = when (forcedOs ?: dir.getEelDescriptor().osFamily) {
+          EelOsFamily.Posix -> POSIX_BINS
+          EelOsFamily.Windows -> WIN_BINS
+        }
+        stream.firstOrNull {
+          it.name.lowercase() in pythonNames &&
+          it.isRegularFile()
+        }
+      }
+
     }
     catch (_: NotDirectoryException) {
       return null
@@ -187,7 +194,6 @@ class VirtualEnvReader private constructor(
     catch (_: NoSuchFileException) {
       return null
     }
-  }
 
   @RequiresBackgroundThread
   private fun resolveDirFromEnvOrElseGetDirInHomePath(eel: EelApi?, env: String, dirName: String): Path {
