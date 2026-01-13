@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.impl.TerminalAliasesInfo
 import java.util.*
 
 @ApiStatus.Internal
@@ -17,7 +16,7 @@ interface TerminalShellIntegrationEventsListener : EventListener {
 
   fun promptFinished() {}
 
-  fun aliasesReceived(aliases: TerminalAliasesInfo) {}
+  fun aliasesReceived(aliasesRaw: String) {}
 
   fun completionFinished(result: String) {}
 }

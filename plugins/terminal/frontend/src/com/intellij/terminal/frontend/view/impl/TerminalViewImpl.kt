@@ -269,6 +269,7 @@ class TerminalViewImpl(
       outputModelController,
       sessionModel,
       shellIntegrationDeferred,
+      startupOptionsDeferred,
       coroutineScope.childScope("TerminalShellIntegrationEventsHandler"),
     )
     controller.addEventsHandler(shellIntegrationEventsHandler)

@@ -3,12 +3,14 @@ package com.intellij.terminal.frontend.view.impl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.asDisposable
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
+import org.jetbrains.plugins.terminal.session.ShellName
+import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
+import org.jetbrains.plugins.terminal.session.guessShellName
 import org.jetbrains.plugins.terminal.session.impl.*
 import org.jetbrains.plugins.terminal.session.impl.dto.toState
 import org.jetbrains.plugins.terminal.util.getNow
@@ -19,6 +21,7 @@ internal class TerminalShellIntegrationEventsHandler(
   private val outputModelController: TerminalOutputModelController,
   private val sessionModel: TerminalSessionModel,
   private val shellIntegrationDeferred: CompletableDeferred<TerminalShellIntegration>,
+  private val startupOptionsDeferred: Deferred<TerminalStartupOptions>,
   private val coroutineScope: CoroutineScope,
 ) : TerminalOutputEventsHandler {
   private val edtContext = Dispatchers.EDT + ModalityState.any().asContextElement()
@@ -72,7 +75,14 @@ internal class TerminalShellIntegrationEventsHandler(
         }
       }
       is TerminalAliasesReceivedEvent -> {
-        getIntegrationOrThrow().onAliasesReceived(event.aliases.aliases)
+        val shellName = startupOptionsDeferred.getNow()?.guessShellName()
+        if (shellName != null) {
+          val aliases = parseAliases(event.aliasesRaw, shellName)
+          getIntegrationOrThrow().onAliasesReceived(aliases)
+        }
+        else {
+          LOG.error("Failed to parse aliases: startup options are not initialized yet")
+        }
       }
       is TerminalCompletionFinishedEvent -> {
         getIntegrationOrThrow().onCompletionFinished(event.result)
@@ -90,5 +100,24 @@ internal class TerminalShellIntegrationEventsHandler(
       coroutineScope.asDisposable()
     )
     shellIntegrationDeferred.complete(integration)
+  }
+
+  private fun parseAliases(text: String, shellName: ShellName): Map<String, String> {
+    if (text.isBlank()) return emptyMap()
+
+    val adjustedShellName = if (shellName == ShellName.PWSH) ShellName.POWERSHELL else shellName
+    val shellSupport = TerminalShellSupport.findByShellName(adjustedShellName.value)
+                       ?: return emptyMap()
+    return try {
+      shellSupport.parseAliases(text)
+    }
+    catch (ex: Exception) {
+      LOG.error("Failed to parse aliases for ${adjustedShellName.value}: $text", ex)
+      emptyMap()
+    }
+  }
+
+  companion object {
+    private val LOG = logger<TerminalShellIntegrationEventsHandler>()
   }
 }
