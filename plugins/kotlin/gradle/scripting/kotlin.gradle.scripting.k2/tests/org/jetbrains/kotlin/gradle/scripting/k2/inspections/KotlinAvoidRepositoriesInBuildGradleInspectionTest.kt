@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import com.intellij.testFramework.runInEdtAndWait
@@ -11,7 +11,6 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsS
 import org.jetbrains.plugins.gradle.testFramework.util.*
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.jupiter.params.ParameterizedTest
-import kotlin.io.path.Path
 
 class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTestCase() {
 
@@ -1114,7 +1113,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 include("subproject")
                 """.trimIndent(),
                 isForPlugins = true,
-                relativeBuildFilePath = Path("subproject", GradleConstants.KOTLIN_DSL_SCRIPT_NAME).toString()
+                relativeBuildFilePath = "subproject/build.gradle.kts"
             )
         }
     }
