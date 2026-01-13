@@ -25,7 +25,7 @@ object SearchEverywhereFeature {
   var isSplit: Boolean
     get() =
       Registry.`is`(registryKey, false) ||
-      Registry.`is`(ALLOW_AB_KEY, true) && ABExperimentOption.SPLIT_SEARCH_EVERYWHERE.isEnabled()
+      Registry.`is`(ALLOW_AB_KEY, false) && ABExperimentOption.SPLIT_SEARCH_EVERYWHERE.isEnabled()
 
     set(value) {
       Registry.get(registryKey).setValue(value)
