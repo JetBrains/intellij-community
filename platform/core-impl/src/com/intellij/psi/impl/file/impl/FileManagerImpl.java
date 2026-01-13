@@ -78,7 +78,7 @@ public final class FileManagerImpl implements FileManagerEx {
 
     LowMemoryWatcher.register(() -> processQueue(), manager);
 
-    myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+    myConnection.subscribe(DumbService.DUMB_MODE_BACKGROUNDABLE, new DumbService.DumbModeListenerBackgroundable() {
       @Override
       public void enteredDumbMode() {
         processFileTypesChanged(false);

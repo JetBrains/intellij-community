@@ -37,7 +37,7 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
   public PsiModificationTrackerImpl(@NotNull Project project) {
     MessageBus bus = project.getMessageBus();
     myPublisher = bus.syncPublisher(TOPIC);
-    bus.connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+    bus.connect().subscribe(DumbService.DUMB_MODE_BACKGROUNDABLE, new DumbService.DumbModeListenerBackgroundable() {
       @Override
       public void enteredDumbMode() {
         doIncCounter();

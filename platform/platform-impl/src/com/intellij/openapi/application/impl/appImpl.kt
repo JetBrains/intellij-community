@@ -13,6 +13,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.util.SlowOperations
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.application
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -193,6 +194,7 @@ object InternalThreading {
   @Internal
   @JvmStatic
   fun isBackgroundWriteActionAllowed(): Boolean =
+    application.isWriteAccessAllowed ||
     currentThreadContext()[RunInBackgroundWriteActionMarker] != null
 
 
