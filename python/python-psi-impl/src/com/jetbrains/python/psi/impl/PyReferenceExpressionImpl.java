@@ -243,25 +243,28 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       }
     }
 
-    final PyType typeFromTargets = getTypeFromTargets(context);
+    // null means no result; Ref(null) here can mean that a variable is annotated
+    // like `var: Any` earlier, so we know not to use __getattr__ later
+    final Ref<PyType> typeFromTargetsRef = getTypeFromTargets(context);
+    final PyType typeFromTargets = Ref.deref(typeFromTargetsRef);
     if (qualified && isNoneType(typeFromTargets)) {
       return null;
     }
+
     final Ref<PyType> descriptorType = PyDescriptorTypeUtil.getDunderGetReturnType(this, typeFromTargets, context);
     if (descriptorType != null) {
       return descriptorType.get();
     }
-
     final PyType callableType = getCallableType(context);
     if (callableType != null) {
       return callableType;
     }
 
-    if (typeFromTargets == null && qualified) {
+    if (typeFromTargetsRef == null && qualified) {
       return getTypeFromDunderGetAttr(context);
     }
 
-    return typeFromTargets;
+    return Ref.deref(typeFromTargetsRef);
   }
 
   private @Nullable PyType getCallableType(@NotNull TypeEvalContext context) {
@@ -330,9 +333,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return null;
   }
 
-  private @Nullable PyType getTypeFromTargets(@NotNull TypeEvalContext context) {
+  private @Nullable Ref<PyType> getTypeFromTargets(@NotNull TypeEvalContext context) {
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
-    final List<PyType> members = new ArrayList<>();
+    final List<Ref<PyType>> members = new ArrayList<>();
 
     final PsiFile realFile = FileContextUtil.getContextFile(this);
     if (!(getContainingFile() instanceof PyExpressionCodeFragment) || (realFile != null && context.maySwitchToAST(realFile))) {
@@ -349,7 +352,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       }
     }
 
-    return PyUnionType.union(members);
+    return members.stream().collect(PyTypeUtil.toUnionFromRef());
   }
 
   private @Nullable PyType getQualifiedReferenceTypeByControlFlow(@NotNull TypeEvalContext context) {
@@ -422,57 +425,58 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return null;
   }
 
-  private static @Nullable PyType getTypeFromTarget(@NotNull PsiElement target,
-                                                    @NotNull TypeEvalContext context,
-                                                    @NotNull PyReferenceExpression anchor) {
-    final PyType type = dropSelfForQualifiedMethod(getGenericTypeFromTarget(target, context, anchor), context, anchor);
+  private static @Nullable Ref<PyType> getTypeFromTarget(@NotNull PsiElement target,
+                                                         @NotNull TypeEvalContext context,
+                                                         @NotNull PyReferenceExpression anchor) {
+    final @Nullable Ref<PyType> typeRef = dropSelfForQualifiedMethod(getGenericTypeFromTarget(target, context, anchor), context, anchor);
 
     if (context.maySwitchToAST(anchor)) {
       final PyExpression qualifier = anchor.getQualifier();
       if (qualifier != null) {
         PyType qualifierType = context.getType(qualifier);
         boolean possiblyParameterizedQualifier = !(qualifierType instanceof PyModuleType || qualifierType instanceof PyImportedModuleType);
+        final PyType type = Ref.deref(typeRef);
         if (possiblyParameterizedQualifier && PyTypeChecker.hasGenerics(type, context)) {
           if (qualifierType instanceof PyCollectionType collectionType && collectionType.isDefinition()) {
             if (type != null) {
               var substitutions = PyTypeChecker.unifyReceiver(qualifierType, context);
               PyType typeWithSubstitutions = PyTypeChecker.substitute(type, substitutions, context);
               if (typeWithSubstitutions != null) {
-                return typeWithSubstitutions;
+                return Ref.create(typeWithSubstitutions);
               }
             }
           }
           final var substitutions = PyTypeChecker.unifyGenericCall(qualifier, Collections.emptyMap(), context);
           if (substitutions != null) {
-            return PyTypeChecker.substitute(type, substitutions, context);
+            return Ref.create(PyTypeChecker.substitute(type, substitutions, context));
           }
         }
       }
     }
 
-    return type;
+    return typeRef;
   }
 
-  private static @Nullable PyType getGenericTypeFromTarget(@NotNull PsiElement target,
-                                                           @NotNull TypeEvalContext context,
-                                                           @NotNull PyReferenceExpression anchor) {
+  private static @Nullable Ref<PyType> getGenericTypeFromTarget(@NotNull PsiElement target,
+                                                                @NotNull TypeEvalContext context,
+                                                                @NotNull PyReferenceExpression anchor) {
     if (!(target instanceof PyTargetExpression)) {  // PyTargetExpression will ask about its type itself
       final Ref<PyType> pyType = getReferenceTypeFromProviders(target, context, anchor);
       if (pyType != null) {
-        return pyType.get();
+        return pyType;
       }
     }
     if (target instanceof PyTargetExpression) {
       final String name = ((PyTargetExpression)target).getName();
       if (PyNames.NONE.equals(name)) {
-        return PyBuiltinCache.getInstance(target).getNoneType();
+        return Ref.create(PyBuiltinCache.getInstance(target).getNoneType());
       }
       if (PyNames.TRUE.equals(name) || PyNames.FALSE.equals(name)) {
-        return PyBuiltinCache.getInstance(target).getBoolType();
+        return Ref.create(PyBuiltinCache.getInstance(target).getBoolType());
       }
     }
     if (target instanceof PyFile) {
-      return new PyModuleType((PyFile)target);
+      return Ref.create(new PyModuleType((PyFile)target));
     }
     if (target instanceof PyElement && context.allowDataFlow(anchor)) {
       final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(anchor);
@@ -482,7 +486,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
             (target instanceof PyTargetExpression || target instanceof PyNamedParameter) && ScopeUtil.getScopeOwner(target) == scopeOwner) {
           final PyType type = getTypeByControlFlow(name, context, anchor, scopeOwner);
           if (type != null) {
-            return type;
+            return Ref.create(type);
           }
         }
       }
@@ -492,18 +496,18 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if (decoratorList != null) {
         final PyDecorator propertyDecorator = decoratorList.findDecorator(PyNames.PROPERTY);
         if (propertyDecorator != null) {
-          return PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY);
+          return Ref.create(PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY));
         }
         for (PyDecorator decorator : decoratorList.getDecorators()) {
           final QualifiedName qName = decorator.getQualifiedName();
           if (qName != null && (qName.endsWith(PyNames.SETTER) || qName.endsWith(PyNames.DELETER) || qName.endsWith(PyNames.GETTER))) {
-            return PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY);
+            return Ref.create(PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY));
           }
         }
       }
     }
     if (target instanceof PyTypedElement) {
-      return context.getType((PyTypedElement)target);
+      return Ref.create(context.getType((PyTypedElement)target));
     }
     if (target instanceof PsiDirectory dir) {
       final PsiFile file = dir.findFile(PyNames.INIT_DOT_PY);
@@ -516,7 +520,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           final QualifiedName qualifiedName = QualifiedNameFinder.findShortestImportableQName(dir);
           if (qualifiedName != null) {
             final PyImportedModule module = new PyImportedModule(null, (PyFile)containingFile, qualifiedName);
-            return new PyImportedModuleType(module);
+            return Ref.create(new PyImportedModuleType(module));
           }
         }
       }
@@ -524,15 +528,15 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return null;
   }
 
-  private static @Nullable PyType dropSelfForQualifiedMethod(@Nullable PyType type,
-                                                             @NotNull TypeEvalContext context,
-                                                             @NotNull PyReferenceExpression anchor) {
-    if (type instanceof PyCallableType functionType && context.maySwitchToAST(anchor) && anchor.getQualifier() != null) {
+  private static @Nullable Ref<PyType> dropSelfForQualifiedMethod(@Nullable Ref<PyType> type,
+                                                                  @NotNull TypeEvalContext context,
+                                                                  @NotNull PyReferenceExpression anchor) {
+    if (Ref.deref(type) instanceof PyCallableType functionType && context.maySwitchToAST(anchor) && anchor.getQualifier() != null) {
       if (context.getType(anchor.getQualifier()) instanceof PyClassLikeType classLikeType && classLikeType.isDefinition() &&
           functionType.getModifier() != PyAstFunction.Modifier.CLASSMETHOD) {
         return type;
       }
-      return functionType.dropSelf(context);
+      return Ref.create(functionType.dropSelf(context));
     }
 
     return type;

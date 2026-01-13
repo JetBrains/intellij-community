@@ -218,6 +218,23 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-85595
+  public void testDunderGetattrNotCalledForExplicitAnyAnnotation() {
+    doTest("Any", """
+      from typing import Any
+      
+      class MyClass:
+          def __init__(self):
+              self.attr: Any = 42
+      
+          def __getattr__(self, item) -> 'MyClass':
+              pass
+      
+      def foo(obj: MyClass):
+          expr = obj.attr
+      """);
+  }
+
   // PY-78964
   public void testFunctionReturnTypeTryFinally() {
     doTest("str",
