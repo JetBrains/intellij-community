@@ -18,14 +18,13 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
+import com.intellij.platform.vcs.impl.shared.telemetry.VcsTracer
+import com.intellij.platform.vcs.impl.shared.telemetry.trace
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.index.*
-import com.intellij.vcs.log.data.util.trace
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogStorageLocker
@@ -274,7 +273,7 @@ class VcsLogData @ApiStatus.Internal constructor(
   }
 
   private suspend fun readCurrentUser(): Map<VirtualFile, VcsUser> =
-    TelemetryManager.getInstance().getTracer(VcsScope).trace(VcsBackendTelemetrySpan.LogData.ReadingCurrentUser) {
+    VcsTracer.trace(VcsBackendTelemetrySpan.LogData.ReadingCurrentUser) {
       buildMap {
         for ((root, provider) in logProviders.entries) {
           checkCanceled()
