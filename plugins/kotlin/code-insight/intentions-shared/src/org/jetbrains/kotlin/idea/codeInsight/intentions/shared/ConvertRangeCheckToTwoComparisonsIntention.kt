@@ -40,7 +40,11 @@ class ConvertRangeCheckToTwoComparisonsIntention :
         KotlinBundle.message("convert.to.comparisons")
 
     override fun KaSession.prepareContext(element: KtBinaryExpression): Context? {
-        if (element.operationToken != KtTokens.IN_KEYWORD) return null
+        val isNegated = when (element.operationToken){
+            KtTokens.IN_KEYWORD -> false
+            KtTokens.NOT_IN -> true
+            else -> return null
+        }
         // ignore for-loop. for(x in 1..2) should not be convert to for(1<=x && x<=2)
         if (element.parent is KtForExpression) return null
         val rangeExpression = element.right ?: return null
@@ -56,9 +60,9 @@ class ConvertRangeCheckToTwoComparisonsIntention :
         if (!argType.semanticallyEquals(leftType) || !argType.semanticallyEquals(rightType)) return null
 
         val pattern = when (rangeExpression.getRangeBinaryExpressionTypeValidated()) {
-            RANGE_TO -> "$0 <= $1 && $1 <= $2"
-            UNTIL, RANGE_UNTIL -> "$0 <= $1 && $1 < $2"
-            DOWN_TO -> "$0 >= $1 && $1 >= $2"
+            RANGE_TO -> if (isNegated) "$1 < $0 || $1 > $2" else "$0 <= $1 && $1 <= $2"
+            UNTIL, RANGE_UNTIL -> if (isNegated) "$1 < $0 || $1 >= $2" else "$0 <= $1 && $1 < $2"
+            DOWN_TO -> if (isNegated) "$1 > $0 || $1 < $2" else "$0 >= $1 && $1 >= $2"
             null -> return null
         }
 

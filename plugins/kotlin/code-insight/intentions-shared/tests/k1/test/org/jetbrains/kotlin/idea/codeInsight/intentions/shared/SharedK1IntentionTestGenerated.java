@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared;
 
@@ -914,6 +914,31 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
         @TestMetadata("nonConstants.kt")
         public void testNonConstants() throws Exception {
             runTest("../testData/intentions/convertRangeCheckToTwoComparisons/nonConstants.kt");
+        }
+
+        @TestMetadata("notInDownTo.kt")
+        public void testNotInDownTo() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/notInDownTo.kt");
+        }
+
+        @TestMetadata("notInRange.kt")
+        public void testNotInRange() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/notInRange.kt");
+        }
+
+        @TestMetadata("notInRangeIf.kt")
+        public void testNotInRangeIf() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/notInRangeIf.kt");
+        }
+
+        @TestMetadata("notInRangeInclusive.kt")
+        public void testNotInRangeInclusive() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/notInRangeInclusive.kt");
+        }
+
+        @TestMetadata("notInUntil.kt")
+        public void testNotInUntil() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/notInUntil.kt");
         }
 
         @TestMetadata("otherOp.kt")

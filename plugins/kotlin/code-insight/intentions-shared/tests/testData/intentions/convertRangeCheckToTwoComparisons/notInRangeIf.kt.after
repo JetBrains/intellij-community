@@ -1,0 +1,6 @@
+// IGNORE_K1
+fun foo(x: Int) {
+    if (x < 1 || x > 10) {
+        println("not in range")
+    }
+}
