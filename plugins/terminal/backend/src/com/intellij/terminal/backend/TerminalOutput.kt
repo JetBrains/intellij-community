@@ -224,8 +224,8 @@ internal fun createTerminalOutputFlow(
       collectAndSendEvents(contentUpdate = null, otherEvent = TerminalPromptFinishedEvent)
     }
 
-    override fun aliasesReceived(aliases: TerminalAliasesInfo) {
-      collectAndSendEvents(contentUpdate = null, otherEvent = TerminalAliasesReceivedEvent(aliases))
+    override fun aliasesReceived(aliasesRaw: String) {
+      collectAndSendEvents(contentUpdate = null, otherEvent = TerminalAliasesReceivedEvent(aliasesRaw))
     }
 
     override fun completionFinished(result: String) {
