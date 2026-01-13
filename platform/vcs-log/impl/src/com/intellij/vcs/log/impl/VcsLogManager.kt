@@ -133,7 +133,7 @@ open class VcsLogManager @Internal constructor(
   }
 
   @Internal
-  suspend fun <R> runWithFreezing(operation: () -> R): R {
+  suspend fun <R> runWithFreezing(operation: suspend () -> R): R {
     withContext(Dispatchers.EDT) {
       freezeLog()
     }

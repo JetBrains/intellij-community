@@ -4,10 +4,12 @@ package git4idea.util
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Clock
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
@@ -19,9 +21,12 @@ import com.intellij.util.text.DateFormatUtil
 import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitNotificationIdsHolder
 import git4idea.commands.Git
+import git4idea.commands.Git.getInstance
 import git4idea.config.GitSaveChangesPolicy
+import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.merge.GitConflictResolver
+import git4idea.repo.GitRepository
 import git4idea.stash.GitChangesSaver
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -159,5 +164,29 @@ class GitPreservingProcess @ApiStatus.Internal constructor(
 
   companion object {
     private val LOG = logger<GitPreservingProcess>()
+
+    suspend fun <R> runWithPreservedLocalChanges(
+      repository: GitRepository,
+      @Nls operationTitle: String,
+      @NlsSafe destinationName: String,
+      operation: () -> R,
+    ): R? {
+      var result: R? = null
+      coroutineToIndicator { indicator ->
+        val saveMethod = GitVcsSettings.getInstance(repository.project).saveChangesPolicy
+        val process = GitPreservingProcess(repository.project,
+                                           getInstance(),
+                                           listOf(repository.root),
+                                           operationTitle,
+                                           destinationName,
+                                           saveMethod,
+                                           indicator
+        ) {
+          result = operation()
+        }
+        process.execute()
+      }
+      return result
+    }
   }
 }

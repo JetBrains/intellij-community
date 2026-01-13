@@ -494,12 +494,13 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     file("c.txt").assertNotExists()
   }
 
-  fun `test drop commit fails when local changes would be overwritten`() {
+  fun `test drop commit cleanly applies local changes after rebase`() {
     file("a.txt").create("content a").add()
-    val firstCommit = commitDetails(commit("Add a"))
-    file("b.txt").create("content b").addCommit("Add b")
+    file("b.txt").create("first line\n\nsecond line\n\nthird line").add()
+    val firstCommit = commitDetails(commit("Add a, b"))
+    file("b.txt").write("first line\n\nmodified second line\n\nthird line").addCommit("Modify b")
 
-    file("b.txt").write("local modified content")
+    file("b.txt").append("\n\nadded fourth line")
 
     logData.refreshAndWait(repo, true)
     refresh()
@@ -511,16 +512,10 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     model.drop(listOf(1))
 
     val validationResult = GitInMemoryRebaseData.createValidatedRebaseData(model, firstCommit, entries.last().commitDetails.id) as GitInMemoryRebaseData.Companion.ValidationResult.Valid
+    GitInMemoryInteractiveRebaseProcess(objectRepo, validationResult.rebaseData).run() as GitCommitEditingOperationResult.Complete
 
-    val lastCommitHashBefore = repo.last()
-    val result = GitInMemoryInteractiveRebaseProcess(objectRepo, validationResult.rebaseData).run()
-
-    assertTrue(result is GitCommitEditingOperationResult.Incomplete)
-
-    val lastCommitHashAfter = repo.last()
-    assertEquals(lastCommitHashBefore, lastCommitHashAfter)
     file("b.txt").assertExists()
-    assertEquals("local modified content", file("b.txt").read())
+    assertEquals("first line\n\nsecond line\n\nthird line\n\nadded fourth line", file("b.txt").read())
   }
 
   fun `test rebase initial commit`() {
