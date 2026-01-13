@@ -1118,6 +1118,140 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         }
     }
 
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testIncludedBuildCanFindSettingsFile(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, COMPOSITE_PROJECT_WITH_SETTINGS_FILES) {
+            testHighlighting(
+                "included/build.gradle.kts",
+                """
+                buildscript {
+                    <weak_warning>repositories</weak_warning> { 
+                        mavenCentral()
+                    }
+                }
+                """.trimIndent()
+            )
+            testMyIntention(
+                """
+                buildscript {
+                    repositories<caret> { 
+                        mavenCentral() 
+                    }
+                }
+                """.trimIndent(),
+                """
+                buildscript {
+                }
+                """.trimIndent(),
+                """
+                rootProject.name = "included"
+                """.trimIndent(),
+                """
+                pluginManagement {
+                    repositories {
+                        mavenCentral()
+                    }
+                }
+                
+                rootProject.name = "included"
+                """.trimIndent(),
+                isForPlugins = true,
+                relativeBuildFilePath = "included/build.gradle.kts",
+                relativeSettingsFilePath = "included/settings.gradle.kts"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testSubprojectInIncludedBuildCanFindSettingsFile(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, COMPOSITE_PROJECT_WITH_SUBPROJECT) {
+            testHighlighting(
+                "included/subproject/build.gradle.kts",
+                """
+                buildscript {
+                    <weak_warning>repositories</weak_warning> { 
+                        mavenCentral()
+                    }
+                }
+                """.trimIndent()
+            )
+            testMyIntention(
+                """
+                buildscript {
+                    repositories<caret> { 
+                        mavenCentral() 
+                    }
+                }
+                """.trimIndent(),
+                """
+                buildscript {
+                }
+                """.trimIndent(),
+                """
+                rootProject.name = "included"
+                include("subproject")
+                """.trimIndent(),
+                """
+                pluginManagement {
+                    repositories {
+                        mavenCentral()
+                    }
+                }
+                
+                rootProject.name = "included"
+                include("subproject")
+                """.trimIndent(),
+                isForPlugins = true,
+                relativeBuildFilePath = "included/subproject/build.gradle.kts",
+                relativeSettingsFilePath = "included/settings.gradle.kts"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testIncludedBuildCreatesSettingsFileInItsOwnRoot(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, COMPOSITE_PROJECT_WITHOUT_INCLUDED_SETTINGS_FILE) {
+            testHighlighting(
+                "included/build.gradle.kts",
+                """
+                buildscript {
+                    <weak_warning>repositories</weak_warning> { 
+                        mavenCentral()
+                    }
+                }
+                """.trimIndent()
+            )
+            testMyIntention(
+                """
+                buildscript {
+                    repositories<caret> { 
+                        mavenCentral() 
+                    }
+                }
+                """.trimIndent(),
+                """
+                buildscript {
+                }
+                """.trimIndent(),
+                null,
+                """
+                pluginManagement {
+                    repositories { 
+                        mavenCentral() 
+                    }
+                }
+                """.trimIndent(),
+                isForPlugins = true,
+                relativeBuildFilePath = "included/build.gradle.kts",
+                relativeSettingsFilePath = "included/settings.gradle.kts"
+            )
+        }
+    }
+
+
     /**
      * tests intention effect on build.gradle.kts and settings.gradle.kts files
      * @param settingsBefore if null, then no settings.gradle.kts file will exist in the project before test
@@ -1126,12 +1260,13 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         buildBefore: String, buildAfter: String,
         settingsBefore: String?, settingsAfter: String,
         isForPlugins: Boolean,
-        relativeBuildFilePath: String = GradleConstants.KOTLIN_DSL_SCRIPT_NAME
+        relativeBuildFilePath: String = GradleConstants.KOTLIN_DSL_SCRIPT_NAME,
+        relativeSettingsFilePath: String = GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
     ) {
         checkCaret(buildBefore)
         writeTextAndCommit(relativeBuildFilePath, buildBefore)
-        if (settingsBefore != null) writeTextAndCommit(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME, settingsBefore)
-        else gradleFixture.fileFixture.snapshot(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME)
+        if (settingsBefore != null) writeTextAndCommit(relativeSettingsFilePath, settingsBefore)
+        else gradleFixture.fileFixture.snapshot(relativeSettingsFilePath)
         runInEdtAndWait {
             codeInsightFixture.configureFromExistingVirtualFile(getFile(relativeBuildFilePath))
             val repositoriesParentBlockInSettingsName = if (isForPlugins) "pluginManagement" else "dependencyResolutionManagement"
@@ -1141,10 +1276,10 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
             val intention = codeInsightFixture.findSingleIntention(intentionName)
             codeInsightFixture.launchAction(intention)
             codeInsightFixture.checkResult(buildAfter)
-            codeInsightFixture.configureFromExistingVirtualFile(getFile(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME))
+            codeInsightFixture.configureFromExistingVirtualFile(getFile(relativeSettingsFilePath))
             codeInsightFixture.checkResult(settingsAfter)
             gradleFixture.fileFixture.rollback(relativeBuildFilePath)
-            gradleFixture.fileFixture.rollback(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME)
+            gradleFixture.fileFixture.rollback(relativeSettingsFilePath)
         }
     }
 
@@ -1180,6 +1315,43 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
                 withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {}
                 withBuildFile(gradleVersion, relativeModulePath = "subproject", gradleDsl = GradleDsl.KOTLIN) {}
+            }
+
+        private val COMPOSITE_PROJECT_WITH_SETTINGS_FILES =
+            GradleTestFixtureBuilder.create("composite-project-with-settings-files") { gradleVersion ->
+                withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+                    setProjectName("composite-project-with-settings-files")
+                    includeBuild("included")
+                }
+                withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {}
+                withSettingsFile(gradleVersion, relativeModulePath = "included", gradleDsl = GradleDsl.KOTLIN) {
+                    setProjectName("included")
+                }
+                withBuildFile(gradleVersion, relativeModulePath = "included", gradleDsl = GradleDsl.KOTLIN) {}
+            }
+
+        private val COMPOSITE_PROJECT_WITH_SUBPROJECT =
+            GradleTestFixtureBuilder.create("composite-project-with-subproject") { gradleVersion ->
+                withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+                    setProjectName("composite-project-with-subproject")
+                    includeBuild("included")
+                }
+                withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {}
+                withSettingsFile(gradleVersion, relativeModulePath = "included", gradleDsl = GradleDsl.KOTLIN) {
+                    setProjectName("included")
+                    include("subproject")
+                }
+                withBuildFile(gradleVersion, relativeModulePath = "included/subproject", gradleDsl = GradleDsl.KOTLIN) {}
+            }
+
+        private val COMPOSITE_PROJECT_WITHOUT_INCLUDED_SETTINGS_FILE =
+            GradleTestFixtureBuilder.create("composite-project-without-included-settings-file") { gradleVersion ->
+                withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+                    setProjectName("composite-project-without-included-settings-file")
+                    includeBuild("included")
+                }
+                withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {}
+                withBuildFile(gradleVersion, relativeModulePath = "included", gradleDsl = GradleDsl.KOTLIN) {}
             }
 
         private fun repositoriesModeText(gradleVersion: GradleVersion, mode: String) =
