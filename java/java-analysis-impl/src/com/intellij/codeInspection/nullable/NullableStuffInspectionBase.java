@@ -87,6 +87,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   public boolean REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER = true;
 
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_CONFLICT_IN_ASSIGNMENTS = true;
+
   private static final Logger LOG = Logger.getInstance(NullableStuffInspectionBase.class);
 
   @Override
@@ -102,6 +104,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           "REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER".equals(name) && "true".equals(value) ||
           "REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS".equals(name) && "false".equals(value) ||
           "REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE".equals(name) && "false".equals(value) ||
+          "REPORT_CONFLICT_IN_ASSIGNMENTS".equals(name) && "true".equals(value) ||
           "REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER".equals(name) && "true".equals(value)) {
         node.removeContent(child);
       }
@@ -209,6 +212,12 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           checkAccessors(field, annotated, project, manager, anno, annoToRemove, holder);
 
           checkConstructorParameters(field, annotated, anno, annoToRemove, holder);
+        }
+        PsiExpression initializer = field.getInitializer();
+        PsiElement identifyingElement = field.getIdentifyingElement();
+        if (REPORT_CONFLICT_IN_ASSIGNMENTS && initializer != null && identifyingElement != null) {
+          checkNestedGenericClasses(identifyingElement, field.getType(), initializer.getType(),
+                                    ConflictNestedTypeProblem.ASSIGNMENT_NESTED_TYPE_PROBLEM);
         }
       }
 
@@ -483,13 +492,30 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
       @Override
       public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
-        checkCollectionNullityOnAssignment(expression.getOperationSign(), expression.getLExpression().getType(), expression.getRExpression());
+        PsiExpression rExpression = expression.getRExpression();
+        if (rExpression == null) return;
+        if (REPORT_CONFLICT_IN_ASSIGNMENTS) {
+          checkNestedGenericClasses(expression.getOperationSign(),
+                                    expression.getLExpression().getType(),
+                                    rExpression.getType(),
+                                    ConflictNestedTypeProblem.ASSIGNMENT_NESTED_TYPE_PROBLEM);
+        }
+        else {
+          checkCollectionNullityOnAssignment(expression.getOperationSign(), expression.getLExpression().getType(), expression.getRExpression());
+        }
       }
 
       @Override
       public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
         PsiIdentifier identifier = variable.getNameIdentifier();
-        if (identifier != null) {
+        if (identifier == null) return;
+        PsiExpression initializer = variable.getInitializer();
+        if (initializer == null) return;
+        if (REPORT_CONFLICT_IN_ASSIGNMENTS) {
+          checkNestedGenericClasses(identifier, variable.getType(), initializer.getType(),
+                                    ConflictNestedTypeProblem.ASSIGNMENT_NESTED_TYPE_PROBLEM);
+        }
+        else {
           checkCollectionNullityOnAssignment(identifier, variable.getType(), variable.getInitializer());
         }
       }
@@ -498,8 +524,9 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
         PsiExpression returnValue = statement.getReturnValue();
         if (returnValue == null) return;
-
-        checkGenericClassOnReturn(PsiTypesUtil.getMethodReturnType(statement), returnValue);
+        checkNestedGenericClasses(returnValue,
+                                  PsiTypesUtil.getMethodReturnType(statement), returnValue.getType(),
+                                  ConflictNestedTypeProblem.RETURN_NESTED_TYPE_PROBLEM);
       }
 
       @Override
@@ -530,17 +557,19 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         }
       }
 
-      private void checkGenericClassOnReturn(@Nullable PsiType expectedType,
-                                             @NotNull PsiExpression returnValue) {
-        PsiType returnType = returnValue.getType();
+      private void checkNestedGenericClasses(@NotNull PsiElement errorElement,
+                                             @Nullable PsiType expectedType,
+                                             @Nullable PsiType actualType,
+                                             @NotNull ConflictNestedTypeProblem problem) {
+        if(expectedType == null || actualType == null) return;
         JavaTypeNullabilityUtil.NullabilityConflictContext
-          context = JavaTypeNullabilityUtil.getNullabilityConflictInAssignment(expectedType, returnType,
+          context = JavaTypeNullabilityUtil.getNullabilityConflictInAssignment(expectedType, actualType,
                                                                                REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS);
         if (context.nullabilityConflict() == JavaTypeNullabilityUtil.NullabilityConflict.UNKNOWN) return;
         String messageKey = context.nullabilityConflict() == JavaTypeNullabilityUtil.NullabilityConflict.NOT_NULL_TO_NULL ?
-                            "returning.a.class.with.notnull.arguments" : "returning.a.class.with.nullable.arguments";
+                            problem.notNullToNullProblem() : problem.nullToNotNullProblem();
 
-        reportProblem(holder, returnValue, LocalQuickFix.EMPTY_ARRAY,
+        reportProblem(holder, errorElement, LocalQuickFix.EMPTY_ARRAY,
                       messageKey, new Object[]{""},
                       messageKey, new Object[]{NullableStuffInspectionUtil.getNullabilityConflictPresentation(context)});
       }
@@ -1345,6 +1374,39 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     @Override
     public @NotNull String getName() {
       return JavaAnalysisBundle.message("inspection.annotate.overridden.method.nullable.quickfix.name");
+    }
+  }
+
+
+  private enum ConflictNestedTypeProblem{
+    RETURN_NESTED_TYPE_PROBLEM("returning.a.class.with.notnull.arguments", "returning.a.class.with.nullable.arguments"),
+    ASSIGNMENT_NESTED_TYPE_PROBLEM("assigning.a.collection.of.notnull.elements", "assigning.a.collection.of.nullable.elements"),
+    ;
+
+    @NotNull
+    @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE)
+    private final String notNullToNullProblemMessage;
+
+    @NotNull
+    @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE)
+    private final String nullToNotNullProblemMessage;
+
+    ConflictNestedTypeProblem(@NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String notNullToNullProblemMessage,
+                              @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String nullToNotNullProblemMessage) {
+      this.notNullToNullProblemMessage = notNullToNullProblemMessage;
+      this.nullToNotNullProblemMessage = nullToNotNullProblemMessage;
+    }
+
+    @NotNull
+    @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE)
+    String notNullToNullProblem() {
+      return notNullToNullProblemMessage;
+    }
+
+    @NotNull
+    @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE)
+    String nullToNotNullProblem() {
+      return nullToNotNullProblemMessage;
     }
   }
 }
