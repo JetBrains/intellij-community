@@ -159,7 +159,13 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
 
   fun clearAllOutputs(): Unit = clearOutputs.strictClick()
 
-  fun restartKernel(): Unit = restartKernelButton.strictClick()
+  fun restartKernel(waitForFinish: Duration? = null) {
+    restartKernelButton.run {
+      strictClick()
+      restartKernelButton.waitNotFound()
+      waitForFinish?.let { waitFound(waitForFinish) }
+    }
+  }
 
   fun interruptKernel(): Unit = interruptKernel.strictClick()
 
