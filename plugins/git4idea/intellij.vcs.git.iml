@@ -127,5 +127,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl.wsl" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
+    <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
   </component>
 </module>

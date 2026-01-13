@@ -30,6 +30,7 @@ import kotlinx.coroutines.channels.onSuccess
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Consumer
 import kotlin.coroutines.cancellation.CancellationException
@@ -38,7 +39,8 @@ import kotlin.time.measureTimedValue
 
 private val LOG = Logger.getInstance(VcsLogRefresherImpl::class.java)
 
-internal class VcsLogRefresherImpl(
+@ApiStatus.Internal
+class VcsLogRefresherImpl(
   parentCs: CoroutineScope,
   private val storage: VcsLogStorage,
   private val providers: Map<VirtualFile, VcsLogProvider>,

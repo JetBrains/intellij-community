@@ -8,11 +8,13 @@ import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.graph.GraphCommit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Intercepts the data loaded by the [VcsLogRefresherImpl] to be used for side activities
  */
-internal interface VcsLogCommitDataConsumer {
+@ApiStatus.Internal
+interface VcsLogCommitDataConsumer {
   fun storeData(root: VirtualFile, commits: List<GraphCommit<Int>>, users: Collection<VcsUser>)
 
   fun storeRecentDetails(details: List<VcsCommitMetadata>)
