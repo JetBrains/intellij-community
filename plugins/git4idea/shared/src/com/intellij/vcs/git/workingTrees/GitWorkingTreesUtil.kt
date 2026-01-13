@@ -7,9 +7,11 @@ import git4idea.GitReference
 import git4idea.GitStandardLocalBranch
 import git4idea.GitWorkingTree
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 
 @ApiStatus.Internal
 object GitWorkingTreesUtil {
+  const val TOOLWINDOW_TAB_ID: @NonNls String = "Working Trees"
 
   fun isWorkingTreesFeatureEnabled(): Boolean {
     return Registry.`is`("git.enable.working.trees.feature", false)
@@ -25,10 +27,10 @@ object GitWorkingTreesUtil {
    * For now only local branches are supported for working trees.
    */
   fun <T> getWorkingTreeWithRef(
-      reference: GitReference,
-      repository: T,
-      skipCurrentWorkingTree: Boolean,
-      workingTrees: (T) -> Collection<GitWorkingTree>,
+    reference: GitReference,
+    repository: T,
+    skipCurrentWorkingTree: Boolean,
+    workingTrees: (T) -> Collection<GitWorkingTree>,
   ): GitWorkingTree? {
     if (!isWorkingTreesFeatureEnabled() || reference !is GitStandardLocalBranch) {
       return null

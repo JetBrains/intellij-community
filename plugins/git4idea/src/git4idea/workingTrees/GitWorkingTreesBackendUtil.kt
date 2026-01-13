@@ -7,7 +7,6 @@ import git4idea.GitWorkingTree
 import git4idea.repo.GitRepository
 
 internal object GitWorkingTreesBackendUtil {
-  internal const val TOOLWINDOW_TAB_ID: String = "Working Trees"
 
   /**
    * See [com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil.getWorkingTreeWithRef]

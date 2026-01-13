@@ -8,8 +8,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.vcs.VcsShowToolWindowTabAction
+import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
 import git4idea.workingTrees.GitWorkingTreesService
-import git4idea.workingTrees.GitWorkingTreesBackendUtil
 
 internal class ShowWorkingTreesAction : DumbAwareAction() {
 
@@ -29,6 +29,6 @@ internal class ShowWorkingTreesAction : DumbAwareAction() {
     val project = e.project ?: return
     GitWorkingTreesService.getInstance(project).workingTreesTabOpenedByUser()
     project.getMessageBus().syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-    VcsShowToolWindowTabAction.activateVcsTab(project, GitWorkingTreesBackendUtil.TOOLWINDOW_TAB_ID, false)
+    VcsShowToolWindowTabAction.activateVcsTab(project, GitWorkingTreesUtil.TOOLWINDOW_TAB_ID, false)
   }
 }
