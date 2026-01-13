@@ -24,7 +24,7 @@ public final class BytecodeAnalysisGist {
     gist = GistManager.getInstance().newVirtualFileGist(
       "BytecodeAnalysisIndex",
       ClassDataIndexer.FINAL_VERSION,
-      new BytecodeAnalysisIndex.EquationsExternalizer(),
+      BytecodeAnalysisIndex.EquationsExternalizer.INSTANCE,
       new ClassDataIndexer()
     );
   }

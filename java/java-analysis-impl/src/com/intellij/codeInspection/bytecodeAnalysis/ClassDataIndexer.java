@@ -284,7 +284,7 @@ public final class ClassDataIndexer implements VirtualFileGist.GistCalculator<Ma
     public void accept(Map<HMember, Equations> map) {
       try {
         UnsyncByteArrayOutputStream stream = new UnsyncByteArrayOutputStream();
-        new BytecodeAnalysisIndex.EquationsExternalizer().save(new DataOutputStream(stream), map);
+        BytecodeAnalysisIndex.EquationsExternalizer.INSTANCE.save(new DataOutputStream(stream), map);
         ourTotalSize.addAndGet(stream.size());
         ourTotalCount.incrementAndGet();
       }

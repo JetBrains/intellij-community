@@ -138,6 +138,8 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
    * Externalizer for compressed equations.
    */
   public static class EquationsExternalizer implements DataExternalizer<Map<HMember, Equations>> {
+    public static final EquationsExternalizer INSTANCE = new EquationsExternalizer();
+
     @Override
     public void save(@NotNull DataOutput out, Map<HMember, Equations> value) throws IOException {
       DataInputOutputUtilRt.writeSeq(out, value.entrySet(), entry -> {
