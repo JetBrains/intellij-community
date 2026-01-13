@@ -40,7 +40,7 @@ public final class GistManagerImpl extends GistManager {
   private static final String GIST_REINDEX_COUNT_PROPERTY_NAME = "file.gist.reindex.count";
   private static final Key<AtomicInteger> GIST_INVALIDATION_COUNT_KEY = Key.create("virtual.file.gist.invalidation.count");
 
-  private static final Map<String, VirtualFileGist<?>> ourGists = CollectionFactory.createConcurrentWeakValueMap();
+  private final Map<String, VirtualFileGist<?>> myGists = CollectionFactory.createConcurrentWeakValueMap();
 
   private final AtomicInteger myReindexCount = new AtomicInteger(
     PropertiesComponent.getInstance().getInt(GIST_REINDEX_COUNT_PROPERTY_NAME, 0)
@@ -98,12 +98,12 @@ public final class GistManagerImpl extends GistManager {
                                                                   int version,
                                                                   @NotNull DataExternalizer<Data> externalizer,
                                                                   @NotNull VirtualFileGist.GistCalculator<Data> calcData) {
-    if (ourGists.get(id) != null) {
+    if (myGists.get(id) != null) {
       throw new IllegalArgumentException("Gist '" + id + "' is already registered");
     }
 
     //noinspection unchecked
-    return (VirtualFileGist<Data>)ourGists.computeIfAbsent(
+    return (VirtualFileGist<Data>)myGists.computeIfAbsent(
       id,
       __ -> new VirtualFileGistOverGistStorage<>(gistStorage.newGist(id, version, externalizer), calcData)
     );
