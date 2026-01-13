@@ -93,8 +93,9 @@ internal class GitWorkingTreeDialog(
     return panel {
       row(GitBundle.message("working.tree.dialog.label.existing.branch")) {
         val localBranchesWithTrees: List<BranchWithWorkingTree?> = computeBranchesWithWorkingTrees()
-        comboBox(localBranchesWithTrees, BranchWithTreeCellRenderer(data.project, data.repository))
-          .bindItem(existingBranchWithWorkingTree).align(Align.FILL).validationOnApply { validateBranchOnApply(it) }
+        val comboBox = comboBox(localBranchesWithTrees, BranchWithTreeCellRenderer(data.project, data.repository))
+        comboBox.bindItem(existingBranchWithWorkingTree).align(Align.FILL).validationOnApply { validateBranchOnApply(it) }
+        comboBox.component.isSwingPopup = false
         existingBranchWithWorkingTree.afterChange { updateSuggestedProjectName() }
       }
 
