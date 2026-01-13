@@ -65,7 +65,7 @@ public class TestAll implements Test {
     public boolean shouldRun(Description description) {
       String className = description.getClassName();
       String methodName = description.getMethodName();
-      return TestFrameworkUtil.isPerformanceTest(methodName, className);
+      return TestFrameworkUtil.isPerformanceTest(methodName, className, description.getTestClass());
     }
 
     @Override
@@ -443,7 +443,7 @@ public class TestAll implements Test {
       }
 
       if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)) {
-        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass.getSimpleName());
+        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass.getSimpleName(), null);
         boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
         if (runEverything) return createJUnit4Adapter(testCaseClass);
 
@@ -477,7 +477,7 @@ public class TestAll implements Test {
           else {
             String name = ((TestCase)test).getName();
             if ("warning".equals(name)) return; // Mute TestSuite's "no tests found" warning
-            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass.getSimpleName()))) {
+            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass.getSimpleName(), testCaseClass))) {
               return;
             }
 
@@ -521,7 +521,7 @@ public class TestAll implements Test {
 
       // Maybe JUnit 4 test?
       if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)) {
-        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass.getSimpleName());
+        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass.getSimpleName(), null);
         boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
         if (runEverything) return true;
 

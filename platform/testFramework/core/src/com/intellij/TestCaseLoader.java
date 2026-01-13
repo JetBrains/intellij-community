@@ -531,11 +531,11 @@ public class TestCaseLoader {
   }
 
   public static boolean shouldIncludePerformanceTestCase(String className) {
-    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null, className);
+    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null, className, null);
   }
 
-  static boolean isPerformanceTest(String methodName, String className) {
-    return TestFrameworkUtil.isPerformanceTest(methodName, className);
+  static boolean isPerformanceTest(String methodName, String className, Class aClass) {
+    return TestFrameworkUtil.isPerformanceTest(methodName, className, aClass);
   }
 
   // We assume that getPatterns and getTestGroups won't change during execution
@@ -582,7 +582,7 @@ public class TestCaseLoader {
       return false;
     }
 
-    return (isIncludingPerformanceTestsRun() || isPerformanceTestsRun() == isPerformanceTest(null, className)) &&
+    return (isIncludingPerformanceTestsRun() || isPerformanceTestsRun() == isPerformanceTest(null, className, null)) &&
            ourCommonCompositeTestClassesFilter.getValue().matches(className);
   }
 

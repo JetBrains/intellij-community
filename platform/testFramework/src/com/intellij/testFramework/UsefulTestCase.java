@@ -1075,11 +1075,12 @@ Most likely there was an uncaught exception in asynchronous execution that resul
   /**
    * @return true for a test which performs a lot of computations to test resource consumption, not correctness.
    * Such tests should avoid performing expensive consistency checks, e.g., data structure consistency complex validations.
-   * If you want your test to be treated as "Performance", include the "Performance" word in its class/method name.
-   * For example: {@code public void testHighlightingPerformance()}
+   * If you want your test to be treated as "Performance", include the "Performance" word in its class or mark
+   * the method as {@link com.intellij.testFramework.PerformanceUnitTest}.
+   * For example: {@code @PerformanceUnitTest public void testHighlightingPerformance()}
    */
   public final boolean isPerformanceTest() {
-    return TestFrameworkUtil.isPerformanceTest(getName(), getClass().getSimpleName());
+    return TestFrameworkUtil.isPerformanceTest(getName(), getClass().getSimpleName(), getClass());
   }
 
   /**
@@ -1091,7 +1092,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
   public final boolean isStressTest() {
     String testName = getName();
     String className = getClass().getSimpleName();
-    return TestFrameworkUtil.isStressTest(testName, className);
+    return TestFrameworkUtil.isStressTest(testName, className, getClass());
   }
 
   public static void doPostponedFormatting(@NotNull Project project) {

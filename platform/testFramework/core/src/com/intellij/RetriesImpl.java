@@ -61,7 +61,7 @@ final class RetriesImpl {
     }
     if (TestCase.class.isAssignableFrom(testClass) &&
         "warning".equals(testDescription.getMethodName()) ||
-        TestCaseLoader.isPerformanceTest(null, testClass.getSimpleName())) {
+        TestCaseLoader.isPerformanceTest(null, testClass.getSimpleName(), null)) {
       return;
     }
     var runner = Request.classWithoutSuiteMethod(testClass).filterWith(testDescription).getRunner();
