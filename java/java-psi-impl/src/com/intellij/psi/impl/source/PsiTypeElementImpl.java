@@ -490,7 +490,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   public @NotNull PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     PsiAnnotation annotation = JavaPsiFacade.getElementFactory(getProject()).createAnnotationFromText('@' + qualifiedName, this);
     PsiElement firstChild = getFirstChild();
-    for (PsiElement child = getLastChild(); child != firstChild; child = child.getPrevSibling()) {
+    for (PsiElement child = firstChild; child != null; child = child.getNextSibling()) {
       if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET) || PsiUtil.isJavaToken(child, JavaTokenType.ELLIPSIS)) {
         return (PsiAnnotation)addBefore(annotation, child);
       }
