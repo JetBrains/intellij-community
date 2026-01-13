@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.framework
 
 import com.intellij.facet.ProjectFacetManager
@@ -18,7 +17,7 @@ import org.jetbrains.kotlin.platform.konan.isNative
  */
 private class CreateKotlinSdkActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
-        val modulesWithFacet = ProjectFacetManager.getInstance(project).getModulesWithFacet(KotlinFacetType.TYPE_ID)
+        val modulesWithFacet = ProjectFacetManager.getInstance(project).getModulesWithFacet(KotlinFacetType.Companion.TYPE_ID)
         if (modulesWithFacet.isNotEmpty()) {
           KotlinSdkType.setUpIfNeeded {
             modulesWithFacet.any {
