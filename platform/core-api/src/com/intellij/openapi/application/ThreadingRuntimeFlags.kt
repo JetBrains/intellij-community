@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import org.jetbrains.annotations.ApiStatus
@@ -54,13 +54,6 @@ val reportInvalidActionChains: Boolean = System.getProperty("ijpl.report.invalid
 
 @get:ApiStatus.Internal
 val installSuvorovProgress: Boolean = System.getProperty("ide.install.suvorov.progress", "true").toBoolean()
-
-/**
- * - `true` means that EDT runnables that require write-intent lock will acquire it in a non-blocking way
- * - `false` means that the write-intent lock will be acquired in a blocking way
- */
-@get:ApiStatus.Internal
-val useNonBlockingFlushQueue: Boolean = System.getProperty("ide.use.non.blocking.flush.queue", "true").toBoolean()
 
 /**
  * Represents the deadline before blocking read lock acquisition starts compensating parallelism for coroutine worker threads
