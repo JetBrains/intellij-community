@@ -17,8 +17,8 @@
     <module name="intellij.groovy.duplicates"/>
     <module name="intellij.groovy.duplicatesDetection"/>
     <module name="intellij.groovy.git"/>
-    <module name="intellij.groovy/ant"/>
-    <module name="intellij.groovy/byte-code-viewer"/>
+    <module name="intellij.groovy.ant"/>
+    <module name="intellij.groovy.byteCodeViewer"/>
   </content>
   <dependencies>
     <plugin id="com.intellij.properties"/>

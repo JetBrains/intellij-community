@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.plugins.groovy.gant.ant">
+<idea-plugin>
   <dependencies>
     <plugin id="AntSupport"/>
   </dependencies>

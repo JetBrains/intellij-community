@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.groovy.byteCodeViewer` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "byteCodeViewer_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "byteCodeViewer",
+  module_name = "intellij.groovy.byteCodeViewer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":byteCodeViewer_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//plugins/groovy/groovy-psi:psi",
+    "//java/java-psi-api:psi",
+    "//plugins/ByteCodeViewer:java-byteCodeViewer",
+    "@lib//:jetbrains-annotations",
+    "//platform/util",
+  ]
+)
+### auto-generated section `build intellij.groovy.byteCodeViewer` end

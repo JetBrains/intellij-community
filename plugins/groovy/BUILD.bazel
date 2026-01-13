@@ -1,20 +1,10 @@
 ### auto-generated section `build intellij.groovy` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
   name = "groovy_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
-)
-
-jvm_provided_library(
-  name = "plugins_ant_provided",
-  lib = "//plugins/ant"
-)
-
-jvm_provided_library(
-  name = "plugins_java-byteCodeViewer_provided",
-  lib = "//plugins/ByteCodeViewer:java-byteCodeViewer"
 )
 
 jvm_library(
@@ -74,7 +64,6 @@ jvm_library(
     "//platform/external-system-api:externalSystem",
     "//RegExpSupport:regexp",
     "//libraries/protobuf",
-    "//platform/util-class-loader:util-classLoader",
     "//platform/core-ui",
     "//libraries/fastutil",
     "//platform/code-style-impl:codeStyle-impl",
@@ -87,20 +76,8 @@ jvm_library(
     "//java/unscramble",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
-    ":plugins_ant_provided",
-    ":plugins_java-byteCodeViewer_provided",
   ],
   exports = ["//plugins/groovy/groovy-psi:psi"]
-)
-
-jvm_provided_library(
-  name = "plugins_ant_test_lib_provided",
-  lib = "//plugins/ant:ant_test_lib"
-)
-
-jvm_provided_library(
-  name = "plugins_java-byteCodeViewer_test_lib_provided",
-  lib = "//plugins/ByteCodeViewer:java-byteCodeViewer_test_lib"
 )
 
 jvm_library(
@@ -172,7 +149,6 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/lang-impl:lang-tests_test_lib",
     "//libraries/protobuf",
-    "//platform/util-class-loader:util-classLoader",
     "//platform/core-ui",
     "//libraries/fastutil",
     "//platform/code-style-impl:codeStyle-impl",
@@ -193,10 +169,6 @@ jvm_library(
     "//platform/execution",
     "@lib//:jet_check",
     "//platform/forms_rt:java-guiForms-rt",
-    ":plugins_ant_provided",
-    ":plugins_java-byteCodeViewer_provided",
-    ":plugins_ant_test_lib_provided",
-    ":plugins_java-byteCodeViewer_test_lib_provided",
   ],
   exports = ["//plugins/groovy/groovy-psi:psi"]
 )

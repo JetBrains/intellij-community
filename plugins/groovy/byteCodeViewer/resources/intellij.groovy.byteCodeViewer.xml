@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.plugins.groovy.byteCodeViewer">
+<idea-plugin>
   <dependencies>
     <plugin id="ByteCodeViewer"/>
   </dependencies>

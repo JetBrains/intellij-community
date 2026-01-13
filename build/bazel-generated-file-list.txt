@@ -993,6 +993,8 @@ plugins/grazie/xml
 plugins/grazie/yaml
 plugins/groovy
 plugins/groovy-live-templates
+plugins/groovy/ant
+plugins/groovy/byteCodeViewer
 plugins/groovy/git
 plugins/groovy/groovy-psi
 plugins/groovy/groovy-uast-tests

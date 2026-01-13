@@ -211,6 +211,8 @@ jvm_library(
     "//java/structuralsearch-java:structuralSearch",
     "//plugins/groovy/structuralsearch-groovy:structuralSearch",
     "//plugins/groovy/git",
+    "//plugins/groovy/ant",
+    "//plugins/groovy/byteCodeViewer",
     "//json/backend",
     "//java/typeMigration",
     "//plugins/terminal",
