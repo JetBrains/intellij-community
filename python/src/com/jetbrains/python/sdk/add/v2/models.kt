@@ -2,7 +2,7 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.execution.target.FullPathOnTarget
-import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
@@ -88,9 +88,9 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
       hatchViewModel.availableEnvironments,
     ).map {
       modificationCounter.updateAndGet { it + 1 }
-    }.launchIn(scope + Dispatchers.UI)
+    }.launchIn(scope + Dispatchers.EDT)
 
-    scope.launch(TraceContext(message("tracecontext.loading.interpreter.list"), scope) + Dispatchers.UI) {
+    scope.launch(TraceContext(message("tracecontext.loading.interpreter.list"), scope) + Dispatchers.EDT) {
       installable = fileSystem.getInstallableInterpreters()
       val projectPathPrefix = projectPathFlows.projectPathWithDefault.first()
       val existingSelectableInterpreters = fileSystem.getExistingSelectableInterpreters(projectPathPrefix)

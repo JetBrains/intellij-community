@@ -7,7 +7,7 @@ import com.intellij.execution.target.getTargetType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
-import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
@@ -211,7 +211,7 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
     }
 
 
-    scope.launch(Dispatchers.UI) {
+    scope.launch(Dispatchers.EDT) {
       textInputFlow
         .debounce(50) // setText method is a combination of two calls - remove + insert, should count them as 1
         .map {

@@ -2,7 +2,7 @@
 package com.jetbrains.python.sdk.add.v2.conda
 
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
-import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
@@ -96,7 +96,7 @@ class CondaViewModel<P : PathHolder>(
 
   fun detectCondaEnvironments(forceRefresh: Boolean) {
     condaEnvironmentsLoading.value = true
-    scope.launch(Dispatchers.UI) {
+    scope.launch(Dispatchers.EDT) {
       condaEnvironmentsResult.value = updateCondaEnvironments(forceRefresh)
     }.invokeOnCompletion {
       condaEnvironmentsLoading.value = false
@@ -142,7 +142,7 @@ class CondaViewModel<P : PathHolder>(
     val environments = PyCondaEnv.getEnvs(binaryToExec, forceRefresh).getOr { return@withContext it }
     val baseConda = environments.find { env -> env.envIdentity.let { it is PyCondaEnvIdentity.UnnamedEnv && it.isBase } }
 
-    withContext(Dispatchers.UI) {
+    withContext(Dispatchers.EDT) {
       baseCondaEnv.set(baseConda)
     }
 
