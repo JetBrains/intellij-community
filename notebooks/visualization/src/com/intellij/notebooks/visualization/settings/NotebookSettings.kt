@@ -4,7 +4,7 @@ import com.intellij.openapi.components.*
 import com.intellij.util.xmlb.XmlSerializerUtil
 
 /** General UI settings for all notebooks, R/Kotlin/Jupyter. */
-@State(name = "NotebookSettings", storages = [(Storage(value = "notebook-settings.xml"))], category = SettingsCategory.UI)
+@State(name = NotebookSettings.COMPONENT_NAME, storages = [(Storage(value = "notebook-settings.xml"))], category = SettingsCategory.UI)
 class NotebookSettings : PersistentStateComponent<NotebookSettings>, Cloneable {
 
   /** When <=0, the max height of output is limited by 30% of screen height. When set, it is calculated in the height of a single text line. */
@@ -25,7 +25,12 @@ class NotebookSettings : PersistentStateComponent<NotebookSettings>, Cloneable {
     XmlSerializerUtil.copyBean(state, this)
   }
 
+  override fun noStateLoaded() {
+    loadState(NotebookSettings())
+  }
+
   companion object {
+    const val COMPONENT_NAME: String = "NotebookSettings"
     fun getInstance(): NotebookSettings = service()
   }
 }

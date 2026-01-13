@@ -70,6 +70,7 @@
                                    order="last"/>
 
     <applicationService serviceImplementation="com.intellij.notebooks.visualization.settings.NotebookSettings"/>
+    <applicationSettings service="com.intellij.notebooks.visualization.settings.NotebookSettings"/>
   </extensions>
 
   <!-- New output inlays -->
