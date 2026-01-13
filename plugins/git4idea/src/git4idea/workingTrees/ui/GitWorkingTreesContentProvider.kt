@@ -2,7 +2,9 @@
 package git4idea.workingTrees.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -18,6 +20,7 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
+import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import git4idea.GitWorkingTree
@@ -38,6 +41,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
   companion object {
     //registered with com.intellij.statistics.actionCustomPlaceAllowlist ExtensionPoint
     internal const val GIT_WORKING_TREE_TOOLWINDOW_TAB_TOOLBAR: String = "GitWorkingTreeToolWindowTabToolbar"
+    internal const val GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST: String = "GitWorkingTreeToolWindowTabEmptyList"
   }
 
   override fun initTabContent(content: Content) {
@@ -67,7 +71,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
 
     init {
       list.cellRenderer = WorkingTreesListRenderer()
-      list.emptyText.text = GitBundle.message("toolwindow.working.trees.tab.empty.text")
+      initEmptyText(list.emptyText)
       addToCenter(list)
 
       list.addMouseListener(object : PopupHandler() {
@@ -90,6 +94,23 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
               model.reload(project)
             }
           }
+        }
+      }
+    }
+
+    private fun initEmptyText(emptyText: StatusText) {
+      emptyText.text = GitBundle.message("toolwindow.working.trees.tab.empty.text")
+      emptyText.appendLine(GitBundle.message("toolwindow.working.trees.tab.empty.text.create.working.tree"),
+                           SimpleTextAttributes.LINK_ATTRIBUTES) { _ ->
+        val action = ActionManager.getInstance().getAction("Git.CreateNewWorkingTree")
+        if (action !== null) {
+          val event = AnActionEvent.createEvent(action,
+                                                DataManager.getInstance().getDataContext(this),
+                                                Presentation(),
+                                                GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST,
+                                                ActionUiKind.NONE,
+                                                null)
+          ActionUtil.performAction(action, event)
         }
       }
     }
