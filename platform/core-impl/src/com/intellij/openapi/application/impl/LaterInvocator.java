@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -46,7 +46,6 @@ public final class LaterInvocator {
   private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.nonModal());// guarded by ourModalityStack
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster =
     EventDispatcher.create(ModalityStateListener.class);
-  private static final FlushQueue ourEdtQueue = new FlushQueue();
   @Volatile
   private static NonBlockingFlushQueue ourNonBlockingEdtQueue = null;
 
@@ -99,17 +98,7 @@ public final class LaterInvocator {
     if (expired.value(null)) {
       return;
     }
-    if (useNonBlockingFlushQueue()) {
-      ourNonBlockingEdtQueue.push(modalityState, runnable, needsWriteIntentLock, expired);
-    } else {
-      ourEdtQueue.push(modalityState, expired, runnable);
-    }
-  }
-
-  private static boolean useNonBlockingFlushQueue() {
-    // non-blocking flush queue can either be explicitly disabled, or be null, like in ServerApplication
-    // it is currently a TODO: use non-blocking flush queue in code server
-    return ThreadingRuntimeFlagsKt.getUseNonBlockingFlushQueue() && ourNonBlockingEdtQueue != null;
+    ourNonBlockingEdtQueue.push(modalityState, runnable, needsWriteIntentLock, expired);
   }
 
   @RequiresBackgroundThread
@@ -369,12 +358,9 @@ public final class LaterInvocator {
   }
 
   static boolean isFlushNow(@NotNull Runnable runnable) {
-    if (useNonBlockingFlushQueue()) {
-      return ourNonBlockingEdtQueue.isFlushNow(runnable);
-    } else {
-      return ourEdtQueue.isFlushNow(runnable);
-    }
+    return ourNonBlockingEdtQueue.isFlushNow(runnable);
   }
+
   public static void pollWriteThreadEventsOnce() {
     LOG.assertTrue(!EDT.isCurrentThreadEdt());
     LOG.assertTrue(ApplicationManager.getApplication().isWriteIntentLockAcquired());
@@ -382,25 +368,17 @@ public final class LaterInvocator {
 
   @TestOnly
   public static @NotNull Object getLaterInvocatorEdtQueue() {
-    if (useNonBlockingFlushQueue()) {
-      return ourNonBlockingEdtQueue;
-    } else {
-      return ourEdtQueue.getQueue();
-    }
+    return ourNonBlockingEdtQueue;
   }
 
   @RequiresEdt
   private static void reincludeSkippedItemsAndRequestFlush() {
-    if (useNonBlockingFlushQueue()) {
-      ourNonBlockingEdtQueue.onModalityChanged();
-    } else {
-      ourEdtQueue.reincludeSkippedItems();
-    }
+    ourNonBlockingEdtQueue.onModalityChanged();
   }
 
   @RequiresEdt
   public static void purgeExpiredItems() {
-    ourEdtQueue.purgeExpiredItems();
+    ourNonBlockingEdtQueue.purgeExpiredItems();
   }
 
   /**

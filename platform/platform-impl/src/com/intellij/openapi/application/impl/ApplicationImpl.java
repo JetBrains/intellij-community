@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.CommonBundle;
@@ -56,7 +56,6 @@ import com.intellij.util.concurrency.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
-import kotlin.Pair;
 import kotlin.Unit;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.jvm.functions.Function0;
@@ -563,8 +562,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     // Start from inner layer: transaction guard
     final var guarded = myTransactionGuard.wrapLaterInvocation(runnable, state);
     // Middle layer: lock and modality
-    boolean wrapWithLocksDeep = wrapWithLocks && !ThreadingRuntimeFlagsKt.getUseNonBlockingFlushQueue();
-    final var locked = wrapWithRunIntendedWriteActionAndModality(guarded, wrapWithLocksDeep, ctxAware ? null : state);
+    final var locked = wrapWithRunIntendedWriteActionAndModality(guarded, false, ctxAware ? null : state);
     // Outer layer context capture & reset
     final var finalRunnable = AppImplKt.rethrowExceptions(AppScheduledExecutorService::captureContextCancellationForRunnableThatDoesNotOutliveContextScope, locked);
 

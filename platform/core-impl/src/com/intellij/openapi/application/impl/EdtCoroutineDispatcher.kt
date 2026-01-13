@@ -1,8 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.isRunBlockingUnderReadAction
 import com.intellij.util.ui.EDT
@@ -44,7 +46,7 @@ internal sealed class EdtCoroutineDispatcher(
     else {
       DispatchedRunnable(context.job, lockingAwareBlock)
     }
-    val useWeakWriteIntent = useNonBlockingFlushQueue && type.lockBehavior == EdtDispatcherKind.LockBehavior.LOCKS_ALLOWED_MANDATORY_WRAPPING
+    val useWeakWriteIntent = type.lockBehavior == EdtDispatcherKind.LockBehavior.LOCKS_ALLOWED_MANDATORY_WRAPPING
     ApplicationManagerEx.getApplicationEx().dispatchCoroutineOnEDT(runnable, state, useWeakWriteIntent)
   }
 
@@ -62,20 +64,8 @@ internal sealed class EdtCoroutineDispatcher(
           ApplicationManagerEx.getApplicationEx().prohibitTakingLocksInsideAndRun(runnable, lockAccessViolationMessage)
         }
       }
-      EdtDispatcherKind.LockBehavior.LOCKS_ALLOWED_NO_WRAPPING -> {
+      EdtDispatcherKind.LockBehavior.LOCKS_ALLOWED_NO_WRAPPING, EdtDispatcherKind.LockBehavior.LOCKS_ALLOWED_MANDATORY_WRAPPING -> {
         runnable
-      }
-      EdtDispatcherKind.LockBehavior.LOCKS_ALLOWED_MANDATORY_WRAPPING -> {
-        if (useNonBlockingFlushQueue) {
-          runnable
-        }
-        else {
-          Runnable {
-            WriteIntentReadAction.run {
-              runnable.run()
-            }
-          }
-        }
       }
     }
   }
