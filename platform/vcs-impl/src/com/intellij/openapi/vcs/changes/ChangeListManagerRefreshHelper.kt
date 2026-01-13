@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
-import com.intellij.configurationStore.StoreUtil
 import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -11,7 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector
-import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -28,35 +27,11 @@ object ChangeListManagerRefreshHelper {
     project.service<Refresher>().requestRefresh()
   }
 
-  private suspend fun refresh(project: Project) {
-    checkCanceled()
-    if (project.isDisposed()) return
-    if (ChangeListManager.getInstance(project).isFreezed != null) return
-
-    withContext(Dispatchers.Default) {
-      doRefreshAndReportMetrics(project) {
-        withContext(Dispatchers.EDT) {
-          FileDocumentManager.getInstance().saveAllDocuments()
-        }
-        checkCanceled()
-        saveSettings(project)
-        checkCanceled()
-        invokeCustomRefreshes(project)
-      }
-    }
-  }
-
-  @JvmStatic
-  @RequiresEdt
-  fun refreshSync(project: Project) {
-    if (project.isDisposed()) return
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return
-
-    doRefreshAndReportMetrics(project) {
-      LOG.info("Saving all documents and project settings")
-      StoreUtil.saveDocumentsAndProjectSettings(project)
-      invokeCustomRefreshes(project)
-    }
+  /**
+   * Launches a refresh of the project changes or displays or notification if changes refresh is not possible due to some activity
+   */
+  fun launchRefreshOrNotifyFrozen(project: Project) {
+    project.service<Refresher>().launchRefreshOrNotifyFrozen()
   }
 
   private fun invokeCustomRefreshes(project: Project) {
@@ -88,20 +63,55 @@ object ChangeListManagerRefreshHelper {
   }
 
   @Service(Service.Level.PROJECT)
-  private class Refresher(private val project: Project, cs: CoroutineScope) {
-    private val refreshFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private class Refresher(private val project: Project, private val cs: CoroutineScope) {
+    private val sem = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
 
-    init {
-      cs.launch {
-        @OptIn(FlowPreview::class)
-        refreshFlow.debounce(300.milliseconds).collect {
-          refresh(project)
-        }
+    private val refreshRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val debouncedRefresherJob = cs.launch(start = CoroutineStart.LAZY) {
+      @OptIn(FlowPreview::class)
+      refreshRequests.debounce(300.milliseconds).collect {
+        refresh(false)
       }
     }
 
     fun requestRefresh() {
-      refreshFlow.tryEmit(Unit)
+      debouncedRefresherJob.start()
+      refreshRequests.tryEmit(Unit)
+    }
+
+    fun launchRefreshOrNotifyFrozen() {
+      cs.launch {
+        refresh(true)
+      }
+    }
+
+    private suspend fun refresh(notifyFrozen: Boolean) {
+      if (project.isDisposed()) return
+      val clm = ChangeListManager.getInstance(project)
+      val clmFrozen = if (notifyFrozen) {
+        withContext(Dispatchers.EDT) {
+          clm.isFreezedWithNotification(null)
+        }
+      }
+      else {
+        clm.isFreezed != null
+      }
+      if (clmFrozen) return
+
+      sem.withPermit {
+        withContext(Dispatchers.Default) {
+          doRefreshAndReportMetrics(project) {
+            LOG.info("Saving all documents and project settings")
+            withContext(Dispatchers.EDT) {
+              FileDocumentManager.getInstance().saveAllDocuments()
+            }
+            checkCanceled()
+            saveSettings(project)
+            checkCanceled()
+            invokeCustomRefreshes(project)
+          }
+        }
+      }
     }
   }
 }

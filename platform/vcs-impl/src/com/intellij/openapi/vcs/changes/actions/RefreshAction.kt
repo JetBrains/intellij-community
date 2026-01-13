@@ -22,18 +22,18 @@ class RefreshAction : AnAction(), DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    doRefresh(project)
+    ChangeListManagerRefreshHelper.launchRefreshOrNotifyFrozen(project)
   }
 
   @Suppress("CompanionObjectInExtension")
   companion object {
     @Deprecated("Use ChangeListManagerRefreshHelper instead",
-                replaceWith = ReplaceWith("ChangeListManagerRefreshHelper.refreshSync(project)",
+                replaceWith = ReplaceWith("ChangeListManagerRefreshHelper.launchRefreshOrNotifyFrozen(project)",
                                           "com.intellij.openapi.vcs.changes.ChangeListManagerRefreshHelper"))
     @JvmStatic
     @RequiresEdt
     fun doRefresh(project: Project) {
-      ChangeListManagerRefreshHelper.refreshSync(project)
+      ChangeListManagerRefreshHelper.launchRefreshOrNotifyFrozen(project)
     }
   }
 }
