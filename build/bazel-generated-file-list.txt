@@ -1375,6 +1375,7 @@ plugins/performanceTesting/remote-driver.compose
 plugins/performanceTesting/scripts-ui
 plugins/performanceTesting/vcs
 plugins/properties
+plugins/properties/copyright
 plugins/properties/properties-common
 plugins/properties/properties-psi-api
 plugins/properties/properties-psi-impl
