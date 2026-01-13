@@ -110,7 +110,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
 
   @Override
   public String toString() {
-    return "PyFunctionType";
+    return "PyFunctionType: " + getName();
   }
 
   @Override

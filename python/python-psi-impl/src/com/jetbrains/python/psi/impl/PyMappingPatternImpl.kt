@@ -8,8 +8,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
 import com.jetbrains.python.psi.types.*
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.upcastLiteralToClass
 
-class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappingPattern, PyCaptureContext, PsiListLikeElement,
-                                                PyWrapperTypeProvider {
+class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappingPattern, PyCaptureContext, PsiListLikeElement {
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
     pyVisitor.visitPyMappingPattern(this)
   }

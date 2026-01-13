@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,7 +54,7 @@ public sealed class TypeEvalContext {
 
   private final ThreadLocal<ProcessingContext> myProcessingContext = ThreadLocal.withInitial(ProcessingContext::new);
 
-  private Ref<ExternalPyTypeResolver> externalTypeResolver = null;
+  private ExternalPyTypeResolver externalTypeResolver = null;
   protected final Map<PyTypedElement, PyType> myEvaluated = getConcurrentMapForCaching();
   protected final Map<PyCallable, PyType> myEvaluatedReturn = getConcurrentMapForCaching();
   protected final Map<Pair<PyExpression, Object>, PyType> contextTypeCache = getConcurrentMapForCaching();
@@ -81,6 +80,9 @@ public sealed class TypeEvalContext {
 
   private TypeEvalContext(@NotNull TypeEvalConstraints constraints) {
     myConstraints = constraints;
+    if (constraints.myOrigin != null) {
+      externalTypeResolver = ExternalPyTypeResolverProvider.createTypeResolver(constraints.myOrigin.getProject());
+    }
   }
 
   @Override
@@ -301,20 +303,14 @@ public sealed class TypeEvalContext {
 
     PsiFile file = element.getContainingFile();
 
-    //lateinit because there is no project for this class
-    if (file != null && externalTypeResolver == null) {
-      externalTypeResolver = Ref.create(ExternalPyTypeResolverProvider.createTypeResolver(file.getProject()));
-    }
-
     return RecursionManager.doPreventingRecursion(
       Pair.create(element, this),
       false,
       () -> {
-        ExternalPyTypeResolver externalPyTypeResolver = externalTypeResolver.get();
         PyType type;
 
-        if (externalPyTypeResolver != null && !isFallbackContext() && externalPyTypeResolver.isSupportedForResolve(element)) {
-          type = externalPyTypeResolver.resolveType(element, this, this instanceof LibraryTypeEvalContext);
+        if (externalTypeResolver != null && externalTypeResolver.isSupportedForResolve(element)) {
+          type = externalTypeResolver.resolveType(element, this instanceof LibraryTypeEvalContext);
         }
         else {
           type = element.getType(this, Key.INSTANCE);
@@ -327,9 +323,6 @@ public sealed class TypeEvalContext {
     );
   }
 
-  private boolean isFallbackContext() {
-    return myConstraints.myOrigin == null;
-  }
 
   public @Nullable PyType getReturnType(final @NotNull PyCallable callable) {
     if (canDelegateToLibraryContext(callable)) {

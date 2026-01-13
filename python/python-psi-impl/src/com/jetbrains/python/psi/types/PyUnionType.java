@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 public class PyUnionType implements PyType {
@@ -65,7 +66,10 @@ public class PyUnionType implements PyType {
 
   @Override
   public String getName() {
-    return StringUtil.join(myMembers, t -> t == null ? "Any" : t.getName(), " | ");
+    return myMembers.stream()
+      .sorted(Comparator.comparing(t -> t == null ? "Any" : t.getName(), Comparator.nullsFirst(Comparator.naturalOrder())))
+      .map(t -> t == null ? "Any" : t.getName())
+      .collect(Collectors.joining(" | "));
   }
 
   /**

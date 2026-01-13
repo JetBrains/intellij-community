@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyAssignmentExpression;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.PyWrapperTypeProvider;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.ApiStatus;
@@ -13,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-public class PyAssignmentExpressionImpl extends PyElementImpl implements PyAssignmentExpression, PyWrapperTypeProvider {
+public class PyAssignmentExpressionImpl extends PyElementImpl implements PyAssignmentExpression {
 
   public PyAssignmentExpressionImpl(@NotNull ASTNode astNode) {
     super(astNode);

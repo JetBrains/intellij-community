@@ -3,11 +3,10 @@ package com.jetbrains.python.psi.types.external
 
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyType
-import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface ExternalPyTypeResolver {
   fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean
-  fun resolveType(pyTypedElement: PyTypedElement, evalContext: TypeEvalContext, isLibrary: Boolean): PyType?
+  fun resolveType(pyTypedElement: PyTypedElement, isLibrary: Boolean): PyType?
 }
