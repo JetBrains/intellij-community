@@ -28,12 +28,14 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
 import com.intellij.util.ModalityUiUtil.invokeLaterIfNeeded
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.launchOnShow
 import com.intellij.vcs.changes.viewModel.ChangesViewProxy
 import com.intellij.vcs.commit.*
 import com.intellij.vcs.commit.CommitModeManager.Companion.subscribeOnCommitModeChange
@@ -211,6 +213,10 @@ class ChangesViewManager internal constructor(private val project: Project, priv
 
       val mainPanel = Panels.simplePanel(mainPanelContent).addToBottom(progressLabel)
       setContent(mainPanel)
+
+      mainPanel.launchOnShow("Changes refresh on changes show") {
+        ChangeListManagerRefreshHelper.requestRefresh(project)
+      }.cancelOnDispose(this)
 
       busConnection.subscribeOnVcsToolWindowLayoutChanges(Runnable { this.updatePanelLayout() })
       updatePanelLayout()

@@ -173,6 +173,10 @@ internal class GitStagePanel(
     })
     commitWorkflowHandler.workflow.addListener(MyCommitWorkflowListener(), this)
 
+    launchOnShow("Changes refresh on changes show") {
+      ChangeListManagerRefreshHelper.requestRefresh(project)
+    }.cancelOnDispose(this)
+
     if (isRefreshInProgress()) {
       tree.setEmptyText(message("stage.loading.status"))
       progressStripe.startLoadingImmediately()
