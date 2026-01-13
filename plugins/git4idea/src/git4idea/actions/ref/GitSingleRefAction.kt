@@ -10,16 +10,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.vcs.git.actions.GitSingleRefActions
 import com.intellij.vcs.git.actions.branch.GitBranchActionToBeWrapped
+import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
 import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitTag
+import git4idea.GitWorkingTree
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.actions.branch.GitBranchActionsUtil
+import git4idea.actions.ref.GitSingleRefAction.Companion.getWorkingTreeWithRef
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
-import git4idea.workingTrees.GitWorkingTreesBackendUtil
-import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
 import java.util.function.Supplier
 import kotlin.reflect.KClass
 import kotlin.reflect.safeCast
@@ -79,7 +80,7 @@ abstract class GitSingleRefAction<T : GitReference>(
 
   companion object {
     internal fun isCurrentRefInAnyRepo(ref: GitReference, repositories: List<GitRepository>) = repositories.any {
-      when(ref) {
+      when (ref) {
         is GitLocalBranch -> it.currentBranch == ref
         is GitTag -> it.state == Repository.State.DETACHED && GitRefUtil.getCurrentReference(it) == ref
         else -> false
@@ -90,7 +91,7 @@ abstract class GitSingleRefAction<T : GitReference>(
      * Only local branches are checked for working trees.
      * Tags are immutable and therefore may be easily used in multiple working trees simultaneously.
      *
-     * See also [GitWorkingTreesBackendUtil.getWorkingTreeWithRef]
+     * See also [getWorkingTreeWithRef]
      */
     internal fun isCurrentRefInAnyRepoOrWorkingTree(
       ref: GitReference,
@@ -102,7 +103,16 @@ abstract class GitSingleRefAction<T : GitReference>(
       }
 
       return repositories.any { repository ->
-        GitWorkingTreesBackendUtil.getWorkingTreeWithRef(ref, repository, checkOnlyNonCurrentWorkingTrees) != null
+        getWorkingTreeWithRef(ref, repository, checkOnlyNonCurrentWorkingTrees) != null
+      }
+    }
+
+    /**
+     * See [com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil.getWorkingTreeWithRef]
+     */
+    fun getWorkingTreeWithRef(reference: GitReference, repository: GitRepository, skipCurrentWorkingTree: Boolean): GitWorkingTree? {
+      return GitWorkingTreesUtil.getWorkingTreeWithRef(reference, repository, skipCurrentWorkingTree) {
+        repository.workingTreeHolder.getWorkingTrees()
       }
     }
   }

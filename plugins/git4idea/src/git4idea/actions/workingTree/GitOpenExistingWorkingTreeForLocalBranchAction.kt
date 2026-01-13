@@ -8,19 +8,18 @@ import git4idea.actions.ref.GitSingleRefAction
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.workingTrees.GitWorkingTreesService
-import git4idea.workingTrees.GitWorkingTreesBackendUtil
 
 class GitOpenExistingWorkingTreeForLocalBranchAction :
   GitSingleRefAction<GitReference>({ GitBundle.message("action.open.worktree.for.a.branch.text") }) {
 
   override fun isEnabledForRef(ref: GitReference, repositories: List<GitRepository>): Boolean {
     val repository = repositories.singleOrNull() ?: return false
-    return GitWorkingTreesBackendUtil.getWorkingTreeWithRef(ref, repository, true) != null
+    return getWorkingTreeWithRef(ref, repository, true) != null
   }
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, reference: GitReference) {
     val repository = repositories.singleOrNull() ?: return
-    val workingTree = GitWorkingTreesBackendUtil.getWorkingTreeWithRef(reference, repository, true) ?: return
+    val workingTree = getWorkingTreeWithRef(reference, repository, true) ?: return
     GitWorkingTreesService.getInstance(repository.project).openWorkingTreeProject(workingTree, e.coroutineScope)
   }
 }
