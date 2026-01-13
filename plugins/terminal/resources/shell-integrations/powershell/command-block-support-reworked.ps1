@@ -44,8 +44,7 @@ function Global:Prompt() {
   if ($Global:__JetBrainsIntellijState.IsInitialized -eq $false) {
     $Global:__JetBrainsIntellijState.IsInitialized = $true
     $Result += Global:__JetBrainsIntellijOSC "initialized;current_directory=$(Global:__JetBrainsIntellijEncode $CurrentDirectory)"
-    # Return the empty aliases list for now
-    $Result += Global:__JetBrainsIntellijOSC "aliases_received"
+    $Result += Global:__JetBrainsIntellijGetAliases
   }
   elseif ($Global:__JetBrainsIntellijState.IsCommandRunning -eq $true){
     $Global:__JetBrainsIntellijState.IsCommandRunning = $false
@@ -76,6 +75,13 @@ function Global:PSConsoleHostReadLine {
   }
 
   return $Command
+}
+
+function Global:__JetBrainsIntellijGetAliases {
+  $Aliases = Get-Alias | ForEach-Object { [PSCustomObject]@{ name = $_.Name; definition = $_.Definition } }
+  $AliasesJson = $Aliases | ConvertTo-Json -Compress
+  $OSC = Global:__JetBrainsIntellijOSC "aliases_received;result=$(Global:__JetBrainsIntellijEncode $AliasesJson)"
+  return $OSC
 }
 
 function Global:__JetBrainsIntellijSendCompletions {
