@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions.commit
 
+import com.intellij.configurationStore.StoreUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -11,7 +12,6 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.actions.RefreshAction
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -84,7 +84,7 @@ internal object CheckinActionUtil {
                                 pathsToCommit: List<FilePath>,
                                 executor: CommitExecutor?,
                                 forceUpdateCommitStateFromContext: Boolean) {
-    RefreshAction.saveAllAndInvokeCustomRefreshersOnEdt(project)
+    StoreUtil.saveDocumentsAndProjectSettings(project)
 
     val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
     if (executor == null && workflowHandler != null) {
