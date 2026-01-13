@@ -4,24 +4,19 @@
 import {createMcpServer} from './mcp-rpc.mjs'
 import {bd, bdJson, bdShowOne} from './bd-client.mjs'
 
-// Parse notes into structured sections (preserves unknown lines)
+// Parse notes into structured sections
+// Only tracks findings and decisions; legacy IN PROGRESS/COMPLETED/NEXT preserved in 'other'
 function parseNotes(notes) {
-  const sections = {findings: [], completed: [], in_progress: '', next: '', decisions: [], other: []}
+  const sections = {findings: [], decisions: [], other: []}
   if (!notes) return sections
 
   for (const line of notes.split('\n')) {
     if (line.startsWith('FINDING:')) {
       sections.findings.push(line.replace('FINDING:', '').trim())
-    } else if (line.startsWith('COMPLETED:')) {
-      sections.completed.push(line.replace('COMPLETED:', '').trim())
-    } else if (line.startsWith('IN PROGRESS:')) {
-      sections.in_progress = line.replace('IN PROGRESS:', '').trim()
-    } else if (line.startsWith('NEXT:')) {
-      sections.next = line.replace('NEXT:', '').trim()
     } else if (line.startsWith('KEY DECISION:')) {
       sections.decisions.push(line.replace('KEY DECISION:', '').trim())
     } else if (line.trim()) {
-      // Preserve non-empty lines that don't match known prefixes
+      // Preserve all other lines (including legacy IN PROGRESS/COMPLETED/NEXT)
       sections.other.push(line)
     }
   }
@@ -29,16 +24,23 @@ function parseNotes(notes) {
 }
 
 // Build notes string from sections
+// Only outputs findings + decisions; legacy fields preserved in 'other'
 function buildNotes(sections) {
   const parts = []
-  // Preserve unknown lines at the top
+  // Preserve legacy/unknown lines at the top
   for (const item of (sections.other || [])) parts.push(item)
   for (const item of sections.findings) parts.push(`FINDING: ${item}`)
-  for (const item of sections.completed) parts.push(`COMPLETED: ${item}`)
-  if (sections.in_progress) parts.push(`IN PROGRESS: ${sections.in_progress}`)
-  if (sections.next) parts.push(`NEXT: ${sections.next}`)
   for (const item of sections.decisions) parts.push(`KEY DECISION: ${item}`)
   return parts.join('\n')
+}
+
+// Check if issue requires user review before closing (based on priority/type)
+function needsReview(issue) {
+  const priority = typeof issue.priority === 'string'
+    ? parseInt(issue.priority.replace('P', ''), 10)
+    : (issue.priority ?? 2)
+  // P0/P1 (critical/high), bugs, and features always need review
+  return priority <= 1 || issue.type === 'bug' || issue.type === 'feature'
 }
 
 // 5 action-driven tools
@@ -68,16 +70,14 @@ const tools = [
   },
   {
     name: 'task_progress',
-    description: 'Update progress notes. Returns action to continue.',
+    description: 'Update progress. Records findings/decisions in notes. Returns action with review requirement based on priority/type.',
     inputSchema: {
       type: 'object',
       properties: {
         id: {type: 'string', description: 'Issue ID'},
-        finding: {type: 'string', description: 'Discovery during exploration - files, patterns, dependencies (appends)'},
-        completed: {type: 'string', description: 'What was completed (appends)'},
-        working_on: {type: 'string', description: 'Current work (replaces)'},
-        next: {type: 'string', description: 'Next action (replaces)'},
-        decision: {type: 'string', description: 'Key decision made (appends)'},
+        finding: {type: 'string', description: 'Discovery during exploration - files, patterns, dependencies (appends to notes)'},
+        completed: {type: 'string', description: 'What was completed (triggers review check for P0/P1/bug/feature)'},
+        decision: {type: 'string', description: 'Key decision made (appends to notes)'},
         status: {type: 'string', enum: ['in_progress', 'blocked', 'deferred'], description: 'Set status (in_progress to resume blocked/deferred)'}
       },
       required: ['id']
@@ -157,17 +157,15 @@ const tools = [
 ]
 
 // Compute action string for a specific issue based on status
-function computeAction(issue, notes) {
+function computeAction(issue) {
   const id = issue.id
   if (issue.status === 'in_progress') {
-    return notes.next
-      ? `Continue: ${notes.next}`
-      : `Work on this issue. When done: task_done(id="${id}", summary="...")`
+    return `Work on this issue. When done: task_done(id="${id}", summary="...")`
   }
   if (issue.status === 'open') {
     return issue.type === 'epic'
       ? `Start: task_epic(resume="${id}")`
-      : `Start: task_progress(id="${id}", working_on="...")`
+      : `Start: task_progress(id="${id}", status="in_progress")`
   }
   if (issue.status === 'blocked') {
     return `Blocked. To unblock: task_progress(id="${id}", status="in_progress")`
@@ -186,15 +184,12 @@ const toolHandlers = {
       if (!issue) {
         return {error: `Issue ${args.id} not found`}
       }
-      const notes = parseNotes(issue.notes)
       return {
         id: issue.id,
         title: issue.title,
         status: issue.status,
         type: issue.type,
-        next: notes.next || undefined,
-        working_on: notes.in_progress || undefined,
-        action: computeAction(issue, notes)
+        action: computeAction(issue)
       }
     }
 
@@ -209,8 +204,13 @@ const toolHandlers = {
       }
       if (ready.length > 0) {
         return {
-          action: 'AskUserQuestion: Pick a task to start',
-          options: ready.map(r => ({id: r.id, title: r.title, type: r.type}))
+          action: 'ask',
+          askUser: {
+            question: 'Which task would you like to work on?',
+            header: 'Task',
+            options: ready.map(r => ({label: r.title, description: r.id})),
+            multiSelect: false
+          }
         }
       }
       return {action: 'No tasks. Ask user what to work on.'}
@@ -219,33 +219,28 @@ const toolHandlers = {
     // Single in-progress, no new request - just continue
     if (inProgress.length === 1 && !args.user_request) {
       const issue = inProgress[0]
-      const notes = parseNotes(issue.notes)
-      if (notes.next) {
-        return {id: issue.id, title: issue.title, action: `Continue: ${notes.next}`}
-      }
       return {
-        action: `AskUserQuestion: Working on "${issue.title}". What to do?`,
-        options: [
-          {id: issue.id, label: 'Continue working'},
-          {id: 'done', label: 'Mark done'},
-          {id: 'block', label: 'Block/defer'}
-        ]
+        id: issue.id,
+        title: issue.title,
+        action: `Continue working on "${issue.title}". When done: task_done(id="${issue.id}", summary="...")`
       }
     }
 
     // Multiple in-progress OR conflict with user_request - user must select
-    const question = args.user_request
-      ? `AskUserQuestion: "${args.user_request}" - which task?`
-      : 'AskUserQuestion: Which task to work on?'
+    const questionText = args.user_request
+      ? `"${args.user_request}" - which task?`
+      : 'Which task to work on?'
     return {
-      action: question,
-      options: [
-        ...inProgress.map(i => {
-          const notes = parseNotes(i.notes)
-          return {id: i.id, title: i.title, next: notes.next || undefined}
-        }),
-        {id: 'new', title: 'Start new task'}
-      ]
+      action: 'ask',
+      askUser: {
+        question: questionText,
+        header: 'Task',
+        options: [
+          ...inProgress.map(i => ({label: i.title, description: i.id})),
+          {label: 'Start new task', description: 'Create a new epic'}
+        ],
+        multiSelect: false
+      }
     }
   },
 
@@ -265,10 +260,7 @@ const toolHandlers = {
           ? `Check sub-issues: task_status(id="${args.resume}")`
           : `Explore codebase, then: task_decompose(epic_id="${args.resume}", sub_issues=[...])`
       } else {
-        const notes = parseNotes(issue.notes)
-        action = notes.next
-          ? `Continue: ${notes.next}`
-          : `Work on this issue: task_progress(id="${args.resume}", working_on="...")`
+        action = `Work on this issue. When done: task_done(id="${args.resume}", summary="...")`
       }
 
       return {id: args.resume, title: issue.title, type: issue.type, is_new: false, action}
@@ -283,8 +275,6 @@ const toolHandlers = {
 
     return {
       id,
-      title: args.title,
-      is_new: true,
       action: `Explore codebase, then: task_decompose(epic_id="${id}", sub_issues=[...])`
     }
   },
@@ -296,11 +286,8 @@ const toolHandlers = {
     }
     const sections = parseNotes(issue.notes)
 
-    // Apply updates
+    // Apply updates - only findings and decisions are stored in notes
     if (args.finding) sections.findings.push(args.finding)
-    if (args.completed) sections.completed.push(args.completed)
-    if (args.working_on !== undefined) sections.in_progress = args.working_on
-    if (args.next !== undefined) sections.next = args.next
     if (args.decision) sections.decisions.push(args.decision)
 
     const newNotes = buildNotes(sections)
@@ -308,20 +295,38 @@ const toolHandlers = {
     if (args.status) updateArgs.push('--status', args.status)
     bd(updateArgs)
 
-    // Determine action
+    // Determine action based on what was updated
     let action
     if (args.status === 'blocked' || args.status === 'deferred') {
       action = `Issue ${args.status}. Pick next: task_status()`
     } else if (args.status === 'in_progress') {
-      action = sections.next
-        ? `Resumed. Continue: ${sections.next}`
-        : `Resumed. Update: task_progress(id="${args.id}", working_on="...")`
-    } else if (sections.next) {
-      action = `Continue: ${sections.next}`
-    } else if (sections.in_progress) {
-      action = `Working on: ${sections.in_progress}. When done: task_done(id="${args.id}", summary="...")`
+      action = `Resumed. Work on this issue. When done: task_done(id="${args.id}", summary="...")`
+    } else if (args.completed) {
+      // Work was completed - check if review is needed based on priority/type
+      if (needsReview(issue)) {
+        action = 'ask'
+        return {
+          success: true,
+          notes: newNotes,
+          status: args.status || issue.status,
+          action,
+          reviewRequired: `${issue.type}/P${issue.priority ?? 2}`,
+          askUser: {
+            question: `Review completed work (${issue.type}/P${issue.priority ?? 2}). What next?`,
+            header: 'Review',
+            options: [
+              {label: 'Close issue', description: 'Work is complete'},
+              {label: 'Needs correction', description: 'Continue fixing'},
+              {label: 'Add more changes', description: 'Continue without closing'}
+            ],
+            multiSelect: false
+          }
+        }
+      } else {
+        action = `Changes noted. Close: task_done(id="${args.id}", summary="${args.completed}")`
+      }
     } else {
-      action = `Update next step or complete: task_done(id="${args.id}", summary="...")`
+      action = `Continue working. When done: task_done(id="${args.id}", summary="...")`
     }
 
     return {success: true, notes: newNotes, status: args.status || issue.status, action}
@@ -384,9 +389,7 @@ const toolHandlers = {
     }
     return {
       id,
-      title: args.title,
-      type: issueType,
-      action: `Created ${id}. If starting now: task_progress(id="${id}", working_on="...")`
+      action: `Created. Start: task_progress(id="${id}", status="in_progress")`
     }
   },
 
@@ -432,7 +435,7 @@ const toolHandlers = {
         ? `ALL SUB-ISSUES DONE. Close epic "${epicTitle}" NOW: task_done(id="${parentId}", summary="...")`
         : `ALL SUB-ISSUES DONE. Close epic NOW: task_done(id="${parentId}", summary="...")`
     } else if (nextReady) {
-      action = `Next: ${nextReady.id} - ${nextReady.title}. Start: task_progress(id="${nextReady.id}", working_on="...")`
+      action = `Next: ${nextReady.id} - ${nextReady.title}. Start: task_progress(id="${nextReady.id}", status="in_progress")`
     } else if (parentId) {
       action = `Check for more work: task_status(id="${parentId}")`
     } else {
