@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.workingTrees
+package com.intellij.vcs.git.workingTrees
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.vcs.git.repo.GitRepositoryModel
@@ -25,10 +25,10 @@ object GitWorkingTreesUtil {
    * For now only local branches are supported for working trees.
    */
   fun <T> getWorkingTreeWithRef(
-    reference: GitReference,
-    repository: T,
-    skipCurrentWorkingTree: Boolean,
-    workingTrees: (T) -> Collection<GitWorkingTree>,
+      reference: GitReference,
+      repository: T,
+      skipCurrentWorkingTree: Boolean,
+      workingTrees: (T) -> Collection<GitWorkingTree>,
   ): GitWorkingTree? {
     if (!isWorkingTreesFeatureEnabled() || reference !is GitStandardLocalBranch) {
       return null

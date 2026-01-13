@@ -12,6 +12,7 @@ import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.repo.GitRepositoryModel
+import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
 import git4idea.GitRemoteBranch
 import git4idea.GitWorkingTree
 import git4idea.actions.workingTree.GitWorkingTreeDialogData

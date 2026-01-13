@@ -13,7 +13,7 @@ import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.rpc.GitOperationsApi
 import git4idea.GitStandardLocalBranch
 import git4idea.i18n.GitBundle
-import git4idea.workingTrees.GitWorkingTreesUtil
+import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

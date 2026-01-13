@@ -19,7 +19,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.workingTrees.GitWorkingTreesBackendUtil
-import git4idea.workingTrees.GitWorkingTreesUtil
+import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
 import java.util.function.Supplier
 import kotlin.reflect.KClass
 import kotlin.reflect.safeCast
