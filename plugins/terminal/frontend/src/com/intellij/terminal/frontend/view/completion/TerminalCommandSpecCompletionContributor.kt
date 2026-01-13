@@ -9,7 +9,6 @@ import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
-import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.util.ShellType
 
@@ -54,8 +53,8 @@ internal suspend fun getCommandSpecCompletionSuggestions(context: TerminalComman
     context.isAutoPopup
   )
 
-  val aliasesStorage = context.editor.getUserData(TerminalAliasesStorage.KEY)
-  val expandedTokens = expandAliases(parameters, allTokens, aliasesStorage)
+  val aliasesMap = context.shellIntegration.commandAliases
+  val expandedTokens = expandAliases(parameters, allTokens, aliasesMap)
   val suggestions = computeSuggestions(expandedTokens, parameters, parameters.isAutoPopup)
   return TerminalCompletionResult(suggestions, prefix)
 }
@@ -63,13 +62,13 @@ internal suspend fun getCommandSpecCompletionSuggestions(context: TerminalComman
 private suspend fun expandAliases(
   parameters: TerminalCompletionParameters,
   tokens: List<String>,
-  aliasesStorage: TerminalAliasesStorage?,
+  aliasesMap: Map<String, String>,
 ): List<String> {
   if (tokens.size < 2) {
     return tokens
   }
-  if (aliasesStorage != null) {
-    val expandedTokens = expandAliases(tokens, aliasesStorage.getAliasesInfo().aliases, parameters)
+  if (aliasesMap.isNotEmpty()) {
+    val expandedTokens = expandAliases(tokens, aliasesMap, parameters)
     return expandedTokens
   }
   return tokens
