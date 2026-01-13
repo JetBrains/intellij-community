@@ -19,6 +19,7 @@ import git4idea.inMemory.objects.toHash
 import git4idea.rebase.interactive.getRebaseUpstreamFor
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.reset.GitResetMode
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 internal abstract class GitInMemoryCommitEditingOperation(
@@ -27,7 +28,7 @@ internal abstract class GitInMemoryCommitEditingOperation(
 ) {
   protected abstract suspend fun editCommits(): CommitEditingResult
 
-  protected abstract val reflogMessage: @NonNls String
+  protected abstract val operationName: @Nls String
   protected abstract val failureTitle: @NonNls String
 
   protected lateinit var initialHeadPosition: String
@@ -86,7 +87,7 @@ internal abstract class GitInMemoryCommitEditingOperation(
   }
 
   private val fullReflogMessage
-    get() = "$reflogMessage $REFLOG_MESSAGE_SUFFIX"
+    get() = "$operationName $REFLOG_MESSAGE_SUFFIX"
 
   private fun notifyOperationFailed(exception: VcsException) {
     VcsNotifier.getInstance(objectRepo.repository.project).notifyError(
