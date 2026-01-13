@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.macros
 
 import com.intellij.ide.ApplicationActivity
@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import org.jetbrains.kotlin.idea.jps.KOTLIN_BUNDLED
 
 /**
  * Starting from KTIJ-11633 Kotlin JPS plugin is downloaded by IDEA depending on what current version of Kotlin compiler in project

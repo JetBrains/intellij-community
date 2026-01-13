@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.macros
 
 import com.intellij.openapi.application.readAction
@@ -6,6 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
@@ -17,7 +18,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
-import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -59,11 +59,11 @@ class KotlinBundledUsageDetector(private val project: Project, private val cs: C
         override suspend fun execute(project: Project) {
             val isUsed = readAction {
                 var used = false
-                project.forEachAllUsedLibraries { library ->
+                OrderEnumerator.orderEntries(project).forEachLibrary { library ->
                     ProgressManager.checkCanceled()
                     if (library.getUrls(OrderRootType.CLASSES).any(String::isStartsWithDistPrefix)) {
                         used = true
-                        return@forEachAllUsedLibraries false
+                        return@forEachLibrary false
                     }
 
                     true

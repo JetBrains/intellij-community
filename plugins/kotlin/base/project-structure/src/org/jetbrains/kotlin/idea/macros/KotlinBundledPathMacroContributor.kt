@@ -1,15 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.macros
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.components.impl.ProjectWidePathMacroContributor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.jps.KOTLIN_BUNDLED
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
@@ -19,6 +19,7 @@ import kotlin.io.path.getLastModifiedTime
 
 private val NOT_CACHED_YET_FILE_TIME: FileTime = FileTime.fromMillis(0L)
 private val FILE_DOESNT_EXIST_FILE_TIME: FileTime = FileTime.fromMillis(1L)
+const val KOTLIN_BUNDLED: @NonNls String = "KOTLIN_BUNDLED"
 
 private class KotlinBundledPathMacroContributor : ProjectWidePathMacroContributor, ProjectCloseListener {
     private val cachedPaths = ConcurrentHashMap<String, Pair<String, FileTime>>()
