@@ -144,7 +144,7 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
     InspectionTestUtil.compareWithExpected(expectedUnnCondResults, unnCondResults, false);
   }
 
-  private static @NotNull Element loadFile(@NotNull Path file) {
+  static @NotNull Element loadFile(@NotNull Path file) {
     try {
       return JDOMUtil.load(file);
     }
