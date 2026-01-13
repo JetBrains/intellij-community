@@ -240,16 +240,17 @@ class VcsLogRefresherImpl(
         LOG.trace { "Recent log loaded in ${loadTime.inWholeMilliseconds} ms" }
         checkCanceled()
         refreshSessionData.put(currentAttemptData)
-
-        val (compoundLog, joinTime) = measureTimedValue { multiRepoJoin(refreshSessionData.commits) }
-        LOG.trace { "Recent log joined in ${joinTime.inWholeMilliseconds} ms" }
-        checkCanceled()
+        val compoundLog = multiRepoJoin(refreshSessionData.commits)
         val allNewRefs = currentRefs.toMutableMap().apply {
           replaceAll { root, refs ->
             refreshSessionData.getRefs(root) ?: refs
           }
         }
-        val joinedFullLog = join(permanentGraph.allCommits.toList(), compoundLog, currentRefs, allNewRefs)
+        checkCanceled()
+        val (joinedFullLog, joinTime) = measureTimedValue {
+          join(permanentGraph.allCommits.toList(), compoundLog, currentRefs, allNewRefs)
+        }
+        LOG.trace { "Recent log joined in ${joinTime.inWholeMilliseconds} ms" }
         if (joinedFullLog != null) {
           val (result, buildTime) = measureTimedValue {
             VcsLogGraphDataFactory.buildData(joinedFullLog, allNewRefs, providers, storage, true)
