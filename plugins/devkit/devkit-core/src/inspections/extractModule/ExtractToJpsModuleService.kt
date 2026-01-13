@@ -26,8 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
@@ -91,18 +89,17 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
         LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newSourceRootPath)
       }
       withContext(Dispatchers.EDT) {
-        val packagePsiDirectory = PsiManager.getInstance(project).findDirectory(data.packageDirectory)
         val createdModule = ModuleManager.getInstance(project).findModuleByName(data.newModuleName)
-        if (createdModule != null && packagePsiDirectory != null && newSourceRootDirectory != null) {
+        if (createdModule != null && newSourceRootDirectory != null) {
           val creator = object : TargetModuleCreator {
-            override fun createExtractedModule(originalModule: Module, directory: PsiDirectory): TargetModuleCreator.ExtractedModuleData {
+            override fun createExtractedModule(originalModule: Module, directory: VirtualFile): TargetModuleCreator.ExtractedModuleData {
               return TargetModuleCreator.ExtractedModuleData(module = createdModule, directoryToMoveClassesTo = newSourceRootDirectory)
             }
           }
-          project.service<ExtractModuleService>().analyzeDependenciesAndCreateModuleInBackground(packagePsiDirectory, data.originalModule, creator)
+          project.service<ExtractModuleService>().analyzeDependenciesAndCreateModuleInBackground(data.packageDirectory, data.originalModule, creator)
         }
         else {
-          LOG.error("Cannot move classes to module '${data.newModuleName}': createdModule = $createdModule, packagePsiDirectory = $packagePsiDirectory, newSourceRootDirectory = $newSourceRootDirectory")
+          LOG.error("Cannot move classes to module '${data.newModuleName}': createdModule = $createdModule, newSourceRootDirectory = $newSourceRootDirectory")
         }
       }
     }

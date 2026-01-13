@@ -8,15 +8,13 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.psi.PsiManager
 import java.nio.file.Path
 
 class ExtractModuleFromPackageAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
-    val module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile) ?: return
-    val directory = PsiManager.getInstance(module.project).findDirectory(virtualFile) ?: return
+    val directory = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
+    val module = ProjectFileIndex.getInstance(project).getModuleForFile(directory) ?: return
     val suggestedModuleName = "${module.name}.${directory.name}"
     val parentContentRoot = ModuleRootManager.getInstance(module).contentRoots.first()
     val dialog = ExtractModuleFromPackageDialog(project, suggestedModuleName,

@@ -24,9 +24,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.platform.util.progress.reportSequentialProgress
-import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiDirectory
 import com.intellij.task.ProjectTaskManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -81,7 +79,7 @@ internal suspend fun compilerOutputPathForTests(module: Module): List<Path> = re
 
 interface TargetModuleCreator {
   @RequiresWriteLock
-  fun createExtractedModule(originalModule: Module, directory: PsiDirectory): ExtractedModuleData
+  fun createExtractedModule(originalModule: Module, directory: VirtualFile): ExtractedModuleData
 
   class ExtractedModuleData(val module: Module, val directoryToMoveClassesTo: VirtualFile?)
 }
@@ -93,7 +91,7 @@ class ExtractModuleService(
 ) {
   @RequiresEdt
   fun analyzeDependenciesAndCreateModuleInBackground(
-    directory: PsiDirectory,
+    directory: VirtualFile,
     module: Module,
     targetModuleCreator: TargetModuleCreator,
   ) {
@@ -112,7 +110,7 @@ class ExtractModuleService(
 
   @OptIn(ExperimentalPathApi::class)
   private suspend fun analyzeDependenciesAndCreateModule(
-    directory: PsiDirectory,
+    directory: VirtualFile,
     module: Module,
     targetModuleCreator: TargetModuleCreator,
   ) {
@@ -123,7 +121,7 @@ class ExtractModuleService(
       if (compilerOutputPaths.isEmpty()) return@reportSequentialProgress
 
       val packageName = readAction {
-        JavaDirectoryService.getInstance().getPackage(directory)?.qualifiedName
+        PackageIndex.getInstance(project).getPackageName(directory)
       } ?: return@reportSequentialProgress
       val packageRelativePathPrefix = packageName.replace('.', '/') + "/"
 
@@ -268,7 +266,7 @@ class ExtractModuleService(
 
   @RequiresWriteLock
   private fun extractModule(
-    directory: PsiDirectory,
+    directory: VirtualFile,
     module: Module,
     targetModuleCreator: TargetModuleCreator,
     usedModules: Set<Module>,
@@ -311,7 +309,7 @@ class ExtractModuleService(
     }
 
     if (directoryToMoveClassesTo != null) {
-      for (child in directory.virtualFile.children) {
+      for (child in directory.children) {
         child.move(this, directoryToMoveClassesTo)
       }
     }
@@ -319,7 +317,7 @@ class ExtractModuleService(
   }
 
   @TestOnly
-  suspend fun extractModuleFromDirectory(directory: PsiDirectory, module: Module, moduleName: @NlsSafe String, targetSourceRoot: String?) {
+  suspend fun extractModuleFromDirectory(directory: VirtualFile, module: Module, moduleName: @NlsSafe String, targetSourceRoot: String?) {
     analyzeDependenciesAndCreateModule(directory, module, TargetModuleCreatorImpl(moduleName, targetSourceRoot))
   }
 }
@@ -355,8 +353,8 @@ internal class TargetModuleCreatorImpl(
   private val moduleName: String,
   private val targetSourceRootPath: String?,
 ) : TargetModuleCreator {
-  override fun createExtractedModule(originalModule: Module, directory: PsiDirectory): TargetModuleCreator.ExtractedModuleData {
-    val packagePrefix = JavaDirectoryService.getInstance().getPackage(directory)?.qualifiedName ?: ""
+  override fun createExtractedModule(originalModule: Module, directory: VirtualFile): TargetModuleCreator.ExtractedModuleData {
+    val packagePrefix = PackageIndex.getInstance(originalModule.project).getPackageName(directory) ?: ""
 
     val targetSourceRoot = targetSourceRootPath?.let { VfsUtil.createDirectories(it) }
     val (contentRoot, imlFileDirectory) = if (targetSourceRoot != null) {
@@ -365,7 +363,7 @@ internal class TargetModuleCreatorImpl(
       else parent to parent.toNioPath()
     }
     else {
-      directory.virtualFile to originalModule.moduleNioFile.parent
+      directory to originalModule.moduleNioFile.parent
     }
 
     val newModule = ModuleManager.getInstance(originalModule.project).newModule(imlFileDirectory.resolve("$moduleName.iml"),
@@ -383,7 +381,7 @@ internal class TargetModuleCreatorImpl(
         contentEntry.addSourceFolder(targetSourceRoot, false)
       }
       else {
-        contentEntry.addSourceFolder(directory.virtualFile, false, packagePrefix)
+        contentEntry.addSourceFolder(directory, false, packagePrefix)
       }
     }
 

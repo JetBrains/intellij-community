@@ -174,7 +174,7 @@ class ExtractModuleFromPackageActionTest {
     val messages = compilerTester.rebuild()
     assertThat(messages.filter { it.category == CompilerMessageCategory.ERROR }).isEmpty()
     runBlocking {
-      projectModel.project.service<ExtractModuleService>().extractModuleFromDirectory(directory, main, "main.xxx",
+      projectModel.project.service<ExtractModuleService>().extractModuleFromDirectory(directory.virtualFile, main, "main.xxx",
                                                                                       targetSourceRoot)
     }
   }
