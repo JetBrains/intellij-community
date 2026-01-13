@@ -7,9 +7,13 @@ import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.SimpleContentRevision
+import com.intellij.openapi.vcs.changes.patch.PatchWriter
 import com.intellij.vcsUtil.VcsUtil
 import java.io.StringWriter
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.nio.file.Paths
 
 class CreateApplyPatchSymmetryTest : HeavyDiffTestCase() {
@@ -94,5 +98,34 @@ class CreateApplyPatchSymmetryTest : HeavyDiffTestCase() {
     debugData?.put("Text3", text3)
 
     assertEquals(text2, text3)
+  }
+
+  fun testCommitMessageHeader() {
+    val basePath = Paths.get("/base/")
+    val filePath = VcsUtil.getFilePath("/base/some/file.txt", false)
+
+    val change = Change(SimpleContentRevision("a\n", filePath, "1"),
+                        SimpleContentRevision("b\n", filePath, "2"))
+    val patches = IdeaTextPatchBuilder.buildPatch(project, listOf(change), basePath, false)
+
+    val includeFullCommitMessage = booleanArrayOf(false)
+    val hasFullCommitMessage = booleanArrayOf(false)
+    for (includeFull in includeFullCommitMessage) {
+      for (hasFull in hasFullCommitMessage) {
+        val commitContext = if (includeFull || hasFull) CommitContext() else null
+
+        val tempDir = Files.createTempDirectory("patch-writer-test")
+        try {
+          val patchFile = tempDir.resolve("test.patch")
+          PatchWriter.writePatches(project!!, patchFile, basePath, patches, "subject", commitContext, StandardCharsets.UTF_8)
+          val text = Files.readString(patchFile)
+          assertTrue(text.contains("Subject: [PATCH] subject"))
+          assertEquals(includeFull && hasFull, text.contains("body"))
+        }
+        finally {
+          tempDir.toFile().deleteRecursively()
+        }
+      }
+    }
   }
 }
