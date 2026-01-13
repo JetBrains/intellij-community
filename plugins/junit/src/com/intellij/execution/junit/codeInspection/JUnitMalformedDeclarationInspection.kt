@@ -4,6 +4,7 @@ package com.intellij.execution.junit.codeInspection
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY
 import com.intellij.codeInsight.MetaAnnotationUtil
+import com.intellij.codeInsight.TestFrameworks
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInsight.intention.IntentionAction
@@ -1215,9 +1216,11 @@ private class JUnitMalformedSignatureVisitor(
     }
 
     private fun getContainingClass(element: UElement): PsiClass? {
-      val containingClass = element.getContainingUClass()?.javaPsi ?: return null
-      if (containingClass.name != "Companion") return containingClass
-      return containingClass.containingClass
+      var containingClass = element.getContainingUClass()?.javaPsi ?: return null
+      while (TestFrameworks.detectFramework(containingClass) == null) {
+        containingClass = containingClass.containingClass ?: return null
+      }
+      return containingClass
     }
 
     fun check(holder: ProblemsHolder, element: UMethod) {

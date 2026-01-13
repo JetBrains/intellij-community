@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_PLATFORM_SUITE_API_SUITE;
+import static com.siyeh.ig.junit.JUnitCommonClassNames.*;
 
 public class JUnit5Framework extends JUnitTestFramework {
 
@@ -71,41 +71,36 @@ public class JUnit5Framework extends JUnitTestFramework {
 
   @Override
   protected @Nullable PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
-    return callWithAlternateResolver(clazz.getProject(), ()->{
-      for (PsiMethod each : clazz.getMethods()) {
-        if (AnnotationUtil.isAnnotated(each, JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, 0)) return each;
-      }
-      return null;
-    }, null);
+    return findMethod(clazz, null, JUnitUtil.BEFORE_EACH_ANNOTATION_NAME);
   }
 
   @Override
   protected @Nullable PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
-    return callWithAlternateResolver(clazz.getProject(), () -> {
-      for (PsiMethod each : clazz.getMethods()) {
-        if (each.hasModifierProperty(PsiModifier.STATIC)
-            && AnnotationUtil.isAnnotated(each, JUnitUtil.BEFORE_ALL_ANNOTATION_NAME, 0)) return each;
-      }
-      return null;
-    }, null);
+    return findMethod(clazz, PsiModifier.STATIC, JUnitUtil.BEFORE_ALL_ANNOTATION_NAME);
+  }
+
+  @Override
+  protected @Nullable PsiElement findBeforeSuiteMethod(@NotNull PsiClass clazz) {
+    return findMethod(clazz, PsiModifier.STATIC, ORG_JUNIT_PLATFORM_SUITE_API_BEFORESUITE);
+  }
+
+  @Override
+  protected @Nullable PsiElement findAfterSuiteMethod(@NotNull PsiClass clazz) {
+    return findMethod(clazz, PsiModifier.STATIC, ORG_JUNIT_PLATFORM_SUITE_API_AFTERSUITE);
   }
 
   @Override
   protected @Nullable PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
-    return callWithAlternateResolver(clazz.getProject(), () -> {
-      for (PsiMethod each : clazz.getMethods()) {
-        if (AnnotationUtil.isAnnotated(each, JUnitUtil.AFTER_EACH_ANNOTATION_NAME, 0)) return each;
-      }
-      return null;
-    }, null);
+    return findMethod(clazz, null, JUnitUtil.AFTER_EACH_ANNOTATION_NAME);
   }
 
-  @Override
-  protected @Nullable PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
+  private static @Nullable PsiMethod findMethod(@NotNull PsiClass clazz,
+                                                @PsiModifier.ModifierConstant @Nullable String modifier,
+                                                @NotNull String annotationFqn) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       for (PsiMethod each : clazz.getMethods()) {
-        if (each.hasModifierProperty(PsiModifier.STATIC)
-            && AnnotationUtil.isAnnotated(each, JUnitUtil.AFTER_ALL_ANNOTATION_NAME, 0)) {
+        if ((modifier == null || each.hasModifierProperty(modifier)) &&
+            AnnotationUtil.isAnnotated(each, annotationFqn, 0)) {
           return each;
         }
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.testIntegration;
 
@@ -10,6 +10,7 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,6 +84,16 @@ public interface TestFramework extends PossiblyDumbAware {
   }
 
   default FileTemplateDescriptor getAfterClassMethodFileTemplateDescriptor() {
+    return null;
+  }
+
+  @ApiStatus.Experimental
+  default @Nullable PsiElement findBeforeSuiteMethod(@NotNull PsiElement clazz) {
+    return null;
+  }
+
+  @ApiStatus.Experimental
+  default @Nullable PsiElement findAfterSuiteMethod(@NotNull PsiElement clazz) {
     return null;
   }
 

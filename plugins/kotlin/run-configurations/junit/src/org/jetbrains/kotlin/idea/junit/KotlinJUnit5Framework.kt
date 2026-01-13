@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.junit
 
 import com.intellij.execution.junit.JUnit5Framework
@@ -6,13 +6,14 @@ import com.intellij.execution.junit.JUnitUtil
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor
 import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.lang.Language
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
 import com.intellij.util.ThreeState.*
-import com.siyeh.ig.junit.JUnitCommonClassNames
+import com.siyeh.ig.junit.JUnitCommonClassNames.*
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
@@ -35,7 +36,7 @@ internal class KotlinJUnit5PsiDelegate(
 ) : AbstractKotlinPsiBasedTestFramework() {
     override val markerClassFqns: Collection<String> = markerClassFqnsParam
 
-    override val disabledTestAnnotation: String = JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_DISABLED
+    override val disabledTestAnnotation: String = ORG_JUNIT_JUPITER_API_DISABLED
 
     override val allowTestMethodsInObject: Boolean = true
 
@@ -89,8 +90,8 @@ internal class KotlinJUnit5PsiDelegate(
         } else if (!isFrameworkAvailable(declaration)) {
             NO
         } else if (declaration is KtClass && declaration.isInner()) {
-            if (isAnnotated(declaration, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED)) YES else NO
-        } else if (declaration.isTopLevel() && isAnnotated(declaration, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)) {
+            if (isAnnotated(declaration, ORG_JUNIT_JUPITER_API_NESTED)) YES else NO
+        } else if (declaration.isTopLevel() && isAnnotated(declaration, ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)) {
             YES
         } else if (findAnnotatedFunction(declaration, testableAnnotations) != null) {
             YES
@@ -107,6 +108,12 @@ internal class KotlinJUnit5PsiDelegate(
 
     override fun findTearDown(classOrObject: KtClassOrObject): KtNamedFunction? =
         findAnnotatedFunction(classOrObject.takeIf { isKotlinTestClass(it) }, tearDownAnnotations)
+
+    fun findBeforeSuite(classOrObject: KtClassOrObject): KtNamedFunction? =
+        findAnnotatedFunction(classOrObject.takeIf { isKotlinTestClass(it) }, setOf(ORG_JUNIT_PLATFORM_SUITE_API_BEFORESUITE))
+
+    fun findAfterSuite(classOrObject: KtClassOrObject): KtNamedFunction? =
+        findAnnotatedFunction(classOrObject.takeIf { isKotlinTestClass(it) }, setOf(ORG_JUNIT_PLATFORM_SUITE_API_AFTERSUITE))
 }
 
 class KotlinJUnit5Framework : JUnit5Framework(), KotlinPsiBasedTestFramework {
@@ -143,6 +150,22 @@ class KotlinJUnit5Framework : JUnit5Framework(), KotlinPsiBasedTestFramework {
             NO -> null
             else -> clazz.asKtClassOrObject()?.let(psiBasedDelegate::findTearDown)
         }
+
+    override fun findBeforeSuiteMethod(clazz: PsiClass): PsiElement? {
+        return when (checkTestClass(clazz)) {
+            UNSURE -> super.findBeforeSuiteMethod(clazz)
+            NO -> null
+            else -> clazz.asKtClassOrObject()?.let(psiBasedDelegate::findBeforeSuite)
+        }
+    }
+
+    override fun findAfterSuiteMethod(clazz: PsiClass): PsiElement? {
+        return when (checkTestClass(clazz)) {
+            UNSURE -> super.findAfterSuiteMethod(clazz)
+            NO -> null
+            else -> clazz.asKtClassOrObject()?.let(psiBasedDelegate::findAfterSuite)
+        }
+    }
 
     override fun isIgnoredMethod(element: PsiElement?): Boolean =
         when (checkTestClass(element)) {
@@ -201,9 +224,9 @@ class KotlinJUnit5Framework : JUnit5Framework(), KotlinPsiBasedTestFramework {
 private val METHOD_ANNOTATION_FQN = setOf(
     JUnitUtil.TEST5_ANNOTATION,
     KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST,
-    JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST,
-    JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_REPEATED_TEST,
-    JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_FACTORY,
+    ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST,
+    ORG_JUNIT_JUPITER_API_REPEATED_TEST,
+    ORG_JUNIT_JUPITER_API_TEST_FACTORY,
     "org.junit.jupiter.api.TestTemplate",
     "org.junitpioneer.jupiter.RetryingTest"
 )

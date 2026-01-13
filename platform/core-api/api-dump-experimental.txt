@@ -580,6 +580,10 @@ f:com.intellij.psi.util.PsiTreeUtilKt
 - *sf:leavesAroundOffset(com.intellij.psi.PsiFile,I):java.lang.Iterable
 - *sf:walkUp(com.intellij.psi.PsiElement,I):java.util.Iterator
 - *sf:walkUp(com.intellij.psi.PsiElement,I,com.intellij.psi.PsiElement):java.util.Iterator
+com.intellij.testIntegration.TestFramework
+- com.intellij.openapi.project.PossiblyDumbAware
+- *:findAfterSuiteMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- *:findBeforeSuiteMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 f:com.intellij.util.CoroutinesKt
 - *sf:awaitCancellationAndInvoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):V
 - *bs:awaitCancellationAndInvoke$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):V
