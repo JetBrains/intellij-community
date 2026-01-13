@@ -7,6 +7,7 @@ import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.tcp.IjentIsolatedTcpDeployingStrategy
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -49,7 +50,14 @@ abstract class TcpEelMachine(
   fun deploy() {
     if (deployingState.compareAndSet(false, true)) {
       coroutineScope.async {
-        deferredEelSession.complete(strategyFactory().createIjentSession())
+        try {
+          deferredEelSession.complete(strategyFactory().createIjentSession())
+        }
+        catch (e: Throwable) {
+          deferredEelSession.completeExceptionally(e)
+
+          if (e is CancellationException) throw e
+        }
       }
     }
   }
