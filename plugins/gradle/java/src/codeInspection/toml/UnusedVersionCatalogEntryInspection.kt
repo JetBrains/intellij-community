@@ -10,7 +10,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
-import org.jetbrains.plugins.gradle.service.resolve.getVersionCatalogFiles
+import org.jetbrains.plugins.gradle.service.resolve.isInVersionCatalog
 import org.toml.lang.psi.TomlKeySegment
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlTable
@@ -23,10 +23,7 @@ class UnusedVersionCatalogEntryInspection : LocalInspectionTool() {
     return object : TomlVisitor() {
 
       override fun visitKeySegment(element: TomlKeySegment) {
-        val containingFile = element.containingFile ?: return
-        if (containingFile.virtualFile !in getVersionCatalogFiles(element.project).values) {
-          return
-        }
+        if (!isInVersionCatalog(element)) return
 
         val headerName = element.parentOfType<TomlKeyValue>()?.parent.asSafely<TomlTable>()?.header?.key?.name
           ?.let { name -> VersionCatalogHeader.values().find { it.repr == name } } ?: return
