@@ -419,8 +419,6 @@
               topic="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManagerListener"/>
     <listener class="com.intellij.openapi.vcs.actions.AnnotationsLineStatusTrackerListener"
               topic="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$Listener"/>
-    <listener class="com.intellij.vcs.commit.ChangesViewToolWindowRefresher"
-              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
   </projectListeners>
 </idea-plugin>
 
