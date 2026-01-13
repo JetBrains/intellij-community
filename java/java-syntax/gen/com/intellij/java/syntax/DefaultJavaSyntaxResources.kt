@@ -82,6 +82,7 @@ internal object DefaultJavaSyntaxResources {
     "feature.java.lang.io" to "java.lang.IO utility class",
     "feature.javadoc.snippets" to "@snippet in Javadoc",
     "feature.lambda.expressions" to "Lambda expressions",
+    "feature.lazy.constants" to "Lazy constants",
     "feature.local.enums" to "Local enums",
     "feature.local.interfaces" to "Local interfaces",
     "feature.lvti" to "Local variable type inference",
