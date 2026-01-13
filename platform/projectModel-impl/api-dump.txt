@@ -351,6 +351,7 @@ f:com.intellij.openapi.roots.impl.OrderEntryUtil
 - s:getModuleLibraries(com.intellij.openapi.roots.ModuleRootModel):java.util.List
 - s:intersectScopes(com.intellij.openapi.roots.DependencyScope,com.intellij.openapi.roots.DependencyScope):com.intellij.openapi.roots.DependencyScope
 - s:isModuleLibraryOrderEntry(com.intellij.openapi.roots.OrderEntry):Z
+- s:moveLastOrderEntries(com.intellij.openapi.roots.ModifiableRootModel,I,I):V
 - s:processOrderEntries(com.intellij.openapi.module.Module,java.lang.Class,com.intellij.util.Processor):V
 - s:replaceLibrary(com.intellij.openapi.roots.ModifiableRootModel,com.intellij.openapi.roots.libraries.Library,com.intellij.openapi.roots.libraries.Library):V
 - s:replaceLibraryEntryByAdded(com.intellij.openapi.roots.ModifiableRootModel,com.intellij.openapi.roots.LibraryOrderEntry):V

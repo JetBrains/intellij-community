@@ -182,6 +182,20 @@ public final class OrderEntryUtil {
     model.rearrangeOrderEntries(newEntries);
   }
 
+  /**
+   * Moves last {@code length} entries in {@code model} to {@code toIndex}.
+   * The first of moved entries will be at {@code toIndex}, the second - at {@code toIndex + 1}, etc.
+   */
+  public static void moveLastOrderEntries(@NotNull ModifiableRootModel model, int toIndex, int length) {
+    OrderEntry[] entries = model.getOrderEntries();
+    if (toIndex < 0 || length <= 0 || toIndex + length > entries.length) return;
+    OrderEntry[] newEntries = new OrderEntry[entries.length];
+    System.arraycopy(entries, 0, newEntries, 0, toIndex);
+    System.arraycopy(entries, entries.length - length, newEntries, toIndex, length);
+    System.arraycopy(entries, toIndex, newEntries, toIndex + length, entries.length - toIndex - length);
+    model.rearrangeOrderEntries(newEntries);
+  }
+
   public static <T extends OrderEntry> void processOrderEntries(@NotNull Module module,
                                                                 @NotNull Class<? extends T> orderEntryClass,
                                                                 @NotNull Processor<? super T> processor) {

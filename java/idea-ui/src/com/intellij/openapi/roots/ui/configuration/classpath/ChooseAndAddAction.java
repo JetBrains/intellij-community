@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -28,7 +29,11 @@ public abstract class ChooseAndAddAction<ItemType> extends ClasspathPanelAction 
         toAdd.add(tableItem);
       }
     }
-    myClasspathPanel.addItems(toAdd);
+    int row = myClasspathPanel.getSelectedRow();
+    if (row != -1) {
+      OrderEntryUtil.moveLastOrderEntries(myClasspathPanel.getRootModel(), row + 1, toAdd.size());
+    }
+    myClasspathPanel.addItems(toAdd, row != -1 ? row + 1 : myClasspathPanel.getRowCount());
   }
 
   protected abstract @Nullable ClasspathTableItem<?> createTableItem(final ItemType item);
