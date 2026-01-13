@@ -211,7 +211,7 @@ final class CommandBuilder {
   private @NotNull UndoMeta createUndoMeta() {
     var actions = ContainerUtil.map(
       undoableActions,
-      a -> ActionMeta.create(
+      a -> UndoableActionMeta.create(
         UndoableActionType.forAction(a),
         a.getAffectedDocuments(),
         a.isGlobal()
