@@ -33,6 +33,7 @@ class CreatePatchConfigurationPanel(val project: Project) {
   private lateinit var toClipboardRadioButton: JRadioButton
   private lateinit var reverseCheckBox: JCheckBox
   private lateinit var standardFormatCheckBox: JCheckBox
+  private lateinit var includeFullCommitMessageCheckBox: JCheckBox
   private lateinit var encodingComboBox: ComboBox<Charset>
 
   private var commonParentDir: File? = null
@@ -93,6 +94,9 @@ class CreatePatchConfigurationPanel(val project: Project) {
       row {
         standardFormatCheckBox = checkBox(message("create.patch.standard.format.checkbox")).component
       }
+      row {
+        includeFullCommitMessageCheckBox = checkBox(message("create.patch.full.commit.message.checkbox")).component
+      }
       row(message("create.patch.encoding")) {
         encodingComboBox = comboBox(DefaultComboBoxModel(CharsetToolkit.getAvailableCharsets())).component
         encodingComboBox.selectedItem = EncodingProjectManager.getInstance(project).defaultCharset
@@ -148,6 +152,14 @@ class CreatePatchConfigurationPanel(val project: Project) {
 
   fun setStandardPatchFormat(isStandard: Boolean) {
     standardFormatCheckBox.isSelected = isStandard
+  }
+
+  fun isIncludeFullCommitMessage(): Boolean {
+    return includeFullCommitMessageCheckBox.isSelected
+  }
+
+  fun setIncludeFullCommitMessage(include: Boolean) {
+    includeFullCommitMessageCheckBox.isSelected = include
   }
 
   fun isToClipboard(): Boolean {

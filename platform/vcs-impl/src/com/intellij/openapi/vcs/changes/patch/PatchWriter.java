@@ -34,6 +34,8 @@ import static com.intellij.openapi.vcs.VcsType.distributed;
 public final class PatchWriter {
   public static final Key<Boolean> STANDARD_PATCH_FORMAT_KEY =
     Key.create("com.intellij.openapi.vcs.changes.patch.PatchWriter.STANDARD_PATCH_FORMAT_KEY");
+  public static final Key<Boolean> INCLUDE_FULL_COMMIT_MESSAGE_KEY =
+    Key.create("com.intellij.openapi.vcs.changes.patch.PatchWriter.INCLUDE_FULL_COMMIT_MESSAGE_KEY");
 
   public static void writePatches(@NotNull Project project,
                                   @NotNull Path file,
@@ -72,6 +74,10 @@ public final class PatchWriter {
                             @Nullable String commitMessage,
                             @Nullable CommitContext commitContext) throws IOException {
     String lineSeparator = CodeStyle.getSettings(project).getLineSeparator();
+    boolean includeFullCommitMessage = commitContext != null && Boolean.TRUE.equals(commitContext.getUserData(INCLUDE_FULL_COMMIT_MESSAGE_KEY));
+    if (includeFullCommitMessage) {
+      throw new UnsupportedOperationException("Full commit message is not implemented yet");
+    }
     UnifiedDiffWriter.writeCommitMessageHeader(project, writer, lineSeparator, commitMessage);
     UnifiedDiffWriter.write(project, basePath, patches, writer, lineSeparator, commitContext, null);
     BinaryPatchWriter.writeBinaries(basePath, ContainerUtil.findAll(patches, BinaryFilePatch.class), writer);
