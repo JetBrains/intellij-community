@@ -1,0 +1,203 @@
+PsiJavaFile:NoSoftKeywordInLambdaParameters.java
+  PsiImportList
+    <empty list>
+  PsiClass:ValueInLambda
+    PsiModifierList:public
+      PsiKeyword:public('public')
+    PsiWhiteSpace(' ')
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:ValueInLambda('ValueInLambda')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n  ')
+    PsiMethod:test
+      PsiModifierList:
+        <empty list>
+      PsiTypeParameterList
+        <empty list>
+      PsiTypeElement:void
+        PsiKeyword:void('void')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:test('test')
+      PsiParameterList:()
+        PsiJavaToken:LPARENTH('(')
+        PsiJavaToken:RPARENTH(')')
+      PsiReferenceList
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiWhiteSpace('\n    ')
+        PsiDeclarationStatement
+          PsiLocalVariable:fn
+            PsiModifierList:
+              <empty list>
+            PsiTypeElement:Fn
+              PsiJavaCodeReferenceElement:Fn
+                PsiIdentifier:Fn('Fn')
+                PsiReferenceParameterList
+                  <empty list>
+            PsiWhiteSpace(' ')
+            PsiIdentifier:fn('fn')
+            PsiWhiteSpace(' ')
+            PsiJavaToken:EQ('=')
+            PsiWhiteSpace(' ')
+            PsiLambdaExpression
+              PsiParameterList:value
+                PsiParameter:value
+                  PsiModifierList:
+                    <empty list>
+                  PsiIdentifier:value('value')
+              PsiWhiteSpace(' ')
+              PsiJavaToken:ARROW('->')
+              PsiWhiteSpace(' ')
+              PsiReferenceExpression:value
+                PsiReferenceParameterList
+                  <empty list>
+                PsiIdentifier:value('value')
+            PsiJavaToken:SEMICOLON(';')
+        PsiWhiteSpace('\n    ')
+        PsiDeclarationStatement
+          PsiLocalVariable:fn2
+            PsiModifierList:
+              <empty list>
+            PsiTypeElement:Fn
+              PsiJavaCodeReferenceElement:Fn
+                PsiIdentifier:Fn('Fn')
+                PsiReferenceParameterList
+                  <empty list>
+            PsiWhiteSpace(' ')
+            PsiIdentifier:fn2('fn2')
+            PsiWhiteSpace(' ')
+            PsiJavaToken:EQ('=')
+            PsiWhiteSpace(' ')
+            PsiLambdaExpression
+              PsiParameterList:(value)
+                PsiJavaToken:LPARENTH('(')
+                PsiParameter:value
+                  PsiModifierList:
+                    <empty list>
+                  PsiIdentifier:value('value')
+                PsiJavaToken:RPARENTH(')')
+              PsiWhiteSpace(' ')
+              PsiJavaToken:ARROW('->')
+              PsiWhiteSpace(' ')
+              PsiReferenceExpression:value
+                PsiReferenceParameterList
+                  <empty list>
+                PsiIdentifier:value('value')
+            PsiJavaToken:SEMICOLON(';')
+        PsiWhiteSpace('\n    ')
+        PsiDeclarationStatement
+          PsiLocalVariable:fn3
+            PsiModifierList:
+              <empty list>
+            PsiTypeElement:Fn
+              PsiJavaCodeReferenceElement:Fn
+                PsiIdentifier:Fn('Fn')
+                PsiReferenceParameterList
+                  <empty list>
+            PsiWhiteSpace(' ')
+            PsiIdentifier:fn3('fn3')
+            PsiWhiteSpace(' ')
+            PsiJavaToken:EQ('=')
+            PsiWhiteSpace(' ')
+            PsiLambdaExpression
+              PsiParameterList:(int value)
+                PsiJavaToken:LPARENTH('(')
+                PsiParameter:value
+                  PsiModifierList:
+                    <empty list>
+                  PsiTypeElement:int
+                    PsiKeyword:int('int')
+                  PsiWhiteSpace(' ')
+                  PsiIdentifier:value('value')
+                PsiJavaToken:RPARENTH(')')
+              PsiWhiteSpace(' ')
+              PsiJavaToken:ARROW('->')
+              PsiWhiteSpace(' ')
+              PsiReferenceExpression:value
+                PsiReferenceParameterList
+                  <empty list>
+                PsiIdentifier:value('value')
+            PsiJavaToken:SEMICOLON(';')
+        PsiWhiteSpace('\n    ')
+        PsiDeclarationStatement
+          PsiLocalVariable:fn4
+            PsiModifierList:
+              <empty list>
+            PsiTypeElement:Fn
+              PsiJavaCodeReferenceElement:Fn
+                PsiIdentifier:Fn('Fn')
+                PsiReferenceParameterList
+                  <empty list>
+            PsiWhiteSpace(' ')
+            PsiIdentifier:fn4('fn4')
+            PsiWhiteSpace(' ')
+            PsiJavaToken:EQ('=')
+            PsiWhiteSpace(' ')
+            PsiLambdaExpression
+              PsiParameterList:sealed
+                PsiParameter:sealed
+                  PsiModifierList:
+                    <empty list>
+                  PsiIdentifier:sealed('sealed')
+              PsiWhiteSpace(' ')
+              PsiJavaToken:ARROW('->')
+              PsiWhiteSpace(' ')
+              PsiReferenceExpression:sealed
+                PsiReferenceParameterList
+                  <empty list>
+                PsiIdentifier:sealed('sealed')
+            PsiJavaToken:SEMICOLON(';')
+        PsiWhiteSpace('\n  ')
+        PsiJavaToken:RBRACE('}')
+    PsiWhiteSpace('\n\n  ')
+    PsiClass:Fn
+      PsiModifierList:
+        <empty list>
+      PsiKeyword:interface('interface')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:Fn('Fn')
+      PsiTypeParameterList
+        <empty list>
+      PsiReferenceList
+        <empty list>
+      PsiReferenceList
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiJavaToken:LBRACE('{')
+      PsiWhiteSpace('\n    ')
+      PsiMethod:x
+        PsiModifierList:
+          <empty list>
+        PsiTypeParameterList
+          <empty list>
+        PsiTypeElement:int
+          PsiKeyword:int('int')
+        PsiWhiteSpace(' ')
+        PsiIdentifier:x('x')
+        PsiParameterList:(int y)
+          PsiJavaToken:LPARENTH('(')
+          PsiParameter:y
+            PsiModifierList:
+              <empty list>
+            PsiTypeElement:int
+              PsiKeyword:int('int')
+            PsiWhiteSpace(' ')
+            PsiIdentifier:y('y')
+          PsiJavaToken:RPARENTH(')')
+        PsiReferenceList
+          <empty list>
+        PsiJavaToken:SEMICOLON(';')
+      PsiWhiteSpace('\n  ')
+      PsiJavaToken:RBRACE('}')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')

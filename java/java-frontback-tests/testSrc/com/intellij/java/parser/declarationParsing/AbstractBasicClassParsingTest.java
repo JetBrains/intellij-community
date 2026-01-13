@@ -81,6 +81,7 @@ public abstract class AbstractBasicClassParsingTest extends AbstractBasicJavaPar
   }
 
   public void testValueClass() { doTest(true); }
+  public void testNoSoftKeywordInLambdaParameters() { doTest(true); }
 
   public void testSealedInterface() { doTest(true); }
   public void testSealedClassOldLanguageLevel() {
