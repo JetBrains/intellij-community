@@ -8,17 +8,13 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.channels.EelDelicateApi
-import com.intellij.platform.eel.channels.EelReceiveChannel
-import com.intellij.platform.eel.channels.EelSendChannel
-import com.intellij.util.io.blockingDispatcher
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
-import java.io.IOException
-import java.net.*
+import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.nio.ByteBuffer
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.DurationUnit
 
 private val LOG: Logger = Logger.getInstance(EelTunnelsApi::class.java)
 
@@ -34,51 +30,44 @@ private val LOG: Logger = Logger.getInstance(EelTunnelsApi::class.java)
  *
  * This function returns when the server starts accepting connections.
  */
-@OptIn(DelicateCoroutinesApi::class)
+@OptIn(DelicateCoroutinesApi::class, EelDelicateApi::class)
 @ApiStatus.Experimental
+@Deprecated("Use com.intellij.platform.eel.eelProxy")
 fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, address: EelTunnelsApi.HostAddress) {
-  val serverSocket = ServerSocket()
-  serverSocket.bind(InetSocketAddress("localhost", localPort), 1024)
-  serverSocket.soTimeout = 2.seconds.toInt(DurationUnit.MILLISECONDS)
-  this.coroutineContext.job.invokeOnCompletion {
-    LOG.debug("Closing connection to server socket")
-    serverSocket.close()
-  }
-  LOG.info("Accepting a connection within IDE client on port $localPort; Conections go to remote address $address")
   var connectionCounter = 0
-  // DO NOT use Dispatchers.IO here. Sockets live long enough to cause starvation of the IO dispatcher.
-  launch(blockingDispatcher.plus(CoroutineName("Local port forwarding server"))) {
-    while (true) {
-      try {
-        LOG.debug("Accepting a coroutine on server socket")
-        val socket = runInterruptible {
-          serverSocket.accept()
-        }
-        socket.soTimeout = 2.seconds.toInt(DurationUnit.MILLISECONDS)
-        val currentConnection = connectionCounter
-        connectionCounter++
-        launch {
-          socket.use {
-            tunnels.getConnectionToRemotePort().hostAddress(address).withConnectionToRemotePort({
-                                                                                                  if (it is EelConnectionError.ConnectionProblem) {
-                                                                                                    LOG.debug("Failed to establish connection $connectionCounter ($localPort - $address: $it); closing socket")
-                                                                                                  }
-                                                                                                  else {
-                                                                                                    LOG.error("Failed to connect to remote port $localPort - $address: $it")
-                                                                                                  }
-                                                                                                }) { (channelTo, channelFrom) ->
-              redirectClientConnectionDataToIJent(currentConnection, socket, channelTo)
-              redirectIJentDataToClientConnection(currentConnection, socket, channelFrom)
-            }
-          }
-        }
-      }
-      catch (e: SocketTimeoutException) {
-        ensureActive() // just checking if it is time to abort the port forwarding
-      }
+  val eelProxyBuilder = eelProxy()
+    .acceptOnTcpPort(localEel.tunnels, port = localPort.toUShort())
+    .connectToTcpPort(tunnels, host = address.hostname, port = address.port)
+    .onConnection {
+      connectionCounter++
     }
-  }.invokeOnCompletion {
-    LOG.info("Local server on $localPort (was tunneling to $address) is terminated")
+    .onConnectionError {
+      if (it is EelConnectionError.ConnectionProblem) {
+        LOG.debug("Failed to establish connection $connectionCounter ($localPort - $address: $it); closing socket")
+      }
+      else {
+        LOG.error("Failed to connect to remote port $localPort - $address: $it")
+      }
+      connectionCounter++
+    }
+
+  val proxy =
+    try {
+      @Suppress("RAW_RUN_BLOCKING")
+      runBlocking { eelProxyBuilder.eelIt() }
+    }
+    catch (e: EelConnectionError) {
+      LOG.error("Failed to start a server on $address (was forwarding $localPort): $e")
+      return
+    }
+
+  launch {
+    try {
+      proxy.runForever()
+    }
+    finally {
+      LOG.info("Local server on $localPort (was tunneling to $address) is terminated")
+    }
   }
 }
 
@@ -121,94 +110,37 @@ suspend fun EelTunnelsApi.findAvailablePort(): Int {
  */
 @OptIn(DelicateCoroutinesApi::class)
 @ApiStatus.Experimental
+@Deprecated("Use com.intellij.platform.eel.eelProxy")
 fun CoroutineScope.forwardLocalServer(tunnels: EelTunnelsApi, localPort: Int, address: EelTunnelsApi.HostAddress): Deferred<EelTunnelsApi.ResolvedSocketAddress> {
-  // todo: do not forward anything if it is local eel
-  val remoteAddress = CompletableDeferred<EelTunnelsApi.ResolvedSocketAddress>()
-  launch(blockingDispatcher.plus(CoroutineName("Local server on port $localPort (tunneling to $address)"))) {
-    tunnels.getAcceptorForRemotePort().hostAddress(address).withAcceptorForRemotePort({
-                                                                                        LOG.error("Failed to start a server on $address (was forwarding $localPort): $it")
-                                                                                        remoteAddress.cancel()
-                                                                                      }) { acceptor ->
-      remoteAddress.complete(acceptor.boundAddress)
-      var connections = 0
-      for ((sendChannel, receiveChannel) in acceptor.incomingConnections) {
-        val currentConnection = connections++
-        launch {
-          Socket().use { socket ->
-            coroutineScope {
-              socket.soTimeout = 2.seconds.toInt(DurationUnit.MILLISECONDS)
-              socket.connect(InetSocketAddress("localhost", localPort))
-              redirectClientConnectionDataToIJent(currentConnection, socket, sendChannel)
-              redirectIJentDataToClientConnection(currentConnection, socket, receiveChannel)
-            }
+  return async {
+    try {
+      val proxy =
+        eelProxy()
+          .acceptOnTcpPort(tunnels, port = localPort.toUShort())
+          .connectToTcpPort(localEel.tunnels, host = address.hostname, port = address.port)
+          .onConnectionClosed { currentConnection ->
             LOG.debug("Stopped forwarding remote connection $currentConnection to local server")
           }
+          .eelIt()
+
+      this@forwardLocalServer.launch {
+        try {
+          proxy.runForever()
+        }
+        finally {
+          LOG.info("Remote server on $address (was tunneling local server on $address) is terminated")
         }
       }
+
+      proxy.acceptor.boundAddress
     }
-  }.invokeOnCompletion {
-    LOG.info("Remote server on $address (was tunneling local server on $address) is terminated")
-  }
-  return remoteAddress
-}
-
-@OptIn(DelicateCoroutinesApi::class)
-private fun CoroutineScope.redirectClientConnectionDataToIJent(connectionId: Int, socket: Socket, channelToIJent: EelSendChannel) = launch(CoroutineName("Reader for connection $connectionId")) {
-
-  try {
-    copy(
-      socket.consumeAsEelChannel(), channelToIJent,
-      onReadError = {
-        if (it is SocketTimeoutException && channelToIJent.isClosed) {
-          this@launch.cancel("Channel is closed normally")
-          OnError.EXIT
-        }
-        else {
-          OnError.RETRY
-        }
-      },
-    )
-  }
-  catch (error: IOException) {
-    when (val error = error) {
-      is CopyError.InError -> {
-        if (!socket.isClosed) {
-          LOG.warn("Connection $connectionId closed", error.cause)
-          throw CancellationException("Closed because of a socket exception", error.cause)
-        }
-      }
-      is CopyError.OutError -> {
-        LOG.warn("Connection $connectionId closed by IJent; ${error.cause}")
-      }
+    catch (e: EelConnectionError) {
+      LOG.error("Failed to start a server on $address (was forwarding $localPort): $e")
+      this@async.cancel()
+      ensureActive()
+      error("unreachable")
     }
   }
-  channelToIJent.close(null)
-}
-
-private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int, socket: Socket, backChannel: EelReceiveChannel) = launch(CoroutineName("Writer for connection $connectionId")) {
-
-  try {
-    copy(backChannel, socket.asEelChannel(), onReadError = {
-      if (it is SocketTimeoutException) OnError.RETRY else OnError.EXIT
-    })
-  }
-  catch (error: IOException) {
-    when (val error = error) {
-      is CopyError.InError -> {
-        LOG.warn("Error reading from channel", error.cause)
-      }
-      is CopyError.OutError -> {
-        val e = error.cause
-        if (!socket.isClosed) {
-          LOG.warn("Socket connection $connectionId closed", e)
-        }
-        else {
-          LOG.debug("Socket connection $connectionId closed because of cancellation", e)
-        }
-      }
-    }
-  }
-  backChannel.closeForReceive()
 }
 
 @ApiStatus.Experimental
