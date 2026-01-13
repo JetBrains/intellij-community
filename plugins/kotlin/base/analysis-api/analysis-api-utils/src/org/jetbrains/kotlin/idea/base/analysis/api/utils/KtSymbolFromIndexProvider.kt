@@ -300,7 +300,6 @@ class KtSymbolFromIndexProvider(
 
     /**
      * Returns all Java callables (methods and fields) matching the given [nameFilter] and [psiFilter].
-     * Methods are emitted before fields.
      */
     context(_: KaSession)
     fun getJavaCallablesByNameFilter(
@@ -308,8 +307,17 @@ class KtSymbolFromIndexProvider(
         scope: GlobalSearchScope = analysisScope,
         psiFilter: (PsiMember) -> Boolean = { true }
     ): Sequence<KaCallableSymbol> {
-        return getJavaMethodsByNameFilter(nameFilter, scope, psiFilter) +
-                getJavaFieldsByNameFilter(nameFilter, scope, psiFilter)
+        val names = buildSet {
+            val processor = createNamesProcessor(nameFilter)
+
+            getNonKotlinNamesCaches(useSiteModule.project).forEach {
+                it.processAllMethodNames(processor, scope, null)
+                it.processAllFieldNames(processor, scope, null)
+            }
+        }
+
+        return names.asSequence()
+            .flatMap {  getJavaMethodsByName(it, scope, psiFilter) + getJavaFieldsByName(it, scope, psiFilter) }
     }
 
     /**
