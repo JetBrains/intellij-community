@@ -26,7 +26,7 @@ class UnusedVersionCatalogEntryInspection : LocalInspectionTool() {
         if (!isInVersionCatalog(element)) return
 
         val headerName = element.parentOfType<TomlKeyValue>()?.parent.asSafely<TomlTable>()?.header?.key?.name
-          ?.let { name -> VersionCatalogHeader.values().find { it.repr == name } } ?: return
+          ?.let { name -> VersionCatalogHeader.entries.find { it.repr == name } } ?: return
 
         val usage = ReferencesSearch.search(element).findFirst()
 
