@@ -24,7 +24,6 @@ jvm_library(
     "//libraries/asm",
     "//platform/util/jdom",
     "@lib//:jetbrains-annotations",
-  ],
-  runtime_deps = ["//platform/backend"]
+  ]
 )
 ### auto-generated section `build intellij.java.langInjection.jps` end
