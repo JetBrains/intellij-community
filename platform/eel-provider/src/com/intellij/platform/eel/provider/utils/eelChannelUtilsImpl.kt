@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.EelLowLevelObjectsPool
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.channels.*
+import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -33,7 +34,7 @@ internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByte
   @OptIn(DelicateCoroutinesApi::class)
   override suspend fun receive(dst: ByteBuffer): ReadResult {
     if (!dst.hasRemaining()) return ReadResult.NOT_EOF
-    return withContext(Dispatchers.IO) {
+    return withContext(blockingDispatcher) {
       var read = 0
       try {
         if (selector != null && readableByteChannel is SelectableChannel) {
