@@ -18,6 +18,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
+import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.git.ui.GitBranchesTreeIconProvider
 import com.intellij.vcsUtil.VcsUtil
@@ -185,6 +186,10 @@ internal class GitWorkingTreeDialog(
     val branches = data.repository.branches
     val result = branches.localBranches.sortedBy { it.name }
       .map { it.toBranchWithWorkingTree() }.toMutableList()
+    if (result.isEmpty()) {
+      // see com.intellij.vcs.git.repo.GitRepositoryState.getLocalBranchesOrCurrent
+      result.addIfNotNull(data.repository.currentBranch?.toBranchWithWorkingTree())
+    }
     val remotes = branches.remoteBranches.sortedBy { it.name }
       .map { BranchWithWorkingTree(it, null) }
     result.addAll(remotes)
