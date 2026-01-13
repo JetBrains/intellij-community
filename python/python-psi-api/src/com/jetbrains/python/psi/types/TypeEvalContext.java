@@ -406,7 +406,11 @@ public sealed class TypeEvalContext {
   }
 
   private static boolean inPyiFile(@NotNull PsiElement element) {
-    if (isPyiFile(element.getContainingFile())) {
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null) {
+      return false;
+    }
+    if (isPyiFile(containingFile)) {
       return true;
     }
     PsiFile contextFile = getContextFile(element);
