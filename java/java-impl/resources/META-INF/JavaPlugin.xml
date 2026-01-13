@@ -362,7 +362,7 @@
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.GetterTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager"/>
     <applicationService serviceImplementation="org.jetbrains.java.generate.template.toString.ToStringTemplatesManager"/>
-    <applicationService serviceImplementation="com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory" open="true"/>
     <applicationService serviceImplementation="com.intellij.pom.java.AcceptedLanguageLevelsSettings"/>
     <applicationService serviceImplementation="com.intellij.refactoring.JavaRefactoringSettings"/>
     <applicationService serviceImplementation="com.intellij.execution.filters.StackTraceFoldingSettings"/>

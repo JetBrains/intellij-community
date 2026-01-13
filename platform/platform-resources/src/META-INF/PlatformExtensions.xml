@@ -246,7 +246,7 @@
                     serviceImplementation="com.intellij.configurationStore.ProjectIdManagerImpl"
                     testServiceImplementation="com.intellij.configurationStore.MockProjectIdManager"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
+    <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder" open="true"
                         serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
 
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionUpdaterInterceptor" open="true"
@@ -550,7 +550,7 @@
     <projectService serviceInterface="com.intellij.openapi.util.WindowStateService"
                     serviceImplementation="com.intellij.openapi.util.WindowStateProjectService"/>
 
-    <applicationService serviceInterface="com.intellij.ide.script.IdeScriptEngineManager"
+    <applicationService serviceInterface="com.intellij.ide.script.IdeScriptEngineManager" open="true"
                         serviceImplementation="com.intellij.ide.script.IdeScriptEngineManagerImpl"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileEditor.impl.IdeScriptEngineUsageCollector"/>
 
