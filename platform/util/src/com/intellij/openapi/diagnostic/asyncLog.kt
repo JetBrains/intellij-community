@@ -94,6 +94,7 @@ private class AsyncLog {
   }
 
   fun log(event: LogEvent) {
+    if (!event.julLogger.isLoggable(event.level.level)) return
     check(queue.trySend(event).isSuccess)
   }
 
