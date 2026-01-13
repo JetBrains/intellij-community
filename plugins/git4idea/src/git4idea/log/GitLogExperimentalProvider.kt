@@ -179,13 +179,11 @@ private class TagsLoader(
       refsLoadingPolicy: VcsLogProvider.RefsLoadingPolicy.LoadAllRefs,
     ): Map<GitTag, Hash> {
       val newTags = tags.toMutableMap()
-      for (ref in refsLoadingPolicy.previouslyLoadedRefs) {
+      for (ref in refsLoadingPolicy.previouslyLoadedRefs.tags) {
         if (newTags.isEmpty()) break
-        if (ref.type == GitRefManager.TAG) {
-          val tag = GitTag(ref.name)
-          if (newTags[tag] == ref.commitHash) {
-            newTags.remove(tag)
-          }
+        val tag = GitTag(ref.name)
+        if (newTags[tag] == ref.commitHash) {
+          newTags.remove(tag)
         }
       }
       LOG.debug { "${newTags.size} newly added tags" }

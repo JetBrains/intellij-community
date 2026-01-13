@@ -12,8 +12,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsTracer
 import com.intellij.platform.vcs.impl.shared.telemetry.traceSuspending
 import com.intellij.platform.vcs.impl.shared.telemetry.withVcsAttributes
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.TimedVcsCommit
+import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsLogProvider.RefsLoadingPolicy
+import com.intellij.vcs.log.VcsLogProviderRequirementsEx
+import com.intellij.vcs.log.VcsLogRefsOfSingleRoot
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.impl.RequirementsImpl
@@ -301,9 +304,9 @@ internal class VcsLogRefresherImpl(
 
   private fun prepareRequirements(roots: Collection<VirtualFile>, commitCount: Int, prevRefs: Map<VirtualFile, VcsLogRefsOfSingleRoot>?) =
     roots.associateWith { root ->
-      val refs = prevRefs?.get(root)?.allRefs?.toList()
+      val refs = prevRefs?.get(root)
       if (refs == null) {
-        RequirementsImpl(commitCount, true, listOf<VcsRef>(), false)
+        RequirementsImpl(commitCount, true, EmptyRefs, false)
       }
       else {
         RequirementsImpl(commitCount, true, refs)
@@ -482,7 +485,7 @@ private inline fun <T> Channel<T>.receiveAll(consumer: (T) -> Unit) {
   while (nextItem != null)
 }
 
-private class LoadRefsPolicy(override val previouslyLoadedRefs: Collection<VcsRef>) : RefsLoadingPolicy.LoadAllRefs
+private class LoadRefsPolicy(override val previouslyLoadedRefs: VcsLogRefsOfSingleRoot) : RefsLoadingPolicy.LoadAllRefs
 
 private fun VcsLogProvider.Requirements.toRefsLoadingPolicy(): RefsLoadingPolicy =
   if (this !is VcsLogProviderRequirementsEx || !isRefreshRefs) RefsLoadingPolicy.FromLoadedCommits

@@ -21,7 +21,7 @@ import java.util.stream.Stream
 import kotlin.streams.asStream
 
 /**
- *  Represents a set of references for **all** VCS roots present in the VCS log.
+ *  Represents a set of stored references for **all** VCS roots present in the VCS log.
  *
  *  @see VcsLogRefsOfSingleRoot
  */

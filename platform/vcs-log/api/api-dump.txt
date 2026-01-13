@@ -184,12 +184,12 @@ f:com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy$FromLoadedCommits
 - sf:INSTANCE:com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy$FromLoadedCommits
 com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy$LoadAllRefs
 - com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy
-- a:getPreviouslyLoadedRefs():java.util.Collection
+- a:getPreviouslyLoadedRefs():com.intellij.vcs.log.VcsLogRefsOfSingleRoot
 com.intellij.vcs.log.VcsLogProvider$Requirements
 - a:getCommitCount():I
 com.intellij.vcs.log.VcsLogProviderRequirementsEx
 - com.intellij.vcs.log.VcsLogProvider$Requirements
-- a:getPreviousRefs():java.util.Collection
+- a:getPreviousRefs():com.intellij.vcs.log.VcsLogRefsOfSingleRoot
 - a:isRefresh():Z
 - a:isRefreshRefs():Z
 com.intellij.vcs.log.VcsLogRangeFilter

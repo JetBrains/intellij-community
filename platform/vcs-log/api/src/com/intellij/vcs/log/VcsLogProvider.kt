@@ -236,7 +236,7 @@ interface VcsLogProvider {
   sealed interface RefsLoadingPolicy {
     object FromLoadedCommits : RefsLoadingPolicy
     interface LoadAllRefs : RefsLoadingPolicy {
-      val previouslyLoadedRefs: Collection<VcsRef>
+      val previouslyLoadedRefs: VcsLogRefsOfSingleRoot
     }
   }
 

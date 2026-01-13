@@ -8,6 +8,9 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.CompressedRefs;
+import com.intellij.vcs.log.data.EmptyLogStorage;
+import com.intellij.vcs.log.data.EmptyRefs;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.RequirementsImpl;
@@ -55,7 +58,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     createTaggedBranch();
 
     VcsLogProvider.DetailedLogData block =
-      myLogProvider.readFirstBlock(getProjectRoot(), new RequirementsImpl(1000, false, Collections.emptySet()));
+      myLogProvider.readFirstBlock(getProjectRoot(), new RequirementsImpl(1000, false, EmptyRefs.INSTANCE));
     assertOrderedEquals(block.getCommits(), expectedLogWithoutTaggedBranch);
   }
 
@@ -65,7 +68,8 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     createTaggedBranch();
 
     List<VcsCommitMetadata> expectedLog = log();
-    VcsLogProvider.DetailedLogData block = myLogProvider.readFirstBlock(getProjectRoot(), new RequirementsImpl(1000, true, prevRefs));
+    VcsLogProvider.DetailedLogData block =
+      myLogProvider.readFirstBlock(getProjectRoot(), new RequirementsImpl(1000, true, toCompressedRefs(prevRefs)));
     assertSameElements(block.getCommits(), expectedLog);
   }
 
@@ -76,7 +80,8 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
     List<VcsCommitMetadata> expectedLog = log();
     Set<VcsRef> refs = readAllRefs(this, getProjectRoot(), myObjectsFactory);
-    VcsLogProvider.DetailedLogData block = myLogProvider.readFirstBlock(getProjectRoot(), new RequirementsImpl(1000, true, prevRefs));
+    VcsLogProvider.DetailedLogData block =
+      myLogProvider.readFirstBlock(getProjectRoot(), new RequirementsImpl(1000, true, toCompressedRefs(prevRefs)));
     assertSameElements(block.getCommits(), expectedLog);
     assertSameElements(block.getRefs(), refs);
   }
@@ -89,7 +94,8 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     git("tag NEW_TAG " + firstCommit);
 
     Set<VcsRef> refs = readAllRefs(this, getProjectRoot(), myObjectsFactory);
-    VcsLogProvider.DetailedLogData block = myLogProvider.readFirstBlock(getProjectRoot(), new RequirementsImpl(1000, true, prevRefs));
+    VcsLogProvider.DetailedLogData block =
+      myLogProvider.readFirstBlock(getProjectRoot(), new RequirementsImpl(1000, true, toCompressedRefs(prevRefs)));
     assertSameElements(block.getRefs(), refs);
   }
 
@@ -115,7 +121,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     git("update-ref refs/remotes/origin/HEAD master");
 
     VcsLogProvider.DetailedLogData block = myLogProvider.readFirstBlock(getProjectRoot(),
-                                                                        new RequirementsImpl(1000, false, Collections.emptySet()));
+                                                                        new RequirementsImpl(1000, false, EmptyRefs.INSTANCE));
     assertFalse("origin/HEAD should be ignored", ContainerUtil.exists(block.getRefs(), ref -> ref.getName().equals("origin/HEAD")));
   }
 
@@ -125,7 +131,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     git("tag build");
 
     VcsLogProvider.DetailedLogData data = myLogProvider.readFirstBlock(getProjectRoot(),
-                                                                       new RequirementsImpl(1000, true, Collections.emptySet()));
+                                                                       new RequirementsImpl(1000, true, EmptyRefs.INSTANCE));
     List<VcsCommitMetadata> expectedLog = log();
     assertOrderedEquals(data.getCommits(), expectedLog);
     assertTrue(ContainerUtil.exists(data.getRefs(), ref -> ref.getName().equals("build") && ref.getType() == GitRefManager.LOCAL_BRANCH));
@@ -374,5 +380,10 @@ public class GitLogProviderTest extends GitSingleRepoTest {
       return new VcsCommitMetadataImpl(TO_HASH.fun(items[0]), ContainerUtil.map(items[1].split(" "), TO_HASH), time,
                                        getProjectRoot(), items[3], defaultUser, items[4], defaultUser, time);
     });
+  }
+
+  @NotNull
+  private VcsLogRefsOfSingleRoot toCompressedRefs(@NotNull Set<VcsRef> refs) {
+    return new CompressedRefs(refs, EmptyLogStorage.INSTANCE);
   }
 }

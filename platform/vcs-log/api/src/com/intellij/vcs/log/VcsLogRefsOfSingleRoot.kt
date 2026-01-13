@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.function.IntConsumer
 
 /**
- * Represents a set of references for a single VCS root in the VCS log.
+ * Represents a set of stored references for a single VCS root in the VCS log.
  */
 @ApiStatus.NonExtendable
 interface VcsLogRefsOfSingleRoot {

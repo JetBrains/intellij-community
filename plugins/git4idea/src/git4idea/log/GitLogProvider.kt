@@ -604,9 +604,9 @@ class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexabl
     private fun addOldStillExistingTags(
       allRefs: MutableSet<in VcsRef>,
       currentTags: Set<String>,
-      previousRefs: Collection<VcsRef>,
+      previousRefs: VcsLogRefsOfSingleRoot,
     ) {
-      for (ref in previousRefs) {
+      for (ref in previousRefs.allRefs) {
         if (!allRefs.contains(ref) && currentTags.contains(ref.name)) {
           allRefs.add(ref)
         }
@@ -632,5 +632,8 @@ class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexabl
     private fun Collection<VcsRef>.getTagNames(): Set<String> = mapNotNullTo(mutableSetOf()) { ref: VcsRef ->
       if (ref.type == GitRefManager.TAG) ref.name else null
     }
+
+    private fun VcsLogRefsOfSingleRoot.getTagNames(): Set<String> =
+      tags.mapNotNullTo(mutableSetOf()) { ref: VcsRef -> ref.name }
   }
 }

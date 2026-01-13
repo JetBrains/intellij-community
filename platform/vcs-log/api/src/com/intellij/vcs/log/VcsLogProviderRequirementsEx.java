@@ -5,8 +5,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
 import static com.intellij.vcs.log.VcsLogProvider.Requirements;
 
 /**
@@ -32,5 +30,5 @@ public interface VcsLogProviderRequirementsEx extends Requirements {
    * Returns the refs which were in the log before the refresh request.
    */
   @NotNull
-  Collection<VcsRef> getPreviousRefs();
+  VcsLogRefsOfSingleRoot getPreviousRefs();
 }
