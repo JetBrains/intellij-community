@@ -1419,6 +1419,7 @@ plugins/tasks/tasks-java
 plugins/tasks/tasks-tests
 plugins/terminal
 plugins/terminal/backend
+plugins/terminal/cloud
 plugins/terminal/completion
 plugins/terminal/frontend
 plugins/terminal/sh

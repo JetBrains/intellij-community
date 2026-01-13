@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.terminal.cloud` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "cloud_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "cloud",
+  module_name = "intellij.terminal.cloud",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":cloud_resources"],
+  deps = [
+    "//platform/remote-servers/agent-rt:remoteServers-agent-rt",
+    "//platform/execution-impl",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//plugins/terminal",
+    "//platform/remote-servers/impl",
+    "//libraries/jediterm-core",
+    "//platform/remote-servers/api:remoteServers",
+  ]
+)
+### auto-generated section `build intellij.terminal.cloud` end

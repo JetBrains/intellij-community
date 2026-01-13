@@ -1521,6 +1521,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-core/trac/intellij.tasks.trac.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-core/trac/intellij.tasks.trac.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/terminal/intellij.terminal.iml" filepath="$PROJECT_DIR$/plugins/terminal/intellij.terminal.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/terminal/backend/intellij.terminal.backend.iml" filepath="$PROJECT_DIR$/plugins/terminal/backend/intellij.terminal.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/terminal/cloud/intellij.terminal.cloud.iml" filepath="$PROJECT_DIR$/plugins/terminal/cloud/intellij.terminal.cloud.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/terminal/completion/intellij.terminal.completion.iml" filepath="$PROJECT_DIR$/plugins/terminal/completion/intellij.terminal.completion.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/terminal/frontend/intellij.terminal.frontend.iml" filepath="$PROJECT_DIR$/plugins/terminal/frontend/intellij.terminal.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/terminal/sh/intellij.terminal.sh.iml" filepath="$PROJECT_DIR$/plugins/terminal/sh/intellij.terminal.sh.iml" />

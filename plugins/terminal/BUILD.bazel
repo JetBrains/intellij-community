@@ -30,8 +30,6 @@ jvm_library(
     "@lib//:jna",
     "//platform/projectModel-api:projectModel",
     "//platform/remote-core",
-    "//platform/remote-servers/api:remoteServers",
-    "//platform/remote-servers/impl",
     "//libraries/jediterm-core",
     "//libraries/jediterm-ui",
     "//platform/execution-impl",
