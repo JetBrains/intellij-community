@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFi
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
 import com.intellij.platform.ide.nonModalWelcomeScreen.GoFileDragAndDropHandler
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
+import com.intellij.platform.ide.nonModalWelcomeScreen.isNonModalWelcomeScreenEnabled
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFile
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconManager
@@ -50,7 +51,7 @@ class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(pro
 
   override fun getIcon(): Icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder)
 
-  override fun isInitiallyVisible(): Boolean = isWelcomeScreenProject(project)
+  override fun isInitiallyVisible(): Boolean = isWelcomeScreenProject(project) && isNonModalWelcomeScreenEnabled
 
   override fun isDefaultPane(project: Project): Boolean {
     return !Registry.`is`("ide.welcome.screen.change.project.view.depending.on.opened.file", false) && isWelcomeScreenProject(project)
