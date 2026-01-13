@@ -7,10 +7,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * Marks final class as "Light Service".
- * <p>
+ * Marks a final class as a <i>Light Service</i>.
  *
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/plugin-services.html#light-services">Light Services</a>.
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/plugin-services.html#light-services">Light Services (IntelliJ Platform Docs)</a>.
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Service {
