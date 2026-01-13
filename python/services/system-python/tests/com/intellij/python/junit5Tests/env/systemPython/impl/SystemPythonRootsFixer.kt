@@ -5,16 +5,23 @@ import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.python.community.services.systemPython.SystemPythonService
-import org.jetbrains.annotations.TestOnly
+import java.nio.file.FileSystemException
 import kotlin.io.path.pathString
 
-@TestOnly
 internal class SystemPythonRootsFixer : ApplicationInitializedListener {
   override suspend fun execute() {
     val disposable = ApplicationManager.getApplication()
     val pythonDirs = SystemPythonService()
       .findSystemPythons()
-      .map { it.pythonBinary.toRealPath().parent.pathString }
+      .map {
+        try {
+          // It might throw FSE on Windows for pythons installed from store, see WinAppxTools
+          it.pythonBinary.toRealPath()
+        }
+        catch (_: FileSystemException) {
+          it.pythonBinary
+        }.parent.pathString
+      }
       .toTypedArray()
     VfsRootAccess.allowRootAccess(disposable, *pythonDirs)
   }
