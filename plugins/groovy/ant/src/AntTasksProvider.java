@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.gant.ant;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.groovy.ant;
 
 import com.intellij.lang.ant.ReflectedProject;
 import com.intellij.openapi.application.ApplicationManager;
@@ -138,7 +138,7 @@ public final class AntTasksProvider {
     }
 
     private static Builder getBuilder(List<Path> files) {
-      return build().files(files).allowLock(false).noPreload().parent(ClassLoader.getPlatformClassLoader());
+      return build().files(files).allowLock(false).noPreload().parent(getPlatformClassLoader());
     }
 
     @NotNull

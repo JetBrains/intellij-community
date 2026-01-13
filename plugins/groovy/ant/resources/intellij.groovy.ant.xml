@@ -3,6 +3,6 @@
     <plugin id="AntSupport"/>
   </dependencies>
   <extensions defaultExtensionNs="org.intellij.groovy">
-    <membersContributor implementation="org.jetbrains.plugins.groovy.gant.ant.GantMemberContributor"/>
+    <membersContributor implementation="com.intellij.groovy.ant.GantMemberContributor"/>
   </extensions>
 </idea-plugin>
