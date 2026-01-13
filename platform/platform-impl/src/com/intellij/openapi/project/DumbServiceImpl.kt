@@ -70,9 +70,11 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   }
 
   // in the beginning, we have dumb mode
-  private val dumbModeListenerState: AtomicReference<DumbModeEventListenerState> = AtomicReference(DumbModeEventListenerState.ENTERED)
   private val dumbModeListenerBackgroundableState: AtomicReference<DumbModeEventListenerState> =
     AtomicReference(DumbModeEventListenerState.ENTERED)
+
+  // this variable is intended to be used only from the EDT
+  private var dumbModeListenerState = DumbModeEventListenerState.ENTERED
 
   @Volatile
   private var isDisposed = false
@@ -281,7 +283,10 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     val old = _state.getAndUpdate { it.incrementDumbCounter() }
     val isStateChanged = old.isSmart
     if (isStateChanged) {
-      runEnteredListeners(dumbModeListenerBackgroundableState) {
+      if (!dumbModeListenerBackgroundableState.compareAndSet(DumbModeEventListenerState.EXITED, DumbModeEventListenerState.ENTERED)) {
+        LOG.error("Unexpected listener state: dumb mode is going to be entered without exiting")
+      }
+      runCatchingIgnorePCE {
         publisherBackgroundable.enteredDumbMode()
       }
     }
@@ -298,13 +303,13 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
       // Otherwise, increment the counter under write action because this will change dumb state
       val enteredDumb = application.runWriteAction(Computable(::doIncrementStateCounter))
       // here we are forcing the execution of listeners in a separate EDT event
-      // consider the following situation:
+      // Assume the listeners run in a single EDT event:
       // ```
       // (bgt)
-      //(1) bgWa { exitDumbMode() } -> (2) invokeLater { (3) runExitedListners() }
+      //(1) bgWa { exitDumbMode() } -> (2) invokeLater { (3) DumbModeListener.enteredDumbMode() }
       //
       // edt
-      //(4) edtWa { enterDumbMode() } -> (5) runEnteredListeners()
+      //(4) edtWa { enterDumbMode() } -> (5) DumbModeListener.enteredDumbMode()
       // ```
       // If 4 and 5 are executed synchronously, there can be order 1-2-4-5-3, and `runEnteredListeners` will be invoked before `runExitedListeners`.
       // This would lead to repeated calls to `runEnteredListeners`, which is not permitted by the contract of these listeners.
@@ -367,7 +372,10 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     val new = _state.updateAndGet { it.decrementDumbCounter() }
     val isStateChanged = new.isSmart
     if (isStateChanged) {
-      runExitedListeners(dumbModeListenerBackgroundableState) {
+      if (!dumbModeListenerBackgroundableState.compareAndSet(DumbModeEventListenerState.ENTERED, DumbModeEventListenerState.EXITED)) {
+        LOG.error("Unexpected listener state: dumb mode is going to be exited without entering")
+      }
+      runCatchingIgnorePCE {
         publisherBackgroundable.exitDumbMode()
       }
     }
@@ -412,35 +420,32 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     }
   }
 
+  /**
+   * Since [DumbModeListener] is invoked asynchronously from the changing the dumb status,
+   * it is possible for someone to enter modal context and change dumb mode inside.
+   * It would mean that [Application.invokeLater] with [DumbModeListener.exitDumbMode] would be delayed until the modal dialog is closed,
+   * so we would get repeated calls to [DumbModeListener.enteredDumbMode]
+   *
+   * To avoid this situation, we deduplicate calls to [DumbModeListener] via a publicly available [dumbModeListenerState] on the EDT.
+   */
   private fun publishDumbModeChangedEvent(desiredListenerState: DumbModeEventListenerState) {
     ThreadingAssertions.assertEventDispatchThread()
     ThreadingAssertions.assertWriteIntentReadAccess()
 
     when (desiredListenerState) {
-      DumbModeEventListenerState.ENTERED -> runEnteredListeners(dumbModeListenerState) {
-        publisher.enteredDumbMode()
+      DumbModeEventListenerState.ENTERED if dumbModeListenerState == DumbModeEventListenerState.EXITED -> {
+        dumbModeListenerState = DumbModeEventListenerState.ENTERED
+        runCatchingIgnorePCE {
+          publisher.enteredDumbMode()
+        }
       }
-      DumbModeEventListenerState.EXITED -> runExitedListeners(dumbModeListenerState) {
-        publisher.exitDumbMode()
+      DumbModeEventListenerState.EXITED if dumbModeListenerState == DumbModeEventListenerState.ENTERED -> {
+        dumbModeListenerState = DumbModeEventListenerState.EXITED
+        runCatchingIgnorePCE {
+          publisher.exitDumbMode()
+        }
       }
-    }
-  }
-
-  private fun runEnteredListeners(listenerState: AtomicReference<DumbModeEventListenerState>, listenerInvocation: () -> Unit) {
-    if (!listenerState.compareAndSet(DumbModeEventListenerState.EXITED, DumbModeEventListenerState.ENTERED)) {
-      LOG.error("Unexpected listener state: dumb mode is going to be entered without exiting")
-    }
-    runCatchingIgnorePCE {
-      listenerInvocation()
-    }
-  }
-
-  private fun runExitedListeners(listenerState: AtomicReference<DumbModeEventListenerState>, listenerInvocation: () -> Unit) {
-    if (!listenerState.compareAndSet(DumbModeEventListenerState.ENTERED, DumbModeEventListenerState.EXITED)) {
-      LOG.error("Unexpected listener state: dumb mode is going to be exited without entering")
-    }
-    runCatchingIgnorePCE {
-      listenerInvocation()
+      else -> Unit
     }
   }
 
