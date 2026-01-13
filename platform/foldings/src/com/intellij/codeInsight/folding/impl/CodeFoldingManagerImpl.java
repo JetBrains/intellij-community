@@ -53,7 +53,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   private static final Key<Map<TextRange, Boolean>> ASYNC_FOLDING_CACHE_KEY = Key.create("ASYNC_FOLDING_CACHE");
   private static final Key<Boolean> AUTO_CREATED_KEY = Key.create("AUTO_CREATED");
   private static final Key<Boolean> FRONTEND_CREATED_KEY = Key.create("FRONTEND_CREATED");
-  private static final Key<Boolean> NOT_PERSISTENT = Key.create("NOT_PERSISTENT");
+  private static final Key<Boolean> TRANSIENT_KEY = Key.create("TRANSIENT");
 
   private final Project myProject;
   private final Collection<Document> myDocumentsWithFoldingInfo = new WeakList<>();
@@ -229,12 +229,20 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   }
 
   /// Do not store the folding region in user config
-  public static void markAsNotPersistent(@NotNull FoldRegion region) {
-    NOT_PERSISTENT.set(region, true);
+  public static void markTransient(@NotNull FoldRegion region) {
+    TRANSIENT_KEY.set(region, true);
   }
 
-  static boolean isNotPersistent(@Nullable FoldRegion region) {
-    return NOT_PERSISTENT.isIn(region);
+  /**
+   * @deprecated use {@link #markTransient(FoldRegion)}
+   */
+  @Deprecated
+  public static void markAsNotPersistent(@NotNull FoldRegion region) {
+    markTransient(region);
+  }
+
+  static boolean isTransient(@Nullable FoldRegion region) {
+    return TRANSIENT_KEY.isIn(region);
   }
 
   public static Map<TextRange, Boolean> getAsyncExpandStatusMap(@Nullable Editor editor) {
