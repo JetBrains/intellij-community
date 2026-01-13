@@ -95,7 +95,7 @@ internal class GitWorkingTreeDialog(
       row(GitBundle.message("working.tree.dialog.label.existing.branch")) {
         val localBranchesWithTrees: List<BranchWithWorkingTree?> = computeBranchesWithWorkingTrees()
         val comboBox = comboBox(localBranchesWithTrees, BranchWithTreeCellRenderer(data.project, data.repository))
-        comboBox.bindItem(existingBranchWithWorkingTree).align(Align.FILL).validationOnApply { validateBranchOnApply(it) }
+        comboBox.bindItem(existingBranchWithWorkingTree).align(Align.FILL).validationOnApply { validateBranchOnApply() }
         comboBox.component.isSwingPopup = false
         existingBranchWithWorkingTree.afterChange { updateSuggestedProjectName() }
       }
@@ -104,7 +104,7 @@ internal class GitWorkingTreeDialog(
         checkBox(GitBundle.message("working.tree.dialog.checkbox.new.branch")).bindSelected(createNewBranch).gap(RightGap.SMALL)
         createNewBranch.afterChange { updateSuggestedProjectName() }
 
-        textField().bindText(newBranchName).align(Align.FILL).validationOnApply { validateBranchNameOnApply(it) }
+        textField().bindText(newBranchName).align(Align.FILL).validationOnApply { validateBranchNameOnApply() }
           .comment(getNewBranchComment())
           .enabledIf(createNewBranch)
         newBranchName.afterChange { updateSuggestedProjectName() }
@@ -113,7 +113,7 @@ internal class GitWorkingTreeDialog(
         .layout(RowLayout.LABEL_ALIGNED)
 
       row(GitBundle.message("working.tree.dialog.label.name")) {
-        projectNameCell = textField().bindText(projectName).align(Align.FILL).validationOnApply { validateProjectNameOnApply(it) }
+        projectNameCell = textField().bindText(projectName).align(Align.FILL).validationOnApply { validateProjectNameOnApply() }
         lastSuggestedProjectName = projectNameCell.component.text
         updateSuggestedProjectName()
       }
@@ -129,21 +129,20 @@ internal class GitWorkingTreeDialog(
     }
   }
 
-  private fun ValidationInfoBuilder.validateBranchOnApply(box: ComboBox<BranchWithWorkingTree?>): ValidationInfo? {
+  private fun ValidationInfoBuilder.validateBranchOnApply(): ValidationInfo? {
     val value = existingBranchWithWorkingTree.get()
     return when {
       value == null -> error(GitBundle.message("working.tree.dialog.location.validation.select.branch"))
       value.workingTree != null -> {
-        val item = (box.selectedItem as? BranchWithWorkingTree)!!
         error(GitBundle.message("working.tree.dialog.branch.validation.already.checked.out.in.working.tree",
-                                item.branch.name, item.workingTree!!.path.name))
+                                value.branch.name, value.workingTree.path.name))
       }
       else -> null
     }
   }
 
-  private fun ValidationInfoBuilder.validateProjectNameOnApply(field: JBTextField): ValidationInfo? {
-    return if (field.text.isBlank()) {
+  private fun ValidationInfoBuilder.validateProjectNameOnApply(): ValidationInfo? {
+    return if (projectName.get().isBlank()) {
       error(GitBundle.message("working.tree.dialog.location.validation.provide.name"))
     }
     else {
@@ -151,8 +150,8 @@ internal class GitWorkingTreeDialog(
     }
   }
 
-  private fun ValidationInfoBuilder.validateBranchNameOnApply(field: JBTextField): ValidationInfo? {
-    return if (field.isEnabled && field.text.isBlank())
+  private fun ValidationInfoBuilder.validateBranchNameOnApply(): ValidationInfo? {
+    return if (createNewBranch.get() && newBranchName.get().isBlank())
       error(GitBundle.message("working.tree.dialog.location.validation.provide.new.branch.name"))
     else
       null
