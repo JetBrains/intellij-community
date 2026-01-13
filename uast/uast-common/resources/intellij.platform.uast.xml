@@ -10,7 +10,7 @@
     <module name="intellij.libraries.stream"/>
     <module name="intellij.platform.core"/>
 
-    <module name="intellij.platform.backend"/>
+    <!--<module name="intellij.platform.backend"/>-->
     <plugin id="com.intellij.modules.java-capable"/>
   </dependencies>
 </idea-plugin>

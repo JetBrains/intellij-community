@@ -11,7 +11,7 @@
     <!--<module name="intellij.java.frontback.psi.impl"/>-->
     <module name="intellij.libraries.stream"/>
     <!--todo temporary disabled-->
-    <module name="intellij.platform.backend"/>
+    <!--<module name="intellij.platform.backend"/>-->
     <plugin id="com.intellij.modules.java-capable"/>
   </dependencies>
 

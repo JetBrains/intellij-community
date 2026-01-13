@@ -24,6 +24,8 @@
   - name: intellij.java.psi
   - name: intellij.java.psi.impl
   - name: intellij.java.frontback.impl
+  - name: intellij.platform.uast
+  - name: intellij.java.uast
   - name: intellij.java.debugger.impl.shared
   - name: intellij.java.execution.impl.shared
 - name: lib/java-impl.jar
@@ -31,9 +33,7 @@
   - name: intellij.java.plugin
   contentModules:
   - name: intellij.java.indexing
-  - name: intellij.platform.uast
   - name: intellij.platform.uast.ide
-  - name: intellij.java.uast
   - name: intellij.java.compiler
   - name: intellij.java.analysis
   - name: intellij.java
