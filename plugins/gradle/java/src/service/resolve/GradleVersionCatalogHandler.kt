@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
@@ -60,6 +61,13 @@ fun getAccessorsForAllCatalogs(context: PsiElement) : Map<String, PsiClass> {
     container.putAll(extension.getAccessorsForAllCatalogs(context))
   }
   return container
+}
+
+fun isInVersionCatalog(element: PsiElement): Boolean {
+  val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return false
+  val versionCatalogFiles = getVersionCatalogFiles(module).values
+  val thisFile = element.containingFile?.virtualFile
+  return versionCatalogFiles.any { it == thisFile }
 }
 
 private val EP_NAME : ExtensionPointName<GradleVersionCatalogHandler> = ExtensionPointName.Companion.create("org.jetbrains.plugins.gradle.externallyHandledExtensions")

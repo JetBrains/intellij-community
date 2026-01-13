@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.toml.navigation
 
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.ElementDescriptionLocation
 import com.intellij.psi.ElementDescriptionProvider
 import com.intellij.psi.PsiElement
@@ -10,11 +9,10 @@ import com.intellij.usageView.UsageViewShortNameLocation
 import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
-import org.jetbrains.plugins.gradle.service.resolve.getVersionCatalogFiles
+import org.jetbrains.plugins.gradle.service.resolve.isInVersionCatalog
 import org.toml.lang.psi.TomlKeySegment
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlTable
-import kotlin.collections.contains
 
 class VersionCatalogDescriptionProvider : ElementDescriptionProvider {
   override fun getElementDescription(element: PsiElement, location: ElementDescriptionLocation): String? {
@@ -28,13 +26,6 @@ class VersionCatalogDescriptionProvider : ElementDescriptionProvider {
       else -> null
     }
   }
-}
-
-private fun isInVersionCatalog(element: PsiElement): Boolean {
-  val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return false
-  val versionCatalogFiles = getVersionCatalogFiles(module).values
-  val thisFile = element.containingFile?.virtualFile
-  return versionCatalogFiles.any { it == thisFile }
 }
 
 private val catalogSections = setOf("libraries", "bundles", "plugins", "versions")

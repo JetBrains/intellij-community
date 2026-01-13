@@ -171,6 +171,7 @@ jvm_library(
     "//platform/smRunner:smRunner_test_lib",
     "//platform/statistics/testFramework",
     "//platform/execution",
+    "//platform/refactoring",
   ],
   runtime_deps = [":java-tests"]
 )

@@ -3,14 +3,18 @@ package org.jetbrains.plugins.gradle.dsl.versionCatalogs
 
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
+import com.intellij.refactoring.rename.RenameInputValidatorRegistry.getInputValidator
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.testFramework.utils.vfs.getPsiFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.BASE_VERSION_CATALOG_FIXTURE
 import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.DYNAMICALLY_INCLUDED_SUBPROJECTS_FIXTURE
+import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.VERSION_CATALOG_COMPOSITE_BUILD_FIXTURE
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleVersionCatalogsRenameTest : GradleCodeInsightTestCase() {
@@ -26,8 +30,11 @@ class GradleVersionCatalogsRenameTest : GradleCodeInsightTestCase() {
       """.trimIndent())
       runInEdtAndWait {
         codeInsightFixture.configureFromExistingVirtualFile(getFile("gradle/libs.versions.toml"))
+        val newName = "eee-fff_ggg"
+        assertRenamingInputIsValid(newName)
+
         TestDialogManager.setTestDialog(TestDialog.OK)
-        codeInsightFixture.renameElementAtCaret("eee-fff_ggg")
+        codeInsightFixture.renameElementAtCaret(newName)
         val uncommittedFile = getFile("build.gradle").getPsiFile(project)
         Assertions.assertEquals("libs.eee.fff.ggg", uncommittedFile.text)
       }
@@ -47,8 +54,11 @@ class GradleVersionCatalogsRenameTest : GradleCodeInsightTestCase() {
       """.trimIndent())
       runInEdtAndWait {
         codeInsightFixture.configureFromExistingVirtualFile(getFile("gradle/libs.versions.toml"))
+        val newName = "eee-fff_ggg"
+        assertRenamingInputIsValid(newName)
+
         TestDialogManager.setTestDialog(TestDialog.OK)
-        codeInsightFixture.renameElementAtCaret("eee-fff_ggg")
+        codeInsightFixture.renameElementAtCaret(newName)
         codeInsightFixture.checkResult("""
         [versions]
         eee-fff_ggg = "13"
@@ -71,11 +81,47 @@ class GradleVersionCatalogsRenameTest : GradleCodeInsightTestCase() {
       writeTextAndCommit("subprojectsDir/subproject1/build.gradle", "customLibs.apache.groovy")
       runInEdtAndWait {
         codeInsightFixture.configureFromExistingVirtualFile(getFile("customPath/custom.toml"))
+        val newName = "renamed-apache-groovy"
+        assertRenamingInputIsValid(newName)
+
         TestDialogManager.setTestDialog(TestDialog.OK)
-        codeInsightFixture.renameElementAtCaret("renamed-apache-groovy")
+        codeInsightFixture.renameElementAtCaret(newName)
         val fileWithUsage = getFile("subprojectsDir/subproject1/build.gradle").getPsiFile(project)
         Assertions.assertEquals("customLibs.renamed.apache.groovy", fileWithUsage.text)
       }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test renaming a library in a TOML catalog of an included build`(gradleVersion: GradleVersion) {
+    test(gradleVersion, VERSION_CATALOG_COMPOSITE_BUILD_FIXTURE) {
+      writeTextAndCommit("includedBuild1/gradle/libs.versions.toml", """
+        [libraries]
+        apache-gro<caret>ovy = { module = "org.apache.groovy:groovy", version = "4.0.0"
+        """.trimIndent()
+      )
+      writeTextAndCommit("includedBuild1/build.gradle", "libs.apache.groovy")
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("includedBuild1/gradle/libs.versions.toml"))
+        val newName = "renamed-apache-groovy"
+        assertRenamingInputIsValid(newName)
+
+        TestDialogManager.setTestDialog(TestDialog.OK)
+        codeInsightFixture.renameElementAtCaret(newName)
+        val fileWithUsage = getFile("includedBuild1/build.gradle").getPsiFile(project)
+        Assertions.assertEquals("libs.renamed.apache.groovy", fileWithUsage.text)
+      }
+    }
+  }
+
+  private fun assertRenamingInputIsValid(newName: String) {
+    val element = codeInsightFixture.elementAtCaret
+    val inputValidator = getInputValidator(element).also {
+      assertNotNull(it) { "Input validator for $element is not found." }
+    }
+    assertTrue(inputValidator!!.value(newName)) {
+      "The validation for the input '$newName' should be passed."
     }
   }
 }
