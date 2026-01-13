@@ -9,7 +9,6 @@
     <module name="intellij.java.frontback.psi.impl"/>
     <module name="intellij.libraries.stream"/>
 
-    <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>
   </dependencies>
 
