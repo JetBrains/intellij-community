@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.SimpleContentRevision
+import com.intellij.openapi.vcs.changes.patch.PatchWriter
 import com.intellij.vcsUtil.VcsUtil
 import java.io.StringWriter
 import java.nio.file.Paths
@@ -22,10 +23,15 @@ class UnifiedDiffWriterStandardPatchTest : HeavyDiffTestCase() {
                         SimpleContentRevision("b\n", filePath, "2"))
     val patches = IdeaTextPatchBuilder.buildPatch(project, listOf(change), basePath, false)
 
-    val standardFormats = booleanArrayOf(false)
+    val standardFormats = booleanArrayOf(false, true)
     val includeAdditionalInfo = booleanArrayOf(false, true)
     for (standardFormat in standardFormats) {
-      val commitContext: CommitContext? = if (standardFormat) CommitContext() else null
+      val commitContext: CommitContext? = if (standardFormat) {
+        CommitContext().apply { putUserData(PatchWriter.STANDARD_PATCH_FORMAT_KEY, true) }
+      }
+      else {
+        null
+      }
       for (includeInfo in includeAdditionalInfo) {
         val ep = object : PatchEP {
           override fun getName(): String = "TestPatchInfo"
