@@ -8,6 +8,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -153,7 +154,9 @@ class ExtractModuleService(
           val virtualFile = file?.virtualFile ?: return@forEach
           val depModule = fileIndex.getModuleForFile(virtualFile)
           if (depModule != null) {
-            usedModules.add(depModule)
+            if (usedModules.add(depModule)) {
+              LOG.debug { "Module ${depModule.name} contains class $className referenced from some class under $packageName package" }
+            }
             return@forEach
           }
 
@@ -161,7 +164,9 @@ class ExtractModuleService(
             .filterNot { it.tableId.level == JpsLibraryTableSerializer.MODULE_LEVEL }
             .firstNotNullOfOrNull { it.findLibraryBridge(WorkspaceModel.getInstance(project).currentSnapshot) }
           if (library != null) {
-            usedLibraries.add(library)
+            if (usedLibraries.add(library)) {
+              LOG.debug { "Library ${library.name} contains class $className referenced from some class under $packageName package" }
+            }
           }
         }
       }
@@ -242,10 +247,11 @@ class ExtractModuleService(
       }
     }
 
-    val packageDependency = fileProcessor.referencedClasses.any { it in packageClasses }
-    val stillDependsOnModule = fileProcessor.referencedClasses.any { it in moduleClasses }
-
-    return packageDependency to stillDependsOnModule
+    val packageDependency = fileProcessor.referencedClasses.firstOrNull { it in packageClasses }
+    if (packageDependency != null) LOG.debug { "Some class under $paths refer to $packageDependency class from the extracted package" }
+    val stillDependsOnModule = fileProcessor.referencedClasses.firstOrNull { it in moduleClasses }
+    if (stillDependsOnModule != null) LOG.debug { "Some class under $paths refer to $stillDependsOnModule class outside the extracted package" }
+    return (packageDependency != null) to (stillDependsOnModule != null)
   }
 
   @RequiresReadLock

@@ -8,6 +8,8 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.*
@@ -39,23 +41,25 @@ class ModuleDependenciesCleaner(
   internal suspend fun findDependenciesToRemove(moduleFileProcessor: ExtractModuleFileProcessor): Set<Module> {
     readAction {
       val fileIndex = ProjectFileIndex.getInstance(module.project)
-      moduleFileProcessor.referencedClasses
-        .asSequence()
-        .mapNotNull { className ->
-          findFile(className)?.virtualFile
-        }
-        .forEach { virtualFile ->
-          val dependencyModule = fileIndex.getModuleForFile(virtualFile)
-          if (dependencyModule != null) {
-            usedModules.add(dependencyModule)
-          }
-          else {
-            fileIndex.findContainingLibraries(virtualFile).asSequence()
-              .filterNot { it.tableId.level == JpsLibraryTableSerializer.MODULE_LEVEL }
-              .firstNotNullOfOrNull { it.findLibraryBridge(WorkspaceModel.getInstance(project).currentSnapshot) }
-              ?.let { usedLibraries.add(it) }
+      for (className in moduleFileProcessor.referencedClasses) {
+        val virtualFile = findFile(className)?.virtualFile ?: continue
+        val dependencyModule = fileIndex.getModuleForFile(virtualFile)
+        if (dependencyModule != null) {
+          if (usedModules.add(dependencyModule)) {
+            LOG.debug { "Module ${dependencyModule.name} contains class $className still referenced from some class in ${module.name} module"}
           }
         }
+        else {
+          val usedLibrary = fileIndex.findContainingLibraries(virtualFile).asSequence()
+            .filterNot { it.tableId.level == JpsLibraryTableSerializer.MODULE_LEVEL }
+            .firstNotNullOfOrNull { it.findLibraryBridge(WorkspaceModel.getInstance(project).currentSnapshot) }
+          if (usedLibrary != null) {
+            if (usedLibraries.add(usedLibrary)) {
+              LOG.debug { "Library ${usedLibrary.name} contains class $className still referenced from some class in ${module.name} module"}
+            }
+          }
+        }
+      }
     }
 
     val dependenciesToRemove =
@@ -167,3 +171,5 @@ class ModuleDependenciesCleaner(
     }
   }
 }
+
+private val LOG = logger<ModuleDependenciesCleaner>()
