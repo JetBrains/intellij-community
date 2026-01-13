@@ -4,7 +4,7 @@ import com.intellij.notebooks.ui.visualization.NotebookUtil.isOrdinaryNotebookEd
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDragAssistant
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
-import com.intellij.notebooks.visualization.use
+import com.intellij.notebooks.visualization.useG2D
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -139,7 +139,9 @@ class EditorCellFoldingBar(
       cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     }
 
-    override fun paint(g: Graphics) {
+    override fun paintComponent(g: Graphics) {
+      super.paintComponent(g)
+
       val rect = rect()
       val arc = if (ExperimentalUI.isNewUI()) {
         rect.width.toDouble()
@@ -147,8 +149,7 @@ class EditorCellFoldingBar(
       else {
         null
       }
-      g.create().use { g2 ->
-        g2 as Graphics2D
+      g.useG2D { g2 ->
         g2.color = background
         RectanglePainter2D.FILL.paint(g2, rect, arc, LinePainter2D.StrokeType.INSIDE, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
       }
