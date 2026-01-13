@@ -203,7 +203,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
      */
     context(_: KaSession, context: K2CompletionSectionContext<P>)
     private fun getAllTopLevelCallablesFromIndex(): Sequence<KaCallableSymbol> {
-        val scopeNameFilter = context.completionContext.scopeNameFilter
+        val scopeNameFilter = context.completionContext.getIndexNameFilter()
         val kotlinCallables = context.symbolFromIndexProvider.getKotlinCallableSymbolsByNameFilter(scopeNameFilter) {
             if (!context.visibilityChecker.canBeVisible(it)) return@getKotlinCallableSymbolsByNameFilter false
             // We should not show class members when we do not have a receiver.
