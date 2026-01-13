@@ -31,7 +31,7 @@ internal class K2CompletionContext<out P: KotlinRawPositionContext>(
      * the [startOnlyNameFilter] that requires a match at the start of the lookup item's lookup strings.
      */
     internal fun getIndexNameFilter(): (Name) -> Boolean {
-        return if ((parameters.invocationCount >= 2 && !parameters.isRerun) || prefixMatcher.prefix.length > 3) {
+        return if (!parameters.isRerun && (parameters.invocationCount >= 2 || prefixMatcher.prefix.length > 3)) {
             scopeNameFilter
         } else {
             startOnlyNameFilter
