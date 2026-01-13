@@ -33,6 +33,9 @@ class TerminalShellIntegrationImpl(
   private val mutableOutputStatus = MutableStateFlow<TerminalOutputStatus>(WaitingForPrompt)
   override val outputStatus: StateFlow<TerminalOutputStatus> = mutableOutputStatus.asStateFlow()
 
+  override var commandAliases: Map<String, String> = emptyMap()
+    private set
+
   private val completionListeners = DisposableWrapperList<TerminalShellBasedCompletionListener>()
 
   override fun addShellBasedCompletionListener(parentDisposable: Disposable, listener: TerminalShellBasedCompletionListener) {
@@ -69,6 +72,10 @@ class TerminalShellIntegrationImpl(
 
     val block = blocksModel.activeBlock as TerminalCommandBlock
     fireCommandExecutionListeners(TerminalCommandFinishedEventImpl(outputModel, block))
+  }
+
+  fun onAliasesReceived(aliases: Map<String, String>) {
+    commandAliases = aliases.toMap()
   }
 
   fun onCompletionFinished(result: String) {

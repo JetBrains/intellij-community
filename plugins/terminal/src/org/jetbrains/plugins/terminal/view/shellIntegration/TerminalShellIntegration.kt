@@ -37,6 +37,12 @@ interface TerminalShellIntegration {
   val outputStatus: StateFlow<TerminalOutputStatus>
 
   /**
+   * Aliases defined in the shell configs of the user.
+   * Can be empty at the very start after shell integration is initialized, but aliases are not reported yet.
+   */
+  val commandAliases: Map<String, String>
+
+  /**
    * Allows listening for command start and finish events.
    */
   fun addCommandExecutionListener(parentDisposable: Disposable, listener: TerminalCommandExecutionListener)

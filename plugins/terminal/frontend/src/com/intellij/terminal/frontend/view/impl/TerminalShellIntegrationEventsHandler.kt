@@ -8,7 +8,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.session.impl.*
 import org.jetbrains.plugins.terminal.session.impl.dto.toState
@@ -20,7 +19,6 @@ internal class TerminalShellIntegrationEventsHandler(
   private val outputModelController: TerminalOutputModelController,
   private val sessionModel: TerminalSessionModel,
   private val shellIntegrationDeferred: CompletableDeferred<TerminalShellIntegration>,
-  private val aliasesStorage: TerminalAliasesStorage,
   private val coroutineScope: CoroutineScope,
 ) : TerminalOutputEventsHandler {
   private val edtContext = Dispatchers.EDT + ModalityState.any().asContextElement()
@@ -74,7 +72,7 @@ internal class TerminalShellIntegrationEventsHandler(
         }
       }
       is TerminalAliasesReceivedEvent -> {
-        aliasesStorage.setAliasesInfo(event.aliases)
+        getIntegrationOrThrow().onAliasesReceived(event.aliases.aliases)
       }
       is TerminalCompletionFinishedEvent -> {
         getIntegrationOrThrow().onCompletionFinished(event.result)
