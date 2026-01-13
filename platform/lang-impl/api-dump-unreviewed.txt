@@ -4894,12 +4894,6 @@ f:com.intellij.codeInsight.template.impl.TemplateEditorUtil
 - s:disposeTemplateEditor(com.intellij.openapi.editor.Editor):V
 - s:setHighlighter(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.template.TemplateContextType):V
 - s:setHighlighter(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.template.impl.TemplateContext):V
-f:com.intellij.codeInsight.template.impl.TemplateExpandShortcutPanel
-- javax.swing.JPanel
-- <init>(java.lang.String):V
-- getSelectedChar():C
-- getSelectedString():java.lang.String
-- setSelectedChar(C):V
 f:com.intellij.codeInsight.template.impl.TemplateGroup
 - com.intellij.openapi.options.ExternalizableScheme
 - <init>(java.lang.String):V

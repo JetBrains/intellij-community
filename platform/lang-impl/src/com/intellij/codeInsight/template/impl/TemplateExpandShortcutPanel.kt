@@ -1,170 +1,127 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.template.impl;
+package com.intellij.codeInsight.template.impl
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.ex.Settings;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsContexts.ListItem;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.Shortcut
+import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.keymap.impl.ui.KeymapPanel
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.options.ex.Settings
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.components.ActionLink
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
+import com.intellij.ui.layout.selectedValueIs
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import java.awt.event.HierarchyEvent
 
-import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+@ApiStatus.Internal
+class TemplateExpandShortcutPanel(label: @NlsContexts.Label String) {
 
-public final class TemplateExpandShortcutPanel extends JPanel {
-  private final JComboBox<String> myExpandByCombo;
-  private final HyperlinkLabel myOpenKeymapLabel;
-
-  public TemplateExpandShortcutPanel(@NotNull @NlsContexts.Label String label) {
-    super(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.weighty = 0;
-    gbConstraints.weightx = 0;
-    gbConstraints.gridy = 0;
-    JLabel jLabel = new JLabel(label);
-    add(jLabel, gbConstraints);
-
-    gbConstraints.gridx = 1;
-    gbConstraints.insets = JBUI.insetsLeft(4);
-    myExpandByCombo = new ComboBox<>();
-    add(myExpandByCombo, gbConstraints);
-    jLabel.setLabelFor(myExpandByCombo);
-
-    myOpenKeymapLabel = new HyperlinkLabel(CodeInsightBundle.message("link.change.context"));
-    gbConstraints.gridx = 2;
-    add(myOpenKeymapLabel, gbConstraints);
-
-    gbConstraints.gridx = 3;
-    gbConstraints.weightx = 1;
-    add(new JPanel(), gbConstraints);
-    setBorder(JBUI.Borders.emptyBottom(10));
-
-    myExpandByCombo.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        myOpenKeymapLabel.setVisible(myExpandByCombo.getSelectedItem() == getCustom());
-      }
-    });
-    for (@ListItem String s : ContainerUtil.ar(getSpace(), getTab(), getEnter(), getCustom())) {
-      myExpandByCombo.addItem(s);
-    }
-    myExpandByCombo.setRenderer(BuilderKt.textListCellRenderer("", (@ListItem String value) -> {
-      if (Strings.areSameInstance(value, getCustom())) {
-        Shortcut[] shortcuts = getCurrentCustomShortcuts();
-        String shortcutText = shortcuts.length == 0 ? "" : KeymapUtil.getShortcutsText(shortcuts);
-        return StringUtil.isEmpty(shortcutText)
-               ? ApplicationBundle.message("custom.option")
-               : ApplicationBundle.message("custom.option.with.shortcut", shortcutText);
-      }
-      return value;
-    }));
-
-    addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(final PropertyChangeEvent evt) {
-        if (isConfigurableOpenEvent(evt)) {
-          resizeComboToFitCustomShortcut();
-        }
-      }
-
-      private static boolean isConfigurableOpenEvent(PropertyChangeEvent evt) {
-        return evt.getPropertyName().equals("ancestor") && evt.getNewValue() != null && evt.getOldValue() == null;
-      }
-    });
-
-    myOpenKeymapLabel.addHyperlinkListener(new HyperlinkAdapter() {
-      @Override
-      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
-        Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myOpenKeymapLabel));
-        final KeymapPanel keymapPanel = allSettings == null ? new KeymapPanel() : allSettings.find(KeymapPanel.class);
-        if (keymapPanel == null) return;
-
-        Runnable selectAction = () -> keymapPanel.selectAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM);
-        if (allSettings != null) {
-          allSettings.select(keymapPanel).doWhenDone(selectAction);
+  val panel: DialogPanel = panel {
+    row(label) {
+      myExpandByCombo = comboBox(listOf(
+        space,
+        tab,
+        enter,
+        custom
+      ), textListCellRenderer<String?>("") {
+        if (it == custom) {
+          val shortcuts = getCurrentCustomShortcuts()
+          val shortcutText = if (shortcuts.isEmpty()) "" else KeymapUtil.getShortcutsText(shortcuts)
+          if (StringUtil.isEmpty(shortcutText))
+            ApplicationBundle.message("custom.option")
+          else
+            ApplicationBundle.message("custom.option.with.shortcut", shortcutText)
         }
         else {
-          ShowSettingsUtil.getInstance().editConfigurable(myOpenKeymapLabel, keymapPanel, selectAction);
-          resizeComboToFitCustomShortcut();
+          it
         }
+      }).component
+
+      myOpenKeymapLabel = link(CodeInsightBundle.message("link.change.context")) {
+        val allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myOpenKeymapLabel))
+        val keymapPanel = if (allSettings == null) KeymapPanel() else allSettings.find(KeymapPanel::class.java) ?: return@link
+        val selectAction = Runnable { keymapPanel.selectAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM) }
+        if (allSettings != null) {
+          allSettings.select(keymapPanel).doWhenDone(selectAction)
+        }
+        else {
+          ShowSettingsUtil.getInstance().editConfigurable(myOpenKeymapLabel, keymapPanel, selectAction)
+          resizeComboToFitCustomShortcut()
+        }
+      }.visibleIf(myExpandByCombo.selectedValueIs(custom))
+        .component
+    }
+  }.apply {
+    addHierarchyListener {
+      if (it.changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong() != 0L && isShowing) {
+        resizeComboToFitCustomShortcut()
       }
-    });
+    }
   }
 
-  private Shortcut[] getCurrentCustomShortcuts() {
-    Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myOpenKeymapLabel));
-    KeymapPanel keymapPanel = allSettings == null ? null : allSettings.find(KeymapPanel.class);
-    Shortcut[] shortcuts = keymapPanel == null ? null : keymapPanel.getCurrentShortcuts(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM);
+  private lateinit var myExpandByCombo: ComboBox<String>
+  private lateinit var myOpenKeymapLabel: ActionLink
+
+  private fun getCurrentCustomShortcuts(): Array<Shortcut?> {
+    val allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myOpenKeymapLabel))
+    val keymapPanel = allSettings?.find(KeymapPanel::class.java)
+    var shortcuts = keymapPanel?.getCurrentShortcuts(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM)
     if (shortcuts == null) {
-      Shortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM);
-      shortcuts = shortcut == null ? Shortcut.EMPTY_ARRAY : new Shortcut[]{shortcut};
+      val shortcut = ActionManager.getInstance().getKeyboardShortcut(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM)
+      shortcuts = if (shortcut == null) Shortcut.EMPTY_ARRAY else arrayOf<Shortcut>(shortcut)
     }
-    return shortcuts;
+    return shortcuts
   }
 
-  public String getSelectedString() {
-    return (String)myExpandByCombo.getSelectedItem();
-  }
+  val selectedString: String?
+    get() = myExpandByCombo.selectedItem as String?
 
-  public void setSelectedChar(char ch) {
-    myExpandByCombo.setSelectedItem(ch == TemplateSettings.CUSTOM_CHAR ? getCustom() :
-                                    ch == TemplateSettings.TAB_CHAR ? getTab() :
-                                    ch == TemplateSettings.ENTER_CHAR ? getEnter() :
-                                    getSpace());
-  }
-
-  public char getSelectedChar() {
-    Object selectedItem = myExpandByCombo.getSelectedItem();
-    if (getTab().equals(selectedItem)) return TemplateSettings.TAB_CHAR;
-    if (getEnter().equals(selectedItem)) return TemplateSettings.ENTER_CHAR;
-    if (getSpace().equals(selectedItem)) {
-      return TemplateSettings.SPACE_CHAR;
+  var selectedChar: Char
+    get() {
+      return when (myExpandByCombo.selectedItem) {
+        tab -> TemplateSettings.TAB_CHAR
+        enter -> TemplateSettings.ENTER_CHAR
+        space -> TemplateSettings.SPACE_CHAR
+        else -> TemplateSettings.CUSTOM_CHAR
+      }
     }
-    else {
-      return TemplateSettings.CUSTOM_CHAR;
+    set(ch) {
+      val value = when (ch) {
+        TemplateSettings.SPACE_CHAR -> space
+        TemplateSettings.TAB_CHAR -> tab
+        TemplateSettings.ENTER_CHAR -> enter
+        else -> custom
+      }
+
+      myExpandByCombo.setSelectedItem(value)
     }
-  }
 
-  private void resizeComboToFitCustomShortcut() {
-    myExpandByCombo.setPrototypeDisplayValue(null);
-    myExpandByCombo.setPrototypeDisplayValue(getCustom());
-    myExpandByCombo.revalidate();
-    myExpandByCombo.repaint();
-  }
-
-  private static @ListItem String getSpace() {
-    return CodeInsightBundle.message("template.shortcut.space");
-  }
-
-  private static @ListItem String getTab() {
-    return CodeInsightBundle.message("template.shortcut.tab");
-  }
-
-  private static @ListItem String getEnter() {
-    return CodeInsightBundle.message("template.shortcut.enter");
-  }
-
-  private static @ListItem String getCustom() {
-    return CodeInsightBundle.message("template.shortcut.custom");
+  private fun resizeComboToFitCustomShortcut() {
+    myExpandByCombo.setPrototypeDisplayValue(null)
+    myExpandByCombo.setPrototypeDisplayValue(custom)
+    myExpandByCombo.revalidate()
+    myExpandByCombo.repaint()
   }
 }
+
+private val space: @Nls String
+  get() = CodeInsightBundle.message("template.shortcut.space")
+
+private val tab: @Nls String
+  get() = CodeInsightBundle.message("template.shortcut.tab")
+
+private val enter: @Nls String
+  get() = CodeInsightBundle.message("template.shortcut.enter")
+
+private val custom: @Nls String
+  get() = CodeInsightBundle.message("template.shortcut.custom")

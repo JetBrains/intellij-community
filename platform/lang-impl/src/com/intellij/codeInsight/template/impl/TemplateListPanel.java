@@ -107,7 +107,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     createTemplateEditor(MOCK_TEMPLATE, "Tab", MOCK_TEMPLATE.createOptions(), MOCK_TEMPLATE.createContext());
 
-    add(myExpandByDefaultPanel, BorderLayout.NORTH);
+    add(myExpandByDefaultPanel.getPanel(), BorderLayout.NORTH);
 
     Splitter splitter = new Splitter(true, 0.9f);
     splitter.setFirstComponent(createTable());

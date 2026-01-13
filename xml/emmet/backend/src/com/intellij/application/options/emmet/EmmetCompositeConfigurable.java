@@ -47,7 +47,7 @@ public class EmmetCompositeConfigurable extends SearchableConfigurable.Parent.Ab
   @Override
   public @Nullable JComponent createComponent() {
     final JPanel rootPanel = new JPanel(new GridLayoutManager(myInnerConfigurables.length + 1, 1, JBInsets.emptyInsets(), -1, -1, false, false));
-    rootPanel.add(myTemplateExpandShortcutPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH,
+    rootPanel.add(myTemplateExpandShortcutPanel.getPanel(), new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH,
                                                                      GridConstraints.FILL_HORIZONTAL,
                                                                      GridConstraints.SIZEPOLICY_CAN_GROW |
                                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK,
