@@ -50,7 +50,7 @@ jvm_library(
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
     "//plugins/kotlin/code-insight/utils",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
     "//plugins/kotlin/base/code-insight/minimal",
   ],
   runtime_deps = [":tests"]

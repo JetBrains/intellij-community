@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.j2k.k2
 
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterSingleFileTest
+import org.jetbrains.kotlin.j2k.getK2FileTextWithErrors
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.util.invalidateCaches
 
 abstract class AbstractK2JavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterSingleFileTest() {
@@ -13,5 +15,9 @@ abstract class AbstractK2JavaToKotlinConverterSingleFileTest : AbstractJavaToKot
             { project.invalidateCaches() },
             { super.tearDown() },
         )
+    }
+
+    override fun dumpTextWithErrors(createKotlinFile: KtFile): String {
+        return getK2FileTextWithErrors(createKotlinFile)
     }
 }

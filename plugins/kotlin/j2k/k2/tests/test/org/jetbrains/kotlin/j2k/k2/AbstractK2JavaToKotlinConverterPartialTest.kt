@@ -3,9 +3,14 @@ package org.jetbrains.kotlin.j2k.k2
 
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterPartialTest
+import org.jetbrains.kotlin.j2k.getK2FileTextWithErrors
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.util.invalidateCaches
 
 abstract class AbstractK2JavaToKotlinConverterPartialTest : AbstractJavaToKotlinConverterPartialTest() {
+    override fun dumpTextWithErrors(createKotlinFile: KtFile): String {
+        return getK2FileTextWithErrors(createKotlinFile)
+    }
 
     override fun tearDown() {
         runAll(

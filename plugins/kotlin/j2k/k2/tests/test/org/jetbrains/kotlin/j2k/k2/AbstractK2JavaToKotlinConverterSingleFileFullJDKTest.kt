@@ -1,11 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.j2k.k2
 
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterSingleFileFullJDKTest
+import org.jetbrains.kotlin.j2k.getK2FileTextWithErrors
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.util.invalidateCaches
 
 abstract class AbstractK2JavaToKotlinConverterSingleFileFullJDKTest : AbstractJavaToKotlinConverterSingleFileFullJDKTest() {
+    override fun dumpTextWithErrors(createKotlinFile: KtFile): String {
+        return getK2FileTextWithErrors(createKotlinFile)
+    }
 
     override fun tearDown() {
         runAll(

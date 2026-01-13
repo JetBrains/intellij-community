@@ -65,13 +65,15 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         val expectedFile = getExpectedFile(javaFile, isCopyPaste = false, pluginMode)
 
         val actualText = if (prefix == "file") {
-            createKotlinFile(convertedText).getFileTextWithErrors(pluginMode)
+            dumpTextWithErrors(createKotlinFile(convertedText))
         } else {
             convertedText
         }
 
         KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
     }
+
+    abstract fun dumpTextWithErrors(createKotlinFile: KtFile): String
 
     private fun addDependencies(directives: Directives) {
         if (directives.contains(JPA_ANNOTATIONS_DIRECTIVE)) addJpaColumnAnnotations()

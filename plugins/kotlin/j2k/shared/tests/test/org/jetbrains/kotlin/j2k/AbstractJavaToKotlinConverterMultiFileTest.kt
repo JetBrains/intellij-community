@@ -90,19 +90,21 @@ abstract class AbstractJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlin
 
         for ((i, kotlinFile) in resultFiles.withIndex()) {
             val expectedFile = expectedResultFile(i)
-            val actualText = kotlinFile.getFileTextWithErrors(pluginMode)
+            val actualText = dumpTextWithErrors(kotlinFile)
             KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
         }
 
         for ((externalFile, externalPsiFile) in externalFiles.zip(externalPsiFiles)) {
             val expectedFile = File(externalFile.path + ".expected")
             val resultText = when (externalPsiFile) {
-                is KtFile -> externalPsiFile.getFileTextWithErrors(pluginMode)
+                is KtFile -> dumpTextWithErrors(externalPsiFile)
                 else -> externalPsiFile.text
             }
             KotlinTestUtils.assertEqualsToFile(expectedFile, resultText)
         }
     }
+
+    abstract fun dumpTextWithErrors(kotlinFile: KtFile): String
 
     private fun convertFilesToKotlin(psiFilesToConvert: List<PsiJavaFile>): FilesResult {
         val j2kKind = if (KotlinPluginModeProvider.isK2Mode()) K2 else K1_NEW

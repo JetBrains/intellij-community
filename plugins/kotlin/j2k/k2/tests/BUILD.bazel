@@ -49,7 +49,7 @@ jvm_library(
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
     "//plugins/kotlin/j2k/shared",
     "//plugins/kotlin/j2k/shared/tests:tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
