@@ -168,7 +168,6 @@ open class AndroidStudioProperties(communityHomeDir: Path) : IdeaCommunityProper
       "intellij.android.design-plugin.descriptor",
       "intellij.android.plugin.descriptor",
       "intellij.android.smali",
-      "intellij.webp",
     )
   }
 
