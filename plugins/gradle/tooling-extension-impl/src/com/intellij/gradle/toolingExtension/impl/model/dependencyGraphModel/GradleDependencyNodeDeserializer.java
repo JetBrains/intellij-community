@@ -46,8 +46,7 @@ public class GradleDependencyNodeDeserializer implements JsonDeserializer<Depend
     return configurationNodes != null ? Arrays.asList(configurationNodes) : Collections.emptyList();
   }
 
-  public static byte @NotNull [] toJson(@NotNull List<DependencyScopeNode> configurationNodes) {
-    String content = new GsonBuilder().create().toJson(configurationNodes);
-    return content.getBytes(StandardCharsets.UTF_8);
+  public static String toJson(@NotNull List<DependencyScopeNode> configurationNodes) {
+    return new GsonBuilder().create().toJson(configurationNodes);
   }
 }
