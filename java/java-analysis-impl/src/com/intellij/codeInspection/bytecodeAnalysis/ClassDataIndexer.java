@@ -13,10 +13,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
+import com.intellij.util.gist.VirtualFileGist;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.gist.GistManager;
-import com.intellij.util.gist.VirtualFileGist;
+
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.UnsyncByteArrayOutputStream;
 import one.util.streamex.StreamEx;
@@ -62,11 +62,9 @@ public final class ClassDataIndexer implements VirtualFileGist.GistCalculator<Ma
 
   private static final int VERSION = 19; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
-  private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER + StringHash.murmur(
+  static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER + StringHash.murmur(
     BytecodeAnalysisSuppressor.EP_NAME.getExtensionList().stream().map(ep -> String.valueOf(ep.getVersion())).collect(Collectors.joining("-")),
     31);
-  private static final VirtualFileGist<Map<HMember, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
-    "BytecodeAnalysisIndex", FINAL_VERSION, new BytecodeAnalysisIndex.EquationsExternalizer(), new ClassDataIndexer());
 
   @Override
   public @Nullable Map<HMember, Equations> calcData(Project project, @NotNull VirtualFile file) {
@@ -273,7 +271,7 @@ public final class ClassDataIndexer implements VirtualFileGist.GistCalculator<Ma
       FileBasedIndex.getInstance().getContainingFiles(BytecodeAnalysisIndex.NAME, key, scope),
       file -> {
         CachedValue<Map<HMember, Equations>> equations = ConcurrencyUtil.computeIfAbsent(file, EQUATIONS, () ->
-          new CachedValueImpl<>(() -> CachedValueProvider.Result.create(ourGist.getFileData(null, file), file)));
+          new CachedValueImpl<>(() -> CachedValueProvider.Result.create(BytecodeAnalysisGist.getInstance().getGist().getFileData(null, file), file)));
         return equations.getValue().get(key);
       });
   }
