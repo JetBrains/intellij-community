@@ -6,6 +6,7 @@ import com.intellij.psi.ElementDescriptionProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.usageView.UsageViewShortNameLocation
+import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.service.resolve.getVersionCatalogFiles
@@ -20,12 +21,13 @@ class VersionCatalogDescriptionProvider : ElementDescriptionProvider {
     if (getVersionCatalogFiles(element.project).values.find { it == element.containingFile?.virtualFile } == null) {
       return null
     }
-    if (location is UsageViewShortNameLocation) return element.name
+    if (!isVersionCatalogAlias(element)) return null
 
-    if (isVersionCatalogAlias(element)) {
-      return GradleInspectionBundle.message("element.description.version.catalog.alias", element.name)
+    return when(location) {
+      is UsageViewShortNameLocation -> element.name
+      is UsageViewTypeLocation -> GradleInspectionBundle.message("element.description.version.catalog.alias")
+      else -> null
     }
-    return null
   }
 }
 
