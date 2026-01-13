@@ -9,6 +9,7 @@ import com.intellij.ide.RecentProjectIconHelper.Companion.generateNewProjectIcon
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -40,6 +41,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
+import kotlin.io.path.nameWithoutExtension
 import kotlin.math.abs
 
 @Internal
@@ -211,7 +213,8 @@ private data class NonLocalProjectIconKey(
 }
 
 private fun getCustomIconFileInfo(file: Path): Pair<Path, BasicFileAttributes>? {
-  val file = sequenceOf("icon.svg", "icon.png")
+  val lookup = if (!JBColor.isBright()) sequenceOf("icon_dark.svg", "icon_dark.png", "icon.svg", "icon.png") else sequenceOf("icon.svg", "icon.png")
+  val file = lookup
                .mapNotNull { RecentProjectIconHelper.getDotIdeaPath(file)?.resolve(it) }
                .firstOrNull { Files.exists(it) } ?: return null
 
@@ -228,6 +231,7 @@ private fun getCustomIcon(path: Path, isProjectValid: Boolean, iconSize: Int): I
     return null
   }
 
+  val isDark = !JBColor.isBright()
   val (file, fileInfo) = getCustomIconFileInfo(path) ?: return null
   val timestamp = fileInfo.lastModifiedTime().toMillis()
 
@@ -238,6 +242,12 @@ private fun getCustomIcon(path: Path, isProjectValid: Boolean, iconSize: Int): I
 
   val borderWidth = 2
   var fileIcon = RecentProjectIconHelper.createIcon(file, iconSize - borderWidth * 2)
+
+  val recolor = isDark && !file.nameWithoutExtension.endsWith("_dark")
+  if (recolor) {
+    fileIcon = IconLoader.getDarkIcon(fileIcon, true)
+  }
+
   if (!isProjectValid) {
     fileIcon = IconUtil.desaturate(fileIcon)
   }
@@ -249,7 +259,8 @@ private fun getCustomIcon(path: Path, isProjectValid: Boolean, iconSize: Int): I
   iconWrapper = ProjectIcon(icon = icon,
                             isProjectValid = isProjectValid,
                             lastUsedProjectIconSize = JBUIScale.scale(iconSize),
-                            timestamp = timestamp)
+                            timestamp = timestamp,
+                            isDark = isDark)
   projectIconCache.put(Pair(path, iconSize), iconWrapper)
   return iconWrapper.icon
 }
@@ -301,17 +312,19 @@ private fun isCachedIcon(icon: ProjectIcon, isProjectValid: Boolean, timestamp: 
   val presentation = (icon.icon as? AvatarIcon)?.presentation as? ProjectAvatarPresentation
   val isNameChanged = presentation?.let { it.name != name } ?: false
   val isTimestampChanged = timestamp?.let { icon.timestamp != it } ?: false
+  val isDarkChanged = icon.isDark?.let { it != !JBColor.isBright() } ?: false
 
   return icon.isProjectValid == isProjectValid
          && icon.lastUsedProjectIconSize == userScaledProjectIconSize()
-         && !isNameChanged && !isTimestampChanged
+         && !isNameChanged && !isTimestampChanged && !isDarkChanged
 }
 
 private data class ProjectIcon(
   @JvmField val icon: Icon,
   @JvmField val isProjectValid: Boolean,
   @JvmField val lastUsedProjectIconSize: Int,
-  @JvmField val timestamp: Long? = null
+  @JvmField val timestamp: Long? = null,
+  @JvmField val isDark: Boolean? = null,
 )
 
 @Internal

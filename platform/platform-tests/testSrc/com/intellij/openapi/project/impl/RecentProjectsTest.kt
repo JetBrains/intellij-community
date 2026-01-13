@@ -12,6 +12,7 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.ui.DeferredIconImpl
+import com.intellij.ui.JBColor
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.SimpleMessageBusConnection
@@ -109,7 +110,17 @@ class RecentProjectsTest {
   }
 
   @Test
-  fun solutionLikeProjectIcon() = timeoutRunBlocking {
+  fun solutionLikeProjectIcon() {
+    doSolutionLikeProjectIcon()
+  }
+
+  @Test
+  fun solutionLikeProjectIconForDarkTheme() {
+    JBColor.setDark(true)
+    doSolutionLikeProjectIcon()
+  }
+
+  private fun doSolutionLikeProjectIcon() = timeoutRunBlocking {
     // For Rider
     val rpm = (RecentProjectsManager.getInstance() as RecentProjectsManagerBase)
 
@@ -131,7 +142,7 @@ class RecentProjectsTest {
 
         if (x >= emptyBorderWidth && x < (iconSize - emptyBorderWidth) &&
             y >= emptyBorderWidth && y < (iconSize - emptyBorderWidth)) {
-          assertThat(color).isEqualTo(Color.BLUE.rgb)
+          assertThat(color).isEqualTo(if (JBColor.isBright()) Color.BLUE.rgb else Color.RED.rgb)
         }
         else {
           assertThat(color).isEqualTo(0)
