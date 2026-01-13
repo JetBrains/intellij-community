@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.util.childrenOfType
@@ -196,11 +197,6 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             )
         }
 
-    private fun KaCallableSymbol.isStaticJavaSymbol(): Boolean {
-        return (this is KaNamedFunctionSymbol && this.isStatic) ||
-                (this is KaJavaFieldSymbol && this.isStatic)
-    }
-
     /**
      * Returns all top-level callables from index, included nested ones, both from Java and Kotlin.
      * Applicable Kotlin callables are returned before Java ones.
@@ -216,10 +212,9 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         }
 
         val javaCallables = context.symbolFromIndexProvider
-            .getJavaCallablesByNameFilter(scopeNameFilter)
-            .filter {
+            .getJavaCallablesByNameFilter(nameFilter = scopeNameFilter) {
                 // We only show static members
-                it.isStaticJavaSymbol() && context.visibilityChecker.canBeVisible(it.psi())
+                context.visibilityChecker.canBeVisible(it) && it.hasModifier(JvmModifier.STATIC)
             }
 
         return kotlinCallables + javaCallables
