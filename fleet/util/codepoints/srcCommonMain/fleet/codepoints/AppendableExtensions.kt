@@ -5,8 +5,8 @@ fun <T : Appendable> T.appendCodePoint(codepoint: Codepoint): T {
     append(codepoint.codepoint.toChar())
   }
   else {
-    append(highSurrogatePlatformSpecific(codepoint.codepoint))
-    append(lowSurrogatePlatformSpecific(codepoint.codepoint))
+    append(highSurrogate(codepoint.codepoint))
+    append(lowSurrogate(codepoint.codepoint))
   }
   return this
 }

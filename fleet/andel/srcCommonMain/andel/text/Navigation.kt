@@ -4,10 +4,12 @@ package andel.text
 import andel.editor.Caret
 import andel.editor.CaretPosition
 import andel.editor.MutableDocument
-import fleet.codepoints.CodepointClass
-import fleet.codepoints.Direction
-import fleet.codepoints.codepointClass
-import fleet.codepoints.codepoints
+import fleet.codepoints.*
+
+private enum class Direction {
+  FORWARD,
+  BACKWARD,
+}
 
 private fun stopOnCodepointClass(
   before: CodepointClass,
@@ -43,10 +45,9 @@ fun textRight(
   stopAfterSpace: Boolean,
 ): Long {
   if (offset == range.end) return offset
-  val cursor = text.charSequence().codepoints(offset.toInt(), Direction.FORWARD)
   var classBefore = CodepointClass.CARET
   var charOffset = offset
-  for (codepoint in cursor) {
+  text.charSequence(offset, text.charCount.toLong()).forEachCodepoint { codepoint ->
     val classAfter = codepointClass(codepoint.codepoint)
     if (stopOnCodepointClass(classBefore, classAfter, Direction.FORWARD, honorCamelHumps, stopAfterSpace) ||
         charOffset >= range.end) {
@@ -70,10 +71,9 @@ private fun textLeft(
   stopAfterSpace: Boolean,
 ): Long {
   if (offset == range.start) return offset
-  val cursor = text.charSequence().codepoints(offset.toInt(), Direction.BACKWARD)
   var classBefore = CodepointClass.CARET
   var charOffset = offset
-  for (codepoint in cursor) {
+  text.charSequence(0, offset).forEachCodepointReversed { codepoint ->
     val classAfter = codepointClass(codepoint.codepoint)
     if (stopOnCodepointClass(classBefore, classAfter, Direction.BACKWARD, honorCamelHumps, stopAfterSpace)) {
       return charOffset
@@ -105,22 +105,21 @@ fun textAround(
   requireWordAtCaret: Boolean = true,
 ): TextRange {
   val validCodepoints = setOf(CodepointClass.LOWERCASE, CodepointClass.UPPERCASE, CodepointClass.UNDERSCORE)
-  val rightCodepoint = run {
-    val cursor = text.charSequence().codepoints(offset.toInt(), Direction.FORWARD)
-    if (cursor.hasNext()) {
-      val next = cursor.next()
-      codepointClass(next.codepoint)
+  val rightCodepoint = if (offset in 0..<text.charCount) {
+    text.charSequence().codePointAt(offset.toInt()).let { cursor ->
+      codepointClass(cursor.codepoint)
     }
-    else null
   }
-
-  val leftCodepoint = run {
-    val cursor = text.charSequence().codepoints(offset.toInt(), Direction.BACKWARD)
-    if (cursor.hasNext()) {
-      val prev = cursor.next()
-      codepointClass(prev.codepoint)
+  else {
+    null
+  }
+  val leftCodepoint = if (offset in 1..text.charCount) {
+    text.charSequence().codePointBefore(offset.toInt()).let { cursor ->
+      codepointClass(cursor.codepoint)
     }
-    else null
+  }
+  else {
+    null
   }
 
   val isWordOnTheRight = rightCodepoint in validCodepoints
