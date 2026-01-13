@@ -1,10 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
+import com.intellij.frontend.FrontendApplicationInfo
+import com.intellij.frontend.FrontendType
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
@@ -12,14 +15,16 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.platform.project.projectId
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType.StandardPanels
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -52,14 +57,6 @@ private class FrontendXLineBreakpointType(
     return availableTypes.any { it.id == this@FrontendXLineBreakpointType.id }
   }
 
-  override fun canPutAtFast(editor: Editor, line: Int, project: Project): ThreeState {
-    val availableTypes = FrontendEditorLinesBreakpointsInfoManager.getInstance(project).getBreakpointsInfoForLineFast(editor, line)?.types
-    if (availableTypes == null) {
-      return ThreeState.UNSURE
-    }
-    return ThreeState.fromBoolean(availableTypes.any { it.id == this@FrontendXLineBreakpointType.id })
-  }
-
   override suspend fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
     // TODO IJPL-185322 What if called for other editors?
     val editor = file.getOpenedEditor(project) ?: return false
@@ -67,11 +64,38 @@ private class FrontendXLineBreakpointType(
     return canPutAt(editor, line, project)
   }
 
+  override fun canPutAtFast(editor: Editor, line: Int, project: Project): ThreeState {
+    val monolithState = canPutAtFastMonolith(project, line) {
+      FileDocumentManager.getInstance().getFile(editor.getDocument())
+    }
+    if (monolithState != null) return monolithState
+
+    val availableTypes = FrontendEditorLinesBreakpointsInfoManager.getInstance(project).getBreakpointsInfoForLineFast(editor, line)?.types
+    if (availableTypes == null) {
+      return ThreeState.UNSURE
+    }
+    return ThreeState.fromBoolean(availableTypes.any { it.id == this@FrontendXLineBreakpointType.id })
+  }
+
   override fun canPutAtFast(file: VirtualFile, line: Int, project: Project): ThreeState {
+    val monolithState = canPutAtFastMonolith(project, line) { file }
+    if (monolithState != null) return monolithState
+
     // TODO IJPL-185322 What if called for other editors?
     val editor = file.getOpenedEditor(project) ?: return ThreeState.NO
 
     return canPutAtFast(editor, line, project)
+  }
+
+  /**
+   * Process monolith directly, as we should not call [FrontendEditorLinesBreakpointsInfoManager.getBreakpointsInfoForLineFast]
+   */
+  private inline fun canPutAtFastMonolith(project: Project, line: Int, fileProvider: () -> VirtualFile?): ThreeState? {
+    if (FrontendApplicationInfo.getFrontendType() !is FrontendType.Monolith) return null
+    val monolithType = XBreakpointUtil.findType(id) as? XLineBreakpointType<*> ?: return null
+    val file = fileProvider() ?: return ThreeState.NO
+    val canPut = monolithType.canPutAt(file, line, project)
+    return ThreeState.fromBoolean(canPut)
   }
 
   private fun VirtualFile.getOpenedEditor(project: Project): Editor? {
