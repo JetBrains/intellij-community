@@ -55,8 +55,8 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.sql.Types;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
@@ -88,7 +88,8 @@ public class DumpDataForm {
   private static final int MAX_SOURCE_HEIGHT = 100;
   private static final Logger LOG = Logger.getInstance(DumpDataForm.class);
   private static final Set<String> EXTRACTORS_NO_TRANSPOSE = Set.of("SQL-Insert-Statements.sql.groovy",
-                                                                               "JSON-Groovy.json.groovy");
+                                                                               "JSON-Groovy.json.groovy",
+                                                                               "Python-DataFrame.py.groovy");
   private final Project myProject;
   private final DumpSource<?> mySource;
   private final @NotNull Supplier<? extends Window> myWindowSupplier;
@@ -303,7 +304,7 @@ public class DumpDataForm {
   }
 
   protected boolean supportsTranspose(DataExtractorFactory factory) {
-    return !(factory instanceof PythonDataFrameExtractorFactory || (factory instanceof Script && EXTRACTORS_NO_TRANSPOSE.contains(factory.getName())));
+    return !(factory instanceof Script && EXTRACTORS_NO_TRANSPOSE.contains(factory.getName()));
   }
 
   protected boolean supportsAddTableDefinition(DataExtractorFactory factory) {
