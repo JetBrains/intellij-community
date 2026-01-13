@@ -14,7 +14,7 @@
   </dependencies>
 
   <content namespace="jetbrains">
-    <module name="intellij.java.ide.customization/training"/>
+    <module name="intellij.java.ide.customization.training"/>
   </content>
 
   <resource-bundle>messages.ActionsBundle</resource-bundle>

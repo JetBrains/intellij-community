@@ -149,6 +149,7 @@ jvm_library(
     "//plugins/properties:properties-backend",
     "//java/ide-resources",
     "//java/ide-customization",
+    "//java/ide-customization/training",
     "//resources:java-resources",
     "//resources-en:java-resources-en",
     "//spellchecker",

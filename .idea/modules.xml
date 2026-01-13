@@ -550,6 +550,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/forms_rt/intellij.java.guiForms.rt.iml" filepath="$PROJECT_DIR$/platform/forms_rt/intellij.java.guiForms.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/java-i18n/intellij.java.i18n.iml" filepath="$PROJECT_DIR$/plugins/java-i18n/intellij.java.i18n.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/ide-customization/intellij.java.ide.customization.iml" filepath="$PROJECT_DIR$/java/ide-customization/intellij.java.ide.customization.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/ide-customization/training/intellij.java.ide.customization.training.iml" filepath="$PROJECT_DIR$/java/ide-customization/training/intellij.java.ide.customization.training.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/ide-resources/intellij.java.ide.resources.iml" filepath="$PROJECT_DIR$/java/ide-resources/intellij.java.ide.resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-impl/intellij.java.impl.iml" filepath="$PROJECT_DIR$/java/java-impl/intellij.java.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-impl-inspections/intellij.java.impl.inspections.iml" filepath="$PROJECT_DIR$/java/java-impl-inspections/intellij.java.impl.inspections.iml" />

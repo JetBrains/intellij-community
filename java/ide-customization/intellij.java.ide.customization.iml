@@ -18,9 +18,6 @@
     <orderEntry type="module" module-name="intellij.java.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.notebooks.visualization" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.featuresTrainer" />
-    <orderEntry type="module" module-name="intellij.platform.util.ui" />
-    <orderEntry type="module" module-name="intellij.java.featuresTrainer" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
   </component>
