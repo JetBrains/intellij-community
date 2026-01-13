@@ -9,7 +9,10 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.AtomicLazyProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.coroutines.childScope
@@ -22,9 +25,7 @@ import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.git.ui.GitBranchesTreeIconProvider
 import com.intellij.vcsUtil.VcsUtil
-import git4idea.GitBranch
-import git4idea.GitStandardLocalBranch
-import git4idea.GitWorkingTree
+import git4idea.*
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.workingTrees.GitWorkingTreesService
@@ -52,6 +53,7 @@ internal class GitWorkingTreeDialog(
   private val branchToWorkingTreeMap = data.repository.workingTreeHolder.getWorkingTrees()
     .filter { it.currentBranch != null }
     .associateBy { it.currentBranch!! }
+  private val localBranchNames = data.repository.branches.localBranches.map { it.name }
 
   private lateinit var parentPathCell: Cell<TextFieldWithBrowseButton>
   private lateinit var projectNameCell: Cell<JBTextField>
@@ -131,14 +133,26 @@ internal class GitWorkingTreeDialog(
 
   private fun ValidationInfoBuilder.validateBranchOnApply(): ValidationInfo? {
     val value = existingBranchWithWorkingTree.get()
-    return when {
-      value == null -> error(GitBundle.message("working.tree.dialog.location.validation.select.branch"))
-      value.workingTree != null -> {
-        error(GitBundle.message("working.tree.dialog.branch.validation.already.checked.out.in.working.tree",
-                                value.branch.name, value.workingTree.path.name))
-      }
-      else -> null
+    if (value == null) {
+      return error(GitBundle.message("working.tree.dialog.location.validation.select.branch"))
     }
+    if (value.workingTree != null) {
+      return error(GitBundle.message("working.tree.dialog.branch.validation.already.checked.out.in.working.tree",
+                                     value.branch.name, value.workingTree.path.name))
+    }
+    val branch = value.branch
+    if (branch is GitRemoteBranch && !createNewBranch.get()) {
+      val defaultLocalBranchName = branch.nameForRemoteOperations
+      // can have remote conflict if git-svn is used - suggested local name will be equal to selected remote,
+      // see git4idea.remote.hosting.GitRemoteBranchesUtil.checkoutRemoteBranch
+      if (GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(defaultLocalBranchName, branch.name)) {
+        return error(GitBundle.message("working.tree.dialog.branch.validation.provide.explicit.local.branch.name", branch.name))
+      }
+      if (localBranchNames.contains(defaultLocalBranchName)) {
+        return error(GitBundle.message("working.tree.dialog.branch.validation.default.exists", branch.name))
+      }
+    }
+    return null
   }
 
   private fun ValidationInfoBuilder.validateProjectNameOnApply(): ValidationInfo? {
@@ -151,10 +165,15 @@ internal class GitWorkingTreeDialog(
   }
 
   private fun ValidationInfoBuilder.validateBranchNameOnApply(): ValidationInfo? {
-    return if (createNewBranch.get() && newBranchName.get().isBlank())
-      error(GitBundle.message("working.tree.dialog.location.validation.provide.new.branch.name"))
-    else
-      null
+    val name = newBranchName.get()
+    return when {
+      !createNewBranch.get() -> null
+      name.isBlank() -> error(GitBundle.message("working.tree.dialog.location.validation.provide.new.branch.name"))
+      localBranchNames.contains(name) -> {
+        error(GitBundle.message("working.tree.dialog.branch.validation.already.exists", name))
+      }
+      else -> null
+    }
   }
 
   private fun ValidationInfoBuilder.validateLocationOnApply(): ValidationInfo? {
