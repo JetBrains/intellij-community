@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
@@ -36,7 +36,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettin
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.isFoojayPluginSupported
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_REPOSITORY_HANDLER
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
-import org.jetbrains.plugins.gradle.util.GradleUtil
+import org.jetbrains.plugins.gradle.util.getGradleVersion
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
@@ -51,7 +51,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(private val holder: 
         if (!expression.isGradleRepositoriesBlock()) return
 
         val repositoriesParentBlockKind = getRepositoriesParentBlockKind(expression)
-        val gradleVersion = GradleUtil.getGradleVersion(holder.project, holder.file)
+        val gradleVersion = getGradleVersion(holder.project, holder.file.virtualFile) ?: GradleVersion.current()
         if (repositoriesParentBlockKind == RepositoriesParentBlockKind.DEPENDENCY && gradleVersion < GradleVersion.version("6.8")) return
 
         val settingsFile = expression.module?.getBuildScriptSettingsPsiFile()
