@@ -35,5 +35,7 @@ interface TerminalStartupOptions {
 fun TerminalStartupOptions.guessShellName(): ShellName {
   val executablePath = shellCommand.first() // it should be guaranteed that it is not empty
   val executableName = PathUtil.getFileName(executablePath)
-  return ShellName.of(executableName)
+  val extension = PathUtil.getFileExtension(executableName)
+  val shellName = if (extension != null) executableName.removeSuffix(".$extension") else executableName
+  return ShellName.of(shellName)
 }
