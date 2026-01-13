@@ -9,7 +9,7 @@
 - a:markChangesProcessed(com.intellij.openapi.vcs.changes.VcsDirtyScope):V
 *f:com.intellij.openapi.vcs.changes.ChangeListManagerRefreshHelper
 - sf:INSTANCE:com.intellij.openapi.vcs.changes.ChangeListManagerRefreshHelper
-- sf:refreshSync(com.intellij.openapi.project.Project):V
+- f:launchRefreshOrNotifyFrozen(com.intellij.openapi.project.Project):V
 - f:requestRefresh(com.intellij.openapi.project.Project):V
 *:com.intellij.openapi.vcs.changes.ChangesListManagerStateProvider
 - *sf:Companion:com.intellij.openapi.vcs.changes.ChangesListManagerStateProvider$Companion
