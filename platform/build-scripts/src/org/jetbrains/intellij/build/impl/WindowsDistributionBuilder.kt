@@ -145,6 +145,13 @@ internal class WindowsDistributionBuilder(
   }
 
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
+    Regex("\\d+").findAll(context.buildNumber).forEach {
+      val number = it.value.toIntOrNull() ?: return@forEach
+      require(number <= 65535) {
+        "${context.buildNumber}: the build number component '$number' cannot exceed 65535"
+      }
+    }
+
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
     val runtimeDir = context.bundledRuntime.extract(OsFamily.WINDOWS, arch, WindowsLibcImpl.DEFAULT)
 
