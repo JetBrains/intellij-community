@@ -334,7 +334,8 @@ public class GradleExtensionsSettings {
         configuration.isVisible(),
         configuration.isScriptClasspathConfiguration(),
         configuration.getDescription(),
-        configuration.getDeclarationAlternatives()
+        configuration.getDeclarationAlternatives(),
+        configuration.isCanBeDeclared()
       );
     }
   }
@@ -435,17 +436,20 @@ public class GradleExtensionsSettings {
     private final boolean scriptClasspath;
     private final @Nullable String description;
     private final @NotNull List<String> declarationAlternatives;
+    private final boolean canDeclareDependencies;
 
     public GradleConfiguration(@NotNull String name,
                                boolean visible,
                                boolean scriptClasspath,
                                @Nullable String description,
-                               @NotNull List<String> declarationAlternatives) {
+                               @NotNull List<String> declarationAlternatives,
+                               boolean canDeclareDependencies) {
       this.name = name;
       this.visible = visible;
       this.scriptClasspath = scriptClasspath;
       this.description = description;
       this.declarationAlternatives = declarationAlternatives;
+      this.canDeclareDependencies = canDeclareDependencies;
     }
 
     public @NotNull String getName() {
@@ -466,6 +470,15 @@ public class GradleExtensionsSettings {
 
     public @NotNull List<String> getDeclarationAlternatives() {
       return declarationAlternatives;
+    }
+
+    /**
+     * @return `true` if a configuration can have dependencies declared. For example, if it's a scope or an annotation processor.
+     * Could be used since Gradle 8.2.
+     * @see <a href="https://docs.gradle.org/current/kotlin-dsl/gradle/org.gradle.api.artifacts/-configuration/is-can-be-declared.html">Gradle Documentation</a>
+     */
+    public boolean isCanDeclareDependencies() {
+      return canDeclareDependencies;
     }
   }
 

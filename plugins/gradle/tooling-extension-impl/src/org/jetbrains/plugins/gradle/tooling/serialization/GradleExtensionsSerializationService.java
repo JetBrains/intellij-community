@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
@@ -111,6 +111,7 @@ public final class GradleExtensionsSerializationService implements Serialization
           writeBoolean(writer, "visible", configuration.isVisible());
           writeBoolean(writer, "scriptClasspathConfiguration", configuration.isScriptClasspathConfiguration());
           writeStrings(writer, "declarationAlternatives", configuration.getDeclarationAlternatives());
+          writeBoolean(writer, "canBeDeclared", configuration.isCanBeDeclared());
         }
         writer.stepOut();
       }
@@ -214,7 +215,9 @@ public final class GradleExtensionsSerializationService implements Serialization
             readString(reader, "description"),
             readBoolean(reader, "visible"),
             readBoolean(reader, "scriptClasspathConfiguration"),
-            readStringList(reader, null));
+            readStringList(reader, null),
+            readBoolean(reader, "canBeDeclared")
+          );
         }
       });
     reader.stepOut();

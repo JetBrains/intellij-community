@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
@@ -22,4 +22,11 @@ public interface GradleConfiguration extends Serializable {
   boolean isScriptClasspathConfiguration();
 
   @NotNull List<String> getDeclarationAlternatives();
+
+  /**
+   * @return `true` if a configuration can have dependencies declared. For example, if it's a scope or an annotation processor.
+   * Could be used since Gradle 8.2.
+   * @see <a href="https://docs.gradle.org/current/kotlin-dsl/gradle/org.gradle.api.artifacts/-configuration/is-can-be-declared.html">Gradle Documentation</a>
+   */
+  boolean isCanBeDeclared();
 }
