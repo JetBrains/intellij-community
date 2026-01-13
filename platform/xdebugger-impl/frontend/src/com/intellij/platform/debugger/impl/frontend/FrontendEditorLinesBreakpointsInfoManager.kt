@@ -85,10 +85,7 @@ internal class FrontendEditorLinesBreakpointsInfoManager(private val project: Pr
   }
 
   suspend fun getBreakpointsInfoForLine(editor: Editor, line: Int): EditorLineBreakpointsInfo {
-    val editorMap = editorsMap[editor]
-    if (editorMap == null) {
-      return putNewLinesInfoMap(editor).getBreakpointsInfoForLine(line)
-    }
+    val editorMap = editorsMap[editor] ?: putNewLinesInfoMap(editor)
     return editorMap.getBreakpointsInfoForLine(line)
   }
 
