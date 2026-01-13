@@ -17,6 +17,7 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
+import kotlin.io.path.isRegularFile
 
 class DownloadGoSdkException(message: String) : SetupException(message)
 
@@ -76,6 +77,7 @@ object GoSdkDownloaderFacade {
       downloadAndInstallGoSdk(version, platformInfo, installPath)
     }
 
+    checkDownloadedGoSdk(goHome, installPath, platformInfo)
     return GoSdkPaths(homePath = goHome, installPath = installPath)
   }
 
@@ -95,6 +97,18 @@ object GoSdkDownloaderFacade {
       FileSystem.unpack(downloadedFile, installPath)
 
       downloadedFile.deleteIfExists()
+    }
+  }
+
+  @OptIn(ExperimentalPathApi::class)
+  private fun checkDownloadedGoSdk(goHome: Path, installPath: Path, platformInfo: PlatformInfo) {
+    // Use platformInfo.os instead of OS.CURRENT to correctly check the binary for the target platform
+    val goBinaryName = if (platformInfo.os == "windows") "go.exe" else "go"
+    val goBinary = goHome.resolve("bin").resolve(goBinaryName)
+
+    if (!goBinary.isRegularFile()) {
+      installPath.deleteRecursively()
+      throw DownloadGoSdkException("Corrupted Go SDK home: $installPath (now deleted)")
     }
   }
 
