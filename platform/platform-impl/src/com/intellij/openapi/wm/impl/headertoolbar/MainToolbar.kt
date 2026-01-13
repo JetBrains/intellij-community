@@ -168,11 +168,6 @@ class MainToolbar(
     return components.filterIsInstance<ActionToolbar>().sumOf { it.component.preferredSize.width} + 4 * JBUI.scale(layoutGap)
   }
 
-  @Internal
-  fun addToolbarListeners(listener: ActionToolbarListener, disposable: Disposable) {
-    components.filterIsInstance<ActionToolbar>().forEach { it.addListener(listener, disposable) }
-  }
-
   private fun updateToolbarActions() {
     for (component in components) {
       if (component is ActionToolbarImpl) {

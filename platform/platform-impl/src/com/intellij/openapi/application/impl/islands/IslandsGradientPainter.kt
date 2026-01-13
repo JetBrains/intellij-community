@@ -108,6 +108,10 @@ private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project,
 
   if (isIjpl217440 && SwingUtilities.getWindowAncestor(frame.component)?.isActive == false) {
     islandsInactiveFrameGraphics2D?.preserveComposite = true
+
+    g.color = mainColor
+    g.fillRect(0, 0, totalWidth, height)
+
     g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, islandsInactiveAlpha)
   }
 
@@ -161,7 +165,15 @@ private fun getGradientCache(root: JComponent, key: String): GradientCache {
 }
 
 private fun doColorGradientPaint(project: Project, projectWindowCustomizer: ProjectWindowCustomizerService, component: Component, g: Graphics2D) {
+  val islandsInactiveFrameGraphics2D = g as? IslandsInactiveFrameGraphics2D
+  val initialComposite = g.composite
   val info = projectWindowCustomizer.getProjectGradients(project)
+
+  if (isIjpl217440 && SwingUtilities.getWindowAncestor(component)?.isActive == false) {
+    islandsInactiveFrameGraphics2D?.preserveComposite = true
+
+    g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, islandsInactiveAlpha)
+  }
 
   g.paint = LinearGradientPaint(0f, 0f, component.width.toFloat(), component.height.toFloat(),
                                 floatArrayOf(info.getDiagonalFraction1(0f), info.getDiagonalFraction2(0.13f),
@@ -188,4 +200,7 @@ private fun doColorGradientPaint(project: Project, projectWindowCustomizer: Proj
   g.paint = GradientPaint(0f, 0f, info.verticalColor1, 0f, component.height.toFloat(), info.verticalColor2)
 
   g.fillRect(0, 0, component.width, component.height)
+
+  g.composite = initialComposite
+  islandsInactiveFrameGraphics2D?.preserveComposite = false
 }

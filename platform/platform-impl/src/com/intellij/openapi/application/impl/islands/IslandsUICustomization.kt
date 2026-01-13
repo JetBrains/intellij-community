@@ -1055,8 +1055,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
+  // todo remove with isIjpl217440 property
   override fun paintFrameBackground(frame: IdeFrame, component: Component, g: Graphics2D) {
-    if (isManyIslandEnabled && isIslandsGradientEnabled) {
+    if (isManyIslandEnabled && isIslandsGradientEnabled && !isIjpl217440) {
       val point = SwingUtilities.convertPoint(component, 0, 0, frame.component)
       g.translate(-point.x, -point.y)
 
