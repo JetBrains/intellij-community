@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.toml.navigation
 import com.intellij.psi.ElementDescriptionLocation
 import com.intellij.psi.ElementDescriptionProvider
 import com.intellij.psi.PsiElement
+import com.intellij.usageView.UsageViewShortNameLocation
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.service.resolve.getVersionCatalogFiles
 import org.jetbrains.plugins.gradle.toml.getVersions
@@ -15,6 +16,8 @@ class VersionCatalogDescriptionProvider : ElementDescriptionProvider {
     if (getVersionCatalogFiles(element.project).values.find { it == element.containingFile?.virtualFile } == null) {
       return null
     }
+    if (location is UsageViewShortNameLocation) return element.name
+
     val versions = getVersions(element)
     if (element in versions) {
       return GradleInspectionBundle.message("element.description.version.catalog.alias", element.name)
