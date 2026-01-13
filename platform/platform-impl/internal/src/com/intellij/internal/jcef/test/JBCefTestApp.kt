@@ -1,16 +1,22 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.jcef.test
 
-import com.intellij.internal.jcef.test.cases.ContextMenu
-import com.intellij.internal.jcef.test.cases.KeyboardEvents
-import com.intellij.internal.jcef.test.cases.PerformanceTest
-import com.intellij.internal.jcef.test.cases.ResourceHandler
+import com.intellij.internal.jcef.test.cases.*
+import com.intellij.internal.jcef.test.detailed.handler.ClientSchemeHandler
+import com.intellij.internal.jcef.test.detailed.handler.SearchSchemeHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBList
+import com.intellij.ui.jcef.JBCefApp
+import com.intellij.ui.jcef.JBCefApp.JBCefCustomSchemeHandlerFactory
+import org.cef.browser.CefBrowser
+import org.cef.browser.CefFrame
+import org.cef.callback.CefSchemeRegistrar
+import org.cef.handler.CefResourceHandler
+import org.cef.network.CefRequest
 import java.awt.CardLayout
 import java.awt.Component
 import java.awt.GridLayout
@@ -25,11 +31,17 @@ internal class JBCefTestApp : AnAction(), DumbAware {
 }
 
 internal class JBCefTestAppFrame : JFrame() {
+  companion object {
+    init {
+      addTestCustomSchemes()
+    }
+  }
+
   private val cardLayout = CardLayout()
   private val contentPanel: JPanel = JPanel(cardLayout)
 
   private val testCases: List<TestCase> = listOf(
-    KeyboardEvents(), ContextMenu(), ResourceHandler(), PerformanceTest())
+    KeyboardEvents(), ContextMenu(), ResourceHandler(), PerformanceTest(), DetailedFrame())
 
   private val tabsList = JBList(testCases.map { it.getDisplayName() })
 

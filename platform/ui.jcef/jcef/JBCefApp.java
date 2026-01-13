@@ -505,7 +505,8 @@ public final class JBCefApp {
    *
    * @throws IllegalStateException if the method is called after {@code JBCefApp} initialization
    */
-  /*public*/ static void addCefCustomSchemeHandlerFactory(@NotNull JBCefApp.JBCefCustomSchemeHandlerFactory factory) {
+  @ApiStatus.Internal
+  public static void addCefCustomSchemeHandlerFactory(@NotNull JBCefApp.JBCefCustomSchemeHandlerFactory factory) {
     if (ourInitialized.get()) {
       throw new IllegalStateException("JBCefApp has already been initialized!");
     }
