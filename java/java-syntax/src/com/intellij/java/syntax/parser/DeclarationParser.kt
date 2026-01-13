@@ -8,6 +8,7 @@ import com.intellij.java.syntax.element.JavaSyntaxTokenType
 import com.intellij.java.syntax.element.SyntaxElementTypes.CLASS_KEYWORD_BIT_SET
 import com.intellij.java.syntax.element.SyntaxElementTypes.KEYWORD_BIT_SET
 import com.intellij.java.syntax.element.SyntaxElementTypes.MODIFIER_BIT_SET
+import com.intellij.java.syntax.element.SyntaxElementTypes.PARAMETER_MODIFIER_BIT_SET
 import com.intellij.java.syntax.element.SyntaxElementTypes.PRIMITIVE_TYPE_BIT_SET
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
@@ -423,11 +424,11 @@ open class DeclarationParser(private val myParser: JavaParser) {
 
     while (true) {
       var tokenType = builder.tokenType ?: break
-      if (isValueToken(builder, tokenType)) {
+      if (isValueToken(builder, tokenType) && modifiers.contains(JavaSyntaxTokenType.VALUE_KEYWORD)) {
         builder.remapCurrentToken(JavaSyntaxTokenType.VALUE_KEYWORD)
         tokenType = JavaSyntaxTokenType.VALUE_KEYWORD
       }
-      else if (isSealedToken(builder, tokenType)) {
+      else if (isSealedToken(builder, tokenType) && modifiers.contains(JavaSyntaxTokenType.SEALED_KEYWORD)) {
         builder.remapCurrentToken(JavaSyntaxTokenType.SEALED_KEYWORD)
         tokenType = JavaSyntaxTokenType.SEALED_KEYWORD
       }
@@ -697,7 +698,8 @@ open class DeclarationParser(private val myParser: JavaParser) {
   ): SyntaxTreeBuilder.Marker? {
     val param = builder.mark()
 
-    val modListInfo = parseModifierList(builder)
+    val modListInfo = parseModifierList(
+      builder, if (type === JavaSyntaxElementType.PARAMETER) PARAMETER_MODIFIER_BIT_SET else MODIFIER_BIT_SET)
 
     val typeInfo: ReferenceParser.TypeInfo?
     if (typed) {
