@@ -3,6 +3,6 @@
     <plugin id="ByteCodeViewer"/>
   </dependencies>
   <extensions defaultExtensionNs="ByteCodeViewer">
-    <classSearcher implementation="org.jetbrains.plugins.groovy.byteCodeViewer.GroovyScriptClassSearcher"/>
+    <classSearcher implementation="com.intellij.groovy.byteCodeViewer.GroovyScriptClassSearcher"/>
   </extensions>
 </idea-plugin>
