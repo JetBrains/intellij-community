@@ -16,11 +16,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.openapi.observable.util.whenTextChangedFromUi
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptor
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.getInstallAndEnableTask
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
@@ -150,9 +149,7 @@ internal class ProjectTypeList(
 
   private fun showInstallPluginDialog(plugin: WizardPlugin) {
     logInstallPluginDialogShowed(context, plugin.name)
-    ProgressManager.getInstance().run(
-      getInstallAndEnableTask(null, setOf(PluginId.getId(plugin.id)), true, true, null) { }
-    )
+    installAndEnable(null, setOf(PluginId.getId(plugin.id)), true, true, null) { }
   }
 
   private fun showInstallPluginDialog() {
