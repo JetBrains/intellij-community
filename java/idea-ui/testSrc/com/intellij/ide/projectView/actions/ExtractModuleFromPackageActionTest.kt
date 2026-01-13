@@ -8,7 +8,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.DependencyScope
-import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -69,9 +68,11 @@ class ExtractModuleFromPackageActionTest {
     extractModule(directory, main, targetSourceRoot)
     val srcRoot = LocalFileSystem.getInstance().findFileByPath(targetSourceRoot)!!
     val xxx = projectModel.moduleManager.findModuleByName("main.xxx")!!
+    val dep1 = projectModel.moduleManager.findModuleByName("dep1")!!
     assertThat(xxx.moduleNioFile).isEqualTo(projectModel.baseProjectDir.rootPath.resolve("xxx/main.xxx.iml"))
     val xxxRoots = ModuleRootManager.getInstance(xxx)
     assertThat(xxxRoots.contentRoots).containsExactly(srcRoot.parent)
+    assertThat(xxxRoots.dependencies).containsExactly(dep1)
     assertThat(xxxRoots.sourceRoots).containsExactly(srcRoot)
     assertThat(xxxRoots.contentEntries.single().sourceFolders.single().packagePrefix).isEqualTo("")
     assertThat(Path.of(targetSourceRoot, "xxx/Main.java")).exists()
@@ -191,6 +192,7 @@ class ExtractModuleFromPackageActionTest {
     val dep2Src = projectModel.addSourceRoot(dep2, "src", JavaSourceRootType.SOURCE)
     val exportedSrc = projectModel.addSourceRoot(exported, "src", JavaSourceRootType.SOURCE)
     val mainClass = VfsTestUtil.createFile(mainSrc, "xxx/Main.java", "package xxx;\npublic class Main extends dep1.Dep1 { exported.Util u; }")
+    VfsTestUtil.createFile(mainSrc, "xxx/AdditionalClassToExtract.java", "package xxx;\nclass AdditionalClassToExtract { Main main; }")
     VfsTestUtil.createFile(mainSrc, "main/MyClass.java", "package main;\npublic class MyClass { dep2.Dep2 d; }")
     if (addDirectUsageOfExportedModule) {
       VfsTestUtil.createFile(mainSrc, "main/ExportedUsage.java", "package main;\nclass ExportedUsage { exported.Util u; }")

@@ -154,6 +154,10 @@ class ExtractModuleService(
           val virtualFile = file?.virtualFile ?: return@forEach
           val depModule = fileIndex.getModuleForFile(virtualFile)
           if (depModule != null) {
+            if (depModule == module && className.startsWith("$packageName.")) {
+              //skip references from classes which will be extracted
+              return@forEach
+            }
             if (usedModules.add(depModule)) {
               LOG.debug { "Module ${depModule.name} contains class $className referenced from some class under $packageName package" }
             }
@@ -258,6 +262,7 @@ class ExtractModuleService(
   private fun collectDependentModules(module: Module): Set<Module> {
     val dependentModules = LinkedHashSet<Module>()
     ModuleUtil.collectModulesDependsOn(module, dependentModules)
+    dependentModules.remove(module)
     return dependentModules
   }
 
