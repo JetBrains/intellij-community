@@ -29,6 +29,7 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
   val profilerButton: StripeButtonUi = stripeButton("Profiler")
   val jpaButton: StripeButtonUi = stripeButton("JPA Console")
   val persistenceButton: StripeButtonUi = stripeButton("Persistence")
+  val valgrindButton: StripeButtonUi = stripeButton("Run Valgrind Memcheck")
 
   fun openMoreToolWindow() { moreButton.click() }
 }
