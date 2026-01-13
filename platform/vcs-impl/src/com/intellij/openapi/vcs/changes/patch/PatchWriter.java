@@ -8,6 +8,7 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -31,6 +32,9 @@ import java.util.List;
 import static com.intellij.openapi.vcs.VcsType.distributed;
 
 public final class PatchWriter {
+  public static final Key<Boolean> STANDARD_PATCH_FORMAT_KEY =
+    Key.create("com.intellij.openapi.vcs.changes.patch.PatchWriter.STANDARD_PATCH_FORMAT_KEY");
+
   public static void writePatches(@NotNull Project project,
                                   @NotNull Path file,
                                   @NotNull Path basePath,

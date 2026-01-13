@@ -32,6 +32,7 @@ class CreatePatchConfigurationPanel(val project: Project) {
 
   private lateinit var toClipboardRadioButton: JRadioButton
   private lateinit var reverseCheckBox: JCheckBox
+  private lateinit var standardFormatCheckBox: JCheckBox
   private lateinit var encodingComboBox: ComboBox<Charset>
 
   private var commonParentDir: File? = null
@@ -89,6 +90,9 @@ class CreatePatchConfigurationPanel(val project: Project) {
       row {
         reverseCheckBox = checkBox(message("create.patch.reverse.checkbox")).component
       }
+      row {
+        standardFormatCheckBox = checkBox(message("create.patch.standard.format.checkbox")).component
+      }
       row(message("create.patch.encoding")) {
         encodingComboBox = comboBox(DefaultComboBoxModel(CharsetToolkit.getAvailableCharsets())).component
         encodingComboBox.selectedItem = EncodingProjectManager.getInstance(project).defaultCharset
@@ -136,6 +140,14 @@ class CreatePatchConfigurationPanel(val project: Project) {
   fun setReverseEnabledAndVisible(isAvailable: Boolean) {
     reverseCheckBox.isVisible = isAvailable
     reverseCheckBox.isEnabled = isAvailable
+  }
+
+  fun isStandardPatchFormat(): Boolean {
+    return standardFormatCheckBox.isSelected
+  }
+
+  fun setStandardPatchFormat(isStandard: Boolean) {
+    standardFormatCheckBox.isSelected = isStandard
   }
 
   fun isToClipboard(): Boolean {

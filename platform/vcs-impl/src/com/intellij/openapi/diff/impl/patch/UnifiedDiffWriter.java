@@ -22,6 +22,7 @@ import java.text.MessageFormat;
 import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.patch.PatchWriter.shouldForceUnixLineSeparator;
+import static com.intellij.openapi.vcs.changes.patch.PatchWriter.STANDARD_PATCH_FORMAT_KEY;
 
 public final class UnifiedDiffWriter {
   private static final @NonNls String INDEX_SIGNATURE = "Index: {0}{1}";
@@ -77,6 +78,10 @@ public final class UnifiedDiffWriter {
     boolean forceUnixSeparators = shouldForceUnixLineSeparator(project);
     String headerLineSeparator = forceUnixSeparators ? LineSeparator.LF.getSeparatorString()
                                                      : lineSeparator;
+    boolean standardFormat = commitContext != null && Boolean.TRUE.equals(commitContext.getUserData(STANDARD_PATCH_FORMAT_KEY));
+    if (standardFormat) {
+      throw new UnsupportedOperationException("Standard patch format is not implemented yet");
+    }
 
     // write the patch files without content modifications strictly after the files with content modifications,
     // because GitPatchReader is not ready for mixed style patches
