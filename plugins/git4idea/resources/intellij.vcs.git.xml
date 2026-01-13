@@ -899,7 +899,7 @@
                         predicateClassName="git4idea.workingTrees.ui.GitWorkingTreesContentVisibilityPredicate"
                         preloaderClassName="git4idea.workingTrees.ui.GitWorkingTreesContentPreloader"
                         isInCommitToolWindow="false"/>
-    <statistics.actionCustomPlaceAllowlist places="GitWorkingTreeToolWindowTabToolbar"/>
+    <statistics.actionCustomPlaceAllowlist places="GitWorkingTreeToolWindowTabToolbar;GitWorkingTreeToolWindowTabEmptyList"/>
 
     <projectService serviceInterface="git4idea.commands.GitCommandOutputPrinter"
                     serviceImplementation="git4idea.commands.GitCommandOutputConsolePrinter"/>
