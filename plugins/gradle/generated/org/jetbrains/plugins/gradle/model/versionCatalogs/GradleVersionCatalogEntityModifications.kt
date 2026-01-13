@@ -14,43 +14,43 @@ import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 interface GradleVersionCatalogEntityBuilder : WorkspaceEntityBuilder<GradleVersionCatalogEntity> {
-  override var entitySource: EntitySource
-  var name: String
-  var url: VirtualFileUrl
-  var build: GradleBuildEntityBuilder
+    override var entitySource: EntitySource
+    var name: String
+    var url: VirtualFileUrl
+    var build: GradleBuildEntityBuilder
 }
 
 internal object GradleVersionCatalogEntityType : EntityType<GradleVersionCatalogEntity, GradleVersionCatalogEntityBuilder>() {
-  override val entityClass: Class<GradleVersionCatalogEntity> get() = GradleVersionCatalogEntity::class.java
-  operator fun invoke(
-    name: String,
-    url: VirtualFileUrl,
-    entitySource: EntitySource,
-    init: (GradleVersionCatalogEntityBuilder.() -> Unit)? = null,
-  ): GradleVersionCatalogEntityBuilder {
-    val builder = builder()
-    builder.name = name
-    builder.url = url
-    builder.entitySource = entitySource
-    init?.invoke(builder)
-    return builder
-  }
+    override val entityClass: Class<GradleVersionCatalogEntity> get() = GradleVersionCatalogEntity::class.java
+    operator fun invoke(
+        name: String,
+        url: VirtualFileUrl,
+        entitySource: EntitySource,
+        init: (GradleVersionCatalogEntityBuilder.() -> Unit)? = null,
+    ): GradleVersionCatalogEntityBuilder {
+        val builder = builder()
+        builder.name = name
+        builder.url = url
+        builder.entitySource = entitySource
+        init?.invoke(builder)
+        return builder
+    }
 }
 
 fun MutableEntityStorage.modifyGradleVersionCatalogEntity(
-  entity: GradleVersionCatalogEntity,
-  modification: GradleVersionCatalogEntityBuilder.() -> Unit,
+    entity: GradleVersionCatalogEntity,
+    modification: GradleVersionCatalogEntityBuilder.() -> Unit,
 ): GradleVersionCatalogEntity = modifyEntity(GradleVersionCatalogEntityBuilder::class.java, entity, modification)
 
 var GradleBuildEntityBuilder.versionCatalogs: List<GradleVersionCatalogEntityBuilder>
-  by WorkspaceEntity.extensionBuilder(GradleVersionCatalogEntity::class.java)
+        by WorkspaceEntity.extensionBuilder(GradleVersionCatalogEntity::class.java)
 
 
 @JvmOverloads
 @JvmName("createGradleVersionCatalogEntity")
 fun GradleVersionCatalogEntity(
-  name: String,
-  url: VirtualFileUrl,
-  entitySource: EntitySource,
-  init: (GradleVersionCatalogEntityBuilder.() -> Unit)? = null,
+    name: String,
+    url: VirtualFileUrl,
+    entitySource: EntitySource,
+    init: (GradleVersionCatalogEntityBuilder.() -> Unit)? = null,
 ): GradleVersionCatalogEntityBuilder = GradleVersionCatalogEntityType(name, url, entitySource, init)
