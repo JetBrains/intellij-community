@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -56,11 +57,14 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
 
   @VisibleForTesting
   public static PsiElement @Nullable [] findSymbolTypes(@NotNull Editor editor, int offset) {
-    PsiElement targetElement = TargetElementUtil.getInstance().findTargetElement(editor,
-                                                                                     TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
-                                                                                     TargetElementUtil.ELEMENT_NAME_ACCEPTED |
-                                                                                     TargetElementUtil.LOOKUP_ITEM_ACCEPTED,
-                                                                                     offset);
+    return findSymbolTypes(editor, offset, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
+                                           TargetElementUtil.ELEMENT_NAME_ACCEPTED |
+                                           TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
+  }
+
+  @ApiStatus.Internal
+  public static PsiElement @Nullable [] findSymbolTypes(@NotNull Editor editor, int offset, int flags) {
+    PsiElement targetElement = TargetElementUtil.getInstance().findTargetElement(editor, flags, offset);
 
     if (targetElement != null) {
       final PsiElement[] symbolType = getSymbolTypeDeclarations(targetElement, editor, offset);
@@ -72,7 +76,7 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
       final ResolveResult[] results = ((PsiPolyVariantReference)psiReference).multiResolve(false);
       Set<PsiElement> types = new HashSet<>();
 
-      for(ResolveResult r: results) {
+      for (ResolveResult r : results) {
         PsiElement element = r.getElement();
         if (element == null) continue;
         final PsiElement[] declarations = getSymbolTypeDeclarations(element, editor, offset);
@@ -91,7 +95,7 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
   }
 
   private static PsiElement @Nullable [] getSymbolTypeDeclarations(@NotNull PsiElement targetElement, Editor editor, int offset) {
-    for(TypeDeclarationProvider provider: TypeDeclarationProvider.EP_NAME.getExtensionList()) {
+    for (TypeDeclarationProvider provider : TypeDeclarationProvider.EP_NAME.getExtensionList()) {
       PsiElement[] result;
       if (provider instanceof TypeDeclarationPlaceAwareProvider) {
         result = ((TypeDeclarationPlaceAwareProvider)provider).getSymbolTypeDeclarations(targetElement, editor, offset);
