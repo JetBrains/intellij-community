@@ -178,6 +178,9 @@ class HtmlSymbolQueryScopeContributor : PolySymbolQueryScopeContributor {
     override fun getMdnDocumentation(): MdnSymbolDocumentation? =
       getDomEventDocumentation(name)
 
+    override val source: PsiElement?
+      get() = null
+
     override val project: Project?
       get() = descriptor.declaration?.project
 

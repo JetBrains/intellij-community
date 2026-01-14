@@ -1015,7 +1015,7 @@
 - a:createPointer():com.intellij.model.Pointer
 - getNavigationTargets(com.intellij.openapi.project.Project):java.util.Collection
 - getPsiContext():com.intellij.psi.PsiElement
-- getSource():com.intellij.psi.PsiElement
+- a:getSource():com.intellij.psi.PsiElement
 - isEquivalentTo(com.intellij.model.Symbol):Z
 *f:com.intellij.polySymbols.utils.FileUtils
 - sf:findOriginalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
