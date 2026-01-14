@@ -1208,7 +1208,15 @@ object EelPathUtils {
                       }
                       Files.move(remoteAbsoluteTempPath, remoteAbsolutePath, StandardCopyOption.REPLACE_EXISTING)
                       if (fileAttributesStrategy !is FileTransferAttributesStrategy.Skip) {
-                        setPermissionsAndAttributes(localFile, remoteAbsolutePath, remoteEelApi, fileAttributesStrategy, true, true, true)
+                        // file attributes should only be transferred if both source and target machines are Windows
+                        val setAttributes = localOsFamily == EelOsFamily.Windows && remoteOsFamily == EelOsFamily.Windows
+                        setPermissionsAndAttributes(localFile,
+                                                    remoteAbsolutePath,
+                                                    remoteEelApi,
+                                                    fileAttributesStrategy,
+                                                    true,
+                                                    setAttributes,
+                                                    true)
                       }
                     }
                     finally {
