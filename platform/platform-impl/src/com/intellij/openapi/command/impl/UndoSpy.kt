@@ -21,6 +21,8 @@ interface UndoSpy {
 
   fun currentCmdEvent(): CmdEvent?
 
+  fun markCurrentCommandAsBackendOnly()
+
   fun <T> withBlind(action: () -> T): T
 
   companion object {
