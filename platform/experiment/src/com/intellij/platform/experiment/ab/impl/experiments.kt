@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.experiment.ab.impl
 
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
@@ -64,8 +64,8 @@ internal val experimentsPartition: List<ExperimentAssignment> = listOf(
   //),
   ExperimentAssignment(
     experiment = TYPESCRIPT_SERVICE_TYPES,
-    experimentBuckets = (0 until 200).toSet(),
-    controlBuckets = (200 until 400).toSet(),
+    experimentBuckets = (0 until 200).toSet() + (400 until 700),
+    controlBuckets = (200 until 400).toSet() + (700 until 1024),
     majorVersion = "2025.3",
     products = EnumSet.of(IntelliJPlatformProduct.WEBSTORM),
   ),
