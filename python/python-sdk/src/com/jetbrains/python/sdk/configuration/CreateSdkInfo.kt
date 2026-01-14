@@ -38,6 +38,7 @@ sealed class CreateSdkInfo(private val sdkCreator: SdkCreator) :
    * Nullable SDK is only possible when we requested user confirmation but didn't get it. The idea behind this function is to provide
    * non-nullable SDK when no confirmation from the user is needed.
    *
+   *  TODO: Make SDK non-null
    * It's a temporary solution until we'll be able to remove all custom user dialogs and enable [enableSDKAutoConfigurator] by default.
    * After that lands, we'll get rid of nullable SDK.
    *

@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.python.pyproject.model.internal.PyProjectSettingsKt;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,10 +18,8 @@ public final class PyDirectoryIconProvider extends IconProvider {
   @Override
   public Icon getIcon(@NotNull PsiElement element, int flags) {
     if (element instanceof PsiDirectory directory) {
-      if (PyProjectSettingsKt.getProjectModelEnabled()) {
-        if (ProjectRootsUtil.isModuleContentRoot(directory.getVirtualFile(), directory.getProject())) {
-          return AllIcons.Nodes.Module;
-        }
+      if (ProjectRootsUtil.isModuleContentRoot(directory.getVirtualFile(), directory.getProject())) {
+        return AllIcons.Nodes.Module;
       }
       // Preserve original icons for excluded directories and source roots
       if (isSpecialDirectory(directory)) return null;
