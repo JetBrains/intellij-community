@@ -116,8 +116,8 @@ fun CoroutineScope.forwardLocalServer(tunnels: EelTunnelsApi, localPort: Int, ad
     try {
       val proxy =
         eelProxy()
-          .acceptOnTcpPort(tunnels, port = localPort.toUShort())
-          .connectToTcpPort(localEel.tunnels, host = address.hostname, port = address.port)
+          .acceptOnTcpPort(tunnels, host = address.hostname, port = address.port)
+          .connectToTcpPort(localEel.tunnels, port = localPort.toUShort())
           .onConnectionClosed { currentConnection ->
             LOG.debug("Stopped forwarding remote connection $currentConnection to local server")
           }
