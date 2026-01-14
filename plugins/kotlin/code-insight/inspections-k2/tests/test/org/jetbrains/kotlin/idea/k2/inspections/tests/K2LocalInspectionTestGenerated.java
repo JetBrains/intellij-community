@@ -13435,6 +13435,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/destructuringWrongNameInspection/hasSyntheticComponent.kt");
             }
 
+            @TestMetadata("incompatibleTypeDestructuring.kt")
+            public void testIncompatibleTypeDestructuring() throws Exception {
+                runTest("testData/inspectionsLocal/destructuringWrongNameInspection/incompatibleTypeDestructuring.kt");
+            }
+
+            @TestMetadata("incompatibleTypeDestructuringFull.kt")
+            public void testIncompatibleTypeDestructuringFull() throws Exception {
+                runTest("testData/inspectionsLocal/destructuringWrongNameInspection/incompatibleTypeDestructuringFull.kt");
+            }
+
             @TestMetadata("lambdaDestructuring.kt")
             public void testLambdaDestructuring() throws Exception {
                 runTest("testData/inspectionsLocal/destructuringWrongNameInspection/lambdaDestructuring.kt");

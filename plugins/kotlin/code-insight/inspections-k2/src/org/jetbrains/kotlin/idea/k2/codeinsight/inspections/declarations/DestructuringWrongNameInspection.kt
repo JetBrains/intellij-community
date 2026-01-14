@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractPrimaryParameters
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.destructuringDeclarationVisitor
 
 internal class DestructuringWrongNameInspection : LocalInspectionTool() {
@@ -17,24 +18,43 @@ internal class DestructuringWrongNameInspection : LocalInspectionTool() {
     }
 
     private fun processDestructuringDeclaration(holder: ProblemsHolder, declaration: KtDestructuringDeclaration) {
-        val parameterNames = analyze(declaration) {
-            extractPrimaryParameters(declaration)?.map { it.name.asString() }
+        if (declaration.isFullForm) return // skip name-based destructuring
+
+        val context = analyze(declaration) {
+            val parameters = extractPrimaryParameters(declaration) ?: return@analyze null
+            val allParameterNames = parameters.mapTo(mutableSetOf()) { it.name.asString() }
+            val entryInfos = declaration.entries.mapIndexed { index, entry ->
+                val param = parameters.getOrNull(index)
+                val expectedName = param?.name?.asString()
+                val entryType = entry.typeReference?.type
+                val canSuggestRename = expectedName != null && (entryType == null || param.returnType.isSubtypeOf(entryType))
+                EntryInfo(entry, expectedName, canSuggestRename)
+            }
+            DestructuringContext(entryInfos, allParameterNames)
         } ?: return
 
-        declaration.entries
-            .asSequence()
-            .withIndex()
-            .filter { (index, variable) -> variable.name != parameterNames.getOrNull(index) && variable.name in parameterNames }
-            .forEach { (index, variable) ->
-                // 'variable' can't be null because of the filter above ('parameterNames' only contains non-nulls)
-                val message = KotlinBundle.message("variable.name.0.matches.the.name.of.a.different.component", variable.name!!)
-                if (index < parameterNames.size) {
-                    val parameterName = parameterNames[index]
-                    val fix = RenameElementFix(variable, parameterName)
-                    holder.registerProblem(variable, message, fix)
-                } else {
-                    holder.registerProblem(variable, message)
-                }
+        for (info in context.entryInfos) {
+            val variableName = info.entry.name ?: continue
+            if (variableName == info.expectedName) continue
+            if (variableName !in context.allParameterNames) continue
+
+            val message = KotlinBundle.message("variable.name.0.matches.the.name.of.a.different.component", variableName)
+            if (info.expectedName != null && info.canSuggestRename) {
+                holder.registerProblem(info.entry, message, RenameElementFix(info.entry, info.expectedName))
+            } else {
+                holder.registerProblem(info.entry, message)
             }
+        }
     }
+
+    private data class EntryInfo(
+        val entry: KtDestructuringDeclarationEntry,
+        val expectedName: String?,
+        val canSuggestRename: Boolean,
+    )
+
+    private data class DestructuringContext(
+        val entryInfos: List<EntryInfo>,
+        val allParameterNames: Set<String>,
+    )
 }
