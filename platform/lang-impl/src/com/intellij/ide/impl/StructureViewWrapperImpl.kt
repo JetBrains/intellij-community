@@ -478,12 +478,12 @@ class StructureViewWrapperImpl(
           readAction { editor.structureViewBuilder } else createStructureViewBuilder(file)
         if (structureViewBuilder != null) {
           val structureView = structureViewBuilder.createStructureViewSuspend(editor, project)
+          Disposer.register(this@StructureViewWrapperImpl, structureView)
           withContext(Dispatchers.EDT) {
             writeIntentReadAction {
               myStructureView = structureView
 
               myFileEditor = editor
-              Disposer.register(this@StructureViewWrapperImpl, structureView)
               val previouslySelectedTab = StructureViewState.getInstance(project).selectedTab
               if (structureView is StructureViewComposite) {
                 val views: Array<StructureViewDescriptor> = structureView.structureViews
