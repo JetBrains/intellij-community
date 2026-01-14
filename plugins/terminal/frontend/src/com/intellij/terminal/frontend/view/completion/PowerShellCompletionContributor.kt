@@ -8,12 +8,17 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionItem
 import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionResultWithContext
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
+import org.jetbrains.plugins.terminal.session.ShellName
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellBasedCompletionListener
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import kotlin.coroutines.resume
 
 internal class PowerShellCompletionContributor : TerminalCommandCompletionContributor {
   override suspend fun getCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCommandCompletionResult? {
+    if (context.isAutoPopup || !ShellName.isPowerShell(context.shellName)) {
+      return null
+    }
+
     context.terminalView.sendText(CALL_COMPLETION_SEQUENCE)
 
     val result: String = awaitCompletionResult(context.shellIntegration)
