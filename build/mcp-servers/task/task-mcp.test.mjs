@@ -268,6 +268,28 @@ describe('task MCP integration', {timeout: 30000}, () => {
       assert.equal(result.ids.length, 2)
       assert.equal(result.epic_id, epic.id)
     })
+
+    it('can mark a child in progress on create', async () => {
+      const epic = await client.callTool('task_epic', {
+        title: 'Decompose Start Test',
+        description: 'Epic to decompose'
+      })
+
+      const result = await client.callTool('task_decompose', {
+        epic_id: epic.id,
+        start_child_index: 0,
+        sub_issues: [
+          {title: 'Sub 1', description: 'First', acceptance: 'Done', design: 'Simple'},
+          {title: 'Sub 2', description: 'Second', acceptance: 'Done', design: 'Simple'}
+        ]
+      })
+
+      assert.ok(result.started_child_id, 'should return started_child_id')
+      assert.equal(result.started_child_id, result.ids[0])
+
+      const inProgress = JSON.parse(execSync('bd list --status in_progress --json', {cwd: testDir, encoding: 'utf-8'}))
+      assert.ok(inProgress.some(issue => issue.id === result.started_child_id))
+    })
   })
 
   describe('task_progress', () => {

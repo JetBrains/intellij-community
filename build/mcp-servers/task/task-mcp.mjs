@@ -124,6 +124,7 @@ const tools = [
             required: ['title', 'description', 'acceptance', 'design']
           }
         },
+        start_child_index: {type: 'integer', description: 'Index in sub_issues to set in_progress after creation'},
         update_epic_acceptance: {type: 'string'}
       },
       required: ['epic_id', 'sub_issues']
@@ -338,11 +339,23 @@ const toolHandlers = {
       }
     })
 
+    let startedChildId = null
+    if (args.start_child_index !== undefined) {
+      if (!Number.isInteger(args.start_child_index)) {
+        throw new Error('start_child_index must be an integer')
+      }
+      if (args.start_child_index < 0 || args.start_child_index >= ids.length) {
+        throw new Error(`start_child_index ${args.start_child_index} out of range (0-${ids.length - 1})`)
+      }
+      startedChildId = ids[args.start_child_index]
+      bd(['update', startedChildId, '--status', 'in_progress'])
+    }
+
     if (args.update_epic_acceptance) {
       bd(['update', args.epic_id, '--acceptance', args.update_epic_acceptance])
     }
 
-    return {ids, epic_id: args.epic_id}
+    return {ids, epic_id: args.epic_id, started_child_id: startedChildId}
   },
 
   task_create: (args) => {
