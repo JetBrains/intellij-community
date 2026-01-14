@@ -20,7 +20,8 @@ internal data class TerminalCompletionResult(
 internal suspend fun getCommandSpecCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCompletionResult? {
   val shellSupport = TerminalShellSupport.findByShellType(ShellType.ZSH) ?: return null
 
-  val commandText = context.commandText
+  val localCursorOffset = context.initialCursorOffset - context.commandStartOffset
+  val commandText = context.commandText.substring(0, localCursorOffset.toInt()).trimStart()
   val tokens = readAction {
     shellSupport.getCommandTokens(context.project, commandText)
   } ?: return null

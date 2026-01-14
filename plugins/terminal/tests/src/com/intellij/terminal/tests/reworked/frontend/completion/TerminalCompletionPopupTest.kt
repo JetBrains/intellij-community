@@ -88,6 +88,13 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `test completion popup shows for command starting with space`() = doTest { fixture ->
+    fixture.type(" test_cmd ")
+    fixture.callCompletionPopup()
+    assertEquals(true, fixture.isLookupActive())
+  }
+
+  @Test
   fun `test selection returns to original item after down and up actions`() = doTest { fixture ->
     fixture.type("test_cmd ")
     fixture.callCompletionPopup()
