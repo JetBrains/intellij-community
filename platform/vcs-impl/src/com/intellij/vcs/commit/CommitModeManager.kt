@@ -162,7 +162,7 @@ class CommitModeManager(private val project: Project, private val coroutineScope
     fun settingsChanged()
   }
 
-  interface CommitModeListener : EventListener {
+  fun interface CommitModeListener : EventListener {
     @RequiresEdt
     fun commitModeChanged()
   }
