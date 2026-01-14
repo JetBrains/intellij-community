@@ -25,10 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceDto;
-import com.intellij.platform.execution.dashboard.splitApi.RunDashboardSettingsDto;
-import com.intellij.platform.execution.dashboard.splitApi.ServiceCustomizationDto;
-import com.intellij.platform.execution.dashboard.splitApi.ServiceStatusDto;
+import com.intellij.platform.execution.dashboard.splitApi.*;
 import com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardUiManagerImpl;
 import com.intellij.ui.content.Content;
 import com.intellij.util.SmartList;
@@ -94,7 +91,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     var newDescriptor = RunContentManagerImpl.getRunContentDescriptorByContent(contentWithNewDescriptor);
 
     var newContentId = newDescriptor == null ? null : newDescriptor.getId();
-    if (newContentId instanceof  RunContentDescriptorIdImpl newContentIdImpl) {
+    if (newContentId instanceof RunContentDescriptorIdImpl newContentIdImpl) {
       updateServiceRunContentDescriptor(oldDescriptorId, newContentIdImpl);
     }
 
@@ -156,8 +153,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     connection.subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       private final BackendRunDashboardUpdatesQueue synchronizationScheduler
         = new BackendRunDashboardUpdatesQueue(
-          RunDashboardCoroutineScopeProvider.getInstance(myProject).createChildNamedScope("Backend run manager listener sync requests"),
-          OverlappingTasksStrategy.SKIP_NEW);
+        RunDashboardCoroutineScopeProvider.getInstance(myProject).createChildNamedScope("Backend run manager listener sync requests"),
+        OverlappingTasksStrategy.SKIP_NEW);
 
       @Override
       public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
@@ -246,7 +243,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
 
     Logger.getInstance(RunDashboardManagerImpl.class)
-      .warn("findServiceById failed to discover backend run dashboard service in global storage, falling back to manually managed collection");
+      .warn(
+        "findServiceById failed to discover backend run dashboard service in global storage, falling back to manually managed collection");
     return ContainerUtil.find(getRunConfigurations(), service -> service.getUuid().equals(id));
   }
 
@@ -387,7 +385,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   @Override
-  public void hideConfigurations(Collection<? extends RunConfiguration> configurations) {
+  public void hideConfigurations(@NotNull Collection<? extends RunConfiguration> configurations) {
     for (RunConfiguration configuration : configurations) {
       if (myState.excludedNewTypes.contains(configuration.getType().getId())) {
         myShownConfigurations.remove(configuration);
@@ -631,7 +629,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
   private static boolean areSameOriginDescriptorsBeingExchanged(@NotNull RunContentDescriptorId descriptorId, RunDashboardService service) {
     var existingId = service.getDescriptorId();
-    var resolvedExistingDescriptor = existingId instanceof RunContentDescriptorIdImpl impl ?  findContentValue(impl) : null;
+    var resolvedExistingDescriptor = existingId instanceof RunContentDescriptorIdImpl impl ? findContentValue(impl) : null;
     var resolvedNewDescriptor = descriptorId instanceof RunContentDescriptorIdImpl impl ? findContentValue(impl) : null;
     var areDescriptorsWithSameExecutors =
       resolvedExistingDescriptor != null && resolvedNewDescriptor != null
@@ -1026,7 +1024,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
     @Override
     public Content getContent() {
-      return getDescriptor().getAttachedContent();
+      RunContentDescriptor descriptor = getDescriptor();
+      return descriptor == null ? null : descriptor.getAttachedContent();
     }
 
     @Override
