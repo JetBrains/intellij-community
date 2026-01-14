@@ -122,9 +122,12 @@ public abstract class DumpHandler<T> {
         int resultSetIndex = getResultSetIndex(s);
         ModelIndexSet<GridColumn> selectedColumns = getSelectedColumns(s);
         String queryText = myNameProvider.getQueryText(s);
+        if (queryText == null) { // I see no reason to just ignore extractions with a null query if we allow empty string queries
+          queryText = "";
+        }
         String name = myNameProvider.getName(s);
         DataExtractor extractor = factory.createExtractor(createExtractorConfig(s, project));
-        return extractor != null && queryText != null ?
+        return extractor != null ?
                new Triple<>((T)s, extractor, new DumpHandlerParameters(selectedColumns, queryText, subQueryIndex, resultSetIndex, name)) :
                null;
       })
