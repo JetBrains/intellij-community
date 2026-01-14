@@ -19,7 +19,6 @@ import com.intellij.vcs.log.data.VcsLogSorter
 import com.intellij.vcs.log.impl.LogDataImpl
 import com.intellij.vcsUtil.VcsFileUtil
 import fleet.util.logging.logger
-import git4idea.GitTag
 import git4idea.GitUtil
 import git4idea.commands.Git
 import git4idea.history.GitLogOutputSplitter
@@ -51,7 +50,7 @@ internal class GitLogExperimentalProvider(private val project: Project) {
 
     return withContext(Dispatchers.Default) {
       val branches = project.serviceAsync<VcsLogObjectsFactory>().createBranchesRefs(repository)
-      val tagsLoader = TagsLoader(repository, refsLoadingPolicy, requirements.commitCount)
+      val tagsLoader = TagsLoader.create(repository, refsLoadingPolicy)
 
       // need to query more to sort them manually; this doesn't affect performance: it is equal for -1000 and -2000
       val commitsFromLogCommand = getCommits(root, requirements.commitCount * 2)
@@ -62,7 +61,7 @@ internal class GitLogExperimentalProvider(private val project: Project) {
         VcsLogSorter.sortByDateTopoOrder(allCommits).take(requirements.commitCount)
       }
 
-      val allRefs = branches + tagsLoader.getTags()
+      val allRefs = branches + tagsLoader.tags
       LogDataImpl(allRefs, sortedCommits)
     }
   }
@@ -114,27 +113,12 @@ internal class GitLogExperimentalProvider(private val project: Project) {
  */
 private class TagsLoader(
   private val repository: GitRepository,
-  refsLoadingPolicy: VcsLogProvider.RefsLoadingPolicy,
-  requestedCommits: Int,
+  val tags: Collection<VcsRef>,
+  /**
+   * Tags that which were added or which hash was changed after the previous refresh
+   */
+  val modifiedTags: Collection<VcsRef>,
 ) {
-  private val tags: Map<GitTag, Hash>
-  private val unseenTags: Map<GitTag, Hash>
-
-  private val commitsToLoad = 20.coerceAtMost(requestedCommits)
-
-  init {
-    when (refsLoadingPolicy) {
-      is VcsLogProvider.RefsLoadingPolicy.LoadAllRefs -> {
-        tags = repository.tagsHolder.state.value.tagsToCommitHashes
-        unseenTags = getNewTags(tags, refsLoadingPolicy)
-      }
-      is VcsLogProvider.RefsLoadingPolicy.FromLoadedCommits -> {
-        tags = emptyMap()
-        unseenTags = emptyMap()
-      }
-    }
-  }
-
   suspend fun loadCommitsReachableOnlyFromTags(commitsFromLog: List<VcsCommitMetadata>): Collection<VcsCommitMetadata> {
     val unreachableTags = getUnreachableTags(commitsFromLog)
     if (unreachableTags.isEmpty()) {
@@ -145,11 +129,10 @@ private class TagsLoader(
     val commits = HashSet<VcsCommitMetadata>()
     VcsTracer.traceSuspending(LoadingCommitsOnTaggedBranch) {
       it.withVcsAttributes(repository.root)
-      val maxCountParam = listOf("--max-count=$commitsToLoad")
-      val tagNames = unreachableTags.map(GitTag::name)
+      val maxCountParam = listOf("--max-count=$COMMITS_TO_LOAD")
 
       withContext(Dispatchers.IO) {
-        VcsFileUtil.foreachChunk(tagNames, 1) { tagsChunk ->
+        VcsFileUtil.foreachChunk(unreachableTags, 1) { tagsChunk ->
           val parameters = ArrayUtilRt.toStringArray(maxCountParam + tagsChunk)
           val logData = GitLogUtil.collectMetadata(repository.project, repository.root, *parameters)
           commits.addAll(logData.commits)
@@ -159,33 +142,39 @@ private class TagsLoader(
     return commits
   }
 
-  fun getTags(): Collection<VcsRef> {
-    val factory = repository.project.service<VcsLogObjectsFactory>()
-    return tags.map { (tag, hash) -> factory.createTag(repository, tag, hash) }
-  }
-
-  private fun getUnreachableTags(commits: List<VcsCommitMetadata>): List<GitTag> {
-    if (unseenTags.isEmpty()) return emptyList()
+  /**
+   * Returns a list of modified tags that are not reachable from the loaded commits.
+   */
+  private fun getUnreachableTags(commits: List<VcsCommitMetadata>): List<String> {
+    if (modifiedTags.isEmpty()) return emptyList()
 
     val commitsHashes = commits.mapTo(mutableSetOf()) { it.id }
-    return unseenTags.mapNotNull { (tag, commitHash) ->
-      if (commitsHashes.contains(commitHash)) null else tag
+    return modifiedTags.mapNotNull {
+      if (commitsHashes.contains(it.commitHash)) null else it.name
     }
   }
 
   companion object {
-    private fun getNewTags(
-      tags: Map<GitTag, Hash>,
-      refsLoadingPolicy: VcsLogProvider.RefsLoadingPolicy.LoadAllRefs,
-    ): Map<GitTag, Hash> {
-      val newTags = tags.toMutableMap()
-      for (ref in refsLoadingPolicy.previouslyLoadedRefs.tags()) {
-        if (newTags.isEmpty()) break
-        val tag = GitTag(ref.name)
-        if (newTags[tag] == ref.commitHash) {
-          newTags.remove(tag)
+    private const val COMMITS_TO_LOAD = 20
+
+    fun create(repository: GitRepository, refsLoadingPolicy: VcsLogProvider.RefsLoadingPolicy): TagsLoader {
+      val (allTags, modifiedTags) = when (refsLoadingPolicy) {
+        is VcsLogProvider.RefsLoadingPolicy.LoadAllRefs -> {
+          val factory = repository.project.service<VcsLogObjectsFactory>()
+          val allTags =
+            repository.tagsHolder.state.value.tagsToCommitHashes.map { (tag, hash) -> factory.createTag(repository, tag.name, hash) }
+          val modifiedTags = getModifiedTags(allTags, refsLoadingPolicy.previouslyLoadedRefs)
+          Pair(allTags, modifiedTags)
         }
+        is VcsLogProvider.RefsLoadingPolicy.FromLoadedCommits -> Pair(emptyList(), emptyList())
       }
+
+      return TagsLoader(repository, allTags, modifiedTags)
+    }
+
+    private fun getModifiedTags(tags: Collection<VcsRef>, previousRefs: VcsRefsContainer): Collection<VcsRef> {
+      val previousTags = previousRefs.tags().associateBy { it.name }
+      val newTags = tags.filter { tag -> previousTags[tag.name]?.commitHash != tag.commitHash }
       LOG.debug { "${newTags.size} newly added tags" }
       return newTags
     }
