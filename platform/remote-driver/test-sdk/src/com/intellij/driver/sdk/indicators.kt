@@ -10,7 +10,7 @@ fun Driver.getProgressIndicators(project: Project): List<StatusBar.TaskInfoPair>
   return withContext {
     val ideFrame = service<WindowManager>().getIdeFrame(project)
     val statusBar = ideFrame?.getStatusBar() ?: return@withContext emptyList()
-    statusBar.getBackgroundProcesses()
+    statusBar.getBackgroundProcessModels()
   }
 }
 
