@@ -51,9 +51,10 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.system.OS
 import com.intellij.vcs.commit.AmendCommitAware
+import com.intellij.vcs.commit.CommitToAmend
 import com.intellij.vcs.commit.ToggleAmendCommitOption.Companion.isAmendCommitOptionSupported
+import com.intellij.vcs.commit.commitToAmend
 import com.intellij.vcs.commit.commitWithoutChangesRoots
-import com.intellij.vcs.commit.isAmendCommitMode
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitUtil
@@ -83,7 +84,7 @@ import javax.swing.JComponent
 @Service(Service.Level.PROJECT)
 class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment, AmendCommitAware {
   private var myNextCommitAuthor: VcsUser? = null // The author for the next commit
-  private var myNextCommitAmend = false // If true, the next commit is amended
+  private var myNextCommitToAmend: CommitToAmend = CommitToAmend.None
   private var myNextCommitAuthorDate: Date? = null
   private var myNextCommitSignOff = false
   private var myNextCommitSkipHook = false
@@ -138,7 +139,7 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
   private val amendService: GitAmendCommitService get() = myProject.getService(GitAmendCommitService::class.java)
 
   private fun updateState(commitContext: CommitContext) {
-    myNextCommitAmend = commitContext.isAmendCommitMode
+    myNextCommitToAmend = commitContext.commitToAmend
     myNextCommitSkipHook = commitContext.isSkipHooks
     myNextCommitAuthor = commitContext.commitAuthor
     myNextCommitAuthorDate = commitContext.commitAuthorDate
@@ -200,7 +201,7 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
   }
 
   private fun createCommitOptions(): GitCommitOptions {
-    return GitCommitOptions(myNextCommitAmend, myNextCommitSignOff, myNextCommitSkipHook, myNextCommitAuthor, myNextCommitAuthorDate,
+    return GitCommitOptions(myNextCommitToAmend, myNextCommitSignOff, myNextCommitSkipHook, myNextCommitAuthor, myNextCommitAuthorDate,
                             myNextCleanupCommitMessage)
   }
 
@@ -942,7 +943,7 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
 
     @Suppress("unused")
     fun isAmend(): Boolean {
-      return myOptionsUi.amendHandler.isAmendCommitMode
+      return myOptionsUi.amendHandler.commitToAmend is CommitToAmend.Last
     }
 
     override fun getComponent(): JComponent {

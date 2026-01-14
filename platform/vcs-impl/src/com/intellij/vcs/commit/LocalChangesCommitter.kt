@@ -147,6 +147,6 @@ private class ChangeListDataCleaner(val committer: LocalChangesCommitter) : Comm
 
 @ApiStatus.Internal
 fun getLocalHistoryEventName(commitContext: CommitContext, commitMessage: String): @NlsContexts.Label String {
-  if (commitContext.isAmendCommitMode) return VcsBundle.message("activity.name.amend.message", commitMessage)
+  if (commitContext.commitToAmend !is CommitToAmend.None) return VcsBundle.message("activity.name.amend.message", commitMessage)
   return VcsBundle.message("activity.name.commit.message", commitMessage)
 }

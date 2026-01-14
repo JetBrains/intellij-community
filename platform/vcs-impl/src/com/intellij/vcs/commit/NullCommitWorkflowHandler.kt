@@ -17,8 +17,8 @@ object NullCommitWorkflowHandler : CommitWorkflowHandler {
 @ApiStatus.Internal
 @Suppress("UNUSED_PARAMETER")
 object NullAmendCommitHandler : AmendCommitHandler {
-  override var isAmendCommitMode: Boolean
-    get() = false
+  override var commitToAmend: CommitToAmend
+    get() = CommitToAmend.None
     set(value) = Unit
 
   override var isAmendCommitModeTogglingEnabled: Boolean

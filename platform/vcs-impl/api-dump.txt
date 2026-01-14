@@ -3887,12 +3887,14 @@ f:com.intellij.vcs.commit.AbstractCommitWorkflowKt
 - sf:commitExecutorProperty(com.intellij.openapi.util.Key,java.lang.Object):kotlin.properties.ReadWriteProperty
 - sf:commitProperty(com.intellij.openapi.util.Key):kotlin.properties.ReadWriteProperty
 - sf:commitProperty(com.intellij.openapi.util.Key,java.lang.Object):kotlin.properties.ReadWriteProperty
+- sf:getCommitToAmend(com.intellij.openapi.vcs.changes.CommitContext):com.intellij.vcs.commit.CommitToAmend
 - sf:isAmendCommitMode(com.intellij.openapi.vcs.changes.CommitContext):Z
 - sf:isCleanupCommitMessage(com.intellij.openapi.vcs.changes.CommitContext):Z
 - sf:isPostCommitCheck(com.intellij.openapi.vcs.checkin.CommitInfo):Z
 - sf:restoreState(com.intellij.vcs.commit.CommitOptions):V
 - sf:saveState(com.intellij.vcs.commit.CommitOptions):V
 - sf:setCleanupCommitMessage(com.intellij.openapi.vcs.changes.CommitContext,Z):V
+- sf:setCommitToAmend(com.intellij.openapi.vcs.changes.CommitContext,com.intellij.vcs.commit.CommitToAmend):V
 a:com.intellij.vcs.commit.AbstractCommitter
 - com.intellij.vcs.commit.Committer
 - <init>(com.intellij.openapi.project.Project,java.lang.String,Z):V

@@ -37,11 +37,11 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
 
   var initialMessage: String? = null
 
-  override var isAmendCommitMode: Boolean
-    get() = commitContext.isAmendCommitMode
+  override var commitToAmend: CommitToAmend
+    get() = commitContext.commitToAmend
     set(value) {
-      if (commitContext.isAmendCommitMode != value) {
-        commitContext.isAmendCommitMode = value
+      if (commitContext.commitToAmend != value) {
+        commitContext.commitToAmend = value
         amendCommitModeToggled()
       }
     }
@@ -49,7 +49,7 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
   protected open fun amendCommitModeToggled() {
     fireAmendCommitModeToggled()
 
-    if (isAmendCommitMode) setAmendMessage() else restoreBeforeAmendMessage()
+    if (commitToAmend is CommitToAmend.Last) setAmendMessage() else restoreBeforeAmendMessage()
     workflowHandler.updateDefaultCommitActionName()
   }
 

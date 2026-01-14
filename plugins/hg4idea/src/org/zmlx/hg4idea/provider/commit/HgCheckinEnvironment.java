@@ -36,6 +36,7 @@ import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.commit.AmendCommitAware;
+import com.intellij.vcs.commit.CommitToAmend;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.isAmendCommitMode;
+import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.getCommitToAmend;
 import static com.intellij.vcs.commit.LocalChangesCommitterKt.getCommitWithoutChangesRoots;
 import static com.intellij.vcs.commit.ToggleAmendCommitOption.isAmendCommitOptionSupported;
 import static java.util.Collections.emptySet;
@@ -136,7 +137,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     List<VcsException> exceptions = new LinkedList<>();
     Map<HgRepository, Set<HgFile>> repositoriesMap = getFilesByRepository(changes);
     addRepositoriesWithoutChanges(repositoriesMap, commitContext);
-    boolean isAmend = isAmendCommitMode(commitContext);
+    CommitToAmend mode = getCommitToAmend(commitContext) ;
+    boolean isAmend = !(mode instanceof CommitToAmend.None);
     for (Map.Entry<HgRepository, Set<HgFile>> entry : repositoriesMap.entrySet()) {
 
       HgRepository repo = entry.getKey();

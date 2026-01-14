@@ -12,7 +12,8 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.CommitExceptionWithActions
-import com.intellij.vcs.commit.isAmendCommitMode
+import com.intellij.vcs.commit.CommitToAmend
+import com.intellij.vcs.commit.commitToAmend
 import com.intellij.vcs.commit.isCleanupCommitMessage
 import com.intellij.vcs.log.VcsUser
 import git4idea.checkin.GitCheckinEnvironment.Companion.COMMIT_DATE_FORMAT
@@ -28,7 +29,7 @@ import java.io.File
 import java.util.Date
 
 data class GitCommitOptions(
-  val isAmend: Boolean = false,
+  val commitToAmend: CommitToAmend = CommitToAmend.None,
   val isSignOff: Boolean = false,
   val isSkipHooks: Boolean = false,
   val commitAuthor: VcsUser? = null,
@@ -36,7 +37,7 @@ data class GitCommitOptions(
   val isCleanupCommitMessage: Boolean = false
 ) {
   constructor(context: CommitContext) : this(
-    context.isAmendCommitMode,
+    context.commitToAmend,
     context.isSignOffCommit,
     context.isSkipHooks,
     context.commitAuthor,
@@ -91,7 +92,7 @@ internal class GitRepositoryCommitter(val repository: GitRepository, private val
 }
 
 private fun GitLineHandler.setCommitOptions(options: GitCommitOptions) {
-  if (options.isAmend) addParameters("--amend")
+  if (options.commitToAmend is CommitToAmend.Last) addParameters("--amend")
   if (options.isSignOff) addParameters("--signoff")
   if (options.isSkipHooks) addParameters("--no-verify")
   if (options.isCleanupCommitMessage) addParameters("--cleanup=strip")

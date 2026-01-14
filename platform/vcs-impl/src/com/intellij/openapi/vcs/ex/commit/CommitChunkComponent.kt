@@ -80,10 +80,10 @@ private class CommitChunkPanel(
       p.isEnabled = component.isVisible && amendCommitHandler.isAmendCommitModeTogglingEnabled == true
     }
 
-    override fun isSelected(e: AnActionEvent): Boolean = amendCommitHandler.isAmendCommitMode
+    override fun isSelected(e: AnActionEvent): Boolean = amendCommitHandler.commitToAmend is CommitToAmend.Last
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      amendCommitHandler.isAmendCommitMode = state
+      amendCommitHandler.commitToAmend = if (state) CommitToAmend.Last else CommitToAmend.None
     }
   }.apply {
     val amendShortcut = ActionManager.getInstance().getAction("Vcs.ToggleAmendCommitMode").shortcutSet
@@ -253,7 +253,7 @@ private class CommitChunkWorkflow(project: Project) : NonModalCommitWorkflow(pro
 
     val lines = range.line2 - range.line1
 
-    CommitChunkCollector.logCommit(commitContext.isAmendCommitMode, lines, messageLines.size, subjectLength)
+    CommitChunkCollector.logCommit(commitContext.commitToAmend is CommitToAmend.Last, lines, messageLines.size, subjectLength)
   }
 }
 

@@ -333,7 +333,7 @@ class DynamicCommitInfoImpl(
   override val commitMessage: String get() = workflowUi.commitMessageUi.text
 
   override val commitActionText: String
-    get() = getActionTextWithoutEllipsis(workflow.vcses, executor, commitContext.isAmendCommitMode,
+    get() = getActionTextWithoutEllipsis(workflow.vcses, executor, commitContext.commitToAmend !is CommitToAmend.None,
                                          isSkipCommitChecks = false, removeMnemonic = false)
 
   override fun asStaticInfo(): StaticCommitInfo {

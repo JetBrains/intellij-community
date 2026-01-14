@@ -29,10 +29,18 @@ class ToggleAmendCommitModeAction : CheckboxAction(), DumbAware {
     }
   }
 
-  override fun isSelected(e: AnActionEvent): Boolean = getAmendCommitHandler(e)?.isAmendCommitMode == true
+  override fun isSelected(e: AnActionEvent): Boolean {
+    val mode = getAmendCommitHandler(e)?.commitToAmend
+    return mode != null && mode !is CommitToAmend.None
+  }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    getAmendCommitHandler(e)!!.isAmendCommitMode = state
+    val handler = getAmendCommitHandler(e)!!
+    handler.commitToAmend = if (state) {
+      check(handler.commitToAmend is CommitToAmend.None)
+      CommitToAmend.Last
+    }
+    else CommitToAmend.None
 
     e.project?.let { project ->
       CommitSessionCollector.getInstance(project).logCommitOptionToggled(CommitOption.AMEND, state)
