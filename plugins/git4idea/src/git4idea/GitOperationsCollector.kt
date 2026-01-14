@@ -19,7 +19,7 @@ import git4idea.rebase.interactive.CantRebaseUsingLogException
 internal object GitOperationsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("git.operations", 7)
+  private val GROUP: EventLogGroup = EventLogGroup("git.operations", 8)
 
   internal val UPDATE_FORCE_PUSHED_BRANCH_ACTIVITY = GROUP.registerIdeActivity("update.force.pushed")
 
@@ -66,8 +66,7 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
   private val WITH_PROVIDED_BRANCH = EventFields.Boolean("with_provided_branch")
   private val WORKING_TREE_CREATION_ACTIVITY =
     GROUP.registerIdeActivity("create.worktree",
-                              startEventAdditionalFields = arrayOf(EventFields.ActionPlace, WITH_PROVIDED_BRANCH),
-                              subStepWithStepId = true)
+                              startEventAdditionalFields = arrayOf(EventFields.ActionPlace, WITH_PROVIDED_BRANCH))
 
   private val WITH_EXISTING_BRANCH = EventFields.Boolean("with_existing_branch")
   private val WORKTREE_CREATION_DIALOG_EXIT_OK_STAGE =
