@@ -7,7 +7,7 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 
 abstract class PyLspToolConfiguration<State : PyLspToolConfiguration<State>> : PersistentStateComponent<State> {
-  var enabled: Boolean = false
+  open var enabled: Boolean = false
   var inspections: Boolean = true
   open var completions: Boolean? = null
 
