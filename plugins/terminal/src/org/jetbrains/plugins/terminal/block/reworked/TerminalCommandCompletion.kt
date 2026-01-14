@@ -27,7 +27,6 @@ object TerminalCommandCompletion {
   fun isEnabled(project: Project): Boolean {
     return Registry.`is`(REGISTRY_KEY, false)
            && AppModeAssertions.isMonolith()                    // Disable in RemDev at the moment because it is not supported yet
-           && OS.CURRENT != OS.Windows                          // Disable on Windows for now as it requires additional support
            && project.getEelDescriptor() == LocalEelDescriptor  // Disable in non-local projects for now as it requires additional support
   }
 
