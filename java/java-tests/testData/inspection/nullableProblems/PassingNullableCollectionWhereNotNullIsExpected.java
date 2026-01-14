@@ -6,7 +6,7 @@ class JC {
 
   void testList() {
     List<@Nullable String> nullableList = new ArrayList<>();
-    print(<warning descr="Assigning a class with nullable type arguments when a class with not-null type arguments is expected{0}">nullableList</warning>);
+    print(<warning descr="Assigning a collection of nullable elements into a collection of non-null elements">nullableList</warning>);
 
     List<@NotNull String> <warning descr="Assigning a class with nullable type arguments when a class with not-null type arguments is expected">list2</warning> = nullableList;
 
@@ -28,8 +28,8 @@ class JC {
   List<@NotNull String> testReturnValue() {
     List<@Nullable String> list = new ArrayList<>();
 
-    Supplier<List<@NotNull String>> supplier = () -> <warning descr="Assigning a class with nullable type arguments when a class with not-null type arguments is expected{0}">list</warning>;
-    Supplier<List<@NotNull String>> supplierRef = <warning descr="Assigning a class with nullable type arguments when a class with not-null type arguments is expected{0}">this::getNullableList</warning>;
+    Supplier<List<@NotNull String>> supplier = () -> <warning descr="Assigning a collection of nullable elements into a collection of non-null elements">list</warning>;
+    Supplier<List<@NotNull String>> supplierRef = <warning descr="Assigning a collection of nullable elements into a collection of non-null elements">this::getNullableList</warning>;
 
     Supplier<List<@NotNull String>> supplier3 = () -> { return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">list</warning>;};
 

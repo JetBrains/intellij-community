@@ -1367,7 +1367,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   private enum ConflictNestedTypeProblem{
     RETURN_NESTED_TYPE_PROBLEM("returning.a.class.with.notnull.arguments", "returning.a.class.with.nullable.arguments"),
-    ASSIGNMENT_NESTED_TYPE_PROBLEM("assigning.a.collection.of.notnull.elements", "assigning.a.collection.of.nullable.elements"),
+    ASSIGNMENT_NESTED_TYPE_PROBLEM("assigning.a.class.with.notnull.elements", "assigning.a.class.with.nullable.elements"),
     ;
 
     @NotNull
