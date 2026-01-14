@@ -12,6 +12,7 @@ import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
@@ -57,6 +58,7 @@ import com.intellij.vcs.commit.commitToAmend
 import com.intellij.vcs.commit.commitWithoutChangesRoots
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.checkin.GitCheckinExplicitMovementProvider.Movement
@@ -164,6 +166,52 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     val commitOptions = createCommitOptions()
 
     val repositories = collectRepositories(sortedChanges.keys, commitWithoutChangesRoots)
+
+    runCommitPossiblyFreezingLog(commitOptions, repositories, sortedChanges, commitContext, commitMessage, exceptions)
+    return exceptions
+  }
+
+  private fun runCommitPossiblyFreezingLog(
+    commitOptions: GitCommitOptions,
+    repositories: List<GitRepository>,
+    sortedChanges: Map<GitRepository, Collection<Change>>,
+    commitContext: CommitContext,
+    commitMessage: @NonNls String,
+    exceptions: MutableList<VcsException>,
+  ) {
+    val commitAction = {
+      doCommit(repositories, sortedChanges, commitContext, commitMessage, commitOptions, exceptions)
+    }
+
+    val needsLogFreeze = commitOptions.commitToAmend is CommitToAmend.Specific
+    if (!needsLogFreeze) {
+      commitAction()
+      return
+    }
+
+    val repository = repositories.singleOrNull() ?: error("Freezing log is supported only for single repository commits")
+    val logManager = repository.let { VcsProjectLog.getInstance(it.project).logManager }
+    if (logManager == null) {
+      commitAction()
+      return
+    }
+
+    runBlockingCancellable {
+      logManager.runWithFreezing {
+        commitAction()
+      }
+    }
+  }
+
+  private fun doCommit(
+    repositories: List<GitRepository>,
+    sortedChanges: Map<GitRepository, Collection<Change>>,
+    commitContext: CommitContext,
+    commitMessage: @NonNls String,
+    commitOptions: GitCommitOptions,
+    exceptions: MutableList<VcsException>,
+  ) {
+
     for (repository in repositories) {
       val rootChanges: Collection<Change> = sortedChanges.getOrDefault(repository, ContainerUtil.emptyList())
       var toCommit: Collection<CommitChange> = collectChangesToCommit(rootChanges)
@@ -181,10 +229,15 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       exceptions.addAll(commitRepository(repository, toCommit, commitMessage, commitContext, commitOptions))
     }
 
-    if (commitContext.isPushAfterCommit && exceptions.isEmpty()) {
-      GitPushAfterCommitDialog.showOrPush(myProject, repositories)
+    if (exceptions.isEmpty()) {
+      if (commitOptions.commitToAmend is CommitToAmend.Specific) {
+        val repository = repositories.single()
+        GitAmendSpecificCommitSquasher.squashLastCommitIntoTarget(repository, commitOptions.commitToAmend.targetHash, commitMessage)
+      }
+      if (commitContext.isPushAfterCommit) {
+        GitPushAfterCommitDialog.showOrPush(myProject, repositories)
+      }
     }
-    return exceptions
   }
 
   private fun collectRepositories(

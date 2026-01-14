@@ -1,9 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
+
+import org.jetbrains.annotations.NonNls
+
 object GitSquashedCommitsMessage {
   private const val REBASE_SQUASH_SEPARATOR = "\n\n\n"
 
-  private val AUTOSQUASH_SUBJECT_REGEX = Regex("^(fixup|squash|amend)! (.+)$")
+  private const val AMEND_PREFIX: @NonNls String = "amend! "
+
+  private val AUTOSQUASH_SUBJECT_REGEX = Regex("^(fixup|squash|amend)! (.+)")
 
   fun trimAutosquashSubject(commitMessage: String): String = if (isAutosquashCommitMessage(commitMessage)) {
     removeSubject(commitMessage)
@@ -28,10 +33,17 @@ object GitSquashedCommitsMessage {
     }.joinToString(REBASE_SQUASH_SEPARATOR)
   }
 
+  fun formatAmendSpecificCommitMessage(targetSubject: String, newMessage: String): String = buildString {
+    append(AMEND_PREFIX)
+    append(targetSubject)
+    append("\n\n")
+    append(newMessage)
+  }
+
   /**
    * Returns true if [commitMessage] has autosquash prefix and target commit subject is present in [commitsSubjects]
    */
-  private fun canAutosquash(commitMessage: String, commitsSubjects: Set<String>): Boolean {
+  fun canAutosquash(commitMessage: String, commitsSubjects: Set<String>): Boolean {
     val subject = getSubject(commitMessage)
     val autosquashWith = AUTOSQUASH_SUBJECT_REGEX.find(subject)?.groupValues?.getOrNull(2)
     return autosquashWith in commitsSubjects

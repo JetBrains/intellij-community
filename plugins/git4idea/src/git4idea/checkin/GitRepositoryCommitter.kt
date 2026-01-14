@@ -24,6 +24,7 @@ import git4idea.commands.GitLineEventDetector
 import git4idea.commands.GitLineHandler
 import git4idea.commit.signing.GpgAgentConfigurationNotificator
 import git4idea.i18n.GitBundle
+import git4idea.rebase.GitSquashedCommitsMessage
 import git4idea.repo.GitRepository
 import java.io.File
 import java.util.Date
@@ -34,7 +35,7 @@ data class GitCommitOptions(
   val isSkipHooks: Boolean = false,
   val commitAuthor: VcsUser? = null,
   val commitAuthorDate: Date? = null,
-  val isCleanupCommitMessage: Boolean = false
+  val isCleanupCommitMessage: Boolean = false,
 ) {
   constructor(context: CommitContext) : this(
     context.commitToAmend,
@@ -42,7 +43,7 @@ data class GitCommitOptions(
     context.isSkipHooks,
     context.commitAuthor,
     context.commitAuthorDate,
-    context.isCleanupCommitMessage
+    context.isCleanupCommitMessage,
   )
 }
 
@@ -52,7 +53,14 @@ internal class GitRepositoryCommitter(val repository: GitRepository, private val
 
   @Throws(VcsException::class)
   fun commitStaged(commitMessage: String) {
-    runWithMessageFile(project, root, commitMessage) { messageFile -> commitStaged(messageFile) }
+    val fullMessage = when (val commitToAmend = commitOptions.commitToAmend) {
+      is CommitToAmend.Specific -> GitSquashedCommitsMessage.formatAmendSpecificCommitMessage(commitToAmend.targetSubject, commitMessage)
+      else -> commitMessage
+    }
+
+    runWithMessageFile(project, root, fullMessage) { messageFile ->
+      commitStaged(messageFile)
+    }
   }
 
   @Throws(VcsException::class)
