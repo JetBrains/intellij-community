@@ -9,10 +9,12 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.get
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.vcs.log.*
-import com.intellij.vcs.log.graph.*
+import com.intellij.vcs.log.graph.GraphColorManagerImpl
+import com.intellij.vcs.log.graph.GraphCommit
+import com.intellij.vcs.log.graph.HeadCommitsComparator
+import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.impl.print.GraphColorGetterByHeadFactory
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import kotlin.time.measureTimedValue
@@ -29,9 +31,7 @@ object VcsLogGraphDataFactory {
     storage: VcsLogStorage,
     full: Boolean,
   ): VcsLogGraphData {
-    val (heads, headsCalculationTime) = measureTimedValue { getHeads(commits) }
-    LOG.trace { "Heads calculated in ${headsCalculationTime.inWholeMilliseconds} ms" }
-    val (refsModel, refsModelCreationTime) = measureTimedValue { RefsModel.create(refs, heads, storage, providers) }
+    val (refsModel, refsModelCreationTime) = measureTimedValue { RefsModel.create(refs, storage, providers) }
     LOG.trace { "Refs model created in ${refsModelCreationTime.inWholeMilliseconds} ms" }
     val (permanentGraph, permanentGraphBuildTime) = measureTimedValue { buildPermanentGraph(commits, refsModel, providers, storage) }
     LOG.trace { "Permanent graph created in ${permanentGraphBuildTime.inWholeMilliseconds} ms" }
@@ -54,7 +54,7 @@ object VcsLogGraphDataFactory {
     providers: Map<VirtualFile, VcsLogProvider>,
     storage: VcsLogStorage,
   ): VcsLogGraphData.OverlayData {
-    val refsModel = RefsModel.create(refs, getHeads(commits), storage, providers)
+    val refsModel = RefsModel.create(refs, storage, providers)
     val permanentGraph = buildPermanentGraph(commits, refsModel, providers, storage)
 
     return VcsLogGraphOverlayData(refsModel, permanentGraph, providers)
@@ -78,17 +78,6 @@ object VcsLogGraphDataFactory {
                                      GraphColorGetterByHeadFactory(GraphColorManagerImpl(refsModel)),
                                      headCommitsComparator,
                                      branches)
-    }
-  }
-
-  private fun getHeads(commits: List<GraphCommit<VcsLogCommitStorageIndex>>): Set<VcsLogCommitStorageIndex> {
-    val parents = commits.flatMapTo(IntOpenHashSet()) { it.parents }
-    return buildSet {
-      for (commit in commits) {
-        if (!parents.contains(commit.id)) {
-          add(commit.id)
-        }
-      }
     }
   }
 }

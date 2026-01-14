@@ -102,6 +102,6 @@ final class SnapshotVisiblePackBuilder {
       Set<VcsRef> refsForRoot = map.get(root);
       refs.put(root, new CompressedRefs(refsForRoot == null ? new HashSet<>() : refsForRoot, myStorage));
     }
-    return RefsModel.create(refs, heads, myStorage, providers);
+    return RefsModel.create(refs, myStorage, providers);
   }
 }
