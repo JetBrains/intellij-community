@@ -31,7 +31,6 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
   ],
-  exports = ["//java/openapi:java"],
   runtime_deps = ["//java/debugger/backend"]
 )
 
@@ -69,8 +68,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//plugins/stream-debugger-core/testFramework",
     "//platform/util/coroutines",
-  ],
-  exports = ["//java/openapi:java"]
+  ]
 )
 ### auto-generated section `build intellij.java.debugger.streams` end
 
