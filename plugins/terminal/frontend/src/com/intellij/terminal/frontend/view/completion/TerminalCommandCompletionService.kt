@@ -93,7 +93,7 @@ class TerminalCommandCompletionService(
     editor.caretModel.primaryCaret.moveToOffset(cursorOffset.toRelative(outputModel))
 
     val activeBlock = shellIntegration.blocksModel.activeBlock as TerminalCommandBlock
-    val commandText = getTypedCommandText(activeBlock, outputModel) ?: return
+    val commandText = getRawCommandText(activeBlock, outputModel) ?: return
 
     val context = TerminalCommandCompletionContext(
       project = project,
@@ -206,9 +206,16 @@ class TerminalCommandCompletionService(
   private fun checkContextValid(context: TerminalCommandCompletionContext): Boolean {
     val outputModel = context.outputModel
     val activeBlock = context.shellIntegration.blocksModel.activeBlock as TerminalCommandBlock
-    val commandText = getTypedCommandText(activeBlock, outputModel)
+    val curCommandText = getRawCommandText(activeBlock, outputModel)?.let {
+      val cursorOffset = outputModel.cursorOffset - activeBlock.commandStartOffset!!
+      it.substring(0, cursorOffset.toInt())
+    }
+    val contextCommandText = context.commandText.let {
+      val cursorOffset = context.initialCursorOffset - context.commandStartOffset
+      it.substring(0, cursorOffset.toInt())
+    }
     return outputModel.cursorOffset == context.initialCursorOffset
-           && commandText == context.commandText
+           && curCommandText == contextCommandText
   }
 
   @RequiresEdt
@@ -235,18 +242,18 @@ class TerminalCommandCompletionService(
   }
 
   /**
-   * Returns command text typed before the cursor.
+   * Returns command text with possible trailing new lines and spaces.
    * Returns null if the cursor is in the incorrect place or the block is invalid.
    */
-  private fun getTypedCommandText(block: TerminalCommandBlock, model: TerminalOutputModel): String? {
+  private fun getRawCommandText(block: TerminalCommandBlock, model: TerminalOutputModel): String? {
     val start = block.commandStartOffset ?: return null
-    val end = model.cursorOffset
+    val end = block.endOffset
     if (start < model.startOffset || start > model.endOffset
         || end < model.startOffset || end > model.endOffset
         || start > end) {
       return null
     }
-    return model.getText(start, end).toString().trimStart()
+    return model.getText(start, end).toString()
   }
 
   @RequiresEdt

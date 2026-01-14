@@ -250,6 +250,7 @@ internal data class TerminalCommandCompletionContext(
   val shellIntegration: TerminalShellIntegration,
   val commandStartOffset: TerminalOffset,
   val initialCursorOffset: TerminalOffset,
+  /** Full command text at the moment of completion request. May include trailing new lines and spaces. */
   val commandText: String,
   val isAutoPopup: Boolean,
 )
