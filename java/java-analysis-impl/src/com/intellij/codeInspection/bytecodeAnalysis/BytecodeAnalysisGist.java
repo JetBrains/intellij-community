@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 /**
- * Holds the {@link VirtualFileGist} for bytecode analysis.
+ * Holds the {@link VirtualFileGist} for caching bytecode analysis results.
  * <p>
  * This is a separate service to avoid accessing {@link GistManager} during static class initialization of {@link ClassDataIndexer},
  * which violates platform rules (class initialization must not depend on services).
