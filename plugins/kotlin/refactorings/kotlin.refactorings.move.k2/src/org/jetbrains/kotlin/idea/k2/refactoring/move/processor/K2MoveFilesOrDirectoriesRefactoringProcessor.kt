@@ -13,7 +13,9 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.getImplicitPackagePrefix
@@ -64,11 +66,13 @@ internal class K2MoveFilesOrDirectoriesRefactoringProcessor(private val descript
      * Even in the case of a potentially long analysis, there will be visible UI activity.
      * The permission is necessary for direct analysis requests through the Analysis API, which sometimes happens in plugins.
      */
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     override fun performRefactoring(_usages: Array<out UsageInfo?>) {
         allowAnalysisOnEdt {
-            withForcedPackageIfNeeded {
-                super.performRefactoring(_usages)
+            allowAnalysisFromWriteAction {
+                withForcedPackageIfNeeded {
+                    super.performRefactoring(_usages)
+                }
             }
         }
     }
