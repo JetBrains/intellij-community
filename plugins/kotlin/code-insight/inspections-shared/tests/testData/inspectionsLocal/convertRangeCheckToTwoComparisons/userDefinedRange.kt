@@ -1,4 +1,4 @@
-// IS_APPLICABLE: false
+// PROBLEM: none
 class MyInt(val value: Int) {
     infix operator fun rangeTo(other: MyInt) = MyIntRange(this.value, other.value)
 }

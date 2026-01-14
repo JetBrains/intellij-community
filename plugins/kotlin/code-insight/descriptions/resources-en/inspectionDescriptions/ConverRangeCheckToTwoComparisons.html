@@ -1,0 +1,13 @@
+<html>
+<body>
+Converts a range check (<code>in</code>) to two consecutive comparisons.
+<p><b>Example:</b></p>
+<pre><code>
+fun foo(arg: Int) = arg in 1..4
+</code></pre>
+<p>After applying quick-fix:</p>
+<pre><code>
+fun foo(arg: Int) = 1 <= arg && arg <= 4
+</code></pre>
+</body>
+</html>

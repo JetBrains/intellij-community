@@ -1,15 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
-
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.InspectionMessage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.RangeKtExpressionType
 import org.jetbrains.kotlin.idea.codeinsight.utils.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
@@ -22,10 +24,12 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.binaryExpressionVisitor
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 
-class ConvertRangeCheckToTwoComparisonsIntention :
-    KotlinApplicableModCommandAction<KtBinaryExpression, ConvertRangeCheckToTwoComparisonsIntention.Context>(KtBinaryExpression::class) {
+class ConvertRangeCheckToTwoComparisonsInspection :
+    KotlinApplicableInspectionBase.Simple<KtBinaryExpression, ConvertRangeCheckToTwoComparisonsInspection.Context>() {
 
     data class Context(
         val pattern: String,
@@ -34,13 +38,20 @@ class ConvertRangeCheckToTwoComparisonsIntention :
         val right: KtExpression
     )
 
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): KtVisitor<*, *> = binaryExpressionVisitor {
+        visitTargetElement(it, holder, isOnTheFly)
+    }
+
     private fun KtExpression?.isSimple() = this is KtConstantExpression || this is KtNameReferenceExpression
 
-    override fun getFamilyName(): String =
+    override fun getProblemDescription(element: KtBinaryExpression, context: Context): @InspectionMessage String =
         KotlinBundle.message("convert.to.comparisons")
 
     override fun KaSession.prepareContext(element: KtBinaryExpression): Context? {
-        val isNegated = when (element.operationToken){
+        val isNegated = when (element.operationToken) {
             KtTokens.IN_KEYWORD -> false
             KtTokens.NOT_IN -> true
             else -> return null
@@ -69,21 +80,25 @@ class ConvertRangeCheckToTwoComparisonsIntention :
         return Context(pattern, left, arg, right)
     }
 
-    override fun invoke(
-        actionContext: ActionContext,
+    override fun createQuickFix(
         element: KtBinaryExpression,
-        elementContext: Context,
-        updater: ModPsiUpdater
-    ) {
-        val psiFactory = KtPsiFactory(element.project)
-        val newExpression = psiFactory.createExpressionByPattern(
-            elementContext.pattern,
-            elementContext.left,
-            elementContext.arg,
-            elementContext.right,
-            reformat = false
-        )
-        element.replace(newExpression)
+        context: Context
+    ): KotlinModCommandQuickFix<KtBinaryExpression> = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+        override fun getFamilyName(): String =
+            KotlinBundle.message("convert.to.comparisons")
+
+        override fun applyFix(project: Project, element: KtBinaryExpression, updater: ModPsiUpdater) {
+            val psiFactory = KtPsiFactory(element.project)
+            val newExpression = psiFactory.createExpressionByPattern(
+                context.pattern,
+                context.left,
+                context.arg,
+                context.right,
+                reformat = false
+            )
+            element.replace(newExpression)
+        }
+
     }
 
     private fun KtExpression.getArguments(): Pair<KtExpression?, KtExpression?>? = when (this) {

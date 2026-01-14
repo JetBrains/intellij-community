@@ -793,5 +793,16 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.implicit.nullable.nothing.type.display.name" bundle="messages.KotlinBundle"/>
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ConvertRangeCheckToTwoComparisonsInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle"
+            groupKey="group.names.style.issues"
+            enabledByDefault="true"
+            level="INFORMATION"
+            bundle="messages.KotlinBundle"
+            key="convert.to.comparisons"
+            language="kotlin"
+    />
   </extensions>
 </idea-plugin>
