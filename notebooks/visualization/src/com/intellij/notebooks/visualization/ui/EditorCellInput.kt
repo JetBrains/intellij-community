@@ -79,6 +79,7 @@ class EditorCellInput(val cell: EditorCell) : EditorCellViewComponent() {
   fun updateInput(): Unit = runInEdt {
     editor.updateManager.update { ctx ->
       (component as? InputComponent)?.updateInput(ctx)
+      (component as? CustomFoldingEditorCellViewComponent)?.updateCustomComponent()
     }
   }
 
