@@ -227,7 +227,7 @@ internal class RefreshSessionImpl internal constructor(
   fun fireEvents(
     events: List<CompoundVFileEvent>,
     appliers: List<AsyncFileListener.ChangeApplier>,
-    asyncProcessing: Boolean,
+    excludeAsyncListeners: Boolean,
   ) {
     try {
       val app = ApplicationManagerEx.getApplicationEx()
@@ -239,7 +239,7 @@ internal class RefreshSessionImpl internal constructor(
             if (indicator is ProgressIndicatorWithDelayedPresentation) {
               indicator.setDelayInMillis(PROGRESS_THRESHOLD_MILLIS)
             }
-           doFireEvents(events, appliers, asyncProcessing)
+           doFireEvents(events, appliers, excludeAsyncListeners)
           })
       }
     }
@@ -255,7 +255,7 @@ internal class RefreshSessionImpl internal constructor(
   private fun fireEventsInWriteAction(
     events: List<CompoundVFileEvent>,
     appliers: List<AsyncFileListener.ChangeApplier>,
-    asyncProcessing: Boolean,
+    excludeAsyncListeners: Boolean,
   ) {
     val manager = VirtualFileManager.getInstance() as VirtualFileManagerImpl
 
@@ -263,7 +263,7 @@ internal class RefreshSessionImpl internal constructor(
       manager.fireBeforeRefreshStart(this.isAsynchronous)
     }
     try {
-      AsyncEventSupport.processEventsFromRefresh(events, appliers, asyncProcessing)
+      AsyncEventSupport.processEventsFromRefresh(events, appliers, excludeAsyncListeners)
     }
     catch (e: AssertionError) {
       if (FileStatusMap.CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING == e.message) {
@@ -317,9 +317,9 @@ internal class RefreshSessionImpl internal constructor(
   }
 
   @RequiresWriteLock
-  private fun doFireEvents(events: List<CompoundVFileEvent>, appliers: List<AsyncFileListener.ChangeApplier>, asyncProcessing: Boolean) {
+  private fun doFireEvents(events: List<CompoundVFileEvent>, appliers: List<AsyncFileListener.ChangeApplier>, excludeAsyncListeners: Boolean) {
     var t = System.nanoTime()
-    fireEventsInWriteAction(events, appliers, asyncProcessing)
+    fireEventsInWriteAction(events, appliers, excludeAsyncListeners)
     t = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t)
     if (t > PROGRESS_THRESHOLD_MILLIS) {
       LOG.warn("Long VFS change processing (" + t + "ms, " + events.size + " events): " + StringUtil.trimLog(events.subList(0, min(events.size, 100)).toString(), 10000))

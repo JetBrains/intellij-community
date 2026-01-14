@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.Application;
@@ -181,10 +181,10 @@ public final class AsyncEventSupport {
   @RequiresWriteLock
   static void processEventsFromRefresh(@NotNull List<CompoundVFileEvent> events,
                                        @NotNull List<AsyncFileListener.ChangeApplier> appliers,
-                                       boolean asyncProcessing) {
+                                       boolean excludeAsyncListeners) {
     beforeVfsChange(appliers);
     try {
-      ((PersistentFSImpl)PersistentFS.getInstance()).processEventsImpl(events, asyncProcessing);
+      ((PersistentFSImpl)PersistentFS.getInstance()).processEventsImpl(events, excludeAsyncListeners);
     }
     catch (Throwable e) {
       if (e instanceof ControlFlowException) {
