@@ -8,18 +8,26 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionContex
 import com.intellij.codeInsight.inline.completion.utils.InlineCompletionHandlerUtils.hideInlineCompletion
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.openapi.util.Key
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 
 // ML-1086
-internal class InlineEditorMouseListener : EditorMouseListener {
+@ApiStatus.Internal
+class InlineEditorMouseListener : EditorMouseListener {
   override fun mousePressed(event: EditorMouseEvent) {
     if (InlineCompletionContext.getOrNull(event.editor)?.containsPoint(event) == true) {
+      return
+    }
+    // to avoid NES becoming hidden on NES rating button click
+    if (event.inlay?.getUserData(IGNORE_MOUSE_CLICK) != null) {
       return
     }
     LOG.trace("Valuable mouse pressed event $event")
@@ -32,7 +40,13 @@ internal class InlineEditorMouseListener : EditorMouseListener {
   }
 
   companion object {
+    private val IGNORE_MOUSE_CLICK: Key<Unit> = Key.create("ignore.nes.mouse.click")
     private val LOG = thisLogger()
+
+    @ApiStatus.Internal
+    fun ignoreMouseClicks(inlay: Inlay<*>) {
+      inlay.putUserData(IGNORE_MOUSE_CLICK, Unit)
+    }
   }
 }
 
