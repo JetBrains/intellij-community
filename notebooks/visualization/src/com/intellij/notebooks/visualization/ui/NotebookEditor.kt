@@ -6,7 +6,7 @@ import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.util.Key
 
 interface NotebookEditor {
-  fun inlayClicked(clickedCell: NotebookCellLines.Interval, ctrlPressed: Boolean, shiftPressed: Boolean, mouseButton: Int)
+  fun inlayClicked(clickedCell: NotebookCellLines.Interval, clickModifiers: ClickModifiers)
   val editorPositionKeeper: NotebookPositionKeeper
 
   /** Updated by JupyterAboveCellToolbarManager. When set, we are hiding the cell action toolbar in the top right corner. */
