@@ -766,18 +766,18 @@ com.intellij.openapi.vcs.changes.ChangesViewI
 - a:selectFile(com.intellij.openapi.vfs.VirtualFile):V
 - a:setGrouping(java.lang.String):V
 - a:updateProgressComponent(java.util.List):V
-c:com.intellij.openapi.vcs.changes.ChangesViewManager
+f:com.intellij.openapi.vcs.changes.ChangesViewManager
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.vcs.changes.ChangesViewEx
-- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
-- closeEditorPreview(Z):V
-- s:createTextStatusFactory(java.lang.String,Z):com.intellij.openapi.util.Factory
-- diffPreviewChanged(Z):V
+- sf:Companion:com.intellij.openapi.vcs.changes.ChangesViewManager$Companion
+- f:closeEditorPreview(Z):V
+- sf:createTextStatusFactory(java.lang.String,Z):com.intellij.openapi.util.Factory
+- f:diffPreviewChanged(Z):V
 - dispose():V
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewI
-- s:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewEx
-- s:getLocalChangesToolWindowName(com.intellij.openapi.project.Project):java.lang.String
-- isDiffPreviewAvailable():Z
+- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewI
+- sf:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewEx
+- sf:getLocalChangesToolWindowName(com.intellij.openapi.project.Project):java.lang.String
+- f:isDiffPreviewAvailable():Z
 - resetViewImmediatelyAndRefreshLater():V
 - scheduleRefresh():V
 - scheduleRefresh(java.lang.Runnable):V
@@ -785,10 +785,11 @@ c:com.intellij.openapi.vcs.changes.ChangesViewManager
 - selectFile(com.intellij.openapi.vfs.VirtualFile):V
 - setGrouping(java.lang.String):V
 - updateProgressComponent(java.util.List):V
-c:com.intellij.openapi.vcs.changes.ChangesViewManager$ContentProvider
-- com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
-- <init>(com.intellij.openapi.project.Project):V
-- initTabContent(com.intellij.ui.content.Content):V
+f:com.intellij.openapi.vcs.changes.ChangesViewManager$Companion
+- f:createTextStatusFactory(java.lang.String,Z):com.intellij.openapi.util.Factory
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewI
+- f:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewEx
+- f:getLocalChangesToolWindowName(com.intellij.openapi.project.Project):java.lang.String
 c:com.intellij.openapi.vcs.changes.ChangesViewManager$DisplayNameSupplier
 - java.util.function.Supplier
 - <init>(com.intellij.openapi.project.Project):V

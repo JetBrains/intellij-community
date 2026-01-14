@@ -1,500 +1,422 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vcs.changes
 
-package com.intellij.openapi.vcs.changes;
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diff.tools.util.DiffDataKeys
+import com.intellij.diff.util.DiffUtil
+import com.intellij.ide.dnd.DnDEvent
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil.wrap
+import com.intellij.openapi.application.ModalityState.nonModal
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Factory
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager.ChangesViewWorkflowListener
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
+import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
+import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.content.Content
+import com.intellij.util.ModalityUiUtil.invokeLaterIfNeeded
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.Panels
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.vcs.changes.viewModel.ChangesViewProxy
+import com.intellij.vcs.commit.*
+import com.intellij.vcs.commit.CommitModeManager.Companion.subscribeOnCommitModeChange
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import java.util.function.Predicate
+import java.util.function.Supplier
+import javax.swing.JComponent
+import javax.swing.SwingConstants
 
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diff.tools.util.DiffDataKeys;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.ide.dnd.DnDEvent;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.content.Content;
-import com.intellij.util.ModalityUiUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
-import com.intellij.vcs.changes.viewModel.ChangesViewProxy;
-import com.intellij.vcs.commit.*;
-import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+private const val CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION"
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+class ChangesViewManager internal constructor(private val project: Project, private val cs: CoroutineScope) : ChangesViewEx, Disposable {
+  internal var changesView: ChangesViewProxy? = null
+    private set
+  private var toolWindowPanel: ChangesViewToolWindowPanel? = null
 
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.*;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.subscribeOnVcsToolWindowLayoutChanges;
-import static com.intellij.util.ui.JBUI.Panels.simplePanel;
-
-public class ChangesViewManager implements ChangesViewEx, Disposable {
-  private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
-
-  private final @NotNull CoroutineScope myScope;
-  private final @NotNull Project myProject;
-
-  private @Nullable ChangesViewProxy myChangesView;
-  private @Nullable ChangesViewToolWindowPanel myToolWindowPanel;
-
-  @NotNull
   @RequiresEdt
-  ChangesViewProxy initChangesView() {
-    if (myChangesView == null) {
-      Activity activity = StartUpMeasurer.startActivity("ChangesViewPanel initialization");
-      myChangesView = ChangesViewProxy.create(myProject, myScope);
-      activity.end();
+  private fun initChangesView(): ChangesViewProxy {
+    return changesView ?: run {
+      val activity = StartUpMeasurer.startActivity("ChangesViewPanel initialization")
+      val view = ChangesViewProxy.create(project, cs)
+      activity.end()
+      view
+    }.also {
+      changesView = it
     }
-    return myChangesView;
   }
 
   @RequiresEdt
-  private @NotNull ChangesViewToolWindowPanel initToolWindowPanel() {
-    if (myToolWindowPanel == null) {
-      Activity activity = StartUpMeasurer.startActivity("ChangesViewToolWindowPanel initialization");
+  private fun initToolWindowPanel(): ChangesViewToolWindowPanel {
+    return toolWindowPanel ?: run {
+      val activity = StartUpMeasurer.startActivity("ChangesViewToolWindowPanel initialization")
 
-      ChangesViewProxy changesView = initChangesView();
-      ChangesViewToolWindowPanel panel = new ChangesViewToolWindowPanel(myProject, changesView);
-      Disposer.register(this, panel);
+      val changesView = initChangesView()
+      val panel = ChangesViewToolWindowPanel(project, changesView)
+      Disposer.register(this, panel)
 
-      panel.updateCommitWorkflow();
+      panel.updateCommitWorkflow()
 
-      myToolWindowPanel = panel;
-      Disposer.register(panel, () -> {
+      Disposer.register(panel, Disposable {
         // Content is removed from TW
-        myChangesView = null;
-        myToolWindowPanel = null;
-      });
-      Disposer.register(panel, changesView);
+        this.changesView = null
+        toolWindowPanel = null
+      })
+      Disposer.register(panel, changesView)
 
-      activity.end();
+      activity.end()
+      panel
+    }.also {
+      toolWindowPanel = it
     }
-    return myToolWindowPanel;
   }
 
-  public ChangesViewManager(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
-    myScope = coroutineScope;
-    myProject = project;
-
-    MessageBusConnection busConnection = project.getMessageBus().connect(this);
-    busConnection.subscribe(ChangesViewWorkflowManager.TOPIC, () -> updateCommitWorkflow());
+  init {
+    project.getMessageBus().connect(this)
+      .subscribe(ChangesViewWorkflowManager.TOPIC, ChangesViewWorkflowListener { updateCommitWorkflow() })
   }
 
-  @Override
   @ApiStatus.Internal
-  public @NotNull ChangesViewCommitWorkflowUi createCommitPanel() {
-    ChangesViewProxy changesView = initChangesView();
-    return new ChangesViewCommitPanel(myProject, changesView);
+  override fun createCommitPanel(): ChangesViewCommitWorkflowUi {
+    val changesView = initChangesView()
+    return ChangesViewCommitPanel(project, changesView)
   }
 
-  public static class DisplayNameSupplier implements Supplier<String> {
-    private final @NotNull Project myProject;
+  override fun dispose() {
+  }
 
-    public DisplayNameSupplier(@NotNull Project project) {
-      myProject = project;
+  override fun scheduleRefresh(callback: Runnable) {
+    changesView?.scheduleRefreshNow(callback)
+  }
+
+  override fun scheduleRefresh() {
+    changesView?.scheduleDelayedRefresh()
+  }
+
+  override fun selectFile(vFile: VirtualFile?) {
+    changesView?.selectFile(vFile)
+  }
+
+  override fun selectChanges(changes: List<Change>) {
+    changesView?.selectChanges(changes.toList())
+  }
+
+  override fun updateProgressComponent(progress: List<Supplier<JComponent?>>) {
+    toolWindowPanel?.updateProgressComponent(progress)
+  }
+
+  override fun setGrouping(groupingKey: String) {
+    changesView?.setGrouping(groupingKey)
+  }
+
+  private fun updateCommitWorkflow() {
+    toolWindowPanel?.updateCommitWorkflow()
+  }
+
+  fun closeEditorPreview(onlyIfEmpty: Boolean) {
+    toolWindowPanel?.closeEditorPreview(onlyIfEmpty)
+  }
+
+  override fun resetViewImmediatelyAndRefreshLater() {
+    changesView?.resetViewImmediatelyAndRefreshLater()
+  }
+
+  val isDiffPreviewAvailable: Boolean
+    get() = toolWindowPanel?.splitterDiffPreview != null ||
+            Registry.get("show.diff.preview.as.editor.tab.with.single.click").asBoolean()
+
+  fun diffPreviewChanged(state: Boolean) {
+    toolWindowPanel?.apply {
+      val preview = splitterDiffPreview ?: editorDiffPreview
+      DiffPreview.setPreviewVisible(preview, state)
+      updatePanelLayout()
     }
+  }
 
-    @Override
-    public String get() {
-      return getLocalChangesToolWindowName(myProject);
+  internal class ContentPreloader(private val project: Project) : ChangesViewContentProvider.Preloader {
+    override fun preloadTabContent(content: Content) {
+      ChangesViewCommitTabTitleUpdater(project, ChangesViewContentManager.LOCAL_CHANGES).init(content)
+
+      content.putUserData(Content.TAB_DND_TARGET_KEY, MyContentDnDTarget(project, content))
     }
   }
 
-  public static @NotNull ChangesViewI getInstance(@NotNull Project project) {
-    return project.getService(ChangesViewI.class);
-  }
-
-  public static @NotNull ChangesViewEx getInstanceEx(@NotNull Project project) {
-    return (ChangesViewEx)getInstance(project);
-  }
-
-  public static @NotNull Factory<JComponent> createTextStatusFactory(@NlsContexts.Label String text, final boolean isError) {
-    return () -> {
-      JLabel label = new JBLabel(StringUtil.replace(text.trim(), "\n", UIUtil.BR)).setCopyable(true);
-      label.setVerticalTextPosition(SwingConstants.TOP);
-      label.setBorder(JBUI.Borders.empty(3));
-      label.setForeground(isError ? JBColor.RED : UIUtil.getLabelForeground());
-      return label;
-    };
-  }
-
-  @Override
-  public void dispose() {
-  }
-
-  static class ContentPreloader implements ChangesViewContentProvider.Preloader {
-    private final @NotNull Project myProject;
-
-    ContentPreloader(@NotNull Project project) {
-      myProject = project;
-    }
-
-    @Override
-    public void preloadTabContent(@NotNull Content content) {
-      new ChangesViewCommitTabTitleUpdater(myProject, LOCAL_CHANGES).init(content);
-
-      content.putUserData(Content.TAB_DND_TARGET_KEY, new MyContentDnDTarget(myProject, content));
-    }
-  }
-
-  static final class ContentPredicate implements Predicate<Project> {
-    @Override
-    public boolean test(Project project) {
+  internal class ContentPredicate : Predicate<Project> {
+    override fun test(project: Project): Boolean {
       return ProjectLevelVcsManager.getInstance(project).hasActiveVcss() &&
-             !CommitModeManager.getInstance(project).getCurrentCommitMode().isLocalChangesTabHidden();
+             !CommitModeManager.getInstance(project).getCurrentCommitMode().isLocalChangesTabHidden
     }
   }
 
-  @Override
-  public void scheduleRefresh(@NotNull Runnable callback) {
-    if (myChangesView == null) return;
-    myChangesView.scheduleRefreshNow(callback);
-  }
+  internal class ContentProvider(private val project: Project) : ChangesViewContentProvider {
+    override fun initTabContent(content: Content) {
+      val viewManager = getInstance(project) as ChangesViewManager
+      val panel = viewManager.initToolWindowPanel()
 
-  @Override
-  public void scheduleRefresh() {
-    if (myChangesView == null) return;
-    myChangesView.scheduleDelayedRefresh();
-  }
-
-  @Override
-  public void selectFile(VirtualFile vFile) {
-    if (myChangesView == null) return;
-    myChangesView.selectFile(vFile);
-  }
-
-  @Override
-  public void selectChanges(@NotNull List<? extends Change> changes) {
-    if (myChangesView == null) return;
-    myChangesView.selectChanges(new ArrayList<>(changes));
-  }
-
-  @Override
-  public void updateProgressComponent(@NotNull List<Supplier<JComponent>> progress) {
-    if (myToolWindowPanel == null) return;
-    myToolWindowPanel.updateProgressComponent(progress);
-  }
-
-  @Override
-  public void setGrouping(@NotNull String groupingKey) {
-    if (myChangesView == null) return;
-    myChangesView.setGrouping(groupingKey);
-  }
-
-  private void updateCommitWorkflow() {
-    if (myToolWindowPanel == null) return;
-    myToolWindowPanel.updateCommitWorkflow();
-  }
-
-  public void closeEditorPreview(boolean onlyIfEmpty) {
-    if (myToolWindowPanel == null) return;
-    myToolWindowPanel.closeEditorPreview(onlyIfEmpty);
-  }
-
-  @Override
-  public void resetViewImmediatelyAndRefreshLater() {
-    if (myChangesView != null) {
-      myChangesView.resetViewImmediatelyAndRefreshLater();
+      content.setHelpId(ChangesListView.HELP_ID)
+      content.setComponent(panel)
+      content.setPreferredFocusableComponent(panel.getPreferredFocusedComponent())
     }
   }
 
-  public static class ContentProvider implements ChangesViewContentProvider {
-    private final @NotNull Project myProject;
-
-    public ContentProvider(@NotNull Project project) {
-      myProject = project;
-    }
-
-    @Override
-    public void initTabContent(@NotNull Content content) {
-      ChangesViewManager viewManager = (ChangesViewManager)getInstance(myProject);
-      ChangesViewToolWindowPanel panel = viewManager.initToolWindowPanel();
-
-      content.setHelpId(ChangesListView.HELP_ID);
-      content.setComponent(panel);
-      content.setPreferredFocusableComponent(panel.myChangesView.getPreferredFocusedComponent());
-    }
-  }
-
-  public boolean isDiffPreviewAvailable() {
-    if (myToolWindowPanel == null) return false;
-
-    return myToolWindowPanel.mySplitterDiffPreview != null ||
-           ChangesViewToolWindowPanel.isOpenEditorDiffPreviewWithSingleClick.asBoolean();
-  }
-
-  public void diffPreviewChanged(boolean state) {
-    if (myToolWindowPanel == null) return;
-    DiffPreview preview = ObjectUtils.chooseNotNull(myToolWindowPanel.mySplitterDiffPreview,
-                                                    myToolWindowPanel.myEditorDiffPreview);
-    DiffPreview.setPreviewVisible(preview, state);
-    myToolWindowPanel.updatePanelLayout();
-  }
-
-
-  private static final class MyContentDnDTarget extends VcsToolwindowDnDTarget {
-    private MyContentDnDTarget(@NotNull Project project, @NotNull Content content) {
-      super(project, content);
-    }
-
-    @Override
-    public void drop(DnDEvent event) {
-      super.drop(event);
-      Object attachedObject = event.getAttachedObject();
-      if (attachedObject instanceof ShelvedChangeListDragBean) {
-        ShelveChangesManager.unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attachedObject, null,
-                                                     !ChangesTreeDnDSupport.isCopyAction(event));
+  private class MyContentDnDTarget(project: Project, content: Content) : VcsToolwindowDnDTarget(project, content) {
+    override fun drop(event: DnDEvent) {
+      super.drop(event)
+      val attachedObject = event.getAttachedObject()
+      if (attachedObject is ShelvedChangeListDragBean) {
+        ShelveChangesManager.unshelveSilentlyWithDnd(
+          myProject, attachedObject, null,
+          !ChangesTreeDnDSupport.isCopyAction(event)
+        )
       }
     }
 
-    @Override
-    public boolean isDropPossible(@NotNull DnDEvent event) {
-      Object attachedObject = event.getAttachedObject();
-      if (attachedObject instanceof ShelvedChangeListDragBean) {
-        return !((ShelvedChangeListDragBean)attachedObject).getShelvedChangelists().isEmpty();
+    override fun isDropPossible(event: DnDEvent): Boolean {
+      val attachedObject = event.getAttachedObject()
+      if (attachedObject is ShelvedChangeListDragBean) {
+        return !attachedObject.shelvedChangelists.isEmpty()
       }
-      return attachedObject instanceof ChangeListDragBean;
+      return attachedObject is ChangeListDragBean
     }
   }
 
-  private static final class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
-    private static final @NotNull RegistryValue isOpenEditorDiffPreviewWithSingleClick =
-      Registry.get("show.diff.preview.as.editor.tab.with.single.click");
+  private class ChangesViewToolWindowPanel(
+    private val project: Project,
+    private val changesView: ChangesViewProxy,
+  ) : SimpleToolWindowPanel(false, true), Disposable {
+    private val vcsConfiguration: VcsConfiguration
 
-    private final @NotNull Project myProject;
-    private final @NotNull VcsConfiguration myVcsConfiguration;
+    private val mainPanelContent: Wrapper
+    private val contentPanel: BorderLayoutPanel
 
-    private final @NotNull Wrapper myMainPanelContent;
-    private final @NotNull BorderLayoutPanel myContentPanel;
+    private val commitPanelSplitter: ChangesViewCommitPanelSplitter
+    val editorDiffPreview: ChangesViewEditorDiffPreview
+    var splitterDiffPreview: ChangesViewSplitterDiffPreview? = null
 
-    private final @NotNull ChangesViewProxy myChangesView;
+    private val progressLabel = Wrapper()
 
-    private final @NotNull ChangesViewCommitPanelSplitter myCommitPanelSplitter;
-    private final @NotNull ChangesViewEditorDiffPreview myEditorDiffPreview;
-    private @Nullable ChangesViewSplitterDiffPreview mySplitterDiffPreview;
+    private var commitPanel: ChangesViewCommitPanel? = null
+    private var commitWorkflowHandler: ChangesViewCommitWorkflowHandler? = null
 
-    private final @NotNull Wrapper myProgressLabel = new Wrapper();
+    private var isDisposed = false
 
-    private @Nullable ChangesViewCommitPanel myCommitPanel;
-    private @Nullable ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
+    init {
+      changesView.initPanel()
 
-    private boolean myDisposed = false;
+      val busConnection = project.getMessageBus().connect(this)
+      vcsConfiguration = VcsConfiguration.getInstance(project)
 
-    private ChangesViewToolWindowPanel(@NotNull Project project,
-                                       @NotNull ChangesViewProxy changesView) {
-      super(false, true);
-      myProject = project;
-      myChangesView = changesView;
-      myChangesView.initPanel();
+      registerShortcuts(this)
 
-      MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
-      myVcsConfiguration = VcsConfiguration.getInstance(myProject);
+      subscribeOnCommitModeChange(busConnection, CommitModeManager.CommitModeListener { configureToolbars() })
+      configureToolbars()
 
-      registerShortcuts(this);
+      commitPanelSplitter = ChangesViewCommitPanelSplitter(project)
+      Disposer.register(this, commitPanelSplitter)
+      commitPanelSplitter.setFirstComponent(changesView.panel)
 
-      CommitModeManager.subscribeOnCommitModeChange(busConnection, () -> configureToolbars());
-      configureToolbars();
+      contentPanel = BorderLayoutPanel()
+      contentPanel.addToCenter(commitPanelSplitter)
+      mainPanelContent = Wrapper(contentPanel)
+      editorDiffPreview = ChangesViewEditorDiffPreview(changesView, contentPanel)
+      Disposer.register(this, editorDiffPreview)
 
-      myCommitPanelSplitter = new ChangesViewCommitPanelSplitter(myProject);
-      Disposer.register(this, myCommitPanelSplitter);
-      myCommitPanelSplitter.setFirstComponent(myChangesView.getPanel());
+      val mainPanel = Panels.simplePanel(mainPanelContent).addToBottom(progressLabel)
+      setContent(mainPanel)
 
-      myContentPanel = new BorderLayoutPanel();
-      myContentPanel.addToCenter(myCommitPanelSplitter);
-      myMainPanelContent = new Wrapper(myContentPanel);
-      JPanel mainPanel = simplePanel(myMainPanelContent)
-        .addToBottom(myProgressLabel);
-
-      myEditorDiffPreview = new ChangesViewEditorDiffPreview(changesView, myContentPanel);
-      Disposer.register(this, myEditorDiffPreview);
-
-      setContent(mainPanel);
-
-      subscribeOnVcsToolWindowLayoutChanges(busConnection, this::updatePanelLayout);
-      updatePanelLayout();
+      busConnection.subscribeOnVcsToolWindowLayoutChanges(Runnable { this.updatePanelLayout() })
+      updatePanelLayout()
     }
 
-    @Override
-    public void dispose() {
-      myDisposed = true;
+    override fun dispose() {
+      isDisposed = true
 
-      if (mySplitterDiffPreview != null) Disposer.dispose(mySplitterDiffPreview);
-      mySplitterDiffPreview = null;
+      if (splitterDiffPreview != null) Disposer.dispose(splitterDiffPreview!!)
+      splitterDiffPreview = null
     }
 
-    private void updatePanelLayout() {
-      if (myDisposed) return;
+    fun updatePanelLayout() {
+      if (isDisposed) return
 
-      boolean isVertical = isToolWindowTabVertical(myProject, LOCAL_CHANGES);
-      boolean hasSplitterPreview = shouldHaveSplitterDiffPreview(myProject, isVertical);
-      boolean isPreviewPanelShown = hasSplitterPreview && myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
-      myCommitPanelSplitter.setOrientation(isPreviewPanelShown || isVertical);
+      val isVertical = ChangesViewContentManager.isToolWindowTabVertical(project, ChangesViewContentManager.LOCAL_CHANGES)
+      val hasSplitterPreview = ChangesViewContentManager.shouldHaveSplitterDiffPreview(project, isVertical)
+      val isPreviewPanelShown = hasSplitterPreview && vcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN
+      commitPanelSplitter.setOrientation(isPreviewPanelShown || isVertical)
 
-      //noinspection DoubleNegation
-      boolean needUpdatePreviews = hasSplitterPreview != (mySplitterDiffPreview != null);
-      if (!needUpdatePreviews) return;
+      val needUpdatePreviews = hasSplitterPreview != (splitterDiffPreview != null)
+      if (!needUpdatePreviews) return
 
       if (hasSplitterPreview) {
-        mySplitterDiffPreview = new ChangesViewSplitterDiffPreview();
-        DiffPreview.setPreviewVisible(mySplitterDiffPreview, myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+        splitterDiffPreview = ChangesViewSplitterDiffPreview(changesView.createDiffPreviewProcessor(false))
+        DiffPreview.setPreviewVisible(splitterDiffPreview!!, vcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN)
       }
       else {
-        Disposer.dispose(mySplitterDiffPreview);
-        mySplitterDiffPreview = null;
+        Disposer.dispose(splitterDiffPreview!!)
+        splitterDiffPreview = null
       }
     }
 
-    private class ChangesViewSplitterDiffPreview implements DiffPreview, Disposable {
-      private final ChangeViewDiffRequestProcessor myProcessor;
-      private final PreviewDiffSplitterComponent mySplitterComponent;
+    private inner class ChangesViewSplitterDiffPreview(
+      private val processor: ChangeViewDiffRequestProcessor,
+    ) : DiffPreview, Disposable {
+      private val splitterComponent = PreviewDiffSplitterComponent(processor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION)
 
-      private ChangesViewSplitterDiffPreview() {
-        myProcessor = myChangesView.createDiffPreviewProcessor(false);
-        mySplitterComponent = new PreviewDiffSplitterComponent(myProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION);
-
-        mySplitterComponent.setFirstComponent(myContentPanel);
-        myMainPanelContent.setContent(mySplitterComponent);
+      init {
+        splitterComponent.setFirstComponent(contentPanel)
+        mainPanelContent.setContent(splitterComponent)
       }
 
-      @Override
-      public void dispose() {
-        Disposer.dispose(myProcessor);
+      override fun dispose() {
+        Disposer.dispose(processor)
 
-        if (!ChangesViewToolWindowPanel.this.myDisposed) {
-          myMainPanelContent.setContent(myContentPanel);
+        if (!this@ChangesViewToolWindowPanel.isDisposed) {
+          mainPanelContent.setContent(contentPanel)
         }
       }
 
-      @Override
-      public boolean openPreview(boolean requestFocus) {
-        return mySplitterComponent.openPreview(requestFocus);
+      override fun openPreview(requestFocus: Boolean): Boolean {
+        return splitterComponent.openPreview(requestFocus)
       }
 
-      @Override
-      public void closePreview() {
-        mySplitterComponent.closePreview();
+      override fun closePreview() {
+        splitterComponent.closePreview()
       }
     }
 
-    private void closeEditorPreview(boolean onlyIfEmpty) {
-      if (onlyIfEmpty && myEditorDiffPreview.hasContent()) return;
-      myEditorDiffPreview.closePreview();
+    fun closeEditorPreview(onlyIfEmpty: Boolean) {
+      if (onlyIfEmpty && editorDiffPreview.hasContent()) return
+      editorDiffPreview.closePreview()
     }
 
-    public void updateCommitWorkflow() {
-      if (myDisposed) return;
+    fun updateCommitWorkflow() {
+      if (isDisposed) return
 
-      ChangesViewCommitWorkflowHandler newWorkflowHandler = ChangesViewWorkflowManager.getInstance(myProject).getCommitWorkflowHandler();
-      if (myCommitWorkflowHandler == newWorkflowHandler) return;
+      val newWorkflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
+      if (commitWorkflowHandler == newWorkflowHandler) return
 
       if (newWorkflowHandler != null) {
-        ChangesViewCommitPanel newCommitPanel = (ChangesViewCommitPanel)newWorkflowHandler.getUi();
-        newCommitPanel.registerRootComponent(this);
-        myCommitPanelSplitter.setSecondComponent(newCommitPanel.getComponent());
+        val newCommitPanel = newWorkflowHandler.ui as ChangesViewCommitPanel
+        newCommitPanel.registerRootComponent(this)
+        commitPanelSplitter.setSecondComponent(newCommitPanel.getComponent())
 
-        myCommitWorkflowHandler = newWorkflowHandler;
-        myCommitPanel = newCommitPanel;
+        commitWorkflowHandler = newWorkflowHandler
+        commitPanel = newCommitPanel
       }
       else {
-        myCommitPanelSplitter.setSecondComponent(null);
+        commitPanelSplitter.setSecondComponent(null)
 
-        myCommitWorkflowHandler = null;
-        myCommitPanel = null;
+        commitWorkflowHandler = null
+        commitPanel = null
       }
-      configureToolbars();
+      configureToolbars()
     }
 
-    private void configureToolbars() {
-      boolean isToolbarHorizontal = CommitModeManager.isCommitToolWindowEnabled(myProject);
-      myChangesView.setToolbarHorizontal(isToolbarHorizontal);
+    fun configureToolbars() {
+      val isToolbarHorizontal = CommitModeManager.isCommitToolWindowEnabled(project)
+      changesView.setToolbarHorizontal(isToolbarHorizontal)
     }
 
-    @Override
-    public @NotNull List<AnAction> getActions(boolean originalProvider) {
-      ActionManager actionManager = ActionManager.getInstance();
-      DefaultActionGroup toolbarActionGroup = (DefaultActionGroup)actionManager.getAction("ChangesViewToolbar.Shared");
-      return Arrays.asList(toolbarActionGroup.getChildren(actionManager));
+    override fun getActions(originalProvider: Boolean): List<AnAction?> {
+      val actionManager = ActionManager.getInstance()
+      val toolbarActionGroup = actionManager.getAction("ChangesViewToolbar.Shared") as DefaultActionGroup
+      return toolbarActionGroup.getChildren(actionManager).toList()
     }
 
-    @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
-      super.uiDataSnapshot(sink);
-      sink.set(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
+    override fun uiDataSnapshot(sink: DataSink) {
+      super.uiDataSnapshot(sink)
+      sink.set<DiffPreview>(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW, editorDiffPreview)
 
       // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
-      DataSink.uiDataSnapshot(sink, myCommitPanel);
+      DataSink.uiDataSnapshot(sink, commitPanel)
     }
 
-    private static void registerShortcuts(@NotNull JComponent component) {
-      ActionUtil.wrap("ChangesView.Refresh").registerCustomShortcutSet(CommonShortcuts.getRerun(), component);
-      ActionUtil.wrap("ChangesView.NewChangeList").registerCustomShortcutSet(CommonShortcuts.getNew(), component);
-      ActionUtil.wrap("ChangesView.RemoveChangeList").registerCustomShortcutSet(CommonShortcuts.getDelete(), component);
-      ActionUtil.wrap(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST).registerCustomShortcutSet(CommonShortcuts.getMove(), component);
-    }
-
-    private void updateProgressComponent(@NotNull List<Supplier<@Nullable JComponent>> progress) {
-      invokeLaterIfNeeded(() -> {
-        if (myDisposed) return;
-        List<? extends @Nullable JComponent> components = ContainerUtil.mapNotNull(progress, it -> it.get());
+    fun updateProgressComponent(progress: List<Supplier<JComponent?>>) {
+      invokeLaterIfNeeded(nonModal(), { isDisposed }, Runnable {
+        val components = progress.mapNotNull { it.get() }
         if (!components.isEmpty()) {
-          JComponent component = DiffUtil.createStackedComponents(components, DiffUtil.TITLE_GAP);
-          myProgressLabel.setContent(new FixedSizeScrollPanel(component, new JBDimension(400, 100)));
+          val component = DiffUtil.createStackedComponents(components, DiffUtil.TITLE_GAP)
+          progressLabel.setContent(FixedSizeScrollPanel(component, JBDimension(400, 100)))
         }
         else {
-          myProgressLabel.setContent(null);
+          progressLabel.setContent(null)
         }
-      });
+      })
     }
 
-    private void invokeLaterIfNeeded(Runnable runnable) {
-      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), myProject.getDisposed(), runnable);
+    fun getPreferredFocusedComponent(): JComponent = changesView.getPreferredFocusedComponent()
+
+    companion object {
+      private fun registerShortcuts(component: JComponent) {
+        wrap("ChangesView.Refresh").registerCustomShortcutSet(CommonShortcuts.getRerun(), component)
+        wrap("ChangesView.NewChangeList").registerCustomShortcutSet(CommonShortcuts.getNew(), component)
+        wrap("ChangesView.RemoveChangeList").registerCustomShortcutSet(CommonShortcuts.getDelete(), component)
+        wrap(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST).registerCustomShortcutSet(CommonShortcuts.getMove(), component)
+      }
     }
   }
 
-  public static @NotNull @Nls String getLocalChangesToolWindowName(@NotNull Project project) {
-    return CommitModeManager.isCommitToolWindowEnabled(project)
-           ? VcsBundle.message("tab.title.commit")
-           : VcsBundle.message("local.changes.tab");
+  @get:ApiStatus.Internal
+  @get:Deprecated("Use ChangesViewWorkflowManager#getCommitWorkflowHandler")
+  override val commitWorkflowHandler: ChangesViewCommitWorkflowHandler?
+    get() = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
+
+  @Deprecated("Use ChangesViewManager.getLocalChangesToolWindowName")
+  open class DisplayNameSupplier(private val project: Project) : Supplier<String?> {
+    override fun get(): String = getLocalChangesToolWindowName(project)
   }
 
-  @ApiStatus.Internal
-  @Override
-  public @Nullable ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
-    return ChangesViewWorkflowManager.getInstance(myProject).getCommitWorkflowHandler();
-  }
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): ChangesViewI {
+      return project.getService(ChangesViewI::class.java)
+    }
 
-  @ApiStatus.Internal
-  public @Nullable ChangesViewProxy getChangesView() {
-    return myChangesView;
+    @JvmStatic
+    fun getInstanceEx(project: Project): ChangesViewEx {
+      return getInstance(project) as ChangesViewEx
+    }
+
+    @JvmStatic
+    fun createTextStatusFactory(@NlsContexts.Label text: @NlsContexts.Label String, isError: Boolean): Factory<JComponent?> {
+      return Factory {
+        val text = StringUtil.replace(text.trim { it <= ' ' }, "\n", UIUtil.BR)
+        JBLabel(text).apply {
+          setCopyable(true)
+          setVerticalTextPosition(SwingConstants.TOP)
+          setBorder(JBUI.Borders.empty(3))
+          setForeground(if (isError) JBColor.RED else UIUtil.getLabelForeground())
+        }
+      }
+    }
+
+    @JvmStatic
+    @Nls
+    fun getLocalChangesToolWindowName(project: Project): @Nls String {
+      return if (CommitModeManager.isCommitToolWindowEnabled(project)) {
+        VcsBundle.message("tab.title.commit")
+      }
+      else {
+        VcsBundle.message("local.changes.tab")
+      }
+    }
   }
 }
