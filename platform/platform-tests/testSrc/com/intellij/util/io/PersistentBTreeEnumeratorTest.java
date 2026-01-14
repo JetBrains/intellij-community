@@ -387,6 +387,263 @@ public class PersistentBTreeEnumeratorTest {
     }
   }
 
+  // ==================== Flush Operation Tests ====================
+  
+  @Test
+  public void testFlushWithoutChangesSucceeds() throws IOException {
+    String value = "testValue";
+    myEnumerator.enumerate(value);
+    myEnumerator.force();
+    
+    // Flush again without changes should succeed
+    myEnumerator.force();
+    assertFalse(myEnumerator.isDirty());
+  }
+  
+  @Test
+  public void testMultipleConsecutiveFlushes() throws IOException {
+    String value1 = "value1";
+    String value2 = "value2";
+    
+    int id1 = myEnumerator.enumerate(value1);
+    myEnumerator.force();
+    assertFalse(myEnumerator.isDirty());
+    
+    int id2 = myEnumerator.enumerate(value2);
+    myEnumerator.force();
+    assertFalse(myEnumerator.isDirty());
+    
+    myEnumerator.force(); // Third flush without changes
+    assertFalse(myEnumerator.isDirty());
+    
+    assertEquals(value1, myEnumerator.valueOf(id1));
+    assertEquals(value2, myEnumerator.valueOf(id2));
+  }
+  
+  @Test
+  public void testFlushEnsuresPersistence() throws IOException {
+    String value = "persistentValue";
+    int id = myEnumerator.enumerate(value);
+    myEnumerator.force();
+    
+    // Reopen and verify data persisted
+    myEnumerator.close();
+    myEnumerator = new TestStringEnumerator(myFile);
+    
+    assertEquals(value, myEnumerator.valueOf(id));
+    assertEquals(id, myEnumerator.tryEnumerate(value));
+  }
+  
+  // ==================== Empty Enumerator Tests ====================
+  
+  @Test
+  public void testEmptyEnumeratorValueOfReturnsNull() throws IOException {
+    // Fresh enumerator should return null for any ID
+    assertNull(myEnumerator.valueOf(1));
+    assertNull(myEnumerator.valueOf(100));
+    assertNull(myEnumerator.valueOf(Integer.MAX_VALUE));
+  }
+  
+  @Test
+  public void testEmptyEnumeratorGetAllReturnsEmpty() throws IOException {
+    Collection<String> allObjects = myEnumerator.getAllDataObjects(null);
+    assertNotNull(allObjects);
+    assertTrue(allObjects.isEmpty());
+  }
+  
+  @Test
+  public void testEmptyEnumeratorProcessAllReturnsTrue() throws IOException {
+    // processAllDataObject should return true (meaning "continue") when no data
+    boolean result = myEnumerator.processAllDataObject(value -> {
+      fail("Should not be called for empty enumerator");
+      return true;
+    }, null);
+    assertTrue("Empty enumerator should return true from processAllDataObject", result);
+  }
+  
+  @Test
+  public void testEmptyEnumeratorTryEnumerateReturnsNull() throws IOException {
+    assertEquals(DataEnumerator.NULL_ID, myEnumerator.tryEnumerate("nonExistent"));
+    assertEquals(DataEnumerator.NULL_ID, myEnumerator.tryEnumerate(""));
+    assertEquals(DataEnumerator.NULL_ID, myEnumerator.tryEnumerate("anything"));
+  }
+  
+  @Test
+  public void testEmptyEnumeratorPersistedCorrectly() throws IOException {
+    myEnumerator.force();
+    myEnumerator.close();
+    myEnumerator = new TestStringEnumerator(myFile);
+    
+    // Should still be empty after reopen
+    assertTrue(myEnumerator.getAllDataObjects(null).isEmpty());
+    assertFalse(myEnumerator.isDirty());
+  }
+  
+  // ==================== Single Element Tests ====================
+  
+  @Test
+  public void testSingleElementEnumerator() throws IOException {
+    String value = "singleValue";
+    int id = myEnumerator.enumerate(value);
+    
+    assertEquals(value, myEnumerator.valueOf(id));
+    assertEquals(id, myEnumerator.tryEnumerate(value));
+    assertEquals(DataEnumerator.NULL_ID, myEnumerator.tryEnumerate("other"));
+    
+    Collection<String> all = myEnumerator.getAllDataObjects(null);
+    assertEquals(1, all.size());
+    assertTrue(all.contains(value));
+  }
+  
+  @Test
+  public void testSingleElementPersistedAfterReopen() throws IOException {
+    String value = "persistentSingle";
+    int id = myEnumerator.enumerate(value);
+    myEnumerator.force();
+    
+    myEnumerator.close();
+    myEnumerator = new TestStringEnumerator(myFile);
+    
+    assertEquals(value, myEnumerator.valueOf(id));
+    assertEquals(id, myEnumerator.tryEnumerate(value));
+    
+    Collection<String> all = myEnumerator.getAllDataObjects(null);
+    assertEquals(1, all.size());
+    assertTrue(all.contains(value));
+  }
+  
+  @Test
+  public void testSingleElementReenumerationReturnsSameId() throws IOException {
+    String value = "reenumedValue";
+    int id1 = myEnumerator.enumerate(value);
+    int id2 = myEnumerator.enumerate(value);
+    int id3 = myEnumerator.enumerate(value);
+    
+    assertEquals(id1, id2);
+    assertEquals(id1, id3);
+    
+    Collection<String> all = myEnumerator.getAllDataObjects(null);
+    assertEquals(1, all.size());
+  }
+  
+  // ==================== Sequential Operations Tests ====================
+  
+  @Test
+  public void testSequentialEnumerationMaintainsConsistency() throws IOException {
+    List<String> values = new ArrayList<>();
+    List<Integer> ids = new ArrayList<>();
+    
+    // Enumerate 1000 sequential values
+    for (int i = 0; i < 1000; i++) {
+      String value = "seq_" + i;
+      values.add(value);
+      ids.add(myEnumerator.enumerate(value));
+    }
+    
+    // Verify all can be retrieved
+    for (int i = 0; i < 1000; i++) {
+      assertEquals(values.get(i), myEnumerator.valueOf(ids.get(i)));
+      assertEquals((int)ids.get(i), myEnumerator.tryEnumerate(values.get(i)));
+    }
+    
+    // Verify all are in getAllDataObjects
+    Collection<String> all = myEnumerator.getAllDataObjects(null);
+    assertEquals(1000, all.size());
+    assertTrue(all.containsAll(values));
+  }
+  
+  @Test
+  public void testInterleavedEnumerateAndRetrieve() throws IOException {
+    Map<String, Integer> valueToId = new HashMap<>();
+    
+    for (int i = 0; i < 100; i++) {
+      String value = "interleaved_" + i;
+      int id = myEnumerator.enumerate(value);
+      valueToId.put(value, id);
+      
+      // Immediately verify
+      assertEquals(value, myEnumerator.valueOf(id));
+      assertEquals(id, myEnumerator.tryEnumerate(value));
+      
+      // Verify all previous values still work
+      for (Map.Entry<String, Integer> entry : valueToId.entrySet()) {
+        assertEquals(entry.getKey(), myEnumerator.valueOf(entry.getValue()));
+      }
+    }
+  }
+  
+  @Test
+  public void testBoundaryValueStrings() throws IOException {
+    String empty = "";
+    String nullChar = "\u0000";
+    String longString = StringUtil.repeat("x", 10000);
+    String unicodeString = "\u0001\u0002\uffff\ud800\udc00"; // Including surrogate pair
+    
+    int id1 = myEnumerator.enumerate(empty);
+    int id2 = myEnumerator.enumerate(nullChar);
+    int id3 = myEnumerator.enumerate(longString);
+    int id4 = myEnumerator.enumerate(unicodeString);
+    
+    // All IDs should be unique
+    assertNotEquals(id1, id2);
+    assertNotEquals(id1, id3);
+    assertNotEquals(id1, id4);
+    assertNotEquals(id2, id3);
+    assertNotEquals(id2, id4);
+    assertNotEquals(id3, id4);
+    
+    // All should be retrievable
+    assertEquals(empty, myEnumerator.valueOf(id1));
+    assertEquals(nullChar, myEnumerator.valueOf(id2));
+    assertEquals(longString, myEnumerator.valueOf(id3));
+    assertEquals(unicodeString, myEnumerator.valueOf(id4));
+    
+    // Persist and verify
+    myEnumerator.force();
+    myEnumerator.close();
+    myEnumerator = new TestStringEnumerator(myFile);
+    
+    assertEquals(empty, myEnumerator.valueOf(id1));
+    assertEquals(nullChar, myEnumerator.valueOf(id2));
+    assertEquals(longString, myEnumerator.valueOf(id3));
+    assertEquals(unicodeString, myEnumerator.valueOf(id4));
+  }
+  
+  @Test
+  public void testProcessAllDataObjectStopsOnFalse() throws IOException {
+    // Add several values
+    for (int i = 0; i < 10; i++) {
+      myEnumerator.enumerate("value_" + i);
+    }
+    
+    final int[] count = {0};
+    boolean result = myEnumerator.processAllDataObject(value -> {
+      count[0]++;
+      return count[0] < 5; // Stop after processing 5 values
+    }, null);
+    
+    assertFalse("Should return false when processor returns false", result);
+    assertEquals(5, count[0]);
+  }
+  
+  @Test
+  public void testProcessAllDataObjectContinuesOnTrue() throws IOException {
+    // Add several values
+    int totalValues = 10;
+    for (int i = 0; i < totalValues; i++) {
+      myEnumerator.enumerate("value_" + i);
+    }
+    
+    final int[] count = {0};
+    boolean result = myEnumerator.processAllDataObject(value -> {
+      count[0]++;
+      return true; // Continue for all
+    }, null);
+    
+    assertTrue("Should return true when processor always returns true", result);
+    assertEquals(totalValues, count[0]);
+  }
+
   private static final StringBuilder builder = new StringBuilder(100);
   private static final Random random = new Random(13101977);
 
