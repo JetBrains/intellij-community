@@ -8,6 +8,8 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.impl.LoggedProcess
+import com.intellij.python.community.execService.impl.LoggedProcessLine
+import com.intellij.python.community.execService.impl.LoggedProcessLine.Kind.OUT
 import com.intellij.python.community.execService.impl.LoggingLimits
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
@@ -21,10 +23,12 @@ import com.intellij.util.io.awaitExit
 import com.intellij.util.progress.sleepCancellable
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.getOrThrow
 import java.awt.datatransfer.DataFlavor
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Collections
+import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -90,7 +94,7 @@ class ProcessOutputControllerServiceTest {
         waitUntil {
             val index = ProcessOutputControllerServiceLimits.MAX_PROCESSES - 1
             val process = history.toList().find { (_, it) ->
-                it.lines.replayCache.getOrNull(0)?.text == "test $index"
+                it.lines.replayCache.find { it.text == "test $index" } != null
             }
 
             process != null && process.second.lines.replayCache.size == 3
@@ -112,16 +116,25 @@ class ProcessOutputControllerServiceTest {
                 assertNotNull(process)
 
                 with(process.lines.replayCache) {
-                    // line 1 (stdout): test $it
-                    // line 2 (stdout): x repeated MAX_OUTPUT_SIZE times minus the length of "test $it" + 1
-                    // line 3 (stderr): y repeated MAX_OUTPUT_SIZE times
+                    // (stdout): test $it
+                    // (stdout): x repeated MAX_OUTPUT_SIZE times minus the length of "test $it" + 1
+                    // (stderr): y repeated MAX_OUTPUT_SIZE times
                     assertEquals(3, size)
-                    assertEquals("test $it", get(0).text)
-                    assertEquals(
-                        LoggingLimits.MAX_OUTPUT_SIZE - ("test $it".length + newLineLen),
-                        get(1).text.length,
+
+                    val xLen = LoggingLimits.MAX_OUTPUT_SIZE - ("test $it".length + newLineLen)
+                    val yLen = LoggingLimits.MAX_OUTPUT_SIZE
+
+                    assertTrue(contains(LoggedProcessLine("test $it", OUT)))
+                    assertNotNull(
+                        find { elem ->
+                            elem.text.startsWith("xxx") && elem.text.length == xLen
+                        },
                     )
-                    assertEquals(LoggingLimits.MAX_OUTPUT_SIZE, get(2).text.length)
+                    assertNotNull(
+                        find { elem ->
+                            elem.text.startsWith("yyy") && elem.text.length == yLen
+                        },
+                    )
                 }
             }
         }
@@ -159,17 +172,23 @@ class ProcessOutputControllerServiceTest {
                 assertNotNull(process)
 
                 with(process.lines.replayCache) {
+                    // (stdout): test $newIt
+                    // (stdout): x repeated MAX_OUTPUT_SIZE times minus the length of "test $newIt" + 1
+                    // (stderr): y repeated MAX_OUTPUT_SIZE times
+                    val xLen = LoggingLimits.MAX_OUTPUT_SIZE - ("test $newIt".length + newLineLen)
+                    val yLen = LoggingLimits.MAX_OUTPUT_SIZE
 
-                    // line 1 (stdout): test $newIt
-                    // line 2 (stdout): x repeated MAX_OUTPUT_SIZE times minus the length of "test $newIt" + 1
-                    // line 3 (stderr): y repeated MAX_OUTPUT_SIZE times
-                    assertEquals(3, size)
-                    assertEquals("test $newIt", get(0).text)
-                    assertEquals(
-                        LoggingLimits.MAX_OUTPUT_SIZE - ("test $newIt".length + newLineLen),
-                        get(1).text.length,
+                    assertTrue(contains(LoggedProcessLine("test $newIt", OUT)))
+                    assertNotNull(
+                        find { elem ->
+                            elem.text.startsWith("xxx") && elem.text.length == xLen
+                        },
                     )
-                    assertEquals(LoggingLimits.MAX_OUTPUT_SIZE, get(2).text.length)
+                    assertNotNull(
+                        find { elem ->
+                            elem.text.startsWith("yyy") && elem.text.length == yLen
+                        },
+                    )
                 }
             }
         }
@@ -252,13 +271,22 @@ class ProcessOutputControllerServiceTest {
             )
         }
 
-        runBin(binOnEel, Args(MAIN_PY))
-
-        waitUntil {
-            service.firstLineOfLastProcess()?.startsWith("out1") == true
+        val loggingProcess = withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+            ExecService().executeGetProcess(
+                binOnEel,
+                Args(MAIN_PY),
+                CoroutineScope(coroutineContext),
+            ).getOrThrow()
         }
 
-        val process = service.loggedProcesses.value[0]
+        // reading all stdout
+        loggingProcess.inputStream.readAllBytes()
+
+        waitUntil {
+            service.loggedProcesses.value.lastOrNull()?.lines?.replayCache?.size == 6
+        }
+
+        val process = service.loggedProcesses.value.last()
 
         // stdout section (0..5)
         service.copyOutputTagAtIndexToClipboard(process, 0)
@@ -275,6 +303,11 @@ class ProcessOutputControllerServiceTest {
             """.trimIndent(),
             CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor),
         )
+
+        // reading all stderr
+        loggingProcess.errorStream.readAllBytes()
+
+        waitUntil { process.lines.replayCache.size == 10 }
 
         // stderr section (6..9)
         service.copyOutputTagAtIndexToClipboard(process, 6)
@@ -317,14 +350,46 @@ class ProcessOutputControllerServiceTest {
         )
     }
 
-    private fun ProcessOutputControllerService.firstLineOfLastProcess(): String? =
-        loggedProcesses
-            .value
-            .lastOrNull()
-            ?.lines
-            ?.replayCache
-            ?.getOrNull(0)
-            ?.text
+    @Test
+    fun `non-ascii output lines are reflected properly`(
+        @TempDir cwd: Path,
+        @PythonBinaryPath python: PythonBinary,
+    ): Unit = timeoutRunBlocking {
+        val service = projectFixture.get().service<ProcessOutputControllerService>()
+
+        val binOnEel = BinOnEel(python, cwd)
+        val mainPy = Files.createFile(cwd.resolve(MAIN_PY))
+        val testTag = "non-ascii test"
+        val nonAsciiText = "Привет, Мир"
+
+        edtWriteAction {
+            mainPy.toFile().writeText(
+                """
+                    import sys 
+                    
+                    sys.stdout.buffer.write("$testTag\n".encode("utf8"))
+                    sys.stdout.buffer.write("$nonAsciiText\n".encode("utf8"))
+                """.trimIndent(),
+            )
+        }
+
+        runBin(binOnEel, Args(MAIN_PY))
+        var lines: List<LoggedProcessLine>? = null
+
+        waitUntil {
+            service.loggedProcesses.value
+                .lastOrNull()
+                ?.lines
+                ?.replayCache
+                ?.also {
+                    lines = it
+                }
+                ?.firstOrNull()
+                ?.text == testTag
+        }
+
+        assertEquals(nonAsciiText, lines?.last()?.text)
+    }
 
     private fun Map<Int, LoggedProcess>.remapByFirstLine(): Map<String?, LoggedProcess> =
         mapOf(
