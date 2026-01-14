@@ -224,21 +224,33 @@ interface VcsLogProvider {
      */
     val commits: List<VcsCommitMetadata>
 
+    @Deprecated("Use refsIterable instead")
+    val refs: Set<VcsRef>
+      get() = throw NotImplementedError("Consider implementing refsIterable")
+
     /**
-     * Should contain all the refs which are related to commits to display in log.
-     * It means that in case of refresh all refs should be loaded,
-     * while during the initial load refs related to [commits] can be loaded.
+     * Depending on the used [RefsLoadingPolicy], can contain refs related to [commits] or all refs in the repository.
+     * [refsIterable] is iterated to store the loaded refs.
      *
      * @see [RefsLoadingPolicy]
+     * @see [VcsLogRootStoredRefs]
      */
-    val refs: Set<VcsRef>
+    val refsIterable: Iterable<VcsRef>
+      get() = refs
   }
 
   @ApiStatus.Experimental
   sealed interface RefsLoadingPolicy {
+    /**
+     * Only refs pointing to the loaded commits can be loaded (e.g., to quickly show the chunk of the log).
+     * However, it's also possible to load more refs.
+     */
     @ApiStatus.Experimental
     object FromLoadedCommits : RefsLoadingPolicy
 
+    /**
+     * All refs from this repository should be loaded.
+     */
     @ApiStatus.Experimental
     interface LoadAllRefs : RefsLoadingPolicy {
       val previouslyLoadedRefs: VcsRefsContainer

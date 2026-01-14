@@ -4,7 +4,6 @@ package git4idea.log
 import com.intellij.dvcs.repo.getRepositoryUnlessFresh
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
@@ -37,6 +36,8 @@ private val LOG = logger<GitLogExperimentalProvider>()
 
 @Service(Service.Level.PROJECT)
 internal class GitLogExperimentalProvider(private val project: Project) {
+  private val vcsLogObjectsFactory = project.service<VcsLogObjectsFactory>()
+
   suspend fun readRecentCommits(
     root: VirtualFile,
     requirements: VcsLogProvider.Requirements,
@@ -49,7 +50,7 @@ internal class GitLogExperimentalProvider(private val project: Project) {
     } ?: return LogDataImpl.empty()
 
     return withContext(Dispatchers.Default) {
-      val branches = project.serviceAsync<VcsLogObjectsFactory>().createBranchesRefs(repository)
+      val branches = vcsLogObjectsFactory.createBranchesRefsSequence(repository)
       val tagsLoader = TagsLoader.create(repository, refsLoadingPolicy)
 
       // need to query more to sort them manually; this doesn't affect performance: it is equal for -1000 and -2000
@@ -61,14 +62,13 @@ internal class GitLogExperimentalProvider(private val project: Project) {
         VcsLogSorter.sortByDateTopoOrder(allCommits).take(requirements.commitCount)
       }
 
-      val allRefs = branches + tagsLoader.tags
-      LogDataImpl(allRefs, sortedCommits)
+      val allRefs = branches + tagsLoader.tags.asSequence()
+      SequenceBasedLogData(allRefs, sortedCommits)
     }
   }
 
   private suspend fun getCommits(root: VirtualFile, commitCount: Int): List<VcsCommitMetadata> {
     checkCanceled()
-    val factory = project.serviceAsync<VcsLogObjectsFactory>()
     val parser = GitLogParser.createDefaultParser(project, *GitLogUtil.COMMIT_METADATA_OPTIONS)
     val handler = GitLogUtil.createGitHandler(project, root).apply {
       setStdoutSuppressed(true)
@@ -86,7 +86,7 @@ internal class GitLogExperimentalProvider(private val project: Project) {
 
     val commits = mutableListOf<VcsCommitMetadata>()
     val handlerListener = GitLogOutputSplitter(handler, parser, { record: GitLogRecord ->
-      commits.add(GitLogUtil.createMetadata(root, record, factory))
+      commits.add(GitLogUtil.createMetadata(root, record, vcsLogObjectsFactory))
     })
     VcsTracer.traceSuspending(Log.LoadingCommitMetadata) {
       it.withVcsAttributes(root)
@@ -104,6 +104,13 @@ internal class GitLogExperimentalProvider(private val project: Project) {
     val isEnabled: Boolean
       get() = Registry.`is`("git.log.provider.experimental.refs.collection", false)
   }
+}
+
+private class SequenceBasedLogData(
+  refsSequence: Sequence<VcsRef>,
+  override val commits: List<VcsCommitMetadata>,
+) : VcsLogProvider.DetailedLogData {
+  override val refsIterable: Iterable<VcsRef> = refsSequence.asIterable()
 }
 
 /**
