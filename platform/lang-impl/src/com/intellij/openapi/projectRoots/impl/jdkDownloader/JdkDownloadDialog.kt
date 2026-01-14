@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WSLDistribution
@@ -158,6 +158,7 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
         .asSequence()
         .filter { it.product !in includedProducts }
         .filter { it !in groupItems }
+        .filter { CpuArch.fromString(it.arch) == CpuArch.CURRENT || Registry.`is`("jdk.downloader.show.other.arch", false) }
         .groupBy { it.product }
         .mapValues { (_, jdkItems) ->
           val comparator = Comparator.comparing(Function<JdkItem, String> { it.jdkVersion }, VersionComparatorUtil.COMPARATOR)
