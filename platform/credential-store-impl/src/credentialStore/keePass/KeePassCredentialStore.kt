@@ -8,9 +8,20 @@ import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.application
 import com.intellij.util.io.delete
 import com.intellij.util.io.safeOutputStream
+import com.intellij.util.messages.SimpleMessageBusConnection
 import org.jetbrains.annotations.TestOnly
+import java.io.Closeable
+import java.nio.file.Files
 import java.nio.file.Path
 import java.security.SecureRandom
 import java.util.*
@@ -29,15 +40,19 @@ internal class KeePassCredentialStore(
   internal val dbFile: Path,
   private val mainKeyStorage: MainKeyFileStorage,
   preloadedDb: KeePassDatabase? = null
-) : BaseKeePassCredentialStore() {
+) : BaseKeePassCredentialStore(), Closeable {
   constructor(dbFile: Path, mainKeyFile: Path) : this(dbFile, MainKeyFileStorage(mainKeyFile), preloadedDb = null)
 
   private val isNeedToSave: AtomicBoolean
+  @Volatile
+  private var lastSavedTimestamp: Long = 0
+  private val messageBusConnection: SimpleMessageBusConnection = application.messageBus.simpleConnect()
 
   override var db: KeePassDatabase = if (preloadedDb == null) {
     isNeedToSave = AtomicBoolean(false)
     if (dbFile.exists()) {
       val mainPassword = mainKeyStorage.load() ?: throw IncorrectMainPasswordException(isFileMissed = true)
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(dbFile.toString())
       loadKdbx(dbFile, KdbxPassword.createAndClear(mainPassword))
     }
     else {
@@ -49,13 +64,30 @@ internal class KeePassCredentialStore(
     preloadedDb
   }
 
+  init {
+    messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: List<VFileEvent>) {
+        if (events.any { (it is VFileContentChangeEvent || it is VFileCreateEvent) && it.path.toNioPathOrNull() == dbFile }) {
+          val currentTimestamp = Files.getLastModifiedTime(dbFile).toMillis()
+          if (currentTimestamp > lastSavedTimestamp) {
+            try {
+              reload()
+            }
+            catch (e: Throwable) {
+              logger<KeePassCredentialStore>().warn("Cannot reload KeePass database on external change", e)
+            }
+          }
+        }
+      }
+    })
+  }
+
   val mainKeyFile: Path
     get() = mainKeyStorage.passwordFile
 
   @Synchronized
-  @TestOnly
   fun reload() {
-    val key = mainKeyStorage.load()!!
+    val key = mainKeyStorage.load() ?: throw IllegalStateException("Main key file is missing")
     val kdbxPassword = KdbxPassword(key)
     key.fill(0)
     db = loadKdbx(dbFile, kdbxPassword)
@@ -85,6 +117,7 @@ internal class KeePassCredentialStore(
       dbFile.safeOutputStream().use {
         db.save(kdbxPassword, it, secureRandom)
       }
+      lastSavedTimestamp = Files.getLastModifiedTime(dbFile).toMillis()
     }
     catch (e: Throwable) {
       // schedule a save again
@@ -116,6 +149,10 @@ internal class KeePassCredentialStore(
 
   override fun markDirty() {
     isNeedToSave.set(true)
+  }
+
+  override fun close() {
+    messageBusConnection.disconnect()
   }
 }
 
