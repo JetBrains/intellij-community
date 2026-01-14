@@ -1,0 +1,19 @@
+<html>
+<body>
+Detects properties with backing fields and suggests a refactoring introducing backing fields explicitly using a <i>field</i> keyword.
+<p>
+    See https://github.com/Kotlin/KEEP/blob/main/proposals/KEEP-0430-explicit-backing-fields.md for more information.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  private val _items = mutableListOf<Item>()
+  val items: List<Item> get() = _items
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  val items: List<Item>
+    field = mutableListOf<Item>()
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

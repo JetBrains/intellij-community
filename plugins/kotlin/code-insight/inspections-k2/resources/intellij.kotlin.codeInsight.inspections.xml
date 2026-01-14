@@ -1301,5 +1301,13 @@
                      language="kotlin"
                      key="inspection.replace.with.import.alias.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertToExplicitBackingFieldsInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.kotlin.convert.to.explicit.backing.fields.display.name" bundle="messages.KotlinBundle"/>
+
     </extensions>
 </idea-plugin>

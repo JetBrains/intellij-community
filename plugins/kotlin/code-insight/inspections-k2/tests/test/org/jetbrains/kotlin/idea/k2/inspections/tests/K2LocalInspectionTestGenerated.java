@@ -13403,6 +13403,75 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/convertToExplicitBackingFields")
+        public static class ConvertToExplicitBackingFields extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("backingFieldTypeIsASubtype.kt")
+            public void testBackingFieldTypeIsASubtype() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/backingFieldTypeIsASubtype.kt");
+            }
+
+            @TestMetadata("customGetter.kt")
+            public void testCustomGetter() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/customGetter.kt");
+            }
+
+            @TestMetadata("delegatedProperties.kt")
+            public void testDelegatedProperties() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/delegatedProperties.kt");
+            }
+
+            @TestMetadata("genericsWithIn.kt")
+            public void testGenericsWithIn() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/genericsWithIn.kt");
+            }
+
+            @TestMetadata("genericsWithOut.kt")
+            public void testGenericsWithOut() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/genericsWithOut.kt");
+            }
+
+            @TestMetadata("nonPrivateBackingField.kt")
+            public void testNonPrivateBackingField() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/nonPrivateBackingField.kt");
+            }
+
+            @TestMetadata("propertyIsVar.kt")
+            public void testPropertyIsVar() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/propertyIsVar.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/simple.kt");
+            }
+
+            @TestMetadata("simpleWithInheritance.kt")
+            public void testSimpleWithInheritance() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/simpleWithInheritance.kt");
+            }
+
+            @TestMetadata("withCustomFunctions.kt")
+            public void testWithCustomFunctions() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/withCustomFunctions.kt");
+            }
+
+            @TestMetadata("withInitialization.kt")
+            public void testWithInitialization() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/withInitialization.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/destructuringWrongNameInspection")
         public static class DestructuringWrongNameInspection extends AbstractK2LocalInspectionTest {
             @java.lang.Override
