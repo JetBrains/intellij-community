@@ -15,8 +15,11 @@ object CommonScope {
     // Shutdown hook is needed to make sure we will surely cancel the scope on test process abrupt exit
     val shutdownHookThread = Thread(Runnable {
       val reason = "Shutdown is in progress: either SIGTERM or SIGKILL is caught"
-      logOutput("Canceling suite supervisor scope: $reason")
-      testSuiteSupervisorScope.cancel(CancellationException(reason))
+      logOutput("Canceling suite supervisor scopes: $reason")
+      val ce = CancellationException(reason)
+      perTestSupervisorScope.cancel(ce)
+      perClassSupervisorScope.cancel(ce)
+      testSuiteSupervisorScope.cancel(ce)
     }, "test-scopes-shutdown-hook")
     try {
       Runtime.getRuntime().addShutdownHook(shutdownHookThread)

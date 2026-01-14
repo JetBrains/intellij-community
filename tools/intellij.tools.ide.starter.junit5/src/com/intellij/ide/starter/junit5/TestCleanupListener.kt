@@ -22,34 +22,35 @@ import org.junit.platform.launcher.TestPlan
  *
  */
 open class TestCleanupListener : TestExecutionListener {
-  fun cancelPerTestSupervisorScope(testIdentifier: TestIdentifier) {
+  fun cancelPerTestSupervisorScope(testIdentifier: TestIdentifier, message: String? = null) {
     if (!testIdentifier.isTest) return
 
-    cancelSupervisorScope(perTestSupervisorScope, "Test `${testIdentifier.displayName}` execution is finished")
+    cancelSupervisorScopeChildren(perTestSupervisorScope, message ?: "Test `${testIdentifier.displayName}` execution is finished")
     ConfigurationStorage.instance().resetToDefault()
   }
 
   override fun executionFinished(testIdentifier: TestIdentifier, testExecutionResult: TestExecutionResult) {
-    val testIdentifierName = testIdentifier.displayName
+    val message = "Test `${testIdentifier.displayName}` execution is finished"
+    cancelPerTestSupervisorScope(testIdentifier, message)
     if (testIdentifier.isContainer) {
-      cancelSupervisorScope(perClassSupervisorScope, "Test class `$testIdentifierName` execution is finished")
+      cancelSupervisorScopeChildren(perClassSupervisorScope, message)
     }
-
-    cancelPerTestSupervisorScope(testIdentifier)
   }
 
   override fun testPlanExecutionFinished(testPlan: TestPlan) {
-    cancelSupervisorScope(testSuiteSupervisorScope, "Test plan execution is finished")
+    val message = "Test plan execution is finished"
+    cancelSupervisorScopeChildren(perTestSupervisorScope, message)
+    cancelSupervisorScopeChildren(perClassSupervisorScope, message)
+    cancelSupervisorScopeChildren(testSuiteSupervisorScope, message)
   }
 }
 
-fun cancelSupervisorScope(scope: CoroutineScope, message: String) {
-  logOutput("Canceling children of '${scope.coroutineContext[CoroutineName]?.name}': $message")
+private fun cancelSupervisorScopeChildren(scope: CoroutineScope, message: String) {
   val timeout = ConfigurationStorage.coroutineScopesCancellationTimeout
 
   @Suppress("SSBasedInspection")
   runBlocking {
-    catchAll {
+    catchAll("Canceling children of '${scope.coroutineContext[CoroutineName]?.name}': $message") {
       scope.coroutineContext.cancelChildren(CancellationException((message)))
       // Wait with timeout - don't hang indefinitely
       val joinResult = withTimeoutOrNull(timeout) {
