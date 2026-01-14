@@ -6,11 +6,13 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.repo.GitRepositoryModel
@@ -117,8 +119,8 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
     }
   }
 
-  fun openWorkingTreeProject(tree: GitWorkingTree, cs: CoroutineScope) {
-    cs.launch(Dispatchers.Default) {
+  fun openWorkingTreeProject(tree: GitWorkingTree) {
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.Default) {
       PlatformProjectOpenProcessor.getInstance().openProjectAndFile(Path(tree.path.path), false, OpenProjectTask.build())
     }
   }

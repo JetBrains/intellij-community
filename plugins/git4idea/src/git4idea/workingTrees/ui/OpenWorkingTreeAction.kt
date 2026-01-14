@@ -36,6 +36,6 @@ internal class OpenWorkingTreeAction : DumbAwareAction() {
     if (!isEnabledFor(data, project)) return
 
     val tree = data!!.first()
-    GitWorkingTreesService.getInstance(project).openWorkingTreeProject(tree, e.coroutineScope)
+    GitWorkingTreesService.getInstance(project).openWorkingTreeProject(tree)
   }
 }
