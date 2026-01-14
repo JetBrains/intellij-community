@@ -178,7 +178,8 @@ com.intellij.vcs.log.VcsLogProvider
 f:com.intellij.vcs.log.VcsLogProvider$Companion
 com.intellij.vcs.log.VcsLogProvider$DetailedLogData
 - a:getCommits():java.util.List
-- a:getRefs():java.util.Set
+- getRefs():java.util.Set
+- getRefsIterable():java.lang.Iterable
 com.intellij.vcs.log.VcsLogProvider$LogData
 - a:getRefs():java.util.Set
 - a:getUsers():java.util.Set

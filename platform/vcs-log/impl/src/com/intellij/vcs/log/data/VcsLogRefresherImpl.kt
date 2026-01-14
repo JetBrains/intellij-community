@@ -336,7 +336,7 @@ class VcsLogRefresherImpl(
           }
           LOG.trace { "Recent commits compacted in ${compactTime.inWholeMilliseconds} ms" }
           checkCanceled()
-          val (compressedRefs, compressingTime) = measureTimedValue { CompressedRefs(data.refs, storage) }
+          val (compressedRefs, compressingTime) = measureTimedValue { CompressedRefs(data.refsIterable, storage) }
           LOG.trace { "Refs compressed in ${compressingTime.inWholeMilliseconds} ms" }
           refreshSessionData.put(root, commits, compressedRefs)
 

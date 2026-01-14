@@ -13,7 +13,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import java.util.function.IntConsumer
 
-internal class CompressedRefs(refs: Set<VcsRef>, private val storage: VcsLogStorage) : VcsLogRootStoredRefs {
+internal class CompressedRefs(refs: Iterable<VcsRef>, private val storage: VcsLogStorage) : VcsLogRootStoredRefs {
   // maps each commit id to the list of tag ids on this commit
   private val tagsMapping: Int2ObjectMap<IntArrayList> = Int2ObjectOpenHashMap()
   // maps each commit id to the list of branches on this commit
