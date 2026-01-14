@@ -87,8 +87,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   public boolean REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER = true;
 
-  @SuppressWarnings("WeakerAccess") public boolean REPORT_CONFLICT_IN_ASSIGNMENTS = true;
-
   private static final Logger LOG = Logger.getInstance(NullableStuffInspectionBase.class);
 
   @Override
@@ -104,7 +102,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           "REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER".equals(name) && "true".equals(value) ||
           "REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS".equals(name) && "false".equals(value) ||
           "REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE".equals(name) && "false".equals(value) ||
-          "REPORT_CONFLICT_IN_ASSIGNMENTS".equals(name) && "true".equals(value) ||
           "REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER".equals(name) && "true".equals(value)) {
         node.removeContent(child);
       }
@@ -215,7 +212,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         }
         PsiExpression initializer = field.getInitializer();
         PsiElement identifyingElement = field.getIdentifyingElement();
-        if (REPORT_CONFLICT_IN_ASSIGNMENTS && initializer != null && identifyingElement != null) {
+        if (initializer != null && identifyingElement != null) {
           checkNestedGenericClasses(identifyingElement, field.getType(), initializer.getType(),
                                     ConflictNestedTypeProblem.ASSIGNMENT_NESTED_TYPE_PROBLEM);
         }
@@ -494,15 +491,10 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
         PsiExpression rExpression = expression.getRExpression();
         if (rExpression == null) return;
-        if (REPORT_CONFLICT_IN_ASSIGNMENTS) {
-          checkNestedGenericClasses(expression.getOperationSign(),
-                                    expression.getLExpression().getType(),
-                                    rExpression.getType(),
-                                    ConflictNestedTypeProblem.ASSIGNMENT_NESTED_TYPE_PROBLEM);
-        }
-        else {
-          checkCollectionNullityOnAssignment(expression.getOperationSign(), expression.getLExpression().getType(), expression.getRExpression());
-        }
+        checkNestedGenericClasses(expression.getOperationSign(),
+                                  expression.getLExpression().getType(),
+                                  rExpression.getType(),
+                                  ConflictNestedTypeProblem.ASSIGNMENT_NESTED_TYPE_PROBLEM);
       }
 
       @Override
@@ -511,13 +503,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         if (identifier == null) return;
         PsiExpression initializer = variable.getInitializer();
         if (initializer == null) return;
-        if (REPORT_CONFLICT_IN_ASSIGNMENTS) {
-          checkNestedGenericClasses(identifier, variable.getType(), initializer.getType(),
-                                    ConflictNestedTypeProblem.ASSIGNMENT_NESTED_TYPE_PROBLEM);
-        }
-        else {
-          checkCollectionNullityOnAssignment(identifier, variable.getType(), variable.getInitializer());
-        }
+        checkNestedGenericClasses(identifier, variable.getType(), initializer.getType(),
+                                  ConflictNestedTypeProblem.ASSIGNMENT_NESTED_TYPE_PROBLEM);
       }
 
       @Override
