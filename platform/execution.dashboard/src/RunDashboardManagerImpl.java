@@ -91,7 +91,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     var newDescriptor = RunContentManagerImpl.getRunContentDescriptorByContent(contentWithNewDescriptor);
 
     var newContentId = newDescriptor == null ? null : newDescriptor.getId();
-    if (newContentId instanceof  RunContentDescriptorIdImpl newContentIdImpl) {
+    if (newContentId instanceof RunContentDescriptorIdImpl newContentIdImpl) {
       updateServiceRunContentDescriptor(oldDescriptorId, newContentIdImpl);
     }
 
@@ -99,7 +99,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   @Override
-  public void navigateToServiceOnRun(@NotNull RunContentDescriptorId descriptorId, Boolean focus){
+  public void navigateToServiceOnRun(@NotNull RunContentDescriptorId descriptorId, Boolean focus) {
     RunDashboardService service = findService(descriptorId);
     if (service == null) return;
 
@@ -161,8 +161,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     connection.subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       private final BackendRunDashboardUpdatesQueue synchronizationScheduler
         = new BackendRunDashboardUpdatesQueue(
-          RunDashboardCoroutineScopeProvider.getInstance(myProject).createChildNamedScope("Backend run manager listener sync requests"),
-          OverlappingTasksStrategy.SKIP_NEW);
+        RunDashboardCoroutineScopeProvider.getInstance(myProject).createChildNamedScope("Backend run manager listener sync requests"),
+        OverlappingTasksStrategy.SKIP_NEW);
 
       @Override
       public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
@@ -251,7 +251,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
 
     Logger.getInstance(RunDashboardManagerImpl.class)
-      .warn("findServiceById failed to discover backend run dashboard service in global storage, falling back to manually managed collection");
+      .warn(
+        "findServiceById failed to discover backend run dashboard service in global storage, falling back to manually managed collection");
     return ContainerUtil.find(getRunConfigurations(), service -> service.getUuid().equals(id));
   }
 
@@ -640,7 +641,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
   private static boolean areSameOriginDescriptorsBeingExchanged(@NotNull RunContentDescriptorId descriptorId, RunDashboardService service) {
     var existingId = service.getDescriptorId();
-    var resolvedExistingDescriptor = existingId instanceof RunContentDescriptorIdImpl impl ?  findContentValue(impl) : null;
+    var resolvedExistingDescriptor = existingId instanceof RunContentDescriptorIdImpl impl ? findContentValue(impl) : null;
     var resolvedNewDescriptor = descriptorId instanceof RunContentDescriptorIdImpl impl ? findContentValue(impl) : null;
     var areDescriptorsWithSameExecutors =
       resolvedExistingDescriptor != null && resolvedNewDescriptor != null
@@ -1035,7 +1036,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
     @Override
     public Content getContent() {
-      return getDescriptor().getAttachedContent();
+      RunContentDescriptor descriptor = getDescriptor();
+      return descriptor == null ? null : descriptor.getAttachedContent();
     }
 
     @Override
