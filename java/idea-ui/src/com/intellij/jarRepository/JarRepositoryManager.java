@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.eel.EelMachine;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -541,6 +542,9 @@ public final class JarRepositoryManager {
   private static @Nullable <T> T submitModalJob(@Nullable Project project,
                                                 @NlsContexts.DialogTitle String title,
                                                 Function<? super ProgressIndicator, ? extends T> job) {
+    // Sync call of resolver on EDT is not allowed
+    SlowOperations.assertSlowOperationsAreAllowed();
+
     Ref<T> result = Ref.create(null);
     new Task.Modal(project, title, true) {
       @Override
