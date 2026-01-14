@@ -55,6 +55,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//java/java-impl-refactorings:impl-refactorings",
     "//java/codeserver/highlighting",
+    "//platform/projectModel-api:projectModel",
   ]
 )
 ### auto-generated section `build intellij.java.typeMigration` end
