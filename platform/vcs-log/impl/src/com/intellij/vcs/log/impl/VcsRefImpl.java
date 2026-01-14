@@ -24,9 +24,7 @@ public final class VcsRefImpl implements VcsRef {
     myCommitHash = commitHash;
     myType = type;
     myRoot = root;
-    synchronized (ourNames) {
-      myName = ourNames.intern(name);
-    }
+    myName = ourNames.intern(name);
   }
 
   @Override
