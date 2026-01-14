@@ -43,11 +43,11 @@ object PyProjectSdkConfiguration {
   }
 
   suspend fun setSdkUsingCreateSdkInfo(
-    module: Module, createSdkInfoWithTool: CreateSdkInfoWithTool, needsConfirmation: NeedsConfirmation,
+    module: Module, createSdkInfoWithTool: CreateSdkInfoWithTool, needsConfirmation: Boolean,
   ): Boolean = withContext(Dispatchers.Default) {
     thisLogger().debug("Configuring sdk using ${createSdkInfoWithTool.toolId}")
 
-    val sdk = createSdkInfoWithTool.createSdkInfo.sdkCreator(needsConfirmation).getOr {
+    val sdk = createSdkInfoWithTool.createSdkInfo.getSdkCreator(module).createSdk(needsConfirmation).getOr {
       ShowingMessageErrorSync.emit(it.error, module.project)
       return@withContext true
     } ?: return@withContext false

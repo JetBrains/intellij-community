@@ -21,6 +21,8 @@ import com.jetbrains.python.PathShortener
 import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import com.jetbrains.python.sdk.configuration.createSdkWithoutConfirmation
+import com.jetbrains.python.sdk.configuration.getSdkCreator
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
@@ -141,7 +143,7 @@ internal class ModulesSdkConfigurator private constructor(
           val createInfo = (modules[module.name] ?: error("No create info for module $module, caller broke the contract"))
           when (createInfo) {
             is ModuleCreateInfo.CreateSdkInfoWrapper -> {
-              when (val r = createInfo.createSdkInfo.createSdkWithoutConfirmation()) {
+              when (val r = createInfo.createSdkInfo.createSdkWithoutConfirmation(module)) {
                 is Result.Failure -> { //TODO: Show SDK creation error?
                   logger.warn("Failed to create SDK for ${module.name}: ${r.error}")
                 }
@@ -236,7 +238,7 @@ private suspend fun configureSdkForModuleAutomatically(module: Module, createEnv
 }
 
 private suspend fun CreateSdkInfo.createAndSetToModule(module: Module) {
-  when (val r = sdkCreator(false)) {
+  when (val r = getSdkCreator(module).createSdk(needsConfirmation = false)) {
     is Result.Failure -> {
       logger.trace { "Failed to create sdk for ${module.name} : ${r.error}" }
     }

@@ -42,6 +42,7 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReady
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setSdkUsingCreateSdkInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.suppressTipAndInspectionsFor
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import com.jetbrains.python.sdk.configuration.getSdkCreator
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -241,11 +242,11 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (fallback == null) {
       return false
     }
-    val sdkCreator = fallback.checkEnvironmentAndPrepareSdkCreator(module)?.sdkCreator
+    val sdkCreator = fallback.checkEnvironmentAndPrepareSdkCreator(module)?.getSdkCreator(module)
     if (sdkCreator == null) {
       return false
     }
-    sdkCreator(true).orLogException(logger)
+    sdkCreator.createSdk(needsConfirmation = true).orLogException(logger)
     return true
   }
 

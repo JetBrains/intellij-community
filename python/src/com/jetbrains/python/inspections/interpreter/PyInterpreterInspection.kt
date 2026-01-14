@@ -38,6 +38,7 @@ import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration
+import com.jetbrains.python.sdk.configuration.createSdkWithoutConfirmation
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.ui.PyUiUtil
@@ -271,7 +272,7 @@ private suspend fun Module.getQuickFixBySdkSuggestion(i: ModuleCreateInfo?): Fin
     when (val createSdkInfo = i.createSdkInfo) {
       is CreateSdkInfo.ExistingEnv -> {
         logger.trace { "$this: Files already exist, just create sn SDK" }
-        when (val creationResult = createSdkInfo.createSdkWithoutConfirmation()) {
+        when (val creationResult = createSdkInfo.createSdkWithoutConfirmation(module = this)) {
           is Result.Failure -> {
             logger.warn("Can't create SDK for $this : ${creationResult.error}")
             FindQuickFixResult.NoSuggestion
