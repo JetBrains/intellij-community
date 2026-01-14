@@ -4,6 +4,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.frontend.view.TerminalView
+import org.jetbrains.plugins.terminal.session.ShellName
+import org.jetbrains.plugins.terminal.session.guessShellName
+import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
@@ -23,7 +26,10 @@ internal data class TerminalCommandCompletionContext(
   /** Full command text at the moment of completion request. May include trailing new lines and spaces. */
   val commandText: String,
   val isAutoPopup: Boolean,
-)
+) {
+  val shellName: ShellName
+    get() = terminalView.startupOptionsDeferred.getNow()?.guessShellName() ?: ShellName.of("unknown")
+}
 
 internal data class TerminalCommandCompletionResult(
   val suggestions: List<ShellCompletionSuggestion>,

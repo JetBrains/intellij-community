@@ -27,9 +27,6 @@ import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
-import org.jetbrains.plugins.terminal.session.ShellName
-import org.jetbrains.plugins.terminal.session.guessShellName
-import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
@@ -46,6 +43,11 @@ class TerminalCommandCompletionService(
   private val project: Project,
   coroutineScope: CoroutineScope,
 ) {
+  private val contributors: List<TerminalCommandCompletionContributor> = listOf(
+    PowerShellCompletionContributor(),
+    TerminalCommandSpecCompletionContributor(),
+  )
+
   @get:RequiresEdt
   internal var activeProcess: TerminalCommandCompletionProcess? = null
     private set
@@ -154,32 +156,31 @@ class TerminalCommandCompletionService(
   }
 
   private suspend fun getCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCommandCompletionResult? {
-    val commandSpecResult = TerminalCommandSpecCompletionContributor().getCompletionSuggestions(context)
-    val powershellResult = if (!context.isAutoPopup && ShellName.isPowerShell(context.shellName)) {
-      PowerShellCompletionContributor().getCompletionSuggestions(context)
+    val results = coroutineScope {
+      contributors.map { contributor ->
+        async {
+          contributor.getCompletionSuggestions(context)
+        }
+      }.awaitAll().filterNotNull()
     }
-    else null
 
-    return if (commandSpecResult != null && commandSpecResult.suggestions.isNotEmpty()
-               && powershellResult != null && powershellResult.suggestions.isNotEmpty()) {
-      if (commandSpecResult.prefix == powershellResult.prefix) {
-        val suggestions = (powershellResult.suggestions + commandSpecResult.suggestions).distinctBy { it.name }
-        TerminalCommandCompletionResult(suggestions, commandSpecResult.prefix)
-      }
-      else if (powershellResult.prefix.length > commandSpecResult.prefix.length) {
-        powershellResult
-      }
-      else commandSpecResult
+    val nonEmptyResults = results.filter { it.suggestions.isNotEmpty() }
+    if (nonEmptyResults.isEmpty()) {
+      return results.firstOrNull()
     }
-    else if (powershellResult != null && powershellResult.suggestions.isNotEmpty()) {
-      powershellResult
+
+    val maxPrefixLength = nonEmptyResults.maxOf { it.prefix.length }
+    val maxLenResults = nonEmptyResults.filter { it.prefix.length == maxPrefixLength }
+    if (maxLenResults.size == 1) {
+      return maxLenResults.first()
     }
-    else commandSpecResult
+
+    val suggestions = maxLenResults.asSequence()
+      .flatMap { it.suggestions }
+      .distinctBy { it.name }
+      .toList()
+    return TerminalCommandCompletionResult(suggestions, maxLenResults.first().prefix)
   }
-
-  private val TerminalCommandCompletionContext.shellName: ShellName
-    // Startup options should be initialized at this point
-    get() = terminalView.startupOptionsDeferred.getNow()?.guessShellName() ?: ShellName.of("unknown")
 
   private fun submitSuggestions(
     process: TerminalCommandCompletionProcess,
