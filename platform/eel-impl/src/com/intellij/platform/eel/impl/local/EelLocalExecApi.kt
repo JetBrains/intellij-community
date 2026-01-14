@@ -245,10 +245,11 @@ private fun executeImpl(builder: EelExecApi.ExecuteProcessOptions): Process {
     // Inherit env vars because lack of `PATH` might break things
     val environment = System.getenv().toMutableMap()
     environment.putAll(builder.env)
-    val escapedCommandLine = CommandLineUtil.toCommandLine(builder.exe, builder.args, Platform.current())
+    val platform = Platform.current()
+    val escapedCommandLine = CommandLineUtil.toCommandLine(builder.exe, builder.args, platform)
     return when (val p = pty) {
       is EelExecApi.Pty -> {
-        if ("TERM" !in environment) {
+        if (platform == Platform.UNIX && "TERM" !in environment) {
           environment.getOrPut("TERM") { "xterm" }
         }
         LocalProcessService.getInstance().startPtyProcess(
