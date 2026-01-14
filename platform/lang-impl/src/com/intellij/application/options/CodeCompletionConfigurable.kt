@@ -115,7 +115,7 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
     return panel {
       row {
         text(ApplicationBundle.message("completion.description"))
-      }
+      }.bottomGap(BottomGap.SMALL)
       buttonsGroup {
         row {
           cbMatchCase = checkBox(ApplicationBundle.message("completion.option.match.case"))
