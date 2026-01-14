@@ -40,6 +40,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/core-impl",
     "//platform/lang-api:lang",
+    "//platform/util/jdom",
   ]
 )
 ### auto-generated section `build intellij.platform.todo` end
