@@ -5,6 +5,7 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.ideFrame
 import com.intellij.driver.sdk.ui.components.elements.list
 import com.intellij.driver.sdk.ui.ui
+import com.intellij.driver.sdk.withRetries
 
 /**
  * Represents the UI component for Kotlin-specific toolbar actions
@@ -31,15 +32,13 @@ class ComboBoxActionButton(data: ComponentData) : UiComponent(data) {
     // it looks like due to some race condition,
     // sometimes the combobox is not updated after the mode change, so we need to retry a few times
     val attemptCount = 5
-    repeat(times = attemptCount) {
-      if (getAllTexts().any { it.text == itemText }) return
+    withRetries(times = attemptCount) {
+      if (getAllTexts().any { it.text == itemText }) return@withRetries
       click()
       val dropdown = driver.ui.ideFrame().list { byClass("MyList") }
       dropdown.clickItem(itemText = itemText)
     }
 
-    if (getAllTexts().none { it.text == itemText }) {
-      error("Failed to select item '$itemText' after $attemptCount attempts")
-    }
+    waitOneText(itemText, "Failed to select item '$itemText' after $attemptCount attempts")
   }
 }
