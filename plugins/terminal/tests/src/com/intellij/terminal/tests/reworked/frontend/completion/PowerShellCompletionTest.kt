@@ -309,6 +309,44 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
     }
   }
 
+  @Test
+  fun `check files are suggested when there is no command`() {
+    doTest { fixture ->
+      val tempDir = createTempDir().also {
+        it.createFile("file.txt")
+        it.createDirectory("figures")
+        it.createDirectory("files")
+        it.createDirectory("dir")
+        it.createFile(".hidden")
+      }
+
+      fixture.type("$tempDir/fi")
+      fixture.callCompletionPopup()
+      val separator = File.separator
+      assertThat(fixture.getLookupElements().map { it.lookupString })
+        .hasSameElementsAs(listOf("file.txt", "figures$separator", "files$separator"))
+    }
+  }
+
+  @Test
+  fun `check files are suggested after unknown command`() {
+    doTest { fixture ->
+      val tempDir = createTempDir().also {
+        it.createFile("file.txt")
+        it.createDirectory("figures")
+        it.createDirectory("files")
+        it.createDirectory("dir")
+        it.createFile(".hidden")
+      }
+
+      fixture.type("some_unknown_command $tempDir/fi")
+      fixture.callCompletionPopup()
+      val separator = File.separator
+      assertThat(fixture.getLookupElements().map { it.lookupString })
+        .hasSameElementsAs(listOf("file.txt", "figures$separator", "files$separator"))
+    }
+  }
+
   private fun doTest(block: suspend (TerminalCompletionFixture) -> Unit) {
     timeoutRunBlocking(timeout = 20.seconds, context = Dispatchers.EDT) {
       val fixtureScope = childScope("TerminalCompletionFixture")
