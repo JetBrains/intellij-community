@@ -3,17 +3,31 @@ package com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.*
 import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
+
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.io.delete
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.assertNotNull
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.util.*
 
 // part of specific tests in the IcsCredentialTest
 class KeePassCredentialStoreTest {
+  companion object {
+    @ClassRule
+    @JvmField
+    val appRule = ApplicationRule()
+  }
+
   // we don't use in memory fs to check real file io
   @Rule
   @JvmField
@@ -149,6 +163,42 @@ class KeePassCredentialStoreTest {
     val attributes = CredentialAttributes(randomString(), userName)
     provider.set(attributes, Credentials(userName, "foo"))
     assertThat(provider.get(attributes)).isNotNull
+  }
+
+  @Test
+  fun `reload on external file change`() {
+    val serviceName = randomString()
+    val attributes = CredentialAttributes(serviceName, "user")
+
+    val baseDir1 = tempDirManager.newPath()
+    val store1 = createStore(baseDir1)
+    store1.use {
+      store1.setPassword(attributes, "first")
+      store1.save(defaultEncryptionSpec)
+
+      val baseDir2 = tempDirManager.newPath()
+      Files.createDirectories(baseDir2)
+      Files.copy(baseDir1.resolve(MAIN_KEY_FILE_NAME), baseDir2.resolve(MAIN_KEY_FILE_NAME))
+
+      val store2 = createStore(baseDir2)
+      store2.use {
+        store2.setPassword(attributes, "second")
+        store2.save(defaultEncryptionSpec)
+      }
+
+      assertThat(store1.getPassword(attributes)).isEqualTo("first")
+      assertThat(store2.getPassword(attributes)).isEqualTo("second")
+
+      val dbFile1 = baseDir1.resolve(DB_FILE_NAME)
+      val vFile1 = LocalFileSystem.getInstance().findFileByPath(dbFile1.toString())
+      assertNotNull(vFile1)
+
+      Files.copy(baseDir2.resolve(DB_FILE_NAME), dbFile1, StandardCopyOption.REPLACE_EXISTING)
+
+      VfsUtil.markDirtyAndRefresh(false, false, false, vFile1)
+
+      assertThat(store1.getPassword(attributes)).isEqualTo("second")
+    }
   }
 }
 
