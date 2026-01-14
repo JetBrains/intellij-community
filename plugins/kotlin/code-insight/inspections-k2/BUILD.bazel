@@ -70,7 +70,6 @@ jvm_library(
     "//java/openapi:java",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight",
     "//plugins/kotlin/base/plugin",
-    "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
     "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
     "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
     "@lib//:kotlin-tooling-core",

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.externalSystem
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -17,7 +17,7 @@ interface KotlinBuildSystemFacade {
     fun findSourceSet(module: Module): KotlinBuildSystemSourceSet?
 
     /**
-     * See [Module.kotlinToolingVersion]
+     * See [kotlinToolingVersion]
      */
     fun getKotlinToolingVersion(module: Module): KotlinToolingVersion?
 
@@ -26,7 +26,7 @@ interface KotlinBuildSystemFacade {
         @JvmStatic
         fun getInstance(): KotlinBuildSystemFacade = KotlinBuildSystemCompositeFacade(EP_NAME.extensionList)
 
-        val EP_NAME = ExtensionPointName.create<KotlinBuildSystemFacade>(
+        val EP_NAME = ExtensionPointName.Companion.create<KotlinBuildSystemFacade>(
             "org.jetbrains.kotlin.idea.base.externalSystem.kotlinBuildSystemFacade"
         )
     }

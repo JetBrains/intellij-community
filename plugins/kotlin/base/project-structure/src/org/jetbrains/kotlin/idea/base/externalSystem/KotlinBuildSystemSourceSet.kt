@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.externalSystem
 
 import com.intellij.openapi.util.IntellijInternalApi
@@ -21,7 +21,7 @@ data class KotlinBuildSystemSourceSet(
      * - "commonTest",
      * - ...
      */
-    @NlsSafe val name: String,
+     val name: @NlsSafe String,
 
     /**
      * Actual file paths which are included into this Source Set
