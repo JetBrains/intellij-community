@@ -13,10 +13,15 @@ function parseNotes(notes) {
   if (notes.trim().startsWith('{')) {
     try {
       const parsed = JSON.parse(notes)
-      return {
+      const result = {
         findings: parsed.findings || [],
         decisions: parsed.decisions || []
       }
+      // Preserve pending_close if present
+      if (parsed.pending_close) {
+        result.pending_close = parsed.pending_close
+      }
+      return result
     } catch (e) {
       // Fall through to text parsing
     }
@@ -40,69 +45,66 @@ function buildNotes(sections) {
   return JSON.stringify(sections, null, 2)
 }
 
+// Fetch ready children for an epic (used in task_status and task_epic resume)
+function getReadyChildren(epicId) {
+  const readyChildren = bdJson(['ready', '--parent', epicId])
+  if (readyChildren.length > 0) {
+    return readyChildren.map(c => ({id: c.id, title: c.title}))
+  }
+  return null
+}
+
 // Check if issue requires user review before closing (based on priority/type)
 function needsReview(issue) {
   const priority = typeof issue.priority === 'string'
     ? parseInt(issue.priority.replace('P', ''), 10)
     : (issue.priority ?? 2)
-  // P0/P1 (critical/high), bugs, and features always need review
-  return priority <= 1 || issue.type === 'bug' || issue.type === 'feature'
+  // P0/P1 (critical/high), bugs, features, and epics always need review
+  return priority <= 1 || issue.issue_type === 'bug' || issue.issue_type === 'feature' || issue.issue_type === 'epic'
 }
 
-// 5 action-driven tools
 const tools = [
   {
     name: 'task_status',
-    description: 'Get state and next action. Pass user_request for new tasks.',
+    description: 'Get issue state or full details',
     inputSchema: {
       type: 'object',
       properties: {
         id: {type: 'string', description: 'Issue ID for full details'},
-        user_request: {type: 'string', description: 'User task description ($ARGUMENTS from /task command)'}
+        user_request: {type: 'string', description: 'User task description'}
       }
     }
   },
   {
-    name: 'task_show',
-    description: 'Show full issue details with parsed notes. Works with any beads issue (created via MCP or CLI).',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        id: {type: 'string', description: 'Issue ID'}
-      },
-      required: ['id']
-    }
-  },
-  {
     name: 'task_epic',
-    description: 'Create new epic or resume existing. Returns action for next step.',
+    description: 'Create or resume epic',
     inputSchema: {
       type: 'object',
       properties: {
-        title: {type: 'string', description: 'Epic title (required for new)'},
-        description: {type: 'string', description: 'WHAT and WHY (required for new)'},
-        resume: {type: 'string', description: 'Resume existing by ID'}
+        title: {type: 'string', description: 'Epic title'},
+        description: {type: 'string', description: 'WHAT and WHY'},
+        resume: {type: 'string', description: 'Resume by ID'}
       }
     }
   },
   {
     name: 'task_progress',
-    description: 'Update progress. Records findings/decisions in notes. Returns action with review requirement based on priority/type.',
+    description: 'Update findings/decisions/status',
     inputSchema: {
       type: 'object',
       properties: {
         id: {type: 'string', description: 'Issue ID'},
-        finding: {type: 'string', description: 'Discovery during exploration - files, patterns, dependencies (appends to notes)'},
-        completed: {type: 'string', description: 'What was completed (triggers review check for P0/P1/bug/feature)'},
-        decision: {type: 'string', description: 'Key decision made (appends to notes)'},
-        status: {type: 'string', enum: ['in_progress', 'blocked', 'deferred'], description: 'Set status (in_progress to resume blocked/deferred)'}
+        findings: {type: 'array', items: {type: 'string'}, description: 'Discoveries'},
+        decisions: {type: 'array', items: {type: 'string'}, description: 'Decisions made'},
+        completed: {type: 'string', description: 'What was completed'},
+        status: {type: 'string', enum: ['in_progress', 'blocked', 'deferred']}
       },
       required: ['id']
     }
   },
   {
     name: 'task_decompose',
-    description: 'Create sub-issues under epic. Returns action for approval flow.',
+    description: 'Create sub-issues under epic',
     inputSchema: {
       type: 'object',
       properties: {
@@ -113,101 +115,69 @@ const tools = [
             type: 'object',
             properties: {
               title: {type: 'string'},
-              description: {type: 'string', description: 'WHAT and WHY'},
-              acceptance: {type: 'string', description: 'Testable outcomes'},
-              design: {type: 'string', description: 'Technical approach'},
-              type: {type: 'string', description: 'Issue type (task|bug|feature|chore)'},
-              depends_on: {type: 'array', items: {type: 'integer'}, description: '0-based indices'}
+              description: {type: 'string'},
+              acceptance: {type: 'string'},
+              design: {type: 'string'},
+              type: {type: 'string'},
+              depends_on: {type: 'array', items: {type: 'integer'}}
             },
             required: ['title', 'description', 'acceptance', 'design']
           }
         },
-        update_epic_acceptance: {type: 'string', description: 'Update epic acceptance'}
+        update_epic_acceptance: {type: 'string'}
       },
       required: ['epic_id', 'sub_issues']
     }
   },
   {
     name: 'task_create',
-    description: 'Create a non-epic issue (task/bug/feature). Returns action for next step.',
+    description: 'Create non-epic issue',
     inputSchema: {
       type: 'object',
       properties: {
-        title: {type: 'string', description: 'Issue title'},
-        description: {type: 'string', description: 'WHAT and WHY'},
-        type: {type: 'string', description: 'Issue type (task|bug|feature|chore)', default: 'task'},
-        parent: {type: 'string', description: 'Optional parent epic ID'},
-        acceptance: {type: 'string', description: 'Testable outcomes'},
-        design: {type: 'string', description: 'Technical approach'},
-        priority: {type: 'string', description: 'Priority (0-4 or P0-P4)'},
-        depends_on: {type: 'string', description: 'Optional dependency: new issue depends on this ID'},
-        dep_type: {type: 'string', description: 'Dependency type (e.g. discovered-from)'}
+        title: {type: 'string'},
+        description: {type: 'string'},
+        type: {type: 'string', default: 'task'},
+        parent: {type: 'string'},
+        acceptance: {type: 'string'},
+        design: {type: 'string'},
+        priority: {type: 'string'},
+        depends_on: {type: 'string'},
+        dep_type: {type: 'string'}
       },
       required: ['title']
     }
   },
   {
-    name: 'task_dep_add',
-    description: 'Add dependency: child depends on parent (child needs parent).',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        child: {type: 'string', description: 'Dependent issue ID'},
-        parent: {type: 'string', description: 'Required issue ID'},
-        type: {type: 'string', description: 'Dependency type (e.g. discovered-from)'}
-      },
-      required: ['child', 'parent']
-    }
-  },
-  {
     name: 'task_done',
-    description: 'Close issue. Returns action for next work or epic closure.',
+    description: 'Close issue',
     inputSchema: {
       type: 'object',
       properties: {
-        id: {type: 'string', description: 'Issue to close'},
-        summary: {type: 'string', description: 'What was accomplished'}
+        id: {type: 'string'},
+        summary: {type: 'string'},
+        findings: {type: 'array', items: {type: 'string'}},
+        decisions: {type: 'array', items: {type: 'string'}},
+        confirmed: {type: 'boolean', description: 'Confirm closure after review prompt'}
       },
-      required: ['id', 'summary']
+      required: ['id']
     }
   }
 ]
 
-// Compute action string for a specific issue based on status
-function computeAction(issue) {
-  const id = issue.id
-  if (issue.status === 'in_progress') {
-    return `Work on this issue. When done: task_done(id="${id}", summary="...")`
-  }
-  if (issue.status === 'open') {
-    return issue.type === 'epic'
-      ? `Start: task_epic(resume="${id}")`
-      : `Start: task_progress(id="${id}", status="in_progress")`
-  }
-  if (issue.status === 'blocked') {
-    return `Blocked. To unblock: task_progress(id="${id}", status="in_progress")`
-  }
-  if (issue.status === 'deferred') {
-    return `Deferred. To resume: task_progress(id="${id}", status="in_progress")`
-  }
-  return `Check status: task_status(id="${id}")`
-}
-
 const toolHandlers = {
   task_status: (args) => {
-    // Specific issue query - return minimal details
+    // Specific issue query - return full details (replaces task_show)
     if (args.id) {
       const issue = bdShowOne(args.id)
       if (!issue) {
         return {error: `Issue ${args.id} not found`}
       }
-      return {
-        id: issue.id,
-        title: issue.title,
-        status: issue.status,
-        type: issue.type,
-        action: computeAction(issue)
+      // Parse notes if present
+      if (issue.notes) {
+        issue.notes = parseNotes(issue.notes)
       }
+      return issue
     }
 
     // Overview query - selection-oriented responses
@@ -217,11 +187,10 @@ const toolHandlers = {
     // No in-progress issues
     if (inProgress.length === 0) {
       if (args.user_request) {
-        return {action: `Create epic: task_epic(title="[summarize]", description="USER REQUEST: ${args.user_request}")`}
+        return {user_request: args.user_request}
       }
       if (ready.length > 0) {
         return {
-          action: 'ask',
           askUser: {
             question: 'Which task would you like to work on?',
             header: 'Task',
@@ -230,49 +199,46 @@ const toolHandlers = {
           }
         }
       }
-      return {action: 'No tasks. Ask user what to work on.'}
+      return {empty: true}
     }
 
     // Single in-progress, no new request - just continue
     if (inProgress.length === 1 && !args.user_request) {
       const issue = inProgress[0]
-      return {
-        id: issue.id,
-        title: issue.title,
-        action: `Continue working on "${issue.title}". When done: task_done(id="${issue.id}", summary="...")`
+      const result = {id: issue.id, title: issue.title, status: issue.status, type: issue.issue_type}
+
+      // For epics, include ready children so Claude knows what to work on
+      if (issue.issue_type === 'epic') {
+        const readyChildren = getReadyChildren(issue.id)
+        if (readyChildren) {
+          result.ready_children = readyChildren
+        }
       }
+      return result
     }
 
     // Multiple in-progress OR conflict with user_request - user must select
     const questionText = args.user_request
-      ? `"${args.user_request}" - which task?`
+      ? 'New request - which task?'
       : 'Which task to work on?'
+
+    // Find parent epic - only if unambiguous (single epic context)
+    const parentIds = [...new Set(inProgress.map(i => i.parent).filter(Boolean))]
+    const epicIds = inProgress.filter(i => i.issue_type === 'epic').map(i => i.id)
+    const parentEpic = parentIds.length === 1 ? parentIds[0]
+      : (parentIds.length === 0 && epicIds.length === 1 ? epicIds[0] : null)
     return {
-      action: 'ask',
       askUser: {
         question: questionText,
         header: 'Task',
         options: [
           ...inProgress.map(i => ({label: i.title, description: i.id})),
+          ...(parentEpic ? [{label: 'Create sub-task', description: `Under ${parentEpic}`}] : []),
           {label: 'Start new task', description: 'Create a new epic'}
         ],
         multiSelect: false
       }
     }
-  },
-
-  task_show: (args) => {
-    const issue = bdShowOne(args.id)
-    if (!issue) {
-      return {error: `Issue ${args.id} not found`}
-    }
-
-    // Parse notes if present
-    if (issue.notes) {
-      issue.notes = parseNotes(issue.notes)
-    }
-
-    return issue
   },
 
   task_epic: (args) => {
@@ -283,18 +249,21 @@ const toolHandlers = {
       }
       bd(['update', args.resume, '--status', 'in_progress'])
 
-      let action
-      if (issue.type === 'epic') {
-        // Check if has sub-issues
-        const hasChildren = issue.children && issue.children.length > 0
-        action = hasChildren
-          ? `Check sub-issues: task_status(id="${args.resume}")`
-          : `Explore codebase, then: task_decompose(epic_id="${args.resume}", sub_issues=[...])`
-      } else {
-        action = `Work on this issue. When done: task_done(id="${args.resume}", summary="...")`
+      // Return full issue details (same as task_status(id)) to avoid redundant follow-up call
+      if (issue.notes) {
+        issue.notes = parseNotes(issue.notes)
+      }
+      issue.is_new = false
+
+      // For epics, include ready children so Claude knows what to work on
+      if (issue.issue_type === 'epic') {
+        const readyChildren = getReadyChildren(args.resume)
+        if (readyChildren) {
+          issue.ready_children = readyChildren
+        }
       }
 
-      return {id: args.resume, title: issue.title, type: issue.type, is_new: false, action}
+      return issue
     }
 
     if (!args.title || !args.description) {
@@ -304,10 +273,7 @@ const toolHandlers = {
     const id = bd(['create', '--title', args.title, '--type', 'epic', '--description', args.description, '--acceptance', 'PENDING', '--design', 'PENDING', '--silent'])
     bd(['update', id, '--status', 'in_progress'])
 
-    return {
-      id,
-      action: `Explore codebase, then: task_decompose(epic_id="${id}", sub_issues=[...])`
-    }
+    return {id, is_new: true}
   },
 
   task_progress: (args) => {
@@ -317,50 +283,33 @@ const toolHandlers = {
     }
     const sections = parseNotes(issue.notes)
 
-    // Apply updates - only findings and decisions are stored in notes
-    if (args.finding) sections.findings.push(args.finding)
-    if (args.decision) sections.decisions.push(args.decision)
+    if (args.findings) sections.findings.push(...args.findings)
+    if (args.decisions) sections.decisions.push(...args.decisions)
 
     const newNotes = buildNotes(sections)
     const updateArgs = ['update', args.id, '--notes', newNotes]
     if (args.status) updateArgs.push('--status', args.status)
     bd(updateArgs)
 
-    // Determine action based on what was updated
-    let action
-    if (args.status === 'blocked' || args.status === 'deferred') {
-      action = `Issue ${args.status}. Pick next: task_status()`
-    } else if (args.status === 'in_progress') {
-      action = `Resumed. Work on this issue. When done: task_done(id="${args.id}", summary="...")`
-    } else if (args.completed) {
-      // Work was completed - check if review is needed based on priority/type
-      if (needsReview(issue)) {
-        action = 'ask'
-        return {
-          success: true,
-          notes: sections,
-          status: args.status || issue.status,
-          action,
-          reviewRequired: `${issue.type}/P${issue.priority ?? 2}`,
-          askUser: {
-            question: `Review completed work (${issue.type}/P${issue.priority ?? 2}). What next?`,
-            header: 'Review',
-            options: [
-              {label: 'Close issue', description: 'Work is complete'},
-              {label: 'Needs correction', description: 'Continue fixing'},
-              {label: 'Add more changes', description: 'Continue without closing'}
-            ],
-            multiSelect: false
-          }
+    if (args.completed && needsReview(issue)) {
+      return {
+        success: true,
+        notes: sections,
+        status: args.status || issue.status,
+        askUser: {
+          question: `Review completed work (${issue.type}/P${issue.priority ?? 2}). What next?`,
+          header: 'Review',
+          options: [
+            {label: 'Close issue', description: 'Work is complete'},
+            {label: 'Needs correction', description: 'Continue fixing'},
+            {label: 'Add more changes', description: 'Continue without closing'}
+          ],
+          multiSelect: false
         }
-      } else {
-        action = `Changes noted. Close: task_done(id="${args.id}", summary="${args.completed}")`
       }
-    } else {
-      action = `Continue working. When done: task_done(id="${args.id}", summary="...")`
     }
 
-    return {success: true, notes: sections, status: args.status || issue.status, action}
+    return {success: true, notes: sections, status: args.status || issue.status}
   },
 
   task_decompose: (args) => {
@@ -393,11 +342,7 @@ const toolHandlers = {
       bd(['update', args.epic_id, '--acceptance', args.update_epic_acceptance])
     }
 
-    return {
-      ids,
-      epic_id: args.epic_id,
-      action: 'Sub-issues created. Write plan file (epic ID pointer), then ExitPlanMode for approval.'
-    }
+    return {ids, epic_id: args.epic_id}
   },
 
   task_create: (args) => {
@@ -418,67 +363,111 @@ const toolHandlers = {
       if (args.dep_type) depArgs.push('--type', args.dep_type)
       bd(depArgs)
     }
-    return {
-      id,
-      action: `Created. Start: task_progress(id="${id}", status="in_progress")`
-    }
-  },
-
-  task_dep_add: (args) => {
-    const depArgs = ['dep', 'add', args.child, args.parent]
-    if (args.type) depArgs.push('--type', args.type)
-    bd(depArgs)
-    return {success: true, action: `Dependency added. Continue: task_status(id="${args.child}")`}
+    return {id}
   },
 
   task_done: (args) => {
-    bd(['close', args.id, '--reason', args.summary])
+    const issue = bdShowOne(args.id)
+    if (!issue) {
+      return {error: `Issue ${args.id} not found`}
+    }
 
-    let epicStatus = null
-    let nextReady = null
-    let parentId = null
-    let epicTitle = null
+    const sections = parseNotes(issue.notes)
 
-    try {
-      const issue = bdShowOne(args.id)
-      parentId = issue.parent
+    // Helper to perform actual close and return result
+    const doClose = (summary) => {
+      // Clean up pending_close if present
+      if (sections.pending_close) {
+        delete sections.pending_close
+        bd(['update', args.id, '--notes', buildNotes(sections)])
+      }
 
-      if (parentId) {
-        const readyList = bdJson(['ready', '--parent', parentId])
-        nextReady = readyList[0] || null
+      bd(['close', args.id, '--reason', summary])
 
-        const epicIssue = bdShowOne(parentId)
-        if (epicIssue) {
-          epicTitle = epicIssue.title
-          const children = epicIssue.children || []
-          const completed = children.filter(c => c.status === 'closed').length
-          epicStatus = {completed, remaining: children.length - completed}
+      let epicStatus = null
+      let nextReady = null
+      let parentId = null
+
+      try {
+        const closedIssue = bdShowOne(args.id)
+        parentId = closedIssue.parent
+
+        if (parentId) {
+          const readyList = bdJson(['ready', '--parent', parentId])
+          nextReady = readyList[0] || null
+
+          const epicIssue = bdShowOne(parentId)
+          if (epicIssue) {
+            const children = epicIssue.children || []
+            const completed = children.filter(c => c.status === 'closed').length
+            epicStatus = {completed, remaining: children.length - completed}
+          }
+        }
+      } catch (e) {
+        // Continue with partial info
+      }
+
+      return {closed: args.id, next_ready: nextReady, epic_status: epicStatus, parent_id: parentId}
+    }
+
+    // If confirmed, retrieve stored pending_close data and close
+    if (args.confirmed) {
+      const pending = sections.pending_close
+      if (!pending) {
+        return {error: 'No pending close found. Call task_done with summary first.'}
+      }
+
+      // Merge any final findings/decisions
+      if (args.findings) sections.findings.push(...args.findings)
+      if (args.decisions) sections.decisions.push(...args.decisions)
+      bd(['update', args.id, '--notes', buildNotes(sections)])
+
+      return doClose(pending.summary)
+    }
+
+    // First call - check if review needed
+    if (needsReview(issue)) {
+      if (!args.summary) {
+        return {error: 'summary required for issues that need review'}
+      }
+
+      // Store pending close data and any findings/decisions
+      if (args.findings) sections.findings.push(...args.findings)
+      if (args.decisions) sections.decisions.push(...args.decisions)
+      sections.pending_close = {summary: args.summary}
+      bd(['update', args.id, '--notes', buildNotes(sections)])
+
+      return {
+        askUser: {
+          question: `Close ${issue.issue_type} "${issue.title}"?`,
+          header: 'Confirm',
+          options: [
+            {label: 'Close', description: 'Work is complete'},
+            {label: 'Keep open', description: 'Continue working'}
+          ],
+          multiSelect: false
         }
       }
-    } catch (e) {
-      // Continue with partial info
     }
 
-    // Determine action
-    let action
-    if (epicStatus?.remaining === 0 && parentId) {
-      action = epicTitle
-        ? `ALL SUB-ISSUES DONE. Close epic "${epicTitle}" NOW: task_done(id="${parentId}", summary="...")`
-        : `ALL SUB-ISSUES DONE. Close epic NOW: task_done(id="${parentId}", summary="...")`
-    } else if (nextReady) {
-      action = `Next: ${nextReady.id} - ${nextReady.title}. Start: task_progress(id="${nextReady.id}", status="in_progress")`
-    } else if (parentId) {
-      action = `Check for more work: task_status(id="${parentId}")`
-    } else {
-      action = 'Issue closed. Check task_status() for more work.'
+    // No review needed - close directly
+    if (!args.summary) {
+      return {error: 'summary required'}
     }
 
-    return {closed: {id: args.id}, next_ready: nextReady, epic_status: epicStatus, action}
+    // Record final findings/decisions before closing
+    if (args.findings) sections.findings.push(...args.findings)
+    if (args.decisions) sections.decisions.push(...args.decisions)
+    if (args.findings || args.decisions) {
+      bd(['update', args.id, '--notes', buildNotes(sections)])
+    }
+
+    return doClose(args.summary)
   }
 }
 
 createMcpServer({
-  serverInfo: {name: 'task', version: '2.0.0'},
+  serverInfo: {name: 'task', version: '3.0.0'},
   tools,
   toolHandlers
 })
