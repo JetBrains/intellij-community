@@ -322,6 +322,28 @@ class ServiceContainerTest {
     assertNotNull(service)
   }
 
+  @Test
+  fun `error message includes class name for unsupported constructor`() {
+    val componentManager = TestComponentManager()
+    componentManager.registerService(
+      ServiceWithUnsupportedConstructor::class.java,
+      ServiceWithUnsupportedConstructor::class.java,
+      testPluginDescriptor,
+      false
+    )
+    val error = LoggedErrorProcessor.executeAndReturnLoggedError {
+      try {
+        componentManager.getService(ServiceWithUnsupportedConstructor::class.java)
+        throw AssertionError("Expected exception")
+      }
+      catch (_: PluginException) {
+        // expected
+      }
+    }
+    assertNotNull(error)
+    assertThat(error.message).contains("ServiceWithUnsupportedConstructor")
+  }
+
   private fun publishComponentManager1(componentManager: ComponentManager, action: () -> Unit): Unit {
     componentManagerHolder1.set(componentManager)
     try {
@@ -413,6 +435,8 @@ private class ContextElement(val marker: String) : AbstractCoroutineContextEleme
   }
 
 }
+
+private class ServiceWithUnsupportedConstructor(@Suppress("UNUSED_PARAMETER") unusedParam: String)
 
 private const val MARKER_0 = "marker 0"
 private const val MARKER_1 = "marker 1"

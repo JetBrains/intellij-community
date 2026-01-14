@@ -889,7 +889,7 @@ abstract class ComponentManagerImpl(
     return (lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
             ?: lookup.findConstructorOrNull(aClass, coroutineScopeMethodType)?.invoke(instanceCoroutineScope(aClass))
             ?: lookup.findConstructorOrNull(aClass, applicationMethodType)?.invoke(this)
-            ?: throw RuntimeException("Cannot find suitable constructor, " +
+            ?: throw RuntimeException("Cannot find suitable constructor for class ${aClass.name}, " +
                                       "expected (), (CoroutineScope), (Application), or (Application, CoroutineScope)")) as T
   }
 
