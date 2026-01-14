@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.AsyncExecutionServiceImpl
 import com.intellij.openapi.application.impl.concurrencyTest
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -304,5 +305,22 @@ class VfsRefreshTest {
     } finally {
       RefreshQueueImpl.setTestListener(null)
     }
+  }
+
+  @Test
+  fun `prioritized vfs refresh does not skip async listeners`(): Unit = timeoutRunBlocking {
+    val file = createTempFile()
+    val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(file)!!
+    val doc = readAction {
+      FileDocumentManager.getInstance().getDocument(virtualFile)
+    }!!
+    assertThat(runReadAction { doc.text }).isEqualTo("")
+    file.write("42")
+    backgroundWriteAction {
+      RefreshQueue.getInstance().createSession(false, false, null).apply {
+        addFile(virtualFile)
+      }.launch()
+    }
+    assertThat(runReadAction { doc.text }).isEqualTo("42")
   }
 }

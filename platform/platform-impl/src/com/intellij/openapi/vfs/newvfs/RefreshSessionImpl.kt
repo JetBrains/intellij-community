@@ -301,13 +301,14 @@ internal class RefreshSessionImpl internal constructor(
   fun fireEventsInBackgroundWriteAction(
     events: List<CompoundVFileEvent>,
     appliers: List<AsyncFileListener.ChangeApplier>,
+    excludeAsyncListeners: Boolean,
   ) {
     try {
       val app = ApplicationManagerEx.getApplicationEx()
       if ((myFinishRunnable != null || !events.isEmpty()) && !app.isDisposed()) {
         if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + events)
         withWriteActionTitle(IdeCoreBundle.message("progress.title.file.system.synchronization"), {
-          doFireEvents(events, appliers, true)
+          doFireEvents(events, appliers, excludeAsyncListeners)
         })
       }
     }
