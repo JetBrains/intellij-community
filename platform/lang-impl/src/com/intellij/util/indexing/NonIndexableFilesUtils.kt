@@ -55,22 +55,24 @@ internal fun iterateNonIndexableFilesImpl(project: Project, inputFilter: Virtual
 
 private data class AllFileSets(val recursive: List<WorkspaceFileSet>, val nonRecursive: List<WorkspaceFileSet>)
 
-private fun WorkspaceFileIndex.allIndexableFileSets(root: VirtualFile): AllFileSets = runReadAction {
-  findFileSets(root, true, true, false, true, true, true).partition { fileSet ->
-    fileSet !is WorkspaceFileSetWithCustomData<*> || fileSet.recursive
-  }
-}.let { (recursive, nonRecursive) -> AllFileSets(recursive, nonRecursive) }
+private fun WorkspaceFileIndex.allIndexableFileSets(root: VirtualFile, alreadyInReadAction: Boolean = false): AllFileSets =
+  runReadActionIfNeeded(alreadyInReadAction) {
+    findFileSets(root, true, true, false, true, true, true).partition { fileSet ->
+      fileSet !is WorkspaceFileSetWithCustomData<*> || fileSet.recursive
+    }
+  }.let { (recursive, nonRecursive) -> AllFileSets(recursive, nonRecursive) }
 
-private fun WorkspaceFileIndexEx.isExcludedOrInvalid(file: VirtualFile): Boolean = runReadAction {
-  val info = getFileInfo(file, true, true, true, true, true, true)
-  when (info) {
-    NonWorkspace.EXCLUDED -> true
-    NonWorkspace.IGNORED -> true
-    NonWorkspace.INVALID -> true
-    NonWorkspace.NOT_UNDER_ROOTS -> true
-    else -> false
+private fun WorkspaceFileIndexEx.isExcludedOrInvalid(file: VirtualFile, alreadyInReadAction: Boolean = false): Boolean =
+  runReadActionIfNeeded(alreadyInReadAction) {
+    val info = getFileInfo(file, true, true, true, true, true, true)
+    when (info) {
+      NonWorkspace.EXCLUDED -> true
+      NonWorkspace.IGNORED -> true
+      NonWorkspace.INVALID -> true
+      NonWorkspace.NOT_UNDER_ROOTS -> true
+      else -> false
+    }
   }
-}
 
 @RequiresBackgroundThread
 private fun WorkspaceFileIndexEx.iterateNonIndexableFilesImpl(roots: Set<VirtualFile>, filter: VirtualFileFilter, processor: ContentIterator): Boolean {
@@ -131,8 +133,8 @@ private class NonIndexableFilesDequeImpl(private val project: Project, private v
       if (file in roots) visitedRoots.add(file)
 
       val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
-      if (workspaceFileIndex.isExcludedOrInvalid(file)) continue
-      val indexableFileSets = WorkspaceFileIndexEx.getInstance(project).allIndexableFileSets(file)
+      if (workspaceFileIndex.isExcludedOrInvalid(file, alreadyInReadAction = true)) continue
+      val indexableFileSets = WorkspaceFileIndexEx.getInstance(project).allIndexableFileSets(file, alreadyInReadAction = true)
 
       if (indexableFileSets.recursive.isNotEmpty()) continue // skip the current file and their children
       if (file.isDirectory) bfsQueue.addAll(file.children)
@@ -143,3 +145,6 @@ private class NonIndexableFilesDequeImpl(private val project: Project, private v
     return null
   }
 }
+
+private inline fun <T> runReadActionIfNeeded(alreadyInReadAction: Boolean, crossinline action: () -> T): T =
+  if (alreadyInReadAction) action() else runReadAction { action() }
