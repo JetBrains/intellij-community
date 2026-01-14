@@ -1,11 +1,16 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
+import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 record UndoCommandFlushReason(
@@ -23,23 +28,27 @@ record UndoCommandFlushReason(
   static @NotNull UndoCommandFlushReason cannotMergeCommands(
     @NotNull String reason,
     @Nullable String currentCommandName,
-    @Nullable Object currentGroupId,
+    @Nullable Reference<Object> currentGroupId,
     boolean isCurrentTransparent,
     boolean isCurrentGlobal,
-    @Nullable String nextCommandName,
-    @Nullable Object nextGroupId,
-    boolean isNextTransparent,
-    boolean isNextGlobal
+    @NotNull PerformedCommand nextCommand
   ) {
+    CommandId nextCommandId = nextCommand.commandId();
+    String nextCommandName = nextCommand.commandName();
+    Object nextGroupId = nextCommand.groupId();
+    boolean isNextTransparent = nextCommand.isTransparent();
+    boolean isNextGlobal = nextCommand.isGlobal();
     return new UndoCommandFlushReason(
       reason,
       new Command(
+        null,
         currentCommandName,
         currentGroupId,
         isCurrentTransparent,
         isCurrentGlobal
       ),
       new Command(
+        nextCommandId,
         nextCommandName,
         nextGroupId,
         isNextTransparent,
@@ -73,33 +82,29 @@ record UndoCommandFlushReason(
   );
 
   private record Command(
-    @Nullable String name,
-    @Nullable String groupId,
+    @Nullable CommandId commandId,
+    @Nullable String commandName,
+    @Nullable Object groupId,
     boolean isTransparent,
     boolean isGlobal
   ) {
-    Command(
-      @Nullable String commandName,
-      @Nullable Object groupId,
-      boolean isTransparent,
-      boolean isGlobal
-    ) {
-      this(
-        commandName,
-        groupId == null ? null : groupId.toString(),
-        isTransparent,
-        isGlobal
-      );
-    }
-
     @Override
     public String toString() {
-      return "Command['%s', %s%s%s]".formatted(
-        name,
-        groupId,
-        isTransparent ? ", transparent" : "",
-        isGlobal ? ", global" : ""
-      );
+      var str = new ArrayList<@Nullable Object>(3);
+      str.add((commandName == null) ? null : ("'" + commandName + "''"));
+      str.add((groupId instanceof Reference<?> ref) ? SoftReference.dereference(ref) : groupId);
+      if (commandId != null) {
+        str.add(commandId);
+      }
+      if (isTransparent) {
+        str.add("transparent");
+      }
+      if (isGlobal) {
+        str.add("global");
+      }
+      return str.stream()
+        .map(Objects::toString)
+        .collect(Collectors.joining(", ", "[", "]"));
     }
   }
 }

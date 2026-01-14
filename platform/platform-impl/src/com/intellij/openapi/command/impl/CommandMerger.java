@@ -299,13 +299,10 @@ public final class CommandMerger {
     return UndoCommandFlushReason.cannotMergeCommands(
       reason,
       commandName,
-      SoftReference.dereference(lastGroupId),
+      lastGroupId,
       isTransparent(),
       isForcedGlobal,
-      performedCommand.commandName(),
-      performedCommand.groupId(),
-      performedCommand.isTransparent(),
-      performedCommand.isGlobal()
+      performedCommand
     );
   }
 
