@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle.completion
 
-import com.intellij.openapi.util.TextRange
+import com.intellij.util.text.matching.MatchedFragment
 import org.jetbrains.plugins.gradle.completion.GradleDependencyCompletionMatcher
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
@@ -63,7 +63,7 @@ class GradleDependencyCompletionMatcherTest {
         }
 
         // Apply ranges as braces to the clean name to build an annotated string
-        fun annotate(name: String, ranges: List<TextRange>): String {
+        fun annotate(name: String, ranges: List<MatchedFragment>): String {
             if (ranges.isEmpty()) return name
             val sorted = ranges.sortedBy { it.startOffset }
             val starts = sorted.groupBy { it.startOffset }
@@ -84,8 +84,6 @@ class GradleDependencyCompletionMatcherTest {
 
         val matcher = GradleDependencyCompletionMatcher(prefix)
         val fragments = matcher.getMatchingFragments(prefix, name)
-
-        require(fragments != null) { "Expected non-null fragments" }
 
         val actualAnnotated = annotate(name, fragments)
         val message = "getMatchingFragments: prefix='$prefix' expected $annotatedName but was $actualAnnotated"

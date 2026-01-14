@@ -80,6 +80,7 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt",
     "//libraries/jspecify",
     "//plugins/repository-search",
+    "//platform/util/text-matching",
   ],
   exports = [
     "//platform/external-system-api:externalSystem",

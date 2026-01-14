@@ -82,5 +82,6 @@
     <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
     <orderEntry type="module" module-name="intellij.repository.search" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.text.matching" scope="TEST" />
   </component>
 </module>

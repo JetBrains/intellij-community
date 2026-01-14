@@ -112,6 +112,8 @@ jvm_library(
     "//plugins/repository-search",
     "//plugins/repository-search:repository-search_test_lib",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
+    "//platform/util/text-matching",
+    "//platform/util/text-matching:text-matching_test_lib",
   ],
   exports = ["@lib//:kotlin-gradle-plugin-idea"],
   runtime_deps = [":tests.shared"]

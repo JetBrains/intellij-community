@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.completion
 
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.TextRange
+import com.intellij.util.text.matching.MatchedFragment
 import org.jetbrains.annotations.ApiStatus
 
 private val log = logger<GradleDependencyCompletionMatcher>()
@@ -18,7 +18,7 @@ class GradleDependencyCompletionMatcher(prefix: String) : PrefixMatcher(prefix) 
     return GradleDependencyCompletionMatcher(prefix)
   }
 
-  override fun getMatchingFragments(prefix: String, name: String): List<TextRange>? {
+  override fun getMatchingFragments(prefix: String, name: String): List<MatchedFragment> {
     try {
       return tryGetMatchingFragments(prefix, name)
     }
@@ -28,17 +28,17 @@ class GradleDependencyCompletionMatcher(prefix: String) : PrefixMatcher(prefix) 
     }
   }
 
-  private fun tryGetMatchingFragments(prefix: String, name: String): List<TextRange>? {
+  private fun tryGetMatchingFragments(prefix: String, name: String): List<MatchedFragment> {
     // handle top level completion case:
     // implementation("org.example:lib-implementation:1.0") - "implementation" in the artifact name should be matched
     val start = name.indexOf("(").coerceAtLeast(0)
     val prefixParts = prefix.split(":")
     val nameParts = name.substring(start).split(":")
-    val result = mutableListOf<TextRange>()
+    val result = mutableListOf<MatchedFragment>()
     var offset = start
     var j = 0
     for (i in 0 until prefixParts.size) {
-      var matchingFragment: TextRange? = null
+      var matchingFragment: MatchedFragment? = null
       while (j < nameParts.size && matchingFragment == null) {
         matchingFragment = getMatchingFragment(offset, prefixParts[i], nameParts[j])
         offset += nameParts[j].length + 1
@@ -53,11 +53,11 @@ class GradleDependencyCompletionMatcher(prefix: String) : PrefixMatcher(prefix) 
     return result
   }
 
-  private fun getMatchingFragment(offset: Int, prefixPart: String, name: String): TextRange? {
+  private fun getMatchingFragment(offset: Int, prefixPart: String, name: String): MatchedFragment? {
     val from = name.indexOf(prefixPart)
     if (from == -1) {
       return null
     }
-    return TextRange(from + offset, from + offset + prefixPart.length)
+    return MatchedFragment(from + offset, from + offset + prefixPart.length)
   }
 }
