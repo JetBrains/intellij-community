@@ -101,7 +101,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
     private fun initEmptyText(emptyText: StatusText) {
       emptyText.text = GitBundle.message("toolwindow.working.trees.tab.empty.text")
       emptyText.appendLine(GitBundle.message("toolwindow.working.trees.tab.empty.text.create.working.tree"),
-                           SimpleTextAttributes.LINK_ATTRIBUTES) { _ ->
+                           SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { _ ->
         val action = ActionManager.getInstance().getAction("Git.CreateNewWorkingTree")
         if (action !== null) {
           val event = AnActionEvent.createEvent(action,
