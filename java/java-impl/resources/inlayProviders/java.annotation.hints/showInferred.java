@@ -1,7 +1,6 @@
-/*<# block fmt:fontSize=ABitSmallerThanInEditor,marginPadding=OnlyPadding #>*/
-class Test {
+class Fish {
   /*<# @Contract(value = "!null -> param1", pure = true) #>*/
-  public final String/*<# ! #>*/ bar(String x) {
+  public final String/*<# ! #>*/ size(String x) {
     if (x != null) return x;
     return "|----------------------------|";
   }

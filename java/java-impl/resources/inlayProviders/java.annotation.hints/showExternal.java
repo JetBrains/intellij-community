@@ -1,7 +1,8 @@
-/*<# block fmt:fontSize=ABitSmallerThanInEditor,marginPadding=OnlyPadding #>*/
-/*<# @Deprecated #>*/
-class Test {
-  public int getSize(String/*<# ! #>*/ s) {
-    return s.length();
+/*<# @Debug.Renderer(text = "name") #>*/
+class Person {
+  public final String name;
+
+  public Person(String name) {
+    this.name = name;
   }
 }
