@@ -29,7 +29,6 @@ jvm_library(
   kotlinc_opts = ":custom_codepoints",
   deps = [
     "@lib//:kotlin-stdlib",
-    "//fleet/util/core",
     ":fleet_util_multiplatform_provided",
   ]
 )

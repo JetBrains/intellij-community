@@ -1,7 +1,2 @@
 <idea-plugin visibility="internal">
-  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-  <dependencies>
-    <module name="fleet.util.core"/>
-  </dependencies>
-  <!-- endregion -->
 </idea-plugin>
