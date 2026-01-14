@@ -20,12 +20,12 @@ project.commonTest
 project.iosArm64Main
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
-    compilerSettings = -nopack -nostdlib
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib
 
 project.iosArm64Test
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
-    compilerSettings = -nopack -nostdlib
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib
 
 project.iosMain
     languageLevel = 1.8
@@ -38,12 +38,12 @@ project.iosTest
 project.iosX64Main
     languageLevel = 1.9
     apiLevel = 1.9
-    compilerSettings = -nopack -nostdlib -opt-in IosAllOptInAnnotation
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in IosAllOptInAnnotation
 
 project.iosX64Test
     languageLevel = 1.9
     apiLevel = 1.9
-    compilerSettings = -nopack -nostdlib -opt-in IosAllOptInAnnotation
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in IosAllOptInAnnotation
 
 project.jsMain
     languageLevel = {{LATEST_STABLE}}
@@ -75,6 +75,14 @@ project.nativeTest
     apiLevel = {{LATEST_STABLE}}
 
 project.test
+
+project.webMain
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+
+project.webTest
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
 
 
 Test configuration:

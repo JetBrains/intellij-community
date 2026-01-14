@@ -11,6 +11,7 @@ my-app.commonTest
 my-app.jsMain
     commonMain (refines, COMPILE)
     org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (COMPILE)
+    webMain (refines, COMPILE)
 
 my-app.jsTest
     commonMain (friend, TEST)
@@ -18,6 +19,8 @@ my-app.jsTest
     jsMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test-js:{{KGP_VERSION}} (TEST)
+    webMain (friend, TEST)
+    webTest (refines, TEST)
 
 my-app.jvmMain
     commonMain (refines, COMPILE)
@@ -66,6 +69,18 @@ my-app.nativeTest
     linuxMain (friend, TEST)
     linuxX64Main (friend, TEST)
     nativeMain (friend, TEST)
+
+my-app.webMain
+    commonMain (refines, COMPILE)
+    org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (COMPILE)
+
+my-app.webTest
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    jsMain (friend, TEST)
+    org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-test-js:{{KGP_VERSION}} (TEST)
+    webMain (friend, TEST)
 
 
 Test configuration:

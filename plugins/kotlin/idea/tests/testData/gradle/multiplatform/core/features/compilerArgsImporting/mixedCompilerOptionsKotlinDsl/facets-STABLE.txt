@@ -29,12 +29,12 @@ project.commonTest
 project.iosArm64Main
     languageLevel = 2.0
     apiLevel = 2.0
-    compilerSettings = -nopack -nostdlib -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
 
 project.iosArm64Test
     languageLevel = 2.0
     apiLevel = 2.0
-    compilerSettings = -nopack -nostdlib -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
 
 project.iosMain
     languageLevel = 1.9
@@ -49,12 +49,12 @@ project.iosTest
 project.iosX64Main
     languageLevel = 2.0
     apiLevel = 2.0
-    compilerSettings = -nopack -nostdlib -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
 
 project.iosX64Test
     languageLevel = 2.0
     apiLevel = 2.0
-    compilerSettings = -nopack -nostdlib -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+    compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
 
 project.jsMain
     languageLevel = 2.0
@@ -105,6 +105,16 @@ project.unitTest
     languageLevel = 1.9
     apiLevel = 1.9
     compilerSettings = -opt-in LangSettingsOptInAnnotation,CompilationOptInAnnotation -progressive
+
+project.webMain
+    languageLevel = 2.0
+    apiLevel = 2.0
+    compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive
+
+project.webTest
+    languageLevel = 2.0
+    apiLevel = 2.0
+    compilerSettings = -opt-in LangSettingsOptInAnnotation -progressive
 
 
 Test configuration:
