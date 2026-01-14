@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.progress
 
@@ -532,10 +532,16 @@ private fun <T> contextToIndicator(ctx: CoroutineContext, action: () -> T): T {
     }
   }
   else {
-    val indicator = EmptyProgressIndicator(contextModality)
+    val indicator = JobDependentIndicator(contextModality)
     jobToIndicator(job, indicator, action)
   }
 }
+
+/**
+ * We keep this class as an inheritor of [EmptyProgressIndicator] for ease of debugging -- if one sees an instance of this class,
+ * it means that the currently used indicator depends on some job.
+ */
+private class JobDependentIndicator(modalityState: ModalityState): EmptyProgressIndicator(modalityState)
 
 @Throws(CancellationException::class)
 @Internal
