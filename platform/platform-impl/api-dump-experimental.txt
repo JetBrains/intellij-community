@@ -168,6 +168,7 @@ f:com.intellij.openapi.actionSystem.ActionGroupUtil
 - *s:forceRecursiveUpdateInBackground(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.ActionGroup
 *f:com.intellij.openapi.application.impl.TestOnlyThreading
 - sf:INSTANCE:com.intellij.openapi.application.impl.TestOnlyThreading
+- sf:dispatchAwtEventsWithoutWriteIntentLock():V
 - sf:releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(java.lang.Runnable):V
 *e:com.intellij.openapi.editor.ComponentInlayAlignment
 - java.lang.Enum
