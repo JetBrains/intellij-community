@@ -20,6 +20,6 @@ class GitOpenExistingWorkingTreeForLocalBranchAction :
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, reference: GitReference) {
     val repository = repositories.singleOrNull() ?: return
     val workingTree = getWorkingTreeWithRef(reference, repository, true) ?: return
-    GitWorkingTreesService.getInstance(repository.project).openWorkingTreeProject(workingTree, e.coroutineScope)
+    GitWorkingTreesService.getInstance(repository.project).openWorkingTreeProject(workingTree)
   }
 }
