@@ -111,7 +111,6 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   ): List<PolySymbol> =
     base.rootScope
       .getMatchingSymbols(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, stack)
-      .toList()
 
   final override fun getSymbols(
     kind: PolySymbolKind,
@@ -120,7 +119,6 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   ): List<PolySymbol> =
     base.rootScope
       .getSymbols(base.contributionForQuery, base.jsonOrigin, kind, params)
-      .toList()
 
   final override fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
@@ -129,7 +127,6 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   ): List<PolySymbolCodeCompletionItem> =
     base.rootScope
       .getCodeCompletions(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, stack)
-      .toList()
 
   final override val kind: PolySymbolKind
     get() = base.kind
