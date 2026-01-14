@@ -109,8 +109,4 @@ class DefaultKotlinScriptEntityProvider(
     }
 }
 
-private fun EntityStorage.containsScriptEntity(url: VirtualFileUrl) = getVirtualFileUrlIndex()
-    .findEntitiesByUrl(url)
-    .filterIsInstance<KotlinScriptEntity>().any()
-
 object DefaultScriptEntitySource : EntitySource

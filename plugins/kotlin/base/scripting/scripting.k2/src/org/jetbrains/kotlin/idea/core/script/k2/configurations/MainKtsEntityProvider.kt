@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgressScope
@@ -59,6 +60,8 @@ class MainKtsEntityProvider(
         definition: ScriptDefinition
     ) {
         val scriptUrl = virtualFile.virtualFileUrl
+        if (project.workspaceModel.currentSnapshot.containsScriptEntity(scriptUrl)) return
+
         val mainKtsConfiguration = resolveMainKtsConfiguration(virtualFile, definition)
         val scriptsToResolve = mainKtsConfiguration.importedScripts - visitedScripts.keys()
         if (scriptsToResolve.isNotEmpty()) {
@@ -98,10 +101,8 @@ class MainKtsEntityProvider(
         }
 
         project.updateKotlinScriptEntities(MainKtsKotlinScriptEntitySource) {
-            val builder = it.toSnapshot().toBuilder()
-            if (builder.getVirtualFileUrlIndex().findEntitiesByUrl(scriptUrl).none()) {
-                updateStorage(builder)
-                it.applyChangesFrom(builder)
+            if (!it.containsScriptEntity(scriptUrl)) {
+                updateStorage(it)
             }
         }
 

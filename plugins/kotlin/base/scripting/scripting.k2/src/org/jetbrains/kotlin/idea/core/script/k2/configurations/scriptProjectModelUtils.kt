@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.idea.core.script.k2.configurations
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.io.URLUtil
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import kotlin.collections.orEmpty
@@ -66,3 +68,7 @@ private fun Iterable<ScriptDependency>.toVirtualFileUrls(urlManager: VirtualFile
 fun ScriptCompilationConfiguration.getDependencyUrls(manager: VirtualFileUrlManager): Pair<List<VirtualFileUrl>, List<VirtualFileUrl>> =
     get(ScriptCompilationConfiguration.dependencies).orEmpty()
         .toVirtualFileUrls(manager) to get(ScriptCompilationConfiguration.ide.dependenciesSources).orEmpty().toVirtualFileUrls(manager)
+
+internal fun EntityStorage.containsScriptEntity(url: VirtualFileUrl) = getVirtualFileUrlIndex()
+    .findEntitiesByUrl(url)
+    .filterIsInstance<KotlinScriptEntity>().any()
