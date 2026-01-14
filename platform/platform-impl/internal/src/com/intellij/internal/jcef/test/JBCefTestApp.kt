@@ -41,7 +41,7 @@ internal class JBCefTestAppFrame : JFrame() {
   private val contentPanel: JPanel = JPanel(cardLayout)
 
   private val testCases: List<TestCase> = listOf(
-    KeyboardEvents(), ContextMenu(), ResourceHandler(), PerformanceTest(), DetailedFrame())
+    KeyboardEvents(), ContextMenu(), ResourceHandler(), PerformanceTest(), DetailedFrame(), MessageRouterTests())
 
   private val tabsList = JBList(testCases.map { it.getDisplayName() })
 
