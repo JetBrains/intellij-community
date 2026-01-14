@@ -44,7 +44,7 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
   protected static final Logger LOG = Logger.getInstance(VirtualFileManagerImpl.class);
 
   // do not use an extension point name to avoid map lookup on each event publishing
-  private static final ExtensionPointImpl<VirtualFileManagerListener> MANAGER_LISTENER_EP =
+  private final ExtensionPointImpl<VirtualFileManagerListener> myListenerEP =
     ((ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea()).getExtensionPoint("com.intellij.virtualFileManagerListener");
 
   private final List<? extends VirtualFileSystem> myPreCreatedFileSystems;
@@ -259,7 +259,7 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
           LOG.error(e);
         }
       }
-      MANAGER_LISTENER_EP.processWithPluginDescriptor((listener, pluginDescriptor) -> {
+      myListenerEP.processWithPluginDescriptor((listener, pluginDescriptor) -> {
         listener.beforeRefreshStart(asynchronous);
         return Unit.INSTANCE;
       });
@@ -280,7 +280,7 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
           LOG.error(e);
         }
       }
-      MANAGER_LISTENER_EP.processWithPluginDescriptor((listener, pluginDescriptor) -> {
+      myListenerEP.processWithPluginDescriptor((listener, pluginDescriptor) -> {
         listener.afterRefreshFinish(asynchronous);
         return Unit.INSTANCE;
       });
