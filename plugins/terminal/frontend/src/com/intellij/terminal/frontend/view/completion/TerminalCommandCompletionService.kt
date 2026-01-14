@@ -48,6 +48,8 @@ class TerminalCommandCompletionService(
     TerminalCommandSpecCompletionContributor(),
   )
 
+  private val fallbackContributor: TerminalCommandCompletionContributor = TerminalFilesCompletionContributor()
+
   @get:RequiresEdt
   internal var activeProcess: TerminalCommandCompletionProcess? = null
     private set
@@ -166,7 +168,7 @@ class TerminalCommandCompletionService(
 
     val nonEmptyResults = results.filter { it.suggestions.isNotEmpty() }
     if (nonEmptyResults.isEmpty()) {
-      return results.firstOrNull()
+      return fallbackContributor.getCompletionSuggestions(context)
     }
 
     val maxPrefixLength = nonEmptyResults.maxOf { it.prefix.length }

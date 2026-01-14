@@ -1,6 +1,7 @@
 package com.intellij.terminal.tests.reworked.frontend.completion
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
@@ -10,6 +11,9 @@ import com.intellij.terminal.tests.reworked.util.EchoingTerminalSession
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.utils.io.createDirectory
+import com.intellij.testFramework.utils.io.createFile
+import com.intellij.testFramework.utils.io.deleteRecursively
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
@@ -21,6 +25,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.awt.event.KeyEvent.*
+import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.createTempDirectory
 
 @RunWith(JUnit4::class)
 class TerminalCompletionPopupTest : BasePlatformTestCase() {
@@ -348,6 +355,40 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
       .isEqualTo(secondSelectedItem)
   }
 
+  @Test
+  fun `test file names are suggested as a fallback when there is no command`() = doTest { fixture ->
+    val tempDir = createTempDir().also {
+      it.createFile("file.txt")
+      it.createDirectory("figures")
+      it.createDirectory("files")
+      it.createDirectory("dir")
+      it.createFile(".hidden")
+    }
+
+    fixture.type("$tempDir/fi")
+    fixture.callCompletionPopup()
+    val separator = File.separator
+    assertThat(fixture.getLookupElements().map { it.lookupString })
+      .hasSameElementsAs(listOf("file.txt", "figures$separator", "files$separator"))
+  }
+
+  @Test
+  fun `test file names are suggested as a fallback after unknown command`() = doTest { fixture ->
+    val tempDir = createTempDir().also {
+      it.createFile("file.txt")
+      it.createDirectory("figures")
+      it.createDirectory("files")
+      it.createDirectory("dir")
+      it.createFile(".hidden")
+    }
+
+    fixture.type("some_unknown_command $tempDir/fi")
+    fixture.callCompletionPopup()
+    val separator = File.separator
+    assertThat(fixture.getLookupElements().map { it.lookupString })
+      .hasSameElementsAs(listOf("file.txt", "figures$separator", "files$separator"))
+  }
+
   private fun doTest(block: suspend (TerminalCompletionFixture) -> Unit) = timeoutRunBlocking(context = Dispatchers.EDT) {
     val fixtureScope = childScope("TerminalCompletionFixture")
     val session = EchoingTerminalSession(fixtureScope.childScope("EchoingTerminalSession"))
@@ -361,6 +402,12 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
       fixture.awaitShellIntegrationFeaturesInitialized()
 
       block(fixture)
+    }
+  }
+
+  private fun createTempDir(): Path {
+    return createTempDirectory().also {
+      Disposer.register(testRootDisposable) { it.deleteRecursively() }
     }
   }
 

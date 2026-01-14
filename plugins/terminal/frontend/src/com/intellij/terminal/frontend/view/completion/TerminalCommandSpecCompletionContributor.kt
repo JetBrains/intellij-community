@@ -7,7 +7,6 @@ import com.intellij.terminal.completion.ShellCommandSpecsManager
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
-import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.util.ShellType
@@ -16,23 +15,12 @@ internal class TerminalCommandSpecCompletionContributor : TerminalCommandComplet
   override suspend fun getCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCommandCompletionResult? {
     val shellSupport = TerminalShellSupport.findByShellType(ShellType.ZSH) ?: return null
 
-    val localCursorOffset = context.initialCursorOffset - context.commandStartOffset
-    val commandText = context.commandText.substring(0, localCursorOffset.toInt()).trimStart()
-    val tokens = readAction {
-      shellSupport.getCommandTokens(context.project, commandText)
-    } ?: return null
-    val allTokens = if (commandText.endsWith(' ') && commandText.isNotBlank()) {
-      tokens + ""  // user inserted space after the last token, so add an empty incomplete token as last
-    }
-    else {
-      tokens
-    }
-
-    if (allTokens.isEmpty()) {
+    val commandTokens = getCommandTokens(context)
+    if (commandTokens.isEmpty()) {
       return null
     }
 
-    val prefix = allTokens.last()
+    val prefix = commandTokens.last()
     if (context.isAutoPopup && prefix.startsWith("-") && prefix.length <= 2) {
       // Do not show the completion popup automatically for short options like `-a` or `-h`
       // Most probably, it will cause only distraction.
@@ -46,13 +34,11 @@ internal class TerminalCommandSpecCompletionContributor : TerminalCommandComplet
       completionServices.runtimeContextProvider,
       completionServices.dataGeneratorsExecutor,
       shellSupport,
-      ShellType.ZSH,
-      context.isAutoPopup
     )
 
     val aliasesMap = context.shellIntegration.commandAliases
-    val expandedTokens = expandAliases(parameters, allTokens, aliasesMap)
-    val suggestions = computeSuggestions(expandedTokens, parameters, parameters.isAutoPopup)
+    val expandedTokens = expandAliases(parameters, commandTokens, aliasesMap)
+    val suggestions = computeSuggestions(expandedTokens, parameters)
     return TerminalCommandCompletionResult(suggestions, prefix)
   }
 
@@ -107,13 +93,11 @@ internal class TerminalCommandSpecCompletionContributor : TerminalCommandComplet
   private suspend fun computeSuggestions(
     tokens: List<String>,
     parameters: TerminalCompletionParameters,
-    isAutoPopup: Boolean,
   ): List<ShellCompletionSuggestion> {
     if (tokens.isEmpty()) {
       return emptyList()
     }
 
-    val runtimeContext = parameters.runtimeContextProvider.getContext(tokens)
     val completion = ShellCommandSpecCompletion(
       parameters.commandSpecsManager,
       parameters.generatorsExecutor,
@@ -122,51 +106,23 @@ internal class TerminalCommandSpecCompletionContributor : TerminalCommandComplet
     val commandExecutable = tokens.first()
     val commandArguments = tokens.subList(1, tokens.size)
 
-    val fileProducer = suspend {
-      parameters.generatorsExecutor.execute(runtimeContext, ShellDataGenerators.fileSuggestionsGenerator())
-      ?: emptyList()
-    }
     val specCompletionFunction: suspend (String) -> List<ShellCompletionSuggestion>? = { commandName ->
       completion.computeCompletionItems(commandName, commandArguments)
     }
 
-    if (commandArguments.isEmpty()) {
-      if (parameters.shellType == ShellType.POWERSHELL || isAutoPopup) {
-        // Return no completions for command name to pass the completion to the PowerShell
-        return emptyList()
-      }
-      val suggestions = fileProducer()
-      return suggestions.filter { !it.isHidden }
+    return if (commandArguments.isNotEmpty()) {
+      computeSuggestionsIfHasArguments(commandExecutable, specCompletionFunction)
     }
-    else {
-      return computeSuggestionsIfHasArguments(commandExecutable, parameters, fileProducer, specCompletionFunction)
-    }
+    else emptyList()
   }
 
   private suspend fun computeSuggestionsIfHasArguments(
     commandExecutable: String,
-    parameters: TerminalCompletionParameters,
-    fileProducer: suspend () -> List<ShellCompletionSuggestion>,
     specCompletionFunction: suspend (String) -> List<ShellCompletionSuggestion>?,
   ): List<ShellCompletionSuggestion> {
-
     val commandVariants = getCommandNameVariants(commandExecutable)
     val items = commandVariants.firstNotNullOfOrNull { specCompletionFunction(it) } ?: emptyList()
-    if (items.isNotEmpty()) {
-      return items
-    }
-
-    if (parameters.isAutoPopup) {
-      return emptyList()
-    }
-
-    // Fall back to shell-based completion if it is PowerShell. It might provide more specific suggestions than just files.
-    if (parameters.shellType == ShellType.POWERSHELL) {
-      return emptyList()
-    }
-
-    // Suggest file names if there is nothing to suggest, and completion is invoked manually.
-    return fileProducer().filter { !it.isHidden }
+    return items
   }
 
   private fun getCommandNameVariants(commandExecutable: String): List<String> {
@@ -183,7 +139,23 @@ internal class TerminalCommandSpecCompletionContributor : TerminalCommandComplet
     val runtimeContextProvider: ShellRuntimeContextProvider,
     val generatorsExecutor: ShellDataGeneratorsExecutor,
     val shellSupport: TerminalShellSupport,
-    val shellType: ShellType,
-    val isAutoPopup: Boolean,
   )
+}
+
+internal suspend fun getCommandTokens(context: TerminalCommandCompletionContext): List<String> {
+  val shellSupport = TerminalShellSupport.findByShellType(ShellType.ZSH) ?: return emptyList()
+
+  val localCursorOffset = context.initialCursorOffset - context.commandStartOffset
+  val commandText = context.commandText.substring(0, localCursorOffset.toInt()).trimStart()
+
+  val tokens = readAction {
+    shellSupport.getCommandTokens(context.project, commandText) ?: emptyList()
+  }
+
+  return if (commandText.endsWith(' ') && commandText.isNotBlank()) {
+    tokens + ""  // user inserted space after the last token, so add an empty incomplete token as last
+  }
+  else {
+    tokens
+  }
 }
