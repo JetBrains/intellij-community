@@ -10,23 +10,19 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable
 import com.intellij.spellchecker.DictionaryLayersProvider
 import com.intellij.spellchecker.SpellCheckerManager
-import com.intellij.spellchecker.SpellCheckerManager.Companion.bundledDictionaries
 import com.intellij.spellchecker.SpellCheckerManager.Companion.restartInspections
 import com.intellij.spellchecker.dictionary.CustomDictionaryProvider
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import com.intellij.spellchecker.settings.SpellCheckerSettings
 import com.intellij.spellchecker.util.SpellCheckerBundle
-import com.intellij.ui.OptionalChooserComponent
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.selected
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.JCheckBox
+import javax.swing.JComponent
 
 @ApiStatus.Internal
 class SpellCheckerConfigurable(private val project: Project) : BoundSearchableConfigurable(
@@ -40,46 +36,6 @@ class SpellCheckerConfigurable(private val project: Project) : BoundSearchableCo
   private lateinit var myDictionariesComboBox: ComboBox<String>
   private lateinit var myDictionariesPanel: CustomDictionariesPanel
   private lateinit var wordsPanel: WordsPanel
-
-  // Dictionaries provided by plugins -- runtime and bundled
-  // todo myProvidedDictionariesChooserComponent is not used since WI-53660 Simplify spellchecker settings: remove bundled dictionaries panel
-  private val myProvidedDictionariesChooserComponent: OptionalChooserComponent<String>
-  private val runtimeDictionaries = mutableSetOf<String>()
-  private val providedDictionaries = mutableListOf<Pair<String, Boolean>>()
-
-  init {
-    // Fill in all the dictionaries folders (not implemented yet) and enabled dictionaries
-    fillProvidedDictionaries()
-
-    myProvidedDictionariesChooserComponent = object : OptionalChooserComponent<String>(providedDictionaries) {
-
-      public override fun createCheckBox(path: String, checked: Boolean): JCheckBox {
-        return JCheckBox(FileUtil.toSystemDependentName(path), checked)
-      }
-
-      override fun apply() {
-        super.apply()
-
-        val runtimeDisabledDictionaries = mutableSetOf<String>()
-
-        for (pair in providedDictionaries) {
-          if (pair.second) continue
-
-          if (runtimeDictionaries.contains(pair.first)) {
-            runtimeDisabledDictionaries.add(pair.first)
-          }
-        }
-        settings.runtimeDisabledDictionariesNames = runtimeDisabledDictionaries
-      }
-
-      override fun reset() {
-        super.reset()
-        fillProvidedDictionaries()
-      }
-    }
-
-    myProvidedDictionariesChooserComponent.emptyText.text = SpellCheckerBundle.message("no.dictionaries")
-  }
 
   override fun createPanel(): DialogPanel {
     myDictionariesPanel = CustomDictionariesPanel(settings, project, manager)
@@ -116,7 +72,7 @@ class SpellCheckerConfigurable(private val project: Project) : BoundSearchableCo
 
       row {
         link(SpellCheckerBundle.message("link.to.inspection.settings")) {
-          val allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext())
+          val allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as? JComponent))
           if (allSettings != null) {
             val errorsConfigurable = allSettings.find(ErrorsConfigurable::class.java)
             if (errorsConfigurable != null) {
@@ -137,9 +93,6 @@ class SpellCheckerConfigurable(private val project: Project) : BoundSearchableCo
     }
 
     restartInspections(this)
-    if (myProvidedDictionariesChooserComponent.isModified) {
-      myProvidedDictionariesChooserComponent.apply()
-    }
 
     if (myDictionariesPanel.isModified()) {
       myDictionariesPanel.apply()
@@ -153,19 +106,5 @@ class SpellCheckerConfigurable(private val project: Project) : BoundSearchableCo
   private fun getSupportedDictionariesDescription(): String {
     return CustomDictionaryProvider.EP_NAME.extensionList
       .joinToString(", ", prefix = ", ") { it.dictionaryType }
-  }
-
-  private fun fillProvidedDictionaries() {
-    providedDictionaries.clear()
-
-    for (dictionary in bundledDictionaries) {
-      providedDictionaries.add(Pair.create(dictionary, true))
-    }
-
-    runtimeDictionaries.clear()
-    for (dictionary in SpellCheckerManager.runtimeDictionaries.map { it.name }) {
-      runtimeDictionaries.add(dictionary)
-      providedDictionaries.add(Pair.create(dictionary, !settings.runtimeDisabledDictionariesNames.contains(dictionary)))
-    }
   }
 }
