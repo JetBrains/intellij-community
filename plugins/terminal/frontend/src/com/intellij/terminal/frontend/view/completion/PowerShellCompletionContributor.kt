@@ -5,12 +5,11 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
-import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionResult
+import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionItem
+import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionResultWithContext
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellBasedCompletionListener
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
-import org.jetbrains.plugins.terminal.view.shellIntegration.getTypedCommandText
 import kotlin.coroutines.resume
 
 internal suspend fun getPowerShellCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCompletionResult? {
@@ -20,7 +19,7 @@ internal suspend fun getPowerShellCompletionSuggestions(context: TerminalCommand
   LOG.trace { "PowerShell completion result: $result" }
 
   val json = Json { ignoreUnknownKeys = true }
-  val completionResult: PowerShellCompletionResult = try {
+  val completionResult: PowerShellCompletionResultWithContext = try {
     json.decodeFromString(result)
   }
   catch (ex: Exception) {
@@ -32,25 +31,24 @@ internal suspend fun getPowerShellCompletionSuggestions(context: TerminalCommand
     return null
   }
 
-  val activeBlock = context.shellIntegration.blocksModel.activeBlock as TerminalCommandBlock
-  val commandText = activeBlock.getTypedCommandText(context.outputModel) ?: return null
-  val absCursorOffset = context.outputModel.cursorOffset
-  val localCursorOffset = (absCursorOffset - activeBlock.commandStartOffset!!).toInt()
+  // Prefix for which completion items were provided in PowerShell
+  val powerShellPrefix = completionResult.commandText.substring(completionResult.replacementIndex, completionResult.cursorIndex)
+  val prefixLength = powerShellPrefix.length
 
-  val replacementIndex = completionResult.replacementIndex
-  val replacementLength = completionResult.replacementLength
-  if (replacementIndex < 0 || replacementLength < 0 || replacementIndex + replacementLength > commandText.length) {
-    LOG.error("""Incorrect completion replacement indexes.
-        |Command: '$commandText'
-        |CursorOffset: $localCursorOffset
-        |Completion Result: $completionResult""".trimMargin())
+  // Prefix at the moment of completion invocation in the IDE
+  val localCursorOffset = (context.initialCursorOffset - context.commandStartOffset).toInt()
+  val typedPrefix = context.commandText.substring(localCursorOffset - prefixLength, localCursorOffset)
+
+  if (powerShellPrefix != typedPrefix) {
+    // Command text for which completion was requested is outdated or incorrect.
     return null
   }
 
-  val prefix = commandText.substring(replacementIndex, localCursorOffset)
+  val prefix = findBestPrefix(typedPrefix, completionResult.matches)
   val suggestions = completionResult.matches.map { item ->
-    ShellCompletionSuggestion(item.value) {
+    ShellCompletionSuggestion(item.presentableText ?: item.value) {
       displayName(item.presentableText ?: item.value)
+      insertValue(item.value)
     }
   }
 
@@ -68,6 +66,30 @@ private suspend fun awaitCompletionResult(shellIntegration: TerminalShellIntegra
       }
     })
   }
+}
+
+/**
+ * Determines the best prefix match between typed text and completion item labels.
+ * For example:
+ * 1. Typed prefix: `-Pa`, label: `Parameter` -> returns `Pa`
+ * 2. Typed prefix: `C:\Users\doc`, label: `Documents` -> returns `doc`
+ */
+private fun findBestPrefix(typedPrefix: String, matches: List<PowerShellCompletionItem>): String {
+  check(matches.isNotEmpty())
+
+  // Use the first match to determine the relationship between the typed text and the label
+  val firstMatch = matches[0]
+  val label = firstMatch.presentableText ?: firstMatch.value
+
+  // We look for the longest trailing substring of typedPrefix that matches the start of the label
+  for (i in 0 until typedPrefix.length) {
+    val candidate = typedPrefix.substring(i)
+    if (label.startsWith(candidate, ignoreCase = true)) {
+      return candidate
+    }
+  }
+
+  return ""
 }
 
 /**

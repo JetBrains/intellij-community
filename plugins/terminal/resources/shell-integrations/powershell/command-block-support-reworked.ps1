@@ -91,9 +91,16 @@ function Global:__JetBrainsIntellijSendCompletions {
 
 	$Completions = TabExpansion2 -inputScript $CommandText -cursorColumn $CursorIndex
   if ($Completions -ne $null) {
-    $CompletionsJson = $Completions | ConvertTo-Json -Compress
-    $Result = Global:__JetBrainsIntellijOSC "completion_finished;result=$(Global:__JetBrainsIntellijEncode $CompletionsJson)"
-  	Write-Host -NoNewLine $Result
+    $ResultObject = [PSCustomObject]@{
+      CommandText = $CommandText
+      CursorIndex = $CursorIndex
+      ReplacementIndex = $Completions.ReplacementIndex
+      ReplacementLength = $Completions.ReplacementLength
+      CompletionMatches = $Completions.CompletionMatches
+    }
+    $ResultJson = $ResultObject | ConvertTo-Json -Compress
+    $ResultOSC = Global:__JetBrainsIntellijOSC "completion_finished;result=$(Global:__JetBrainsIntellijEncode $ResultJson)"
+  	Write-Host -NoNewLine $ResultOSC
   }
 }
 
