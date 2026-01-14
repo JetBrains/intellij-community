@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared;
 
@@ -1601,6 +1601,110 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             public void testSingleHasStatement() throws Exception {
                 runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/while/singleHasStatement.kt");
             }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons")
+    public static class ConvertRangeCheckToTwoComparisons extends AbstractSharedK1LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("differentTypes.kt")
+        public void testDifferentTypes() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/differentTypes.kt");
+        }
+
+        @TestMetadata("double.kt")
+        public void testDouble() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/double.kt");
+        }
+
+        @TestMetadata("downTo.kt")
+        public void testDownTo() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/downTo.kt");
+        }
+
+        @TestMetadata("forLoop.kt")
+        public void testForLoop() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/forLoop.kt");
+        }
+
+        @TestMetadata("insideForLoop.kt")
+        public void testInsideForLoop() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/insideForLoop.kt");
+        }
+
+        @TestMetadata("insideForLoop2.kt")
+        public void testInsideForLoop2() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/insideForLoop2.kt");
+        }
+
+        @TestMetadata("int.kt")
+        public void testInt() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/int.kt");
+        }
+
+        @TestMetadata("nonConstants.kt")
+        public void testNonConstants() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/nonConstants.kt");
+        }
+
+        @TestMetadata("notInDownTo.kt")
+        public void testNotInDownTo() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/notInDownTo.kt");
+        }
+
+        @TestMetadata("notInRange.kt")
+        public void testNotInRange() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/notInRange.kt");
+        }
+
+        @TestMetadata("notInRangeIf.kt")
+        public void testNotInRangeIf() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/notInRangeIf.kt");
+        }
+
+        @TestMetadata("notInRangeInclusive.kt")
+        public void testNotInRangeInclusive() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/notInRangeInclusive.kt");
+        }
+
+        @TestMetadata("notInUntil.kt")
+        public void testNotInUntil() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/notInUntil.kt");
+        }
+
+        @TestMetadata("otherOp.kt")
+        public void testOtherOp() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/otherOp.kt");
+        }
+
+        @TestMetadata("rangeUntil.kt")
+        public void testRangeUntil() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/rangeUntil.kt");
+        }
+
+        @TestMetadata("until.kt")
+        public void testUntil() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/until.kt");
+        }
+
+        @TestMetadata("userDefinedRange.kt")
+        public void testUserDefinedRange() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/userDefinedRange.kt");
+        }
+
+        @TestMetadata("withSideEffects.kt")
+        public void testWithSideEffects() throws Exception {
+            runTest("../testData/inspectionsLocal/convertRangeCheckToTwoComparisons/withSideEffects.kt");
         }
     }
 
