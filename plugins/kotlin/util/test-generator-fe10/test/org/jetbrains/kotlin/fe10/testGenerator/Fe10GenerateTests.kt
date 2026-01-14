@@ -67,10 +67,10 @@ import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.highlighter.*
-import org.jetbrains.kotlin.idea.imports.AbstractK1JsOptimizeImportsTest
-import org.jetbrains.kotlin.idea.imports.AbstractK1JvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.imports.AbstractK1AutoImportTest
 import org.jetbrains.kotlin.idea.imports.AbstractK1FilteringAutoImportTest
+import org.jetbrains.kotlin.idea.imports.AbstractK1JsOptimizeImportsTest
+import org.jetbrains.kotlin.idea.imports.AbstractK1JvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.index.AbstractKotlinTypeAliasByExpansionShortNameIndexTest
 import org.jetbrains.kotlin.idea.inspections.*
 import org.jetbrains.kotlin.idea.intentions.AbstractConcatenatedStringGeneratorTest
@@ -99,8 +99,8 @@ import org.jetbrains.kotlin.idea.refactoring.copy.AbstractMultiModuleCopyTest
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineMultiFileTest
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineTest
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineTestWithSomeDescriptors
-import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractK1InplaceIntroduceFunctionTest
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractK1ExtractionTest
+import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractK1InplaceIntroduceFunctionTest
 import org.jetbrains.kotlin.idea.refactoring.move.AbstractK1MultiModuleMoveTest
 import org.jetbrains.kotlin.idea.refactoring.move.AbstractMoveTest
 import org.jetbrains.kotlin.idea.refactoring.pullUp.AbstractPullUpTest
@@ -483,6 +483,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "namedLambdaContextParameter",
                     "useWithIndex", // Intention-based inspection in K1, covered by the intention tests
                     "receiverShadowedByContextParameter",
+                    "removeRedundantCallsOfConversionMethods", // K2 compiler diagnostic
                 )
             )
         }

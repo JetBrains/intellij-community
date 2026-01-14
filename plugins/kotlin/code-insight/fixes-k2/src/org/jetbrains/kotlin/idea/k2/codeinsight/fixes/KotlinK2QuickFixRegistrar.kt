@@ -373,6 +373,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(UselessIsCheckFactories.uselessWhenCheckFactory)
         registerFactory(UselessIsCheckFactories.impossibleWhenCheckWarningFactory)
         registerFactory(UselessIsCheckFactories.impossibleWhenCheckErrorFactory)
+        registerFactory(ReplaceCallFixFactories.redundantCallsOfConversionMethods)
         registerFactory(ReplaceCallFixFactories.unsafeCallFactory)
         registerFactory(ReplaceCallFixFactories.unsafeInfixCallFactory)
         registerFactory(ReplaceCallFixFactories.unsafeOperatorCallFactory)

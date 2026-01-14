@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.quickfix.RemoveRedundantCallsOfConversionMethodsFix
 import org.jetbrains.kotlin.idea.quickfix.ReplaceImplicitReceiverCallFix
 import org.jetbrains.kotlin.idea.quickfix.ReplaceInfixOrOperatorCallFix
 import org.jetbrains.kotlin.idea.quickfix.ReplaceWithSafeCallFix
@@ -22,6 +23,12 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object ReplaceCallFixFactories {
+    val redundantCallsOfConversionMethods: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.RedundantCallOfConversionMethod> =
+    KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.RedundantCallOfConversionMethod ->
+        val element = diagnostic.psi as? KtQualifiedExpression ?: return@ModCommandBased emptyList()
+        listOf(RemoveRedundantCallsOfConversionMethodsFix(element))
+    }
+
     val unsafeCallFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.UnsafeCall> =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeCall ->
             val psi = diagnostic.psi

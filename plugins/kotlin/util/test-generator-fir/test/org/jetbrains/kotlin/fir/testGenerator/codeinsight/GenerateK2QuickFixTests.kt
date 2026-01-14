@@ -1,11 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixMultiFileTest
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixMultiModuleTest
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixTest
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelWithPostponedQuickFixMultiModuleTest
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractK2KDocUnresolvedReferenceTest
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.*
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.QUICKFIXES
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
@@ -144,6 +140,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/redundantModalityModifier", pattern = pattern)
             model("$idea/quickfix/redundantSuspend", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/redundantVisibilityModifier", pattern = pattern)
+            model("$idea/quickfix/removeRedundantCallsOfConversionMethods", pattern = pattern)
             model("$idea/quickfix/removeRedundantReturn", pattern = pattern)
             model("$idea/quickfix/removeAnnotation", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/removeArgument", pattern = pattern)

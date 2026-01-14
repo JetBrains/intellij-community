@@ -76,6 +76,17 @@ class ReplaceImplicitReceiverCallFix(
     }
 }
 
+class RemoveRedundantCallsOfConversionMethodsFix(
+    element: KtQualifiedExpression
+) : PsiUpdateModCommandAction<KtQualifiedExpression>(element) {
+
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.redundant.calls.of.the.conversion.method")
+
+    override fun invoke(context: ActionContext, element: KtQualifiedExpression, updater: ModPsiUpdater) {
+        element.replace(element.receiverExpression)
+    }
+}
+
 class ReplaceWithSafeCallFix(
     element: KtDotQualifiedExpression,
     notNullNeeded: Boolean

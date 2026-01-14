@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes;
 
@@ -11459,6 +11459,120 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/redundantVisibilityModifier/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods")
+    public static class RemoveRedundantCallsOfConversionMethods extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("booleanToInt.kt")
+        public void testBooleanToInt() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/booleanToInt.kt");
+        }
+
+        @TestMetadata("byte.kt")
+        public void testByte() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/byte.kt");
+        }
+
+        @TestMetadata("char.kt")
+        public void testChar() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/char.kt");
+        }
+
+        @TestMetadata("double.kt")
+        public void testDouble() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/double.kt");
+        }
+
+        @TestMetadata("float.kt")
+        public void testFloat() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/float.kt");
+        }
+
+        @TestMetadata("int.kt")
+        public void testInt() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/int.kt");
+        }
+
+        @TestMetadata("long.kt")
+        public void testLong() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/long.kt");
+        }
+
+        @TestMetadata("nullable.kt")
+        public void testNullable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/nullable.kt");
+        }
+
+        @TestMetadata("nullable2.kt")
+        public void testNullable2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/nullable2.kt");
+        }
+
+        @TestMetadata("safeString.kt")
+        public void testSafeString() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/safeString.kt");
+        }
+
+        @TestMetadata("safeString2.kt")
+        public void testSafeString2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/safeString2.kt");
+        }
+
+        @TestMetadata("short.kt")
+        public void testShort() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/short.kt");
+        }
+
+        @TestMetadata("string.kt")
+        public void testString() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/string.kt");
+        }
+
+        @TestMetadata("toOtherType.kt")
+        public void testToOtherType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/toOtherType.kt");
+        }
+
+        @TestMetadata("typealias.kt")
+        public void testTypealias() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/typealias.kt");
+        }
+
+        @TestMetadata("uByte.kt")
+        public void testUByte() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/uByte.kt");
+        }
+
+        @TestMetadata("uInt.kt")
+        public void testUInt() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/uInt.kt");
+        }
+
+        @TestMetadata("uLong.kt")
+        public void testULong() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/uLong.kt");
+        }
+
+        @TestMetadata("uShort.kt")
+        public void testUShort() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/uShort.kt");
+        }
+
+        @TestMetadata("variable.kt")
+        public void testVariable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/variable.kt");
         }
     }
 
