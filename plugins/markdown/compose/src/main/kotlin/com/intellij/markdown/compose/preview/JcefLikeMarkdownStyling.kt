@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.times
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.ui.preview.PreviewStyleScheme
@@ -57,14 +56,14 @@ internal fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextU
   val blockVerticalSpacing: Dp = 16.dp
   val baseTextStyle: TextStyle = defaultTextStyle
 
-  val codeFenceFont = Font(FontPreferences.JETBRAINS_MONO, Font.PLAIN, (fontSize.value * 0.9f).toInt()).asComposeFontFamily()
-  val codeFenceTextStyle = baseTextStyle.copy(fontFamily = codeFenceFont)
+  val codeFont = Font(FontPreferences.JETBRAINS_MONO, Font.PLAIN, (fontSize.value * 0.9f).toInt()).asComposeFontFamily()
+  val codeTextStyle = baseTextStyle.copy(fontFamily = codeFont)
 
-  val inlinesStyling = createInlinesStyling(baseTextStyle, scheme)
+  val inlinesStyling = createInlinesStyling(baseTextStyle, scheme, codeFont)
   val paragraph = createParagraphStyling(inlinesStyling)
-  val heading = createHeadingStyling(scheme, baseTextStyle, fontSizeDp)
+  val heading = createHeadingStyling(scheme, baseTextStyle, fontSizeDp, codeFont)
   val blockQuote = createBlockQuoteStyling(scheme)
-  val code: Code = createCodeStyling(codeFenceTextStyle, scheme)
+  val code: Code = createCodeStyling(codeTextStyle, scheme)
   val list: List = createListStyling(baseTextStyle)
   val image: Image = createImageStyling()
   val thematicBreak: ThematicBreak = createThematicBreakStyling(scheme)
@@ -86,6 +85,7 @@ internal fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextU
 private fun createInlinesStyling(
   baseTextStyle: TextStyle,
   scheme: PreviewStyleScheme,
+  codeFont: FontFamily = FontFamily.Monospace,
   link: SpanStyle = baseTextStyle.copy(
     color = JBUI.CurrentTheme.Link.Foreground.ENABLED.toComposeColor(),
     textDecoration = TextDecoration.Underline,
@@ -94,6 +94,7 @@ private fun createInlinesStyling(
   textStyle = baseTextStyle,
   inlineCode = baseTextStyle
     .copy(
+      fontFamily = codeFont,
       fontSize = baseTextStyle.fontSize,
       background = scheme.fenceBackgroundColor.toComposeColor(),
     )
@@ -119,44 +120,45 @@ private fun createHeadingStyling(
   scheme: PreviewStyleScheme,
   defaultTextStyle: TextStyle,
   fontSizeDp: Dp,
+  codeFont: FontFamily,
 ): Heading = Heading(
   h1 = Heading.H1(
-    inlinesStyling = headerInlinesStyling(scheme, defaultTextStyle, 2.2f, 1.4f),
+    inlinesStyling = headerInlinesStyling(scheme, defaultTextStyle, 2.2f, 1.4f, codeFont),
     underlineWidth = 0.dp,
     underlineColor = Color.Unspecified,
     underlineGap = 0.dp,
     padding = PaddingValues(top = fontSizeDp * 2.2f * 1.6f),
   ),
   h2 = Heading.H2(
-    inlinesStyling = headerInlinesStyling(scheme, defaultTextStyle, 1.8f, 1.2f),
+    inlinesStyling = headerInlinesStyling(scheme, defaultTextStyle, 1.8f, 1.2f, codeFont),
     underlineWidth = 0.dp,
     underlineColor = Color.Unspecified,
     underlineGap = 0.dp,
     padding = PaddingValues(top = fontSizeDp * 1.8f * 1.6f)
   ),
   h3 = Heading.H3(
-    inlinesStyling = headerInlinesStyling(scheme, defaultTextStyle, 1.3f, 1.0f),
+    inlinesStyling = headerInlinesStyling(scheme, defaultTextStyle, 1.3f, 1.0f, codeFont),
     underlineWidth = 0.dp,
     underlineColor = Color.Unspecified,
     underlineGap = 0.dp,
     padding = PaddingValues(top = fontSizeDp * 1.3f * 1.6f)
   ),
   h4 = Heading.H4(
-    inlinesStyling = headerInlinesStyling(scheme, defaultTextStyle, 1.0f, 1.4f),
+    inlinesStyling = headerInlinesStyling(scheme, defaultTextStyle, 1.0f, 1.4f, codeFont),
     underlineWidth = 0.dp,
     underlineColor = Color.Unspecified,
     underlineGap = 0.dp,
     padding = PaddingValues(top = fontSizeDp),
   ),
   h5 = Heading.H5(
-    inlinesStyling = headerInlinesStyling(scheme, defaultTextStyle, 1.0f, 1.4f),
+    inlinesStyling = headerInlinesStyling(scheme, defaultTextStyle, 1.0f, 1.4f, codeFont),
     underlineWidth = 0.dp,
     underlineColor = Color.Unspecified,
     underlineGap = 0.dp,
     padding = PaddingValues(top = fontSizeDp),
   ),
   h6 = Heading.H6(
-    inlinesStyling = headerInlinesStyling(scheme, defaultTextStyle, 1.0f, 1.4f, scheme.infoForegroundColor.toComposeColor()),
+    inlinesStyling = headerInlinesStyling(scheme, defaultTextStyle, 1.0f, 1.4f, codeFont, scheme.infoForegroundColor.toComposeColor()),
     underlineWidth = 0.dp,
     underlineColor = Color.Unspecified,
     underlineGap = 0.dp,
@@ -164,14 +166,14 @@ private fun createHeadingStyling(
   ),
 )
 
-private fun headerInlinesStyling(scheme: PreviewStyleScheme, textStyle: TextStyle, fontSizeMultiplier: Float, lineHeightMultiplier: Float, color: Color? = null): InlinesStyling {
+private fun headerInlinesStyling(scheme: PreviewStyleScheme, textStyle: TextStyle, fontSizeMultiplier: Float, lineHeightMultiplier: Float, codeFont: FontFamily, color: Color? = null): InlinesStyling {
   val fontSize = textStyle.fontSize * fontSizeMultiplier
   return createInlinesStyling(textStyle.copy(
     fontWeight = FontWeight.Bold,
     color = color ?: textStyle.color,
     fontSize = fontSize,
     lineHeight = fontSize * lineHeightMultiplier,
-  ), scheme)
+  ), scheme, codeFont)
 }
 
 private fun createBlockQuoteStyling(scheme: PreviewStyleScheme): BlockQuote = BlockQuote(
