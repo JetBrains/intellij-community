@@ -41,7 +41,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <typedHandler implementation="com.intellij.grazie.ide.inspection.auto.GrazieTypedHandler"/>
-    <projectConfigurable parentId="proofread" instance="com.intellij.grazie.spellcheck.settings.SpellCheckerSettingsManager"
+    <projectConfigurable parentId="proofread" instance="com.intellij.grazie.spellcheck.settings.SpellCheckerConfigurable"
                          id="reference.settings.ide.settings.spelling"
                          key="spelling"
                          bundle="messages.SpellCheckerBundle" />

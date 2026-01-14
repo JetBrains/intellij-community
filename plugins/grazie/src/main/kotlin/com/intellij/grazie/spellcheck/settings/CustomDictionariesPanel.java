@@ -18,6 +18,8 @@ import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.state.AppDictionaryState;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.*;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
@@ -115,6 +117,8 @@ public final class CustomDictionariesPanel extends JPanel {
     myCustomDictionariesTableView.getEmptyText().setText((SpellCheckerBundle.message("no.custom.dictionaries")));
     this.setLayout(new BorderLayout());
     this.add(decorator.createPanel(), BorderLayout.CENTER);
+
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
   }
 
   private void doChooseFiles(@NotNull Project project, @NotNull Consumer<? super List<VirtualFile>> consumer) {
