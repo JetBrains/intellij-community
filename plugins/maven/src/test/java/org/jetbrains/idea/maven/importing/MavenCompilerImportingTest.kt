@@ -8,6 +8,7 @@ import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
 import com.intellij.idea.TestFor
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.JavaRelease
@@ -309,7 +310,14 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
       </build>
     """.trimIndent())
     assertModules("project")
-    assertEquals(LanguageLevel.entries[LanguageLevel.HIGHEST.ordinal + 1], getLanguageLevelForModule())
+    //JavaRelease.getHighest() returns allowed version
+    //Unlike Gradle, Maven additionally specifies the preview level.
+    //see org.jetbrains.idea.maven.importing.MavenImportUtil.getLanguageLevel$intellij_maven
+    var highest = JavaRelease.getHighest()
+    if (ApplicationManager.getApplication().isEAP()) {
+      highest = LanguageLevel.HIGHEST
+    }
+    assertEquals(LanguageLevel.entries[highest.ordinal + 1], getLanguageLevelForModule())
   }
 
   @Test
