@@ -16,6 +16,8 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
   private val currentRoot = repository.root.path
   private var badLineReported = 0
   private var currentWorktreePath: String? = null
+  private var branchFullName: String? = null
+  private var isDetached = false
   private var isFirst = true
   val trees: List<GitWorkingTree>
     get() = _trees.toImmutableList()
@@ -29,11 +31,15 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
   }
 
   override fun onLineAvailable(line: @NlsSafe String, outputType: Key<*>) {
-    if (line.isBlank()) return
+    if (line.isBlank()) {
+      createWorkingTree(currentWorktreePath, branchFullName, isDetached, isFirst)
+      return
+    }
+
     try {
       if (outputType == ProcessOutputType.STDOUT) {
         if (line == "detached") {
-          reportTreeWithBranch(null)
+          isDetached = true
           return
         }
         val scanner = StringScanner(line)
@@ -46,7 +52,7 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
           "HEAD" -> { //ignore for now
           }
           "branch" -> {
-            reportTreeWithBranch(value)
+            branchFullName = value
           }
           else -> report(line)
         }
@@ -57,15 +63,19 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
     }
   }
 
-  private fun reportTreeWithBranch(branchFullName: String?) {
-    val path = currentWorktreePath
-    if (path != null) {
-      _trees.add(GitWorkingTree(path, branchFullName, isFirst, path == currentRoot))
-      isFirst = false
+  private fun createWorkingTree(path: String?, branch: String?, detached: Boolean, isMain: Boolean) {
+    if (path == null) {
+      thisLogger().warn("'worktree' wasn't reported for branch ${branch ?: "<detached>"}")
+    }
+    else if (!detached && branch == null) {
+      thisLogger().warn("'branch' wasn't reported for path $path")
     }
     else {
-      thisLogger().warn("'worktree' wasn't reported for branch ${branchFullName ?: "<detached>"}")
+      _trees.add(GitWorkingTree(path, branch, isMain, path == currentRoot))
     }
     currentWorktreePath = null
+    branchFullName = null
+    isDetached = false
+    isFirst = false
   }
 }
