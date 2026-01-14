@@ -33,9 +33,9 @@ open class TestCleanupListener : TestExecutionListener {
     val testIdentifierName = testIdentifier.displayName
     if (testIdentifier.isContainer) {
       cancelSupervisorScope(perClassSupervisorScope, "Test class `$testIdentifierName` execution is finished")
-    } else {
-      cancelPerTestSupervisorScope(testIdentifier)
     }
+
+    cancelPerTestSupervisorScope(testIdentifier)
   }
 
   override fun testPlanExecutionFinished(testPlan: TestPlan) {
