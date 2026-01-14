@@ -119,6 +119,7 @@ public class  ClientSchemeHandler extends CefResourceHandlerAdapter {
         return has_data;
     }
 
+    // TODO: remove copy-paste
     private boolean loadContent(String resName) {
       InputStream inStream = DetailedFrame.class.getResourceAsStream("resources/detailed_frame/" + resName);
         if (inStream != null) {

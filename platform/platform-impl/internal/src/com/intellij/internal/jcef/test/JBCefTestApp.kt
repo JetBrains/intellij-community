@@ -2,13 +2,22 @@
 package com.intellij.internal.jcef.test
 
 import com.intellij.internal.jcef.test.cases.*
+import com.intellij.internal.jcef.test.aggrtest.AggressiveRouterTest
 import com.intellij.internal.jcef.test.detailed.handler.ClientSchemeHandler
 import com.intellij.internal.jcef.test.detailed.handler.SearchSchemeHandler
+import com.intellij.internal.jcef.test.rhtest.RequestHandlingRESTApiTest
+import com.intellij.notification.NotificationDisplayType
+import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroup.Companion.create
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NotNullFactory
+import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.ui.components.JBList
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefApp.JBCefCustomSchemeHandlerFactory
@@ -33,7 +42,51 @@ internal class JBCefTestApp : AnAction(), DumbAware {
 internal class JBCefTestAppFrame : JFrame() {
   companion object {
     init {
-      addTestCustomSchemes()
+      // Register test custom schemes if possible (and show notification otherwise)
+      try {
+        JBCefApp.addCefCustomSchemeHandlerFactory(object : JBCefCustomSchemeHandlerFactory {
+          override fun registerCustomScheme(registrar: CefSchemeRegistrar) {
+            registrar.addCustomScheme(
+              SearchSchemeHandler.scheme, true, false, false, false, true, false, false)
+          }
+
+          override fun getSchemeName() = SearchSchemeHandler.scheme
+          override fun getDomainName() = SearchSchemeHandler.domain
+          override fun create(browser: CefBrowser?, frame: CefFrame?, schemeName: String?, request: CefRequest?): CefResourceHandler {
+            return SearchSchemeHandler(browser)
+          }
+        })
+
+        JBCefApp.addCefCustomSchemeHandlerFactory(object : JBCefCustomSchemeHandlerFactory {
+          override fun registerCustomScheme(registrar: CefSchemeRegistrar) {
+            registrar.addCustomScheme(
+              ClientSchemeHandler.scheme, true, false, false, false, true, false, false)
+          }
+
+          override fun getSchemeName() = ClientSchemeHandler.scheme
+          override fun getDomainName() = ClientSchemeHandler.domain
+          override fun create(browser: CefBrowser?, frame: CefFrame?, schemeName: String?, request: CefRequest?): CefResourceHandler {
+            return ClientSchemeHandler()
+          }
+        })
+      }
+      catch (e: IllegalStateException) {
+        ApplicationManager.getApplication().executeOnPooledThread(Runnable {
+          val NOTIFICATION_GROUP = NotNullLazyValue.createValue<NotificationGroup?>(NotNullFactory {
+            create("JCEF test app",
+                   NotificationDisplayType.BALLOON,
+                   true,
+                   null,
+                   null,
+                   null)
+          })
+          val notification = NOTIFICATION_GROUP.getValue().createNotification(
+            "Can't register test custom schemes.",
+            "JCEF has been initialized and new custom schemes can't be registered. Please run JCEF test app before any web-component initialization.",
+            NotificationType.ERROR)
+          notification.notify(null)
+        })
+      }
     }
   }
 
@@ -41,7 +94,7 @@ internal class JBCefTestAppFrame : JFrame() {
   private val contentPanel: JPanel = JPanel(cardLayout)
 
   private val testCases: List<TestCase> = listOf(
-    KeyboardEvents(), ContextMenu(), ResourceHandler(), PerformanceTest(), DetailedFrame(), MessageRouterTests())
+    KeyboardEvents(), ContextMenu(), ResourceHandler(), PerformanceTest(), DetailedFrame(), MessageRouterTests(), RequestHandlingRESTApiTest(), AggressiveRouterTest())
 
   private val tabsList = JBList(testCases.map { it.getDisplayName() })
 
