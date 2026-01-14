@@ -15,7 +15,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.patterns.ElementPattern
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.impl.toRelative
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -23,9 +22,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
-import org.jetbrains.plugins.terminal.view.TerminalOffset
-import org.jetbrains.plugins.terminal.view.TerminalOutputModel
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import java.util.function.Supplier
 import javax.swing.Icon
 
@@ -241,16 +237,3 @@ internal class TerminalCommandCompletionProcess(
     throw NotImplementedError()
   }
 }
-
-internal data class TerminalCommandCompletionContext(
-  val project: Project,
-  val terminalView: TerminalView,
-  val editor: Editor,
-  val outputModel: TerminalOutputModel,
-  val shellIntegration: TerminalShellIntegration,
-  val commandStartOffset: TerminalOffset,
-  val initialCursorOffset: TerminalOffset,
-  /** Full command text at the moment of completion request. May include trailing new lines and spaces. */
-  val commandText: String,
-  val isAutoPopup: Boolean,
-)
