@@ -58,18 +58,9 @@ public abstract class JobLauncher {
   public <T> boolean invokeConcurrentlyUnderContextProgress(@NotNull List<? extends T> things,
                                                             @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    //noinspection TestOnlyProblems
-    if (progressIndicator == null && Cancellation.currentJob() != null) {
-      return CoroutinesKt.blockingContextToIndicator(
-        () -> invokeConcurrentlyUnderProgress(things, ProgressIndicatorProvider.getGlobalProgressIndicator(), app.isReadAccessAllowed(),
-                                              app.isInImpatientReader(), thingProcessor));
-    }
-    else {
-      ProgressIndicator actualIndicator = progressIndicator == null ? new EmptyProgressIndicator() : progressIndicator;
-      return invokeConcurrentlyUnderProgress(things, actualIndicator, app.isReadAccessAllowed(), app.isInImpatientReader(),
-                                             thingProcessor);
-    }
+    return ConcurrencyUtils.runWithIndicatorOrContextCancellation(
+      indicator ->
+        invokeConcurrentlyUnderProgress(things, ProgressIndicatorProvider.getGlobalProgressIndicator(), app.isReadAccessAllowed(), app.isInImpatientReader(), thingProcessor));
   }
 
   /**

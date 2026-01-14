@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.concurrency.JobLauncher
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.Disposable
@@ -16,6 +17,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
+import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -512,4 +514,25 @@ class PlatformUtilitiesTest {
     currentJob.complete()
   }
 
+  @Test
+  fun `JobLauncher can be canceled on termination of the context job`(): Unit = concurrencyTest {
+    val j1 = Job(coroutineContext.job)
+    val j2 = Job(coroutineContext.job)
+    val job = launch(Dispatchers.Default) {
+      JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(listOf(1, 2), { num ->
+        if (num == 1) {
+          j1.complete()
+          j2.asCompletableFuture().join()
+        }
+        if (num == 2) {
+          fail<Nothing>("should not be reached")
+        }
+        true
+      })
+    }
+    j1.join()
+    job.cancel()
+    j2.complete()
+    job.join()
+  }
 }
