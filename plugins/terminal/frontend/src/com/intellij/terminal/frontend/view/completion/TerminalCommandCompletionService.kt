@@ -13,7 +13,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellSuggestionType
 import com.intellij.terminal.frontend.view.TerminalView
@@ -280,11 +279,9 @@ class TerminalCommandCompletionService(
 
   private fun ShellCompletionSuggestion.toLookupElement(): LookupElement {
     val actualIcon = icon ?: TerminalCompletionUtil.findIconForSuggestion(name, type)
-    val realInsertValue = insertValue?.replace("{cursor}", "")
     val nextSuggestions = TerminalCompletionUtil.getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
-    val escapedInsertValue = StringUtil.escapeChar(realInsertValue ?: name, ' ')
 
-    val element = LookupElementBuilder.create(this, escapedInsertValue)
+    val element = LookupElementBuilder.create(this, name)
       .withPresentableText(displayName ?: name)
       .withTailText(nextSuggestions, true)
       .withIcon(TerminalStatefulDelegatingIcon(actualIcon))
