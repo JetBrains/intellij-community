@@ -7,21 +7,22 @@ import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileCha
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentLinkedQueue
 
 @ApiStatus.Internal
 abstract class NewFilesListener : VirtualFileChangesListener {
 
-  abstract fun fireNewFilesCreated()
-
-  private var isCreatedNewFiles = false
+  protected abstract fun fireNewFilesCreated(files: Collection<VirtualFile>)
+  private val modifiedFiles = ConcurrentLinkedQueue<VirtualFile>()
 
   override fun init() {
-    isCreatedNewFiles = false
+    modifiedFiles.clear()
   }
 
   override fun apply() {
-    if (isCreatedNewFiles) {
-      fireNewFilesCreated()
+    val set = ArrayList(modifiedFiles)
+    if (set.isNotEmpty()) {
+      fireNewFilesCreated(set)
     }
   }
 
@@ -33,13 +34,13 @@ abstract class NewFilesListener : VirtualFileChangesListener {
   }
 
   override fun updateFile(file: VirtualFile, event: VFileEvent) {
-    isCreatedNewFiles = true
+    modifiedFiles.add(file)
   }
 
   companion object {
-    fun whenNewFilesCreated(action: () -> Unit, parentDisposable: Disposable) {
+    fun whenNewFilesCreated(action: (modifiedFiles: Collection<VirtualFile>) -> Unit, parentDisposable: Disposable) {
       val listener = object : NewFilesListener() {
-        override fun fireNewFilesCreated() = action()
+        override fun fireNewFilesCreated(files: Collection<VirtualFile>) = action(files)
       }
       installAsyncVirtualFileListener(listener, parentDisposable)
     }
