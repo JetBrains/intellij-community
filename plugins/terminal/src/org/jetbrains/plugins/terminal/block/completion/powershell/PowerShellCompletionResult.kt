@@ -20,6 +20,21 @@ data class PowerShellCompletionResult(
   @SerialName("CompletionMatches") val matches: List<PowerShellCompletionItem>,
 )
 
+@ApiStatus.Internal
+@Serializable
+data class PowerShellCompletionResultWithContext(
+  /** Text of the command for which completion was invoked */
+  @SerialName("CommandText") val commandText: String,
+  /** Offset of the cursor within the command text */
+  @SerialName("CursorIndex") val cursorIndex: Int,
+  /** Index in the command text at which completion item should be inserted */
+  @SerialName("ReplacementIndex") val replacementIndex: Int,
+  /** Length of the text to be replaced with completion item text starting from [replacementIndex] */
+  @SerialName("ReplacementLength") val replacementLength: Int,
+  /** The list of completion items to be shown in the completion popup */
+  @SerialName("CompletionMatches") val matches: List<PowerShellCompletionItem>,
+)
+
 // https://learn.microsoft.com/en-us/dotnet/api/system.management.automation.completionresult
 @ApiStatus.Internal
 @Serializable

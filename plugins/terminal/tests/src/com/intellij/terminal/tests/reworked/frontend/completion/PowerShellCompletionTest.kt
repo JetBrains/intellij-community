@@ -99,7 +99,7 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.type("[System")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
-        .contains("System", "SystemColors", "SystemIcons")
+        .contains("System", "SystemPolicy", "SystemEvents")
     }
   }
 
