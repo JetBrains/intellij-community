@@ -340,6 +340,7 @@ public final class ExplicitTypeAnnotationContainer implements TypeAnnotationCont
   private class TypeAnnotationContainerProvider implements TypeAnnotationProvider {
     private final PsiElement myParent;
     private final @Nullable PsiAnnotationOwner myOwner;
+    private final NotNullLazyValue<PsiAnnotation[]> myAnnotations = NotNullLazyValue.createValue(this::computeAnnotations);
 
     private TypeAnnotationContainerProvider(PsiElement parent, @Nullable PsiAnnotationOwner owner) { 
       myParent = parent;
@@ -351,8 +352,7 @@ public final class ExplicitTypeAnnotationContainer implements TypeAnnotationCont
       return new TypeAnnotationContainerProvider(myParent, owner);
     }
 
-    @Override
-    public @NotNull PsiAnnotation @NotNull [] getAnnotations() {
+    private @NotNull PsiAnnotation @NotNull [] computeAnnotations() {
       List<PsiAnnotation> result = new ArrayList<>();
       for (TypeAnnotationEntry entry : myList) {
         if (entry.myPath.length == 0) {
@@ -362,6 +362,11 @@ public final class ExplicitTypeAnnotationContainer implements TypeAnnotationCont
         }
       }
       return result.toArray(PsiAnnotation.EMPTY_ARRAY);
+    }
+
+    @Override
+    public @NotNull PsiAnnotation @NotNull [] getAnnotations() {
+      return myAnnotations.getValue();
     }
   }
 }
