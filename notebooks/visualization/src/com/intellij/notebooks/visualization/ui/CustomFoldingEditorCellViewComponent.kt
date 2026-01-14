@@ -45,6 +45,8 @@ open class CustomFoldingEditorCellViewComponent(protected val cell: EditorCell, 
     return component
   }
 
+  open fun updateCustomComponent() { }
+
   private fun updateGutterIcons(gutterAction: AnAction?) {
     editor.updateManager.update { ctx ->
       gutterActionRenderer = gutterAction?.let { ActionToGutterRendererAdapter(it) }
