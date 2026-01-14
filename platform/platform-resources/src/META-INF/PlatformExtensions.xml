@@ -1353,7 +1353,7 @@
     <registryKey defaultValue="true"
                  description="Indicates whether the platform is allowed to update actions without the read lock and perform actions without the write-intent lock. Disabling this flag makes the IDE acquiring locks in both these cases"
                  key="actions.allow.update.and.perform.without.rw.lock"/>
-    <registryKey defaultValue="true"
+    <registryKey defaultValue="false"
                  description="Whether actions with `getActionUpdateThread() == EDT` are automatically updated without read lock and performed without the write lock."
                  key="actions.update.and.perform.edt.actions.without.rw.lock"/>
 
