@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -1165,16 +1165,21 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     return JpsJavaSdkType.complianceOption(JavaVersion.compose(major));
   }
 
+  /**
+   * @return the specified module's language level, or the project's language level, when no module language level is set. 
+   * When no language level is set or the language level is experimental <code>0</code> is returned.
+   */
   private static int getLanguageLevel(@NotNull JpsModule module) {
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
-    return level != null ? level.feature() : 0;
+    return level != null && level != LanguageLevel.JDK_X ? level.feature() : 0;
   }
 
   /**
    * The assumed module's source code language version.
    * Returns the version number, corresponding to the language level, associated with the given module.
-   * If no language level set (neither on module- nor on project-level), the version of JDK associated with the module is returned.
-   * If no JDK is associated, returns 0.
+   * When no language level is set (neither on module- nor on project-level) or the level is X - experimental,
+   * the version of JDK associated with the module is returned.
+   * When no JDK is associated, returns 0.
    */
   private static int getTargetPlatformLanguageVersion(@NotNull JpsModule module) {
     final int level = getLanguageLevel(module);
