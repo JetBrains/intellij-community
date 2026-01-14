@@ -22,8 +22,6 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.gist.GistManager
 import java.util.*
-import kotlin.collections.HashMap
-
 
 private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 14, MethodDataExternalizer) { file ->
   indexFile(file.node.lighterAST)
@@ -35,16 +33,21 @@ private fun indexFile(tree: LighterAST): Map<Int, MethodData> {
   return visitor.result
 }
 
-internal data class ClassData(val hasSuper: Boolean, val hasPureInitializer: Boolean, val isFinal: Boolean,
-                              val onlyLocalInheritors: Boolean, val fieldModifiers: Map<String, LighterASTNode?>)
+internal data class ClassData(
+  val hasSuper: Boolean,
+  val hasPureInitializer: Boolean,
+  val isFinal: Boolean,
+  val onlyLocalInheritors: Boolean,
+  val fieldModifiers: Map<String, LighterASTNode?>,
+)
 
-private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeWalkingVisitor(tree) {
+private class InferenceVisitor(val tree: LighterAST) : RecursiveLighterASTNodeWalkingVisitor(tree) {
   var methodIndex = 0
   val classData = HashMap<LighterASTNode, ClassData>()
   val result = HashMap<Int, MethodData>()
 
   override fun visitNode(element: LighterASTNode) {
-    when(element.tokenType) {
+    when (element.tokenType) {
       CLASS, ANONYMOUS_CLASS -> {
         classData[element] = calcClassData(element)
       }
@@ -58,7 +61,7 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
     super.visitNode(element)
   }
 
-  private fun calcClassData(aClass: LighterASTNode) : ClassData {
+  private fun calcClassData(aClass: LighterASTNode): ClassData {
     var hasSuper = aClass.tokenType == ANONYMOUS_CLASS
     var isFinal = aClass.tokenType == ANONYMOUS_CLASS
     val parent = tree.getParent(aClass)
@@ -66,7 +69,7 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
     val fieldModifiers = HashMap<String, LighterASTNode?>()
     val initializers = ArrayList<LighterASTNode>()
     for (child in tree.getChildren(aClass)) {
-      when(child.tokenType) {
+      when (child.tokenType) {
         JavaTokenType.RECORD_KEYWORD, JavaTokenType.ENUM_KEYWORD -> isFinal = true
         MODIFIER_LIST -> {
           isFinal = LightTreeUtil.firstChildOfType(tree, child, JavaTokenType.FINAL_KEYWORD) != null
@@ -121,7 +124,7 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
     }
     return ClassData(hasSuper, pureInitializer, isFinal, onlyLocalInheritors, fieldModifiers)
   }
-  
+
   private fun getInferenceMode(method: LighterASTNode, clsData: ClassData?): JavaSourceInference.InferenceMode {
     if (clsData?.isFinal == true || clsData?.onlyLocalInheritors == true) return JavaSourceInference.InferenceMode.ENABLED
     // PsiUtil#canBeOverridden logic on LighterAST
@@ -152,7 +155,7 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
     // Constructor which has super classes may implicitly call impure super constructor, so don't infer purity for subclasses
     val ctor = LightTreeUtil.firstChildOfType(tree, method, TYPE) == null
     val maybeImpureCtor = ctor && (clsData == null || clsData.hasSuper || !clsData.hasPureInitializer)
-    
+
     val contractInference = ContractInferenceInterpreter(tree, method, body)
     val contracts = contractInference.inferContracts(statements)
 
@@ -186,11 +189,13 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
     }.visitNode(root)
   }
 
-  private fun createData(body: LighterASTNode,
-                         contracts: List<PreContract>,
-                         methodReturn: MethodReturnInferenceResult?,
-                         purity: PurityInferenceResult?,
-                         notNullParams: BitSet): MethodData? {
+  private fun createData(
+    body: LighterASTNode,
+    contracts: List<PreContract>,
+    methodReturn: MethodReturnInferenceResult?,
+    purity: PurityInferenceResult?,
+    notNullParams: BitSet,
+  ): MethodData? {
     if (methodReturn == null && purity == null && contracts.isEmpty() && notNullParams.isEmpty) return null
 
     return MethodData(methodReturn, purity, contracts, notNullParams, body.startOffset, body.endOffset)
