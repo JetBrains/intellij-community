@@ -3,18 +3,18 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.async.*
 import com.intellij.collaboration.util.CodeReviewDomainEntity
-import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.gitlab.api.*
-import org.jetbrains.plugins.gitlab.api.dto.*
+import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionRestDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteRestDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.addDraftReplyNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.changeMergeRequestDiscussionResolve
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.createReplyNote
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.getNoteAwardEmoji
 import java.util.*
 
 @CodeReviewDomainEntity
@@ -66,10 +66,6 @@ class LoadedGitLabDiscussion(
   override val createdAt: Date = discussionData.createdAt
 
   private val cs = parentCs.childScope(this::class)
-  private val emojiMapDeferred: Deferred<Map<String, String>> = cs.async(start = CoroutineStart.LAZY) {
-    service<GitLabEmojiService>().emojis.await().associateBy({ it.name }, { it.moji })
-  }
-
   private val operationsGuard = Mutex()
 
   private val noteEvents = MutableSharedFlow<GitLabNoteEvent<GitLabNoteRestDTO>>()
@@ -106,21 +102,7 @@ class LoadedGitLabDiscussion(
       .mapDataToModel(
         GitLabNoteRestDTO::id,
         { note ->
-          MutableGitLabMergeRequestNote(this, api, glProject, mr, id, currentUser, noteEvents::emit, note).also {
-            launch {
-              runCatching {
-                val emojiMap = emojiMapDeferred.await()
-                val emojis = withContext(Dispatchers.IO) {
-                  api.rest.getNoteAwardEmoji(glProject, mr.iid, note.id.restId).body()
-                }
-                it.setEmojis(emojis.map { emoji -> GitLabAwardEmojiRestDTO.fromRestDTO(emoji, emojiMap) })
-              }.onFailure { e ->
-                if (e !is CancellationException) {
-                  LOG.warn("Failed to load award emoji for note ${note.id}", e)
-                }
-              }
-            }
-          }
+          MutableGitLabMergeRequestNote(this, api, glProject, mr, id, currentUser, noteEvents::emit, note)
         },
         MutableGitLabMergeRequestNote::update
       ).combine(draftNotes) { notes, draftNotes ->
@@ -189,9 +171,4 @@ class LoadedGitLabDiscussion(
 
   override fun toString(): String =
     "LoadedGitLabDiscussion(id='$id', createdAt=$createdAt)"
-
-  companion object {
-    internal val LOG = Logger.getInstance(LoadedGitLabDiscussion::class.java)
-  }
-
 }

@@ -10,7 +10,6 @@ import com.intellij.collaboration.api.graphql.loadResponse
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import org.jetbrains.plugins.gitlab.api.*
-import org.jetbrains.plugins.gitlab.api.dto.GitLabAwardEmojiRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteRestDTO
@@ -55,21 +54,6 @@ fun getMergeRequestDiscussionsUri(project: GitLabProjectCoordinates, mrIid: Stri
     .resolveRelative("merge_requests")
     .resolveRelative(mrIid)
     .resolveRelative("discussions")
-
-@SinceGitLab("8.9")
-suspend fun GitLabApi.Rest.getNoteAwardEmoji(
-  project: GitLabProjectCoordinates,
-  mrIid: String,
-  noteId: String,
-): HttpResponse<out List<GitLabAwardEmojiRestDTO>> {
-  val uri = project.restApiUri
-    .resolveRelative("merge_requests")
-    .resolveRelative(mrIid)
-    .resolveRelative("notes")
-    .resolveRelative(noteId)
-    .resolveRelative("award_emoji")
-  return loadList(GitLabApiRequestName.REST_GET_NOTE_AWARD_EMOJI, uri.toString())
-}
 
 @SinceGitLab("10.6")
 suspend fun GitLabApi.Rest.addNote(

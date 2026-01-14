@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
+import com.intellij.collaboration.api.page.ApiPageUtil
+import com.intellij.collaboration.api.page.foldToList
 import com.intellij.collaboration.async.Change
 import com.intellij.collaboration.async.Deleted
 import com.intellij.collaboration.async.childScope
@@ -8,16 +10,21 @@ import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.util.CodeReviewDomainEntity
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.map
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.getOrHandleException
+import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.gitlab.api.*
-import org.jetbrains.plugins.gitlab.api.dto.GitLabAwardEmojiDTO
+import org.jetbrains.plugins.gitlab.api.data.GitLabAwardEmoji
+import org.jetbrains.plugins.gitlab.api.dto.GitLabAwardEmojiRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
+import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.util.*
 
 @CodeReviewDomainEntity
@@ -60,7 +67,7 @@ interface GitLabMergeRequestNote : GitLabNote {
   val position: StateFlow<GitLabNotePosition?>
   val positionMapping: StateFlow<ComputedResult<GitLabMergeRequestNotePositionMapping?>>
 
-  val awardEmoji: StateFlow<List<GitLabAwardEmojiDTO>>
+  val awardEmojis: StateFlow<List<GitLabAwardEmoji>>
 
   suspend fun toggleReaction(reaction: GitLabReaction)
 }
@@ -88,7 +95,6 @@ class MutableGitLabMergeRequestNote(
   private val cs = parentCs.childScope(this::class)
 
   private val operationsGuard = Mutex()
-
   override val id: GitLabRestId = noteData.id
   override val author: GitLabUserDTO = GitLabUserDTO.fromRestDTO(noteData.author)
   override val createdAt: Date = noteData.createdAt
@@ -98,15 +104,23 @@ class MutableGitLabMergeRequestNote(
   private val data = MutableStateFlow(noteData)
   override val body: StateFlow<String> = data.mapState(cs, GitLabNoteRestDTO::body)
   override val resolved: StateFlow<Boolean> = data.mapState(cs, GitLabNoteRestDTO::resolved)
-  private val _awardEmoji = MutableStateFlow<List<GitLabAwardEmojiDTO>>(emptyList())
-  override val awardEmoji: StateFlow<List<GitLabAwardEmojiDTO>> = _awardEmoji.asStateFlow()
   override val position: StateFlow<GitLabNotePosition?> = data.mapState(cs) {
     it.position?.let(GitLabNotePosition::from)
   }
   override val positionMapping: StateFlow<ComputedResult<GitLabMergeRequestNotePositionMapping?>> =
     position.mapPosition(mr).stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
+  private val _awardEmojis = MutableStateFlow<List<GitLabAwardEmoji>>(emptyList())
+  override val awardEmojis: StateFlow<List<GitLabAwardEmoji>> = _awardEmojis.asStateFlow()
+  private val emojiMapDeferred = service<GitLabEmojiService>().emojiMap
+
   override fun canEdit(): Boolean = true
   override fun canSubmit(): Boolean = false
+
+  init {
+    cs.launch {
+      data.collect { loadEmojis() }
+    }
+  }
 
   override suspend fun setBody(newText: String) {
     withContext(cs.coroutineContext) {
@@ -136,10 +150,21 @@ class MutableGitLabMergeRequestNote(
 
   override suspend fun toggleReaction(reaction: GitLabReaction) {
     withContext(cs.coroutineContext) {
+      val emojiMap = emojiMapDeferred.await()
+      val noteEmoji = awardEmojis.value.firstOrNull {
+        it.name == reaction.name && it.user.id == currentUser.id
+      }
       withContext(Dispatchers.IO) {
-        val id = id.guessGid() ?: return@withContext
-        val awardEmojiTogglePayload = api.graphQL.awardEmojiToggle(id, reaction.name).body()
-        updateEmojisLocally(reaction, awardEmojiTogglePayload)
+        if (noteEmoji == null) {
+          val awardedEmojiDTO = api.rest.addAwardEmoji(project, mr.iid, id.restId, reaction.name).body()
+          val awardEmoji = GitLabAwardEmoji.fromDto(awardedEmojiDTO, emojiMap)
+          updateEmojisLocally(awardEmoji)
+        }
+        else {
+          val awardId = noteEmoji.id.restId ?: return@withContext
+          api.rest.deleteAwardEmoji(project, mr.iid, id.restId, awardId).body()
+          updateEmojisLocally(noteEmoji)
+        }
       }
     }
   }
@@ -148,25 +173,40 @@ class MutableGitLabMergeRequestNote(
     data.value = item
   }
 
-  fun setEmojis(updatedEmojis: List<GitLabAwardEmojiDTO>) {
-    _awardEmoji.value = updatedEmojis
+  private fun updateEmojisLocally(toggledEmoji: GitLabAwardEmoji) {
+    _awardEmojis.update { currentEmojis ->
+      val updatedEmojis = currentEmojis.toMutableList()
+      if (!updatedEmojis.remove(toggledEmoji)) {
+        updatedEmojis.add(toggledEmoji)
+      }
+      updatedEmojis
+    }
   }
 
-  private fun updateEmojisLocally(reaction: GitLabReaction, awardEmojiTogglePayload: AwardEmojiTogglePayload) {
-    val updatedEmojis = awardEmoji.value.toMutableList()
-    val awardEmojiResponse = awardEmojiTogglePayload.awardEmoji // HINT: returned value is `null` if toggledOn is `false`
-    if (awardEmojiTogglePayload.toggledOn && awardEmojiResponse != null) {
-      updatedEmojis.add(awardEmojiResponse)
-    }
-    else {
-      updatedEmojis.removeIf { it.name == reaction.name && it.user.id == currentUser.id }
-    }
+  private suspend fun loadEmojis() {
+    runCatching {
+      val emojiMap = emojiMapDeferred.await()
+      val uri = getMRNotesAwardEmojiUri(project, mr.iid, id.restId)
 
-    setEmojis(updatedEmojis)
+      val emojis: List<GitLabAwardEmojiRestDTO> = withContext(Dispatchers.IO) {
+        ApiPageUtil.createPagesFlowByLinkHeader(uri) { pageUri ->
+          api.rest.loadUpdatableJsonList<GitLabAwardEmojiRestDTO>(GitLabApiRequestName.REST_GET_NOTE_AWARD_EMOJI, pageUri)
+        }
+          .map { it.body() }
+          .foldToList()
+      }
+      _awardEmojis.value = emojis.map { emoji -> GitLabAwardEmoji.fromDto(emoji, emojiMap) }
+    }.getOrHandleException {
+      LOG.warn("Failed to load award emojis", it)
+    }
   }
 
   override fun toString(): String =
     "MutableGitLabNote(id='$id', author=$author, createdAt=$createdAt, canAdmin=$canAdmin, body=${body.value}, resolved=${resolved.value}, position=${position.value})"
+
+  companion object {
+    internal val LOG = logger<GitLabNote>()
+  }
 }
 
 @CodeReviewDomainEntity
@@ -190,7 +230,7 @@ class GitLabMergeRequestDraftNoteImpl(
 
   private val data = MutableStateFlow(noteData)
   override val body: StateFlow<String> = data.mapState(cs, GitLabMergeRequestDraftNoteRestDTO::note)
-  override val awardEmoji: StateFlow<List<GitLabAwardEmojiDTO>> = MutableStateFlow(emptyList())
+  override val awardEmojis: StateFlow<List<GitLabAwardEmoji>> = MutableStateFlow(emptyList())
 
   override val position: StateFlow<GitLabNotePosition?> = data.mapState(cs) { it.position.let(GitLabNotePosition::from) }
   override val positionMapping: StateFlow<ComputedResult<GitLabMergeRequestNotePositionMapping?>> =

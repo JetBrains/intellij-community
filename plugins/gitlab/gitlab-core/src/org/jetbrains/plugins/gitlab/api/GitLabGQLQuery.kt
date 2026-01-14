@@ -49,7 +49,4 @@ enum class GitLabGQLQuery(val filePath: String) {
   MERGE_REQUEST_UPDATE("graphql/query/mergeRequestUpdate.graphql"),
   @SinceGitLab("13.9")
   MERGE_REQUEST_REVIEWER_REREVIEW("graphql/query/mergeRequestReviewerRereview.graphql"),
-
-  @SinceGitLab("13.2")
-  AWARD_EMOJI_TOGGLE("graphql/query/awardEmojiToggle.graphql")
 }

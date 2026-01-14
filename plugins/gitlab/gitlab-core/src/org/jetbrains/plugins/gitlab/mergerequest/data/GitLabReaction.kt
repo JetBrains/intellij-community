@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
-import org.jetbrains.plugins.gitlab.api.dto.GitLabAwardEmojiDTO
+import org.jetbrains.plugins.gitlab.api.data.GitLabAwardEmoji
 
 interface GitLabReaction {
   val name: String
@@ -15,7 +15,7 @@ class GitLabReactionImpl private constructor(
   override val category: String? = null
 ) : GitLabReaction {
 
-  constructor(dto: GitLabAwardEmojiDTO) : this(dto.name, dto.emoji)
+  constructor(model: GitLabAwardEmoji) : this(model.name, model.emoji)
   constructor(parsedEmoji: ParsedGitLabEmoji) : this(parsedEmoji.name, parsedEmoji.moji, parsedEmoji.category)
 
   override fun equals(other: Any?): Boolean {

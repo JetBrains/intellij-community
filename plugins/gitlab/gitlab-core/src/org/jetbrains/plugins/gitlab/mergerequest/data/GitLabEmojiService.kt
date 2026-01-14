@@ -21,6 +21,10 @@ internal class GitLabEmojiService(cs: CoroutineScope) {
     parseEmojisFile()
   }
 
+  val emojiMap: Deferred<Map<String, String>> = cs.async(start = CoroutineStart.LAZY) {
+    emojis.await().associateBy({ it.name }, { it.moji })
+  }
+
   private fun parseEmojisFile(): List<ParsedGitLabEmoji> =
     GitLabEmojiService::class.java.classLoader.getResourceAsStream("emoji/index.json")?.use {
       mapper.readValue(it, object : TypeReference<Map<String, ParsedGitLabEmoji>>() {})
