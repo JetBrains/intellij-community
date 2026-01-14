@@ -5,33 +5,39 @@ import {createMcpServer} from './mcp-rpc.mjs'
 import {bd, bdJson, bdShowOne} from './bd-client.mjs'
 
 // Parse notes into structured sections
-// Only tracks findings and decisions; legacy IN PROGRESS/COMPLETED/NEXT preserved in 'other'
+// Tries JSON format first, falls back to legacy text format for backward compatibility
 function parseNotes(notes) {
-  const sections = {findings: [], decisions: [], other: []}
-  if (!notes) return sections
+  if (!notes) return {findings: [], decisions: []}
 
+  // Try JSON first
+  if (notes.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(notes)
+      return {
+        findings: parsed.findings || [],
+        decisions: parsed.decisions || []
+      }
+    } catch (e) {
+      // Fall through to text parsing
+    }
+  }
+
+  // Legacy text format (backward compat)
+  const sections = {findings: [], decisions: []}
   for (const line of notes.split('\n')) {
     if (line.startsWith('FINDING:')) {
       sections.findings.push(line.replace('FINDING:', '').trim())
     } else if (line.startsWith('KEY DECISION:')) {
       sections.decisions.push(line.replace('KEY DECISION:', '').trim())
-    } else if (line.trim()) {
-      // Preserve all other lines (including legacy IN PROGRESS/COMPLETED/NEXT)
-      sections.other.push(line)
     }
   }
   return sections
 }
 
 // Build notes string from sections
-// Only outputs findings + decisions; legacy fields preserved in 'other'
+// Stores as pretty-printed JSON for human readability
 function buildNotes(sections) {
-  const parts = []
-  // Preserve legacy/unknown lines at the top
-  for (const item of (sections.other || [])) parts.push(item)
-  for (const item of sections.findings) parts.push(`FINDING: ${item}`)
-  for (const item of sections.decisions) parts.push(`KEY DECISION: ${item}`)
-  return parts.join('\n')
+  return JSON.stringify(sections, null, 2)
 }
 
 // Check if issue requires user review before closing (based on priority/type)
@@ -54,6 +60,17 @@ const tools = [
         id: {type: 'string', description: 'Issue ID for full details'},
         user_request: {type: 'string', description: 'User task description ($ARGUMENTS from /task command)'}
       }
+    }
+  },
+  {
+    name: 'task_show',
+    description: 'Show full issue details with parsed notes. Works with any beads issue (created via MCP or CLI).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: {type: 'string', description: 'Issue ID'}
+      },
+      required: ['id']
     }
   },
   {
@@ -244,6 +261,20 @@ const toolHandlers = {
     }
   },
 
+  task_show: (args) => {
+    const issue = bdShowOne(args.id)
+    if (!issue) {
+      return {error: `Issue ${args.id} not found`}
+    }
+
+    // Parse notes if present
+    if (issue.notes) {
+      issue.notes = parseNotes(issue.notes)
+    }
+
+    return issue
+  },
+
   task_epic: (args) => {
     if (args.resume) {
       const issue = bdShowOne(args.resume)
@@ -307,7 +338,7 @@ const toolHandlers = {
         action = 'ask'
         return {
           success: true,
-          notes: newNotes,
+          notes: sections,
           status: args.status || issue.status,
           action,
           reviewRequired: `${issue.type}/P${issue.priority ?? 2}`,
@@ -329,7 +360,7 @@ const toolHandlers = {
       action = `Continue working. When done: task_done(id="${args.id}", summary="...")`
     }
 
-    return {success: true, notes: newNotes, status: args.status || issue.status, action}
+    return {success: true, notes: sections, status: args.status || issue.status, action}
   },
 
   task_decompose: (args) => {
