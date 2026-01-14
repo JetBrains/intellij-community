@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
+import com.intellij.polySymbols.utils.qualifiedName
 import com.intellij.psi.*
 import com.intellij.psi.impl.FakePsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -55,6 +56,7 @@ class PsiSourcedPolySymbolReference(
 
   class RenameHandler(reference: PsiSourcedPolySymbolReference) {
     private val symbol = reference.symbol
+    private val symbolName = symbol.qualifiedName
     private val targetPointer = reference.resolve()
       .let { if (it is FakePsiElement) it.context ?: it else it }
       .createSmartPointer()
@@ -75,6 +77,7 @@ class PsiSourcedPolySymbolReference(
       return NonCodeUsageInfo.create(file, range.startOffset, range.endOffset, target,
                                      symbol.adjustNameForRefactoring(
                                        queryExecutor,
+                                       symbolName,
                                        newName,
                                        file.text.substring(range.startOffset, range.endOffset)))
     }

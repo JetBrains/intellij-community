@@ -255,8 +255,13 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
    * Note: do not implement - to be removed
    */
   @ApiStatus.Internal
-  fun adjustNameForRefactoring(queryExecutor: PolySymbolQueryExecutor, newName: String, occurence: String): String =
-    queryExecutor.namesProvider.adjustRename(qualifiedName, newName, occurence)
+  fun adjustNameForRefactoring(
+    queryExecutor: PolySymbolQueryExecutor,
+    oldName: PolySymbolQualifiedName,
+    newName: String,
+    occurence: String
+  ): String =
+    queryExecutor.namesProvider.adjustRename(oldName, newName, occurence)
 
 
   sealed interface Priority : Comparable<Priority> {

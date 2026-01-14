@@ -3,9 +3,11 @@ package com.intellij.polySymbols.refactoring
 
 import com.intellij.model.Pointer
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.search.PolySymbolUsageQueries
+import com.intellij.polySymbols.utils.qualifiedName
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.rename.api.*
@@ -21,8 +23,11 @@ internal class PolySymbolRenameUsageSearcher : RenameUsageSearcher {
           .map { query ->
             query.mapping {
               PolySymbolPsiModifiableRenameUsage(
-                PolySymbolQueryExecutorFactory.create(PsiTreeUtil.findElementOfClassAtRange(it.file, it.range.startOffset, it.range.endOffset, PsiElement::class.java)
-                                                      ?: it.file), symbol,
+                PolySymbolQueryExecutorFactory.create(PsiTreeUtil.findElementOfClassAtRange(it.file,
+                                                                                            it.range.startOffset,
+                                                                                            it.range.endOffset,
+                                                                                            PsiElement::class.java)
+                                                      ?: it.file), symbol, symbol.qualifiedName,
                 PsiRenameUsage.defaultPsiRenameUsage(it))
             }
           }
@@ -32,23 +37,25 @@ internal class PolySymbolRenameUsageSearcher : RenameUsageSearcher {
   private class PolySymbolPsiModifiableRenameUsage(
     private val queryExecutor: PolySymbolQueryExecutor,
     private val symbol: PolySymbol,
+    private val symbolName: PolySymbolQualifiedName,
     private val psiRenameUsage: PsiRenameUsage,
   ) : PsiRenameUsage by psiRenameUsage, PsiModifiableRenameUsage {
 
     override val fileUpdater: ModifiableRenameUsage.FileUpdater
       get() = fileRangeUpdater {
-        symbol.adjustNameForRefactoring(queryExecutor, it, range.substring(file.text))
+        symbol.adjustNameForRefactoring(queryExecutor, symbolName, it, range.substring(file.text))
       }
 
     override fun createPointer(): Pointer<out PsiModifiableRenameUsage> {
       val queryExecutorPtr = queryExecutor.createPointer()
       val symbolPtr = symbol.createPointer()
+      val symbolName = symbolName
       val usagePtr = psiRenameUsage.createPointer()
       return Pointer {
         val queryExecutor = queryExecutorPtr.dereference() ?: return@Pointer null
         val symbol = symbolPtr.dereference() ?: return@Pointer null
         val usage = usagePtr.dereference() ?: return@Pointer null
-        PolySymbolPsiModifiableRenameUsage(queryExecutor, symbol, usage)
+        PolySymbolPsiModifiableRenameUsage(queryExecutor, symbol, symbolName, usage)
       }
     }
   }
