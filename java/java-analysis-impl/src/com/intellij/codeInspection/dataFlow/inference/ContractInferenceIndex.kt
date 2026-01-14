@@ -23,17 +23,13 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.gist.GistManager
 import java.util.*
 
-private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 14, MethodDataExternalizer) { file ->
-  indexFile(file.node.lighterAST)
-}
-
-private fun indexFile(tree: LighterAST): Map<Int, MethodData> {
+internal fun indexFile(tree: LighterAST): Map<Int, MethodData> {
   val visitor = InferenceVisitor(tree)
   visitor.visitNode(tree.root)
   return visitor.result
 }
 
-internal data class ClassData(
+private data class ClassData(
   val hasSuper: Boolean,
   val hasPureInitializer: Boolean,
   val isFinal: Boolean,
@@ -206,6 +202,7 @@ public fun handleInconsistency(method: PsiMethodImpl, cachedData: MethodData, e:
   if (e is ProcessCanceledException) return e
 
   val file = method.containingFile
+  val gist = ContractInferenceGist.getInstance().gist
   val gistMap = gist.getFileData(file)
   GistManager.getInstance().invalidateData(file.viewProvider.virtualFile)
 
@@ -233,6 +230,7 @@ public fun handleInconsistency(method: PsiMethodImpl, cachedData: MethodData, e:
 public fun getIndexedData(method: PsiMethodImpl): MethodData? {
   val file = method.containingFile
   val map = CachedValuesManager.getCachedValue(file) {
+    val gist = ContractInferenceGist.getInstance().gist
     CachedValueProvider.Result.create(bindMethods(gist.getFileData(file), file), file)
   }
   return map[method]
