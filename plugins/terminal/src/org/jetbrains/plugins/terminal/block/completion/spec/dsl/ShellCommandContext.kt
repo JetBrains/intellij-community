@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.block.completion.spec.dsl
 
 import com.intellij.terminal.completion.spec.ShellCommandParserOptions
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.annotations.ApiStatus
 
@@ -53,6 +54,9 @@ sealed interface ShellCommandContext : ShellSuggestionContext {
    * Use [dynamicOptions] if your option can be used only in some particular shell state.
    *
    * @param names the names of the option (for example, short and long form: `-o` and `--option`)
+   * Name is used to filter the completion popup to show only relevant items.
+   * Also, it is inserted when chosen from the popup, if [insertValue] is not specified.
+   * Also, it is shown in the completion popup, if [displayName] is not specified.
    * @param content description of the option
    */
   fun option(vararg names: String, content: ShellOptionContext.() -> Unit = {})

@@ -58,6 +58,19 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
           }
         }
       }
+      subcommand("custom-insert-value") {
+        argument {
+          suggestions {
+            listOf(
+              ShellCompletionSuggestion("files") {
+                priority(100)
+                insertValue("someCustomInsertValue")
+              },
+              ShellCompletionSuggestion("figures")
+            )
+          }
+        }
+      }
     }
   }
 
@@ -159,6 +172,23 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
 
     val expectedText = "test_cmd with-cursor-single suggestion().after"
     val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong() - 7) // cursor is between parentheses
+    fixture.assertOutputModelState(expectedText, expectedCursorOffset)
+  }
+
+  @Test
+  fun `test suggestion name is used for prefix matching but custom insert value is inserted`() = doTest { fixture ->
+    fixture.type("test_cmd custom-insert-value fi")
+    fixture.callCompletionPopup()
+    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+    assertThat(lookup.items.map { it.lookupString })
+      .hasSameElementsAs(listOf("figures", "files"))
+    assertThat(lookup.currentItem?.lookupString)
+      .isEqualTo("files")
+
+    fixture.insertSelectedItem()
+
+    val expectedText = "test_cmd custom-insert-value someCustomInsertValue"
+    val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong())
     fixture.assertOutputModelState(expectedText, expectedCursorOffset)
   }
 

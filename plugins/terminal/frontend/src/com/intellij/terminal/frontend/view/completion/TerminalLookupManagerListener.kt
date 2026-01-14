@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
@@ -68,7 +69,6 @@ private class TerminalLookupListener : LookupListener {
     val terminalInput = event.lookup.editor.getUserData(TerminalInput.Companion.KEY) ?: return false
     val item = event.item
     val lookup = event.lookup as LookupImpl
-    val completionChar = event.completionChar
 
     if (item == null || !item.isValid() || item is EmptyLookupItem) {
       return false
@@ -81,13 +81,15 @@ private class TerminalLookupListener : LookupListener {
     }
 
     // Second step - insert the completion item
-    terminalInput.sendString(item.lookupString)
+    val suggestion = item.`object` as ShellCompletionSuggestion
+    val realInsertValue = suggestion.insertValue?.replace("{cursor}", "")
+    val escapedInsertValue = StringUtil.escapeChar(realInsertValue ?: suggestion.name, ' ')
+    terminalInput.sendString(escapedInsertValue)
 
     // Third step - move the cursor to the custom position if it is specified
-    val suggestion = item.`object` as ShellCompletionSuggestion
     val cursorOffset = suggestion.insertValue?.indexOf("{cursor}")
     if (cursorOffset != null && cursorOffset != -1) {
-      val delta = item.lookupString.length - cursorOffset
+      val delta = escapedInsertValue.length - cursorOffset
       repeat(delta) {
         terminalInput.sendLeft()
       }

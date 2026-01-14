@@ -90,6 +90,11 @@ sealed interface ShellArgumentContext {
    * Provide the hardcoded values for the argument.
    * It creates a [ShellCompletionSuggestion] for each of the provided [names] with
    * [ARGUMENT][com.intellij.terminal.completion.spec.ShellSuggestionType.ARGUMENT] suggestion type.
+   *
+   * @param names the names of the suggestions.
+   * Name is used to filter the completion popup to show only relevant items.
+   * Also, it is inserted when chosen from the popup, if [ShellSuggestionContext.insertValue] is not specified.
+   * Also, it is shown in the completion popup, if [ShellCompletionSuggestion.displayName] is not specified.
    */
   fun suggestions(vararg names: String)
 }
