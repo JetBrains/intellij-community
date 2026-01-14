@@ -153,10 +153,10 @@ class TerminalCommandCompletionService(
     }
   }
 
-  private suspend fun getCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCompletionResult? {
-    val commandSpecResult = getCommandSpecCompletionSuggestions(context)
+  private suspend fun getCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCommandCompletionResult? {
+    val commandSpecResult = TerminalCommandSpecCompletionContributor().getCompletionSuggestions(context)
     val powershellResult = if (!context.isAutoPopup && ShellName.isPowerShell(context.shellName)) {
-      getPowerShellCompletionSuggestions(context)
+      PowerShellCompletionContributor().getCompletionSuggestions(context)
     }
     else null
 
@@ -164,7 +164,7 @@ class TerminalCommandCompletionService(
                && powershellResult != null && powershellResult.suggestions.isNotEmpty()) {
       if (commandSpecResult.prefix == powershellResult.prefix) {
         val suggestions = (powershellResult.suggestions + commandSpecResult.suggestions).distinctBy { it.name }
-        TerminalCompletionResult(suggestions, commandSpecResult.prefix)
+        TerminalCommandCompletionResult(suggestions, commandSpecResult.prefix)
       }
       else if (powershellResult.prefix.length > commandSpecResult.prefix.length) {
         powershellResult
@@ -183,7 +183,7 @@ class TerminalCommandCompletionService(
 
   private fun submitSuggestions(
     process: TerminalCommandCompletionProcess,
-    result: TerminalCompletionResult,
+    result: TerminalCommandCompletionResult,
   ) {
     val prefixReplacementIndex = result.suggestions.firstOrNull()?.prefixReplacementIndex ?: 0
     val prefix = result.prefix.substring(prefixReplacementIndex)

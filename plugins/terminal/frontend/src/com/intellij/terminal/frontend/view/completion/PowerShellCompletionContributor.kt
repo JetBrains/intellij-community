@@ -1,6 +1,6 @@
 package com.intellij.terminal.frontend.view.completion
 
-import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -12,90 +12,94 @@ import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellBasedCo
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import kotlin.coroutines.resume
 
-internal suspend fun getPowerShellCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCompletionResult? {
-  context.terminalView.sendText(CALL_COMPLETION_SEQUENCE)
+internal class PowerShellCompletionContributor : TerminalCommandCompletionContributor {
+  override suspend fun getCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCommandCompletionResult? {
+    context.terminalView.sendText(CALL_COMPLETION_SEQUENCE)
 
-  val result: String = awaitCompletionResult(context.shellIntegration)
-  LOG.trace { "PowerShell completion result: $result" }
+    val result: String = awaitCompletionResult(context.shellIntegration)
+    LOG.trace { "PowerShell completion result: $result" }
 
-  val json = Json { ignoreUnknownKeys = true }
-  val completionResult: PowerShellCompletionResultWithContext = try {
-    json.decodeFromString(result)
-  }
-  catch (ex: Exception) {
-    LOG.error("Failed to parse PowerShell completion result: $result", ex)
-    return null
-  }
-
-  if (completionResult.matches.isEmpty()) {
-    return null
-  }
-
-  // Prefix for which completion items were provided in PowerShell
-  val powerShellPrefix = completionResult.commandText.substring(completionResult.replacementIndex, completionResult.cursorIndex)
-  val prefixLength = powerShellPrefix.length
-
-  // Prefix at the moment of completion invocation in the IDE
-  val localCursorOffset = (context.initialCursorOffset - context.commandStartOffset).toInt()
-  val typedPrefix = context.commandText.substring(localCursorOffset - prefixLength, localCursorOffset)
-
-  if (powerShellPrefix != typedPrefix) {
-    // Command text for which completion was requested is outdated or incorrect.
-    return null
-  }
-
-  val prefix = findBestPrefix(typedPrefix, completionResult.matches)
-  val suggestions = completionResult.matches.map { item ->
-    ShellCompletionSuggestion(item.presentableText ?: item.value) {
-      displayName(item.presentableText ?: item.value)
-      insertValue(item.value)
+    val json = Json { ignoreUnknownKeys = true }
+    val completionResult: PowerShellCompletionResultWithContext = try {
+      json.decodeFromString(result)
     }
-  }
+    catch (ex: Exception) {
+      LOG.error("Failed to parse PowerShell completion result: $result", ex)
+      return null
+    }
 
-  return TerminalCompletionResult(suggestions, prefix)
-}
+    if (completionResult.matches.isEmpty()) {
+      return null
+    }
 
-private suspend fun awaitCompletionResult(shellIntegration: TerminalShellIntegration): String {
-  return suspendCancellableCoroutine { continuation ->
-    val disposable = Disposer.newDisposable()
-    continuation.invokeOnCancellation { Disposer.dispose(disposable) }
-    shellIntegration.addShellBasedCompletionListener(disposable, object : TerminalShellBasedCompletionListener {
-      override fun completionFinished(result: String) {
-        Disposer.dispose(disposable)
-        continuation.resume(result)
+    // Prefix for which completion items were provided in PowerShell
+    val powerShellPrefix = completionResult.commandText.substring(completionResult.replacementIndex, completionResult.cursorIndex)
+    val prefixLength = powerShellPrefix.length
+
+    // Prefix at the moment of completion invocation in the IDE
+    val localCursorOffset = (context.initialCursorOffset - context.commandStartOffset).toInt()
+    val typedPrefix = context.commandText.substring(localCursorOffset - prefixLength, localCursorOffset)
+
+    if (powerShellPrefix != typedPrefix) {
+      // Command text for which completion was requested is outdated or incorrect.
+      return null
+    }
+
+    val prefix = findBestPrefix(typedPrefix, completionResult.matches)
+    val suggestions = completionResult.matches.map { item ->
+      ShellCompletionSuggestion(item.presentableText ?: item.value) {
+        displayName(item.presentableText ?: item.value)
+        insertValue(item.value)
       }
-    })
+    }
+
+    return TerminalCommandCompletionResult(suggestions, prefix)
   }
-}
 
-/**
- * Determines the best prefix match between typed text and completion item labels.
- * For example:
- * 1. Typed prefix: `-Pa`, label: `Parameter` -> returns `Pa`
- * 2. Typed prefix: `C:\Users\doc`, label: `Documents` -> returns `doc`
- */
-private fun findBestPrefix(typedPrefix: String, matches: List<PowerShellCompletionItem>): String {
-  check(matches.isNotEmpty())
-
-  // Use the first match to determine the relationship between the typed text and the label
-  val firstMatch = matches[0]
-  val label = firstMatch.presentableText ?: firstMatch.value
-
-  // We look for the longest trailing substring of typedPrefix that matches the start of the label
-  for (i in 0 until typedPrefix.length) {
-    val candidate = typedPrefix.substring(i)
-    if (label.startsWith(candidate, ignoreCase = true)) {
-      return candidate
+  private suspend fun awaitCompletionResult(shellIntegration: TerminalShellIntegration): String {
+    return suspendCancellableCoroutine { continuation ->
+      val disposable = Disposer.newDisposable()
+      continuation.invokeOnCancellation { Disposer.dispose(disposable) }
+      shellIntegration.addShellBasedCompletionListener(disposable, object : TerminalShellBasedCompletionListener {
+        override fun completionFinished(result: String) {
+          Disposer.dispose(disposable)
+          continuation.resume(result)
+        }
+      })
     }
   }
 
-  return ""
+  /**
+   * Determines the best prefix match between typed text and completion item labels.
+   * For example:
+   * 1. Typed prefix: `-Pa`, label: `Parameter` -> returns `Pa`
+   * 2. Typed prefix: `C:\Users\doc`, label: `Documents` -> returns `doc`
+   */
+  private fun findBestPrefix(typedPrefix: String, matches: List<PowerShellCompletionItem>): String {
+    check(matches.isNotEmpty())
+
+    // Use the first match to determine the relationship between the typed text and the label
+    val firstMatch = matches[0]
+    val label = firstMatch.presentableText ?: firstMatch.value
+
+    // We look for the longest trailing substring of typedPrefix that matches the start of the label
+    for (i in 0 until typedPrefix.length) {
+      val candidate = typedPrefix.substring(i)
+      if (label.startsWith(candidate, ignoreCase = true)) {
+        return candidate
+      }
+    }
+
+    return ""
+  }
+
+  companion object {
+    /**
+     * Sequence that is sent to the shell when pressing `F12, e`.
+     * Our PowerShell integration script binds completion to this sequence.
+     */
+    private const val CALL_COMPLETION_SEQUENCE = "\u001b[24~e"
+
+    private val LOG = logger<PowerShellCompletionContributor>()
+  }
 }
-
-/**
- * Sequence that is sent to the shell when pressing `F12, e`.
- * Our PowerShell integration script binds completion to this sequence.
- */
-private const val CALL_COMPLETION_SEQUENCE = "\u001b[24~e"
-
-private val LOG = fileLogger()
