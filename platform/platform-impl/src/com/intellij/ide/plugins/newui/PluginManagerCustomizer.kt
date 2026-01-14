@@ -40,6 +40,11 @@ interface PluginManagerCustomizer {
     modalityState: ModalityState,
   ): UpdateButtonCustomizationModel?
 
+  suspend fun getUninstallButtonCustomizationModel(
+    pluginModelFacade: PluginModelFacade,
+    pluginModel: PluginUiModel,
+  ): UninstallButtonCustomizationModel?
+
   fun updateAfterModification(updateUi: () -> Unit)
 
   suspend fun updateAfterModificationAsync(updateUi: suspend () -> Unit)
@@ -86,5 +91,10 @@ data class OptionsButonCustomizationModel(
 
 @ApiStatus.Internal
 data class UpdateButtonCustomizationModel(
+  val action: () -> Unit,
+)
+
+@ApiStatus.Internal
+data class UninstallButtonCustomizationModel(
   val action: () -> Unit,
 )
