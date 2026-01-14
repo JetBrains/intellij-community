@@ -230,13 +230,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
     if (searchScope instanceof GlobalSearchScope) {
-      ProgressIndicator progress = getOrCreateIndicator();
-      StringSearcher searcher = new StringSearcher(text, options.contains(Options.CASE_SENSITIVE_SEARCH), true,
-                                                   searchContext == UsageSearchContext.IN_STRINGS,
-                                                   options.contains(Options.PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE));
+      return ConcurrencyUtils.runWithIndicatorOrContextCancellation((__) -> {
+        ProgressIndicator progress = getOrCreateIndicator();
+        StringSearcher searcher = new StringSearcher(text, options.contains(Options.CASE_SENSITIVE_SEARCH), true,
+                                                     searchContext == UsageSearchContext.IN_STRINGS,
+                                                     options.contains(Options.PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE));
 
-      return processElementsWithTextInGlobalScope((GlobalSearchScope)searchScope, searcher, searchContext,
-                                                  options.contains(Options.CASE_SENSITIVE_SEARCH), containerName, session, progress, processor);
+        return processElementsWithTextInGlobalScope((GlobalSearchScope)searchScope, searcher, searchContext,
+                                                    options.contains(Options.CASE_SENSITIVE_SEARCH), containerName, session, progress, processor);
+      });
     }
     LocalSearchScope scope = (LocalSearchScope)searchScope;
     PsiElement[] scopeElements = scope.getScope();
