@@ -26,5 +26,5 @@ internal fun VcsLogObjectsFactory.createBranchesRefs(repository: GitRepository):
   return refs
 }
 
-internal fun VcsLogObjectsFactory.createTag(repository: GitRepository, tag: GitTag, hash: Hash): VcsRef =
-  createRef(hash, tag.name, GitRefManager.TAG, repository.root)
+internal fun VcsLogObjectsFactory.createTag(repository: GitRepository, tagName: String, hash: Hash): VcsRef =
+  createRef(hash, tagName, GitRefManager.TAG, repository.root)
