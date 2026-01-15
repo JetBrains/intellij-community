@@ -5,6 +5,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <eelProvider implementation="com.intellij.platform.ijent.community.impl.nio.IjentEelDescriptorProvider"/>
+
     <applicationService
       serviceInterface="com.intellij.platform.ijent.spi.IjentSessionProvider" open="true"
       serviceImplementation="com.intellij.platform.ijent.spi.DefaultIjentSessionProvider"/>
