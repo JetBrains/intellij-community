@@ -38,6 +38,7 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt.class
       ByteIterator
       CharIterator
       collections.kotlin_builtins
+      DetachedMapEntry.class
       DoubleIterator
       EmptyIterator
       EmptyList

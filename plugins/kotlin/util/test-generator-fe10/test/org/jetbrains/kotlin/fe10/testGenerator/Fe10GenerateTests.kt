@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fe10.testGenerator
 
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
@@ -1317,6 +1317,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                 "asJava/lightClasses/lightClassByFqName",
                 excludedDirectories = listOf(
                     "withTestCompilerPluginEnabled", // relevant only for K2
+                    "k2", // relevant only for K2
                 ),
                 pattern = KT_OR_KTS_WITHOUT_DOTS,
             )
@@ -1328,6 +1329,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                 pattern = KT_OR_KTS_WITHOUT_DOTS,
                 excludedDirectories = listOf(
                     "jvmExposeBoxed", // K2 feature
+                    "k2", // relevant only for K2
                 )
             )
         }
@@ -1341,6 +1343,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "ideRegression",
                     "script",
                     "withTestCompilerPluginEnabled", // relevant only for K2
+                    "k2", // relevant only for K2
                 ),
                 pattern = KT_OR_KTS_WITHOUT_DOTS,
             )
