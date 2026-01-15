@@ -4,8 +4,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellSuggestionType
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
+import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionItem
 import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionResultType
 import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionResultWithContext
@@ -14,6 +16,7 @@ import org.jetbrains.plugins.terminal.session.ShellName
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellBasedCompletionListener
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import java.io.File
+import javax.swing.Icon
 import kotlin.coroutines.resume
 
 internal class PowerShellCompletionContributor : TerminalCommandCompletionContributor {
@@ -112,6 +115,31 @@ internal class PowerShellCompletionContributor : TerminalCommandCompletionContri
 
     return ShellCompletionSuggestion(lookupString) {
       insertValue(insertValue)
+      type(item.type.toShellSuggestionType())
+
+      val typeIcon = item.type.getIcon()
+      if (typeIcon != null) icon(typeIcon)
+    }
+  }
+
+  private fun PowerShellCompletionResultType.toShellSuggestionType(): ShellSuggestionType {
+    return when (this) {
+      PowerShellCompletionResultType.PROVIDER_ITEM -> ShellSuggestionType.FILE
+      PowerShellCompletionResultType.PROVIDER_CONTAINER -> ShellSuggestionType.FOLDER
+      else -> ShellSuggestionType.ARGUMENT
+    }
+  }
+
+  private fun PowerShellCompletionResultType.getIcon(): Icon? {
+    return when (this) {
+      PowerShellCompletionResultType.COMMAND, PowerShellCompletionResultType.METHOD, PowerShellCompletionResultType.HISTORY -> {
+        TerminalIcons.Command
+      }
+      PowerShellCompletionResultType.PARAMETER_NAME -> TerminalIcons.Option
+      PowerShellCompletionResultType.PROVIDER_CONTAINER, PowerShellCompletionResultType.PROVIDER_ITEM -> {
+        null  // Icons for files/directories will be calculated by the core completion logic.
+      }
+      else -> TerminalIcons.Other
     }
   }
 
