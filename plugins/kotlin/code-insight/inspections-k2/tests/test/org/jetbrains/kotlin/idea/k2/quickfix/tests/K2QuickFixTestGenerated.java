@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.quickfix.tests;
 
@@ -1743,6 +1743,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/optIn/appendFileAnnotationWithAnnotationList.kt");
         }
 
+        @TestMetadata("argumentUseSiteOptIn.kt")
+        public void testArgumentUseSiteOptIn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/argumentUseSiteOptIn.kt");
+        }
+
+        @TestMetadata("assignmentUseSiteOptIn.kt")
+        public void testAssignmentUseSiteOptIn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/assignmentUseSiteOptIn.kt");
+        }
+
         @TestMetadata("basicFunction.kt")
         public void testBasicFunction() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/optIn/basicFunction.kt");
@@ -1776,6 +1786,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         @TestMetadata("existingFileAnnotationWithPackage.kt")
         public void testExistingFileAnnotationWithPackage() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/optIn/existingFileAnnotationWithPackage.kt");
+        }
+
+        @TestMetadata("expressionUseSiteOptIn.kt")
+        public void testExpressionUseSiteOptIn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/expressionUseSiteOptIn.kt");
         }
 
         @TestMetadata("forbiddenTargetsExpression.kt")

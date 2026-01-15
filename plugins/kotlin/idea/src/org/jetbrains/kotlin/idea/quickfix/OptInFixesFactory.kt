@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -100,30 +100,25 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
         val result = mutableListOf<CandidateData>()
         var current: PsiElement? = this
 
-        fun CandidateData.addToResult() {
-            if (result.any { this.element == it.element }) return
-            result.add(this)
-        }
-
         val closestDeclaration = this.findParentOfType<KtDeclaration>(strict = false)
 
         while (current != null) {
             when (current) {
                 is KtClassOrObject if closestDeclaration != current -> OptInGeneralUtils.findContainingClassOrObjectCandidate(
                     current
-                )?.addToResult()
+                )?.addTo(result)
 
-                is KtCallExpression -> current.findSamConstructorCallCandidate()?.addToResult()
+                is KtCallExpression -> current.findSamConstructorCallCandidate()?.addTo(result)
                 is KtDeclaration if (current is KtDeclarationWithBody && !current.isLambda()
                         || current is KtTypeAlias
                         || current is KtProperty
                         || current is KtClassOrObject) ->
-                    OptInGeneralUtils.findContainingDeclarationCandidate(current).addToResult()
+                    OptInGeneralUtils.findContainingDeclarationCandidate(current).addTo(result)
             }
             current = current.parent
         }
 
-        OptInGeneralUtils.findStatementCandidate(this)?.addToResult()
+        OptInGeneralUtils.findStatementCandidate(this)?.addTo(result)
 
         // For the case where two different elements have the same name
         return result.sortedBy { it.kind == AddAnnotationFix.Kind.Self }
