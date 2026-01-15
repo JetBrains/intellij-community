@@ -6,7 +6,6 @@ import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -64,16 +63,6 @@ public final class LinearGraphUtils {
 
   public static @NotNull List<Integer> getDownNodes(@NotNull LinearGraph graph, final int nodeIndex) {
     return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_DOWN), graphEdge -> graphEdge.getDownNodeIndex());
-  }
-
-  public static @NotNull List<Integer> getDownNodesIncludeNotLoad(final @NotNull LinearGraph graph, final int nodeIndex) {
-    return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, EdgeFilter.ALL), graphEdge -> {
-      if (isEdgeDown(graphEdge, nodeIndex)) {
-        if (graphEdge.getType() == GraphEdgeType.NOT_LOAD_COMMIT) return graphEdge.getTargetId();
-        return graphEdge.getDownNodeIndex();
-      }
-      return null;
-    });
   }
 
   public static @NotNull LiteLinearGraph asLiteLinearGraph(final @NotNull LinearGraph graph) {
