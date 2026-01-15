@@ -1077,6 +1077,8 @@ object EelPathUtils {
       val sourceDescriptor = localPathEel.descriptor
       val localOsFamily = localPathEel.descriptor.osFamily
       val remoteOsFamily = targetRoot.getEelDescriptor().osFamily
+      val sourceRoot = localPathEel.asNioPath()
+      val targetRoot = targetRootEel.asNioPath()
 
       val sourceAttrs = sourceRoot.fileAttributesView<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
       // handle target path not existing
