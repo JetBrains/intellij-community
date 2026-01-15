@@ -22,10 +22,7 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.plaf.basic.DefaultMenuLayout;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
+import java.awt.event.*;
 
 /**
  * @author ignatov
@@ -204,9 +201,18 @@ public class JBPopupMenu extends JPopupMenu {
 
   private static class MyLayout extends DefaultMenuLayout implements ActionListener {
     private final JPopupMenu myTarget;
+    private Point mouseLocation = null;
     int myShift = 0;
     int myScrollDirection = 0;
     Timer myTimer;
+    private final AWTEventListener toolkitListener = new AWTEventListener() {
+      @Override
+      public void eventDispatched(AWTEvent event) {
+        if (event instanceof MouseEvent mouseEvent) {
+          mouseLocation = SwingUtilities.convertPoint(mouseEvent.getComponent(), mouseEvent.getPoint(), myTarget);
+        }
+      }
+    };
 
     MyLayout(final JPopupMenu target) {
       super(target, PAGE_AXIS);
@@ -240,33 +246,31 @@ public class JBPopupMenu extends JPopupMenu {
     private void switchTimer(boolean on) {
       if (on && !myTimer.isRunning()) {
         myTimer.start();
+        Toolkit.getDefaultToolkit().addAWTEventListener(toolkitListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
       }
       if (!on && myTimer.isRunning()) {
         myTimer.stop();
+        Toolkit.getDefaultToolkit().removeAWTEventListener(toolkitListener);
       }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
       if (!myTarget.isShowing()) return;
-      PointerInfo info = MouseInfo.getPointerInfo();
-      if (info == null) return;
-      Point mouseLocation = info.getLocation();
-      Point targetLocation = myTarget.getLocationOnScreen();
-      if (mouseLocation.x < targetLocation.x || mouseLocation.x > targetLocation.x + myTarget.getWidth()) {
+      if (mouseLocation == null) return;
+      if (mouseLocation.x < 0 || mouseLocation.x > myTarget.getWidth()) {
         return;
       }
-      if (Math.abs(mouseLocation.y - targetLocation.y - getMaxHeight()) < 10) {
+      if (Math.abs(mouseLocation.y - getMaxHeight()) < 10) {
         myScrollDirection = 1;
       }
-      else if (Math.abs(mouseLocation.y - targetLocation.y) < 10) {
+      else if (Math.abs(mouseLocation.y) < 10) {
         myScrollDirection = -1;
       }
       else {
         return;
       }
 
-      SwingUtilities.convertPointFromScreen(mouseLocation, myTarget);
       myTarget.dispatchEvent(
         new MouseEvent(myTarget, MouseEvent.MOUSE_ENTERED, System.currentTimeMillis(), 0, mouseLocation.x, mouseLocation.y, 0, false));
 
