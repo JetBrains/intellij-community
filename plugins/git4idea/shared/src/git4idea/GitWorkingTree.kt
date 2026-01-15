@@ -26,14 +26,39 @@ data class GitWorkingTree(
   val currentBranch: GitStandardLocalBranch?,
   val isMain: Boolean,
   val isCurrent: Boolean,
+  /**
+   * A locked working tree is never pruned, i.e., removed from a list of existing working trees.
+   * Also, locking prevents working trees from being moved or deleted.
+   * Locking is useful for working trees on portable devices or network shares which are not always mounted.
+   *
+   * @see isPrunable
+   */
+  val isLocked: Boolean = false,
+  /**
+   * Means that the working tree can be pruned by the prune command.
+   * This working tree is not considered valid by git, and its administrative files in `$GIT_DIR/worktrees` are considered stale and
+   * a subject to remove on `git worktree prune` command or on eventual automatic cleanup (see `gc.worktreePruneExpire` in git-config).
+   *
+   * @see isLocked
+   */
+  val isPrunable: Boolean = false,
 ) {
 
-  constructor(path: @NlsSafe String, fullBranchName: @NlsSafe String?, isMain: Boolean, isCurrent: Boolean) :
+  constructor(
+    path: @NlsSafe String,
+    fullBranchName: @NlsSafe String?,
+    isMain: Boolean,
+    isCurrent: Boolean,
+    isLocked: Boolean = false,
+    isPrunable: Boolean = false,
+  ) :
     this(
       VcsContextFactory.getInstance().createFilePath(path, true),
       if (fullBranchName == null) null else GitStandardLocalBranch(fullBranchName),
       isMain,
-      isCurrent
+      isCurrent,
+      isLocked,
+      isPrunable,
     )
 
 }
@@ -45,6 +70,8 @@ internal object GitWorkingTreeSerializer : KSerializer<GitWorkingTree> {
     element("branch", SerialDescriptor("branch", GitStandardLocalBranch.serializer().descriptor))
     element("main", PrimitiveSerialDescriptor("main", PrimitiveKind.BOOLEAN))
     element("current", PrimitiveSerialDescriptor("current", PrimitiveKind.BOOLEAN))
+    element("locked", PrimitiveSerialDescriptor("locked", PrimitiveKind.BOOLEAN))
+    element("prunable", PrimitiveSerialDescriptor("prunable", PrimitiveKind.BOOLEAN))
   }
 
   override fun serialize(encoder: Encoder, value: GitWorkingTree) {
@@ -53,6 +80,8 @@ internal object GitWorkingTreeSerializer : KSerializer<GitWorkingTree> {
     composite.encodeNullableSerializableElement(descriptor, 1, GitStandardLocalBranch.serializer(), value.currentBranch)
     composite.encodeBooleanElement(descriptor, 2, value.isMain)
     composite.encodeBooleanElement(descriptor, 3, value.isCurrent)
+    composite.encodeBooleanElement(descriptor, 4, value.isLocked)
+    composite.encodeBooleanElement(descriptor, 5, value.isPrunable)
     composite.endStructure(descriptor)
   }
 
@@ -62,6 +91,8 @@ internal object GitWorkingTreeSerializer : KSerializer<GitWorkingTree> {
     var currentBranch: GitStandardLocalBranch? = null
     var isMain: Boolean? = null
     var isCurrent: Boolean? = null
+    var isLocked: Boolean? = null
+    var isPrunable: Boolean? = null
     var loop = true
 
     while (loop) {
@@ -71,6 +102,8 @@ internal object GitWorkingTreeSerializer : KSerializer<GitWorkingTree> {
         1 -> currentBranch = dec.decodeNullableSerializableElement(descriptor, 1, GitStandardLocalBranch.serializer())
         2 -> isMain = dec.decodeBooleanElement(descriptor, 2)
         3 -> isCurrent = dec.decodeBooleanElement(descriptor, 3)
+        4 -> isLocked = dec.decodeBooleanElement(descriptor, 4)
+        5 -> isPrunable = dec.decodeBooleanElement(descriptor, 5)
         else -> throw SerializationException("Unknown index $index")
       }
     }
@@ -84,6 +117,8 @@ internal object GitWorkingTreeSerializer : KSerializer<GitWorkingTree> {
       currentBranch = currentBranch,
       isMain = isMain ?: throw SerializationException("Field 'isMain' is missing"),
       isCurrent = isCurrent ?: throw SerializationException("Field 'isCurrent' is missing"),
+      isLocked = isLocked ?: throw SerializationException("Field 'isLocked' is missing"),
+      isPrunable = isPrunable ?: throw SerializationException("Field 'isPrunable' is missing"),
     )
   }
 }

@@ -18,6 +18,8 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
   private var currentWorktreePath: String? = null
   private var branchFullName: String? = null
   private var isDetached = false
+  private var isLocked = false
+  private var isPrunable = false
   private var isFirst = true
   val trees: List<GitWorkingTree>
     get() = _trees.toImmutableList()
@@ -32,7 +34,7 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
 
   override fun onLineAvailable(line: @NlsSafe String, outputType: Key<*>) {
     if (line.isBlank()) {
-      createWorkingTree(currentWorktreePath, branchFullName, isDetached, isFirst)
+      createWorkingTree(currentWorktreePath, branchFullName, isDetached, isFirst, isLocked, isPrunable)
       return
     }
 
@@ -40,6 +42,10 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
       if (outputType == ProcessOutputType.STDOUT) {
         if (line == "detached") {
           isDetached = true
+          return
+        }
+        if (line == "locked") {
+          isLocked = true
           return
         }
         val scanner = StringScanner(line)
@@ -54,6 +60,12 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
           "branch" -> {
             branchFullName = value
           }
+          "prunable" -> {
+            isPrunable = true
+          }
+          "locked" -> {
+            isLocked = true
+          }
           else -> report(line)
         }
       }
@@ -63,7 +75,14 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
     }
   }
 
-  private fun createWorkingTree(path: String?, branch: String?, detached: Boolean, isMain: Boolean) {
+  private fun createWorkingTree(
+    path: String?,
+    branch: String?,
+    detached: Boolean,
+    main: Boolean,
+    locked: Boolean,
+    prunable: Boolean,
+  ) {
     if (path == null) {
       thisLogger().warn("'worktree' wasn't reported for branch ${branch ?: "<detached>"}")
     }
@@ -71,11 +90,13 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
       thisLogger().warn("'branch' wasn't reported for path $path")
     }
     else {
-      _trees.add(GitWorkingTree(path, branch, isMain, path == currentRoot))
+      _trees.add(GitWorkingTree(path, branch, main, path == currentRoot, locked, prunable))
     }
     currentWorktreePath = null
     branchFullName = null
     isDetached = false
+    isLocked = false
+    isPrunable = false
     isFirst = false
   }
 }
