@@ -1,6 +1,15 @@
 *f:com.intellij.vcs.log.UnsupportedHistoryFiltersException
 - java.lang.Exception
 - <init>(java.lang.String):V
+*:com.intellij.vcs.log.VcsLogAggregatedStoredRefs
+- com.intellij.vcs.log.VcsRefsContainer
+- allRefs():kotlin.sequences.Sequence
+- branches():kotlin.sequences.Sequence
+- a:getRefForHeadCommit(I):com.intellij.vcs.log.VcsRef
+- a:getRefsByRoot():java.util.Map
+- a:getRootForHeadCommit(I):com.intellij.openapi.vfs.VirtualFile
+- a:refsToCommit(I):java.util.List
+- tags():kotlin.sequences.Sequence
 *:com.intellij.vcs.log.VcsLogCommitDataCache
 - a:getCachedData(I):com.intellij.vcs.log.VcsShortCommitDetails
 *:com.intellij.vcs.log.VcsLogFileHistoryHandler
@@ -31,3 +40,16 @@
 - hashCode():I
 *:com.intellij.vcs.log.VcsLogFilterUi
 - a:getFilters():com.intellij.vcs.log.VcsLogFilterCollection
+*:com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy
+*f:com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy$FromLoadedCommits
+- com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy
+- sf:INSTANCE:com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy$FromLoadedCommits
+*:com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy$LoadAllRefs
+- com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy
+- a:getPreviouslyLoadedRefs():com.intellij.vcs.log.VcsRefsContainer
+*:com.intellij.vcs.log.VcsLogRootStoredRefs
+- com.intellij.vcs.log.VcsRefsContainer
+- a:contains(I):Z
+- a:forEachBranchIndex(java.util.function.IntConsumer):V
+- a:getRefsIndexes():java.util.Collection
+- a:refsToCommit(I):java.util.List

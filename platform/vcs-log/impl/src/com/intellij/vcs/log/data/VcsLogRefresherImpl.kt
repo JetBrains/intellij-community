@@ -12,11 +12,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsTracer
 import com.intellij.platform.vcs.impl.shared.telemetry.traceSuspending
 import com.intellij.platform.vcs.impl.shared.telemetry.withVcsAttributes
-import com.intellij.vcs.log.TimedVcsCommit
-import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.VcsLogProvider.RefsLoadingPolicy
-import com.intellij.vcs.log.VcsLogProviderRequirementsEx
-import com.intellij.vcs.log.VcsLogRefsOfSingleRoot
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.impl.RequirementsImpl
@@ -304,7 +301,7 @@ class VcsLogRefresherImpl(
       VcsLogGraphData.Empty
     }
 
-  private fun prepareRequirements(roots: Collection<VirtualFile>, commitCount: Int, prevRefs: Map<VirtualFile, VcsLogRefsOfSingleRoot>?) =
+  private fun prepareRequirements(roots: Collection<VirtualFile>, commitCount: Int, prevRefs: Map<VirtualFile, VcsLogRootStoredRefs>?) =
     roots.associateWith { root ->
       val refs = prevRefs?.get(root)
       if (refs == null) {
@@ -399,8 +396,8 @@ class VcsLogRefresherImpl(
   private suspend fun join(
     fullLog: List<GraphCommit<Int>>,
     recentCommits: List<GraphCommit<Int>>,
-    previousRefs: Map<VirtualFile, VcsLogRefsOfSingleRoot>,
-    newRefs: Map<VirtualFile, VcsLogRefsOfSingleRoot>,
+    previousRefs: Map<VirtualFile, VcsLogRootStoredRefs>,
+    newRefs: Map<VirtualFile, VcsLogRootStoredRefs>,
   ): List<GraphCommit<Int>>? {
     if (fullLog.isEmpty()) return recentCommits
 
@@ -451,7 +448,7 @@ private data class RefreshRequest(
 }
 
 private class RefreshSessionData {
-  private val refsByRoot = HashMap<VirtualFile, VcsLogRefsOfSingleRoot>()
+  private val refsByRoot = HashMap<VirtualFile, VcsLogRootStoredRefs>()
   private val commitsByRoot = HashMap<VirtualFile, List<GraphCommit<Int>>>()
 
   fun put(other: RefreshSessionData) {
@@ -459,7 +456,7 @@ private class RefreshSessionData {
     refsByRoot.putAll(other.refsByRoot)
   }
 
-  fun put(root: VirtualFile, commits: List<GraphCommit<Int>>, refs: VcsLogRefsOfSingleRoot) {
+  fun put(root: VirtualFile, commits: List<GraphCommit<Int>>, refs: VcsLogRootStoredRefs) {
     commitsByRoot[root] = commits
     refsByRoot[root] = refs
   }
@@ -467,10 +464,10 @@ private class RefreshSessionData {
   val commits: Collection<List<GraphCommit<Int>>>
     get() = commitsByRoot.values
 
-  val refs: Map<VirtualFile, VcsLogRefsOfSingleRoot>
+  val refs: Map<VirtualFile, VcsLogRootStoredRefs>
     get() = refsByRoot.toMap()
 
-  fun getRefs(root: VirtualFile): VcsLogRefsOfSingleRoot? = refsByRoot[root]
+  fun getRefs(root: VirtualFile): VcsLogRootStoredRefs? = refsByRoot[root]
 }
 
 /**
@@ -487,7 +484,7 @@ private inline fun <T> Channel<T>.receiveAll(consumer: (T) -> Unit) {
   while (nextItem != null)
 }
 
-private class LoadRefsPolicy(override val previouslyLoadedRefs: VcsLogRefsOfSingleRoot) : RefsLoadingPolicy.LoadAllRefs
+private class LoadRefsPolicy(override val previouslyLoadedRefs: VcsRefsContainer) : RefsLoadingPolicy.LoadAllRefs
 
 private fun VcsLogProvider.Requirements.toRefsLoadingPolicy(): RefsLoadingPolicy =
   if (this !is VcsLogProviderRequirementsEx || !isRefreshRefs) RefsLoadingPolicy.FromLoadedCommits

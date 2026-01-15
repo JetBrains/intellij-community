@@ -20,7 +20,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
-import com.intellij.vcs.log.VcsLogRefs;
+import com.intellij.vcs.log.VcsLogAggregatedStoredRefs;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.data.VcsLogGraphData;
@@ -129,7 +129,7 @@ public final class GitRefDialog extends DialogWrapper {
   }
 
   private static final class MyVcsRefCompletionProvider extends VcsRefCompletionProvider {
-    MyVcsRefCompletionProvider(@NotNull VcsLogRefs refs,
+    MyVcsRefCompletionProvider(@NotNull VcsLogAggregatedStoredRefs refs,
                                @NotNull Collection<? extends VirtualFile> roots,
                                @NotNull Comparator<? super VcsRef> comparator) {
       super(refs, roots, new VcsRefDescriptor(comparator));

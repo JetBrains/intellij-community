@@ -14,6 +14,7 @@ import com.intellij.util.messages.MessageBus
 import com.intellij.vcs.log.graph.PermanentGraph
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Provides the information needed to build the VCS log, such as the list of most recent commits with their parents.
@@ -233,10 +234,14 @@ interface VcsLogProvider {
     val refs: Set<VcsRef>
   }
 
+  @ApiStatus.Experimental
   sealed interface RefsLoadingPolicy {
+    @ApiStatus.Experimental
     object FromLoadedCommits : RefsLoadingPolicy
+
+    @ApiStatus.Experimental
     interface LoadAllRefs : RefsLoadingPolicy {
-      val previouslyLoadedRefs: VcsLogRefsOfSingleRoot
+      val previouslyLoadedRefs: VcsRefsContainer
     }
   }
 

@@ -23,11 +23,18 @@ import kotlin.streams.asStream
 /**
  *  Represents a set of stored references for **all** VCS roots present in the VCS log.
  *
- *  @see VcsLogRefsOfSingleRoot
+ *  @see VcsLogRootStoredRefs
  */
 @ApiStatus.NonExtendable
-interface VcsLogRefs {
-  val refsByRoot: Map<VirtualFile, VcsLogRefsOfSingleRoot>
+@ApiStatus.Experimental
+interface VcsLogAggregatedStoredRefs : VcsRefsContainer {
+  val refsByRoot: Map<VirtualFile, VcsLogRootStoredRefs>
+
+  override fun branches(): Sequence<VcsRef> = refsByRoot.values.asSequence().flatMap { it.branches() }
+
+  override fun tags(): Sequence<VcsRef> = refsByRoot.values.asSequence().flatMap { it.tags() }
+
+  override fun allRefs(): Sequence<VcsRef> = refsByRoot.values.asSequence().flatMap { it.allRefs() }
 
   /**
    * @return reference that should be displayed for the given "head" (or "tip") commit,
@@ -38,20 +45,16 @@ interface VcsLogRefs {
   fun getRootForHeadCommit(headIndex: VcsLogCommitStorageIndex): VirtualFile?
 
   /**
-   * @see [VcsLogRefsOfSingleRoot.refsToCommit]
+   * @see [VcsLogRootStoredRefs.refsToCommit]
    */
   fun refsToCommit(index: VcsLogCommitStorageIndex): List<VcsRef>
 }
 
-val VcsLogRefs.allRefs: Sequence<VcsRef>
-  get() = refsByRoot.values.asSequence().flatMap { it.allRefs }
-
-val VcsLogRefs.branches: List<VcsRef>
-  get() = refsByRoot.values.flatMapTo(mutableListOf()) { rootRefs -> rootRefs.branches }
+val VcsLogAggregatedStoredRefs.branches: List<VcsRef>
+  get() = branches().toList()
 
 @ApiStatus.Obsolete
-fun VcsLogRefs.allRefsStream(): Stream<VcsRef> =
-  refsByRoot.values.asSequence().flatMap { it.allRefs }.asStream()
+fun VcsLogAggregatedStoredRefs.allRefsStream(): Stream<VcsRef> = allRefs().asStream()
 
-fun VcsLogRefs.refsToCommit(root: VirtualFile, index: VcsLogCommitStorageIndex): List<VcsRef> =
+fun VcsLogAggregatedStoredRefs.refsToCommit(root: VirtualFile, index: VcsLogCommitStorageIndex): List<VcsRef> =
   refsByRoot[root]?.refsToCommit(index) ?: emptyList()

@@ -3,8 +3,8 @@ package com.intellij.vcs.log.util
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.VcsLogAggregatedStoredRefs
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
-import com.intellij.vcs.log.VcsLogRefs
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.data.VcsLogStorage
@@ -15,7 +15,7 @@ import com.intellij.vcs.log.graph.utils.subgraphDifference
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 
-fun VcsLogRefs.findBranch(name: String, root: VirtualFile): VcsRef? = VcsLogUtil.findBranch(this, root, name)
+fun VcsLogAggregatedStoredRefs.findBranch(name: String, root: VirtualFile): VcsRef? = VcsLogUtil.findBranch(this, root, name)
 fun VcsLogGraphData.findBranch(name: String, root: VirtualFile): VcsRef? = refsModel.findBranch(name, root)
 
 fun VcsLogGraphData.subgraphDifference(withRef: VcsRef, withoutRef: VcsRef, storage: VcsLogStorage): IntSet? {
@@ -51,7 +51,7 @@ fun VcsLogGraphData.containsAll(commits: Collection<CommitId>, storage: VcsLogSt
   return nodeIds.size == commits.size && nodeIds.all { it >= 0 }
 }
 
-fun VcsLogGraphData.exclusiveCommits(ref: VcsRef, refsModel: VcsLogRefs, storage: VcsLogStorage): IntSet? {
+fun VcsLogGraphData.exclusiveCommits(ref: VcsRef, refsModel: VcsLogAggregatedStoredRefs, storage: VcsLogStorage): IntSet? {
   val refIndex = storage.getCommitIndex(ref.commitHash, ref.root)
   @Suppress("UNCHECKED_CAST") val permanentGraphInfo = permanentGraph as? PermanentGraphInfo<VcsLogCommitStorageIndex> ?: return null
   val refNode = permanentGraphInfo.permanentCommitsInfo.getNodeId(refIndex)
@@ -63,4 +63,4 @@ fun VcsLogGraphData.exclusiveCommits(ref: VcsRef, refsModel: VcsLogRefs, storage
   return IntCollectionUtil.map2IntSet(exclusiveNodes) { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) }
 }
 
-private fun VcsLogRefs.isBranchHead(commitId: VcsLogCommitStorageIndex) = refsToCommit(commitId).any { it.type.isBranch }
+private fun VcsLogAggregatedStoredRefs.isBranchHead(commitId: VcsLogCommitStorageIndex) = refsToCommit(commitId).any { it.type.isBranch }

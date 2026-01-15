@@ -4,8 +4,8 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.textCompletion.TextCompletionValueDescriptor;
-import com.intellij.vcs.log.VcsLogRefs;
-import com.intellij.vcs.log.VcsLogRefsKt;
+import com.intellij.vcs.log.VcsLogAggregatedStoredRefs;
+import com.intellij.vcs.log.VcsLogAggregatedStoredRefsKt;
 import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,10 +15,10 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public class VcsRefCompletionProvider extends TwoStepCompletionProvider<VcsRef> {
-  private final @NotNull VcsLogRefs myRefs;
+  private final @NotNull VcsLogAggregatedStoredRefs myRefs;
   private final @NotNull Set<VirtualFile> myRoots;
 
-  public VcsRefCompletionProvider(@NotNull VcsLogRefs refs,
+  public VcsRefCompletionProvider(@NotNull VcsLogAggregatedStoredRefs refs,
                                   @NotNull Collection<? extends VirtualFile> roots,
                                   @NotNull TextCompletionValueDescriptor<VcsRef> descriptor) {
     super(descriptor);
@@ -28,12 +28,12 @@ public class VcsRefCompletionProvider extends TwoStepCompletionProvider<VcsRef> 
 
   @Override
   protected @NotNull Stream<? extends VcsRef> collectSync(@NotNull CompletionResultSet result) {
-    return filterAndSort(result, VcsLogRefsKt.getBranches(myRefs).stream());
+    return filterAndSort(result, VcsLogAggregatedStoredRefsKt.getBranches(myRefs).stream());
   }
 
   @Override
   protected @NotNull Stream<? extends VcsRef> collectAsync(@NotNull CompletionResultSet result) {
-    return filterAndSort(result, VcsLogRefsKt.allRefsStream(myRefs).filter(ref -> !ref.getType().isBranch()));
+    return filterAndSort(result, VcsLogAggregatedStoredRefsKt.allRefsStream(myRefs).filter(ref -> !ref.getType().isBranch()));
   }
 
   private @NotNull Stream<VcsRef> filterAndSort(@NotNull CompletionResultSet result, @NotNull Stream<VcsRef> stream) {

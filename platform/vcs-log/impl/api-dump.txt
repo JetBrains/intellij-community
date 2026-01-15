@@ -91,7 +91,7 @@ com.intellij.vcs.log.data.DataGetter
 c:com.intellij.vcs.log.data.DataPack
 - f:getLogProviders():java.util.Map
 - f:getPermanentGraph():com.intellij.vcs.log.graph.PermanentGraph
-- f:getRefsModel():com.intellij.vcs.log.VcsLogRefs
+- f:getRefsModel():com.intellij.vcs.log.VcsLogAggregatedStoredRefs
 - f:isFull():Z
 com.intellij.vcs.log.data.DataPackChangeListener
 - a:onDataPackChange(com.intellij.vcs.log.data.VcsLogGraphData):V
@@ -193,14 +193,14 @@ f:com.intellij.vcs.log.data.VcsLogDataKt
 com.intellij.vcs.log.data.VcsLogGraphData
 - a:getLogProviders():java.util.Map
 - a:getPermanentGraph():com.intellij.vcs.log.graph.PermanentGraph
-- a:getRefsModel():com.intellij.vcs.log.VcsLogRefs
+- a:getRefsModel():com.intellij.vcs.log.VcsLogAggregatedStoredRefs
 - a:isFull():Z
 f:com.intellij.vcs.log.data.VcsLogGraphData$Empty
 - com.intellij.vcs.log.data.VcsLogGraphData
 - sf:INSTANCE:com.intellij.vcs.log.data.VcsLogGraphData$Empty
 - getLogProviders():java.util.Map
 - getPermanentGraph():com.intellij.vcs.log.graph.PermanentGraph
-- getRefsModel():com.intellij.vcs.log.VcsLogRefs
+- getRefsModel():com.intellij.vcs.log.VcsLogAggregatedStoredRefs
 - isFull():Z
 f:com.intellij.vcs.log.data.VcsLogGraphData$Error
 - com.intellij.vcs.log.data.VcsLogGraphData
@@ -208,7 +208,7 @@ f:com.intellij.vcs.log.data.VcsLogGraphData$Error
 - f:getError():java.lang.Throwable
 - getLogProviders():java.util.Map
 - getPermanentGraph():com.intellij.vcs.log.graph.PermanentGraph
-- getRefsModel():com.intellij.vcs.log.VcsLogRefs
+- getRefsModel():com.intellij.vcs.log.VcsLogAggregatedStoredRefs
 - isFull():Z
 com.intellij.vcs.log.data.VcsLogGraphData$OverlayData
 - com.intellij.vcs.log.data.VcsLogGraphData
@@ -710,7 +710,7 @@ a:com.intellij.vcs.log.ui.actions.TwoStepCompletionProvider
 - fillCompletionVariants(com.intellij.codeInsight.completion.CompletionParameters,java.lang.String,com.intellij.codeInsight.completion.CompletionResultSet):V
 c:com.intellij.vcs.log.ui.actions.VcsRefCompletionProvider
 - com.intellij.vcs.log.ui.actions.TwoStepCompletionProvider
-- <init>(com.intellij.vcs.log.VcsLogRefs,java.util.Collection,com.intellij.util.textCompletion.TextCompletionValueDescriptor):V
+- <init>(com.intellij.vcs.log.VcsLogAggregatedStoredRefs,java.util.Collection,com.intellij.util.textCompletion.TextCompletionValueDescriptor):V
 - p:collectAsync(com.intellij.codeInsight.completion.CompletionResultSet):java.util.stream.Stream
 - p:collectSync(com.intellij.codeInsight.completion.CompletionResultSet):java.util.stream.Stream
 - p:filterRefs(java.util.stream.Stream):java.util.stream.Stream
@@ -1117,8 +1117,8 @@ a:com.intellij.vcs.log.ui.table.column.util.VcsLogExternalStatusColumnService
 f:com.intellij.vcs.log.ui.table.column.util.VcsLogExternalStatusColumnService$Companion
 f:com.intellij.vcs.log.util.DataPackUtilKt
 - sf:containsAll(com.intellij.vcs.log.data.VcsLogGraphData,java.util.Collection,com.intellij.vcs.log.data.VcsLogStorage):Z
-- sf:exclusiveCommits(com.intellij.vcs.log.data.VcsLogGraphData,com.intellij.vcs.log.VcsRef,com.intellij.vcs.log.VcsLogRefs,com.intellij.vcs.log.data.VcsLogStorage):it.unimi.dsi.fastutil.ints.IntSet
-- sf:findBranch(com.intellij.vcs.log.VcsLogRefs,java.lang.String,com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsRef
+- sf:exclusiveCommits(com.intellij.vcs.log.data.VcsLogGraphData,com.intellij.vcs.log.VcsRef,com.intellij.vcs.log.VcsLogAggregatedStoredRefs,com.intellij.vcs.log.data.VcsLogStorage):it.unimi.dsi.fastutil.ints.IntSet
+- sf:findBranch(com.intellij.vcs.log.VcsLogAggregatedStoredRefs,java.lang.String,com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsRef
 - sf:findBranch(com.intellij.vcs.log.data.VcsLogGraphData,java.lang.String,com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsRef
 - sf:subgraphDifference(com.intellij.vcs.log.data.VcsLogGraphData,I,I):it.unimi.dsi.fastutil.ints.IntSet
 - sf:subgraphDifference(com.intellij.vcs.log.data.VcsLogGraphData,com.intellij.vcs.log.VcsRef,com.intellij.vcs.log.VcsRef,com.intellij.vcs.log.data.VcsLogStorage):it.unimi.dsi.fastutil.ints.IntSet
@@ -1182,7 +1182,7 @@ f:com.intellij.vcs.log.util.VcsLogUtil
 - s:convertToRevisionNumber(com.intellij.vcs.log.Hash):com.intellij.openapi.vcs.changes.TextRevisionNumber
 - s:createCommittedChangeList(com.intellij.vcs.log.VcsFullCommitDetails):com.intellij.vcs.CommittedChangeListForRevision
 - s:createCommittedChangeList(com.intellij.vcs.log.VcsFullCommitDetails,Z):com.intellij.vcs.CommittedChangeListForRevision
-- s:findBranch(com.intellij.vcs.log.VcsLogRefs,com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.vcs.log.VcsRef
+- s:findBranch(com.intellij.vcs.log.VcsLogAggregatedStoredRefs,com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.vcs.log.VcsRef
 - s:getActualRoot(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vfs.VirtualFile
 - s:getActualRoot(com.intellij.openapi.project.Project,java.util.Map,com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vfs.VirtualFile
 - s:getAffectedPaths(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.actionSystem.AnActionEvent):java.util.Collection
@@ -1197,7 +1197,7 @@ f:com.intellij.vcs.log.util.VcsLogUtil
 - s:getShortHash(java.lang.String):java.lang.String
 - s:getShortHash(java.lang.String,I):java.lang.String
 - s:getShownChangesLimit():I
-- s:getSingleFilteredBranch(com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.VcsLogRefs):java.lang.String
+- s:getSingleFilteredBranch(com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.VcsLogAggregatedStoredRefs):java.lang.String
 - s:getSize(com.intellij.vcs.log.VcsFullCommitDetails):I
 - s:getSizeText(I):java.lang.String
 - s:getVcsDisplayName(com.intellij.openapi.project.Project,com.intellij.vcs.log.impl.VcsLogManager):java.lang.String
@@ -1237,7 +1237,7 @@ f:com.intellij.vcs.log.visible.VcsLogFiltererImpl
 - <init>(com.intellij.vcs.log.data.VcsLogData):V
 - <init>(java.util.Map,com.intellij.vcs.log.data.VcsLogStorage,com.intellij.vcs.log.data.TopCommitsCache,com.intellij.vcs.log.VcsLogCommitDataCache,com.intellij.vcs.log.data.index.VcsLogIndex):V
 - filter(com.intellij.vcs.log.data.VcsLogGraphData,com.intellij.vcs.log.visible.VisiblePack,com.intellij.vcs.log.graph.PermanentGraph$Options,com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.visible.CommitCountStage):kotlin.Pair
-- f:getMatchingHeads(com.intellij.vcs.log.VcsLogRefs,java.util.Collection,com.intellij.vcs.log.VcsLogFilterCollection):java.util.Set
+- f:getMatchingHeads(com.intellij.vcs.log.VcsLogAggregatedStoredRefs,java.util.Collection,com.intellij.vcs.log.VcsLogFilterCollection):java.util.Set
 c:com.intellij.vcs.log.visible.VisiblePack
 - com.intellij.openapi.util.UserDataHolder
 - com.intellij.vcs.log.VcsLogDataPack
@@ -1252,7 +1252,7 @@ c:com.intellij.vcs.log.visible.VisiblePack
 - f:getDataPack():com.intellij.vcs.log.data.VcsLogGraphData
 - getFilters():com.intellij.vcs.log.VcsLogFilterCollection
 - getLogProviders():java.util.Map
-- getRefs():com.intellij.vcs.log.VcsLogRefs
+- getRefs():com.intellij.vcs.log.VcsLogAggregatedStoredRefs
 - getRootAtHead(I):com.intellij.openapi.vfs.VirtualFile
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - f:getVisibleGraph():com.intellij.vcs.log.graph.VisibleGraph

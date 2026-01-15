@@ -4,9 +4,9 @@ package com.intellij.vcs.log.data
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.VcsLogAggregatedStoredRefs
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.VcsLogProvider
-import com.intellij.vcs.log.VcsLogRefs
 import com.intellij.vcs.log.graph.PermanentGraph
 import org.jetbrains.annotations.ApiStatus
 
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 sealed interface VcsLogGraphData {
   val logProviders: Map<VirtualFile, VcsLogProvider>
   val permanentGraph: PermanentGraph<VcsLogCommitStorageIndex>
-  val refsModel: VcsLogRefs
+  val refsModel: VcsLogAggregatedStoredRefs
   val isFull: Boolean
 
   /**
@@ -41,14 +41,14 @@ sealed interface VcsLogGraphData {
   class Error(val error: Throwable) : VcsLogGraphData {
     override val logProviders: Map<VirtualFile, VcsLogProvider> = emptyMap()
     override val permanentGraph: PermanentGraph<VcsLogCommitStorageIndex> = EmptyPermanentGraph.getInstance()
-    override val refsModel: VcsLogRefs = RefsModel.createEmptyInstance(EmptyLogStorage.INSTANCE)
+    override val refsModel: VcsLogAggregatedStoredRefs = RefsModel.createEmptyInstance(EmptyLogStorage.INSTANCE)
     override val isFull: Boolean = false
   }
 
   object Empty : VcsLogGraphData {
     override val logProviders: Map<VirtualFile, VcsLogProvider> = emptyMap()
     override val permanentGraph: PermanentGraph<VcsLogCommitStorageIndex> = EmptyPermanentGraph.getInstance()
-    override val refsModel: VcsLogRefs = RefsModel.createEmptyInstance(EmptyLogStorage.INSTANCE)
+    override val refsModel: VcsLogAggregatedStoredRefs = RefsModel.createEmptyInstance(EmptyLogStorage.INSTANCE)
     override val isFull: Boolean = false
   }
 }

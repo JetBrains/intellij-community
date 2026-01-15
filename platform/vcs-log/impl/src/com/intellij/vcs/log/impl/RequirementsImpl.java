@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.vcs.log.VcsLogProviderRequirementsEx;
-import com.intellij.vcs.log.VcsLogRefsOfSingleRoot;
+import com.intellij.vcs.log.VcsRefsContainer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,14 +11,14 @@ public class RequirementsImpl implements VcsLogProviderRequirementsEx {
 
   private final int myCommitCount;
   private final boolean myRefresh;
-  private final @NotNull VcsLogRefsOfSingleRoot myPreviousRefs;
+  private final @NotNull VcsRefsContainer myPreviousRefs;
   private final boolean myIsRefreshRefs;
 
-  public RequirementsImpl(int count, boolean refresh, @NotNull VcsLogRefsOfSingleRoot previousRefs) {
+  public RequirementsImpl(int count, boolean refresh, @NotNull VcsRefsContainer previousRefs) {
     this(count, refresh, previousRefs, true);
   }
 
-  public RequirementsImpl(int count, boolean refresh, @NotNull VcsLogRefsOfSingleRoot previousRefs, boolean isRefreshRefs) {
+  public RequirementsImpl(int count, boolean refresh, @NotNull VcsRefsContainer previousRefs, boolean isRefreshRefs) {
     myCommitCount = count;
     myRefresh = refresh;
     myIsRefreshRefs = isRefreshRefs;
@@ -41,7 +41,7 @@ public class RequirementsImpl implements VcsLogProviderRequirementsEx {
   }
 
   @Override
-  public @NotNull VcsLogRefsOfSingleRoot getPreviousRefs() {
+  public @NotNull VcsRefsContainer getPreviousRefs() {
     return myPreviousRefs;
   }
 

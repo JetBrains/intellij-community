@@ -2,17 +2,17 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.VcsLogAggregatedStoredRefs
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.VcsLogProvider
-import com.intellij.vcs.log.VcsLogRefs
 import com.intellij.vcs.log.graph.PermanentGraph
 import org.jetbrains.annotations.ApiStatus
 
 @Deprecated("Use VcsLogGraphData instead")
 @ApiStatus.ScheduledForRemoval
 open class DataPack internal constructor(
-  val refsModel: VcsLogRefs,
-  val logProviders: Map<VirtualFile, VcsLogProvider>,
-  val permanentGraph: PermanentGraph<VcsLogCommitStorageIndex>,
-  val isFull: Boolean,
+    val refsModel: VcsLogAggregatedStoredRefs,
+    val logProviders: Map<VirtualFile, VcsLogProvider>,
+    val permanentGraph: PermanentGraph<VcsLogCommitStorageIndex>,
+    val isFull: Boolean,
 )

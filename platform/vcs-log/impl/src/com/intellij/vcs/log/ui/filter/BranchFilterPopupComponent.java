@@ -100,7 +100,7 @@ public final class BranchFilterPopupComponent extends MultipleValueFilterPopupCo
     VcsLogDataPack logData = myFilterModel.getDataPack();
 
     List<List<String>> branchFilters = processRecentBranchFilters(
-      ContainerUtil.map2Set(VcsLogRefsKt.getBranches(logData.getRefs()), VcsRef::getName),
+      ContainerUtil.map2Set(VcsLogAggregatedStoredRefsKt.getBranches(logData.getRefs()), VcsRef::getName),
       getRecentValuesFromSettings());
 
     actionGroup.add(new MyBranchPopupBuilder(logData, myBranchFilterModel.getVisibleRoots(), branchFilters).build());
@@ -110,7 +110,7 @@ public final class BranchFilterPopupComponent extends MultipleValueFilterPopupCo
 
   @Override
   protected @NotNull @Unmodifiable List<String> getAllValues() {
-    Collection<VcsRef> branches = VcsLogRefsKt.getBranches(myFilterModel.getDataPack().getRefs());
+    Collection<VcsRef> branches = VcsLogAggregatedStoredRefsKt.getBranches(myFilterModel.getDataPack().getRefs());
     if (myBranchFilterModel.getVisibleRoots() != null) {
       branches = ContainerUtil.filter(branches, branch -> myBranchFilterModel.getVisibleRoots().contains(branch.getRoot()));
     }

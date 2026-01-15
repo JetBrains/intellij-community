@@ -230,7 +230,7 @@ internal class CherryPickedCommitsHighlighter(
     }
 
     @JvmStatic
-    fun getComparedBranchFromFilters(filters: VcsLogFilterCollection, refs: VcsLogRefs): String? {
+    fun getComparedBranchFromFilters(filters: VcsLogFilterCollection, refs: VcsLogAggregatedStoredRefs): String? {
       val singleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(filters, refs)
       if (singleFilteredBranch != null) return singleFilteredBranch
 

@@ -27,7 +27,7 @@ open class VisiblePack @JvmOverloads constructor(
     return dataPack.logProviders
   }
 
-  override fun getRefs(): VcsLogRefs {
+  override fun getRefs(): VcsLogAggregatedStoredRefs {
     return dataPack.refsModel
   }
 

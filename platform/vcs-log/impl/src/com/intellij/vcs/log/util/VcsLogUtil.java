@@ -150,13 +150,14 @@ public final class VcsLogUtil {
     }));
   }
 
-  public static @Nullable @NlsSafe String getSingleFilteredBranch(@NotNull VcsLogFilterCollection filters, @NotNull VcsLogRefs refs) {
+  public static @Nullable @NlsSafe String getSingleFilteredBranch(@NotNull VcsLogFilterCollection filters,
+                                                                  @NotNull VcsLogAggregatedStoredRefs refs) {
     VcsLogBranchFilter filter = filters.get(VcsLogFilterCollection.BRANCH_FILTER);
     if (filter == null) return null;
 
     String branchName = null;
     Set<VirtualFile> checkedRoots = new HashSet<>();
-    for (VcsRef branch : VcsLogRefsKt.getBranches(refs)) {
+    for (VcsRef branch : VcsLogAggregatedStoredRefsKt.getBranches(refs)) {
       if (!filter.matches(branch.getName())) continue;
 
       if (branchName == null) {
@@ -214,10 +215,12 @@ public final class VcsLogUtil {
     return s.length() == FULL_HASH_LENGTH && HASH_REGEX.matcher(s).matches();
   }
 
-  public static @Nullable VcsRef findBranch(@NotNull VcsLogRefs refs, @NotNull VirtualFile root, @NotNull String branchName) {
-    VcsLogRefsOfSingleRoot rootRefs = refs.getRefsByRoot().get(root);
+  public static @Nullable VcsRef findBranch(@NotNull VcsLogAggregatedStoredRefs refs,
+                                            @NotNull VirtualFile root,
+                                            @NotNull String branchName) {
+    VcsLogRootStoredRefs rootRefs = refs.getRefsByRoot().get(root);
     if (rootRefs == null) return null;
-    return ContainerUtil.find(rootRefs.getBranches().iterator(), (ref) -> ref.getName().equals(branchName));
+    return ContainerUtil.find(rootRefs.branches().iterator(), (ref) -> ref.getName().equals(branchName));
   }
 
   public static @NotNull List<Change> collectChanges(@NotNull List<? extends VcsFullCommitDetails> detailsList) {

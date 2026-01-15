@@ -11,10 +11,10 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.jetbrains.annotations.ApiStatus
 
 internal class RefsModel private constructor(
-  override val refsByRoot: Map<VirtualFile, VcsLogRefsOfSingleRoot>,
+  override val refsByRoot: Map<VirtualFile, VcsLogRootStoredRefs>,
   private val storage: VcsLogStorage,
   private val providers: Map<VirtualFile, VcsLogProvider>,
-) : VcsLogRefs {
+) : VcsLogAggregatedStoredRefs {
   private val bestRefForHead: Int2ObjectMap<VcsRef> = Int2ObjectOpenHashMap()
   private val rootForHead: Int2ObjectMap<VirtualFile> = Int2ObjectOpenHashMap()
 
@@ -55,7 +55,7 @@ internal class RefsModel private constructor(
     @ApiStatus.Internal
     @JvmStatic
     fun create(
-      refs: Map<VirtualFile, VcsLogRefsOfSingleRoot>,
+      refs: Map<VirtualFile, VcsLogRootStoredRefs>,
       heads: Set<VcsLogCommitStorageIndex>,
       storage: VcsLogStorage,
       providers: Map<VirtualFile, VcsLogProvider>,

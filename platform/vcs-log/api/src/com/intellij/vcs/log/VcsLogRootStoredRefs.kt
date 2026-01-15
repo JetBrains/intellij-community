@@ -8,10 +8,8 @@ import java.util.function.IntConsumer
  * Represents a set of stored references for a single VCS root in the VCS log.
  */
 @ApiStatus.NonExtendable
-interface VcsLogRefsOfSingleRoot {
-  val branches: Sequence<VcsRef>
-  val tags: Sequence<VcsRef>
-
+@ApiStatus.Experimental
+interface VcsLogRootStoredRefs : VcsRefsContainer {
   fun contains(index: VcsLogCommitStorageIndex): Boolean
 
   /**
@@ -23,5 +21,3 @@ interface VcsLogRefsOfSingleRoot {
 
   fun forEachBranchIndex(consumer: IntConsumer)
 }
-
-val VcsLogRefsOfSingleRoot.allRefs: Sequence<VcsRef> get() = branches + tags

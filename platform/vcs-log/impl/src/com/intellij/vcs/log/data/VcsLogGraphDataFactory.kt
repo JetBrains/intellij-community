@@ -22,7 +22,7 @@ object VcsLogGraphDataFactory {
   @JvmStatic
   fun buildData(
     commits: List<GraphCommit<VcsLogCommitStorageIndex>>,
-    refs: Map<VirtualFile, VcsLogRefsOfSingleRoot>,
+    refs: Map<VirtualFile, VcsLogRootStoredRefs>,
     providers: Map<VirtualFile, VcsLogProvider>,
     storage: VcsLogStorage,
     full: Boolean,
@@ -35,7 +35,7 @@ object VcsLogGraphDataFactory {
 
   @JvmStatic
   fun buildData(
-    refsModel: VcsLogRefs,
+    refsModel: VcsLogAggregatedStoredRefs,
     permanentGraph: PermanentGraph<VcsLogCommitStorageIndex>,
     logProviders: Map<VirtualFile, VcsLogProvider>,
     full: Boolean,
@@ -44,7 +44,7 @@ object VcsLogGraphDataFactory {
   @JvmStatic
   fun buildOverlayData(
     commits: List<GraphCommit<VcsLogCommitStorageIndex>>,
-    refs: Map<VirtualFile, VcsLogRefsOfSingleRoot>,
+    refs: Map<VirtualFile, VcsLogRootStoredRefs>,
     providers: Map<VirtualFile, VcsLogProvider>,
     storage: VcsLogStorage,
   ): VcsLogGraphData.OverlayData {
@@ -88,7 +88,7 @@ object VcsLogGraphDataFactory {
 }
 
 private open class VcsLogGraphDataImpl(
-  override val refsModel: VcsLogRefs,
+  override val refsModel: VcsLogAggregatedStoredRefs,
   override val permanentGraph: PermanentGraph<VcsLogCommitStorageIndex>,
   override val logProviders: Map<VirtualFile, VcsLogProvider>,
   override val isFull: Boolean,
@@ -99,7 +99,7 @@ private open class VcsLogGraphDataImpl(
 }
 
 private class VcsLogGraphOverlayData(
-  refsModel: VcsLogRefs,
+  refsModel: VcsLogAggregatedStoredRefs,
   permanentGraph: PermanentGraph<VcsLogCommitStorageIndex>,
   logProviders: Map<VirtualFile, VcsLogProvider>,
 ) : VcsLogGraphDataImpl(refsModel, permanentGraph, logProviders, isFull = false), VcsLogGraphData.OverlayData {

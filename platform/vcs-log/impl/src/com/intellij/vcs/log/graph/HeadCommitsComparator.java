@@ -5,8 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogAggregatedStoredRefs;
 import com.intellij.vcs.log.VcsLogRefManager;
-import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -18,13 +18,13 @@ import java.util.function.Function;
 @ApiStatus.Internal
 public final class HeadCommitsComparator implements Comparator<Integer> {
   private static final Logger LOG = Logger.getInstance(HeadCommitsComparator.class);
-  private final @NotNull VcsLogRefs myRefsModel;
+  private final @NotNull VcsLogAggregatedStoredRefs myRefsModel;
   private final @NotNull Map<VirtualFile, VcsLogRefManager> myRefManagers;
   private final @NotNull Function<? super Integer, ? extends Hash> myHashGetter;
 
   private final @NotNull Map<Integer, Integer> myErrorWasReported = new FixedHashMap<>(100);
 
-  public HeadCommitsComparator(@NotNull VcsLogRefs refsModel,
+  public HeadCommitsComparator(@NotNull VcsLogAggregatedStoredRefs refsModel,
                                @NotNull Map<VirtualFile, VcsLogRefManager> refManagers,
                                @NotNull Function<? super Integer, ? extends Hash> hashGetter) {
     myRefsModel = refsModel;

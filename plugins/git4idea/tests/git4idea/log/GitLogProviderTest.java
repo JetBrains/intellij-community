@@ -8,8 +8,6 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.CompressedRefs;
-import com.intellij.vcs.log.data.EmptyLogStorage;
 import com.intellij.vcs.log.data.EmptyRefs;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -69,7 +67,8 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
     List<VcsCommitMetadata> expectedLog = log();
     VcsLogProvider.DetailedLogData block =
-      myLogProvider.readFirstBlock(getProjectRoot(), new RequirementsImpl(1000, true, toCompressedRefs(prevRefs)));
+      myLogProvider.readFirstBlock(getProjectRoot(),
+                                   new RequirementsImpl(1000, true, new TestVcsRefsSequences(prevRefs)));
     assertSameElements(block.getCommits(), expectedLog);
   }
 
@@ -81,7 +80,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     List<VcsCommitMetadata> expectedLog = log();
     Set<VcsRef> refs = readAllRefs(this, getProjectRoot(), myObjectsFactory);
     VcsLogProvider.DetailedLogData block =
-      myLogProvider.readFirstBlock(getProjectRoot(), new RequirementsImpl(1000, true, toCompressedRefs(prevRefs)));
+      myLogProvider.readFirstBlock(getProjectRoot(), new RequirementsImpl(1000, true, new TestVcsRefsSequences(prevRefs)));
     assertSameElements(block.getCommits(), expectedLog);
     assertSameElements(block.getRefs(), refs);
   }
@@ -95,7 +94,8 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
     Set<VcsRef> refs = readAllRefs(this, getProjectRoot(), myObjectsFactory);
     VcsLogProvider.DetailedLogData block =
-      myLogProvider.readFirstBlock(getProjectRoot(), new RequirementsImpl(1000, true, toCompressedRefs(prevRefs)));
+      myLogProvider.readFirstBlock(getProjectRoot(),
+                                   new RequirementsImpl(1000, true, new TestVcsRefsSequences(prevRefs)));
     assertSameElements(block.getRefs(), refs);
   }
 
@@ -380,10 +380,5 @@ public class GitLogProviderTest extends GitSingleRepoTest {
       return new VcsCommitMetadataImpl(TO_HASH.fun(items[0]), ContainerUtil.map(items[1].split(" "), TO_HASH), time,
                                        getProjectRoot(), items[3], defaultUser, items[4], defaultUser, time);
     });
-  }
-
-  @NotNull
-  private VcsLogRefsOfSingleRoot toCompressedRefs(@NotNull Set<VcsRef> refs) {
-    return new CompressedRefs(refs, EmptyLogStorage.INSTANCE);
   }
 }

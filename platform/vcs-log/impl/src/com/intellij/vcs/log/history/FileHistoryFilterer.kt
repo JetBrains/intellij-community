@@ -233,7 +233,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
       return result
     }
 
-    private fun getFilteredRefs(dataPack: VcsLogGraphData): Map<VirtualFile, VcsLogRefsOfSingleRoot> {
+    private fun getFilteredRefs(dataPack: VcsLogGraphData): Map<VirtualFile, VcsLogRootStoredRefs> {
       val compressedRefs = dataPack.refsModel.refsByRoot[root] ?: EmptyRefs
       return mapOf(Pair(root, compressedRefs))
     }

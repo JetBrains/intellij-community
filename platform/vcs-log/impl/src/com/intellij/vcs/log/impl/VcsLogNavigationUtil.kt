@@ -111,7 +111,7 @@ object VcsLogNavigationUtil {
     val future = SettableFuture.create<Boolean>()
     val refs = dataPack.refs
     ApplicationManager.getApplication().executeOnPooledThread {
-      val matchingRefs = refs.allRefs.filter { ref ->
+      val matchingRefs = refs.allRefs().filter { ref ->
         ref.name.startsWith(reference)
         && (repositoryRoot == null || ref.root == repositoryRoot)
       }.toList()

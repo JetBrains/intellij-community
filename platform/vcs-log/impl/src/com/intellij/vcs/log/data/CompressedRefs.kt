@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
-import com.intellij.vcs.log.VcsLogRefsOfSingleRoot
+import com.intellij.vcs.log.VcsLogRootStoredRefs
 import com.intellij.vcs.log.VcsRef
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
@@ -13,16 +13,11 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import java.util.function.IntConsumer
 
-internal class CompressedRefs(refs: Set<VcsRef>, private val storage: VcsLogStorage) : VcsLogRefsOfSingleRoot {
+internal class CompressedRefs(refs: Set<VcsRef>, private val storage: VcsLogStorage) : VcsLogRootStoredRefs {
   // maps each commit id to the list of tag ids on this commit
   private val tagsMapping: Int2ObjectMap<IntArrayList> = Int2ObjectOpenHashMap()
-  override val tags: Sequence<VcsRef> = tagsMapping.values.asSequence().flatMap { tagsCollection: IntArrayList ->
-    tagsCollection.asSequence().mapNotNull { storage.getVcsRef(it) }
-  }
-
   // maps each commit id to the list of branches on this commit
   private val branchesMapping: Int2ObjectMap<MutableCollection<VcsRef>> = Int2ObjectOpenHashMap()
-  override val branches: Sequence<VcsRef> = branchesMapping.values.asSequence().flatMap { it.asSequence() }
 
   init {
     var root: VirtualFile? = null
@@ -44,6 +39,11 @@ internal class CompressedRefs(refs: Set<VcsRef>, private val storage: VcsLogStor
     for (list in tagsMapping.values) {
       list.trim()
     }
+  }
+
+  override fun branches(): Sequence<VcsRef> = branchesMapping.values.asSequence().flatMap { it.asSequence() }
+  override fun tags(): Sequence<VcsRef> = tagsMapping.values.asSequence().flatMap { tagsCollection: IntArrayList ->
+    tagsCollection.asSequence().mapNotNull { storage.getVcsRef(it) }
   }
 
   override fun contains(index: VcsLogCommitStorageIndex): Boolean {

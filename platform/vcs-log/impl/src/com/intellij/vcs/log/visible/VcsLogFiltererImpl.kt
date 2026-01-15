@@ -396,7 +396,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   fun getMatchingHeads(
-    refs: VcsLogRefs,
+    refs: VcsLogAggregatedStoredRefs,
     roots: Collection<VirtualFile>,
     filters: VcsLogFilterCollection,
   ): Set<VcsLogCommitStorageIndex>? {
@@ -423,7 +423,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   private fun getMatchingHeads(
-    refs: VcsLogRefs,
+    refs: VcsLogAggregatedStoredRefs,
     roots: Collection<VirtualFile>,
     branchFilter: VcsLogBranchFilter?,
     revisionFilter: VcsLogRevisionFilter?,
@@ -435,12 +435,12 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   private fun getMatchingHeads(
-    refsModel: VcsLogRefs,
+    refsModel: VcsLogAggregatedStoredRefs,
     roots: Collection<VirtualFile>,
     filter: VcsLogBranchFilter,
   ): Set<VcsLogCommitStorageIndex> {
     return mapRefsForRoots(refsModel, roots) { refs ->
-      refs.branches.filter { filter.matches(it.name) }.toList()
+      refs.branches().filter { filter.matches(it.name) }.toList()
     }.toReferencedCommitIndexes()
   }
 
@@ -450,11 +450,15 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     }
   }
 
-  private fun getMatchingHeads(refsModel: VcsLogRefs, roots: Collection<VirtualFile>): Set<VcsLogCommitStorageIndex> {
+  private fun getMatchingHeads(refsModel: VcsLogAggregatedStoredRefs, roots: Collection<VirtualFile>): Set<VcsLogCommitStorageIndex> {
     return mapRefsForRoots(refsModel, roots) { refs -> refs.getRefsIndexes() }
   }
 
-  private fun <T> mapRefsForRoots(refsModel: VcsLogRefs, roots: Collection<VirtualFile>, mapping: (VcsLogRefsOfSingleRoot) -> Iterable<T>) =
+  private fun <T> mapRefsForRoots(
+    refsModel: VcsLogAggregatedStoredRefs,
+    roots: Collection<VirtualFile>,
+    mapping: (VcsLogRootStoredRefs) -> Iterable<T>,
+  ) =
     refsModel.refsByRoot.filterKeys { roots.contains(it) }.values.flatMapTo(mutableSetOf(), mapping)
 
   private fun filterDetailsInMemory(permanentGraph: PermanentGraph<VcsLogCommitStorageIndex>,
