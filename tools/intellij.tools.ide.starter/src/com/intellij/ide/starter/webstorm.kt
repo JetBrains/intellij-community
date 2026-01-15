@@ -55,28 +55,6 @@ fun downloadAndConfigureNodejs(version: String): Path {
   return nodePath
 }
 
-fun installNodeModules(projectDir: Path, nodeVersion: String, packageManager: String, noFrozenLockFile: Boolean = false) {
-  if (projectDir.resolve("node_modules").exists()) {
-    logOutput("node_modules folder already exists")
-    return
-  }
-
-  val stdout = ExecOutputRedirect.ToString()
-  val nodejsRoot = getNodePathByVersion(nodeVersion)
-  val packageManagerPath = getApplicationExecutablePath(nodejsRoot, packageManager)
-  val args = mutableListOf("$packageManagerPath", "install")
-  if (noFrozenLockFile) args += "--no-frozen-lockfile"
-
-  ProcessExecutor(presentableName = "installing node modules",
-                  projectDir,
-                  timeout = 10.minutes,
-                  args = args,
-                  environmentVariables = getUpdateEnvVarsWithPrependedPath(nodejsRoot),
-                  stdoutRedirect = stdout,
-                  stderrRedirect = ExecOutputRedirect.ToStdOut("${packageManager} install")
-  ).start()
-}
-
 fun IDETestContext.setUseTypesFromServer(value: Boolean): IDETestContext = applyVMOptionsPatch {
   addSystemProperty("typescript.compiler.evaluation", value.toString())
 }
