@@ -2,7 +2,6 @@
 package com.intellij.vcs.log
 
 import org.jetbrains.annotations.ApiStatus
-import java.util.function.IntConsumer
 
 /**
  * Represents a set of stored references for a single VCS root in the VCS log.
@@ -18,6 +17,4 @@ interface VcsLogRootStoredRefs : VcsRefsContainer {
   fun refsToCommit(index: VcsLogCommitStorageIndex): List<VcsRef>
 
   fun getRefsIndexes(): Collection<VcsLogCommitStorageIndex>
-
-  fun forEachBranchIndex(consumer: IntConsumer)
 }
