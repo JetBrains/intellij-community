@@ -3,47 +3,7 @@
 
 import {createMcpServer} from '../shared/mcp-rpc.mjs'
 import {bd, bdJson, bdShowOne} from './bd-client.mjs'
-
-// Parse notes into structured sections
-// Tries JSON format first, falls back to legacy text format for backward compatibility
-function parseNotes(notes) {
-  if (!notes) return {findings: [], decisions: []}
-
-  // Try JSON first
-  if (notes.trim().startsWith('{')) {
-    try {
-      const parsed = JSON.parse(notes)
-      const result = {
-        findings: parsed.findings || [],
-        decisions: parsed.decisions || []
-      }
-      // Preserve pending_close if present
-      if (parsed.pending_close) {
-        result.pending_close = parsed.pending_close
-      }
-      return result
-    } catch (e) {
-      // Fall through to text parsing
-    }
-  }
-
-  // Legacy text format (backward compat)
-  const sections = {findings: [], decisions: []}
-  for (const line of notes.split('\n')) {
-    if (line.startsWith('FINDING:')) {
-      sections.findings.push(line.replace('FINDING:', '').trim())
-    } else if (line.startsWith('KEY DECISION:')) {
-      sections.decisions.push(line.replace('KEY DECISION:', '').trim())
-    }
-  }
-  return sections
-}
-
-// Build notes string from sections
-// Stores as pretty-printed JSON for human readability
-function buildNotes(sections) {
-  return JSON.stringify(sections, null, 2)
-}
+import {addSectionComments, buildPendingNotes, parseNotes, prepareSectionUpdates} from './notes.mjs'
 
 // Fetch ready children for an epic (used in task_status and task_epic resume)
 async function getReadyChildren(epicId) {
@@ -174,9 +134,11 @@ const toolHandlers = {
       if (!issue) {
         return {error: `Issue ${args.id} not found`}
       }
-      // Parse notes if present
-      if (issue.notes) {
-        issue.notes = parseNotes(issue.notes)
+      const parsedNotes = parseNotes(issue.notes, issue['comments'])
+      if (parsedNotes) {
+        issue.notes = parsedNotes
+      } else {
+        delete issue.notes
       }
       return issue
     }
@@ -251,8 +213,11 @@ const toolHandlers = {
       await bd(['update', args.resume, '--status', 'in_progress'])
 
       // Return full issue details (same as task_status(id)) to avoid redundant follow-up call
-      if (issue.notes) {
-        issue.notes = parseNotes(issue.notes)
+      const parsedNotes = parseNotes(issue.notes, issue['comments'])
+      if (parsedNotes) {
+        issue.notes = parsedNotes
+      } else {
+        delete issue.notes
       }
       issue.is_new = false
 
@@ -282,20 +247,30 @@ const toolHandlers = {
     if (!issue) {
       return {error: `Issue ${args.id} not found`}
     }
-    const sections = parseNotes(issue.notes)
 
-    if (args.findings) sections.findings.push(...args.findings)
-    if (args.decisions) sections.decisions.push(...args.decisions)
+    const update = prepareSectionUpdates(issue, args.findings, args.decisions)
+    if (update.findingsToAdd.length > 0 || update.decisionsToAdd.length > 0) {
+      await addSectionComments(args.id, update.findingsToAdd, update.decisionsToAdd)
+    }
 
-    const newNotes = buildNotes(sections)
-    const updateArgs = ['update', args.id, '--notes', newNotes]
+    const updateArgs = ['update', args.id]
     if (args.status) updateArgs.push('--status', args.status)
-    await bd(updateArgs)
+    if (update.shouldStripNotes) {
+      updateArgs.push('--notes', buildPendingNotes(update.notesSections.pending_close))
+    }
+    if (updateArgs.length > 2) {
+      await bd(updateArgs)
+    }
+
+    const responseNotes = {findings: update.finalFindings, decisions: update.finalDecisions}
+    if (update.notesSections.pending_close) {
+      responseNotes.pending_close = update.notesSections.pending_close
+    }
 
     if (args.completed && needsReview(issue)) {
       return {
         success: true,
-        notes: sections,
+        notes: responseNotes,
         status: args.status || issue.status,
         askUser: {
           question: `Review completed work (${issue.type}/P${issue.priority ?? 2}). What next?`,
@@ -310,7 +285,7 @@ const toolHandlers = {
       }
     }
 
-    return {success: true, notes: sections, status: args.status || issue.status}
+    return {success: true, notes: responseNotes, status: args.status || issue.status}
   },
 
   task_decompose: async (args) => {
@@ -388,15 +363,25 @@ const toolHandlers = {
       return {error: `Issue ${args.id} not found`}
     }
 
-    const sections = parseNotes(issue.notes)
+    const update = prepareSectionUpdates(issue, args.findings, args.decisions)
+
+    const applyComments = async () => {
+      if (update.findingsToAdd.length > 0 || update.decisionsToAdd.length > 0) {
+        await addSectionComments(args.id, update.findingsToAdd, update.decisionsToAdd)
+      }
+    }
+
+    const updateNotes = async (pendingClose) => {
+      const pendingCloseChanged = JSON.stringify(pendingClose ?? null)
+        !== JSON.stringify(update.notesSections.pending_close ?? null)
+      if (update.shouldStripNotes || pendingCloseChanged) {
+        await bd(['update', args.id, '--notes', buildPendingNotes(pendingClose)])
+      }
+    }
 
     // Helper to perform actual close and return result
     const doClose = async (summary) => {
-      // Clean up pending_close if present
-      if (sections.pending_close) {
-        delete sections.pending_close
-        await bd(['update', args.id, '--notes', buildNotes(sections)])
-      }
+      await updateNotes(null)
 
       await bd(['close', args.id, '--reason', summary])
 
@@ -428,16 +413,12 @@ const toolHandlers = {
 
     // If confirmed, retrieve stored pending_close data and close
     if (args.confirmed) {
-      const pending = sections.pending_close
+      const pending = update.notesSections.pending_close
       if (!pending) {
         return {error: 'No pending close found. Call task_done with summary first.'}
       }
 
-      // Merge any final findings/decisions
-      if (args.findings) sections.findings.push(...args.findings)
-      if (args.decisions) sections.decisions.push(...args.decisions)
-      await bd(['update', args.id, '--notes', buildNotes(sections)])
-
+      await applyComments()
       return await doClose(pending.summary)
     }
 
@@ -447,11 +428,8 @@ const toolHandlers = {
         return {error: 'summary required for issues that need review'}
       }
 
-      // Store pending close data and any findings/decisions
-      if (args.findings) sections.findings.push(...args.findings)
-      if (args.decisions) sections.decisions.push(...args.decisions)
-      sections.pending_close = {summary: args.summary}
-      await bd(['update', args.id, '--notes', buildNotes(sections)])
+      await applyComments()
+      await updateNotes({summary: args.summary})
 
       return {
         askUser: {
@@ -471,13 +449,7 @@ const toolHandlers = {
       return {error: 'summary required'}
     }
 
-    // Record final findings/decisions before closing
-    if (args.findings) sections.findings.push(...args.findings)
-    if (args.decisions) sections.decisions.push(...args.decisions)
-    if (args.findings || args.decisions) {
-      await bd(['update', args.id, '--notes', buildNotes(sections)])
-    }
-
+    await applyComments()
     return await doClose(args.summary)
   }
 }

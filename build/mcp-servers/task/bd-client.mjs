@@ -26,6 +26,10 @@ export function bd(args) {
   })
 }
 
+export async function bdAddComment(id, text) {
+  await bd(['comments', 'add', id, text])
+}
+
 export async function bdJson(args) {
   const result = await bd([...args, '--json'])
   return JSON.parse(result)

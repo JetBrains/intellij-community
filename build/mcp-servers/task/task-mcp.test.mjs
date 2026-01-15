@@ -6,9 +6,12 @@ import {execSync, spawn} from 'node:child_process'
 import {mkdtempSync, rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {dirname, join} from 'node:path'
+import process from 'node:process'
 import {fileURLToPath} from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+
+process['env'].BD_NO_DAEMON = '1'
 
 // MCP client for testing
 class McpTestClient {
@@ -308,6 +311,10 @@ describe('task MCP integration', {timeout: 30000}, () => {
       assert.ok(result.success)
       assert.deepEqual(result.notes.findings, ['Found pattern X'])
       assert.deepEqual(result.notes.decisions, ['Use approach Y'])
+
+      const comments = JSON.parse(execSync(`bd comments ${epic.id} --json`, {cwd: testDir, encoding: 'utf-8'}))
+      assert.ok(comments.some(comment => comment.text === 'FINDING: Found pattern X'))
+      assert.ok(comments.some(comment => comment.text === 'KEY DECISION: Use approach Y'))
     })
   })
 
