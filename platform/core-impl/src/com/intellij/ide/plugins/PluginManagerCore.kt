@@ -623,9 +623,9 @@ object PluginManagerCore {
           pluginsToLoad = pluginsToLoad.plugins,
           pluginNonLoadReasons = incompletePlugins.values.associateByTo(mutableMapOf(), { it.pluginId }, { excludedFromLoading[it]!! }),
           incompletePlugins = incompletePlugins.values.toList(),
-          idMap = pluginsToLoad.getFullPluginIdMapping(),
-          fullIdMap = ambiguousPluginSet.getFullPluginIdMapping().mapValues { it.value.first() },
-          fullContentModuleIdMap = ambiguousPluginSet.getFullContentModuleIdMapping().mapValues { it.value.first() },
+          idMap = pluginsToLoad.buildFullPluginIdMapping(),
+          fullIdMap = ambiguousPluginSet.buildFullPluginIdMapping().mapValues { it.value.first() },
+          fullContentModuleIdMap = ambiguousPluginSet.buildFullContentModuleIdMapping().mapValues { it.value.first() },
           duplicateModuleMap = null, // conflicts are handled and nonLoadingReasons are set by selectPluginsToLoad
           shadowedBundledIds = shadowedBundledIds
         )

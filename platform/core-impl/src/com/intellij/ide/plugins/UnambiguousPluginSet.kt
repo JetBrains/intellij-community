@@ -23,12 +23,14 @@ interface UnambiguousPluginSet {
   fun resolveContentModuleId(id: PluginModuleId): ContentModuleDescriptor?
 
   /**
-   * Plugin id can resolve either as a regular plugin id, or as a plugin alias,
-   * in which case it may refer either to the plugin descriptor module or to the plugin content module.
+   * @return a sequence of all keys that are resolvable by [resolvePluginId]
    */
-  fun getFullPluginIdMapping(): Map<PluginId, PluginModuleDescriptor>
+  fun sequenceAllPluginIds(): Sequence<PluginId>
 
-  fun getFullContentModuleIdMapping(): Map<PluginModuleId, ContentModuleDescriptor>
+  /**
+   * @return a sequence of all keys that are resolvable by [resolveContentModuleId]
+   */
+  fun sequenceAllContentModuleIds(): Sequence<PluginModuleId>
 
   companion object
 }
@@ -50,12 +52,38 @@ interface AmbiguousPluginSet {
   fun resolveContentModuleId(id: PluginModuleId): Sequence<ContentModuleDescriptor>
 
   /**
-   * Plugin id can resolve either as a regular plugin id, or as a plugin alias,
-   * in which case it may refer either to the plugin descriptor module or to the plugin content module.
+   * @return a sequence of all keys that are resolvable by [resolvePluginId]
    */
-  fun getFullPluginIdMapping(): Map<PluginId, List<PluginModuleDescriptor>>
+  fun sequenceAllPluginIds(): Sequence<PluginId>
 
-  fun getFullContentModuleIdMapping(): Map<PluginModuleId, List<ContentModuleDescriptor>>
+  /**
+   * @return a sequence of all keys that are resolvable by [resolveContentModuleId]
+   */
+  fun sequenceAllContentModuleIds(): Sequence<PluginModuleId>
 
   companion object
 }
+
+/**
+ * Plugin id can resolve either as a regular plugin id, or as a plugin alias,
+ * in which case it may refer either to the plugin descriptor module or to the plugin content module.
+ */
+@ApiStatus.Internal
+fun UnambiguousPluginSet.buildFullPluginIdMapping(): Map<PluginId, PluginModuleDescriptor> =
+  sequenceAllPluginIds().associateWith { resolvePluginId(it)!! }
+
+@ApiStatus.Internal
+fun UnambiguousPluginSet.buildFullContentModuleIdMapping(): Map<PluginModuleId, ContentModuleDescriptor> =
+  sequenceAllContentModuleIds().associateWith { resolveContentModuleId(it)!! }
+
+/**
+ * Plugin id can resolve either as a regular plugin id, or as a plugin alias,
+ * in which case it may refer either to the plugin descriptor module or to the plugin content module.
+ */
+@ApiStatus.Internal
+fun AmbiguousPluginSet.buildFullPluginIdMapping(): Map<PluginId, List<PluginModuleDescriptor>> =
+  sequenceAllPluginIds().associateWith { resolvePluginId(it).toList() }
+
+@ApiStatus.Internal
+fun AmbiguousPluginSet.buildFullContentModuleIdMapping(): Map<PluginModuleId, List<ContentModuleDescriptor>> =
+  sequenceAllContentModuleIds().associateWith { resolveContentModuleId(it).toList() }

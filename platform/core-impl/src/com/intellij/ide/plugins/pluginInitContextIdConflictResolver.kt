@@ -116,8 +116,8 @@ private class UnambiguousPluginSetImpl(
 ): UnambiguousPluginSet {
   override fun resolvePluginId(id: PluginId): PluginModuleDescriptor? = pluginIdMap[id]
   override fun resolveContentModuleId(id: PluginModuleId): ContentModuleDescriptor? = contentModuleIdMap[id]
-  override fun getFullPluginIdMapping(): Map<PluginId, PluginModuleDescriptor> = pluginIdMap
-  override fun getFullContentModuleIdMapping(): Map<PluginModuleId, ContentModuleDescriptor> = contentModuleIdMap
+  override fun sequenceAllPluginIds(): Sequence<PluginId> = pluginIdMap.keys.asSequence()
+  override fun sequenceAllContentModuleIds(): Sequence<PluginModuleId> = contentModuleIdMap.keys.asSequence()
 }
 
 @ApiStatus.Internal
@@ -145,6 +145,6 @@ private class AmbiguousPluginSetImpl(
 ): AmbiguousPluginSet {
   override fun resolvePluginId(id: PluginId): Sequence<PluginModuleDescriptor> = pluginIdMap[id]?.asSequence() ?: emptySequence()
   override fun resolveContentModuleId(id: PluginModuleId): Sequence<ContentModuleDescriptor> = contentModuleIdMap[id]?.asSequence() ?: emptySequence()
-  override fun getFullPluginIdMapping(): Map<PluginId, List<PluginModuleDescriptor>> = pluginIdMap
-  override fun getFullContentModuleIdMapping(): Map<PluginModuleId, List<ContentModuleDescriptor>> = contentModuleIdMap
+  override fun sequenceAllPluginIds(): Sequence<PluginId> = pluginIdMap.keys.asSequence()
+  override fun sequenceAllContentModuleIds(): Sequence<PluginModuleId> = contentModuleIdMap.keys.asSequence()
 }

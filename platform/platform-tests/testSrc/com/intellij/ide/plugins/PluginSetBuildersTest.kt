@@ -46,8 +46,8 @@ class PluginSetBuildersTest {
 
       assertThat(result).isNotNull
       assertThat(result!!.plugins).isEmpty()
-      assertThat(result.getFullPluginIdMapping()).isEmpty()
-      assertThat(result.getFullContentModuleIdMapping()).isEmpty()
+      assertThat(result.buildFullPluginIdMapping()).isEmpty()
+      assertThat(result.buildFullContentModuleIdMapping()).isEmpty()
     }
 
     @Test
@@ -68,8 +68,8 @@ class PluginSetBuildersTest {
       assertThat(result.resolvePluginId(PluginId.getId("unknown"))).isNull()
       
       // Verify full mapping
-      assertThat(result.getFullPluginIdMapping()).hasSize(1)
-      assertThat(result.getFullPluginIdMapping()[PluginId.getId("foo")]).isNotNull
+      assertThat(result.buildFullPluginIdMapping()).hasSize(1)
+      assertThat(result.buildFullPluginIdMapping()[PluginId.getId("foo")]).isNotNull
     }
 
     @Test
@@ -92,7 +92,7 @@ class PluginSetBuildersTest {
       assertThat(result.resolvePluginId(PluginId.getId("foo-alias-2"))).isSameAs(fooDescriptor)
       
       // Verify full mapping contains all IDs
-      val fullMapping = result.getFullPluginIdMapping()
+      val fullMapping = result.buildFullPluginIdMapping()
       assertThat(fullMapping).hasSize(3) // main ID + 2 aliases
       assertThat(fullMapping).containsKeys(
         PluginId.getId("foo"),
@@ -155,7 +155,7 @@ class PluginSetBuildersTest {
       assertThat(result.resolveContentModuleId(module2Id)).isNotNull
       
       // Verify full content module mapping
-      val contentMapping = result.getFullContentModuleIdMapping()
+      val contentMapping = result.buildFullContentModuleIdMapping()
       assertThat(contentMapping).hasSize(2)
       assertThat(contentMapping).containsKeys(module1Id, module2Id)
     }
@@ -294,8 +294,8 @@ class PluginSetBuildersTest {
 
       assertThat(result).isNotNull
       assertThat(result.plugins).isEmpty()
-      assertThat(result.getFullPluginIdMapping()).isEmpty()
-      assertThat(result.getFullContentModuleIdMapping()).isEmpty()
+      assertThat(result.buildFullPluginIdMapping()).isEmpty()
+      assertThat(result.buildFullContentModuleIdMapping()).isEmpty()
     }
 
     @Test
@@ -317,7 +317,7 @@ class PluginSetBuildersTest {
       assertThat(result.resolvePluginId(PluginId.getId("unknown")).toList()).isEmpty()
       
       // Verify full mapping
-      val fullMapping = result.getFullPluginIdMapping()
+      val fullMapping = result.buildFullPluginIdMapping()
       assertThat(fullMapping).hasSize(2) // main ID + alias
       assertThat(fullMapping[PluginId.getId("foo")]).hasSize(1)
       assertThat(fullMapping[PluginId.getId("foo-alias")]).hasSize(1)
@@ -340,7 +340,7 @@ class PluginSetBuildersTest {
       assertThat(resolved.map { it.pluginId.idString }).containsOnly("foo")
       
       // Verify full mapping
-      val fullMapping = result.getFullPluginIdMapping()
+      val fullMapping = result.buildFullPluginIdMapping()
       assertThat(fullMapping[PluginId.getId("foo")]).hasSize(2)
     }
 
@@ -400,7 +400,7 @@ class PluginSetBuildersTest {
       assertThat(resolved.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
       
       // Verify full content module mapping
-      val contentMapping = result.getFullContentModuleIdMapping()
+      val contentMapping = result.buildFullContentModuleIdMapping()
       assertThat(contentMapping[PluginModuleId("shared.module", "shared")]).hasSize(2)
     }
 
@@ -443,11 +443,11 @@ class PluginSetBuildersTest {
       assertThat(result.resolvePluginId(PluginId.getId("module-alias")).toList()).hasSize(2)
       
       // Verify full mappings
-      val pluginMapping = result.getFullPluginIdMapping()
+      val pluginMapping = result.buildFullPluginIdMapping()
       assertThat(pluginMapping[PluginId.getId("shared")]).hasSize(2)
       assertThat(pluginMapping[PluginId.getId("module-alias")]).hasSize(2)
       
-      val contentMapping = result.getFullContentModuleIdMapping()
+      val contentMapping = result.buildFullContentModuleIdMapping()
       assertThat(contentMapping[PluginModuleId("foo.module", "test")]).hasSize(1)
       assertThat(contentMapping[PluginModuleId("bar.module", "test")]).hasSize(1)
     }
@@ -480,7 +480,7 @@ class PluginSetBuildersTest {
       val resolved = result.resolvePluginId(PluginId.getId("duplicate")).toList()
       assertThat(resolved).hasSize(2) // same descriptor appears twice
       
-      val fullMapping = result.getFullPluginIdMapping()
+      val fullMapping = result.buildFullPluginIdMapping()
       assertThat(fullMapping[PluginId.getId("duplicate")]).hasSize(2)
     }
   }
