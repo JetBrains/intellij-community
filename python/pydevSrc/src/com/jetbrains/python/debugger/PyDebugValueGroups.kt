@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.xdebugger.frame.XCompositeNode
+import com.intellij.xdebugger.frame.XNamedValue
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueGroup
@@ -10,9 +11,9 @@ import com.jetbrains.python.debugger.pydev.ProcessDebugger
 import javax.swing.Icon
 
 
-const val DUNDER_LEN = "__len__"
-const val DUNDER_EX = "__exception__"
-val PROTECTED_ATTRS_EXCLUDED = setOf(DUNDER_LEN, DUNDER_EX)
+const val DUNDER_LEN: String = "__len__"
+const val DUNDER_EX: String = "__exception__"
+val PROTECTED_ATTRS_EXCLUDED: Set<String> = setOf(DUNDER_LEN, DUNDER_EX)
 
 open class PyXValueGroup(groupName: String, val groupType: ProcessDebugger.GROUP_TYPE) : XValueGroup(groupName)
 
@@ -40,7 +41,7 @@ private fun filterChildren(children: XValueChildrenList, predicate: (String) -> 
   for (i in 0 until children.size()) {
     val value = children.getValue(i)
     val name = children.getName(i)
-    if (value is PyDebugValue) {
+    if (value is XNamedValue) {
       if (predicate(value.name) && !excludedNames.contains(value.name)) {
         result.groupElements[name] = value
       }

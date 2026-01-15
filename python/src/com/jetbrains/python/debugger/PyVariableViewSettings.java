@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.jetbrains.python.PyBundle;
@@ -19,10 +20,10 @@ import java.util.List;
 
 public final class PyVariableViewSettings {
   public static final class SimplifiedView extends ToggleAction {
-    private final PyDebugProcess myProcess;
+    private final XDebugProcess myProcess;
     private volatile boolean mySimplifiedView;
 
-    public SimplifiedView(@Nullable PyDebugProcess debugProcess) {
+    public SimplifiedView(@Nullable XDebugProcess debugProcess) {
       super(PyBundle.message("debugger.simplified.view.text"), PyBundle.message("debugger.simplified.view.description"), null);
       mySimplifiedView = PyDebuggerSettings.getInstance().isSimplifiedView();
       myProcess = debugProcess;
