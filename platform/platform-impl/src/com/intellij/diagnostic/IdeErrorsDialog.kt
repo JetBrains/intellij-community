@@ -32,7 +32,6 @@ import com.intellij.openapi.ui.LoadingDecorator
 import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
@@ -45,6 +44,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.URLUtil
+import com.intellij.util.system.OS
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -56,7 +56,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.GridBagConstraints.*
 import java.awt.event.ActionEvent
-import java.net.URL
+import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.function.Predicate
@@ -309,19 +309,11 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       .toList()
     myOKAction = CompositeAction(lastAction.getAction(this), additionalActions)
     val clearErrorsAction = if (!hideClearButton) ClearErrorsAction() else null
-    return if (SystemInfo.isWindows) {
-      listOfNotNull(
-        okAction,
-        clearErrorsAction,
-        cancelAction
-      )
+    return if (OS.CURRENT == OS.Windows) {
+      listOfNotNull(okAction, clearErrorsAction, cancelAction)
     }
     else {
-      listOfNotNull(
-        clearErrorsAction,
-        cancelAction,
-        okAction
-      )
+      listOfNotNull(clearErrorsAction, cancelAction, okAction)
     }.toTypedArray()
   }
 
@@ -498,7 +490,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     }
   }
 
-  private fun isValidUrl(url: String): Boolean = runCatching { URL(url) }.isSuccess
+  private fun isValidUrl(url: String): Boolean = runCatching { URI(url).toURL() }.isSuccess
 
   private fun updateDetails(cluster: MessageCluster) {
     val message = cluster.first
