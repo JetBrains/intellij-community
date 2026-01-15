@@ -5,7 +5,6 @@ import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.util.coroutines.childScope
-import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.isInCurrentHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
@@ -13,7 +12,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.detailsComputationFlow
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getHeadRemoteDescriptor
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel
 import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG = logger<GHPRReviewBranchStateSharedViewModel>()
@@ -56,10 +55,6 @@ internal class GHPRReviewBranchStateSharedViewModel(
       return
     }
     val server = dataContext.repositoryDataService.repositoryCoordinates.serverPath
-    val remoteDescriptor = details.getHeadRemoteDescriptor(server) ?: return
-
-    val repository = dataContext.repositoryDataService.remoteCoordinates.repository
-    val localPrefix = if (details.headRepository?.isFork == true) "fork" else null
-    GitRemoteBranchesUtil.fetchAndCheckoutRemoteBranch(repository, remoteDescriptor, details.headRefName, localPrefix)
+    GHPRBranchesViewModel.fetchAndCheckoutBranch(repository, server, details)
   }
 }
