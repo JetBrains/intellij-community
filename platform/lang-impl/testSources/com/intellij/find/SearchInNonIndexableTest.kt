@@ -82,7 +82,7 @@ class SearchInNonIndexableTest() {
 
   @Test
   fun `non-indexable files deque`(): Unit = runBlocking {
-    val deque = readAction { FilesDeque.nonIndexableDequeue(project) }
+    val deque = readAction { FilesDeque.nonIndexableDequeue(project, requireReadAction = true) }
     val files = mutableListOf<VirtualFile>()
     while (true) {
       val file = readAction { deque.computeNext() } ?: break

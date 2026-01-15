@@ -620,7 +620,7 @@ final class FindInProjectTask {
       if (Boolean.TRUE.equals(project.getUserData(FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE))) {
         //MAYBE RC: currently nonIndexableFiles() returns transient files already -- but maybe it is safer to return _regular_ files
         //          from nonIndexableFiles(), and wrap them all into transient here, in a unified way?
-        searchItems.add(ReadAction.nonBlocking(() -> FilesDeque.nonIndexableDequeue(project)).executeSynchronously());
+        searchItems.add(ReadAction.nonBlocking(() -> FilesDeque.nonIndexableDequeue(project, true)).executeSynchronously());
       }
     }
 

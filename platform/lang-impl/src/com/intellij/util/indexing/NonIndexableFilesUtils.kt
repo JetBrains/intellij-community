@@ -99,7 +99,6 @@ private fun WorkspaceFileIndexEx.iterateNonIndexableFilesImpl(roots: Set<Virtual
 
 @ApiStatus.Internal
 interface FilesDeque {
-  @RequiresReadLock
   fun computeNext(): VirtualFile?
 
   companion object {
@@ -109,22 +108,28 @@ interface FilesDeque {
      *
      * This method is only for rare specific use-cases,
      * where we need to process non-indexable files in a non-blocking read action, such as find-in-files
+     *
+     * @param requireReadAction if true, the returned deque will require read action to execute [computeNext].
+     * Otherwise [computeNext] will run small blocking read acitons itself
      */
     @ApiStatus.Internal
     @JvmStatic
     @RequiresReadLock
     @RequiresBackgroundThread
-    fun nonIndexableDequeue(project: Project): FilesDeque {
-      return NonIndexableFilesDequeImpl(project, WorkspaceFileIndexEx.getInstance(project).contentNonIndexableRoots())
+    fun nonIndexableDequeue(project: Project, requireReadAction: Boolean): FilesDeque {
+      return NonIndexableFilesDequeImpl(project, WorkspaceFileIndexEx.getInstance(project).contentNonIndexableRoots(), requireReadAction)
     }
   }
 }
 
-private class NonIndexableFilesDequeImpl(private val project: Project, private val roots: Set<VirtualFile>) : FilesDeque {
+private class NonIndexableFilesDequeImpl(
+  private val project: Project,
+  private val roots: Set<VirtualFile>,
+  private val alreadyInReadAction: Boolean,
+) : FilesDeque {
   private val bfsQueue: ArrayDeque<VirtualFile> = ArrayDeque(roots)
   private val visitedRoots: MutableSet<VirtualFile> = mutableSetOf()
 
-  @RequiresReadLock
   override fun computeNext(): VirtualFile? {
     while (bfsQueue.isNotEmpty()) {
       val file = bfsQueue.removeFirst()
@@ -133,8 +138,8 @@ private class NonIndexableFilesDequeImpl(private val project: Project, private v
       if (file in roots) visitedRoots.add(file)
 
       val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
-      if (workspaceFileIndex.isExcludedOrInvalid(file, alreadyInReadAction = true)) continue
-      val indexableFileSets = WorkspaceFileIndexEx.getInstance(project).allIndexableFileSets(file, alreadyInReadAction = true)
+      if (workspaceFileIndex.isExcludedOrInvalid(file, alreadyInReadAction)) continue
+      val indexableFileSets = WorkspaceFileIndexEx.getInstance(project).allIndexableFileSets(file, alreadyInReadAction)
 
       if (indexableFileSets.recursive.isNotEmpty()) continue // skip the current file and their children
       if (file.isValid && !file.isRecursiveOrCircularSymlink) {
