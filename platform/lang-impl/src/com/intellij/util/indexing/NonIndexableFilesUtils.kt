@@ -137,7 +137,10 @@ private class NonIndexableFilesDequeImpl(private val project: Project, private v
       val indexableFileSets = WorkspaceFileIndexEx.getInstance(project).allIndexableFileSets(file, alreadyInReadAction = true)
 
       if (indexableFileSets.recursive.isNotEmpty()) continue // skip the current file and their children
-      if (file.isDirectory) bfsQueue.addAll(file.children)
+      if (file.isValid && !file.isRecursiveOrCircularSymlink) {
+        val children = file.children
+        if (children != null) bfsQueue.addAll(children)
+      }
       if (indexableFileSets.nonRecursive.isNotEmpty()) continue // skip only the current file, children can be non-indexable
 
       return file
