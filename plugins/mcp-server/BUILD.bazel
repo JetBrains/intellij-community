@@ -71,6 +71,8 @@ jvm_library(
     "@lib//:mcpserver-ktor-server-cio-internal",
     "//libraries/ktor/io",
     "//platform/execution",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
   ]
 )
 ### auto-generated section `build intellij.mcpserver` end

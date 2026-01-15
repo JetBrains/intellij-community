@@ -66,6 +66,9 @@
     <registryKey defaultValue="true"
                  description="Support legacy MCP server name"
                  key="mcp.server.write.legacy.key"/>
+    <registryKey defaultValue="true"
+                 description="Enable OT tracer for MCP tool calls"
+                 key="mcp.server.ot.trace"/>
 
     <applicationConfigurable
       instance="com.intellij.mcpserver.settings.McpServerSettingsConfigurable"
