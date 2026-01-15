@@ -13,11 +13,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.findPsiFile
+import com.intellij.openapi.vfs.refreshAndFindVirtualDirectory
+import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.PathUtil
 import com.intellij.util.asSafely
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -36,8 +37,8 @@ import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettin
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_REPOSITORY_HANDLER
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
 import org.jetbrains.plugins.gradle.util.getGradleVersion
+import org.jetbrains.plugins.gradle.util.getIncludedProjectRootPath
 import java.nio.file.Path
-import kotlin.io.path.Path
 import kotlin.io.path.exists
 
 
@@ -53,7 +54,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(private val holder: 
         val gradleVersion = getGradleVersion(holder.project, holder.file.virtualFile) ?: GradleVersion.current()
         if (repositoriesParentBlockKind == RepositoriesParentBlockKind.DEPENDENCY && gradleVersion < GradleVersion.version("6.8")) return
 
-        val settingsFile = expression.module?.getBuildScriptSettingsPsiFile()
+        val settingsFile = expression.module?.getGradleSettingsPsiFile()
         val fix = when (settingsFile) {
             null -> LocalQuickFix.from(CreateSettingsAndMoveRepositoriesAction(repositoriesParentBlockKind, gradleVersion))
             is KtFile -> MoveRepositoriesToSettingsFile(settingsFile, repositoriesParentBlockKind, gradleVersion)
@@ -90,22 +91,14 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(private val holder: 
         else RepositoriesParentBlockKind.DEPENDENCY
     }
 
-    private fun Module.getBuildScriptSettingsPsiFile(): PsiFile? =
-        ExternalSystemApiUtil.getExternalProjectPath(this)?.let { externalProjectPath ->
-            generateSequence(externalProjectPath) {
-                PathUtil.getParentPath(it).ifBlank { null }
-            }.mapNotNull {
-                findSettingsFile(it)
-            }.map { settingsPath ->
-                VfsUtil.findFile(settingsPath, true)?.findPsiFile(project)
-            }.firstOrNull()
-        }
 
-    private fun findSettingsFile(path: String): Path? {
-        val root = Path(path)
+    private fun Module.getGradleSettingsPsiFile(): PsiFile? {
+        val root = getIncludedProjectRootPath() ?: return null
         return setOf("settings.gradle.kts", "settings.gradle")
             .map { root.resolve(it) }
             .firstOrNull(Path::exists)
+            ?.refreshAndFindVirtualFile()
+            ?.findPsiFile(project)
     }
 }
 
@@ -139,7 +132,10 @@ private class CreateSettingsAndMoveRepositoriesAction(
             }
         }
 
-        val projectDir = context.project.guessProjectDir() ?: element.containingFile.virtualFile.parent
+        val projectDir = element.module?.getIncludedProjectRootPath()?.refreshAndFindVirtualDirectory()
+            ?: ExternalSystemApiUtil.getExternalRootProjectPath(element.module)?.toNioPathOrNull()?.refreshAndFindVirtualDirectory()
+            ?: context.project.guessProjectDir()
+            ?: element.containingFile.virtualFile.parent
         val settingsFile = FutureVirtualFile(
             projectDir,
             KOTLIN_DSL_SETTINGS_FILE_NAME,
