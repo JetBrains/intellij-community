@@ -92,15 +92,15 @@ class OptInFixes {
             val annotationName = annotationClassId.shortClassName.asString()
             val annotationEntry = if (argumentClassFqName != null) "(${argumentClassFqName.shortName().asString()}::class)" else ""
             val argumentText = annotationName + annotationEntry
-            val actionName = when {
-                kind is Kind.Self -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, "?")
-                kind is Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.propagate.constructor", argumentText)
-                kind is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, kind.name ?: "?")
-                kind is Kind.ContainingClass && element is KtObjectDeclaration -> KotlinBundle.message(
+            val actionName = when (kind) {
+                is Kind.Self -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, "?")
+                is Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.propagate.constructor", argumentText)
+                is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, kind.name ?: "?")
+                is Kind.ContainingClass if element is KtObjectDeclaration -> KotlinBundle.message(
                     "fix.opt_in.text.propagate.containing.object", argumentText, kind.name ?: "?"
                 )
 
-                kind is Kind.ContainingClass -> KotlinBundle.message(
+                is Kind.ContainingClass -> KotlinBundle.message(
                     "fix.opt_in.text.propagate.containing.class", argumentText, kind.name ?: "?"
                 )
 
@@ -121,22 +121,22 @@ private fun getOptInAnnotationFixPresentation(
     argumentClassFqName: FqName
 ): Presentation {
     val argumentText = argumentClassFqName.shortName().asString()
-    val actionName = when {
-        kind is Kind.Self -> KotlinBundle.message("fix.opt_in.text.use.statement", argumentText)
-        kind is Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.use.constructor", argumentText)
-        kind is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.use.declaration", argumentText, kind.name ?: "?")
-        kind is Kind.ContainingClass && element is KtObjectDeclaration && kind.name != null -> KotlinBundle.message(
+    val actionName = when (kind) {
+        is Kind.Self -> KotlinBundle.message("fix.opt_in.text.use.statement", argumentText)
+        is Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.use.constructor", argumentText)
+        is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.use.declaration", argumentText, kind.name ?: "?")
+        is Kind.ContainingClass if element is KtObjectDeclaration && kind.name != null -> KotlinBundle.message(
             "fix.opt_in.text.use.containing.object",
             argumentText,
             kind.name
         )
 
-        kind is Kind.ContainingClass && element is KtObjectDeclaration && kind.name == null -> KotlinBundle.message(
+        is Kind.ContainingClass if element is KtObjectDeclaration && kind.name == null -> KotlinBundle.message(
             "fix.opt_in.text.use.containing.anonymous.object",
             argumentText
         )
 
-        kind is Kind.ContainingClass -> KotlinBundle.message(
+        is Kind.ContainingClass -> KotlinBundle.message(
             "fix.opt_in.text.use.containing.class",
             argumentText,
             kind.name ?: "?"

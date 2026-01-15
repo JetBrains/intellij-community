@@ -108,17 +108,16 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
         val closestDeclaration = this.findParentOfType<KtDeclaration>(strict = false)
 
         while (current != null) {
-            when {
-                current is KtClassOrObject && closestDeclaration != current -> OptInGeneralUtils.findContainingClassOrObjectCandidate(
+            when (current) {
+                is KtClassOrObject if closestDeclaration != current -> OptInGeneralUtils.findContainingClassOrObjectCandidate(
                     current
                 )?.addToResult()
 
-                current is KtCallExpression -> current.findSamConstructorCallCandidate()?.addToResult()
-                current is KtDeclaration &&
-                        (current is KtDeclarationWithBody && !current.isLambda()
-                                || current is KtTypeAlias
-                                || current is KtProperty
-                                || current is KtClassOrObject) ->
+                is KtCallExpression -> current.findSamConstructorCallCandidate()?.addToResult()
+                is KtDeclaration if (current is KtDeclarationWithBody && !current.isLambda()
+                        || current is KtTypeAlias
+                        || current is KtProperty
+                        || current is KtClassOrObject) ->
                     OptInGeneralUtils.findContainingDeclarationCandidate(current).addToResult()
             }
             current = current.parent
@@ -145,9 +144,9 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
         if (parent !is KtBlockExpression && parent !is KtScriptInitializer && parent !is KtAnnotatedExpression) return null
         val resolvedCall = this.resolveToCall() ?: return null
         if (resolvedCall.resultingDescriptor !is SamConstructorDescriptor) return null
-        val element = when {
-            parent is KtScriptInitializer -> parent
-            parent is KtAnnotatedExpression && parent.parent is KtScriptInitializer -> parent.parent
+        val element = when (parent) {
+            is KtScriptInitializer -> parent
+            is KtAnnotatedExpression if parent.parent is KtScriptInitializer -> parent.parent
             else -> this
         }
         val name = resolvedCall.resultingDescriptor.name.asString()
