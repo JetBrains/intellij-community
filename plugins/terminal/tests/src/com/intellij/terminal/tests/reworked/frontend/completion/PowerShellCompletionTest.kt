@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandFinishedEvent
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
@@ -23,6 +24,7 @@ import org.junit.Assume
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.awt.event.KeyEvent
 import java.io.File
 import java.nio.file.Path
 import kotlin.coroutines.resume
@@ -180,13 +182,18 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
   @Test
   fun `check options are suggested on the next line after continuation`() {
     doTest { fixture ->
-      fixture.type("""
-        Get-Content `
-        -
-      """.trimIndent())
+      fixture.type("Get-Content `")
+      fixture.pressKey(KeyEvent.VK_ENTER)
+      fixture.type("-")
+
+      fixture.assertOutputModelState { model ->
+        val text = model.getText(model.startOffset, model.endOffset)
+        text.contains(">> -")  // Check that line continuation is present
+      }
+
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
-        .contains("-Path", "-Filter", "-Encoding")
+        .contains("Path", "Filter", "Encoding")
     }
   }
 
@@ -390,6 +397,22 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
     }
 
     shellIntegration.outputStatus.first { it == TerminalOutputStatus.TypingCommand }
+  }
+
+  private suspend fun TerminalCompletionFixture.assertOutputModelState(
+    condition: (TerminalOutputModel) -> Boolean,
+  ) {
+    val conditionMet = awaitOutputModelState(3.seconds, condition)
+
+    val model = outputModel
+    assertThat(conditionMet)
+      .overridingErrorMessage {
+        """
+        Output model text doesn't match the condition.
+        Current text: '${model.getText(model.startOffset, model.endOffset)}', cursor offset: ${model.cursorOffset}
+      """.trimIndent()
+      }
+      .isTrue
   }
 
   private fun createTempDir(): Path {
