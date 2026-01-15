@@ -4,7 +4,6 @@ package com.intellij.openapi.actionSystem.impl
 import com.intellij.diagnostic.UILatencyLogger
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.IdeEventQueue.Companion.getInstance
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.inspector.UiInspectorActionUtil
 import com.intellij.internal.inspector.UiInspectorContextProvider
@@ -451,7 +450,7 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.NonLockedEve
         Disposer.dispose(callbackAlarm!!)
         callbackAlarm = null
         if (eventToRedispatch != null) {
-          getInstance().dispatchEvent(eventToRedispatch!!)
+          IdeEventQueue.getInstance().dispatchEvent(eventToRedispatch!!)
         }
       },
       delay = 50,
@@ -464,7 +463,7 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.NonLockedEve
     if (startMousePoint != null) {
       xClosestToTargetSoFar = startMousePoint!!.x
       Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.COMPONENT_EVENT_MASK)
-      getInstance().addDispatcher(this, this)
+      IdeEventQueue.getInstance().addDispatcher(this, this)
     }
   }
 
