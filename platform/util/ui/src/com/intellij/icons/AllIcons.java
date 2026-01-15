@@ -732,6 +732,7 @@ public class AllIcons {
     /** 20x20 */ public static final @NotNull Icon LikeDimmed = load("ide/likeDimmed.svg", 449955239, 2);
     /** 20x20 */ public static final @NotNull Icon LikeSelected = load("ide/likeSelected.svg", 1058551001, 2);
     /** 12x12 */ public static final @NotNull Icon Link = load("expui/general/chevronRight.svg", "ide/link.svg", 941220318, 2);
+    /** 16x16 */ public static final @NotNull Icon LocalChanges = load("ide/localChanges.svg", -455323487, 0);
     /** 16x16 */ public static final @NotNull Icon LocalScope = load("expui/ide/localScope.svg", "ide/localScope.svg", -204717233, 0);
     /** 16x16 */ public static final @NotNull Icon LocalScopeAction = load("expui/ide/localScope.svg", "ide/localScopeAction.svg", 1217252486, 2);
 

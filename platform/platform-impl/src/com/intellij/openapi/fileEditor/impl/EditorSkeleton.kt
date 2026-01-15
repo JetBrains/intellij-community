@@ -186,7 +186,7 @@ internal class EditorSkeleton(cs: CoroutineScope, val initialTime: AtomicLong) :
 
     val elapsed = currentTime.get() - initialTime.get()
     val t = (elapsed % ANIMATION_DURATION_MS).toDouble() / ANIMATION_DURATION_MS.toDouble()
-    val opacity = 0.3 + 0.3 * sin(2 * Math.PI * t)
+    val opacity = 0.3 + 0.35 * (sin(2 * Math.PI * (t - 0.75)) + 1)
     return ColorUtil.withAlpha(BACKGROUND_COLOR, opacity)
   }
 
