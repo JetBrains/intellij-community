@@ -6,22 +6,34 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.Serializable;
+import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * @author Vladislav.Soroka
  */
+@SuppressWarnings("IO_FILE_USAGE")
 public class WebResource implements Serializable {
   private static final long serialVersionUID = 1L;
 
   private final @NotNull WarDirectory warDirectory;
   private final @NotNull String warRelativePath;
-  private final @NotNull File file;
+  private final @NotNull Path filePath;
 
+  /**
+   * @deprecated use {@link #WebResource(WarDirectory, String, Path)} instead.
+   */
+  @Deprecated
   @PropertyMapping({"warDirectory", "warRelativePath", "file"})
   public WebResource(@NotNull WarDirectory warDirectory, @NotNull String warRelativePath, @NotNull File file) {
+    this(warDirectory, warRelativePath, file.toPath());
+  }
+
+  @PropertyMapping({"warDirectory", "warRelativePath", "file"})
+  public WebResource(@NotNull WarDirectory warDirectory, @NotNull String warRelativePath, @NotNull Path filePath) {
     this.warDirectory = warDirectory;
     this.warRelativePath = getAdjustedPath(warRelativePath);
-    this.file = file;
+    this.filePath = filePath;
   }
 
   public @NotNull WarDirectory getWarDirectory() {
@@ -32,8 +44,16 @@ public class WebResource implements Serializable {
     return warRelativePath;
   }
 
+  /**
+   * @deprecated use {@link #getFilePath()} instead.
+   */
+  @Deprecated
   public @NotNull File getFile() {
-    return file;
+    return filePath.toFile();
+  }
+
+  public @NotNull Path getFilePath() {
+    return filePath;
   }
 
   private static String getAdjustedPath(final @NotNull String path) {
@@ -42,30 +62,24 @@ public class WebResource implements Serializable {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof WebResource resource)) return false;
-
-    if (!file.getPath().equals(resource.file.getPath())) return false;
-    if (warDirectory != resource.warDirectory) return false;
-    if (!warRelativePath.equals(resource.warRelativePath)) return false;
-
-    return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    WebResource resource = (WebResource)o;
+    return Objects.equals(warDirectory, resource.warDirectory) &&
+           Objects.equals(warRelativePath, resource.warRelativePath) &&
+           Objects.equals(filePath, resource.filePath);
   }
 
   @Override
   public int hashCode() {
-    int result = warDirectory.hashCode();
-    result = 31 * result + warRelativePath.hashCode();
-    result = 31 * result + file.getPath().hashCode();
-    return result;
+    return Objects.hash(warDirectory, warRelativePath, filePath);
   }
 
   @Override
   public String toString() {
     return "WebResource{" +
-           "myWarDirectory=" + warDirectory +
+           "warDirectory=" + warDirectory +
            ", warRelativePath='" + warRelativePath + '\'' +
-           ", file=" + file +
+           ", filePath=" + filePath +
            '}';
   }
 }
