@@ -123,21 +123,13 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
             current = current.parent
         }
 
-        this.findStatementCandidate()?.addToResult()
+        OptInGeneralUtils.findStatementCandidate(this)?.addToResult()
 
         // For the case where two different elements have the same name
         return result.sortedBy { it.kind == AddAnnotationFix.Kind.Self }
     }
 
     private fun KtDeclarationWithBody.isLambda() = descriptor?.name?.asString() == "<anonymous>"
-
-    private fun KtElement.findStatementCandidate(): CandidateData? {
-        require(this.containingFile.isScript())
-        var statementElement: KtElement = this
-        while (statementElement.parent !is KtBlockExpression && statementElement.parent !is KtClassBody) statementElement =
-            statementElement.parent as? KtElement ?: return null
-        return CandidateData(statementElement, AddAnnotationFix.Kind.Self)
-    }
 
     private fun KtCallExpression.findSamConstructorCallCandidate(): CandidateData? {
         val parent = this.parent

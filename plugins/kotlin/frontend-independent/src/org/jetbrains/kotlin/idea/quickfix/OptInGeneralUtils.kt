@@ -103,4 +103,11 @@ abstract class OptInGeneralUtilsBase {
         val containingClassOrObject = element as? KtClassOrObject ?: (element.containingClassOrObject ?: return null)
         return CandidateData(containingClassOrObject, AddAnnotationFix.Kind.ContainingClass(containingClassOrObject.name))
     }
+
+    fun findStatementCandidate(element: KtElement): CandidateData? {
+        var statementElement: KtElement = element
+        while (statementElement.parent !is KtBlockExpression && statementElement.parent !is KtClassBody) statementElement =
+            statementElement.parent as? KtElement ?: return null
+        return CandidateData(statementElement, AddAnnotationFix.Kind.Self)
+    }
 }
