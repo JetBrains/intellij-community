@@ -162,6 +162,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     };
   }
 
+  @RequiresEdt
   private void updateAndInitFolding(@NotNull Editor editor,
                                     @NotNull FoldingModelEx foldingModel,
                                     @NotNull PsiFile psiFile,
@@ -267,6 +268,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     DaemonCodeAnalyzerEx.getInstanceEx(myProject).restart("CodeFoldingManagerImpl.scheduleAsyncFoldingUpdate");
   }
 
+  @RequiresEdt
   private void initFolding(@NotNull Editor editor) {
     Document document = editor.getDocument();
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
