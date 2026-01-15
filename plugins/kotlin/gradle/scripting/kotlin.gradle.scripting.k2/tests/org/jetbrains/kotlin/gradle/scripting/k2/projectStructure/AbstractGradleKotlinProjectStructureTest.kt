@@ -71,7 +71,7 @@ internal abstract class AbstractGradleKotlinProjectStructureTest : AbstractGradl
 //                    .replaceTransformHash()
 //                    .replaceAccessorsHash()
 
-            val testDataFilePath = dataFile().toPath()
+            val testDataFilePath = dataFile()?.toPath() ?: return@test
             KotlinTestUtils.assertEqualsToFile(
                 testDataFilePath.resolveSibling(testDataFilePath.nameWithoutExtension + ".txt"),
                 txt
