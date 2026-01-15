@@ -5,7 +5,7 @@ import {createMcpServer} from '../shared/mcp-rpc.mjs'
 import {bd, bdJson, bdShowOne} from './bd-client.mjs'
 import {addSectionComments, buildPendingNotes, parseNotes, prepareSectionUpdates} from './notes.mjs'
 
-// Fetch ready children for an epic (used in task_status and task_epic resume)
+// Fetch ready children for an epic (used in task_status and task_start resume)
 async function getReadyChildren(epicId) {
   const readyChildren = await bdJson(['ready', '--parent', epicId])
   if (readyChildren.length > 0) {
@@ -23,6 +23,12 @@ function needsReview(issue) {
   return priority <= 1 || issue.issue_type === 'bug' || issue.issue_type === 'feature' || issue.issue_type === 'epic'
 }
 
+async function createEpic(title, description) {
+  const id = await bd(['create', '--title', title, '--type', 'epic', '--description', description, '--acceptance', 'PENDING', '--design', 'PENDING', '--silent'])
+  await bd(['update', id, '--status', 'in_progress'])
+  return id
+}
+
 const tools = [
   {
     name: 'task_status',
@@ -36,14 +42,13 @@ const tools = [
     }
   },
   {
-    name: 'task_epic',
-    description: 'Create or resume epic',
+    name: 'task_start',
+    description: 'Start task workflow (status + optional epic creation)',
     inputSchema: {
       type: 'object',
       properties: {
-        title: {type: 'string', description: 'Epic title'},
-        description: {type: 'string', description: 'WHAT and WHY'},
-        resume: {type: 'string', description: 'Resume by ID'}
+        id: {type: 'string', description: 'Issue ID for full details'},
+        user_request: {type: 'string', description: 'User task description'}
       }
     }
   },
@@ -126,121 +131,114 @@ const tools = [
   }
 ]
 
-const toolHandlers = {
-  task_status: async (args) => {
-    // Specific issue query - return full details (replaces task_show)
-    if (args.id) {
-      const issue = await bdShowOne(args.id)
-      if (!issue) {
-        return {error: `Issue ${args.id} not found`}
-      }
-      const parsedNotes = parseNotes(issue.notes, issue['comments'])
-      if (parsedNotes) {
-        issue.notes = parsedNotes
-      } else {
-        delete issue.notes
-      }
-      return issue
+async function handleTaskStatus(args, options = {}) {
+  const shouldResume = options.resume === true
+  // Specific issue query - return full details (replaces task_show)
+  if (args.id) {
+    const issue = await bdShowOne(args.id)
+    if (!issue) {
+      return {error: `Issue ${args.id} not found`}
     }
-
-    // Overview query - selection-oriented responses
-    const inProgress = await bdJson(['list', '--status', 'in_progress'])
-    const ready = await bdJson(['ready', '--limit', '5'])
-
-    // No in-progress issues
-    if (inProgress.length === 0) {
-      if (args.user_request) {
-        return {user_request: args.user_request}
-      }
-      if (ready.length > 0) {
-        return {
-          askUser: {
-            question: 'Which task would you like to work on?',
-            header: 'Task',
-            options: ready.map(r => ({label: r.title, description: r.id})),
-            multiSelect: false
-          }
-        }
-      }
-      return {empty: true}
-    }
-
-    // Single in-progress, no new request - just continue
-    if (inProgress.length === 1 && !args.user_request) {
-      const issue = inProgress[0]
-      const result = {id: issue.id, title: issue.title, status: issue.status, type: issue.issue_type}
-
-      // For epics, include ready children so Claude knows what to work on
-      if (issue.issue_type === 'epic') {
-        const readyChildren = await getReadyChildren(issue.id)
-        if (readyChildren) {
-          result.ready_children = readyChildren
-        }
-      }
-      return result
-    }
-
-    // Multiple in-progress OR conflict with user_request - user must select
-    const questionText = args.user_request
-      ? 'New request - which task?'
-      : 'Which task to work on?'
-
-    // Find parent epic - only if unambiguous (single epic context)
-    const parentIds = [...new Set(inProgress.map(i => i.parent).filter(Boolean))]
-    const epicIds = inProgress.filter(i => i.issue_type === 'epic').map(i => i.id)
-    const parentEpic = parentIds.length === 1 ? parentIds[0]
-      : (parentIds.length === 0 && epicIds.length === 1 ? epicIds[0] : null)
-    return {
-      askUser: {
-        question: questionText,
-        header: 'Task',
-        options: [
-          ...inProgress.map(i => ({label: i.title, description: i.id})),
-          ...(parentEpic ? [{label: 'Create sub-task', description: `Under ${parentEpic}`}] : []),
-          {label: 'Start new task', description: 'Create a new epic'}
-        ],
-        multiSelect: false
-      }
-    }
-  },
-
-  task_epic: async (args) => {
-    if (args.resume) {
-      const issue = await bdShowOne(args.resume)
-      if (!issue) {
-        return {error: `Issue ${args.resume} not found`}
-      }
-      await bd(['update', args.resume, '--status', 'in_progress'])
-
-      // Return full issue details (same as task_status(id)) to avoid redundant follow-up call
-      const parsedNotes = parseNotes(issue.notes, issue['comments'])
-      if (parsedNotes) {
-        issue.notes = parsedNotes
-      } else {
-        delete issue.notes
-      }
+    if (shouldResume) {
+      await bd(['update', args.id, '--status', 'in_progress'])
       issue.is_new = false
-
-      // For epics, include ready children so Claude knows what to work on
+      issue.status = 'in_progress'
       if (issue.issue_type === 'epic') {
-        const readyChildren = await getReadyChildren(args.resume)
+        const readyChildren = await getReadyChildren(args.id)
         if (readyChildren) {
           issue.ready_children = readyChildren
         }
       }
-
-      return issue
     }
-
-    if (!args.title || !args.description) {
-      throw new Error('title and description required for new epic')
+    const parsedNotes = parseNotes(issue.notes, issue['comments'])
+    if (parsedNotes) {
+      issue.notes = parsedNotes
+    } else {
+      delete issue.notes
     }
+    return issue
+  }
 
-    const id = await bd(['create', '--title', args.title, '--type', 'epic', '--description', args.description, '--acceptance', 'PENDING', '--design', 'PENDING', '--silent'])
-    await bd(['update', id, '--status', 'in_progress'])
+  // Overview query - selection-oriented responses
+  const inProgress = await bdJson(['list', '--status', 'in_progress'])
+  const ready = await bdJson(['ready', '--limit', '5'])
 
-    return {id, is_new: true}
-  },
+  // No in-progress issues
+  if (inProgress.length === 0) {
+    if (args.user_request) {
+      const title = args.user_request.trim()
+      if (title) {
+        const description = `USER REQUEST: ${args.user_request}`
+        const id = await createEpic(title, description)
+        const issue = await bdShowOne(id)
+        if (!issue) {
+          return {id, is_new: true}
+        }
+        const parsedNotes = parseNotes(issue.notes, issue['comments'])
+        if (parsedNotes) {
+          issue.notes = parsedNotes
+        } else {
+          delete issue.notes
+        }
+        issue.is_new = true
+        return issue
+      }
+    }
+    if (ready.length > 0) {
+      return {
+        askUser: {
+          question: 'Which task would you like to work on?',
+          header: 'Task',
+          options: ready.map(r => ({label: r.title, description: r.id})),
+          multiSelect: false
+        }
+      }
+    }
+    return {empty: true}
+  }
+
+  // Single in-progress, no new request - just continue
+  if (inProgress.length === 1 && !args.user_request) {
+    const issue = inProgress[0]
+    const result = {id: issue.id, title: issue.title, status: issue.status, type: issue.issue_type}
+
+    // For epics, include ready children so Claude knows what to work on
+    if (issue.issue_type === 'epic') {
+      const readyChildren = await getReadyChildren(issue.id)
+      if (readyChildren) {
+        result.ready_children = readyChildren
+      }
+    }
+    return result
+  }
+
+  // Multiple in-progress OR conflict with user_request - user must select
+  const questionText = args.user_request
+    ? 'New request - which task?'
+    : 'Which task to work on?'
+
+  // Find parent epic - only if unambiguous (single epic context)
+  const parentIds = [...new Set(inProgress.map(i => i.parent).filter(Boolean))]
+  const epicIds = inProgress.filter(i => i.issue_type === 'epic').map(i => i.id)
+  const parentEpic = parentIds.length === 1 ? parentIds[0]
+    : (parentIds.length === 0 && epicIds.length === 1 ? epicIds[0] : null)
+  return {
+    askUser: {
+      question: questionText,
+      header: 'Task',
+      options: [
+        ...inProgress.map(i => ({label: i.title, description: i.id})),
+        ...(parentEpic ? [{label: 'Create sub-task', description: `Under ${parentEpic}`}] : []),
+        {label: 'Start new task', description: 'Create a new epic'}
+      ],
+      multiSelect: false
+    }
+  }
+}
+
+const toolHandlers = {
+  task_status: handleTaskStatus,
+  task_start: (args) => handleTaskStatus(args, {resume: true}),
 
   task_progress: async (args) => {
     const issue = await bdShowOne(args.id)

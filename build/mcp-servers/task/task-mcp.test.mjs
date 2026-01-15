@@ -146,45 +146,35 @@ describe('task MCP integration', {timeout: 30000}, () => {
       assert.deepEqual(result, {empty: true})
     })
 
-    it('returns user_request when provided and no in-progress issues', async () => {
+    it('creates epic when user_request provided and no in-progress issues', async () => {
       const result = await client.callTool('task_status', {user_request: 'test task'})
-      assert.deepEqual(result, {user_request: 'test task'})
+      assert.ok(result.id, 'should return id')
+      assert.ok(result.title === 'test task')
+      assert.ok(result.status === 'in_progress')
+      assert.ok(result.is_new === true)
     })
   })
 
-  describe('task_epic', () => {
-    it('creates new epic', async () => {
-      const result = await client.callTool('task_epic', {
-        title: 'Test Epic',
-        description: 'Test description'
-      })
-
+  describe('task_start', () => {
+    it('creates epic when user_request provided and no in-progress issues', async () => {
+      const result = await client.callTool('task_start', {user_request: 'start task'})
       assert.ok(result.id, 'should return id')
-      assert.equal(result.is_new, true)
+      assert.ok(result.title === 'start task')
+      assert.ok(result.status === 'in_progress')
+      assert.ok(result.is_new === true)
     })
 
-    it('resumes existing epic', async () => {
-      // Create epic first
-      const created = await client.callTool('task_epic', {
-        title: 'Resume Test',
-        description: 'Test'
-      })
+    it('returns issue for explicit id', async () => {
+      const epic = await client.callTool('task_start', {user_request: 'Start by id'})
 
-      // Close it via bd command
-      execSync(`bd close ${created.id} --reason "test"`, {cwd: testDir, stdio: 'pipe'})
-
-      // Resume it
-      const resumed = await client.callTool('task_epic', {resume: created.id})
-      assert.equal(resumed.id, created.id)
-      assert.equal(resumed.is_new, false)
+      const result = await client.callTool('task_start', {id: epic.id})
+      assert.ok(result.id === epic.id)
+      assert.ok(result.status === 'in_progress')
+      assert.ok(result.is_new === false)
     })
 
     it('resumes epic with ready_children', async () => {
-      // Create epic with sub-issues
-      const epic = await client.callTool('task_epic', {
-        title: 'Resume with Children',
-        description: 'Test'
-      })
+      const epic = await client.callTool('task_start', {user_request: 'Resume with Children'})
 
       await client.callTool('task_decompose', {
         epic_id: epic.id,
@@ -194,13 +184,11 @@ describe('task MCP integration', {timeout: 30000}, () => {
         ]
       })
 
-      // Close epic
       execSync(`bd close ${epic.id} --reason "test"`, {cwd: testDir, stdio: 'pipe'})
 
-      // Resume it - should include ready_children
-      const resumed = await client.callTool('task_epic', {resume: epic.id})
-      assert.equal(resumed.id, epic.id)
-      assert.equal(resumed.is_new, false)
+      const resumed = await client.callTool('task_start', {id: epic.id})
+      assert.ok(resumed.id === epic.id)
+      assert.ok(resumed.is_new === false)
       assert.ok(resumed.ready_children, 'should have ready_children')
       assert.equal(resumed.ready_children.length, 2)
     })
@@ -208,10 +196,7 @@ describe('task MCP integration', {timeout: 30000}, () => {
 
   describe('task_status with in-progress epic', () => {
     it('returns single in-progress issue', async () => {
-      const epic = await client.callTool('task_epic', {
-        title: 'In Progress Epic',
-        description: 'Test'
-      })
+      const epic = await client.callTool('task_start', {user_request: 'In Progress Epic'})
 
       const status = await client.callTool('task_status', {})
       assert.equal(status.id, epic.id)
@@ -219,10 +204,7 @@ describe('task MCP integration', {timeout: 30000}, () => {
     })
 
     it('shows Create sub-task option for single epic', async () => {
-      await client.callTool('task_epic', {
-        title: 'Parent Epic',
-        description: 'Test'
-      })
+      await client.callTool('task_start', {user_request: 'Parent Epic'})
 
       const status = await client.callTool('task_status', {user_request: 'new task'})
       assert.ok(status.askUser, 'should return askUser')
@@ -233,10 +215,7 @@ describe('task MCP integration', {timeout: 30000}, () => {
     })
 
     it('returns ready_children for epic with decomposed sub-issues', async () => {
-      const epic = await client.callTool('task_epic', {
-        title: 'Epic with children',
-        description: 'Test'
-      })
+      const epic = await client.callTool('task_start', {user_request: 'Epic with children'})
 
       await client.callTool('task_decompose', {
         epic_id: epic.id,
@@ -255,10 +234,7 @@ describe('task MCP integration', {timeout: 30000}, () => {
 
   describe('task_decompose', () => {
     it('creates sub-issues under epic', async () => {
-      const epic = await client.callTool('task_epic', {
-        title: 'Decompose Test',
-        description: 'Epic to decompose'
-      })
+      const epic = await client.callTool('task_start', {user_request: 'Decompose Test'})
 
       const result = await client.callTool('task_decompose', {
         epic_id: epic.id,
@@ -273,10 +249,7 @@ describe('task MCP integration', {timeout: 30000}, () => {
     })
 
     it('can mark a child in progress on create', async () => {
-      const epic = await client.callTool('task_epic', {
-        title: 'Decompose Start Test',
-        description: 'Epic to decompose'
-      })
+      const epic = await client.callTool('task_start', {user_request: 'Decompose Start Test'})
 
       const result = await client.callTool('task_decompose', {
         epic_id: epic.id,
@@ -297,10 +270,7 @@ describe('task MCP integration', {timeout: 30000}, () => {
 
   describe('task_progress', () => {
     it('adds findings and decisions', async () => {
-      const epic = await client.callTool('task_epic', {
-        title: 'Progress Test',
-        description: 'Test'
-      })
+      const epic = await client.callTool('task_start', {user_request: 'Progress Test'})
 
       const result = await client.callTool('task_progress', {
         id: epic.id,
@@ -320,10 +290,7 @@ describe('task MCP integration', {timeout: 30000}, () => {
 
   describe('task_done', () => {
     it('closes epic with review prompt', async () => {
-      const epic = await client.callTool('task_epic', {
-        title: 'Close Test',
-        description: 'Test'
-      })
+      const epic = await client.callTool('task_start', {user_request: 'Close Test'})
 
       // First call should prompt for review (epics need review)
       const first = await client.callTool('task_done', {
@@ -361,10 +328,7 @@ describe('task MCP integration', {timeout: 30000}, () => {
   describe('sub-task option ambiguity', () => {
     it('hides sub-task option when multiple epics in progress', async () => {
       // Create first epic
-      await client.callTool('task_epic', {
-        title: 'Epic 1',
-        description: 'First epic'
-      })
+      await client.callTool('task_start', {user_request: 'Epic 1'})
 
       // Create second epic (also becomes in_progress)
       const epic2Id = execSync(
