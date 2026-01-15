@@ -19,7 +19,7 @@ jvm_library(
   name = "test_test_lib",
   module_name = "fleet.util.codepoints.test",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonTest/**/*.kt", "srcCommonTest/**/*.java", "srcCommonTest/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
   kotlinc_opts = ":custom_test",
   deps = [
     "//fleet/util/codepoints",
