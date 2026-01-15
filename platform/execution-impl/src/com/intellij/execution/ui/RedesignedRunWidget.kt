@@ -22,7 +22,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.actionSystem.impl.PopupShowingTimeTracker
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.components.Service
@@ -284,7 +284,7 @@ abstract class TogglePopupAction : ToggleAction {
     val component = e.inputEvent?.component as? JComponent ?: return
     val start = IdeEventQueue.getInstance().popupTriggerTime
     val popup = createPopup(e) ?: return
-    Utils.showPopupElapsedMillisIfConfigured(start, popup.content)
+    PopupShowingTimeTracker.showElapsedMillisIfConfigured(start, popup)
     popup.showUnderneathOf(component)
   }
 

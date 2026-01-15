@@ -116,7 +116,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
         throw new IllegalArgumentException("component must be shown on the screen (" + component + ")");
       }
       myPopupTriggeredNanos = IdeEventQueue.getInstance().getPopupTriggerTime();
-      Utils.showPopupElapsedMillisIfConfigured(myPopupTriggeredNanos, this);
+      PopupShowingTimeTracker.showElapsedMillisIfConfigured(myPopupTriggeredNanos, this);
 
       int x2 = Math.max(0, Math.min(x, component.getWidth() - 1)); // fit x into [0, width-1]
       int y2 = Math.max(0, Math.min(y, component.getHeight() - 1)); // fit y into [0, height-1]

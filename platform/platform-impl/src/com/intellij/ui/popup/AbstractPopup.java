@@ -87,7 +87,7 @@ import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 
-public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup {
+public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup, UserDataHolder {
   public static final @NonNls String SHOW_HINTS = "ShowHints";
 
   // Popup size stored with DimensionService is null first time.
@@ -244,6 +244,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   private volatile State myState = State.NEW;
   private long myOpeningTime;
+
+  private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   void setNormalWindowLevel(boolean normalWindowLevel) {
     myNormalWindowLevel = normalWindowLevel;
@@ -2994,5 +2996,16 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   private static boolean shouldUseTrueWaylandPopups() {
     return StartupUiUtil.isWaylandToolkit() && Registry.is("wayland.true.popups", false);
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    myUserDataHolder.putUserData(key, value);
+  }
+
+  @Override
+  @Nullable
+  public <T> T getUserData(@NotNull Key<T> key) {
+    return myUserDataHolder.getUserData(key);
   }
 }

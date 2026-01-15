@@ -10,15 +10,11 @@ import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.installThreadContext
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.impl.DataValidators
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionGroupExpanded
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAligned
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAlignedInGroup
@@ -64,7 +60,6 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
-import com.intellij.util.ui.update.UiNotifyConnector
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
@@ -81,7 +76,10 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.concurrency.asCancellablePromise
 import java.awt.*
-import java.awt.event.*
+import java.awt.event.FocusEvent
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
@@ -913,34 +911,6 @@ object Utils {
     }
     while (cur != null)
     return true
-  }
-
-  @JvmStatic
-  fun showPopupElapsedMillisIfConfigured(startNanos: Long, component: Component) {
-    if (startNanos <= 0 || !Registry.`is`("ide.diagnostics.show.context.menu.invocation.time")) {
-      return
-    }
-
-    UiNotifyConnector.doWhenFirstShown(component, isDeferred = false) {
-      UIUtil.getWindow(component)?.addWindowListener(object : WindowAdapter() {
-        override fun windowOpened(e: WindowEvent) {
-          val time = TimeoutUtil.getDurationMillis(startNanos)
-
-          System.getProperty("perf.test.popup.name")?.let { popupName ->
-            val startTimeUnixNano = startNanos + StartUpMeasurer.getStartTimeUnixNanoDiff()
-            getTracer(false).spanBuilder("popupShown#$popupName")
-              .setStartTimestamp(startTimeUnixNano, TimeUnit.NANOSECONDS)
-              .startSpan()
-              .end(startTimeUnixNano + TimeUnit.MILLISECONDS.toNanos(time), TimeUnit.NANOSECONDS)
-          }
-
-          e.window.removeWindowListener(this)
-          @Suppress("DEPRECATION", "removal", "HardCodedStringLiteral")
-          Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Popup invocation took $time ms",
-                       NotificationType.INFORMATION).notify(null)
-        }
-      })
-    }
   }
 
   /**

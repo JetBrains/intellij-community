@@ -118,13 +118,13 @@ open class LocalPopupComponentFactory: PopupComponentFactory {
       val window = window
       if (window != null) {
         fixFlickering(window, false)
+        if (window is JWindow) {
+          window.rootPane.putClientProperty(JBPopup.KEY, myJBPopup)
+        }
       }
       popup.show()
       if (window != null) {
         fixFlickering(window, true)
-        if (window is JWindow) {
-          window.rootPane.putClientProperty(JBPopup.KEY, myJBPopup)
-        }
       }
     }
 

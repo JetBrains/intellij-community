@@ -13467,6 +13467,7 @@ c:com.intellij.ui.popup.AbstractPopup
 - com.intellij.ide.ui.ScreenAreaConsumer
 - com.intellij.openapi.ui.popup.AlignedPopup
 - com.intellij.openapi.ui.popup.JBPopup
+- com.intellij.openapi.util.UserDataHolder
 - sf:FIRST_TIME_SIZE:java.lang.String
 - sf:SHOW_HINTS:java.lang.String
 - p:myOk:Z
@@ -13515,6 +13516,7 @@ c:com.intellij.ui.popup.AbstractPopup
 - getSizeForPositioning():java.awt.Dimension
 - getTitle():com.intellij.ui.CaptionPanel
 - getUnderlyingWindow():java.awt.Window
+- getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - getUserData(java.lang.Class):java.lang.Object
 - p:init(com.intellij.openapi.project.Project,javax.swing.JComponent,javax.swing.JComponent,Z,Z,Z,java.lang.String,Z,java.lang.String,com.intellij.openapi.util.Computable,Z,java.util.Set,Z,com.intellij.ui.ActiveComponent,com.intellij.openapi.ui.popup.IconButton,com.intellij.openapi.ui.popup.MouseChecker,Z,com.intellij.openapi.ui.popup.ActiveIcon,Z,Z,Z,java.awt.Dimension,F,com.intellij.openapi.ui.popup.MaskProvider,Z,Z,java.awt.Component[],java.lang.String,I,Z,java.util.List,java.awt.Component,com.intellij.util.Processor,Z,Z,Z,java.awt.Color,Z,com.intellij.util.BooleanFunction):com.intellij.ui.popup.AbstractPopup
 - p:isAdVisible():Z
@@ -13531,6 +13533,7 @@ c:com.intellij.ui.popup.AbstractPopup
 - notifyListeners():V
 - p:onSpeedSearchPatternChanged():V
 - pack(Z,Z):V
+- putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
 - removeListener(com.intellij.openapi.ui.popup.JBPopupListener):V
 - pf:requestFocus():Z
 - setAdText(java.lang.String):V
