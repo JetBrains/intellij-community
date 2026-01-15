@@ -4153,6 +4153,7 @@
         "in_memory_rebase_result" : [ "{enum:SUCCESS|CONFLICT|CANCELED|ERROR}" ],
         "is_authentication_failed" : [ "{enum#boolean}" ],
         "pick_entries_count" : [ "{regexp#integer}" ],
+        "place" : [ "{util#place}" ],
         "push_new_branch" : [ "{enum#boolean}" ],
         "push_result" : [ "{enum:SUCCESS|NEW_BRANCH|UP_TO_DATE|FORCED|REJECTED_NO_FF|REJECTED_STALE_INFO|REJECTED_OTHER|ERROR|NOT_PUSHED}" ],
         "push_set_upsteram" : [ "{enum#boolean}" ],
@@ -4161,10 +4162,12 @@
         "reword_entries_count" : [ "{regexp#integer}" ],
         "squash_entries_count" : [ "{regexp#integer}" ],
         "update-ref_entries_count" : [ "{regexp#integer}" ],
-        "was_successful" : [ "{enum#boolean}" ]
+        "was_successful" : [ "{enum#boolean}" ],
+        "with_existing_branch" : [ "{enum#boolean}" ],
+        "with_provided_branch" : [ "{enum#boolean}" ]
       },
       "enums" : {
-        "__event_id" : [ "push.started", "push.finished", "update.force.pushed.finished", "update.force.pushed.started", "rebase.interactive.log.validation_error", "in.memory.interactive.rebase.started", "cant.rebase.using.log", "rebase.start.using.log", "in.memory.interactive.rebase.finished", "interactive.rebase.finished", "interactive.rebase.started" ]
+        "__event_id" : [ "push.started", "push.finished", "update.force.pushed.finished", "update.force.pushed.started", "rebase.interactive.log.validation_error", "in.memory.interactive.rebase.started", "cant.rebase.using.log", "rebase.start.using.log", "in.memory.interactive.rebase.finished", "interactive.rebase.finished", "interactive.rebase.started", "create.worktree.started", "create.worktree.worktree.project.was.opened.after.creation", "create.worktree.finished", "create.worktree.worktree.creation.dialog.exited.with.ok" ]
       }
     }
   }, {
@@ -15346,5 +15349,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6641"
+  "version" : "6645"
 }
