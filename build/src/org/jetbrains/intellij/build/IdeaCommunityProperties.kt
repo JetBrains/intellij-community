@@ -23,6 +23,7 @@ val MAVEN_ARTIFACTS_ADDITIONAL_MODULES: PersistentList<String> = persistentListO
   "intellij.platform.debugger.testFramework",
   "intellij.platform.vcs.testFramework",
   "intellij.platform.externalSystem.testFramework",
+  "intellij.platform.uast.testFramework",
   "intellij.maven.testFramework",
   "intellij.tools.reproducibleBuilds.diff",
   "intellij.space.java.jps",
