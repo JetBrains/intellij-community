@@ -63,7 +63,8 @@ import com.intellij.tools.ide.performanceTesting.commands.waitForCodeAnalysisFin
 
  */
 object CodeTypingCommandGenerator {
-  private const val CODE_TYPING_SPAN_NAME = "codeTyping"
+  const val CODE_TYPING_SPAN_NAME: String = "codeTyping"
+
   private const val CODE_TYPING_WARMUP_SPAN_NAME = "${CODE_TYPING_SPAN_NAME}_warmup"
 
   /**
