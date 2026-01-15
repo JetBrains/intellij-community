@@ -117,29 +117,31 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
     // We want to send good matches first, and only send others later if didn't find enough
     val suboptimalMatches = mutableListOf<VirtualFile>()
 
-    FileBasedIndex.getInstance().iterateNonIndexableFiles(project, null) { file ->
-      progressIndicator.checkCanceled()
-
+    fun processFile(file: VirtualFile, alreadyInReadAction: Boolean): Boolean {
       val nonIndexableRoot = nonIndexableRoots.firstOrNull { root -> file.path.startsWith(root) } ?: ""
       val pathFromNonIndexableRoot = file.path.removePrefix(nonIndexableRoot).removePrefix("/")
 
-      if (pathMatcher.matches(pathFromNonIndexableRoot)) {
-        val matchingDegree = nameMatcher.matchingDegree(file.name)
-        if (matchingDegree > 0) {
-          val psiItem = PsiManager.getInstance(project).getPsiFileSystemItem(file) ?: return@iterateNonIndexableFiles true
-          val itemDescriptor = FoundItemDescriptor<Any>(psiItem, matchingDegree)
-          ReadAction.computeCancellable<Boolean, Throwable> {
-            consumer.process(itemDescriptor)
-          }
-        }
-        else {
-          suboptimalMatches.add(file)
-          true
-        }
+      if (!pathMatcher.matches(pathFromNonIndexableRoot)) {
+        return true // file doesn't match pattern, skip
       }
-      else {
-        true
+
+      val matchingDegree = nameMatcher.matchingDegree(file.name)
+      if (matchingDegree <= 0) {
+        suboptimalMatches.add(file)
+        return true // suboptimal match, process later, after "optimal" matches
       }
+
+      val psiItem = PsiManager.getInstance(project).getPsiFileSystemItem(file) ?: return true
+      val itemDescriptor = FoundItemDescriptor<Any>(psiItem, matchingDegree)
+      return when {
+        alreadyInReadAction -> consumer.process(itemDescriptor)
+        else -> ReadAction.computeCancellable<Boolean, Throwable> { consumer.process(itemDescriptor) }
+      }
+    }
+
+    FileBasedIndex.getInstance().iterateNonIndexableFiles(project, null) { file ->
+      progressIndicator.checkCanceled()
+      processFile(file = file, alreadyInReadAction = false)
     }
 
     if (suboptimalMatches.isEmpty() || namePattern.length < 2) return
