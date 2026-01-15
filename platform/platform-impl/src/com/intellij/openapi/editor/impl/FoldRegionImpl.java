@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,15 +48,18 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   }
 
   @Override
+  @RequiresEdt
   public void setExpanded(boolean expanded) {
     setExpanded(expanded, true);
   }
 
+  @RequiresEdt
   void setExpanded(boolean expanded, boolean notify) {
     FoldingModelImpl foldingModel = myEditor.getFoldingModel();
     if (myGroup == null) {
       doSetExpanded(expanded, foldingModel, this, notify);
-    } else {
+    }
+    else {
       for (final FoldRegion region : foldingModel.getGroupedRegions(myGroup)) {
         doSetExpanded(expanded, foldingModel, region, notify || region != this);
         // There is a possible case that we can't change expanded status of particular fold region (e.g. we can't collapse
@@ -73,6 +77,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     }
   }
 
+  @RequiresEdt
   private static void doSetExpanded(boolean expanded, FoldingModelImpl foldingModel, FoldRegion region, boolean notify) {
     if (expanded) {
       foldingModel.expandFoldRegion(region, notify);

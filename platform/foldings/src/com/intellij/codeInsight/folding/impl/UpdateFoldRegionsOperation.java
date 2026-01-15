@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,6 +114,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
     }
   }
 
+  @RequiresEdt
   private @NotNull List<FoldRegion> addNewRegions(@NotNull EditorFoldingInfo info,
                                                   @NotNull FoldingModelEx foldingModel,
                                                   @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap,
@@ -182,6 +184,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
     return newRegions;
   }
 
+  @RequiresEdt
   private static @Nullable FoldRegion mergeWithZombie(@NotNull FoldingModelEx foldingModel,
                                                       @NotNull TextRange range,
                                                       @NotNull String placeholder,

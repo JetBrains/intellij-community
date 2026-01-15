@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,7 @@ public interface FoldingModel {
    * intersects with another existing region)
    */
   @Nullable
+  @RequiresEdt
   FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText);
 
   /**
@@ -46,6 +48,7 @@ public interface FoldingModel {
    *
    * @param region the region to remove.
    */
+  @RequiresEdt
   void removeFoldRegion(@NotNull FoldRegion region);
 
   /**
@@ -92,6 +95,7 @@ public interface FoldingModel {
    *
    * @param operation the operation to execute.
    */
+  @RequiresEdt
   default void runBatchFoldingOperation(@NotNull Runnable operation) {
     runBatchFoldingOperation(operation, true, true);
   }
@@ -110,6 +114,7 @@ public interface FoldingModel {
    *                                  caret position will remain unchanged (if caret is not visible at operation start, top left corner
    *                                  of editor will be used as an anchor instead). If {@code false}, no scrolling adjustment will be done.
    */
+  @RequiresEdt
   void runBatchFoldingOperation(@NotNull Runnable operation, boolean allowMovingCaret, boolean keepRelativeCaretPosition);
 
   /**

@@ -20,6 +20,7 @@ import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IntPair;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -84,11 +85,13 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
+  @RequiresEdt
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
     return createFoldRegion(startOffset, endOffset, placeholderText, null, false);
   }
 
   @Override
+  @RequiresEdt
   public @Nullable FoldRegion createFoldRegion(
     int startOffset,
     int endOffset,
@@ -164,6 +167,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
+  @RequiresEdt
   public void removeFoldRegion(@NotNull FoldRegion region) {
     assertIsDispatchThreadForEditor();
     assertOurRegion(region);
@@ -256,6 +260,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
+  @RequiresEdt
   public void runBatchFoldingOperation(@NotNull Runnable operation, boolean allowMovingCaret, boolean keepRelativeCaretPosition) {
     runBatchFoldingOperation(operation, !allowMovingCaret, true, keepRelativeCaretPosition);
   }
@@ -425,6 +430,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     onFoldRegionStateChange(region);
   }
 
+  @RequiresEdt
   void runBatchFoldingOperation(@NotNull Runnable operation,
                                 boolean dontCollapseCaret,
                                 boolean moveCaret,
@@ -476,6 +482,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
            p.x >= myEditor.getContentComponent().getInsets().left + ((CustomFoldRegion)region).getWidthInPixels() ? null : region;
   }
 
+  @RequiresEdt
   void removeRegionFromTree(@NotNull FoldRegionImpl region) {
     ThreadingAssertions.assertEventDispatchThread();
     if (!myEditor.getFoldingModel().isInBatchFoldingOperation()) {
@@ -491,6 +498,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     myRegionTree.dispose(myEditor.getDocument());
   }
 
+  @RequiresEdt
   void expandFoldRegion(@NotNull FoldRegion region, boolean notify) {
     assertIsDispatchThreadForEditor();
     if (region.isExpanded() || region.shouldNeverExpand()) return;
@@ -517,9 +525,12 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     onFoldProcessingStart();
     myExpansionCounter.incrementAndGet();
     ((FoldRegionImpl) region).setExpandedInternal(true);
-    if (notify) onFoldRegionStateChange(region);
+    if (notify) {
+      onFoldRegionStateChange(region);
+    }
   }
 
+  @RequiresEdt
   void collapseFoldRegion(@NotNull FoldRegion region, boolean notify) {
     assertIsDispatchThreadForEditor();
     if (!region.isExpanded()) return;
