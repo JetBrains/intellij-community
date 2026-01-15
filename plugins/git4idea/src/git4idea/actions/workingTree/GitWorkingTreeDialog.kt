@@ -193,6 +193,7 @@ internal class GitWorkingTreeDialog(
       precomputePathValidation()
     }
     projectName.afterChange {
+      updateParentPathCellComment()
       precomputePathValidation()
       if (hasErrors(parentPathCell.component.textField)) {
         initValidation()
@@ -246,7 +247,17 @@ internal class GitWorkingTreeDialog(
   }
 
   private fun updateParentPathCellComment() {
-    parentPathCell.comment?.text = GitBundle.message("working.tree.dialog.label.location.comment", getPresentablePath(parentPath.get()))
+    val parent = parentPath.get()
+    val child = projectName.get()
+    val text = when {
+      parent.isBlank() -> ""
+      child.isBlank() -> GitBundle.message("working.tree.dialog.label.location.comment", getPresentablePath(parent))
+      else -> {
+        val path = getPresentablePath("${parent}/${child}")
+        GitBundle.message("working.tree.dialog.label.location.comment", path)
+      }
+    }
+    parentPathCell.comment?.text = text
   }
 
   private class BranchWithTreeCellRenderer(project: Project, repository: GitRepository) :
