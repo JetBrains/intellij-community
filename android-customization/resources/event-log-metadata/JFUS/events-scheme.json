@@ -35,6 +35,8 @@
       "event_id" : [ "{enum:import.succeeded|import.started|import.failed}" ],
       "event_data" : {
         "exceptionClass" : [ "{util#class_name}" ],
+        "exceptionClasses" : [ "{util#class_name}" ],
+        "gradleVersion" : [ "{regexp#version}" ],
         "platform" : [ "{enum:Android|Jvm|Ios|WasmJs|Js|Ktor|Native|Unknown}" ],
         "plugin" : [ "{util#plugin}" ],
         "plugin_type" : [ "{util#plugin_type}" ],
@@ -49,8 +51,9 @@
       "from" : "1"
     } ],
     "rules" : {
-      "event_id" : [ "{enum:kmp.usage.checked}" ],
+      "event_id" : [ "{enum:kmp.usage.checked|project.structure.checked}" ],
       "event_data" : {
+        "isNewProjectStructure" : [ "{enum#boolean}" ],
         "platform" : [ "{enum:Android|Jvm|Ios|WasmJs|Js|Ktor|Native|Unknown}" ],
         "target" : [ "{enum:Jvm|Desktop|WasmJs|Wasm|JS|Native|AndroidX64|AndroidX86|AndroidArm32|AndroidArm64|IosArm64|IosX64|IosSimulatorArm64|WatchosArm32|WatchosArm64|WatchosX64|WatchosSimulatorArm64|WatchosDeviceArm64|TvosArm64|TvosX64|TvosSimulatorArm64|LinuxX64|MingwX64|MacosX64|MacosArm64|LinuxArm64|Unknown}" ]
       }
@@ -319,5 +322,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6280"
+  "version" : "6648"
 }
