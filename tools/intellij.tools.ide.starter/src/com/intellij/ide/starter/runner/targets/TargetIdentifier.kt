@@ -65,4 +65,4 @@ fun TargetIdentifier.isWsl(): Boolean = current is WSL
 @Repeatable
 annotation class TargetDockerConfig(val dockerImage: String)
 
-const val TARGET_DEFAULT_DOCKER_IMAGE = "ubuntu:22.04"
+const val TARGET_DEFAULT_DOCKER_IMAGE = "registry.jetbrains.team/p/ij/docker-hub/ubuntu:22.04"
