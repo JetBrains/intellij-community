@@ -140,8 +140,11 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
       }
     }
 
-    if (Registry.`is`("se.enable.non.indexable.files.use.bfs")) {
-      val filesDeque = ReadAction.computeCancellable<FilesDeque, Throwable> { FilesDeque.nonIndexableDequeue(project, requireReadAction = true) }
+    val useBfs = Registry.`is`("se.enable.non.indexable.files.use.bfs")
+    val useBfsUnderOneReadAction = !Registry.`is`("se.enable.non.indexable.files.use.bfs.blocking.read.actions")
+    if (useBfs && useBfsUnderOneReadAction) {
+      // BFS under one big cancellable read action
+      val filesDeque = ReadAction.computeCancellable<FilesDeque, Throwable> { FilesDeque.nonIndexableDequeue(project, true) }
       ReadAction.nonBlocking<Unit> {
         while (true) {
           progressIndicator.checkCanceled()
@@ -150,7 +153,17 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
         }
       }.executeSynchronously()
     }
+    else if (useBfs) {
+      // BFS with many small blocking read actions
+      val filesDeque = ReadAction.computeCancellable<FilesDeque, Throwable> { FilesDeque.nonIndexableDequeue(project, false) }
+      while (true) {
+        progressIndicator.checkCanceled()
+        val file = filesDeque.computeNext()
+        if (file == null || !processFile(file, alreadyInReadAction = false)) break
+      }
+    }
     else {
+      // DFS with many small blocking read actions
       FileBasedIndex.getInstance().iterateNonIndexableFiles(project, null) { file ->
         progressIndicator.checkCanceled()
         processFile(file = file, alreadyInReadAction = false)
