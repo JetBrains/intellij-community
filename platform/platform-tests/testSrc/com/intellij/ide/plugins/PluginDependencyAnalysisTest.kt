@@ -870,10 +870,9 @@ class PluginDependencyAnalysisTest {
       PluginDependencyAnalysis.getRequiredTransitiveModules(
         initContext,
         listOf(fooPlugin),
-        ambiguousPluginSet
-      ) { node, dep ->
-        unresolvedDeps.add(node to dep)
-      }
+        ambiguousPluginSet,
+        unresolvedDeps
+      )
 
       assertThat(unresolvedDeps).hasSize(1)
       val (node, dep) = unresolvedDeps[0]
@@ -901,10 +900,9 @@ class PluginDependencyAnalysisTest {
       PluginDependencyAnalysis.getRequiredTransitiveModules(
         initContext,
         listOf(fooPlugin),
-        ambiguousPluginSet
-      ) { node, dep ->
-        unresolvedDeps.add(node to dep)
-      }
+        ambiguousPluginSet,
+        unresolvedDeps
+      )
 
       assertThat(unresolvedDeps).hasSize(1)
       val (node, dep) = unresolvedDeps[0]
@@ -934,10 +932,9 @@ class PluginDependencyAnalysisTest {
       PluginDependencyAnalysis.getRequiredTransitiveModules(
         initContext,
         listOf(fooPlugin),
-        ambiguousPluginSet
-      ) { node, dep ->
-        unresolvedDeps.add(node to dep)
-      }
+        ambiguousPluginSet,
+        unresolvedDeps
+      )
 
       assertThat(unresolvedDeps).isEmpty()
     }
@@ -963,10 +960,9 @@ class PluginDependencyAnalysisTest {
       PluginDependencyAnalysis.getRequiredTransitiveModules(
         initContext,
         listOf(fooPlugin),
-        ambiguousPluginSet
-      ) { node, dep ->
-        unresolvedDeps.add(node to dep)
-      }
+        ambiguousPluginSet,
+        unresolvedDeps
+      )
 
       assertThat(unresolvedDeps).hasSize(3)
       assertThat(unresolvedDeps.all { it.first.pluginId.idString == "foo" }).isTrue()
@@ -1004,10 +1000,9 @@ class PluginDependencyAnalysisTest {
       PluginDependencyAnalysis.getRequiredTransitiveModules(
         initContext,
         listOf(fooPlugin),
-        ambiguousPluginSet
-      ) { node, dep ->
-        unresolvedDeps.add(node to dep)
-      }
+        ambiguousPluginSet,
+        unresolvedDeps
+      )
 
       // The unresolved dependency should be reported from bar (not foo)
       assertThat(unresolvedDeps).hasSize(1)
