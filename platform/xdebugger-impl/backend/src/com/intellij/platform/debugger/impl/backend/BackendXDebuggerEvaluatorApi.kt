@@ -1,50 +1,49 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.rpc.DocumentId
 import com.intellij.ide.rpc.document
 import com.intellij.ide.ui.icons.rpcId
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.evaluate.XEvaluationException
 import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
+import com.intellij.xdebugger.impl.evaluate.XInvalidExpressionException
+import com.intellij.xdebugger.impl.evaluate.evaluateSuspend
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.models.*
 import com.intellij.xdebugger.impl.rpc.sourcePosition
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackWithOrigin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import org.jetbrains.concurrency.asDeferred
 
 internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   override suspend fun evaluate(frameId: XStackFrameId, expression: String, position: XSourcePositionDto?, origin: XEvaluationOrigin): TimeoutSafeResult<XEvaluationResult> {
-    return evaluate(frameId, origin) { evaluator, callback ->
-      evaluator.evaluate(expression, callback, position?.sourcePosition())
+    return evaluate(frameId) { evaluator ->
+      evaluator.evaluateSuspend(expression, position?.sourcePosition(), origin)
     }
   }
 
   override suspend fun evaluateXExpression(frameId: XStackFrameId, expression: XExpressionDto, position: XSourcePositionDto?, origin: XEvaluationOrigin): TimeoutSafeResult<XEvaluationResult> {
-    return evaluate(frameId, origin) { evaluator, callback ->
-      evaluator.evaluate(expression.xExpression(), callback, position?.sourcePosition())
+    return evaluate(frameId) { evaluator ->
+      evaluator.evaluateSuspend(expression.xExpression(), position?.sourcePosition(), origin)
     }
   }
 
   override suspend fun evaluateInDocument(frameId: XStackFrameId, documentId: DocumentId, offset: Int, type: ValueHintType, origin: XEvaluationOrigin): TimeoutSafeResult<XEvaluationResult> {
-    return evaluate(frameId, origin) { evaluator, callback ->
+    return evaluate(frameId) { evaluator ->
       val document = documentId.document()!!
       if (evaluator is XDebuggerDocumentOffsetEvaluator) {
-        evaluator.evaluate(document, offset, type, callback)
+        evaluator.evaluateSuspend(document, offset, type, origin)
       }
       else {
-        callback.errorOccurred(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"))
+        throw XEvaluationException(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"))
       }
     }
   }
@@ -60,43 +59,31 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
     }.asDeferred().await()
   }
 
-  private suspend fun evaluate(
+  private fun evaluate(
     frameId: XStackFrameId,
-    origin: XEvaluationOrigin,
-    evaluateFun: suspend (XDebuggerEvaluator, XEvaluationCallback) -> Unit,
+    evaluateFun: suspend (XDebuggerEvaluator) -> XValue,
   ): TimeoutSafeResult<XEvaluationResult> {
     val stackFrameModel = frameId.findValue()
                           ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
     val evaluator = stackFrameModel.stackFrame.evaluator
                     ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
     val session = stackFrameModel.session
-    val evaluationResult = CompletableDeferred<XEvaluationResult>()
     val evaluationCoroutineScope = session.coroutineScope
 
-    val callback = object : XEvaluationCallback, XEvaluationCallbackWithOrigin {
-      override fun getOrigin() = origin
-
-      override fun evaluated(result: XValue) {
-        evaluationCoroutineScope.launch {
-          val xValueModel = newXValueModel(stackFrameModel, result, session)
-          val xValueDto = xValueModel.toXValueDtoWithPresentation()
-          evaluationResult.complete(XEvaluationResult.Evaluated(xValueDto))
-        }
+    return evaluationCoroutineScope.async {
+      try {
+        val xValue = evaluateFun(evaluator)
+        val xValueModel = newXValueModel(stackFrameModel, xValue, session)
+        val xValueDto = xValueModel.toXValueDtoWithPresentation()
+        XEvaluationResult.Evaluated(xValueDto)
       }
-
-      override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-        evaluationResult.complete(XEvaluationResult.EvaluationError(errorMessage))
+      catch (e: XInvalidExpressionException) {
+        XEvaluationResult.InvalidExpression(e.error)
       }
-
-      override fun invalidExpression(error: @NlsContexts.DialogMessage String) {
-        evaluationResult.complete(XEvaluationResult.InvalidExpression(error))
+      catch (e: XEvaluationException) {
+        XEvaluationResult.EvaluationError(e.errorMessage)
       }
     }
-    withContext(Dispatchers.EDT) {
-      evaluateFun(evaluator, callback)
-    }
-
-    return evaluationResult
   }
 }
 
