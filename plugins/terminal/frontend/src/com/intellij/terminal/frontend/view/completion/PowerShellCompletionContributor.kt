@@ -3,14 +3,17 @@ package com.intellij.terminal.frontend.view.completion
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
 import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionItem
+import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionResultType
 import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionResultWithContext
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
 import org.jetbrains.plugins.terminal.session.ShellName
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellBasedCompletionListener
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
+import java.io.File
 import kotlin.coroutines.resume
 
 internal class PowerShellCompletionContributor : TerminalCommandCompletionContributor {
@@ -51,11 +54,8 @@ internal class PowerShellCompletionContributor : TerminalCommandCompletionContri
     }
 
     val prefix = findBestPrefix(typedPrefix, completionResult.matches)
-    val suggestions = completionResult.matches.map { item ->
-      ShellCompletionSuggestion(item.presentableText ?: item.value) {
-        displayName(item.presentableText ?: item.value)
-        insertValue(item.value)
-      }
+    val suggestions = completionResult.matches.map {
+      toShellSuggestion(it)
     }
 
     return TerminalCommandCompletionResult(suggestions, prefix)
@@ -96,6 +96,23 @@ internal class PowerShellCompletionContributor : TerminalCommandCompletionContri
     }
 
     return ""
+  }
+
+  private fun toShellSuggestion(item: PowerShellCompletionItem): ShellCompletionSuggestion {
+    var lookupString = item.presentableText ?: item.value
+    var insertValue = item.value
+
+    // PROVIDER_CONTAINER type is used for directory names.
+    // PowerShell provides them without a trailing file separator, so let's add it.
+    if (item.type == PowerShellCompletionResultType.PROVIDER_CONTAINER) {
+      val separator = File.separator
+      lookupString = if (lookupString.endsWith(separator)) lookupString else lookupString + separator
+      insertValue = if (insertValue.endsWith(separator)) insertValue else insertValue + separator
+    }
+
+    return ShellCompletionSuggestion(lookupString) {
+      insertValue(insertValue)
+    }
   }
 
   companion object {
