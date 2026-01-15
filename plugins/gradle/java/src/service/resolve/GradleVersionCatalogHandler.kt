@@ -66,7 +66,7 @@ fun getAccessorsForAllCatalogs(context: PsiElement) : Map<String, PsiClass> {
 fun isInVersionCatalog(element: PsiElement): Boolean {
   val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return false
   val versionCatalogFiles = getVersionCatalogFiles(module).values
-  val thisFile = element.containingFile?.virtualFile
+  val thisFile = element.containingFile?.virtualFile ?:return false
   return versionCatalogFiles.any { it == thisFile }
 }
 

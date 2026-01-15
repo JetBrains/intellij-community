@@ -56,7 +56,11 @@ internal object GradleVersionCatalogFixtures {
       withSettingsFile(gradleVersion) {
         includeBuild("includedBuild1")
       }
+      withSettingsFile(gradleVersion, "includedBuild1",) {
+        include("subproject1")
+      }
       withBuildFile(gradleVersion, "includedBuild1")
+      withBuildFile(gradleVersion, "includedBuild1/subproject1")
       withFile("includedBuild1/gradle/libs.versions.toml", "")
     }
 }

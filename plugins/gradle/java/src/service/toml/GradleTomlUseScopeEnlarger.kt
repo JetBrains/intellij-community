@@ -5,17 +5,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.UseScopeEnlarger
 import org.jetbrains.plugins.gradle.config.GradleBuildscriptSearchScope
-import org.jetbrains.plugins.gradle.service.resolve.getVersionCatalogFiles
+import org.jetbrains.plugins.gradle.service.resolve.isInVersionCatalog
 import org.toml.lang.psi.TomlElement
 
+/**
+ * Enables finding usages of TOML version catalog entries in subprojects.
+ */
 class GradleTomlUseScopeEnlarger : UseScopeEnlarger() {
   override fun getAdditionalUseScope(element: PsiElement): SearchScope? {
     if (element !is TomlElement) return null
-    val containingFile = element.containingFile?.virtualFile ?: return null
-    val versionCatalogFiles = getVersionCatalogFiles(element.project).values
-    if (containingFile !in versionCatalogFiles) {
-      return null
-    }
+    if (!isInVersionCatalog(element)) return null
     return GradleBuildscriptSearchScope(element.project)
   }
 }
