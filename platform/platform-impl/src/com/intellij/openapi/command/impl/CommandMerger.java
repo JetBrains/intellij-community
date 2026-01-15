@@ -64,7 +64,7 @@ public final class CommandMerger {
     return false;
   }
 
-  @Nullable UndoCommandFlushReason shouldFlush(@NotNull PerformedCommand performedCommand) {
+  @Nullable CommandMergerFlushReason shouldFlush(@NotNull PerformedCommand performedCommand) {
     if (isPartialForeignCommand(performedCommand)) {
       return null;
     }
@@ -97,7 +97,7 @@ public final class CommandMerger {
     return canMergeGroup ? null : createFlushReason("CHANGED_GROUP", performedCommand);
   }
 
-  @Nullable UndoableGroup formGroup(@NotNull UndoCommandFlushReason flushReason, int commandTimestamp) {
+  @Nullable UndoableGroup formGroup(@NotNull CommandMergerFlushReason flushReason, int commandTimestamp) {
     UndoableGroup group = !hasActions() ? null : createUndoableGroup(flushReason, commandTimestamp);
     reset();
     return group;
@@ -295,8 +295,8 @@ public final class CommandMerger {
     mergeConfirmationPolicy(performedCommand.confirmationPolicy());
   }
 
-  private @NotNull UndoCommandFlushReason createFlushReason(@NotNull String reason, @NotNull PerformedCommand performedCommand) {
-    return UndoCommandFlushReason.cannotMergeCommands(
+  private @NotNull CommandMergerFlushReason createFlushReason(@NotNull String reason, @NotNull PerformedCommand performedCommand) {
+    return CommandMergerFlushReason.cannotMergeCommands(
       reason,
       commandName,
       lastGroupId,
@@ -306,7 +306,7 @@ public final class CommandMerger {
     );
   }
 
-  private @NotNull UndoableGroup createUndoableGroup(@NotNull UndoCommandFlushReason flushReason, int commandTimestamp) {
+  private @NotNull UndoableGroup createUndoableGroup(@NotNull CommandMergerFlushReason flushReason, int commandTimestamp) {
     if (additionalAffectedDocuments.size() > 0) {
       DocumentReference[] refs = additionalAffectedDocuments.asCollection().toArray(DocumentReference.EMPTY_ARRAY);
       undoableActions.add(new MyEmptyUndoableAction(refs));

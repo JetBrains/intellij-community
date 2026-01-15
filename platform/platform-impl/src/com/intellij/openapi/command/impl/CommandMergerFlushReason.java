@@ -9,23 +9,22 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 
-record UndoCommandFlushReason(
+record CommandMergerFlushReason(
   @NotNull String reason,
   @Nullable Command currentCommand,
   @Nullable Command nextCommand
 ) {
-  static UndoCommandFlushReason CLEAR_STACKS = new UndoCommandFlushReason("CLEAR_STACKS");
-  static UndoCommandFlushReason CLEAR_QUEUE = new UndoCommandFlushReason("CLEAR_QUEUE");
-  static UndoCommandFlushReason GET_LAST_GROUP = new UndoCommandFlushReason("GET_LAST_GROUP");
-  static UndoCommandFlushReason MANAGER_FORCE = new UndoCommandFlushReason("MANAGER_FORCE");
-  static UndoCommandFlushReason UNDO = new UndoCommandFlushReason("UNDO");
-  static UndoCommandFlushReason REDO = new UndoCommandFlushReason("REDO");
+  static CommandMergerFlushReason CLEAR_STACKS = create("CLEAR_STACKS");
+  static CommandMergerFlushReason CLEAR_QUEUE = create("CLEAR_QUEUE");
+  static CommandMergerFlushReason GET_LAST_GROUP = create("GET_LAST_GROUP");
+  static CommandMergerFlushReason MANAGER_FORCE = create("MANAGER_FORCE");
+  static CommandMergerFlushReason UNDO = create("UNDO");
+  static CommandMergerFlushReason REDO = create("REDO");
 
-  static @NotNull UndoCommandFlushReason cannotMergeCommands(
+  static @NotNull CommandMergerFlushReason cannotMergeCommands(
     @NotNull String reason,
     @Nullable String currentCommandName,
     @Nullable Reference<Object> currentGroupId,
@@ -38,7 +37,7 @@ record UndoCommandFlushReason(
     Object nextGroupId = nextCommand.groupId();
     boolean isNextTransparent = nextCommand.isTransparent();
     boolean isNextGlobal = nextCommand.isGlobal();
-    return new UndoCommandFlushReason(
+    return new CommandMergerFlushReason(
       reason,
       new Command(
         null,
@@ -57,13 +56,13 @@ record UndoCommandFlushReason(
     );
   }
 
-  private UndoCommandFlushReason(@NotNull String reason) {
-    this(reason, null, null);
+  private static @NotNull CommandMergerFlushReason create(@NotNull String reason) {
+    return new CommandMergerFlushReason(reason, null, null);
   }
 
   @Override
   public String toString() {
-    if (SHORT_NAMES.contains(this)) {
+    if (currentCommand == null && nextCommand == null) {
       return "Reason{" + reason + '}';
     }
     return "Reason{" + reason +
@@ -71,15 +70,6 @@ record UndoCommandFlushReason(
            ", next=" + nextCommand +
            '}';
   }
-
-  private static final Set<UndoCommandFlushReason> SHORT_NAMES = Set.of(
-    CLEAR_STACKS,
-    CLEAR_QUEUE,
-    GET_LAST_GROUP,
-    MANAGER_FORCE,
-    UNDO,
-    REDO
-  );
 
   private record Command(
     @Nullable CommandId commandId,

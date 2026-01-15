@@ -30,7 +30,7 @@ final class UndoableGroup implements Dumpable {
   private final @Nullable @Command String commandName;
   private final @NotNull List<? extends UndoableAction> actions;
   private final @NotNull UndoConfirmationPolicy confirmationPolicy;
-  private final @Nullable UndoCommandFlushReason flushReason;
+  private final @Nullable CommandMergerFlushReason flushReason;
   private final int commandTimestamp;
   private final boolean isLocalHistoryActivity;
   private final boolean isTransparent;
@@ -50,7 +50,7 @@ final class UndoableGroup implements Dumpable {
     @NotNull UndoConfirmationPolicy confirmationPolicy,
     @Nullable EditorAndState stateBefore,
     @Nullable EditorAndState stateAfter,
-    @Nullable UndoCommandFlushReason flushReason,
+    @Nullable CommandMergerFlushReason flushReason,
     int commandTimestamp,
     boolean isLocalHistoryActivity,
     boolean isTransparent,
@@ -238,7 +238,7 @@ final class UndoableGroup implements Dumpable {
     return stateAfter;
   }
 
-  @Nullable UndoCommandFlushReason getFlushReason() {
+  @Nullable CommandMergerFlushReason getFlushReason() {
     return flushReason;
   }
 
