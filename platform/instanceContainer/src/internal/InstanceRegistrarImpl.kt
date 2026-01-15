@@ -116,7 +116,7 @@ internal class InstanceRegistrarImpl(
 
   private fun logIncorrectOverride(exception: InstanceNotOverridableException) {
     if (shouldTolerateIncorrectOverrides) {
-      LOG.warn(exception)
+      LOG.warn("InstanceNotOverridableException: ${exception.message}")
     }
     else {
       LOG.error(exception)
