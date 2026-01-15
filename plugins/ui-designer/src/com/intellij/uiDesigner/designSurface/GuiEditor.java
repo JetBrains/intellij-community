@@ -682,7 +682,8 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     FileDocumentManager.getInstance().saveDocument(myDocument);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    final FormSourceCodeGenerator generator = new FormSourceCodeGenerator(myProject);
+    final boolean generateFinalFields = GuiDesignerConfiguration.getInstance(myProject).GENERATE_SOURCES_FINAL_FIELDS;
+    final FormSourceCodeGenerator generator = new FormSourceCodeGenerator(myProject, generateFinalFields);
     generator.generate(myFile);
 
     final ArrayList<FormErrorInfo> errors = generator.getErrors();

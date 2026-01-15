@@ -26,14 +26,16 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.*;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.BooleanStack;
+import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -45,6 +47,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
+import java.util.stream.Stream;
 
 public final class FormSourceCodeGenerator {
   private static final Logger LOG = Logger.getInstance(FormSourceCodeGenerator.class);
@@ -52,6 +56,7 @@ public final class FormSourceCodeGenerator {
   private @NonNls StringBuffer myBuffer;
   private BooleanStack myIsFirstParameterStack;
   private final Project myProject;
+  private final boolean myGenerateFinalFields;
   private final ArrayList<FormErrorInfo> myErrors;
   private boolean myNeedLoadLabelText;
   private boolean myNeedLoadButtonText;
@@ -67,6 +72,10 @@ public final class FormSourceCodeGenerator {
   private static final ElementPattern<PsiExpressionStatement> ourSuperCallPattern =
     PsiJavaPatterns.psiExpressionStatement().withFirstChild(
       PlatformPatterns.psiElement(PsiMethodCallExpression.class).withFirstChild(PlatformPatterns.psiElement().withText(JavaKeywords.SUPER)));
+
+  private static final ElementPattern<PsiExpressionStatement> ourThisCallPattern =
+    PsiJavaPatterns.psiExpressionStatement().withFirstChild(
+      PlatformPatterns.psiElement(PsiMethodCallExpression.class).withFirstChild(PlatformPatterns.psiElement().withText(JavaKeywords.THIS)));
 
   static {
     ourComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutSourceGenerator());
@@ -95,8 +104,9 @@ public final class FormSourceCodeGenerator {
     ourTitleJustificationMap.put(5, "javax.swing.border.TitledBorder.TRAILING");
   }
 
-  public FormSourceCodeGenerator(final @NotNull Project project){
+  public FormSourceCodeGenerator(final @NotNull Project project, boolean generateFinalFields) {
     myProject = project;
+    myGenerateFinalFields = generateFinalFields;
     myErrors = new ArrayList<>();
   }
 
@@ -176,13 +186,12 @@ public final class FormSourceCodeGenerator {
     try {
       _generate(rootContainer, module);
     }
-    catch (ClassToBindNotFoundException e) {
-      // ignore
-    }
     catch (CodeGenerationException e) {
+      LOG.warn(e);
       myErrors.add(new FormErrorInfo(e.getComponentId(), e.getMessage()));
     }
     catch (IncorrectOperationException e) {
+      LOG.warn(e);
       myErrors.add(new FormErrorInfo(null, e.getMessage()));
     }
   }
@@ -213,12 +222,15 @@ public final class FormSourceCodeGenerator {
       throw new ClassToBindNotFoundException(UIDesignerBundle.message("error.class.to.bind.not.found", rootContainer.getClassToBind()));
     }
 
-    final boolean haveCustomCreateComponents = Utils.getCustomCreateComponentCount(rootContainer) > 0;
-    if (haveCustomCreateComponents) {
-      if (FormEditingUtil.findCreateComponentsMethod(classToBind) == null) {
-        throw new CodeGenerationException(null, UIDesignerBundle.message("error.no.custom.create.method"));
+    // no create components method when running with generate final fields
+    if (!myGenerateFinalFields) {
+      final boolean haveCustomCreateComponents = Utils.getCustomCreateComponentCount(rootContainer) > 0;
+      if (haveCustomCreateComponents) {
+        if (FormEditingUtil.findCreateComponentsMethod(classToBind) == null) {
+          throw new CodeGenerationException(null, UIDesignerBundle.message("error.no.custom.create.method"));
+        }
+        myBuffer.append(AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME).append("();");
       }
-      myBuffer.append(AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME).append("();");
     }
 
     generateSetupCodeForComponent(topComponent,
@@ -234,6 +246,65 @@ public final class FormSourceCodeGenerator {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
 
     PsiClass newClass = (PsiClass) classToBind.copy();
+
+    PsiElement anchor;
+    if (myGenerateFinalFields) {
+      anchor = generateSourceFinalFields(newClass, module, methodText, classToBind, id2component);
+    }
+    else {
+      anchor = generateSourcesNoFinalFields(rootContainer, newClass, module, methodText);
+    }
+
+    final @NonNls String grcMethodText = "/** @noinspection ALL */ public javax.swing.JComponent " +
+                                         AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME +
+                                         "() { return " + topComponent.getBinding() + "; }";
+    generateMethodIfRequired(newClass, anchor, AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME, grcMethodText, topComponent.getBinding() != null);
+
+    final String loadButtonTextMethodText = getLoadMethodText(AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD, AbstractButton.class, module);
+    generateMethodIfRequired(newClass, anchor, AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD, loadButtonTextMethodText, myNeedLoadButtonText);
+    final String loadLabelTextMethodText = getLoadMethodText(AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, JLabel.class, module);
+    generateMethodIfRequired(newClass, anchor, AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, loadLabelTextMethodText, myNeedLoadLabelText);
+
+    generateGetMessageFromBundle(newClass, anchor, elementFactory, myNeedGetMessageFromBundle);
+
+    if (myGetFontMethod != null) {
+      String getFontMethod =
+        "/** @noinspection ALL */ " +
+        "private java.awt.Font " + myGetFontMethod +
+        "(java.lang.String fontName, int style, int size, java.awt.Font currentFont) {" +
+        "if (currentFont == null) return null;" +
+        "java.lang.String resultName;" +
+        "if (fontName == null) {resultName = currentFont.getName();}" +
+        "else {" +
+        "  java.awt.Font testFont = new java.awt.Font(fontName, java.awt.Font.PLAIN, 10);" +
+        "  if (testFont.canDisplay('a') && testFont.canDisplay('1')) {resultName = fontName;}" +
+        "  else {resultName = currentFont.getName();}" +
+        "}" +
+        "java.awt.Font font = new java.awt.Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());" +
+        "boolean isMac = java.lang.System.getProperty(\"os.name\", \"\").toLowerCase(java.util.Locale.ENGLISH).startsWith(\"mac\");" +
+        "java.awt.Font fontWithFallback = isMac" +
+        "? new java.awt.Font(font.getFamily(), font.getStyle(), font.getSize())" +
+        ": new javax.swing.text.StyleContext().getFont(font.getFamily(), font.getStyle(), font.getSize());" +
+        "return fontWithFallback instanceof javax.swing.plaf.FontUIResource ? fontWithFallback : new javax.swing.plaf.FontUIResource(fontWithFallback);}";
+
+      generateMethodIfRequired(newClass, anchor, myGetFontMethod, getFontMethod, true);
+    }
+
+    final CodeStyleManager formatter = CodeStyleManager.getInstance(module.getProject());
+    final JavaCodeStyleManager styler = JavaCodeStyleManager.getInstance(module.getProject());
+
+    newClass = (PsiClass) styler.shortenClassReferences(newClass);
+    newClass = (PsiClass) formatter.reformat(newClass);
+
+    if (!lexemsEqual(classToBind, newClass)) {
+      classToBind.replace(newClass);
+    }
+  }
+
+  private static PsiElement generateSourcesNoFinalFields(LwRootContainer rootContainer, PsiClass newClass, Module module, String methodText) {
+    final PsiManager psiManager = PsiManager.getInstance(module.getProject());
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    final boolean haveCustomCreateComponents = Utils.getCustomCreateComponentCount(rootContainer) > 0;
 
     PsiElement initializerComment = null;
     PsiElement firstMethodMarker = null;
@@ -282,9 +353,6 @@ public final class FormSourceCodeGenerator {
       null
     );
 
-    final CodeStyleManager formatter = CodeStyleManager.getInstance(module.getProject());
-    final JavaCodeStyleManager styler = JavaCodeStyleManager.getInstance(module.getProject());
-
     PsiMethod method = (PsiMethod)(firstMethodMarker == null
                                    ? newClass.add(fakeClass.getMethods()[0])
                                    : newClass.addAfter(fakeClass.getMethods()[0], firstMethodMarker));
@@ -318,47 +386,259 @@ public final class FormSourceCodeGenerator {
       }
     }
 
-    final @NonNls String grcMethodText = "/** @noinspection ALL */ public javax.swing.JComponent " +
-                                         AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME +
-                                         "() { return " + topComponent.getBinding() + "; }";
-    generateMethodIfRequired(newClass, method, AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME, grcMethodText, topComponent.getBinding() != null);
+    return method;
+  }
 
-    final String loadButtonTextMethodText = getLoadMethodText(AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD, AbstractButton.class, module);
-    generateMethodIfRequired(newClass, method, AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD, loadButtonTextMethodText, myNeedLoadButtonText);
-    final String loadLabelTextMethodText = getLoadMethodText(AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, JLabel.class, module);
-    generateMethodIfRequired(newClass, method, AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, loadLabelTextMethodText, myNeedLoadLabelText);
+  private static PsiElement generateSourceFinalFields(PsiClass newClass, Module module, String methodText, PsiClass classToBind, HashMap<String, LwComponent> id2component)
+    throws CodeGenerationException {
 
-    generateGetMessageFromBundle(newClass, method, elementFactory, myNeedGetMessageFromBundle);
+    final PsiManager psiManager = PsiManager.getInstance(module.getProject());
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
 
-    if (myGetFontMethod != null) {
-      String getFontMethod =
-        "/** @noinspection ALL */ " +
-        "private java.awt.Font " + myGetFontMethod +
-        "(java.lang.String fontName, int style, int size, java.awt.Font currentFont) {" +
-        "if (currentFont == null) return null;" +
-        "java.lang.String resultName;" +
-        "if (fontName == null) {resultName = currentFont.getName();}" +
-        "else {" +
-        "  java.awt.Font testFont = new java.awt.Font(fontName, java.awt.Font.PLAIN, 10);" +
-        "  if (testFont.canDisplay('a') && testFont.canDisplay('1')) {resultName = fontName;}" +
-        "  else {resultName = currentFont.getName();}" +
-        "}" +
-        "java.awt.Font font = new java.awt.Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());" +
-        "boolean isMac = java.lang.System.getProperty(\"os.name\", \"\").toLowerCase(java.util.Locale.ENGLISH).startsWith(\"mac\");" +
-        "java.awt.Font fontWithFallback = isMac" +
-        "? new java.awt.Font(font.getFamily(), font.getStyle(), font.getSize())" +
-        ": new javax.swing.text.StyleContext().getFont(font.getFamily(), font.getStyle(), font.getSize());" +
-        "return fontWithFallback instanceof javax.swing.plaf.FontUIResource ? fontWithFallback : new javax.swing.plaf.FontUIResource(fontWithFallback);}";
+    cleanup(newClass);
 
-      generateMethodIfRequired(newClass, method, myGetFontMethod, getFontMethod, true);
+    List<PsiField> boundFields = new ArrayList<>();
+    for (LwComponent component : id2component.values()) {
+      String componentBinding = component.getBinding();
+      if (componentBinding != null) {
+        PsiField boundField = newClass.findFieldByName(componentBinding, false);
+        if (boundField == null) {
+          throw new CodeGenerationException(component.getId(),
+                                            "Bound field '" + componentBinding + "' not found in class " + classToBind.getQualifiedName());
+        }
+
+        boundFields.add(boundField);
+
+        if (!boundField.hasModifierProperty(PsiModifier.FINAL)) {
+          Objects.requireNonNull(boundField.getModifierList()).setModifierProperty(PsiModifier.FINAL, true);
+        }
+      }
     }
 
-    newClass = (PsiClass) styler.shortenClassReferences(newClass);
-    newClass = (PsiClass) formatter.reformat(newClass);
+    boundFields.sort(Comparator.comparing(PsiField::getTextOffset));
 
-    if (!lexemsEqual(classToBind, newClass)) {
-      classToBind.replace(newClass);
+    PsiField lastBoundField = boundFields.isEmpty() ? null : boundFields.getLast();
+
+    PsiMethod[] createComponentsMethods = newClass.findMethodsByName(AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME, false);
+    if (createComponentsMethods.length > 1) {
+      throw new CodeGenerationException(null, "More than one " + AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME + " method found in class " + classToBind.getQualifiedName());
     }
+
+    PsiCodeBlock createComponentsBody;
+    if (createComponentsMethods.length > 0) {
+      PsiCodeBlock body = createComponentsMethods[0].getBody();
+      if (body == null) {
+        throw new CodeGenerationException(null, "No body found in " + AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME + " method of " + classToBind.getQualifiedName());
+      }
+
+      createComponentsBody = (PsiCodeBlock)body.copy();
+      createComponentsMethods[0].delete();
+    }
+    else {
+      createComponentsBody = null;
+    }
+
+    List<PsiBlockStatement> existingBlocksInsideConstructor = new ArrayList<>();
+    for (PsiMethod constructor : newClass.getConstructors()) {
+      PsiCodeBlock body = constructor.getBody();
+      if (body != null) {
+        for (PsiStatement bodyStatement : body.getStatements()) {
+          if (bodyStatement instanceof PsiBlockStatement) {
+            Optional<PsiComment> firstComment = PsiTreeUtil.findChildrenOfType(bodyStatement, PsiComment.class).stream().findFirst();
+            if (firstComment.isPresent() && firstComment.get().getText().contains("GUI initializer generated by")) {
+              existingBlocksInsideConstructor.add((PsiBlockStatement)bodyStatement);
+            }
+          }
+        }
+      }
+    }
+
+    if (existingBlocksInsideConstructor.size() > 1) {
+      throw new CodeGenerationException(null, "More than one GUI initializer block found in class " + classToBind.getQualifiedName());
+    }
+
+    final PsiBlockStatement fakeGuiInitializerBlock = (PsiBlockStatement)elementFactory.createStatementFromText(
+      "{\n" +
+      "// GUI initializer generated by " + ApplicationNamesInfo.getInstance().getFullProductName() + " GUI Designer\n" +
+      "// >>> IMPORTANT!! <<<\n" +
+      "// DO NOT EDIT OR ADD ANY CODE HERE!\n" +
+      methodText +
+      "}\n",
+      newClass
+    );
+
+    if (!existingBlocksInsideConstructor.isEmpty()) {
+      if (createComponentsBody != null) {
+        // Block inside ctor already exists, but create component method still exists, something is not right, throw an exception
+        throw new CodeGenerationException(null, "Block inside constructor and create components method both exist, class: " + classToBind.getQualifiedName());
+      }
+
+      PsiBlockStatement existingBlock = existingBlocksInsideConstructor.getFirst();
+      existingBlock.getCodeBlock().replace(fakeGuiInitializerBlock.getCodeBlock());
+    }
+    else {
+      PsiBlockStatement guiInitializerBlock = insertGuiInitializerToConstructor(newClass, fakeGuiInitializerBlock, classToBind, lastBoundField);
+
+      if (createComponentsBody != null && !createComponentsBody.isEmpty()) {
+        PsiBlockStatement createComponentsBlockStatement = (PsiBlockStatement)elementFactory.createStatementFromText("{}", guiInitializerBlock);
+        createComponentsBlockStatement.getCodeBlock().replace(createComponentsBody);
+        guiInitializerBlock.getParent().addBefore(createComponentsBlockStatement, guiInitializerBlock);
+      }
+    }
+
+    // in case of init block in ctor, add all other methods after ctors
+    PsiMethod[] constructors = newClass.getConstructors();
+    return constructors[constructors.length - 1];
+  }
+
+  private static PsiBlockStatement replaceSetupUICall(PsiCodeBlock psiCodeBlock, PsiBlockStatement fakeGuiInitializerBlock) {
+    PsiStatement[] statements = psiCodeBlock.getStatements();
+    for (PsiStatement statement : statements) {
+      if (statement instanceof PsiExpressionStatement) {
+        PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
+        if (expression instanceof PsiMethodCallExpression) {
+          PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
+          if (!methodExpression.isQualified() && methodExpression.getText().contains(AsmCodeGenerator.SETUP_METHOD_NAME)) {
+            return (PsiBlockStatement)statement.replace(fakeGuiInitializerBlock);
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private static boolean isFieldAssignedFromParameter(@NotNull PsiStatement statement) {
+    if (!(statement instanceof PsiExpressionStatement exprStmt)) return false;
+
+    PsiExpression expr = exprStmt.getExpression();
+    if (!(expr instanceof PsiAssignmentExpression assignment)) return false;
+
+    PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
+    PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
+    if (!(lhs instanceof PsiReferenceExpression lhsRef) ||
+        !(rhs instanceof PsiReferenceExpression rhsRef)) {
+      return false;
+    }
+
+    // RHS must resolve to a method parameter
+    PsiElement rhsTarget = rhsRef.resolve();
+    if (!(rhsTarget instanceof PsiParameter param)) return false;
+
+    // That parameter must belong to the same method as the assignment
+    PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+    if (method == null) return false;
+    if (!method.isConstructor()) return false; // only care about constructors
+    if (param.getDeclarationScope() != method) return false;
+
+    // LHS must resolve to a field of the same class
+    PsiElement lhsTarget = lhsRef.resolve();
+    if (!(lhsTarget instanceof PsiField field)) return false;
+
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null || field.getContainingClass() != containingClass) return false;
+
+    // Ensure qualifier is either `this` or absent: `field = ...` or `this.field = ...`
+    PsiExpression qualifier = lhsRef.getQualifierExpression();
+    if (qualifier != null &&
+        !(qualifier instanceof PsiThisExpression)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private static PsiBlockStatement insertGuiInitializerToConstructor(PsiClass newClass, PsiBlockStatement fakeGuiInitializerBlock, PsiClass classToBind, PsiField lastBoundField) throws CodeGenerationException {
+    PsiMethod[] constructors = newClass.getConstructors();
+
+    // Case 1: existing $$$setupUI$$$ call in ctor. Replace it with GUI initializer block
+    for (PsiMethod constructor : constructors) {
+      PsiCodeBlock constructorBody = constructor.getBody();
+      if (constructorBody != null) {
+        PsiBlockStatement guiInitializerBlock = replaceSetupUICall(constructorBody, fakeGuiInitializerBlock);
+        if (guiInitializerBlock != null) return guiInitializerBlock;
+      }
+    }
+
+    // Case 2: add GUI initializer in first ctor after super call and field assignments
+    for (PsiMethod constructor : constructors) {
+      PsiCodeBlock constructorBody = constructor.getBody();
+      if (constructorBody == null) continue;
+
+      PsiStatement[] statements = constructorBody.getStatements();
+      Optional<PsiStatement> superCall = Arrays.stream(statements).filter(ourSuperCallPattern::accepts).findFirst();
+      if (superCall.isPresent()) {
+        int superIndex = ArrayUtil.indexOf(statements, superCall.get());
+        if (superIndex < 0) {
+          throw new IllegalStateException("Could not find already found super call at " + classToBind.getQualifiedName());
+        }
+
+        PsiElement anchor = superCall.get();
+
+        for (int i = superIndex + 1; i < statements.length; i++) {
+          PsiStatement stmt = statements[i];
+          if (isFieldAssignedFromParameter(stmt)) {
+            // Move anchor past this assignment
+            anchor = stmt;
+            continue;
+          }
+
+          // First non-matching statement: stop skipping
+          break;
+        }
+
+        return (PsiBlockStatement)constructorBody.addAfter(fakeGuiInitializerBlock, anchor);
+      }
+    }
+
+    // Case 3: add GUI initializer before first statement in first ctor without this call
+    for (PsiMethod constructor : constructors) {
+      PsiCodeBlock constructorBody = constructor.getBody();
+      if (constructorBody == null) continue;
+
+      PsiStatement[] statements = constructorBody.getStatements();
+      if (ContainerUtil.exists(statements, ourThisCallPattern::accepts)) continue;
+
+      if (statements.length > 0) {
+        // skip field assignments
+        PsiStatement afterAnchor = null;
+        for (PsiStatement stmt : statements) {
+          if (isFieldAssignedFromParameter(stmt)) {
+            // Move anchor past this assignment
+            afterAnchor = stmt;
+            continue;
+          }
+
+          // First non-matching statement: stop skipping
+          break;
+        }
+
+        if (afterAnchor != null) {
+          return (PsiBlockStatement)constructorBody.addAfter(fakeGuiInitializerBlock, afterAnchor);
+        }
+        else {
+          return (PsiBlockStatement)constructorBody.addBefore(fakeGuiInitializerBlock, statements[0]);
+        }
+      }
+      else {
+        // no statements -> add before rBrace
+        PsiJavaToken rBrace = constructorBody.getRBrace();
+        if (rBrace == null) {
+          throw new CodeGenerationException(null, "No rBrace in first constructor " + classToBind.getQualifiedName());
+        }
+
+        return (PsiBlockStatement)constructorBody.addBefore(fakeGuiInitializerBlock, rBrace);
+      }
+    }
+
+    // Case 4: no constructors at all, fine, add one after all bound fields
+    PsiMethod fakeConstructor = JavaPsiFacade.getElementFactory(newClass.getProject()).createConstructor();
+    PsiMethod constructor = (PsiMethod)newClass.addAfter(fakeConstructor, lastBoundField != null ? lastBoundField : newClass.getLBrace());
+    return (PsiBlockStatement)Objects.requireNonNull(constructor.getBody()).add(fakeGuiInitializerBlock);
+  }
+
+  public static <T> Optional<T> getLast(Stream<T> stream) {
+    return stream.reduce((a, b) -> b);
   }
 
   private static void addSetupUICall(final PsiMethod constructor, final LwRootContainer rootContainer, final PsiMethod setupUIMethod) {
@@ -433,7 +713,9 @@ public final class FormSourceCodeGenerator {
   }
 
   private static boolean lexemsEqual(final PsiClass classToBind, final PsiClass newClass) {
+    @SuppressWarnings("deprecation")
     Lexer oldTextLexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
+    @SuppressWarnings("deprecation")
     Lexer newTextLexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
     String oldBuffer = classToBind.getText();
     String newBuffer = newClass.getText();
@@ -520,7 +802,7 @@ public final class FormSourceCodeGenerator {
     return bundle.getString(key);
   }
   */
-  private static void generateGetMessageFromBundle(PsiClass aClass, PsiMethod anchor, PsiElementFactory elementFactory, boolean condition) {
+  private static void generateGetMessageFromBundle(PsiClass aClass, PsiElement anchor, PsiElementFactory elementFactory, boolean condition) {
     String dynamicBundleClassName = DynamicBundle.class.getName();
 
     String methodName = AsmCodeGenerator.GET_MESSAGE_FROM_BUNDLE;
@@ -544,6 +826,7 @@ public final class FormSourceCodeGenerator {
         null);
 
     String methodText =
+      "/** @noinspection ALL */ " +
       "private String " + methodName + "(String path, String key) {\n" +
       " java.util.ResourceBundle bundle;\n" +
       "try {\n" +
@@ -565,7 +848,7 @@ public final class FormSourceCodeGenerator {
     aClass.addAfter(cachedMethodField, anchor);
   }
 
-  private void generateMethodIfRequired(PsiClass aClass, PsiMethod anchor, final String methodName, String methodText, boolean condition) throws IncorrectOperationException {
+  private void generateMethodIfRequired(PsiClass aClass, PsiElement anchor, final String methodName, String methodText, boolean condition) throws IncorrectOperationException {
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     PsiMethod[] oldMethods = aClass.findMethodsByName(methodName, false);
     if (!condition) {

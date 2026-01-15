@@ -6,6 +6,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.binding.FieldFormReference;
 import com.intellij.uiDesigner.binding.FormReferenceProvider;
@@ -29,6 +30,15 @@ public final class BoundFieldAssignmentInspection extends AbstractBaseJavaLocalI
   @Override
   public boolean isEnabledByDefault() {
     return true;
+  }
+
+  @Override
+  public boolean isAvailableForFile(@NotNull PsiFile file) {
+    // Does not make sense if sources are generated with final fields, because
+    // in that case initialization is not done in setup method
+    // and also re-assignment is impossible due to one-shot final fields initialization
+    return super.isAvailableForFile(file) &&
+           !GuiDesignerConfiguration.getInstance(file.getProject()).GENERATE_SOURCES_FINAL_FIELDS;
   }
 
   @Override

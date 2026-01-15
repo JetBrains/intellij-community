@@ -1,11 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.make;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
@@ -66,6 +68,8 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       return ProcessingItem.EMPTY_ARRAY;
     }
 
+    final boolean generateFinalFields = designerConfiguration.GENERATE_SOURCES_FINAL_FIELDS;
+
     final ArrayList<ProcessingItem> items = new ArrayList<>();
     DumbService.getInstance(project).runReadActionInSmartMode(() -> {
       final CompileScope scope = context.getCompileScope();
@@ -103,6 +107,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
           }
 
           if (classToBind == null) {
+            addError(context, new FormErrorInfo(null, "Form is unbound"), formFile);
             continue;
           }
 
@@ -111,6 +116,11 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
             if (scope.belongs(formFile.getUrl())) {
               addError(context, new FormErrorInfo(null, UIDesignerBundle.message("error.class.to.bind.does.not.exist", classToBind)), formFile);
             }
+            continue;
+          }
+
+          if (!FileTypeManager.getInstance().isFileOfType(sourceFile, JavaFileType.INSTANCE)) {
+            addError(context, new FormErrorInfo(null, "Source file '" + sourceFile + "'must be JAVA"), formFile);
             continue;
           }
 
@@ -129,7 +139,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
             continue;
           }
 
-          items.add(new MyInstrumentationItem(sourceFile, formFile));
+          items.add(new MyInstrumentationItem(sourceFile, formFile, generateFinalFields));
         }
       }
       finally {
@@ -149,7 +159,6 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     int formsProcessed = 0;
 
     final Project project = context.getProject();
-    final FormSourceCodeGenerator generator = new FormSourceCodeGenerator(project);
 
     final HashSet<Module> processedModules = new HashSet<>();
 
@@ -191,6 +200,8 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       ApplicationManager.getApplication().invokeAndWait(() -> {
         CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+          final FormSourceCodeGenerator generator = new FormSourceCodeGenerator(project, item.generateFinalFields());
           generator.generate(formFile);
           final ArrayList<FormErrorInfo> errors = generator.getErrors();
           if (errors.isEmpty()) {
@@ -232,14 +243,22 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   }
 
   private static final class MyInstrumentationItem implements ProcessingItem {
+    // increment it every time you want files to be regenerated
+    // i.e. on generation logic change
+    private static final long TIMESTAMP_BASE = 1;
+
     private final @NotNull VirtualFile mySourceFile;
     private final VirtualFile myFormFile;
     private final TimestampValidityState myState;
+    private final boolean myGenerateFinalFields;
 
-    MyInstrumentationItem(final @NotNull VirtualFile sourceFile, final VirtualFile formFile) {
+    MyInstrumentationItem(final @NotNull VirtualFile sourceFile, final VirtualFile formFile, boolean generateFinalFields) {
       mySourceFile = sourceFile;
       myFormFile = formFile;
-      myState = new TimestampValidityState(formFile.getTimeStamp());
+      myGenerateFinalFields = generateFinalFields;
+
+      long hash = Objects.hash(formFile.getTimeStamp(), sourceFile.getTimeStamp(), myGenerateFinalFields, TIMESTAMP_BASE);
+      myState = new TimestampValidityState(hash);
     }
 
     @Override
@@ -255,6 +274,9 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     public ValidityState getValidityState() {
       return myState;
     }
-  }
 
+    public boolean generateFinalFields() {
+      return myGenerateFinalFields;
+    }
+  }
 }

@@ -298,7 +298,10 @@ public final class ErrorAnalyzer {
     catch (IncorrectOperationException ignored) {
     }
 
-    if (component.isCustomCreate() && FormEditingUtil.findCreateComponentsMethod(psiClass) == null) {
+    if (component.isCustomCreate() &&
+        FormEditingUtil.findCreateComponentsMethod(psiClass) == null &&
+        // with generating final fields, initilization code lies in ctor, not in createComponent method
+        !GuiDesignerConfiguration.getInstance(psiClass.getProject()).GENERATE_SOURCES_FINAL_FIELDS) {
       final QuickFix[] fixes = editor != null ? new QuickFix[]{
         new GenerateCreateComponentsFix(editor, psiClass)
       } : QuickFix.EMPTY_ARRAY;
@@ -310,6 +313,7 @@ public final class ErrorAnalyzer {
           fixes));
       return true;
     }
+
     return false;
   }
 
