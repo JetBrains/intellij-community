@@ -27,6 +27,7 @@ internal abstract class GitWorkingTreeTestBase : GitSingleRepoTest() {
     expectedWorkingTreeLastCommit: String,
   ) {
     val holder = GitRepositoriesHolder.getAndInit(project)
+    repo.workingTreeHolder.ensureUpToDateForTests()
     assertSameElements(repo.workingTreeHolder.getWorkingTrees(), getExpectedDefaultWorkingTrees())
 
     holder.expectEvent(
