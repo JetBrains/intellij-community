@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts
 
 import com.intellij.application.options.colors.AbstractFontOptionsPanel
@@ -37,11 +37,13 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
   private var variantsPlaceholder: Placeholder? = null
   private var currentFont: String? = null
   private val currentFeatures: MutableMap<String, JBCheckBox> = mutableMapOf()
+  private val recentFeatures: MutableMap<String, Set<String>> = mutableMapOf()
   private val fontGlyphCache: FontGlyphHashCache = FontGlyphHashCache()
 
   init {
     addListener(object : ColorAndFontSettingsListener.Abstract() {
       override fun fontChanged() {
+        restoreSelectedVariants()
         updateFontPreferences()
       }
     })
@@ -171,6 +173,16 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
     } else {
       // Same font: variants might have changed
       currentFeatures.forEach { (feature, cb) -> cb.isSelected = feature in enabledFeatures }
+    }
+  }
+
+  private fun restoreSelectedVariants() {
+    // Save previous variants
+    currentFont?.let { font -> recentFeatures[font] = currentFeatures.filter { (_, value) -> value.isSelected }.keys.toSet() }
+    // Restore variants for fontPreferences.fontFamily
+    val previousFeatures = recentFeatures[fontPreferences.fontFamily]
+    if (previousFeatures != null && fontPreferences.characterVariants != previousFeatures) {
+      (fontPreferences as ModifiableFontPreferences).characterVariants = previousFeatures
     }
   }
 
