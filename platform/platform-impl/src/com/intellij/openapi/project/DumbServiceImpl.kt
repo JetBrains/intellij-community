@@ -332,15 +332,15 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   private suspend fun incrementDumbCounterSuspending(trace: Throwable) {
     withContext(dispatcher) {
       // `runWriteActionWithCheckInWriteIntent` is a glorified 'if' statement that provides atomic transition to background write action if the condition is true
-      val enteredDumb = getGlobalThreadingSupport().runWriteActionWithCheckInWriteIntent(::tryIncrementStateCounter) {
+       getGlobalThreadingSupport().runWriteActionWithCheckInWriteIntent(::tryIncrementStateCounter) {
         // If already dumb - just increment the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
         // Otherwise, increment the counter under write action because this will change dumb state
-        doIncrementStateCounter()
-      }
-      if (enteredDumb != null) {
-        withContext(Dispatchers.EDT) {
-          proceedWithPublishingOfIncrementEvents(enteredDumb, trace)
-        }
+         val enteredDumb = doIncrementStateCounter()
+         if (enteredDumb) {
+           application.invokeLater {
+             proceedWithPublishingOfIncrementEvents(true, trace)
+           }
+         }
       }
     }
     LOG.assertTrue(state.value.isDumb, "Should be dumb")
@@ -409,12 +409,12 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     LOG.assertTrue(state.value.isDumb, "Should be dumb")
     withContext(dispatcher) {
       // `runWriteActionWithCheckInWriteIntent` is a glorified 'if' statement that provides atomic transition to background write action if the condition is true
-      val isNowSmart = getGlobalThreadingSupport().runWriteActionWithCheckInWriteIntent(::tryDecrementDumbCounter) {
-        doDecrementDumbCounter()
-      } ?: false
-      if (isNowSmart) {
-        withContext(Dispatchers.EDT) {
-          proceedWithPublishingOfDecrementEvents(true)
+      getGlobalThreadingSupport().runWriteActionWithCheckInWriteIntent(::tryDecrementDumbCounter) {
+        val isNowSmart = doDecrementDumbCounter()
+        if (isNowSmart) {
+          application.invokeLater {
+            proceedWithPublishingOfDecrementEvents(true)
+          }
         }
       }
     }
