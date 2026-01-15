@@ -513,8 +513,7 @@ public final class DebuggerUtilsAsync {
    * as in the command being processed at the moment
    */
   public static <T> CompletableFuture<T> reschedule(CompletableFuture<T> future) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    DebuggerManagerThreadImpl thread = (DebuggerManagerThreadImpl)InvokeThread.currentThread();
+    DebuggerManagerThreadImpl thread = DebuggerManagerThreadImpl.getCurrentThread();
     LOG.assertTrue(thread != null);
     DebuggerCommandImpl event = DebuggerManagerThreadImpl.getCurrentCommand();
     LOG.assertTrue(event != null);

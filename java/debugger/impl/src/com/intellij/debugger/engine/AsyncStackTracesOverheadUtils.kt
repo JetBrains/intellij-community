@@ -51,7 +51,7 @@ internal fun initializeLastSessionPauseListener(process: DebugProcessImpl) {
 internal fun showOverheadNotification(process: DebugProcessImpl, overhead: ObjectReference) {
   val xDebugSession = process.session.xDebugSession as? XDebugSessionImpl ?: return
   val cs = xDebugSession.coroutineScope
-  val managerThread = process.managerThread
+  val managerThread = DebuggerManagerThreadImpl.getCurrentThread()
   cs.launch(Dispatchers.EDT) {
     val listener = process.getUserData(lastSessionPauseListenerKey)
     if (listener != null) {

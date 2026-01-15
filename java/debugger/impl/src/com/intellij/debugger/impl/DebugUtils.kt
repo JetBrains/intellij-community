@@ -110,7 +110,7 @@ fun preloadAllClasses(vm: VirtualMachine) {
   catch (_: UnsupportedOperationException) {
   }
 
-  val managerThread = InvokeThread.currentThread() as DebuggerManagerThreadImpl
+  val managerThread = DebuggerManagerThreadImpl.getCurrentThread()
   managerThread.coroutineScope.launch {
     launch {
       val classes = allClasses.await()
