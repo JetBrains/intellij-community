@@ -9,10 +9,8 @@ import com.intellij.util.text.matching.undeprecate
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-open class MatcherWithFallback internal constructor(
-  private val myMainMatcher: MinusculeMatcher,
-  private val myFallbackMatcher: MinusculeMatcher?,
-) : MinusculeMatcher() {
+open class MatcherWithFallback(private val myMainMatcher: MinusculeMatcher, private val myFallbackMatcher: MinusculeMatcher?) :
+  MinusculeMatcher() {
   override val pattern: String
     get() = myMainMatcher.pattern
 

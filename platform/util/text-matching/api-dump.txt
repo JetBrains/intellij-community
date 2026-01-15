@@ -20,6 +20,9 @@ c:com.intellij.psi.codeStyle.FixingLayoutMatcher
 - sf:fixLayout(java.lang.String,com.intellij.util.text.matching.KeyboardLayoutConverter):java.lang.String
 f:com.intellij.psi.codeStyle.FixingLayoutMatcher$Companion
 - f:fixLayout(java.lang.String,com.intellij.util.text.matching.KeyboardLayoutConverter):java.lang.String
+f:com.intellij.psi.codeStyle.FixingLayoutTypoTolerantMatcher
+- sf:INSTANCE:com.intellij.psi.codeStyle.FixingLayoutTypoTolerantMatcher
+- sf:create(java.lang.String,com.intellij.util.text.matching.MatchingMode,java.lang.String,com.intellij.util.text.matching.KeyboardLayoutConverter):com.intellij.psi.codeStyle.MinusculeMatcher
 a:com.intellij.psi.codeStyle.MinusculeMatcher
 - com.intellij.util.text.Matcher
 - sf:Companion:com.intellij.psi.codeStyle.MinusculeMatcher$Companion
