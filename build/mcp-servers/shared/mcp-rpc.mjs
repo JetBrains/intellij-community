@@ -24,7 +24,7 @@ export function sendError(id, code, message) {
 export function createMcpServer(config) {
   const { serverInfo, tools, toolHandlers } = config;
 
-  function handleRequest(request) {
+  async function handleRequest(request) {
     const { id, method, params } = request;
 
     // Notifications have no id - don't respond
@@ -58,7 +58,7 @@ export function createMcpServer(config) {
           }
 
           try {
-            const result = toolHandlers[name](args);
+            const result = await toolHandlers[name](args);
             sendResponse(id, {
               content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
             });

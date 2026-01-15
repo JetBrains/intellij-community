@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import {createMcpServer} from './mcp-rpc.mjs'
+import {createMcpServer} from '../shared/mcp-rpc.mjs'
 import {bd, bdJson, bdShowOne} from './bd-client.mjs'
 
 // Parse notes into structured sections
@@ -46,8 +46,8 @@ function buildNotes(sections) {
 }
 
 // Fetch ready children for an epic (used in task_status and task_epic resume)
-function getReadyChildren(epicId) {
-  const readyChildren = bdJson(['ready', '--parent', epicId])
+async function getReadyChildren(epicId) {
+  const readyChildren = await bdJson(['ready', '--parent', epicId])
   if (readyChildren.length > 0) {
     return readyChildren.map(c => ({id: c.id, title: c.title}))
   }
@@ -167,10 +167,10 @@ const tools = [
 ]
 
 const toolHandlers = {
-  task_status: (args) => {
+  task_status: async (args) => {
     // Specific issue query - return full details (replaces task_show)
     if (args.id) {
-      const issue = bdShowOne(args.id)
+      const issue = await bdShowOne(args.id)
       if (!issue) {
         return {error: `Issue ${args.id} not found`}
       }
@@ -182,8 +182,8 @@ const toolHandlers = {
     }
 
     // Overview query - selection-oriented responses
-    const inProgress = bdJson(['list', '--status', 'in_progress'])
-    const ready = bdJson(['ready', '--limit', '5'])
+    const inProgress = await bdJson(['list', '--status', 'in_progress'])
+    const ready = await bdJson(['ready', '--limit', '5'])
 
     // No in-progress issues
     if (inProgress.length === 0) {
@@ -210,7 +210,7 @@ const toolHandlers = {
 
       // For epics, include ready children so Claude knows what to work on
       if (issue.issue_type === 'epic') {
-        const readyChildren = getReadyChildren(issue.id)
+        const readyChildren = await getReadyChildren(issue.id)
         if (readyChildren) {
           result.ready_children = readyChildren
         }
@@ -242,13 +242,13 @@ const toolHandlers = {
     }
   },
 
-  task_epic: (args) => {
+  task_epic: async (args) => {
     if (args.resume) {
-      const issue = bdShowOne(args.resume)
+      const issue = await bdShowOne(args.resume)
       if (!issue) {
         return {error: `Issue ${args.resume} not found`}
       }
-      bd(['update', args.resume, '--status', 'in_progress'])
+      await bd(['update', args.resume, '--status', 'in_progress'])
 
       // Return full issue details (same as task_status(id)) to avoid redundant follow-up call
       if (issue.notes) {
@@ -258,7 +258,7 @@ const toolHandlers = {
 
       // For epics, include ready children so Claude knows what to work on
       if (issue.issue_type === 'epic') {
-        const readyChildren = getReadyChildren(args.resume)
+        const readyChildren = await getReadyChildren(args.resume)
         if (readyChildren) {
           issue.ready_children = readyChildren
         }
@@ -271,14 +271,14 @@ const toolHandlers = {
       throw new Error('title and description required for new epic')
     }
 
-    const id = bd(['create', '--title', args.title, '--type', 'epic', '--description', args.description, '--acceptance', 'PENDING', '--design', 'PENDING', '--silent'])
-    bd(['update', id, '--status', 'in_progress'])
+    const id = await bd(['create', '--title', args.title, '--type', 'epic', '--description', args.description, '--acceptance', 'PENDING', '--design', 'PENDING', '--silent'])
+    await bd(['update', id, '--status', 'in_progress'])
 
     return {id, is_new: true}
   },
 
-  task_progress: (args) => {
-    const issue = bdShowOne(args.id)
+  task_progress: async (args) => {
+    const issue = await bdShowOne(args.id)
     if (!issue) {
       return {error: `Issue ${args.id} not found`}
     }
@@ -290,7 +290,7 @@ const toolHandlers = {
     const newNotes = buildNotes(sections)
     const updateArgs = ['update', args.id, '--notes', newNotes]
     if (args.status) updateArgs.push('--status', args.status)
-    bd(updateArgs)
+    await bd(updateArgs)
 
     if (args.completed && needsReview(issue)) {
       return {
@@ -313,7 +313,7 @@ const toolHandlers = {
     return {success: true, notes: sections, status: args.status || issue.status}
   },
 
-  task_decompose: (args) => {
+  task_decompose: async (args) => {
     // Validate depends_on indices
     args.sub_issues.forEach((sub, i) => {
       if (sub.depends_on) {
@@ -328,16 +328,19 @@ const toolHandlers = {
     const ids = []
     for (const sub of args.sub_issues) {
       const subType = sub.type || 'task'
-      const id = bd(['create', '--title', sub.title, '--parent', args.epic_id, '--type', subType, '--description', sub.description, '--acceptance', sub.acceptance, '--design', sub.design, '--silent'])
+      const id = await bd(['create', '--title', sub.title, '--parent', args.epic_id, '--type', subType, '--description', sub.description, '--acceptance', sub.acceptance, '--design', sub.design, '--silent'])
       ids.push(id)
     }
 
     // Add dependencies
-    args.sub_issues.forEach((sub, i) => {
+    for (let i = 0; i < args.sub_issues.length; i++) {
+      const sub = args.sub_issues[i]
       if (sub.depends_on) {
-        sub.depends_on.forEach(depIdx => bd(['dep', 'add', ids[i], ids[depIdx]]))
+        for (const depIdx of sub.depends_on) {
+          await bd(['dep', 'add', ids[i], ids[depIdx]])
+        }
       }
-    })
+    }
 
     let startedChildId = null
     if (args.start_child_index !== undefined) {
@@ -348,17 +351,17 @@ const toolHandlers = {
         throw new Error(`start_child_index ${args.start_child_index} out of range (0-${ids.length - 1})`)
       }
       startedChildId = ids[args.start_child_index]
-      bd(['update', startedChildId, '--status', 'in_progress'])
+      await bd(['update', startedChildId, '--status', 'in_progress'])
     }
 
     if (args.update_epic_acceptance) {
-      bd(['update', args.epic_id, '--acceptance', args.update_epic_acceptance])
+      await bd(['update', args.epic_id, '--acceptance', args.update_epic_acceptance])
     }
 
     return {ids, epic_id: args.epic_id, started_child_id: startedChildId}
   },
 
-  task_create: (args) => {
+  task_create: async (args) => {
     if (!args.title) {
       throw new Error('title required for new issue')
     }
@@ -370,17 +373,17 @@ const toolHandlers = {
     if (args.parent) createArgs.push('--parent', args.parent)
     if (args.priority) createArgs.push('--priority', args.priority)
 
-    const id = bd(createArgs)
+    const id = await bd(createArgs)
     if (args.depends_on) {
       const depArgs = ['dep', 'add', id, args.depends_on]
       if (args.dep_type) depArgs.push('--type', args.dep_type)
-      bd(depArgs)
+      await bd(depArgs)
     }
     return {id}
   },
 
-  task_done: (args) => {
-    const issue = bdShowOne(args.id)
+  task_done: async (args) => {
+    const issue = await bdShowOne(args.id)
     if (!issue) {
       return {error: `Issue ${args.id} not found`}
     }
@@ -388,28 +391,28 @@ const toolHandlers = {
     const sections = parseNotes(issue.notes)
 
     // Helper to perform actual close and return result
-    const doClose = (summary) => {
+    const doClose = async (summary) => {
       // Clean up pending_close if present
       if (sections.pending_close) {
         delete sections.pending_close
-        bd(['update', args.id, '--notes', buildNotes(sections)])
+        await bd(['update', args.id, '--notes', buildNotes(sections)])
       }
 
-      bd(['close', args.id, '--reason', summary])
+      await bd(['close', args.id, '--reason', summary])
 
       let epicStatus = null
       let nextReady = null
       let parentId = null
 
       try {
-        const closedIssue = bdShowOne(args.id)
+        const closedIssue = await bdShowOne(args.id)
         parentId = closedIssue.parent
 
         if (parentId) {
-          const readyList = bdJson(['ready', '--parent', parentId])
+          const readyList = await bdJson(['ready', '--parent', parentId])
           nextReady = readyList[0] || null
 
-          const epicIssue = bdShowOne(parentId)
+          const epicIssue = await bdShowOne(parentId)
           if (epicIssue) {
             const children = epicIssue.children || []
             const completed = children.filter(c => c.status === 'closed').length
@@ -433,9 +436,9 @@ const toolHandlers = {
       // Merge any final findings/decisions
       if (args.findings) sections.findings.push(...args.findings)
       if (args.decisions) sections.decisions.push(...args.decisions)
-      bd(['update', args.id, '--notes', buildNotes(sections)])
+      await bd(['update', args.id, '--notes', buildNotes(sections)])
 
-      return doClose(pending.summary)
+      return await doClose(pending.summary)
     }
 
     // First call - check if review needed
@@ -448,7 +451,7 @@ const toolHandlers = {
       if (args.findings) sections.findings.push(...args.findings)
       if (args.decisions) sections.decisions.push(...args.decisions)
       sections.pending_close = {summary: args.summary}
-      bd(['update', args.id, '--notes', buildNotes(sections)])
+      await bd(['update', args.id, '--notes', buildNotes(sections)])
 
       return {
         askUser: {
@@ -472,10 +475,10 @@ const toolHandlers = {
     if (args.findings) sections.findings.push(...args.findings)
     if (args.decisions) sections.decisions.push(...args.decisions)
     if (args.findings || args.decisions) {
-      bd(['update', args.id, '--notes', buildNotes(sections)])
+      await bd(['update', args.id, '--notes', buildNotes(sections)])
     }
 
-    return doClose(args.summary)
+    return await doClose(args.summary)
   }
 }
 
