@@ -4,7 +4,6 @@ package com.intellij.vcs.log.data
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.VcsLogRootStoredRefs
 import com.intellij.vcs.log.VcsRef
-import java.util.function.IntConsumer
 
 /**
  * Empty implementation of [VcsLogRootStoredRefs] representing no references.
@@ -19,8 +18,4 @@ internal data object EmptyRefs : VcsLogRootStoredRefs {
   override fun refsToCommit(index: VcsLogCommitStorageIndex): List<VcsRef> = emptyList()
 
   override fun getRefsIndexes(): Collection<VcsLogCommitStorageIndex> = emptySet()
-
-  override fun forEachBranchIndex(consumer: IntConsumer) {
-    // no-op
-  }
 }

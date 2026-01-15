@@ -50,6 +50,5 @@
 *:com.intellij.vcs.log.VcsLogRootStoredRefs
 - com.intellij.vcs.log.VcsRefsContainer
 - a:contains(I):Z
-- a:forEachBranchIndex(java.util.function.IntConsumer):V
 - a:getRefsIndexes():java.util.Collection
 - a:refsToCommit(I):java.util.List

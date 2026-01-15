@@ -9,7 +9,6 @@ import com.intellij.vcs.log.VcsRef
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import java.util.function.IntConsumer
 
 internal class RootRefsModel private constructor(refs: Iterable<VcsRef>, storage: VcsLogStorage) : VcsLogRootStoredRefs {
   private val tagsMapping: Int2ObjectMap<MutableCollection<VcsRef>> = Int2ObjectOpenHashMap()
@@ -51,10 +50,6 @@ internal class RootRefsModel private constructor(refs: Iterable<VcsRef>, storage
     result.addAll(branchesMapping.keys)
     result.addAll(tagsMapping.keys)
     return result
-  }
-
-  override fun forEachBranchIndex(consumer: IntConsumer) {
-    branchesMapping.keys.forEach(consumer)
   }
 
   companion object {
