@@ -14,7 +14,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
 import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator.decorateTextIfNeeded
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader.getDarkIcon
@@ -36,13 +36,20 @@ import com.intellij.ui.plaf.beg.BegMenuItemUI
 import com.intellij.ui.plaf.beg.IdeaMenuUI
 import com.intellij.util.FontUtil
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.SingleAlarm
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.EdtScheduler
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.moveToFitChildPopupX
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.withContext
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.ComponentEvent
@@ -54,6 +61,7 @@ import javax.swing.event.ChangeListener
 import javax.swing.event.MenuEvent
 import javax.swing.event.MenuListener
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @Suppress("RedundantConstructorKeyword")
@@ -434,6 +442,7 @@ class ActionMenu constructor(
   }
 }
 
+@OptIn(FlowPreview::class)
 private class UsabilityHelper(component: Component) : IdeEventQueue.NonLockedEventDispatcher, AWTEventListener, Disposable {
   private var component: Component?
   private var startMousePoint: Point?
@@ -441,22 +450,24 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.NonLockedEve
   private var closestHorizontalDistanceSoFar = 0
   private var upperTargetPoint: Point? = null
   private var lowerTargetPoint: Point? = null
-  private var callbackAlarm: SingleAlarm? = null
   private var eventToRedispatch: MouseEvent? = null
+  private val pendingDispatchFlow = MutableStateFlow(false)
+  private var done = false
 
   init {
-    callbackAlarm = SingleAlarm(
-      task = {
-        Disposer.dispose(callbackAlarm!!)
-        callbackAlarm = null
-        if (eventToRedispatch != null) {
-          IdeEventQueue.getInstance().dispatchEvent(eventToRedispatch!!)
+    component.launchOnShow("ActionMenu.UsabilityHelper") {
+      pendingDispatchFlow.debounce(50.milliseconds).collect { dispatch ->
+        val event = eventToRedispatch
+        if (!done && event != null && dispatch) {
+          done = true // must be set before dispatching to disable this dispatcher
+          withContext(Dispatchers.EDT) { // needed to dispatch
+            IdeEventQueue.getInstance().dispatchEvent(event)
+          }
+          eventToRedispatch = null
+          cancel()
         }
-      },
-      delay = 50,
-      parentDisposable = this,
-      modalityState = ModalityState.any(),
-    )
+      }
+    }.cancelOnDispose(this)
     this.component = component
     val info = MouseInfo.getPointerInfo()
     startMousePoint = info?.location
@@ -495,8 +506,7 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.NonLockedEve
   }
 
   override fun dispatch(e: AWTEvent): Boolean {
-    val callbackAlarm = callbackAlarm
-    if (e !is MouseEvent || upperTargetPoint == null || lowerTargetPoint == null || callbackAlarm == null) {
+    if (e !is MouseEvent || upperTargetPoint == null || lowerTargetPoint == null || done) {
       return false
     }
 
@@ -520,16 +530,12 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.NonLockedEve
         .contains(point)
     )
     eventToRedispatch = e
-    if (!isMouseMovingTowardsSubmenu) {
-      callbackAlarm.request()
-    }
-    else {
-      callbackAlarm.cancel()
-    }
+    pendingDispatchFlow.value = !isMouseMovingTowardsSubmenu
     return true
   }
 
   override fun dispose() {
+    done = true
     component = null
     eventToRedispatch = null
     lowerTargetPoint = null
