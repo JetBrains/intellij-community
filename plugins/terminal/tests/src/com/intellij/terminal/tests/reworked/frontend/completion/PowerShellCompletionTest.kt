@@ -57,7 +57,7 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.type($$"echo $PS")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
-        .contains($$"$PSVersionTable")
+        .contains("PSVersionTable")
     }
   }
 
@@ -69,7 +69,7 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       """.trimIndent())
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
-        .contains("Equals(", "Length", "GetType(")
+        .contains("Equals", "Length", "GetType")
     }
   }
 
@@ -89,7 +89,7 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.type("Get-Content -")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
-        .contains("-Path", "-Filter", "-Encoding")
+        .contains("Path", "Filter", "Encoding")
     }
   }
 
@@ -106,10 +106,10 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
   @Test
   fun `check type names are suggested`() {
     doTest { fixture ->
-      fixture.type("[System.Text.S")
+      fixture.type("[System.Text.")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
-        .contains("StringBuilder", "SpanLineEnumerator")
+        .contains("Encoder", "Decoder")
     }
   }
 
@@ -119,7 +119,7 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.type("[Math]::")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
-        .contains("Abs(", "Sqrt(", "PI")
+        .contains("Abs", "Sqrt", "PI")
     }
   }
 
@@ -162,8 +162,8 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.type("ls -")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
-        .contains("-Name", "-Path", "-Attributes")   // PowerShell `Get-ChildItem` options
-        .doesNotContain("-a", "-l")                  // Unix `ls` options
+        .contains("Name", "Path", "Attributes")   // PowerShell `Get-ChildItem` options
+        .doesNotContain("-a", "-l", "a", "l")     // Unix `ls` options
     }
   }
 
