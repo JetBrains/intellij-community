@@ -26,6 +26,7 @@ import com.intellij.util.asDisposable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
@@ -190,6 +191,19 @@ internal class TerminalCompletionFixture(
 
   fun insertSelectedItem() {
     runActionById("Terminal.CommandCompletion.InsertSuggestion")
+  }
+
+  fun insertCompletionItem(itemText: String) {
+    val lookup = getActiveLookup() ?: error("No active lookup")
+
+    val itemIndex = lookup.items.indexOfFirst { it.lookupString == itemText }
+    assertThat(itemIndex)
+      .overridingErrorMessage { "Item with text '$itemText' not found in lookup: ${lookup.itemStrings}" }
+      .isNotEqualTo(-1)
+
+    lookup.selectedIndex = itemIndex
+
+    insertSelectedItem()
   }
 
   fun downCompletionPopup() {

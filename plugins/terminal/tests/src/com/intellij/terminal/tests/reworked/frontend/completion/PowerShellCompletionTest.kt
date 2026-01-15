@@ -10,13 +10,17 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.utils.io.createFile
 import com.intellij.testFramework.utils.io.deleteRecursively
+import com.intellij.util.PathUtil
 import com.intellij.util.system.OS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
+import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandFinishedEvent
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
@@ -44,27 +48,33 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
   override fun runInDispatchThread(): Boolean = false
 
   @Test
-  fun `check command names are suggested`() {
+  fun `check command names are suggested and inserted correctly`() {
     doTest { fixture ->
-      fixture.type("pw")
+      fixture.type("Get-P")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
-        .contains("pwd")
+        .contains("Get-Process", "Get-Package", "Get-PSDrive")
+
+      fixture.insertCompletionItem("Get-Process")
+      fixture.assertCommandTextState("Get-Process<cursor>")
     }
   }
 
   @Test
-  fun `check built-in variables are suggested`() {
+  fun `check built-in variables are suggested and inserted correctly`() {
     doTest { fixture ->
       fixture.type($$"echo $PS")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .contains("PSVersionTable")
+
+      fixture.insertCompletionItem("PSVersionTable")
+      fixture.assertCommandTextState($$"echo $PSVersionTable<cursor>")
     }
   }
 
   @Test
-  fun `check method names are suggested`() {
+  fun `check method names are suggested and inserted correctly`() {
     doTest { fixture ->
       fixture.type("""
         "aaa".
@@ -72,71 +82,94 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .contains("Equals", "Length", "GetType")
+
+      fixture.insertCompletionItem("Equals")
+      fixture.assertCommandTextState("""
+        "aaa".Equals(<cursor>
+      """.trimIndent())
     }
   }
 
   @Test
-  fun `check properties of variables are suggested`() {
+  fun `check properties of variables are suggested and inserted correctly`() {
     doTest { fixture ->
       fixture.type($$"$host.")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .contains("Version", "Name", "UI")
+
+      fixture.insertCompletionItem("Version")
+      fixture.assertCommandTextState($$"$host.Version<cursor>")
     }
   }
 
   @Test
-  fun `check cmdlet options are suggested`() {
+  fun `check cmdlet options are suggested and inserted correctly`() {
     doTest { fixture ->
       fixture.type("Get-Content -")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .contains("Path", "Filter", "Encoding")
+
+      fixture.insertCompletionItem("Path")
+      fixture.assertCommandTextState("Get-Content -Path<cursor>")
     }
   }
 
   @Test
-  fun `check namespace names are suggested`() {
+  fun `check namespace names are suggested and inserted correctly`() {
     doTest { fixture ->
       fixture.type("[System")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .contains("System", "SystemPolicy", "SystemEvents")
+
+      fixture.insertCompletionItem("SystemPolicy")
+      fixture.assertCommandTextState("[System.Management.Automation.Security.SystemPolicy<cursor>")
     }
   }
 
   @Test
-  fun `check type names are suggested`() {
+  fun `check type names are suggested and inserted correctly`() {
     doTest { fixture ->
       fixture.type("[System.Text.")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .contains("Encoder", "Decoder")
+
+      fixture.insertCompletionItem("Encoder")
+      fixture.assertCommandTextState("[System.Text.Encoder<cursor>")
     }
   }
 
   @Test
-  fun `check static members are suggested`() {
+  fun `check static members are suggested and inserted correctly`() {
     doTest { fixture ->
       fixture.type("[Math]::")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .contains("Abs", "Sqrt", "PI")
+
+      fixture.insertCompletionItem("Abs")
+      fixture.assertCommandTextState("[Math]::Abs(<cursor>")
     }
   }
 
   @Test
-  fun `check enum values are suggested`() {
+  fun `check enum values are suggested and inserted correctly`() {
     doTest { fixture ->
       fixture.type("Set-ExecutionPolicy ")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .contains("AllSigned", "Bypass", "Restricted")
+
+      fixture.insertCompletionItem("AllSigned")
+      fixture.assertCommandTextState("Set-ExecutionPolicy AllSigned<cursor>")
     }
   }
 
   @Test
-  fun `check history names are suggested`() {
+  fun `check history names are suggested and inserted correctly`() {
     doTest { fixture ->
       fixture.executeCommandAndAwaitNextPrompt("ls")
       fixture.executeCommandAndAwaitNextPrompt("pwd")
@@ -145,6 +178,9 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .hasSameElementsAs(listOf("ls", "pwd"))
+
+      fixture.insertCompletionItem("pwd")
+      fixture.assertCommandTextState("pwd<cursor>")
     }
   }
 
@@ -170,23 +206,26 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
   }
 
   @Test
-  fun `check properties are suggested in pipeline`() {
+  fun `check properties are suggested in pipeline and inserted correctly`() {
     doTest { fixture ->
       fixture.type("Get-Process | Select-Object ")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .contains("Id", "ProcessName", "CPU")
+
+      fixture.insertCompletionItem("ProcessName")
+      fixture.assertCommandTextState("Get-Process | Select-Object ProcessName<cursor>")
     }
   }
 
   @Test
-  fun `check options are suggested on the next line after continuation`() {
+  fun `check options are suggested on the next line after continuation and inserted correctly`() {
     doTest { fixture ->
       fixture.type("Get-Content `")
       fixture.pressKey(KeyEvent.VK_ENTER)
       fixture.type("-")
 
-      fixture.assertOutputModelState { model ->
+      fixture.awaitOutputModelState(3.seconds) { model ->
         val text = model.getText(model.startOffset, model.endOffset)
         text.contains(">> -")  // Check that line continuation is present
       }
@@ -194,11 +233,14 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .contains("Path", "Filter", "Encoding")
+
+      fixture.insertCompletionItem("Path")
+      fixture.assertCommandTextState("Get-Content `\n>> -Path<cursor>")
     }
   }
 
   @Test
-  fun `check only files are suggested for absolute path with Windows file separator`() {
+  fun `check files are suggested for absolute path with Windows file separator and inserted correctly`() {
     Assume.assumeTrue(OS.CURRENT == OS.Windows)
 
     doTest { fixture ->
@@ -212,11 +254,14 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .hasSameElementsAs(listOf("file.txt", "dir\\", ".hidden"))
+
+      fixture.insertCompletionItem("file.txt")
+      fixture.assertCommandTextState("dir $tempDir\\file.txt<cursor>")
     }
   }
 
   @Test
-  fun `check only files are suggested for absolute path with Unix file separator`() {
+  fun `check files are suggested for absolute path with Unix file separator and inserted correctly`() {
     doTest { fixture ->
       val tempDir = createTempDir().also {
         it.createFile("file.txt")
@@ -227,12 +272,15 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.type("dir $tempDir/")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
-        .hasSameElementsAs(listOf("file.txt", "dir${File.separator}", ".hidden"))
+        .hasSameElementsAs(listOf("file.txt", "dir$separator", ".hidden"))
+
+      fixture.insertCompletionItem("dir$separator")
+      fixture.assertCommandTextState("dir $tempDir${separator}dir${separator}<cursor>")
     }
   }
 
   @Test
-  fun `check files are suggested after no prefix`() {
+  fun `check files are suggested after no prefix and inserted correctly`() {
     doTest { fixture ->
       val tempDir = createTempDir().also {
         it.createFile("file.txt")
@@ -245,12 +293,15 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.type("dir ")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
-        .contains("file.txt", "dir${File.separator}", ".hidden")
+        .contains("file.txt", "dir${separator}", ".hidden")
+
+      fixture.insertCompletionItem("file.txt")
+      fixture.assertCommandTextState("dir .${separator}file.txt<cursor>")
     }
   }
 
   @Test
-  fun `check files are suggested after relative file prefix`() {
+  fun `check files are suggested after relative file prefix and inserted correctly`() {
     doTest { fixture ->
       val tempDir = createTempDir().also {
         it.createFile("file1.txt")
@@ -264,12 +315,15 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.type("dir fi")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
-        .hasSameElementsAs(listOf("file1.txt", "file2.log", "figures${File.separator}"))
+        .hasSameElementsAs(listOf("file1.txt", "file2.log", "figures$separator"))
+
+      fixture.insertCompletionItem("file1.txt")
+      fixture.assertCommandTextState("dir .${separator}file1.txt<cursor>")
     }
   }
 
   @Test
-  fun `check files are suggested after dot based relative path prefix`() {
+  fun `check files are suggested after dot based relative path prefix and inserted correctly`() {
     doTest { fixture ->
       val tempDir = createTempDir().also {
         it.createFile("file.txt")
@@ -282,12 +336,15 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.type("dir ./")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
-        .contains("file.txt", "dir${File.separator}", ".hidden")
+        .contains("file.txt", "dir$separator", ".hidden")
+
+      fixture.insertCompletionItem("dir$separator")
+      fixture.assertCommandTextState("dir .${separator}dir${separator}<cursor>")
     }
   }
 
   @Test
-  fun `check files are suggested in double quotes`() {
+  fun `check files are suggested in double quotes and inserted correctly`() {
     doTest { fixture ->
       val tempDir = createTempDir().also {
         it.createFile("file with spaces.txt")
@@ -298,11 +355,14 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .contains("file with spaces.txt", "abcde.txt")
+
+      fixture.insertCompletionItem("abcde.txt")
+      fixture.assertCommandTextState("dir \"$tempDir${separator}abcde.txt<cursor>\"")
     }
   }
 
   @Test
-  fun `check files are suggested in single quotes`() {
+  fun `check files are suggested in single quotes and inserted correctly`() {
     doTest { fixture ->
       val tempDir = createTempDir().also {
         it.createFile("file with spaces.txt")
@@ -313,11 +373,14 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .contains("file with spaces.txt", "abcde.txt")
+
+      fixture.insertCompletionItem("abcde.txt")
+      fixture.assertCommandTextState("dir '$tempDir${separator}abcde.txt<cursor>'")
     }
   }
 
   @Test
-  fun `check files are suggested when there is no command`() {
+  fun `check files are suggested when there is no command and inserted correctly`() {
     doTest { fixture ->
       val tempDir = createTempDir().also {
         it.createFile("file.txt")
@@ -329,14 +392,16 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
 
       fixture.type("$tempDir/fi")
       fixture.callCompletionPopup()
-      val separator = File.separator
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .hasSameElementsAs(listOf("file.txt", "figures$separator", "files$separator"))
+
+      fixture.insertCompletionItem("file.txt")
+      fixture.assertCommandTextState("$tempDir${separator}file.txt<cursor>")
     }
   }
 
   @Test
-  fun `check files are suggested after unknown command`() {
+  fun `check files are suggested after unknown command and inserted correctly`() {
     doTest { fixture ->
       val tempDir = createTempDir().also {
         it.createFile("file.txt")
@@ -348,9 +413,11 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
 
       fixture.type("some_unknown_command $tempDir/fi")
       fixture.callCompletionPopup()
-      val separator = File.separator
       assertThat(fixture.getLookupElements().map { it.lookupString })
         .hasSameElementsAs(listOf("file.txt", "figures$separator", "files$separator"))
+
+      fixture.insertCompletionItem("files$separator")
+      fixture.assertCommandTextState("some_unknown_command $tempDir${separator}files${separator}<cursor>")
     }
   }
 
@@ -358,10 +425,23 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
     timeoutRunBlocking(timeout = 20.seconds, context = Dispatchers.EDT) {
       val fixtureScope = childScope("TerminalCompletionFixture")
 
+      // Disable PowerShell 7 Inline Completion (gray text)
+      val executableName = PathUtil.getFileName(shellPath.toString())
+      val envVariables = if (executableName == "pwsh.exe" || executableName == "pwsh") {
+        mapOf("JEDITERM_SOURCE" to "Set-PSReadLineOption -PredictionSource None")
+      }
+      else emptyMap()
+
+      val startupOptions = ShellStartupOptions.Builder()
+        .shellCommand(listOf(shellPath.toString()))
+        .workingDirectory(System.getProperty("user.home"))
+        .envVariables(envVariables)
+        .build()
+
       val session = TerminalSessionTestUtil.startTestTerminalSession(
         project,
-        shellPath.toString(),
-        System.getProperty("user.home"),
+        startupOptions,
+        isLowLevelSession = false,
         fixtureScope.childScope("TerminalSession")
       ).session
 
@@ -399,25 +479,43 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
     shellIntegration.outputStatus.first { it == TerminalOutputStatus.TypingCommand }
   }
 
-  private suspend fun TerminalCompletionFixture.assertOutputModelState(
-    condition: (TerminalOutputModel) -> Boolean,
-  ) {
-    val conditionMet = awaitOutputModelState(3.seconds, condition)
+  private suspend fun TerminalCompletionFixture.assertCommandTextState(expectedCommandPattern: String) {
+    val cursorMarker = "<cursor>"
+    val expectedText = expectedCommandPattern.replace(cursorMarker, "")
+    val expectedCursorOffset = expectedCommandPattern.indexOf(cursorMarker).toLong()
+
+    val blockModel = view.shellIntegrationDeferred.getNow()!!.blocksModel
+    val activeBlock = blockModel.activeBlock as TerminalCommandBlock
+    val conditionMet = awaitOutputModelState(3.seconds) { outputModel ->
+      val commandStartOffset = activeBlock.commandStartOffset ?: return@awaitOutputModelState false
+      val textBeforeCursor = outputModel.getText(commandStartOffset, outputModel.cursorOffset).toString()
+      val textAfterCursor = outputModel.getText(outputModel.cursorOffset, outputModel.endOffset).toString()
+      val commandText = textBeforeCursor + textAfterCursor.trimEnd()
+
+      commandText == expectedText && outputModel.cursorOffset == commandStartOffset + expectedCursorOffset
+    }
 
     val model = outputModel
     assertThat(conditionMet)
       .overridingErrorMessage {
         """
-        Output model text doesn't match the condition.
-        Current text: '${model.getText(model.startOffset, model.endOffset)}', cursor offset: ${model.cursorOffset}
-      """.trimIndent()
+          Command text doesn't match the expected pattern: '$expectedCommandPattern'
+          Current cursor offset: ${model.cursorOffset}
+          Current output model text:
+          
+        """.trimIndent() + model.text
       }
       .isTrue
   }
+
+  private val TerminalOutputModel.text: String
+    get() = getText(startOffset, endOffset).toString()
 
   private fun createTempDir(): Path {
     return createTempDirectory().also {
       Disposer.register(testRootDisposable) { it.deleteRecursively() }
     }
   }
+
+  private val separator = File.separator
 }
