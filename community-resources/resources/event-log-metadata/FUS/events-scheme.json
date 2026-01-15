@@ -279,8 +279,12 @@
     "rules" : {
       "event_id" : [ "{enum#__event_id}" ],
       "event_data" : {
+        "add_to_dataset_popup_checkbox_checked" : [ "{enum#boolean}" ],
         "count" : [ "{regexp#integer}" ],
         "custom_runner_type" : [ "{enum:run|debug|aidebugger.runner}" ],
+        "default_expected_json_path_correctness_value" : [ "{enum#boolean}" ],
+        "default_input_json_path_correctness_value" : [ "{enum#boolean}" ],
+        "event_type" : [ "{enum:langgraph|langchain|langchain_el|koog|null}", "{enum:LangChain|LangChainEL|LangGraph|Koog|Null}" ],
         "events_count" : [ "{regexp#integer}" ],
         "plugin_version" : [ "{regexp:^(?:\\d+\\.\\d+\\.\\d+|dev)$}" ],
         "show_reason" : [ "{enum:all|auto}" ],
@@ -288,8 +292,30 @@
         "threads_count" : [ "{regexp#integer}" ]
       },
       "enums" : {
-        "__event_id" : [ "debugger_disable", "debugger_enable", "disable_auto_show", "tool_window_show", "tool_window_close", "custom_runner_selected", "no_pretty_view_found", "thread_finished", "session_finished", "graph_show", "thread_show", "raw_show", "pretty_show", "custom_runner_skipped", "report_issue_click", "buy_pycharm_pro_clicked", "first_event_received", "runtime_requirements_not_met" ],
+        "__event_id" : [ "debugger_disable", "debugger_enable", "disable_auto_show", "tool_window_show", "tool_window_close", "custom_runner_selected", "no_pretty_view_found", "thread_finished", "session_finished", "graph_show", "thread_show", "raw_show", "pretty_show", "custom_runner_skipped", "report_issue_click", "buy_pycharm_pro_clicked", "first_event_received", "runtime_requirements_not_met", "add_to_dataset_popup_checkbox_clicked", "add_to_existing_dataset_from_popup_success", "add_to_dataset_became_clickable", "add_to_dataset_popup_shown", "add_to_existing_dataset_from_popup_cancelled", "add_to_dataset_shown", "default_input_json_path_correctness", "default_expected_json_path_correctness", "add_trace_popup_shown", "add_to_dataset_popup_new_dataset_creation_cancelled", "created_new_dataset_from_popup", "add_to_dataset_clicked", "add_to_dataset_popup_new_dataset_creation_started" ],
         "__skip_reason" : [ "remote_interpreter", "sdk_is_null", "python_version_is_null", "run_config_is_null", "python_version_is_invalid", "low_python_version" ]
+      }
+    }
+  }, {
+    "id" : "aitoolkit.evaluation",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "1"
+    } ],
+    "rules" : {
+      "event_id" : [ "{enum#__event_id}" ],
+      "event_data" : {
+        "evaluators_count" : [ "{regexp#integer}" ],
+        "has_llm_judge_evaluator" : [ "{enum#boolean}" ],
+        "has_regex_evaluator" : [ "{enum#boolean}" ],
+        "model_provider" : [ "{enum:OPENAI|OPENAI_COMPATIBLE|ANTHROPIC|GEMINI|undefined}" ],
+        "plugin_version" : [ "{regexp:^(?:\\d+\\.\\d+\\.\\d+|dev)$}" ],
+        "ratio_of_errors_in_run" : [ "{regexp#float}" ],
+        "rows_count_buckets" : [ "{enum:B0|B1|B2|B3|B4|B5|B6|B7|B_INF}" ],
+        "tooltip_id" : [ "{enum:intro|add.to.dataset.button|enter.dataset.name|select.dataset|add.to.dataset.dialog.inputs|switch.to.datasets.folder|switch.to.evaluation.folder|evaluation.plus.button|create.config.form|evaluation.run.button|evaluation.results.output|evaluation.help.button}" ]
+      },
+      "enums" : {
+        "__event_id" : [ "toolwindow_edit_eval_configuration_clicked", "toolwindow_add_dataset_clicked", "settings_import_keys_banner_clicked_and_success", "tooltip_secondary_button_clicked", "eval_run_finished", "datasets_tab_selected", "eval_config_llm_provider_banner_import_keys_button_shown", "toolwindow_remote_run_configuration_clicked", "onboarding_restarted", "tooltip_primary_button_clicked", "toolwindow_duplicate_dataset_clicked", "settings_import_keys_banner_clicked", "eval_config_llm_provider_banner_import_keys_button_clicked", "toolwindow_duplicate_eval_configuration_clicked", "eval_config_llm_provider_banner_go_to_settings_button_clicked", "eval_config_llm_provider_banner_shown", "eval_config_created", "toolwindow_add_eval_configuration_clicked", "toolwindow_cancel_configuration_clicked", "toolwindow_download_dataset_clicked", "tooltip_shown", "toolwindow_remove_dataset_clicked", "eval_config_llm_provider_import_keys_success", "tooltip_escape_all_clicked", "evaluation_tab_selected", "toolwindow_remove_eval_configuration_clicked", "settings_import_keys_banner_shown", "toolwindow_run_configuration_clicked", "settings_import_keys_banner_clicked_and_cancelled", "settings_import_keys_banner_hidden" ]
       }
     }
   }, {
@@ -15320,5 +15346,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6632"
+  "version" : "6641"
 }
