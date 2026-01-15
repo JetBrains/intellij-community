@@ -512,6 +512,10 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     }
     val switched = CountDownLatch(1)
     val smartModeScheduler = myProject.getService(SmartModeScheduler::class.java)
+    if (smartModeScheduler.getCurrentMode() == 0) {
+      // optimization: let's return right away if already in smart mode
+      return true
+    }
     smartModeScheduler.runWhenSmart { switched.countDown() }
 
     // we check getCurrentMode here because of tests which may hang because runWhenSmart needs EDT for scheduling
