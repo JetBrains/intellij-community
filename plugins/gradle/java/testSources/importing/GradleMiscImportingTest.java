@@ -129,13 +129,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Test
   public void testPreviewLanguageLevel() throws Exception {
     LanguageLevel highest = JavaRelease.getHighest();
-    LanguageLevel highestPreview = highest;
-    if (ApplicationManager.getApplication().isEAP()) {
-      //Unlike Maven, Gradle doesn't additionally specify the preview level.
-      //see org.jetbrains.idea.maven.importing.MavenImportUtil.getLanguageLevel$intellij_maven
-      //see AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(level)
-      highestPreview = highest.getPreviewLevel();
-    }
+    LanguageLevel highestPreview = highest.getPreviewLevel();
     importProject(
       "apply plugin: 'java'\n" +
       "java.sourceCompatibility = " + highest.feature() + "\n" +
