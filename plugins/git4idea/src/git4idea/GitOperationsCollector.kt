@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.RoundedIntEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import git4idea.actions.workingTree.GitWorkingTreeDialogData
 import git4idea.commands.GitCommandResult
@@ -140,9 +139,9 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
     REBASE_START_USING_LOG_EVENT.log(project, *eventPairs)
   }
 
-  fun logCreateWorktreeActionInvoked(e: AnActionEvent, branch: GitReference?): StructuredIdeActivity {
-    return WORKING_TREE_CREATION_ACTIVITY.started(e.project) {
-      listOf(EventFields.ActionPlace.with(e.place), WITH_PROVIDED_BRANCH.with(branch != null))
+  fun logCreateWorktreeActionInvoked(project: Project, place: String, branch: GitReference?): StructuredIdeActivity {
+    return WORKING_TREE_CREATION_ACTIVITY.started(project) {
+      listOf(EventFields.ActionPlace.with(place), WITH_PROVIDED_BRANCH.with(branch != null))
     }
   }
 

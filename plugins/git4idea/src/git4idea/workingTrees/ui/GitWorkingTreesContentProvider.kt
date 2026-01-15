@@ -2,9 +2,7 @@
 package git4idea.workingTrees.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -24,6 +22,7 @@ import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import git4idea.GitWorkingTree
+import git4idea.actions.workingTree.GitCreateWorkingTreeService
 import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
@@ -102,15 +101,11 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
       emptyText.text = GitBundle.message("toolwindow.working.trees.tab.empty.text")
       emptyText.appendLine(GitBundle.message("toolwindow.working.trees.tab.empty.text.create.working.tree"),
                            SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { _ ->
-        val action = ActionManager.getInstance().getAction("Git.CreateNewWorkingTree")
-        if (action !== null) {
-          val event = AnActionEvent.createEvent(action,
-                                                DataManager.getInstance().getDataContext(this),
-                                                Presentation(),
-                                                GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST,
-                                                ActionUiKind.NONE,
-                                                null)
-          ActionUtil.performAction(action, event)
+        val repository = model.repository
+        if (repository != null) {
+          GitCreateWorkingTreeService.getInstance().collectDataAndCreateWorkingTree(repository,
+                                                                                    null,
+                                                                                    GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST)
         }
       }
     }
