@@ -59,11 +59,25 @@ open class BackgroundRun(override val startResult: Deferred<IDEStartResult>, dri
    * The IDE is closed on any exception, or if it doesn't close automatically after the block execution completes.
    */
   open fun <R> useDriver(closeIdeTimeout: Duration = 1.minutes, block: Driver.() -> R): IDEStartResult {
-    val ideStartResult: IDEStartResult
-    try {
-      driver.withContext { block(this) }
-    }
-    finally {
+    lateinit var ideStartResult: IDEStartResult
+    runCatching {
+      driver.withContext {
+        block(this)
+        if (isConnected) takeScreenshot("beforeIdeClosed")
+      }
+    }.onFailure { e ->
+      runCatching {
+        driver.exitApplication()
+        waitFor(
+          timeout = 15.seconds,
+          errorMessage = {
+            forceKill()
+            "Error on exit application via Driver"
+          },
+        ) { !driver.isConnected }
+      }
+      throw e
+    }.onSuccess {
       ideStartResult = driver.waitToClose(closeIdeTimeout)
     }
     return ideStartResult
