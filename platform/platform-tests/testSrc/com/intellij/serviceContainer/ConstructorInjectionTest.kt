@@ -5,13 +5,20 @@ package com.intellij.serviceContainer
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
-import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class ConstructorInjectionTest {
-  @PerformanceUnitTest
+  @Test
+  fun `constructor with bool`() {
+    val componentManager = TestComponentManager()
+    componentManager.registerService(ConstructorWithBoolean::class.java, ConstructorWithBoolean::class.java, DefaultPluginDescriptor("test"), false)
+    componentManager.getService(ConstructorWithBoolean::class.java)
+  }
+}
+
+class ConstructorInjectionPerformanceTest {
   @Test
   fun `light service getService() performance`() {
     val componentManager = TestComponentManager()
@@ -22,13 +29,6 @@ class ConstructorInjectionTest {
         componentManager.getService(BarService::class.java)!!
       }
     }.runAsStressTest().start()
-  }
-
-  @Test
-  fun `constructor with bool`() {
-    val componentManager = TestComponentManager()
-    componentManager.registerService(ConstructorWithBoolean::class.java, ConstructorWithBoolean::class.java, DefaultPluginDescriptor("test"), false)
-    componentManager.getService(ConstructorWithBoolean::class.java)
   }
 }
 @Service
