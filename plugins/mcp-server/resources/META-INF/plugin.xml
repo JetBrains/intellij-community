@@ -63,7 +63,7 @@
     <registryKey defaultValue="true"
                  description="Whether to return output schema and structured output from tools"
                  key="mcp.server.structured.tool.output"/>
-    <registryKey defaultValue="true"
+    <registryKey defaultValue="false"
                  description="Support legacy MCP server name"
                  key="mcp.server.write.legacy.key"/>
     <registryKey defaultValue="true"
