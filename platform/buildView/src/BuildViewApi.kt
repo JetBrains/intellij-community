@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildView
 
-import com.intellij.build.BuildViewEvent
 import com.intellij.build.BuildContentId
 import com.intellij.build.BuildId
+import com.intellij.build.BuildViewEvent
+import com.intellij.frontend.FrontendApplicationInfo
+import com.intellij.frontend.FrontendType
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
@@ -45,7 +47,8 @@ interface BuildViewApi : RemoteApi<Unit> {
 
   companion object {
     suspend fun getInstance(): BuildViewApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<BuildViewApi>())
+      val isCWM = (FrontendApplicationInfo.getFrontendType() as? FrontendType.Remote)?.isGuest() == true
+      return if (isCWM) BuildViewApiImpl else RemoteApiProviderService.resolve(remoteApiDescriptor<BuildViewApi>())
     }
   }
 }
