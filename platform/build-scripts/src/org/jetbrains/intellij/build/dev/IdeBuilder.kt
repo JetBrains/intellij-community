@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dev
 
 import com.dynatrace.hash4j.hashing.HashFunnel
@@ -140,7 +140,12 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     "JetBrainsClient" -> "${request.baseIdePlatformPrefixForFrontend ?: ""}${request.platformPrefix}"
     else -> request.platformPrefix
   }
-  val productDirName = (productDirNameWithoutClassifier + (if (System.getProperty("intellij.build.minimal").toBoolean()) "-ij-void" else "") + classifier).takeLast(255)
+  val productDirSuffix = when {
+    System.getProperty("intellij.build.minimal").toBoolean() -> "-ij-void"
+    request.scrambleTool != null -> "-scrambled"
+    else -> ""
+  }
+  val productDirName = (productDirNameWithoutClassifier + productDirSuffix + classifier).takeLast(255)
 
   val buildDir = withContext(Dispatchers.IO.limitedParallelism(4)) {
     val buildDir = rootDir.resolve(productDirName)

@@ -169,13 +169,22 @@ private suspend fun processProductModule(
   xIncludeResolver: XIncludeElementResolverImpl,
   moduleName: String,
   isEmbedded: Boolean,
-  context: CompilationContext,
+  context: BuildContext,
 ) {
-  val isInScrambledFile = isEmbedded && isModuleCloseSource(moduleName = moduleName, context = context)
-  val relativeOutFile = if (isInScrambledFile) {
-    if (frontendModuleFilter.isBackendModule(moduleName)) PRODUCT_BACKEND_JAR else PRODUCT_JAR
+  // - Embedded modules: scrambled if close-source (isModuleCloseSource check)
+  // - Non-embedded modules: scrambled if in contentModulesToScramble list
+  val willBeScrambled = isModuleCloseSource(moduleName = moduleName, context = context) ||
+                        context.productProperties.contentModulesToScramble.contains(moduleName)
+
+  // Step 2: Determine jar location based on embedded status
+  val relativeOutFile = if (isEmbedded && isModuleCloseSource(moduleName, context)) {
+    // Embedded modules use getProductModuleJarName which handles product vs app jar selection
+    // based on close-source check (product.jar/product-backend.jar for close-source,
+    // app.jar/app-backend.jar for open-source)
+    getProductModuleJarName(moduleName, context, frontendModuleFilter)
   }
   else {
+    // Non-embedded modules always get per-module jars
     "$moduleName.jar"
   }
 
@@ -200,7 +209,7 @@ private suspend fun processProductModule(
   // Because scrambling applies only (by policy) to embedded modules, we embed the module descriptor for non-embedded modules to address this.
   //
   // Note: We could implement runtime loading via the module's classloader, but that would significantly complicate the runtime code.
-  if (!isInScrambledFile) {
+  if (!willBeScrambled) {
     resolveAndEmbedContentModuleDescriptor(
       moduleElement = moduleElement,
       descriptorCache = descriptorCache,
