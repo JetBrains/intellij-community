@@ -191,7 +191,12 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       @Override
       public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
         synchronizationScheduler.submit(() -> {
-          updateDashboardIfNeeded(settings);
+          RunConfiguration configuration = settings.getConfiguration();
+          if (isShowInDashboard(configuration) ||
+              !filterByContent(getConfigurationDescriptors(configuration)).isEmpty()) {
+            mySharedState.setServices(myServices);
+            updateDashboard(true);
+          }
         });
       }
 
