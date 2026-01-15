@@ -7,6 +7,9 @@ import com.intellij.ide.actions.AttachDirectoryUsagesCollector.logAttachedSpecia
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil
+import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -14,9 +17,12 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SystemProperties
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
+import com.intellij.util.system.OS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.math.min
 
@@ -34,12 +40,50 @@ internal object AttachDirectoryUsagesCollector : CounterUsagesCollector() {
         if (userHome.isEmpty()) return false
         return try {
           val home = Paths.get(userHome).toRealPath()
-          val rootPath = Paths.get(root.path).toRealPath()
+          val rootPath = root.toNioPath().toRealPath()
           home == rootPath
         }
         catch (_: Exception) {
           false
         }
+      }
+    },
+    DOWNLOADS {
+      private val downloadsPath: Path? by lazy {
+        try {
+          resolveDownloadsDir()?.toRealPath()
+        }
+        catch (_: Exception) {
+          null
+        }
+      }
+
+      override fun matches(root: VirtualFile): Boolean {
+        val downloads = downloadsPath ?: return false
+        return try {
+          val rootPath = root.toNioPath().toRealPath()
+          downloads == rootPath
+        }
+        catch (_: Exception) {
+          false
+        }
+      }
+
+      private fun resolveDownloadsDir(): Path? {
+        if (OS.isGenericUnix() && PathEnvironmentVariableUtil.isOnPath("xdg-user-dir")) {
+          val line = ExecUtil.execAndReadLine(GeneralCommandLine("xdg-user-dir", "DOWNLOAD"))
+          if (!line.isNullOrBlank()) {
+            return try {
+              Paths.get(line)
+            }
+            catch (_: InvalidPathException) {
+              null
+            }
+          }
+        }
+
+        val home = SystemProperties.getUserHome()
+        return if (home.isEmpty()) null else Paths.get(home, "Downloads")
       }
     },
     ROOT {
