@@ -15,6 +15,7 @@ jvm_library(
   runtime_deps = [
     "//plugins/kotlin/plugin/common",
     "//plugins/kotlin/plugin",
+    "//plugins/kotlin/kotlin.searching",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-analysis-api",

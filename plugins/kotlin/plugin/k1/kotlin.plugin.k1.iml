@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="kotlin.plugin.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.searching" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.analysis-api" level="project" />
