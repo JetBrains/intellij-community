@@ -96,7 +96,6 @@ jvm_library(
     "//plugins/groovy:groovy_test_lib",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/base/code-insight:code-insight_test_lib",
-    "//plugins/kotlin/base/fe10/analysis",
     "//plugins/kotlin/project-wizard/core",
     "//plugins/kotlin/project-wizard/core:core_test_lib",
     "//platform/testFramework/junit5",
