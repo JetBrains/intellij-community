@@ -502,7 +502,7 @@ abstract class DumbService {
     fun enteredDumbMode() {
     }
 
-    @RequiresEdt
+    @RequiresWriteLock
     fun exitDumbMode() {
     }
   }
