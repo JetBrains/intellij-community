@@ -3,6 +3,7 @@ package com.intellij.platform.execution.dashboard.splitApi.frontend.tree;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.dashboard.LegacyRunDashboardServiceSubstitutor;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -22,8 +23,10 @@ import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendDashb
 import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardLuxHolder;
 import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardManager;
 import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardService;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.Content;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -34,7 +37,8 @@ import java.util.Collections;
 
 import static com.intellij.ide.ui.icons.IconIdKt.icon;
 
-public class FrontendRunConfigurationNode extends AbstractTreeNode<FrontendRunDashboardService> implements RunDashboardRunConfigurationNode {
+public class FrontendRunConfigurationNode extends AbstractTreeNode<FrontendRunDashboardService>
+  implements RunDashboardRunConfigurationNode {
   public FrontendRunConfigurationNode(@NotNull Project project, @NotNull FrontendRunDashboardService value) {
     super(project, value);
   }
@@ -63,7 +67,17 @@ public class FrontendRunConfigurationNode extends AbstractTreeNode<FrontendRunDa
 
   @Override
   public RunnerAndConfigurationSettings getConfigurationSettings() {
-    Logger.getInstance(FrontendRunConfigurationNode.class).debug("Deprecated method `getConfigurationSettings` called for " + getService().getName());
+    Logger.getInstance(FrontendRunConfigurationNode.class)
+      .debug("Deprecated method `getConfigurationSettings` called for " + getService().getName());
+    if (IdeProductMode.isMonolith()) {
+      var substitutor = ContainerUtil.getFirstItem(LegacyRunDashboardServiceSubstitutor.EP_NAME.getExtensionList());
+      if (substitutor == null) return null;
+
+      var backendService = substitutor.substituteWithBackendService(this, getProject());
+      if (backendService != this) {
+        return backendService.getConfigurationSettings();
+      }
+    }
     return null;
   }
 
