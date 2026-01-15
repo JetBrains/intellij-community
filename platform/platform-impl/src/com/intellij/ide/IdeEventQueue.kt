@@ -484,7 +484,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     if (isUserActivityEvent(e)) {
       ActivityTracker.getInstance().inc()
     }
-    if (popupManager.isPopupActive && !shouldSkipListeners(e) && threadingSupport.runWriteIntentReadAction { popupManager.dispatch(e) }) {
+    if (popupManager.isPopupActive && !shouldSkipListeners(e) && popupManager.dispatch(e)) {
       if (keyEventDispatcher.isWaitingForSecondKeyStroke) {
         keyEventDispatcher.state = KeyState.STATE_INIT
       }
