@@ -258,6 +258,7 @@ com.intellij.codeInsight.template.impl.TemplateOptionalProcessor
 com.intellij.codeInsight.template.impl.TemplatePreprocessor
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:preprocessTemplate(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I,java.lang.String,java.lang.String):V
+com.intellij.codeInspection.AggregateResultsInspection
 a:com.intellij.codeInspection.InspectionManagerBase
 - createProblemDescriptor(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.String,com.intellij.codeInspection.ProblemHighlightType,java.lang.String,Z,com.intellij.codeInspection.LocalQuickFix[]):com.intellij.codeInspection.ProblemDescriptor
 com.intellij.codeInspection.InspectionToolResultExporter
