@@ -10,11 +10,7 @@ import com.intellij.codeInsight.lookup.LookupFocusDegree
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -46,15 +42,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import com.intellij.testFramework.registerServiceInstance
-import com.intellij.testFramework.runInEdtAndGet
-import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.testFramework.unregisterService
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.ApiVersion
@@ -63,8 +52,7 @@ import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.coroutineContext
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinxCoroutines
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.facet.hasKotlinFacet
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -315,7 +303,10 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                     KotlinProjectDescriptorWithFacet.KOTLIN_STABLE_WITH_MULTIPLATFORM
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_COROUTINES") ->
-                    KotlinWithJdkAndRuntimeLightProjectDescriptor(listOf(kotlinxCoroutines, coroutineContext), emptyList())
+                    KotlinWithJdkAndRuntimeLightProjectDescriptor(
+                        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance().libraryFiles +
+                                listOf(TestKotlinArtifacts.kotlinxCoroutines, TestKotlinArtifacts.coroutineContext), emptyList()
+                    )
 
                 else -> getDefaultProjectDescriptor()
             }

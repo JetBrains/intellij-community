@@ -22,6 +22,10 @@
     <additionalTextAttributes scheme="Darcula" file="colorScheme/Darcula_Kotlin.xml"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighter.KotlinRainbowVisitor"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.base.highlighting.KotlinBeforeResolveHighlightingVisitor"/>
+    <registryKey key="kotlin.highlight.stdlib.dsl.exit.points"
+                 description="Enable highlighting of generator operators (yield, emit, add, etc.) in builder DSLs"
+                 defaultValue="true"
+                 restartRequired="false"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
