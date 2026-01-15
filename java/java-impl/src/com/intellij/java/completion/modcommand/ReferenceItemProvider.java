@@ -15,6 +15,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.ModLaunchEditorAction;
 import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.modcompletion.ModCompletionItemProvider;
@@ -361,6 +362,7 @@ final class ReferenceItemProvider implements ModCompletionItemProvider {
       return List.of(new CommonCompletionItem(StringUtil.notNullize(pkg.getName()))
                        .withObject(pkg)
                        .withTail(addDot ? ModNavigatorTailType.dotType() : ModNavigatorTailType.noneType())
+                       .withAdditionalUpdater(((completionStart, updater) -> updater.editorAction(ModLaunchEditorAction.ACTION_CODE_COMPLETION, true)))
                        .withPresentation(new ModCompletionItemPresentation(MarkupText.plainText(pkg.getName()+(addDot?".":"")))
                                            .withMainIcon(() -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Package))));
     }

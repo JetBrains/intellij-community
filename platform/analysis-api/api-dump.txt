@@ -671,9 +671,20 @@ com.intellij.modcommand.ModCommandService
 - a:wrapToLocalQuickFixAndIntentionActionOnPsiElement(com.intellij.modcommand.ModCommandAction,com.intellij.psi.PsiElement):com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 - a:wrapToQuickFix(com.intellij.modcommand.ModCommandAction):com.intellij.codeInspection.LocalQuickFix
 - a:wrapToQuickFix(com.intellij.modcommand.ModCommandAction,Z):com.intellij.codeInspection.LocalQuickFix
+f:com.intellij.modcommand.ModLaunchEditorAction
+- java.lang.Record
+- com.intellij.modcommand.ModCommand
+- sf:ACTION_CODE_COMPLETION:java.lang.String
+- sf:ACTION_PARAMETER_INFO:java.lang.String
+- <init>(java.lang.String,Z):V
+- actionId():java.lang.String
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- optional():Z
 com.intellij.modcommand.ModPsiUpdater
 - com.intellij.openapi.editor.ModNavigator
 - a:cancel(java.lang.String):V
+- a:editorAction(java.lang.String,Z):V
 - a:getCaretOffset():I
 - a:getDocument():com.intellij.openapi.editor.Document
 - a:getOriginalFile(com.intellij.psi.PsiFile):com.intellij.psi.PsiFile

@@ -11,6 +11,7 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModLaunchEditorAction;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.modcompletion.PsiUpdateCompletionItem;
@@ -152,13 +153,17 @@ final class MethodCallCompletionItem extends PsiUpdateCompletionItem<PsiMethod> 
   
   @Override
   public void update(ActionContext actionContext, InsertionContext insertionContext, ModPsiUpdater updater) {
-    insertParentheses(updater);
+    ThreeState parameters = mayHaveParameters(updater.getPsiFile());
+    insertParentheses(updater, parameters);
     PsiDocumentManager.getInstance(updater.getProject()).commitDocument(updater.getDocument());
     if (myNeedExplicitTypeParameters) {
       qualifyMethodCall(updater, actionContext.offset());
       insertExplicitTypeParameters(updater);
     } else {
       importOrQualify(updater, actionContext.offset());
+    }
+    if (parameters != ThreeState.NO) {
+      updater.editorAction(ModLaunchEditorAction.ACTION_PARAMETER_INFO, true);
     }
   }
 
@@ -214,8 +219,7 @@ final class MethodCallCompletionItem extends PsiUpdateCompletionItem<PsiMethod> 
     JavaCompletionUtil.insertClassReference(myContainingClass, file, startOffset);
   }
 
-  private void insertParentheses(ModNavigator updater) {
-    ThreeState mayHaveParameters = mayHaveParameters(updater.getPsiFile());
+  private static void insertParentheses(ModNavigator updater, ThreeState mayHaveParameters) {
     boolean needRightParenth = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
     CommonCodeStyleSettings styleSettings = CodeStyle.getLanguageSettings(updater.getPsiFile(), JavaLanguage.INSTANCE);
     boolean spaceBetweenParentheses = mayHaveParameters == ThreeState.YES && styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES ||

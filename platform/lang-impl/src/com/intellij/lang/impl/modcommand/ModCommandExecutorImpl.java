@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl.modcommand;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.hint.HintManager;
@@ -23,9 +24,8 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.*;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.modcommand.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
@@ -154,7 +155,24 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     if (command instanceof ModUpdateSystemOptions updateOptions) {
       return executeUpdateInspectionOptions(context, updateOptions);
     }
+    if (command instanceof ModLaunchEditorAction action) {
+      return executeLaunchEditorAction(project, action, editor);
+    }
     throw new IllegalArgumentException("Unknown command: " + command);
+  }
+
+  private static boolean executeLaunchEditorAction(@NotNull Project project, @NotNull ModLaunchEditorAction action, @Nullable Editor editor) {
+    AnAction anAction = ActionManager.getInstance().getAction(action.actionId());
+    if (anAction == null) {
+      return handleError(project, editor, AnalysisBundle.message("modcommand.executor.action.not.found", action.actionId()));
+    }
+    if (!(editor instanceof EditorEx ex)) return action.optional();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (ex.isDisposed()) return;
+      DataContext ctx = ex.getDataContext();
+      anAction.actionPerformed(AnActionEvent.createEvent(anAction, ctx, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null));
+    });
+    return true;
   }
 
   private static boolean handleError(@NotNull Project project, @Nullable Editor editor, @Nls String message) {

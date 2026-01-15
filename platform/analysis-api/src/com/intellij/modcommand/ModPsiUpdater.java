@@ -8,10 +8,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 import java.util.Map;
@@ -87,6 +84,17 @@ public interface ModPsiUpdater extends ModNavigator {
    * @param suggestedNames names to suggest (user is free to type any other name as well)
    */
   void rename(@NotNull PsiNameIdentifierOwner element, @NotNull List<@NotNull String> suggestedNames);
+
+  /**
+   * Add a command to launch an interactive editor action in the context of an opened editor/file.
+   *
+   * @param actionId action identifier; taken from the IntelliJ IDEA action system (see {@code com.intellij.openapi.actionSystem.IdeActions}).
+   *                 For example, "CodeCompletion" will invoke the code completion at the caret position.
+   * @param optional if true, the action is optional and can be skipped if the ModCommand is executed non-interactively,
+   *                 or if the action is not supported by the target editor. 
+   *                 If false and it's unable to execute this action, an error should be displayed. 
+   */
+  void editorAction(@NotNull @NonNls String actionId, boolean optional);
 
   /**
    * Displays the UI to rename a given element. Does nothing when executed non-interactively. 

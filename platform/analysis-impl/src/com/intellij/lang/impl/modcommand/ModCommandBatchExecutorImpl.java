@@ -8,6 +8,8 @@ import com.intellij.codeInspection.options.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.*;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -88,6 +90,7 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       return Result.INTERACTIVE;
     }
     return switch (command) {
+      case ModLaunchEditorAction action -> action.optional() ? Result.NOTHING : Result.INTERACTIVE;
       case ModRegisterTabOut ignored -> Result.NOTHING;
       case ModUpdateFileText upd -> executeUpdate(project, upd) ? Result.SUCCESS : Result.ABORT;
       case ModCreateFile create -> {
@@ -378,6 +381,12 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
           html = (IntentionPreviewInfo.Html)IntentionPreviewInfo.rename(fileToCreate, targetFile.getName());
         }
         fsActions.add(html.content());
+      }
+      else if (command instanceof ModLaunchEditorAction(String id, boolean optional) && !optional) {
+        AnAction anAction = ActionManager.getInstance().getAction(id);
+        if (anAction != null) {
+          fsActions.add(text(AnalysisBundle.message("preview.execute.action", anAction.getTemplateText())));
+        }
       }
       else if (command instanceof ModUpdateSystemOptions options) {
         HtmlChunk preview = createOptionsPreview(context, options);

@@ -260,10 +260,11 @@ final class PsiUpdateImpl {
     private int myCaretOffset;
     private int myCaretVirtualEnd;
     private @NotNull TextRange mySelection;
-    private @NotNull List<@NotNull ModRegisterTabOut> myTabOutCommands = new ArrayList<>();
+    private final @NotNull List<@NotNull ModRegisterTabOut> myTabOutCommands = new ArrayList<>();
     private final Consumer<@NotNull Document> myCopyCleaner;
     private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
     private final List<ModStartTemplate.TemplateField> myTemplateFields = new ArrayList<>();
+    private final List<ModLaunchEditorAction> myLaunchEditorActions = new ArrayList<>();
     private @NotNull Function<? super @NotNull PsiFile, ? extends @NotNull ModCommand> myTemplateFinishFunction = f -> nop();
     private @Nullable ModStartRename myRenameSymbol;
     private final List<ModUpdateReferences> myTrackedDeclarations = new ArrayList<>();
@@ -554,6 +555,11 @@ final class PsiUpdateImpl {
     }
 
     @Override
+    public void editorAction(@NotNull String actionId, boolean optional) {
+      myLaunchEditorActions.add(new ModLaunchEditorAction(actionId, optional));
+    }
+
+    @Override
     public void rename(@NotNull PsiNamedElement element, @Nullable PsiElement nameIdentifier, @NotNull List<@NotNull String> suggestedNames) {
       if (myRenameSymbol != null) {
         throw new IllegalStateException("One element is already registered for rename");
@@ -755,6 +761,7 @@ final class PsiUpdateImpl {
         .andThen(myTrackedDeclarations.stream().<ModCommand>map(c -> c).reduce(nop(), ModCommand::andThen))
         .andThen(myRenameSymbol == null ? nop() : myRenameSymbol)
         .andThen(myTabOutCommands.stream().<ModCommand>map(c -> c).reduce(nop(), ModCommand::andThen))
+        .andThen(myLaunchEditorActions.stream().<ModCommand>map(c -> c).reduce(nop(), ModCommand::andThen))
         .andThen(myInfoMessage == null ? nop() : ModCommand.info(myInfoMessage));
     }
 
