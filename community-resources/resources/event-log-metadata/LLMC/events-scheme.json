@@ -457,6 +457,7 @@
         "deleted_length" : [ "{regexp#integer}" ],
         "deleted_lines_number" : [ "{regexp#integer}" ],
         "diff_index" : [ "{regexp#integer}" ],
+        "diff_rating" : [ "{enum:LIKE|DISLIKE|NOT_RATED}" ],
         "diffs" : [ "{util#llm_parameters}" ],
         "editable_region" : [ "{util#llm_parameters}" ],
         "filter_reason" : [ "{enum:iter_no_diffs|iter_does_not_fit_screen|iter_one_diff_too_long|iter_file_removed|iter_internal_markers|iter_revert_last_change}", "{enum:iter_contains_simple_comment|iter_contains_plain_todo}", "{enum:iter_direct_code_repetition}", "{enum:iter_jupyter_change_cell_separators}" ],
@@ -559,5 +560,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6568"
+  "version" : "6649"
 }
