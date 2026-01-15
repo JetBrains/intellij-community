@@ -1013,7 +1013,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       assertThat(result.resolvePluginId(PluginId.getId("bar-alias"))).isNotNull()
 
       // Verify full mappings
-      val fullMapping = result.getFullPluginIdMapping()
+      val fullMapping = result.buildFullPluginIdMapping()
       assertThat(fullMapping).hasSize(4) // 2 main IDs + 2 aliases
       assertThat(fullMapping).containsKeys(
         PluginId.getId("foo"),
@@ -1072,8 +1072,8 @@ class PluginInitializationSelectPluginsToLoadTest {
       val (result, _) = testPluginSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).isEmpty()
-      assertThat(result.getFullPluginIdMapping()).isEmpty()
-      assertThat(result.getFullContentModuleIdMapping()).isEmpty()
+      assertThat(result.buildFullPluginIdMapping()).isEmpty()
+      assertThat(result.buildFullContentModuleIdMapping()).isEmpty()
     }
 
     @Test
