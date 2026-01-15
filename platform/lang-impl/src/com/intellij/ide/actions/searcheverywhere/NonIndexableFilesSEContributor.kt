@@ -141,7 +141,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
     }
 
     if (Registry.`is`("se.enable.non.indexable.files.use.bfs")) {
-      val filesDeque = ReadAction.computeCancellable<FilesDeque, Throwable> { FilesDeque.nonIndexableDequeue(project) }
+      val filesDeque = ReadAction.computeCancellable<FilesDeque, Throwable> { FilesDeque.nonIndexableDequeue(project, requireReadAction = true) }
       ReadAction.nonBlocking<Unit> {
         while (true) {
           progressIndicator.checkCanceled()
