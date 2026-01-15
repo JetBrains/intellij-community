@@ -1853,7 +1853,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     }
     if (ExperimentalUI.isNewUI() && isRealEditor()) {
       //todo[kb] recalculate gutters renderers and return 0 if there are none in EditorMouseEventArea.LINE_NUMBERS_AREA
-      return EditorUIUtil.scaleWidth(JBUI.scale(14), myEditor);
+      return scaleWithEditor(14);
     }
     return 0;
   }
@@ -2890,11 +2890,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   private int getInitialLineNumberWidth(boolean applyEditorScale) {
     if (ExperimentalUI.isNewUI()) {
       //have a placeholder for breakpoints
-      int baseWidth = JBUI.scale(12);
+      int baseWidth = 12;
       if (applyEditorScale) {
-        return EditorUIUtil.scaleWidth(baseWidth, myEditor);
+        return scaleWithEditor(baseWidth);
       } else {
-        return baseWidth;
+        return JBUI.scale(baseWidth);
       }
     }
     return 0;
