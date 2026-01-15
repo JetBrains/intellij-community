@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.RepositoryId
-import com.intellij.util.messages.Topic
 import com.intellij.vcs.git.ref.GitCurrentRef
 import com.intellij.vcs.git.ref.GitFavoriteRefs
 import com.intellij.vcs.git.rpc.GitRepositoryApi
@@ -24,6 +23,10 @@ import git4idea.GitWorkingTree
 import git4idea.i18n.GitBundle
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -46,6 +49,11 @@ class GitRepositoriesHolder(
     get() = initSignal.isCompleted
 
   private val initLock = Mutex()
+
+  private val _updates = MutableSharedFlow<UpdateType>(replay = 0, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  @ApiStatus.Internal
+  val updates: SharedFlow<UpdateType> = _updates.asSharedFlow()
 
   fun getAll(): List<GitRepositoryModel> {
     logErrorIfNotInitialized()
@@ -124,7 +132,7 @@ class GitRepositoriesHolder(
           }
 
           if (initialized) {
-            getUpdateType(event)?.let { project.messageBus.syncPublisher(UPDATES).afterUpdate(it) }
+            getUpdateType(event)?.let { _updates.emit(it) }
           }
         }
       }
@@ -170,9 +178,6 @@ class GitRepositoriesHolder(
   companion object {
     fun getInstance(project: Project): GitRepositoriesHolder = project.getService(GitRepositoriesHolder::class.java)
 
-    @ApiStatus.Internal
-    val UPDATES: Topic<UpdatesListener> = Topic(UpdatesListener::class.java, Topic.BroadcastDirection.NONE)
-
     private val LOG = Logger.getInstance(GitRepositoriesHolder::class.java)
 
     private fun convertToRepositoryInfo(repositoryDto: GitRepositoryDto) =
@@ -208,11 +213,6 @@ class GitRepositoriesHolder(
       is GitRepositoryEvent.ReloadState -> UpdateType.RELOAD_STATE
       is GitRepositoryEvent.RepositoriesSync -> null
     }
-  }
-
-  @ApiStatus.Internal
-  fun interface UpdatesListener {
-    fun afterUpdate(updateType: UpdateType)
   }
 
   @ApiStatus.Internal

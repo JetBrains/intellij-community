@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.vcs.impl.shared.VcsUpdatesDebouncer
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
 internal class GitBranchesTreeUpdatesService(project: Project, cs: CoroutineScope) {
@@ -28,24 +29,26 @@ internal class GitBranchesTreeUpdatesService(project: Project, cs: CoroutineScop
   val updates = updatesDebouncer.updates
 
   init {
-    project.messageBus.connect(cs).subscribe(GitRepositoriesHolder.UPDATES, GitRepositoriesHolder.UpdatesListener { event ->
-      val update = when (event) {
-        GitRepositoriesHolder.UpdateType.FAVORITE_REFS_UPDATED -> GitBranchesTreeUpdate.REPAINT
-        GitRepositoriesHolder.UpdateType.REPOSITORY_CREATED -> GitBranchesTreeUpdate.REFRESH
-        GitRepositoriesHolder.UpdateType.REPOSITORY_DELETED -> GitBranchesTreeUpdate.REFRESH
-        GitRepositoriesHolder.UpdateType.REPOSITORY_STATE_UPDATED -> GitBranchesTreeUpdate.REFRESH
-        GitRepositoriesHolder.UpdateType.TAGS_LOADED -> GitBranchesTreeUpdate.REFRESH_TAGS
-        GitRepositoriesHolder.UpdateType.TAGS_HIDDEN -> GitBranchesTreeUpdate.REFRESH
-        GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED -> GitBranchesTreeUpdate.REFRESH
-        GitRepositoriesHolder.UpdateType.RELOAD_STATE -> GitBranchesTreeUpdate.REFRESH
-      }
+    cs.launch {
+      GitRepositoriesHolder.getInstance(project).updates.collect { event ->
+        val update = when (event) {
+          GitRepositoriesHolder.UpdateType.FAVORITE_REFS_UPDATED -> GitBranchesTreeUpdate.REPAINT
+          GitRepositoriesHolder.UpdateType.REPOSITORY_CREATED -> GitBranchesTreeUpdate.REFRESH
+          GitRepositoriesHolder.UpdateType.REPOSITORY_DELETED -> GitBranchesTreeUpdate.REFRESH
+          GitRepositoriesHolder.UpdateType.REPOSITORY_STATE_UPDATED -> GitBranchesTreeUpdate.REFRESH
+          GitRepositoriesHolder.UpdateType.TAGS_LOADED -> GitBranchesTreeUpdate.REFRESH_TAGS
+          GitRepositoriesHolder.UpdateType.TAGS_HIDDEN -> GitBranchesTreeUpdate.REFRESH
+          GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED -> GitBranchesTreeUpdate.REFRESH
+          GitRepositoriesHolder.UpdateType.RELOAD_STATE -> GitBranchesTreeUpdate.REFRESH
+        }
 
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Transformed $event to $update")
-      }
+        if (LOG.isDebugEnabled) {
+          LOG.debug("Transformed $event to $update")
+        }
 
-      updatesDebouncer.tryEmit(update)
-    })
+        updatesDebouncer.tryEmit(update)
+      }
+    }
   }
 
   internal fun refresh() {

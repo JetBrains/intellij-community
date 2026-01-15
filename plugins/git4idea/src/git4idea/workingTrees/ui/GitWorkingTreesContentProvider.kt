@@ -5,10 +5,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -27,6 +25,7 @@ import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.workingTrees.GitWorkingTreesService
+import kotlinx.coroutines.launch
 import java.awt.Component
 import java.awt.Point
 import java.util.function.Predicate
@@ -84,14 +83,15 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
         }
       })
 
-      project.messageBus.connect(GitWorkingTreesService.getInstance(project).coroutineScope)
-        .subscribe(GitRepositoriesHolder.UPDATES, GitRepositoriesHolder.UpdatesListener { event ->
+      GitWorkingTreesService.getInstance(project).coroutineScope.launch {
+        GitRepositoriesHolder.getInstance(project).updates.collect { event ->
           if (event == GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED) {
             ApplicationManager.getApplication().invokeLater {
               model.reload(project)
             }
           }
-        })
+        }
+      }
     }
 
     override fun uiDataSnapshot(sink: DataSink) {
@@ -172,19 +172,3 @@ internal class GitWorkingTreesContentVisibilityPredicate : Predicate<Project> {
   }
 }
 
-internal class GitWorkingTreeToolwindowUpdateListener(private val project: Project) : GitRepositoriesHolder.UpdatesListener {
-  init {
-    val app = ApplicationManager.getApplication()
-    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
-      throw ExtensionNotApplicableException.create()
-    }
-  }
-
-  override fun afterUpdate(updateType: GitRepositoriesHolder.UpdateType) {
-    if (updateType == GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED || updateType == GitRepositoriesHolder.UpdateType.RELOAD_STATE) {
-      ApplicationManager.getApplication().invokeLater {
-        project.getMessageBus().syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-      }
-    }
-  }
-}

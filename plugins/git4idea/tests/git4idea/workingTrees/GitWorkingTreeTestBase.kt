@@ -6,12 +6,12 @@ import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import git4idea.GitLocalBranch
 import git4idea.GitWorkingTree
 import git4idea.actions.workingTree.GitWorkingTreeDialogData
-import git4idea.repo.GitRepositoriesFrontendHolderTest
 import git4idea.repo.GitRepository
+import git4idea.repo.expectEvent
+import git4idea.repo.getAndInit
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.branch
 import git4idea.test.registerRepo
-import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -20,36 +20,23 @@ internal abstract class GitWorkingTreeTestBase : GitSingleRepoTest() {
   abstract fun getExpectedDefaultWorkingTrees(): List<GitWorkingTree>
   abstract val mainRepoPath: Path
 
-  protected val eventHandler = GitRepositoriesFrontendHolderTest.GitRepositoriesHolderEventHandler()
-
-  override fun setUp() {
-    super.setUp()
-    eventHandler.subscribe(project)
-  }
-
   protected fun doTestWorkingTreeCreation(
     data: GitWorkingTreeDialogData,
     expectedWorkingTree: GitWorkingTree,
     expectedWorkingTreeBranchName: String,
     expectedWorkingTreeLastCommit: String,
   ) {
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
-
+    val holder = GitRepositoriesHolder.getAndInit(project)
     assertSameElements(repo.workingTreeHolder.getWorkingTrees(), getExpectedDefaultWorkingTrees())
 
-    eventHandler.executeAndExpectEvent(
+    holder.expectEvent(
       {
         val result = GitWorkingTreesService.getInstance(project).createWorkingTree(repo, data)
         assertTrue(result.errorOutputAsHtmlString, result.success)
         val worktreesDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(mainRepoPath.resolve(".git/worktrees"))
         refresh(worktreesDir!!)
       },
-      { event, _ ->
-        return@executeAndExpectEvent event == GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED
-      }
+      { event, _ -> event == GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED }
     )
 
     val workingTrees = repo.workingTreeHolder.getWorkingTrees()

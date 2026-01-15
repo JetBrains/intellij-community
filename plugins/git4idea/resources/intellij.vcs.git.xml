@@ -1009,7 +1009,6 @@
               topic="git4idea.config.GitVcsSettings$GitVcsSettingsListener"/>
     <listener os="windows" class="git4idea.config.GitNewVersionCheckerStarter"
               topic="com.intellij.openapi.vcs.VcsMappingListener"/>
-    <listener class="git4idea.workingTrees.ui.GitWorkingTreeToolwindowUpdateListener"
-              topic="com.intellij.vcs.git.repo.GitRepositoriesHolder$UpdatesListener"/>
+
   </projectListeners>
 </idea-plugin>

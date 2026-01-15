@@ -3,7 +3,6 @@ package git4idea.repo
 
 import com.intellij.dvcs.repo.repositoryId
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
@@ -20,61 +19,10 @@ import git4idea.test.checkoutNew
 import git4idea.test.createSubRepository
 import git4idea.test.git
 import git4idea.ui.branch.GitBranchManager
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
-import kotlin.time.Duration.Companion.seconds
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
-  class GitRepositoriesHolderEventHandler {
-    private val updatesChanel = Channel<GitRepositoriesHolder.UpdateType>(capacity = 1000, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
-    fun subscribe(project: Project) {
-      project.messageBus.connect().subscribe(GitRepositoriesHolder.UPDATES,
-                                             GitRepositoriesHolder.UpdatesListener { updateType -> updatesChanel.trySend(updateType) })
-    }
-
-    fun executeAndExpectEvent(
-      operation: suspend () -> Unit,
-      condition: (currentEvent: GitRepositoriesHolder.UpdateType, previousEvents: List<GitRepositoriesHolder.UpdateType>) -> Boolean,
-    ) {
-      runBlocking {
-        skipEvents()
-        operation()
-        val collected = mutableListOf<GitRepositoriesHolder.UpdateType>()
-        withTimeout(5.seconds) {
-          updatesChanel.consumeAsFlow().first {
-            LOG.info("Received update: $it")
-            collected.add(it)
-            condition(it, collected)
-          }
-        }
-      }
-    }
-
-    private suspend fun skipEvents() {
-      withTimeout(1.seconds) {
-        while (!updatesChanel.isEmpty) {
-          updatesChanel.tryReceive()
-        }
-      }
-    }
-  }
-
-  private val eventHandler = GitRepositoriesHolderEventHandler()
-
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus(GitRepositoriesHolder::class.java.name)
-
-  override fun setUp() {
-    super.setUp()
-
-    eventHandler.subscribe(project)
-  }
 
   fun `test single repository data is available`() {
     val holder = GitRepositoriesHolder.getInstance(project)
@@ -98,12 +46,9 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
   }
 
   fun `test data is updated after repository is removed`() {
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
+    val holder = GitRepositoriesHolder.getAndInit(project)
     assertSize(1, holder.getAll())
-    eventHandler.executeAndExpectEvent(
+    holder.expectEvent(
       { vcsManager.unregisterVcs(vcs) },
       { event, _ -> event == GitRepositoriesHolder.UpdateType.REPOSITORY_DELETED })
 
@@ -111,13 +56,10 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
   }
 
   fun `test new repository is added`() {
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
+    val holder = GitRepositoriesHolder.getAndInit(project)
     assertSize(1, holder.getAll())
 
-    eventHandler.executeAndExpectEvent(
+    holder.expectEvent(
       { repo.createSubRepository("nested") },
       { event, _ -> event == GitRepositoriesHolder.UpdateType.REPOSITORY_CREATED })
 
@@ -125,15 +67,12 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
   }
 
   fun `test favorite branches are updated`() {
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
+    val holder = GitRepositoriesHolder.getAndInit(project)
 
     assertTrue("master should be favorite",
                holder.getTestRepo().favoriteRefs.contains(GitStandardLocalBranch("master")))
 
-    eventHandler.executeAndExpectEvent(
+    holder.expectEvent(
       {
         project.service<GitBranchManager>().setFavorite(
           GitBranchType.LOCAL,
@@ -149,10 +88,7 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
   }
 
   fun `test repo state is updated`() {
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
+    val holder = GitRepositoriesHolder.getAndInit(project)
 
     val masterBranch = GitStandardLocalBranch("master")
     assertTrue("master is current branch", holder.getTestRepo().state.isCurrentRef(masterBranch))
@@ -161,7 +97,7 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
     branchesToCheckout.forEach { branch -> repo.checkoutNew(branch.name) }
 
     val newCurrentBranch = GitStandardLocalBranch("new-branch")
-    eventHandler.executeAndExpectEvent(
+    holder.expectEvent(
       { repo.checkoutNew(newCurrentBranch.name) },
       { event, _ -> event == GitRepositoriesHolder.UpdateType.REPOSITORY_STATE_UPDATED })
 
@@ -169,7 +105,8 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
     assertTrue("master is current branch", stateAfterUpdate.isCurrentRef(newCurrentBranch))
 
     // max 5 branches in order of checkout
-    val expectedRecentBranches = listOf(newCurrentBranch) + branchesToCheckout.reversed().take(GitBranchesCollection.MAX_RECENT_CHECKOUT_BRANCHES - 1)
+    val expectedRecentBranches =
+      listOf(newCurrentBranch) + branchesToCheckout.reversed().take(GitBranchesCollection.MAX_RECENT_CHECKOUT_BRANCHES - 1)
     assertEquals("recent branches are updated", expectedRecentBranches, stateAfterUpdate.recentBranches)
   }
 
@@ -178,14 +115,11 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
     repo.git("tag $tagName")
     (repo.tagsHolder as? GitRepositoryTagsHolderImpl)?.updateForTests()
 
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
+    val holder = GitRepositoriesHolder.getAndInit(project)
 
     assertEquals(setOf(GitTag(tagName)), holder.getTestRepo().state.tags)
 
-    eventHandler.executeAndExpectEvent(
+    holder.expectEvent(
       { GitUiSettingsApi.getInstance().setShowTags(project.projectId(), false) },
       { event, _ -> event == GitRepositoriesHolder.UpdateType.TAGS_HIDDEN }
     )
@@ -198,12 +132,9 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
     repo.git("tag $tagName")
     (repo.tagsHolder as? GitRepositoryTagsHolderImpl)?.updateForTests()
 
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
+    val holder = GitRepositoriesHolder.getAndInit(project)
 
-    eventHandler.executeAndExpectEvent(
+    holder.expectEvent(
       {
         GitUiSettingsApi.getInstance().setShowTags(project.projectId(), false)
         GitUiSettingsApi.getInstance().setShowTags(project.projectId(), true)
@@ -217,24 +148,18 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
   }
 
   fun `test force state sync`() {
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
+    val holder = GitRepositoriesHolder.getAndInit(project)
 
-    eventHandler.executeAndExpectEvent(
+    holder.expectEvent(
       { GitRepositoryApi.getInstance().forceSync(project.projectId()) },
       { event, _ -> event == GitRepositoriesHolder.UpdateType.RELOAD_STATE }
     )
   }
 
   fun `test update of unknown repo forces sync`() {
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
+    val holder = GitRepositoriesHolder.getAndInit(project)
 
-    eventHandler.executeAndExpectEvent(
+    holder.expectEvent(
       {
         holder.clearRepositories()
         assertTrue(holder.getAll().isEmpty())
