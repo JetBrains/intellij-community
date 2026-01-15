@@ -1275,20 +1275,39 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - f:getDEFAULT():com.intellij.collaboration.ui.codereview.list.search.PopupConfig
 *:com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter
 - a:getFilter():com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
+*f:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersDropDownComponentFactory
+- sf:INSTANCE:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersDropDownComponentFactory
+- f:create(kotlinx.coroutines.flow.StateFlow,java.lang.String,java.util.List,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function0):javax.swing.JComponent
+- f:create(kotlinx.coroutines.flow.StateFlow,java.lang.String,java.util.List,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function0):javax.swing.JComponent
+- f:create(kotlinx.coroutines.flow.StateFlow,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function0):javax.swing.JComponent
+- bs:create$default(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersDropDownComponentFactory,kotlinx.coroutines.flow.StateFlow,java.lang.String,java.util.List,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function0,I,java.lang.Object):javax.swing.JComponent
+- bs:create$default(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersDropDownComponentFactory,kotlinx.coroutines.flow.StateFlow,java.lang.String,java.util.List,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function0,I,java.lang.Object):javax.swing.JComponent
+- bs:create$default(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersDropDownComponentFactory,kotlinx.coroutines.flow.StateFlow,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function0,I,java.lang.Object):javax.swing.JComponent
+*f:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersPanelFactory
+- sf:INSTANCE:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersPanelFactory
+- f:create(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersPanelViewModel,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):javax.swing.JComponent
+*:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchFiltersPanelViewModel
+- a:clearSearchQuery():V
+- a:getQuickFilters():java.util.List
+- a:getSearchHistory():java.util.List
+- a:getSearchQueryState():kotlinx.coroutines.flow.StateFlow
+- a:getSearchTextState():kotlinx.coroutines.flow.StateFlow
+- a:resetSearchQuery():V
+- a:setSearchQuery(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue):V
+- a:setSearchText(java.lang.String):V
+- a:submitSearchText():V
 *:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchHistoryModel
 - a:add(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue):V
 - a:getHistory():java.util.List
 - a:getLastFilter():com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
 - a:setLastFilter(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue):V
 *a:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory
-- *sf:Companion:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory$Companion
 - <init>(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModel):V
 - f:create(kotlinx.coroutines.CoroutineScope):javax.swing.JComponent
 - pa:createFilters(kotlinx.coroutines.CoroutineScope):java.util.List
 - pa:getQuickFilterTitle(com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter):java.lang.String
 - pa:getShortText(com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue):java.lang.String
 - pf:getVm():com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModel
-*f:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory$Companion
 *:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModel
 - a:getDefaultFilter():com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
 - a:getEmptySearch():com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
@@ -1593,6 +1612,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - sf:bindTextIn(javax.swing.JEditorPane,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindTextIn(javax.swing.JLabel,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindTextIn(javax.swing.text.JTextComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
+- sf:bindTextIn(javax.swing.text.JTextComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):V
 - sf:bindTooltipTextIn(javax.swing.JComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindVisibilityIn(javax.swing.JComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 *f:com.intellij.collaboration.ui.util.popup.CollaborationToolsPopupUtilKt

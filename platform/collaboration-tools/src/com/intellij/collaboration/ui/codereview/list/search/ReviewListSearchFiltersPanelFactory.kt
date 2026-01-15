@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.list.search
 
 import com.intellij.collaboration.ui.HorizontalListPanel
@@ -11,8 +11,7 @@ import com.intellij.ui.components.GradientViewport
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBThinOverlappingScrollBar
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Adjustable
@@ -21,22 +20,29 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
-abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : ReviewListQuickFilter<S>, VM : ReviewListSearchPanelViewModel<S, Q>>(
-  protected val vm: VM
-) {
-
-  fun create(viewScope: CoroutineScope): JComponent =
-    create(viewScope, null)
+object ReviewListSearchFiltersPanelFactory {
+  fun <S : ReviewListSearchValue, Q : ReviewListQuickFilter<S>> create(
+    vm: ReviewListSearchFiltersPanelViewModel<S, Q>,
+    getShortText: (S) -> @Nls String,
+    createFilters: () -> List<JComponent>,
+    getQuickFilterTitle: (Q) -> @Nls String,
+  ): JComponent = create(vm, getShortText, createFilters, getQuickFilterTitle, null)
 
   @Internal
-  fun create(viewScope: CoroutineScope, quickFilterListener: ((Q) -> Unit)?): JComponent {
+  fun <S : ReviewListSearchValue, Q : ReviewListQuickFilter<S>> create(
+    vm: ReviewListSearchFiltersPanelViewModel<S, Q>,
+    getShortText: (S) -> @Nls String,
+    createFilters: () -> List<JComponent>,
+    getQuickFilterTitle: (Q) -> @Nls String,
+    quickFilterListener: ((Q) -> Unit)?,
+  ): JComponent {
+    val searchQueryTextState = vm.searchQueryState.map { it.searchQuery }
     val searchField = ReviewListSearchFiltersTextFieldFactory
       .create(
-        vm.queryState,
-        submitSearchText = { text ->
-          vm.queryState.update { text }
-        },
-        chooseFromHistory = { point ->
+        searchQueryTextState,
+        { text -> vm.setSearchText(text) },
+        { vm.submitSearchText() },
+        { point ->
           val value = JBPopupFactory.getInstance()
             .createPopupChooserBuilder(vm.getSearchHistory().reversed())
             .setRenderer(SimpleListCellRenderer.create { label, value, _ ->
@@ -45,11 +51,11 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
             .createPopup()
             .showAndAwaitListSubmission<S>(point, ShowDirection.BELOW)
           if (value != null) {
-            vm.searchState.update { value }
+            vm.setSearchQuery(value)
           }
         })
 
-    val filters = createFilters(viewScope)
+    val filters = createFilters()
 
     val filtersPanel = HorizontalListPanel(4).apply {
       filters.forEach { add(it) }
@@ -66,12 +72,12 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
     }
 
     val quickFilterButton = QuickFilterButtonFactory.create(
-      vm.searchState,
+      vm.searchQueryState,
       vm.quickFilters,
       quickFilterListener,
-      { it.getQuickFilterTitle() },
-      { vm.searchState.update { it } },
-      { vm.searchState.update { vm.emptySearch } }
+      getQuickFilterTitle,
+      { vm.setSearchQuery(it) },
+      { vm.clearSearchQuery() }
     )
 
     val filterPanel = JPanel(BorderLayout()).apply {
@@ -89,10 +95,4 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
 
     return searchPanel
   }
-
-  protected abstract fun getShortText(searchValue: S): @Nls String
-
-  protected abstract fun createFilters(viewScope: CoroutineScope): List<JComponent>
-
-  protected abstract fun Q.getQuickFilterTitle(): @Nls String
 }

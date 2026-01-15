@@ -213,6 +213,25 @@ fun JTextComponent.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>
   }
 }
 
+fun JTextComponent.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>, onTextChange: (String) -> Unit) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    this@bindTextIn.document.addDocumentListener(object : javax.swing.event.DocumentListener {
+      override fun insertUpdate(e: javax.swing.event.DocumentEvent?) = onUpdate()
+      override fun removeUpdate(e: javax.swing.event.DocumentEvent?) = onUpdate()
+      override fun changedUpdate(e: javax.swing.event.DocumentEvent?) = onUpdate()
+      private fun onUpdate() {
+        onTextChange(this@bindTextIn.text ?: "")
+      }
+    })
+
+    textFlow.collect {
+      if (text != it) {
+        text = it
+      }
+    }
+  }
+}
+
 fun JEditorPane.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
