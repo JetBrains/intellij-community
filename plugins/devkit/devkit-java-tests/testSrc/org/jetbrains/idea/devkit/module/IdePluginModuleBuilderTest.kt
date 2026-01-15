@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.module
 
 import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.setupTestModule
@@ -213,6 +213,18 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
 
     assertPluginXmlDependencies(
       "org.jetbrains.plugins.ruby"
+    )
+  }
+
+  @Test
+  fun pluginPropertiesDependencies() {
+    genModuleWithDependencies("properties")
+
+    fixture.configureFromTempProjectFile("build.gradle.kts")
+    assertBuildGradlePlugins("com.intellij.properties")
+
+    assertPluginXmlDependencies(
+      "com.intellij.properties"
     )
   }
 
