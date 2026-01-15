@@ -3,6 +3,7 @@ package com.intellij.util.ui
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ComponentUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
@@ -101,6 +102,26 @@ fun getNearestTopLevelAncestor(component: Component): Component? {
   return ComponentUtil.findParentByCondition(component) { c ->
     c is Window && c.type != Window.Type.POPUP
   }
+}
+
+/**
+ * Slightly decreases the screen height on Wayland.
+ *
+ * Because Wayland doesn't report the actual screen insets,
+ * for some use cases, like trying to determine the maximum height of some menu or popup,
+ * the maximum size can be larger than the actual available screen space.
+ * This function applies a workaround for this problem by subtracting some fixed
+ * amount of space from the screen height.
+ *
+ * Does nothing if not running under the native Wayland toolkit.
+ */
+@ApiStatus.Internal
+fun addFakeScreenInsets(rectangle: Rectangle) {
+  if (!StartupUiUtil.isWaylandToolkit()) return
+  val total = JBUI.scale(Registry.intValue("wayland.screen.vInsets", defaultValue = 50, minValue = 0, maxValue = 300))
+  val top = total / 2
+  rectangle.y += top
+  rectangle.height -= total
 }
 
 private fun fitValue(location: Int, width: Int, start1: Int, end1: Int, start2: Int, end2: Int, preferLess: Boolean): Int {
