@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.rpc.FrontendDocumentId
@@ -14,11 +14,9 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
-import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.FileColorManager
 import com.intellij.util.ThreeState
@@ -29,12 +27,10 @@ import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
-import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
-import com.intellij.xdebugger.impl.frame.XStackFrameWithCustomBackgroundColor
-import com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove
+import com.intellij.xdebugger.impl.frame.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
@@ -44,15 +40,10 @@ import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
 import fleet.rpc.core.toRpc
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.await
 import org.jetbrains.concurrency.rejectedPromise
@@ -200,57 +191,39 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
-  override suspend fun computeRunningExecutionStacks(sessionId: XDebugSessionId): Flow<XExecutionStacksEvent> {
-    val session = sessionId.findValue() ?: return emptyFlow()
-    val scope = session.coroutineScope.childScopeCancelledOnSessionEvents("RunningExecutionStacksScope", session)
-    return createExecutionStacksEventFlow(session, scope) { container ->
-      session.debugProcess.computeRunningExecutionStacks(container)
+  override suspend fun computeRunningExecutionStacks(sessionId: XDebugSessionId): TimeoutSafeResult<XExecutionStacksResult> {
+    val session = sessionId.findValue()
+                  ?: return CompletableDeferred(value = XExecutionStacksResult.ExecutionStacks(listOf()))
+    return computeExecutionStacksImpl(session.coroutineScope, session) {
+      session.debugProcess.computeRunningExecutionStacksSuspend()
     }
   }
 
-  override suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent> {
-    val suspendContextModel = suspendContextId.findValue() ?: return emptyFlow()
+  override suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): TimeoutSafeResult<XExecutionStacksResult> {
+    val suspendContextModel = suspendContextId.findValue()
+                              ?: return CompletableDeferred(value = XExecutionStacksResult.ExecutionStacks(listOf()))
     val session = suspendContextModel.session
-    return createExecutionStacksEventFlow(session, suspendContextModel.coroutineScope) { container ->
-      suspendContextModel.suspendContext.computeExecutionStacks(container)
+    return computeExecutionStacksImpl(suspendContextModel.coroutineScope, session) {
+      suspendContextModel.suspendContext.computeExecutionStacksSuspend()
     }
   }
 
-  private fun createExecutionStacksEventFlow(
-    session: XDebugSessionImpl,
+  private fun computeExecutionStacksImpl(
     scope: CoroutineScope,
-    computeExecutionStacks: (XSuspendContext.XExecutionStackContainer) -> Unit
-  ) : Flow<XExecutionStacksEvent> {
-    return channelFlow {
-      attachAsChildTo(scope)
-      val container = object : XSuspendContext.XExecutionStackContainer {
-        @Volatile
-        var obsolete = false
-
-        override fun isObsolete(): Boolean {
-          return obsolete
+    session: XDebugSessionImpl,
+    computeExecutionStacks: suspend () -> List<XExecutionStack>,
+  ): TimeoutSafeResult<XExecutionStacksResult> {
+    return scope.async {
+      try {
+        val stackDtos = computeExecutionStacks().map { stack ->
+          stack.toRpc(scope, session)
         }
-
-        override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
-          val stacks = executionStacks.map { stack ->
-            stack.toRpc(scope, session)
-          }
-          trySend(XExecutionStacksEvent.NewExecutionStacks(stacks, last))
-          if (last) {
-            this@channelFlow.close()
-          }
-        }
-
-        override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-          trySend(XExecutionStacksEvent.ErrorOccurred(errorMessage))
-        }
+        XExecutionStacksResult.ExecutionStacks(stackDtos)
       }
-      computeExecutionStacks(container)
-
-      awaitClose {
-        container.obsolete = true
+      catch (e: XExecutionStacksComputationException) {
+        XExecutionStacksResult.ErrorOccurred(e.message ?: "Error occurred while computing execution stacks")
       }
-    }.buffer(Channel.UNLIMITED)
+    }
   }
 
   private fun CoroutineScope.childScopeCancelledOnSessionEvents(name: String, session: XDebugSessionImpl): CoroutineScope =

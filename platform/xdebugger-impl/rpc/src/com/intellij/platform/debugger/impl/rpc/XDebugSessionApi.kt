@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.execution.RunContentDescriptorIdImpl
@@ -58,9 +58,9 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun setCurrentStackFrame(sessionId: XDebugSessionId, executionStackId: XExecutionStackId, frameId: XStackFrameId, isTopFrame: Boolean, changedByUser: Boolean = false)
 
-  suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent>
+  suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): TimeoutSafeResult<XExecutionStacksResult>
 
-  suspend fun computeRunningExecutionStacks(sessionId: XDebugSessionId): Flow<XExecutionStacksEvent>
+  suspend fun computeRunningExecutionStacks(sessionId: XDebugSessionId): TimeoutSafeResult<XExecutionStacksResult>
 
   suspend fun muteBreakpoints(sessionDataId: XDebugSessionDataId, muted: Boolean)
 
@@ -98,12 +98,12 @@ data class XDebugSessionDto(
 
 @ApiStatus.Internal
 @Serializable
-sealed interface XExecutionStacksEvent {
+sealed interface XExecutionStacksResult {
   @Serializable
-  data class NewExecutionStacks(val stacks: List<XExecutionStackDto>, val last: Boolean) : XExecutionStacksEvent
+  data class ExecutionStacks(val stacks: List<XExecutionStackDto>) : XExecutionStacksResult
 
   @Serializable
-  data class ErrorOccurred(val errorMessage: @NlsContexts.DialogMessage String) : XExecutionStacksEvent
+  data class ErrorOccurred(val errorMessage: @NlsContexts.DialogMessage String) : XExecutionStacksResult
 }
 
 @ApiStatus.Internal
