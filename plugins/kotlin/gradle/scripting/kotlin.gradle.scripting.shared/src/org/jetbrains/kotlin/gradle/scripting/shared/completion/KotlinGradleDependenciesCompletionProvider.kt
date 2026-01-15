@@ -156,6 +156,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
                     .withPresentableText(item)
                     .withInsertHandler(FullStringInsertHandler)
                 lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
+                lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
                 result.addElement(lookupElement)
             }
         }
