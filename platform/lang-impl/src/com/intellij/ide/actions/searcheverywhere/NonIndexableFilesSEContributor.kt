@@ -131,7 +131,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
         return true // suboptimal match, process later, after "optimal" matches
       }
 
-      val psiItem = PsiManager.getInstance(project).getPsiFileSystemItem(file) ?: return true
+      val psiItem = PsiManager.getInstance(project).getPsiFileSystemItem(file, alreadyInReadAction) ?: return true
       val itemDescriptor = FoundItemDescriptor<Any>(psiItem, matchingDegree)
       return when {
         alreadyInReadAction -> consumer.process(itemDescriptor)
@@ -158,7 +158,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
         val matcher = otherNameMatchers[i]
         val matchingDegree = matcher.matchingDegree(file.name)
         if (matchingDegree > 0) {
-          val psiItem = PsiManager.getInstance(project).getPsiFileSystemItem(file) ?: continue
+          val psiItem = PsiManager.getInstance(project).getPsiFileSystemItem(file, alreadyInReadAction = false) ?: continue
           val weight = matchingDegree * (otherNameMatchers.size - i) / (otherNameMatchers.size + 1)
           val itemDescriptor = FoundItemDescriptor<Any>(psiItem, weight)
           if (!ReadAction.computeCancellable<Boolean, Throwable> {
@@ -189,9 +189,12 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
   }
 }
 
-private fun PsiManager.getPsiFileSystemItem(file: VirtualFile) = when {
-  file.isDirectory -> runReadAction { findDirectory(file) }
-  else -> runReadAction { findFile(file) }
+private fun PsiManager.getPsiFileSystemItem(file: VirtualFile, alreadyInReadAction: Boolean) = when {
+  file.isDirectory -> runReadActionIfNeeded(alreadyInReadAction) { findDirectory(file) }
+  else -> runReadActionIfNeeded(alreadyInReadAction) { findFile(file) }
 }
 
 private fun isGotoFileToNonIndexableEnabled(): Boolean = Registry.`is`("se.enable.non.indexable.files.contributor")
+
+private inline fun <T> runReadActionIfNeeded(alreadyInReadAction: Boolean, crossinline action: () -> T): T =
+  if (alreadyInReadAction) action() else runReadAction { action() }
