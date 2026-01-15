@@ -274,7 +274,8 @@ class VcsLogFiltererTest {
 
       val commits = graphsByRoots.values.map { it.commits }.flatten()
 
-      val refs = hashMap.storagesByRoot.mapValues { (_, storage) -> CompressedRefs(HashSet(storage.refs.values), hashMap) }
+      val refs =
+        hashMap.storagesByRoot.mapValues { (_, storage) -> RootRefsModel.create(HashSet(storage.refs.values), hashMap) }
       val dataPack = VcsLogGraphDataFactory.buildData(commits, refs, providers, hashMap, true)
 
       val detailsCache = TopCommitsCache(hashMap)
