@@ -444,10 +444,20 @@ class ActionMenu constructor(
 
 @OptIn(FlowPreview::class)
 private class UsabilityHelper(component: Component) : IdeEventQueue.NonLockedEventDispatcher, AWTEventListener, Disposable {
-  private var component: Component?
-  private var startMousePoint: Point?
+  /**
+   * The parent popup menu window.
+   *
+   * To make this whole thing Wayland-agnostic, all computations are done in this window's coordinate system.
+   * This makes it possible to avoid relying on screen coordinates.
+   *
+   * This window is never null (until dispose) because the helper is only created when the menu is showing.
+   */
+  private var window: Component? = ComponentUtil.getWindow(component)
+  private var component: Component? = component
+  private var startMousePoint: Point? = null
   private var xClosestToTargetSoFar = 0
   private var closestHorizontalDistanceSoFar = 0
+  private var targetBounds: Rectangle? = null
   private var upperTargetPoint: Point? = null
   private var lowerTargetPoint: Point? = null
   private var eventToRedispatch: MouseEvent? = null
@@ -468,45 +478,52 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.NonLockedEve
         }
       }
     }.cancelOnDispose(this)
-    this.component = component
-    val info = MouseInfo.getPointerInfo()
-    startMousePoint = info?.location
-    if (startMousePoint != null) {
-      xClosestToTargetSoFar = startMousePoint!!.x
-      Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.COMPONENT_EVENT_MASK)
-      IdeEventQueue.getInstance().addDispatcher(this, this)
-    }
+    Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.COMPONENT_EVENT_MASK)
+    IdeEventQueue.getInstance().addDispatcher(this, this)
   }
 
   override fun eventDispatched(event: AWTEvent) {
-    if (event !is ComponentEvent) {
+    if (event !is ComponentEvent || window == null || component == null || done) {
       return
     }
 
     val component = event.component
     val popup = ComponentUtil.getParentOfType(JPopupMenu::class.java, component)
-    if (popup != null && popup.invoker === this.component && popup.isShowing()) {
+    val popupParent = popup?.parent
+    if (popup != null && popupParent != null && popup.invoker === this.component && popup.isShowing()) {
       val bounds = popup.bounds
       if (bounds.isEmpty) {
         return
       }
 
-      bounds.location = popup.locationOnScreen
-      if (startMousePoint!!.x < bounds.x) {
-        upperTargetPoint = Point(bounds.x, bounds.y)
-        lowerTargetPoint = Point(bounds.x, bounds.y + bounds.height)
-        closestHorizontalDistanceSoFar = abs(upperTargetPoint!!.x - xClosestToTargetSoFar)
-      }
-      if (startMousePoint!!.x > bounds.x + bounds.width) {
-        upperTargetPoint = Point(bounds.x + bounds.width, bounds.y)
-        lowerTargetPoint = Point(bounds.x + bounds.width, bounds.y + bounds.height)
-        closestHorizontalDistanceSoFar = abs(upperTargetPoint!!.x - xClosestToTargetSoFar)
-      }
+      bounds.location = SwingUtilities.convertPoint(popupParent, popup.location, window)
+      this.targetBounds = bounds
+      computeTargetPointsIfPossible()
+    }
+  }
+
+  private fun computeTargetPointsIfPossible() {
+    if (upperTargetPoint != null && lowerTargetPoint != null) return // already computed
+    val bounds = targetBounds ?: return // the child popup position is not known yet
+    val startMousePoint = this.startMousePoint ?: return // the mouse position is not known yet
+    if (startMousePoint.x < bounds.x) {
+      upperTargetPoint = Point(bounds.x, bounds.y)
+      lowerTargetPoint = Point(bounds.x, bounds.y + bounds.height)
+      closestHorizontalDistanceSoFar = abs(upperTargetPoint!!.x - xClosestToTargetSoFar)
+    }
+    if (startMousePoint.x > bounds.x + bounds.width) {
+      upperTargetPoint = Point(bounds.x + bounds.width, bounds.y)
+      lowerTargetPoint = Point(bounds.x + bounds.width, bounds.y + bounds.height)
+      closestHorizontalDistanceSoFar = abs(upperTargetPoint!!.x - xClosestToTargetSoFar)
     }
   }
 
   override fun dispatch(e: AWTEvent): Boolean {
-    if (e !is MouseEvent || upperTargetPoint == null || lowerTargetPoint == null || done) {
+    val component = this.component
+    val window = this.window
+    val parent = component?.parent
+
+    if (e !is MouseEvent || window == null || component == null || parent == null || done) {
       return false
     }
 
@@ -514,9 +531,20 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.NonLockedEve
       return false
     }
 
-    val point = e.locationOnScreen
-    val bounds = component!!.bounds
-    bounds.location = component!!.locationOnScreen
+    if (startMousePoint == null) {
+      startMousePoint = SwingUtilities.convertPoint(e.component, e.point, window)
+      xClosestToTargetSoFar = startMousePoint!!.x
+    }
+
+    computeTargetPointsIfPossible()
+
+    if (upperTargetPoint == null || lowerTargetPoint == null) { // the child popup is not shown yet
+      return false
+    }
+
+    val point = SwingUtilities.convertPoint(e.component, e.point, window)
+    val bounds = component.bounds
+    bounds.location = SwingUtilities.convertPoint(component.parent, component.location, window)
     val insideTarget = bounds.contains(point)
     val horizontalDistance = abs(upperTargetPoint!!.x - point.x)
     if (!insideTarget && horizontalDistance < closestHorizontalDistanceSoFar) {
@@ -536,6 +564,7 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.NonLockedEve
 
   override fun dispose() {
     done = true
+    window = null
     component = null
     eventToRedispatch = null
     lowerTargetPoint = null
