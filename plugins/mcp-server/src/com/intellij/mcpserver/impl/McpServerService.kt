@@ -39,7 +39,6 @@ import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.response.respond
 import io.ktor.util.toMap
-
 import io.modelcontextprotocol.kotlin.sdk.server.RegisteredTool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
@@ -86,6 +85,7 @@ class McpServerService(val cs: CoroutineScope) {
   private val server = MutableStateFlow(startGlobalServerIfEnabled())
 
   private class ServerAndCount(var server: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>?, var userCount: Int)
+
   private val privateServer: ServerAndCount = ServerAndCount(null, 0)
   private val privateServerMutex = Mutex()
   private val callId = AtomicInteger(0)
@@ -123,7 +123,10 @@ class McpServerService(val cs: CoroutineScope) {
    * The calling site should pass the token value in http headers.
    * @param block suspend function that runs in the isolated MCP server context
    */
-  suspend fun authorizedSession(mcpSessionOptions: McpSessionOptions, block: suspend CoroutineScope.(port: Int, authTokenName: String, authTokenValue: String) -> Unit) {
+  suspend fun authorizedSession(
+    mcpSessionOptions: McpSessionOptions,
+    block: suspend CoroutineScope.(port: Int, authTokenName: String, authTokenValue: String) -> Unit,
+  ) {
     // open server here on random port
     val uuid = UUID.randomUUID().toString()
 
@@ -203,7 +206,7 @@ class McpServerService(val cs: CoroutineScope) {
     }
   }
 
-  class MyProjectListener: ProjectActivity {
+  class MyProjectListener : ProjectActivity {
     override suspend fun execute(project: Project) {
       // TODO: consider start on app startup
       serviceAsync<McpServerService>() // initialize service
@@ -307,23 +310,32 @@ class McpServerService(val cs: CoroutineScope) {
     }
   }
 
-  private fun McpTool.mcpToolToRegisteredTool(server: Server, session: ServerSession, projectPathFromInitialRequest: String?): RegisteredTool {
+  private fun McpTool.mcpToolToRegisteredTool(
+    server: Server,
+    session: ServerSession,
+    projectPathFromInitialRequest: String?,
+  ): RegisteredTool {
     val tool = toSdkTool()
     return RegisteredTool(tool) { request ->
       val httpRequest = currentCoroutineContext().httpRequestOrNull
-      val projectPathFromHeaders = httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH) ?: (request.meta?.get(IJ_MCP_SERVER_PROJECT_PATH) as? JsonPrimitive)?.content ?: projectPathFromInitialRequest
+      val projectPathFromHeaders =
+        httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH) ?: (request.meta?.get(IJ_MCP_SERVER_PROJECT_PATH) as? JsonPrimitive)?.content
+        ?: projectPathFromInitialRequest
       val projectPathFromMcpRequest = (request.arguments?.get(projectPathParameterName) as? JsonPrimitive)?.content
+
       @Suppress("IncorrectCancellationExceptionHandling")
       val project = try {
         if (!projectPathFromMcpRequest.isNullOrBlank()) {
           logger.trace { "Project path specified in MCP request: $projectPathFromMcpRequest" }
           // prefer a project from mcp argument first
-          findMostRelevantProject(Path(projectPathFromMcpRequest)) ?: throw noSuitableProjectError("`$projectPathParameterName`=`$projectPathFromMcpRequest` doesn't correspond to any open project.")
+          findMostRelevantProject(Path(projectPathFromMcpRequest))
+          ?: throw noSuitableProjectError("`$projectPathParameterName`=`$projectPathFromMcpRequest` doesn't correspond to any open project.")
         }
         else if (!projectPathFromHeaders.isNullOrBlank()) {
           logger.trace { "Project path specified in MCP request headers: $projectPathFromHeaders" }
           // then from headers
-          findMostRelevantProject(Path(projectPathFromHeaders)) ?: throw noSuitableProjectError("Project path specified via header variable `$IJ_MCP_SERVER_PROJECT_PATH`=`$projectPathFromHeaders` doesn't correspond to any open project.")
+          findMostRelevantProject(Path(projectPathFromHeaders))
+          ?: throw noSuitableProjectError("Project path specified via header variable `$IJ_MCP_SERVER_PROJECT_PATH`=`$projectPathFromHeaders` doesn't correspond to any open project.")
         }
         else {
           null
@@ -331,19 +343,23 @@ class McpServerService(val cs: CoroutineScope) {
       }
       catch (tce: TimeoutCancellationException) {
         logger.trace { "Calling of tool '${descriptor.name}' has been timed out: ${tce.message}" }
-        return@RegisteredTool McpToolCallResult.error(errorMessage = "Calling of tool '${descriptor.name}' has been timed out: ${tce.message}").toSdkToolCallResult()
+        return@RegisteredTool McpToolCallResult.error(errorMessage = "Calling of tool '${descriptor.name}' has been timed out: ${tce.message}")
+          .toSdkToolCallResult()
       }
       // handle it here because it incorrectly handled in the MCP SDK
       catch (ce: CancellationException) {
         //logger.trace { "Calling of tool '${descriptor.name}' has been cancelled: ${ce.message}" }
-        return@RegisteredTool McpToolCallResult.error(errorMessage = "Calling of tool '${descriptor.name}' has been cancelled: ${ce.message}").toSdkToolCallResult()
+        return@RegisteredTool McpToolCallResult.error(errorMessage = "Calling of tool '${descriptor.name}' has been cancelled: ${ce.message}")
+          .toSdkToolCallResult()
       }
       catch (mcpError: McpExpectedError) {
-        return@RegisteredTool McpToolCallResult.error(errorMessage = mcpError.mcpErrorText, structuredContent = mcpError.mcpErrorStructureContent).toSdkToolCallResult()
+        return@RegisteredTool McpToolCallResult.error(errorMessage = mcpError.mcpErrorText,
+                                                      structuredContent = mcpError.mcpErrorStructureContent).toSdkToolCallResult()
       }
       catch (e: Throwable) {
         logger.error("Failed to determine project for MCP tool call by provided arguments", e)
-        return@RegisteredTool McpToolCallResult.error(errorMessage = e.message ?: "Unknown error", structuredContent = null).toSdkToolCallResult()
+        return@RegisteredTool McpToolCallResult.error(errorMessage = e.message ?: "Unknown error", structuredContent = null)
+          .toSdkToolCallResult()
       }
 
       val authToken = httpRequest?.headers[IJ_MCP_AUTH_TOKEN]
