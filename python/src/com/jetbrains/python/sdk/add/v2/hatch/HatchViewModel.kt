@@ -72,7 +72,7 @@ class HatchViewModel<P : PathHolder>(
     val projectPath = projectPathFlows.projectPathWithDefault.first()
     val hatchExecutablePath = (hatchExecutable as? BinOnEel)?.path
                               ?: return@withContext Result.failure(HatchUIError.HatchExecutablePathIsNotValid(hatchExecutable.toString()))
-    val hatchWorkingDirectory = if (projectPath.isDirectory()) projectPath else projectPath.parent
+    val hatchWorkingDirectory = generateSequence(projectPath) { it.parent }.firstOrNull { it.isDirectory() }
     val hatchService = hatchWorkingDirectory.getHatchService(hatchExecutablePath).getOr { return@withContext it }
 
     val hatchEnvironments = hatchService.findVirtualEnvironments().getOr { return@withContext it }
