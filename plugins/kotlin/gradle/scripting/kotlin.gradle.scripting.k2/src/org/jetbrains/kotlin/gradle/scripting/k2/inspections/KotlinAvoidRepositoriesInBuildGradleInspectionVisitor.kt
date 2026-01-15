@@ -51,7 +51,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(private val holder: 
         if (!expression.isGradleRepositoriesBlock()) return
 
         val repositoriesParentBlockKind = getRepositoriesParentBlockKind(expression)
-        val gradleVersion = getGradleVersion(holder.project, holder.file.virtualFile) ?: GradleVersion.current()
+        val gradleVersion = expression.module?.getGradleVersion() ?: GradleVersion.current()
         if (repositoriesParentBlockKind == RepositoriesParentBlockKind.DEPENDENCY && gradleVersion < GradleVersion.version("6.8")) return
 
         val settingsFile = expression.module?.getGradleSettingsPsiFile()
