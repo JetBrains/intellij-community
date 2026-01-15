@@ -147,7 +147,6 @@ f:com.intellij.vcs.log.graph.utils.LinearGraphUtils
 - s:convertNodeIndexesToIds(com.intellij.vcs.log.graph.api.LinearGraph,java.util.Collection):java.util.Set
 - s:getCursor(Z):java.awt.Cursor
 - s:getDownNodes(com.intellij.vcs.log.graph.api.LinearGraph,I):java.util.List
-- s:getDownNodesIncludeNotLoad(com.intellij.vcs.log.graph.api.LinearGraph,I):java.util.List
 - s:getEdge(com.intellij.vcs.log.graph.api.LinearGraph,I,I):com.intellij.vcs.log.graph.api.elements.GraphEdge
 - s:getNotNullNodeIndex(com.intellij.vcs.log.graph.api.elements.GraphEdge):I
 - s:getUpNodes(com.intellij.vcs.log.graph.api.LinearGraph,I):java.util.List
