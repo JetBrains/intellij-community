@@ -794,6 +794,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/navigation/tests/intellij.kotlin.navigation.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/navigation/tests/intellij.kotlin.navigation.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/onboarding/intellij.kotlin.onboarding.iml" filepath="$PROJECT_DIR$/plugins/kotlin/onboarding/intellij.kotlin.onboarding.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/onboarding-gradle/intellij.kotlin.onboarding.gradle.iml" filepath="$PROJECT_DIR$/plugins/kotlin/onboarding-gradle/intellij.kotlin.onboarding.gradle.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/onboarding-maven/intellij.kotlin.onboarding.maven.iml" filepath="$PROJECT_DIR$/plugins/kotlin/onboarding-maven/intellij.kotlin.onboarding.maven.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/onboarding-promoter/intellij.kotlin.onboarding.promoter.iml" filepath="$PROJECT_DIR$/plugins/kotlin/onboarding-promoter/intellij.kotlin.onboarding.promoter.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.performanceExtendedPlugin/intellij.kotlin.performanceExtendedPlugin.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.performanceExtendedPlugin/intellij.kotlin.performanceExtendedPlugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/intellij.kotlin.plugin.community.main.iml" filepath="$PROJECT_DIR$/plugins/kotlin/intellij.kotlin.plugin.community.main.iml" />

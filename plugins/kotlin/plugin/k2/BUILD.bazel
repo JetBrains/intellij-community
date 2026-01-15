@@ -129,6 +129,7 @@ jvm_library(
     "//plugins/kotlin/injection/base:kotlin-base-injection",
     "//plugins/kotlin/onboarding",
     "//plugins/kotlin/onboarding-gradle",
+    "//plugins/kotlin/onboarding-maven",
     "//plugins/kotlin/base/code-insight/minimal",
     "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes",
     "//plugins/kotlin/jsr223",

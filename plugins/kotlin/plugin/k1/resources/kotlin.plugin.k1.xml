@@ -62,6 +62,7 @@
     <module name="intellij.kotlin.maven"/>
     <module name="intellij.kotlin.onboarding"/>
     <module name="intellij.kotlin.onboarding.gradle"/>
+    <module name="intellij.kotlin.onboarding.maven"/>
     <module name="intellij.kotlin.projectWizard.idea"/>
     <module name="kotlin.project-wizard.idea.k1"/>
     <module name="intellij.kotlin.projectWizard.gradle"/>
