@@ -67,7 +67,13 @@ class DecoratedEditor private constructor(
           editorImpl.setMode(NotebookEditorMode.COMMAND)
         }
 
-        updateSelectionAfterClick(hoveredCell.interval, ClickModifiers.fromEvent(event))
+        updateSelectionAfterClick(
+          hoveredCell.interval,
+          event.button,
+          event.isControlDown,
+          event.isShiftDown,
+          event.isAltDown
+        )
       }
 
       private fun sendMouseEventToNestedScroll(event: MouseEvent) {
@@ -82,18 +88,28 @@ class DecoratedEditor private constructor(
     editorComponentWrapper.addEditorMouseWheelEvent { nestedScrollingSupport.processMouseWheelEvent(it) }
   }
 
-  override fun inlayClicked(clickedCell: NotebookCellLines.Interval, clickModifiers: ClickModifiers) {
+  override fun inlayClicked(clickedCell: NotebookCellLines.Interval, event: MouseEvent) {
     editorImpl.setMode(NotebookEditorMode.COMMAND)
-    updateSelectionAfterClick(clickedCell, clickModifiers)
+
+    updateSelectionAfterClick(
+      clickedCell,
+      event.button,
+      event.isControlDown,
+      event.isShiftDown,
+      event.isAltDown
+    )
   }
 
   fun updateSelectionAfterClick(
     clickedCell: NotebookCellLines.Interval,
-    clickModifiers: ClickModifiers
+    mouseButton: Int,
+    isCtrlPressed: Boolean,
+    isShiftPressed: Boolean,
+    isAltPressed: Boolean,
   ) {
     val model = editorImpl.cellSelectionModel!!
     when {
-      clickModifiers.isCtrlPressed -> {
+      isCtrlPressed -> {
         if (model.isSelectedCell(clickedCell)) {
           model.removeSelection(clickedCell)
         }
@@ -101,7 +117,7 @@ class DecoratedEditor private constructor(
           model.selectCell(clickedCell, makePrimary = true)
         }
       }
-      clickModifiers.isShiftPressed -> {
+      isShiftPressed -> {
         // select or deselect all cells from primary to the selected one
         val primaryCell = model.primarySelectedCell
         val line1 = primaryCell.lines.first
@@ -125,10 +141,10 @@ class DecoratedEditor private constructor(
           }
         }
       }
-      clickModifiers.isAltPressed -> {
+      isAltPressed -> {
         // don't change selection in this case
       }
-      clickModifiers.mouseButton == MouseEvent.BUTTON1 && !model.isSelectedCell(clickedCell) -> {
+      mouseButton == MouseEvent.BUTTON1 && !model.isSelectedCell(clickedCell) -> {
         model.selectSingleCell(clickedCell)
       }
     }
