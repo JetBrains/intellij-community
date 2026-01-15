@@ -16,7 +16,7 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.dialogs.SshSettingsPanel;
+import org.jetbrains.idea.svn.dialogs.SshSettingConfigurableUi;
 
 import java.awt.*;
 import java.io.File;
@@ -64,7 +64,7 @@ public abstract class SvnConfigurable extends ConfigurableBase<ConfigurableUi<Sv
 
   public static class Ssh extends SvnConfigurable {
     public Ssh(@NotNull Project project) {
-      super(project, "SSH", message("configurable.name.svn.ssh"), () -> new SshSettingsPanel(project));
+      super(project, "SSH", message("configurable.name.svn.ssh"), () -> new SshSettingConfigurableUi(project));
     }
   }
 
