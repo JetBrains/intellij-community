@@ -23,13 +23,12 @@ import git4idea.GitWorkingTree
 import git4idea.i18n.GitBundle
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
@@ -42,17 +41,10 @@ class GitRepositoriesHolder(
   private val cs: CoroutineScope,
 ) {
   private val repositories: MutableMap<RepositoryId, GitRepositoryModelImpl> = ConcurrentHashMap()
-
-  private val initSignal = CompletableDeferred<Unit>()
-
-  val initialized: Boolean
-    get() = initSignal.isCompleted
-
-  private val initLock = Mutex()
-
+  private val initJob = cs.launch(start = CoroutineStart.LAZY) { subscribeToRepoEvents() }
   private val _updates = MutableSharedFlow<UpdateType>(replay = 0, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  @ApiStatus.Internal
+  val initialized: Boolean get() = initJob.isCompleted
   val updates: SharedFlow<UpdateType> = _updates.asSharedFlow()
 
   fun getAll(): List<GitRepositoryModel> {
@@ -74,28 +66,19 @@ class GitRepositoriesHolder(
     }
   }
 
-  suspend fun init() {
-    if (initialized) return
-    initLock.withLock {
-      if (initialized) return
-
-      subscribeToRepoEvents()
-    }
-  }
-
   /**
    * Returns immediately if [GitRepositoriesHolder] is initialized or waits until the initialization is completed.
-   *
-   * **Doesn't trigger the initialization**
    */
   suspend fun awaitInitialization() {
-    initSignal.await()
+    initJob.start()
+    initJob.join()
   }
 
   /**
    * @return once the connection is established and the first [GitRepositoryEvent.ReloadState] is received
    */
   private suspend fun subscribeToRepoEvents() {
+    val initSignal = CompletableDeferred<Unit>()
     cs.childScope("Git repository state synchronization").launch {
       durable {
         GitRepositoryApi.getInstance().getRepositoriesEvents(project.projectId()).collect { event ->

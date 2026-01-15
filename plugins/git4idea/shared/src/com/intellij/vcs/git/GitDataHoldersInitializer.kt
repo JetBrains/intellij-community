@@ -17,7 +17,7 @@ internal class GitDataHoldersInitializer : ProjectActivity {
 
     coroutineScope {
       launch {
-        GitRepositoriesHolder.getInstance(project).init()
+        GitRepositoriesHolder.getInstance(project).awaitInitialization()
       }
     }
     GitInOutStateHolder.getInstance(project)

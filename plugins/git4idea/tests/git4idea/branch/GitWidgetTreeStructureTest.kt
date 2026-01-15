@@ -48,7 +48,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
 
     runBlocking {
       // Ensure that the state holder is initialized
-      GitRepositoriesHolder.getInstance(project).init()
+      GitRepositoriesHolder.getInstance(project).awaitInitialization()
     }
   }
 

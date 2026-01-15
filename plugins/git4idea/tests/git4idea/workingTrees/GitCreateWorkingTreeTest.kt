@@ -47,7 +47,7 @@ class GitCreateWorkingTreeTest : GitSingleRepoTest() {
     createBranch(repo, branch)
     val holder = GitRepositoriesHolder.getInstance(project)
     runBlocking {
-      holder.init()
+      holder.awaitInitialization()
     }
 
     val workingTreePath = LocalFilePath(testNioRoot.resolve(treeRoot).toString(), true)

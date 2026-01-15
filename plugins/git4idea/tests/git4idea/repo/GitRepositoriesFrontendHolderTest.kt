@@ -32,7 +32,7 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
     }
 
     runBlocking {
-      holder.init()
+      holder.awaitInitialization()
     }
 
     val allReposInHolder = holder.getAll()

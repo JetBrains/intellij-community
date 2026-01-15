@@ -13,7 +13,9 @@ import kotlinx.coroutines.flow.shareIn
 import kotlin.time.Duration.Companion.seconds
 
 internal fun GitRepositoriesHolder.Companion.getAndInit(project: Project): GitRepositoriesHolder = getInstance(project).also {
-  runBlocking { it.init() }
+  runBlocking {
+    it.awaitInitialization()
+  }
 }
 
 internal fun GitRepositoriesHolder.expectEvent(
