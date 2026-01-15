@@ -32,7 +32,7 @@ internal class UndoClearHistoryAction : UndoHistoryAction() {
       .ask(undoManager.project)
     if (confirmedClear) {
       super.perform(undoManager, editor)
-      undoManager.clearStacks(editor)
+      undoManager.clearAndRepairStacks(editor)
       super.perform(undoManager, editor)
       Notification(
         "Undo/redo",

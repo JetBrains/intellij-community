@@ -284,6 +284,11 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
+  public void clearAndRepairStacks(@Nullable FileEditor editor) {
+    clearStacks(editor);
+  }
+
+  @ApiStatus.Internal
   protected void undoOrRedo(@Nullable FileEditor editor, boolean isUndo) {
     UndoClientState state = getClientState(editor);
     if (state != null) {
