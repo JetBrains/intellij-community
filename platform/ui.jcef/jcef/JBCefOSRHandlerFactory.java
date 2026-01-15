@@ -43,7 +43,7 @@ public interface JBCefOSRHandlerFactory {
     assert component instanceof JBCefOsrComponent;
     JBCefOsrComponent osrComponent = (JBCefOsrComponent)component;
     var screenBoundsProvider = createScreenBoundsProvider();
-    JBCefOsrHandler handler = JBCefApp.isRemoteEnabled() ?
+    JBCefOsrHandler handler = JBCefApp.getInstance().isRemoteEnabled() ?
                               new JBCefNativeOsrHandler(osrComponent, screenBoundsProvider) :
                               new JBCefOsrHandler(osrComponent, screenBoundsProvider);
     osrComponent.setRenderHandler(handler);

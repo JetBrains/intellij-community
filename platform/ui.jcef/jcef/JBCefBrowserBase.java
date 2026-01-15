@@ -900,7 +900,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
                                               boolean isMouseWheelEventEnabled,
                                               CefBrowserSettings settings) {
     final String validUrl = ObjectUtils.notNull(url, "");
-    if (JBCefApp.isRemoteEnabled()) {
+    if (JBCefApp.getInstance().isRemoteEnabled()) {
       Supplier<CefRendering> renderingSupplier = () -> createCefRenderingWithHandler(osrHandlerFactory, isMouseWheelEventEnabled);
       CefBrowser browser = client.createBrowser(validUrl, renderingSupplier, true, context, settings);
 

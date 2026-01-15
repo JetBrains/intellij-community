@@ -621,6 +621,8 @@
 
     <extensionPoint name="cefDelegate" interface="com.intellij.ui.jcef.CefDelegate" dynamic="false"/>
 
+    <extensionPoint name="cefNativeBundleProvider" interface="com.intellij.ui.jcef.JBCefNativeBundleProvider" dynamic="false"/>
+
     <extensionPoint name="proxySettingsOverrideProvider" interface="com.intellij.util.net.ProxySettingsOverrideProvider" dynamic="true"/>
     <extensionPoint name="navbarLeftSide" dynamic="true" interface="com.intellij.ide.navigationToolbar.NavBarLeftSideExtension"/>
 
