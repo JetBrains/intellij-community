@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -26,6 +28,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.workingTrees.GitWorkingTreesService
 import git4idea.workingTrees.ui.GitWorkingTreesContentProvider
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -71,7 +74,7 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
     val repository = GitWorkingTreesService.getRepoForWorkingTreesSupport(project) ?: return
     val branchFromContext = getBranchFromContext(e, repository)
     val ideActivity = GitOperationsCollector.logCreateWorktreeActionInvoked(e, branchFromContext)
-    e.coroutineScope.launch(Dispatchers.Default) {
+    service<GitWorkingTreeAppService>().coroutineScope.launch(Dispatchers.Default) {
       val preDialogData = readAction {
         val initialParentPath = computeInitialParentPath(project, repository)
         GitWorkingTreePreDialogData(project, repository, ideActivity, branchFromContext, initialParentPath)
@@ -147,3 +150,6 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
     }
   }
 }
+
+@Service(Service.Level.APP)
+private class GitWorkingTreeAppService(val coroutineScope: CoroutineScope)
