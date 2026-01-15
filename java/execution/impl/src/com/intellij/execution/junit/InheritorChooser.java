@@ -76,8 +76,8 @@ public class InheritorChooser {
       }
       if (classes.isEmpty()) return false;
       final FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(context.getDataContext());
-      if (fileEditor instanceof TextEditor) {
-        final Document document = ((TextEditor)fileEditor).getEditor().getDocument();
+      if (fileEditor instanceof TextEditor te) {
+        final Document document = te.getEditor().getDocument();
         final PsiFile containingFile = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(document);
         if (containingFile instanceof PsiClassOwner) {
           final List<PsiClass> psiClasses = new ArrayList<>(Arrays.asList(((PsiClassOwner)containingFile).getClasses()));

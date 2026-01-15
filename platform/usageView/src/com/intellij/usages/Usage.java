@@ -37,8 +37,8 @@ public interface Usage extends Navigatable {
    */
   default int getNavigationOffset() {
     FileEditorLocation location = getLocation();
-    if (location instanceof TextEditorLocation) {
-      LogicalPosition position = ((TextEditorLocation)location).getPosition();
+    if (location instanceof TextEditorLocation tel) {
+      LogicalPosition position = tel.getPosition();
       return ((TextEditor)location.getEditor()).getEditor().logicalPositionToOffset(position);
     }
     return -1;

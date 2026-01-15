@@ -124,9 +124,9 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
       logCurrentLatency();
 
       FileEditor editor = event.getNewEditor();
-      if (editor instanceof TextEditor) {
+      if (editor instanceof TextEditor te) {
         myCurrentFile = event.getNewFile();
-        myCurrentEditor = ((TextEditor)editor).getEditor();
+        myCurrentEditor = te.getEditor();
         myLatencyRecord = new LatencyDistributionRecord(new LatencyDistributionRecordKey("FUS"));
       }
       else {

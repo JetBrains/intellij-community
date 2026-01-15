@@ -235,16 +235,17 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
 
     // We want to sync selected property key on selection change.
     if (newEditor == this) {
-      if (oldEditor instanceof TextEditor) {
+      if (oldEditor instanceof TextEditor te) {
         myPropertiesInsertDeleteManager.reload();
-        setStructureViewSelectionFromPropertiesFile(((TextEditor)oldEditor).getEditor());
-      } else if (myPropertyToSelectWhenVisible != null) {
+        setStructureViewSelectionFromPropertiesFile(te.getEditor());
+      }
+      else if (myPropertyToSelectWhenVisible != null) {
         setStructureViewSelection(myPropertyToSelectWhenVisible);
         myPropertyToSelectWhenVisible = null;
       }
     }
-    else if (newEditor instanceof TextEditor) {
-      setPropertiesFileSelectionFromStructureView(((TextEditor)newEditor).getEditor());
+    else if (newEditor instanceof TextEditor te) {
+      setPropertiesFileSelectionFromStructureView(te.getEditor());
     }
   }
 

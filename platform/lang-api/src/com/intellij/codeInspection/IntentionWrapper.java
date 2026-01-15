@@ -77,7 +77,7 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
     PsiFile file = element == null ? null : element.getContainingFile();
     if (file != null) {
       FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(file.getVirtualFile());
-      myAction.invoke(project, editor instanceof TextEditor ? ((TextEditor)editor).getEditor() : null, file);
+      myAction.invoke(project, editor instanceof TextEditor te ? te.getEditor() : null, file);
     }
   }
 

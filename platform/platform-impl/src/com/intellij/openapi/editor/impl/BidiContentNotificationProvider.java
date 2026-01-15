@@ -34,11 +34,11 @@ final class BidiContentNotificationProvider implements EditorNotificationProvide
     }
 
     return fileEditor -> {
-      if (!(fileEditor instanceof TextEditor)) {
+      if (!(fileEditor instanceof TextEditor te)) {
         return null;
       }
 
-      Editor editor = ((TextEditor)fileEditor).getEditor();
+      Editor editor = te.getEditor();
       if (!Boolean.TRUE.equals(editor.getUserData(EditorImpl.CONTAINS_BIDI_TEXT)) ||
           Boolean.TRUE.equals(editor.getUserData(DISABLE_NOTIFICATION))) {
         return null;

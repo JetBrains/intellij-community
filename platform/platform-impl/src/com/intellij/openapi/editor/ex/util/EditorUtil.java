@@ -84,7 +84,7 @@ public final class EditorUtil {
   }
 
   public static @Nullable EditorEx getEditorEx(@Nullable FileEditor fileEditor) {
-    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+    Editor editor = fileEditor instanceof TextEditor te ? te.getEditor() : null;
     return editor instanceof EditorEx ? (EditorEx)editor : null;
   }
 

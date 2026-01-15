@@ -80,7 +80,7 @@ public class ThreesideContentPanel extends JPanel {
       super(ContainerUtil.map(holders, holder -> holder.getComponent()));
 
       EditorHolder baseHolder = ThreeSide.BASE.select(holders);
-      myBaseEditor = baseHolder instanceof TextEditorHolder ? ((TextEditorHolder)baseHolder).getEditor() : null;
+      myBaseEditor = baseHolder instanceof TextEditorHolder te ? te.getEditor() : null;
 
       mySplitter.redispatchWheelEventsTo(baseHolder);
     }

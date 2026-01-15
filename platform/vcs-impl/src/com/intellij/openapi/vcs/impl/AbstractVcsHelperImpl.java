@@ -341,8 +341,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   public void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line) {
     TextEditor textFileEditor;
     FileEditor fileEditor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
-    if (fileEditor instanceof TextEditor) {
-      textFileEditor = ((TextEditor)fileEditor);
+    if (fileEditor instanceof TextEditor te) {
+      textFileEditor = te;
     }
     else {
       textFileEditor = ContainerUtil.findInstance(FileEditorManager.getInstance(myProject).getEditorList(file), TextEditor.class);

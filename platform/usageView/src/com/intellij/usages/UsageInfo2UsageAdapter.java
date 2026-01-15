@@ -213,11 +213,11 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     VirtualFile virtualFile = getFile();
     if (virtualFile == null) return null;
     FileEditor editor = FileEditorManager.getInstance(getProject()).getSelectedEditor(virtualFile);
-    if (!(editor instanceof TextEditor)) return null;
+    if (!(editor instanceof TextEditor te)) return null;
 
     Segment segment = getUsageInfo().getSegment();
     if (segment == null) return null;
-    return new TextEditorLocation(segment.getStartOffset(), (TextEditor)editor);
+    return new TextEditorLocation(segment.getStartOffset(), te);
   }
 
   @Override

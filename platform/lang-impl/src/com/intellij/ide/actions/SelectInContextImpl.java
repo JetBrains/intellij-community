@@ -163,7 +163,7 @@ public final class SelectInContextImpl extends FileSelectInContext {
   }
 
   private static @Nullable Object getElementFromStructureTreeView(@NotNull FileEditor fileEditor, TreeBasedStructureViewBuilder builder) {
-    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+    Editor editor = fileEditor instanceof TextEditor te ? te.getEditor() : null;
     StructureViewModel model = builder.createStructureViewModel(editor);
     Object selectorInFile = model.getCurrentEditorElement();
     Disposer.dispose(model);

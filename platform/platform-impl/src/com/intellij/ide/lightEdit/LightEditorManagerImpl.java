@@ -74,10 +74,10 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
 
   private void installListener(@NotNull LightEditorInfo editorInfo) {
     FileEditor fileEditor = editorInfo.getFileEditor();
-    if (fileEditor instanceof TextEditor) {
-      Editor editor = ((TextEditor)fileEditor).getEditor();
-      if (editor instanceof EditorEx) {
-        ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
+    if (fileEditor instanceof TextEditor te) {
+      Editor editor = te.getEditor();
+      if (editor instanceof EditorEx ex) {
+        ex.addFocusListener(new FocusChangeListener() {
           @Override
           public void focusGained(@NotNull Editor editor) {
             WriteIntentReadAction.run(() -> checkUpdate(editor));
@@ -252,7 +252,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   private @Nullable LightEditorInfo findEditor(@NotNull Editor editor) {
     for (LightEditorInfo editorInfo : editors) {
       FileEditor fileEditor = editorInfo.getFileEditor();
-      if (fileEditor instanceof TextEditor && editor == ((TextEditor)fileEditor).getEditor()) {
+      if (fileEditor instanceof TextEditor te && editor == te.getEditor()) {
         return editorInfo;
       }
     }

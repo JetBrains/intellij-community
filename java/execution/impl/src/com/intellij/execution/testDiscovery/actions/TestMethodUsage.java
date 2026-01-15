@@ -107,11 +107,11 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
     if (virtualFile == null) return null;
     Project project = getPointer().getProject();
     FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
-    if (!(editor instanceof TextEditor)) return null;
+    if (!(editor instanceof TextEditor te)) return null;
 
     Segment segment = getPointer().getPsiRange();
     if (segment == null) return null;
-    return new TextEditorLocation(segment.getStartOffset(), (TextEditor)editor);
+    return new TextEditorLocation(segment.getStartOffset(), te);
   }
 
   @Override

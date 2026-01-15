@@ -191,8 +191,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       final Runnable runnable = () -> {
         removeRestartHighlightingListenerFromCurrentEditor();
         removeMatchHighlights();
-        if (myNewEditor instanceof TextEditor) {
-          myEditor = ((TextEditor)myNewEditor).getEditor();
+        if (myNewEditor instanceof TextEditor te) {
+          myEditor = te.getEditor();
           addMatchHighlights();
           addRestartHighlightingListenerToCurrentEditor();
         }

@@ -95,8 +95,8 @@ public final class XDebuggerInlayUtil {
     EDT.assertIsEdt();
     XSourcePosition position = renderer.getPosition();
     FileEditor editor = XDebuggerUtil.getInstance().getSelectedEditor(session.getProject(), position.getFile());
-    if (editor instanceof TextEditor) {
-      Editor e = ((TextEditor)editor).getEditor();
+    if (editor instanceof TextEditor te) {
+      Editor e = te.getEditor();
       int line = position.getLine();
       if (!DocumentUtil.isValidLine(line, e.getDocument())) return;
       int lineStart = e.getDocument().getLineStartOffset(line);

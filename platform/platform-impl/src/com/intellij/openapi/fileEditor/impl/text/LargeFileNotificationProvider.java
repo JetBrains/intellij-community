@@ -30,11 +30,11 @@ public final class LargeFileNotificationProvider implements EditorNotificationPr
   public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                 @NotNull VirtualFile file) {
     return fileEditor -> {
-      if (!(fileEditor instanceof TextEditor) || fileEditor.getUserData(LargeFileEditorProvider.IS_LARGE) != Boolean.TRUE) {
+      if (!(fileEditor instanceof TextEditor te) || fileEditor.getUserData(LargeFileEditorProvider.IS_LARGE) != Boolean.TRUE) {
         return null;
       }
 
-      Editor editor = ((TextEditor)fileEditor).getEditor();
+      Editor editor = te.getEditor();
       if (editor.getUserData(HIDDEN_KEY) != null || PropertiesComponent.getInstance().isTrueValue(DISABLE_KEY)) {
         return null;
       }

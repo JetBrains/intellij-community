@@ -200,8 +200,8 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
               @Override
               public void onDiscard() {
                 FileEditor fileEditor = editorInfo.getFileEditor();
-                if (fileEditor instanceof TextEditor) {
-                  Editor editor = ((TextEditor)fileEditor).getEditor();
+                if (fileEditor instanceof TextEditor te) {
+                  Editor editor = te.getEditor();
                   FileDocumentManager.getInstance().reloadFromDisk(editor.getDocument());
                 }
               }

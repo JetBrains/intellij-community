@@ -457,8 +457,8 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       return (PsiElement)elementAtCursor;
     }
 
-    if (psiFile != null && myFileEditor instanceof TextEditor) {
-      return psiFile.getViewProvider().findElementAt(((TextEditor)myFileEditor).getEditor().getCaretModel().getOffset());
+    if (psiFile != null && myFileEditor instanceof TextEditor te) {
+      return psiFile.getViewProvider().findElementAt(te.getEditor().getCaretModel().getOffset());
     }
 
     return null;

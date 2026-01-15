@@ -244,8 +244,8 @@ public final class FindUsagesManager {
     checkNotNull(primaryElements, handler, "getPrimaryElements()");
     PsiElement[] secondaryElements = handler.getSecondaryElements();
     checkNotNull(secondaryElements, handler, "getSecondaryElements()");
-    if (singleFile && fileEditor instanceof TextEditor) {
-      Editor editor = ((TextEditor)fileEditor).getEditor();
+    if (singleFile && fileEditor instanceof TextEditor te) {
+      Editor editor = te.getEditor();
       editor.putUserData(KEY_START_USAGE_AGAIN, null);
       findUsagesInEditor(primaryElements, secondaryElements, handler, scopeFile, FileSearchScope.FROM_START, findUsagesOptions.clone(),
                          editor);

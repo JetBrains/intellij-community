@@ -101,8 +101,8 @@ public final class StartMarkAction extends BasicUndoableAction {
   @Deprecated
   public static StartMarkAction canStart(@NotNull Project project) {
     for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
-      if (fileEditor instanceof TextEditor) {
-        StartMarkAction startMarkAction = ((TextEditor)fileEditor).getEditor().getUserData(START_MARK_ACTION_KEY);
+      if (fileEditor instanceof TextEditor te) {
+        StartMarkAction startMarkAction = te.getEditor().getUserData(START_MARK_ACTION_KEY);
         if (startMarkAction != null) {
           return startMarkAction;
         }

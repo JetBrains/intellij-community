@@ -162,8 +162,8 @@ public class ExecutionPointHighlighter {
     if (myOpenFileDescriptor != null) {
       if (!navigate) {
         FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(myOpenFileDescriptor.getFile());
-        if (editor instanceof TextEditor) {
-          myEditor = ((TextEditor)editor).getEditor();
+        if (editor instanceof TextEditor te) {
+          myEditor = te.getEditor();
         }
       }
       else {
