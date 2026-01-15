@@ -21,7 +21,7 @@ fun panel(init: Panel.() -> Unit): DialogPanel {
   dialogPanelConfig.context.postInit()
 
   val layout = GridLayout()
-  layout.respectMinimumSize = Registry.`is`("ui.kotlin.ui.dsl.respect.minimum.size", false)
+  layout.respectMinimumSize = true
   val result = DialogPanel(layout = layout)
   val builder = PanelBuilder(panel.rows, dialogPanelConfig, panel.spacingConfiguration, result, layout.rootGrid)
   builder.build()
