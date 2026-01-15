@@ -336,7 +336,7 @@ class VcsLogRefresherImpl(
           }
           LOG.trace { "Recent commits compacted in ${compactTime.inWholeMilliseconds} ms" }
           checkCanceled()
-          val (compressedRefs, compressingTime) = measureTimedValue { CompressedRefs(data.refsIterable, storage) }
+          val (compressedRefs, compressingTime) = measureTimedValue { RootRefsModel.create(data.refsIterable, storage) }
           LOG.trace { "Refs compressed in ${compressingTime.inWholeMilliseconds} ms" }
           refreshSessionData.put(root, commits, compressedRefs)
 
@@ -376,7 +376,7 @@ class VcsLogRefresherImpl(
             }
           }
           LOG.trace { "Full data loaded and compacted in ${readTime.inWholeMilliseconds} ms" }
-          refreshSessionData.put(root, graphCommits, CompressedRefs(data.refs, storage))
+          refreshSessionData.put(root, graphCommits, RootRefsModel.create(data.refs, storage))
 
           val storeTime = measureTime { commitDataConsumer?.storeData(root, graphCommits, data.users) }
           LOG.trace { "Stored full data: ${graphCommits.size} commits, ${data.users.size} users in ${storeTime.inWholeMilliseconds} ms" }

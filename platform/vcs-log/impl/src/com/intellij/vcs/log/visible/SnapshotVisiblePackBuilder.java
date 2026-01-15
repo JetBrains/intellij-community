@@ -4,10 +4,7 @@ package com.intellij.vcs.log.visible;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsLogAggregatedStoredRefs;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.graph.GraphColorManagerImpl;
 import com.intellij.vcs.log.graph.VisibleGraph;
@@ -97,10 +94,10 @@ final class SnapshotVisiblePackBuilder {
     }
 
     Map<VirtualFile, Set<VcsRef>> map = VcsLogUtil.groupRefsByRoot(branchesAndHeads);
-    Map<VirtualFile, CompressedRefs> refs = new HashMap<>();
+    Map<VirtualFile, VcsLogRootStoredRefs> refs = new HashMap<>();
     for (VirtualFile root : providers.keySet()) {
       Set<VcsRef> refsForRoot = map.get(root);
-      refs.put(root, new CompressedRefs(refsForRoot == null ? new HashSet<>() : refsForRoot, myStorage));
+      refs.put(root, RootRefsModel.create(refsForRoot == null ? new HashSet<>() : refsForRoot, myStorage));
     }
     return RefsModel.create(refs, myStorage, providers);
   }
