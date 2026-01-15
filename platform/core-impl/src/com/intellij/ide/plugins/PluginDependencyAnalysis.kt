@@ -107,14 +107,14 @@ fun PluginDependencyAnalysis.sequenceOptionalDependsStatements(plugin: PluginMai
  * If [ambiguousPluginSet] happens to resolve some ids to many modules, they all are included in the resulting sequence.
  * Resulting set includes [plugins].
  * 
- * @param onUnresolvedStrictDependency callback invoked when a strict dependency resolves to an empty sequence
+ * @param unresolvedStrictDependenciesCollector optional mutable list that is populated with unresolved strict dependencies
  */
 @ApiStatus.Internal
 fun PluginDependencyAnalysis.getRequiredTransitiveModules(
   initContext: PluginInitializationContext,
   plugins: Collection<PluginModuleDescriptor>,
   ambiguousPluginSet: AmbiguousPluginSet,
-  onUnresolvedStrictDependency: (node: PluginModuleDescriptor, dependency: DependencyRef) -> Unit = { _, _ -> },
+  unresolvedStrictDependenciesCollector: MutableList<Pair<PluginModuleDescriptor, DependencyRef>>? = null,
 ): Set<PluginModuleDescriptor> {
   val bfs = object : PluginDependencyAnalysis.BFS<PluginModuleDescriptor>() {
     override fun visit(node: PluginModuleDescriptor) {
@@ -129,7 +129,7 @@ fun PluginDependencyAnalysis.getRequiredTransitiveModules(
           resolvedAny = true
         }
         if (!resolvedAny) {
-          onUnresolvedStrictDependency(node, dep)
+          unresolvedStrictDependenciesCollector?.add(node to dep)
         }
       }
       if (node is PluginMainDescriptor) {
