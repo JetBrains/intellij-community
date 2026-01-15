@@ -80,7 +80,7 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
 
             viewer.showCodeReview(
               modelFactory = { _, _, locationToLine, lineToLocations, lineToUnified ->
-                DiffEditorModel(this, changeVm, locationToLine, lineToLocations) {
+                DiffEditorModel(this, project, changeVm, locationToLine, lineToLocations) {
                   val (leftLine, rightLine) = lineToUnified(it)
                   UnifiedCodeReviewItemPosition(change, leftLine, rightLine)
                 }
@@ -116,6 +116,7 @@ internal interface GitLabReviewDiffEditorModel : CodeReviewEditorModel<GitLabMer
 
 private class DiffEditorModel(
   cs: CoroutineScope,
+  private val project: Project,
   private val diffReviewVm: GitLabMergeRequestDiffReviewViewModel,
   private val locationToLine: (DiffLineLocation) -> Int?,
   private val lineToLocation: (Int) -> DiffLineLocation?,
@@ -158,6 +159,7 @@ private class DiffEditorModel(
 
   override fun toggleComments(lineIdx: Int) {
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
+    GitLabStatistics.logToggledComments(project)
   }
 
   override val canNavigate: Boolean get() = diffReviewVm.isCumulativeChange

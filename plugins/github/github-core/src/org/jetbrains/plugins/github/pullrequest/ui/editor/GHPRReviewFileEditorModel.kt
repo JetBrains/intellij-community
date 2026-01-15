@@ -11,6 +11,7 @@ import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
@@ -22,12 +23,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import java.util.*
 
 internal class GHPRReviewFileEditorModel internal constructor(
   private val cs: CoroutineScope,
+  private val project: Project,
   private val settings: GithubPullRequestsProjectUISettings,
   private val fileVm: GHPRReviewFileEditorViewModel,
   private val changesModel: MutableCodeReviewEditorGutterChangesModel = MutableCodeReviewEditorGutterChangesModel(),
@@ -90,6 +93,7 @@ internal class GHPRReviewFileEditorModel internal constructor(
 
   override fun toggleComments(lineIdx: Int) {
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
+    GHPRStatisticsCollector.logToggledComments(project)
   }
 
   override fun getBaseContent(lines: LineRange): String? = fileVm.getBaseContent(lines)

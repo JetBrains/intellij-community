@@ -99,7 +99,7 @@ private suspend fun showReview(project: Project, settings: GithubPullRequestsPro
   withContext(Dispatchers.Main.immediate) {
     val reviewHeadContent = fileVm.originalContent.mapNotNull { it?.result?.getOrThrow() }.first()
     val cs = this
-    val model = GHPRReviewFileEditorModel(cs, settings, fileVm) showEditor@{ changeToShow, lineIdx ->
+    val model = GHPRReviewFileEditorModel(cs, project, settings, fileVm) showEditor@{ changeToShow, lineIdx ->
       val file = changeToShow.filePathAfter?.virtualFile ?: return@showEditor
       val fileOpenDescriptor = OpenFileDescriptor(project, file, lineIdx, 0)
       FileEditorManager.getInstance(project).openFileEditor(fileOpenDescriptor, true)

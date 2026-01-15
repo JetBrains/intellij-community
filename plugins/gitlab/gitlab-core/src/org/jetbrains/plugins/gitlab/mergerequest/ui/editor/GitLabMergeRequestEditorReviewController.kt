@@ -112,7 +112,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
       val preferences = project.serviceAsync<GitLabMergeRequestsPreferences>()
       val reviewHeadContent = fileVm.headContent.mapNotNull { it?.result?.getOrThrow() }.first()
 
-      val model = GitLabMergeRequestEditorReviewUIModel(this, preferences, fileVm) showEditor@{ changeToShow, lineIdx ->
+      val model = GitLabMergeRequestEditorReviewUIModel(this, project, preferences, fileVm) showEditor@{ changeToShow, lineIdx ->
         val file = changeToShow.filePathAfter?.virtualFile ?: return@showEditor
         val fileOpenDescriptor = OpenFileDescriptor(project, file, lineIdx, 0)
         FileEditorManager.getInstance(project).openFileEditor(fileOpenDescriptor, true)

@@ -7,6 +7,7 @@ import com.intellij.collaboration.util.*
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
@@ -15,12 +16,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 /**
  * A wrapper over [GitLabMergeRequestEditorReviewFileViewModel] to encapsulate LST integration
  */
 internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   private val cs: CoroutineScope,
+  private val project: Project,
   private val preferences: GitLabMergeRequestsPreferences,
   private val fileVm: GitLabMergeRequestEditorReviewFileViewModel,
   private val changesModel: MutableCodeReviewEditorGutterChangesModel = MutableCodeReviewEditorGutterChangesModel(),
@@ -88,6 +91,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
 
   override fun toggleComments(lineIdx: Int) {
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
+    GitLabStatistics.logToggledComments(project)
   }
 
   fun cancelNewDiscussion(originalLine: Int) {

@@ -19,6 +19,7 @@ import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.lineLocation
@@ -52,7 +54,7 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
   }
 
   @Service(Service.Level.PROJECT)
-  private class InlaysController(parentCs: CoroutineScope) {
+  private class InlaysController(private val project: Project, parentCs: CoroutineScope) {
     private val cs = parentCs.childScope(javaClass.name, Dispatchers.Main)
 
     fun installInlays(reviewVm: GHPRDiffViewModel, change: RefComparisonChange, viewer: DiffViewerBase) {
@@ -71,7 +73,7 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
             viewer.showCodeReview { editor, _, locationToLine, lineToLocation, lineToUnified ->
               coroutineScope {
                 val cs = this
-                val model = DiffEditorModel(cs, reviewVm, changeVm, locationToLine, lineToLocation) {
+                val model = DiffEditorModel(cs, project, reviewVm, changeVm, locationToLine, lineToLocation) {
                   val (leftLine, rightLine) = lineToUnified(it)
                   UnifiedCodeReviewItemPosition(change, leftLine, rightLine)
                 }
@@ -98,6 +100,7 @@ internal interface GHPRReviewDiffEditorModel : CodeReviewEditorModel<GHPREditorM
 
 private class DiffEditorModel(
   cs: CoroutineScope,
+  private val project: Project,
   private val reviewVm: GHPRDiffViewModel,
   private val diffVm: GHPRDiffReviewViewModel,
   private val locationToLine: (DiffLineLocation) -> Int?,
@@ -195,6 +198,7 @@ private class DiffEditorModel(
 
   override fun toggleComments(lineIdx: Int) {
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
+    GHPRStatisticsCollector.logToggledComments(project)
   }
 
   override val canNavigate: Boolean get() = diffVm.canNavigate

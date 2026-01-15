@@ -102,7 +102,7 @@ object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 28)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 29)
 
   /**
    * Server metadata was fetched
@@ -297,6 +297,12 @@ object GitLabStatistics {
 
   fun logFileUploadActionExecuted(project: Project): Unit = PROJECT_FILE_UPLOAD.log(project)
 
+  private val DISCUSSIONS_TOGGLED = COUNTERS_GROUP.registerEvent("comments.toggled",
+                                                                 "The user toggled visibility of discussions on given line in code review")
+
+  fun logToggledComments(project: Project) {
+    DISCUSSIONS_TOGGLED.log(project)
+  }
 
   /**
    * GitLab tool window tab <type> was opened from <place>
