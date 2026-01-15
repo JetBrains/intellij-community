@@ -454,15 +454,19 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.NonLockedEve
    */
   private var window: Component? = ComponentUtil.getWindow(component)
   private var component: Component? = component
-  private var startMousePoint: Point? = null
-  private var xClosestToTargetSoFar = 0
-  private var closestHorizontalDistanceSoFar = 0
-  private var targetBounds: Rectangle? = null
-  private var upperTargetPoint: Point? = null
-  private var lowerTargetPoint: Point? = null
   private var eventToRedispatch: MouseEvent? = null
   private val pendingDispatchFlow = MutableStateFlow(false)
   private var done = false
+
+  // The stuff above needs to be cleaned up on dispose to avoid leaks.
+  // The stuff below only holds cached computations.
+
+  private var startMousePoint: Point? = null
+  private var targetBounds: Rectangle? = null
+  private var upperTargetPoint: Point? = null
+  private var lowerTargetPoint: Point? = null
+  private var xClosestToTargetSoFar = 0
+  private var closestHorizontalDistanceSoFar = 0
 
   init {
     component.launchOnShow("ActionMenu.UsabilityHelper") {
@@ -567,9 +571,6 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.NonLockedEve
     window = null
     component = null
     eventToRedispatch = null
-    lowerTargetPoint = null
-    upperTargetPoint = null
-    startMousePoint = null
     Toolkit.getDefaultToolkit().removeAWTEventListener(this)
   }
 }
