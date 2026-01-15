@@ -93,7 +93,7 @@ class OptInFixes {
             val annotationEntry = if (argumentClassFqName != null) "(${argumentClassFqName.shortName().asString()}::class)" else ""
             val argumentText = annotationName + annotationEntry
             val actionName = when (kind) {
-                is Kind.Self -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, "?")
+                is Kind.Self -> KotlinBundle.message("fix.opt_in.text.use.statement", argumentText)
                 is Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.propagate.constructor", argumentText)
                 is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, kind.name ?: "?")
                 is Kind.ContainingClass if element is KtObjectDeclaration -> KotlinBundle.message(
