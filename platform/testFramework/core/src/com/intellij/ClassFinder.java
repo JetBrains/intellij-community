@@ -22,10 +22,16 @@ public class ClassFinder {
   private final List<String> classNameList;
   private final Path classPathRoot;
   private final boolean includeUnconventionallyNamedTests;
+  private final boolean includeEverything;
 
   public ClassFinder(final Path classPathRoot, final String rootPackage, boolean includeUnconventionallyNamedTests) {
+    this(classPathRoot, rootPackage, includeUnconventionallyNamedTests, false);
+  }
+
+  public ClassFinder(final Path classPathRoot, final String rootPackage, boolean includeUnconventionallyNamedTests, boolean includeEverything) {
     this.classPathRoot = classPathRoot;
     this.includeUnconventionallyNamedTests = includeUnconventionallyNamedTests;
+    this.includeEverything = includeEverything;
     String directoryOffset = rootPackage.replace(".", classPathRoot.getFileSystem().getSeparator());
     if (Files.isRegularFile(classPathRoot)) {
       classNameList = findAndStoreTestClassesFromJar(directoryOffset);
@@ -38,6 +44,12 @@ public class ClassFinder {
   private @Nullable String computeClassName(final @NotNull Path path, final @NotNull Path root) {
     Path absPath = path.toAbsolutePath();
     String fileName = absPath.getFileName().toString();
+    if (includeEverything) {
+      if (fileName.endsWith(".class")) {
+        return getClassFQN(absPath, root);
+      }
+      return null;
+    }
     if (!includeUnconventionallyNamedTests) {
       // It's faster and easier to check for `endsWith` rather than `extensionEquals` (see below) which does `endsWith`
       if (fileName.endsWith("Test.class")) {
