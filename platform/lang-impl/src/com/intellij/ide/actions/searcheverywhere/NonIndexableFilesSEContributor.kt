@@ -19,6 +19,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FilesDeque
 import com.intellij.util.indexing.contentNonIndexableRoots
 import com.intellij.util.text.matching.MatchingMode
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
@@ -139,10 +140,23 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
       }
     }
 
-    FileBasedIndex.getInstance().iterateNonIndexableFiles(project, null) { file ->
-      progressIndicator.checkCanceled()
-      processFile(file = file, alreadyInReadAction = false)
+    if (Registry.`is`("se.enable.non.indexable.files.use.bfs")) {
+      val filesDeque = ReadAction.computeCancellable<FilesDeque, Throwable> { FilesDeque.nonIndexableDequeue(project) }
+      ReadAction.nonBlocking<Unit> {
+        while (true) {
+          progressIndicator.checkCanceled()
+          val file = filesDeque.computeNext()
+          if (file == null || !processFile(file, alreadyInReadAction = true)) break
+        }
+      }.executeSynchronously()
     }
+    else {
+      FileBasedIndex.getInstance().iterateNonIndexableFiles(project, null) { file ->
+        progressIndicator.checkCanceled()
+        processFile(file = file, alreadyInReadAction = false)
+      }
+    }
+
 
     if (suboptimalMatches.isEmpty() || namePattern.length < 2) return
 
