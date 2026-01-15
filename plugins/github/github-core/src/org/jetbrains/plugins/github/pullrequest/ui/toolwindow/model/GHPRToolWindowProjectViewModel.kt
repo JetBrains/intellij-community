@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GHRepositoryConnection
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRFilesManagerImpl
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -95,6 +96,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
         }
       }
     }
+    GHPRStatisticsCollector.logNewPRViewOpened(project)
   }
 
   override fun viewList(requestFocus: Boolean) {
@@ -113,6 +115,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
         requestFocus()
       }
     }
+    GHPRStatisticsCollector.logDetailsOpened(project)
   }
 
   override fun viewPullRequest(id: GHPRIdentifier, commitOid: String) {
@@ -120,6 +123,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
     tabsHelper.showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
       selectCommit(commitOid)
     }
+    GHPRStatisticsCollector.logDetailsOpened(project)
   }
 
   override fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean) {
