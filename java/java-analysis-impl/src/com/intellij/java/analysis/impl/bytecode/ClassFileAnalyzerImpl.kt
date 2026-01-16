@@ -5,8 +5,10 @@ import com.intellij.java.analysis.bytecode.ClassFileAnalyzer
 import com.intellij.java.analysis.bytecode.JvmBytecodeDeclarationProcessor
 import com.intellij.java.analysis.bytecode.JvmBytecodeReferenceProcessor
 import java.io.InputStream
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.*
 
 internal class ClassFileAnalyzerImpl(
   declarationProcessor: JvmBytecodeDeclarationProcessor?,
@@ -30,5 +32,40 @@ internal class ClassFileAnalyzerImpl(
 
   override fun processInputStream(inputStream: InputStream) {
     processFileContent(inputStream.readAllBytes())
+  }
+
+  override fun processClassFiles(root: Path, relativePathFilter: (String) -> Boolean) {
+    withClassRootEntries(root) { entries ->
+      entries
+        .filter { relativePathFilter(it.entryName) }
+        .forEach { entry -> processFile(entry.path) }
+    }
+  }
+}
+
+private data class ClassFileEntry(val entryName: String, val path: Path)
+
+@OptIn(ExperimentalPathApi::class)
+private fun <R> withClassRootEntries(classRoot: Path, block: (entries: Sequence<ClassFileEntry>) -> R): R {
+  return withClassRoot(classRoot) { nioRoot ->
+    val sequence = nioRoot
+      .walk()
+      .filter { path ->
+        path.extension == "class" && !classRoot.relativize(path).startsWith("META-INF/")
+      }
+      .map { ClassFileEntry(it.relativeTo(nioRoot).invariantSeparatorsPathString, it) }
+    block(sequence)
+  }
+}
+
+private fun <R> withClassRoot(classRoot: Path, block: (root: Path) -> R): R {
+  return when {
+    classRoot.isDirectory() -> block(classRoot)
+    classRoot.isRegularFile() && classRoot.extension == "jar" -> {
+      FileSystems.newFileSystem(classRoot).use {
+        block(it.rootDirectories.single())
+      }
+    }
+    else -> error("Unsupported classes output root: $classRoot")
   }
 }

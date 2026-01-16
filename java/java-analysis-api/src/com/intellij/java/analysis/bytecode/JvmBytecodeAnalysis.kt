@@ -1,4 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("JvmBytecodeAnalysis")
 package com.intellij.java.analysis.bytecode
 
 import com.intellij.openapi.components.service
@@ -56,4 +57,10 @@ public interface ClassFileAnalyzer {
 
   @Throws(IOException::class)
   public fun processInputStream(inputStream: InputStream)
+
+  /**
+   * Processes all *.class files under [root] (which may refer to a directory or a JAR file) with relative paths from the root matching
+   * the given [relativePathFilter].
+   */
+  public fun processClassFiles(root: Path, relativePathFilter: (String) -> Boolean)
 }

@@ -30,5 +30,7 @@ internal class ExtractModuleFileProcessor {
   val gatheredClassLinks: Map<String, Set<String>>
     get() = mutableGatheredClassLinks
 
-  fun processFile(path: Path) = classFileAnalyzer.processFile(path)
+  fun processClassFiles(root: Path, relativePathFilter: (String) -> Boolean = { true }) {
+    classFileAnalyzer.processClassFiles(root, relativePathFilter)
+  }
 }
