@@ -33,7 +33,7 @@ public class ConfigurationState {
   // Also consider advancing the version when
   //  - ABI generation logic changed (e.g. changes in ordering, filtering, etc)
   //  - Any changes in builder's logic implemented, that might affect sources processing
-  private static final int VERSION = 4;
+  private static final int VERSION = 5;
 
   private static final ConfigurationState EMPTY = new ConfigurationState(
     new PathSourceMapper(), NodeSourceSnapshot.EMPTY, List.of(), NodeSourceSnapshot.EMPTY, Map.of()
@@ -63,6 +63,7 @@ public class ConfigurationState {
   private final Iterable<ResourceGroup> myResources;
   private final NodeSourceSnapshot myLibsSnapshot;
   private final long myFlagsDigest;
+  private final long myRunnersDigest;
 
   public ConfigurationState(
     NodeSourcePathMapper pathMapper, NodeSourceSnapshot sourcesSnapshot, Iterable<ResourceGroup> resourceGroups, NodeSourceSnapshot libsSnapshot, Map<CLFlags, List<String>> flags
@@ -72,6 +73,7 @@ public class ConfigurationState {
     myResources = resourceGroups;
     myLibsSnapshot = libsSnapshot;
     myFlagsDigest = buildFlagsDigest(flags);
+    myRunnersDigest = RunnerRegistry.getConfigurationDigest();
   }
 
   public ConfigurationState(NodeSourcePathMapper pathMapper, Path savedState) throws IOException {
@@ -84,12 +86,14 @@ public class ConfigurationState {
         myResources = RW.readCollection(in, () -> new ResourceGroupImpl(in, PathSource::new));
         myLibsSnapshot = new SourceSnapshotImpl(in, PathSource::new);
         myFlagsDigest = in.readLong();
+        myRunnersDigest = in.readLong();
       }
       else { // version differs
         mySourcesSnapshot = NodeSourceSnapshot.EMPTY;
         myResources = List.of();
         myLibsSnapshot = NodeSourceSnapshot.EMPTY;
         myFlagsDigest = buildFlagsDigest(Map.of());
+        myRunnersDigest = 0; // will differ from current RUNNERS_DIGEST, triggering rebuild
       }
     }
   }
@@ -103,6 +107,7 @@ public class ConfigurationState {
       RW.writeCollection(out, myResources, gr -> gr.write(out));
       getLibraries().write(out);
       out.writeLong(myFlagsDigest);
+      out.writeLong(myRunnersDigest);
     }
     catch (Throwable e) {
       LOG.log(Level.SEVERE, "Error saving build configuration state " + context.getTargetName(), e);
@@ -137,6 +142,10 @@ public class ConfigurationState {
 
   public long getFlagsDigest() {
     return myFlagsDigest;
+  }
+
+  public long getRunnersDigest() {
+    return myRunnersDigest;
   }
 
   // tracks names and order of classpath entries as well as content digests of all third-party dependencies
