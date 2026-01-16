@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter
 
 class DuplicateVisitor: PsiRecursiveElementWalkingVisitor() {
   private val nameToElementMap : MutableMap<@NlsSafe String, MutableSet<PsiElement>> = mutableMapOf()
@@ -14,7 +15,7 @@ class DuplicateVisitor: PsiRecursiveElementWalkingVisitor() {
     if (element is GrImportStatement) {
       visitImportStatement(element)
     }
-    else if (element is GrTypeDefinition) {
+    else if (element is GrTypeDefinition && element !is GrTypeParameter) {
       visitTypeDefinition(element)
     }
 
