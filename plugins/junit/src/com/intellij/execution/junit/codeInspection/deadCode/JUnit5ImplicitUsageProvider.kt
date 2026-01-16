@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection.deadCode
 
 import com.intellij.codeInsight.MetaAnnotationUtil
@@ -27,8 +27,8 @@ private fun parameterIsUsedByParameterizedTest(parameter: PsiParameter): Boolean
     val attributeValue = annotation.findDeclaredAttributeValue("name")
     if (attributeValue is PsiExpression) {
       val indexInDisplayName = "{" + declarationScope.parameterList.getParameterIndex(parameter) + "}"
-      val value = JavaConstantExpressionEvaluator.computeConstantExpression(attributeValue as PsiExpression?, null, false)
-      return indexInDisplayName == value
+      val value = JavaConstantExpressionEvaluator.computeConstantExpression(attributeValue as PsiExpression?, null, false) as? String
+      return value?.contains(indexInDisplayName) == true
     }
   }
   return false

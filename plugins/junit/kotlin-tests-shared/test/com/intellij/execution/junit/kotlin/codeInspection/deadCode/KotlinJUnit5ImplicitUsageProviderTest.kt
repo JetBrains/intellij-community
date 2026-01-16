@@ -40,6 +40,41 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
      """.trimIndent())
   }
 
+  fun `test implicit usage of multiple parameters in parameterized test`() {
+    if (pluginMode == K1) return // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import org.junit.jupiter.params.provider.Arguments
+      import java.util.stream.Stream
+      
+      class MyTest {
+        companion object {
+          @JvmStatic
+          fun source(): Stream<Arguments> = Stream.of(
+            Arguments.of("a", 1, true),
+            Arguments.of("b", 2, false)
+          )
+        }
+        
+        @org.junit.jupiter.params.ParameterizedTest(name = "{0} vs {1}")
+        @org.junit.jupiter.params.provider.MethodSource("source")
+        fun testMultiple(name: String, value: Int, <warning descr="Parameter \"flag\" is never used">flag</warning>: Boolean) {
+        }
+      }
+   """.trimIndent())
+  }
+
+  fun `test unused parameter when not in display name`() {
+    if (pluginMode == K1) return // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      class MyTest {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.ValueSource(strings = ["a"])
+        fun test(<warning descr="Parameter \"unused\" is never used">unused</warning>: String) {
+        }
+      }
+   """.trimIndent())
+  }
+
   fun `test implicit usage of method source with implicit method name`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.util.stream.*
