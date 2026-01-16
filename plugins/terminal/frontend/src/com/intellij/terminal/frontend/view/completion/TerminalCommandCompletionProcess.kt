@@ -48,6 +48,11 @@ internal class TerminalCommandCompletionProcess(
   var restartPending = false
     private set
 
+  var beforePrefixReplacementLength: Int = 0
+    private set
+  var afterPrefixReplacementLength: Int = 0
+    private set
+
   init {
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: error("Can't find PSI file for ${editor.document}")
     val offset = editor.caretModel.offset.coerceIn(0, editor.document.textLength - 1)
@@ -97,10 +102,17 @@ internal class TerminalCommandCompletionProcess(
     lookup.setArranger(arranger)
   }
 
-  fun addItems(items: List<CompletionResult>) {
+  fun addItems(
+    items: List<CompletionResult>,
+    beforePrefixReplacementLength: Int,
+    afterPrefixReplacementLength: Int,
+  ) {
     if (lookup.isLookupDisposed) {
       return
     }
+
+    this.beforePrefixReplacementLength = beforePrefixReplacementLength
+    this.afterPrefixReplacementLength = afterPrefixReplacementLength
 
     val curArranger = arranger ?: error("CompletionLookupArrangerImpl is null")
     curArranger.batchUpdate {

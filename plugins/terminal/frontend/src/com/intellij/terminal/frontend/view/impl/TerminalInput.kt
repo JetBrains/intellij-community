@@ -142,6 +142,11 @@ internal class TerminalInput(
     sendBytes(leftBytes)
   }
 
+  fun sendRight() {
+    val rightBytes = encodingManager.getCode(KeyEvent.VK_RIGHT, 0)!!
+    sendBytes(rightBytes)
+  }
+
   private fun doSendBytes(data: ByteArray, eventTime: TimeMark?) {
     val writeBytesEvent = TerminalWriteBytesEvent(bytes = data)
     sendEvent(InputEventSubmission(writeBytesEvent, eventTime))

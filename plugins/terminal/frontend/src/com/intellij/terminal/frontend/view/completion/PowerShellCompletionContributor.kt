@@ -56,12 +56,18 @@ internal class PowerShellCompletionContributor : TerminalCommandCompletionContri
       return null
     }
 
+    val suggestions = completionResult.matches.map { toShellSuggestion(it) }
+    // The smallest prefix that should be used for filtering completion popup options
     val prefix = findBestPrefix(typedPrefix, completionResult.matches)
-    val suggestions = completionResult.matches.map {
-      toShellSuggestion(it)
-    }
+    val beforePrefixReplacementLength = typedPrefix.removeSuffix(prefix).length
+    val afterPrefixReplacementLength = completionResult.replacementIndex + completionResult.replacementLength - completionResult.cursorIndex
 
-    return TerminalCommandCompletionResult(suggestions, prefix)
+    return TerminalCommandCompletionResult(
+      suggestions,
+      prefix,
+      beforePrefixReplacementLength,
+      afterPrefixReplacementLength,
+    )
   }
 
   private suspend fun awaitCompletionResult(shellIntegration: TerminalShellIntegration): String {
