@@ -2,24 +2,23 @@
 package com.intellij.platform.buildView.frontend
 
 import com.intellij.build.*
-import com.intellij.icons.AllIcons
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.rpc.ComponentDirectTransferId
 import com.intellij.ide.rpc.getComponent
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.OnePixelSplitter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import java.awt.BorderLayout
-import java.lang.ref.Reference
-import java.lang.ref.WeakReference
 import javax.swing.JPanel
 import kotlin.reflect.KMutableProperty1
 
@@ -32,6 +31,10 @@ internal class FrontendBuildView(
 ) : JPanel(BorderLayout()), Disposable {
   private val scope = parentScope.childScope("FrontendBuildView")
   internal val treeView: BuildTreeView?
+
+  internal companion object {
+    val DATA_KEY = DataKey.create<FrontendBuildView>("FrontendBuildView")
+  }
 
   init {
     val console = consoleComponent.getComponent()
@@ -69,17 +72,6 @@ internal class FrontendBuildView(
   fun goPreviousOccurence(): OccurenceNavigator.OccurenceInfo? {
     return treeView?.goPreviousOccurence()
   }
-
-  fun createFilteringActionGroup(): ActionGroup {
-    val actionGroup = DefaultActionGroup(LangBundle.message("action.filters.text"), true)
-    actionGroup.templatePresentation.icon = AllIcons.Actions.Show
-    val treeViewRef = WeakReference(treeView)
-    actionGroup.add(FilteringToggleAction(LangBundle.message("build.tree.filters.show.warnings"), WarningsToggleAction.STATE_KEY,
-                                          BuildTreeView::showingWarnings, WarningsToggleAction.DEFAULT_STATE, treeViewRef))
-    actionGroup.add(FilteringToggleAction(LangBundle.message("build.tree.filters.show.successful"), SuccessfulStepsToggleAction.STATE_KEY,
-                                          BuildTreeView::showingSuccessful, SuccessfulStepsToggleAction.DEFAULT_STATE, treeViewRef))
-    return actionGroup
-  }
 }
 
 private fun restoreSavedFiltering(treeView: BuildTreeView) {
@@ -89,18 +81,18 @@ private fun restoreSavedFiltering(treeView: BuildTreeView) {
                                                                             SuccessfulStepsToggleAction.DEFAULT_STATE)
 }
 
-private class FilteringToggleAction(
-  @NlsContexts.Command text: String,
+internal abstract class FilteringToggleAction(
   private val stateKey: String,
-  private val property: KMutableProperty1<BuildTreeView, Boolean>,
   private val defaultState: Boolean,
-  private val treeViewRef: Reference<BuildTreeView?>,
-) : ToggleAction(text), DumbAware {
+  private val property: KMutableProperty1<BuildTreeView, Boolean>,
+) : ToggleAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+  private fun AnActionEvent.getTreeView(): BuildTreeView? = getData(FrontendBuildView.DATA_KEY)?.treeView
 
   override fun isSelected(e: AnActionEvent): Boolean {
     val presentation = e.presentation
-    val treeView = treeViewRef.get()
+    val treeView = e.getTreeView()
     if (treeView == null) {
       presentation.isEnabledAndVisible = false
       return false
@@ -110,8 +102,16 @@ private class FilteringToggleAction(
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val treeView = treeViewRef.get() ?: return
+    val treeView = e.getTreeView() ?: return
     property.set(treeView, state)
     PropertiesComponent.getInstance().setValue(stateKey, state, defaultState)
   }
 }
+
+internal class BuildViewFilterWarningsAction : FilteringToggleAction(WarningsToggleAction.STATE_KEY,
+                                                                     WarningsToggleAction.DEFAULT_STATE,
+                                                                     BuildTreeView::showingWarnings)
+
+internal class BuildViewFilterSuccessfulAction : FilteringToggleAction(SuccessfulStepsToggleAction.STATE_KEY,
+                                                                       SuccessfulStepsToggleAction.DEFAULT_STATE,
+                                                                       BuildTreeView::showingSuccessful)
