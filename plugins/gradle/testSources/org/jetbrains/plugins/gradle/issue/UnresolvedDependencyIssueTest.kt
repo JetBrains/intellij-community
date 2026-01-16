@@ -49,4 +49,67 @@ internal class UnresolvedDependencyIssueTest {
       syncIssue.description
     )
   }
+
+  @Test
+  fun `test unresolved dependency during sync has no quick-fixes`() {
+    val syncIssue = UnresolvedDependencySyncIssue(
+      dependencyName = "my.not.existing.dependency:gradle:1.2.3-dev",
+      failureMessage = """
+        Could not find my.not.existing.dependency:gradle:1.2.3-dev.
+        Searched in the following locations:
+          - https://some.link
+        Required by:
+            root project 'irrelevant'
+      """.trimIndent(),
+      projectPath = "irrelevant",
+      isOfflineMode = false
+    )
+    val actualQuickFixes = syncIssue.quickFixes
+    assertEquals(0, actualQuickFixes.size) { "Should not contain any quick-fixes" }
+    assertEquals(
+      """
+        Could not find my.not.existing.dependency:gradle:1.2.3-dev.
+        Searched in the following locations:
+          - https://some.link
+        Required by:
+            root project 'irrelevant'
+        
+        Possible solution:
+         - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
+        
+      """.trimIndent(),
+      syncIssue.description
+    )
+  }
+
+  @Test
+  fun `test unresolved dependency during build has no quick-fixes`() {
+    val syncIssue = UnresolvedDependencyBuildIssue(
+      dependencyName = "my.not.existing.dependency:gradle:1.2.3-dev",
+      failureMessage = """
+        Could not find my.not.existing.dependency:gradle:1.2.3-dev.
+        Searched in the following locations:
+          - https://some.link
+        Required by:
+            root project 'irrelevant'
+      """.trimIndent(),
+      isOfflineMode = false
+    )
+    val actualQuickFixes = syncIssue.quickFixes
+    assertEquals(0, actualQuickFixes.size) { "Should not contain any quick-fixes" }
+    assertEquals(
+      """
+        Could not find my.not.existing.dependency:gradle:1.2.3-dev.
+        Searched in the following locations:
+          - https://some.link
+        Required by:
+            root project 'irrelevant'
+        
+        Possible solution:
+         - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
+        
+      """.trimIndent(),
+      syncIssue.description
+    )
+  }
 }
