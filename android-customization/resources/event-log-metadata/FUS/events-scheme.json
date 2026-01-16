@@ -305,7 +305,8 @@
       "event_id" : [ "{enum:compose.cmp.used}" ],
       "event_data" : {
         "allPlatforms" : [ "{enum:Android|Jvm|Ios|WasmJs|Js|Ktor|Native|Unknown}" ],
-        "cmpPlatforms" : [ "{enum:Android|Jvm|Ios|WasmJs|Js|Ktor|Native|Unknown}" ]
+        "cmpPlatforms" : [ "{enum:Android|Jvm|Ios|WasmJs|Js|Ktor|Native|Unknown}" ],
+        "isCMP" : [ "{enum#boolean}" ]
       }
     }
   }, {
@@ -1510,7 +1511,7 @@
         "ide_activity_id" : [ "{regexp#integer}" ],
         "issue_id" : [ "{regexp#short_hash}" ],
         "issue_type" : [ "{enum:ISSUE|CHAT}", "{enum:AUTO}", "{enum:CODE}" ],
-        "llm_model" : [ "{enum:OPENAI_GPT_5|ANTHROPIC_SONNET_3_7|ANTHROPIC_SONNET_4}", "{enum:ANTHROPIC_SONNET_4_5}", "{enum:OPENAI_GPT_5_1|GEMINI_3_0_PRO|ANTHROPIC_OPUS_4_5}", "{enum:OPENAI_GPT_5_2|OPENAI_GPT_5_1_CODEX_MAX|OPENAI_GPT_5_MINI|XAI_GROK_4_1_FAST_REASONING}" ],
+        "llm_model" : [ "{enum:OPENAI_GPT_5|ANTHROPIC_SONNET_3_7|ANTHROPIC_SONNET_4}", "{enum:ANTHROPIC_SONNET_4_5}", "{enum:OPENAI_GPT_5_1|GEMINI_3_0_PRO|ANTHROPIC_OPUS_4_5}", "{enum:OPENAI_GPT_5_2|OPENAI_GPT_5_1_CODEX_MAX|OPENAI_GPT_5_MINI|XAI_GROK_4_1_FAST_REASONING}", "{enum:GEMINI_3_0_FLASH|ANTHROPIC_OPUS_4_5_FAST|OPENAI_GPT_5_2_CODEX}" ],
         "model_stats_cache_create_input_tokens" : [ "{regexp#integer}" ],
         "model_stats_cache_input_tokens" : [ "{regexp#integer}" ],
         "model_stats_cached_cost" : [ "{regexp#float}" ],
@@ -2135,5 +2136,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6650"
+  "version" : "6656"
 }
