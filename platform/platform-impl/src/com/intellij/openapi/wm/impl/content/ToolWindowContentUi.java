@@ -99,6 +99,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     this.contentComponent = contentComponent;
 
     getCurrentLayout().init(contentManager);
+    getCurrentLayout().rebuild();
 
     ContentManagerListener contentManagerListener = new ContentManagerListener() {
       private final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
