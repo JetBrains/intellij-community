@@ -13340,16 +13340,6 @@ f:com.intellij.ui.layout.LayoutKt
 - sf:initPanel(com.intellij.ui.layout.LayoutBuilder,com.intellij.openapi.ui.DialogPanel):V
 - sf:panel(com.intellij.ui.layout.LCFlags[],java.lang.String,kotlin.jvm.functions.Function1):com.intellij.openapi.ui.DialogPanel
 - bs:panel$default(com.intellij.ui.layout.LCFlags[],java.lang.String,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.ui.DialogPanel
-f:com.intellij.ui.layout.PropertyBinding
-- <init>(kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):V
-- f:component1():kotlin.jvm.functions.Function0
-- f:component2():kotlin.jvm.functions.Function1
-- f:copy(kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.layout.PropertyBinding
-- bs:copy$default(com.intellij.ui.layout.PropertyBinding,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.layout.PropertyBinding
-- equals(java.lang.Object):Z
-- f:getGet():kotlin.jvm.functions.Function0
-- f:getSet():kotlin.jvm.functions.Function1
-- hashCode():I
 a:com.intellij.ui.layout.Row
 - com.intellij.ui.layout.Cell
 - com.intellij.ui.layout.RowBuilder
@@ -13359,11 +13349,6 @@ f:com.intellij.ui.layout.RowBuilder$DefaultImpls
 - bs:createChildRow$default(com.intellij.ui.layout.RowBuilder,javax.swing.JLabel,Z,I,java.lang.Object):com.intellij.ui.layout.Row
 - bs:row$default(com.intellij.ui.layout.RowBuilder,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.layout.Row
 - bs:row$default(com.intellij.ui.layout.RowBuilder,javax.swing.JLabel,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.layout.Row
-f:com.intellij.ui.layout.RowBuilderWithButtonGroupProperty
-- com.intellij.ui.layout.RowBuilder
-- b:<init>(com.intellij.ui.layout.RowBuilder,com.intellij.ui.layout.PropertyBinding):V
-- b:row(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
-- b:row(javax.swing.JLabel,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 f:com.intellij.ui.layout.ValidationInfoBuilder
 - <init>(javax.swing.JComponent):V
 - f:error(java.lang.String):com.intellij.openapi.ui.ValidationInfo
