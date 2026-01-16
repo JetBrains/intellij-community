@@ -15,7 +15,7 @@ import com.intellij.util.ui.UIUtil
 internal class ClientCurrentEditorProvider(val session: ClientAppSession) : CurrentEditorProvider {
   override fun getCurrentEditor(project: Project?): FileEditor? {
     if (session.isDisposed) {
-      logger<ClientCurrentEditorProvider>().warn("The client (${ClientId.current}) session has expired.", Throwable())
+      logger<ClientCurrentEditorProvider>().error("The client (${ClientId.current}) session has expired.", Throwable())
       return null
     }
 
