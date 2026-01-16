@@ -25,7 +25,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 
 @ApiStatus.Internal
-class ShowDiffFromLocalChangesActionProvider : AnActionExtensionProvider {
+class ChangesViewShowDiffActionProvider : AnActionExtensionProvider {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun isActive(e: AnActionEvent): Boolean {
