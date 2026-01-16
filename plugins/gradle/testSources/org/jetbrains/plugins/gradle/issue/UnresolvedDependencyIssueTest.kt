@@ -115,6 +115,116 @@ internal class UnresolvedDependencyIssueTest {
     )
   }
 
+  @Test
+  fun `test unresolved dependency during sync with no repositories defined has no quick-fixes`() {
+    val syncIssue = UnresolvedDependencySyncIssue(
+      dependencyName = "my.existing.dependency:gradle:1.2.3-dev",
+      failureMessage = """
+        Cannot resolve external dependency my.existing.dependency:gradle:1.2.3-dev because no repositories are defined.
+        Required by:
+            root project 'irrelevant'
+      """.trimIndent(),
+      projectPath = "irrelevant",
+      isOfflineMode = false
+    )
+    val actualQuickFixes = syncIssue.quickFixes
+    assertEquals(0, actualQuickFixes.size) { "Should not contain any quick-fixes" }
+    assertEquals(
+      """
+        Cannot resolve external dependency my.existing.dependency:gradle:1.2.3-dev because no repositories are defined.
+        Required by:
+            root project 'irrelevant'
+        
+        Possible solution:
+         - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
+        
+      """.trimIndent(),
+      syncIssue.description
+    )
+  }
+
+  @Test
+  fun `test unresolved dependency during build with no repositories defined has no quick-fixes`() {
+    val syncIssue = UnresolvedDependencyBuildIssue(
+      dependencyName = "my.existing.dependency:gradle:1.2.3-dev",
+      failureMessage = """
+        Cannot resolve external dependency my.existing.dependency:gradle:1.2.3-dev because no repositories are defined.
+        Required by:
+            root project 'irrelevant'
+      """.trimIndent(),
+      isOfflineMode = false
+    )
+    val actualQuickFixes = syncIssue.quickFixes
+    assertEquals(0, actualQuickFixes.size) { "Should not contain any quick-fixes" }
+    assertEquals(
+      """
+        Cannot resolve external dependency my.existing.dependency:gradle:1.2.3-dev because no repositories are defined.
+        Required by:
+            root project 'irrelevant'
+        
+        Possible solution:
+         - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
+        
+      """.trimIndent(),
+      syncIssue.description
+    )
+  }
+
+  @Test
+  fun `test unresolved dependency during sync with no repositories defined in offline mode has no quick-fixes`() {
+    val syncIssue = UnresolvedDependencySyncIssue(
+      dependencyName = "my.existing.dependency:gradle:1.2.3-dev",
+      failureMessage = """
+        Cannot resolve external dependency my.existing.dependency:gradle:1.2.3-dev because no repositories are defined.
+        Required by:
+            root project 'irrelevant'
+      """.trimIndent(),
+      projectPath = "irrelevant",
+      isOfflineMode = true
+    )
+    val actualQuickFixes = syncIssue.quickFixes
+    assertEquals(0, actualQuickFixes.size) { "Should not contain any quick-fixes" }
+    assertEquals(
+      """
+        Cannot resolve external dependency my.existing.dependency:gradle:1.2.3-dev because no repositories are defined.
+        Required by:
+            root project 'irrelevant'
+        
+        Possible solution:
+         - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
+        
+      """.trimIndent(),
+      syncIssue.description
+    )
+  }
+
+  @Test
+  fun `test unresolved dependency during build with no repositories defined in offline mode has no quick-fixes`() {
+    val syncIssue = UnresolvedDependencyBuildIssue(
+      dependencyName = "my.existing.dependency:gradle:1.2.3-dev",
+      failureMessage = """
+        Cannot resolve external dependency my.existing.dependency:gradle:1.2.3-dev because no repositories are defined.
+        Required by:
+            root project 'irrelevant'
+      """.trimIndent(),
+      isOfflineMode = true
+    )
+    val actualQuickFixes = syncIssue.quickFixes
+    assertEquals(0, actualQuickFixes.size) { "Should not contain any quick-fixes" }
+    assertEquals(
+      """
+        Cannot resolve external dependency my.existing.dependency:gradle:1.2.3-dev because no repositories are defined.
+        Required by:
+            root project 'irrelevant'
+        
+        Possible solution:
+         - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
+        
+      """.trimIndent(),
+      syncIssue.description
+    )
+  }
+
   @ParameterizedTest
   @CsvSource(
     "8, 17",
