@@ -1,17 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.pane
 
-import com.intellij.ide.rpc.deserializeFromRpc
-import com.intellij.ide.rpc.serializeToRpc
+import com.intellij.ide.ui.colors.ColorId
+import com.intellij.ide.ui.colors.color
+import com.intellij.ide.ui.colors.rpcId
+import com.intellij.ide.ui.icons.IconId
+import com.intellij.ide.ui.icons.icon
+import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.treeStructure.TreeNodePresentation
 import com.intellij.ui.treeStructure.TreeNodePresentationImpl
 import com.intellij.ui.treeStructure.TreeNodeTextFragment
-import fleet.util.openmap.SerializedValue
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Color
-import javax.swing.Icon
 
 @ApiStatus.Internal
 fun TreeNodePresentation.toDTO(): TreeNodePresentationDTO = (this as TreeNodePresentationImpl).toDTO()
@@ -19,7 +20,7 @@ fun TreeNodePresentation.toDTO(): TreeNodePresentationDTO = (this as TreeNodePre
 @ApiStatus.Internal
 fun TreeNodePresentationImpl.toDTO(): TreeNodePresentationDTO = TreeNodePresentationDTO(
   isLeaf = isLeaf,
-  icon = icon?.let { serializeToRpc(it) },
+  iconId = icon?.rpcId(),
   mainText = mainText,
   fullText = fullText.map { it.toDTO() },
   toolTip = toolTip,
@@ -28,7 +29,7 @@ fun TreeNodePresentationImpl.toDTO(): TreeNodePresentationDTO = TreeNodePresenta
 @ApiStatus.Internal
 fun TreeNodePresentationDTO.toPresentation(): TreeNodePresentation = TreeNodePresentationImpl(
   isLeaf = isLeaf,
-  icon = deserializeFromRpc(icon, Icon ::class),
+  icon = iconId?.icon(),
   mainText = mainText,
   fullText = fullText.map { it.toTextFragment() },
   toolTip = toolTip,
@@ -38,7 +39,7 @@ fun TreeNodePresentationDTO.toPresentation(): TreeNodePresentation = TreeNodePre
 @Serializable
 data class TreeNodePresentationDTO(
   val isLeaf: Boolean,
-  val icon: SerializedValue?,
+  val iconId: IconId?,
   val mainText: String,
   val fullText: List<TreeNodeTextFragmentDTO>,
   val toolTip: String?,
@@ -65,25 +66,25 @@ data class TreeNodeTextFragmentDTO(
 
 @ApiStatus.Internal
 fun SimpleTextAttributes.toDTO(): SimpleTextAttributesDTO = SimpleTextAttributesDTO(
-  bgColor?.let { serializeToRpc(it) },
-  fgColor?.let { serializeToRpc(it) },
-  waveColor?.let { serializeToRpc(it) },
+  bgColor?.rpcId(),
+  fgColor?.rpcId(),
+  waveColor?.rpcId(),
   style,
 )
 
 @ApiStatus.Internal
 fun SimpleTextAttributesDTO.toAttributes(): SimpleTextAttributes = SimpleTextAttributes(
-  bgColor?.let { deserializeFromRpc(it, Color::class) },
-  fgColor?.let { deserializeFromRpc(it, Color::class) },
-  waveColor?.let { deserializeFromRpc(it, Color::class) },
+  bgColorId?.color(),
+  fgColorId?.color(),
+  waveColorId?.color(),
   style,
 )
 
 @ApiStatus.Internal
 @Serializable
 data class SimpleTextAttributesDTO(
-  val bgColor: SerializedValue?,
-  val fgColor: SerializedValue?,
-  val waveColor: SerializedValue?,
+  val bgColorId: ColorId?,
+  val fgColorId: ColorId?,
+  val waveColorId: ColorId?,
   val style: Int,
 )
