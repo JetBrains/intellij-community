@@ -37,9 +37,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
-import java.nio.file.FileSystems
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
 
 private val LOG = logger<ExtractModuleService>()
 
@@ -131,16 +130,8 @@ class ExtractModuleService(
       val moduleFileProcessor = ExtractModuleFileProcessor()
 
       for (outputPath in compilerOutputPaths) {
-        withClassRootEntries(outputPath) { entries ->
-          for (entry in entries) {
-            if (entry.entryName.startsWith(packageRelativePathPrefix)) {
-              packageFileProcessor.processFile(entry.path)
-            }
-            else {
-              moduleFileProcessor.processFile(entry.path)
-            }
-          }
-        }
+        packageFileProcessor.processClassFiles(outputPath) { it.startsWith(packageRelativePathPrefix) }
+        moduleFileProcessor.processClassFiles(outputPath) { !it.startsWith(packageRelativePathPrefix) }
       }
 
       progressReporter.itemStep(JavaUiBundle.message("progress.step.extract.module.building.dependencies"))
@@ -241,11 +232,7 @@ class ExtractModuleService(
 
     withContext(Dispatchers.IO) {
       for (outputPath in paths) {
-        withClassRootEntries(outputPath) { entries ->
-          for (entry in entries) {
-            fileProcessor.processFile(entry.path)
-          }
-        }
+        fileProcessor.processClassFiles(outputPath)
       }
     }
 
@@ -319,33 +306,6 @@ class ExtractModuleService(
   @TestOnly
   suspend fun extractModuleFromDirectory(directory: VirtualFile, module: Module, moduleName: @NlsSafe String, targetSourceRoot: String?) {
     analyzeDependenciesAndCreateModule(directory, module, TargetModuleCreatorImpl(moduleName, targetSourceRoot))
-  }
-}
-
-private data class ClassFileEntry(val entryName: String, val path: Path)
-
-@OptIn(ExperimentalPathApi::class)
-private fun <R> withClassRootEntries(classRoot: Path, block: (entries: Sequence<ClassFileEntry>) -> R): R {
-  return withClassRoot(classRoot) { nioRoot ->
-    val sequence = nioRoot
-      .walk()
-      .filter { path ->
-        path.extension == "class" && !classRoot.relativize(path).startsWith("META-INF/")
-      }
-      .map { ClassFileEntry(it.relativeTo(nioRoot).invariantSeparatorsPathString, it) }
-    block(sequence)
-  }
-}
-
-private fun <R> withClassRoot(classRoot: Path, block: (root: Path) -> R): R {
-  return when {
-    classRoot.isDirectory() -> block(classRoot)
-    classRoot.isRegularFile() && classRoot.extension == "jar" -> {
-      FileSystems.newFileSystem(classRoot).use {
-        block(it.rootDirectories.single())
-      }
-    }
-    else -> error("Unsupported classes output root: $classRoot")
   }
 }
 
