@@ -38,7 +38,7 @@ private val consumedClassId = ClassId(asyncPackage, "Consumed".name)
 
 private val coroutineScopeClassId = ClassId(FqName.fromSegments(listOf("kotlinx", "coroutines")), "CoroutineScope".name)
 
-private val clientStubClassName = Name.identifier("\$ClientStub")
+private val clientStubClassName = Name.identifier("_generated_ClientStub")
 
 @UnsafeDuringIrConstructionAPI
 fun buildClientStub(
