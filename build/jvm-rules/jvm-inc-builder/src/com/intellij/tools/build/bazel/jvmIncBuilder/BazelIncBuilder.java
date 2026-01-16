@@ -61,7 +61,7 @@ public class BazelIncBuilder {
 
           srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), presentState.getSources());
 
-          if (shouldRecompileAll(srcSnapshotDelta) || pastState.getFlagsDigest() != presentState.getFlagsDigest() || pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
+          if (shouldRecompileAll(srcSnapshotDelta) || pastState.getFlagsDigest() != presentState.getFlagsDigest() || pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest() || pastState.getRunnersDigest() != presentState.getRunnersDigest()) {
             int changedPercent = srcSnapshotDelta.getChangedPercent();
             LOG.info(() -> "Marking whole target for recompilation [" + context.getTargetName() + "]. Changed sources: " + changedPercent + "% (threshold " + RECOMPILE_CHANGED_RATIO_PERCENT + "%) ");
             srcSnapshotDelta.markRecompileAll();
