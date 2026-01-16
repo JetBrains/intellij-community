@@ -7,6 +7,7 @@ import com.intellij.execution.process.AnsiEscapeDecoder
 import com.intellij.execution.process.AnsiEscapeDecoder.ColoredTextAcceptor
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ActivityTracker
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.OccurenceNavigator.OccurenceInfo
@@ -21,6 +22,7 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.platform.buildView.BuildDataKeys
 import com.intellij.platform.buildView.BuildViewApi
 import com.intellij.ui.*
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
@@ -186,10 +188,11 @@ internal class FrontendMultipleBuildsView(
   private fun configureToolbar(view: FrontendBuildView?) {
     toolbarActions.removeAll()
     if (view != null) {
-      // todo view-dependent actions
+      toolbarActions.add(ActionManager.getInstance().getAction("BuildViewToolbar"))
       toolbarActions.add(PinBuildViewAction())
       toolbarActions.add(view.createFilteringActionGroup())
     }
+    ActivityTracker.getInstance().inc() // make sure toolbar is updated
   }
 
   fun handleEvent(event: BuildViewEvent) {
@@ -198,7 +201,7 @@ internal class FrontendMultipleBuildsView(
         val info = FrontendBuildInfo(event)
         buildMap[event.buildId] = info
         buildListModel.addElement(info)
-        val buildView = FrontendBuildView(project, scope, event.treeViewId, event.consoleComponent)
+        val buildView = FrontendBuildView(project, scope, event.buildId, event.treeViewId, event.consoleComponent)
         viewMap[info] = buildView
         Disposer.register(this, buildView)
         if (activeView == null) {
@@ -300,7 +303,7 @@ internal class FrontendMultipleBuildsView(
     }
   }
 
-  private inner class MultipleBuildsPanel : JPanel(BorderLayout()), OccurenceNavigator {
+  private inner class MultipleBuildsPanel : JPanel(BorderLayout()), OccurenceNavigator, UiDataProvider {
     private fun getOccurenceNavigator(next: Boolean): Pair<Int, () -> OccurenceInfo?>? {
       if (buildListModel.size() == 0) return null
       val index = max(buildList.selectedIndex, 0)
@@ -355,6 +358,12 @@ internal class FrontendMultipleBuildsView(
     override fun updateUI() {
       super.updateUI()
       updateBuildsListRowHeight()
+    }
+
+    override fun uiDataSnapshot(sink: DataSink) {
+      activeView?.let {
+        sink[BuildDataKeys.BUILD_ID] = it.buildId
+      }
     }
   }
 

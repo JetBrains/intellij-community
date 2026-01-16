@@ -1,10 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildView.frontend
 
-import com.intellij.build.BuildTreeConsoleView
-import com.intellij.build.BuildViewId
-import com.intellij.build.SuccessfulStepsToggleAction
-import com.intellij.build.WarningsToggleAction
+import com.intellij.build.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.rpc.ComponentDirectTransferId
@@ -29,6 +26,7 @@ import kotlin.reflect.KMutableProperty1
 internal class FrontendBuildView(
   project: Project,
   parentScope: CoroutineScope,
+  val buildId: BuildId,
   treeViewId: BuildViewId?,
   consoleComponent: ComponentDirectTransferId,
 ) : JPanel(BorderLayout()), Disposable {

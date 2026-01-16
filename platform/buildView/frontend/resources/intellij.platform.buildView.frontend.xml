@@ -7,4 +7,9 @@
     <frontend.splitComponentProvider implementation="com.intellij.platform.buildView.frontend.BuildTreeComponentProvider"/>
     <postStartupActivity implementation="com.intellij.platform.buildView.frontend.FrontendBuildViewStartupActivity"/>
   </extensions>
+  <actions>
+    <group id="BuildViewToolbar">
+      <reference ref="BuildView"/>
+    </group>
+  </actions>
 </idea-plugin>
