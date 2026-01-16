@@ -48,5 +48,68 @@
 
   <xi:include href="/META-INF/UsageData.xml"/>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.annotationPackageSupport" interface="com.intellij.codeInsight.annoPackages.AnnotationPackageSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.annotations.marker.suppressor"
+                    interface="com.intellij.codeInsight.NonCodeAnnotationsMarkerSuppressor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.refactoring.chainCallExtractor"
+                    interface="com.intellij.refactoring.chainCall.ChainCallExtractor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.inspection.bulkMethodInfo"
+                    interface="com.intellij.codeInspection.bulkOperation.BulkMethodInfoProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.externalAnnotation"
+                    interface="com.intellij.codeInsight.externalAnnotation.AnnotationProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.documentationDelegateProvider"
+                    interface="com.intellij.codeInsight.javadoc.DocumentationDelegateProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.externalLibraryResolver"
+                    interface="com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.projectModelModifier" interface="com.intellij.openapi.roots.JavaProjectModelModifier"
+                    area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.library.dependencyScopeSuggester"
+                    interface="com.intellij.openapi.roots.LibraryDependencyScopeSuggester" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.getterSetterProvider"
+                    interface="com.intellij.codeInsight.generation.GetterSetterPrototypeProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.generation.toStringClassFilter"
+                    interface="org.jetbrains.generate.tostring.GenerateToStringClassFilter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.generateAccessorProvider" interface="com.intellij.util.NotNullFunction" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.overrideImplementsAnnotationsHandler"
+                    interface="com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.testGenerator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.testIntegration.createTest.TestGenerator"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.constructorBodyGenerator" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.generation.ConstructorBodyGenerator"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.createFieldFromUsageHelper" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.externalAnnotationsArtifactsResolver"
+                    interface="com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.externalAnnotation.locationProvider"
+                    interface="com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.variableTypeCalculator"
+                    interface="com.intellij.codeInsight.template.macro.VariableTypeCalculator" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.effectively.final.fixer"
+                    interface="com.intellij.codeInsight.daemon.impl.quickfix.makefinal.EffectivelyFinalFixer" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.changeSignature.converter" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.changeSignature.JavaChangeInfoConverter"/>
+    </extensionPoint>
+
+    <!-- com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection -->
+    <extensionPoint qualifiedName="com.intellij.javaDocNotNecessary" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.jvm.logging" interface="com.intellij.lang.logging.JvmLogger" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.openapi.projectRoots.externalJavaConfigurationProvider"
+                    interface="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.openapi.projectRoots.externalJavaConfigurationMissingAction"
+                    interface="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationMissingAction" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.gotoByName.defaultProvider.ignoreLanguage" dynamic="true"
+                    beanClass="com.intellij.ide.util.gotoByName.IgnoreLanguageInDefaultProvider"/>
+  </extensionPoints>
 
 </idea-plugin>

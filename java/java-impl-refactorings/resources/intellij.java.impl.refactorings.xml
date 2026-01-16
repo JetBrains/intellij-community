@@ -26,4 +26,35 @@
     <plugin id="com.intellij.modules.java-capable"/>
 
   </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveClassHandler"
+                    interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveAllClassesInFileHandler"
+                    interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveAllClassesInFileHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveClassToInnerHandler"
+                    interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.introduceParameterMethodUsagesProcessor"
+                    interface="com.intellij.refactoring.introduceParameter.IntroduceParameterMethodUsagesProcessor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.safeDelete.importSearcher" interface="com.intellij.refactoring.safeDelete.ImportSearcher"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.predefinedMigrationMapProvider"
+                    interface="com.intellij.refactoring.migration.PredefinedMigrationProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.conversion.rule" interface="com.intellij.refactoring.typeMigration.rules.TypeConversionRule"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveInnerClassUsagesHandler"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveInner.MoveInnerClassUsagesHandler"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveMemberHandler" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveMembers.MoveMemberHandler"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveInnerHandler" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveInner.MoveInnerHandler"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.refactoring.overrideMethodProcessor"
+                    interface="com.intellij.refactoring.OverrideMethodsProcessor" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

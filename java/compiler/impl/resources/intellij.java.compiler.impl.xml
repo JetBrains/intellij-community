@@ -28,4 +28,34 @@
     <plugin id="com.intellij.modules.java-capable"/>
 
   </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.languageCompilerRefAdapter"
+                    interface="com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compiler.isUpToDateCheckConsumer"
+                    interface="com.intellij.compiler.backwardRefs.IsUpToDateCheckConsumer" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.languageCompilerRefAdapter.directInheritorProvider" area="IDEA_PROJECT"
+                    interface="com.intellij.compiler.backwardRefs.DirectInheritorProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compiler.buildTargetScopeProvider"
+                    interface="com.intellij.compiler.impl.BuildTargetScopeProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.compiler.optionsManager"
+                    interface="com.intellij.compiler.options.CompilerOptionsFilter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compiler.task" area="IDEA_PROJECT" beanClass="com.intellij.compiler.CompileTaskBean"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.openapi.compiler.CompileTask"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.compileServer.plugin" beanClass="com.intellij.compiler.server.CompileServerPlugin"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.buildProcess.parametersProvider" area="IDEA_PROJECT"
+                    interface="com.intellij.compiler.server.BuildProcessParametersProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compiler.buildIssueContributor" dynamic="true"
+                    interface="com.intellij.compiler.progress.BuildIssueContributor"/>
+    <extensionPoint qualifiedName="com.intellij.java.compiler" area="IDEA_PROJECT"
+                    interface="com.intellij.compiler.impl.javaCompiler.BackendCompiler" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compiler.updateResourcesBuildContributor"
+                    interface="com.intellij.compiler.impl.UpdateResourcesBuildContributor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.jpsServerAuthExtension"
+                    interface="com.intellij.compiler.cache.client.JpsServerAuthExtension" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

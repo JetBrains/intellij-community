@@ -32,4 +32,13 @@
     <module name="intellij.platform.backend"/>
 
   </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.runConfigurationExtension" interface="com.intellij.execution.RunConfigurationExtension"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.jreProvider" interface="com.intellij.execution.ui.JreProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.threadDumpProvider"
+                    interface="com.intellij.execution.impl.ThreadDumpProvider" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

@@ -15,4 +15,26 @@
     <plugin id="com.intellij.modules.java-capable"/>
 
   </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.packaging.elementType" interface="com.intellij.packaging.elements.PackagingElementType"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.packaging.artifactPropertiesProvider"
+                    interface="com.intellij.packaging.artifacts.ArtifactPropertiesProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.packaging.sourceItemProvider"
+                    interface="com.intellij.packaging.ui.PackagingSourceItemsProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.packaging.sourceItemFilter" interface="com.intellij.packaging.ui.PackagingSourceItemFilter"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.packaging.artifactType" interface="com.intellij.packaging.artifacts.ArtifactType"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compiler" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.Compiler"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compilerFactory" area="IDEA_PROJECT"
+                    interface="com.intellij.openapi.compiler.CompilerFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compilableFileTypesProvider" area="IDEA_PROJECT"
+                    interface="com.intellij.openapi.compiler.CompilableFileTypesProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compiler.inspectionValidator"
+                    interface="com.intellij.openapi.compiler.util.InspectionValidator"
+                    area="IDEA_PROJECT" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

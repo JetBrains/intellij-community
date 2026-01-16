@@ -13,4 +13,11 @@
     <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>
   </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.unusedDeclarationFixProvider"
+                    interface="com.intellij.codeInspection.reference.UnusedDeclarationFixProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.actions.jvmElementActionsFactory" interface="com.intellij.lang.jvm.actions.JvmElementActionsFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.changeVariableTypeQuickFixProvider" interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

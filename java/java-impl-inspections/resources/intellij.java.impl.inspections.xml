@@ -22,4 +22,8 @@
     <plugin id="com.intellij.modules.java-capable"/>
 
   </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.ignoreAnnotationParamSupport" interface="com.intellij.codeInspection.DefaultAnnotationParamInspection$IgnoreAnnotationParamSupport" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

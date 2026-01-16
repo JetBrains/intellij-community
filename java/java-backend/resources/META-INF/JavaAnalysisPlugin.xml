@@ -16,36 +16,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="/META-INF/GlobalInspections.xml"/>
 
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.deadCode"
-                    interface="com.intellij.codeInspection.reference.EntryPoint" dynamic="true"/>
-
-    <!-- See com.intellij.codeInspection.visibility.VisibilityInspection -->
-    <extensionPoint qualifiedName="com.intellij.visibility" interface="com.intellij.codeInspection.visibility.VisibilityExtension" dynamic="true"/>
-
-    <extensionPoint qualifiedName="com.intellij.java.errorFixProvider" dynamic="true" 
-                    interface="com.intellij.codeInsight.daemon.impl.analysis.JavaErrorFixProvider"/>
-
-    <extensionPoint qualifiedName="com.intellij.lang.jvm.actions.jvmElementActionsFactory" interface="com.intellij.lang.jvm.actions.JvmElementActionsFactory" dynamic="true"/>
-
-    <extensionPoint qualifiedName="com.intellij.allowedApiFilter" interface="com.intellij.psi.impl.AllowedApiFilterExtension" dynamic="true"/>
-
-    <extensionPoint qualifiedName="com.intellij.canBeFinal" interface="com.intellij.codeInspection.canBeFinal.CanBeFinalHandler" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.codeInsight.implicitSubclassProvider" interface="com.intellij.codeInspection.inheritance.ImplicitSubclassProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.codeInsight.changeVariableTypeQuickFixProvider" interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.lang.jvm.annotationPackageSupport" interface="com.intellij.codeInsight.annoPackages.AnnotationPackageSupport" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.lang.jvm.ignoreAnnotationParamSupport" interface="com.intellij.codeInspection.DefaultAnnotationParamInspection$IgnoreAnnotationParamSupport" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.lang.jvm.ignoreVariableCanBeFinalSupport" interface="com.intellij.codeInspection.localCanBeFinal.IgnoreVariableCanBeFinalSupport" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.javaLanguageLevelPusherCustomizer" interface="com.intellij.openapi.roots.impl.JavaLanguageLevelPusherCustomizer" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.propertyAccessorDetector" interface="com.intellij.psi.util.PropertyAccessorDetector" dynamic="true"/>
-
-    <extensionPoint qualifiedName="com.intellij.injectedLanguageJavaReferenceSupplier"
-                    beanClass="com.intellij.codeInsight.daemon.impl.analysis.InjectedLanguageJavaReferenceSupplier" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.lang.jvm.annotations.marker.suppressor"
-                    interface="com.intellij.codeInsight.NonCodeAnnotationsMarkerSuppressor" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.lang.jvm.bytecodeAnalysisSuppressor"
-                    interface="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisSuppressor" dynamic="true"/>
-  </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <resolveScopeProvider implementation="com.intellij.psi.impl.file.impl.JavaResolveScopeProvider"/>

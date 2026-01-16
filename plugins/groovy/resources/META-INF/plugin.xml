@@ -24,6 +24,7 @@
   <dependencies>
     <plugin id="com.intellij.properties"/>
     <plugin id="com.intellij.java"/>
+    <module name="intellij.java.backend"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.java.unscramble"/>
     <module name="intellij.properties.backend"/>
