@@ -28,7 +28,7 @@ jvm_library(
   kotlinc_opts = ":custom_test",
   deps = [
     "@lib//:kotlin-stdlib",
-    "//fleet/junit",
+    "//fleet/test-runtime",
     "//fleet/codecache",
     "@lib//:kotlinx-coroutines-core",
     "//fleet/bundles",

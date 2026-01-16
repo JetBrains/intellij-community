@@ -48,7 +48,7 @@ jvm_library(
     "@lib//:slf4j-api",
     "@lib//:fleet-github-luben-zstd-jni",
     "@lib//:fleet-tukaani-xz",
-    "//fleet/junit",
+    "//fleet/test-runtime",
     "@lib//:commons-compress",
     "@lib//:commons-io",
     "@lib//:commons-lang3",

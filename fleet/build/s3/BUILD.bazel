@@ -43,7 +43,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:fleet-aws-sdk-kotlin-s3-jvm",
     "@lib//:slf4j-api",
-    "//fleet/junit",
+    "//fleet/test-runtime",
     "@lib//:kotlinx-coroutines-test",
   ]
 )

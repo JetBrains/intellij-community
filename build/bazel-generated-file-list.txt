@@ -234,7 +234,6 @@ fleet/codecache
 fleet/codecache/test
 fleet/compiler-plugins
 fleet/fastutil
-fleet/junit
 fleet/kernel
 fleet/ktor/client/cio
 fleet/ktor/client/core
@@ -252,6 +251,7 @@ fleet/rhizomedb.transactor
 fleet/rhizomedb.transactor.rebase
 fleet/rpc
 fleet/rpc.server
+fleet/test-runtime
 fleet/util/codepoints
 fleet/util/codepoints/test
 fleet/util/core
