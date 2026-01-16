@@ -4,6 +4,7 @@ import {bdAddComment} from './bd-client.mjs'
 
 export const FINDING_PREFIX = 'FINDING:'
 export const DECISION_PREFIX = 'KEY DECISION:'
+export const DEFAULT_MEMORY_LIMIT = 0
 
 function normalizeEntry(entry) {
   if (typeof entry !== 'string') return null
@@ -95,8 +96,7 @@ function parseComments(comments) {
 }
 
 // Build notes from comments + legacy notes for API compatibility.
-export function parseNotes(notes, comments) {
-  const hasNotes = typeof notes === 'string' && notes.length > 0
+function parseNotes(notes, comments) {
   const notesSections = parseNotesOnly(notes)
   const commentSections = parseComments(comments)
   const findings = mergeEntries(commentSections.findings, notesSections.findings)
@@ -104,10 +104,69 @@ export function parseNotes(notes, comments) {
   const result = {findings, decisions}
   if (notesSections.pending_close) result.pending_close = notesSections.pending_close
 
-  if (findings.length > 0 || decisions.length > 0 || result.pending_close || hasNotes) {
+  if (findings.length > 0 || decisions.length > 0 || result.pending_close) {
     return result
   }
   return null
+}
+
+function normalizeLimit(limit) {
+  if (limit === undefined || limit === null) return DEFAULT_MEMORY_LIMIT
+  const parsed = Number.parseInt(limit, 10)
+  if (!Number.isFinite(parsed)) return DEFAULT_MEMORY_LIMIT
+  return parsed <= 0 ? 0 : parsed
+}
+
+function sliceToLimit(entries, limit) {
+  if (!Array.isArray(entries) || limit <= 0) return []
+  if (entries.length <= limit) return entries
+  return entries.slice(-limit)
+}
+
+function buildMemoryFromSections(sections, limit) {
+  if (!sections) return null
+  const cap = normalizeLimit(limit)
+  if (cap <= 0) return null
+  const totals = {
+    findings: sections.findings.length,
+    decisions: sections.decisions.length
+  }
+  if (totals.findings === 0 && totals.decisions === 0 && !sections.pending_close) {
+    return null
+  }
+  const findings = sliceToLimit(sections.findings, cap)
+  const decisions = sliceToLimit(sections.decisions, cap)
+  const truncated = findings.length < totals.findings || decisions.length < totals.decisions
+
+  const memory = {
+    findings,
+    decisions,
+    totals,
+    truncated,
+    limit: cap
+  }
+  if (sections.pending_close) memory.pending_close = sections.pending_close
+  return memory
+}
+
+export function buildMemory(notes, comments, limit) {
+  return buildMemoryFromSections(parseNotes(notes, comments), limit)
+}
+
+export function buildMemoryFromEntries(findings, decisions, pendingClose, limit) {
+  const sections = {
+    findings: normalizeEntries(findings),
+    decisions: normalizeEntries(decisions)
+  }
+  if (pendingClose) sections.pending_close = pendingClose
+  return buildMemoryFromSections(sections, limit)
+}
+
+export function extractMemoryFromIssue(issue, limit) {
+  const memory = buildMemory(issue.notes, issue.comments, limit)
+  delete issue.notes
+  delete issue.comments
+  return memory
 }
 
 export function buildPendingNotes(pendingClose) {
