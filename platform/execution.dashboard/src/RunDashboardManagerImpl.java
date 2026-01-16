@@ -186,7 +186,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
           RunConfiguration configuration = settings.getConfiguration();
           if (isShowInDashboard(configuration) ||
               !filterByContent(getConfigurationDescriptors(configuration)).isEmpty()) {
-            mySharedState.setServices(myServices);
+            mySharedState.setServices(getRunConfigurations());
             updateDashboard(true);
           }
         });
@@ -543,8 +543,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
     finally {
       myServiceLock.writeLock().unlock();
-      mySharedState.setConfigurationTypes(myState.configurationTypes);
-      mySharedState.setServices(myServices);
+      mySharedState.setConfigurationTypes(new HashSet<>(myState.configurationTypes));
+      mySharedState.setServices(getRunConfigurations());
     }
   }
 
@@ -564,7 +564,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
     finally {
       myServiceLock.writeLock().unlock();
-      mySharedState.setServices(myServices);
+      mySharedState.setServices(getRunConfigurations());
       updateDashboard(true);
     }
   }
@@ -579,7 +579,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
     finally {
       myServiceLock.writeLock().unlock();
-      mySharedState.setServices(myServices);
+      mySharedState.setServices(getRunConfigurations());
       updateDashboard(true);
     }
   }
@@ -594,7 +594,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
     finally {
       myServiceLock.writeLock().unlock();
-      mySharedState.setServices(myServices);
+      mySharedState.setServices(getRunConfigurations());
       updateDashboard(true);
     }
   }
