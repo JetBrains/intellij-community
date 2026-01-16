@@ -133,6 +133,7 @@
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.json.ShellDefaultCommandSpecsProvider"/>
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.specs.ShellCodeBasedCommandSpecsProvider"/>
+    <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.specs.PowerShellCommandSpecsProvider"/>
 
     <shellSupport key="zsh" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.zsh.ZshSupport"/>
     <shellSupport key="bash" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.bash.BashSupport"/>
