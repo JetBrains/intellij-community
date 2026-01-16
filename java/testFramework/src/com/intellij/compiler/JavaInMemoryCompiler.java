@@ -45,8 +45,20 @@ public final class JavaInMemoryCompiler {
    * @return the compiled classes as a map (a class Name -> the class compiled content)
    */
   public Map<String, byte[]> compile(String className, @Language("JAVA") String code) {
+    return compile(Collections.singletonMap(className, code));
+  }
+
+  /**
+   * Compiles the given Java source classes.
+   * @param sources mapping from dot-separated class names to their source code
+   * @return the compiled classes as a map (a class Name -> the class compiled content)
+   */
+  public Map<String, byte[]> compile(Map<String, String> sources) {
     final DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-    final Iterable<? extends JavaFileObject> compilationUnits = Collections.singletonList(new JavaSourceFromString(className, code));
+    final List<JavaSourceFromString> compilationUnits = new ArrayList<>();
+    for (Map.Entry<String, String> entry : sources.entrySet()) {
+      compilationUnits.add(new JavaSourceFromString(entry.getKey(), entry.getValue()));
+    }
     final Iterable<String> options = Collections.singletonList("-g"); // generate debugging info.
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     final OutputStreamWriter out = new OutputStreamWriter(System.err, StandardCharsets.UTF_8);
@@ -62,7 +74,7 @@ public final class JavaInMemoryCompiler {
       throw new RuntimeException(writer.toString());
     }
     final List<InMemoryClassFile> classFiles = myFileManager.getClassFiles();
-    final Map<String, byte[]> result = new HashMap<>(2);
+    final Map<String, byte[]> result = new HashMap<>(classFiles.size());
     for (InMemoryClassFile classFile : classFiles) {
       result.put(classFile.getClassName(), classFile.getBytes());
     }
