@@ -28,7 +28,7 @@ import kotlin.io.path.Path
  */
 @StressTestApplication
 @RegistryKey(key = "se.enable.non.indexable.files.contributor", value = "true")
-class NonIndexableFileSearchPerformanceTest {
+open class NonIndexableFileSearchPerformanceTest {
   @RegisterExtension
   private val projectModel: ProjectModelExtension = ProjectModelExtension()
 
@@ -110,4 +110,17 @@ class NonIndexableFileSearchPerformanceTest {
       Disposer.register(projectModel.disposableRule.disposable, contributor)
     }
   }
+}
+
+
+@RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
+@RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "false")
+class NonIndexableFileSearchPerformanceBfsOneReadActionTest: NonIndexableFileSearchPerformanceTest(){
+
+}
+
+@RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
+@RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
+class NonIndexableFileSearchPerformanceBfsManyReadActionsTest: NonIndexableFileSearchPerformanceTest(){
+
 }
