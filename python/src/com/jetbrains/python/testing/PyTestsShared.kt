@@ -114,21 +114,27 @@ fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEv
 }
 
 /**
- * If element is a subelement of the folder excplicitly marked as test root -- use it
+ * If an element is a subelement of the folder explicitly marked as test root -- use it
+ *
+ * @param findSource if true, will also check if an element is a subelement of the source root, then use it as working dir
  */
-private fun getExplicitlyConfiguredTestRoot(element: PsiFileSystemItem): VirtualFile? {
+private fun getExplicitlyConfiguredTestRoot(element: PsiFileSystemItem, findSource: Boolean = false): VirtualFile? {
   val vfDirectory = element.virtualFile
   val module = ModuleUtil.findModuleForPsiElement(element) ?: return null
-  return ModuleRootManager.getInstance(module).getSourceRoots(JavaSourceRootType.TEST_SOURCE).firstOrNull {
-    VfsUtil.isAncestor(it, vfDirectory, false)
+  val manager = ModuleRootManager.getInstance(module)
+  val findSourceByType = {type: JavaSourceRootType -> manager.getSourceRoots(type).firstOrNull { VfsUtil.isAncestor(it, vfDirectory, false) } }
+
+  findSourceByType(JavaSourceRootType.TEST_SOURCE)?.let { return it }
+  if (findSource) {
+    findSourceByType(JavaSourceRootType.SOURCE)?.let { return it }
   }
+
+  return null
 }
 
-private fun isTestFolder(
-  element: PsiDirectory,
-  testCaseClassRequired: ThreeState,
-  typeEvalContext: TypeEvalContext,
-): Boolean {
+private fun isTestFolder(element: PsiDirectory,
+                         testCaseClassRequired: ThreeState,
+                         typeEvalContext: TypeEvalContext): Boolean {
   return (getExplicitlyConfiguredTestRoot(element) != null) || element.name.contains("test", true) || element.children.any {
     it is PyFile && PythonUnitTestDetectorsBasedOnSettings.isTestFile(it, testCaseClassRequired, typeEvalContext)
   }
@@ -140,11 +146,9 @@ private fun isTestFolder(
  * We just save its name and provide it again to rerun
  * @param metainfo additional info provided by test runner, in case of pytest it is test name with parameters (if test is parametrized)
  */
-private class PyTargetBasedPsiLocation(
-  val target: ConfigurationTarget,
-  element: PsiElement,
-  val metainfo: String?,
-) : PsiLocation<PsiElement>(element) {
+private class PyTargetBasedPsiLocation(val target: ConfigurationTarget,
+                                       element: PsiElement,
+                                       val metainfo: String?) : PsiLocation<PsiElement>(element) {
   override fun equals(other: Any?): Boolean {
     if (other is PyTargetBasedPsiLocation) {
       return target == other.target && metainfo == other.metainfo
@@ -220,26 +224,22 @@ private fun getElementByUrl(
 
 object PyTestsLocator : SMTestLocator {
 
-  override fun getLocation(
-    protocol: String,
-    path: String,
-    metainfo: String?,
-    project: Project,
-    scope: GlobalSearchScope,
-  ): List<Location<out PsiElement>> = getLocationInternal(protocol, path, project,
-                                                          metainfo, scope)
+  override fun getLocation(protocol: String,
+                           path: String,
+                           metainfo: String?,
+                           project: Project,
+                           scope: GlobalSearchScope): List<Location<out PsiElement>> = getLocationInternal(protocol, path, project,
+                                                                                                           metainfo, scope)
 
   override fun getLocation(protocol: String, path: String, project: Project, scope: GlobalSearchScope): List<Location<out PsiElement>> {
     return getLocationInternal(protocol, path, project, null, scope)
   }
 
-  private fun getLocationInternal(
-    protocol: String,
-    path: String,
-    project: Project,
-    metainfo: String?,
-    scope: GlobalSearchScope,
-  ): List<Location<out PsiElement>> {
+  private fun getLocationInternal(protocol: String,
+                                  path: String,
+                                  project: Project,
+                                  metainfo: String?,
+                                  scope: GlobalSearchScope): List<Location<out PsiElement>> {
     if (scope !is ModuleWithDependenciesScope) {
       return listOf()
     }
@@ -263,8 +263,7 @@ object PyTestsLocator : SMTestLocator {
 abstract class PyTestExecutionEnvironment<T : PyAbstractTestConfiguration>(
   configuration: T,
   environment: ExecutionEnvironment,
-)
-  : PythonTestCommandLineStateBase<T>(configuration, environment) {
+) : PythonTestCommandLineStateBase<T>(configuration, environment) {
 
   override fun getTestLocator(): SMTestLocator = PyTestsLocator
 
@@ -311,8 +310,7 @@ private const val DEFAULT_PATH = ""
  */
 data class ConfigurationTarget(
   @ConfigField("runcfg.python_tests.config.target") override var target: String,
-  @ConfigField(
-    "runcfg.python_tests.config.targetType") override var targetType: PyRunTargetVariant,
+  @ConfigField("runcfg.python_tests.config.targetType") override var targetType: PyRunTargetVariant,
 ) : TargetWithVariant {
   fun copyTo(dst: ConfigurationTarget) {
     // TODO:  do we have such method it in Kotlin?
@@ -345,10 +343,8 @@ data class ConfigurationTarget(
       PyRunTargetVariant.PATH -> listOf("--path", target.trim())
     }
 
-  fun generateArgumentsLine(
-    request: TargetEnvironmentRequest,
-    configuration: PyAbstractTestConfiguration,
-  ): List<TargetEnvironmentFunction<String>> =
+  fun generateArgumentsLine(request: TargetEnvironmentRequest,
+                            configuration: PyAbstractTestConfiguration): List<TargetEnvironmentFunction<String>> =
     when (targetType) {
       PyRunTargetVariant.CUSTOM -> emptyList()
       PyRunTargetVariant.PYTHON -> getArgumentsForPythonTarget(configuration).map(::constant)
@@ -471,10 +467,8 @@ internal interface PyTestConfigurationWithCustomSymbol {
  * All config-specific fields are implemented as properties. They are saved/restored automatically and passed to GUI form.
  *
  */
-abstract class PyAbstractTestConfiguration(
-  project: Project,
-  private val testFactory: PyAbstractTestFactory<*>,
-)
+abstract class PyAbstractTestConfiguration(project: Project,
+                                           private val testFactory: PyAbstractTestFactory<*>)
   : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, testFactory, testFactory.packageRequired),
     PyRerunAwareConfiguration,
     RefactoringListenerProvider,
@@ -573,10 +567,8 @@ abstract class PyAbstractTestConfiguration(
     return ConfigurationTarget(qualifiedName, PyRunTargetVariant.PYTHON).generateArgumentsLine(this)
   }
 
-  private fun getPythonTestSpecByLocation(
-    request: TargetEnvironmentRequest,
-    location: Location<*>,
-  ): List<TargetEnvironmentFunction<String>> {
+  private fun getPythonTestSpecByLocation(request: TargetEnvironmentRequest,
+                                          location: Location<*>): List<TargetEnvironmentFunction<String>> {
     if (location is PyTargetBasedPsiLocation) {
       return location.target.generateArgumentsLine(request, this)
     }
@@ -593,10 +585,8 @@ abstract class PyAbstractTestConfiguration(
     return ConfigurationTarget(qualifiedName, PyRunTargetVariant.PYTHON).generateArgumentsLine(request, this)
   }
 
-  final override fun getTestSpec(
-    location: Location<*>,
-    failedTest: AbstractTestProxy,
-  ): String? {
+  final override fun getTestSpec(location: Location<*>,
+                                 failedTest: AbstractTestProxy): String? {
     val list = getPythonTestSpecByLocation(location)
     if (list.isEmpty()) {
       return null
@@ -609,21 +599,17 @@ abstract class PyAbstractTestConfiguration(
   /**
    * *To be deprecated. The part of the legacy implementation based on [GeneralCommandLine].*
    */
-  override fun getTestSpecsForRerun(
-    scope: GlobalSearchScope,
-    locations: List<Pair<Location<*>, AbstractTestProxy>>,
-  ): List<String> =
+  override fun getTestSpecsForRerun(scope: GlobalSearchScope,
+                                    locations: List<Pair<Location<*>, AbstractTestProxy>>): List<String> =
     // Set used to remove duplicate targets
     locations
       .map { it.first }
       .distinctBy { it.psiElement }
       .flatMap { getPythonTestSpecByLocation(it) } + generateRawArguments(true)
 
-  override fun getTestSpecsForRerun(
-    request: TargetEnvironmentRequest,
-    scope: GlobalSearchScope,
-    locations: List<Pair<Location<*>, AbstractTestProxy>>,
-  ): List<TargetEnvironmentFunction<String>> =
+  override fun getTestSpecsForRerun(request: TargetEnvironmentRequest,
+                                    scope: GlobalSearchScope,
+                                    locations: List<Pair<Location<*>, AbstractTestProxy>>): List<TargetEnvironmentFunction<String>> =
     // Set used to remove duplicate targets
     locations
       .map { it.first }
@@ -785,11 +771,9 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration>(t
 }
 
 
-internal sealed class PyTestTargetForConfig(
-  val configurationTarget: ConfigurationTarget,
-  val workingDirectory: VirtualFile,
-  val targetElement: PsiElement,
-) {
+internal sealed class PyTestTargetForConfig(val configurationTarget: ConfigurationTarget,
+                                            val workingDirectory: VirtualFile,
+                                            val targetElement: PsiElement) {
   class PyTestPathTarget(target: String, workingDirectory: VirtualFile, targetElement: PsiElement) :
     PyTestTargetForConfig(ConfigurationTarget(target, PyRunTargetVariant.PATH), workingDirectory, targetElement)
 
@@ -807,10 +791,8 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
      * Also reports working dir what should be set to configuration to work correctly and target PsiElement
      * @return [targetPath, workingDirectory, targetPsiElement]
      */
-    internal fun getTargetForConfig(
-      configuration: PyAbstractTestConfiguration,
-      baseElement: PsiElement,
-    ): PyTestTargetForConfig? {
+    internal fun getTargetForConfig(configuration: PyAbstractTestConfiguration,
+                                    baseElement: PsiElement): PyTestTargetForConfig? {
       var element = baseElement
       // Go up until we reach top of the file
       // asking configuration about each element if it is supported or not
@@ -876,7 +858,7 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
      * Inspect file relative imports, find farthest and return folder with imported file
      */
     private fun getDirectoryForFileToBeImportedFrom(file: PyFile, module: Module?): PsiDirectory? {
-      getExplicitlyConfiguredTestRoot(file)?.let {
+      getExplicitlyConfiguredTestRoot(file, true)?.let {
         return file.manager.findDirectory(it)
       }
 
@@ -945,23 +927,17 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
   }
 
   // test configuration is always prefered over regular one
-  override fun shouldReplace(
-    self: ConfigurationFromContext,
-    other: ConfigurationFromContext,
-  ): Boolean = other.configuration is PythonRunConfiguration ||
-               isDoctestConfiguration(self.configuration)
+  override fun shouldReplace(self: ConfigurationFromContext,
+                             other: ConfigurationFromContext): Boolean = other.configuration is PythonRunConfiguration ||
+                                                                         isDoctestConfiguration(self.configuration)
 
-  override fun isPreferredConfiguration(
-    self: ConfigurationFromContext?,
-    other: ConfigurationFromContext,
-  ): Boolean = other.configuration is PythonRunConfiguration ||
-               self?.configuration?.let { isDoctestConfiguration(it) } == true
+  override fun isPreferredConfiguration(self: ConfigurationFromContext?,
+                                        other: ConfigurationFromContext): Boolean = other.configuration is PythonRunConfiguration ||
+                                                                                    self?.configuration?.let { isDoctestConfiguration(it) } == true
 
-  override fun setupConfigurationFromContext(
-    configuration: PyAbstractTestConfiguration,
-    context: ConfigurationContext,
-    sourceElement: Ref<PsiElement>,
-  ): Boolean {
+  override fun setupConfigurationFromContext(configuration: PyAbstractTestConfiguration,
+                                             context: ConfigurationContext,
+                                             sourceElement: Ref<PsiElement>): Boolean {
     val element = sourceElement.get() ?: return false
 
     if (element.containingFile !is PyFile && element !is PsiDirectory) {
