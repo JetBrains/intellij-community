@@ -16,7 +16,7 @@ public final class JavaElementSignatureProvider extends AbstractElementSignature
   private static final Logger LOG = Logger.getInstance(JavaElementSignatureProvider.class);
 
   @Override
-  public @Nullable String getSignature(final @NotNull PsiElement element) {
+  public @Nullable String getSignature(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (!(file instanceof PsiJavaFile)) {
       return null;

@@ -39,7 +39,7 @@ public final class TextEditorState implements FileEditorState {
   }
 
   /**
-   * Folding state is more complex than, say, line/column number, that's why it's a deserialization can be performed only when
+   * Folding state is more complex than, say, line/column number, that's why its deserialization can be performed only when
    * necessary pre-requisites are met (e.g., corresponding {@link Document} is created).
    * <p/>
    * However, we can't be sure that those conditions are met on IDE startup (when editor states are read). Current method allows

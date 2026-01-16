@@ -57,7 +57,7 @@ public final class CodeFormattingData {
     myPsiFile.putUserData(CODE_FORMATTING_DATA_KEY, null);
   }
 
-  public @NotNull Set<TextRange> getInjectedRanges(@NotNull TextRange range) {
+  @NotNull Set<TextRange> getInjectedRanges(@NotNull TextRange range) {
     if (myPsiFile.getProject().isDefault() || range.isEmpty()) return Collections.emptySet();
     if ("Rust".equals(myPsiFile.getLanguage().getID())) return Collections.emptySet();
     Set<TextRange> injectedRanges = injectedFileRangesMap.get(range.getStartOffset());
@@ -88,7 +88,7 @@ public final class CodeFormattingData {
         for (PsiLanguageInjectionHost.Shred place : places) {
           Segment rangeMarker = place.getHostRangeMarker();
           if (rangeMarker != null) {
-            injectedFileRangesSet.add(TextRange.create(rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
+            injectedFileRangesSet.add(TextRange.create(rangeMarker));
           }
         }
       };

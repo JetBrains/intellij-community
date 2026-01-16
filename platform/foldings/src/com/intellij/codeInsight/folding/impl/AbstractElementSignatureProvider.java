@@ -9,6 +9,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +68,10 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
   /**
    * @return -1, if {@code parent} has too many children and calculating child index would be too slow
    */
-  protected static <T extends PsiNamedElement> int getChildIndex(T element, @NotNull PsiElement parent, String name, Class<? extends T> hisClass) {
+  protected static <T extends PsiNamedElement> int getChildIndex(@Nullable T element,
+                                                                 @NotNull PsiElement parent,
+                                                                 @NotNull String name,
+                                                                 @NotNull Class<? extends T> hisClass) {
     PsiFile file = parent.getContainingFile();
     Set<PsiElement> cache = file == null ? null :
       CachedValuesManager.getCachedValue(file, () -> new CachedValueProvider.Result<>(ContainerUtil.createWeakSet(), file));
@@ -83,9 +87,8 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
     for (PsiElement child : children) {
       if (ReflectionUtil.isAssignable(hisClass, child.getClass())) {
         T namedChild = hisClass.cast(child);
-        final String childName = namedChild.getName();
-
-        if (Objects.equals(name, childName)) {
+        String childName = namedChild.getName();
+        if (name.equals(childName)) {
           if (namedChild.equals(element)) {
             return index;
           }
@@ -98,18 +101,15 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
   }
 
   protected static @Nullable <T extends PsiNamedElement> T restoreElementInternal(@NotNull PsiElement parent,
-                                                                                  String name,
+                                                                                  @NotNull String name,
                                                                                   int index,
-                                                                                  @NotNull Class<T> hisClass)
-  {
+                                                                                  @NotNull Class<T> hisClass) {
     PsiElement[] children = parent.getChildren();
-
     for (PsiElement child : children) {
       if (ReflectionUtil.isAssignable(hisClass, child.getClass())) {
         T namedChild = hisClass.cast(child);
-        final String childName = namedChild.getName();
-
-        if (Objects.equals(name, childName)) {
+        String childName = namedChild.getName();
+        if (name.equals(childName)) {
           if (index == 0) {
             return namedChild;
           }
@@ -121,11 +121,13 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
     return null;
   }
 
-  protected static String escape(String name) {
+  @Contract(pure = true)
+  protected static @NotNull String escape(@NotNull String name) {
     return StringUtil.replace(name, ESCAPE_FROM, ESCAPE_TO);
   }
 
-  protected static String unescape(String name) {
+  @Contract(pure = true)
+  protected static @NotNull String unescape(@NotNull String name) {
     return StringUtil.replace(name, ESCAPE_TO, ESCAPE_FROM);
   }
 }
