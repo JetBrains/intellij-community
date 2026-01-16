@@ -8,6 +8,7 @@ import com.intellij.terminal.tests.block.util.TestJsonCommandSpecsProvider
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
@@ -164,6 +165,17 @@ internal class ShellCommandSpecManagerTest : BasePlatformTestCase() {
 
     val spec = commandSpecsManager.getCommandSpec(commandName) ?: error("Failed to load $commandName command spec")
     assertTrue("Merged command spec is created, while there is only one spec", spec !is ShellMergedCommandSpec)
+  }
+
+  @Test
+  fun `check that command spec can be get by name in other case`() = runBlocking {
+    val spec = ShellCommandSpec("Command") {}
+    val replacingSpecProvider = TestCommandSpecsProvider(ShellCommandSpecInfo.create(spec, ShellCommandSpecConflictStrategy.DEFAULT))
+    mockCommandSpecProviders(replacingSpecProvider)
+
+    assertThat(commandSpecsManager.getCommandSpec("COMMAND")).isNotNull
+    assertThat(commandSpecsManager.getLightCommandSpec("COMMAND")).isNotNull
+    Unit
   }
 
   private fun mockCommandSpecProviders(vararg newProviders: ShellCommandSpecsProvider) {
