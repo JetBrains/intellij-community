@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
@@ -97,14 +96,13 @@ private class TerminalLookupListener : LookupListener {
 
     // Third step - insert the completion item
     val suggestion = item.`object` as ShellCompletionSuggestion
-    val realInsertValue = suggestion.insertValue?.replace("{cursor}", "")
-    val escapedInsertValue = StringUtil.escapeChar(realInsertValue ?: suggestion.name, ' ')
-    terminalInput.sendString(escapedInsertValue)
+    val realInsertValue = suggestion.insertValue?.replace("{cursor}", "") ?: suggestion.name
+    terminalInput.sendString(realInsertValue)
 
     // Fourth step - move the cursor to the custom position if it is specified
     val cursorOffset = suggestion.insertValue?.indexOf("{cursor}")
     if (cursorOffset != null && cursorOffset != -1) {
-      val delta = escapedInsertValue.length - cursorOffset
+      val delta = realInsertValue.length - cursorOffset
       repeat(delta) {
         terminalInput.sendLeft()
       }
