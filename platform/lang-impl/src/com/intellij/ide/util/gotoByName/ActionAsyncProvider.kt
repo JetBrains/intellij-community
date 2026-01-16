@@ -247,18 +247,39 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
 
       return@mapNotNull action
     }
+
+    if (LOG.isDebugEnabled) {
+      LOG.debug { "[$pattern] TEST DIAGNOSTICS: allIds contains \"CollectZippedLogs\": ${allIds.contains("CollectZippedLogs")}" }
+    }
+
     val extendedActions: Sequence<AnAction> = model.dataContext.getData(QuickActionProvider.KEY)?.getActions(true)?.asSequence() ?: emptySequence<AnAction>()
     val allActions: Sequence<AnAction> = mainActions + extendedActions + extendedActions.flatMap { (it as? ActionGroup)?.let { model.updateSession.children(it) } ?: emptyList() }
     val matchedActions = produce(capacity = Channel.UNLIMITED) {
       allActions.forEach { action ->
+        val isCollectLogsAction = LOG.isDebugEnabled && action::class.java.simpleName.let {
+          it == "ClientCollectZippedLogsWithRemoteAction" || it == "CWMBackendCollectZippedLogsWithRemoteAction"
+        }
+
+        if (isCollectLogsAction) {
+           LOG.debug { "[$pattern] TEST DIAGNOSTICS: allActions contains Collect Logs action: ${action::class.java.simpleName}" }
+        }
+
         launch {
           runCatching {
             val mode = model.actionMatches(pattern, matcher, action)
             if (mode != MatchMode.NONE) {
+              if (isCollectLogsAction) {
+                LOG.debug("[$pattern] TEST DIAGNOSTICS: Collect Logs action matched")
+              }
+
               val weight = calcElementWeight(action, pattern, weightMatcher)
               send(MatchedAction(action, mode, weight))
             }
             else {
+              if (isCollectLogsAction) {
+                LOG.debug("[$pattern] TEST DIAGNOSTICS: Collect Logs action unmatched")
+              }
+
               if (action is ActionStubBase) actionManager.getId(action)?.let { unmatchedIdsChannel.send(it) }
             }
           }.onFailure { t ->
