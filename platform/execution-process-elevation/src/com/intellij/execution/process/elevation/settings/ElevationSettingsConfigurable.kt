@@ -8,19 +8,15 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import java.awt.Component
-import javax.swing.DefaultListCellRenderer
-import javax.swing.JList
-import javax.swing.ListCellRenderer
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
 class ElevationSettingsConfigurable : BoundConfigurable(ElevationBundle.message("elevation.settings.configurable")),
                                       Configurable.NoScroll {
-  val settings = ElevationSettings.getInstance()
+  private val settings = ElevationSettings.getInstance()
 
   override fun createPanel(): DialogPanel {
     return panel {
@@ -39,7 +35,8 @@ class ElevationSettingsConfigurable : BoundConfigurable(ElevationBundle.message(
           .bindSelected(settings::isKeepAuth)
           .gap(RightGap.SMALL)
 
-        comboBox(CollectionComboBoxModel(getTimeLimitItems(settings.quotaTimeLimitMs)), DurationListCellRenderer())
+        comboBox(getTimeLimitItems(settings.quotaTimeLimitMs),
+                 textListCellRenderer("") { NlsMessages.formatDuration(it) })
           .bindItem(settings::quotaTimeLimitMs.toNullableProperty())
           .enabledIf(keepAuth.selected)
       }
@@ -69,21 +66,6 @@ class ElevationSettingsConfigurable : BoundConfigurable(ElevationBundle.message(
       if (currentDurationMs > 0 && currentDurationMs !in this) {
         add(currentDurationMs)
       }
-    }
-  }
-
-  private class DurationListCellRenderer : ListCellRenderer<Long?> {
-    private val delegate = DefaultListCellRenderer()
-
-    override fun getListCellRendererComponent(list: JList<out Long?>?,
-                                              value: Long?,
-                                              index: Int,
-                                              isSelected: Boolean,
-                                              cellHasFocus: Boolean): Component? {
-      val prettyValue = value?.let { durationMs ->
-        NlsMessages.formatDuration(durationMs)
-      }
-      return delegate.getListCellRendererComponent(list, prettyValue, index, isSelected, cellHasFocus)
     }
   }
 }

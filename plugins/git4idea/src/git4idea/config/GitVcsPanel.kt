@@ -321,16 +321,10 @@ internal class GitVcsPanel(private val project: Project) :
 
   private fun Panel.fetchTagsRow() {
     row(message("settings.git.fetch.tags.label")) {
-      val listCellRenderer = listCellRenderer<GitFetchTagsMode?> {
-        val v = value
-        if (v != null) {
-          text(v.getModeName())
-          text(v.getDescription()) {
-            foreground = greyForeground
-          }
-        }
-        else {
-          text("")
+      val listCellRenderer = listCellRenderer<GitFetchTagsMode>("") {
+        text(value.getModeName())
+        text(value.getDescription()) {
+          foreground = greyForeground
         }
       }
       comboBox(EnumComboBoxModel(GitFetchTagsMode::class.java), renderer = listCellRenderer)
