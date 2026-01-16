@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.ui.icons;
 
 import org.jetbrains.annotations.NotNull;
@@ -2470,7 +2470,7 @@ public final class AllIconsKeys {
   public static final class Modules {
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey AddExcludedRoot = new IntelliJIconKey("modules/addExcludedRoot.svg", "modules/addExcludedRoot.svg", AllIconsKeys.class);
+    public static final @NotNull IntelliJIconKey AddExcludedRoot = new IntelliJIconKey("modules/addExcludedRoot.svg", "expui/actions/addExcludedRoot.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Annotation = new IntelliJIconKey("modules/annotation.svg", "expui/nodes/annotationFolder.svg", AllIconsKeys.class);
@@ -2687,7 +2687,7 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey JarDirectory = new IntelliJIconKey("nodes/jarDirectory.svg", "nodes/jarDirectory.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey JavaDocFolder = new IntelliJIconKey("nodes/javaDocFolder.svg", "nodes/javaDocFolder.svg", AllIconsKeys.class);
+    public static final @NotNull IntelliJIconKey JavaDocFolder = new IntelliJIconKey("nodes/javaDocFolder.svg", "expui/nodes/javaDocFolder.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey JavaModule = new IntelliJIconKey("nodes/javaModule.svg", "expui/nodes/moduleJava.svg", AllIconsKeys.class);
@@ -3731,7 +3731,7 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey AddJira = new IntelliJIconKey("toolbarDecorator/addJira.svg", "toolbarDecorator/addJira.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey AddLink = new IntelliJIconKey("toolbarDecorator/addLink.svg", "toolbarDecorator/addLink.svg", AllIconsKeys.class);
+    public static final @NotNull IntelliJIconKey AddLink = new IntelliJIconKey("toolbarDecorator/addLink.svg", "expui/actions/addLink.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey AddPattern = new IntelliJIconKey("toolbarDecorator/addPattern.svg", "toolbarDecorator/addPattern.svg", AllIconsKeys.class);
