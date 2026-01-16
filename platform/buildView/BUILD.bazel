@@ -18,6 +18,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//platform/kernel/shared:kernel",
     "//platform/execution",
+    "//platform/execution-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
