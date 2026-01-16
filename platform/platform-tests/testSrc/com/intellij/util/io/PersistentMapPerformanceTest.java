@@ -3,6 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.CommonProcessors;
@@ -21,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Eugene Zhuravlev
  */
 @SkipSlowTestLocally
+@PerformanceUnitTest
 public class PersistentMapPerformanceTest extends PersistentMapTestBase {
   interface MapConstructor<T, T2> {
     PersistentHashMap<T, T2> createMap(File file) throws IOException;

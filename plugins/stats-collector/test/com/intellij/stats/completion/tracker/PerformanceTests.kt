@@ -8,12 +8,14 @@ import com.intellij.stats.completion.network.service.RequestService
 import com.intellij.stats.completion.network.service.ResponseData
 import com.intellij.stats.completion.sender.StatisticSenderImpl
 import com.intellij.stats.completion.storage.FilePathProvider
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.replaceService
 import org.mockito.Mockito.*
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
+@PerformanceUnitTest
 class PerformanceTests : LightFixtureCompletionTestCase() {
   private lateinit var pathProvider: FilePathProvider
 

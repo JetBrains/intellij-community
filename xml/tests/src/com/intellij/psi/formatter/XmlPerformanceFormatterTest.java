@@ -17,6 +17,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.semantic.SemService;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+@PerformanceUnitTest
 public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   private static final String BASE_PATH = "psi/formatter/xml";
   private static final Set<String> ourTestsWithDocumentUpdate = Set.of("Performance3", "Performance4");

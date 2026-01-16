@@ -706,6 +706,7 @@ private fun createSimpleMessageBusOwner(owner: String): MessageBusOwner {
   }
 }
 
+@PerformanceUnitTest
 class MessageBusPerformanceTest : MessageBusTestBase() {
   @Test
   fun manyChildrenCreationDeletionPerformance() {

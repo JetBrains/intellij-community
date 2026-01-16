@@ -5,8 +5,10 @@ import com.intellij.find.impl.livePreview.LivePreview;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
+@PerformanceUnitTest
 public class FindInEditorPerformanceTest extends AbstractFindInEditorTest {
   public void testEditingWithSearchResultsShown() {
     init(StringUtil.repeat("cheese\n", 9999)); // just below the limit for occurrences highlighting

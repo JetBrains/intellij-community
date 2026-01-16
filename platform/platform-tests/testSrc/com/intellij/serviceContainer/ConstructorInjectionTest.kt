@@ -5,6 +5,7 @@ package com.intellij.serviceContainer
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -18,6 +19,7 @@ class ConstructorInjectionTest {
   }
 }
 
+@PerformanceUnitTest
 class ConstructorInjectionPerformanceTest {
   @Test
   fun `light service getService() performance`() {

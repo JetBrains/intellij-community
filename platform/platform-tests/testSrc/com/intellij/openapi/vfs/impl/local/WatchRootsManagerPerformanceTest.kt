@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.local.FileWatcherTestUtil.refresh
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.shutdown
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.startup
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.wait
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.SkipSlowTestLocally
@@ -27,6 +28,7 @@ import java.util.*
 import kotlin.test.assertFalse
 
 @SkipSlowTestLocally
+@PerformanceUnitTest
 class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
   private val LOG = logger<WatchRootsManagerPerformanceTest>()

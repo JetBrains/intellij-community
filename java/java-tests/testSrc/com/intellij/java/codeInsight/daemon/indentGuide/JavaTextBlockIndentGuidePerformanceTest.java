@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.daemon.indentGuide;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,6 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 
+@PerformanceUnitTest
 public class JavaTextBlockIndentGuidePerformanceTest extends LightDaemonAnalyzerTestCase {
   @NotNull
   @Override

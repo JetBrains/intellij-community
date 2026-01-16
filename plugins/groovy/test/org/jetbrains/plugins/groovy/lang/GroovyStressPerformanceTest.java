@@ -5,6 +5,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 
 @Slow
+@PerformanceUnitTest
 public class GroovyStressPerformanceTest extends LightGroovyTestCase {
   @Override
   public String getBasePath() {

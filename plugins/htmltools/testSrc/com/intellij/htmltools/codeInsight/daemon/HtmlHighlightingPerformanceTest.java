@@ -5,6 +5,7 @@ import com.intellij.htmltools.codeInspection.htmlInspections.HtmlDeprecatedTagIn
 import com.intellij.htmltools.codeInspection.htmlInspections.HtmlPresentationalElementInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
@@ -12,6 +13,7 @@ import com.intellij.xml.util.XmlDuplicatedIdInspection;
 import com.intellij.xml.util.XmlInvalidIdInspection;
 
 
+@PerformanceUnitTest
 public class HtmlHighlightingPerformanceTest extends BasePlatformTestCase {
   @Override
   public String getTestDataPath() {

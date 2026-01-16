@@ -4,11 +4,13 @@ package com.intellij.java.codeInsight.completion;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ThrowableRunnable;
 import one.util.streamex.IntStreamEx;
 import org.intellij.lang.annotations.Language;
 
+@PerformanceUnitTest
 public final class JavaCompletionPerformanceTest extends LightFixtureCompletionTestCase {
   public void testPerformanceWithManyNonMatchingDeclarations() {
     for (int i = 0; i < 10; i++) {

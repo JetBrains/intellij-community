@@ -12,6 +12,7 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.VfsTestUtil
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 
 @StressTestApplication
 @TestApplication
+@PerformanceUnitTest
 class ProjectFileIndexPerformanceTest {
   companion object {
     @RegisterExtension

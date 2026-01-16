@@ -36,6 +36,7 @@ import com.intellij.platform.workspace.storage.query.map
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.StressTestApplication
@@ -66,6 +67,7 @@ import kotlin.time.measureTime
 
 
 @StressTestApplication
+@PerformanceUnitTest
 class WorkspaceModelBenchmarksPerformanceTest {
   @JvmField
   @RegisterExtension

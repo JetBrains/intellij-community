@@ -11,6 +11,7 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.ui.UIUtil;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 
+@PerformanceUnitTest
 public class HtmlEmmetPerformanceTest extends BasePlatformTestCase {
   public void testPerformance() throws Exception {
     final String fileContent = FileUtil.loadFile(new File(getTestDataPath() + "/performance.html"), StandardCharsets.UTF_8);

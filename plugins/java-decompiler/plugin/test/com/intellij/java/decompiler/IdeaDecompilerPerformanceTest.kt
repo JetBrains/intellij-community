@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.SystemProperties
@@ -13,6 +14,7 @@ import org.jetbrains.java.decompiler.DecompilerPreset
 import org.jetbrains.java.decompiler.IdeaDecompiler
 import org.jetbrains.java.decompiler.IdeaDecompilerSettings
 
+@PerformanceUnitTest
 class IdeaDecompilerPerformanceTest : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()

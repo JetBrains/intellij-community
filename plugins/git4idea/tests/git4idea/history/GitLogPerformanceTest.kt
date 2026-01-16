@@ -4,6 +4,7 @@ package git4idea.history
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.vcs.impl.VcsInitialization
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
@@ -27,6 +28,7 @@ import java.nio.file.Path
  * hypotheses locally.
  */
 @Ignore("Intended for local runs only")
+@PerformanceUnitTest
 internal class GitLogPerformanceTest : GitPlatformTest() {
   private lateinit var testRepo: GitRepository
 
