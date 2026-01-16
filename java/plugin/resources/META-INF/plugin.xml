@@ -97,6 +97,5 @@
     <module name="intellij.jvm.dfa.analysis.ui"/>
     <module name="intellij.java.copyright"/>
     <module name="intellij.java.promo"/>
-    <module name="intellij.debugger.streams.shared" loading="required"/>
   </content>
 </idea-plugin>
