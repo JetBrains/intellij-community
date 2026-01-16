@@ -58,6 +58,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//platform/eel",
     "//java/java-indexing-api:indexing",
+    "//java/openapi:java",
   ]
 )
 ### auto-generated section `build intellij.kotlin.devkit` end
