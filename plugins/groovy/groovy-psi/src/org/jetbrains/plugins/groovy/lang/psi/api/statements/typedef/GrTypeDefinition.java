@@ -20,6 +20,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 
+/// Represents any element that defines a type in Groovy.
+/// NB: type parameter is also treated as a type definition.
 public interface GrTypeDefinition extends PsiClass, GrDocCommentOwner, GrMember, GrNamedElement, GrTopStatement {
 
   GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];

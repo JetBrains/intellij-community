@@ -23,6 +23,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
@@ -37,10 +38,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.util.GroovyMainMethodSearcher;
 
 import java.util.*;
@@ -100,12 +102,12 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
           PsiElement nameId = ((GrNamedElement)element).getNameIdentifierGroovy();
           if (nameId.getNode().getElementType() == GroovyTokenTypes.mIDENT) {
             String name = ((GrNamedElement)element).getName();
-            if (element instanceof GrTypeDefinition && !UnusedSymbolUtil.isClassUsed(myProject,
-                                                                                     element.getContainingFile(), (GrTypeDefinition)element,
+            if (element instanceof GrTypeDefinition definition && !UnusedSymbolUtil.isClassUsed(myProject,
+                                                                                     element.getContainingFile(), definition,
                                                                                      usageHelper
             )) {
               HighlightInfo.Builder builder = UnusedSymbolUtil
-                .createUnusedSymbolInfoBuilder(nameId, GroovyBundle.message("text.class.0.is.unused", name), HighlightInfoType.UNUSED_SYMBOL, GroovyUnusedDeclarationInspection.SHORT_NAME);
+                .createUnusedSymbolInfoBuilder(nameId, GroovyBundle.message(getKeyForTypeDefinition(definition), name), HighlightInfoType.UNUSED_SYMBOL, GroovyUnusedDeclarationInspection.SHORT_NAME);
               IntentionAction action = QuickFixFactory.getInstance().createSafeDeleteFix(element);
               builder.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(unusedDefKey), null, unusedDefKey);
               ContainerUtil.addIfNotNull(unusedDeclarations, builder.create());
@@ -183,6 +185,29 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     Set<GrImportStatement> unusedImports = myUnusedImports;
     if (myUnusedDeclarations != null && unusedImports != null) {
       optimizeImports(unusedImports);
+    }
+  }
+
+  private static @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) String getKeyForTypeDefinition(GrTypeDefinition definition) {
+    if (definition instanceof GrTypeParameter) {
+      return "text.type.parameter.0.is.unused";
+    }
+    else if (definition instanceof GrInterfaceDefinition) {
+      return "text.interface.0.is.unused";
+    }
+    else if (definition instanceof GrTraitTypeDefinition) {
+      return "text.trait.0.is.unused";
+    }
+    else if (definition instanceof GrEnumTypeDefinition) {
+      return "text.enum.0.is.unused";
+    }
+    else if (definition instanceof GrRecordDefinition) {
+      return "text.record.0.is.unused";
+    } else if (definition instanceof GrAnnotationTypeDefinition) {
+      return "text.annotation.class.0.is.unused";
+    }
+    else {
+      return "text.class.0.is.unused";
     }
   }
 
