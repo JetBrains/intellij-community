@@ -3359,7 +3359,7 @@
       "from" : "1"
     } ],
     "rules" : {
-      "event_id" : [ "{enum:session|provider_finished|diff_finished|model_request_sent}" ],
+      "event_id" : [ "{enum#__event_id}" ],
       "event_data" : {
         "accepted_diffs" : [ "{regexp#integer}" ],
         "accepted_jumps" : [ "{regexp#integer}" ],
@@ -3370,11 +3370,13 @@
         "deleted_length" : [ "{regexp#integer}" ],
         "deleted_lines_number" : [ "{regexp#integer}" ],
         "diff_index" : [ "{regexp#integer}" ],
+        "diff_rating" : [ "{enum:LIKE|DISLIKE|NOT_RATED}" ],
         "filter_reason" : [ "{enum:iter_changes_only_whitespaces|iter_contains_plain_todo|iter_contains_simple_comment|iter_direct_code_repetition|iter_does_not_fit_screen|iter_file_removed|iter_internal_markers|iter_jupyter_change_cell_separators|iter_no_diffs|iter_one_diff_too_long|iter_removed_last_modified_region|iter_revert_last_change|iter_similar_to_rejected_suggestion}" ],
         "finish_type" : [ "{enum:EXPIRED|NOT_APPROPRIATE|ASSOCIATED_COMPLETION_FINISHED_SESSION}", "{enum:ESCAPE|DOCUMENT_CHANGE|INCOMPATIBLE_CARET_CHANGE|ACCEPTED|COULD_NOT_SHOW|MANAGER_DISPOSED|INACTIVE|NEW_SESSION|NO_SUGGESTION_FROM_PROVIDERS|DOCUMENT_EXPIRED|SELECTION_CHANGED|OLD_SESSION_EXPIRED|FOCUS_LOST|INLINE_COMPLETION_FAILED_TO_SHOW|INLINE_COMPLETION_FINISHED_WITH_UNKNOWN_REASON}", "{enum:ERROR|UNKNOWN|CANCELLATION}" ],
         "inserted_length" : [ "{regexp#integer}" ],
         "inserted_lines_number" : [ "{regexp#integer}" ],
         "invalid" : [ "{enum#boolean}" ],
+        "is_syntax_valid" : [ "{enum#boolean}" ],
         "lang" : [ "{util#lang}" ],
         "performance.client_execution_time" : [ "{regexp#integer}" ],
         "performance.context_collection_time" : [ "{regexp#integer}" ],
@@ -3382,6 +3384,7 @@
         "performance.request_waiting_time" : [ "{regexp#integer}" ],
         "performance.session_duration" : [ "{regexp#integer}" ],
         "provider_id" : [ "{enum:backend_call|ide_action_change_signature|ide_action_rename|test_provider|nes_client|inspection_next_edit_suggestion_provider|kotlin_quickfix_next_edit_suggestion_provider|inspection_next_edit_suggestion_provider}" ],
+        "psi_file_build_duration" : [ "{regexp#integer}" ],
         "request_id" : [ "{regexp#integer}" ],
         "session_duration" : [ "{regexp#integer}" ],
         "show_time" : [ "{regexp#integer}" ],
@@ -3391,6 +3394,7 @@
         "steps_description.steps_view_type" : [ "{enum:INLINE_COMPLETION|GREEN_ADDITION|DELETION|SIMPLE_REPLACEMENT|GENERAL_REPLACEMENT|ACTION|UNKNOWN}" ],
         "suppressed_by_inline" : [ "{regexp#integer}" ],
         "suppressed_by_lookup" : [ "{regexp#integer}" ],
+        "syntax_check_duration" : [ "{regexp#integer}" ],
         "task_id" : [ "{util#llm_parameters}" ],
         "time_to_show" : [ "{regexp#integer}" ],
         "total_delete_length" : [ "{regexp#integer}" ],
@@ -3399,6 +3403,9 @@
         "total_insert_length" : [ "{regexp#integer}" ],
         "total_inserted_lines_number" : [ "{regexp#integer}" ],
         "trigger_event" : [ "{enum:TYPING|REMOVAL|DIRECT_CALL|IDE_ACTION|LOOKUP_ITEM_SELECTED|INLINE_COMPLETION_SELECTED|NEXT_EDIT_SELECTED|CARET_MOVE|RESTART_AFTER_HIGHLIGHTING_FINISHED|UNKNOWN}", "{enum:SUGGESTED_REFACTORING_REMOVED}" ]
+      },
+      "enums" : {
+        "__event_id" : [ "session", "provider_finished", "diff_finished", "model_request_sent", "syntax_check_finished" ]
       }
     },
     "anonymized_fields" : [ {
@@ -3409,6 +3416,9 @@
       "fields" : [ "anonymous_id", "completion_id" ]
     }, {
       "event" : "model_request_sent",
+      "fields" : [ "anonymous_id" ]
+    }, {
+      "event" : "syntax_check_finished",
       "fields" : [ "anonymous_id" ]
     }, {
       "event" : "session",
@@ -3640,5 +3650,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6633"
+  "version" : "6653"
 }
