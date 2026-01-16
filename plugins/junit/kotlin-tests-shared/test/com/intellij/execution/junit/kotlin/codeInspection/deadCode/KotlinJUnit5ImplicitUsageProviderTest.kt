@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection.deadCode
 
 import com.intellij.junit.testFramework.JUnit5ImplicitUsageProviderTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode.K1
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
@@ -30,14 +31,13 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
   }
 
   fun `test implicit usage of parameter in parameterized test`() {
+    if (pluginMode == K1) return // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
-      class MyTest {
-        @org.junit.jupiter.params.ParameterizedTest(name = "{0}")
-        fun byName(name: String) {
-          println(name)
+        class MyTest {
+          @org.junit.jupiter.params.ParameterizedTest(name = "{0}")
+          fun byName(name: String, <warning descr="Parameter \"flag\" is never used">flag</warning>: Boolean = false) { }
         }
-      }
-   """.trimIndent())
+     """.trimIndent())
   }
 
   fun `test implicit usage of method source with implicit method name`() {
