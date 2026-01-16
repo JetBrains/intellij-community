@@ -806,22 +806,22 @@ object K2UnusedSymbolUtil {
                 LightClassUtil.getLightClassMethod(declaration as KtFunction)
             }
             is KtSecondaryConstructor -> LightClassUtil.getLightClassMethod(declaration as KtFunction)
-            is KtProperty, is KtParameter -> {
-                if (declaration is KtParameter) {
-                    val ownerFunction = declaration.ownerFunction
-                    if (ownerFunction is KtNamedFunction && KotlinMainFunctionDetector.getInstance().isMain(ownerFunction)) {
+            is KtParameter -> {
+                val ownerFunction = declaration.ownerFunction
+                if (ownerFunction is KtNamedFunction) {
+                    if (KotlinMainFunctionDetector.getInstance().isMain(ownerFunction)) {
                         // @JvmStatic main() must have parameters
                         return ownerFunction.findAnnotation(JvmStandardClassIds.Annotations.JvmStatic) != null
                     }
-                    if (ownerFunction is KtNamedFunction) {
-                        if (declaration.toPsiParameters().any { isJavaEntryPoint.isEntryPoint(it) }) {
-                            return true
-                        }
+
+                    if ( declaration.toPsiParameters()
+                    .any { isJavaEntryPoint.isEntryPoint(it) }) {
+                        return true
                     }
-                    if (!declaration.hasValOrVar()) return false
                 }
+                if (!declaration.hasValOrVar()) return false
                 // we may handle only annotation parameters so far
-                if (declaration is KtParameter && isAnnotationParameter(declaration)) {
+                if (isAnnotationParameter(declaration)) {
                     val lightAnnotationMethods = LightClassUtil.getLightClassPropertyMethods(declaration).toList()
                     for (javaParameterPsi in lightAnnotationMethods) {
                         if (isJavaEntryPoint.isEntryPoint(javaParameterPsi)) {
@@ -829,25 +829,31 @@ object K2UnusedSymbolUtil {
                         }
                     }
                 }
-                if (declaration is KtProperty) {
-                    val javaFieldPsi = LightClassUtil.getLightClassBackingField(declaration)
-                    if (javaFieldPsi != null && isJavaEntryPoint.isEntryPoint(javaFieldPsi)) {
+                // can't rely on a light element, check annotation ourselves
+                val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase
+                return checkAnnotatedUsingPatterns(
+                    declaration,
+                    entryPointsManager.additionalAnnotations + entryPointsManager.ADDITIONAL_ANNOTATIONS
+                )
+            }
+            is KtProperty -> {
+                val javaFieldPsi = LightClassUtil.getLightClassBackingField(declaration)
+                if (javaFieldPsi != null && isJavaEntryPoint.isEntryPoint(javaFieldPsi)) {
+                    return true
+                }
+
+                // `@get:` or `@set:` behaves like an accessor method with annotation
+                val getterOrSetterSiteTargetAnnotationPresent = declaration.annotationEntries.any {
+                    val target = it.useSiteTarget?.getAnnotationUseSiteTarget()
+                    target == AnnotationUseSiteTarget.PROPERTY_GETTER || target == AnnotationUseSiteTarget.PROPERTY_SETTER
+                }
+                if (getterOrSetterSiteTargetAnnotationPresent) {
+                    val psiMethods = LightClassUtil.getLightClassPropertyMethods(declaration)
+                    if (psiMethods.any { isJavaEntryPoint.isEntryPoint(it) }) {
                         return true
                     }
-
-                    // `@get:` or `@set:` behaves like an accessor method with annotation
-                    val getterOrSetterSiteTargetAnnotationPresent = declaration.annotationEntries.any {
-                        val target = it.useSiteTarget?.getAnnotationUseSiteTarget()
-                        target == AnnotationUseSiteTarget.PROPERTY_GETTER || target == AnnotationUseSiteTarget.PROPERTY_SETTER
-                    }
-                    if (getterOrSetterSiteTargetAnnotationPresent) {
-                        val psiMethods = LightClassUtil.getLightClassPropertyMethods(declaration)
-                        if (psiMethods.any { isJavaEntryPoint.isEntryPoint(it) }) {
-                            return true
-                        }
-                    }
-
                 }
+
                 // can't rely on a light element, check annotation ourselves
                 val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase
                 return checkAnnotatedUsingPatterns(

@@ -118,18 +118,16 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                 is KtEnumEntry -> LightClassUtil.getLightClassBackingField(declaration)
                 is KtClassOrObject -> declaration.toLightClass()
                 is KtNamedFunction, is KtSecondaryConstructor -> LightClassUtil.getLightClassMethod(declaration as KtFunction)
-                is KtProperty, is KtParameter -> {
-                    if (declaration is KtParameter) {
-                        val ownerFunction = declaration.ownerFunction
-                        if (ownerFunction is KtNamedFunction) {
-                            if (declaration.toPsiParameters().any { javaInspection.isEntryPoint(it) }) {
-                                return true
-                            }
+                is KtParameter -> {
+                    val ownerFunction = declaration.ownerFunction
+                    if (ownerFunction is KtNamedFunction) {
+                        if (declaration.toPsiParameters().any { javaInspection.isEntryPoint(it) }) {
+                            return true
                         }
-                        if (!declaration.hasValOrVar()) return false
                     }
+                    if (!declaration.hasValOrVar()) return false
                     // we may handle only annotation parameters so far
-                    if (declaration is KtParameter && isAnnotationParameter(declaration)) {
+                    if (isAnnotationParameter(declaration)) {
                         val lightAnnotationMethods = LightClassUtil.getLightClassPropertyMethods(declaration).toList()
                         for (javaParameterPsi in lightAnnotationMethods) {
                             if (javaInspection.isEntryPoint(javaParameterPsi)) {
@@ -137,11 +135,17 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                             }
                         }
                     }
-                    if (declaration is KtProperty) {
-                        val javaFieldPsi = LightClassUtil.getLightClassBackingField(declaration)
-                        if (javaFieldPsi != null && javaInspection.isEntryPoint(javaFieldPsi)) {
-                            return true
-                        }
+                    // can't rely on light element, check annotation ourselves
+                    val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase
+                    return checkAnnotatedUsingPatterns(
+                        declaration,
+                        entryPointsManager.additionalAnnotations + entryPointsManager.ADDITIONAL_ANNOTATIONS
+                    )
+                }
+                is KtProperty -> {
+                    val javaFieldPsi = LightClassUtil.getLightClassBackingField(declaration)
+                    if (javaFieldPsi != null && javaInspection.isEntryPoint(javaFieldPsi)) {
+                        return true
                     }
                     // can't rely on light element, check annotation ourselves
                     val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase
