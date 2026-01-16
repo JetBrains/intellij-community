@@ -138,6 +138,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
     setRootVisible(false);
     setShowsRootHandles(true);
     setOpaque(false);
+    setHorizontalAutoScrollingEnabled(false);
     if (withSpeedSearch) {
       TreeSpeedSearch.installOn(this, false, ChangesBrowserNode.TO_TEXT_CONVERTER);
     }
