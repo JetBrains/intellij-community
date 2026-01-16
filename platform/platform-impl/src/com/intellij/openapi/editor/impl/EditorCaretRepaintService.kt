@@ -143,7 +143,8 @@ internal class EditorCaretRepaintService(coroutineScope: CoroutineScope) {
           if (fadingOut) 1.0 else 0.0
         }
       }
-      cursor.isActive = true
+
+      cursor.isActive = opacity >= 1e-2
       cursor.blinkOpacity = opacity.toFloat()
       cursor.repaint()
 
