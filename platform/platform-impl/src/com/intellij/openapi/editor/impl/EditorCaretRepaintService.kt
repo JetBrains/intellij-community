@@ -22,7 +22,10 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
-private enum class ActionRequest { Restart, Pause }
+private sealed class ActionRequest {
+  class Restart(val after: Long = 0) : ActionRequest()
+  class Pause : ActionRequest()
+}
 
 @Service(Service.Level.APP)
 internal class EditorCaretRepaintService(coroutineScope: CoroutineScope) {
@@ -60,8 +63,9 @@ internal class EditorCaretRepaintService(coroutineScope: CoroutineScope) {
   init {
     coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
       editorFlow.combine(actionRequests, ::Pair).collectLatest { (editor, action) ->
-        if (editor != null && action == ActionRequest.Restart) {
+        if (editor != null && action is ActionRequest.Restart) {
           runCatching {
+            delay(action.after)
             blink(editor)
           }.getOrHandleException { e ->
             LOG.error("An exception occurred while blinking the active caret", e)
@@ -69,15 +73,19 @@ internal class EditorCaretRepaintService(coroutineScope: CoroutineScope) {
         }
       }
     }
-    restart()
+    restartImmediately()
   }
 
-  fun restart() {
-    check(actionRequests.tryEmit(ActionRequest.Restart))
+  fun restart(after: Long) {
+    check(actionRequests.tryEmit(ActionRequest.Restart(after)))
+  }
+
+  fun restartImmediately() {
+    restart(0)
   }
 
   fun pause() {
-    check(actionRequests.tryEmit(ActionRequest.Pause))
+    check(actionRequests.tryEmit(ActionRequest.Pause()))
   }
 
   private suspend fun blink(editor: EditorImpl) {
@@ -90,22 +98,19 @@ internal class EditorCaretRepaintService(coroutineScope: CoroutineScope) {
 
   private suspend fun blinkNormal(editor: EditorImpl) {
     while (true) {
-      delay(blinkPeriod)
       val cursor = editor.myCaretCursor
-      val time = System.currentTimeMillis() - cursor.startTime
-      if (time > blinkPeriod) {
-        var toRepaint = true
-        if (isBlinking) {
-          cursor.isActive = !cursor.isActive
-        }
-        else {
-          toRepaint = !cursor.isActive
-          cursor.isActive = true
-        }
-        if (toRepaint) {
-          cursor.repaint()
-        }
+      var toRepaint = true
+      if (isBlinking) {
+        cursor.isActive = !cursor.isActive
       }
+      else {
+        toRepaint = !cursor.isActive
+        cursor.isActive = true
+      }
+      if (toRepaint) {
+        cursor.repaint()
+      }
+      delay(blinkPeriod)
     }
   }
 
