@@ -23,7 +23,9 @@
         "ide_activity_id" : [ "{regexp#integer}" ],
         "issue_id" : [ "{util#ej_rules}" ],
         "issue_type" : [ "{enum:ISSUE|CHAT}", "{enum:AUTO}", "{enum:CODE}" ],
-        "llm_model" : [ "{enum:OPENAI_GPT_5|ANTHROPIC_SONNET_3_7|ANTHROPIC_SONNET_4}", "{enum:ANTHROPIC_SONNET_4_5}", "{enum:OPENAI_GPT_5_1}", "{enum:GEMINI_3_0_PRO|ANTHROPIC_OPUS_4_5}", "{enum:OPENAI_GPT_5_2|OPENAI_GPT_5_1_CODEX_MAX|OPENAI_GPT_5_MINI|XAI_GROK_4_1_FAST_REASONING}" ],
+        "llm_model" : [ "{enum:OPENAI_GPT_5|ANTHROPIC_SONNET_3_7|ANTHROPIC_SONNET_4}", "{enum:ANTHROPIC_SONNET_4_5}", "{enum:OPENAI_GPT_5_1}", "{enum:GEMINI_3_0_PRO|ANTHROPIC_OPUS_4_5}", "{enum:OPENAI_GPT_5_2|OPENAI_GPT_5_1_CODEX_MAX|OPENAI_GPT_5_MINI|XAI_GROK_4_1_FAST_REASONING}", "{enum:GEMINI_3_0_FLASH|ANTHROPIC_OPUS_4_5_FAST|OPENAI_GPT_5_2_CODEX}" ],
+        "memory_enabled" : [ "{enum#boolean}" ],
+        "memory_experiment_group" : [ "{regexp#integer}" ],
         "model_stats_cache_create_input_tokens" : [ "{regexp#integer}" ],
         "model_stats_cache_input_tokens" : [ "{regexp#integer}" ],
         "model_stats_cached_cost" : [ "{regexp#float}" ],
@@ -37,6 +39,7 @@
         "model_stats_web_search_count" : [ "{regexp#integer}" ],
         "open_files_added_to_context" : [ "{util#ej_rules}" ],
         "parent_artifact_id" : [ "{util#ej_rules}" ],
+        "project_memory_enabled" : [ "{enum#boolean}" ],
         "recent_files_added_to_context" : [ "{util#ej_rules}" ],
         "semantic_search_enabled" : [ "{enum#boolean}" ],
         "speed_mode" : [ "{enum:Speed|Quality}" ],
@@ -47,7 +50,7 @@
         "trajectory_entry" : [ "{util#ej_rules}" ]
       },
       "enums" : {
-        "__event_id" : [ "ej_generation.finished", "ej_generation_step.started", "ej_trajectory", "ej_generation.started", "ej_generation_step.finished" ],
+        "__event_id" : [ "ej_generation.finished", "ej_generation_step.started", "ej_trajectory", "ej_generation.started", "ej_generation_step.finished", "memory_experiment_assigned" ],
         "__step_type" : [ "compress_history_processor", "project_str_worker", "goland_swe_next_step", "goland_swe_patch", "rubymine_swe_next_step", "rustrover_swe_patch", "rustrover_swe_next_step", "rubymine_swe_patch", "rename_element", "update_status", "answer", "build", "ask_user", "bash" ]
       }
     }
@@ -133,5 +136,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6569"
+  "version" : "6655"
 }
