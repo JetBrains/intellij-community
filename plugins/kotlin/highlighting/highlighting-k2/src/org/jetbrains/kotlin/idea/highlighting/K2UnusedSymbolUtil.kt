@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.asJava.toPsiParameters
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
@@ -811,6 +812,11 @@ object K2UnusedSymbolUtil {
                     if (ownerFunction is KtNamedFunction && KotlinMainFunctionDetector.getInstance().isMain(ownerFunction)) {
                         // @JvmStatic main() must have parameters
                         return ownerFunction.findAnnotation(JvmStandardClassIds.Annotations.JvmStatic) != null
+                    }
+                    if (ownerFunction is KtNamedFunction) {
+                        if (declaration.toPsiParameters().any { isJavaEntryPoint.isEntryPoint(it) }) {
+                            return true
+                        }
                     }
                     if (!declaration.hasValOrVar()) return false
                 }

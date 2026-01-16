@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.asJava.toPsiParameters
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
@@ -118,7 +119,15 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                 is KtClassOrObject -> declaration.toLightClass()
                 is KtNamedFunction, is KtSecondaryConstructor -> LightClassUtil.getLightClassMethod(declaration as KtFunction)
                 is KtProperty, is KtParameter -> {
-                    if (declaration is KtParameter && !declaration.hasValOrVar()) return false
+                    if (declaration is KtParameter) {
+                        val ownerFunction = declaration.ownerFunction
+                        if (ownerFunction is KtNamedFunction) {
+                            if (declaration.toPsiParameters().any { javaInspection.isEntryPoint(it) }) {
+                                return true
+                            }
+                        }
+                        if (!declaration.hasValOrVar()) return false
+                    }
                     // we may handle only annotation parameters so far
                     if (declaration is KtParameter && isAnnotationParameter(declaration)) {
                         val lightAnnotationMethods = LightClassUtil.getLightClassPropertyMethods(declaration).toList()
