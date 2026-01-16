@@ -532,4 +532,20 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testDefaultNotNullTypeParameterOverrides() {
     doTest();
   }
+
+  public void testCallIncompatibilitiesWithGeneric() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+    doTest();
+  }
+
+  public void testCallIncompatibilitiesWithGenericWithNotNullToNull() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = false;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+    doTest();
+  }
 }

@@ -211,7 +211,11 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
       return bound;
     }
     else {
-      return isCapture() && capture ? PsiUtil.captureToplevelWildcards(myUpperBound, myContext) : myUpperBound;
+      PsiType type = isCapture() && capture ? PsiUtil.captureToplevelWildcards(myUpperBound, myContext) : myUpperBound;
+      if (bound != null) {
+        type = type.withNullability(type.getNullability().meet(bound.getNullability()));
+      }
+      return type;
     }
   }
 
