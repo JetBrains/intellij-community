@@ -34,8 +34,8 @@ class PipPackageManagerEngine(
 
     PipManagementInstaller(sdk, manager).installManagementIfNeeded()
 
-    val argumentsGroups = partitionPackagesBySource(installRequest)
-    return performInstall(argumentsGroups, options)
+    val argumentsGroups = partitionPackagesBySource(installRequest, options)
+    return performInstall(argumentsGroups)
   }
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
@@ -45,8 +45,8 @@ class PipPackageManagerEngine(
   }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
-    val argumentsGroups = partitionPackagesBySource(specifications.toList())
-    return performInstall(argumentsGroups, listOf("--upgrade"))
+    val argumentsGroups = partitionPackagesBySource(specifications.toList(), listOf("--upgrade"))
+    return performInstall(argumentsGroups)
   }
 
   suspend fun syncProject(): PyResult<Unit> {
@@ -102,19 +102,32 @@ class PipPackageManagerEngine(
   private suspend fun runPackagingTool(operation: String, arguments: List<String>): PyResult<String> =
     runPackagingTool(operation, Args(*arguments.toTypedArray()))
 
-
-  private fun partitionPackagesBySource(installRequest: PythonPackageInstallRequest): List<Args> {
+  /**
+   * Partitions packages by repository and prepares install arguments.
+   *
+   * @param options Global pip options (e.g., `--upgrade`, `--no-deps`) placed BEFORE packages and `--index-url`.
+   *                Package-specific options like `--hash` are not supported - use [syncRequirementsTxt] instead.
+   * @return Argument groups for `pip install [options] [--index-url URL] package1 package2 ...`
+   */
+  private fun partitionPackagesBySource(installRequest: PythonPackageInstallRequest, options: List<String>): List<Args> {
     when (installRequest) {
       is PythonPackageInstallRequest.ByLocation -> {
-        return listOf(Args(installRequest.location.toString()))
+        return listOf(Args(*options.toTypedArray()).addArgs(installRequest.location.toString()))
       }
       is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> {
-        return partitionPackagesBySource(installRequest.specifications)
+        return partitionPackagesBySource(installRequest.specifications, options)
       }
     }
   }
 
-  private fun partitionPackagesBySource(specifications: List<PythonRepositoryPackageSpecification>): List<Args> {
+  /**
+   * Partitions packages by repository and prepares install arguments.
+   *
+   * @param options Global pip options (e.g., `--upgrade`, `--no-deps`) placed BEFORE packages and `--index-url`.
+   *                Package-specific options like `--hash` are not supported - use [syncRequirementsTxt] instead.
+   * @return Argument groups for `pip install [options] [--index-url URL] package1 package2 ...`
+   */
+  private fun partitionPackagesBySource(specifications: List<PythonRepositoryPackageSpecification>, options: List<String>): List<Args> {
     val (pypiSpecs, nonPypi) = specifications.partition {
       val url = it.repository.urlForInstallation?.toString()
       url == null || url == PyPIPackageUtil.PYPI_LIST_URL
@@ -127,7 +140,7 @@ class PipPackageManagerEngine(
           return@mapNotNull null
         }
 
-        val argsStr = listOf(
+        val argsStr = options + listOf(
           "--index-url",
           url
         ) + specs.map { it.nameWithVersionSpec }
@@ -137,17 +150,17 @@ class PipPackageManagerEngine(
 
     val pypi = mutableListOf<Args>()
     if (pypiSpecs.isNotEmpty()) {
-      pypi.add(Args().addArgs(pypiSpecs.map { it.nameWithVersionsSpec }))
+      pypi.add(Args().addArgs(options + pypiSpecs.map { it.nameWithVersionsSpec }))
     }
 
     return pypi + byRepository
   }
 
-  suspend fun performInstall(argumentsGroups: List<Args>, options: List<String>): PyResult<Unit> {
+  suspend fun performInstall(argumentsGroups: List<Args>): PyResult<Unit> {
     for (argumentsGroup in argumentsGroups) {
       val result = runPackagingTool(
         operation = "install",
-        arguments = argumentsGroup.addArgs(options)
+        arguments = argumentsGroup
       )
 
       result.onFailure {
