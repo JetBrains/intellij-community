@@ -344,17 +344,103 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
   }
 
   @Test
-  fun `check files are suggested in double quotes and inserted correctly`() {
+  fun `check files are suggested after double quote and directory inserted correctly`() {
     doTest { fixture ->
       val tempDir = createTempDir().also {
         it.createFile("file with spaces.txt")
         it.createFile("abcde.txt")
+        it.createDirectory("dir")
       }
 
       fixture.type("dir \"$tempDir/")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
-        .contains("file with spaces.txt", "abcde.txt")
+        .contains("file with spaces.txt", "abcde.txt", "dir$separator")
+
+      fixture.insertCompletionItem("dir$separator")
+      fixture.assertCommandTextState("dir \"$tempDir${separator}dir${separator}<cursor>\"")
+    }
+  }
+
+  @Test
+  fun `check files are suggested after single quote and directory inserted correctly`() {
+    doTest { fixture ->
+      val tempDir = createTempDir().also {
+        it.createFile("file with spaces.txt")
+        it.createFile("abcde.txt")
+        it.createDirectory("dir")
+      }
+
+      fixture.type("dir '$tempDir/")
+      fixture.callCompletionPopup()
+      assertThat(fixture.getLookupElements().map { it.lookupString })
+        .contains("file with spaces.txt", "abcde.txt", "dir$separator")
+
+      fixture.insertCompletionItem("dir$separator")
+      fixture.assertCommandTextState("dir '$tempDir${separator}dir${separator}<cursor>'")
+    }
+  }
+
+  @Test
+  fun `check files are suggested inside double quotes and directory inserted correctly`() {
+    doTest { fixture ->
+      val tempDir = createTempDir().also {
+        it.createFile("file with spaces.txt")
+        it.createFile("abcde.txt")
+        it.createDirectory("dir")
+      }
+
+      fixture.type("""
+        dir "$tempDir/"
+      """.trimIndent())
+      fixture.pressKey(KeyEvent.VK_LEFT)
+      fixture.callCompletionPopup()
+      assertThat(fixture.getLookupElements().map { it.lookupString })
+        .contains("file with spaces.txt", "abcde.txt", "dir$separator")
+
+      fixture.insertCompletionItem("dir$separator")
+      fixture.assertCommandTextState("dir \"$tempDir${separator}dir${separator}<cursor>\"")
+    }
+  }
+
+  @Test
+  fun `check files are suggested inside single quotes and directory inserted correctly`() {
+    doTest { fixture ->
+      val tempDir = createTempDir().also {
+        it.createFile("file with spaces.txt")
+        it.createFile("abcde.txt")
+        it.createDirectory("dir")
+      }
+
+      fixture.type("""
+        dir '$tempDir/'
+      """.trimIndent())
+      fixture.pressKey(KeyEvent.VK_LEFT)
+      fixture.callCompletionPopup()
+      assertThat(fixture.getLookupElements().map { it.lookupString })
+        .contains("file with spaces.txt", "abcde.txt", "dir$separator")
+
+      fixture.insertCompletionItem("dir$separator")
+      fixture.assertCommandTextState("dir '$tempDir${separator}dir${separator}<cursor>'")
+    }
+  }
+
+  @Test
+  fun `check files are suggested inside double quotes and file name is inserted correctly`() {
+    doTest { fixture ->
+      val tempDir = createTempDir().also {
+        it.createFile("file with spaces.txt")
+        it.createFile("abcde.txt")
+        it.createDirectory("dir")
+      }
+
+      fixture.type("""
+        dir "$tempDir/"
+      """.trimIndent())
+      fixture.pressKey(KeyEvent.VK_LEFT)
+      fixture.callCompletionPopup()
+      assertThat(fixture.getLookupElements().map { it.lookupString })
+        .contains("file with spaces.txt", "abcde.txt", "dir$separator")
 
       fixture.insertCompletionItem("abcde.txt")
       fixture.assertCommandTextState("dir \"$tempDir${separator}abcde.txt<cursor>\"")
@@ -362,20 +448,24 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
   }
 
   @Test
-  fun `check files are suggested in single quotes and inserted correctly`() {
+  fun `check files are suggested inside single quotes and file name is inserted correctly`() {
     doTest { fixture ->
       val tempDir = createTempDir().also {
         it.createFile("file with spaces.txt")
         it.createFile("abcde.txt")
+        it.createDirectory("dir")
       }
 
-      fixture.type("dir '$tempDir/")
+      fixture.type("""
+        dir '$tempDir/'
+      """.trimIndent())
+      fixture.pressKey(KeyEvent.VK_LEFT)
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
-        .contains("file with spaces.txt", "abcde.txt")
+        .contains("file with spaces.txt", "abcde.txt", "dir$separator")
 
-      fixture.insertCompletionItem("abcde.txt")
-      fixture.assertCommandTextState("dir '$tempDir${separator}abcde.txt<cursor>'")
+      fixture.insertCompletionItem("dir$separator")
+      fixture.assertCommandTextState("dir '$tempDir${separator}dir${separator}<cursor>'")
     }
   }
 
@@ -498,12 +588,15 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
     val model = outputModel
     assertThat(conditionMet)
       .overridingErrorMessage {
+        val modelText = buildString {
+          append(model.text)
+          insert(model.cursorOffset.toAbsolute().toInt(), cursorMarker)
+        }
         """
           Command text doesn't match the expected pattern: '$expectedCommandPattern'
-          Current cursor offset: ${model.cursorOffset}
           Current output model text:
           
-        """.trimIndent() + model.text
+        """.trimIndent() + modelText
       }
       .isTrue
   }
@@ -512,7 +605,7 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
     get() = getText(startOffset, endOffset).toString()
 
   private fun createTempDir(): Path {
-    return createTempDirectory().also {
+    return createTempDirectory().toRealPath().also {
       Disposer.register(testRootDisposable) { it.deleteRecursively() }
     }
   }

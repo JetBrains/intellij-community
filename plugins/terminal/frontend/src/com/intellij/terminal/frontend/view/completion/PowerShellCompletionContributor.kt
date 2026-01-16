@@ -116,7 +116,13 @@ internal class PowerShellCompletionContributor : TerminalCommandCompletionContri
     if (item.type == PowerShellCompletionResultType.PROVIDER_CONTAINER) {
       val separator = File.separator
       lookupString = if (lookupString.endsWith(separator)) lookupString else lookupString + separator
-      insertValue = if (insertValue.endsWith(separator)) insertValue else insertValue + separator
+      insertValue = insertValue.appendQuotesAware(separator)
+    }
+
+    // If the insert value is with quotes, add the cursor mark
+    // to place the cursor before the closing quote on insertion.
+    if (insertValue.isSurroundedByQuotes()) {
+      insertValue = insertValue.appendQuotesAware("{cursor}")
     }
 
     return ShellCompletionSuggestion(lookupString) {
@@ -147,6 +153,34 @@ internal class PowerShellCompletionContributor : TerminalCommandCompletionContri
       }
       else -> TerminalIcons.Other
     }
+  }
+
+  /**
+   * Appends [value] to the string taking quotes into account.
+   * If it is surrounded by quotes, the value is added before the closing quote.
+   * If it is already ends with [value], nothing is appended.
+   */
+  private fun String.appendQuotesAware(value: String): String {
+    return if (isSurroundedByQuotes()) {
+      val quote = first().toString()
+      val withoutQuotes = removeSurrounding(quote)
+      val withAddedValue = if (withoutQuotes.endsWith(value)) withoutQuotes else withoutQuotes + value
+      quote + withAddedValue + quote
+    }
+    else if (endsWith(value)) {
+      this
+    }
+    else {
+      this + value
+    }
+  }
+
+  private fun String.isSurroundedByQuotes(): Boolean {
+    return isSurroundedBy("'") || isSurroundedBy("\"")
+  }
+
+  private fun String.isSurroundedBy(value: String): Boolean {
+    return startsWith(value) && endsWith(value)
   }
 
   companion object {
