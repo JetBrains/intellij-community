@@ -11,7 +11,6 @@ import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.project.Project
 import com.intellij.platform.execution.dashboard.splitApi.*
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 
@@ -51,14 +50,13 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
     return sharedServicesState.asStateFlow()
   }
 
-  fun setServices(value: List<List<RunDashboardService>>) {
+  fun setServices(value: List<RunDashboardService>) {
     scheduleSharedStateUpdate {
-      val flattenServices = value.flatten()
-      sharedServicesState.value = flattenServices.map { backendServiceModel ->
+      sharedServicesState.value = value.map { backendServiceModel ->
         createServiceDto(backendServiceModel)
       }
 
-      val effectiveServicesSet = flattenServices.asSequence().map { it.uuid }.toSet()
+      val effectiveServicesSet = value.asSequence().map { it.uuid }.toSet()
       tagCallbacksByServiceId.keys.retainAll(effectiveServicesSet)
     }
   }
