@@ -20,8 +20,8 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FilesDeque
-import com.intellij.util.indexing.contentNonIndexableRoots
 import com.intellij.util.text.matching.MatchingMode
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -108,19 +108,15 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
       .preferringStartMatches()
       .build()
 
-    val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
-    val nonIndexableRoots = ReadAction.nonBlocking<Set<VirtualFile>> {
-      workspaceFileIndex.contentNonIndexableRoots()
-    }.executeSynchronously().map { it.path }
-
-
     // search everywhere has limit of entries it allows contibutor to contribute.
     // We want to send good matches first, and only send others later if didn't find enough
     val suboptimalMatches = mutableListOf<VirtualFile>()
 
     fun processFile(file: VirtualFile, alreadyInReadAction: Boolean): Boolean {
-      val nonIndexableRoot = nonIndexableRoots.firstOrNull { root -> file.path.startsWith(root) } ?: ""
-      val pathFromNonIndexableRoot = file.path.removePrefix(nonIndexableRoot).removePrefix("/")
+      val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
+      val nonIndexableRoot = runReadActionIfNeeded(alreadyInReadAction) { workspaceFileIndex.findNonIndexableFileSet(file) }?.root
+      // path includes root
+      val pathFromNonIndexableRoot = file.path.removePrefix(nonIndexableRoot?.parent?.path ?: "").removePrefix("/")
 
       if (!pathMatcher.matches(pathFromNonIndexableRoot)) {
         return true // file doesn't match pattern, skip
@@ -215,6 +211,10 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
     }
   }
 }
+
+private fun WorkspaceFileIndexEx.findNonIndexableFileSet(
+  file: VirtualFile,
+): WorkspaceFileSet? = findFileSet(file, true, false, true, false, false, false)
 
 private fun PsiManager.getPsiFileSystemItem(file: VirtualFile, alreadyInReadAction: Boolean) = when {
   file.isDirectory -> runReadActionIfNeeded(alreadyInReadAction) { findDirectory(file) }
