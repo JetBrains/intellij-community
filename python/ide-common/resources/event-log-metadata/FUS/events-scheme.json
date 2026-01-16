@@ -784,6 +784,19 @@
       }
     }
   }, {
+    "id" : "cidr.dap.debuggers",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "1"
+    } ],
+    "rules" : {
+      "event_id" : [ "{enum:debuggers|debugger}" ],
+      "event_data" : {
+        "count" : [ "{regexp#integer}" ],
+        "kind" : [ "{enum:gdb|lldb-dap|codelldb|other|invalidPath}" ]
+      }
+    }
+  }, {
     "id" : "cidr.debugger",
     "builds" : [ ],
     "versions" : [ {
@@ -7027,16 +7040,16 @@
       "event_data" : {
         "action_name" : [ "{enum:Offline mode Enable|Offline mode Disable|Set up models|Focused|Balanced|Creative|Enable for Project|Disable for Project|Disable Permanently|Settings|Install Junie}" ],
         "button_name" : [ "{enum:Lets Go|Upgrade|Refresh}", "{enum:Add}" ],
-        "current_plan" : [ "{enum:ULTIMATE|ENTERPRISE|PRO_TRIAL|PRO|BUSINESS_TRIAL|BUSINESS|EAP_TRIAL|FREE|NONE}", "{enum:BYOK}", "{enum:Ultimate|Enterprise|Pro Trial|Pro|Business Trial|Business|Trial for EAP IDE|Free|None}" ],
-        "new_plan" : [ "{enum:Ultimate|Enterprise|Pro Trial|Pro|Business Trial|Business|Trial for EAP IDE|Free|None}", "{enum:BYOK}" ],
+        "current_plan" : [ "{enum:ULTIMATE|ENTERPRISE|PRO_TRIAL|PRO|BUSINESS_TRIAL|BUSINESS|EAP_TRIAL|FREE|NONE}", "{enum:BYOK}", "{enum:Codex}", "{enum:Ultimate|Enterprise|Pro Trial|Pro|Business Trial|Business|Trial for EAP IDE|Free|None}" ],
+        "new_plan" : [ "{enum:Ultimate|Enterprise|Pro Trial|Pro|Business Trial|Business|Trial for EAP IDE|Free|None}", "{enum:BYOK}", "{enum:Codex}" ],
         "notification_action" : [ "{enum:Top-up credits|Upgrade to ultimate}", "{enum:Close(x)|Upgrade now|Renew now|Upgrade to Pro}", "{enum:Close(x)|Upgrade now|Renew now|Upgrade to ultimate|Add top-up credits|About top-up credits}" ],
-        "notification_plan" : [ "{enum:Ultimate|Enterprise|Pro Trial|Pro|Business Trial|Business|Trial for EAP IDE|Free|None}", "{enum:BYOK}" ],
+        "notification_plan" : [ "{enum:Ultimate|Enterprise|Pro Trial|Pro|Business Trial|Business|Trial for EAP IDE|Free|None}", "{enum:BYOK}", "{enum:Codex}" ],
         "notification_type" : [ "{enum:Trial expires in 5 days|Trial expired|Trial expired Free available|Trial expired Free not available}", "{enum:Free limit|Pro limit|Pro trial limit|Business limit|Business trial limit|Ultimate plan|Enterprise}", "{enum:Ultimate top up limit|Pro top up limit}", "{enum:Plan limit, top up available|Business top up limit}", "{enum:Pro expires in 5 days|Pro expired|Pro expired Free available|Pro expired Free not available}", "{enum:Pro expired, top up remained}", "{enum:Business expires in 5 days|Business expired}", "{enum:Business expired, top up remained}", "{enum:Business trial expires in 5 days|Business trial expired}", "{enum:Ultimate expired, top up remained}", "{enum:License expires in 5 days|License expired|License expired, top up remained|Quota reaching|Quota reached|Quota reached, top up remained|Quota reached, 15% top-up left|Quota reached, top up exhausted}" ],
         "plan_type" : [ "{enum:ULTIMATE|ENTERPRISE|PRO_TRIAL|PRO|BUSINESS_TRIAL|BUSINESS|EAP_TRIAL|FREE|NONE}" ],
         "plugin" : [ "{util#plugin}" ],
         "plugin_type" : [ "{util#plugin_type}" ],
         "plugin_version" : [ "{util#plugin_version}" ],
-        "previous_plan" : [ "{enum:Ultimate|Enterprise|Pro Trial|Pro|Business Trial|Business|Trial for EAP IDE|Free|None}", "{enum:BYOK}" ]
+        "previous_plan" : [ "{enum:Ultimate|Enterprise|Pro Trial|Pro|Business Trial|Business|Trial for EAP IDE|Free|None}", "{enum:BYOK}", "{enum:Codex}" ]
       },
       "enums" : {
         "__event_id" : [ "hub.notifications.type.trial.action.clicked", "hub.notifications.quota.shown", "hub.current.aia.plan.displayed", "hub.notifications.quota.action.clicked", "hub.notifications.type.trial.shown", "hub.notifications.type.pro.action.clicked", "hub.actions.clicked", "hub.notifications.type.pro.shown", "plan.changed", "hub.icon.clicked", "button.clicked", "hub.notifications.type.business.shown", "hub.notifications.type.business.action.clicked", "hub.notifications.type.business.trial.action.clicked", "hub.notifications.type.business.trial.shown", "hub.notifications.no.local.models.shown", "hub.notifications.no.local.models.configure.clicked", "hub.notifications.type.ultimate.shown", "hub.notification.action.clicked", "hub.notification.shown" ]
@@ -13806,5 +13819,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6647"
+  "version" : "6651"
 }
