@@ -21,7 +21,7 @@
       description="Using incremental walking transfer for IJent"
       key="ijent.incremental.walking.transfer"
       restartRequired="false"
-      defaultValue="false"/>
+      defaultValue="true"/>
   </extensions>
   <extensionPoints>
     <extensionPoint name="multiRoutingFileSystemBackend" interface="com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend"
