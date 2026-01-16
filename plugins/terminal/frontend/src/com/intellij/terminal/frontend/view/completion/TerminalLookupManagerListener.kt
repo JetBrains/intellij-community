@@ -1,6 +1,5 @@
 package com.intellij.terminal.frontend.view.completion
 
-import com.google.common.base.Ascii
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -12,7 +11,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
-import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.frontend.view.impl.TerminalInput
 import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
@@ -65,48 +63,12 @@ internal class TerminalLookupManagerListener : LookupManagerListener {
 
 private class TerminalLookupListener : LookupListener {
   override fun beforeItemSelected(event: LookupEvent): Boolean {
-    val terminalInput = event.lookup.editor.getUserData(TerminalInput.Companion.KEY) ?: return false
     val item = event.item
-    val lookup = event.lookup as LookupImpl
-
     if (item == null || !item.isValid() || item is EmptyLookupItem) {
       return false
     }
 
-    // Get the active process to retrieve replacement lengths
-    val process = TerminalCommandCompletionService.getInstance(lookup.project).activeProcess
-    val beforeReplacementLength = process?.beforePrefixReplacementLength ?: 0
-    val afterReplacementLength = process?.afterPrefixReplacementLength ?: 0
-
-    // First step - remove characters after cursor (if any)
-    // Move right and then backspace to delete text after cursor
-    if (afterReplacementLength > 0) {
-      repeat(afterReplacementLength) {
-        terminalInput.sendRight()
-      }
-      terminalInput.sendBytes(ByteArray(afterReplacementLength) { Ascii.DEL })
-    }
-
-    // Second step - remove the typed prefix AND beforePrefixReplacementLength
-    val typedPrefixLength = lookup.itemPattern(item).length
-    val charsToRemove = typedPrefixLength + beforeReplacementLength
-    if (charsToRemove > 0) {
-      terminalInput.sendBytes(ByteArray(charsToRemove) { Ascii.DEL })
-    }
-
-    // Third step - insert the completion item
-    val suggestion = item.`object` as ShellCompletionSuggestion
-    val realInsertValue = suggestion.insertValue?.replace("{cursor}", "") ?: suggestion.name
-    terminalInput.sendString(realInsertValue)
-
-    // Fourth step - move the cursor to the custom position if it is specified
-    val cursorOffset = suggestion.insertValue?.indexOf("{cursor}")
-    if (cursorOffset != null && cursorOffset != -1) {
-      val delta = realInsertValue.length - cursorOffset
-      repeat(delta) {
-        terminalInput.sendLeft()
-      }
-    }
+    insertTerminalCompletionItem(event.lookup as LookupImpl, item)
 
     // if one of the listeners returns false - the item is not inserted
     return false
