@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.applications;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,7 +42,8 @@ public final class DiffApplicationBase {
   // Impl
   //
 
-  public static @NotNull List<VirtualFile> findFilesOrThrow(@NotNull List<String> filePaths, @Nullable String currentDirectory) throws Exception {
+  public static @NotNull List<@Nullable VirtualFile> findFilesOrThrow(@NotNull List<String> filePaths,
+                                                                      @Nullable String currentDirectory) throws Exception {
     List<VirtualFile> files = new ArrayList<>();
 
     for (String path : filePaths) {
@@ -101,14 +102,17 @@ public final class DiffApplicationBase {
     return file;
   }
 
-  public static @Unmodifiable @NotNull List<VirtualFile> replaceNullsWithEmptyFile(@NotNull List<? extends VirtualFile> contents) {
-    return ContainerUtil.map(contents, file -> file != null ? file : new LightVirtualFile(NULL_PATH, PlainTextFileType.INSTANCE, ""));
+  public static @Unmodifiable @NotNull List<@NotNull VirtualFile> replaceNullsWithEmptyFile(@NotNull List<? extends @Nullable VirtualFile> contents) {
+    return ContainerUtil.mapNotNull(contents,
+                                    file -> file != null ? file : new LightVirtualFile(NULL_PATH, PlainTextFileType.INSTANCE, ""));
   }
 
-  static @Nullable Project guessProject(@NotNull List<? extends VirtualFile> files) {
+  static @Nullable Project guessProject(@NotNull List<? extends @Nullable VirtualFile> files) {
     Set<Project> projects = new HashSet<>();
     for (VirtualFile file : files) {
-      projects.addAll(ProjectLocator.getInstance().getProjectsForFile(file));
+      if (file != null) {
+        projects.addAll(ProjectLocator.getInstance().getProjectsForFile(file));
+      }
     }
 
     if (projects.isEmpty()) {
