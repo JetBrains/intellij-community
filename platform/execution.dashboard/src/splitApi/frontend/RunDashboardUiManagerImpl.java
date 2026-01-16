@@ -350,7 +350,19 @@ public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
       if (myPreviousSelection == content) {
         myPreviousSelection = null;
       }
-      FrontendRunDashboardManager.getInstance(myProject).detachServiceRunContentDescriptor(content);
+      if (IdeProductMode.isFrontend()) {
+        FrontendRunDashboardManager.getInstance(myProject).detachServiceRunContentDescriptor(content);
+        return;
+      }
+
+      // Call of RunDashboardManagerImpl is ok since we checked that it's not a frontend
+      RunDashboardManagerImpl runDashboardManager = RunDashboardManagerImpl.getInstance(myProject);
+
+      RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
+      RunContentDescriptorId descriptorId = descriptor == null ? null : descriptor.getId();
+      if (descriptorId == null) return;
+
+      runDashboardManager.detachServiceRunContentDescriptor(descriptorId);
     }
   }
 }
