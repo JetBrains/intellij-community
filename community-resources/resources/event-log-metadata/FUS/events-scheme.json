@@ -1088,6 +1088,19 @@
       "event_id" : [ "{enum:create.new.clang.tidy.file}" ]
     }
   }, {
+    "id" : "cidr.dap.debuggers",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "1"
+    } ],
+    "rules" : {
+      "event_id" : [ "{enum:debuggers|debugger}" ],
+      "event_data" : {
+        "count" : [ "{regexp#integer}" ],
+        "kind" : [ "{enum:gdb|lldb-dap|codelldb|other|invalidPath}" ]
+      }
+    }
+  }, {
     "id" : "cidr.debug.servers",
     "builds" : [ ],
     "versions" : [ {
@@ -15350,5 +15363,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6650"
+  "version" : "6651"
 }
