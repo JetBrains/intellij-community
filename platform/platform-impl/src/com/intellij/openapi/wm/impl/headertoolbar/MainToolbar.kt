@@ -27,15 +27,12 @@ import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.application.impl.InternalUICustomization
-import com.intellij.openapi.application.impl.islands.isIjpl217440
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
@@ -114,12 +111,10 @@ class MainToolbar(
   isOpaque: Boolean = false,
   background: Color? = null,
   private val isFullScreen: () -> Boolean,
-) : JPanel(HorizontalLayout(layoutGap)), BorderPainterHolder {
+) : JPanel(HorizontalLayout(layoutGap)) {
   private val flavor: MainToolbarFlavor
   private val widthCalculationListeners = mutableSetOf<ToolbarWidthCalculationListener>()
   private val cachedWidths by lazy { ConcurrentHashMap<String, Int>() }
-
-  override var borderPainter: BorderPainter = DefaultBorderPainter()
 
   init {
     this.background = background
@@ -294,15 +289,6 @@ class MainToolbar(
     super.paintComponent(g)
     if (!CustomWindowHeaderUtil.isToolbarInHeader(UISettings.getInstance(), isFullScreen())) {
       ProjectWindowCustomizerService.getInstance().paint(frame, this, g as Graphics2D)
-      InternalUICustomization.getInstance()?.paintFrameBackground(frame as IdeFrame, this, g)
-    }
-  }
-
-  // todo remove with isIjpl217440 property
-  override fun paintChildren(g: Graphics) {
-    super.paintChildren(g)
-    if (!isIjpl217440) {
-      borderPainter.paintAfterChildren(this, g)
     }
   }
 

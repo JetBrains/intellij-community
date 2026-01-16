@@ -288,12 +288,7 @@
       "borderWidth": 6,
       "borderWidth.compact": 4,
       "borderColor": "container-tool-window-bg",
-      "inactiveAlpha": 0.56,
-      "inactiveAlphaInStatusBar": {
-        "os.mac": 0.2,
-        "os.windows": 0.2,
-        "os.linux": 0.15
-      }
+      "inactiveAlpha": 0.56
     },
 
     "alt": {

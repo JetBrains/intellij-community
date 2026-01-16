@@ -17,7 +17,6 @@ import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.toolWindow.StripesUxCustomizer
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.xNext.XNextStripesUxCustomizer
-import com.intellij.ui.BorderPainter
 import com.intellij.ui.Graphics2DDelegate
 import com.intellij.ui.JBColor
 import com.intellij.ui.mac.WindowTabsComponent
@@ -162,8 +161,6 @@ open class InternalUICustomization {
 
   open fun attachIdeFrameBackgroundPainter(frame: IdeFrame, glassPane: IdeGlassPane): Unit = Unit
 
-  open fun paintFrameBackground(frame: IdeFrame, component: Component, g: Graphics2D) {}
-
   open fun updateBackgroundPainter() {}
 
   open fun attachIdeFallbackBackgroundPainter(glassPane: IdeGlassPane): Unit = Unit
@@ -210,10 +207,4 @@ open class InternalUICustomization {
   open fun getTabLayoutStart(layout: ContentLayout): Int = 0
 
   open fun getSingleRowTabInsets(tabsPosition: JBTabsPosition): Insets? = null
-}
-
-// todo remove with isIjpl217440 property
-@ApiStatus.Internal
-interface BorderPainterHolder {
-  var borderPainter: BorderPainter
 }

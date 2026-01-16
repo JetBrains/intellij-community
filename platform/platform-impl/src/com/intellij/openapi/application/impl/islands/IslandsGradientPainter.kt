@@ -107,7 +107,7 @@ private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project,
   val initialComposite = g.composite
   val islandsInactiveFrameGraphics2D = g as? IslandsInactiveFrameGraphics2D
 
-  if (isIjpl217440 && SwingUtilities.getWindowAncestor(frame.component)?.isActive == false) {
+  if (SwingUtilities.getWindowAncestor(frame.component)?.isActive == false) {
     islandsInactiveFrameGraphics2D?.preserveComposite = true
 
     g.color = mainColor
@@ -170,7 +170,7 @@ private fun doColorGradientPaint(project: Project, projectWindowCustomizer: Proj
   val initialComposite = g.composite
   val info = projectWindowCustomizer.getProjectGradients(project)
 
-  if (isIjpl217440 && SwingUtilities.getWindowAncestor(component)?.isActive == false) {
+  if (SwingUtilities.getWindowAncestor(component)?.isActive == false) {
     islandsInactiveFrameGraphics2D?.preserveComposite = true
 
     g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, islandsInactiveAlpha)
