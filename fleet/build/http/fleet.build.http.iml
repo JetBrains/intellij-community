@@ -30,7 +30,7 @@
     <orderEntry type="module" module-name="fleet.build.fs" />
     <orderEntry type="library" name="fleet:io.ktor.client.logging" level="project" />
     <orderEntry type="library" name="slf4j-api" level="project" />
-    <orderEntry type="module" module-name="fleet.junit" scope="TEST" />
+    <orderEntry type="module" module-name="fleet.test.runtime" scope="TEST" />
     <orderEntry type="library" name="fleet:io.ktor.client.mock" level="project" />
   </component>
 </module>

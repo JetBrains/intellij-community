@@ -29,7 +29,7 @@
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="fleet:github.luben.zstd.jni" level="project" />
     <orderEntry type="library" name="fleet:tukaani.xz" level="project" />
-    <orderEntry type="module" module-name="fleet.junit" scope="TEST" />
+    <orderEntry type="module" module-name="fleet.test.runtime" scope="TEST" />
     <orderEntry type="library" name="commons-compress" level="project" />
     <orderEntry type="library" name="commons-io" level="project" />
     <orderEntry type="library" name="commons-lang3" level="project" />

@@ -25,6 +25,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="fleet.util.codepoints" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="fleet.junit" scope="TEST" />
+    <orderEntry type="module" module-name="fleet.test.runtime" scope="TEST" />
   </component>
 </module>

@@ -56,7 +56,7 @@ kotlin {
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.core.jvm1739247612.get().let { "${it.group}:kotlinx-serialization-core:${it.version}" }) {
       isTransitive = false
     }
-    implementation(project(":fleet.junit"))
+    implementation(project(":fleet.test.runtime"))
     implementation(project(":fleet.codecache"))
     implementation(project(":fleet.bundles"))
     implementation(project(":fleet.util.network"))

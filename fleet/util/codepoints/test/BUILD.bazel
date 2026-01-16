@@ -24,7 +24,7 @@ jvm_library(
   deps = [
     "//fleet/util/codepoints",
     "@lib//:kotlin-stdlib",
-    "//fleet/junit",
+    "//fleet/test-runtime",
   ],
   runtime_deps = [":test"]
 )

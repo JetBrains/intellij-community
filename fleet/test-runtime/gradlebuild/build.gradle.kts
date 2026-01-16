@@ -14,7 +14,7 @@ plugins {
 
 fleetModule {
   module {
-    name = "fleet.junit"
+    name = "fleet.test.runtime"
     importedFromJps {}
   }
 }
