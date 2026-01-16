@@ -2,7 +2,7 @@
 package com.intellij.java.analysis.bytecode
 
 /**
- * Pass an instance of this interface to [JvmBytecodeAnalysis.createReferenceAnalyzer] or
+ * Pass an instance of this interface to [JvmBytecodeAnalysis.createReferenceAnalyzerWithImplicitSuperclassReferences] or
  * [JvmBytecodeAnalysis.createDeclarationAndReferencesAnalyzer] to process references in *.class files.
  */
 public interface JvmBytecodeReferenceProcessor {
