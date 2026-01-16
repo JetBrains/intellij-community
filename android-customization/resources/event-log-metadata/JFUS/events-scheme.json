@@ -74,6 +74,37 @@
       }
     }
   }, {
+    "id" : "jb.kmp.plugin",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "1"
+    } ],
+    "rules" : {
+      "event_id" : [ "{enum:plugin.used}" ],
+      "event_data" : {
+        "PluginVersion" : [ "{regexp:\\d+\\.\\d+-\\d+\\.\\d+-(IJ(?:_CE)?|AS)-\\d+|error}" ]
+      }
+    }
+  }, {
+    "id" : "jb.kmp.project.environment",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "1"
+    } ],
+    "rules" : {
+      "event_id" : [ "{enum:xcode}" ],
+      "event_data" : {
+        "ios" : [ "{regexp#version}" ],
+        "macos" : [ "{regexp#version}" ],
+        "swift" : [ "{regexp#version}" ],
+        "tvos" : [ "{regexp#version}" ],
+        "version" : [ "{regexp#version}" ],
+        "visionos" : [ "{regexp#version}" ],
+        "watchos" : [ "{regexp#version}" ],
+        "xcode_build" : [ "{regexp:\\d{1,2}[A-Z]\\d+[a-z]?|unknown}" ]
+      }
+    }
+  }, {
     "id" : "jb.kmp.run_config",
     "builds" : [ ],
     "versions" : [ {
@@ -91,12 +122,12 @@
         "plugin_type" : [ "{util#plugin_type}" ],
         "plugin_version" : [ "{util#plugin_version}" ],
         "sdk" : [ "{enum:macosx|iphoneos|iphonesimulator|appletvos|appletvsimulator|watchos|watchsimulator}" ],
-        "target" : [ "{enum:Jvm|Desktop|WasmJs|Js|Gradle|Ktor|Compose|Apple|Android|Unknown}" ],
+        "target" : [ "{enum:Jvm|JvmHotReload|Desktop|WasmJs|Js|Gradle|Ktor|Compose|Apple|Android|Unknown}" ],
         "version" : [ "{regexp#version}" ],
         "web" : [ "{enum:WasmJs|Js}" ]
       },
       "enums" : {
-        "__event_id" : [ "run.configuration.finished", "run.configuration.compose.finished", "run.configuration.gradle.started", "run.configuration.apple.finished", "run.configuration.ktor.started", "run.configuration.apple.started", "run.configuration.jvm.started", "run.configuration.ktor.finished", "run.configuration.web.started", "run.configuration.android.finished", "run.configuration.unknown.finished", "run.configuration.jvm.finished", "run.configuration.android.started", "run.configuration.gradle.finished", "run.configuration.compose.started", "run.configuration.web.finished", "run.configuration.unknown.started" ]
+        "__event_id" : [ "run.configuration.finished", "run.configuration.compose.finished", "run.configuration.gradle.started", "run.configuration.apple.finished", "run.configuration.ktor.started", "run.configuration.apple.started", "run.configuration.jvm.started", "run.configuration.ktor.finished", "run.configuration.web.started", "run.configuration.android.finished", "run.configuration.unknown.finished", "run.configuration.jvm.finished", "run.configuration.android.started", "run.configuration.gradle.finished", "run.configuration.compose.started", "run.configuration.web.finished", "run.configuration.unknown.started", "run.configuration.hot_reload.jvm.finished", "run.configuration.hot_reload.jvm.started", "run.configuration.started" ]
       }
     }
   }, {
@@ -324,5 +355,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6657"
+  "version" : "6660"
 }
