@@ -6,8 +6,6 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.BorderPainterHolder
-import com.intellij.openapi.application.impl.islands.isIjpl217440
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.NlsActions
@@ -50,7 +48,7 @@ internal fun updateWinControlsTheme(background: Color, customTitleBar: CustomTit
   customTitleBar.putProperty("controls.background.hovered", UIManager.getColor("TitlePane.Button.hoverBackground"))
 }
 
-internal sealed class CustomHeader(@JvmField internal val window: Window) : JPanel(), BorderPainterHolder {
+internal sealed class CustomHeader(@JvmField internal val window: Window) : JPanel() {
   companion object {
     val H: Int
       get() = 12
@@ -128,8 +126,6 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
   protected val productIcon: JComponent by lazy {
     createProductIcon()
   }
-
-  override var borderPainter: BorderPainter = DefaultBorderPainter()
 
   init {
     isOpaque = true
@@ -289,14 +285,6 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
   open fun addMenuItems(menu: JPopupMenu) {
     val closeMenuItem = menu.add(createCloseAction(this))
     closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
-  }
-
-  // todo remove with isIjpl217440 property
-  override fun paint(g: Graphics) {
-    super.paint(g)
-    if (!isIjpl217440) {
-      borderPainter.paintAfterChildren(this, g)
-    }
   }
 
   override fun getAccessibleContext(): AccessibleContext {

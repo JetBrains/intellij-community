@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl.islands
 
-import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.LafManager
@@ -12,7 +11,6 @@ import com.intellij.ide.ui.experimental.ExperimentalUiCollector
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -27,21 +25,17 @@ import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.content.ContentLayout
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
-import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.toolWindow.InternalDecoratorImpl.Companion.preventRecursiveBackgroundUpdateOnToolwindow
 import com.intellij.toolWindow.ToolWindowButtonManager
-import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.*
-import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.WindowTabsComponent
 import com.intellij.ui.paint.LinePainter2D
@@ -54,7 +48,6 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.TabPainterAdapter
 import com.intellij.util.ui.*
-import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.HierarchyEvent
@@ -65,7 +58,10 @@ import java.awt.geom.Path2D
 import java.awt.geom.RoundRectangle2D
 import java.util.function.Predicate
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JFrame
+import javax.swing.SwingConstants
+import javax.swing.UIManager
 import javax.swing.border.AbstractBorder
 import javax.swing.border.Border
 
@@ -73,22 +69,8 @@ private data class WindowBackgroundComponentData(val origOpaque: Boolean, val or
 
 private val WINDOW_BACKGROUND_COMPONENT_KEY: Key<WindowBackgroundComponentData> = Key.create("Islands.WINDOW_BACKGROUND_COMPONENT_KEY")
 
-/**
- * After removing isIjpl217440 property
- * * Re3move from registry.properties
- * * Check all places, marked with: todo remove with isIjpl217440 property
- * * Remove inactiveAlphaInStatusBar property from everywhere including themes
- */
-@get:ApiStatus.Internal
-val isIjpl217440: Boolean
-  get() = Registry.`is`("idea.islands.ijpl217440.enabled")
-
 internal val islandsInactiveAlpha: Float
-  get() {
-    return if (isIjpl217440)
-      JBUI.getFloat("Island.inactiveAlpha", 0.5f)
-    else 0.44f
-  }
+  get() = JBUI.getFloat("Island.inactiveAlpha", 0.5f)
 
 internal class IslandsUICustomization : InternalUICustomization() {
 
@@ -530,35 +512,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
-  private val inactivePainter = object : DefaultBorderPainter() {
-    override fun paintAfterChildren(component: JComponent, g: Graphics) {
-      val window = UIUtil.getWindow(component) ?: return
-      if (!window.isActive) {
-        if (component is MainToolbar && component.parent !is JBLayeredPane) {
-          return
-        }
-        if (component is ToolWindowPane && JBColor.isBright()) {
-          return
-        }
-
-        val alpha = if (component is IdeStatusBarImpl) JBUI.getFloat("Island.inactiveAlphaInStatusBar", 0.5f) else islandsInactiveAlpha
-
-        g as Graphics2D
-        g.color = getMainBackgroundColor()
-        g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha)
-
-        if (component is ToolWindowPane) {
-          val extraBorder = JBUI.scale(4)
-          g.fillRect(0, 0, component.width, extraBorder)
-          g.fillRect(0, extraBorder, extraBorder, component.height)
-        }
-        else {
-          g.fillRect(0, 0, component.width, component.height)
-        }
-      }
-    }
-  }
-
   private val frameActiveListener = object : WindowAdapter() {
     override fun windowActivated(e: WindowEvent) {
       e.window?.repaint()
@@ -603,17 +556,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun configureMainFrameChildren(component: Component, install: Boolean) {
-    if (!isIjpl217440) {
-      when (component) {
-        is IdeStatusBarImpl -> {
-          component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
-        }
-        is BorderPainterHolder -> {
-          component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
-        }
-      }
-    }
-
     if (component is JComponent) {
       val data = component.getUserData(WINDOW_BACKGROUND_COMPONENT_KEY)
       if (data != null) {
@@ -1134,18 +1076,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
-  // todo remove with isIjpl217440 property
-  override fun paintFrameBackground(frame: IdeFrame, component: Component, g: Graphics2D) {
-    if (isManyIslandEnabled && isIslandsGradientEnabled && !isIjpl217440) {
-      val point = SwingUtilities.convertPoint(component, 0, 0, frame.component)
-      g.translate(-point.x, -point.y)
-
-      islandsGradientPaint(frame, getMainBackgroundColor(), ProjectWindowCustomizerService.getInstance(), component, g)
-
-      g.translate(point.x, point.y)
-    }
-  }
-
   override fun transformGraphics(component: JComponent, graphics: Graphics): Graphics {
     if (isManyIslandEnabled && isIslandsGradientEnabled) {
       return JBSwingUtilities.runGlobalCGTransform(component, graphics)
@@ -1165,7 +1095,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   override fun inactiveFrameGraphics(graphics: Graphics, component: Component): Graphics {
-    return if (isManyIslandEnabled && isIjpl217440)
+    return if (isManyIslandEnabled)
       IslandsInactiveFrameGraphics2D(graphics as Graphics2D, component)
     else super.inactiveFrameGraphics(graphics, component)
   }

@@ -11,7 +11,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.InternalUICustomization
-import com.intellij.openapi.application.impl.islands.isIjpl217440
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
@@ -126,9 +125,6 @@ open class IdeStatusBarImpl @Internal constructor(
   private val listeners = EventDispatcher.create(StatusBarListener::class.java)
 
   private val progressFlow = MutableSharedFlow<ProgressSetChangeEvent>(replay = 1, extraBufferCapacity = Int.MAX_VALUE)
-
-  // todo remove with isIjpl217440 property
-  internal var borderPainter: BorderPainter = DefaultBorderPainter()
 
   companion object {
     internal val HOVERED_WIDGET_ID: DataKey<String> = DataKey.create("HOVERED_WIDGET_ID")
@@ -557,9 +553,6 @@ open class IdeStatusBarImpl @Internal constructor(
   override fun paintChildren(g: Graphics) {
     effectRenderer.paintBackground(g)
     super.paintChildren(g)
-    if (!isIjpl217440) {
-      borderPainter.paintAfterChildren(this, g)
-    }
   }
 
   private fun dispatchMouseEvent(e: MouseEvent): Boolean {

@@ -13,9 +13,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
-import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.application.impl.InternalUICustomization
-import com.intellij.openapi.application.impl.islands.isIjpl217440
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.openapi.wm.StatusBar
@@ -24,7 +22,9 @@ import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.AutoscrollLimit
 import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.ScrollableToSelected
 import com.intellij.platform.navbar.frontend.NavBarRootPaneExtension.NavBarWrapperPanel
 import com.intellij.platform.navbar.frontend.ui.NavBarBorder
-import com.intellij.ui.*
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBScrollBar
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBThinOverlappingScrollBar
@@ -276,20 +276,6 @@ internal open class MyNavBarWrapperPanel(private val project: Project, useAsComp
   }
 }
 
-// todo remove with isIjpl217440 property
-internal class MyTopNavBarWrapperPanel(project: Project, useAsComponent: Boolean) :
-  MyNavBarWrapperPanel(project, useAsComponent), BorderPainterHolder {
-
-  override var borderPainter: BorderPainter = DefaultBorderPainter()
-
-  override fun paintChildren(g: Graphics) {
-    super.paintChildren(g)
-    if (!isIjpl217440) {
-      borderPainter.paintAfterChildren(this, g)
-    }
-  }
-}
-
 private fun updateScrollBarFlippedState(location: NavBarLocation?, scrollPane: JScrollPane) {
   if (ExperimentalUI.isNewNavbar) {
     val effectiveLocation = location ?: UISettings.getInstance().navBarLocation
@@ -449,7 +435,7 @@ private object TopNavBarMode : NavBarMode {
   override suspend fun configure(project: Project, statusBar: StatusBar, uiSettings: UISettings): MyNavBarWrapperPanel {
     return withContext(Dispatchers.EDT) {
       setStatusBarCentralWidget(statusBar, null)
-      val panel = MyTopNavBarWrapperPanel(project, useAsComponent = true)
+      val panel = MyNavBarWrapperPanel(project, useAsComponent = true)
       InternalUICustomization.getInstance()?.registerWindowBackgroundComponent(panel)
       panel
     }
