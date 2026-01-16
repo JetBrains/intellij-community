@@ -7,9 +7,14 @@
     <frontend.splitComponentProvider implementation="com.intellij.platform.buildView.frontend.BuildTreeComponentProvider"/>
     <postStartupActivity implementation="com.intellij.platform.buildView.frontend.FrontendBuildViewStartupActivity"/>
   </extensions>
-  <actions>
+  <actions resource-bundle="messages.LangBundle">
     <group id="BuildViewToolbar">
       <reference ref="BuildView"/>
+      <action id="PinBuildView" class="com.intellij.platform.buildView.frontend.PinBuildViewAction" icon="AllIcons.General.Pin_tab"/>
+      <group id="BuildViewFiltering" popup="true" icon="AllIcons.Actions.Show">
+        <action id="BuildViewFilterWarnings" class="com.intellij.platform.buildView.frontend.BuildViewFilterWarningsAction"/>
+        <action id="BuildViewFilterSuccessful" class="com.intellij.platform.buildView.frontend.BuildViewFilterSuccessfulAction"/>
+      </group>
     </group>
   </actions>
 </idea-plugin>

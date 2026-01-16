@@ -103,7 +103,7 @@ private fun install(
 
 @ApiStatus.Internal
 class SuccessfulStepsToggleAction(filterable: Supplier<Filterable<ExecutionNode>?>) :
-  FilterToggleAction(LangBundle.message("build.tree.filters.show.successful"),
+  FilterToggleAction(LangBundle.message("action.BuildViewFilterSuccessful.text"),
                      STATE_KEY, filterable, SUCCESSFUL_STEPS_FILTER, DEFAULT_STATE), DumbAware {
 
   companion object {
@@ -120,7 +120,7 @@ class SuccessfulStepsToggleAction(filterable: Supplier<Filterable<ExecutionNode>
 
 @ApiStatus.Internal
 class WarningsToggleAction(filterable: Supplier<Filterable<ExecutionNode>?>) :
-  FilterToggleAction(LangBundle.message("build.tree.filters.show.warnings"),
+  FilterToggleAction(LangBundle.message("action.BuildViewFilterWarnings.text"),
                      STATE_KEY, filterable, WARNINGS_FILTER, DEFAULT_STATE), DumbAware {
 
   companion object {

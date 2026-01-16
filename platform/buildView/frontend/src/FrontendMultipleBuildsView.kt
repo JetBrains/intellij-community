@@ -6,7 +6,6 @@ import com.intellij.build.events.BuildEventsNls
 import com.intellij.execution.process.AnsiEscapeDecoder
 import com.intellij.execution.process.AnsiEscapeDecoder.ColoredTextAcceptor
 import com.intellij.execution.process.ProcessOutputTypes
-import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.OccurenceNavigator
@@ -15,6 +14,7 @@ import com.intellij.ide.ui.icons.icon
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -59,7 +59,6 @@ internal class FrontendMultipleBuildsView(
   private val name = buildContent.name
   private val buildMap = mutableMapOf<BuildId, FrontendBuildInfo>()
   private val viewMap = mutableMapOf<FrontendBuildInfo, FrontendBuildView>()
-  private val toolbarActions = DefaultActionGroup()
   private val threeComponentsSplitter = createSplitter()
   private val buildListModel = DefaultListModel<FrontendBuildInfo>()
   private val buildList = createList()
@@ -67,6 +66,10 @@ internal class FrontendMultipleBuildsView(
   private val focusWatcher = FocusWatcher()
   private var activeView: FrontendBuildView? = null
   private var locked = false
+
+  internal companion object {
+    val DATA_KEY = DataKey.create<FrontendMultipleBuildsView>("FrontendMultipleBuildsView")
+  }
 
   init {
     updateBuildsListRowHeight()
@@ -97,7 +100,8 @@ internal class FrontendMultipleBuildsView(
   private fun createContentUI() : JComponent {
     val consoleComponent = MultipleBuildsPanel()
     consoleComponent.add(threeComponentsSplitter, BorderLayout.CENTER)
-    val tb = ActionManager.getInstance().createActionToolbar("BuildView", toolbarActions, false)
+    val actionGroup = ActionManager.getInstance().getAction("BuildViewToolbar") as ActionGroup
+    val tb = ActionManager.getInstance().createActionToolbar("BuildView", actionGroup, false)
     tb.targetComponent = consoleComponent
     if (!isNewUI()) {
       tb.component.border = JBUI.Borders.merge(tb.component.border,
@@ -171,7 +175,7 @@ internal class FrontendMultipleBuildsView(
       return
     }
     activeView = view
-    configureToolbar(view)
+    ActivityTracker.getInstance().inc() // update toolbar
     if (view == null) {
       threeComponentsSplitter.secondComponent = null
       content.preferredFocusableComponent = null
@@ -183,16 +187,6 @@ internal class FrontendMultipleBuildsView(
         view.requestFocusInWindow() // todo check IJPL-172285
       }
     }
-  }
-
-  private fun configureToolbar(view: FrontendBuildView?) {
-    toolbarActions.removeAll()
-    if (view != null) {
-      toolbarActions.add(ActionManager.getInstance().getAction("BuildViewToolbar"))
-      toolbarActions.add(PinBuildViewAction())
-      toolbarActions.add(view.createFilteringActionGroup())
-    }
-    ActivityTracker.getInstance().inc() // make sure toolbar is updated
   }
 
   fun handleEvent(event: BuildViewEvent) {
@@ -273,6 +267,20 @@ internal class FrontendMultipleBuildsView(
       revalidate()
       repaint()
     }
+  }
+
+  internal fun isPinnable() = content.isValid && !locked && activeView != null
+
+  internal fun isPinned() = content.isPinned
+
+  internal fun togglePinned(): Boolean {
+    val pinned = !content.isPinned
+    if (pinned) {
+      content.putUserData(ToolWindow.SHOW_CONTENT_ICON, true)
+    }
+    content.isPinned = pinned
+    log { "PinBuildViewAction: $pinned" }
+    return pinned
   }
 
   private fun log(messageProvider: () -> String) {
@@ -361,8 +369,10 @@ internal class FrontendMultipleBuildsView(
     }
 
     override fun uiDataSnapshot(sink: DataSink) {
+      sink[DATA_KEY] = this@FrontendMultipleBuildsView
       activeView?.let {
         sink[BuildDataKeys.BUILD_ID] = it.buildId
+        sink[FrontendBuildView.DATA_KEY] = it
       }
     }
   }
@@ -394,38 +404,6 @@ internal class FrontendMultipleBuildsView(
     }
   }
 
-  private inner class PinBuildViewAction : DumbAwareAction(), Toggleable {
-    override fun actionPerformed(e: AnActionEvent) {
-      val selected: Boolean = !content.isPinned
-      if (selected) {
-        content.putUserData(ToolWindow.SHOW_CONTENT_ICON, true)
-      }
-      content.isPinned = selected
-      Toggleable.setSelected(e.presentation, selected)
-      log { "PinBuildViewAction: $selected" }
-    }
-
-    override fun update(e: AnActionEvent) {
-      if (!content.isValid) return
-
-      if (locked) {
-        e.presentation.isEnabledAndVisible = false
-        return
-      }
-
-      val selected = content.isPinned
-
-      e.presentation.icon = AllIcons.General.Pin_tab
-      Toggleable.setSelected(e.presentation, selected)
-      e.presentation.text = IdeBundle.message(if (selected) "action.unpin.tab" else "action.pin.tab")
-      e.presentation.isEnabledAndVisible = true
-    }
-
-    override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.EDT
-    }
-  }
-
   private class FrontendBuildInfo(event: BuildViewEvent.BuildStarted) : BuildDescriptor {
     private val id = event.buildId
     private val title = event.title
@@ -440,5 +418,34 @@ internal class FrontendMultipleBuildsView(
     override fun getStartTime() = startTime
 
     override fun toString() = "Build[$id/$title]"
+  }
+}
+
+internal class PinBuildViewAction : DumbAwareAction(), Toggleable, ActionRemoteBehaviorSpecification.Frontend {
+  init {
+    templatePresentation.text = IdeBundle.message("action.pin.tab")
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
+  override fun update(e: AnActionEvent) {
+    val view = e.getData(FrontendMultipleBuildsView.DATA_KEY)
+    if (view == null || !view.isPinnable()) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    e.presentation.isEnabledAndVisible = true
+
+    val selected = view.isPinned()
+    Toggleable.setSelected(e.presentation, selected)
+    e.presentation.text = IdeBundle.message(if (selected) "action.unpin.tab" else "action.pin.tab")
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val view = e.getData(FrontendMultipleBuildsView.DATA_KEY) ?: return
+    val selected = view.togglePinned()
+    Toggleable.setSelected(e.presentation, selected)
   }
 }
