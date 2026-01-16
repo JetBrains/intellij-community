@@ -1513,7 +1513,9 @@
         "lines_percentage_by_kind.paste_lines_percentage" : [ "{regexp#float}" ],
         "lines_percentage_by_kind.refactoring_lines_percentage" : [ "{regexp#float}" ],
         "lines_percentage_by_kind.typing_lines_percentage" : [ "{regexp#float}" ],
+        "lines_percentage_by_kind.undo_lines_percentage" : [ "{regexp#float}" ],
         "lines_percentage_by_kind.unknown_lines_percentage" : [ "{regexp#float}" ],
+        "lines_percentage_by_kind.vcs_lines_percentage" : [ "{regexp#float}" ],
         "operation_type" : [ "{enum:commit|stash|unstash|checkout|amend}" ],
         "total_changed_lines_count" : [ "{regexp#integer}" ]
       }
@@ -15365,5 +15367,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6657"
+  "version" : "6662"
 }
