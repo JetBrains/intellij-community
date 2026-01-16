@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.local.tunnels
 
 import com.intellij.openapi.application.ApplicationManager
@@ -16,6 +16,7 @@ import com.intellij.platform.eel.impl.asResolvedSocketAddress
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.utils.*
+import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
@@ -160,15 +161,18 @@ private suspend fun getConnectionToRemotePortImpl(args: GetConnectionToRemotePor
   SocketAdapter(socketChannel)
 }
 
-private fun getAcceptorForRemotePortImpl(args: GetAcceptorForRemotePort): ConnectionAcceptor {
-  val channel = try {
-    ServerSocketChannel.open().apply {
-      bind(args.asInetSocketAddress, 50)  // Default backlog size, same as ServerSocket default.
-      logger.info("Listening for $localAddress")
+@OptIn(DelicateCoroutinesApi::class)
+private suspend fun getAcceptorForRemotePortImpl(args: GetAcceptorForRemotePort): ConnectionAcceptor {
+  val channel = computeDetached {
+    try {
+      ServerSocketChannel.open().apply {
+        bind(args.asInetSocketAddress, 50)  // Default backlog size, same as ServerSocket default.
+        logger.info("Listening for $localAddress")
+      }
     }
-  }
-  catch (e: IOException) {
-    throw EelConnectionError.UnknownFailure(e.localizedMessage, e)
+    catch (e: IOException) {
+      throw EelConnectionError.UnknownFailure(e.localizedMessage, e)
+    }
   }
   args.configureServerSocket(ConfigurableServerSocketImpl(channel.socket()))
   return ConnectionAcceptorImpl(channel)
@@ -225,6 +229,7 @@ private class ConnectionAcceptorImpl(private val boundServerSocket: ServerSocket
 
   override suspend fun close() {
     closeImpl()
+    listenSocket.join()
   }
 
   private fun closeImpl(err: Throwable? = null) {
