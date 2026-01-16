@@ -117,6 +117,9 @@ class JavaCompletionPolicy extends CompletionPolicy {
         PsiTreeUtil.isAncestor(ref, parentReference.getQualifier(), false)) {
       return false;
     }
+    if (ref.getParent() instanceof PsiAnnotation && target instanceof PsiClass psiClass && !psiClass.isAnnotationType()) {
+      return false; // IDEA-384738
+    }
     return true;
   }
 
