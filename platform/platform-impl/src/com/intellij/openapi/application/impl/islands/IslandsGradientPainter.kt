@@ -79,11 +79,12 @@ internal fun islandsGradientPaint(frame: IdeFrame, mainColor: Color, projectWind
     doColorGradientPaint(project, projectWindowCustomizer, component, g)
   }
   else {
-    doGradientPaint(frame, mainColor, project, projectWindowCustomizer, g)
+    doGradientPaint(frame, mainColor, project, projectWindowCustomizer, component, g)
   }
 }
 
-private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project, projectWindowCustomizer: ProjectWindowCustomizerService, g: Graphics2D) {
+private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project, projectWindowCustomizer: ProjectWindowCustomizerService,
+                            component: Component, g: Graphics2D) {
   val cache = getGradientCache(frame.component, "GradientCache")
 
   val centerColor = projectWindowCustomizer.getGradientProjectColor(project)
@@ -110,7 +111,7 @@ private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project,
     islandsInactiveFrameGraphics2D?.preserveComposite = true
 
     g.color = mainColor
-    g.fillRect(0, 0, totalWidth, height)
+    g.fillRect(0, 0, component.width, component.height)
 
     g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, islandsInactiveAlpha)
   }
