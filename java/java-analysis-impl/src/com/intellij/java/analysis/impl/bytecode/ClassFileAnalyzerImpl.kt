@@ -12,9 +12,10 @@ import kotlin.io.path.*
 
 internal class ClassFileAnalyzerImpl(
   declarationProcessor: JvmBytecodeDeclarationProcessor?,
-  referenceProcessor: JvmBytecodeReferenceProcessor?
+  referenceProcessor: JvmBytecodeReferenceProcessor?,
+  implicitAncestorReferencesResolver: ClassAncestorResolver? = null,
 ) : ClassFileAnalyzer {
-  private val visitor = ClassFileAnalysisVisitor(declarationProcessor, referenceProcessor)
+  private val visitor = ClassFileAnalysisVisitor(declarationProcessor, referenceProcessor, implicitAncestorReferencesResolver)
 
   override fun processFile(path: Path) {
     // ASM ClassReader in any case reads the whole file into memory
@@ -43,10 +44,10 @@ internal class ClassFileAnalyzerImpl(
   }
 }
 
-private data class ClassFileEntry(val entryName: String, val path: Path)
+internal data class ClassFileEntry(val entryName: String, val path: Path)
 
 @OptIn(ExperimentalPathApi::class)
-private fun <R> withClassRootEntries(classRoot: Path, block: (entries: Sequence<ClassFileEntry>) -> R): R {
+internal fun <R> withClassRootEntries(classRoot: Path, block: (entries: Sequence<ClassFileEntry>) -> R): R {
   return withClassRoot(classRoot) { nioRoot ->
     val sequence = nioRoot
       .walk()
@@ -58,7 +59,7 @@ private fun <R> withClassRootEntries(classRoot: Path, block: (entries: Sequence<
   }
 }
 
-private fun <R> withClassRoot(classRoot: Path, block: (root: Path) -> R): R {
+internal fun <R> withClassRoot(classRoot: Path, block: (root: Path) -> R): R {
   return when {
     classRoot.isDirectory() -> block(classRoot)
     classRoot.isRegularFile() && classRoot.extension == "jar" -> {

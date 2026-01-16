@@ -21,14 +21,17 @@ final class ClassFileAnalysisVisitor extends ClassVisitor {
   private final DependencyFieldVisitor myFieldVisitor = new DependencyFieldVisitor();
   private final @Nullable JvmBytecodeDeclarationProcessor myDeclarationProcessor;
   private final @Nullable JvmBytecodeReferenceProcessor myReferenceProcessor;
+  private final @Nullable ClassAncestorResolver myImplicitAncestorReferencesResolver;
 
   private JvmClassBytecodeDeclaration myCurrentClass;
 
   ClassFileAnalysisVisitor(@Nullable JvmBytecodeDeclarationProcessor declarationProcessor,
-                           @Nullable JvmBytecodeReferenceProcessor referenceProcessor) {
+                           @Nullable JvmBytecodeReferenceProcessor referenceProcessor,
+                           @Nullable ClassAncestorResolver implicitAncestorReferencesResolver) {
     super(Opcodes.API_VERSION);
     myDeclarationProcessor = declarationProcessor;
     myReferenceProcessor = referenceProcessor;
+    myImplicitAncestorReferencesResolver = implicitAncestorReferencesResolver;
   }
 
   void processFileContent(byte @NotNull [] classFileContent) {
@@ -61,6 +64,15 @@ final class ClassFileAnalysisVisitor extends ClassVisitor {
     }
     else {
       addSignature(signature);
+    }
+    processImplicitSuperclassReferences(myCurrentClass);
+  }
+
+  private void processImplicitSuperclassReferences(JvmClassBytecodeDeclaration referencedClass) {
+    if (myReferenceProcessor != null && myImplicitAncestorReferencesResolver != null) {
+      for (String superclass : myImplicitAncestorReferencesResolver.getAllAncestors(referencedClass.getBinaryClassName())) {
+        myReferenceProcessor.processClassReference(getOrCreateClassDeclaration(superclass), myCurrentClass);
+      }
     }
   }
 
@@ -186,6 +198,7 @@ final class ClassFileAnalysisVisitor extends ClassVisitor {
       JvmClassBytecodeDeclaration targetClass = addName(owner);
       addMethodDesc(desc);
       processMethodReference(targetClass, name, desc);
+      processImplicitSuperclassReferences(targetClass);
     }
 
     @Override

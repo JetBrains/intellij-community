@@ -3,12 +3,21 @@ package com.intellij.java.analysis.bytecode
 
 import com.intellij.compiler.JavaInMemoryCompiler
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
+import java.nio.file.Path
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.writeBytes
 
 @TestApplication
 internal class JvmBytecodeReferenceAnalysisTest {
+  @JvmField
+  @RegisterExtension
+  val tempDirectory = TempDirectoryExtension()
+
   @Test
   fun `test field reference`() {
     assertReference("public class Main { String field; }", "java/lang/String")
@@ -52,6 +61,7 @@ internal class JvmBytecodeReferenceAnalysisTest {
         "A" to "public @interface A { Class<?> value(); }",
         "Main" to "@A(String.class) public class Main { }"
       ),
+      emptyMap(),
       "A", "java/lang/String"
     )
   }
@@ -126,13 +136,113 @@ internal class JvmBytecodeReferenceAnalysisTest {
                     "A")
   }
 
-  private fun assertReference(@Language("JAVA") source: String, vararg expectedTargets: String) {
-    assertReference(mapOf("Main" to source), *expectedTargets)
+  @Test
+  fun `test implicit references to superclasses from declaration`() {
+    assertReference(
+      sources = mapOf(
+        "Main" to "public class Main extends p.A {}"
+      ),
+      sourcesToSearchImplicitReferences = mapOf(
+        "p.A" to "package p; public class A extends Exception {}",
+      ),
+      "p/A", "java/lang/Exception",
+    )
   }
 
-  private fun assertReference(sources: Map<String, String>, vararg expectedTargets: String) {
-    val compiler = JavaInMemoryCompiler()
+  @Test
+  fun `test implicit references to superclasses from method call`() {
+    assertReference(
+      sources = mapOf(
+        "p1.A" to "package p1; public class A extends p2.B { public void foo() {} }",
+        "Main" to "public class Main { Main() { new p1.A().foo(); } }"
+      ),
+      sourcesToSearchImplicitReferences = mapOf(
+        "p2.B" to "package p2; public class B {}",
+      ),
+      "p1/A", "p2/B",
+    )
+  }
+
+  @Test
+  fun `test no implicit references to superclasses if instance is just passed around`() {
+    assertReference(
+      sources = mapOf(
+        "p1.A" to "package p1; public class A extends p2.B { public void foo() {} }",
+        "p1.AManager" to """
+          |package p1;
+          |public class AManager { 
+          |  public A createInstance() { return new A(); }
+          |  public void useInstance(A a) { a.foo();  }
+          |}
+          """.trimMargin(),
+        "Main" to """
+          |import p1.*;
+          |public class Main { 
+          |  Main() { 
+          |    AManager manager = new AManager();
+          |    A a = manager.createInstance();
+          |    manager.useInstance(a); 
+          |  } 
+          |}
+          """.trimMargin()
+      ),
+      sourcesToSearchImplicitReferences = mapOf(
+        "p2.B" to "package p2; public class B {}",
+      ),
+      "p1/A", "p1/AManager",
+    )
+  }
+
+  @Test
+  fun `test implicit references to superclasses in generic parameters from declaration`() {
+    assertReference(
+      sources = mapOf(
+        "Main" to "public abstract class Main extends p.A {}"
+      ),
+      sourcesToSearchImplicitReferences = mapOf(
+        "p.A" to "package p; public abstract class A extends B<String> {}",
+        "p.B" to "package p; import java.util.*; public abstract class B<T> implements Map<T, List<T>> {}"
+      ),
+      "p/A", "p/B", "java/util/Map", "java/util/List", "java/lang/String",
+    )
+  }
+
+  @Test
+  fun `test avoid StackOverflowError when processing implicit references to superclasses`() {
+    assertReference(
+      sources = mapOf(
+        "Main" to "public abstract class Main extends p.A {}"
+      ),
+      sourcesToSearchImplicitReferences = mapOf(
+        "p.A" to "package p; public class A extends B<A> {}",
+        "p.B" to "package p; public class B<T> {}"
+      ),
+      "p/A", "p/B",
+    )
+  }
+
+
+  private fun assertReference(@Language("JAVA") source: String, vararg expectedTargets: String) {
+    assertReference(
+      sources = mapOf("Main" to source),
+      sourcesToSearchImplicitReferences = emptyMap(),
+      expectedTargets = expectedTargets,
+    )
+  }
+
+  private fun assertReference(sources: Map<String, String>,
+                              sourcesToSearchImplicitReferences: Map<String, String> = emptyMap(),
+                              vararg expectedTargets: String) {
+    val classpathForImplicitReferences = ArrayList<Path>()
+    if (sourcesToSearchImplicitReferences.isNotEmpty()) {
+      saveClassFiles(JavaInMemoryCompiler().compile(sourcesToSearchImplicitReferences))
+      classpathForImplicitReferences.add(tempDirectory.rootPath)
+    }
+    val compiler = JavaInMemoryCompiler(*classpathForImplicitReferences.map { it.toFile() }.toTypedArray())
     val compiledClasses = compiler.compile(sources)
+    if (sourcesToSearchImplicitReferences.isNotEmpty()) {
+      saveClassFiles(compiledClasses)
+    }
     val mainClassBytes = compiledClasses["Main"] ?: throw IllegalStateException("Main class not found")
 
     val analysis = JvmBytecodeAnalysis.getInstance()
@@ -143,9 +253,19 @@ internal class JvmBytecodeReferenceAnalysisTest {
       }
     }
 
-    val analyzer = analysis.createReferenceAnalyzer(referenceProcessor)
+    val analyzer =
+      if (classpathForImplicitReferences.isEmpty()) analysis.createReferenceAnalyzer(referenceProcessor)
+      else analysis.createReferenceAnalyzerWithImplicitSuperclassReferences(referenceProcessor, classpathForImplicitReferences)
     analyzer.processFileContent(mainClassBytes)
     references.remove("java/lang/Object") //always referenced as the superclass
     assertThat(references).containsExactlyInAnyOrder(*expectedTargets)
+  }
+
+  private fun saveClassFiles(classFiles: Map<String, ByteArray>) {
+    for ((className, classFileContent) in classFiles) {
+      val classFilePath = tempDirectory.rootPath.resolve("${className.replace('.', '/')}.class")
+      classFilePath.createParentDirectories()
+      classFilePath.writeBytes(classFileContent)
+    }
   }
 }
