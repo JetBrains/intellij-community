@@ -1120,6 +1120,48 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
 
     @ParameterizedTest
     @AllGradleVersionsSource
+    fun testSubprojectOutsideRootCanFindSettingsFile(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, EMPTY_MULTI_MODULE_PROJECT_WITH_SUBPROJECT_OUTSIDE_ROOT) {
+            testHighlighting(
+                "../subproject/build.gradle.kts",
+                """
+                buildscript {
+                    <weak_warning>repositories</weak_warning> { mavenCentral() }
+                }
+                """.trimIndent()
+            )
+            testMyIntention(
+                """
+                buildscript {
+                    repositories<caret> { mavenCentral() }
+                }
+                """.trimIndent(),
+                """
+                buildscript {
+                }
+                """.trimIndent(),
+                """
+                include("subproject")
+                project(":subproject").projectDir = file("../subproject")
+                """.trimIndent(),
+                """
+                pluginManagement {
+                    repositories {
+                        mavenCentral()
+                    }
+                }
+                
+                include("subproject")
+                project(":subproject").projectDir = file("../subproject")
+                """.trimIndent(),
+                isForPlugins = true,
+                relativeBuildFilePath = "../subproject/build.gradle.kts"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
     fun testIncludedBuildCanFindSettingsFile(gradleVersion: GradleVersion) {
         runTest(gradleVersion, COMPOSITE_PROJECT_WITH_SETTINGS_FILES) {
             testHighlighting(
@@ -1315,6 +1357,17 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
                 withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {}
                 withBuildFile(gradleVersion, relativeModulePath = "subproject", gradleDsl = GradleDsl.KOTLIN) {}
+            }
+
+        private val EMPTY_MULTI_MODULE_PROJECT_WITH_SUBPROJECT_OUTSIDE_ROOT =
+            GradleTestFixtureBuilder.create("empty-multi-module-project-with-subproject-outside-root") { gradleVersion ->
+                withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+                    setProjectName("empty-multi-module-project-with-subproject-outside-root")
+                    include("subproject")
+                    setProjectDir(":subproject", "../subproject")
+                }
+                withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {}
+                withBuildFile(gradleVersion, relativeModulePath = "../subproject", gradleDsl = GradleDsl.KOTLIN) {}
             }
 
         private val COMPOSITE_PROJECT_WITH_SETTINGS_FILES =
