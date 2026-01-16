@@ -9,7 +9,8 @@
       "event_id" : [ "{enum:compose.cmp.used}" ],
       "event_data" : {
         "allPlatforms" : [ "{enum:Android|Jvm|Ios|WasmJs|Js|Ktor|Native|Unknown}" ],
-        "cmpPlatforms" : [ "{enum:Android|Jvm|Ios|WasmJs|Js|Ktor|Native|Unknown}" ]
+        "cmpPlatforms" : [ "{enum:Android|Jvm|Ios|WasmJs|Js|Ktor|Native|Unknown}" ],
+        "isCMP" : [ "{enum#boolean}" ]
       }
     }
   }, {
@@ -322,5 +323,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6649"
+  "version" : "6656"
 }
