@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,6 +44,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.siyeh.ig.psiutils.JavaDeprecationUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -317,14 +319,13 @@ final class ReferenceItemProvider implements ModCompletionItemProvider {
           .withPresentation(presentation));
       }
 
-      //if (completion instanceof PsiClass) {
-      //  List<JavaPsiClassReferenceElement> classItems = JavaClassNameCompletionContributor.createClassLookupItems(
-      //    CompletionUtil.getOriginalOrSelf((PsiClass)completion),
-      //    JavaClassNameCompletionContributor.AFTER_NEW.accepts(reference),
-      //    JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
-      //    Conditions.alwaysTrue());
-      //  return JBIterable.from(classItems).flatMap(i -> JavaConstructorCallElement.wrap(i, reference.getElement()));
-      //}
+      if (completion instanceof PsiClass cls) {
+        List<ClassReferenceCompletionItem> classItems = NonImportedClassProvider.createClassLookupItems(
+          CompletionUtil.getOriginalOrSelf(cls),
+          JavaClassNameCompletionContributor.AFTER_NEW.accepts(reference),
+          Predicates.alwaysTrue());
+        return StreamEx.of(classItems).toFlatList(i -> ConstructorCallCompletionItem.tryWrap(i, reference.getElement()));
+      }
     }
 
     PsiSubstitutor substitutor = completionElement.getSubstitutor();

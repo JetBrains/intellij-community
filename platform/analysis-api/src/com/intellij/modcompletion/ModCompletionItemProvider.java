@@ -117,5 +117,10 @@ public interface ModCompletionItemProvider {
     public Project getProject() {
       return originalFile.getProject();
     }
+
+    @Override
+    public int getInvocationCount() {
+      return invocationCount();
+    }
   }
 }

@@ -48,4 +48,11 @@ public interface BaseCompletionParameters {
    * @return the file being edited, possibly injected, where code completion was invoked.
    */
   @NotNull PsiFile getOriginalFile();
+
+  /**
+   * @return 0 for autopopup<br>
+   * 1 for explicitly invoked completion<br>
+   * >1 for next completion invocations when one lookup is already active
+   */
+  int getInvocationCount();
 }

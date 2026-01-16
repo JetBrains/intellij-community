@@ -957,6 +957,7 @@
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.AnnotationAttributeItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.GenerateMemberItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.ReferenceItemProvider"/>
+    <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.NonImportedClassProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.InnerScopeVariableItemProvider"/>
     
     <completion.skip implementation="com.intellij.codeInsight.completion.AbstractExpectedTypeSkipper" id="skipAbstract"/>

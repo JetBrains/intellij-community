@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.Set;
 
 @NotNullByDefault
 public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem<PsiClass> {
@@ -50,7 +51,12 @@ public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem<
   public ClassReferenceCompletionItem(PsiClass psiClass) {
     this(psiClass, PsiSubstitutor.EMPTY, null);
   }
-  
+
+  @Override
+  public Set<@NlsSafe String> additionalLookupStrings() {
+    return myForcedPresentableName == null ? Set.of() : Set.of(myForcedPresentableName);
+  }
+
   public ClassReferenceCompletionItem withPresentableName(@Nullable String forcedPresentableName) {
     return new ClassReferenceCompletionItem(contextObject(), mySubstitutor, forcedPresentableName);
   }
@@ -66,6 +72,7 @@ public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem<
   @Override
   public void update(ActionContext actionContext, InsertionContext insertionContext, ModPsiUpdater updater) {
     if (!contextObject().isValid()) return;
+    PsiDocumentManager.getInstance(updater.getProject()).commitDocument(updater.getDocument());
     if (processInImport(updater)) return;
     if (processJavaDoc(actionContext.offset(), updater)) return;
     AllClassesGetter.tryShorten(updater.getPsiFile(), updater, contextObject());
@@ -149,6 +156,10 @@ public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem<
     }
 
     return StringUtil.notNullize(name);
+  }
+
+  @Nullable String getForcedPresentableName() {
+    return myForcedPresentableName;
   }
 
   private static String formatTypeParameters(final PsiSubstitutor substitutor, final PsiTypeParameter[] params) {

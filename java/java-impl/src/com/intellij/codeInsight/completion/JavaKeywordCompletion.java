@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
+import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -72,6 +73,9 @@ public class JavaKeywordCompletion {
     context.commitDocument();
     CodeStyleManager.getInstance(context.getProject()).adjustLineIndent(context.getFile(), context.getStartOffset());
   };
+  public static final PsiJavaElementPattern.Capture<PsiElement> AFTER_PRIMITIVE_OR_ARRAY = psiElement().withParent(
+    psiReferenceExpression().withFirstChild(
+      psiElement(PsiClassObjectAccessExpression.class).withLastChild(not(psiElement().withText(JavaKeywords.CLASS)))));
 
   private static boolean isStatementCodeFragment(PsiFile file) {
     return file instanceof JavaCodeFragment &&
@@ -1158,11 +1162,8 @@ public class JavaKeywordCompletion {
     return isEndOfBlock(position);
   }
 
-  static boolean isAfterPrimitiveOrArrayType(PsiElement element) {
-    return psiElement().withParent(
-      psiReferenceExpression().withFirstChild(
-        psiElement(PsiClassObjectAccessExpression.class).withLastChild(
-          not(psiElement().withText(JavaKeywords.CLASS))))).accepts(element);
+  public static boolean isAfterPrimitiveOrArrayType(PsiElement element) {
+    return AFTER_PRIMITIVE_OR_ARRAY.accepts(element);
   }
 
   public static boolean isAfterTypeDot(PsiElement position) {

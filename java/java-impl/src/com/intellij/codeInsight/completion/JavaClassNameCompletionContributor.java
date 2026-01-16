@@ -34,6 +34,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,9 +186,10 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
                                         new LimitedAccessibleClassPreprocessor(parameters, filterByScope, classProcessor));
   }
 
-  private static @NotNull GlobalSearchScope getReferenceScope(@NotNull CompletionParameters parameters,
-                                                              boolean filterByScope,
-                                                              boolean inPermitsList) {
+  @ApiStatus.Internal
+  public static @NotNull GlobalSearchScope getReferenceScope(@NotNull BaseCompletionParameters parameters,
+                                                             boolean filterByScope,
+                                                             boolean inPermitsList) {
     PsiElement insertedElement = parameters.getPosition();
     PsiFile psiFile = insertedElement.getContainingFile().getOriginalFile();
     Project project = insertedElement.getProject();
@@ -211,7 +213,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
     return GlobalSearchScope.fileScope(psiFile);
   }
 
-  private static @NotNull MultiMap<String, PsiClass> getAllAnnotationClasses(PsiElement context, PrefixMatcher matcher) {
+  public static @NotNull MultiMap<String, PsiClass> getAllAnnotationClasses(PsiElement context, PrefixMatcher matcher) {
     MultiMap<String, PsiClass> map = new MultiMap<>();
     GlobalSearchScope scope = context.getResolveScope();
     Project project = context.getProject();

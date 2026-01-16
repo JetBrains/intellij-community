@@ -7,6 +7,7 @@ a:com.intellij.codeInsight.TailType
 - ps:moveCaret(com.intellij.openapi.editor.ModNavigator,I,I):I
 com.intellij.codeInsight.completion.BaseCompletionParameters
 - a:getCompletionType():com.intellij.codeInsight.completion.CompletionType
+- a:getInvocationCount():I
 - a:getOffset():I
 - a:getOriginalFile():com.intellij.psi.PsiFile
 - a:getOriginalPosition():com.intellij.psi.PsiElement

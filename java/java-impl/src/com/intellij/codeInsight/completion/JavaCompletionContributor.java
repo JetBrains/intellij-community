@@ -1273,7 +1273,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
   }
 
-  static @Nullable PsiJavaCodeReferenceElement getAnnotationNameIfInside(@Nullable PsiElement position) {
+  @ApiStatus.Internal
+  public static @Nullable PsiJavaCodeReferenceElement getAnnotationNameIfInside(@Nullable PsiElement position) {
     PsiAnnotation anno = PsiTreeUtil.getParentOfType(position, PsiAnnotation.class);
     PsiJavaCodeReferenceElement ref = anno == null ? null : anno.getNameReferenceElement();
     return ref != null && PsiTreeUtil.isAncestor(ref, position, false) ? ref : null;
