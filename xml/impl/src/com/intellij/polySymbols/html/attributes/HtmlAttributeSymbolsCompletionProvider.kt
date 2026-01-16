@@ -20,7 +20,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
 
-class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttribute>() {
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+
+open class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttribute>() {
 
   override fun getContext(position: PsiElement): XmlAttribute? =
     PsiTreeUtil.getParentOfType(position, XmlAttribute::class.java)
@@ -81,8 +85,9 @@ class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase
                             .asSingleSymbol() ?: return@runWithTimeoutOrNull null
               HtmlAttributeSymbolInfo.create(fullName, freshRegistry, match, insertionContext.file)
             }
-            if (info != null && info.acceptsValue && !info.acceptsNoValue) {
-              XmlAttributeInsertHandler.INSTANCE.handleInsert(insertionContext, lookupItem)
+            if (info != null && shouldInsertValue(parameters, item, info)) {
+              val handler = selectInsertHandler(parameters, item, info)
+              handler.handleInsert(insertionContext, lookupItem)
             }
           }
         ).addToResult(parameters, patchedResultSet)
@@ -101,5 +106,23 @@ class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase
       }
     }
 
+  }
+
+  protected open fun selectInsertHandler(
+    parameters: CompletionParameters,
+    item: PolySymbolCodeCompletionItem,
+    info: HtmlAttributeSymbolInfo
+  ): InsertHandler<LookupElement> {
+    val framework = HtmlFrameworkSymbolsSupport.get(info.symbol)
+    return framework.createAttributeInsertHandler(parameters, item, info) ?: XmlAttributeInsertHandler.INSTANCE
+  }
+
+  protected open fun shouldInsertValue(
+    parameters: CompletionParameters,
+    item: PolySymbolCodeCompletionItem,
+    info: HtmlAttributeSymbolInfo
+  ): Boolean {
+    val framework = HtmlFrameworkSymbolsSupport.get(info.symbol)
+    return framework.shouldInsertAttributeValue(parameters, item, info)
   }
 }
