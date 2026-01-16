@@ -147,7 +147,7 @@ private suspend fun serviceUri(featureUsageStatisticsProperties: FeatureUsageSta
 
 private suspend fun metadataServiceUri(featureUsageStatisticsProperties: FeatureUsageStatisticsProperties, context: BuildContext): String {
   val appInfo = context.applicationInfo
-  val metadataVersion = (appInfo.majorVersion.substring(2,4) + appInfo.minorVersion).toInt()
+  val metadataVersion = (appInfo.majorVersion.substring(2,4) + appInfo.minorVersionMainPart).toInt()
   return serviceUri(featureUsageStatisticsProperties, context).provideMetadataProductUrl(metadataVersion)!!
 }
 
