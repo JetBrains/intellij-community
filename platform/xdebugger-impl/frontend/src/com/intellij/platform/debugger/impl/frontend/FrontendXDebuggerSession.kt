@@ -1,4 +1,4 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.execution.RunContentDescriptorIdImpl
@@ -437,8 +437,7 @@ class FrontendXDebuggerSession private constructor(
     coroutineScope.launch {
       XDebugSessionApi.getInstance()
         .computeRunningExecutionStacks(id)
-        .await()
-        .handleResult(project, coroutineScope, container)
+        .collectExecutionStackEvents(project, coroutineScope, container)
     }
   }
 
