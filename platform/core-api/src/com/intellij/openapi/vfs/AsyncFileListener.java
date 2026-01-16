@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -92,7 +92,7 @@ public interface AsyncFileListener {
      * The implementations should be as fast as possible.<p></p>
      * <p>
      * <b> In the future versions of IntelliJ Platform, this listener may start running on background threads.
-     * Consider using {@link ChangeApplierBackgroundable} to avoid changes in semantics depending on the version of the Platform.
+     * You can use {@link VirtualFileManager#addAsyncFileListenerBackgroundable} to run this listener on background thread unconditionally.
      * </b>
      * <p>
      * If you process events passed into {@link #prepareChange} here, remember that an event might be superseded by further events
