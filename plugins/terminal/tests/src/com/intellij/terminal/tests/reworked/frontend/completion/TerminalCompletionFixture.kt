@@ -286,9 +286,14 @@ internal class TerminalCompletionFixture(
           }
         })
       }
+
+      // Give the output model updates settle down for a moment
+      // to ensure that condition is met not in the middle of updates.
+      delay(300)
+      condition(view.activeOutputModel())
     }
 
-    return result != null
+    return result == true
   }
 
   fun mockTestShellCommand(testCommandSpec: ShellCommandSpec) {
