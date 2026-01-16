@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.statistics.SpellcheckerActionStatistics;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
+import com.intellij.spellchecker.util.Strings;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ToolbarDecorator;
@@ -56,7 +57,8 @@ public final class SpellCheckerSettingsPane {
         word = word.trim();
       }
 
-      if (!manager.hasProblem(word)) {
+      boolean mixedCase = Strings.isMixedCase(word);
+      if (mixedCase && getWords().contains(word) || !mixedCase && !manager.hasProblem(word)) {
         Messages.showWarningDialog(SpellCheckerBundle.message("entered.word.0.is.correct.you.no.need.to.add.this.in.list", word),
                                    SpellCheckerBundle.message("add.new.word"));
         return null;
