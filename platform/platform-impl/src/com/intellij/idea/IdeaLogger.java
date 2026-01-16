@@ -171,7 +171,9 @@ public final class IdeaLogger extends JulLogger {
 
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
-    if (isTooFrequentException(t)) return;
+    if (isTooFrequentException(t)) {
+      return;
+    }
 
     var detailString = String.join("\n", details);
     if (!detailString.isEmpty()) {
