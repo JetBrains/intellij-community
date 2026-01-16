@@ -103,7 +103,7 @@ jvm_library(
 jvm_library(
   name = "jewel-markdown-core-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form", "src/testFixtures/kotlin/**/*.kt", "src/testFixtures/kotlin/**/*.java", "src/testFixtures/kotlin/**/*.form"], allow_empty = True),
   resources = [":jewel-markdown-core-tests_test_resources"],
   kotlinc_opts = ":custom_jewel-markdown-core-tests",
   associates = [

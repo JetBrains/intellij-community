@@ -5,13 +5,11 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.InlineTextContent
@@ -36,15 +34,36 @@ import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.layout.onFirstVisible
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFontFamilyResolver
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.ParagraphIntrinsics
+import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.resolveDefaults
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.LayoutDirection.Ltr
 import androidx.compose.ui.unit.dp
+import kotlin.math.ceil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.code.MimeType
@@ -78,6 +97,7 @@ import org.jetbrains.jewel.ui.component.HorizontallyScrollableContainer
 import org.jetbrains.jewel.ui.component.Text
 
 private const val DISABLED_CODE_ALPHA = .5f
+private const val COMPOSE_INLINE_CONTENT_ANNOTATION_TAG = "androidx.compose.foundation.text.inlineContent"
 private val MIME_TYPE_REGEX = "^\\w+/.+$".toRegex()
 
 /**
@@ -145,6 +165,7 @@ public open class DefaultMarkdownBlockRenderer(
             ThematicBreak -> RenderThematicBreak(rootStyling.thematicBreak, enabled, modifier)
             is MarkdownBlock.HtmlBlockWithAttributes ->
                 RenderHtmlBlockWithAttributes(block, enabled, onUrlClick, modifier)
+
             is CustomBlock -> {
                 rendererExtensions
                     .find { it.blockRenderer?.canRender(block) == true }
@@ -206,31 +227,50 @@ public open class DefaultMarkdownBlockRenderer(
         softWrap: Boolean,
         maxLines: Int,
     ) {
-        val onlyImages = remember(block) { block.inlineContent.all { it is InlineMarkdown.Image } }
-        val images = renderedImages(block)
+        RenderBlockWithInlines(
+            block,
+            styling.inlinesStyling,
+            enabled,
+            onUrlClick,
+            onTextLayout,
+            modifier,
+            overflow,
+            softWrap,
+            maxLines,
+        )
+    }
 
-        if (onlyImages) {
-            RenderImages(images, modifier)
-        } else {
-            val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled, onUrlClick)
-            val textColor =
-                styling.inlinesStyling.textStyle.color
-                    .takeOrElse { LocalContentColor.current }
-                    .takeOrElse { styling.inlinesStyling.textStyle.color }
-            val mergedStyle = styling.inlinesStyling.textStyle.merge(TextStyle(color = textColor))
+    @Composable
+    private fun RenderBlockWithInlines(
+        block: WithInlineMarkdown,
+        inlinesStyling: InlinesStyling,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
+        onTextLayout: (TextLayoutResult) -> Unit,
+        modifier: Modifier = Modifier,
+        overflow: TextOverflow = TextOverflow.Clip,
+        softWrap: Boolean = true,
+        maxLines: Int = Int.MAX_VALUE,
+    ) {
+        val originalImages = renderedImages(block)
 
-            Text(
-                modifier = modifier,
-                text = renderedContent,
-                overflow = overflow,
-                softWrap = softWrap,
-                maxLines = maxLines,
-                onTextLayout = onTextLayout,
-                inlineContent = images,
-                style = mergedStyle,
-                textAlign = LocalTextAlignment.current,
-            )
-        }
+        val renderedContent = rememberRenderedContent(block, inlinesStyling, enabled, onUrlClick)
+        val textColor = inlinesStyling.textStyle.color.takeOrElse { LocalContentColor.current }
+        val mergedStyle = inlinesStyling.textStyle.merge(TextStyle(color = textColor))
+        val density = LocalDensity.current
+
+        TextWithScalableInlineContent(
+            text = renderedContent,
+            inlineContent = originalImages,
+            density = density,
+            modifier = modifier,
+            overflow = overflow,
+            softWrap = softWrap,
+            maxLines = maxLines,
+            onTextLayout = onTextLayout,
+            style = mergedStyle,
+            textAlign = LocalTextAlignment.current,
+        )
     }
 
     @Composable
@@ -284,30 +324,15 @@ public open class DefaultMarkdownBlockRenderer(
         onUrlClick: (String) -> Unit,
         modifier: Modifier,
     ) {
-        val onlyImages = remember(block) { block.inlineContent.all { it is InlineMarkdown.Image } }
-        val images = renderedImages(block)
-
-        if (onlyImages && images.isEmpty()) return
-
         Column(modifier = modifier.padding(styling.padding)) {
-            if (onlyImages) {
-                RenderImages(images)
-            } else {
-                val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled, onUrlClick)
-
-                val textColor =
-                    styling.inlinesStyling.textStyle.color.takeOrElse {
-                        LocalContentColor.current.takeOrElse { styling.inlinesStyling.textStyle.color }
-                    }
-                val mergedStyle = styling.inlinesStyling.textStyle.merge(TextStyle(color = textColor))
-                Text(
-                    text = renderedContent,
-                    style = mergedStyle,
-                    modifier = Modifier.focusProperties { this.canFocus = false },
-                    inlineContent = images,
-                    textAlign = LocalTextAlignment.current,
-                )
-            }
+            RenderBlockWithInlines(
+                block,
+                styling.inlinesStyling,
+                enabled,
+                onUrlClick,
+                {},
+                Modifier.focusProperties { this.canFocus = false },
+            )
 
             if (styling.underlineWidth > 0.dp && styling.underlineColor.isSpecified) {
                 Spacer(Modifier.height(styling.underlineGap))
@@ -820,21 +845,290 @@ public open class DefaultMarkdownBlockRenderer(
         }
     }
 
+    /**
+     * A Text composable that automatically scales inline content when there's insufficient horizontal space.
+     *
+     * Uses [SubcomposeLayout] to defer composition until constraints are known, allowing placeholder sizes to be
+     * computed based on actual available width without triggering recomposition. The outer [Layout] wrapper provides
+     * custom [MeasurePolicy.maxIntrinsicWidth] using [rememberTextMeasurer] for proper intrinsic measurements, which is
+     * crucial for grid-based containers like tables to preserve proportions.
+     */
     @Composable
-    private fun RenderImages(images: Map<String, InlineTextContent>, modifier: Modifier = Modifier) {
-        if (images.isEmpty()) return
+    private fun TextWithScalableInlineContent(
+        text: AnnotatedString,
+        inlineContent: Map<String, InlineTextContent>,
+        density: Density,
+        modifier: Modifier = Modifier,
+        overflow: TextOverflow = TextOverflow.Clip,
+        softWrap: Boolean = true,
+        maxLines: Int = Int.MAX_VALUE,
+        onTextLayout: (TextLayoutResult) -> Unit = {},
+        style: TextStyle = TextStyle.Default,
+        textAlign: TextAlign = LocalTextAlignment.current,
+    ) {
+        val inlineContentLayoutState = inlineContent.toLayoutState()
+        val inlineContentIds = inlineContentLayoutState.map { it.id }.toSet()
+        val placeholderWidths = inlineContentLayoutState.map { it.placeholder.width.value }
 
-        val density = LocalDensity.current
-        FlowRow(modifier) {
-            images.map { (text, inlineBlock) ->
-                Box(
-                    modifier =
-                        with(density) {
-                            Modifier.size(inlineBlock.placeholder.width.toDp(), inlineBlock.placeholder.height.toDp())
+        // Fast path: no images or only zero-width images - just render regular Text
+        if (placeholderWidths.sum() <= 0.01f) {
+            Text(
+                modifier = modifier,
+                text = text,
+                overflow = overflow,
+                softWrap = softWrap,
+                maxLines = maxLines,
+                onTextLayout = onTextLayout,
+                inlineContent = inlineContent,
+                style = style,
+                textAlign = textAlign,
+            )
+            return
+        }
+
+        // Pre-measure text with unscaled inline content to get intrinsic width.
+        // This is used for grid-based containers to preserve proportions, i.e., tables.
+        val textMeasurer = rememberTextMeasurer()
+        val fontFamilyResolver = LocalFontFamilyResolver.current
+        val layoutDirection = LocalLayoutDirection.current
+        val mergedStyle = remember(style, textAlign) { style.merge(TextStyle(textAlign = textAlign)) }
+        val textWithoutInlineContent = remember(text, inlineContentIds) { text.withoutInlineContent(inlineContentIds) }
+
+        val maxIntrinsicWidth =
+            remember(text, placeholderWidths, mergedStyle, textMeasurer) {
+                val placeholders = getPlaceholders(text, inlineContent)
+
+                // Measure with unconstrained width
+                val measured =
+                    textMeasurer.measure(
+                        text = text,
+                        style = mergedStyle,
+                        softWrap = false,
+                        maxLines = 1,
+                        placeholders = placeholders,
+                    )
+
+                measured.size.width
+            }
+
+        val minIntrinsicWidth =
+            remember(textWithoutInlineContent, mergedStyle, density, fontFamilyResolver, layoutDirection) {
+                textWithoutInlineContent.minParagraphIntrinsicWidth(
+                    style = mergedStyle,
+                    density = density,
+                    fontFamilyResolver = fontFamilyResolver,
+                    layoutDirection = layoutDirection,
+                )
+            }
+
+        // Outer `Layout` provides custom intrinsics (`SubcomposeLayout` doesn't support intrinsics).
+        // Inner `SubcomposeLayout` defers `Text` composition until constraints are known,
+        // so we can compute scaled placeholders based on actual available width.
+        val measurePolicy =
+            remember(
+                maxIntrinsicWidth,
+                minIntrinsicWidth,
+                text,
+                inlineContentLayoutState,
+                mergedStyle,
+                overflow,
+                softWrap,
+                maxLines,
+                textMeasurer,
+                density,
+            ) {
+                object : MeasurePolicy {
+                    override fun MeasureScope.measure(
+                        measurables: List<Measurable>,
+                        constraints: Constraints,
+                    ): MeasureResult {
+                        val placeable = measurables.firstOrNull()?.measure(constraints)
+
+                        return layout(
+                            width = placeable?.width ?: constraints.minWidth,
+                            height = placeable?.height ?: constraints.minHeight,
+                        ) {
+                            placeable?.place(0, 0)
                         }
-                ) {
-                    inlineBlock.children(text)
+                    }
+
+                    override fun IntrinsicMeasureScope.maxIntrinsicWidth(
+                        measurables: List<IntrinsicMeasurable>,
+                        height: Int,
+                    ): Int = maxIntrinsicWidth
+
+                    override fun IntrinsicMeasureScope.minIntrinsicWidth(
+                        measurables: List<IntrinsicMeasurable>,
+                        height: Int,
+                    ): Int = minIntrinsicWidth
+
+                    override fun IntrinsicMeasureScope.minIntrinsicHeight(
+                        measurables: List<IntrinsicMeasurable>,
+                        width: Int,
+                    ): Int = computeHeightForWidth(width)
+
+                    override fun IntrinsicMeasureScope.maxIntrinsicHeight(
+                        measurables: List<IntrinsicMeasurable>,
+                        width: Int,
+                    ): Int = computeHeightForWidth(width)
+
+                    private fun computeHeightForWidth(width: Int): Int {
+                        val availableWidth = if (width == Constraints.Infinity) Int.MAX_VALUE else width
+                        val scaledContent = scaleInlineContent(inlineContent, availableWidth, density)
+
+                        val placeholders = getPlaceholders(text, scaledContent)
+
+                        val constraints =
+                            if (width == Constraints.Infinity) {
+                                Constraints()
+                            } else {
+                                Constraints(maxWidth = width)
+                            }
+
+                        val measuredText =
+                            textMeasurer.measure(
+                                text = text,
+                                style = mergedStyle,
+                                placeholders = placeholders,
+                                constraints = constraints,
+                                overflow = overflow,
+                                softWrap = softWrap,
+                                maxLines = maxLines,
+                            )
+
+                        return measuredText.size.height
+                    }
                 }
+            }
+
+        Layout(
+            modifier = modifier.testTag(DOWNSCALED_INLINE_CONTENT_TAG),
+            measurePolicy = measurePolicy,
+            content = {
+                SubcomposeLayout { constraints ->
+                    val availableWidth =
+                        if (constraints.maxWidth == Constraints.Infinity) {
+                            Int.MAX_VALUE
+                        } else {
+                            constraints.maxWidth
+                        }
+
+                    val scaledContent = scaleInlineContent(inlineContent, availableWidth, density)
+
+                    val measurables =
+                        subcompose(Unit) {
+                            Text(
+                                text = text,
+                                overflow = overflow,
+                                softWrap = softWrap,
+                                maxLines = maxLines,
+                                onTextLayout = onTextLayout,
+                                inlineContent = scaledContent,
+                                style = style,
+                                textAlign = textAlign,
+                            )
+                        }
+
+                    val placeable = measurables.firstOrNull()?.measure(constraints)
+
+                    layout(
+                        width = placeable?.width ?: constraints.minWidth,
+                        height = placeable?.height ?: constraints.minHeight,
+                    ) {
+                        placeable?.place(0, 0)
+                    }
+                }
+            },
+        )
+    }
+
+    private fun getPlaceholders(
+        text: AnnotatedString,
+        inlineContent: Map<String, InlineTextContent>,
+    ): List<AnnotatedString.Range<Placeholder>> =
+        text.getInlineContentAnnotations().mapNotNull { annotation ->
+            inlineContent[annotation.item]?.let { content ->
+                AnnotatedString.Range(content.placeholder, annotation.start, annotation.end)
+            }
+        }
+
+    private fun AnnotatedString.withoutInlineContent(inlineContentIds: Set<String>): AnnotatedString {
+        if (inlineContentIds.isEmpty()) return this
+
+        val inlineRanges = getInlineContentAnnotations().filter { it.item in inlineContentIds }
+        if (inlineRanges.isEmpty()) return this
+
+        return buildAnnotatedString {
+            var currentIndex = 0
+            for (range in inlineRanges) {
+                if (currentIndex < range.start) {
+                    append(text, currentIndex, range.start)
+                }
+
+                append(' ')
+                currentIndex = range.end
+            }
+
+            if (currentIndex < text.length) {
+                append(text, currentIndex, text.length)
+            }
+        }
+    }
+
+    private fun AnnotatedString.getInlineContentAnnotations(): List<AnnotatedString.Range<String>> =
+        getStringAnnotations(COMPOSE_INLINE_CONTENT_ANNOTATION_TAG, 0, text.length)
+
+    private fun Map<String, InlineTextContent>.toLayoutState(): Set<InlineContentLayoutState> =
+        entries
+            .map { (id, content) -> InlineContentLayoutState(id = id, placeholder = content.placeholder) }
+            .toSortedSet(compareBy(InlineContentLayoutState::id))
+
+    private fun AnnotatedString.minParagraphIntrinsicWidth(
+        style: TextStyle,
+        density: Density,
+        fontFamilyResolver: FontFamily.Resolver,
+        layoutDirection: LayoutDirection,
+    ): Int {
+        val segments = text.split(WHITESPACE_REGEX).filter { it.isNotEmpty() }
+        if (segments.isEmpty()) return 0
+        val resolvedStyle = resolveDefaults(style, layoutDirection)
+
+        return segments.maxOf { segment ->
+            ceil(
+                    ParagraphIntrinsics(
+                            text = segment,
+                            style = resolvedStyle,
+                            annotations = emptyList(),
+                            density = density,
+                            fontFamilyResolver = fontFamilyResolver,
+                        )
+                        .minIntrinsicWidth
+                )
+                .toInt()
+        }
+    }
+
+    /** Scales the inline content placeholders by the given scale factor. */
+    private fun scaleInlineContent(
+        content: Map<String, InlineTextContent>,
+        availableWidth: Int,
+        density: Density,
+    ): Map<String, InlineTextContent> {
+        return content.mapValues { (_, inlineContent) ->
+            val width = with(density) { inlineContent.placeholder.width.roundToPx() }
+            if (width == 0 || availableWidth >= width) {
+                inlineContent
+            } else {
+                val scale = availableWidth.toFloat() / width
+                InlineTextContent(
+                    placeholder =
+                        Placeholder(
+                            width = inlineContent.placeholder.width * scale,
+                            height = inlineContent.placeholder.height * scale,
+                            placeholderVerticalAlign = inlineContent.placeholder.placeholderVerticalAlign,
+                        ),
+                    children = inlineContent.children,
+                )
             }
         }
     }
@@ -860,6 +1154,8 @@ public open class DefaultMarkdownBlockRenderer(
         private val LocalTextAlignment: ProvidableCompositionLocal<TextAlign> = staticCompositionLocalOf {
             TextAlign.Start
         }
+
+        private val WHITESPACE_REGEX = "\\s+".toRegex()
     }
 }
 
@@ -935,3 +1231,8 @@ private fun MimeType.Known.fromMimeTypeString(mimeType: String): MimeType =
 
         else -> UNKNOWN
     }
+
+/** Test tag applied to the scalable inline content layout when SubcomposeLayout path is used. */
+public const val DOWNSCALED_INLINE_CONTENT_TAG: String = "ScalableInlineContent"
+
+private data class InlineContentLayoutState(val id: String, val placeholder: Placeholder)
