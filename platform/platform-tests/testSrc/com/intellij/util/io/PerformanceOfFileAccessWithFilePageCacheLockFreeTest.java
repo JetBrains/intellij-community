@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.util.io.pagecache.Page;
 import com.intellij.util.io.pagecache.PageUnsafe;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
@@ -34,6 +35,7 @@ import static org.junit.Assume.assumeTrue;
  * But keep in mind: benchmark uses (FILE_SIZE * THREADS) of disk space.
  */
 @FixMethodOrder(MethodSorters.JVM)
+@PerformanceUnitTest
 public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends PerformanceOfFileAccessBaseTest {
 
 

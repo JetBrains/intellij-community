@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.testFramework.JavaResolveTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
@@ -22,6 +23,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+@PerformanceUnitTest
 public class ResolvePerformanceTest extends JavaResolveTestCase {
   public void testPerformance1() throws Exception{
     final String fullPath = PathManagerEx.getTestDataPath() + "/psi/resolve/Thinlet.java";

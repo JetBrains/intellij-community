@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.vfs.readText
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.asSafely
 import org.gradle.util.GradleVersion
@@ -19,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil.disable
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 
+@PerformanceUnitTest
 class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest

@@ -11,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +19,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+@PerformanceUnitTest
 public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
   @Override
   protected void setUp() throws Exception {

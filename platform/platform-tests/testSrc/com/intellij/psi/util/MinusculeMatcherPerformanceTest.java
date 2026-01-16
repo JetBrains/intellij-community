@@ -4,6 +4,7 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.matching.MatchingMode;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.ArrayList;
 import java.util.List;
 
+@PerformanceUnitTest
 public class MinusculeMatcherPerformanceTest extends TestCase {
   public void testPerformance() {
     @NonNls final String longName = "ThisIsAQuiteLongNameWithParentheses().Dots.-Minuses-_UNDERSCORES_digits239:colons:/slashes\\AndOfCourseManyLetters";

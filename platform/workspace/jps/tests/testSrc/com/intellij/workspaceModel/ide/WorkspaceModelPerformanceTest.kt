@@ -15,6 +15,7 @@ import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
@@ -38,6 +39,7 @@ class SuspendIndexingExtension : BeforeAllCallback, AfterAllCallback {
   }
 }
 
+@PerformanceUnitTest
 @ExtendWith(SuspendIndexingExtension::class)
 @TestApplication
 @RunInEdt(writeIntent = true)

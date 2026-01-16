@@ -8,6 +8,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.StressTestApplication
@@ -28,6 +29,7 @@ import kotlin.io.path.Path
  */
 @StressTestApplication
 @RegistryKey(key = "se.enable.non.indexable.files.contributor", value = "true")
+@PerformanceUnitTest
 open class NonIndexableFileSearchPerformanceTest {
   @RegisterExtension
   private val projectModel: ProjectModelExtension = ProjectModelExtension()
@@ -116,6 +118,7 @@ open class NonIndexableFileSearchPerformanceTest {
 @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
 @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "false")
 @StressTestApplication
+@PerformanceUnitTest
 class NonIndexableFileSearchPerformanceBfsOneReadActionTest: NonIndexableFileSearchPerformanceTest(){
 
 }
@@ -123,6 +126,7 @@ class NonIndexableFileSearchPerformanceBfsOneReadActionTest: NonIndexableFileSea
 @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
 @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
 @StressTestApplication
+@PerformanceUnitTest
 class NonIndexableFileSearchPerformanceBfsManyReadActionsTest: NonIndexableFileSearchPerformanceTest(){
 
 }

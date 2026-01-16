@@ -84,9 +84,17 @@ inline fun <reified T: Any> MutableTGroup.testClass(
     indexingMode: List<IndexingMode> = emptyList(),
     platforms: List<KMPTestPlatform> = listOf(KMPTestPlatform.Unspecified),
     generatedPackagePostfix: String? = null,
+    annotations: List<TAnnotation> = emptyList(),
     block: MutableTSuite.() -> Unit
 ) {
-    suites += TSuiteImpl(T::class.java, generatedClassName, commonSuite, indexingMode, platforms, generatedPackagePostfix).apply(block)
+    val suite = TSuiteImpl(T::class.java, generatedClassName, commonSuite, indexingMode, platforms, generatedPackagePostfix).apply {
+        this.annotations += annotations
+        annotations.forEach { this.imports += it.className }
+
+        block()
+    }
+
+    suites += suite
 }
 
 fun MutableTGroup.testClass(

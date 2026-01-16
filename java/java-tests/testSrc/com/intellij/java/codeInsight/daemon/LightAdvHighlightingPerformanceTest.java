@@ -26,6 +26,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.impl.source.tree.injected.ConcatenationInjectorManager;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
@@ -37,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 
 @SkipSlowTestLocally
+@PerformanceUnitTest
 public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {

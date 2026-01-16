@@ -8,10 +8,12 @@ import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.controlFlow.LocalsControlFlowPolicy;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 
+@PerformanceUnitTest
 public class ControlFlowPerformanceTest extends LightJavaCodeInsightTestCase {
   @NonNls private static final String PATH = "/psi/controlFlowPerf/";
 

@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 
 @SkipSlowTestLocally
+@PerformanceUnitTest
 public class SmartPsiElementPointersPerformanceTest extends LightPlatformCodeInsightTestCase {
   private SmartPointerManagerImpl getPointerManager() {
     return (SmartPointerManagerImpl)SmartPointerManager.getInstance(getProject());

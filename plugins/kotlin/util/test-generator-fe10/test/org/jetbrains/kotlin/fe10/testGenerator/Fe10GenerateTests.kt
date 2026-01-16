@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fe10.testGenerator
 
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import org.jetbrains.kotlin.AbstractDataFlowValueRenderingTest
 import org.jetbrains.kotlin.addImport.AbstractK1AddImportTest
@@ -1438,7 +1439,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("kdoc", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
         }
 
-        testClass<AbstractK1MLPerformanceCompletionTest>(commonSuite = false) {
+        testClass<AbstractK1MLPerformanceCompletionTest>(commonSuite = false, annotations = listOf(TAnnotation<PerformanceUnitTest>())) {
             model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
             model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
         }

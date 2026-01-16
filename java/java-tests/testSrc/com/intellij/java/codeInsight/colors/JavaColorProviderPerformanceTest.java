@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.colors;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ui.ColorIcon;
@@ -9,6 +10,7 @@ import com.intellij.util.ui.ColorIcon;
 /**
  * @author Bas Leijdekkers
  */
+@PerformanceUnitTest
 public final class JavaColorProviderPerformanceTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override

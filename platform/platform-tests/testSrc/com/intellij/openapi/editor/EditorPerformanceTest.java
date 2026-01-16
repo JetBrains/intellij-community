@@ -6,11 +6,13 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 
+@PerformanceUnitTest
 public class EditorPerformanceTest extends AbstractEditorTest {
   public void testEditingWithALotOfHighlighters() {
     initText(StringUtil.repeat("\nLorem ipsum", 10_000));

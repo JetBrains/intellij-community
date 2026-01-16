@@ -50,6 +50,7 @@ import static org.junit.Assert.*;
 
 @RunFirst
 @SkipSlowTestLocally
+@PerformanceUnitTest
 public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
 
