@@ -30,7 +30,7 @@ jvm_library(
   name = "core",
   module_name = "intellij.platform.jewel.markdown.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form", "src/testFixtures/kotlin/**/*.kt", "src/testFixtures/kotlin/**/*.java", "src/testFixtures/kotlin/**/*.form"], allow_empty = True),
   resources = [":core_resources"],
   kotlinc_opts = ":custom_core",
   deps = [
