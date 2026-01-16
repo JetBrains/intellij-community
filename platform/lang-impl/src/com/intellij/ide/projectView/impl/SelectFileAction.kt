@@ -11,6 +11,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.PlatformDataKeys.TOOL_WINDOW
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.project.DumbAwareAction
@@ -75,6 +76,7 @@ internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecifi
     val id = getActionId(event)
     event.presentation.text = ActionsBundle.actionText(id)
     event.presentation.description = ActionsBundle.actionDescription(id)
+    SELECT_IN_LOG.debug { "SelectFileAction#update $id" }
     when (id) {
       SELECT_CONTEXT_FILE -> {
         event.presentation.isEnabledAndVisible = getSelector(event)?.run { target.canSelect(context) } == true
@@ -83,6 +85,7 @@ internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecifi
         val view = getView(event)
         event.presentation.isEnabled = event.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR) != null
         event.presentation.isVisible = view?.isSelectOpenedFileEnabled == true
+        SELECT_IN_LOG.debug { "SelectFileAction#update isVisible=${event.presentation.isVisible}" }
         event.project?.let { project ->
           if (event.presentation.isVisible && getFirstKeyboardShortcutText(id).isEmpty()) {
             val shortcut = getFirstKeyboardShortcutText("SelectIn")
