@@ -14,9 +14,23 @@ import java.util.*;
  */
 public final class JavaInMemoryCompiler {
 
+  private final JavaCompiler myCompiler = createJavaCompiler();
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private final JavaMemFileManager myFileManager = new JavaMemFileManager();
-  private final JavaCompiler myCompiler = ToolProvider.getSystemJavaCompiler();
+  private final JavaMemFileManager myFileManager = new JavaMemFileManager(myCompiler);
+
+  private static JavaCompiler createJavaCompiler() {
+    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    if (compiler == null) {
+      //workaround for IJPL-229691
+      try {
+        compiler = (JavaCompiler)Class.forName("com.sun.tools.javac.api.JavacTool").getMethod("create").invoke(null);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return compiler;
+  }
 
   public JavaInMemoryCompiler(File... classpath) {
     try {
@@ -99,8 +113,8 @@ public final class JavaInMemoryCompiler {
 
     private final List<InMemoryClassFile> myClassFiles = new ArrayList<>(2);
 
-    public JavaMemFileManager() {
-      super(ToolProvider.getSystemJavaCompiler().getStandardFileManager(null, null, null));
+    public JavaMemFileManager(JavaCompiler compiler) {
+      super(compiler.getStandardFileManager(null, null, null));
     }
 
     @Override
