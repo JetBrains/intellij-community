@@ -49,6 +49,9 @@ public interface ClassFileAnalyzer {
   @Throws(IOException::class)
   public fun processFile(path: Path)
 
+  public fun processFileContent(classFileContent: ByteArray)
+
+  @Deprecated("Use processFileContent instead", ReplaceWith("processFileContent(classFileContent)"))
   public fun processData(data: ByteArray)
 
   @Throws(IOException::class)

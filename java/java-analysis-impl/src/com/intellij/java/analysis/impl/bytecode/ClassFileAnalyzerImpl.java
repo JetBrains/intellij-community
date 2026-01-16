@@ -39,12 +39,17 @@ final class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnaly
   @Override
   public void processFile(@NotNull Path path) throws IOException {
     // ASM ClassReader in any case reads the whole file into memory
-    processData(Files.readAllBytes(path));
+    processFileContent(Files.readAllBytes(path));
   }
 
   @Override
   public void processData(byte @NotNull [] data) {
-    ClassReader cr = new ClassReader(data) {
+    processFileContent(data);
+  }
+
+  @Override
+  public void processFileContent(byte @NotNull [] classFileContent) {
+    ClassReader cr = new ClassReader(classFileContent) {
       @Override
       protected Label readLabel(int offset, Label[] labels) {
         if (offset >= labels.length) {
@@ -62,7 +67,7 @@ final class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnaly
 
   @Override
   public void processInputStream(@NotNull InputStream inputStream) throws IOException {
-    processData(inputStream.readAllBytes());
+    processFileContent(inputStream.readAllBytes());
   }
 
   @Override
