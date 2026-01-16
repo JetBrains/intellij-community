@@ -564,6 +564,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/DeprecatedSinceKotlinFun.kt");
         }
 
+        @TestMetadata("DoNotLiftShorter.kt")
+        public void testDoNotLiftShorter() throws Exception {
+            runTest("../testData/weighers/basic/DoNotLiftShorter.kt");
+        }
+
         @TestMetadata("DoNotPreferNullForNonNullable.kt")
         public void testDoNotPreferNullForNonNullable() throws Exception {
             runTest("../testData/weighers/basic/DoNotPreferNullForNonNullable.kt");
