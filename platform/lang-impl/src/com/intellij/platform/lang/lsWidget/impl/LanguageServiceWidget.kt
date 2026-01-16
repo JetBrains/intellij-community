@@ -23,7 +23,11 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
+import com.intellij.openapi.wm.impl.status.TextPanel
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.Icon
+import javax.swing.JPanel
 
 private const val maxIconsInStatusBar = 4
 
@@ -37,6 +41,9 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
   private var cachedWidgetItems: List<LanguageServiceWidgetItem> = emptyList()
 
   override fun ID(): String = LANGUAGE_SERVICES_WIDGET_ID
+
+  // Create a custom TextPanel that returns a fixed accessible name instead of the text value
+  override fun createComponent(): JPanel = LanguageServiceTextPanel()
 
   override fun createInstance(project: Project): StatusBarWidget = LanguageServiceWidget(project, scope)
 
@@ -137,5 +144,19 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
     }
 
     override fun actionPerformed(e: AnActionEvent) {}
+  }
+
+  private class LanguageServiceTextPanel : TextPanel.WithIconAndArrows() {
+    override fun getAccessibleContext(): AccessibleContext {
+      if (accessibleContext == null) {
+        accessibleContext = LanguageServiceAccessibleTextPanel()
+      }
+      return accessibleContext
+    }
+
+    private inner class LanguageServiceAccessibleTextPanel : AccessibleJComponent() {
+      override fun getAccessibleRole(): AccessibleRole = AccessibleRole.LABEL
+      override fun getAccessibleName(): String = LangBundle.message("language.services.widget")
+    }
   }
 }
