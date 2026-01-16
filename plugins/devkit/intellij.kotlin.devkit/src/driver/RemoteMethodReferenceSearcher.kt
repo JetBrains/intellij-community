@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.roots.TestSourcesFilter
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScope.EMPTY_SCOPE
 import com.intellij.psi.search.GlobalSearchScope.allScope
 import com.intellij.psi.search.RequestResultProcessor
@@ -18,15 +19,14 @@ import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.util.InheritanceUtil.isInheritorOrSelf
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.uast.*
 
 internal class RemoteMethodReferenceSearcher :
   QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters>() {
-  override fun processQuery(
-    queryParameters: MethodReferencesSearch.SearchParameters,
-    consumer: Processor<in PsiReference>,
-  ) {
+  override fun processQuery(queryParameters: MethodReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
     val targetMethod = queryParameters.method
     val methodName = ReadAction.compute<String, Throwable> { targetMethod.name }
 
@@ -57,27 +57,26 @@ internal class RemoteMethodReferenceSearcher :
                           ?: return@compute EMPTY_SCOPE
 
         // we don't care about resolve scope of the method itself
-        remoteClass.useScope.intersectWith(queryParameters.scopeDeterminedByUser)
+        // only search in project sources; when annotation comes from libraries, it may have a huge .useScope
+        remoteClass.useScope
+          .intersectWith(queryParameters.scopeDeterminedByUser)
+          .intersectWith(GlobalSearchScope.projectScope(project))
       },
       UsageSearchContext.IN_CODE,
       true,
       targetMethod,
       object : RequestResultProcessor() {
-        override fun processTextOccurrence(
-          element: PsiElement,
-          offsetInElement: Int,
-          consumer: Processor<in PsiReference>,
-        ): Boolean {
-          val method = element.toUElement(UMethod::class.java) ?: return true
+        override fun processTextOccurrence(element: PsiElement, offsetInElement: Int, consumer: Processor<in PsiReference>): Boolean {
+          // short-circuit without UAST conversion
+          if (element !is KtNamedFunction) return true
+          if (element.valueParameters.size != targetMethod.parameters.size) return true
+          val holderClass = element.containingClassOrObject ?: return true
+          if (holderClass !is KtClass || !holderClass.isInterface()) return true
 
-          val uClass = method.getContainingUClass() ?: return true
-          val psiMethodFound = method.javaPsi
-
-          if (psiMethodFound.parameters.size != targetMethod.parameters.size) {
-            // parameter count mismatch
-            return true
-          }
-
+          // target checks
+          val uMethod = element.toUElement(UMethod::class.java) ?: return true
+          val uClass = uMethod.getContainingUClass() ?: return true
+          val psiMethodFound = uMethod.javaPsi
           val psiClass = psiMethodFound.containingClass ?: return true
           if (!isRemoteInterface(psiClass)) return true
 

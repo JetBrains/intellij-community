@@ -7,6 +7,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScope.allScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.UseScopeEnlarger
@@ -31,6 +32,7 @@ internal class RemoteUseScopeEnlarger : UseScopeEnlarger() {
     val remoteClass = JavaPsiFacade.getInstance(project)
                         .findClass(REMOTE_ANNOTATION_FQN, allScope(project)) ?: return null
 
-    return remoteClass.useScope
+    // only search in project sources; when annotation comes from libraries, it may have a huge .useScope
+    return remoteClass.useScope.intersectWith(GlobalSearchScope.projectScope(project))
   }
 }
