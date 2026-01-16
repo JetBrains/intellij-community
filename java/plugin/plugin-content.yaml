@@ -98,9 +98,6 @@
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2/kotlin-metadata-jvm-2.jar
   reason: withProjectLibrary
-- name: lib/modules/intellij.debugger.streams.shared.jar
-  contentModules:
-  - name: intellij.debugger.streams.shared
 - name: lib/modules/intellij.java.backend.jar
   contentModules:
   - name: intellij.java.backend
