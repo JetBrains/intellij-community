@@ -50,6 +50,8 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
    * the ImmediatePainterTest to work.
    */
   fun setCursorPositionImmediately(editor: EditorImpl) {
+    editor.pauseBlinking()
+
     val animationStates = calculateUpdates(editor)
     for (state in animationStates) {
       editor.lastPosMap[state.caret] = state.finalPos
@@ -57,6 +59,8 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
     editor.myCaretCursor.setPositions(animationStates.map { state ->
       EditorImpl.CaretRectangle(state.finalPos, state.width, state.caret, state.isRtl, 1.0f)
     }.toTypedArray())
+
+    editor.resumeBlinking(editor.settings.caretBlinkPeriod.toLong())
   }
 
   // Replaying 128 requests is probably way too much, actually 2 should be enough. It shouldn't break
@@ -157,8 +161,7 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
     }
 
     editor.caretAnimationElapsed = 0.0
-    delay(editor.settings.caretBlinkPeriod.toLong())
-    editor.resumeBlinking()
+    editor.resumeBlinking(editor.settings.caretBlinkPeriod.toLong())
   }
 }
 

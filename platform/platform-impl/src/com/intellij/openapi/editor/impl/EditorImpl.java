@@ -1117,7 +1117,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     mySelectionModel.reinitSettings();
     caretRepaintService.setBlinking(mySettings.isBlinkCaret());
     caretRepaintService.setBlinkPeriod(mySettings.getCaretBlinkPeriod());
-    caretRepaintService.restart();
+    caretRepaintService.restartImmediately();
 
     myView.reinitSettings();
     if (myAdView != null) myAdView.reinitSettings();
@@ -1678,7 +1678,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void setCaretActive() {
     synchronized (caretRepaintService) {
       caretRepaintService.setEditor(this);
-      caretRepaintService.restart();
+      caretRepaintService.restartImmediately();
     }
   }
 
@@ -3212,10 +3212,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @ApiStatus.Internal
-  void resumeBlinking() {
+  void resumeBlinking(long after) {
     synchronized (caretRepaintService) {
       caretRepaintService.setEditor(this);
-      caretRepaintService.restart();
+      caretRepaintService.restart(after);
     }
   }
 
@@ -3367,7 +3367,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         caretRepaintService.setBlinking(blink);
         caretRepaintService.setBlinkPeriod(blinkPeriod);
         myIsShown = true;
-        caretRepaintService.restart();
+        caretRepaintService.restartImmediately();
       }
     }
 
