@@ -6,7 +6,6 @@ import com.intellij.devkit.core.icons.DevkitCoreIcons
 import com.intellij.ide.IconProvider
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import org.jetbrains.idea.devkit.driver.REMOTE_ANNOTATION_FQN
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.uast.UClass

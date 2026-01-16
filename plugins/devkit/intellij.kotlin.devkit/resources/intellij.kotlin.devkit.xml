@@ -109,6 +109,13 @@
                      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.PrivateExtensionClassInspection"
                      key="inspection.private.extension.class"/>
 
+    <useScopeEnlarger implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteUseScopeEnlarger"/>
+    <methodReferencesSearch implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteMethodReferenceSearcher"/>
+    <overridingMethodsSearch implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteMethodImplementationSearcher"/>
+    <allOverridingMethodsSearch implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteMethodAllImplementationSearcher"/>
+    <directClassInheritorsSearch implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteInterfaceDirectImplementationSearcher"/>
+    <classInheritorsSearch implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteInterfaceImplementationSearcher"/>
+
     <iconProvider implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteIconProvider" order="first"/>
 
     <registryKey key="devkit.inspections.forbidden.method.in.suspend.context" defaultValue="false"

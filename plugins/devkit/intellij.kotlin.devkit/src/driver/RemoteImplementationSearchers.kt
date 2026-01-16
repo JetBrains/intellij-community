@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.driver
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.kotlin.driver
 
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.application.ReadAction
@@ -83,8 +83,10 @@ internal class RemoteInterfaceImplementationSearcher : QueryExecutor<PsiClass, C
   }
 }
 
-private fun processRemoteTargetClass(classToProcess: PsiClass,
-                                     consumer: Processor<in PsiClass>): Boolean {
+private fun processRemoteTargetClass(
+  classToProcess: PsiClass,
+  consumer: Processor<in PsiClass>,
+): Boolean {
   return ReadAction.compute<Boolean, Throwable> {
     if (isRemoteInterface(classToProcess)) {
       val uClass = classToProcess.toUElementOfType<UClass>() ?: return@compute true
