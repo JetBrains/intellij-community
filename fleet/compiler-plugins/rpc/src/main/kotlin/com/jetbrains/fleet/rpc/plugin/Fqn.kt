@@ -32,4 +32,4 @@ val RPC_CORE_FQN: FqName = RPC_FQN.child(Name.identifier("core"))
 val REMOTE_RESOURCE_FQN: FqName = RPC_CORE_FQN.child(Name.identifier("RemoteResource"))
 val REMOTE_OBJECT_FQN = RPC_CORE_FQN.child(Name.identifier("RemoteObject"))
 
-val remoteApiDescriptorImplClassName = Name.identifier("\$RemoteApiDescriptor")
+val remoteApiDescriptorImplClassName = Name.identifier("_generated_RemoteApiDescriptor")
