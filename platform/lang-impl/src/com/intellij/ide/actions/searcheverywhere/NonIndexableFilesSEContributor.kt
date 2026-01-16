@@ -130,17 +130,16 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
 
       val psiItem = PsiManager.getInstance(project).getPsiFileSystemItem(file, alreadyInReadAction) ?: return true
       val itemDescriptor = FoundItemDescriptor<Any>(psiItem, matchingDegree)
-      return when {
-        alreadyInReadAction -> consumer.process(itemDescriptor)
-        else -> ReadAction.computeCancellable<Boolean, Throwable> { consumer.process(itemDescriptor) }
-      }
+      return ReadAction.nonBlocking <Boolean> { consumer.process(itemDescriptor) }.executeSynchronously()
     }
 
     val useBfs = Registry.`is`("se.enable.non.indexable.files.use.bfs")
     val useBfsUnderOneReadAction = !Registry.`is`("se.enable.non.indexable.files.use.bfs.blocking.read.actions")
     if (useBfs && useBfsUnderOneReadAction) {
       // BFS under one big cancellable read action
-      val filesDeque = ReadAction.computeCancellable<FilesDeque, Throwable> { FilesDeque.nonIndexableDequeue(project, true) }
+      val filesDeque = ReadAction.nonBlocking<FilesDeque> {
+        FilesDeque.nonIndexableDequeue(project, true)
+      }.executeSynchronously()
       ReadAction.nonBlocking<Unit> {
         while (true) {
           progressIndicator.checkCanceled()
@@ -151,7 +150,9 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
     }
     else if (useBfs) {
       // BFS with many small blocking read actions
-      val filesDeque = ReadAction.computeCancellable<FilesDeque, Throwable> { FilesDeque.nonIndexableDequeue(project, false) }
+      val filesDeque = ReadAction.nonBlocking<FilesDeque> {
+        FilesDeque.nonIndexableDequeue(project, false)
+      }.executeSynchronously()
       while (true) {
         progressIndicator.checkCanceled()
         val file = filesDeque.computeNext()
@@ -184,9 +185,9 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
           val psiItem = PsiManager.getInstance(project).getPsiFileSystemItem(file, alreadyInReadAction = false) ?: continue
           val weight = matchingDegree * (otherNameMatchers.size - i) / (otherNameMatchers.size + 1)
           val itemDescriptor = FoundItemDescriptor<Any>(psiItem, weight)
-          if (!ReadAction.computeCancellable<Boolean, Throwable> {
+          if (!ReadAction.nonBlocking <Boolean> {
             consumer.process(itemDescriptor)
-          }) return
+          }.executeSynchronously()) return
           break
         }
       }
