@@ -3,6 +3,8 @@
     "actions": {
       "addFile.svg": "actions/addFile.svg",
       "addToDictionary.svg": "actions/addToDictionary.svg",
+      "addExcludedRoot.svg": "modules/addExcludedRoot.svg",
+      "addLink.svg": "toolbarDecorator/addLink.svg",
       "buildLoadChanges.svg": "actions/buildLoadChanges.svg",
       "buildAutoReloadChanges.svg": "actions/buildAutoReloadChanges.svg",
       "checked.svg": ["actions/checked.svg", "actions/setDefault.svg"],
@@ -700,6 +702,7 @@
       "ideaProject.svg": ["nodes/ideaProject.svg", "nodes/enterpriseProject.svg"],
       "include.svg": "nodes/include.svg",
       "interface.svg": "nodes/interface.svg",
+      "javaDocFolder.svg": "nodes/javaDocFolder.svg",
       "jdk.svg": "nodes/ppJdk.svg",
       "lambda.svg": "nodes/lambda.svg",
       "library.svg": "nodes/ppLib.svg",

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.icons;
 
 import com.intellij.ui.IconManager;
@@ -893,7 +893,7 @@ public class AllIcons {
   }
 
   public static final class Modules {
-    /** 16x16 */ public static final @NotNull Icon AddExcludedRoot = load("modules/addExcludedRoot.svg", -551171712, 2);
+    /** 16x16 */ public static final @NotNull Icon AddExcludedRoot = load("expui/actions/addExcludedRoot.svg", "modules/addExcludedRoot.svg", -551171712, 2);
     /** 16x16 */ public static final @NotNull Icon Annotation = load("expui/nodes/annotationFolder.svg", "modules/annotation.svg", 394273456, 0);
     /** 16x16 */ public static final @NotNull Icon EditFolder = load("expui/nodes/editFolder.svg", "modules/editFolder.svg", -260654478, 0);
     /** 16x16 */ public static final @NotNull Icon ExcludedGeneratedRoot = load("expui/nodes/excludedGenerated.svg", "modules/excludedGeneratedRoot.svg", -1551632995, 0);
@@ -967,7 +967,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Include = load("expui/nodes/include.svg", "nodes/include.svg", -1043076621, 0);
     /** 16x16 */ public static final @NotNull Icon Interface = load("expui/nodes/interface.svg", "nodes/interface.svg", -371611298, 1);
     /** 16x16 */ public static final @NotNull Icon JarDirectory = load("nodes/jarDirectory.svg", -692661187, 0);
-    /** 16x16 */ public static final @NotNull Icon JavaDocFolder = load("nodes/javaDocFolder.svg", 135532303, 0);
+    /** 16x16 */ public static final @NotNull Icon JavaDocFolder = load("expui/nodes/javaDocFolder.svg", "nodes/javaDocFolder.svg", 135532303, 0);
     /** 16x16 */ public static final @NotNull Icon JavaModule = load("expui/nodes/moduleJava.svg", "nodes/javaModule.svg", 2003423238, 0);
     /** 16x16 */ public static final @NotNull Icon JunitTestMark = load("expui/nodes/junitTestMark.svg", "nodes/junitTestMark.svg", -1344036663, 0);
     /** 16x16 */ public static final @NotNull Icon KeymapAnt = load("expui/nodes/folder.svg", "nodes/keymapAnt.svg", 1301975081, 0);
@@ -1356,7 +1356,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon AddFolder = load("toolbarDecorator/addFolder.svg", 395130952, 2);
     /** 16x16 */ public static final @NotNull Icon AddIcon = load("toolbarDecorator/addIcon.svg", 928060610, 2);
     /** 16x16 */ public static final @NotNull Icon AddJira = load("toolbarDecorator/addJira.svg", -1559078405, 2);
-    /** 16x16 */ public static final @NotNull Icon AddLink = load("toolbarDecorator/addLink.svg", 740343788, 2);
+    /** 16x16 */ public static final @NotNull Icon AddLink = load("expui/actions/addLink.svg", "toolbarDecorator/addLink.svg", 740343788, 2);
     /** 16x16 */ public static final @NotNull Icon AddPattern = load("toolbarDecorator/addPattern.svg", 1133058713, 2);
     /** 16x16 */ public static final @NotNull Icon AddRemoteDatasource = load("toolbarDecorator/addRemoteDatasource.svg", -1532941571, 2);
     /** 16x16 */ public static final @NotNull Icon AddYouTrack = load("toolbarDecorator/addYouTrack.svg", -1383628266, 2);
