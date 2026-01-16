@@ -167,7 +167,32 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
       object = otherObject;
     }
     if (object == null) return Collections.emptySet();
-    return new YamlObjectAdapter(object).getPropertyList().stream().map(p -> p.getName()).collect(Collectors.toSet());
+
+    int mappingIndent = indentOf(object);
+    int caretIndent = indentOf(computedPosition);
+
+    // Find the first property to determine the "baseline" indent for properties in this mapping
+    List<YAMLKeyValue> keyValues = object.getKeyValues().stream().toList();
+    if (!keyValues.isEmpty()) {
+      int firstPropIndent = indentOf(keyValues.getFirst());
+      if (caretIndent > firstPropIndent) {
+        // Caret is deeper than existing properties in this mapping -> it's a new nested object
+        return Collections.emptySet();
+      }
+    } else {
+      // Mapping is empty, check against the mapping's own indent
+      // Usually, nested mapping keys are indented relative to the parent key.
+      if (caretIndent > mappingIndent) {
+        // Logically a new level
+        return Collections.emptySet();
+      }
+    }
+
+    // If we are at the same level as the mapping's properties, return the names to prevent duplicates
+    return new YamlObjectAdapter(object).getPropertyList().stream()
+      .map(p -> p.getName())
+      .filter(Objects::nonNull)
+      .collect(Collectors.toSet());
   }
 
   @Override
