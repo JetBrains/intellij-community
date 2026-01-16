@@ -470,6 +470,25 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
   }
 
   @Test
+  fun `check file with spaces is surrounded with single quotes on insertion`() {
+    doTest { fixture ->
+      val tempDir = createTempDir().also {
+        it.createFile("file with spaces.txt")
+        it.createFile("abcde.txt")
+        it.createDirectory("dir")
+      }
+
+      fixture.type("dir $tempDir/")
+      fixture.callCompletionPopup()
+      assertThat(fixture.getLookupElements().map { it.lookupString })
+        .contains("file with spaces.txt", "abcde.txt", "dir$separator")
+
+      fixture.insertCompletionItem("file with spaces.txt")
+      fixture.assertCommandTextState("dir '$tempDir${separator}file with spaces.txt<cursor>'")
+    }
+  }
+
+  @Test
   fun `check files are suggested when there is no command and inserted correctly`() {
     doTest { fixture ->
       val tempDir = createTempDir().also {
