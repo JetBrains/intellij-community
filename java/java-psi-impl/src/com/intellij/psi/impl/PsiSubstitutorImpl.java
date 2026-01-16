@@ -183,7 +183,8 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
 
       if (type.isExtends()) {
         if (newBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-          return PsiWildcardType.createUnbounded(type.getManager());
+          return PsiWildcardType.createUnbounded(type.getManager())
+            .withNullability(newBound.getNullability());
         }
         return PsiWildcardType.createExtends(type.getManager(), newBound);
       }

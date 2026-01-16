@@ -123,7 +123,13 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
         new Pair<>("AugmentedInferenceAgreesWithBaseInference.java", 33), // see: IDEA-377683
         new Pair<>("NullnessUnspecifiedTypeParameter.java", 33), // see: IDEA-377683
         new Pair<>("TypeVariableMinusNullVsTypeVariable.java", 28), // see: IDEA-377683
-        new Pair<>("TypeVariableMinusNullVsTypeVariable.java", 30) // see: IDEA-377683
+        new Pair<>("TypeVariableMinusNullVsTypeVariable.java", 30), // see: IDEA-377683
+
+        new Pair<>("ComplexParametric.java", 238), // see: IDEA-384752
+        new Pair<>("ComplexParametric.java", 243), // see: IDEA-384752
+        new Pair<>("ComplexParametric.java", 246), // see: IDEA-384752
+        new Pair<>("ComplexParametric.java", 261) // see: IDEA-384752
+
       )
     ),
     new SkipIndividuallyFilter( //cases to investigate later (with unspecified annotation and complicated to understand). (line number starts from 0)
@@ -184,8 +190,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
         new Pair<>("SuperVsObject.java", 24), // see: IDEA-379303
         new Pair<>("SuperNullableForNonNullableTypeParameter.java", 27) // see: IDEA-379303
       )
-    ),
-    new CallWithParameterWithNestedGenericsFilter() // see: IDEA-377682
+    )
   );
 
   private static final LightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
@@ -580,8 +585,9 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
              "inspection.nullable.problems.at.local.variable" -> warnings.put(anchor, "jspecify_unrecognized_location");
         case "inspection.nullable.problems.Nullable.method.overrides.NotNull",
              "inspection.nullable.problems.NotNull.parameter.overrides.Nullable",
-             "assigning.a.collection.of.nullable.elements",
-             "assigning.a.collection.of.notnull.elements",
+             "complex.problem.with.nullability",
+             "assigning.a.class.with.nullable.elements",
+             "assigning.a.class.with.notnull.elements",
              "returning.a.class.with.nullable.arguments",
              "returning.a.class.with.notnull.arguments"
           //,  "non.null.type.argument.is.expected"  //todo see IDEA-377707
