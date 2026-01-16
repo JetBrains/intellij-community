@@ -71,8 +71,6 @@ kotlin {
     implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.test.jvm1610416103.get().let { "${it.group}:kotlinx-coroutines-test:${it.version}" }) {
       isTransitive = false
     }
-  }
-  sourceSets.jvmTest.dependencies {
     implementation(project(":fleet.junit"))
   }
   // KOTLIN__MARKER_END

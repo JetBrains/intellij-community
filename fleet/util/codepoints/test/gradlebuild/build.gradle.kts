@@ -58,8 +58,6 @@ kotlin {
       exclude(group = "org.jetbrains", module = "annotations")
     }
     implementation(project(":fleet.util.codepoints"))
-  }
-  sourceSets.jvmTest.dependencies {
     implementation(project(":fleet.junit"))
   }
   // KOTLIN__MARKER_END
