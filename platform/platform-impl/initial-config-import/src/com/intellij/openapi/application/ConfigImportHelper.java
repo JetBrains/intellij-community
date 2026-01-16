@@ -195,7 +195,7 @@ public final class ConfigImportHelper {
           log.error("Couldn't backup current config or delete current config directory", e);
         }
       }
-      else if (wizardEnabled && (System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null || PluginManagerCore.isRunningFromSources())) {
+      else if (wizardEnabled && (!PlatformUtils.isJetBrainsClient() && System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null || PluginManagerCore.isRunningFromSources())) {
         log.info("skipping import because of non-standard config directory");
       }
       else {
