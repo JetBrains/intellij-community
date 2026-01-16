@@ -84,7 +84,7 @@ class SubscriptionExpirationDialog(project: Project?, private val settings: Subs
         label(dialogTitle()).component.font = JBFont.h1()
       }
       row {
-        browserLink(IdeBundle.message("subscription.dialog.link", platformName), "https://www.jetbrains.com/idea/features")
+        browserLink(IdeBundle.message("subscription.dialog.link", platformName), "https://www.jetbrains.com/products/compare/?product=idea&product=idea-ult")
         bottomGap(BottomGap.MEDIUM)
       }
 
