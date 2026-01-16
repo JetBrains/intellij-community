@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.analysis.impl.bytecode;
 
-import com.intellij.java.analysis.bytecode.ClassFileAnalyzer;
 import com.intellij.java.analysis.bytecode.JvmBytecodeDeclarationProcessor;
 import com.intellij.java.analysis.bytecode.JvmBytecodeReferenceProcessor;
 import com.intellij.java.analysis.bytecode.JvmClassBytecodeDeclaration;
@@ -11,14 +10,10 @@ import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
 import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-final class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
+final class ClassFileAnalysisVisitor extends ClassVisitor {
   private static final Label LABEL = new Label();
 
   private final AnnotationDependencyVisitor myAnnotationVisitor = new AnnotationDependencyVisitor();
@@ -29,26 +24,14 @@ final class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnaly
 
   private JvmClassBytecodeDeclaration myCurrentClass;
 
-  ClassFileAnalyzerImpl(@Nullable JvmBytecodeDeclarationProcessor declarationProcessor,
-                        @Nullable JvmBytecodeReferenceProcessor referenceProcessor) {
+  ClassFileAnalysisVisitor(@Nullable JvmBytecodeDeclarationProcessor declarationProcessor,
+                           @Nullable JvmBytecodeReferenceProcessor referenceProcessor) {
     super(Opcodes.API_VERSION);
     myDeclarationProcessor = declarationProcessor;
     myReferenceProcessor = referenceProcessor;
   }
 
-  @Override
-  public void processFile(@NotNull Path path) throws IOException {
-    // ASM ClassReader in any case reads the whole file into memory
-    processFileContent(Files.readAllBytes(path));
-  }
-
-  @Override
-  public void processData(byte @NotNull [] data) {
-    processFileContent(data);
-  }
-
-  @Override
-  public void processFileContent(byte @NotNull [] classFileContent) {
+  void processFileContent(byte @NotNull [] classFileContent) {
     ClassReader cr = new ClassReader(classFileContent) {
       @Override
       protected Label readLabel(int offset, Label[] labels) {
@@ -63,11 +46,6 @@ final class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnaly
       }
     };
     cr.accept(this, ClassReader.SKIP_FRAMES);
-  }
-
-  @Override
-  public void processInputStream(@NotNull InputStream inputStream) throws IOException {
-    processFileContent(inputStream.readAllBytes());
   }
 
   @Override
