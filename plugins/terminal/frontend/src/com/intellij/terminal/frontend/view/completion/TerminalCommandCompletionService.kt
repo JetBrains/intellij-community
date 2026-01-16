@@ -171,8 +171,8 @@ class TerminalCommandCompletionService(
       return fallbackContributor.getCompletionSuggestions(context)
     }
 
-    val maxPrefixLength = nonEmptyResults.maxOf { it.prefix.length }
-    val maxLenResults = nonEmptyResults.filter { it.prefix.length == maxPrefixLength }
+    val maxReplacementLength = nonEmptyResults.maxOf { it.beforePrefixReplacementLength }
+    val maxLenResults = nonEmptyResults.filter { it.beforePrefixReplacementLength == maxReplacementLength }
     if (maxLenResults.size == 1) {
       return maxLenResults.first()
     }
@@ -181,7 +181,12 @@ class TerminalCommandCompletionService(
       .flatMap { it.suggestions }
       .distinctBy { it.name }
       .toList()
-    return TerminalCommandCompletionResult(suggestions, maxLenResults.first().prefix)
+    return TerminalCommandCompletionResult(
+      suggestions,
+      prefix = maxLenResults.first().prefix,
+      beforePrefixReplacementLength = maxReplacementLength,
+      afterPrefixReplacementLength = maxLenResults.first().afterPrefixReplacementLength,
+    )
   }
 
   private fun submitSuggestions(
@@ -197,7 +202,7 @@ class TerminalCommandCompletionService(
       val element = it.toLookupElement()
       CompletionResult.wrap(element, prefixMatcher, sorter)
     }
-    process.addItems(items)
+    process.addItems(items, result.beforePrefixReplacementLength, result.afterPrefixReplacementLength)
   }
 
   /**

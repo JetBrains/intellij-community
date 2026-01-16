@@ -74,19 +74,34 @@ private class TerminalLookupListener : LookupListener {
       return false
     }
 
-    // First step - remove the typed prefix
-    val commandSize = lookup.itemPattern(item).length
-    if (commandSize > 0) {
-      terminalInput.sendBytes(ByteArray(commandSize) { Ascii.DEL })
+    // Get the active process to retrieve replacement lengths
+    val process = TerminalCommandCompletionService.getInstance(lookup.project).activeProcess
+    val beforeReplacementLength = process?.beforePrefixReplacementLength ?: 0
+    val afterReplacementLength = process?.afterPrefixReplacementLength ?: 0
+
+    // First step - remove characters after cursor (if any)
+    // Move right and then backspace to delete text after cursor
+    if (afterReplacementLength > 0) {
+      repeat(afterReplacementLength) {
+        terminalInput.sendRight()
+      }
+      terminalInput.sendBytes(ByteArray(afterReplacementLength) { Ascii.DEL })
     }
 
-    // Second step - insert the completion item
+    // Second step - remove the typed prefix AND beforePrefixReplacementLength
+    val typedPrefixLength = lookup.itemPattern(item).length
+    val charsToRemove = typedPrefixLength + beforeReplacementLength
+    if (charsToRemove > 0) {
+      terminalInput.sendBytes(ByteArray(charsToRemove) { Ascii.DEL })
+    }
+
+    // Third step - insert the completion item
     val suggestion = item.`object` as ShellCompletionSuggestion
     val realInsertValue = suggestion.insertValue?.replace("{cursor}", "")
     val escapedInsertValue = StringUtil.escapeChar(realInsertValue ?: suggestion.name, ' ')
     terminalInput.sendString(escapedInsertValue)
 
-    // Third step - move the cursor to the custom position if it is specified
+    // Fourth step - move the cursor to the custom position if it is specified
     val cursorOffset = suggestion.insertValue?.indexOf("{cursor}")
     if (cursorOffset != null && cursorOffset != -1) {
       val delta = escapedInsertValue.length - cursorOffset

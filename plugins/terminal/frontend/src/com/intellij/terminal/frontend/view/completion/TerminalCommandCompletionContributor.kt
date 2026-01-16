@@ -34,4 +34,8 @@ internal data class TerminalCommandCompletionContext(
 internal data class TerminalCommandCompletionResult(
   val suggestions: List<ShellCompletionSuggestion>,
   val prefix: String,
+  /** The length of the text to be replaced before the prefix when a completion item is inserted. */
+  val beforePrefixReplacementLength: Int = 0,
+  /** The length of the text to be replaced after the prefix when a completion item is inserted. */
+  val afterPrefixReplacementLength: Int = 0,
 )
