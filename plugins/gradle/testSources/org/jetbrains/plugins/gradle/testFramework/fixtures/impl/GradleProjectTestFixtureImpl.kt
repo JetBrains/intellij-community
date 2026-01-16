@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
@@ -32,10 +32,11 @@ import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskFinished
 
 internal class GradleProjectTestFixtureImpl(
+  private val fixtureName: String,
   override val projectName: String,
   override val gradleVersion: GradleVersion,
   private val javaVersionRestriction: JavaVersionRestriction,
-  private val configureProject: FileTestFixture.Builder.() -> Unit
+  private val configureProject: FileTestFixture.Builder.() -> Unit,
 ) : GradleProjectTestFixture {
 
   override lateinit var gradleJvmFixture: GradleJvmTestFixture
@@ -76,7 +77,7 @@ internal class GradleProjectTestFixtureImpl(
     gradleJvmFixture.setUp()
 
     gradleJvmFixture.withProjectSettingsConfigurator {
-      fileFixture = FileTestFixtureImpl("GradleTestFixture/$gradleVersion/$projectName") {
+      fileFixture = FileTestFixtureImpl("GradleTestFixture/$gradleVersion/$fixtureName", projectName) {
         configureProject()
         excludeFilePatterns("glob:**/.gradle{,/**}", "glob:**/build{,/**}")
         withGradleWrapper(gradleVersion)
@@ -89,7 +90,7 @@ internal class GradleProjectTestFixtureImpl(
 
     _project = runBlocking {
       awaitOpenProjectActivity {
-        openProjectAsync(fileFixture.root)
+        openProjectAsync(fileFixture.projectRoot)
       }
     }
   }

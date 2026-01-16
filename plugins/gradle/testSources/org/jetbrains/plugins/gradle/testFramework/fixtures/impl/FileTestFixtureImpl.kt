@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
@@ -46,7 +46,8 @@ import java.util.Optional
 
 internal class FileTestFixtureImpl(
   private val relativePath: String,
-  private val configure: FileTestFixture.Builder.() -> Unit
+  private val relativeProjectPath: String,
+  private val configure: FileTestFixture.Builder.() -> Unit,
 ) : FileTestFixture {
 
   private var isInitialized: Boolean = false
@@ -57,9 +58,11 @@ internal class FileTestFixtureImpl(
 
   private lateinit var testRootDisposable: Disposable
   private lateinit var fixtureRoot: VirtualFile
+  private lateinit var fixtureProjectRoot: VirtualFile
   private lateinit var fixtureStateFile: VirtualFile
 
   override val root: VirtualFile get() = fixtureRoot
+  override val projectRoot: VirtualFile get() = fixtureProjectRoot
 
   override fun setUp() {
     isInitialized = false
@@ -70,11 +73,12 @@ internal class FileTestFixtureImpl(
 
     fixtureRoot = createFixtureRoot(relativePath)
     fixtureStateFile = createFixtureStateFile()
+    fixtureProjectRoot = createProjectRoot()
 
     val configuration = createFixtureConfiguration()
 
     excludedFiles = configuration.excludedFiles
-      .map { root.toNioPath().getResolvedPath(it) }
+      .map { projectRoot.toNioPath().getResolvedPath(it) }
       .toSet()
     excludedFilePatterns = configuration.excludedFilePatterns
 
@@ -114,6 +118,12 @@ internal class FileTestFixtureImpl(
   private fun createFixtureStateFile(): VirtualFile {
     return runWriteActionAndGet {
       root.findOrCreateFile("_FileTestFixture.xml")
+    }
+  }
+
+  private fun createProjectRoot(): VirtualFile {
+    return runWriteActionAndGet {
+      root.findOrCreateDirectory(relativeProjectPath)
     }
   }
 
@@ -162,9 +172,10 @@ internal class FileTestFixtureImpl(
 
   private suspend fun configureFixtureCaches(configuration: Configuration) {
     runCatching {
-      if (!configuration.areContentsEqual(root)) {
+      if (!configuration.areContentsEqual(projectRoot)) {
         invalidateFixtureCaches()
-        configuration.createFiles(root)
+        fixtureProjectRoot = createProjectRoot()
+        configuration.createFiles(projectRoot)
       }
       root.refreshAndAwait()
     }
@@ -186,7 +197,7 @@ internal class FileTestFixtureImpl(
   }
 
   override fun snapshot(relativePath: String) {
-    snapshot(root.toNioPath().getResolvedPath(relativePath))
+    snapshot(projectRoot.toNioPath().getResolvedPath(relativePath))
   }
 
   private fun snapshot(path: Path) {
@@ -203,7 +214,7 @@ internal class FileTestFixtureImpl(
   }
 
   override fun rollback(relativePath: String) {
-    rollback(root.toNioPath().getResolvedPath(relativePath))
+    rollback(projectRoot.toNioPath().getResolvedPath(relativePath))
   }
 
   private fun rollback(path: Path) {
