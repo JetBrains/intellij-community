@@ -313,15 +313,13 @@ describe('task MCP integration', {timeout: 30000}, () => {
       assert.equal(result.epic_id, epic.issue.id)
     })
 
-    it('can mark a child in progress on create', async () => {
-      const epic = await client.callTool('task_start', {user_request: 'Decompose Start Test'})
+    it('auto-starts a single child on create', async () => {
+      const epic = await client.callTool('task_start', {user_request: 'Decompose Auto Start Test'})
 
       const result = await client.callTool('task_decompose', {
         epic_id: epic.issue.id,
-        start_child_index: 0,
         sub_issues: [
-          {title: 'Sub 1', description: 'First', acceptance: 'Done', design: 'Simple'},
-          {title: 'Sub 2', description: 'Second', acceptance: 'Done', design: 'Simple'}
+          {title: 'Sub 1', description: 'First', acceptance: 'Done', design: 'Simple'}
         ]
       })
 

@@ -52,7 +52,7 @@ const tools = [
   },
   {
     name: 'task_decompose',
-    description: 'Create sub-issues under epic',
+    description: 'Create sub-issues under epic (auto-starts single child)',
     inputSchema: {
       type: 'object',
       additionalProperties: false,
@@ -74,7 +74,6 @@ const tools = [
             required: ['title', 'description', 'acceptance', 'design']
           }
         },
-        start_child_index: {type: 'integer', description: 'Index in sub_issues to set in_progress after creation'},
         update_epic_acceptance: {type: 'string'}
       },
       required: ['epic_id', 'sub_issues']
