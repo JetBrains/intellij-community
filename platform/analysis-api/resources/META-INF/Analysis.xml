@@ -1,4 +1,5 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="Analysis.analyzer.xml"/>
   <extensionPoints>
     <extensionPoint name="languageInjector" interface="com.intellij.psi.LanguageInjector" dynamic="true"/>
     <extensionPoint name="completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP" dynamic="true">
@@ -8,42 +9,17 @@
     <extensionPoint name="gotoDeclarationHandler" interface="com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler"
                     dynamic="true"/>
     <extensionPoint name="completion.skip" interface="com.intellij.codeInsight.completion.CompletionPreselectSkipper" dynamic="true"/>
-    <extensionPoint name="weigher" beanClass="com.intellij.psi.WeigherExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.psi.Weigher"/>
-    </extensionPoint>
-    <extensionPoint name="lang.documentationProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.lang.documentation.DocumentationProvider"/>
-    </extensionPoint>
     <extensionPoint name="inspectionCustomComponent" interface="com.intellij.codeInspection.options.CustomComponentExtension"
                     dynamic="true"/>
     <extensionPoint name="highlightErrorFilter" interface="com.intellij.codeInsight.highlighting.HighlightErrorFilter" area="IDEA_PROJECT" dynamic="true"/>
-    <extensionPoint name="codeInsight.containerProvider"
-                    interface="com.intellij.codeInsight.ContainerProvider"
-                    dynamic="true"/>
 
     <extensionPoint name="fileContextProvider" interface="com.intellij.psi.FileContextProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider" dynamic="true"/>
 
-    <extensionPoint name="localInspection" beanClass="com.intellij.codeInspection.LocalInspectionEP" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInspection.LocalInspectionTool"/>
-    </extensionPoint>
-
-    <extensionPoint name="globalInspection" beanClass="com.intellij.codeInspection.InspectionEP" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInspection.GlobalInspectionTool"/>
-    </extensionPoint>
-
-    <extensionPoint name="inspectionToolProvider" interface="com.intellij.codeInspection.InspectionToolProvider" dynamic="true"/>
-    <extensionPoint name="dynamicInspectionsProvider" interface="com.intellij.codeInspection.ex.DynamicInspectionsProvider" dynamic="true"/>
-    <!--suppress PluginXmlValidity -->
-    <extensionPoint name="codeInspection.InspectionExtension" interface="com.intellij.codeInspection.lang.InspectionExtensionsFactory" dynamic="true"/>
     <extensionPoint name="inspectionsReportConverter" interface="com.intellij.codeInspection.InspectionsReportConverter" dynamic="true"/>
 
     <extensionPoint name="lang.inspectionSuppressor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInspection.InspectionSuppressor"/>
-    </extensionPoint>
-
-    <extensionPoint name="intentionAction" beanClass="com.intellij.codeInsight.intention.IntentionActionBean" dynamic="true">
-      <with tag="className" implements="com.intellij.codeInsight.intention.CommonIntentionAction"/>
     </extensionPoint>
 
     <extensionPoint name="liveTemplateContext" beanClass="com.intellij.codeInsight.template.LiveTemplateContextBean" dynamic="true">
@@ -56,10 +32,7 @@
 
     <extensionPoint name="liveTemplateMacro" interface="com.intellij.codeInsight.template.Macro" dynamic="true"/>
 
-    <extensionPoint name="documentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider" dynamic="true"/>
-
     <extensionPoint name="localFileSystemTimestampEvaluator" interface="com.intellij.openapi.vfs.impl.local.LocalFileSystemTimestampEvaluator" dynamic="true"/>
-    <extensionPoint name="inspectionElementsMerger" interface="com.intellij.codeInspection.ex.InspectionElementsMerger" dynamic="true"/>
     <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter" dynamic="true"/>
     <extensionPoint name="optionController" interface="com.intellij.codeInspection.options.OptionControllerProvider" dynamic="true"/>
     <extensionPoint name="formatting.caretRestorationDecider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
