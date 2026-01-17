@@ -10,6 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.testFramework.teamCity.TeamCityPrinterKt;
 import com.intellij.teamcity.TeamCityClient;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestLoggerFactory;
@@ -63,9 +64,9 @@ public class TestAll implements Test {
   private static final Filter PERFORMANCE_ONLY = new Filter() {
     @Override
     public boolean shouldRun(Description description) {
-      String className = description.getClassName();
-      String methodName = description.getMethodName();
-      return TestFrameworkUtil.isPerformanceTest(methodName, className, description.getTestClass());
+      return description.getAnnotation(PerformanceUnitTest.class) != null ||
+             description.getTestClass() != null && description.getTestClass().isAnnotationPresent(PerformanceUnitTest.class) ||  // for methods of classes w/ @PerformanceUnitTest
+             ContainerUtil.exists(description.getChildren(), this::shouldRun);  // recursively
     }
 
     @Override
@@ -443,7 +444,7 @@ public class TestAll implements Test {
       }
 
       if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)) {
-        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass.getSimpleName(), null);
+        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass);
         boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
         if (runEverything) return createJUnit4Adapter(testCaseClass);
 
@@ -477,7 +478,7 @@ public class TestAll implements Test {
           else {
             String name = ((TestCase)test).getName();
             if ("warning".equals(name)) return; // Mute TestSuite's "no tests found" warning
-            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass.getSimpleName(), testCaseClass))) {
+            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass))) {
               return;
             }
 
@@ -521,7 +522,7 @@ public class TestAll implements Test {
 
       // Maybe JUnit 4 test?
       if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)) {
-        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass.getSimpleName(), null);
+        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass);
         boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
         if (runEverything) return true;
 

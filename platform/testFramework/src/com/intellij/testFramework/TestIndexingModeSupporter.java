@@ -167,7 +167,7 @@ public interface TestIndexingModeSupporter {
         if (!Modifier.isPublic(declaredMethod.getModifiers())) continue;
         String methodName = declaredMethod.getName();
         if (!methodName.startsWith("test")) continue;
-        if (TestFrameworkUtil.isPerformanceTest(methodName, aClass.getName(), aClass)) continue;
+        if (TestFrameworkUtil.isPerformanceTest(methodName, aClass)) continue;
         if (handler.shouldIgnore(declaredMethod)) continue;
         TestIndexingModeSupporter aCase = constructor.newInstance();
         aCase.setIndexingMode(handler.getIndexingMode());

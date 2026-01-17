@@ -177,23 +177,23 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
     throws NoSuchMethodException, ClassNotFoundException, IllegalAccessException {
     MethodHandle included = MethodHandles.publicLookup()
       .findStatic(Class.forName("com.intellij.TestCaseLoader", true, classLoader),
-                  "isClassIncluded", MethodType.methodType(boolean.class, String.class));
+                  "isClassIncluded", MethodType.methodType(boolean.class, Class.class));
     return new PostDiscoveryFilter() {
       record LastCheckResult(String className, FilterResult result) {
       }
 
       private LastCheckResult myLastResult = null;
 
-      private FilterResult isIncluded(String className) {
-        if (myLastResult == null || !myLastResult.className.equals(className)) {
-          myLastResult = new LastCheckResult(className, isIncludedImpl(className));
+      private FilterResult isIncluded(Class<?> aClass) {
+        if (myLastResult == null || !myLastResult.className.equals(aClass.getName())) {
+          myLastResult = new LastCheckResult(aClass.getName(), isIncludedImpl(aClass));
         }
         return myLastResult.result;
       }
 
-      private FilterResult isIncludedImpl(String className) {
+      private FilterResult isIncludedImpl(Class<?> aClass) {
         try {
-          if ((boolean)included.invokeExact(className)) {
+          if ((boolean)included.invokeExact(aClass)) {
             return FilterResult.included(null);
           }
           return FilterResult.excluded(null);
@@ -213,10 +213,10 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
           return FilterResult.included("No source for descriptor");
         }
         if (source instanceof MethodSource methodSource) {
-          return isIncluded(methodSource.getClassName());
+          return isIncluded(methodSource.getJavaClass());
         }
         if (source instanceof ClassSource classSource) {
-          return isIncluded(classSource.getClassName());
+          return isIncluded(classSource.getJavaClass());
         }
         return FilterResult.included("Unknown source type " + source.getClass());
       }

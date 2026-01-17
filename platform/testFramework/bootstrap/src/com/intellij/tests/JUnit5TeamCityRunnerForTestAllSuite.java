@@ -111,11 +111,11 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     throws NoSuchMethodException, ClassNotFoundException, IllegalAccessException {
     final MethodHandle method = MethodHandles.publicLookup()
       .findStatic(Class.forName("com.intellij.testFramework.TestFrameworkUtil", true, classLoader),
-                  "isPerformanceTest", MethodType.methodType(boolean.class, String.class, String.class));
+                  "isPerformanceTest", MethodType.methodType(boolean.class, String.class, Class.class));
     return new PostDiscoveryFilter() {
-      private FilterResult isIncluded(String className, String methodName) {
+      private FilterResult isIncluded(Class<?> aClass, String methodName) {
         try {
-          if ((boolean)method.invokeExact(methodName, className)) {
+          if ((boolean)method.invokeExact(methodName, aClass)) {
             return FilterResult.included(null);
           }
           return FilterResult.excluded(null);
@@ -135,10 +135,10 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
           return FilterResult.included("No source for descriptor");
         }
         if (source instanceof MethodSource methodSource) {
-          return isIncluded(methodSource.getClassName(), methodSource.getMethodName());
+          return isIncluded(methodSource.getJavaClass(), methodSource.getMethodName());
         }
         if (source instanceof ClassSource classSource) {
-          return isIncluded(classSource.getClassName(), null);
+          return isIncluded(classSource.getJavaClass(), null);
         }
         return FilterResult.included("Unknown source type " + source.getClass());
       }
