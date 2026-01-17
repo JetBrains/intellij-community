@@ -1,0 +1,34 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.containerProvider"
+                    interface="com.intellij.codeInsight.ContainerProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.intentionAction" beanClass="com.intellij.codeInsight.intention.IntentionActionBean" dynamic="true">
+      <with tag="className" implements="com.intellij.codeInsight.intention.CommonIntentionAction"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.documentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.lang.documentationProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.documentation.DocumentationProvider"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.localInspection" beanClass="com.intellij.codeInspection.LocalInspectionEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInspection.LocalInspectionTool"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.globalInspection" beanClass="com.intellij.codeInspection.InspectionEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInspection.GlobalInspectionTool"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.inspectionToolProvider" interface="com.intellij.codeInspection.InspectionToolProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.dynamicInspectionsProvider" interface="com.intellij.codeInspection.ex.DynamicInspectionsProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.inspectionElementsMerger" interface="com.intellij.codeInspection.ex.InspectionElementsMerger" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInspection.InspectionExtension" interface="com.intellij.codeInspection.lang.InspectionExtensionsFactory" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.weigher" beanClass="com.intellij.psi.WeigherExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.Weigher"/>
+    </extensionPoint>
+  </extensionPoints>
+</idea-plugin>
