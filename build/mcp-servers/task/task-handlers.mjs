@@ -2,6 +2,7 @@
 
 import {bd, bdJson, bdShowOne} from './bd-client.mjs'
 import {addSectionComments, buildMemoryFromEntries, buildPendingNotes, extractMemoryFromIssue, prepareSectionUpdates} from './notes.mjs'
+import {buildIssueView} from './task-issue-view.mjs'
 import {
   buildCreateSubTaskChoice,
   buildCreated,
@@ -31,7 +32,27 @@ import {buildInProgressSummary, createEpic, getReadyChildren, needsReview} from 
  * }} Issue
  */
 
-async function loadIssue(id, {resume, next, memory_limit} = {}) {
+function compactMemory(memory) {
+  if (!memory) return null
+  const findings = Array.isArray(memory.findings) ? memory.findings : []
+  const decisions = Array.isArray(memory.decisions) ? memory.decisions : []
+  const result = {}
+  if (findings.length > 0) result.findings = findings
+  if (decisions.length > 0) result.decisions = decisions
+  if (memory.truncated) {
+    result.truncated = true
+    if (memory.totals) {
+      const moreFindings = Math.max(0, (memory.totals.findings || 0) - findings.length)
+      const moreDecisions = Math.max(0, (memory.totals.decisions || 0) - decisions.length)
+      if (moreFindings > 0 || moreDecisions > 0) {
+        result.more = {findings: moreFindings, decisions: moreDecisions}
+      }
+    }
+  }
+  return Object.keys(result).length === 0 ? null : result
+}
+
+async function loadIssue(id, {resume, next, memory_limit, view, meta_max_chars} = {}) {
   const issue = /** @type {Issue | null} */ (await bdShowOne(id))
   if (!issue) {
     return buildError(`Issue ${id} not found`)
@@ -47,8 +68,14 @@ async function loadIssue(id, {resume, next, memory_limit} = {}) {
       }
     }
   }
-  const memory = extractMemoryFromIssue(issue, memory_limit)
-  return buildIssue(issue, {next: next ?? (resume ? 'continue' : 'await_user'), memory})
+  const memory = compactMemory(extractMemoryFromIssue(issue, memory_limit))
+  let viewIssue
+  try {
+    viewIssue = buildIssueView(issue, {view, meta_max_chars})
+  } catch (error) {
+    return buildError(error.message || String(error))
+  }
+  return buildIssue(viewIssue, {next: next ?? (resume ? 'continue' : 'await_user'), memory})
 }
 
 function buildReadyAskUser(ready) {
@@ -83,7 +110,13 @@ async function handleTaskStatus(args) {
     return buildError('task_status does not accept user_request; use task_start')
   }
   if (args.id) {
-    return loadIssue(args.id, {resume: false, next: 'await_user', memory_limit: args.memory_limit})
+    return loadIssue(args.id, {
+      resume: false,
+      next: 'await_user',
+      memory_limit: args.memory_limit,
+      view: args.view,
+      meta_max_chars: args.meta_max_chars
+    })
   }
 
   const inProgress = /** @type {Issue[]} */ (await bdJson(['list', '--status', 'in_progress']))
@@ -106,7 +139,13 @@ async function handleTaskStatus(args) {
 
 async function handleTaskStart(args) {
   if (args.id) {
-    return loadIssue(args.id, {resume: true, next: 'continue', memory_limit: args.memory_limit})
+    return loadIssue(args.id, {
+      resume: true,
+      next: 'continue',
+      memory_limit: args.memory_limit,
+      view: args.view,
+      meta_max_chars: args.meta_max_chars
+    })
   }
 
   const inProgress = /** @type {Issue[]} */ (await bdJson(['list', '--status', 'in_progress']))
@@ -122,9 +161,15 @@ async function handleTaskStart(args) {
         if (!issue) {
           return buildIssue({id, is_new: true}, {next: 'continue'})
         }
-        const memory = extractMemoryFromIssue(issue, args.memory_limit)
+        const memory = compactMemory(extractMemoryFromIssue(issue, args.memory_limit))
         issue.is_new = true
-        return buildIssue(issue, {next: 'continue', memory})
+        let viewIssue
+        try {
+          viewIssue = buildIssueView(issue, {view: args.view, meta_max_chars: args.meta_max_chars})
+        } catch (error) {
+          return buildError(error.message || String(error))
+        }
+        return buildIssue(viewIssue, {next: 'continue', memory})
       }
     }
     if (ready.length > 0) {
@@ -169,12 +214,12 @@ export const toolHandlers = {
       await bd(updateArgs)
     }
 
-    const memory = buildMemoryFromEntries(
+    const memory = compactMemory(buildMemoryFromEntries(
       update.finalFindings,
       update.finalDecisions,
       update.notesSections.pending_close,
       args.memory_limit
-    )
+    ))
 
     if (args.completed && needsReview(issue)) {
       const response = buildNeedUser({
@@ -378,7 +423,13 @@ export const toolHandlers = {
     if (!reopened) {
       return buildIssue({id: args.id, status: 'open'}, {next: 'await_user'})
     }
-    const memory = extractMemoryFromIssue(reopened, args.memory_limit)
-    return buildIssue(reopened, {next: 'await_user', memory})
+    const memory = compactMemory(extractMemoryFromIssue(reopened, args.memory_limit))
+    let viewIssue
+    try {
+      viewIssue = buildIssueView(reopened, {view: args.view, meta_max_chars: args.meta_max_chars})
+    } catch (error) {
+      return buildError(error.message || String(error))
+    }
+    return buildIssue(viewIssue, {next: 'await_user', memory})
   }
 }
