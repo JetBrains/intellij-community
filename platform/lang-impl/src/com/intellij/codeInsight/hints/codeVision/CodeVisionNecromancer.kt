@@ -13,8 +13,10 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.zombie.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
@@ -22,6 +24,8 @@ import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.collections.map
+
 
 internal class CodeVisionNecromancerAwaker : NecromancerAwaker<CodeVisionZombie> {
   override fun awake(project: Project, coroutineScope: CoroutineScope): Necromancer<CodeVisionZombie> {
@@ -32,65 +36,68 @@ internal class CodeVisionNecromancerAwaker : NecromancerAwaker<CodeVisionZombie>
 private class CodeVisionNecromancer(
   project: Project,
   coroutineScope: CoroutineScope,
-) : GravingNecromancer<CodeVisionZombie>(
+) : CleaverNecromancer<CodeVisionZombie, CodeVisionLimb>(
   project,
   coroutineScope,
   "graved-code-vision",
   CodeVisionZombie.Necromancy,
 ) {
 
-  override fun isOnDuty(recipe: Recipe): Boolean {
+  override fun enoughMana(recipe: Recipe): Boolean {
     return Registry.`is`("editor.codeVision.new", true) &&
            CodeVisionSettings.getInstance().codeVisionEnabled &&
            CodeVisionProjectSettings.getInstance(recipe.project).isEnabledForProject()
   }
 
-  override fun turnIntoZombie(recipe: TurningRecipe): CodeVisionZombie? {
+  override fun isZombieFriendly(recipe: Recipe): Boolean {
+    return Registry.`is`("cache.inlay.hints.on.disk", true)
+  }
+
+  override fun cutIntoLimbs(recipe: TurningRecipe): List<CodeVisionLimb> {
     val context = recipe.editor.lensContext
     if (context != null) {
-      val limbs = context.getValidPairResult()
+      return context.getValidPairResult()
         .filter { (_, cvEntry) -> !ignoreEntry(cvEntry) }
         .map { CodeVisionLimb(it) }
         .toList()
-      if (limbs.isNotEmpty()) {
-        return CodeVisionZombie(limbs)
-      }
     }
-    return null
+    return emptyList()
   }
 
-  override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: CodeVisionZombie?) {
-    if (isZombieFriendly() && zombie != null) {
-      val providerIdToGroupId = providerToGroupMap(recipe.project)
-      val settings = CodeVisionSettings.getInstance()
-      val entries = zombie.asCodeVisionEntries()
-        .sortedBy { (_, cvEntry) -> cvEntry.providerId }
-        .filter { (_, zombieEntry) ->
-          val zombieGroup = providerIdToGroupId[zombieEntry.providerId]
-          zombieGroup != null && settings.isProviderEnabled(zombieGroup)
-        }
-      if (entries.isNotEmpty()) {
-        val editor = recipe.editorSupplier()
-        withContext(Dispatchers.EDT) {
-          if (recipe.isValid(editor)) {
-            writeIntentReadAction {
-              FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.CODE_VISION)
-              editor.lensContext?.setZombieResults(entries)
-            }
-          }
-        }
+  override suspend fun spawnZombie(
+    recipe: SpawnRecipe,
+    limbs: List<CodeVisionLimb>,
+  ): (suspend (Editor) -> Unit)? {
+    val providerIdToGroupId = providerToGroupMap(recipe.project)
+    val settings = CodeVisionSettings.getInstance()
+    val entries = limbs
+      .map { entry -> Pair(TextRange(entry.startOffset, entry.endOffset), entry.asEntry()) }
+      .sortedBy { (_, cvEntry) -> cvEntry.providerId }
+      .filter { (_, zombieEntry) ->
+        val zombieGroup = providerIdToGroupId[zombieEntry.providerId]
+        zombieGroup != null && settings.isProviderEnabled(zombieGroup)
       }
-    } else {
-      val psiManager = recipe.project.serviceAsync<PsiManager>()
-      val psiFile = readActionBlocking { psiManager.findFile(recipe.file) }
-      val editor = recipe.editorSupplier.invoke()
-      val placeholders = recipe.project.serviceAsync<CodeVisionHost>().collectPlaceholders(editor, psiFile)
-      if (placeholders.isNotEmpty()) {
-        withContext(Dispatchers.EDT) {
-          if (!editor.isDisposed) {
-            writeIntentReadAction {
-              editor.lensContext?.setResults(placeholders)
-            }
+    if (entries.isEmpty()) {
+      return null
+    }
+    return { editor ->
+      writeIntentReadAction {
+        FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.CODE_VISION)
+        editor.lensContext?.setZombieResults(entries)
+      }
+    }
+  }
+
+  override suspend fun spawnNoZombie(recipe: SpawnRecipe) {
+    val psiManager = recipe.project.serviceAsync<PsiManager>()
+    val psiFile = readActionBlocking { psiManager.findFile(recipe.file) }
+    val editor = recipe.editorSupplier.invoke()
+    val placeholders = recipe.project.serviceAsync<CodeVisionHost>().collectPlaceholders(editor, psiFile)
+    if (placeholders.isNotEmpty()) {
+      withContext(Dispatchers.EDT) {
+        if (!editor.isDisposed) {
+          writeIntentReadAction {
+            editor.lensContext?.setResults(placeholders)
           }
         }
       }
@@ -111,9 +118,5 @@ private class CodeVisionNecromancer(
   private fun ignoreEntry(cvEntry: CodeVisionEntry): Boolean {
     // TODO: rich text in not supported yet
     return cvEntry is ZombieCodeVisionEntry || cvEntry is RichTextCodeVisionEntry
-  }
-
-  private fun isZombieFriendly(): Boolean {
-    return Registry.`is`("cache.inlay.hints.on.disk", true)
   }
 }

@@ -26,11 +26,11 @@ abstract class LimbedNecromancy<Z : LimbedZombie<L>, L> (
   isDeepBury: Boolean = false,
 ) : AbstractNecromancy<Z>(spellLevel, isDeepBury) {
 
+  abstract fun formZombie(limbs: List<L>): Z
+
   protected abstract fun buryLimb(grave: DataOutput, limb: L)
 
   protected abstract fun exhumeLimb(grave: DataInput): L
-
-  protected abstract fun formZombie(limbs: List<L>): Z
 
   final override fun buryZombie(grave: DataOutput, zombie: Z) {
     writeInt(grave, zombie.limbs().size)

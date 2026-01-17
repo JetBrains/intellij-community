@@ -36,7 +36,7 @@ interface Necromancer<Z : Zombie> {
   /**
    * Determines whether the necromancer currently agrees to cast his spells
    */
-  fun isOnDuty(recipe: Recipe): Boolean
+  fun enoughMana(recipe: Recipe): Boolean
 
   /**
    * Turning editor's state into a zombie.

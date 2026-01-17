@@ -10,6 +10,7 @@ import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -53,7 +54,7 @@ open class HighlightingNecromancerAwaker : NecromancerAwaker<HighlightingZombie>
 open class HighlightingNecromancer(
   protected val project: Project,
   protected val coroutineScope: CoroutineScope,
-) : GravingNecromancer<HighlightingZombie>(
+) : CleaverNecromancer<HighlightingZombie, HighlightingLimb>(
   project,
   coroutineScope,
   GRAVED_HIGHLIGHTING,
@@ -67,24 +68,21 @@ open class HighlightingNecromancer(
     NO_ZOMBIE,
   }
 
-  override fun isOnDuty(recipe: Recipe): Boolean {
+  override fun enoughMana(recipe: Recipe): Boolean {
     return isEnabled()
   }
 
-  override fun turnIntoZombie(recipe: TurningRecipe): HighlightingZombie? {
+  override fun cutIntoLimbs(recipe: TurningRecipe): List<HighlightingLimb> {
     val markupModel = DocumentMarkupModel.forDocument(recipe.document, recipe.project, false)
     if (markupModel is MarkupModelEx) {
       val colorsScheme = recipe.editor.colorsScheme
       val collector = HighlighterCollector()
       markupModel.processRangeHighlightersOverlappingWith(0, recipe.document.textLength, collector)
-      val highlighters = collector.results.map { highlighter ->
+      return collector.results.map { highlighter ->
         HighlightingLimb(highlighter, getHighlighterLayer(highlighter), colorsScheme)
       }.toList()
-      if (highlighters.isNotEmpty()) {
-        return HighlightingZombie(highlighters)
-      }
     }
-    return null
+    return emptyList()
   }
 
   override suspend fun shouldBuryZombie(recipe: TurningRecipe, zombie: HighlightingZombie): Boolean {
@@ -115,29 +113,33 @@ open class HighlightingNecromancer(
     return !zombieStatusMap.containsKey(recipe.fileId)
   }
 
-  override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: HighlightingZombie?) {
-    if (zombie == null || zombie.limbs().isEmpty()) {
-      zombieStatusMap.put(recipe.fileId, Status.NO_ZOMBIE)
-      logFusStatistic(recipe.file, MarkupGraveEvent.NOT_RESTORED_CACHE_MISS)
-      LOG.debug { "no zombie to spawn for ${fileName(recipe.file)}" }
-    } else {
-      val markupModel = DocumentMarkupModel.forDocument(recipe.document, project, true)
+  override suspend fun spawnZombie(
+    recipe: SpawnRecipe,
+    limbs: List<HighlightingLimb>,
+  ): (suspend (Editor) -> Unit)? {
+    val markupModel = DocumentMarkupModel.forDocument(recipe.document, project, true)
 
-      // we have to make sure that editor highlighter is created before we start raising zombies
-      // because creation of highlighter has a side effect that TextAttributesKey.ourRegistry is filled with corresponding keys
-      // (e.g. class loading of org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors)
-      // without such guarantee there is a risk to get uninitialized fallbackKey in TextAttributesKey.find(externalName)
-      // it may lead to incorrect color of highlighters on startup
-      recipe.highlighterReady()
+    // we have to make sure that editor highlighter is created before we start raising zombies
+    // because creation of highlighter has a side effect that TextAttributesKey.ourRegistry is filled with corresponding keys
+    // (e.g. class loading of org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors)
+    // without such guarantee there is a risk to get uninitialized fallbackKey in TextAttributesKey.find(externalName)
+    // it may lead to incorrect color of highlighters on startup
+    recipe.highlighterReady()
 
-      val spawned = spawnZombie(markupModel, recipe, zombie)
-      zombieStatusMap.put(recipe.fileId, if (spawned == 0) Status.NO_ZOMBIE else Status.SPAWNED)
-      logFusStatistic(recipe.file, MarkupGraveEvent.RESTORED, spawned)
-      if (spawned != 0) {
-        FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.HIGHLIGHTING)
-      }
-      LOG.debug { "spawned zombie with ${spawned}/${zombie.limbs().size} libs for ${fileName(recipe.file)}" }
+    val spawned = spawnZombie(markupModel, recipe, limbs)
+    zombieStatusMap.put(recipe.fileId, if (spawned == 0) Status.NO_ZOMBIE else Status.SPAWNED)
+    logFusStatistic(recipe.file, MarkupGraveEvent.RESTORED, spawned)
+    if (spawned != 0) {
+      FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.HIGHLIGHTING)
     }
+    LOG.debug { "spawned zombie with ${spawned}/${limbs.size} libs for ${fileName(recipe.file)}" }
+    return null
+  }
+
+  override suspend fun spawnNoZombie(recipe: SpawnRecipe) {
+    zombieStatusMap.put(recipe.fileId, Status.NO_ZOMBIE)
+    logFusStatistic(recipe.file, MarkupGraveEvent.NOT_RESTORED_CACHE_MISS)
+    LOG.debug { "no zombie to spawn for ${fileName(recipe.file)}" }
   }
 
   open fun subscribeDaemonFinished() {
@@ -207,19 +209,19 @@ open class HighlightingNecromancer(
     }
   }
 
-  private suspend fun spawnZombie(markupModel: MarkupModel, recipe: SpawnRecipe, zombie: HighlightingZombie): Int {
+  private suspend fun spawnZombie(markupModel: MarkupModel, recipe: SpawnRecipe, limbs: List<HighlightingLimb>): Int {
     var spawned = 0
     if (recipe.isValid()) {
       // restore highlighters with batches to balance between RA duration and RA count
       val batchSize = RA_BATCH_SIZE
-      val batchCount = zombie.limbs().size / batchSize
+      val batchCount = limbs.size / batchSize
       for (batchNum in 0 until batchCount) {
         val abortSpawning = readActionBlocking {
           val isValid = recipe.isValid() // ensure document not changed
           if (isValid) {
             for (limbNumInBatch in 0 until batchSize) {
               val limbNum = batchNum * batchSize + limbNumInBatch
-              createRangeHighlighter(markupModel, zombie.limbs()[limbNum])
+              createRangeHighlighter(markupModel, limbs[limbNum])
               spawned++
             }
           }
@@ -231,14 +233,14 @@ open class HighlightingNecromancer(
       }
       readActionBlocking {
         if (recipe.isValid()) {
-          for (limbNum in (batchCount * batchSize) until zombie.limbs().size) {
-            createRangeHighlighter(markupModel, zombie.limbs()[limbNum])
+          for (limbNum in (batchCount * batchSize) until limbs.size) {
+            createRangeHighlighter(markupModel, limbs[limbNum])
             spawned++
           }
         }
       }
-      assert(spawned == zombie.limbs().size) {
-        "expected: ${zombie.limbs().size}, actual: $spawned"
+      assert(spawned == limbs.size) {
+        "expected: ${limbs.size}, actual: $spawned"
       }
     }
     return spawned
