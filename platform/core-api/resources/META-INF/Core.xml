@@ -1,13 +1,13 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="Core.analyzer.xml"/>
+
   <extensionPoints>
-    <extensionPoint name="languageBundle" beanClass="com.intellij.DynamicBundle$LanguageBundleEP" dynamic="true"/>
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="applicationService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="projectService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
-    <extensionPoint name="virtualFileManagerListener" interface="com.intellij.openapi.vfs.VirtualFileManagerListener" dynamic="true"/>
     <extensionPoint name="vfs.asyncListener" interface="com.intellij.openapi.vfs.AsyncFileListener" dynamic="true"/>
     <extensionPoint name="vfs.asyncListenerBackgroundable" interface="com.intellij.openapi.vfs.AsyncFileListener" dynamic="true"/>
 
@@ -20,8 +20,6 @@
     <!-- only bundled plugin can define initProjectGeneratorActivity -->
     <extensionPoint name="initProjectGeneratorActivity" interface="com.intellij.openapi.project.InitProjectGeneratorActivity" dynamic="false"/>
 
-    <extensionPoint name="multiverseEnabler" interface="com.intellij.codeInsight.multiverse.MultiverseEnabler" dynamic="false"/>
-    <extensionPoint name="multiverse.codeInsightContextProvider" interface="com.intellij.codeInsight.multiverse.CodeInsightContextProvider" dynamic="true"/>
     <extensionPoint name="multiverse.codeInsightContextPresentationProvider" interface="com.intellij.codeInsight.multiverse.CodeInsightContextPresentationProvider" dynamic="true"/>
 
     <extensionPoint name="fileTypeDetector" interface="com.intellij.openapi.fileTypes.FileTypeRegistry$FileTypeDetector" dynamic="true"/>
@@ -36,38 +34,15 @@
     <extensionPoint name="writingAccessProvider" area="IDEA_PROJECT" interface="com.intellij.openapi.vfs.WritingAccessProvider" dynamic="true"/>
     <extensionPoint name="fileVisibilityProvider" area="IDEA_PROJECT" interface="com.intellij.openapi.vfs.FileVisibilityProvider" dynamic="true"/>
     <extensionPoint name="virtualFilePreCloseCheck" interface="com.intellij.openapi.vfs.VirtualFilePreCloseCheck" dynamic="true"/>
-    <extensionPoint name="metaLanguage" interface="com.intellij.lang.MetaLanguage" dynamic="true"/>
-    <extensionPoint name="lang.parserDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.lang.ParserDefinition"/>
-    </extensionPoint>
     <extensionPoint name="lang.elementManipulator" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.ElementManipulator"/>
     </extensionPoint>
     <!--suppress PluginXmlValidity -->
-    <extensionPoint name="stubElementTypeHolder" beanClass="com.intellij.psi.stubs.StubElementTypeHolderEP" dynamic="true"/>
 
     <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher" dynamic="true"/>
-    <extensionPoint name="filetype.decompiler" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.BinaryFileDecompiler"/>
-    </extensionPoint>
     <extensionPoint name="iconLayerProvider" interface="com.intellij.ide.IconLayerProvider" dynamic="true"/>
     <extensionPoint name="lang.fileViewProviderFactory" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.FileViewProviderFactory"/>
-    </extensionPoint>
-    <extensionPoint name="lang.commenter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.lang.Commenter"/>
-    </extensionPoint>
-    <extensionPoint dynamic="true" name="lang.substitutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.psi.LanguageSubstitutor"/>
-    </extensionPoint>
-    <!--We need to define an extension point for Eel Provider here because it is used in GeneralCommandLine.
-        If something unfortunate happens to GeneralCommandLine, we would need to remove this definition -->
-    <extensionPoint name="eelProvider" interface="com.intellij.platform.eel.provider.EelProvider" dynamic="true"/>
-    <extensionPoint name="eelMachineResolver"
-                    interface="com.intellij.platform.eel.provider.EelMachineResolver" dynamic="true"/>
-    <extensionPoint name="iconProvider" interface="com.intellij.ide.IconProvider" dynamic="true"/>
-    <extensionPoint name="inspection.basicVisitor" beanClass="com.intellij.psi.BasicInspectionVisitorBean" dynamic="true">
-      <with attribute="class" implements="com.intellij.psi.PsiElementVisitor"/>
     </extensionPoint>
     <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider" dynamic="true"/>
     <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher" dynamic="true"/>
