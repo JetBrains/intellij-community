@@ -1,0 +1,21 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.useScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.resolveScopeProvider" interface="com.intellij.psi.ResolveScopeProvider" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.modcommand.ModCommandService"
+                        serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.modcommand.ModCommandExecutor" open="true"
+                        serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandBatchExecutorImpl"/>
+
+    <projectService serviceInterface="com.intellij.psi.impl.cache.CacheManager"
+                    serviceImplementation="com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl"/>
+    <projectService serviceInterface="com.intellij.psi.search.PsiSearchHelper"
+                    serviceImplementation="com.intellij.psi.impl.search.PsiSearchHelperImpl"/>
+
+    <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndexImpl"/>
+  </extensions>
+</idea-plugin>
