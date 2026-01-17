@@ -39,7 +39,16 @@ export async function createEpic(title, description) {
 }
 
 export async function buildInProgressSummary(issue) {
-  const result = {id: issue.id, title: issue.title, status: issue.status, type: issue.issue_type}
+  const result = {id: issue.id, title: issue.title, status: issue.status}
+  if (issue.priority !== undefined && issue.priority !== null) {
+    result.priority = issue.priority
+  }
+  if (issue.issue_type) {
+    result.type = issue.issue_type
+  }
+  if (issue.assignee) {
+    result.assignee = issue.assignee
+  }
   if (issue.issue_type === 'epic') {
     const readyChildren = await getReadyChildren(issue.id)
     if (readyChildren) {

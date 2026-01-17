@@ -10,6 +10,8 @@ const tools = [
       type: 'object',
       properties: {
         id: {type: 'string', description: 'Issue ID for full details'},
+        view: {type: 'string', enum: ['summary', 'meta'], description: 'Issue view (default: summary)'},
+        meta_max_chars: {type: 'integer', description: 'Max chars for description/design/acceptance in meta view (default: 400)'},
         memory_limit: {type: 'integer', description: 'Max entries per memory list in response (0 to omit memory)'}
       }
     }
@@ -22,6 +24,8 @@ const tools = [
       properties: {
         id: {type: 'string', description: 'Issue ID for full details'},
         user_request: {type: 'string', description: 'User task description'},
+        view: {type: 'string', enum: ['summary', 'meta'], description: 'Issue view (default: summary)'},
+        meta_max_chars: {type: 'integer', description: 'Max chars for description/design/acceptance in meta view (default: 400)'},
         memory_limit: {type: 'integer', description: 'Max entries per memory list in response (0 to omit memory)'}
       }
     }
@@ -112,6 +116,8 @@ const tools = [
       properties: {
         id: {type: 'string', description: 'Issue ID'},
         reason: {type: 'string', description: 'Reason for reopening'},
+        view: {type: 'string', enum: ['summary', 'meta'], description: 'Issue view (default: summary)'},
+        meta_max_chars: {type: 'integer', description: 'Max chars for description/design/acceptance in meta view (default: 400)'},
         memory_limit: {type: 'integer', description: 'Max entries per memory list in response (0 to omit memory)'}
       },
       required: ['id', 'reason']

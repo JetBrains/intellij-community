@@ -176,14 +176,30 @@ describe('task MCP integration', {timeout: 30000}, () => {
       const status = await client.callTool('task_status', {id: epic.issue.id, memory_limit: 1})
       assert.equal(status.kind, 'issue')
       assert.ok(status.memory)
-      assert.equal(status.memory.limit, 1)
-      assert.equal(status.memory.totals.findings, 2)
-      assert.equal(status.memory.totals.decisions, 2)
-      assert.equal(status.memory.findings.length, 1)
-      assert.equal(status.memory.decisions.length, 1)
+      assert.deepEqual(status.memory.findings, ['F2'])
+      assert.deepEqual(status.memory.decisions, ['D2'])
       assert.equal(status.memory.truncated, true)
+      assert.deepEqual(status.memory.more, {findings: 1, decisions: 1})
       assert.equal(status.issue.notes, undefined)
       assert.equal(status.issue.comments, undefined)
+    })
+
+    it('supports meta view with truncation', async () => {
+      const epic = await client.callTool('task_start', {user_request: 'Meta View'})
+
+      const status = await client.callTool('task_status', {
+        id: epic.issue.id,
+        view: 'meta',
+        meta_max_chars: 10
+      })
+
+      assert.equal(status.kind, 'issue')
+      assert.equal(status.issue.type, 'epic')
+      assert.equal(status.issue.issue_type, undefined)
+      assert.ok(status.issue.description.endsWith('...'))
+      assert.ok(status.issue.meta_truncated.includes('description'))
+      assert.equal(status.issue.acceptance, 'PENDING')
+      assert.equal(status.issue.design, 'PENDING')
     })
   })
 
@@ -196,6 +212,8 @@ describe('task MCP integration', {timeout: 30000}, () => {
       assert.ok(issue.title === 'start task')
       assert.ok(issue.status === 'in_progress')
       assert.ok(issue.is_new === true)
+      assert.equal(issue.type, 'epic')
+      assert.equal(issue.issue_type, undefined)
     })
 
     it('omits memory by default', async () => {
@@ -362,12 +380,10 @@ describe('task MCP integration', {timeout: 30000}, () => {
 
       assert.equal(result.kind, 'progress')
       assert.ok(result.memory)
-      assert.equal(result.memory.limit, 1)
-      assert.equal(result.memory.totals.findings, 2)
-      assert.equal(result.memory.totals.decisions, 2)
-      assert.equal(result.memory.findings.length, 1)
-      assert.equal(result.memory.decisions.length, 1)
+      assert.deepEqual(result.memory.findings, ['F2'])
+      assert.deepEqual(result.memory.decisions, ['D2'])
       assert.equal(result.memory.truncated, true)
+      assert.deepEqual(result.memory.more, {findings: 1, decisions: 1})
     })
   })
 
