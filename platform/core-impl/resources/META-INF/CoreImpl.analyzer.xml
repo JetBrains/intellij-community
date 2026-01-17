@@ -1,0 +1,61 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.psi.implicitReferenceProvider"
+                    dynamic="true"
+                    interface="com.intellij.model.psi.ImplicitReferenceProvider"/>
+    <extensionPoint qualifiedName="com.intellij.psi.symbolReferenceProvider"
+                    dynamic="true"
+                    beanClass="com.intellij.model.psi.PsiSymbolReferenceProviderBean">
+      <with attribute="hostElementClass" implements="com.intellij.model.psi.PsiExternalReferenceHost"/>
+      <with attribute="referenceClass" implements="com.intellij.model.psi.PsiSymbolReference"/>
+      <with attribute="targetClass" implements="com.intellij.model.Symbol"/>
+      <with attribute="implementationClass" implements="com.intellij.model.psi.PsiSymbolReferenceProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.virtualFileSystem" beanClass="com.intellij.openapi.vfs.impl.VirtualFileManagerImpl$VirtualFileSystemBean" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.vfs.VirtualFileSystem"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.psi.treeChangeListener"
+                    interface="com.intellij.psi.PsiTreeChangeListener"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.psi.treeChangePreprocessor"
+                    interface="com.intellij.psi.impl.PsiTreeChangePreprocessor"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.treeCopyHandler"
+                    interface="com.intellij.psi.impl.source.tree.TreeCopyHandler"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.smartPointer.anchorProvider"
+                    interface="com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.elementsToHighlightFilter"
+                    interface="com.intellij.openapi.util.Condition"
+                    dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.lang.PsiBuilderFactory"
+                        serviceImplementation="com.intellij.lang.impl.PsiBuilderFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry"
+                        serviceImplementation="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.PsiReferenceService"
+                        serviceImplementation="com.intellij.psi.PsiReferenceServiceImpl"/>
+    <projectService serviceInterface="com.intellij.pom.PomModel" open="true"
+                    serviceImplementation="com.intellij.pom.core.impl.PomModelImpl"/>
+    <projectService serviceInterface="com.intellij.psi.text.BlockSupport"
+                    serviceImplementation="com.intellij.psi.impl.BlockSupportImpl"/>
+    <projectService serviceInterface="com.intellij.psi.PsiParserFacade"
+                    serviceImplementation="com.intellij.psi.impl.PsiParserFacadeImpl"/>
+    <projectService serviceInterface="com.intellij.codeInsight.multiverse.CodeInsightContextManager"
+                    serviceImplementation="com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl"/>
+    <projectService serviceInterface="com.intellij.psi.util.PsiModificationTracker"
+                    serviceImplementation="com.intellij.psi.impl.PsiModificationTrackerImpl"/>
+    <projectService serviceInterface="com.intellij.psi.PsiFileFactory"
+                    serviceImplementation="com.intellij.psi.impl.PsiFileFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory" open="true"
+                    serviceImplementation="com.intellij.psi.impl.file.PsiDirectoryFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.vfs.VirtualFileSetFactory"
+                        serviceImplementation="com.intellij.openapi.vfs.CompactVirtualFileSetFactory"/>
+    <applicationService serviceInterface="com.intellij.diagnostic.PluginProblemReporter"
+                        serviceImplementation="com.intellij.diagnostic.PluginProblemReporterImpl"/>
+  </extensions>
+</idea-plugin>
