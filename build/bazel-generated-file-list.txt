@@ -1280,8 +1280,6 @@ plugins/kotlin/navigation/tests
 plugins/kotlin/onboarding
 plugins/kotlin/onboarding-gradle
 plugins/kotlin/onboarding-promoter
-plugins/kotlin/performance-tests
-plugins/kotlin/performance-tests/performance-test-utils
 plugins/kotlin/plugin
 plugins/kotlin/plugin-updater
 plugins/kotlin/plugin/common
