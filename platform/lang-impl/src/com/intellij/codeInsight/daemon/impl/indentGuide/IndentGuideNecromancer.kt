@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.indentGuide
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.IndentGuideDescriptor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.IndentsModelImpl
@@ -51,11 +52,14 @@ private class IndentGuideNecromancer(
 
   override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: IndentGuideZombie?) {
     if (zombie != null && zombie.limbs().isNotEmpty()) {
-      val ranges = IndentGuidePass.buildRanges(recipe.document, zombie.limbs())
+      val indentGuides = IndentGuides(recipe.document, IndentGuideZombieRenderer)
+      runReadAction {
+        indentGuides.buildIndents(zombie.limbs())
+      }
       val editor = recipe.editorSupplier()
       withContext(Dispatchers.EDT) {
         if (recipe.isValid(editor)) {
-          IndentGuidePass.applyIndents(editor, zombie.limbs(), ranges, true)
+          indentGuides.applyIndents(editor)
         }
       }
     }

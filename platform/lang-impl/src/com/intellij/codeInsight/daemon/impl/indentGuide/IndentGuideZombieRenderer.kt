@@ -7,7 +7,17 @@ import java.awt.Graphics2D
 import java.awt.Stroke
 
 
-internal class IndentGuideZombieRenderer : IndentGuideRenderer() {
+internal object IndentGuideZombieRenderer : IndentGuideRenderer() {
+
+  private val ZOMBIE_DEBUG_INDENT_STROKE: Stroke = BasicStroke(
+    /* width = */      1f,
+    /* cap = */        BasicStroke.CAP_BUTT,
+    /* join = */       BasicStroke.JOIN_BEVEL,
+    /* miterlimit = */ 0f,
+    /* dash = */       floatArrayOf(10f, 10f),
+    /* dash_phase = */ 0f,
+  )
+
   override fun drawLine(g: Graphics2D, x1: Int, y1: Int, x2: Int, y2: Int) {
     if (isZombieDebugEnabled()) {
       val prevStroke = g.stroke
@@ -21,16 +31,5 @@ internal class IndentGuideZombieRenderer : IndentGuideRenderer() {
 
   private fun isZombieDebugEnabled(): Boolean {
     return Registry.`is`("cache.markup.debug", false)
-  }
-
-  companion object {
-    private val ZOMBIE_DEBUG_INDENT_STROKE: Stroke = BasicStroke(
-      /* width = */      1f,
-      /* cap = */        BasicStroke.CAP_BUTT,
-      /* join = */       BasicStroke.JOIN_BEVEL,
-      /* miterlimit = */ 0f,
-      /* dash = */       floatArrayOf(10f, 10f),
-      /* dash_phase = */ 0f,
-    )
   }
 }
