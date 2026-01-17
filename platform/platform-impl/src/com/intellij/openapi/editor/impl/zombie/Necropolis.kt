@@ -104,19 +104,21 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
       val recipe = SpawnRecipe(project, fileId, file, document, modStamp, editorSupplier, highlighterReady)
       coroutineScope {
         for (necromancer in necromancersDeferred.await()) {
-          launch(CoroutineName(necromancer.name())) {
-            try {
-              if (!project.isDisposed && necromancer.shouldSpawnZombie(recipe)) {
-                val zombie = exhumeZombieIfValid(recipe, necromancer, fingerprint)
-                necromancer.spawnZombie(recipe, zombie)
+          if (necromancer.isOnDuty(recipe)) {
+            launch(CoroutineName(necromancer.name())) {
+              try {
+                if (!project.isDisposed && necromancer.shouldSpawnZombie(recipe)) {
+                  val zombie = exhumeZombieIfValid(recipe, necromancer, fingerprint)
+                  necromancer.spawnZombie(recipe, zombie)
+                }
+              } catch (e: CancellationException) {
+                throw e
+              } catch (e: Throwable) {
+                LOG.warn(
+                  "Exception during editor loading",
+                  if (e is ControlFlowException) RuntimeException(e) else e
+                )
               }
-            } catch (e: CancellationException) {
-              throw e
-            } catch (e: Throwable) {
-              LOG.warn(
-                "Exception during editor loading",
-                if (e is ControlFlowException) RuntimeException(e) else e
-              )
             }
           }
         }
@@ -154,11 +156,13 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
   }
 
   private fun turnIntoZombiesAndBury(necromancers: List<Necromancer<Zombie>>, recipe: TurningRecipe) {
-    val zombies = necromancers.mapNotNull { necromancer ->
-      necromancer.turnIntoZombie(recipe)?.let { zombie ->
-        necromancer to zombie
-      }
-    }.toList()
+    val zombies = necromancers
+      .filter { it.isOnDuty(recipe) }
+      .mapNotNull { necromancer ->
+        necromancer.turnIntoZombie(recipe)?.let { zombie ->
+          necromancer to zombie
+        }
+      }.toList()
     if (LOG.isDebugEnabled) {
       LOG.debug("Turned into zombies for ${recipe.fileId}: ${zombies.map { it.first.name() }}")
     }

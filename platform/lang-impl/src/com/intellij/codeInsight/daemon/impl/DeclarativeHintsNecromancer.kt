@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.hints.InlayHintsSettings
@@ -6,7 +6,6 @@ import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.InlayActionPayload
 import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.*
-import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass.PreprocessedInlayData
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeIndentedBlockInlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
@@ -22,6 +21,7 @@ import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjec
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
 
 internal class DeclarativeHintsNecromancerAwaker : NecromancerAwaker<DeclarativeHintsZombie> {
   override fun awake(project: Project, coroutineScope: CoroutineScope): Necromancer<DeclarativeHintsZombie> {
@@ -39,45 +39,44 @@ private class DeclarativeHintsNecromancer(
   DeclarativeHintsNecromancy,
 ) {
 
-  override fun turnIntoZombie(recipe: TurningRecipe): DeclarativeHintsZombie? {
-    if (isDeclarativeEnabled() && isCacheEnabled()) {
-      val inlineHints = recipe.editor.getInlayModel().getInlineElementsInRange(
-        0,
-        recipe.editor.getDocument().textLength,
-        DeclarativeInlayRenderer::class.java,
-      )
-      val eolHints = recipe.editor.getInlayModel().getAfterLineEndElementsInRange(
-        0,
-        recipe.editor.getDocument().textLength,
-        DeclarativeInlayRenderer::class.java,
-      )
-      val blockHints = recipe.editor.getInlayModel().getBlockElementsInRange(
-        0,
-        recipe.editor.getDocument().textLength,
-        DeclarativeIndentedBlockInlayRenderer::class.java,
-      )
-      val inlayDataList = ArrayList<InlayData>()
-      inlineHints.flatMapTo(inlayDataList) { it.renderer.toInlayData() }
-      eolHints.flatMapTo(inlayDataList) { it.renderer.toInlayData() }
-      blockHints.flatMapTo(inlayDataList) { it.renderer.toInlayData() }
-      return DeclarativeHintsZombie(inlayDataList)
-    } else {
-      return null
-    }
-  }
-
-  override suspend fun shouldSpawnZombie(recipe: SpawnRecipe): Boolean {
+  override fun isOnDuty(recipe: Recipe): Boolean {
     return isDeclarativeEnabled() && isCacheEnabled()
   }
 
+  override fun turnIntoZombie(recipe: TurningRecipe): DeclarativeHintsZombie? {
+    val inlineHints = recipe.editor.getInlayModel().getInlineElementsInRange(
+      0,
+      recipe.editor.getDocument().textLength,
+      DeclarativeInlayRenderer::class.java,
+    )
+    val eolHints = recipe.editor.getInlayModel().getAfterLineEndElementsInRange(
+      0,
+      recipe.editor.getDocument().textLength,
+      DeclarativeInlayRenderer::class.java,
+    )
+    val blockHints = recipe.editor.getInlayModel().getBlockElementsInRange(
+      0,
+      recipe.editor.getDocument().textLength,
+      DeclarativeIndentedBlockInlayRenderer::class.java,
+    )
+    val inlayDataList = ArrayList<InlayData>()
+    inlineHints.flatMapTo(inlayDataList) { it.renderer.toInlayData() }
+    eolHints.flatMapTo(inlayDataList) { it.renderer.toInlayData() }
+    blockHints.flatMapTo(inlayDataList) { it.renderer.toInlayData() }
+    if (inlayDataList.isNotEmpty()) {
+      return DeclarativeHintsZombie(inlayDataList)
+    }
+    return null
+  }
+
   override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: DeclarativeHintsZombie?) {
-    if (zombie != null && zombie.limbs().isNotEmpty()) {
+    if (zombie != null) {
       val settings = DeclarativeInlayHintsSettings.getInstance()
       for (inlayData in zombie.limbs()) {
         initZombiePointers(recipe.project, recipe.file, inlayData.tree)
       }
       val inlayDataMap = readActionBlocking {
-        if (!recipe.isValid()) return@readActionBlocking emptyMap<String, PreprocessedInlayData>()
+        if (!recipe.isValid()) return@readActionBlocking emptyMap()
         zombie.limbs()
           .filter { settings.isProviderEnabled(it.providerId) ?: true }
           .groupBy { it.sourceId }
@@ -119,7 +118,9 @@ private class DeclarativeHintsNecromancer(
     }
   }
 
-  private fun isCacheEnabled() = Registry.`is`("cache.inlay.hints.on.disk", true)
+  private fun isCacheEnabled(): Boolean {
+    return Registry.`is`("cache.inlay.hints.on.disk", true)
+  }
 
   private fun isDeclarativeEnabled(): Boolean {
     val enabledGlobally = InlayHintsSettings.instance().hintsEnabledGlobally()

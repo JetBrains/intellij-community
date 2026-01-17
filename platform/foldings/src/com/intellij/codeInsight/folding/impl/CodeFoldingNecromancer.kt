@@ -46,19 +46,24 @@ private class CodeFoldingNecromancer(
   CodeFoldingNecromancy,
 ) {
 
+  override fun isOnDuty(recipe: Recipe): Boolean {
+    return true
+  }
+
   override fun turnIntoZombie(recipe: TurningRecipe): CodeFoldingZombie? {
-    if (isNecromancerEnabled()) {
-      return CodeFoldingZombie.create(notZombieRegions(recipe.editor))
-    } else {
-      return null
+    if (isZombieFriendly()) {
+      val foldRegions = notZombieRegions(recipe.editor)
+      if (foldRegions.isNotEmpty()) {
+        return CodeFoldingZombie.create(foldRegions)
+      }
     }
+    return null
   }
 
   override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: CodeFoldingZombie?) {
     val document = recipe.document
-    if (isNecromancerEnabled() &&
+    if (isZombieFriendly() &&
         zombie != null &&
-        !zombie.isEmpty() &&
         isNotCompiledFile(recipe.project, recipe.document)) {
       val editor = recipe.editorSupplier()
       withContext(Dispatchers.EDT) {
@@ -89,9 +94,11 @@ private class CodeFoldingNecromancer(
       if (foldingState != null) {
         val editor = recipe.editorSupplier()
         withContext(Dispatchers.EDT) {
-          runReadAction { // set to editor with RA IJPL-159083
-            SlowOperations.knownIssue("IJPL-165088").use {
-              foldingState.setToEditor(editor)
+          if (editor.foldingModel.isFoldingEnabled) {
+            runReadAction { // set to editor with RA IJPL-159083
+              SlowOperations.knownIssue("IJPL-165088").use {
+                foldingState.setToEditor(editor)
+              }
             }
           }
         }
@@ -113,7 +120,7 @@ private class CodeFoldingNecromancer(
     return psiFile != null && psiFile !is PsiCompiledFile
   }
 
-  private fun isNecromancerEnabled(): Boolean {
+  private fun isZombieFriendly(): Boolean {
     return Registry.`is`("cache.folding.model.on.disk", true)
   }
 
