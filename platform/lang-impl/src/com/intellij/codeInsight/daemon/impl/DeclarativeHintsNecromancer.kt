@@ -10,7 +10,6 @@ import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.Declarative
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.openapi.application.readActionBlocking
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.zombie.*
 import com.intellij.openapi.project.Project
@@ -67,7 +66,7 @@ private class DeclarativeHintsNecromancer(
   override suspend fun spawnZombie(
     recipe: SpawnRecipe,
     limbs: List<InlayData>,
-  ): (suspend (Editor) -> Unit)? {
+  ): ((Editor) -> Unit)? {
     val settings = DeclarativeInlayHintsSettings.getInstance()
     for (inlayData in limbs) {
       initZombiePointers(recipe.project, recipe.file, inlayData.tree)
@@ -83,19 +82,17 @@ private class DeclarativeHintsNecromancer(
       return null
     }
     return { editor ->
-      writeIntentReadAction {
-        inlayDataMap.forEach { (sourceId, preparedInlayData) ->
-          DeclarativeInlayHintsPass.applyInlayData(
-            editor,
-            recipe.project,
-            preparedInlayData,
-            emptySet(),
-            sourceId,
-          )
-        }
-        DeclarativeInlayHintsPassFactory.resetModificationStamp(editor)
-        FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.DECLARATIVE_HINTS)
+      inlayDataMap.forEach { (sourceId, preparedInlayData) ->
+        DeclarativeInlayHintsPass.applyInlayData(
+          editor,
+          recipe.project,
+          preparedInlayData,
+          emptySet(),
+          sourceId,
+        )
       }
+      DeclarativeInlayHintsPassFactory.resetModificationStamp(editor)
+      FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.DECLARATIVE_HINTS)
     }
   }
 

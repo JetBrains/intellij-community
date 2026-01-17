@@ -63,7 +63,7 @@ private class DocRenderNecromancer(
   override suspend fun spawnZombie(
     recipe: SpawnRecipe,
     limbs: List<DocRenderZombie.Limb>,
-  ): (suspend (Editor) -> Unit)? {
+  ): ((Editor) -> Unit)? {
     val itemList = limbs.map { limb ->
       Item(TextRange(limb.startOffset, limb.endOffset), limb.text)
     }
@@ -72,12 +72,10 @@ private class DocRenderNecromancer(
     if (!DocRenderManager.isDocRenderingEnabled(editor)) {
       return null
     }
-    return {
-      writeIntentReadAction {
-        DocRenderPassFactory.applyItemsToRender(editor, recipe.project, items, true)
-        DocRenderPassFactory.forceRefreshOnNextPass(editor)
-        FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.DOC_RENDER)
-      }
+    return { editor ->
+      DocRenderPassFactory.applyItemsToRender(editor, recipe.project, items, true)
+      DocRenderPassFactory.forceRefreshOnNextPass(editor)
+      FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.DOC_RENDER)
     }
   }
 

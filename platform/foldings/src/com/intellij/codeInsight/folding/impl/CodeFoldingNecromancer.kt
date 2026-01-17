@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl
 
 import com.intellij.codeInsight.folding.CodeFoldingManager
@@ -30,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 
+
 internal class CodeFoldingNecromancerAwaker : NecromancerAwaker<CodeFoldingZombie> {
   override fun awake(project: Project, coroutineScope: CoroutineScope): Necromancer<CodeFoldingZombie> {
     return CodeFoldingNecromancer(project, coroutineScope)
@@ -39,7 +40,7 @@ internal class CodeFoldingNecromancerAwaker : NecromancerAwaker<CodeFoldingZombi
 private class CodeFoldingNecromancer(
   project: Project,
   coroutineScope: CoroutineScope,
-) : GravingNecromancer<CodeFoldingZombie>(
+) : GravingNecromancer<CodeFoldingZombie>( // TODO: migrate to CleaverNecromancer
   project,
   coroutineScope,
   "graved-code-folding",
