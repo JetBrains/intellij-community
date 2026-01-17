@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+
 internal class FocusZoneNecromancerAwaker : NecromancerAwaker<Nothing> {
   override fun awake(project: Project, coroutineScope: CoroutineScope): WeakNecromancer {
     return FocusZoneNecromancer()
@@ -36,9 +37,11 @@ private class FocusZoneNecromancer : WeakNecromancer("focus-zone") {
 
     val editor = recipe.editorSupplier()
     withContext(Dispatchers.EDT) {
-      FocusModePassFactory.setToEditor(focusZones, editor)
-      if (editor is EditorImpl) {
-        editor.applyFocusMode()
+      if (recipe.isValid(editor)) {
+        FocusModePassFactory.setToEditor(focusZones, editor)
+        if (editor is EditorImpl) {
+          editor.applyFocusMode()
+        }
       }
     }
   }

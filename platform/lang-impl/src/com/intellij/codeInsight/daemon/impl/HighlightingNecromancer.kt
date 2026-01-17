@@ -116,7 +116,7 @@ open class HighlightingNecromancer(
   override suspend fun spawnZombie(
     recipe: SpawnRecipe,
     limbs: List<HighlightingLimb>,
-  ): (suspend (Editor) -> Unit)? {
+  ): ((Editor) -> Unit)? {
     val markupModel = DocumentMarkupModel.forDocument(recipe.document, project, true)
 
     // we have to make sure that editor highlighter is created before we start raising zombies

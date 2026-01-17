@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.ParameterHintsPass.HintData
 import com.intellij.openapi.application.readActionBlocking
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
@@ -56,7 +55,7 @@ private class ParameterHintsNecromancer(
   override suspend fun spawnZombie(
     recipe: SpawnRecipe,
     limbs: List<Pair<Int, HintData>>,
-  ): (suspend (Editor) -> Unit) {
+  ): (Editor) -> Unit {
     val zombieHints = Int2ObjectOpenHashMap<MutableList<HintData>>()
     for ((offset, hint) in limbs) {
       val list: MutableList<HintData> = zombieHints.getOrPut(offset) { SmartList() }
@@ -68,16 +67,14 @@ private class ParameterHintsNecromancer(
       list.add(hint1)
     }
     return { editor ->
-      writeIntentReadAction {
-        ParameterHintsUpdater(
-          editor,
-          listOf(),
-          zombieHints,
-          Int2ObjectOpenHashMap(0),
-          true,
-        ).update()
-        FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.PARAMETER_HINTS)
-      }
+      ParameterHintsUpdater(
+        editor,
+        listOf(),
+        zombieHints,
+        Int2ObjectOpenHashMap(0),
+        true,
+      ).update()
+      FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.PARAMETER_HINTS)
     }
   }
 

@@ -67,7 +67,7 @@ private class CodeVisionNecromancer(
   override suspend fun spawnZombie(
     recipe: SpawnRecipe,
     limbs: List<CodeVisionLimb>,
-  ): (suspend (Editor) -> Unit)? {
+  ): ((Editor) -> Unit)? {
     val providerIdToGroupId = providerToGroupMap(recipe.project)
     val settings = CodeVisionSettings.getInstance()
     val entries = limbs
@@ -81,10 +81,8 @@ private class CodeVisionNecromancer(
       return null
     }
     return { editor ->
-      writeIntentReadAction {
-        FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.CODE_VISION)
-        editor.lensContext?.setZombieResults(entries)
-      }
+      editor.lensContext?.setZombieResults(entries)
+      FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.CODE_VISION)
     }
   }
 

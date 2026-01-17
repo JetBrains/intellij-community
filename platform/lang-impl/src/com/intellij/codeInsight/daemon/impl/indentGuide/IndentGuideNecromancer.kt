@@ -40,7 +40,7 @@ private class IndentGuideNecromancer(
   override suspend fun spawnZombie(
     recipe: SpawnRecipe,
     limbs: List<IndentGuideDescriptor>,
-  ): (suspend (Editor) -> Unit) {
+  ): (Editor) -> Unit {
     val indentGuides = IndentGuides(recipe.document, IndentGuideZombieRenderer)
     runReadAction {
       indentGuides.buildIndents(limbs)
