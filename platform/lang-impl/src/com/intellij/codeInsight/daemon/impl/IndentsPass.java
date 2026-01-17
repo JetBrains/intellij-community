@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -44,6 +44,7 @@ import java.util.*;
 public final class IndentsPass extends TextEditorHighlightingPass implements DumbAware {
   private static final Key<List<RangeHighlighter>> INDENT_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("INDENT_HIGHLIGHTERS_IN_EDITOR_KEY");
   private static final Key<Long> LAST_TIME_INDENTS_BUILT = Key.create("LAST_TIME_INDENTS_BUILT");
+  private static final Key<Boolean> IS_ZOMBIE_INDENT_KEY = Key.create("IS_ZOMBIE_INDENT_KEY");
 
   private final Editor myEditor;
   private final PsiFile myPsiFile;
@@ -62,20 +63,22 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     Long stamp = myEditor.getUserData(LAST_TIME_INDENTS_BUILT);
-    if (stamp != null && stamp.longValue() == nowStamp()) return;
-
-    myDescriptors = buildDescriptors();
-
-    ArrayList<TextRange> ranges = new ArrayList<>();
-    for (IndentGuideDescriptor descriptor : myDescriptors) {
-      ProgressManager.checkCanceled();
-      int endOffset =
-        descriptor.endLine < myDocument.getLineCount() ? myDocument.getLineStartOffset(descriptor.endLine) : myDocument.getTextLength();
-      ranges.add(new TextRange(myDocument.getLineStartOffset(descriptor.startLine), endOffset));
+    if (stamp != null && stamp.longValue() == nowStamp()) {
+      return;
     }
+    myDescriptors = buildDescriptors();
+    myRanges = buildRanges(myDocument, myDescriptors);
+  }
 
+  static @NotNull ArrayList<TextRange> buildRanges(@NotNull Document document, @NotNull List<IndentGuideDescriptor> descriptors) {
+    ArrayList<TextRange> ranges = new ArrayList<>();
+    for (IndentGuideDescriptor descriptor : descriptors) {
+      ProgressManager.checkCanceled();
+      int endOffset = descriptor.endLine < document.getLineCount() ? document.getLineStartOffset(descriptor.endLine) : document.getTextLength();
+      ranges.add(new TextRange(document.getLineStartOffset(descriptor.startLine), endOffset));
+    }
     ranges.sort(Segment.BY_START_OFFSET_THEN_END_OFFSET);
-    myRanges = ranges;
+    return ranges;
   }
 
   private long nowStamp() {
@@ -91,11 +94,18 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
   @Override
   public void doApplyInformationToEditor() {
     Long stamp = myEditor.getUserData(LAST_TIME_INDENTS_BUILT);
-    if (stamp != null && stamp.longValue() == nowStamp()) return;
+    if (stamp != null && stamp.longValue() == nowStamp()) {
+      return;
+    }
+    applyIndents(myEditor, myDescriptors, myRanges, false);
+    myEditor.putUserData(LAST_TIME_INDENTS_BUILT, nowStamp());
+  }
 
-    List<RangeHighlighter> oldHighlighters = myEditor.getUserData(INDENT_HIGHLIGHTERS_IN_EDITOR_KEY);
+  static void applyIndents(Editor editor, List<IndentGuideDescriptor> descriptors, List<TextRange> ranges, boolean isZombie) {
+    Document document = editor.getDocument();
+    List<RangeHighlighter> oldHighlighters = editor.getUserData(INDENT_HIGHLIGHTERS_IN_EDITOR_KEY);
     List<RangeHighlighter> newHighlighters = new ArrayList<>();
-    MarkupModel mm = myEditor.getMarkupModel();
+    MarkupModel mm = editor.getMarkupModel();
 
     int curRange = 0;
 
@@ -104,8 +114,8 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
       oldHighlighters.sort(Comparator.comparing((RangeHighlighter h) -> !h.isValid())
                                      .thenComparing(Segment.BY_START_OFFSET_THEN_END_OFFSET));
       int curHighlight = 0;
-      while (curRange < myRanges.size() && curHighlight < oldHighlighters.size()) {
-        TextRange range = myRanges.get(curRange);
+      while (curRange < ranges.size() && curHighlight < oldHighlighters.size()) {
+        TextRange range = ranges.get(curRange);
         RangeHighlighter highlighter = oldHighlighters.get(curHighlight);
         if (!highlighter.isValid()) {
           break;
@@ -113,7 +123,7 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
 
         int cmp = compare(range, highlighter);
         if (cmp < 0) {
-          newHighlighters.add(createHighlighter(mm, range));
+          newHighlighters.add(createHighlighter(mm, range, isZombie));
           curRange++;
         }
         else if (cmp > 0) {
@@ -121,6 +131,7 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
           curHighlight++;
         }
         else {
+          markZombieIndent(highlighter, isZombie);
           newHighlighters.add(highlighter);
           curHighlight++;
           curRange++;
@@ -135,16 +146,23 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
     }
 
     int startRangeIndex = curRange;
-    DocumentUtil.executeInBulk(myDocument, myRanges.size() > 10000, () -> {
-      for (int i = startRangeIndex; i < myRanges.size(); i++) {
-        newHighlighters.add(createHighlighter(mm, myRanges.get(i)));
+    DocumentUtil.executeInBulk(document, ranges.size() > 10000, () -> {
+      for (int i = startRangeIndex; i < ranges.size(); i++) {
+        newHighlighters.add(createHighlighter(mm, ranges.get(i), isZombie));
       }
     });
 
+    editor.putUserData(INDENT_HIGHLIGHTERS_IN_EDITOR_KEY, newHighlighters);
+    editor.getIndentsModel().assumeIndents(descriptors);
+  }
 
-    myEditor.putUserData(INDENT_HIGHLIGHTERS_IN_EDITOR_KEY, newHighlighters);
-    myEditor.putUserData(LAST_TIME_INDENTS_BUILT, nowStamp());
-    myEditor.getIndentsModel().assumeIndents(myDescriptors);
+  private static void markZombieIndent(@NotNull RangeHighlighter highlighter, boolean isZombie) {
+    if (isZombie) highlighter.putUserData(IS_ZOMBIE_INDENT_KEY, Boolean.TRUE);
+    else highlighter.putUserData(IS_ZOMBIE_INDENT_KEY, null);
+  }
+
+  static boolean isZombieIndent(@NotNull RangeHighlighter highlighter) {
+    return highlighter.getUserData(IS_ZOMBIE_INDENT_KEY) != null;
   }
 
   private List<IndentGuideDescriptor> buildDescriptors() {
@@ -226,10 +244,11 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
     }
   }
 
-  private static @NotNull RangeHighlighter createHighlighter(MarkupModel mm, TextRange range) {
+  private static @NotNull RangeHighlighter createHighlighter(MarkupModel mm, TextRange range, boolean isZombie) {
     RangeHighlighter highlighter = mm.addRangeHighlighter(null, range.getStartOffset(), range.getEndOffset(), 0,
                                                                 HighlighterTargetArea.EXACT_RANGE);
     highlighter.setCustomRenderer(RENDERER);
+    markZombieIndent(highlighter, isZombie);
     return highlighter;
   }
 

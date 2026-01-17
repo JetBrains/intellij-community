@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo;
@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.DefaultLineMarkerRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ObjectUtils;
@@ -24,6 +25,8 @@ import java.awt.*;
 import java.util.List;
 
 public class IndentGuideRenderer implements CustomHighlighterRenderer {
+  private static final Stroke ZOMBIE_INDENT_STROKE = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{10, 10}, 0);
+
   @Override
   public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
     int startOffset = highlighter.getStartOffset();
@@ -46,7 +49,8 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
 
     VisualPosition startPosition = editor.offsetToVisualPosition(off);
     VisualPosition endPosition = editor.offsetToVisualPosition(endOffset);
-    paint(editor, startPosition, endPosition, off, endOffset, doc, g);
+    boolean isZombieIndent = IndentsPass.isZombieIndent(highlighter);
+    paint(editor, startPosition, endPosition, off, endOffset, doc, g, isZombieIndent);
   }
 
   /**
@@ -64,6 +68,19 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
     int endOffset,
     @NotNull Document doc,
     @NotNull Graphics g
+  ) {
+    paint(editor, lineStartPosition, lineEndPosition, startOffset, endOffset, doc, g, false);
+  }
+
+  private void paint(
+    @NotNull Editor editor,
+    @NotNull VisualPosition lineStartPosition,
+    @NotNull VisualPosition lineEndPosition,
+    int startOffset,
+    int endOffset,
+    @NotNull Document doc,
+    @NotNull Graphics g,
+    boolean isZombie
   ) {
     int indentColumn = lineStartPosition.column;
     if (indentColumn < 0) return; // 0 is possible in Rider virtual formatting, and it is logically sound
@@ -127,7 +144,7 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
     //     2. Show indent as is if it doesn't intersect with soft wrap-introduced text;
     List<? extends SoftWrap> softWraps = ((EditorEx)editor).getSoftWrapModel().getRegisteredSoftWraps();
     if (selected || softWraps.isEmpty()) {
-      LinePainter2D.paint((Graphics2D)g, targetX, start.y, targetX, maxY - 1);
+      drawLine((Graphics2D)g, targetX, start.y, targetX, maxY - 1, isZombie);
     }
     else {
       int startY = start.y;
@@ -145,7 +162,7 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
             SoftWrap softWrap = softWraps.get(it.getStartOrPrevWrapIndex());
             if (softWrap.getIndentInColumns() < indentColumn) {
               if (startY < currY) {
-                LinePainter2D.paint((Graphics2D)g, targetX, startY, targetX, currY - 1);
+                drawLine((Graphics2D)g, targetX, startY, targetX, currY - 1, isZombie);
               }
               startY = currY + lineHeight;
             }
@@ -154,7 +171,7 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
         it.advance();
       }
       if (startY < maxY) {
-        LinePainter2D.paint((Graphics2D)g, targetX, startY, targetX, maxY - 1);
+        drawLine((Graphics2D)g, targetX, startY, targetX, maxY - 1, isZombie);
       }
     }
   }
@@ -193,5 +210,17 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
     CaretModel caretModel = editor.getCaretModel();
     int caretOffset = caretModel.getOffset();
     return caretOffset >= off && caretOffset < endOffset && caretModel.getLogicalPosition().column == indentColumn;
+  }
+
+  private static void drawLine(Graphics2D g, int x1, int y1, int x2, int y2, boolean isZombie) {
+    if (isZombie && Registry.is("cache.markup.debug", false)) {
+      Stroke prevStroke = g.getStroke();
+      g.setStroke(ZOMBIE_INDENT_STROKE);
+      g.drawLine(x1, y1, x2, y2);
+      g.setStroke(prevStroke);
+    }
+    else {
+      LinePainter2D.paint(g, x1, y1, x2, y2);
+    }
   }
 }
