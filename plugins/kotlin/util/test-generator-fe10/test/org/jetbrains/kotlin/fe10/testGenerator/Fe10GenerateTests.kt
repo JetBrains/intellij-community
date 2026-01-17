@@ -85,9 +85,6 @@ import org.jetbrains.kotlin.idea.kdoc.AbstractKDocTypingTest
 import org.jetbrains.kotlin.idea.navigation.*
 import org.jetbrains.kotlin.idea.navigationToolbar.AbstractKotlinNavBarTest
 import org.jetbrains.kotlin.idea.parameterInfo.AbstractParameterInfoTest
-import org.jetbrains.kotlin.idea.perf.stats.AbstractPerformanceBasicCompletionHandlerStatNamesTest
-import org.jetbrains.kotlin.idea.perf.stats.AbstractPerformanceHighlightingStatNamesTest
-import org.jetbrains.kotlin.idea.perf.synthetic.*
 import org.jetbrains.kotlin.idea.projectView.AbstractKotlinProjectViewTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractK1QuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractK1QuickFixMultiModuleTest
@@ -1571,63 +1568,6 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
 
         testClass<AbstractFE1LegacyUastValuesTest> {
             model("")
-        }
-    }
-
-    testGroup("performance-tests", testDataPath = "../idea/tests/testData") {
-        testClass<AbstractPerformanceJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
-            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
-        }
-
-        testClass<AbstractPerformanceNewJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
-            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
-        }
-
-        testClass<AbstractPerformanceLiteralKotlinToKotlinCopyPasteTest>(commonSuite = false) {
-            model("copyPaste/literal", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^([^.]+)\.kt$"""))
-        }
-
-        testClass<AbstractPerformanceHighlightingTest>(commonSuite = false) {
-            model("highlighter", testMethodName = "doPerfTest")
-        }
-
-        testClass<AbstractPerformanceHighlightingStatNamesTest>(commonSuite = false) {
-            model("highlighter", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^(InvokeCall)\.kt$"""))
-        }
-
-        testClass<AbstractPerformanceAddImportTest>(commonSuite = false) {
-            model("addImport", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
-        }
-
-        testClass<AbstractPerformanceTypingIndentationTest>(commonSuite = false) {
-            model("editor/enterHandler", pattern = Patterns.forRegex("""^([^.]+)\.after\.kt.*$"""), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
-            model("editor/enterHandler", pattern = Patterns.forRegex("""^([^.]+)\.after\.inv\.kt.*$"""), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
-        }
-    }
-
-    testGroup("performance-tests", testDataPath = "../completion/testData") {
-        testClass<AbstractPerformanceCompletionIncrementalResolveTest>(commonSuite = false) {
-            model("incrementalResolve", testMethodName = "doPerfTest")
-        }
-
-        testClass<AbstractPerformanceBasicCompletionHandlerTest>(commonSuite = false) {
-            model("handlers/basic", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
-        }
-
-        testClass<AbstractPerformanceBasicCompletionHandlerStatNamesTest>(commonSuite = false) {
-            model("handlers/basic", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^(GetOperator)\.kt$"""))
-        }
-
-        testClass<AbstractPerformanceSmartCompletionHandlerTest>(commonSuite = false) {
-            model("handlers/smart", testMethodName = "doPerfTest")
-        }
-
-        testClass<AbstractPerformanceKeywordCompletionHandlerTest>(commonSuite = false) {
-            model("handlers/keywords", testMethodName = "doPerfTest")
-        }
-
-        testClass<AbstractPerformanceCompletionCharFilterTest>(commonSuite = false) {
-            model("handlers/charFilter", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
         }
     }
 

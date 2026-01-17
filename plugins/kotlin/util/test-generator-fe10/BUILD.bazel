@@ -38,7 +38,6 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/performance-tests:performance-tests_test_lib",
     "//jps/jps-builders:build",
     "//plugins/kotlin/compiler-plugins/parcelize/tests:tests_test_lib",
     "//plugins/kotlin/compiler-reference-index/tests:tests_test_lib",

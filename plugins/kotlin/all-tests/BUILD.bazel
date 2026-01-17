@@ -43,8 +43,6 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/noarg/tests",
     "//plugins/kotlin/compiler-plugins/parcelize/tests/k1",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/tests",
-    "//plugins/kotlin/performance-tests/performance-test-utils",
-    "//plugins/kotlin/performance-tests",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/test-framework",
     "//plugins/kotlin/tests-common:common-tests",

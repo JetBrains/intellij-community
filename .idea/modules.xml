@@ -1723,8 +1723,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/kotlin.jvm-debugger.test.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/kotlin.jvm-debugger.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm/k1/kotlin.jvm.k1.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm/k1/kotlin.jvm.k1.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm/shared/kotlin.jvm.shared.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm/shared/kotlin.jvm.shared.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/performance-tests/kotlin.performance-tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/performance-tests/kotlin.performance-tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/performance-tests/performance-test-utils/kotlin.performance-tests.performance-test-utils.iml" filepath="$PROJECT_DIR$/plugins/kotlin/performance-tests/performance-test-utils/kotlin.performance-tests.performance-test-utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/plugin/kotlin.plugin.iml" filepath="$PROJECT_DIR$/plugins/kotlin/plugin/kotlin.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/plugin/common/kotlin.plugin.common.iml" filepath="$PROJECT_DIR$/plugins/kotlin/plugin/common/kotlin.plugin.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/plugin/k1/kotlin.plugin.k1.iml" filepath="$PROJECT_DIR$/plugins/kotlin/plugin/k1/kotlin.plugin.k1.iml" />

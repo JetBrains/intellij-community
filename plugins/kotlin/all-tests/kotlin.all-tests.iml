@@ -43,8 +43,6 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.performance-tests.performance-test-utils" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.performance-tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="RUNTIME" />
