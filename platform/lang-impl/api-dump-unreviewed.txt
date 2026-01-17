@@ -2036,17 +2036,6 @@ f:com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
 f:com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 - <init>():V
 - s:isEnabled():Z
-c:com.intellij.codeInsight.daemon.impl.IndentGuideRenderer
-- com.intellij.openapi.editor.markup.CustomHighlighterRenderer
-- <init>():V
-- ps:isCaretOnGuide(com.intellij.openapi.editor.Editor,I,I,I):Z
-- p:isSelected(com.intellij.openapi.editor.Editor,I,I,I):Z
-- p:paint(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.VisualPosition,com.intellij.openapi.editor.VisualPosition,I,I,com.intellij.openapi.editor.Document,java.awt.Graphics):V
-- paint(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.markup.RangeHighlighter,java.awt.Graphics):V
-com.intellij.codeInsight.daemon.impl.IndentsPassFilter
-- sf:EXTENSION_POINT:com.intellij.openapi.extensions.ExtensionPointName
-- a:shouldRunIndentsPass(com.intellij.openapi.editor.Editor):Z
-- a:shouldShowIndentGuide(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.IndentGuideDescriptor):Z
 a:com.intellij.codeInsight.daemon.impl.InheritorsLineMarkerNavigator
 - com.intellij.codeInsight.daemon.impl.LineMarkerNavigator
 - com.intellij.codeInsight.daemon.GutterIconNavigationHandler

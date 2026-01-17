@@ -1,4 +1,5 @@
-package com.intellij.codeInsight.daemon.impl;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.daemon.impl.indentGuide;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.IndentGuideDescriptor;
@@ -11,9 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * Example: Rider disables IJ-based pass entirely for C# files, because R# already adds its own indent guides there.
  * Another example: Rider keeps IJ-based pass for Razor files, but removes indent guides that both start and end in a C# code block.
  */
-public interface IndentsPassFilter {
-  ExtensionPointName<IndentsPassFilter> EXTENSION_POINT = new ExtensionPointName<>("com.intellij.daemon.indentsPassFilter");
-
+public interface IndentGuidePassFilter {
   boolean shouldRunIndentsPass(@NotNull Editor editor);
 
   boolean shouldShowIndentGuide(@NotNull Editor editor, @NotNull IndentGuideDescriptor descriptor);

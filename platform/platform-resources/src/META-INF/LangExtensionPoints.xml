@@ -64,7 +64,7 @@
     <extensionPoint name="daemon.tooltipActionProvider" interface="com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider" dynamic="true"/>
     <extensionPoint name="daemon.externalAnnotatorsFilter" interface="com.intellij.lang.ExternalAnnotatorsFilter" dynamic="true"/>
     <extensionPoint name="daemon.changeLocalityDetector" interface="com.intellij.codeInsight.daemon.ChangeLocalityDetector" dynamic="true"/>
-    <extensionPoint name="daemon.indentsPassFilter" interface="com.intellij.codeInsight.daemon.impl.IndentsPassFilter" dynamic="true"/>
+    <extensionPoint name="daemon.indentGuidePassFilter" interface="com.intellij.codeInsight.daemon.impl.indentGuide.IndentGuidePassFilter" dynamic="true"/>
     <extensionPoint name="daemon.statusItemMerger" interface="com.intellij.codeInsight.daemon.impl.StatusItemMerger" dynamic="true"/>
 
     <extensionPoint name="implicitUsageProvider" interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider" dynamic="true"/>

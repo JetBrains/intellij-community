@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.daemon.impl
+package com.intellij.codeInsight.daemon.impl.indentGuide
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.IndentGuideDescriptor
@@ -51,11 +51,11 @@ private class IndentGuideNecromancer(
 
   override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: IndentGuideZombie?) {
     if (zombie != null && zombie.limbs().isNotEmpty()) {
-      val ranges = IndentsPass.buildRanges(recipe.document, zombie.limbs())
+      val ranges = IndentGuidePass.buildRanges(recipe.document, zombie.limbs())
       val editor = recipe.editorSupplier()
       withContext(Dispatchers.EDT) {
         if (recipe.isValid(editor)) {
-          IndentsPass.applyIndents(editor, zombie.limbs(), ranges, true)
+          IndentGuidePass.applyIndents(editor, zombie.limbs(), ranges, true)
         }
       }
     }
