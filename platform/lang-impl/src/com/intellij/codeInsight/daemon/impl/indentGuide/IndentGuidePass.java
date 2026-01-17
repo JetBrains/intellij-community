@@ -4,10 +4,7 @@ package com.intellij.codeInsight.daemon.impl.indentGuide;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
-import com.intellij.codeInsight.highlighting.CodeBlockSupportHandler;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.IndentGuideDescriptor;
@@ -26,8 +23,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.DocumentUtil;
@@ -159,11 +154,12 @@ public final class IndentGuidePass extends TextEditorHighlightingPass implements
       return Collections.emptyList();
     }
 
-    IndentsCalculator calculator = new IndentsCalculator();
-    calculator.calculate();
-    int[] lineIndents = calculator.lineIndents;
+    IndentGuideCalculator calculator = new IndentGuideCalculator(myEditor, myPsiFile);
+    int[] lineIndents = calculator.calculate(getTabSize());
 
+    //noinspection SSBasedInspection
     IntArrayList lines = new IntArrayList();
+    //noinspection SSBasedInspection
     IntArrayList indents = new IntArrayList();
 
     lines.push(0);
@@ -257,109 +253,5 @@ public final class IndentGuidePass extends TextEditorHighlightingPass implements
   @TestOnly
   public @NotNull List<IndentGuideDescriptor> getDescriptors() {
     return new ArrayList<>(myDescriptors);
-  }
-
-  private final class IndentsCalculator {
-    final @NotNull Map<Language, TokenSet> myComments = new HashMap<>();
-    final int @NotNull [] lineIndents; // negative value means the line is empty (or contains a comment) and indent
-    // (denoted by absolute value) was deduced from enclosing non-empty lines
-    final @NotNull CharSequence myChars;
-
-    IndentsCalculator() {
-      lineIndents = new int[myDocument.getLineCount()];
-      myChars = myDocument.getCharsSequence();
-    }
-
-    /**
-     * Calculates line indents for the {@link #myDocument target document}.
-     */
-    void calculate() {
-      FileType fileType = myPsiFile.getFileType();
-      int tabSize = getTabSize();
-
-      for (int line = 0; line < lineIndents.length; line++) {
-        ProgressManager.checkCanceled();
-        int lineStart = myDocument.getLineStartOffset(line);
-        int lineEnd = myDocument.getLineEndOffset(line);
-        int offset = lineStart;
-        int column = 0;
-        outer:
-        while(offset < lineEnd) {
-          switch (myChars.charAt(offset)) {
-            case ' ':
-              column++;
-              break;
-            case '\t':
-              column = (column / tabSize + 1) * tabSize;
-              break;
-            default:
-              break outer;
-          }
-          offset++;
-        }
-        // treating commented lines in the same way as empty lines
-        // Blank line marker
-        lineIndents[line] = offset == lineEnd || isComment(offset) ? -1 : column;
-      }
-
-      int topIndent = 0;
-      for (int line = 0; line < lineIndents.length; line++) {
-        ProgressManager.checkCanceled();
-        if (lineIndents[line] >= 0) {
-          topIndent = lineIndents[line];
-        }
-        else {
-          int startLine = line;
-          while (line < lineIndents.length && lineIndents[line] < 0) {
-            //noinspection AssignmentToForLoopParameter
-            line++;
-          }
-
-          int bottomIndent = line < lineIndents.length ? lineIndents[line] : topIndent;
-
-          int indent = Math.min(topIndent, bottomIndent);
-          if (bottomIndent < topIndent) {
-            int lineStart = myDocument.getLineStartOffset(line);
-            int lineEnd = myDocument.getLineEndOffset(line);
-            int nonWhitespaceOffset = CharArrayUtil.shiftForward(myChars, lineStart, lineEnd, " \t");
-            HighlighterIterator iterator = myEditor.getHighlighter().createIterator(nonWhitespaceOffset);
-            IElementType tokenType = iterator.getTokenType();
-            if (BraceMatchingUtil.isRBraceToken(iterator, myChars, fileType) ||
-                tokenType != null &&
-                !CodeBlockSupportHandler.findMarkersRanges(myPsiFile, tokenType.getLanguage(), nonWhitespaceOffset).isEmpty()) {
-              indent = topIndent;
-            }
-          }
-
-          for (int blankLine = startLine; blankLine < line; blankLine++) {
-            assert lineIndents[blankLine] == -1;
-            lineIndents[blankLine] = - Math.min(topIndent, indent);
-          }
-
-          //noinspection AssignmentToForLoopParameter
-          line--; // will be incremented back at the end of the loop;
-        }
-      }
-    }
-
-    private boolean isComment(int offset) {
-      HighlighterIterator it = myEditor.getHighlighter().createIterator(offset);
-      IElementType tokenType = it.getTokenType();
-      Language language = tokenType.getLanguage();
-      TokenSet comments = myComments.get(language);
-      if (comments == null) {
-        ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-        if (definition != null) {
-          comments = definition.getCommentTokens();
-        }
-        if (comments == null) {
-          return false;
-        }
-        else {
-          myComments.put(language, comments);
-        }
-      }
-      return comments.contains(tokenType);
-    }
   }
 }
