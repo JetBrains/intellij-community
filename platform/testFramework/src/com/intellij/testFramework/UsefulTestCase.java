@@ -1080,7 +1080,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
    * For example: {@code @PerformanceUnitTest public void testHighlightingPerformance()}
    */
   public final boolean isPerformanceTest() {
-    return TestFrameworkUtil.isPerformanceTest(getName(), getClass().getSimpleName(), getClass());
+    return TestFrameworkUtil.isPerformanceTest(getName(), getClass());
   }
 
   /**
@@ -1090,9 +1090,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
    * For example: {@code public void testStressPSIFromDifferentThreads()}
    */
   public final boolean isStressTest() {
-    String testName = getName();
-    String className = getClass().getSimpleName();
-    return TestFrameworkUtil.isStressTest(testName, className, getClass());
+    return TestFrameworkUtil.isStressTest(getName(), getClass());
   }
 
   public static void doPostponedFormatting(@NotNull Project project) {

@@ -259,8 +259,6 @@ public class TestCaseLoader {
   }
 
   private boolean isPotentiallyTestCase(String className, String moduleName) {
-    String classNameWithoutPackage = StringsKt.substringAfterLast(className, '.', className);
-    if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(classNameWithoutPackage)) return false;
     if (!myTestClassesFilter.matches(className, moduleName)) return false;
     if (myFirstTestClass != null && className.equals(myFirstTestClass.getName())) return false;
     if (myLastTestClass != null && className.equals(myLastTestClass.getName())) return false;
@@ -377,7 +375,7 @@ public class TestCaseLoader {
   }
 
   private boolean shouldExcludeTestClass(String moduleName, Class<?> testCaseClass) {
-    if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(testCaseClass.getSimpleName())) return true;
+    if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(testCaseClass)) return true;
     String className = testCaseClass.getName();
 
     return !myTestClassesFilter.matches(className, moduleName) ||
@@ -530,12 +528,12 @@ public class TestCaseLoader {
     return INCLUDE_PERFORMANCE_TESTS;
   }
 
-  public static boolean shouldIncludePerformanceTestCase(String className) {
-    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null, className, null);
+  public static boolean shouldIncludePerformanceTestCase(Class<?> aClass) {
+    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null, aClass);
   }
 
-  static boolean isPerformanceTest(String methodName, String className, Class aClass) {
-    return TestFrameworkUtil.isPerformanceTest(methodName, className, aClass);
+  static boolean isPerformanceTest(String methodName, Class<?> aClass) {
+    return TestFrameworkUtil.isPerformanceTest(methodName, aClass);
   }
 
   // We assume that getPatterns and getTestGroups won't change during execution
@@ -582,17 +580,17 @@ public class TestCaseLoader {
       return false;
     }
 
-    return (isIncludingPerformanceTestsRun() || isPerformanceTestsRun() == isPerformanceTest(null, className, null)) &&
-           ourCommonCompositeTestClassesFilter.getValue().matches(className);
+    return ourCommonCompositeTestClassesFilter.getValue().matches(className);
   }
 
   // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createPostDiscoveryFilter`
   @SuppressWarnings("unused")
-  public static boolean isClassIncluded(String className) {
+  public static boolean isClassIncluded(Class<?> aClass) {
     // JUnit 5 might rediscover `@Nested` tests if they were previously filtered out by `isClassNameIncluded`,
     // but their host class was not filtered out. Let's not remove them again based on `ourFilter.matches(className)`,
     // so not checking for `isClassNameIncluded` here.
-    return matchesCurrentBucket(className);
+    return (isIncludingPerformanceTestsRun() || isPerformanceTestsRun() == isPerformanceTest(null, aClass))
+           && matchesCurrentBucket(aClass.getName());
   }
 
   public void fillTestCases(String rootPackage, List<? extends Path> classesRoots) {

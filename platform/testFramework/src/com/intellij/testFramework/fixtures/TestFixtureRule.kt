@@ -15,7 +15,7 @@ class TestFixtureRule : ExternalResource() {
     private set
 
   override fun apply(base: Statement, description: Description): Statement {
-    ApplicationManagerEx.setInStressTest(TestFrameworkUtil.isStressTest(description.methodName, description.className, description.testClass))
+    ApplicationManagerEx.setInStressTest(TestFrameworkUtil.isStressTest(description.methodName, description.testClass))
     return super.apply(base, description)
   }
 
