@@ -27,9 +27,9 @@ final class IndentGuideCalculator {
   private final PsiFile psiFile;
   private final Map<Language, TokenSet> comments = new HashMap<>();
 
-  IndentGuideCalculator(@NotNull Editor editor, @NotNull PsiFile file) {
+  IndentGuideCalculator(@NotNull Editor editor, @NotNull Document document, @NotNull PsiFile file) {
     this.editor = editor;
-    this.document = editor.getDocument();
+    this.document = document;
     this.psiFile = file;
   }
 
