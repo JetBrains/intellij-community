@@ -38,25 +38,28 @@ private class ParameterHintsNecromancer(
   ParameterHintsZombie.Necromancy,
 ) {
 
+  override fun isOnDuty(recipe: Recipe): Boolean {
+    return Registry.`is`("cache.inlay.hints.on.disk", true)
+  }
+
   override fun turnIntoZombie(recipe: TurningRecipe): ParameterHintsZombie? {
-    if (isEnabled()) {
-      val editor = recipe.editor
-      val hints = ParameterHintsPresentationManager.getInstance()
-        .getParameterHintsInRange(editor, 0, editor.document.textLength)
-        .mapNotNull { inlay -> inlay.toHintData() }
-        .toList()
+    val editor = recipe.editor
+    val hints = ParameterHintsPresentationManager.getInstance()
+      .getParameterHintsInRange(editor, 0, editor.document.textLength)
+      .mapNotNull { inlay -> inlay.toHintData() }
+      .toList()
+    if (hints.isNotEmpty()) {
       return ParameterHintsZombie(hints)
-    } else {
-      return null
     }
+    return null
   }
 
   override suspend fun shouldSpawnZombie(recipe: SpawnRecipe): Boolean {
-    return isEnabled() && isEnabledForLang(recipe.project, recipe.file)
+    return isEnabledForLang(recipe.project, recipe.file)
   }
 
   override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: ParameterHintsZombie?) {
-    if (zombie != null && zombie.limbs().isNotEmpty()) {
+    if (zombie != null) {
       val zombieHints = Int2ObjectOpenHashMap<MutableList<HintData>>()
       for ((offset, hint) in zombie.limbs()) {
         val list: MutableList<HintData> = zombieHints.getOrPut(offset) { SmartList() }
@@ -114,6 +117,7 @@ private class ParameterHintsNecromancer(
            isParameterHintsEnabledForLanguage(language)
   }
 
-  private fun isEnabled(): Boolean = Registry.`is`("cache.inlay.hints.on.disk", true)
-  private fun isDebug(): Boolean = Registry.`is`("cache.markup.debug", false)
+  private fun isDebug(): Boolean {
+    return Registry.`is`("cache.markup.debug", false)
+  }
 }

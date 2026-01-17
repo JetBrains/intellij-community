@@ -29,22 +29,21 @@ private class IndentGuideNecromancer(
   IndentGuideZombie.Necromancy,
 ) {
 
+  override fun isOnDuty(recipe: Recipe): Boolean {
+    return Registry.`is`("cache.indent.guide.model.on.disk", true) &&
+           EditorSettingsExternalizable.getInstance().isIndentGuidesShown
+  }
+
   override fun turnIntoZombie(recipe: TurningRecipe): IndentGuideZombie? {
-    if (isEnabled()) {
-      val indents = (recipe.editor.indentsModel as IndentsModelImpl).indents
-      if (indents.isNotEmpty()) {
-        return IndentGuideZombie(indents)
-      }
+    val indents = (recipe.editor.indentsModel as IndentsModelImpl).indents
+    if (indents.isNotEmpty()) {
+      return IndentGuideZombie(indents)
     }
     return null
   }
 
-  override suspend fun shouldSpawnZombie(recipe: SpawnRecipe): Boolean {
-    return isEnabled()
-  }
-
   override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: IndentGuideZombie?) {
-    if (zombie != null && zombie.limbs().isNotEmpty()) {
+    if (zombie != null) {
       val indentGuides = IndentGuides(recipe.document, IndentGuideZombieRenderer)
       runReadAction {
         indentGuides.buildIndents(zombie.limbs())
@@ -56,17 +55,5 @@ private class IndentGuideNecromancer(
         }
       }
     }
-  }
-
-  private fun isEnabled(): Boolean {
-    return isNecromancerEnabled() && isIndentGuideEnabled()
-  }
-
-  private fun isIndentGuideEnabled(): Boolean {
-    return EditorSettingsExternalizable.getInstance().isIndentGuidesShown
-  }
-
-  private fun isNecromancerEnabled(): Boolean {
-    return Registry.`is`("cache.indent.guide.model.on.disk", true)
   }
 }

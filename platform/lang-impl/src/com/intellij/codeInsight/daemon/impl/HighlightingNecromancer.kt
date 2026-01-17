@@ -67,16 +67,20 @@ open class HighlightingNecromancer(
     NO_ZOMBIE,
   }
 
+  override fun isOnDuty(recipe: Recipe): Boolean {
+    return isEnabled()
+  }
+
   override fun turnIntoZombie(recipe: TurningRecipe): HighlightingZombie? {
-    if (isEnabled()) {
-      val markupModel = DocumentMarkupModel.forDocument(recipe.document, recipe.project, false)
-      if (markupModel is MarkupModelEx) {
-        val colorsScheme = recipe.editor.colorsScheme
-        val collector = HighlighterCollector()
-        markupModel.processRangeHighlightersOverlappingWith(0, recipe.document.textLength, collector)
-        val highlighters = collector.results.map { highlighter ->
-          HighlightingLimb(highlighter, getHighlighterLayer(highlighter), colorsScheme)
-        }.toList()
+    val markupModel = DocumentMarkupModel.forDocument(recipe.document, recipe.project, false)
+    if (markupModel is MarkupModelEx) {
+      val colorsScheme = recipe.editor.colorsScheme
+      val collector = HighlighterCollector()
+      markupModel.processRangeHighlightersOverlappingWith(0, recipe.document.textLength, collector)
+      val highlighters = collector.results.map { highlighter ->
+        HighlightingLimb(highlighter, getHighlighterLayer(highlighter), colorsScheme)
+      }.toList()
+      if (highlighters.isNotEmpty()) {
         return HighlightingZombie(highlighters)
       }
     }
@@ -108,7 +112,7 @@ open class HighlightingNecromancer(
   }
 
   override suspend fun shouldSpawnZombie(recipe: SpawnRecipe): Boolean {
-    return isEnabled() && !zombieStatusMap.containsKey(recipe.fileId)
+    return !zombieStatusMap.containsKey(recipe.fileId)
   }
 
   override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: HighlightingZombie?) {

@@ -34,8 +34,13 @@ private class DocRenderNecromancer(
   "graved-doc-render",
   DocRenderZombie.Necromancy,
 ) {
+
+  override fun isOnDuty(recipe: Recipe): Boolean {
+    return true
+  }
+
   override fun turnIntoZombie(recipe: TurningRecipe): DocRenderZombie? {
-    if (isNecromancerEnabled()) {
+    if (isZombieFriendly()) {
       val limbs = mutableListOf<DocRenderZombie.Limb>()
       for (foldRegion in recipe.editor.foldingModel.allFoldRegions) {
         if (foldRegion.group == null && foldRegion is CustomFoldRegion) {
@@ -48,14 +53,16 @@ private class DocRenderNecromancer(
           }
         }
       }
-      return DocRenderZombie(limbs)
+      if (limbs.isNotEmpty()) {
+        return DocRenderZombie(limbs)
+      }
     }
     return null
   }
 
   override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: DocRenderZombie?) {
     val project = recipe.project
-    if (isNecromancerEnabled() && zombie != null && zombie.limbs().isNotEmpty()) {
+    if (isZombieFriendly() && zombie != null) {
       val itemList= zombie.limbs().map { limb ->
         Item(TextRange(limb.startOffset, limb.endOffset), limb.text)
       }
@@ -63,7 +70,7 @@ private class DocRenderNecromancer(
       val editor = recipe.editorSupplier()
       if (DocRenderManager.isDocRenderingEnabled(editor)) {
         withContext(Dispatchers.EDT) {
-          if (recipe.isValid()) {
+          if (recipe.isValid(editor)) {
             //maybe readaction
             writeIntentReadAction {
               DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
@@ -101,7 +108,7 @@ private class DocRenderNecromancer(
     }
   }
 
-  private fun isNecromancerEnabled(): Boolean {
+  private fun isZombieFriendly(): Boolean {
     return Registry.`is`("cache.folding.model.on.disk", true)
   }
 }

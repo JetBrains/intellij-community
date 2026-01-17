@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
@@ -39,29 +39,28 @@ private class CodeVisionNecromancer(
   CodeVisionZombie.Necromancy,
 ) {
 
+  override fun isOnDuty(recipe: Recipe): Boolean {
+    return Registry.`is`("editor.codeVision.new", true) &&
+           CodeVisionSettings.getInstance().codeVisionEnabled &&
+           CodeVisionProjectSettings.getInstance(recipe.project).isEnabledForProject()
+  }
+
   override fun turnIntoZombie(recipe: TurningRecipe): CodeVisionZombie? {
-    if (isNecromancerEnabled()) {
-      val context = recipe.editor.lensContext
-      if (context != null) {
-        val limbs = context.getValidPairResult()
-          .filter { (_, cvEntry) -> !ignoreEntry(cvEntry) }
-          .map { CodeVisionLimb(it) }
-          .toList()
+    val context = recipe.editor.lensContext
+    if (context != null) {
+      val limbs = context.getValidPairResult()
+        .filter { (_, cvEntry) -> !ignoreEntry(cvEntry) }
+        .map { CodeVisionLimb(it) }
+        .toList()
+      if (limbs.isNotEmpty()) {
         return CodeVisionZombie(limbs)
       }
     }
     return null
   }
 
-  override suspend fun shouldSpawnZombie(recipe: SpawnRecipe): Boolean {
-    return Registry.`is`("editor.codeVision.new", true) &&
-           CodeVisionSettings.getInstance().codeVisionEnabled &&
-           CodeVisionProjectSettings.getInstance(recipe.project).isEnabledForProject() &&
-           isNecromancerEnabled()
-  }
-
   override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: CodeVisionZombie?) {
-    if (zombie != null && zombie.limbs().isNotEmpty()) {
+    if (isZombieFriendly() && zombie != null) {
       val providerIdToGroupId = providerToGroupMap(recipe.project)
       val settings = CodeVisionSettings.getInstance()
       val entries = zombie.asCodeVisionEntries()
@@ -114,5 +113,7 @@ private class CodeVisionNecromancer(
     return cvEntry is ZombieCodeVisionEntry || cvEntry is RichTextCodeVisionEntry
   }
 
-  private fun isNecromancerEnabled() = Registry.`is`("cache.inlay.hints.on.disk", true)
+  private fun isZombieFriendly(): Boolean {
+    return Registry.`is`("cache.inlay.hints.on.disk", true)
+  }
 }
