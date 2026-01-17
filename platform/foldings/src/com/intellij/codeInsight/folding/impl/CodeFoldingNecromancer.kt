@@ -46,7 +46,7 @@ private class CodeFoldingNecromancer(
   CodeFoldingNecromancy,
 ) {
 
-  override fun isOnDuty(recipe: Recipe): Boolean {
+  override fun enoughMana(recipe: Recipe): Boolean {
     return true
   }
 

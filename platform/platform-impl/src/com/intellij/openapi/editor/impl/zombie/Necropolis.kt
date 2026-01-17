@@ -104,7 +104,7 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
       val recipe = SpawnRecipe(project, fileId, file, document, modStamp, editorSupplier, highlighterReady)
       coroutineScope {
         for (necromancer in necromancersDeferred.await()) {
-          if (necromancer.isOnDuty(recipe)) {
+          if (necromancer.enoughMana(recipe)) {
             launch(CoroutineName(necromancer.name())) {
               try {
                 if (!project.isDisposed && necromancer.shouldSpawnZombie(recipe)) {
@@ -157,7 +157,7 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
 
   private fun turnIntoZombiesAndBury(necromancers: List<Necromancer<Zombie>>, recipe: TurningRecipe) {
     val zombies = necromancers
-      .filter { it.isOnDuty(recipe) }
+      .filter { it.enoughMana(recipe) }
       .mapNotNull { necromancer ->
         necromancer.turnIntoZombie(recipe)?.let { zombie ->
           necromancer to zombie

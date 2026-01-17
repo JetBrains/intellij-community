@@ -17,12 +17,6 @@ import javax.swing.Icon
 
 internal class CodeVisionZombie(limbs: List<CodeVisionLimb>) : LimbedZombie<CodeVisionLimb>(limbs) {
 
-  fun asCodeVisionEntries(): List<Pair<TextRange, CodeVisionEntry>> {
-    return limbs().map { entry ->
-      Pair(TextRange(entry.startOffset, entry.endOffset), entry.asEntry())
-    }
-  }
-
   internal object Necromancy : LimbedNecromancy<CodeVisionZombie, CodeVisionLimb>(spellLevel=3) {
 
     override fun buryLimb(grave: DataOutput, limb: CodeVisionLimb) {

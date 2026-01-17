@@ -1,16 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.indentGuide
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.IndentGuideDescriptor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.IndentsModelImpl
 import com.intellij.openapi.editor.impl.zombie.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 
 internal class IndentGuideNecromancerAwaker : NecromancerAwaker<IndentGuideZombie> {
@@ -22,38 +21,32 @@ internal class IndentGuideNecromancerAwaker : NecromancerAwaker<IndentGuideZombi
 private class IndentGuideNecromancer(
   project: Project,
   coroutineScope: CoroutineScope,
-) : GravingNecromancer<IndentGuideZombie>(
+) : CleaverNecromancer<IndentGuideZombie, IndentGuideDescriptor>(
   project,
   coroutineScope,
   "graved-indent-guides",
   IndentGuideZombie.Necromancy,
 ) {
 
-  override fun isOnDuty(recipe: Recipe): Boolean {
+  override fun enoughMana(recipe: Recipe): Boolean {
     return Registry.`is`("cache.indent.guide.model.on.disk", true) &&
            EditorSettingsExternalizable.getInstance().isIndentGuidesShown
   }
 
-  override fun turnIntoZombie(recipe: TurningRecipe): IndentGuideZombie? {
-    val indents = (recipe.editor.indentsModel as IndentsModelImpl).indents
-    if (indents.isNotEmpty()) {
-      return IndentGuideZombie(indents)
-    }
-    return null
+  override fun cutIntoLimbs(recipe: TurningRecipe): List<IndentGuideDescriptor> {
+    return (recipe.editor.indentsModel as IndentsModelImpl).indents
   }
 
-  override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: IndentGuideZombie?) {
-    if (zombie != null) {
-      val indentGuides = IndentGuides(recipe.document, IndentGuideZombieRenderer)
-      runReadAction {
-        indentGuides.buildIndents(zombie.limbs())
-      }
-      val editor = recipe.editorSupplier()
-      withContext(Dispatchers.EDT) {
-        if (recipe.isValid(editor)) {
-          indentGuides.applyIndents(editor)
-        }
-      }
+  override suspend fun spawnZombie(
+    recipe: SpawnRecipe,
+    limbs: List<IndentGuideDescriptor>,
+  ): (suspend (Editor) -> Unit) {
+    val indentGuides = IndentGuides(recipe.document, IndentGuideZombieRenderer)
+    runReadAction {
+      indentGuides.buildIndents(limbs)
+    }
+    return { editor ->
+      indentGuides.applyIndents(editor)
     }
   }
 }

@@ -23,7 +23,7 @@ internal class FocusZoneNecromancerAwaker : NecromancerAwaker<Nothing> {
 
 private class FocusZoneNecromancer : WeakNecromancer("focus-zone") {
 
-  override fun isOnDuty(recipe: Recipe): Boolean {
+  override fun enoughMana(recipe: Recipe): Boolean {
     return FocusModePassFactory.isEnabled()
   }
 

@@ -1,13 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.ParameterHintsPass.HintData
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.zombie.*
 import com.intellij.openapi.project.Project
@@ -19,8 +19,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.util.SmartList
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+
 
 internal class ParameterHintsNecromancerAwaker : NecromancerAwaker<ParameterHintsZombie> {
   override fun awake(project: Project, coroutineScope: CoroutineScope): Necromancer<ParameterHintsZombie> {
@@ -31,59 +30,53 @@ internal class ParameterHintsNecromancerAwaker : NecromancerAwaker<ParameterHint
 private class ParameterHintsNecromancer(
   project: Project,
   coroutineScope: CoroutineScope,
-) : GravingNecromancer<ParameterHintsZombie>(
+) : CleaverNecromancer<ParameterHintsZombie, Pair<Int, HintData>>(
   project,
   coroutineScope,
   "graved-parameter-hints",
   ParameterHintsZombie.Necromancy,
 ) {
 
-  override fun isOnDuty(recipe: Recipe): Boolean {
+  override fun enoughMana(recipe: Recipe): Boolean {
     return Registry.`is`("cache.inlay.hints.on.disk", true)
   }
 
-  override fun turnIntoZombie(recipe: TurningRecipe): ParameterHintsZombie? {
+  override fun cutIntoLimbs(recipe: TurningRecipe): List<Pair<Int, HintData>> {
     val editor = recipe.editor
-    val hints = ParameterHintsPresentationManager.getInstance()
+    return ParameterHintsPresentationManager.getInstance()
       .getParameterHintsInRange(editor, 0, editor.document.textLength)
       .mapNotNull { inlay -> inlay.toHintData() }
       .toList()
-    if (hints.isNotEmpty()) {
-      return ParameterHintsZombie(hints)
-    }
-    return null
   }
 
   override suspend fun shouldSpawnZombie(recipe: SpawnRecipe): Boolean {
     return isEnabledForLang(recipe.project, recipe.file)
   }
 
-  override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: ParameterHintsZombie?) {
-    if (zombie != null) {
-      val zombieHints = Int2ObjectOpenHashMap<MutableList<HintData>>()
-      for ((offset, hint) in zombie.limbs()) {
-        val list: MutableList<HintData> = zombieHints.getOrPut(offset) { SmartList() }
-        val hint1 = if (isDebug()) {
-          debugHintData(hint)
-        } else {
-          hint
-        }
-        list.add(hint1)
+  override suspend fun spawnZombie(
+    recipe: SpawnRecipe,
+    limbs: List<Pair<Int, HintData>>,
+  ): (suspend (Editor) -> Unit) {
+    val zombieHints = Int2ObjectOpenHashMap<MutableList<HintData>>()
+    for ((offset, hint) in limbs) {
+      val list: MutableList<HintData> = zombieHints.getOrPut(offset) { SmartList() }
+      val hint1 = if (isDebug()) {
+        debugHintData(hint)
+      } else {
+        hint
       }
-      val editor = recipe.editorSupplier()
-      withContext(Dispatchers.EDT) {
-        writeIntentReadAction {
-          if (recipe.isValid(editor)) {
-            ParameterHintsUpdater(
-              editor,
-              listOf(),
-              zombieHints,
-              Int2ObjectOpenHashMap(0),
-              true
-            ).update()
-            FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.PARAMETER_HINTS)
-          }
-        }
+      list.add(hint1)
+    }
+    return { editor ->
+      writeIntentReadAction {
+        ParameterHintsUpdater(
+          editor,
+          listOf(),
+          zombieHints,
+          Int2ObjectOpenHashMap(0),
+          true,
+        ).update()
+        FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.PARAMETER_HINTS)
       }
     }
   }

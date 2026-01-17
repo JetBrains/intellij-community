@@ -9,9 +9,9 @@ import com.intellij.codeInsight.hints.declarative.impl.*
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeIndentedBlockInlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.zombie.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -19,8 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 
 internal class DeclarativeHintsNecromancerAwaker : NecromancerAwaker<DeclarativeHintsZombie> {
@@ -32,18 +30,18 @@ internal class DeclarativeHintsNecromancerAwaker : NecromancerAwaker<Declarative
 private class DeclarativeHintsNecromancer(
   project: Project,
   coroutineScope: CoroutineScope,
-) : GravingNecromancer<DeclarativeHintsZombie>(
+) : CleaverNecromancer<DeclarativeHintsZombie, InlayData>(
   project,
   coroutineScope,
   "graved-declarative-hints",
   DeclarativeHintsNecromancy,
 ) {
 
-  override fun isOnDuty(recipe: Recipe): Boolean {
+  override fun enoughMana(recipe: Recipe): Boolean {
     return isDeclarativeEnabled() && isCacheEnabled()
   }
 
-  override fun turnIntoZombie(recipe: TurningRecipe): DeclarativeHintsZombie? {
+  override fun cutIntoLimbs(recipe: TurningRecipe): List<InlayData> {
     val inlineHints = recipe.editor.getInlayModel().getInlineElementsInRange(
       0,
       recipe.editor.getDocument().textLength,
@@ -63,39 +61,40 @@ private class DeclarativeHintsNecromancer(
     inlineHints.flatMapTo(inlayDataList) { it.renderer.toInlayData() }
     eolHints.flatMapTo(inlayDataList) { it.renderer.toInlayData() }
     blockHints.flatMapTo(inlayDataList) { it.renderer.toInlayData() }
-    if (inlayDataList.isNotEmpty()) {
-      return DeclarativeHintsZombie(inlayDataList)
-    }
-    return null
+    return inlayDataList
   }
 
-  override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: DeclarativeHintsZombie?) {
-    if (zombie != null) {
-      val settings = DeclarativeInlayHintsSettings.getInstance()
-      for (inlayData in zombie.limbs()) {
-        initZombiePointers(recipe.project, recipe.file, inlayData.tree)
-      }
-      val inlayDataMap = readActionBlocking {
-        if (!recipe.isValid()) return@readActionBlocking emptyMap()
-        zombie.limbs()
-          .filter { settings.isProviderEnabled(it.providerId) ?: true }
-          .groupBy { it.sourceId }
-          .mapValues { (_, inlayDataList) -> DeclarativeInlayHintsPass.preprocessCollectedInlayData(inlayDataList, recipe.document) }
-      }
-      if (inlayDataMap.isNotEmpty()) {
-        val editor = recipe.editorSupplier()
-        withContext(Dispatchers.EDT) {
-          if (recipe.isValid(editor)) {
-            //maybe readaction
-            writeIntentReadAction {
-              inlayDataMap.forEach { (sourceId, preparedInlayData) ->
-                DeclarativeInlayHintsPass.applyInlayData(editor, recipe.project, preparedInlayData, emptySet(), sourceId)
-              }
-              DeclarativeInlayHintsPassFactory.resetModificationStamp(editor)
-              FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.DECLARATIVE_HINTS)
-            }
-          }
+  override suspend fun spawnZombie(
+    recipe: SpawnRecipe,
+    limbs: List<InlayData>,
+  ): (suspend (Editor) -> Unit)? {
+    val settings = DeclarativeInlayHintsSettings.getInstance()
+    for (inlayData in limbs) {
+      initZombiePointers(recipe.project, recipe.file, inlayData.tree)
+    }
+    val inlayDataMap = readActionBlocking {
+      if (!recipe.isValid()) return@readActionBlocking emptyMap()
+      limbs
+        .filter { settings.isProviderEnabled(it.providerId) ?: true }
+        .groupBy { it.sourceId }
+        .mapValues { (_, inlayDataList) -> DeclarativeInlayHintsPass.preprocessCollectedInlayData(inlayDataList, recipe.document) }
+    }
+    if (inlayDataMap.isEmpty()) {
+      return null
+    }
+    return { editor ->
+      writeIntentReadAction {
+        inlayDataMap.forEach { (sourceId, preparedInlayData) ->
+          DeclarativeInlayHintsPass.applyInlayData(
+            editor,
+            recipe.project,
+            preparedInlayData,
+            emptySet(),
+            sourceId,
+          )
         }
+        DeclarativeInlayHintsPassFactory.resetModificationStamp(editor)
+        FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.DECLARATIVE_HINTS)
       }
     }
   }
