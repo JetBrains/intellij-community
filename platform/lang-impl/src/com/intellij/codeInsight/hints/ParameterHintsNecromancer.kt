@@ -35,7 +35,7 @@ private class ParameterHintsNecromancer(
   project,
   coroutineScope,
   "graved-parameter-hints",
-  ParameterHintsNecromancy
+  ParameterHintsZombie.Necromancy,
 ) {
 
   override fun turnIntoZombie(recipe: TurningRecipe): ParameterHintsZombie? {

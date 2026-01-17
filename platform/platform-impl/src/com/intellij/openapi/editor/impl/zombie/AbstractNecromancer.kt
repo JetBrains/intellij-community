@@ -1,12 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.zombie
 
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.DataInputOutputUtil.readINT
-import com.intellij.util.io.DataInputOutputUtil.writeINT
 import kotlinx.coroutines.CoroutineScope
-import java.io.DataInput
-import java.io.DataOutput
+
 
 /**
  * Abstract class representing [Necromancer] who can manage zombies.
@@ -59,54 +56,5 @@ abstract class GravingNecromancer<Z : Zombie>(
 
   final override suspend fun exhumeZombie(id: Int): FingerprintedZombie<Z>? {
     return grave.exhumeZombie(id)
-  }
-}
-
-/**
- * Base class for zombie consisting of limbs.
- *
- * See [LimbedNecromancy]
- */
-open class LimbedZombie<L>(private val limbs: List<L>) : Zombie {
-  fun limbs(): List<L> = limbs
-
-  override fun toString(): String {
-    return "${javaClass.simpleName}[limbs=${limbs.size}]"
-  }
-}
-
-/**
- * Base necromancy serializing the zombie limb-by-limb
- */
-abstract class LimbedNecromancy<Z : LimbedZombie<L>, L> (
-  private val spellLevel: Int,
-  private val isDeepBury: Boolean = false,
-) : Necromancy<Z> {
-
-  abstract fun buryLimb(grave: DataOutput, limb: L)
-
-  abstract fun exhumeLimb(grave: DataInput): L
-
-  abstract fun formZombie(limbs: List<L>): Z
-
-  final override fun spellLevel(): Int = spellLevel
-
-  final override fun isDeepBury(): Boolean = isDeepBury
-
-  final override fun buryZombie(grave: DataOutput, zombie: Z) {
-    writeINT(grave, zombie.limbs().size)
-    for (limb in zombie.limbs()) {
-      buryLimb(grave, limb)
-    }
-  }
-
-  final override fun exhumeZombie(grave: DataInput): Z {
-    val limbCount = readINT(grave)
-    val limbs = buildList {
-      repeat(limbCount) {
-        add(exhumeLimb(grave))
-      }
-    }
-    return formZombie(limbs)
   }
 }
