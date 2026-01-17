@@ -22,16 +22,6 @@ export async function getReadyChildren(epicId) {
   return null
 }
 
-// Check if issue requires user review before closing (based on priority/type)
-/** @param {Issue} issue */
-export function needsReview(issue) {
-  const priority = typeof issue.priority === 'string'
-    ? parseInt(issue.priority.replace('P', ''), 10)
-    : (issue.priority ?? 2)
-  // P0/P1 (critical/high), bugs, features, and epics always need review
-  return priority <= 1 || issue.issue_type === 'bug' || issue.issue_type === 'feature' || issue.issue_type === 'epic'
-}
-
 export async function createEpic(title, description) {
   const id = await bd(['create', '--title', title, '--type', 'epic', '--description', description, '--acceptance', 'PENDING', '--design', 'PENDING', '--silent'])
   await bd(['update', id, '--status', 'in_progress'])
