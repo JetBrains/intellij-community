@@ -8,11 +8,13 @@ const tools = [
     description: 'Get issue state or full details',
     inputSchema: {
       type: 'object',
+      additionalProperties: false,
       properties: {
         id: {type: 'string', description: 'Issue ID for full details'},
-        view: {type: 'string', enum: ['summary', 'meta'], description: 'Issue view (default: summary)'},
-        meta_max_chars: {type: 'integer', description: 'Max chars for description/design/acceptance in meta view (default: 400)'},
-        memory_limit: {type: 'integer', description: 'Max entries per memory list in response (0 to omit memory)'}
+        user_request: {type: 'string', description: 'Not supported for task_status; use task_start'},
+        view: {type: 'string', enum: ['summary', 'meta'], default: 'summary', description: 'Issue view (default: summary)'},
+        meta_max_chars: {type: 'integer', default: 400, description: 'Max chars for description/design/acceptance in meta view (default: 400)'},
+        memory_limit: {type: 'integer', default: 0, description: 'Max entries per memory list in response (0 to omit memory)'}
       }
     }
   },
@@ -21,12 +23,13 @@ const tools = [
     description: 'Start task workflow (status + optional epic creation)',
     inputSchema: {
       type: 'object',
+      additionalProperties: false,
       properties: {
         id: {type: 'string', description: 'Issue ID for full details'},
         user_request: {type: 'string', description: 'User task description'},
-        view: {type: 'string', enum: ['summary', 'meta'], description: 'Issue view (default: summary)'},
-        meta_max_chars: {type: 'integer', description: 'Max chars for description/design/acceptance in meta view (default: 400)'},
-        memory_limit: {type: 'integer', description: 'Max entries per memory list in response (0 to omit memory)'}
+        view: {type: 'string', enum: ['summary', 'meta'], default: 'summary', description: 'Issue view (default: summary)'},
+        meta_max_chars: {type: 'integer', default: 400, description: 'Max chars for description/design/acceptance in meta view (default: 400)'},
+        memory_limit: {type: 'integer', default: 0, description: 'Max entries per memory list in response (0 to omit memory)'}
       }
     }
   },
@@ -35,13 +38,14 @@ const tools = [
     description: 'Update findings/decisions/status',
     inputSchema: {
       type: 'object',
+      additionalProperties: false,
       properties: {
         id: {type: 'string', description: 'Issue ID'},
         findings: {type: 'array', items: {type: 'string'}, description: 'Discoveries'},
         decisions: {type: 'array', items: {type: 'string'}, description: 'Decisions made'},
         completed: {type: 'string', description: 'What was completed'},
         status: {type: 'string', enum: ['in_progress', 'blocked', 'deferred']},
-        memory_limit: {type: 'integer', description: 'Max entries per memory list in response (0 to omit memory)'}
+        memory_limit: {type: 'integer', default: 0, description: 'Max entries per memory list in response (0 to omit memory)'}
       },
       required: ['id']
     }
@@ -51,12 +55,14 @@ const tools = [
     description: 'Create sub-issues under epic',
     inputSchema: {
       type: 'object',
+      additionalProperties: false,
       properties: {
         epic_id: {type: 'string', description: 'Parent epic ID'},
         sub_issues: {
           type: 'array',
           items: {
             type: 'object',
+            additionalProperties: false,
             properties: {
               title: {type: 'string'},
               description: {type: 'string'},
@@ -79,6 +85,7 @@ const tools = [
     description: 'Create non-epic issue',
     inputSchema: {
       type: 'object',
+      additionalProperties: false,
       properties: {
         title: {type: 'string'},
         description: {type: 'string'},
@@ -98,14 +105,14 @@ const tools = [
     description: 'Close issue',
     inputSchema: {
       type: 'object',
+      additionalProperties: false,
       properties: {
         id: {type: 'string'},
-        summary: {type: 'string'},
+        reason: {type: 'string'},
         findings: {type: 'array', items: {type: 'string'}},
-        decisions: {type: 'array', items: {type: 'string'}},
-        confirmed: {type: 'boolean', description: 'Confirm closure after review prompt'}
+        decisions: {type: 'array', items: {type: 'string'}}
       },
-      required: ['id']
+      required: ['id', 'reason']
     }
   },
   {
@@ -113,12 +120,13 @@ const tools = [
     description: 'Reopen closed issue',
     inputSchema: {
       type: 'object',
+      additionalProperties: false,
       properties: {
         id: {type: 'string', description: 'Issue ID'},
         reason: {type: 'string', description: 'Reason for reopening'},
-        view: {type: 'string', enum: ['summary', 'meta'], description: 'Issue view (default: summary)'},
-        meta_max_chars: {type: 'integer', description: 'Max chars for description/design/acceptance in meta view (default: 400)'},
-        memory_limit: {type: 'integer', description: 'Max entries per memory list in response (0 to omit memory)'}
+        view: {type: 'string', enum: ['summary', 'meta'], default: 'summary', description: 'Issue view (default: summary)'},
+        meta_max_chars: {type: 'integer', default: 400, description: 'Max chars for description/design/acceptance in meta view (default: 400)'},
+        memory_limit: {type: 'integer', default: 0, description: 'Max entries per memory list in response (0 to omit memory)'}
       },
       required: ['id', 'reason']
     }

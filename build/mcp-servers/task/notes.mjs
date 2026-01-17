@@ -102,9 +102,7 @@ function parseNotes(notes, comments) {
   const findings = mergeEntries(commentSections.findings, notesSections.findings)
   const decisions = mergeEntries(commentSections.decisions, notesSections.decisions)
   const result = {findings, decisions}
-  if (notesSections.pending_close) result.pending_close = notesSections.pending_close
-
-  if (findings.length > 0 || decisions.length > 0 || result.pending_close) {
+  if (findings.length > 0 || decisions.length > 0) {
     return result
   }
   return null
@@ -131,7 +129,7 @@ function buildMemoryFromSections(sections, limit) {
     findings: sections.findings.length,
     decisions: sections.decisions.length
   }
-  if (totals.findings === 0 && totals.decisions === 0 && !sections.pending_close) {
+  if (totals.findings === 0 && totals.decisions === 0) {
     return null
   }
   const findings = sliceToLimit(sections.findings, cap)
@@ -145,7 +143,6 @@ function buildMemoryFromSections(sections, limit) {
     truncated,
     limit: cap
   }
-  if (sections.pending_close) memory.pending_close = sections.pending_close
   return memory
 }
 
@@ -153,12 +150,11 @@ export function buildMemory(notes, comments, limit) {
   return buildMemoryFromSections(parseNotes(notes, comments), limit)
 }
 
-export function buildMemoryFromEntries(findings, decisions, pendingClose, limit) {
+export function buildMemoryFromEntries(findings, decisions, limit) {
   const sections = {
     findings: normalizeEntries(findings),
     decisions: normalizeEntries(decisions)
   }
-  if (pendingClose) sections.pending_close = pendingClose
   return buildMemoryFromSections(sections, limit)
 }
 
@@ -167,11 +163,6 @@ export function extractMemoryFromIssue(issue, limit) {
   delete issue.notes
   delete issue.comments
   return memory
-}
-
-export function buildPendingNotes(pendingClose) {
-  if (!pendingClose) return ''
-  return JSON.stringify({pending_close: pendingClose}, null, 2)
 }
 
 function filterNewEntries(entries, existingSet) {
@@ -218,7 +209,9 @@ export function prepareSectionUpdates(issue, incomingFindings, incomingDecisions
   const finalFindings = mergeEntries(existingFindings, newFindings)
   const finalDecisions = mergeEntries(existingDecisions, newDecisions)
 
-  const shouldStripNotes = notesSections.findings.length > 0 || notesSections.decisions.length > 0
+  const shouldStripNotes = notesSections.findings.length > 0
+    || notesSections.decisions.length > 0
+    || notesSections.pending_close
 
   return {
     notesSections,
