@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.python.test.env.common.PredefinedPyEnvironments;
 import com.intellij.python.test.env.junit4.JUnit4FactoryHolder;
 import com.intellij.testFramework.TestApplicationManager;
@@ -163,6 +164,7 @@ public abstract class PyEnvTestCase {
   private void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
     Assume.assumeFalse("Running under teamcity but not by Env configuration. Test seems to be launched by accident, skip it.",
                        UsefulTestCase.IS_UNDER_TEAMCITY && !SETTINGS.isEnvConfiguration());
+    Registry.get("debugpy.dap.is.enable").setValue(false);
     doRunTests(testTask, testName);
   }
 
