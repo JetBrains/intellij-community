@@ -236,14 +236,6 @@ export const toolHandlers = {
       }
     }
 
-    if (args.start_child_index !== undefined) {
-      if (!Number.isInteger(args.start_child_index)) {
-        return buildError('start_child_index must be an integer')
-      }
-      if (args.start_child_index < 0 || args.start_child_index >= args.sub_issues.length) {
-        return buildError(`start_child_index ${args.start_child_index} out of range (0-${args.sub_issues.length - 1})`)
-      }
-    }
 
     const ids = []
     for (const sub of args.sub_issues) {
@@ -262,9 +254,9 @@ export const toolHandlers = {
       }
     }
 
-    let startedChildId = null
-    if (args.start_child_index !== undefined) {
-      startedChildId = ids[args.start_child_index]
+    let startedChildId
+    if (args.sub_issues.length === 1) {
+      startedChildId = ids[0]
       await bd(['update', startedChildId, '--status', 'in_progress'])
     }
 
@@ -272,7 +264,9 @@ export const toolHandlers = {
       await bd(['update', args.epic_id, '--acceptance', args.update_epic_acceptance])
     }
 
-    return buildCreated({ids, epic_id: args.epic_id, started_child_id: startedChildId})
+    const payload = {ids, epic_id: args.epic_id}
+    if (startedChildId) payload.started_child_id = startedChildId
+    return buildCreated(payload)
   },
 
   task_create: async (args) => {
