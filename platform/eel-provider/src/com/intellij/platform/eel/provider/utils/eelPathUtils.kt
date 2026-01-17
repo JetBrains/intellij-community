@@ -6,6 +6,7 @@ package com.intellij.platform.eel.provider.utils
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -33,6 +34,7 @@ import java.io.IOException
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
+import java.nio.file.AccessDeniedException
 import java.nio.file.AccessMode
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -414,6 +416,7 @@ object EelPathUtils {
     fileAttributesStrategy: FileTransferAttributesStrategy,
     absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler? = null,
   ) {
+    LOG.debug { "walkingTransfer($sourceRoot -> $targetRoot)" }
     if (Registry.`is`("ijent.incremental.walking.transfer")) {
       runBlockingMaybeCancellable {
         incrementalWalkingTransfer(sourceRoot, targetRoot, fileAttributesStrategy, absoluteSymlinkHandler)
@@ -476,8 +479,16 @@ object EelPathUtils {
 
             sourceAttrs.isRegularFile -> {
               Files.newInputStream(source, READ).use { reader ->
-                Files.newOutputStream(target, CREATE, TRUNCATE_EXISTING, WRITE).use { writer ->
-                  reader.copyTo(writer, bufferSize = 4 * 1024 * 1024)
+                try {
+                  Files.newOutputStream(target, CREATE, TRUNCATE_EXISTING, WRITE).use { writer ->
+                    reader.copyTo(writer, bufferSize = 4 * 1024 * 1024)
+                  }
+                }
+                catch (e: IOException) {
+                  val parent = target.parent
+                  val text = "Couldn't open $target for writing ${target.getReadableInfo()}, " +
+                           "and parent: ${parent.getReadableInfo()}"
+                  throw IOException(text, e)
                 }
               }
               if (removeSource) {
@@ -1550,3 +1561,7 @@ private inline fun <reified T : Throwable> runCatching(vararg blocks: () -> Unit
     }
   }
 }
+
+private fun Path.getReadableInfo(): @NlsSafe String = """
+  $this : isFile ${isRegularFile()}, isDir: ${isDirectory()}, exists: ${exists()}
+""".trimIndent()
