@@ -3,22 +3,15 @@ package com.intellij.codeInsight.daemon.impl.indentGuide
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.editor.IndentGuideDescriptor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.IndentsModelImpl
 import com.intellij.openapi.editor.impl.zombie.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.io.DataInputOutputUtil.readINT
-import com.intellij.util.io.DataInputOutputUtil.writeINT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.DataInput
-import java.io.DataOutput
 
-
-typealias IndentGuideLimb = IndentGuideDescriptor
 
 internal class IndentGuideNecromancerAwaker : NecromancerAwaker<IndentGuideZombie> {
   override fun awake(project: Project, coroutineScope: CoroutineScope): Necromancer<IndentGuideZombie> {
@@ -33,7 +26,7 @@ private class IndentGuideNecromancer(
   project,
   coroutineScope,
   "graved-indent-guides",
-  IndentGuideNecromancy,
+  IndentGuideZombie.Necromancy,
 ) {
 
   override fun turnIntoZombie(recipe: TurningRecipe): IndentGuideZombie? {
@@ -75,36 +68,5 @@ private class IndentGuideNecromancer(
 
   private fun isNecromancerEnabled(): Boolean {
     return Registry.`is`("cache.indent.guide.model.on.disk", true)
-  }
-}
-
-internal class IndentGuideZombie(
-  limbs: List<IndentGuideLimb>,
-) : LimbedZombie<IndentGuideLimb>(limbs)
-
-private object IndentGuideNecromancy : LimbedNecromancy<IndentGuideZombie, IndentGuideLimb>(spellLevel=0) {
-
-  override fun buryLimb(grave: DataOutput, limb: IndentGuideLimb) {
-    writeINT(grave, limb.indentLevel)
-    writeINT(grave, limb.codeConstructStartLine)
-    writeINT(grave, limb.startLine)
-    writeINT(grave, limb.endLine)
-  }
-
-  override fun exhumeLimb(grave: DataInput): IndentGuideLimb {
-    val indentLevel           : Int = readINT(grave)
-    val codeConstructStartLine: Int = readINT(grave)
-    val startLine             : Int = readINT(grave)
-    val endLine               : Int = readINT(grave)
-    return IndentGuideDescriptor(
-      indentLevel,
-      codeConstructStartLine,
-      startLine,
-      endLine,
-    )
-  }
-
-  override fun formZombie(limbs: List<IndentGuideLimb>): IndentGuideZombie {
-    return IndentGuideZombie(limbs)
   }
 }
