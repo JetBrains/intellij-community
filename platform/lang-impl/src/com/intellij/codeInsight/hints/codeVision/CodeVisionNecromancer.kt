@@ -8,7 +8,6 @@ import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.RichTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.ZombieCodeVisionEntry
 import com.intellij.codeInsight.daemon.impl.grave.CodeVisionLimb
-import com.intellij.codeInsight.daemon.impl.grave.CodeVisionNecromancy
 import com.intellij.codeInsight.daemon.impl.grave.CodeVisionZombie
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
@@ -37,7 +36,7 @@ private class CodeVisionNecromancer(
   project,
   coroutineScope,
   "graved-code-vision",
-  CodeVisionNecromancy,
+  CodeVisionZombie.Necromancy,
 ) {
 
   override fun turnIntoZombie(recipe: TurningRecipe): CodeVisionZombie? {

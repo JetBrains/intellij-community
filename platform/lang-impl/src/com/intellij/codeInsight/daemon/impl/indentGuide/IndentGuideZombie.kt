@@ -4,8 +4,6 @@ package com.intellij.codeInsight.daemon.impl.indentGuide
 import com.intellij.openapi.editor.IndentGuideDescriptor
 import com.intellij.openapi.editor.impl.zombie.LimbedNecromancy
 import com.intellij.openapi.editor.impl.zombie.LimbedZombie
-import com.intellij.util.io.DataInputOutputUtil.readINT
-import com.intellij.util.io.DataInputOutputUtil.writeINT
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -16,17 +14,17 @@ internal class IndentGuideZombie(
 
   object Necromancy : LimbedNecromancy<IndentGuideZombie, IndentGuideDescriptor>(spellLevel=0) {
     override fun buryLimb(grave: DataOutput, limb: IndentGuideDescriptor) {
-      writeINT(grave, limb.indentLevel)
-      writeINT(grave, limb.codeConstructStartLine)
-      writeINT(grave, limb.startLine)
-      writeINT(grave, limb.endLine)
+      writeInt(grave, limb.indentLevel)
+      writeInt(grave, limb.codeConstructStartLine)
+      writeInt(grave, limb.startLine)
+      writeInt(grave, limb.endLine)
     }
 
     override fun exhumeLimb(grave: DataInput): IndentGuideDescriptor {
-      val indentLevel           : Int = readINT(grave)
-      val codeConstructStartLine: Int = readINT(grave)
-      val startLine             : Int = readINT(grave)
-      val endLine               : Int = readINT(grave)
+      val indentLevel:            Int = readInt(grave)
+      val codeConstructStartLine: Int = readInt(grave)
+      val startLine:              Int = readInt(grave)
+      val endLine:                Int = readInt(grave)
       return IndentGuideDescriptor(
         indentLevel,
         codeConstructStartLine,

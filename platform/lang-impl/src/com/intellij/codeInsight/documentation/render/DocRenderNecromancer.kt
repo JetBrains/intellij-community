@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render
 
 import com.intellij.codeInsight.documentation.render.DocRenderPassFactory.Item
@@ -14,15 +14,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
 import com.intellij.psi.PsiManager
-import com.intellij.util.io.DataInputOutputUtil.readINT
-import com.intellij.util.io.DataInputOutputUtil.writeINT
-import com.intellij.util.io.IOUtil.readUTF
-import com.intellij.util.io.IOUtil.writeUTF
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.DataInput
-import java.io.DataOutput
+
 
 internal class DocRenderNecromancerAwaker : NecromancerAwaker<DocRenderZombie> {
   override fun awake(project: Project, coroutineScope: CoroutineScope): Necromancer<DocRenderZombie> {
@@ -37,18 +32,18 @@ private class DocRenderNecromancer(
   project,
   coroutineScope,
   "graved-doc-render",
-  DocRenderNecromancy,
+  DocRenderZombie.Necromancy,
 ) {
   override fun turnIntoZombie(recipe: TurningRecipe): DocRenderZombie? {
     if (isNecromancerEnabled()) {
-      val limbs = mutableListOf<DocRenderLimb>()
+      val limbs = mutableListOf<DocRenderZombie.Limb>()
       for (foldRegion in recipe.editor.foldingModel.allFoldRegions) {
         if (foldRegion.group == null && foldRegion is CustomFoldRegion) {
           val renderer = foldRegion.renderer
           if (renderer is DocRenderer) {
             val text = renderer.item.textToRender
             if (text != null) {
-              limbs.add(DocRenderLimb(foldRegion.startOffset, foldRegion.endOffset, text))
+              limbs.add(DocRenderZombie.Limb(foldRegion.startOffset, foldRegion.endOffset, text))
             }
           }
         }
@@ -108,32 +103,5 @@ private class DocRenderNecromancer(
 
   private fun isNecromancerEnabled(): Boolean {
     return Registry.`is`("cache.folding.model.on.disk", true)
-  }
-}
-
-internal class DocRenderZombie(limbs: List<DocRenderLimb>) : LimbedZombie<DocRenderLimb>(limbs)
-
-internal data class DocRenderLimb(
-  val startOffset: Int,
-  val endOffset: Int,
-  val text: String,
-)
-
-private object DocRenderNecromancy : LimbedNecromancy<DocRenderZombie, DocRenderLimb>(spellLevel=0) {
-  override fun buryLimb(grave: DataOutput, limb: DocRenderLimb) {
-    writeINT(grave, limb.startOffset)
-    writeINT(grave, limb.endOffset)
-    writeUTF(grave, limb.text)
-  }
-
-  override fun exhumeLimb(grave: DataInput): DocRenderLimb {
-    val startOffset = readINT(grave)
-    val endOffset = readINT(grave)
-    val text = readUTF(grave)
-    return DocRenderLimb(startOffset, endOffset, text)
-  }
-
-  override fun formZombie(limbs: List<DocRenderLimb>): DocRenderZombie {
-    return DocRenderZombie(limbs)
   }
 }
