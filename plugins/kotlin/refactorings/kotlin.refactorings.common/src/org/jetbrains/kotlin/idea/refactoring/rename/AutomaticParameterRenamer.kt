@@ -1,15 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.*
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.naming.AutomaticRenamer
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
@@ -18,6 +17,7 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
+import com.intellij.refactoring.rename.naming.AutomaticParametersRenamer as JavaAutomaticParametersRenamer
 
 class AutomaticParameterRenamer(element: KtParameter, newName: String) : AutomaticRenamer() {
     init {
@@ -49,7 +49,7 @@ class AutomaticParameterRenamer(element: KtParameter, newName: String) : Automat
     override fun isSelectedByDefault() = true
 }
 
-class AutomaticParameterRenamerFactory : AutomaticRenamerFactory {
+open class AutomaticParameterRenamerFactory : AutomaticRenamerFactory {
     override fun isApplicable(element: PsiElement) = element is KtParameter && element.ownerFunction is KtNamedFunction
 
     override fun getOptionName() = RefactoringBundle.message("rename.parameters.hierarchy")
@@ -62,5 +62,17 @@ class AutomaticParameterRenamerFactory : AutomaticRenamerFactory {
 
     override fun createRenamer(element: PsiElement, newName: String, usages: Collection<UsageInfo>): AutomaticRenamer {
         return AutomaticParameterRenamer(element as KtParameter, newName)
+    }
+}
+
+internal class AutomaticParameterRenamerFactoryForJavaParam : AutomaticParameterRenamerFactory() {
+    override fun isApplicable(element: PsiElement): Boolean {
+        if (element !is PsiParameter) return false
+        val declarationScope = element.declarationScope
+        return declarationScope is PsiMethod && !declarationScope.hasModifierProperty(PsiModifier.STATIC)
+    }
+
+    override fun createRenamer(element: PsiElement, newName: String, usages: Collection<UsageInfo>): AutomaticRenamer {
+        return JavaAutomaticParametersRenamer(element as PsiParameter, newName, KotlinLanguage.INSTANCE)
     }
 }

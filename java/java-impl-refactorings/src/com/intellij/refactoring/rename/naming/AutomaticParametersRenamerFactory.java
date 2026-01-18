@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.naming;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -41,6 +42,6 @@ public final class AutomaticParametersRenamerFactory implements AutomaticRenamer
 
   @Override
   public @NotNull AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
-    return new AutomaticParametersRenamer((PsiParameter)element, newName);
+    return new AutomaticParametersRenamer((PsiParameter)element, newName, JavaLanguage.INSTANCE);
   }
 }
