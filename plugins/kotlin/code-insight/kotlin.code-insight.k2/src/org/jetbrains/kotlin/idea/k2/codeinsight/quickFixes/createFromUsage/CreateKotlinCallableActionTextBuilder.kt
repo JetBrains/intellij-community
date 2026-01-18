@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.lang.jvm.actions.CreateMethodRequest
@@ -77,12 +77,14 @@ object CreateKotlinCallableActionTextBuilder {
                 val recPackageFqName = request.receiverExpression.expressionType?.convertToClass()?.classIdIfNonLocal?.packageFqName
                 val addedPackage = if (recPackageFqName == container.containingKtFile.packageFqName || recPackageFqName == null || recPackageFqName.asString().startsWith("kotlin")) "" else recPackageFqName.asString()+"."
                 // Since receiverExpression.getKtType() returns `kotlin/Unit` for a companion object, we first try the symbol resolution and its type rendering.
-                val renderedReceiver = receiverSymbol?.renderAsReceiver(request.isAbstractClassOrInterface, receiverType, renderer)
+                val renderedReceiver = receiverSymbol?.renderAsReceiver(request, receiverType, renderer)
                     ?: receiverType?.render(renderer, Variance.IN_VARIANCE)
                     ?: request.receiverExpression.text
                 receiverTypeText = addedPackage + renderedReceiver
             }
-            return if (request.isExtension && receiverSymbol is KaCallableSymbol) {
+            return if (receiverTypeText.isEmpty()) {
+                "" to ""
+            } else if (request.isExtension && receiverSymbol is KaCallableSymbol) {
                 val receiverType = receiverSymbol.returnType
                 (if (receiverType is KaFunctionType) "($receiverTypeText)." else "$receiverTypeText.") to receiverTypeText
             } else {
@@ -93,10 +95,20 @@ object CreateKotlinCallableActionTextBuilder {
 
     context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun KaSymbol.renderAsReceiver(isAbstract: Boolean, ktType: KaType?, renderer: KaTypeRenderer): String? {
+    private fun KaSymbol.renderAsReceiver(request: CreateMethodFromKotlinUsageRequest, ktType: KaType?, renderer: KaTypeRenderer): String? {
+        val isAbstract = request.isAbstractClassOrInterface
         return when (this) {
             is KaCallableSymbol -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract)
                 ?.render(renderer, Variance.IN_VARIANCE)
+
+            is KaClassSymbol if (classKind == KaClassKind.ANONYMOUS_OBJECT) -> {
+                if (isAbstract || request.isExtension) {
+                    ktType?.directSupertypes?.firstNotNullOfOrNull { it.selfOrSuperTypeWithAbstractMatch(isAbstract) }
+                        ?.render(renderer, Variance.IN_VARIANCE)
+                } else {
+                    ""
+                }
+            }
 
             is KaClassLikeSymbol -> classId?.shortClassName?.asString() ?: render(KaDeclarationRendererForSource.WITH_SHORT_NAMES)
             else -> null

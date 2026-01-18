@@ -4578,6 +4578,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             public void testOtherExplicitReceiver() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/abstract/otherExplicitReceiver.kt");
             }
+
+            @TestMetadata("thisInAnonymousObject.kt")
+            public void testThisInAnonymousObject() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/abstract/thisInAnonymousObject.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -4641,6 +4646,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("extensionFunOnInterface.kt")
             public void testExtensionFunOnInterface() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnInterface.kt");
+            }
+
+            @TestMetadata("extensionFunOnInterfaceThisInAnonymousObject.kt")
+            public void testExtensionFunOnInterfaceThisInAnonymousObject() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnInterfaceThisInAnonymousObject.kt");
+            }
+
+            @TestMetadata("extensionFunOnObjectThisInAnonymousObject.kt")
+            public void testExtensionFunOnObjectThisInAnonymousObject() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnObjectThisInAnonymousObject.kt");
             }
 
             @TestMetadata("extensionOfInt.kt")
@@ -4860,6 +4875,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("stripPrefix.kt")
             public void testStripPrefix() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/member/stripPrefix.kt");
+            }
+
+            @TestMetadata("thisInAnonymousObject.kt")
+            public void testThisInAnonymousObject() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/member/thisInAnonymousObject.kt");
             }
 
             @TestMetadata("thisInClass.kt")

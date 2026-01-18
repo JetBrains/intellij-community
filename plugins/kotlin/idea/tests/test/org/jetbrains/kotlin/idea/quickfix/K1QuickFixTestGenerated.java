@@ -5476,6 +5476,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     public void testOtherExplicitReceiver() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/otherExplicitReceiver.kt");
                     }
+
+                    @TestMetadata("thisInAnonymousObject.kt")
+                    public void testThisInAnonymousObject() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/thisInAnonymousObject.kt");
+                    }
                 }
 
                 @RunWith(JUnit3RunnerWithInners.class)
@@ -5539,6 +5544,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     @TestMetadata("extensionFunOnInterface.kt")
                     public void testExtensionFunOnInterface() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnInterface.kt");
+                    }
+
+                    @TestMetadata("extensionFunOnInterfaceThisInAnonymousObject.kt")
+                    public void testExtensionFunOnInterfaceThisInAnonymousObject() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnInterfaceThisInAnonymousObject.kt");
+                    }
+
+                    @TestMetadata("extensionFunOnObjectThisInAnonymousObject.kt")
+                    public void testExtensionFunOnObjectThisInAnonymousObject() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnObjectThisInAnonymousObject.kt");
                     }
 
                     @TestMetadata("extensionOfInt.kt")
@@ -5797,6 +5812,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     @TestMetadata("stripPrefix.kt")
                     public void testStripPrefix() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/member/stripPrefix.kt");
+                    }
+
+                    @TestMetadata("thisInAnonymousObject.kt")
+                    public void testThisInAnonymousObject() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/thisInAnonymousObject.kt");
                     }
 
                     @TestMetadata("thisInClass.kt")
