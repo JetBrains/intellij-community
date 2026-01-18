@@ -115,12 +115,14 @@ open class NonIndexableFileSearchPerformanceTest {
 
 @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
 @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "false")
+@StressTestApplication
 class NonIndexableFileSearchPerformanceBfsOneReadActionTest: NonIndexableFileSearchPerformanceTest(){
 
 }
 
 @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
 @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
+@StressTestApplication
 class NonIndexableFileSearchPerformanceBfsManyReadActionsTest: NonIndexableFileSearchPerformanceTest(){
 
 }
