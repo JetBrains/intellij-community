@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.openapi.command.CommandProcessor;
@@ -7,11 +7,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringFactory;
+import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.usageView.UsageInfo;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -850,5 +853,207 @@ public class RenameTest extends GroovyLatestTest implements BaseTest {
         }
       }
       """);
+  }
+
+  private void runRenameRefactoringWithAutomaticRenames(String newName) {
+    PsiElement element = getFixture().getElementAtCaret();
+    RenameRefactoring renameRefactoring = RefactoringFactory.getInstance(getProject())
+      .createRename(element, newName, false, false);
+    renameRefactoring.respectEnabledAutomaticRenames();
+    renameRefactoring.run();
+  }
+
+  @Test
+  public void autoRenameParams() {
+    @Language("Groovy")
+    String fileText = """
+      package test
+      
+      class BaseClass {
+        def foo(String <caret>s, int i) {}
+      }
+      
+      class SubClass extends BaseClass {
+        @Override
+        def foo(String s, int i) {}
+      }
+      """;
+
+    getFixture().configureByText("a.groovy", fileText);
+    runRenameRefactoringWithAutomaticRenames("newName");
+
+    @Language("Groovy")
+    String resultText = """
+      package test
+      
+      class BaseClass {
+        def foo(String <caret>newName, int i) {}
+      }
+      
+      class SubClass extends BaseClass {
+        @Override
+        def foo(String newName, int i) {}
+      }
+      """;
+    getFixture().checkResult(resultText);
+  }
+
+  @Test
+  public void autoRenameParams_doNotRenameSupers() {
+    @Language("Groovy")
+    String fileText = """
+      package test
+      
+      class BaseClass {
+        def foo(String s, int i) {}
+      }
+      
+      class SubClass extends BaseClass {
+        @Override
+        def foo(String <caret>s, int i) {}
+      }
+      
+      class AnotherSubClass extends SubClass {
+        @Override
+        def foo(String s, int i) {}
+      }
+      """;
+
+    getFixture().configureByText("a.groovy", fileText);
+    runRenameRefactoringWithAutomaticRenames("newName");
+
+    @Language("Groovy")
+    String resultText = """
+      package test
+      
+      class BaseClass {
+        def foo(String s, int i) {}
+      }
+      
+      class SubClass extends BaseClass {
+        @Override
+        def foo(String <caret>newName, int i) {}
+      }
+      
+      class AnotherSubClass extends SubClass {
+        @Override
+        def foo(String newName, int i) {}
+      }
+      """;
+    getFixture().checkResult(resultText);
+  }
+
+  @Test
+  public void autoRenameParamsWithJavaSuper() {
+    @Language("Java")
+    String javaText = """
+      package test
+      
+      public class BaseClass {
+        public void foo(String <caret>s, int i) {}
+      }
+      """;
+    @Language("Groovy")
+    String groovyText = """
+      package test
+      
+      class SubClass extends BaseClass {
+        @Override
+        def foo(String s, int i) {}
+      }
+      
+      class AnotherSubClass extends SubClass {
+        @Override
+        def foo(String s, int i) {}
+      }
+      """;
+
+    getFixture().addFileToProject("test/a.groovy", groovyText);
+    getFixture().configureByText("BaseClass.java", javaText);
+    runRenameRefactoringWithAutomaticRenames("str");
+
+    @Language("Java")
+    String resultJavaText = """
+      package test
+      
+      public class BaseClass {
+        public void foo(String <caret>str, int i) {}
+      }
+      """;
+    @Language("Groovy")
+    String resultGroovyText = """
+      package test
+      
+      class SubClass extends BaseClass {
+        @Override
+        def foo(String str, int i) {}
+      }
+      
+      class AnotherSubClass extends SubClass {
+        @Override
+        def foo(String str, int i) {}
+      }
+      """;
+    getFixture().checkResult(resultJavaText, true);
+    getFixture().checkResult("test/a.groovy", resultGroovyText, true);
+  }
+
+  @Test
+  public void autoRenameParamsWithJavaSub() {
+    @Language("Java")
+    String javaText = """
+      package test
+      
+      public class SubClass extends BaseClass {
+           @Override
+           public Object foo(String s, int i) {
+               return super.foo(s, i);
+           }
+       }
+      """;
+    @Language("Groovy")
+    String groovyText = """
+      package test
+      
+      class BaseClass {
+        def foo(String <caret>s, int i) {}
+      }
+      
+      class AnotherSubClass extends SubClass {
+        @Override
+        def foo(String s, int i) {}
+      }
+      """;
+
+    getFixture().addFileToProject("test/SubClass.java", javaText);
+    getFixture().configureByText("a.groovy", groovyText);
+    runRenameRefactoringWithAutomaticRenames("str");
+
+    @Language("Java")
+    String resultJavaText = """
+      package test
+      
+      public class SubClass extends BaseClass {
+           @Override
+           public Object foo(String str, int i) {
+               return super.foo(str, i);
+           }
+       }
+      """;
+    @Language("Groovy")
+    String resultGroovyText = """
+      package test
+      
+      class BaseClass {
+        def foo(String <caret>str, int i) {}
+      }
+      
+      class AnotherSubClass extends SubClass {
+        @Override
+        def foo(String str, int i) {}
+      }
+      """;
+    getFixture().checkResult(resultGroovyText, true);
+    getFixture().checkResult("test/SubClass.java", resultJavaText, true);
   }
 }

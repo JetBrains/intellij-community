@@ -505,6 +505,7 @@
                                order="last"/>
 
     <automaticRenamerFactory implementation="org.jetbrains.plugins.groovy.refactoring.rename.GroovyAutomaticOverloadsRenamerFactory"/>
+    <automaticRenamerFactory implementation="org.jetbrains.plugins.groovy.refactoring.rename.GroovyAutomaticParametersRenamerFactory"/>
 
     <rename.inplace.resolveSnapshotProvider language="Groovy"
                                             implementationClass="org.jetbrains.plugins.groovy.refactoring.rename.inplace.GroovyResolveSnapshotProvider"/>
