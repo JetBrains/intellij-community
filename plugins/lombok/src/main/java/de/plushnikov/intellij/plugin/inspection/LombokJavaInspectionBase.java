@@ -12,7 +12,7 @@ public abstract class LombokJavaInspectionBase extends AbstractBaseJavaLocalInsp
   @Override
   public final @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     Module module = ModuleUtilCore.findModuleForFile(holder.getFile());
-    if (!LombokLibraryUtil.hasLombokClasses(module)) {
+    if (!LombokLibraryUtil.hasLombokClasses(module) || !LombokLibraryUtil.hasLombokClassesInScopeOfElement(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
 
