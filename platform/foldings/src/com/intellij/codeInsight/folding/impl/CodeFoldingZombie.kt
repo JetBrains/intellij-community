@@ -1,79 +1,27 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl
 
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.FoldingGroup
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.FoldingKeys.ZOMBIE_REGION_KEY
 import com.intellij.openapi.editor.impl.zombie.CodeFoldingZombieUtils
-import com.intellij.openapi.editor.impl.zombie.Zombie
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.editor.impl.zombie.LimbedZombie
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import java.text.BreakIterator
+
 
 internal class CodeFoldingZombie(
-  val regions: List<CodeFoldingRegion>,
-  val groupedRegions: Map<Long, List<CodeFoldingRegion>>,
-) : Zombie {
+  limbs: List<FoldLimb>,
+) : LimbedZombie<FoldLimb>(limbs) {
 
-  companion object {
-    private val logger: Logger = logger<CodeFoldingZombie>()
-
-    fun create(foldRegions: List<FoldRegion>): CodeFoldingZombie {
-      val regions = ArrayList<CodeFoldingRegion>()
-      val groupedRegions = HashMap<Long, MutableList<CodeFoldingRegion>>()
-      for (foldRegion in foldRegions) {
-        val regionState = CodeFoldingRegion(
-          foldRegion.startOffset,
-          foldRegion.endOffset,
-          createPlaceholderText(foldRegion.placeholderText),
-          foldRegion.group?.id,
-          foldRegion.shouldNeverExpand(),
-          foldRegion.isExpanded,
-          CodeFoldingManagerImpl.getCollapsedByDef(foldRegion) == true,
-          CodeFoldingManagerImpl.isFrontendCreated(foldRegion)
-        )
-        putRegion(regionState, regions, groupedRegions)
-      }
-      return CodeFoldingZombie(regions, groupedRegions)
-    }
-
-    private fun createPlaceholderText(text: String): String {
-      return if (Registry.`is`("cache.folding.model.hide.placeholder")) {
-        CodeFoldingRegion.PLACEHOLDER_SYMBOL.repeat(text.graphemeCount())
-      }
-      else {
-        text
-      }
-    }
-
-    fun putRegion(
-      region: CodeFoldingRegion,
-      regions: MutableList<CodeFoldingRegion>,
-      groupedRegions: MutableMap<Long, MutableList<CodeFoldingRegion>>,
-    ) {
-      val groupId: Long? = region.groupId
-      if (groupId == null) {
-        regions.add(region)
-      } else {
-        groupedRegions.computeIfAbsent(groupId) {
-          mutableListOf()
-        }.add(region)
-      }
-    }
-  }
-
-  fun isEmpty(): Boolean {
-    return regions.isEmpty() && groupedRegions.isEmpty()
-  }
+  private val regions: List<FoldLimb> = limbs.filter { it.groupId == null }
+  private val groupedRegions: Map<Long, List<FoldLimb>> = limbs.filter { it.groupId != null }.groupBy { it.groupId!! }
 
   @RequiresEdt
-  fun applyState(document: Document, editor: EditorEx) {
+  fun applyState(editor: EditorEx) {
+    ThreadingAssertions.assertEventDispatchThread()
     val foldingModel = editor.foldingModel
     foldingModel.runBatchFoldingOperationDoNotCollapseCaret {
       val applied1 = applyRegions(foldingModel)
@@ -81,14 +29,13 @@ internal class CodeFoldingZombie(
       CodeFoldingZombieUtils.setZombieRaised(editor, applied1 || applied2)
     }
     foldingModel.clearDocumentRangesModificationStatus()
-    logger.debug { "restored $this for $document" }
   }
 
   private fun applyRegions(foldingModel: FoldingModelEx): Boolean {
     var appliedAny = false
     for (region in regions) {
-      assert(region.groupId == null) {
-        "regions with non-null groupId should be handled as a grouped region"
+      if (region.groupId != null) {
+        error("regions with non-null groupId should be handled as a grouped region")
       }
       val applied = applyRegion(foldingModel, region, group = null)
       appliedAny = appliedAny || applied
@@ -101,8 +48,8 @@ internal class CodeFoldingZombie(
     for ((groupId, regions) in groupedRegions) {
       val group = FoldingGroup.newGroup("zombie-group")
       for (region in regions) {
-        assert(region.groupId == groupId) {
-          "folding group mismatch: expected $groupId, action ${region.groupId}"
+        if (region.groupId != groupId) {
+          error("folding group mismatch: expected $groupId, action ${region.groupId}")
         }
         val applied = applyRegion(foldingModel, region, group)
         appliedAny = appliedAny || applied
@@ -111,7 +58,7 @@ internal class CodeFoldingZombie(
     return appliedAny
   }
 
-  private fun applyRegion(foldingModel: FoldingModelEx, regionState: CodeFoldingRegion, group: FoldingGroup?): Boolean {
+  private fun applyRegion(foldingModel: FoldingModelEx, regionState: FoldLimb, group: FoldingGroup?): Boolean {
     val (start, end, placeholder, _, neverExpands, isExpanded, isCollapsedByDefault, isFrontendCreated) = regionState
     val region: FoldRegion? = foldingModel.createFoldRegion(start, end, placeholder, group, neverExpands)
     if (region != null) {
@@ -131,36 +78,4 @@ internal class CodeFoldingZombie(
   override fun toString(): String {
     return "CodeFoldingZombie(regions=${regions.size}, groupedRegions=${groupedRegions.size})"
   }
-}
-
-internal data class CodeFoldingRegion(
-  val startOffset: Int,
-  val endOffset: Int,
-  val placeholderText: String,
-  val groupId: Long?,
-  val neverExpands: Boolean,
-  val isExpanded: Boolean,
-  val isCollapsedByDefault: Boolean,
-  val isFrontendCreated: Boolean,
-) {
-  companion object {
-    const val PLACEHOLDER_SYMBOL = " "
-  }
-
-  override fun toString(): String {
-    val groupStr = if (groupId == null) "" else " $groupId,"
-    return "($startOffset-$endOffset,$groupStr '$placeholderText', ${(if (isExpanded) "-" else "+")}, def:${(if (isCollapsedByDefault) "+" else "-")}, ${if (isFrontendCreated) "FRONTEND" else "BACKEND"})"
-  }
-}
-
-private fun String.graphemeCount(): Int {
-  val iterator = BreakIterator.getCharacterInstance()
-  iterator.setText(this)
-
-  var count = 0
-  while (iterator.next() != BreakIterator.DONE) {
-    count++
-  }
-
-  return count
 }

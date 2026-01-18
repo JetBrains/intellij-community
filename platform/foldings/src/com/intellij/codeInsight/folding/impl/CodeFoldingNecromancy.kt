@@ -1,61 +1,29 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl
 
-import com.intellij.openapi.editor.impl.zombie.AbstractNecromancy
+import com.intellij.openapi.editor.impl.zombie.LimbedNecromancy
 import java.io.DataInput
 import java.io.DataOutput
 
 
-internal object CodeFoldingNecromancy : AbstractNecromancy<CodeFoldingZombie>(spellLevel=2, isDeepBury=false) {
+internal object CodeFoldingNecromancy : LimbedNecromancy<CodeFoldingZombie, FoldLimb>(spellLevel=3) {
 
-  override fun buryZombie(grave: DataOutput, zombie: CodeFoldingZombie) {
-    writeRegionCount(grave, zombie)
-    writeRegions(grave, zombie)
-    writeGroupedRegions(grave, zombie)
+  override fun formZombie(limbs: List<FoldLimb>): CodeFoldingZombie {
+    return CodeFoldingZombie(limbs)
   }
 
-  private fun writeRegionCount(grave: DataOutput, zombie: CodeFoldingZombie) {
-    val regionCount = zombie.regions.size + zombie.groupedRegions.values.sumOf { it.size }
-    writeInt(grave, regionCount)
+  override fun buryLimb(grave: DataOutput, limb: FoldLimb) {
+    writeInt(grave, limb.startOffset)
+    writeInt(grave, limb.endOffset)
+    writeString(grave, limb.placeholderText)
+    writeLongNullable(grave, limb.groupId)
+    writeBool(grave, limb.neverExpands)
+    writeBool(grave, limb.isExpanded)
+    writeBool(grave, limb.isCollapsedByDefault)
+    writeBool(grave, limb.isFrontendCreated)
   }
 
-  private fun writeRegions(grave: DataOutput, zombie: CodeFoldingZombie) {
-    for (region in zombie.regions) {
-      writeRegion(grave, region)
-    }
-  }
-
-  private fun writeGroupedRegions(grave: DataOutput, zombie: CodeFoldingZombie) {
-    for ((_, regions) in zombie.groupedRegions) {
-      for (region in regions) {
-        writeRegion(grave, region)
-      }
-    }
-  }
-
-  private fun writeRegion(grave: DataOutput, region: CodeFoldingRegion) {
-    writeInt(grave, region.startOffset)
-    writeInt(grave, region.endOffset)
-    writeString(grave, region.placeholderText)
-    writeLongNullable(grave, region.groupId)
-    writeBool(grave, region.neverExpands)
-    writeBool(grave, region.isExpanded)
-    writeBool(grave, region.isCollapsedByDefault)
-    writeBool(grave, region.isFrontendCreated)
-  }
-
-  override fun exhumeZombie(grave: DataInput): CodeFoldingZombie {
-    val regionCount = readInt(grave)
-    val regions = ArrayList<CodeFoldingRegion>()
-    val groupedRegions = HashMap<Long, MutableList<CodeFoldingRegion>>()
-    repeat(regionCount) {
-      val region = read(grave)
-      CodeFoldingZombie.putRegion(region, regions, groupedRegions)
-    }
-    return CodeFoldingZombie(regions, groupedRegions)
-  }
-
-  private fun read(grave: DataInput): CodeFoldingRegion {
+  override fun exhumeLimb(grave: DataInput): FoldLimb {
     val startOffset:              Int = readInt(grave)
     val endOffset:                Int = readInt(grave)
     val placeholderText:       String = readString(grave)
@@ -64,7 +32,7 @@ internal object CodeFoldingNecromancy : AbstractNecromancy<CodeFoldingZombie>(sp
     val isExpanded:           Boolean = readBool(grave)
     val isCollapsedByDefault: Boolean = readBool(grave)
     val isFrontendCreated:    Boolean = readBool(grave)
-    return CodeFoldingRegion(
+    return FoldLimb(
       startOffset,
       endOffset,
       placeholderText,

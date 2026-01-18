@@ -5,18 +5,16 @@ import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.FoldingKeys.ZOMBIE_REGION_KEY
 import com.intellij.openapi.editor.impl.zombie.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
-
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -40,7 +38,7 @@ internal class CodeFoldingNecromancerAwaker : NecromancerAwaker<CodeFoldingZombi
 private class CodeFoldingNecromancer(
   project: Project,
   coroutineScope: CoroutineScope,
-) : GravingNecromancer<CodeFoldingZombie>( // TODO: migrate to CleaverNecromancer
+) : CleaverNecromancer<CodeFoldingZombie, FoldLimb>(
   project,
   coroutineScope,
   "graved-code-folding",
@@ -51,64 +49,62 @@ private class CodeFoldingNecromancer(
     return true
   }
 
-  override fun turnIntoZombie(recipe: TurningRecipe): CodeFoldingZombie? {
-    if (isZombieFriendly()) {
-      val foldRegions = notZombieRegions(recipe.editor)
-      if (foldRegions.isNotEmpty()) {
-        return CodeFoldingZombie.create(foldRegions)
-      }
-    }
-    return null
+  override fun isZombieFriendly(recipe: Recipe): Boolean {
+    return Registry.`is`("cache.folding.model.on.disk", true)
   }
 
-  override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: CodeFoldingZombie?) {
-    val document = recipe.document
-    if (isZombieFriendly() &&
-        zombie != null &&
-        isNotCompiledFile(recipe.project, recipe.document)) {
-      val editor = recipe.editorSupplier()
-      withContext(Dispatchers.EDT) {
-        writeIntentReadAction {
-          if (recipe.isValid(editor) &&
-              editor.foldingModel.isFoldingEnabled &&
-              !CodeFoldingManagerImpl.isFoldingsInitializedInEditor(editor)) {
-            zombie.applyState(document, editor)
-            FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.CODE_FOLDING)
-          }
+  override fun cutIntoLimbs(recipe: TurningRecipe): List<FoldLimb> {
+    return recipe.editor.foldingModel.allFoldRegions
+      .filter { it.getUserData(ZOMBIE_REGION_KEY) == null }
+      .map { FoldLimb(it) }
+  }
+
+  override suspend fun spawnZombie(
+    recipe: SpawnRecipe,
+    limbs: List<FoldLimb>,
+  ): ((Editor) -> Unit)? {
+    if (isNotCompiledFile(recipe.project, recipe.document)) {
+      return { editor ->
+        editor as EditorEx
+        if (editor.foldingModel.isFoldingEnabled && !CodeFoldingManagerImpl.isFoldingsInitializedInEditor(editor)) {
+          CodeFoldingZombie(limbs).applyState(editor)
+          FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.CODE_FOLDING)
         }
       }
     } else {
-      val project = recipe.project
-      val codeFoldingManager = project.serviceAsync<CodeFoldingManager>()
-      val psiDocumentManager = project.serviceAsync<PsiDocumentManager>()
-      val foldingState = readAction {
-        if (psiDocumentManager.isCommitted(document)) {
-          catchingExceptions {
-            blockingContextToIndicator {
-              codeFoldingManager.buildInitialFoldings(document)
-            }
+      spawnNoZombie(recipe)
+      return null
+    }
+  }
+
+  override suspend fun spawnNoZombie(recipe: SpawnRecipe) {
+    val project = recipe.project
+    val document = recipe.document
+    val codeFoldingManager = project.serviceAsync<CodeFoldingManager>()
+    val psiDocumentManager = project.serviceAsync<PsiDocumentManager>()
+    val foldingState = readAction {
+      if (psiDocumentManager.isCommitted(document)) {
+        catchingExceptions {
+          blockingContextToIndicator {
+            codeFoldingManager.buildInitialFoldings(document)
           }
-        } else {
-          null
         }
+      } else {
+        null
       }
-      if (foldingState != null) {
-        val editor = recipe.editorSupplier()
-        withContext(Dispatchers.EDT) {
-          if (editor.foldingModel.isFoldingEnabled) {
-            runReadAction { // set to editor with RA IJPL-159083
-              SlowOperations.knownIssue("IJPL-165088").use {
-                foldingState.setToEditor(editor)
-              }
+    }
+    if (foldingState != null) {
+      val editor = recipe.editorSupplier()
+      withContext(Dispatchers.EDT) {
+        if (editor.foldingModel.isFoldingEnabled) {
+          runReadAction { // set to editor with RA IJPL-159083
+            SlowOperations.knownIssue("IJPL-165088").use {
+              foldingState.setToEditor(editor)
             }
           }
         }
       }
     }
-  }
-
-  private fun notZombieRegions(editor: Editor): List<FoldRegion> {
-    return editor.foldingModel.allFoldRegions.filter { it.getUserData(ZOMBIE_REGION_KEY) == null }
   }
 
   private suspend fun isNotCompiledFile(project: Project, document: Document): Boolean {
@@ -121,11 +117,8 @@ private class CodeFoldingNecromancer(
     return psiFile != null && psiFile !is PsiCompiledFile
   }
 
-  private fun isZombieFriendly(): Boolean {
-    return Registry.`is`("cache.folding.model.on.disk", true)
-  }
-
   // not `inline` to ensure that this function is not used for a `suspend` task
+  @Suppress("IncorrectCancellationExceptionHandling")
   private fun <T : Any> catchingExceptions(computable: () -> T?): T? {
     try {
       return computable()
