@@ -6,7 +6,7 @@ import com.intellij.python.community.impl.venv.createVenv
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.*
 
 suspend fun <P : PathHolder> PythonMutableTargetAddInterpreterModel<P>.setupVirtualenv(venvFolder: P, moduleOrProject: ModuleOrProject): PyResult<Sdk> {
@@ -53,5 +53,8 @@ private suspend fun <P : PathHolder> PythonAddInterpreterModel<P>.createSdkFromB
     isAssociateWithModule = !venvViewModel.makeAvailableForAllProjects.get()
   )
 
-  return sdkResult.mapSuccess { sdk -> fileSystem.wrapSdk(sdk) }
+  return when (sdkResult) {
+    is com.jetbrains.python.Result.Success -> PyResult.success(fileSystem.wrapSdk(sdkResult.result))
+    is com.jetbrains.python.Result.Failure -> PyResult.failure(sdkResult.error)
+  }
 }

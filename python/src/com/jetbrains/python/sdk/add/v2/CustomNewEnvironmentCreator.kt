@@ -143,7 +143,9 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
     val installedSdk = when (baseInterpreter) {
       is InstallableSelectableInterpreter -> installBaseSdk(baseInterpreter.sdk, model.existingSdks)
         ?.let {
-          val sdkWrapper = model.fileSystem.wrapSdk(it)
+          val sdkWrapper = runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {
+            model.fileSystem.wrapSdk(it)
+          }
           val installed = model.addInstalledInterpreter(sdkWrapper.homePath, baseInterpreter.pythonInfo)
           model.state.baseInterpreter.set(installed)
           installed
@@ -181,7 +183,7 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
   internal open fun onVenvSelectExisting() {}
 }
 
-private fun <P : PathHolder> PythonAddInterpreterModel<P>.installPythonIfNeeded(interpreter: PythonSelectableInterpreter<P>): P? {
+  private suspend fun <P : PathHolder> PythonAddInterpreterModel<P>.installPythonIfNeeded(interpreter: PythonSelectableInterpreter<P>): P? {
   // todo use target config
   val path = if (interpreter is InstallableSelectableInterpreter<P>) {
     installBaseSdk(interpreter.sdk, existingSdks)?.let { fileSystem.wrapSdk(it) }?.homePath
