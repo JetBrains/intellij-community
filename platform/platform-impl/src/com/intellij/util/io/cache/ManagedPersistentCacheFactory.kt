@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.cache
 
 import com.intellij.openapi.project.Project
@@ -35,7 +35,7 @@ internal object ManagedPersistentCacheFactory : ManagedCacheFactory {
     val projectName = project.getProjectCacheFileName(hashSeparator="-")
     val projectPath = basePath.resolve(projectName)
     val cacheUniqName = "$cacheName-$projectName" // name should be unique across the application
-    val cachePath = projectPath.resolve(cacheName).resolve(cacheName) // TODO: why name is twice here?
+    val cachePath = projectPath.resolve(cacheName).resolve(cacheName)
     return cacheUniqName to cachePath
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.cache
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -13,18 +13,17 @@ import com.intellij.util.io.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+
 
 /**
  * Wrapper for PersistentHashMap closed on [coroutineScope] cancel.
  * Values are forced on disk after putting into the map with a specified delay.
  * The name should be unique across the application to support emergency closing on application shutdown.
  */
-@Internal
 class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) constructor(
   private val name: String,
   private val mapBuilder: PersistentMapBuilder<K, V>,
@@ -50,18 +49,6 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
     forceAsync()
   }
 
-  override suspend fun entries(): Flow<Pair<K, V>> {
-    // Implementation detail: flow could not be used here since processExistingKeys is not suspendable
-    return buildList {
-      withPersistentMap(opName = "entries") { map ->
-        map.processExistingKeys { key ->
-          add(key to map.get(key)!!)
-          true
-        }
-      }
-    }.asFlow()
-  }
-
   override suspend fun get(key: K): V? {
     return withPersistentMap(opName="get") { map ->
       map.get(key)
@@ -73,6 +60,18 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
       map.remove(key)
     }
     forceAsync()
+  }
+
+  override suspend fun entries(): Flow<Pair<K, V>> {
+    // Implementation detail: flow could not be used here since processExistingKeys is not suspendable
+    return buildList {
+      withPersistentMap(opName="entries") { map ->
+        map.processExistingKeys { key ->
+          add(key to map.get(key)!!)
+          true
+        }
+      }
+    }.asFlow()
   }
 
   private fun forceAsync() {
