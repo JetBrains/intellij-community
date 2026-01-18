@@ -10,17 +10,14 @@ import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
-import com.intellij.modcommand.PsiUpdateModCommandAction;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
+import de.plushnikov.intellij.plugin.intention.AbstractLombokIntentionAction;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
-import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +26,7 @@ import java.util.function.Consumer;
 /**
  * Adds @SneakyThrows Annotation as Fix to handle unhandled exceptions
  */
-public class AddSneakyThrowsAnnotationCommandAction extends PsiUpdateModCommandAction<PsiElement> {
+public class AddSneakyThrowsAnnotationCommandAction extends AbstractLombokIntentionAction {
 
   public AddSneakyThrowsAnnotationCommandAction(@NotNull PsiElement context) {
     super(context);
@@ -42,8 +39,7 @@ public class AddSneakyThrowsAnnotationCommandAction extends PsiUpdateModCommandA
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
-    Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    if (!LombokLibraryUtil.hasLombokClasses(module)) {
+    if (null == super.getPresentation(context, element)) {
       return null;
     }
 
