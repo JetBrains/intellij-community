@@ -336,8 +336,9 @@ internal class PythonInterpreterComboBox<P : PathHolder>(
           errorSink.emit(error)
         }.successOrNull
 
-        val interpreter = pathOnFileSystem?.let {
-          onPathSelected(it).onFailure { error -> errorSink.emit(error) }.successOrNull
+        val interpreter = pathOnFileSystem?.let { selectedPath ->
+          val pythonBinaryPath = fileSystem.resolvePythonBinary(selectedPath) ?: selectedPath
+          onPathSelected(pythonBinaryPath).onFailure { error -> errorSink.emit(error) }.successOrNull
         }
 
         interpreter?.let { interpreter ->

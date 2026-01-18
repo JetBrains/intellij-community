@@ -70,7 +70,7 @@ sealed interface FileSystem<P : PathHolder> {
 
   suspend fun validateVenv(homePath: P): PyResult<Unit>
   suspend fun suggestVenv(projectPath: Path): PyResult<P>
-  fun wrapSdk(sdk: Sdk): SdkWrapper<P>
+  suspend fun wrapSdk(sdk: Sdk): SdkWrapper<P>
   suspend fun detectSelectableVenv(): List<DetectedSelectableInterpreter<P>>
   fun preferredInterpreterBasePath(): P? = null
   suspend fun resolvePythonBinary(pythonHome: P): P?
@@ -161,8 +161,9 @@ sealed interface FileSystem<P : PathHolder> {
       return PyResult.success(interpreter)
     }
 
-    override fun wrapSdk(sdk: Sdk): SdkWrapper<PathHolder.Eel> {
-      return SdkWrapper(sdk, PathHolder.Eel(Path.of(sdk.homePath!!)))
+    override suspend fun wrapSdk(sdk: Sdk): SdkWrapper<PathHolder.Eel> = withContext(Dispatchers.IO) {
+      val adjustedHomePath = PythonSdkType.getInstance().adjustSelectedSdkHome(sdk.homePath!!)
+      SdkWrapper(sdk, PathHolder.Eel(Path.of(adjustedHomePath)))
     }
 
     override suspend fun detectSelectableVenv(): List<DetectedSelectableInterpreter<PathHolder.Eel>> {
@@ -291,7 +292,7 @@ sealed interface FileSystem<P : PathHolder> {
       return PyResult.success(interpreter)
     }
 
-    override fun wrapSdk(sdk: Sdk): SdkWrapper<PathHolder.Target> {
+    override suspend fun wrapSdk(sdk: Sdk): SdkWrapper<PathHolder.Target> {
       return SdkWrapper(sdk, PathHolder.Target(sdk.homePath!!))
     }
 

@@ -129,18 +129,33 @@ class VirtualEnvReader private constructor(
 
 
   /**
-   * [dir] is root directory of python installation or virtualenv
+   * [pathOrDir] is either a direct path to a Python binary or a root directory of python installation or virtualenv
    */
   @RequiresBackgroundThread
-  fun findPythonInPythonRoot(dir: PythonHomePath): PythonBinary? {
+  fun findPythonInPythonRoot(pathOrDir: PythonHomePath): PythonBinary? {
+    val pythonNames = when (forcedOs ?: pathOrDir.getEelDescriptor().osFamily) {
+      EelOsFamily.Posix -> POSIX_BINS
+      EelOsFamily.Windows -> WIN_BINS
+    }
+    if (pathOrDir.isRegularFile() && pathOrDir.name.lowercase() in pythonNames) {
+      return pathOrDir
+    }
 
-    val bin = dir.resolve("bin")
-    findInterpreter(bin)?.let { return it }
+    if (!pathOrDir.isDirectory()) {
+      return null
+    }
 
-    val scripts = dir.resolve("Scripts")
-    findInterpreter(scripts)?.let { return it }
+    val bin = pathOrDir.resolve("bin")
+    if (bin.isDirectory()) {
+      findInterpreter(bin)?.let { return it }
+    }
 
-    return findInterpreter(dir)
+    val scripts = pathOrDir.resolve("Scripts")
+    if (scripts.isDirectory()) {
+      findInterpreter(scripts)?.let { return it }
+    }
+
+    return findInterpreter(pathOrDir)
   }
 
   fun getVenvRootPath(path: Path): Path? {
