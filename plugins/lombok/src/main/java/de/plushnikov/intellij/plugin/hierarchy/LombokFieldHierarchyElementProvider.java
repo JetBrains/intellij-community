@@ -1,33 +1,39 @@
 package de.plushnikov.intellij.plugin.hierarchy;
 
 import com.intellij.ide.hierarchy.call.CallHierarchyElementProvider;
-import com.intellij.ide.hierarchy.call.CallHierarchyNodeDescriptor;
-import com.intellij.ide.hierarchy.call.JavaCallHierarchyData;
-import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class LombokFieldHierarchyElementProvider implements CallHierarchyElementProvider {
 
   @Override
-  public boolean canProvide(@NotNull PsiMember element) {
-    return element instanceof PsiField;
-  }
+  public @NotNull Collection<PsiElement> provideReferencedMembers(@NotNull PsiMember psiMember) {
+    // only PsiFields are supported now
+    if(!(psiMember instanceof PsiField)) {
+      return Collections.emptyList();
+    }
 
-  @Override
-  public Collection<PsiElement> provideReferencedMembers(@NotNull PsiMember elementToSearch) {
-    final PsiClass containingClass = elementToSearch.getContainingClass();
+    // skip early if no lombok in current module
+    final Module module = ModuleUtilCore.findModuleForPsiElement(psiMember);
+    if (!LombokLibraryUtil.hasLombokClasses(module)) {
+      return Collections.emptyList();
+    }
+
+    final PsiClass containingClass = psiMember.getContainingClass();
     if (containingClass != null) {
       final Collection<PsiElement> result = new ArrayList<>();
 
       Arrays.stream(containingClass.getMethods())
         .filter(LombokLightMethodBuilder.class::isInstance)
         .map(LombokLightMethodBuilder.class::cast)
-        .filter(psiMethod -> psiMethod.getNavigationElement() == elementToSearch || psiMethod.hasRelatedMember(elementToSearch))
+        .filter(psiMethod -> psiMethod.getNavigationElement() == psiMember || psiMethod.hasRelatedMember(psiMember))
         .forEach(result::add);
 
       Arrays.stream(containingClass.getInnerClasses())
@@ -35,7 +41,7 @@ public class LombokFieldHierarchyElementProvider implements CallHierarchyElement
         .flatMap(Arrays::stream)
         .filter(LombokLightMethodBuilder.class::isInstance)
         .map(LombokLightMethodBuilder.class::cast)
-        .filter(psiMethod -> psiMethod.hasRelatedMember(elementToSearch))
+        .filter(psiMethod -> psiMethod.hasRelatedMember(psiMember))
         .forEach(result::add);
 
       return result;
@@ -44,26 +50,25 @@ public class LombokFieldHierarchyElementProvider implements CallHierarchyElement
   }
 
   @Override
-  public void appendReferencedMethods(@NotNull PsiMethod methodToFind, @NotNull JavaCallHierarchyData hierarchyData) {
+  public @NotNull List<PsiMethod> provideReferencedMethods(@NotNull PsiMethod methodToFind) {
+    // skip early if no lombok in current module
+    final Module module = ModuleUtilCore.findModuleForPsiElement(methodToFind);
+    if (!LombokLibraryUtil.hasLombokClasses(module)) {
+      return Collections.emptyList();
+    }
+
     if (methodToFind.isConstructor()) {
       final PsiClass containingClass = methodToFind.getContainingClass();
       if (null != containingClass) {
-        Arrays.stream(containingClass.getInnerClasses())
+        return Arrays.stream(containingClass.getInnerClasses())
           .map(PsiClass::getMethods)
           .flatMap(Arrays::stream)
           .filter(LombokLightMethodBuilder.class::isInstance)
           .map(LombokLightMethodBuilder.class::cast)
           .filter(methodBuilder -> methodBuilder.hasRelatedMember(methodToFind))
-          .forEach(methodBuilder -> {
-            CallHierarchyNodeDescriptor parentDescriptor = (CallHierarchyNodeDescriptor)hierarchyData.getNodeDescriptor();
-            final Map<PsiMember, NodeDescriptor<?>> nodeDescriptorMap = hierarchyData.getResultMap();
-            CallHierarchyNodeDescriptor d = (CallHierarchyNodeDescriptor)nodeDescriptorMap.get(methodBuilder);
-            if (d == null) {
-              d = new CallHierarchyNodeDescriptor(hierarchyData.getProject(), parentDescriptor, methodBuilder, false, true);
-              nodeDescriptorMap.put(methodBuilder, d);
-            }
-          });
+          .collect(Collectors.toList());
       }
     }
+    return Collections.emptyList();
   }
 }
