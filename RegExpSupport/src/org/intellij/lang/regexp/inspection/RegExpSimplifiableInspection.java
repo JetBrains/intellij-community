@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -74,6 +74,7 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
             if (!(element instanceof RegExpChar) || !"[{}().*+?|$".contains(element.getText())) {
               final String text = element.getUnescapedText();
               if (StringUtil.isWhiteSpace(text.charAt(0)) && isCommentMode(element)) return;
+              if (text.equals("\\b")) return;
               // [a] -> a
               registerProblem(regExpClass, text);
             }
