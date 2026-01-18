@@ -71,9 +71,9 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
 
     PsiMember member = enclosingElement;
     PsiClass originalClass = member.getContainingClass();
-    
+
     if (originalClass == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-    
+
     PsiClassType originalType = JavaPsiFacade.getElementFactory(myProject).createType(originalClass);
     Set<PsiMethod> methodsToFind = new HashSet<>();
 
@@ -83,7 +83,9 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
 
       Map<PsiMember, NodeDescriptor<?>> methodToDescriptorMap = new HashMap<>();
       for (PsiMethod methodToFind : methodsToFind) {
-        JavaCallHierarchyData data = new JavaCallHierarchyData(originalClass, methodToFind, originalType, method, methodsToFind, descriptor, methodToDescriptorMap, myProject);
+        JavaCallHierarchyData data =
+          new JavaCallHierarchyData(originalClass, methodToFind, originalType, method, methodsToFind, descriptor, methodToDescriptorMap,
+                                    myProject);
 
         MethodReferencesSearch.search(methodToFind, searchScope, true).forEach(reference -> {
           // references in javadoc really couldn't "call" anything
@@ -118,15 +120,21 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
           return true;
         });
 
-        // add other method elements without references
+        // add other methods with augmented references to methodToFind
         for (CallHierarchyElementProvider provider : CallHierarchyElementProvider.EP_NAME.getExtensionList()) {
-            provider.appendReferencedMethods(methodToFind, data);
+          final Collection<PsiMethod> referencedMethods = provider.provideReferencedMethods(methodToFind);
+          referencedMethods.forEach(referencedMethod -> {
+            final Map<PsiMember, NodeDescriptor<?>> nodeDescriptorMap = data.getResultMap();
+            nodeDescriptorMap.computeIfAbsent(referencedMethod,
+                                              psiMember -> new CallHierarchyNodeDescriptor(myProject, descriptor, psiMember,
+                                                                                           false, true));
+          });
         }
       }
 
       return ArrayUtil.toObjectArray(methodToDescriptorMap.values());
     }
-    
+
     assert enclosingElement instanceof PsiField || enclosingElement instanceof PsiRecordComponent
       : "Enclosing element should be a field, but was " + enclosingElement.getClass() + ", text: " + enclosingElement.getText();
 
@@ -134,12 +142,10 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       .search(enclosingElement, searchScope).findAll().stream()
       .map(PsiReference::getElement);
 
-    // collect other field elements without references
+    // collect other field elements without direct references
     Collection<@NotNull PsiElement> providedElements = new ArrayList<>();
     for (CallHierarchyElementProvider provider : CallHierarchyElementProvider.EP_NAME.getExtensionList()) {
-      if(provider.canProvide(enclosingElement)) {
-        providedElements.addAll(provider.provideReferencedMembers(enclosingElement));
-      }
+      providedElements.addAll(provider.provideReferencedMembers(enclosingElement));
     }
 
     return Stream.concat(referencedElements, providedElements.stream())
