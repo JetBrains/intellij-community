@@ -65,8 +65,6 @@
     <projectService serviceInterface="com.intellij.openapi.editor.LazyRangeMarkerFactory"
                     serviceImplementation="com.intellij.openapi.editor.impl.LazyRangeMarkerFactoryImpl"/>
 
-    <projectService serviceInterface="com.intellij.codeInsight.multiverse.EditorContextManager"
-                    serviceImplementation="com.intellij.codeInsight.multiverse.EditorContextManagerImpl"/>
     <multiverse.codeInsightContextPresentationProvider implementation="com.intellij.codeInsight.multiverse.ModuleEntityContextPresentationProvider"/>
     <iw.actionProvider implementation="com.intellij.openapi.editor.impl.multiverse.CodeInsightContextSwitcherProvider"/>
 

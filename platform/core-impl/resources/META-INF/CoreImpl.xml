@@ -39,7 +39,6 @@
                     serviceImplementation="com.intellij.util.CachedValuesManagerImpl"/>
     <projectService serviceInterface="com.intellij.util.CachedValuesFactory"
                     serviceImplementation="com.intellij.psi.impl.PsiCachedValuesFactory"/>
-    <projectService serviceImplementation="com.intellij.psi.impl.source.resolve.ResolveCache"/>
     <applicationService serviceInterface="com.intellij.psi.stubs.StubElementRegistryService"
                         serviceImplementation="com.intellij.psi.stubs.StubElementRegistryServiceImpl"/>
   </extensions>

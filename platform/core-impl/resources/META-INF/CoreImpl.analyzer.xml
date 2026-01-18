@@ -57,5 +57,6 @@
                         serviceImplementation="com.intellij.openapi.vfs.CompactVirtualFileSetFactory"/>
     <applicationService serviceInterface="com.intellij.diagnostic.PluginProblemReporter"
                         serviceImplementation="com.intellij.diagnostic.PluginProblemReporterImpl"/>
+    <projectService serviceImplementation="com.intellij.psi.impl.source.resolve.ResolveCache"/>
   </extensions>
 </idea-plugin>

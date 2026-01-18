@@ -17,5 +17,7 @@
                     serviceImplementation="com.intellij.psi.impl.search.PsiSearchHelperImpl"/>
 
     <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndexImpl"/>
+    <projectService serviceInterface="com.intellij.codeInsight.multiverse.EditorContextManager"
+                    serviceImplementation="com.intellij.codeInsight.multiverse.EditorContextManagerImpl"/>
   </extensions>
 </idea-plugin>
