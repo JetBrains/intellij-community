@@ -34,6 +34,8 @@ internal class ShellJsonBasedCommandSpec(
 
   override val isHidden: Boolean = false
 
+  override val shouldEscape: Boolean = true
+
   override val requiresSubcommand: Boolean
     get() = data.requiresSubcommand
 

@@ -41,6 +41,8 @@ class ShellMergedCommandSpec(
 
   override val isHidden: Boolean = false
 
+  override val shouldEscape: Boolean = true
+
   override val requiresSubcommand: Boolean
     get() = overridingSpecs.any { it.requiresSubcommand }
 
