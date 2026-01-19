@@ -82,7 +82,7 @@ __jetbrains_intellij_prompt_finished() {
 
 __jetbrains_intellij_get_aliases() {
   builtin local aliases_mapping="$(__jetbrains_intellij_escape_json "$(alias)")"
-  builtin printf '\e]1341;aliases_received;result=%s\a' "$aliases_mapping"
+  builtin printf '\e]1341;aliases_received;result=%s\a' "$(__jetbrains_intellij_encode "$aliases_mapping")"
 }
 
 __jetbrains_intellij_escape_json() {
