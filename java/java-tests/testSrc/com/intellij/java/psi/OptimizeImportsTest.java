@@ -44,7 +44,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 public class OptimizeImportsTest extends OptimizeImportsTestCase {
   static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/optimizeImports";
@@ -490,6 +489,22 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testOptimizeImportNotOnTheFlyInvalidImportNoIntention() {
+    checkOptimizeImportNoIntention();
+  }
+
+  public void testOptimizeImportNotOnTheFlyInvalidStaticImportPackageNoIntention() {
+    checkOptimizeImportNoIntention();
+  }
+
+  public void testOptimizeImportNotOnTheFlyInvalidStaticImportClassNoIntention() {
+    myFixture.addFileToProject(
+      "foo/Util.java",
+      """
+        package foo;
+        
+        public class Util {}
+        """
+    );
     checkOptimizeImportNoIntention();
   }
 

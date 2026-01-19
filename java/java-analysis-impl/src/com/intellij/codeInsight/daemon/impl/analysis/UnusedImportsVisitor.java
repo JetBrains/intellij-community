@@ -206,7 +206,6 @@ public class UnusedImportsVisitor extends JavaElementVisitor {
       if (isRedundantImport(javaFile, importStatement, state.refCountHolder)) {
         redundantImports.add(importStatement);
       }
-
       else {
         int entryIndex = JavaCodeStyleManager.getInstance(javaFile.getProject()).findEntryIndex(importStatement);
         if (entryIndex < state.currentEntryIndex && !state.requiresFix) {
@@ -272,7 +271,7 @@ public class UnusedImportsVisitor extends JavaElementVisitor {
 
       myState.builderList.add(builder);
 
-      if (!predefinedImport && !myState.requiresFix) {
+      if (!predefinedImport && !myState.requiresFix/* && importStatement.resolve() != null*/) {
         myState.requiresFix = true;
       }
     }

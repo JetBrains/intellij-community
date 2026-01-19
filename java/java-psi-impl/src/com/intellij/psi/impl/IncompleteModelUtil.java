@@ -214,10 +214,18 @@ public final class IncompleteModelUtil {
   }
 
   /**
+   * @see #getPotentialImports(PsiJavaCodeReferenceElement, boolean)
+   */
+  public static @NotNull List<PsiImportStatementBase> getPotentialImports(@NotNull PsiJavaCodeReferenceElement ref) {
+    return getPotentialImports(ref, true);
+  }
+
+  /**
    * @param ref unresolved reference to find potential imports for
+   * @param ignoreResolvableStaticImports if true, static imports that resolved to a class are filtered out.
    * @return list of import statements that potentially import the given unresolved reference
    */
-  public static List<PsiImportStatementBase> getPotentialImports(@NotNull PsiJavaCodeReferenceElement ref) {
+  public static @NotNull List<PsiImportStatementBase> getPotentialImports(@NotNull PsiJavaCodeReferenceElement ref, boolean ignoreResolvableStaticImports) {
     PsiElement parent = ref.getParent();
     if (parent instanceof PsiImportStatementBase || ref.isQualified()) return Collections.emptyList();
     boolean maybeClass = canBeClassReference(ref);
@@ -226,7 +234,7 @@ public final class IncompleteModelUtil {
     List<PsiImportStatementBase> imports = new ArrayList<>();
     if (list != null) {
       for (PsiImportStatementBase statement : list.getAllImportStatements()) {
-        if (statement instanceof PsiImportStaticStatement && ((PsiImportStaticStatement)statement).resolveTargetClass() != null) continue;
+        if (statement instanceof PsiImportStaticStatement && ((PsiImportStaticStatement)statement).resolveTargetClass() != null && ignoreResolvableStaticImports) continue;
         if (!statement.isOnDemand()) {
           PsiJavaCodeReferenceElement reference = statement.getImportReference();
           if (reference == null) continue;
