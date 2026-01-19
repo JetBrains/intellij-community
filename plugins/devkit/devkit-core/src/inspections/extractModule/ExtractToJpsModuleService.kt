@@ -187,7 +187,7 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
 
     val packageName = resolvedModuleDescriptor.`package`.stringValue
     val packageDirectory =
-      if (packageName != null) ModulePackageIndex.getInstance(originalModule).getDirectoriesByPackageName(packageName, false).firstOrNull()
+      if (packageName != null) ModulePackageIndex.getInstance(originalModule).getDirsByPackageName(packageName, originalModule.moduleProductionSourceScope).firstOrNull()
       else null
     val newModuleName = descriptor.nameWithoutExtension
     val newModuleDirectoryPath = contentRoot.path + "/" + newModuleName.removePrefix(originalModule.name + ".")
