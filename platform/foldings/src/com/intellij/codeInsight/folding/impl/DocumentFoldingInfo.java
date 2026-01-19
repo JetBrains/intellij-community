@@ -9,10 +9,7 @@ import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.Project;
@@ -27,7 +24,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.xml.util.XmlStringUtil;
@@ -62,9 +58,8 @@ final class DocumentFoldingInfo implements CodeFoldingState {
     myFile = FileDocumentManager.getInstance().getFile(document);
   }
 
-  @RequiresEdt
   void loadFromEditor(@NotNull Editor editor) {
-    ThreadingAssertions.assertEventDispatchThread();
+    EditorThreading.Companion.assertInteractionAllowed();
     LOG.assertTrue(!editor.isDisposed());
     clear();
 
