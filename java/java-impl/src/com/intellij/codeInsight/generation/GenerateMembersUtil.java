@@ -198,7 +198,8 @@ public final class GenerateMembersUtil {
           RangeMarker marker = document.createRangeMarker(info.start(), info.start());
           PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
           if (marker.isValid()) {
-            CodeStyleManager.getInstance(project).adjustLineIndent(document, marker.getStartOffset());
+            int offset = CodeStyleManager.getInstance(project).adjustLineIndent(document, marker.getStartOffset());
+            updater.moveCaretTo(offset);
           }
         }
         return;
