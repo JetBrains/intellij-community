@@ -18,6 +18,7 @@ from tensorflow import (
     io as io,
     keras as keras,
     math as math,
+    nn as nn,
     random as random,
     types as types,
 )
@@ -37,7 +38,7 @@ from tensorflow.core.protobuf import struct_pb2
 from tensorflow.dtypes import *
 from tensorflow.experimental.dtensor import Layout
 from tensorflow.keras import losses as losses
-from tensorflow.linalg import eye as eye
+from tensorflow.linalg import eye as eye, matmul as matmul
 
 # Most tf.math functions are exported as tf, but sadly not all are.
 from tensorflow.math import (
@@ -385,6 +386,13 @@ def squeeze(
 ) -> Tensor: ...
 @overload
 def squeeze(input: RaggedTensor, axis: int | tuple[int, ...] | list[int], name: str | None = None) -> RaggedTensor: ...
+def split(
+    value: TensorCompatible,
+    num_or_size_splits: int | TensorCompatible,
+    axis: int | Tensor = 0,
+    num: int | None = None,
+    name: str | None = "split",
+) -> list[Tensor]: ...
 def tensor_scatter_nd_update(
     tensor: TensorCompatible, indices: TensorCompatible, updates: TensorCompatible, name: str | None = None
 ) -> Tensor: ...
@@ -433,5 +441,11 @@ def gather_nd(
     batch_dims: UIntTensorCompatible = 0,
     name: str | None = None,
     bad_indices_policy: Literal["", "DEFAULT", "ERROR", "IGNORE"] = "",
+) -> Tensor: ...
+def transpose(
+    a: Tensor, perm: Sequence[int] | IntArray | None = None, conjugate: _bool = False, name: str = "transpose"
+) -> Tensor: ...
+def clip_by_value(
+    t: Tensor | IndexedSlices, clip_value_min: TensorCompatible, clip_value_max: TensorCompatible, name: str | None = None
 ) -> Tensor: ...
 def __getattr__(name: str): ...  # incomplete module

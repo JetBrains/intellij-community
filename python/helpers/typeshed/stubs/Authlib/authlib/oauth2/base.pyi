@@ -1,4 +1,5 @@
 from _typeshed import Incomplete
+from typing import Literal
 
 from authlib.common.errors import AuthlibHTTPError
 
@@ -10,7 +11,7 @@ class OAuth2Error(AuthlibHTTPError):
     redirect_fragment: Incomplete
     def __init__(
         self,
-        description=None,
+        description: str | None = None,
         uri=None,
         status_code=None,
         state=None,
@@ -18,5 +19,5 @@ class OAuth2Error(AuthlibHTTPError):
         redirect_fragment: bool = False,
         error=None,
     ) -> None: ...
-    def get_body(self) -> list[Incomplete]: ...
-    def __call__(self, uri=None): ...
+    def get_body(self) -> list[tuple[Literal["error", "error_description", "error_uri"], str | None]]: ...
+    def __call__(self, uri: str | None = None): ...

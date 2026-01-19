@@ -344,20 +344,20 @@ the latest mypy (`pip install -r requirements-tests.txt`) before running the scr
 
 ### Supported type system features
 
-Since PEP 484 was accepted, there have been many other PEPs that added
-new features to the Python type system. In general, new features can
-be used in typeshed as soon as the PEP has been accepted and implemented
-and most type checkers support the new feature.
+Since [PEP 484](https://peps.python.org/pep-0484/) was accepted, there have been
+many other PEPs that added new features to the Python type system. In general,
+new features can be used in typeshed as soon as the PEP has been accepted and
+implemented and most type checkers support the new feature.
 
 Supported features include:
-- [PEP 544](https://peps.python.org/pep-0544/) (Protocol)
+- [PEP 544](https://peps.python.org/pep-0544/) (`Protocol`)
 - [PEP 585](https://peps.python.org/pep-0585/) (builtin generics)
-- [PEP 586](https://peps.python.org/pep-0586/) (Literal)
-- [PEP 591](https://peps.python.org/pep-0591/) (Final/@final)
-- [PEP 589](https://peps.python.org/pep-0589/) (TypedDict)
+- [PEP 586](https://peps.python.org/pep-0586/) (`Literal`)
+- [PEP 591](https://peps.python.org/pep-0591/) (`Final`/`@final`)
+- [PEP 589](https://peps.python.org/pep-0589/) (`TypedDict`)
 - [PEP 604](https://peps.python.org/pep-0604/) (`Foo | Bar` union syntax)
-- [PEP 612](https://peps.python.org/pep-0612/) (ParamSpec)
-- [PEP 647](https://peps.python.org/pep-0647/) (TypeGuard):
+- [PEP 612](https://peps.python.org/pep-0612/) (`ParamSpec`)
+- [PEP 647](https://peps.python.org/pep-0647/) (`TypeGuard`):
   see [#5406](https://github.com/python/typeshed/issues/5406)
 - [PEP 655](https://peps.python.org/pep-0655/) (`Required` and `NotRequired`)
 - [PEP 673](https://peps.python.org/pep-0673/) (`Self`)

@@ -99,8 +99,9 @@ rather than `.pyi` files)
 is that the test cases cannot always use modern syntax for type hints.
 While we can use `from __future__ import annotations` to enable the use of
 modern typing syntax wherever possible,
-type checkers may (correctly) emit errors if PEP 604 syntax or PEP 585 syntax
-is used in a runtime context on lower versions of Python. For example:
+type checkers may (correctly) emit errors if [PEP 604](https://peps.python.org/pep-0604/)
+syntax or [PEP 585](https://peps.python.org/pep-0585/) syntax is used
+in a runtime context on lower versions of Python. For example:
 
 ```python
 from __future__ import annotations
