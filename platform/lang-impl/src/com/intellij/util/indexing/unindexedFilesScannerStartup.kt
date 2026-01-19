@@ -2,8 +2,8 @@
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -252,31 +252,32 @@ private class AllNotSeenDirtyFileIds(val result: Collection<Int>) : GetNotSeenDi
   override fun getFullScanningDecision(): NotSeenIdsBasedFullScanningDecision = DirtyFileIdsCompatibleWithFullScanningSkip
 }
 
-private suspend fun findProjectFiles(project: Project, dirtyFilesIds: Collection<Int>, limit: Int = -1): List<VirtualFile> {
-  return readAction {
-    val fs = ManagingFS.getInstance()
-    val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
-    var exceptionLogged = false
-    dirtyFilesIds.asSequence()
-      .mapNotNull { fileId ->
-        try {
-          val file = fs.findFileById(fileId)
-          if (file != null && fileBasedIndex.belongsToProjectIndexableFiles(file, project)) file else null
+private fun findProjectFiles(project: Project, dirtyFilesIds: Collection<Int>, limit: Int = -1): List<VirtualFile> {
+  val fs = ManagingFS.getInstance()
+  val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+  var exceptionLogged = false
+  return dirtyFilesIds.asSequence()
+    .mapNotNull { fileId ->
+      try {
+        val file = fs.findFileById(fileId)
+        // Blocking read action because the lambda is fast and the number of files can be large.
+        // And the previous solution was de-facto blocking because somebody (me) forgot checkCancelled.
+        val inProject = file != null && runReadAction { fileBasedIndex.belongsToProjectIndexableFiles(file, project) }
+        if (inProject) file else null
+      }
+      catch (e: VfsRootAccessNotAllowedError) {
+        if (!exceptionLogged) {
+          LOG.debug("VfsRootAccessNotAllowedError occurred. " +
+                    "Probably previous test with different rules for project roots saved these files to dirty files queue. " +
+                    "Example of error:", e)
+          exceptionLogged = true
         }
-        catch (e: VfsRootAccessNotAllowedError) {
-          if (!exceptionLogged) {
-            LOG.debug("VfsRootAccessNotAllowedError occurred. " +
-                      "Probably previous test with different rules for project roots saved these files to dirty files queue. " +
-                      "Example of error:", e)
-            exceptionLogged = true
-          }
-          null
-        }
-      }.run {
-        if (limit <= 0) this
-        else this.take(limit)
-      }.toList()
-  }
+        null
+      }
+    }.run {
+      if (limit <= 0) this
+      else this.take(limit)
+    }.toList()
 }
 
 private suspend fun scheduleForIndexing(someProjectDirtyFilesFiles: List<VirtualFile>, project: Project, fileBasedIndex: FileBasedIndexImpl, limit: Int) {
