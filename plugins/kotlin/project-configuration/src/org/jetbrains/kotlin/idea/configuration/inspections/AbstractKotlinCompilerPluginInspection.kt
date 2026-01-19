@@ -13,6 +13,7 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
@@ -28,6 +29,7 @@ abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompil
         KotlinCompilerPluginProjectConfigurator.EP_NAME.extensionList
             .filter { it.kotlinCompilerPluginId == kotlinCompilerPluginId }
 
+    @OptIn(KaPlatformInterface::class)
     protected fun KtFile.hasCompilerPluginExtension(filter: (FirExtensionRegistrarAdapter) -> Boolean): Boolean {
         val module = getKaModule(project, useSiteModule = null).takeIf { it is KaSourceModule } ?: return false
         val pluginsProvider =

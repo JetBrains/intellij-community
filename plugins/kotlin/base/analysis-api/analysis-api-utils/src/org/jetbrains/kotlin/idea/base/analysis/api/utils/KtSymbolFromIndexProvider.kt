@@ -573,10 +573,10 @@ private fun MutableSet<Name>.createNamesProcessor(
 /**
  * Returns whether the module can declare expect declarations that could be implemented by an implementing module.
  */
+@OptIn(KaPlatformInterface::class)
 private fun KaModule.canHaveExpectDeclarations(): Boolean {
     if (targetPlatform.isMultiPlatform()) return true
 
-    @OptIn(KaPlatformInterface::class)
     val contextModule = (this as? KaDanglingFileModule)?.contextModule ?: this
     // We return true in this case out of caution, because we do not know for sure.
     if (contextModule !is KaSourceModule) return true

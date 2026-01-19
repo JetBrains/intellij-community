@@ -11,6 +11,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.imports.getDefaultImports
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
@@ -66,6 +67,7 @@ class PsiBasedClassResolver @TestOnly constructor(private val targetClassFqName:
 
             val cachedValue = CachedValuesManager.getManager(target.project).createCachedValue(
                 {
+                    @OptIn(KaPlatformInterface::class)
                     CachedValueProvider.Result(
                         PsiBasedClassResolver(target),
                         KotlinModificationTrackerFactory.getInstance(target.project).createProjectWideSourceModificationTracker(),
