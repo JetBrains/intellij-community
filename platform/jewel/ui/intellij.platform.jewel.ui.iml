@@ -41,41 +41,41 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" exported="" />
     <orderEntry type="module-library" exported="">
       <library name="org.jetbrains.compose.components.components.resources" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources:1.10.0-rc01">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources:1.10.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.10.0-rc01/components-resources-1.10.0-rc01.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.10.0/components-resources-1.10.0.jar">
               <sha256sum>7d2f02d5ecc865b8c9b81cc3026db4c0ba2ccf180c1be6844896e56581045b9a</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.10.0-rc01/components-resources-1.10.0-rc01.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.10.0/components-resources-1.10.0.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.10.0-rc01/components-resources-1.10.0-rc01-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.10.0/components-resources-1.10.0-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.10.0-rc01/components-resources-1.10.0-rc01-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.10.0/components-resources-1.10.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="org.jetbrains.compose.components.components.resources.desktop" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources-desktop:1.10.0-rc01">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources-desktop:1.10.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.10.0-rc01/components-resources-desktop-1.10.0-rc01.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.10.0/components-resources-desktop-1.10.0.jar">
               <sha256sum>7dbbe06683befa8110b4ac926a7432b7e2ee446ed156adf55ad17e9c868ae0e2</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.10.0-rc01/components-resources-desktop-1.10.0-rc01.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.10.0/components-resources-desktop-1.10.0.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.10.0-rc01/components-resources-desktop-1.10.0-rc01-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.10.0/components-resources-desktop-1.10.0-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.10.0-rc01/components-resources-desktop-1.10.0-rc01-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.10.0/components-resources-desktop-1.10.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
