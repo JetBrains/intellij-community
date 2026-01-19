@@ -39,8 +39,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.deprecatedParentTargetMap
+import org.jetbrains.kotlin.resolve.deprecatedTargetPredicateMap
 import org.jetbrains.kotlin.resolve.possibleParentTargetPredicateMap
-import org.jetbrains.kotlin.resolve.possibleTargetMap
+import org.jetbrains.kotlin.resolve.possibleTargetPredicateMap
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 /**
@@ -593,8 +594,14 @@ class KeywordCompletion() {
 
                         else -> listOf()
                     }
-                    val modifierTargets = possibleTargetMap[keywordTokenType]?.intersect(possibleTargets)
-                    if (modifierTargets != null && possibleTargets.isNotEmpty() && modifierTargets.isEmpty()) return false
+
+                    if (possibleTargets.isNotEmpty() && possibleTargets.none {
+                        // A target should be "possible" (== true) but not "deprecated" (!= true) to be considered
+                        // one that we should suggest. No such target => no correct keyword application
+                        possibleTargetPredicateMap[keywordTokenType]?.isAllowed(it, languageVersionSettings) == true &&
+                                deprecatedTargetPredicateMap[keywordTokenType]?.isAllowed(it, languageVersionSettings) != true
+                        }
+                    ) return false
 
                     val parentTarget = when (val ownerDeclaration = container?.getParentOfType<KtDeclaration>(strict = true)) {
                         null -> FILE
