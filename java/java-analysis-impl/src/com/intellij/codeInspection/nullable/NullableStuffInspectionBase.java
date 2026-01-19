@@ -557,16 +557,14 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       context = JavaTypeNullabilityUtil.getNullabilityConflictInAssignment(expectedType, actualType,
                                                                            REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS);
     JavaTypeNullabilityUtil.NullabilityConflict conflict = context.nullabilityConflict();
-    String messageKey;
-    switch (conflict) {
-      case UNKNOWN -> {
-        return false;
-      }
-      case NOT_NULL_TO_NULL -> messageKey = problem.notNullToNullProblem();
-      case NULL_TO_NOT_NULL -> messageKey = problem.nullToNotNullProblem();
-      case COMPLEX -> messageKey = problem.complexProblem();
-      default -> throw new IllegalStateException("Unexpected value: " + conflict);
-    }
+    String messageKey = switch (conflict) {
+      case UNKNOWN -> null;
+      case NOT_NULL_TO_NULL -> problem.notNullToNullProblem();
+      case NULL_TO_NOT_NULL -> problem.nullToNotNullProblem();
+      case COMPLEX -> problem.complexProblem();
+    };
+
+    if (messageKey == null) return false;
 
     reportProblem(holder, errorElement, LocalQuickFix.EMPTY_ARRAY,
                   messageKey, new Object[]{""},
