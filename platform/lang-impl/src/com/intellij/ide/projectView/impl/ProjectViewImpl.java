@@ -99,6 +99,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
+import static com.intellij.ide.projectView.impl.SelectInProjectViewImplKt.selectInProjectViewLog;
 import static com.intellij.ide.scratch.ScratchTreeStructureProvider.SCRATCHES_NODE_SETTING;
 import static com.intellij.ui.tree.project.ProjectViewUpdateCauseUtilKt.guessProjectViewUpdateCauseByCaller;
 import static com.intellij.ui.treeStructure.Tree.AUTO_SCROLL_FROM_SOURCE_BLOCKED;
@@ -1575,9 +1576,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private boolean isAutoscrollFromSourceEnabled(String paneId) {
-    if (project.isDisposed()) return false;
-    if (!myAutoscrollFromSource.isSelected()) return false;
-    if (!myAutoscrollFromSource.isEnabled(paneId)) return false;
+    if (project.isDisposed()) {
+      selectInProjectViewLog().debug("Select in Project View not available: the project is disposed");
+      return false;
+    }
+    if (!myAutoscrollFromSource.isSelected()) {
+      selectInProjectViewLog().debug("Select in Project View not available: Always Select Opened File is enabled");
+      return false;
+    }
+    if (!myAutoscrollFromSource.isEnabled(paneId)) {
+      selectInProjectViewLog().debug("Select in Project View not available: not enabled for " + paneId);
+      return false;
+    }
     return true;
   }
 
