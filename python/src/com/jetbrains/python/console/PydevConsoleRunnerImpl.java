@@ -340,6 +340,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
 
     NewErrorTreeViewPanel errorViewPanel = new NewErrorTreeViewPanel(myProject, null, false, false, null);
+    Disposer.register(PythonPluginDisposable.getInstance(myProject), errorViewPanel);
 
     String[] messages = StringUtil.isNotEmpty(e.getMessage()) ? StringUtil.splitByLines(e.getMessage()) : ArrayUtilRt.EMPTY_STRING_ARRAY;
     if (messages.length == 0) {
