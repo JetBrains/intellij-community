@@ -12,7 +12,15 @@ public interface MnemonicsTokenizer {
 
   void tokenize(@NotNull PropertyValueImpl element, @NotNull TokenConsumer consumer);
 
+  /**
+   * Use {@link #ignoredCharacters(PropertyValueImpl)} instead.
+   */
+  @Deprecated
   default Set<Character> ignoredCharacters() {
     return Set.of();
+  }
+
+  default Set<Character> ignoredCharacters(@NotNull PropertyValueImpl element) {
+    return ignoredCharacters();
   }
 }
