@@ -77,6 +77,16 @@ open class NonIndexableFileSearchPerformanceTest {
   }
 
   @Test
+  @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
+  @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
+  fun `iterate over all files - bfs many read actions`() = `iterate over all files`()
+
+  @Test
+  @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
+  @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "false")
+  fun `iterate over all files - bfs one read action`() = `iterate over all files`()
+
+  @Test
   fun `search for one file deep inside`(): Unit = runBlocking {
       val searchPattern = "ProjectRootEntity"
       val contributor = createContributor()
@@ -85,6 +95,16 @@ open class NonIndexableFileSearchPerformanceTest {
           nonIndexableFilesCount
       }.start()
   }
+
+  @Test
+  @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
+  @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
+  fun `search for one file deep inside - bfs many read actions`() = `search for one file deep inside`()
+
+  @Test
+  @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
+  @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "false")
+  fun `search for one file deep inside - bfs one read action`() = `search for one file deep inside`()
 
   @Test
   fun `search for one last root child`(): Unit = runBlocking {
@@ -97,6 +117,16 @@ open class NonIndexableFileSearchPerformanceTest {
   }
 
   @Test
+  @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
+  @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
+  fun `search for one last root child - bfs many read actions`() = `search for one last root child`()
+
+  @Test
+  @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
+  @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "false")
+  fun `search for one last root child - bfs one read action`() = `search for one last root child`()
+
+  @Test
   fun `search for the first root child`(): Unit = runBlocking {
       val filename = communityVirtualFile.getChildren(true).first().name
       val contributor = createContributor()
@@ -105,6 +135,15 @@ open class NonIndexableFileSearchPerformanceTest {
       }.start()
   }
 
+  @Test
+  @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
+  @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
+  fun `search for the first root child - bfs many read actions`() = `search for the first root child`()
+
+  @Test
+  @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
+  @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "false")
+  fun `search for the first root child - bfs one read action`() = `search for the first root child`()
 
   private fun createContributor(): NonIndexableFilesSEContributor {
     val event = TestActionEvent.createTestEvent(SimpleDataContext.getProjectContext(project))
@@ -112,21 +151,4 @@ open class NonIndexableFileSearchPerformanceTest {
       Disposer.register(projectModel.disposableRule.disposable, contributor)
     }
   }
-}
-
-
-@RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
-@RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "false")
-@StressTestApplication
-@PerformanceUnitTest
-class NonIndexableFileSearchPerformanceBfsOneReadActionTest: NonIndexableFileSearchPerformanceTest(){
-
-}
-
-@RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
-@RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
-@StressTestApplication
-@PerformanceUnitTest
-class NonIndexableFileSearchPerformanceBfsManyReadActionsTest: NonIndexableFileSearchPerformanceTest(){
-
 }
