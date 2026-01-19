@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.trackers.AbstractP
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.scope.AbstractCombinedSourceAndClassRootsScopeContainsTest
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.scope.AbstractCombinedSourceAndClassRootsScopeStructureTest
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractSmartCompletionHandlerTest
 import org.jetbrains.kotlin.idea.coverage.AbstractKotlinCoverageOutputFilesTest
 import org.jetbrains.kotlin.idea.fir.AbstractK2JsBasicCompletionLegacyStdlibTest
 import org.jetbrains.kotlin.idea.fir.actions.AbstractK2AddImportActionTest
@@ -342,6 +343,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
             model("handlers", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX, isRecursive = false)
         }
 
+        testClass<AbstractHighLevelSmartCompletionHandlerTest> {
+            model("handlers/smart", pattern = KT_WITHOUT_FIR_PREFIX)
+        }
+
         testClass<AbstractHighLevelJavaCompletionHandlerTest> {
             model("handlers/injava", pattern = JAVA)
         }
@@ -360,6 +365,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
 
         testClass<AbstractHighLevelMultiFileJvmBasicCompletionTest> {
             model("basic/multifile", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractHighLevelMultiFileSmartCompletionTest> {
+            model("smartMultiFile", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractK2MultiPlatformCompletionTest> {
@@ -390,7 +399,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
         }
 
         testClass<AbstractK2SmartCompletionTest> {
-            model("smart/frontendAgnostic", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("smart", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         // Smart completion does not work in K2, see KTIJ-26166
