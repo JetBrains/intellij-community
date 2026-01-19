@@ -61,8 +61,7 @@ internal class FrontendXValueContainer(
     // Children of this container should be tied to the container scope,
     // not the node scope. The XValue may be reused in other nodes, e.g. inline debugger.
     val containerScope = cs
-    val nodeScope = node.childCoroutineScope(containerScope, "FrontendXValueContainer#computeChildren", childrenManager)
-    nodeScope.launch(Dispatchers.EDT) {
+    containerScope.launch(Dispatchers.EDT) {
       val flow = childrenManager.getChildrenEventsFlow(id)
       val builder = XValuesPresentationBuilder()
       flow.collect { event ->
@@ -93,23 +92,32 @@ internal class FrontendXValueContainer(
               childrenList.addTopValue(xValue as XNamedValue)
             }
 
-            node.addChildren(childrenList, event.isLast)
+            // Important: event when a node is obsolete,
+            // we should continue to call createFlows,
+            // so that the presentation of the xValue continues to update.
+            if (!node.isObsolete) {
+              node.addChildren(childrenList, event.isLast)
+            }
           }
           is XValueComputeChildrenEvent.SetAlreadySorted -> {
+            if (node.isObsolete) return@collect
             node.setAlreadySorted(event.value)
           }
           is XValueComputeChildrenEvent.SetErrorMessage -> {
-            node.setErrorMessage(event.message, event.link?.hyperlink(nodeScope))
+            if (node.isObsolete) return@collect
+            node.setErrorMessage(event.message, event.link?.hyperlink(containerScope))
           }
           is XValueComputeChildrenEvent.SetMessage -> {
+            if (node.isObsolete) return@collect
             node.setMessage(
               event.message,
               event.icon?.icon(),
               event.attributes.toSimpleTextAttributes(),
-              event.link?.hyperlink(nodeScope)
+              event.link?.hyperlink(containerScope)
             )
           }
           is XValueComputeChildrenEvent.TooManyChildren -> {
+            if (node.isObsolete) return@collect
             val addNextChildren = event.addNextChildren
             if (addNextChildren != null) {
               node.tooManyChildren(event.remaining) { addNextChildren.trySend(Unit) }
