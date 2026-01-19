@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DetektPluginSettings">
+    <option name="enableDetekt" value="true" />
+    <option name="enableForProjectResult" value="Accepted" />
+    <option name="pluginJars">
+      <list>
+        <option value="$PROJECT_DIR$/platform/jewel/detekt-rules/detekt-compose-rules-binary_deploy.jar" />
+        <option value="$PROJECT_DIR$/platform/jewel/detekt-rules/detekt-plugin-binary_deploy.jar" />
+      </list>
+    </option>
+  </component>
+</project>
