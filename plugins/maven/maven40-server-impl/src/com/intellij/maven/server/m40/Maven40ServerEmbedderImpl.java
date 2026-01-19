@@ -203,7 +203,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-    if(myContainer == null) throw new IllegalStateException("Cannot create maven container");
+    if (myContainer == null) throw new IllegalStateException("Cannot create maven container");
 
     myAlwaysUpdateSnapshots = commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots");
 
@@ -467,6 +467,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     return executeWithMavenSession(request, workspaceMap, indicator, b -> {
     }, runnable);
   }
+
   public MavenExecutionResult executeWithMavenSession(@NotNull MavenExecutionRequest request,
                                                       @NotNull MavenWorkspaceMap workspaceMap,
                                                       @NotNull MavenServerConsoleIndicatorImpl indicator,
@@ -810,24 +811,24 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     MavenProject mavenProject = result.getMavenProject();
     if (mavenProject == null) return new MavenGoalExecutionResult(false, file, folders, problems);
 
-    folders.setMavenSources(convertSourceRoots(mavenProject.getSourceRoots()));
+    folders.setMavenSources(convertSourceRoots(file, mavenProject.getSourceRoots()));
 
     return new MavenGoalExecutionResult(true, file, folders, problems);
   }
 
-  private static List<MavenSource> convertSourceRoots(List<Source> roots) {
+  private static List<MavenSource> convertSourceRoots(File pomFile, List<Source> roots) {
     List<MavenSource> list = new ArrayList<>();
     for (Source it : roots) {
-      MavenSource convert = Maven40ModelConverter.convert(it);
+      MavenSource convert = Maven40ModelConverter.convert(pomFile, it);
       list.add(convert);
     }
     return list;
   }
 
-  private static List<MavenSource> convertSourceRoots(Collection<SourceRoot> roots) {
+  private static List<MavenSource> convertSourceRoots(File pomFile, Collection<SourceRoot> roots) {
     List<MavenSource> list = new ArrayList<>();
     for (SourceRoot it : roots) {
-      MavenSource convert = Maven40ModelConverter.convert(it);
+      MavenSource convert = Maven40ModelConverter.convert(pomFile, it);
       list.add(convert);
     }
     return list;
@@ -870,7 +871,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       if (reader != null) {
         try {
           Model model = reader.read(file, inputOptions);
-          return Maven40ModelConverter.convertModel(model);
+          return Maven40ModelConverter.convertModel(file, model);
         }
         catch (Exception e) {
           MavenServerGlobals.getLogger().warn(e);

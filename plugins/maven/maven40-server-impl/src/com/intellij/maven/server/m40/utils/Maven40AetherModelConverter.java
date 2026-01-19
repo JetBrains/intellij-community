@@ -52,7 +52,7 @@ public final class Maven40AetherModelConverter extends Maven40ModelConverter {
     result.setProfiles(convertProfiles(model.getProfiles()));
     result.setModules(mavenProject.getModules());
 
-    convertBuild(result.getBuild(), model.getBuild());
+    convertBuild(mavenProject.getFile(), result.getBuild(), model.getBuild());
     return result;
   }
 

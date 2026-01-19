@@ -179,7 +179,7 @@ class MavenProjectReader(
     mavenBuildBase.directory = findChildValueByPath(xmlBuild, "directory")
 
     if (isMaven4Model(modelVersion)) {
-      mavenBuildBase.mavenSources = collectMavenSources(xmlBuild)
+      mavenBuildBase.mavenSources = collectMavenSources(xmlBuild, projectFile)
     }
     else {
       mavenBuildBase.resources = collectResources(
@@ -203,7 +203,7 @@ class MavenProjectReader(
     }
   }
 
-  private fun collectMavenSources(xmlBuild: Element?): List<MavenSource> {
+  private fun collectMavenSources(xmlBuild: Element?, projectFile: VirtualFile): List<MavenSource> {
     if (xmlBuild == null) return emptyList()
     val xmlSources = findChildrenByPath(xmlBuild, "sources", "source")
     val result: MutableList<MavenSource> = ArrayList()
@@ -219,6 +219,7 @@ class MavenProjectReader(
       val enabled = "true" == findChildValueByPath(each, "enabled")
       val directory = findChildValueByPath(each, "directory") ?: "src/${scope}/${lang}"
       result.add(MavenSource.fromSourceTag(
+        projectFile.toNioPath(),
         directory,
         includes,
         excludes,
