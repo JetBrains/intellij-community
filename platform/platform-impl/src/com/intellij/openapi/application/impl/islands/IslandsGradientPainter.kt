@@ -85,13 +85,7 @@ internal fun islandsGradientPaint(frame: IdeFrame, mainColor: Color, projectWind
 
 private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project, projectWindowCustomizer: ProjectWindowCustomizerService,
                             component: Component, g: Graphics2D) {
-  val cache = getGradientCache(frame.component, "GradientCache")
-
-  val centerColor = projectWindowCustomizer.getGradientProjectColor(project)
-
   val centerX = project.service<ProjectWidgetGradientLocationService>().gradientOffsetRelativeToRootPane
-
-  val blendedColor = cache.getBlendedColor(mainColor, centerColor)
 
   val ctx = ScaleContext.create(g)
 
@@ -102,6 +96,16 @@ private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project,
   val rightWidth = alignIntToInt(length, ctx, PaintUtil.RoundingMode.CEIL, null)
   val totalWidth = alignIntToInt(leftWidth + rightWidth, ctx, PaintUtil.RoundingMode.CEIL, null)
 
+  val fullBounds = Rectangle(totalWidth, height)
+  val bounds = g.clipBounds?.intersection(fullBounds) ?: fullBounds
+  if (bounds.isEmpty) {
+    return
+  }
+
+  val cache = getGradientCache(frame.component, "GradientCache")
+  val centerColor = projectWindowCustomizer.getGradientProjectColor(project)
+  val blendedColor = cache.getBlendedColor(mainColor, centerColor)
+
   val leftGradientTexture = cache.left.getHorizontalTexture(g, leftWidth, mainColor, blendedColor)
   val rightGradientTexture = cache.right.getHorizontalTexture(g, rightWidth, blendedColor, mainColor, leftWidth)
   val initialComposite = g.composite
@@ -110,8 +114,12 @@ private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project,
   if (SwingUtilities.getWindowAncestor(frame.component)?.isActive == false) {
     islandsInactiveFrameGraphics2D?.preserveComposite = true
 
-    g.color = mainColor
-    g.fillRect(0, 0, component.width, component.height)
+    val componentFullBounds = Rectangle(component.width, component.height)
+    val componentBounds = g.clipBounds?.intersection(componentFullBounds) ?: componentFullBounds
+    if (!componentBounds.isEmpty) {
+      g.color = mainColor
+      g.fillRect(componentBounds.x, componentBounds.y, componentBounds.width, componentBounds.height)
+    }
 
     g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, islandsInactiveAlpha)
   }
@@ -120,17 +128,23 @@ private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project,
 
   alignTxToInt(g, null, true, false, PaintUtil.RoundingMode.FLOOR)
 
-  g.paint = leftGradientTexture
-  g.fillRect(0, 0, leftWidth, height)
+  val leftBounds = bounds.intersection(Rectangle(leftWidth, height))
+  if (!leftBounds.isEmpty) {
+    g.paint = leftGradientTexture
+    g.fillRect(leftBounds.x, leftBounds.y, leftBounds.width, leftBounds.height)
+  }
 
-  g.paint = rightGradientTexture
-  g.fillRect(leftWidth, 0, rightWidth, height)
+  val rightBounds = bounds.intersection(Rectangle(leftWidth, 0, rightWidth, height))
+  if (!rightBounds.isEmpty) {
+    g.paint = rightGradientTexture
+    g.fillRect(rightBounds.x, rightBounds.y, rightBounds.width, rightBounds.height)
+  }
 
   alignTxToInt(g, null, false, true, PaintUtil.RoundingMode.FLOOR)
 
   val startColor = if (SystemInfo.isMac) Gray.TRANSPARENT else ColorUtil.toAlpha(mainColor, 0)
   g.paint = GradientPaint(0f, 0f, startColor, 0f, height.toFloat(), mainColor)
-  g.fillRect(0, 0, totalWidth, height)
+  g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height)
 
   g.composite = initialComposite
   islandsInactiveFrameGraphics2D?.preserveComposite = false
