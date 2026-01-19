@@ -483,7 +483,11 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     }
   }
 
-  private fun changeStatus(newStatus: AnalyzerStatus) {
+  fun getCurrentStatus(): AnalyzerStatus {
+    return analyzerStatus
+  }
+
+  fun changeStatus(newStatus: AnalyzerStatus) {
     ThreadingAssertions.assertEventDispatchThread()
     if (!isErrorStripeVisible || resourcesDisposable.isDisposed()) {
       return

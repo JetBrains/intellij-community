@@ -159,6 +159,7 @@
     <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.documentation.render.DocRenderNecromancerAwaker"/>
     <textEditorNecromancerAwaker implementation="com.intellij.openapi.fileEditor.impl.text.FocusZoneNecromancerAwaker"/>
     <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.daemon.impl.indentGuide.IndentGuideNecromancerAwaker"/>
+    <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.daemon.impl.TrafficLightNecromancerAwaker"/>
 
     <postStartupActivity implementation="com.intellij.codeInsight.navigation.InitCtrlMouseHandlerActivity"/>
 
