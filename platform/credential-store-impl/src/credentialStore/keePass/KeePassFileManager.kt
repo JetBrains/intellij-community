@@ -36,9 +36,10 @@ open class KeePassFileManager(private val file: Path,
       val mainPassword = mainKeyFileStorage.load()
       if (mainPassword != null) {
         val db = loadKdbx(file, KdbxPassword.createAndClear(mainPassword))
-        val store = KeePassCredentialStore(file, mainKeyFileStorage, db)
-        store.clear()
-        store.save(mainKeyEncryptionSpec)
+        KeePassCredentialStore(file, mainKeyFileStorage, db).use { store ->
+          store.clear()
+          store.save(mainKeyEncryptionSpec)
+        }
         return
       }
     }
