@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrCall
-import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
+import org.jetbrains.kotlin.ir.expressions.IrAnnotation
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
@@ -227,7 +227,7 @@ private fun IrClass.addInvocationHandlerToPrimaryConstructor(pluginContext: File
   )
 }
 
-internal fun IrAnnotationContainer.extractApiStatusAnnotations(): List<IrConstructorCall> {
+internal fun IrAnnotationContainer.extractApiStatusAnnotations(): List<IrAnnotation> {
   return annotations.filter { it.annotationClass.kotlinFqName.startsWith(FqName.fromSegments(listOf("org", "jetbrains", "annotations", "ApiStatus"))) }
 }
 

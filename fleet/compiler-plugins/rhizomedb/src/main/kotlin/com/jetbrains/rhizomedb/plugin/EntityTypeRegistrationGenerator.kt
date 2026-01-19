@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.ir.backend.js.utils.nameWithoutExtension
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.*
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
+import org.jetbrains.kotlin.ir.expressions.IrAnnotation
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.CallableId
@@ -192,7 +192,7 @@ private class EntityTypeRegistrationGeneratorImpl(
       }.apply {
         // @EagerInitialization
         annotations += with(DeclarationIrBuilder(pluginContext, symbol)) {
-          irCall(eagerAnnotation.owner.primaryConstructor!!.symbol)
+          irAnnotation(eagerAnnotation.owner.primaryConstructor!!.symbol)
         }
 
         // Needs to be called before addBackingField
@@ -227,7 +227,7 @@ private class EntityTypeRegistrationGeneratorImpl(
 
 }
 
-internal fun IrAnnotationContainer.extractApiStatusAnnotations(): List<IrConstructorCall> {
+internal fun IrAnnotationContainer.extractApiStatusAnnotations(): List<IrAnnotation> {
   return annotations.filter { it.annotationClass.kotlinFqName.startsWith(FqName.fromSegments(listOf("org", "jetbrains", "annotations", "ApiStatus"))) }
 }
 
