@@ -76,7 +76,8 @@ def _targets_repo_impl(ctx):
     # before the current build's analysis phase starts. The inner bazel invocation is a completely
     # separate bazel server process that doesn't conflict with the outer one.
     if ctx.os.name.startswith("windows"):
-        res = ctx.execute(["cmd.exe", "/c", script], quiet = False)
+        # proper quoting of the script path is important in the case of whitespace in the path, see https://ss64.com/nt/cmd.html
+        res = ctx.execute(["cmd.exe", "/c", '""%s""' % script], quiet = False)
     else:
         res = ctx.execute(["/bin/bash", script], quiet = False)
 
