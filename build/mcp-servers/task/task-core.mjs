@@ -27,6 +27,9 @@ const tools = [
       properties: {
         id: {type: 'string', description: 'Issue ID for full details'},
         user_request: {type: 'string', description: 'User task description'},
+        description: {type: 'string'},
+        design: {type: 'string'},
+        acceptance: {type: 'string'},
         view: {type: 'string', enum: ['summary', 'meta'], default: 'summary', description: 'Issue view (default: summary)'},
         meta_max_chars: {type: 'integer', default: 400, description: 'Max chars for description/design/acceptance in meta view (default: 400)'},
         memory_limit: {type: 'integer', default: 0, description: 'Max entries per memory list in response (0 to omit memory)'}
@@ -43,8 +46,25 @@ const tools = [
         id: {type: 'string', description: 'Issue ID'},
         findings: {type: 'array', items: {type: 'string'}, description: 'Discoveries'},
         decisions: {type: 'array', items: {type: 'string'}, description: 'Decisions made'},
-        completed: {type: 'string', description: 'What was completed'},
         status: {type: 'string', enum: ['in_progress', 'blocked', 'deferred']},
+        memory_limit: {type: 'integer', default: 0, description: 'Max entries per memory list in response (0 to omit memory)'}
+      },
+      required: ['id']
+    }
+  },
+  {
+    name: 'task_update_meta',
+    description: 'Update description/design/acceptance',
+    inputSchema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: {type: 'string', description: 'Issue ID'},
+        description: {type: 'string'},
+        design: {type: 'string'},
+        acceptance: {type: 'string'},
+        view: {type: 'string', enum: ['summary', 'meta'], default: 'summary', description: 'Issue view (default: summary)'},
+        meta_max_chars: {type: 'integer', default: 400, description: 'Max chars for description/design/acceptance in meta view (default: 400)'},
         memory_limit: {type: 'integer', default: 0, description: 'Max entries per memory list in response (0 to omit memory)'}
       },
       required: ['id']
@@ -96,7 +116,7 @@ const tools = [
         depends_on: {type: 'string'},
         dep_type: {type: 'string'}
       },
-      required: ['title']
+      required: ['title', 'description', 'design', 'acceptance']
     }
   },
   {

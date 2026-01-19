@@ -22,8 +22,19 @@ export async function getReadyChildren(epicId) {
   return null
 }
 
-export async function createEpic(title, description) {
-  const id = await bd(['create', '--title', title, '--type', 'epic', '--description', description, '--acceptance', 'PENDING', '--design', 'PENDING', '--silent'])
+export async function createEpic(title, {description, design, acceptance} = {}) {
+  const resolvedDescription = description || `USER REQUEST: ${title}`
+  const resolvedDesign = design || 'PENDING'
+  const resolvedAcceptance = acceptance || 'PENDING'
+  const id = await bd([
+    'create',
+    '--title', title,
+    '--type', 'epic',
+    '--description', resolvedDescription,
+    '--acceptance', resolvedAcceptance,
+    '--design', resolvedDesign,
+    '--silent'
+  ])
   await bd(['update', id, '--status', 'in_progress'])
   return id
 }
@@ -39,6 +50,9 @@ export async function buildInProgressSummary(issue) {
   if (issue.assignee) {
     result.assignee = issue.assignee
   }
+  if (issue.parent) {
+    result.parent = issue.parent
+  }
   if (issue.issue_type === 'epic') {
     const readyChildren = await getReadyChildren(issue.id)
     if (readyChildren) {
@@ -46,4 +60,24 @@ export async function buildInProgressSummary(issue) {
     }
   }
   return result
+}
+
+export async function buildInProgressSummaries(issues) {
+  const summaries = []
+  for (const issue of issues) {
+    summaries.push(await buildInProgressSummary(issue))
+  }
+  return summaries
+}
+
+export function computeSuggestedParent(issues) {
+  const parentIds = [...new Set(issues.map(i => i.parent).filter(Boolean))]
+  const epicIds = issues.filter(i => i.issue_type === 'epic').map(i => i.id)
+  if (parentIds.length === 1) {
+    return {id: parentIds[0], reason: 'shared parent for in-progress tasks'}
+  }
+  if (parentIds.length === 0 && epicIds.length === 1) {
+    return {id: epicIds[0], reason: 'single in-progress epic'}
+  }
+  return null
 }

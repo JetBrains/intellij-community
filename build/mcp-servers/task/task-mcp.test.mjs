@@ -106,6 +106,20 @@ function startServer(testDir) {
   return new McpTestClient(server)
 }
 
+function createInProgressChildren(epicId, testDir) {
+  const child1 = execSync(
+    `bd create --title "Child 1" --type task --parent ${epicId} --silent`,
+    {cwd: testDir, encoding: 'utf-8'}
+  ).trim()
+  const child2 = execSync(
+    `bd create --title "Child 2" --type task --parent ${epicId} --silent`,
+    {cwd: testDir, encoding: 'utf-8'}
+  ).trim()
+  execSync(`bd update ${child1} --status in_progress`, {cwd: testDir, stdio: 'pipe'})
+  execSync(`bd update ${child2} --status in_progress`, {cwd: testDir, stdio: 'pipe'})
+  return {child1, child2}
+}
+
 describe('task MCP integration', {timeout: 30000}, () => {
   let testDir
   let client
@@ -201,6 +215,27 @@ describe('task MCP integration', {timeout: 30000}, () => {
       assert.equal(status.issue.acceptance, 'PENDING')
       assert.equal(status.issue.design, 'PENDING')
     })
+
+    it('includes children for epic status view', async () => {
+      const epic = await client.callTool('task_start', {user_request: 'Epic with children status'})
+
+      await client.callTool('task_decompose', {
+        epic_id: epic.issue.id,
+        sub_issues: [
+          {title: 'Sub 1', description: 'First', acceptance: 'Done', design: 'Simple'},
+          {title: 'Sub 2', description: 'Second', acceptance: 'Done', design: 'Simple'}
+        ]
+      })
+
+      const status = await client.callTool('task_status', {id: epic.issue.id})
+      assert.equal(status.kind, 'issue')
+      assert.ok(Array.isArray(status.issue.children))
+      assert.equal(status.issue.children.length, 2)
+      const titles = status.issue.children.map(child => child.title).sort()
+      assert.deepEqual(titles, ['Sub 1', 'Sub 2'])
+      assert.ok(status.issue.children[0].id)
+      assert.ok(status.issue.children[0].status)
+    })
   })
 
   describe('task_start', () => {
@@ -214,6 +249,21 @@ describe('task MCP integration', {timeout: 30000}, () => {
       assert.ok(issue.is_new === true)
       assert.equal(issue.type, 'epic')
       assert.equal(issue.issue_type, undefined)
+    })
+
+    it('uses provided meta when creating epic', async () => {
+      const result = await client.callTool('task_start', {
+        user_request: 'Meta Epic',
+        description: 'Custom description',
+        design: 'Custom design',
+        acceptance: 'Custom acceptance',
+        view: 'meta'
+      })
+
+      assert.equal(result.kind, 'issue')
+      assert.equal(result.issue.description, 'Custom description')
+      assert.equal(result.issue.design, 'Custom design')
+      assert.equal(result.issue.acceptance, 'Custom acceptance')
     })
 
     it('omits memory by default', async () => {
@@ -271,23 +321,30 @@ describe('task MCP integration', {timeout: 30000}, () => {
 
       const status = await client.callTool('task_status', {})
       assert.equal(status.kind, 'summary')
-      assert.equal(status.issue.id, epic.issue.id)
-      assert.equal(status.issue.status, 'in_progress')
+      assert.ok(Array.isArray(status.issues))
+      assert.equal(status.issues.length, 1)
+      assert.equal(status.issues[0].id, epic.issue.id)
+      assert.equal(status.issues[0].status, 'in_progress')
+    })
+
+    it('returns summary list with suggested_parent when tasks share a single epic', async () => {
+      const epic = await client.callTool('task_start', {user_request: 'Parent Epic'})
+
+      createInProgressChildren(epic.issue.id, testDir)
+
+      const status = await client.callTool('task_status', {})
+      assert.equal(status.kind, 'summary')
+      assert.ok(Array.isArray(status.issues))
+      assert.ok(status.issues.length >= 3)
+      assert.ok(status.issues.some(issue => issue.id === epic.issue.id))
+      assert.ok(status.suggested_parent)
+      assert.equal(status.suggested_parent.id, epic.issue.id)
     })
 
     it('shows Create sub-task option when in-progress tasks share a single epic', async () => {
       const epic = await client.callTool('task_start', {user_request: 'Parent Epic'})
 
-      const child1 = execSync(
-        `bd create --title "Child 1" --type task --parent ${epic.issue.id} --silent`,
-        {cwd: testDir, encoding: 'utf-8'}
-      ).trim()
-      const child2 = execSync(
-        `bd create --title "Child 2" --type task --parent ${epic.issue.id} --silent`,
-        {cwd: testDir, encoding: 'utf-8'}
-      ).trim()
-      execSync(`bd update ${child1} --status in_progress`, {cwd: testDir, stdio: 'pipe'})
-      execSync(`bd update ${child2} --status in_progress`, {cwd: testDir, stdio: 'pipe'})
+      createInProgressChildren(epic.issue.id, testDir)
 
       const status = await client.callTool('task_start', {})
       assert.equal(status.kind, 'need_user')
@@ -311,9 +368,10 @@ describe('task MCP integration', {timeout: 30000}, () => {
 
       const status = await client.callTool('task_status', {})
       assert.equal(status.kind, 'summary')
-      assert.equal(status.issue.id, epic.issue.id)
-      assert.ok(status.issue.ready_children, 'should have ready_children')
-      assert.equal(status.issue.ready_children.length, 2)
+      assert.ok(Array.isArray(status.issues))
+      const epicSummary = status.issues.find(issue => issue.id === epic.issue.id)
+      assert.ok(epicSummary.ready_children, 'should have ready_children')
+      assert.equal(epicSummary.ready_children.length, 2)
     })
   })
 
@@ -334,6 +392,20 @@ describe('task MCP integration', {timeout: 30000}, () => {
       assert.equal(result.epic_id, epic.issue.id)
     })
 
+    it('rejects sub-issues missing meta', async () => {
+      const epic = await client.callTool('task_start', {user_request: 'Decompose Missing Meta'})
+
+      const result = await client.callTool('task_decompose', {
+        epic_id: epic.issue.id,
+        sub_issues: [
+          {title: 'Sub 1', description: 'First', acceptance: 'Done'}
+        ]
+      })
+
+      assert.equal(result.kind, 'error')
+      assert.ok(result.message.includes('missing required fields'))
+    })
+
     it('auto-starts a single child on create', async () => {
       const epic = await client.callTool('task_start', {user_request: 'Decompose Auto Start Test'})
 
@@ -350,6 +422,53 @@ describe('task MCP integration', {timeout: 30000}, () => {
 
       const inProgress = JSON.parse(execSync('bd list --status in_progress --json', {cwd: testDir, encoding: 'utf-8'}))
       assert.ok(inProgress.some(issue => issue.id === result.started_child_id))
+    })
+  })
+
+  describe('task_create', () => {
+    it('requires description/design/acceptance', async () => {
+      const result = await client.callTool('task_create', {title: 'Incomplete Task'})
+      assert.equal(result.kind, 'error')
+      assert.ok(result.message.includes('Missing required fields'))
+    })
+
+    it('creates a task with meta', async () => {
+      const result = await client.callTool('task_create', {
+        title: 'Complete Task',
+        description: 'Do the thing',
+        design: 'Straightforward steps',
+        acceptance: 'Verify behavior X'
+      })
+
+      assert.equal(result.kind, 'created')
+      assert.ok(result.id, 'should return id')
+    })
+  })
+
+  describe('task_update_meta', () => {
+    it('requires at least one field', async () => {
+      const epic = await client.callTool('task_start', {user_request: 'Meta Update Required'})
+
+      const result = await client.callTool('task_update_meta', {id: epic.issue.id})
+      assert.equal(result.kind, 'error')
+      assert.ok(result.message.includes('At least one'))
+    })
+
+    it('updates description/design/acceptance', async () => {
+      const epic = await client.callTool('task_start', {user_request: 'Meta Update'})
+
+      const updated = await client.callTool('task_update_meta', {
+        id: epic.issue.id,
+        description: 'Updated description',
+        design: 'Updated design',
+        acceptance: 'Updated acceptance',
+        view: 'meta'
+      })
+
+      assert.equal(updated.kind, 'issue')
+      assert.equal(updated.issue.description, 'Updated description')
+      assert.equal(updated.issue.design, 'Updated design')
+      assert.equal(updated.issue.acceptance, 'Updated acceptance')
     })
   })
 

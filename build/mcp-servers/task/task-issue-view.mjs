@@ -13,6 +13,7 @@ const SUMMARY_FIELDS = [
   {from: 'assignee', to: 'assignee'},
   {from: 'parent', to: 'parent'},
   {from: 'ready_children', to: 'ready_children'},
+  {from: 'children', to: 'children'},
   {from: 'is_new', to: 'is_new'}
 ]
 
