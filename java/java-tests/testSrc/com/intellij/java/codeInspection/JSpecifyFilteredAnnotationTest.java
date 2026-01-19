@@ -392,56 +392,6 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     }
   }
 
-  private static class CallWithParameterWithNestedGenericsFilter implements ErrorFilter {
-
-    @Override
-    public boolean filterActual(@NotNull PsiFile file,
-                                @NotNull String strippedText,
-                                int lineNumber,
-                                int startLineOffset,
-                                @NotNull String errorMessage) {
-      if (!errorMessage.contains("jspecify_nullness_mismatch")) return false;
-      PsiElement element = findElement(file, strippedText, lineNumber, startLineOffset);
-      PsiExpressionStatement statement = PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class, true);
-      if (statement == null) return false;
-      PsiExpression expression = statement.getExpression();
-      if (!(expression instanceof PsiCallExpression callExpression)) return false;
-      PsiMethod method = callExpression.resolveMethod();
-      if (method == null) return false;
-      return ContainerUtil.exists(method.getParameterList().getParameters(),
-                                  parameter -> parameter.getType() instanceof PsiClassType classType && classType.hasParameters());
-    }
-
-    @Override
-    public boolean filterExpected(@NotNull PsiElement psiElement, @NotNull String errorMessage) {
-      //filter only actual file
-      return false;
-    }
-  }
-
-  private static class VariableWithNestedGenericsFilter implements ErrorFilter {
-
-    @Override
-    public boolean filterActual(@NotNull PsiFile file,
-                                @NotNull String strippedText,
-                                int lineNumber,
-                                int startLineOffset,
-                                @NotNull String errorMessage) {
-      if (!errorMessage.contains("jspecify_nullness_mismatch")) return false;
-      PsiElement element = findElement(file, strippedText, lineNumber, startLineOffset);
-      PsiVariable variable = PsiTreeUtil.getParentOfType(element, PsiVariable.class, true);
-      if (variable == null) return false;
-      return variable.getType() instanceof PsiClassType classType && classType.hasParameters();
-    }
-
-    @Override
-    public boolean filterExpected(@NotNull PsiElement psiElement, @NotNull String errorMessage) {
-      //filter only actual file
-      return false;
-    }
-  }
-
-
   private static class SkipIndividuallyFilter implements ErrorFilter {
     private final Set<Pair<String, Integer>> places;
     private final Set<Pair<String, Integer>> unusedPlaces;
