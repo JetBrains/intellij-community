@@ -105,6 +105,28 @@ function buildSelectionAskUser(inProgress, questionText, next) {
   })
 }
 
+async function createEpicFromUserRequest(userRequest, {memory_limit, view, meta_max_chars} = {}) {
+  const title = userRequest.trim()
+  if (!title) {
+    return null
+  }
+  const description = `USER REQUEST: ${userRequest}`
+  const id = await createEpic(title, description)
+  const issue = await bdShowOne(id)
+  if (!issue) {
+    return buildIssue({id, is_new: true}, {next: 'continue'})
+  }
+  const memory = compactMemory(extractMemoryFromIssue(issue, memory_limit))
+  issue.is_new = true
+  let viewIssue
+  try {
+    viewIssue = buildIssueView(issue, {view, meta_max_chars})
+  } catch (error) {
+    return buildError(error.message || String(error))
+  }
+  return buildIssue(viewIssue, {next: 'continue', memory})
+}
+
 async function handleTaskStatus(args) {
   if (args.user_request) {
     return buildError('task_status does not accept user_request; use task_start')
@@ -151,43 +173,27 @@ async function handleTaskStart(args) {
   const inProgress = /** @type {Issue[]} */ (await bdJson(['list', '--status', 'in_progress']))
   const ready = await bdJson(['ready', '--limit', '5'])
 
-  if (inProgress.length === 0) {
-    if (args.user_request) {
-      const title = args.user_request.trim()
-      if (title) {
-        const description = `USER REQUEST: ${args.user_request}`
-        const id = await createEpic(title, description)
-        const issue = await bdShowOne(id)
-        if (!issue) {
-          return buildIssue({id, is_new: true}, {next: 'continue'})
-        }
-        const memory = compactMemory(extractMemoryFromIssue(issue, args.memory_limit))
-        issue.is_new = true
-        let viewIssue
-        try {
-          viewIssue = buildIssueView(issue, {view: args.view, meta_max_chars: args.meta_max_chars})
-        } catch (error) {
-          return buildError(error.message || String(error))
-        }
-        return buildIssue(viewIssue, {next: 'continue', memory})
-      }
+  const hasUserRequest = typeof args.user_request === 'string' && args.user_request.trim().length > 0
+  if (hasUserRequest) {
+    const created = await createEpicFromUserRequest(args.user_request, args)
+    if (created) {
+      return created
     }
+  }
+
+  if (inProgress.length === 0) {
     if (ready.length > 0) {
       return buildReadyAskUser(ready)
     }
     return buildEmpty()
   }
 
-  if (inProgress.length === 1 && !args.user_request) {
+  if (inProgress.length === 1 && !hasUserRequest) {
     const summary = await buildInProgressSummary(inProgress[0])
     return buildSummary(summary, 'await_user')
   }
 
-  const questionText = args.user_request
-    ? 'New request - which task?'
-    : 'Which task to work on?'
-  const next = args.user_request ? 'select_task_for_request' : 'select_task'
-  return buildSelectionAskUser(inProgress, questionText, next)
+  return buildSelectionAskUser(inProgress, 'Which task to work on?', 'select_task')
 }
 
 export const toolHandlers = {

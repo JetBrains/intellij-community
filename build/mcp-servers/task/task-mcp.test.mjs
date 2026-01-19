@@ -233,6 +233,15 @@ describe('task MCP integration', {timeout: 30000}, () => {
       assert.ok(issue.is_new === false)
     })
 
+    it('creates epic even when in-progress issues exist', async () => {
+      await client.callTool('task_start', {user_request: 'Existing task'})
+
+      const result = await client.callTool('task_start', {user_request: 'New epic'})
+      assert.equal(result.kind, 'issue')
+      assert.equal(result.issue.is_new, true)
+      assert.equal(result.issue.title, 'New epic')
+    })
+
     it('resumes epic with ready_children', async () => {
       const epic = await client.callTool('task_start', {user_request: 'Resume with Children'})
 
@@ -266,15 +275,27 @@ describe('task MCP integration', {timeout: 30000}, () => {
       assert.equal(status.issue.status, 'in_progress')
     })
 
-    it('shows Create sub-task option for single epic', async () => {
-      await client.callTool('task_start', {user_request: 'Parent Epic'})
+    it('shows Create sub-task option when in-progress tasks share a single epic', async () => {
+      const epic = await client.callTool('task_start', {user_request: 'Parent Epic'})
 
-      const status = await client.callTool('task_start', {user_request: 'new task'})
+      const child1 = execSync(
+        `bd create --title "Child 1" --type task --parent ${epic.issue.id} --silent`,
+        {cwd: testDir, encoding: 'utf-8'}
+      ).trim()
+      const child2 = execSync(
+        `bd create --title "Child 2" --type task --parent ${epic.issue.id} --silent`,
+        {cwd: testDir, encoding: 'utf-8'}
+      ).trim()
+      execSync(`bd update ${child1} --status in_progress`, {cwd: testDir, stdio: 'pipe'})
+      execSync(`bd update ${child2} --status in_progress`, {cwd: testDir, stdio: 'pipe'})
+
+      const status = await client.callTool('task_start', {})
       assert.equal(status.kind, 'need_user')
 
       const choices = status.choices
       const subTaskOption = choices.find(o => o.action === 'create_sub_task')
       assert.ok(subTaskOption, 'should have Create sub-task option')
+      assert.equal(subTaskOption.parent, epic.issue.id)
     })
 
     it('returns ready_children for epic with decomposed sub-issues', async () => {
@@ -456,7 +477,7 @@ describe('task MCP integration', {timeout: 30000}, () => {
       ).trim()
       execSync(`bd update ${epic2Id} --status in_progress`, {cwd: testDir, stdio: 'pipe'})
 
-      const status = await client.callTool('task_start', {user_request: 'new task'})
+      const status = await client.callTool('task_start', {})
       assert.equal(status.kind, 'need_user')
 
       const choices = status.choices
