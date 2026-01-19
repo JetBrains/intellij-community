@@ -594,11 +594,7 @@ class KeywordCompletion() {
                         else -> listOf()
                     }
                     val modifierTargets = possibleTargetMap[keywordTokenType]?.intersect(possibleTargets)
-                    if (modifierTargets != null && possibleTargets.isNotEmpty() &&
-                        modifierTargets.none {
-                            isModifierTargetSupportedAtLanguageLevel(keywordTokenType, it, languageVersionSettings)
-                        }
-                    ) return false
+                    if (modifierTargets != null && possibleTargets.isNotEmpty() && modifierTargets.isEmpty()) return false
 
                     val parentTarget = when (val ownerDeclaration = container?.getParentOfType<KtDeclaration>(strict = true)) {
                         null -> FILE
@@ -694,23 +690,6 @@ class KeywordCompletion() {
             else -> return true
         }
         return languageVersionSettings.supportsFeature(feature)
-    }
-
-    private fun isModifierTargetSupportedAtLanguageLevel(
-        keyword: KtKeywordToken,
-        target: KotlinTarget,
-        languageVersionSettings: LanguageVersionSettings
-    ): Boolean {
-        if (keyword == LATEINIT_KEYWORD) {
-            val feature = when (target) {
-                TOP_LEVEL_PROPERTY -> LanguageFeature.LateinitTopLevelProperties
-                LOCAL_VARIABLE -> LanguageFeature.LateinitLocalVariables
-                else -> return true
-            }
-            return languageVersionSettings.supportsFeature(feature)
-        } else {
-            return true
-        }
     }
 
     // builds text within scope (or from the start of the file) before position element excluding almost all declarations

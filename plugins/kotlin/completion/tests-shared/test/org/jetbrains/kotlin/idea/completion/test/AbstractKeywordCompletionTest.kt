@@ -20,8 +20,6 @@ abstract class AbstractKeywordCompletionTest : KotlinFixtureCompletionBaseTestCa
     }
 
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor = when {
-        "LangLevel10" in fileName() -> KotlinProjectDescriptorWithFacet.KOTLIN_10.apply { replicateToFacetSettings() }
-        "LangLevel11" in fileName() -> KotlinProjectDescriptorWithFacet.KOTLIN_11.apply { replicateToFacetSettings() }
         else -> KotlinProjectDescriptorWithFacet.createKotlinWithMultiplatformAndStdlib()
     }
 
