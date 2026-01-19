@@ -4,8 +4,6 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ClientProperty;
-import com.intellij.ui.components.labels.DropDownLink;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JLabelUtil;
 import com.intellij.util.ui.SwingTextTrimmer;
 import sun.swing.SwingUtilities2;
@@ -104,9 +102,6 @@ public class DarculaLabelUI extends BasicLabelUI {
       trimmer.setTrimmed(false);
     }
 
-    if (label instanceof DropDownLink) {
-      iconR.y += JBUIScale.scale(1);
-    }
     return result;
   }
 }
