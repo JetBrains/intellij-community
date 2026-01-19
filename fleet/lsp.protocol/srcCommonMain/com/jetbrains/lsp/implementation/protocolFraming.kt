@@ -3,15 +3,11 @@ package com.jetbrains.lsp.implementation
 import com.jetbrains.lsp.protocol.LSP
 import fleet.util.decodeToStringUtf8
 import fleet.util.encodeToByteArrayUtf8
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.io.IOException
 import kotlinx.serialization.json.JsonElement
 
@@ -74,7 +70,8 @@ private suspend fun ByteReader.readFrame(): JsonElement? {
         if (key == "Content-Length") {
           contentLength = value.toInt()
         }
-      } catch(x: Throwable) {
+      }
+      catch (x: Throwable) {
         throw IllegalStateException("could not read header: $line", x)
       }
     }
