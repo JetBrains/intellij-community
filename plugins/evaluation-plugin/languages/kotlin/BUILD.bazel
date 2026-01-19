@@ -50,7 +50,7 @@ jvm_library(
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/plugin/k2",
