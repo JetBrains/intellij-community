@@ -674,7 +674,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       .toArray(new PsiLiteralExpression[0]);
 
     if (literals.length == 1) {
-      return StringUtil.unquoteString(literals[0].getText()).replaceAll(" ", "_");
+      return StringUtil.unquoteString(literals[0].getText()).replace(' ', '_');
     }
     return null;
   }
