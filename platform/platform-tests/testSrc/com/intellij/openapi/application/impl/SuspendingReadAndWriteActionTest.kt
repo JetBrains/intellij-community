@@ -1,7 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -207,6 +208,7 @@ class SuspendingReadAndWriteActionTest {
   fun `readAndBackgroundWriteAction executes write actions on background`(): Unit = timeoutRunBlocking {
     readAndBackgroundWriteAction {
       writeAction {
+        Assertions.assertTrue(ApplicationManagerEx.getApplicationEx().isBackgroundWriteActionRunningOrPending)
         Assertions.assertTrue(application.isWriteAccessAllowed)
         Assertions.assertFalse(EDT.isCurrentThreadEdt())
       }

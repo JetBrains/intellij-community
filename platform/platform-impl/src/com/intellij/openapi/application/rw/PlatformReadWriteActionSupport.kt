@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.rw
 
 import com.intellij.diagnostic.ThreadDumper
@@ -92,7 +92,12 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
             executeWriteActionOnEdt(stamp, readResult.action)
           }
           else {
-            executeWriteActionOnBackgroundWithAtomicCheck(lock, stamp, readResult.action)
+            try {
+              InternalThreading.incrementBackgroundWriteActionCount()
+              executeWriteActionOnBackgroundWithAtomicCheck(lock, stamp, readResult.action)
+            } finally {
+              InternalThreading.decrementBackgroundWriteActionCount()
+            }
           }
           if (writeResult !== retryMarker) {
             @Suppress("UNCHECKED_CAST")
