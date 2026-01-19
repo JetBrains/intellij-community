@@ -70,14 +70,3 @@ export async function buildInProgressSummaries(issues) {
   return summaries
 }
 
-export function computeSuggestedParent(issues) {
-  const parentIds = [...new Set(issues.map(i => i.parent).filter(Boolean))]
-  const epicIds = issues.filter(i => i.issue_type === 'epic').map(i => i.id)
-  if (parentIds.length === 1) {
-    return {id: parentIds[0], reason: 'shared parent for in-progress tasks'}
-  }
-  if (parentIds.length === 0 && epicIds.length === 1) {
-    return {id: epicIds[0], reason: 'single in-progress epic'}
-  }
-  return null
-}

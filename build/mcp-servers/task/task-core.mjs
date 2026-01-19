@@ -89,7 +89,16 @@ const tools = [
               acceptance: {type: 'string'},
               design: {type: 'string'},
               type: {type: 'string'},
-              depends_on: {type: 'array', items: {type: 'integer'}}
+              depends_on: {
+                type: 'array',
+                items: {
+                  anyOf: [
+                    {type: 'integer'},
+                    {type: 'string'}
+                  ]
+                }
+              },
+              dep_type: {type: 'string'}
             },
             required: ['title', 'description', 'acceptance', 'design']
           }
@@ -101,7 +110,7 @@ const tools = [
   },
   {
     name: 'task_create',
-    description: 'Create non-epic issue',
+    description: 'Create issue',
     inputSchema: {
       type: 'object',
       additionalProperties: false,
@@ -113,10 +122,34 @@ const tools = [
         acceptance: {type: 'string'},
         design: {type: 'string'},
         priority: {type: 'string'},
-        depends_on: {type: 'string'},
+        depends_on: {
+          anyOf: [
+            {type: 'string'},
+            {type: 'array', items: {type: 'string'}}
+          ]
+        },
         dep_type: {type: 'string'}
       },
       required: ['title', 'description', 'design', 'acceptance']
+    }
+  },
+  {
+    name: 'task_link',
+    description: 'Add dependencies between existing issues',
+    inputSchema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: {type: 'string'},
+        depends_on: {
+          anyOf: [
+            {type: 'string'},
+            {type: 'array', items: {type: 'string'}}
+          ]
+        },
+        dep_type: {type: 'string'}
+      },
+      required: ['id', 'depends_on']
     }
   },
   {

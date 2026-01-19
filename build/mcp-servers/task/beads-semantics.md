@@ -2,10 +2,9 @@
 
 ## Response envelope
 - Every response includes `kind` and `next`.
-- Interactive prompts use `kind: "need_user"` with `question` and `choices`.
-- Each choice includes `action` plus optional `id`/`parent`.
+- Response kinds: `issue`, `summary`, `empty`, `progress`, `created`, `updated`, `closed`, `error`.
 - Issue/progress responses may include top-level `memory`.
-- Summary responses use `issues` (array of summary issues) and may include `suggested_parent`.
+- Summary responses use `issues` (array of summary issues).
 - Summary/issue objects include core fields only.
 
 ## Views and memory
@@ -32,39 +31,47 @@
 - Tool inputs are strict; unknown fields are rejected.
 - Defaults: `view=summary`, `meta_max_chars=400`, `memory_limit=0`.
 - `task_create` and `task_decompose` require non-empty `description`, `design`, and `acceptance`.
+- `task_link` requires `id` and non-empty `depends_on` (string or string array).
+- `task_start` requires `id` or `user_request`.
 
 ## Errors (common)
 - `task_create`: missing meta -> `Missing required fields: ...`.
 - `task_decompose`: sub-issue missing meta -> `sub_issues[i] missing required fields: ...`.
 - `task_update_meta`: no fields -> `At least one of description, design, acceptance is required`.
+- `task_start`: missing id/user_request -> `task_start requires id or user_request`.
 
 ## Tool behaviors (canonical)
-- `task_status()` -> `kind: "need_user" | "summary" | "empty" | "error"`
+- `task_status()` -> `kind: "summary" | "empty" | "error"`
   - When in_progress tasks exist, `summary.issues` lists them all.
 - `task_status(id, memory_limit?, view?, meta_max_chars?)` -> `kind: "issue" | "error"` (optional `memory`)
-- `task_start(user_request, description?, design?, acceptance?, memory_limit?, view?, meta_max_chars?)` -> `kind: "issue" (is_new=true) | "empty"`
+- `task_start(user_request, description?, design?, acceptance?, memory_limit?, view?, meta_max_chars?)` -> `kind: "issue" (is_new=true) | "error"`
   - If description/design/acceptance are provided, they are used.
   - Otherwise: description = "USER REQUEST: ...", design/acceptance = "PENDING".
   - Always creates a new epic when `user_request` is provided, even if in_progress tasks exist.
 - `task_start(id, memory_limit?, view?, meta_max_chars?)` -> `kind: "issue"` (is_new=false, status `in_progress`)
-- `task_progress(..., memory_limit?)` -> `kind: "progress" | "need_user" | "error"` (optional `memory`)
+- `task_progress(..., memory_limit?)` -> `kind: "progress" | "error"` (optional `memory`)
 - `task_update_meta(id, description?, design?, acceptance?, view?, meta_max_chars?, memory_limit?)` -> `kind: "issue" | "error"` (optional `memory`)
 - `task_decompose(epic_id, sub_issues)` -> `kind: "created" (ids, epic_id, started_child_id) | "error"`
   - Auto-starts when a single child is created.
-- `task_create(title, description, design, acceptance, ...)` -> `kind: "created" (id) | "error"`
+- `task_create(title, description, design, acceptance, type?, parent?, ...)` -> `kind: "created" (id) | "error"`
+  - `type` can be any issue type, including `epic`.
+- `task_link(id, depends_on, dep_type?)` -> `kind: "updated" (id, added_depends_on, dep_type?) | "error"`
 - `task_done(id, reason)` -> `kind: "closed" (closed, next_ready, epic_status, parent_id)`
+  - If the closed issue was the last open child of an epic, the parent epic is auto-closed (>=1 child, not pinned or hooked).
+  - Auto-close reason: "Auto-closed: all child issues closed".
 - `task_reopen(id, reason, memory_limit?, view?, meta_max_chars?)` -> `kind: "issue" | "error"` (optional `memory`)
 
 ## Status and semantics
-- Statuses: `open`, `in_progress`, `blocked`, `deferred`, `closed`, `tombstone`, `pinned`.
+- Statuses: `open`, `in_progress`, `blocked`, `deferred`, `closed`, `tombstone`, `pinned`, `hooked`.
 - Ready queue = open issues with no `blocks` deps; only `blocks` affects readiness.
 - Use `blocked` when waiting on a dependency; use `deferred` when intentionally paused.
-- `pinned` reserved for orchestrators; do not auto-close.
+- `pinned` and `hooked` are protected statuses; do not auto-close.
 
 ## Structure
 - Priority set on create: `task_create(priority="P2")` (P0..P4 / 0..4).
 - Parent/child: `task_decompose(epic_id, ...)` or `task_create(parent=epic_id)`.
-- Dependencies: `task_decompose(depends_on=[...])` uses default dep type; `task_create(depends_on=..., dep_type=...)` sets a type.
+- Dependencies: `task_decompose(depends_on=[...])` accepts indices (0..i-1) or issue IDs; `dep_type` on a sub-issue applies the dependency type to all of its `depends_on` entries.
+- `task_create(depends_on=..., dep_type=...)` accepts a string or string array and sets a type; add dependencies later with `task_link(id, depends_on, dep_type?)`.
 - Epics own child tasks via `parent-child` links.
 - Child IDs are dotted (example: `bd-xxxx.1`); up to 3 nesting levels.
 - Work happens on child issues; epic is for roll-up only.
@@ -87,7 +94,10 @@
 - `task_progress(id="bd-123", decisions=["Use LRU cache"])`
 - `task_update_meta(id="bd-123", design="LRU in front of DB")`
 - `task_decompose(epic_id="bd-123", sub_issues=[{title:"Add cache", description:"Add cache layer", design:"LRU map", acceptance:"Cache hit/miss verified"}])`
+- `task_decompose(epic_id="bd-123", sub_issues=[{title:"Wire cache", description:"Hook cache", design:"Call cache API", acceptance:"Cache used", depends_on:["bd-122"], dep_type:"blocks"}])`
 - `task_create(title="Add cache", description="Add cache layer", design="LRU map", acceptance="Cache hit/miss verified")`
+- `task_create(title="Wire cache", description="Hook cache", design="Call cache API", acceptance="Cache used", depends_on=["bd-101","bd-102"])`
+- `task_link(id="bd-103", depends_on=["bd-101","bd-102"])`
 - `task_done(id="bd-123", reason="Completed")`
 - `task_reopen(id="bd-123", reason="Regression found")`
 
