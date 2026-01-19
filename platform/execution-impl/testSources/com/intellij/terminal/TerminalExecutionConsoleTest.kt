@@ -2,16 +2,25 @@
 package com.intellij.terminal
 
 import com.intellij.diagnostic.ThreadDumper
-import com.intellij.execution.process.*
+import com.intellij.execution.process.ColoredProcessHandler
+import com.intellij.execution.process.NopProcessHandler
+import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.testApp.SimpleCliApp
+import com.intellij.terminal.testApp.SimplePrinterApp
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TextStyle
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.Assumptions
 import java.lang.management.ThreadInfo
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -185,12 +194,78 @@ class TerminalExecutionConsoleTest : BasePlatformTestCase() {
     processHandler.assertTerminated()
   }
 
+  fun `test output auto scrolling`(): Unit = timeoutRunBlockingWithConsole(TermSize(200, 30)) { console ->
+    val javaCommand = SimplePrinterApp.NonRuntime.createCommand(SimplePrinterApp.Options("foo", 3))
+    val processHandler = createTerminalProcessHandler(this, javaCommand, console.termSize)
+    console.attachToProcess(processHandler)
+    TestProcessTerminationMessage.attach(processHandler)
+
+    processHandler.startNotify()
+    console.awaitOutputEndsWithLines(expectedEndLines = listOf("foo1", "foo2", "foo3", "Input:"))
+    awaitAllOutputVisible(console)
+
+    processHandler.writeToStdinAndHitEnter("30 bar")
+    console.awaitOutputEndsWithLines(expectedEndLines = listOf("bar28", "bar29", "bar30", "Input:"))
+    awaitScrolledToBottom(console)
+
+    processHandler.writeToStdinAndHitEnter(SimplePrinterApp.EXIT)
+    console.awaitOutputEndsWithLines(expectedEndLines = listOf(TestProcessTerminationMessage.getMessage(0)))
+    processHandler.assertTerminated()
+  }
+
+  private suspend fun awaitAllOutputVisible(console: TerminalExecutionConsole) {
+    withContext(Dispatchers.UI) {
+      Assumptions.assumeTrue(canShowAllOutput(console))
+      awaitCondition {
+        Assertions.assertThat(canShowAllOutput(console)).isTrue
+        val historyLinesCount = console.historyLinesCount
+        console.terminalWidget.terminalPanel.verticalScrollModel.value == -historyLinesCount
+      }
+    }
+  }
+
+  private suspend fun awaitScrolledToBottom(console: TerminalExecutionConsole) {
+    withContext(Dispatchers.UI) {
+      awaitCondition {
+        Assertions.assertThat(canShowAllOutput(console)).isFalse
+        console.terminalWidget.terminalPanel.verticalScrollModel.value == 0
+      }
+    }
+  }
+
+  private val TerminalExecutionConsole.historyLinesCount: Int
+    get() {
+      val textBuffer = terminalWidget.terminalTextBuffer
+      textBuffer.lock()
+      try {
+        return textBuffer.historyLinesCount
+      }
+      finally {
+        textBuffer.unlock()
+      }
+    }
+
+  private fun canShowAllOutput(console: TerminalExecutionConsole): Boolean {
+    val textBuffer = console.terminalWidget.terminalTextBuffer
+    textBuffer.lock()
+    try {
+      val cursor = console.terminalWidget.terminal.cursorPosition
+      val historyLinesCount = textBuffer.historyLinesCount
+      val termHeight = textBuffer.height
+      return historyLinesCount + cursor.y <= termHeight
+    }
+    finally {
+      textBuffer.unlock()
+    }
+  }
+
   private fun <T> timeoutRunBlockingWithConsole(
+    initialSize: TermSize = TermSize(200, 24),
     timeout: Duration = DEFAULT_TEST_TIMEOUT,
     action: suspend CoroutineScope.(TerminalExecutionConsole) -> T,
   ): T = timeoutRunBlocking(timeout) {
     val console = withContext(Dispatchers.UI) {
-      TerminalExecutionConsoleBuilder(project).build()
+      TerminalExecutionConsoleBuilder(project).initialTermSize(initialSize).build()
     }
     try {
       action(console)
