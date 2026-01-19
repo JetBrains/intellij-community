@@ -83,7 +83,10 @@ public class FoldingDescriptor {
    * @param dependencies folding dependencies: other files or elements that could change
    * folding description, see <a href="#Dependencies">Dependencies</a>
    */
-  public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable FoldingGroup group, Set<Object> dependencies) {
+  public FoldingDescriptor(@NotNull ASTNode node,
+                           @NotNull TextRange range,
+                           @Nullable FoldingGroup group,
+                           @NotNull @Unmodifiable Set<@NotNull Object> dependencies) {
     this(node, range, group, dependencies, false);
   }
 
@@ -101,7 +104,7 @@ public class FoldingDescriptor {
   public FoldingDescriptor(@NotNull ASTNode node,
                            @NotNull TextRange range,
                            @Nullable FoldingGroup group,
-                           Set<Object> dependencies,
+                           @NotNull @Unmodifiable Set<@NotNull Object> dependencies,
                            boolean neverExpands) {
     this(node, range, group, dependencies, neverExpands, null, null);
   }
@@ -155,7 +158,7 @@ public class FoldingDescriptor {
                            @Nullable FoldingGroup group,
                            @Nullable("null means FoldingBuilder.getPlaceholderText will be used") String placeholderText,
                            @Nullable("null means FoldingBuilder.isCollapsedByDefault will be used") Boolean collapsedByDefault,
-                           @NotNull Set<Object> dependencies) {
+                           @NotNull @Unmodifiable Set<@NotNull Object> dependencies) {
     this(node, range, group, dependencies, false, placeholderText, collapsedByDefault);
   }
 
@@ -175,7 +178,7 @@ public class FoldingDescriptor {
   public FoldingDescriptor(@NotNull ASTNode node,
                            @NotNull TextRange range,
                            @Nullable FoldingGroup group,
-                           @NotNull @Unmodifiable Set<Object> dependencies,
+                           @NotNull @Unmodifiable Set<@NotNull Object> dependencies,
                            boolean neverExpands,
                            @Nullable("null means FoldingBuilder.getPlaceholderText will be used") String placeholderText,
                            @Nullable("null means FoldingBuilder.isCollapsedByDefault will be used") Boolean collapsedByDefault) {
@@ -187,11 +190,13 @@ public class FoldingDescriptor {
     myRange = range;
     myGroup = group;
     myDependencies = dependencies;
-    try {
-      assert dependencies.isEmpty() || !dependencies.contains(null);
-    }
-    catch (NullPointerException ignored) {
-      // ImmutableCollections doesn't support null elements
+    if (!dependencies.isEmpty()) {
+      for (Object dependency : dependencies) {
+        //noinspection ConstantValue
+        if (dependency == null) {
+          throw new IllegalArgumentException("'dependencies' argument must not contain null elements but got: "+dependencies);
+        }
+      }
     }
     myPlaceholderText = placeholderText;
     setFlag(FLAG_NEVER_EXPANDS, neverExpands);
