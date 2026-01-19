@@ -188,27 +188,16 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     }
   }
 
-  private static @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) String getKeyForTypeDefinition(GrTypeDefinition definition) {
-    if (definition instanceof GrTypeParameter) {
-      return "text.type.parameter.0.is.unused";
-    }
-    else if (definition instanceof GrInterfaceDefinition) {
-      return "text.interface.0.is.unused";
-    }
-    else if (definition instanceof GrTraitTypeDefinition) {
-      return "text.trait.0.is.unused";
-    }
-    else if (definition instanceof GrEnumTypeDefinition) {
-      return "text.enum.0.is.unused";
-    }
-    else if (definition instanceof GrRecordDefinition) {
-      return "text.record.0.is.unused";
-    } else if (definition instanceof GrAnnotationTypeDefinition) {
-      return "text.annotation.class.0.is.unused";
-    }
-    else {
-      return "text.class.0.is.unused";
-    }
+  private static @NotNull @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) String getKeyForTypeDefinition(@NotNull GrTypeDefinition definition) {
+    return switch (definition) {
+      case GrTypeParameter ignored -> "text.type.parameter.0.is.unused";
+      case GrInterfaceDefinition ignored -> "text.interface.0.is.unused";
+      case GrTraitTypeDefinition ignored -> "text.trait.0.is.unused";
+      case GrEnumTypeDefinition ignored -> "text.enum.0.is.unused";
+      case GrRecordDefinition ignored -> "text.record.0.is.unused";
+      case GrAnnotationTypeDefinition ignored -> "text.annotation.class.0.is.unused";
+      default -> "text.class.0.is.unused";
+    };
   }
 
   private static boolean methodMayHaveUnusedParameters(GrMethod method) {
