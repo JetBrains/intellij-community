@@ -14,8 +14,11 @@ export function buildIssue(issue, {next = 'continue', memory} = {}) {
   return response
 }
 
-export function buildSummary(issue, next = 'await_user') {
-  return {kind: 'summary', next, issue}
+export function buildSummary(issues, {next = 'await_user', suggested_parent} = {}) {
+  const normalizedIssues = Array.isArray(issues) ? issues : (issues ? [issues] : [])
+  const response = {kind: 'summary', next, issues: normalizedIssues}
+  if (suggested_parent) response.suggested_parent = suggested_parent
+  return response
 }
 
 export function buildProgress({memory, status, next = 'await_user'}) {

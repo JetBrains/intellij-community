@@ -4,9 +4,9 @@ import {bd, bdJson, bdShowOne} from './bd-client.mjs'
 import {addSectionComments, buildMemoryFromEntries, extractMemoryFromIssue, prepareSectionUpdates} from './notes.mjs'
 import {buildIssueView} from './task-issue-view.mjs'
 import {
-  buildCreateSubTaskChoice,
-  buildCreated,
   buildClosed,
+  buildCreated,
+  buildCreateSubTaskChoice,
   buildEmpty,
   buildError,
   buildIssue,
@@ -16,7 +16,7 @@ import {
   buildSummary,
   buildTaskChoice
 } from './task-responses.mjs'
-import {buildInProgressSummary, createEpic, getReadyChildren} from './task-helpers.mjs'
+import {buildInProgressSummaries, computeSuggestedParent, createEpic, getReadyChildren} from './task-helpers.mjs'
 
 /**
  * @typedef {{
@@ -52,6 +52,36 @@ function compactMemory(memory) {
   return Object.keys(result).length === 0 ? null : result
 }
 
+function getNonEmptyString(value) {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+function readMetaFields(source) {
+  return {
+    description: getNonEmptyString(source.description),
+    design: getNonEmptyString(source.design),
+    acceptance: getNonEmptyString(source.acceptance)
+  }
+}
+
+function summarizeChildren(children) {
+  if (!Array.isArray(children) || children.length === 0) return null
+  return children.map(child => {
+    const summary = {
+      id: child.id,
+      title: child.title,
+      status: child.status
+    }
+    const type = child.issue_type || child.type
+    if (type) summary.type = type
+    if (child.priority !== undefined && child.priority !== null) summary.priority = child.priority
+    if (child.assignee) summary.assignee = child.assignee
+    return summary
+  })
+}
+
 async function loadIssue(id, {resume, next, memory_limit, view, meta_max_chars} = {}) {
   const issue = /** @type {Issue | null} */ (await bdShowOne(id))
   if (!issue) {
@@ -66,6 +96,20 @@ async function loadIssue(id, {resume, next, memory_limit, view, meta_max_chars} 
       if (readyChildren) {
         issue.ready_children = readyChildren
       }
+    }
+  }
+  if (issue.issue_type === 'epic') {
+    let summarizedChildren = summarizeChildren(issue.children)
+    if (!summarizedChildren) {
+      try {
+        const listedChildren = await bdJson(['list', '--parent', id])
+        summarizedChildren = summarizeChildren(listedChildren)
+      } catch (error) {
+        summarizedChildren = null
+      }
+    }
+    if (summarizedChildren) {
+      issue.children = summarizedChildren
     }
   }
   const memory = compactMemory(extractMemoryFromIssue(issue, memory_limit))
@@ -105,13 +149,17 @@ function buildSelectionAskUser(inProgress, questionText, next) {
   })
 }
 
-async function createEpicFromUserRequest(userRequest, {memory_limit, view, meta_max_chars} = {}) {
+async function createEpicFromUserRequest(userRequest, {memory_limit, view, meta_max_chars, ...metaArgs} = {}) {
   const title = userRequest.trim()
   if (!title) {
     return null
   }
-  const description = `USER REQUEST: ${userRequest}`
-  const id = await createEpic(title, description)
+  const meta = readMetaFields(metaArgs)
+  const id = await createEpic(title, {
+    description: meta.description || `USER REQUEST: ${userRequest}`,
+    design: meta.design,
+    acceptance: meta.acceptance
+  })
   const issue = await bdShowOne(id)
   if (!issue) {
     return buildIssue({id, is_new: true}, {next: 'continue'})
@@ -151,12 +199,9 @@ async function handleTaskStatus(args) {
     return buildEmpty()
   }
 
-  if (inProgress.length === 1) {
-    const summary = await buildInProgressSummary(inProgress[0])
-    return buildSummary(summary, 'await_user')
-  }
-
-  return buildSelectionAskUser(inProgress, 'Which task to work on?', 'select_task')
+  const summaries = await buildInProgressSummaries(inProgress)
+  const suggestedParent = computeSuggestedParent(inProgress)
+  return buildSummary(summaries, {next: 'await_user', suggested_parent: suggestedParent})
 }
 
 async function handleTaskStart(args) {
@@ -189,8 +234,9 @@ async function handleTaskStart(args) {
   }
 
   if (inProgress.length === 1 && !hasUserRequest) {
-    const summary = await buildInProgressSummary(inProgress[0])
-    return buildSummary(summary, 'await_user')
+    const summaries = await buildInProgressSummaries(inProgress)
+    const suggestedParent = computeSuggestedParent(inProgress)
+    return buildSummary(summaries, {next: 'await_user', suggested_parent: suggestedParent})
   }
 
   return buildSelectionAskUser(inProgress, 'Which task to work on?', 'select_task')
@@ -229,6 +275,33 @@ export const toolHandlers = {
     return buildProgress({memory, status: args.status || issue.status})
   },
 
+  task_update_meta: async (args) => {
+    const issue = /** @type {Issue | null} */ (await bdShowOne(args.id))
+    if (!issue) {
+      return buildError(`Issue ${args.id} not found`)
+    }
+
+    const meta = readMetaFields(args)
+    if (!meta.description && !meta.design && !meta.acceptance) {
+      return buildError('At least one of description, design, acceptance is required')
+    }
+
+    const updateArgs = ['update', args.id]
+    if (meta.description) updateArgs.push('--description', meta.description)
+    if (meta.design) updateArgs.push('--design', meta.design)
+    if (meta.acceptance) updateArgs.push('--acceptance', meta.acceptance)
+
+    await bd(updateArgs)
+
+    return loadIssue(args.id, {
+      resume: false,
+      next: 'await_user',
+      memory_limit: args.memory_limit,
+      view: args.view,
+      meta_max_chars: args.meta_max_chars
+    })
+  },
+
   task_decompose: async (args) => {
     // Validate depends_on indices
     for (let i = 0; i < args.sub_issues.length; i++) {
@@ -243,16 +316,30 @@ export const toolHandlers = {
     }
 
 
+    const normalizedSubs = []
+    for (let i = 0; i < args.sub_issues.length; i++) {
+      const sub = args.sub_issues[i]
+      const meta = readMetaFields(sub)
+      const missing = []
+      if (!meta.description) missing.push('description')
+      if (!meta.design) missing.push('design')
+      if (!meta.acceptance) missing.push('acceptance')
+      if (missing.length > 0) {
+        return buildError(`sub_issues[${i}] missing required fields: ${missing.join(', ')}`)
+      }
+      normalizedSubs.push({...sub, ...meta})
+    }
+
     const ids = []
-    for (const sub of args.sub_issues) {
+    for (const sub of normalizedSubs) {
       const subType = sub.type || 'task'
       const id = await bd(['create', '--title', sub.title, '--parent', args.epic_id, '--type', subType, '--description', sub.description, '--acceptance', sub.acceptance, '--design', sub.design, '--silent'])
       ids.push(id)
     }
 
     // Add dependencies
-    for (let i = 0; i < args.sub_issues.length; i++) {
-      const sub = args.sub_issues[i]
+    for (let i = 0; i < normalizedSubs.length; i++) {
+      const sub = normalizedSubs[i]
       if (sub.depends_on) {
         for (const depIdx of sub.depends_on) {
           await bd(['dep', 'add', ids[i], ids[depIdx]])
@@ -276,14 +363,28 @@ export const toolHandlers = {
   },
 
   task_create: async (args) => {
-    if (!args.title) {
+    const title = getNonEmptyString(args.title)
+    if (!title) {
       return buildError('title required for new issue')
     }
+    const meta = readMetaFields(args)
+    const missing = []
+    if (!meta.description) missing.push('description')
+    if (!meta.design) missing.push('design')
+    if (!meta.acceptance) missing.push('acceptance')
+    if (missing.length > 0) {
+      return buildError(`Missing required fields: ${missing.join(', ')}`)
+    }
     const issueType = args.type || 'task'
-    const createArgs = ['create', '--title', args.title, '--type', issueType, '--silent']
-    if (args.description) createArgs.push('--description', args.description)
-    if (args.acceptance) createArgs.push('--acceptance', args.acceptance)
-    if (args.design) createArgs.push('--design', args.design)
+    const createArgs = [
+      'create',
+      '--title', title,
+      '--type', issueType,
+      '--description', meta.description,
+      '--acceptance', meta.acceptance,
+      '--design', meta.design,
+      '--silent'
+    ]
     if (args.parent) createArgs.push('--parent', args.parent)
     if (args.priority) createArgs.push('--priority', args.priority)
 
