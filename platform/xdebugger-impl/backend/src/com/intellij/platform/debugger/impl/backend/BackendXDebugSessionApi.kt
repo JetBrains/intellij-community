@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.rpc.FrontendDocumentId
@@ -312,7 +312,7 @@ internal suspend fun createBackendDocument(
 internal fun XDebugSessionImpl.suspendData(): SuspendData? {
   val suspendContext = suspendContext ?: return null
   val suspendScope = currentSuspendCoroutineScope ?: return null
-  val suspendContextId = suspendContext.getOrStoreGlobally(suspendScope, this)
+  val suspendContextId = suspendContext.getOrStoreGlobally(suspendScope, this).id
   val suspendContextDto = XSuspendContextDto(suspendContextId, suspendContext is XSteppingSuspendContext)
   val executionStackDto = suspendContext.activeExecutionStack?.toRpc(suspendScope, this)
   val stackFrameDto = currentStackFrame?.toRpc(suspendScope, this)
