@@ -2120,6 +2120,9 @@
     <inspection_tool class="KotlinNoActualForExpect" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="KotlinObjectExtensionRegistration" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="KotlinObjectRegisteredAsExtension" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="KotlinUnusedImport" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="IntelliJ LSP" level="WARNING" enabled="true" />
+    </inspection_tool>
     <inspection_tool class="KotlinOptionsToCompilerOptionsInGradleScript" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="KotlinRedundantOverride" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="KotlinSpringComponentScan" enabled="false" level="ERROR" enabled_by_default="false" />
