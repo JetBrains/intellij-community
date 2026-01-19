@@ -122,10 +122,10 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
       fixture.type("[System")
       fixture.callCompletionPopup()
       assertThat(fixture.getLookupElements().map { it.lookupString })
-        .contains("System", "SystemPolicy", "SystemEvents")
+        .contains("System", "SystemEvents")
 
-      fixture.insertCompletionItem("SystemPolicy")
-      fixture.assertCommandTextState("[System.Management.Automation.Security.SystemPolicy<cursor>")
+      fixture.insertCompletionItem("SystemEvents")
+      fixture.assertCommandTextState("[Microsoft.Win32.SystemEvents<cursor>")
     }
   }
 
