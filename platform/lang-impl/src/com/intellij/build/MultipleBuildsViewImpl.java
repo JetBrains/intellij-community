@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
@@ -219,7 +219,6 @@ public final class MultipleBuildsViewImpl implements MultipleBuildsView {
           myBuildsList.setSelectedIndex(0);
 
           for (BuildView consoleView : myViewMap.values()) {
-            if (consoleView == view) continue; // ConcurrentHashMap#values is weakly constistent, can return nulls
             BuildTreeConsoleView buildConsoleView = consoleView.getView(BuildTreeConsoleView.class.getName(), BuildTreeConsoleView.class);
             if (buildConsoleView != null) {
               buildConsoleView.hideRootNode();
@@ -396,7 +395,7 @@ public final class MultipleBuildsViewImpl implements MultipleBuildsView {
     }
     if (clearAll) {
       myBuildsMap.clear();
-      SmartList<BuildView> viewsToDispose = new SmartList<>(myViewMap.values());
+      BuildView[] viewsToDispose = myViewMap.values().toArray(size -> new BuildView[size]);
       runOnEdt.add(() -> {
         for (BuildView view : viewsToDispose) {
           if (view != null) { // ConcurrentHashMap#values is weakly constistent, can return nulls
