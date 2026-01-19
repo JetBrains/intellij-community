@@ -7,3 +7,5 @@ class A {
 }
 
 // ELEMENT: Inner
+
+// IGNORE_K2

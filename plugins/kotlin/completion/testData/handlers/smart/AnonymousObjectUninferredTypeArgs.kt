@@ -7,3 +7,4 @@ fun g() {
 }
 
 // ELEMENT: object
+// IGNORE_K2

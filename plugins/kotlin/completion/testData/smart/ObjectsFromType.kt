@@ -15,3 +15,5 @@ fun foo(): T {
 // EXIST: object
 // ABSENT: Other
 // NOTHING_ELSE
+
+// IGNORE_K2

@@ -5,3 +5,5 @@ fun bar(i: Int) {
 }
 
 // ELEMENT: i
+
+// IGNORE_K2

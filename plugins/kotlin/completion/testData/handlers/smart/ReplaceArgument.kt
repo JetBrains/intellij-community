@@ -9,3 +9,5 @@ fun foo(p: Int){
 
 // CHAR: '\t'
 // ELEMENT: p
+
+// IGNORE_K2

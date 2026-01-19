@@ -7,3 +7,5 @@ fun f(p1: Any, p2: String, p3: File) {
 // ABSENT: p1
 // EXIST: p2
 // EXIST: p3
+
+// IGNORE_K2

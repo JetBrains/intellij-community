@@ -4,3 +4,5 @@ fun foo() {
 
 // EXIST: "i ->"
 // EXIST: "i: Int ->"
+
+// IGNORE_K2

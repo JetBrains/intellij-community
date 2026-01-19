@@ -8,3 +8,5 @@ fun foo() {
 }
 
 // ELEMENT: C
+
+// IGNORE_K2

@@ -11,3 +11,5 @@ interface A {
 }
 
 // EXIST: { lookupString:"createX", itemText: "createX", tailText: "(t: String)", typeText:"X<String>" }
+
+// IGNORE_K2

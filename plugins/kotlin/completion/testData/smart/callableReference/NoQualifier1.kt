@@ -12,3 +12,5 @@ fun f2(i: Int){}
 // ABSENT: ::Unit
 // ABSENT: ::Nothing
 // ABSENT: { lookupString:"object" }
+
+// IGNORE_K2

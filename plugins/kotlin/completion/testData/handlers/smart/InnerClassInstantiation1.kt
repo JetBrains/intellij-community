@@ -7,3 +7,5 @@ class A {
 }
 
 // ELEMENT: XYZ
+
+// IGNORE_K2

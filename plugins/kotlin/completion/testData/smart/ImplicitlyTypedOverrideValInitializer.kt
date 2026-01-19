@@ -11,3 +11,4 @@ fun getString(): String = ""
 
 // EXIST: getInt
 // ABSENT: getString
+// IGNORE_K2

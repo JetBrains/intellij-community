@@ -3,3 +3,5 @@ abstract class Foo
 var a : Foo = object : Foo() {<caret>}
 
 //ELEMENT: object
+
+// IGNORE_K2

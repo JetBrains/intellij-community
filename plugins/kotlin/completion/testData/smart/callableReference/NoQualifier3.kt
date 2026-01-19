@@ -9,3 +9,5 @@ fun f(): () -> Unit {}
 
 // EXIST: ::f
 // EXIST: f
+
+// IGNORE_K2

@@ -4,3 +4,5 @@ fun foo(flag: Boolean) {
 
 // ELEMENT: flag
 // CHAR: '!'
+
+// IGNORE_K2

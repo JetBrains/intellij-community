@@ -11,3 +11,5 @@ fun foo(x: X?) {
 }
 
 // ELEMENT_TEXT: "!! x"
+
+// IGNORE_K2

@@ -9,3 +9,5 @@ class C(val p1: String) {
 }
 
 // EXIST: "p1, p2, p3"
+
+// IGNORE_K2

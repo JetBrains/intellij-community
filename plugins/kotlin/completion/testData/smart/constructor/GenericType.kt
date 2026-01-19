@@ -5,3 +5,5 @@ fun foo(p : Any){
 }
 
 // EXIST: { lookupString:"Foo", itemText:"Foo", tailText:"(t: String) (<root>)" }
+
+// IGNORE_K2

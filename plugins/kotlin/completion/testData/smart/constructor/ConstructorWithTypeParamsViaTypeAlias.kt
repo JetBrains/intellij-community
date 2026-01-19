@@ -11,3 +11,4 @@ fun usage() {
 }
 
 // EXIST: {"lookupString":"TaSomeClass","tailText":"() (<root>)","typeText":"SomeClass<K, V>"}
+// IGNORE_K2

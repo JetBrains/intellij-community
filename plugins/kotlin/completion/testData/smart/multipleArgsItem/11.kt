@@ -7,3 +7,5 @@ fun bar(b: String, a: Int, c: String, d: Int) {
 // EXIST: "a, b"
 // EXIST: "a, b, c"
 // EXIST: "a, b, c, d"
+
+// IGNORE_K2

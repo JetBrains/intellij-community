@@ -6,3 +6,5 @@ fun bar() {
 
 // EXIST: "{...}"
 // ABSENT: "{ () -> ... }"
+
+// IGNORE_K2

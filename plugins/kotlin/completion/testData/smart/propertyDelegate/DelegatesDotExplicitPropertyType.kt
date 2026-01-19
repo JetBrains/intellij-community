@@ -8,3 +8,5 @@ class C {
 // EXIST: { itemText: "observable", typeText: "ReadWriteProperty<Any?, String>" }
 // EXIST: { itemText: "vetoable", typeText: "ReadWriteProperty<Any?, String>" }
 // NOTHING_ELSE
+
+// IGNORE_K2

@@ -8,3 +8,5 @@ fun bar() {
 
 // ELEMENT_TEXT: "?: getString"
 // TAIL_TEXT: "(i: Int) (<root>)"
+
+// IGNORE_K2

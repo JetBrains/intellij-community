@@ -6,3 +6,5 @@ fun foo(c: KotlinClass, l: L<String>) {
 }
 
 // EXIST: l
+
+// IGNORE_K2

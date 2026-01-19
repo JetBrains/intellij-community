@@ -7,3 +7,5 @@ val c: java.io.Closeable = object : Closeable {
 }
 
 //ELEMENT_TEXT: "object : Closeable{...}"
+
+// IGNORE_K2
