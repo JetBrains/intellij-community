@@ -17,6 +17,18 @@ enum class InlineCompletionEditorType {
   TERMINAL,
   UNKNOWN;
 
+  @ApiStatus.Internal
+  fun supportsLookupCompletion(): Boolean {
+    return when (this) {
+      MAIN_EDITOR -> true
+      XDEBUGGER -> false // do not contain virtual file to build cache key
+      COMMIT_MESSAGES -> true
+      AI_ASSISTANT_CHAT_INPUT -> true
+      TERMINAL -> false // Could be true if needed in the future
+      UNKNOWN -> false // Conservative default
+    }
+  }
+
   companion object {
     private val forcedInlineCompletionEditorType: Key<InlineCompletionEditorType> = Key<InlineCompletionEditorType>("ml.completion.forced.editor.type")
 
