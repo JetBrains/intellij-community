@@ -12,6 +12,7 @@ import com.intellij.testFramework.utils.io.createFile
 import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.util.PathUtil
 import com.intellij.util.system.OS
+import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -544,6 +545,8 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
         .shellCommand(listOf(shellPath.toString()))
         .workingDirectory(System.getProperty("user.home"))
         .envVariables(envVariables)
+        // Use the wide terminal size because ConPTY may insert sudden line breaks when inserting a completion item.
+        .initialTermSize(TermSize(300, 30))
         .build()
 
       val sessionScope = childScope("TerminalSession")
