@@ -28,7 +28,8 @@
 ## Tool outputs (canonical)
 - `task_status()` -> `kind: "need_user" | "summary" | "empty" | "error"`
 - `task_status(id, memory_limit?, view?, meta_max_chars?)` -> `kind: "issue" | "error"` (optional `memory`)
-- `task_start(user_request, memory_limit?, view?, meta_max_chars?)` -> `kind: "issue" (is_new=true) | "need_user" | "empty"`
+- `task_start(user_request, memory_limit?, view?, meta_max_chars?)` -> `kind: "issue" (is_new=true) | "empty"`
+  - Always creates a new epic when `user_request` is provided, even if in_progress tasks exist.
 - `task_start(id, memory_limit?, view?, meta_max_chars?)` -> `kind: "issue"` (is_new=false, status `in_progress`)
 - `task_progress(..., memory_limit?)` -> `kind: "progress" | "need_user" | "error"` (optional `memory`)
 - `task_decompose(epic_id, sub_issues)` -> `kind: "created" (ids, epic_id, started_child_id) | "error"` (auto-starts when a single child is created)
@@ -71,6 +72,7 @@
 ## Task MCP hints
 - `task_status(id=epic)` returns child statuses
 - `task_done` returns `next_ready` and `epic_status`
+- `task_start(user_request)` always creates a new epic; use `task_status()` to review in_progress work first if needed
 
 ## Decomposition guidelines (task_decompose)
 - Decompose into the smallest independently testable units with clear acceptance
