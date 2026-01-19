@@ -19,6 +19,7 @@ import io.github.smiley4.schemakenerator.jsonschema.jsonDsl.JsonArray
 import io.github.smiley4.schemakenerator.jsonschema.jsonDsl.JsonObject
 import io.github.smiley4.schemakenerator.serialization.SerializationSteps.analyzeTypeUsingKotlinxSerialization
 import io.github.smiley4.schemakenerator.serialization.analyzer.AnnotationAnalyzer
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.*
 import kotlinx.serialization.serializerOrNull
 import kotlin.reflect.KAnnotatedElement
@@ -86,7 +87,7 @@ fun KCallable<*>.returnTypeSchema(): McpToolSchema? {
   if (type.isSubtypeOf(typeOf<Enum<*>>())) return null
   if (type.isSubtypeOf(typeOf<McpToolCallResult>())) return null
   if (type.isSubtypeOf(typeOf<McpToolCallResultContent>())) return null
-  if (serializerOrNull(type) == null) return null
+  val serializer = serializerOrNull(type) ?: return null
 
   val intermediateJsonSchemaData = initial(type)
     .analyzeTypeUsingKotlinxSerialization()
@@ -99,7 +100,9 @@ fun KCallable<*>.returnTypeSchema(): McpToolSchema? {
   val jsonSchema = schema.json.toKt() as? kotlinx.serialization.json.JsonObject ?: error("Non-primitive type is expected in return type: ${type.classifier} in $this")
   val properties = jsonSchema["properties"] as? kotlinx.serialization.json.JsonObject ?: error("Properties are expected in return type: ${type.classifier} in $this")
   val required = jsonSchema["required"] as? kotlinx.serialization.json.JsonArray ?: error("Required is expected in return type: ${type.classifier} in $this")
-  return McpToolSchema.ofPropertiesSchema(properties = properties, requiredProperties = required.map { it.jsonPrimitive.content }.toSet(), definitions = emptyMap(), definitionsPath = McpToolSchema.DEFAULT_DEFINITIONS_PATH)
+  val requiredProperties = required.map { it.jsonPrimitive.content }.toSet()
+  val adjustedRequired = removeRequiredForDefaultValues(requiredProperties, serializer)
+  return McpToolSchema.ofPropertiesSchema(properties = properties, requiredProperties = adjustedRequired, definitions = emptyMap(), definitionsPath = McpToolSchema.DEFAULT_DEFINITIONS_PATH)
 }
 
 private fun JsonNode.toKt(): JsonElement {
@@ -142,6 +145,24 @@ private fun IntermediateJsonSchemaData.handleMcpDescriptionAnnotations(customDes
 private fun IntermediateJsonSchemaData.removeNumericBounds(): IntermediateJsonSchemaData {
   RemoveNumericBoundsStep().process(this)
   return this
+}
+
+// to mark properties as optional when they have default values
+// fixes problem with EncodeDefault.Never case
+// see https://youtrack.jetbrains.com/issue/IJPL-230494
+private fun removeRequiredForDefaultValues(requiredProperties: Set<String>, serializer: KSerializer<*>): Set<String> {
+  val result = mutableSetOf(*requiredProperties.toTypedArray())
+
+  val descriptor = serializer.descriptor
+  if (descriptor.elementsCount == 0) return result
+
+  for (i in 0 until descriptor.elementsCount) {
+    if (descriptor.isElementOptional(i)) {
+      result.remove(descriptor.getElementName(i))
+    }
+  }
+
+  return result
 }
 
 private const val descriptionPropertyNameInschema = "description"
