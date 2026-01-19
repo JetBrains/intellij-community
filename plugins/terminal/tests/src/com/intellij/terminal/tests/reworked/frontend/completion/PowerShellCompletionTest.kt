@@ -18,6 +18,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
+import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
 import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
@@ -532,8 +533,6 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
 
   private fun doTest(block: suspend (TerminalCompletionFixture) -> Unit) {
     timeoutRunBlocking(timeout = 20.seconds, context = Dispatchers.EDT) {
-      val fixtureScope = childScope("TerminalCompletionFixture")
-
       // Disable PowerShell 7 Inline Completion (gray text)
       val executableName = PathUtil.getFileName(shellPath.toString())
       val envVariables = if (executableName == "pwsh.exe" || executableName == "pwsh") {
@@ -547,22 +546,30 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
         .envVariables(envVariables)
         .build()
 
+      val sessionScope = childScope("TerminalSession")
       val session = TerminalSessionTestUtil.startTestTerminalSession(
         project,
         startupOptions,
         isLowLevelSession = false,
-        fixtureScope.childScope("TerminalSession")
+        coroutineScope = sessionScope
       ).session
 
-      doWithCompletionFixture(project, session, fixtureScope) { fixture ->
-        fixture.setCompletionOptions(
-          showPopupAutomatically = false,
-          showingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS,
-          parentDisposable = testRootDisposable
-        )
-        fixture.awaitShellIntegrationFeaturesInitialized()
+      val fixtureScope = childScope("TerminalCompletionFixture")
+      try {
+        doWithCompletionFixture(project, session, fixtureScope) { fixture ->
+          fixture.setCompletionOptions(
+            showPopupAutomatically = false,
+            showingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS,
+            parentDisposable = testRootDisposable
+          )
+          fixture.awaitShellIntegrationFeaturesInitialized()
 
-        block(fixture)
+          block(fixture)
+        }
+      }
+      finally {
+        // Session scope should be terminated in a result of sending the close event.
+        session.getInputChannel().send(TerminalCloseEvent())
       }
     }
   }
