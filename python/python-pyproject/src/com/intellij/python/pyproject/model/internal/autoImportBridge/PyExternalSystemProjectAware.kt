@@ -13,8 +13,8 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.project.stateStore
-import com.intellij.python.pyproject.model.api.ModelRebuiltListener
 import com.intellij.python.pyproject.model.internal.PyProjectTomlBundle
+import com.intellij.python.pyproject.model.internal.notifyModelRebuilt
 import com.intellij.python.pyproject.model.internal.pyProjectToml.walkFileSystemNoTomlContent
 import com.intellij.python.pyproject.model.internal.pyProjectToml.walkFileSystemWithTomlContent
 import com.intellij.python.pyproject.model.internal.workspaceBridge.rebuildProjectModel
@@ -90,10 +90,8 @@ class PyExternalSystemProjectAware private constructor(
         }
         rebuildProjectModel(project, files)
         this.onProjectReloadFinish(ExternalSystemRefreshStatus.SUCCESS)
-        // Even though we have no entities, we still "rebuilt" the model
-        withContext(Dispatchers.Default) {
-          project.messageBus.syncPublisher(MODEL_REBUILD).modelRebuilt(project)
-        }
+        // Even though we have no entities, we still "rebuilt" the model, time to configure SDK
+        notifyModelRebuilt(project)
       }
       catch (e: CancellationException) {
         this.onProjectReloadFinish(ExternalSystemRefreshStatus.CANCEL)
@@ -132,8 +130,6 @@ class PyExternalSystemProjectAware private constructor(
 private val PROJECT_AWARE_TOPIC: Topic<ExternalSystemProjectListener> =
   Topic(ExternalSystemProjectListener::class.java, Topic.BroadcastDirection.NONE)
 
-@Topic.ProjectLevel
-internal val MODEL_REBUILD: Topic<ModelRebuiltListener> = Topic(ModelRebuiltListener::class.java, Topic.BroadcastDirection.NONE)
 
 @Service(Service.Level.PROJECT)
 private class PyExternalSystemProjectAwareService(val scope: CoroutineScope)
