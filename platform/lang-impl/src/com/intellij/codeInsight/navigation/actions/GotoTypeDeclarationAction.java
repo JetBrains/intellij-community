@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +64,9 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
   }
 
   @ApiStatus.Internal
-  public static PsiElement @Nullable [] findSymbolTypes(@NotNull Editor editor, int offset, int flags) {
+  public static PsiElement @Nullable [] findSymbolTypes(@NotNull Editor editor,
+                                                        int offset,
+                                                        @MagicConstant(flagsFromClass = TargetElementUtil.class) int flags) {
     PsiElement targetElement = TargetElementUtil.getInstance().findTargetElement(editor, flags, offset);
 
     if (targetElement != null) {
