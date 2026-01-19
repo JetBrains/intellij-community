@@ -40,9 +40,10 @@ fun PsiFile.getRelativePath(): String? {
 
 fun PsiElement.getNodeLocation(): CallGraphNodeLocation? {
   val relativePath = containingFile.getRelativePath() ?: return null
+  val textRangeDefined = textRange ?: return null
   return CallGraphNodeLocation(
     projectRootFilePath = relativePath,
-    textRange = textRange.startOffset..textRange.endOffset
+    textRange = textRangeDefined.startOffset..textRangeDefined.endOffset
   )
 }
 
