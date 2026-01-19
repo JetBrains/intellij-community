@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -81,8 +82,15 @@ public final class AddOnDemandStaticImportAction extends PsiUpdateModCommandActi
       final PsiElement qualifier = call.getMethodExpression().getQualifier();
       if (qualifier == null) return null;
       qualifier.delete();
-      final PsiMethod method = call.resolveMethod();
-      if (method != null && method.getContainingClass() != psiClass)  return null;
+      JavaResolveResult[] results = call.multiResolve(false);
+      if (Arrays.stream(results)
+        .filter(Objects::nonNull)
+        .map(ResolveResult::getElement)
+        .anyMatch(psiElement ->
+                    psiElement instanceof PsiMethod psiMethod &&
+                    psiMethod.getContainingClass() != psiClass)) {
+        return null;
+      }
     }
     else {
       PsiElement refNameElement = parentRef.getReferenceNameElement();

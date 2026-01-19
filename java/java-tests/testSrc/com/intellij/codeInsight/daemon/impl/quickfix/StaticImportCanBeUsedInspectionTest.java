@@ -303,6 +303,34 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
     }
   }
 
+  public void testDoubleTheSameMethod() {
+    try {
+      myFixture.addClass("""
+                           package staticImportCanBeUsed;
+                           import java.util.Locale;
+                           public interface Example {
+                           	default String localize() {
+                           		return localize(Locale.getDefault());
+                           	}
+                            String localize(Locale locale);
+                           }""");
+
+      myFixture.addClass("""
+                           package staticImportCanBeUsed;
+                           import java.util.Locale;
+                           public class StaticMethod {
+                             public static String localize(Locale locale, String translationKey) {
+                               return translationKey;
+                             }
+                           }""");
+      addStaticAutoImportToProject("staticImportCanBeUsed.StaticMethod.localize");
+      doTest();
+    }
+    finally {
+      cleanTable();
+    }
+  }
+
   private void cleanupTest() {
     IntentionAction intention = myFixture.getAvailableIntention(AnalysisBundle.message("cleanup.in.file"));
     myFixture.launchAction(intention);
