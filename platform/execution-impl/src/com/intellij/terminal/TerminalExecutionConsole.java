@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -30,7 +31,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.ui.update.UiNotifyConnector;
+import com.jediterm.core.util.CellPosition;
 import com.jediterm.terminal.HyperlinkStyle;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
@@ -149,14 +150,62 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
    */
   private void moveScreenToScrollbackBufferAndShowAllOutput() throws IOException {
     LOG.trace("Printing command line detected at the beginning of the output, scheduling a scroll command.");
+    CheckedDisposable disposed = Disposer.newCheckedDisposable(this);
     BoundedRangeModel verticalScrollModel = myTerminalWidget.getTerminalPanel().getVerticalScrollModel();
     verticalScrollModel.addChangeListener(new javax.swing.event.ChangeListener() {
+      private boolean myIgnoreScrollEvent = false;
+      private int myEventCount = 0;
+
       @Override
       public void stateChanged(ChangeEvent e) {
-        verticalScrollModel.removeChangeListener(this);
-        UiNotifyConnector.doWhenFirstShown(myTerminalWidget.getTerminalPanel(), () -> {
-          myTerminalWidget.getTerminalPanel().scrollToShowAllOutput();
-        });
+        if (myIgnoreScrollEvent) {
+          return;
+        }
+        int id = myEventCount++;
+        // id == 0 -> vertical scrollbar change caused by `ESC[2J` (moving screen lines to scrollback buffer)
+        // id == 1 -> vertical scrollbar change caused by the initial terminal resize according to the UI component actual bounds
+        if (id > 1) {
+          verticalScrollModel.removeChangeListener(this);
+          return;
+        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (!disposed.isDisposed()) {
+            if (id == 1) {
+              runIgnoringScrollEvents(() -> {
+                verticalScrollModel.setValue(0); // scroll to bottom
+              });
+            }
+            tryScrollToShowAllOutput();
+          }
+        }, ModalityState.any());
+      }
+
+      private void tryScrollToShowAllOutput() {
+        TerminalTextBuffer textBuffer = myTerminalWidget.getTerminalTextBuffer();
+        textBuffer.lock();
+        try {
+          CellPosition cursor = myTerminalWidget.getTerminal().getCursorPosition();
+          int historyLinesCount = textBuffer.getHistoryLinesCount();
+          int termHeight = textBuffer.getHeight();
+          if (historyLinesCount + cursor.getY() <= termHeight) {
+            runIgnoringScrollEvents(() -> {
+              myTerminalWidget.getTerminalPanel().scrollToShowAllOutput();
+            });
+          }
+        }
+        finally {
+          textBuffer.unlock();
+        }
+      }
+
+      private void runIgnoringScrollEvents(@NotNull Runnable runnable) {
+        myIgnoreScrollEvent = true;
+        try {
+          runnable.run();
+        }
+        finally {
+          myIgnoreScrollEvent = false;
+        }
       }
     });
     // `ESC[2J` moves screen lines to the scrollback buffer
