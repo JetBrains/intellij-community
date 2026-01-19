@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.proxy
 
 import com.intellij.execution.RunContentDescriptorIdImpl
@@ -121,7 +121,7 @@ internal class MonolithSessionProxy(val session: XDebugSession) : XDebugSessionP
   }
 
   override val currentSuspendContextCoroutineScope: CoroutineScope?
-    get() = sessionImplIfAvailable?.currentSuspendCoroutineScope
+    get() = sessionImplIfAvailable?.getSuspendContextModel()?.coroutineScope
 
   override val activeNonLineBreakpointFlow: Flow<XBreakpointProxy?>
     get() = sessionImpl
