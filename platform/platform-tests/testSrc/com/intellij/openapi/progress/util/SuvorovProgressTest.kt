@@ -4,6 +4,8 @@ package com.intellij.openapi.progress.util
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.concurrencyTest
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.locking.impl.NestedLocksThreadingSupport
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -11,6 +13,8 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.util.application
+import com.intellij.util.concurrency.TransferredWriteActionService
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.assertj.core.api.Assertions.assertThat
@@ -21,6 +25,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JPanel
+import kotlin.test.assertEquals
 
 @TestApplication
 class SuvorovProgressTest {
@@ -175,5 +180,35 @@ class SuvorovProgressTest {
     raJob.join()
     lockingSupport.runWriteActionBlocking {
     } // check that it can finish
+  }
+
+  @Test
+  fun `suvorov progress is resilient to exceptions 2`(): Unit = concurrencyTest {
+    launch(Dispatchers.Default) {
+      backgroundWriteAction {
+        checkpoint(1)
+        checkpoint(6)
+        try {
+          application.service<TransferredWriteActionService>().runOnEdtWithTransferredWriteActionAndWait {
+            checkpoint(7)
+            throw RuntimeException("test exception")
+          }
+        } catch (e: RuntimeException) {
+          assertEquals("test exception", e.message)
+        }
+        application.service<TransferredWriteActionService>().runOnEdtWithTransferredWriteActionAndWait {
+          checkpoint(8)
+        }
+      }
+    }
+    checkpoint(2)
+    launch(Dispatchers.UiWithModelAccess) {
+      checkpoint(3)
+      WriteIntentReadAction.run { checkpoint(10) }
+    }
+    checkpoint(4)
+    Thread.sleep(10)
+    checkpoint(5)
+    checkpoint(9)
   }
 }
