@@ -380,8 +380,12 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   private void trackModifiers() {
     assert !isAutopopupCompletion();
 
-    final JComponent contentComponent = myEditor.getContentComponent();
-    contentComponent.addKeyListener(new ModifierTracker(contentComponent));
+    JComponent contentComponent = myEditor.getContentComponent();
+    ModifierTracker modifierTracker = new ModifierTracker(contentComponent);
+    contentComponent.addKeyListener(modifierTracker);
+    Disposer.register(this, () -> {
+      contentComponent.removeKeyListener(modifierTracker);
+    });
   }
 
   void setMergeCommand() {
