@@ -1,6 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(UnsafeCastFunction::class)
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.compiler.CompilerReferenceService
@@ -12,18 +10,16 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.util.currentJavaVersion
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
-import org.jetbrains.kotlin.utils.addToStdlib.cast
 import kotlin.io.path.pathString
 
 abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase(),
-                                                 ExpectedPluginModeProvider {
+    ExpectedPluginModeProvider {
 
     // it is known that Kotlin 1.9.25 is incompatible with JDK25
     val isCompatibleVersions: Boolean = (pluginMode == KotlinPluginMode.K2 || currentJavaVersion().feature < 25)
@@ -63,9 +59,9 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase(),
 
     protected fun getReferentFiles(element: PsiElement, withJavaIndex: Boolean): Set<String>? {
         val fromKotlinIndex = KotlinCompilerReferenceIndexService[project].findReferenceFilesInTests(element)
-        val fromJavaIndex = CompilerReferenceService.getInstance(project)
+        val fromJavaIndex = (CompilerReferenceService.getInstance(project)
             .takeIf { withJavaIndex }
-            ?.cast<CompilerReferenceServiceBase<*>>()
+            as? CompilerReferenceServiceBase<*>)
             ?.getReferentFilesForTests(element)
 
         if (fromKotlinIndex == null && fromJavaIndex == null) return null

@@ -8,7 +8,6 @@ jvm_library(
   runtime_deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "//plugins/kotlin/compiler-reference-index",
   ]
 )
 
@@ -21,10 +20,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/plugin/k2",
-    "//plugins/kotlin/compiler-reference-index",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/base/test:test_test_lib",
-    "//plugins/kotlin/compiler-reference-index/tests:tests_test_lib",
     "//java/java-tests:tests_test_lib",
     "//platform/core-api:core",
     "//java/testFramework",
@@ -38,6 +35,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ],
   runtime_deps = [":kotlin-compilerReferenceIndex-tests"]
 )

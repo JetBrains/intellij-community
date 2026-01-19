@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.openapi.module.JavaModuleType
@@ -7,15 +7,10 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.SkipSlowTestLocally
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.search.assertWithExpectedScope
+import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.search.toHumanReadableString
 
-@SkipSlowTestLocally
-open class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
+abstract class AbstractSearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
 
     override fun setUp() {
         super.setUp()
@@ -184,3 +179,25 @@ open class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase(
 
     private fun SearchScope.assertWithExpected(expected: String): Unit = assertWithExpectedScope(this, expected)
 }
+
+private fun assertWithExpectedScope(actual: SearchScope, expected: String) {
+    val actualText = actual.toHumanReadableString()
+    val expectedLines = expected.lines()
+    val actualLines = actualText.lines()
+    try {
+        TestCase.assertEquals(expectedLines.size, actualLines.size)
+        for ((index, expectedLine) in expectedLines.withIndex()) {
+            val actualLine = actualLines[index]
+            val firstExpectedWord = stablePartOfLineRegex.find(expectedLine)
+                ?: error("stable part is not found in expected '$expectedLine'")
+
+            val firstActualWord = stablePartOfLineRegex.find(actualLine) ?: error("stable part is not found in actual '$actualLine'")
+            TestCase.assertEquals(firstExpectedWord.value, firstActualWord.value)
+        }
+    } catch (e: AssertionError) {
+        System.err.println(e.message)
+        TestCase.assertEquals(expected, actualText)
+    }
+}
+
+private val stablePartOfLineRegex = Regex("[^\\[]*")

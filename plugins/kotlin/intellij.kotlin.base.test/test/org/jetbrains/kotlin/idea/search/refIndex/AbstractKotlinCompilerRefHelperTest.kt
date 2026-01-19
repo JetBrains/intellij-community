@@ -1,35 +1,23 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.compiler.CompilerReferenceService
 import com.intellij.java.compiler.CompilerReferencesTestBase
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.util.descendantsOfType
-import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.util.currentJavaVersion
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtEnumEntry
 
-@SkipSlowTestLocally
-open class KotlinCompilerRefHelperTest : CompilerReferencesTestBase(), ExpectedPluginModeProvider {
+abstract class AbstractKotlinCompilerRefHelperTest : CompilerReferencesTestBase(), ExpectedPluginModeProvider {
     // it is known that Kotlin 1.9.25 is incompatible with JDK25
     val isCompatibleVersions: Boolean = (pluginMode == KotlinPluginMode.K2 || currentJavaVersion().feature < 25)
 
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
-
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }
-        if (pluginMode == KotlinPluginMode.K2) {
-            project.enableK2Compiler()
-            ConfigLibraryUtil.configureKotlinRuntime(module)
-        } else {
-            project.enableK1Compiler()
-        }
     }
 
     fun `test dirty scope`() {

@@ -5,10 +5,10 @@ import com.intellij.testFramework.SkipSlowTestLocally
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.CallableOverridingsTooltip
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.ClassInheritorsTooltip
-import org.jetbrains.kotlin.idea.search.refIndex.CustomKotlinCompilerReferenceTest6
+import org.jetbrains.kotlin.idea.search.refIndex.AbstractCustomKotlinCompilerReferenceTest6
 
 @SkipSlowTestLocally
-class CustomKotlinCompilerReferenceFirTest : CustomKotlinCompilerReferenceTest6() {
+class CustomKotlinCompilerReferenceFirTest : AbstractCustomKotlinCompilerReferenceTest6() {
 
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
