@@ -5,10 +5,13 @@ import com.google.gson.GsonBuilder;
 import com.intellij.build.FileNavigatable;
 import com.intellij.build.FilePosition;
 import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.BuildIssueEvent;
 import com.intellij.build.events.MessageEvent;
+import com.intellij.build.events.impl.BuildIssueEventImpl;
 import com.intellij.build.events.impl.FileDownloadEventImpl;
 import com.intellij.build.events.impl.FileDownloadedEventImpl;
 import com.intellij.build.events.impl.MessageEventImpl;
+import com.intellij.build.issue.BuildIssue;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -24,15 +27,15 @@ import org.gradle.tooling.events.ProgressEvent;
 import org.gradle.tooling.events.ProgressListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.issue.GradleIssueChecker;
+import org.jetbrains.plugins.gradle.issue.GradleIssueData;
 import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.MessageReporter;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import static com.intellij.openapi.util.text.StringUtil.formatDuration;
 
@@ -48,28 +51,34 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   private final ExternalSystemTaskId myTaskId;
   private final Map<Object, Long> myStatusEventIds = new HashMap<>();
   private final String myOperationId;
+  private final @NotNull String myBuildRootDirPath;
   private static final String EXECUTING_BUILD = "Build";
   private static final String STARTING_GRADLE_DAEMON_EVENT = "Starting Gradle Daemon";
   private ExternalSystemTaskNotificationEvent myLastStatusChange = null;
   private final boolean sendProgressEventsToOutput;
 
+  /**
+   * @deprecated the build root path is now required. Get one from a BuildEnvironment or a GradleExecutionSettings instance.
+   */
+  @Deprecated
   public GradleProgressListener(
     @NotNull ExternalSystemTaskNotificationListener listener,
     @NotNull ExternalSystemTaskId taskId
   ) {
-    this(listener, taskId, null);
+    this(listener, taskId, "");
   }
 
   public GradleProgressListener(
     @NotNull ExternalSystemTaskNotificationListener listener,
     @NotNull ExternalSystemTaskId taskId,
-    @Nullable Path buildRootDir
+    @NotNull String buildRootDir
   ) {
     myListener = listener;
     myTaskId = taskId;
-    myOperationId = taskId.hashCode() + ":" + FileUtil.pathHashCode(buildRootDir == null ? UUID.randomUUID().toString() : buildRootDir.toString());
+    myOperationId = taskId.hashCode() + ":" + FileUtil.pathHashCode(buildRootDir);
     myProgressMapper = new GradleExecutionProgressMapper();
     myDownloadProgressMapper = new GradleDownloadProgressMapper();
+    myBuildRootDirPath = buildRootDir;
     sendProgressEventsToOutput = Registry.is(SEND_PROGRESS_EVENTS_TO_OUTPUT_KEY, true);
   }
 
@@ -161,7 +170,10 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
 
   private void reportModelBuilderMessageToListener(@NotNull Message message) {
     if (!message.isInternal()) {
-      var messageEvent = getModelBuilderMessage(message);
+      BuildEvent messageEvent = getModelBuilderErrorMessage(message);
+      if (messageEvent == null) {
+        messageEvent = getModelBuilderMessage(message);
+      }
       myListener.onStatusChange(new ExternalSystemBuildEvent(myTaskId, messageEvent));
     }
   }
@@ -187,6 +199,43 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
         return new FileNavigatable(project, filePosition);
       }
     };
+  }
+
+  /**
+   * Attempts to transform a model builder error message into a BuildIssue by delegating to known Gradle issue checkers.
+   * Returns a BuildIssueEvent created by a GradleIssueChecker if a matching issue is found, null otherwise.
+   */
+  @Nullable
+  private BuildIssueEvent getModelBuilderErrorMessage(@NotNull Message message) {
+    if (message.getKind() != Message.Kind.ERROR) return null;
+    // Build a synthetic GradleIssueData from the message
+    GradleIssueData issueData = getGradleIssueData(message);
+
+    for (var checker : GradleIssueChecker.getKnownIssuesCheckList()) {
+      BuildIssue buildIssue = checker.check(issueData);
+      if (buildIssue != null) {
+        return new BuildIssueEventImpl(myTaskId, buildIssue, MessageEvent.Kind.ERROR);
+      }
+    }
+    return null;
+  }
+
+  private @NotNull GradleIssueData getGradleIssueData(@NotNull Message message) {
+    String errorText = StringUtil.notNullize(message.getText(), message.getTitle());
+    Throwable syntheticError = new RuntimeException(errorText);
+
+    Message.FilePosition position = message.getFilePosition();
+    FilePosition filePosition = position == null ? null : new FilePosition(
+      new File(position.getFilePath()), position.getLine(), position.getColumn()
+    );
+
+    GradleIssueData issueData = new GradleIssueData(
+      myBuildRootDirPath,
+      syntheticError,
+      null,
+      filePosition
+    );
+    return issueData;
   }
 
   private void sendProgressEventToOutput(ExternalSystemTaskNotificationEvent event) {

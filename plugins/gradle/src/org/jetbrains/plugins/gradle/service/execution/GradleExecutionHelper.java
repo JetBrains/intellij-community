@@ -192,7 +192,7 @@ public final class GradleExecutionHelper {
 
       // do not use connection.getModel methods since it doesn't allow to handle progress events
       // and we can miss gradle tooling client side events like distribution download.
-      GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId);
+      GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId, context.getProjectPath());
       modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
       modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
       modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));
@@ -355,10 +355,10 @@ public final class GradleExecutionHelper {
     @NotNull GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskId id,
     @NotNull ExternalSystemTaskNotificationListener listener,
-    @Nullable BuildEnvironment buildEnvironment
+    @NotNull BuildEnvironment buildEnvironment
   ) {
     var buildRootDir = getBuildRoot(buildEnvironment);
-    var progressListener = new GradleProgressListener(listener, id, buildRootDir);
+    var progressListener = new GradleProgressListener(listener, id, buildRootDir.toString());
     operation.addProgressListener((ProgressListener)progressListener);
     operation.addProgressListener(
       progressListener,
@@ -599,7 +599,7 @@ public final class GradleExecutionHelper {
 
         // do not use connection.getModel methods since it doesn't allow to handle progress events
         // and we can miss gradle tooling client side events like distribution download.
-        GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId);
+        GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId, context.getProjectPath());
         modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
         modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
         modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));
