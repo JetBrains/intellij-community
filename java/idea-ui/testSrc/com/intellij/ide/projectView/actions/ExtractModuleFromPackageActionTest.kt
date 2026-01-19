@@ -169,6 +169,27 @@ class ExtractModuleFromPackageActionTest {
     }
   }
 
+  @Test
+  fun `add dependency on module with implicitly referenced superclasses`() {
+    val (main, directory) = prepareProject()
+    val implicitDep = projectModel.createModule("implicitDep")
+    projectModel.addSourceRoot(implicitDep, "implicitDep", JavaSourceRootType.SOURCE).let {
+      VfsTestUtil.createFile(it, "implicitDep/BaseClass.java", "package implicitDep;\npublic class BaseClass {}")
+    }
+    val dep1 = projectModel.moduleManager.findModuleByName("dep1")!!
+    ModuleRootModificationUtil.addDependency(dep1, implicitDep)
+    ModuleRootModificationUtil.addDependency(main, implicitDep)
+    val dep1Src = ModuleRootManager.getInstance(dep1).sourceRoots.single()
+    VfsTestUtil.createFile(dep1Src, "dep1/SubClass.java", "package dep1;\npublic class SubClass extends implicitDep.BaseClass { public void foo() {} }")
+    VfsTestUtil.createFile(directory.virtualFile, "ClassWithMethodCall.java", "package xxx;\npublic class ClassWithMethodCall { public void call() { new dep1.SubClass().foo(); } }")
+
+    extractModule(directory, main, null)
+
+    val xxx = projectModel.moduleManager.findModuleByName("main.xxx")!!
+    val xxxRoots = ModuleRootManager.getInstance(xxx)
+    assertThat(xxxRoots.dependencies).containsExactly(dep1, implicitDep)
+  }
+
   private fun extractModule(directory: PsiDirectory, main: Module, targetSourceRoot: String?) {
     val compilerTester = CompilerTester(projectModel.project, ModuleManager.getInstance(projectModel.project).modules.toList(), disposableRule.disposable)
     val messages = compilerTester.rebuild()

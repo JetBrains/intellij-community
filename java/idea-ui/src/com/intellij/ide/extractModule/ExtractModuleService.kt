@@ -126,8 +126,15 @@ class ExtractModuleService(
 
       progressReporter.itemStep(JavaUiBundle.message("progress.step.extract.module.collecting.used.classes", directory.name))
 
-      val packageFileProcessor = ExtractModuleFileProcessor()
-      val moduleFileProcessor = ExtractModuleFileProcessor()
+      val moduleClasspathSet = LinkedHashSet<Path>()
+      readAction {
+        OrderEnumerator.orderEntries(module).productionOnly().recursively().exportedOnly().forEachModule { module ->
+          moduleClasspathSet.addAll(compilerOutputs(module, includeTests = false))
+        }
+      }
+      val moduleClasspath = moduleClasspathSet.toList()
+      val packageFileProcessor = ExtractModuleFileProcessor(moduleClasspath)
+      val moduleFileProcessor = ExtractModuleFileProcessor(moduleClasspath)
 
       for (outputPath in compilerOutputPaths) {
         packageFileProcessor.processClassFiles(outputPath) { it.startsWith(packageRelativePathPrefix) }

@@ -6,7 +6,7 @@ import com.intellij.java.analysis.bytecode.JvmBytecodeReferenceProcessor
 import com.intellij.java.analysis.bytecode.JvmClassBytecodeDeclaration
 import java.nio.file.Path
 
-internal class ExtractModuleFileProcessor {
+internal class ExtractModuleFileProcessor(classpathToSearchImplicitReferences: List<Path> = emptyList()) {
   private val mutableReferencedClasses: MutableSet<String> = HashSet()
   private val mutableGatheredClassLinks: MutableMap<String, MutableSet<String>> = HashMap()
 
@@ -22,7 +22,9 @@ internal class ExtractModuleFileProcessor {
     }
   }
 
-  val classFileAnalyzer = JvmBytecodeAnalysis.getInstance().createReferenceAnalyzer(referenceProcessor)
+  private val classFileAnalyzer =
+    if (classpathToSearchImplicitReferences.isEmpty()) JvmBytecodeAnalysis.getInstance().createReferenceAnalyzer(referenceProcessor)
+    else JvmBytecodeAnalysis.getInstance().createReferenceAnalyzerWithImplicitSuperclassReferences(referenceProcessor, classpathToSearchImplicitReferences)
 
   val referencedClasses: Set<String>
     get() = mutableReferencedClasses
