@@ -119,11 +119,9 @@ internal class PowerShellCompletionContributor : TerminalCommandCompletionContri
       insertValue = insertValue.appendQuotesAware(separator)
     }
 
-    // If the insert value is with quotes, add the cursor mark
-    // to place the cursor before the closing quote on insertion.
-    if (insertValue.isSurroundedByQuotes()) {
-      insertValue = insertValue.appendQuotesAware("{cursor}")
-    }
+    // Set the cursor position inside the insert string.
+    // If the value is in quotes, the cursor will be placed before the closing quote.
+    insertValue = insertValue.appendQuotesAware("{cursor}")
 
     return ShellCompletionSuggestion(lookupString) {
       insertValue(insertValue)
@@ -157,22 +155,35 @@ internal class PowerShellCompletionContributor : TerminalCommandCompletionContri
 
   /**
    * Appends [value] to the string taking quotes into account.
+   * Also, it takes the PowerShell invocation prefix into account in cases like `& 'C:\Program Files\'`
+   *
    * If it is surrounded by quotes, the value is added before the closing quote.
    * If it is already ends with [value], nothing is appended.
    */
   private fun String.appendQuotesAware(value: String): String {
-    return if (isSurroundedByQuotes()) {
-      val quote = first().toString()
-      val withoutQuotes = removeSurrounding(quote)
+    var str = this
+
+    val invocationPrefix = "& "
+    var shouldAddInvocationPrefix = false
+    if (str.startsWith(invocationPrefix)) {
+      str = str.removePrefix(invocationPrefix)
+      shouldAddInvocationPrefix = true
+    }
+
+    str = if (str.isSurroundedByQuotes()) {
+      val quote = str.first().toString()
+      val withoutQuotes = str.removeSurrounding(quote)
       val withAddedValue = if (withoutQuotes.endsWith(value)) withoutQuotes else withoutQuotes + value
       quote + withAddedValue + quote
     }
-    else if (endsWith(value)) {
-      this
+    else if (str.endsWith(value)) {
+      str
     }
     else {
-      this + value
+      str + value
     }
+
+    return if (shouldAddInvocationPrefix) invocationPrefix + str else str
   }
 
   private fun String.isSurroundedByQuotes(): Boolean {
