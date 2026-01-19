@@ -21,7 +21,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 public class Maven40ModelConverter {
-  public static @NotNull MavenModel convertModel(Model model) {
+  public static @NotNull MavenModel convertModel(File pomFile, Model model) {
     if (model.getBuild() == null) {
       model.setBuild(new Build());
     }
@@ -43,7 +43,7 @@ public class Maven40ModelConverter {
     result.setProfiles(convertProfiles(model.getProfiles()));
     result.setModules(model.getModules());
 
-    convertBuild(result.getBuild(), model.getBuild());
+    convertBuild(pomFile, result.getBuild(), model.getBuild());
     return result;
   }
 
@@ -132,15 +132,15 @@ public class Maven40ModelConverter {
     return directory == null ? Collections.emptyList() : Collections.singletonList(directory);
   }
 
-  public static void convertBuild(MavenBuild result, Build build) {
+  public static void convertBuild(File pomFile, MavenBuild result, Build build) {
     convertBuildBase(result, build);
     result.setOutputDirectory(build.getOutputDirectory());
     result.setTestOutputDirectory(build.getTestOutputDirectory());
-    setupSourceDirectories(result, build);
+    setupSourceDirectories(pomFile, result, build);
   }
 
 
-  private static void setupSourceDirectories(MavenBuild result, Build build) {
+  private static void setupSourceDirectories(File pomFile, MavenBuild result, Build build) {
 
     /*
      *  `sourceDirectory`, `testSourceDirectory` and `scriptSourceDirectory`
@@ -161,15 +161,16 @@ public class Maven40ModelConverter {
     else {
       List<MavenSource> list = new ArrayList<>();
       for (org.apache.maven.api.model.Source it : sourceList) {
-        MavenSource source = convert(it);
+        MavenSource source = convert(pomFile, it);
         list.add(source);
       }
       result.setMavenSources(list);
     }
   }
 
-  public static @NotNull MavenSource convert(org.apache.maven.api.model.Source it) {
+  public static @NotNull MavenSource convert(File pomFile, org.apache.maven.api.model.Source it) {
     return MavenSource.fromSourceTag(
+      pomFile.toPath(),
       it.getDirectory(),
       it.getIncludes(),
       it.getExcludes(),
@@ -182,10 +183,11 @@ public class Maven40ModelConverter {
     );
   }
 
-  public static @NotNull MavenSource convert(SourceRoot it) {
+  public static @NotNull MavenSource convert(File pomFile, SourceRoot it) {
     var scope = it.scope() == null ? null : it.scope().id();
     var lang = it.language() == null ? null : it.language().id();
     return MavenSource.fromSourceTag(
+      pomFile.toPath(),
       it.directory().toString(),
       Collections.emptyList(),
       Collections.emptyList(),
@@ -219,10 +221,10 @@ public class Maven40ModelConverter {
       if (null == directory) continue;
 
       result.add(new MavenResource(directory,
-                                  each.isFiltering(),
-                                  each.getTargetPath(),
-                                  ensurePatterns(each.getIncludes()),
-                                  ensurePatterns(each.getExcludes())));
+                                   each.isFiltering(),
+                                   each.getTargetPath(),
+                                   ensurePatterns(each.getIncludes()),
+                                   ensurePatterns(each.getExcludes())));
     }
     return result;
   }

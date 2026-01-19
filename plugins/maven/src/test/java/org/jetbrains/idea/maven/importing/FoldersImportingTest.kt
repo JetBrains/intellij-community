@@ -30,6 +30,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.junit.Test
 import java.io.File
 import java.io.IOException
+import kotlin.io.path.createTempDirectory
 
 class FoldersImportingTest : FoldersImportingTestCase() {
 
@@ -1242,5 +1243,53 @@ class FoldersImportingTest : FoldersImportingTestCase() {
     assertTestSources("project", "my/testsrc")
     assertResources("project", "my/res")
     assertTestResources("project", "my/testres")
+  }
+
+  @Test
+  fun testImportingSourcesTagWithoutDirectory() = runBlocking {
+    assumeMaven4()
+    useModel410()
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>
+        <sources>
+            <source>
+                <lang>java</lang>
+                <scope>main</scope>
+            </source>
+            <source>
+                <module>mod</module>
+                <scope>test</scope>
+            </source>
+        </sources>
+      </build>
+      """);
+    assertModules("project")
+    assertSources("project", "src/main/java")
+    assertTestSources("project", "src/test/java")
+  }
+
+  @Test
+  fun testImportingSourcesTagWithAbsoluteDirectory() = runBlocking {
+    assumeMaven4()
+    useModel410()
+    createProjectSubDirs("my/src", "my/res", "my/testsrc", "my/testres")
+    val dir = createTempDirectory()
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>
+        <sources>
+            <source>
+               <directory>$dir</directory>
+            </source>
+        </sources>
+      </build>
+      """);
+    assertModules("project")
+    assertSources("project", projectRoot.toNioPath().relativize(dir).toString())
   }
 }

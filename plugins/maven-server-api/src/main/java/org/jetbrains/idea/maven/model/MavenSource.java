@@ -4,10 +4,12 @@ package org.jetbrains.idea.maven.model;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 public class MavenSource implements Serializable {
   public static final String MAIN_SCOPE = "main";
@@ -15,7 +17,7 @@ public class MavenSource implements Serializable {
   public static final String JAVA_LANG = "java";
   public static final String RESOURCES_LANG = "resources";
 
-  private final @NotNull String myDirectory;
+  private final @NotNull String myDirectoryAbsolutePath;
   private final ArrayList<String> myIncludes;
   private final ArrayList<String> myExcludes;
   private final String myScope;
@@ -28,7 +30,7 @@ public class MavenSource implements Serializable {
 
 
   private MavenSource(boolean isSourceTag,
-                      @NotNull String directory,
+                      @NotNull String directoryAbsolutePath,
                       List<String> includes,
                       List<String> excludes,
                       String scope,
@@ -39,7 +41,7 @@ public class MavenSource implements Serializable {
                       boolean enabled) {
 
     myIsSourceTag = isSourceTag;
-    myDirectory = directory;
+    myDirectoryAbsolutePath = directoryAbsolutePath;
     myIncludes = new ArrayList<>(includes);
     myExcludes = new ArrayList<>(excludes);
     myScope = scope;
@@ -52,7 +54,7 @@ public class MavenSource implements Serializable {
 
 
   public @NotNull String getDirectory() {
-    return myDirectory;
+    return myDirectoryAbsolutePath;
   }
 
   public List<String> getIncludes() {
@@ -137,7 +139,8 @@ public class MavenSource implements Serializable {
                            RESOURCES_LANG, resource.getTargetPath(), null, resource.isFiltered(), true);
   }
 
-  public static MavenSource fromSourceTag(@NotNull String directory,
+  public static MavenSource fromSourceTag(@NotNull Path projectPomFile,
+                                          String directory,
                                           List<String> includes,
                                           List<String> excludes,
                                           String scope,
@@ -146,7 +149,51 @@ public class MavenSource implements Serializable {
                                           String targetVersion,
                                           boolean filtered,
                                           boolean enabled) {
-    return new MavenSource(true, directory, includes, excludes, scope, lang, targetPath, targetVersion, filtered, enabled);
+    if (scope == null) {
+      scope = MAIN_SCOPE;
+    }
+    if (lang == null) {
+      lang = JAVA_LANG;
+    }
+    if (directory == null) {
+      directory = "src/" + scope + "/" + lang;
+    }
+    Path absolute = getAbsolutePath(projectPomFile.getParent(), directory);
+    return new MavenSource(true, absolute.toString(), includes, excludes, scope, lang, targetPath, targetVersion, filtered, enabled);
+  }
+
+  private static Path getAbsolutePath(@NotNull Path pomDirectory, @NotNull String directory) {
+    Path p = parseToPath(directory);
+    if (!p.isAbsolute()) {
+      p = pomDirectory.resolve(p);
+    }
+    return p.toAbsolutePath().normalize();
+  }
+
+  private static Path parseToPath(@NotNull String directory) {
+    String trimmed = directory.trim();
+
+    // Handle file: URIs like file:///C:/path or file:/home/user/path
+    if (trimmed.toLowerCase(Locale.ROOT).startsWith("file:")) {
+      try {
+        URI uri = new URI(trimmed);
+        // Java 8 way
+        return Paths.get(uri);
+      }
+      catch (URISyntaxException e) {
+        throw new IllegalArgumentException("Invalid file URI: " + directory, e);
+      }
+      catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException("Unsupported URI (expected file:): " + directory, e);
+      }
+    }
+
+    try {
+      return Paths.get(trimmed);
+    }
+    catch (InvalidPathException e) {
+      throw new IllegalArgumentException("Invalid path: " + directory, e);
+    }
   }
 
 
@@ -158,7 +205,7 @@ public class MavenSource implements Serializable {
     MavenSource source = (MavenSource)o;
     return myFiltered == source.myFiltered &&
            myEnabled == source.myEnabled &&
-           Objects.equals(myDirectory, source.myDirectory) &&
+           Objects.equals(myDirectoryAbsolutePath, source.myDirectoryAbsolutePath) &&
            Objects.equals(myIncludes, source.myIncludes) &&
            Objects.equals(myExcludes, source.myExcludes) &&
            Objects.equals(myScope, source.myScope) &&
@@ -169,7 +216,7 @@ public class MavenSource implements Serializable {
 
   @Override
   public int hashCode() {
-    int result = Objects.hashCode(myDirectory);
+    int result = Objects.hashCode(myDirectoryAbsolutePath);
     result = 31 * result + Objects.hashCode(myIncludes);
     result = 31 * result + Objects.hashCode(myExcludes);
     result = 31 * result + Objects.hashCode(myScope);
