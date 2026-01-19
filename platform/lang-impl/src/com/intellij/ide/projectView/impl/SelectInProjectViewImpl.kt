@@ -8,6 +8,7 @@ import com.intellij.ide.scopeView.ScopeViewPane
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -441,3 +442,5 @@ private fun <T : VirtualFile> T.nullIfInvalid(): T? = if (isValid) this else nul
 private val PsiElement.virtualFile: VirtualFile? get() = PsiUtilCore.getVirtualFile(this)
 
 private val LOG = logger<SelectInProjectViewImpl>()
+
+internal fun selectInProjectViewLog(): Logger = LOG
