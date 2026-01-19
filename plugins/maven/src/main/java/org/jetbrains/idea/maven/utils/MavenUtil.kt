@@ -532,19 +532,9 @@ object MavenUtil {
     val manager = FileTemplateManager.getInstance(project)
     val fileTemplate = manager.getJ2eeTemplate(templateName)
     val allProperties = manager.getDefaultProperties()
-    if (!interactive) {
-      allProperties.putAll(properties)
-    }
+    allProperties.putAll(properties)
     allProperties.putAll(conditions!!)
     var text = fileTemplate.getText(allProperties)
-    val pattern = Pattern.compile("\\$\\{(.*?)}")
-    val matcher = pattern.matcher(text)
-    val builder = StringBuilder()
-    while (matcher.find()) {
-      matcher.appendReplacement(builder, "\\$" + StringUtil.toUpperCase(matcher.group(1)) + "\\$")
-    }
-    matcher.appendTail(builder)
-    text = builder.toString()
 
     val template = TemplateManager.getInstance(project).createTemplate("", "", text) as TemplateImpl
     for (i in 0..<template.getSegmentsCount()) {
