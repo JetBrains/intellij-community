@@ -46,7 +46,7 @@ public final class LightModCompletionServiceImpl {
   public static void getItems(PsiFile file, int startOffset, int caretOffset, int invocationCount, CompletionType type,  
                               Consumer<ModCompletionItem> sink) {
     PsiElement element;
-    PsiElement original = Objects.requireNonNull(file.findElementAt(startOffset));
+    PsiElement original = file.findElementAt(startOffset);
     if (startOffset == caretOffset) {
       PsiFile copy = (PsiFile)file.copy();
       Document document = copy.getFileDocument();
@@ -55,7 +55,7 @@ public final class LightModCompletionServiceImpl {
       manager.commitDocument(document);
       element = Objects.requireNonNull(copy.findElementAt(caretOffset));
     } else {
-      element = original;
+      element = Objects.requireNonNullElse(original, file);
     }
     List<ModCompletionItemProvider> providers = ModCompletionItemProvider.EP_NAME.allForLanguage(file.getLanguage());
     String prefix = file.getFileDocument().getText(TextRange.create(startOffset, caretOffset));
