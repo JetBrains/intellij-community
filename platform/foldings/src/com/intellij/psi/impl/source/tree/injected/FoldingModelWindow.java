@@ -152,7 +152,7 @@ public final class FoldingModelWindow implements FoldingModelEx, ModificationTra
   }
 
   @Override
-  public @NotNull List<FoldRegion> getGroupedRegions(FoldingGroup group) {
+  public @NotNull List<FoldRegion> getGroupedRegions(@NotNull FoldingGroup group) {
     List<FoldRegion> hostRegions = myDelegate.getGroupedRegions(group);
     return getWindowRegions(hostRegions);
   }

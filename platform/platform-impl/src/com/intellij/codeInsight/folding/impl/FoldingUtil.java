@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,12 +52,6 @@ public final class FoldingUtil {
     return regions;
   }
 
-  @ApiStatus.Internal
-  public static boolean caretInsideRange(@NotNull Editor editor, @NotNull TextRange range) {
-    final int offset = editor.getCaretModel().getOffset();
-    return range.contains(offset) && range.getStartOffset() != offset;
-  }
-
   public static boolean isHighlighterFolded(@NotNull Editor editor, @NotNull RangeHighlighter highlighter) {
     int startOffset = highlighter instanceof RangeHighlighterEx
                       ? ((RangeHighlighterEx)highlighter).getAffectedAreaStartOffset()
@@ -77,7 +70,7 @@ public final class FoldingUtil {
    * Iterates fold region tree in a depth-first order (pre-order)
    */
   public static @NotNull Iterator<FoldRegion> createFoldTreeIterator(@NotNull Editor editor) {
-    final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
+    FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     return new Iterator<>() {
       private int sectionStart;
       private int current;

@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.zombie.CodeFoldingZombieUtils;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -27,6 +26,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -93,11 +93,11 @@ final class UpdateFoldRegionsOperation implements Runnable {
     EditorFoldingInfo info = EditorFoldingInfo.get(myEditor);
     FoldingModelEx foldingModel = (FoldingModelEx)myEditor.getFoldingModel();
 
-    Map<TextRange, Boolean> rangeToExpandStatusMap = removeInvalidRegions(info, foldingModel);
+    Map<TextRange, Boolean> rangeToExpandStatusMap = removeInvalidRegions(foldingModel, info);
 
     Set<FoldRegion> shouldExpand = new HashSet<>();
     Set<FoldingGroup> groupExpand = new HashSet<>();
-    List<FoldRegion> newRegions = addNewRegions(info, foldingModel, rangeToExpandStatusMap, shouldExpand, groupExpand);
+    List<FoldRegion> newRegions = addNewRegions(foldingModel, info, rangeToExpandStatusMap, shouldExpand, groupExpand);
     if (CodeFoldingManagerImpl.isAsyncFoldingUpdater(myEditor)) {
       Map<TextRange, Boolean> postponedExpansionMap = CodeFoldingManagerImpl.getAsyncExpandStatusMap(myEditor);
       if (postponedExpansionMap != null) {
@@ -123,13 +123,15 @@ final class UpdateFoldRegionsOperation implements Runnable {
   }
 
   @RequiresEdt
-  private @NotNull List<FoldRegion> addNewRegions(@NotNull EditorFoldingInfo info,
-                                                  @NotNull FoldingModelEx foldingModel,
-                                                  @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap,
+  private @NotNull List<FoldRegion> addNewRegions(@NotNull FoldingModelEx foldingModel,
+                                                  @NotNull EditorFoldingInfo editorFoldingInfo,
+                                                  @NotNull @Unmodifiable Map<TextRange, Boolean> rangeToExpandStatusMap,
                                                   @NotNull Set<? super FoldRegion> shouldExpand,
                                                   @NotNull Set<? super FoldingGroup> groupExpand) {
     List<FoldRegion> newRegions = new ArrayList<>(myRegionInfos.size());
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
+    TextRange rangeToUnfoldOnNavigation = OpenFileDescriptor.getRangeToUnfoldOnNavigation(myEditor);
+    int caretOffset = myEditor.getCaretModel().getOffset();
     for (FoldingUpdate.RegionInfo regionInfo : myRegionInfos) {
       ProgressManager.checkCanceled();
       FoldingDescriptor descriptor = regionInfo.descriptor();
@@ -161,20 +163,22 @@ final class UpdateFoldRegionsOperation implements Runnable {
 
       region.setGutterMarkEnabledForSingleLine(descriptor.isGutterMarkEnabledForSingleLine());
 
-      if (descriptor.canBeRemovedWhenCollapsed()) region.putUserData(CAN_BE_REMOVED_WHEN_COLLAPSED, Boolean.TRUE);
+      if (descriptor.canBeRemovedWhenCollapsed()) {
+        region.putUserData(CAN_BE_REMOVED_WHEN_COLLAPSED, Boolean.TRUE);
+      }
       CodeFoldingManagerImpl.markAsFrontendCreated(region);
-      CodeFoldingManagerImpl.setCollapsedByDef(region, regionInfo.collapsedByDefault());
+      CodeFoldingManagerImpl.setCollapsedByDefault(region, regionInfo.collapsedByDefault());
       region.putUserData(KEEP_EXPANDED_ON_FIRST_COLLAPSE_ALL, regionInfo.keepExpandedOnFirstCollapseAll());
       region.putUserData(SIGNATURE, ObjectUtils.chooseNotNull(regionInfo.signature(), NO_SIGNATURE));
 
-      info.addRegion(region, smartPointerManager.createSmartPsiElementPointer(psi));
+      editorFoldingInfo.addRegion(region, smartPointerManager.createSmartPsiElementPointer(psi));
       newRegions.add(region);
 
       if (descriptor.isNonExpandable()) {
         region.putUserData(SELECT_REGION_ON_CARET_NEARBY, Boolean.TRUE);
       }
       else {
-        boolean expandStatus = shouldExpandNewRegion(range, rangeToExpandStatusMap, regionInfo.collapsedByDefault());
+        boolean expandStatus = shouldExpandNewRegion(range, rangeToExpandStatusMap, regionInfo.collapsedByDefault(), rangeToUnfoldOnNavigation, caretOffset);
         if (expandStatus) {
           if (group == null) {
             shouldExpand.add(region);
@@ -217,25 +221,30 @@ final class UpdateFoldRegionsOperation implements Runnable {
     return region;
   } 
 
+  static boolean caretInsideRange(int caretOffset, @NotNull TextRange range) {
+    return range.contains(caretOffset) && range.getStartOffset() != caretOffset;
+  }
+
   private boolean shouldExpandNewRegion(@NotNull TextRange range,
-                                        @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap,
-                                        boolean collapsedByDefault) {
+                                        @NotNull @Unmodifiable Map<TextRange, Boolean> rangeToExpandStatusMap,
+                                        boolean collapsedByDefault,
+                                        @NotNull TextRange rangeToUnfoldOnNavigation,
+                                        int caretOffset) {
     if (myApplyDefaultState != ApplyDefaultStateMode.NO) {
       // Considering that this code is executed only on initial fold regions construction on editor opening.
       if (myApplyDefaultState == ApplyDefaultStateMode.EXCEPT_CARET_REGION) {
-        TextRange lineRange = OpenFileDescriptor.getRangeToUnfoldOnNavigation(myEditor);
-        if (lineRange.intersects(range)) {
+        if (rangeToUnfoldOnNavigation.intersects(range)) {
           return true;
         }
       }
       return !collapsedByDefault;
     }
 
-    final Boolean oldStatus = rangeToExpandStatusMap.get(range);
-    return oldStatus == null || oldStatus.booleanValue() || FoldingUtil.caretInsideRange(myEditor, range);
+    Boolean oldStatus = rangeToExpandStatusMap.get(range);
+    return oldStatus == null || oldStatus.booleanValue() || caretInsideRange(caretOffset, range);
   }
 
-  private @NotNull Map<TextRange, Boolean> removeInvalidRegions(@NotNull EditorFoldingInfo info, @NotNull FoldingModelEx foldingModel) {
+  private @NotNull Map<TextRange, Boolean> removeInvalidRegions(@NotNull FoldingModelEx foldingModel, @NotNull EditorFoldingInfo info) {
     FoldRegion[] allFoldRegions = foldingModel.getAllFoldRegions();
     Map<TextRange, Boolean> rangeToExpandStatusMap = HashMap.newHashMap(allFoldRegions.length);
     List<FoldRegion> toRemove = new ArrayList<>();
@@ -251,7 +260,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
       boolean shouldRemove = false;
       boolean isLight = true;
       for (FoldRegion regionToProcess : regionsToProcess) {
-        if (!regionToProcess.isValid() || shouldRemoveRegion(regionToProcess, info, rangeToExpandStatusMap, infoRef)) {
+        if (!regionToProcess.isValid() || shouldRemoveRegion(foldingModel, regionToProcess, info, rangeToExpandStatusMap, infoRef)) {
           shouldRemove = true;
         }
         isLight &= regionToProcess.getUserData(SIGNATURE) == null;
@@ -305,7 +314,8 @@ final class UpdateFoldRegionsOperation implements Runnable {
     return rangeToExpandStatusMap;
   }
 
-  private boolean shouldRemoveRegion(@NotNull FoldRegion region,
+  private boolean shouldRemoveRegion(@NotNull FoldingModelEx foldingModel,
+                                     @NotNull FoldRegion region,
                                      @NotNull EditorFoldingInfo info,
                                      @NotNull Map<? super TextRange, ? super Boolean> rangeToExpandStatusMap,
                                      @NotNull Ref<? super FoldingUpdate.RegionInfo> matchingInfo) {
@@ -322,8 +332,8 @@ final class UpdateFoldRegionsOperation implements Runnable {
         return false;
       }
     }
-    boolean forceKeepRegion = myKeepCollapsedRegions && !region.isExpanded() && !regionOrGroupCanBeRemovedWhenCollapsed(region);
-    Boolean storedCollapsedByDefault = CodeFoldingManagerImpl.getCollapsedByDef(region);
+    boolean forceKeepRegion = myKeepCollapsedRegions && !region.isExpanded() && !regionOrGroupCanBeRemovedWhenCollapsed(foldingModel, region);
+    Boolean storedCollapsedByDefault = CodeFoldingManagerImpl.getCollapsedByDefault(region);
     Collection<FoldingUpdate.RegionInfo> regionInfos;
     if (element != null && !(regionInfos = myElementsToFoldMap.get(element)).isEmpty()) {
       FoldingUpdate.RegionInfo[] array = regionInfos.toArray(new FoldingUpdate.RegionInfo[0]);
@@ -350,40 +360,39 @@ final class UpdateFoldRegionsOperation implements Runnable {
         }
         return true;
       }
+      return false;
+    }
+    // In the case of auto-created folding, we need to ensure that we really need to ensure that the region is safe to be removed.
+    // Otherwise, backend-originated foldings could be removed without any new foldings (which is a case for frontend-rebuilt folding)
+    if (CodeFoldingManagerImpl.isAutoCreated(region)) {
+      // for auto-created foldings, CAN_BE_REMOVED_WHEN_COLLAPSED could be only inherited from the previously alive frontend folding
+      // That previous folding is 99.9% a merge of the same foldings from backend and frontend (since they are for now placed in common modules).
+      // However, if during the reparse + folding update, those foldings (e.g., new import added) should be extended, it, first, should be removed.
+      // But due to the lack of that flag, it will not be removed and the state of the folding will be inconsistent on the back-/frontend.
+      // That lead to IJPL-198085
+      return !forceKeepRegion &&
+             Boolean.TRUE.equals(region.getUserData(CAN_BE_REMOVED_WHEN_COLLAPSED));
     }
     else {
-      // In the case of auto-created folding, we need to ensure that we really need to ensure that the region is safe to be removed.
-      // Otherwise, backend-originated foldings could be removed without any new foldings (which is a case for frontend-rebuilt folding)
-      if (CodeFoldingManagerImpl.isAutoCreated(region)) {
-        // for auto-created foldings, CAN_BE_REMOVED_WHEN_COLLAPSED could be only inherited from the previously alive frontend folding
-        // That previous folding is 99.9% a merge of the same foldings from backend and frontend (since they are for now placed in common modules).
-        // However, if during the reparse + folding update, those foldings (e.g., new import added) should be extended, it, first, should be removed.
-        // But due to the lack of that flag, it will not be removed and the state of the folding will be inconsistent on the back-/frontend.
-        // That lead to IJPL-198085
-        return !forceKeepRegion &&
-               Boolean.TRUE.equals(region.getUserData(CAN_BE_REMOVED_WHEN_COLLAPSED));
-      } else {
-        return !forceKeepRegion &&
-               !(region.getUserData(SIGNATURE) == null /* 'light' region */);
-      }
+      return !forceKeepRegion &&
+             !(region.getUserData(SIGNATURE) == null /* 'light' region */);
     }
-    return false;
   }
 
-  private boolean regionOrGroupCanBeRemovedWhenCollapsed(@NotNull FoldRegion region) {
+  private boolean regionOrGroupCanBeRemovedWhenCollapsed(@NotNull FoldingModelEx foldingModel, @NotNull FoldRegion region) {
     FoldingGroup group = region.getGroup();
-    List<FoldRegion> affectedRegions = group != null && myEditor instanceof EditorEx
-                                       ? ((EditorEx)myEditor).getFoldingModel().getGroupedRegions(group)
+    List<FoldRegion> affectedRegions = group != null
+                                       ? foldingModel.getGroupedRegions(group)
                                        : Collections.singletonList(region);
     for (FoldRegion affectedRegion : affectedRegions) {
-      if (regionCanBeRemovedWhenCollapsed(affectedRegion)) return true;
+      if (regionCanBeRemovedWhenCollapsed(foldingModel, affectedRegion)) return true;
     }
     return false;
   }
 
-  private boolean regionCanBeRemovedWhenCollapsed(@NotNull FoldRegion region) {
+  private boolean regionCanBeRemovedWhenCollapsed(@NotNull FoldingModelEx foldingModel, @NotNull FoldRegion region) {
     return Boolean.TRUE.equals(region.getUserData(CAN_BE_REMOVED_WHEN_COLLAPSED)) ||
-           ((FoldingModelEx)myEditor.getFoldingModel()).hasDocumentRegionChangedFor(region) ||
+           foldingModel.hasDocumentRegionChangedFor(region) ||
            !region.isValid() ||
            isRegionInCaretLine(region);
   }

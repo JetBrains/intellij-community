@@ -24,7 +24,7 @@ internal data class FoldLimb(
     foldRegion.group?.id,
     foldRegion.shouldNeverExpand(),
     foldRegion.isExpanded,
-    CodeFoldingManagerImpl.getCollapsedByDef(foldRegion) == true,
+    CodeFoldingManagerImpl.getCollapsedByDefault(foldRegion) == true,
     CodeFoldingManagerImpl.isFrontendCreated(foldRegion),
   )
 

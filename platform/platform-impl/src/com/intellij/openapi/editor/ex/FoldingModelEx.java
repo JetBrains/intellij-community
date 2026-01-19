@@ -48,7 +48,7 @@ public interface FoldingModelEx extends FoldingModel {
   void rebuild();
 
   @NotNull
-  List<FoldRegion> getGroupedRegions(FoldingGroup group);
+  List<FoldRegion> getGroupedRegions(@NotNull FoldingGroup group);
 
   void clearDocumentRangesModificationStatus();
 

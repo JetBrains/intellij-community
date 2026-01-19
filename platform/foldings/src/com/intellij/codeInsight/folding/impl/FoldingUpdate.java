@@ -165,13 +165,12 @@ public final class FoldingUpdate {
         continue;
       }
       InjectedLanguageUtil.enumerate(injectedDocument, psiFile, (injectedFile, places) -> {
-        if (!injectedFile.isValid()) return;
-        Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
-        if (!(injectedEditor instanceof EditorWindow)) return;
-
-        injectedEditors.add((EditorWindow)injectedEditor);
-        injectedFiles.add(injectedFile);
-        lists.add(codeFoldingForInjectedEnabled ? getFoldingsFor(injectedFile, false) : List.of());
+        Editor injectedEditor = injectedFile.isValid() ? InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile) : null;
+        if (injectedEditor instanceof EditorWindow window) {
+          injectedEditors.add(window);
+          injectedFiles.add(injectedFile);
+          lists.add(codeFoldingForInjectedEnabled ? getFoldingsFor(injectedFile, false) : List.of());
+        }
       });
     }
 
@@ -220,8 +219,8 @@ public final class FoldingUpdate {
 
   @VisibleForTesting
   public static @NotNull @Unmodifiable List<RegionInfo> getFoldingsFor(@NotNull PsiFile psiFile, boolean quick) {
-    if (psiFile instanceof PsiCompiledFile) {
-      psiFile = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
+    if (psiFile instanceof PsiCompiledFile compiled) {
+      psiFile = compiled.getDecompiledPsiFile();
     }
     FileViewProvider viewProvider = psiFile.getViewProvider();
     Document document = viewProvider.getDocument();
@@ -237,19 +236,19 @@ public final class FoldingUpdate {
 
     Comparator<PsiFile> preferBaseLanguage = Comparator.comparing((PsiFile f) -> f.getLanguage() != viewProvider.getBaseLanguage()).thenComparing(f->f.getLanguage().getID());
     List<PsiFile> allFiles = ContainerUtil.sorted(viewProvider.getAllFiles(), preferBaseLanguage);
-    DocumentEx copyDoc = allFiles.size() > 1 ? new DocumentImpl(document.getImmutableCharSequence(), document instanceof DocumentImpl && ((DocumentImpl)document).acceptsSlashR(), true) : null;
+    DocumentEx copyDoc = allFiles.size() > 1 ? new DocumentImpl(document.getImmutableCharSequence(), document instanceof DocumentImpl docImpl && docImpl.acceptsSlashR(), true) : null;
     List<RegionInfo> elementsToFold = null;
-    for (PsiFile psi : allFiles) {
-      Language language = psi.getLanguage();
+    for (PsiFile psiRoot : allFiles) {
+      Language language = psiRoot.getLanguage();
       FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
       if (foldingBuilder != null) {
-        if (psi.getTextLength() != textLength) {
-          LOG.error(DebugUtil.diagnosePsiDocumentInconsistency(psi, document));
+        if (psiRoot.getTextLength() != textLength) {
+          LOG.error(DebugUtil.diagnosePsiDocumentInconsistency(psiRoot, document));
           return List.of();
         }
 
         PsiFile containingFile = PsiUtilCore.getTemplateLanguageFile(psiFile);
-        FoldingDescriptor[] descriptors = LanguageFolding.buildFoldingDescriptors(foldingBuilder, psi, document, quick);
+        FoldingDescriptor[] descriptors = LanguageFolding.buildFoldingDescriptors(foldingBuilder, psiRoot, document, quick);
         if (elementsToFold == null) {
           elementsToFold = new ArrayList<>(descriptors.length);
         }
@@ -265,7 +264,7 @@ public final class FoldingUpdate {
           }
           TextRange range = descriptor.getRange();
           if (range.getEndOffset() > textLength) {
-            diagnoseIncorrectRange(psi, document, language, foldingBuilder, descriptor, psiElement);
+            diagnoseIncorrectRange(psiRoot, document, language, foldingBuilder, descriptor, psiElement);
             continue;
           }
 

@@ -162,7 +162,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
 
   @Override
   public @Nullable Boolean isCollapsedByDefault(@NotNull FoldRegion region) {
-    return getCollapsedByDef(region);
+    return getCollapsedByDefault(region);
   }
 
   @Override
@@ -206,11 +206,11 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     return CAN_BE_REMOVED_WHEN_COLLAPSED.get(region) == Boolean.TRUE;
   }
 
-  public static Boolean getCollapsedByDef(@NotNull FoldRegion region) {
+  public static Boolean getCollapsedByDefault(@NotNull FoldRegion region) {
     return UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT.get(region);
   }
 
-  public static void setCollapsedByDef(@NotNull FoldRegion region, boolean isCollapsed) {
+  public static void setCollapsedByDefault(@NotNull FoldRegion region, boolean isCollapsed) {
     UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT.set(region, isCollapsed);
   }
 
@@ -256,12 +256,15 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   @RequiresEdt
   private void initFolding(@NotNull Editor editor) {
     Document document = editor.getDocument();
+    ThreadingAssertions.assertEventDispatchThread();
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
+      ThreadingAssertions.assertEventDispatchThread();
       DocumentFoldingInfo documentFoldingInfo = getOrCreateDocumentFoldingInfo(document);
       EditorFactory.getInstance().editors(document, myProject)
         .filter(otherEditor -> otherEditor != editor && isFoldingsInitializedInEditor(otherEditor))
         .findFirst()
-        .ifPresent(documentFoldingInfo::loadFromEditor);
+        .ifPresent(otherEditor -> documentFoldingInfo.loadFromEditor(otherEditor));
+
       documentFoldingInfo.setToEditor(editor);
       documentFoldingInfo.clear();
 
