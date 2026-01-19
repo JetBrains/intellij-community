@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.Nullability;
@@ -353,12 +353,12 @@ public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLoca
       String replacementText;
       if (model.myCopy) {
         assert model.myContent.size() == 1;
-        replacementText = "java.util." + model.myType + "." + typeArgument + "copyOf(" + model.myContent.get(0).getText() + ")";
+        replacementText = "java.util." + model.myType + "." + typeArgument + "copyOf(" + model.myContent.getFirst().getText() + ")";
       }
       else if (model.hasTooManyMapEntries()) {
         replacementText = StreamEx.ofSubLists(model.myContent, 2)
-          .map(expr -> ct.commentsBefore(expr.get(0)) +
-                       "java.util.Map.entry(" + ct.text(expr.get(0)) + "," + ct.textWithComments(expr.get(1)) + ")")
+          .map(expr -> ct.commentsBefore(expr.getFirst()) +
+                       "java.util.Map.entry(" + ct.text(expr.getFirst()) + "," + ct.textWithComments(expr.get(1)) + ")")
           .joining(",", "java.util.Map." + typeArgument + "ofEntries(", ")");
       }
       else {

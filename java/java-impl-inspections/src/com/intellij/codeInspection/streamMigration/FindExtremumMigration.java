@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.project.Project;
@@ -573,7 +573,7 @@ final class FindExtremumMigration extends BaseStreamApiMigration {
       if (mayChangeBeforeLoop(extremum, terminalBlock)) return null;
       if (nonFinalVars != null) {
         if (nonFinalVars.size() != 1) return null;
-        if (!nonFinalVars.get(0).equals(extremum)) return null;
+        if (!nonFinalVars.getFirst().equals(extremum)) return null;
         if (containsAnyVariable(loopVarExpr, nonFinalVars)) return null;
       }
       PsiType loopVarExprType = loopVarExpr.getType();

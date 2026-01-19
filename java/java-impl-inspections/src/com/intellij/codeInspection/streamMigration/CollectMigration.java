@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.Nullability;
@@ -515,7 +515,7 @@ final class CollectMigration extends BaseStreamApiMigration {
       PsiReferenceExpression valueReference = condition.getValueReference();
       if(valueReference == null) return null;
       PsiLocalVariable listVar = tryCast(valueReference.resolve(), PsiLocalVariable.class);
-      if (nonFinalVariables != null && !nonFinalVariables.get(0).equals(listVar) ||
+      if (nonFinalVariables != null && !nonFinalVariables.getFirst().equals(listVar) ||
           listVar == null ||
           !InheritanceUtil.isInheritor(listVar.getType(), JAVA_UTIL_LIST)) {
         return null;

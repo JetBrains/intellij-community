@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.impl.RemoveRedundantParameterTypesFix;
@@ -350,7 +350,7 @@ public final class ComparatorCombinatorsInspection extends AbstractBaseJavaLocal
                                                           @NotNull PsiVariable firstVar,
                                                           @NotNull PsiVariable secondVar) {
     if (blocks.size() < 2) return null;
-    ComparisonBlock first = blocks.get(0);
+    ComparisonBlock first = blocks.getFirst();
     StringBuilder builder = new StringBuilder();
     PsiType type = secondVar.getType();
     String name = suggestVarName(firstVar);

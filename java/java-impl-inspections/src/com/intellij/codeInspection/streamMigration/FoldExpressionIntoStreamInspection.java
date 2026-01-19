@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.*;
@@ -94,7 +94,7 @@ public final class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLo
         }
         elements.add(left);
       }
-      else if (elements.get(0) != left) {
+      else if (elements.getFirst() != left) {
         return Collections.emptyList();
       }
       if (!Objects.equals(left.getType(), right.getType()) ||
@@ -198,7 +198,7 @@ public final class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLo
       if (diffs.isEmpty()) return;
 
       PsiExpression[] operands = expression.getOperands();
-      PsiExpression firstExpression = diffs.get(0);
+      PsiExpression firstExpression = diffs.getFirst();
       assert PsiTreeUtil.isAncestor(operands[0], firstExpression, false);
       Object marker = new Object();
       PsiTreeUtil.mark(firstExpression, marker);
@@ -262,7 +262,7 @@ public final class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLo
     public boolean isStringJoin(PsiPolyadicExpression expression, List<? extends PsiExpression> diff) {
       if (!myMapToString.isEmpty()) return false;
       PsiExpression[] operands = getOperands(expression);
-      return operands[0] == diff.get(0);
+      return operands[0] == diff.getFirst();
     }
 
     @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -165,7 +165,7 @@ public abstract class FunctionHelper {
               }
             }
             return new VoidBlockLambdaFunctionHelper(block, parameters);
-          } else if (returns.size() == 1 && ArrayUtil.getLastElement(block.getStatements()) == returns.get(0)) {
+          } else if (returns.size() == 1 && ArrayUtil.getLastElement(block.getStatements()) == returns.getFirst()) {
             PsiExpression trivialCall = JavaPsiFacade.getElementFactory(lambda.getProject())
               .createExpressionFromText("((" + type.getCanonicalText() + ")" + lambda.getText() + ")." +
                                         interfaceMethod.getName() + "(" + String.join(",", parameters) + ")", lambda);

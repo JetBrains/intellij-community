@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -89,7 +89,7 @@ public final class RedundantFileCreationInspection extends AbstractBaseJavaLocal
       if (!candidate.isConstructor() || candidate.equals(method)) continue;
       List<PsiType> candidateParams = ContainerUtil.map(candidate.getParameterList().getParameters(), param -> param.getType());
       if (candidateParams.size() != methodParams.size()) continue;
-      if (TypeUtils.isJavaLangString(candidateParams.get(0)) &&
+      if (TypeUtils.isJavaLangString(candidateParams.getFirst()) &&
           methodParams.subList(1, methodParams.size()).equals(candidateParams.subList(1, candidateParams.size()))) {
         return true;
       }

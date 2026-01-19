@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -144,7 +144,7 @@ final class TerminalBlock {
         ContainerUtil.filter(vars, var -> ContainerUtil.or(statements, st -> VariableAccessUtils.variableIsUsed(var, st)));
       if (used.size() > 1) return null;
       if (!used.isEmpty()) {
-        PsiPatternVariable var = used.get(0);
+        PsiPatternVariable var = used.getFirst();
         String text = JavaPsiPatternUtil.getEffectiveInitializerText(var);
         if (text == null) return null;
         if (ContainerUtil.or(statements, st -> VariableAccessUtils.variableIsUsed(myVariable, st))) return null;

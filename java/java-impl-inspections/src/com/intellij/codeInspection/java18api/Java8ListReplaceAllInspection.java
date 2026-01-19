@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -167,7 +167,7 @@ public final class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalIn
 
     private static @NotNull String generateParameterName(PsiStatement body, List<PsiMethodCallExpression> getCalls) {
       if (getCalls.isEmpty()) return "ignored";
-      return new VariableNameGenerator(body, VariableKind.PARAMETER).byExpression(getCalls.get(0)).generate(true);
+      return new VariableNameGenerator(body, VariableKind.PARAMETER).byExpression(getCalls.getFirst()).generate(true);
     }
 
     private static void inlineVariable(PsiLocalVariable variable, PsiStatement body) {

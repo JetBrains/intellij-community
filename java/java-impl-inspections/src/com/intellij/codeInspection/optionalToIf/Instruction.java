@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.optionalToIf;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -139,7 +139,7 @@ interface Instruction {
     @Override
     public String generate() {
       if (myInstructions.size() == 1 && !hasElseBranch()) {
-        Instruction instruction = myInstructions.get(0);
+        Instruction instruction = myInstructions.getFirst();
         if (!(instruction instanceof Declaration) &&
             (!(instruction instanceof CodeBlock) || ((CodeBlock)instruction).myBlock.getCodeBlock().getStatements().length == 1)) {
           return "if(" + myCondition.getText() + ")" + instruction.generate();

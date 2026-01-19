@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -402,7 +402,7 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
     @Override
     public @NotNull String getText() {
       if (mySignatures.size() == 1) {
-        final String declarationText = getDeclarationText(mySignatures.get(0));
+        final String declarationText = getDeclarationText(mySignatures.getFirst());
         return JavaBundle.message(myIsConstructor
                                          ? "inspection.handle.signature.use.constructor.fix.name"
                                          : "inspection.handle.signature.use.method.fix.name",
@@ -437,7 +437,7 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
       }
 
       if (mySignatures.size() == 1) {
-        applyFix(project, startElement, mySignatures.get(0));
+        applyFix(project, startElement, mySignatures.getFirst());
       }
       else if (editor != null) {
         showLookup(project, editor);
@@ -448,7 +448,7 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
     public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
       if (mySignatures.isEmpty()) return IntentionPreviewInfo.EMPTY;
       // Show first even if lookup is displayed
-      ReflectiveSignature signature = mySignatures.get(0);
+      ReflectiveSignature signature = mySignatures.getFirst();
       PsiElement element = PsiTreeUtil.findSameElementInCopy(getStartElement(), psiFile);
       if (element == null) return IntentionPreviewInfo.EMPTY;
       applyFix(project, element, signature);

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -146,7 +146,7 @@ final class JavaLangReflectHandleInvocationChecker {
     if (lazyMethodSignature == null) return true;
 
     if (!isConstructor && !lazyMethodSignature.isEmpty()) {
-      final ReflectiveType returnType = lazyMethodSignature.get(0).get();
+      final ReflectiveType returnType = lazyMethodSignature.getFirst().get();
       checkReturnType(invokeCall, returnType, isExact, holder);
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -191,7 +191,7 @@ public final class BulkFileAttributesReadInspection extends AbstractBaseJavaLoca
       List<String> names =
         new VariableNameGenerator(anchor, VariableKind.LOCAL_VARIABLE).byType(attributesVariable.myType).byName(attributesVariable.myName)
           .generateAll(true);
-      String name = names.get(0);
+      String name = names.getFirst();
 
       final PsiDeclarationStatement declaration;
       if (!attributesVariable.myNeedsTryCatch) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sameReturnValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -157,7 +157,7 @@ public final class SameReturnValueInspection extends GlobalJavaBatchInspectionTo
             }
           });
           if (returnExpressions.size() < 2) return true;
-          String returnValue = RefMethodImpl.createReturnValueTemplate(returnExpressions.get(0));
+          String returnValue = RefMethodImpl.createReturnValueTemplate(returnExpressions.getFirst());
           if (returnValue != null &&
               ContainerUtil.all(returnExpressions,
                                 returnExpression -> returnValue.equals(RefMethodImpl.createReturnValueTemplate(returnExpression)))) {

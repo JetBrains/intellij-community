@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInspection.RedundantRecordConstructorInspection;
@@ -103,7 +103,7 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       String backingFieldName = fieldAccessorCandidate.backingField().getName();
 
       List<PsiMethod> methods = substituteWithSuperMethodsIfPossible(fieldAccessorCandidate.method());
-      RenamePsiElementProcessor methodRenameProcessor = RenamePsiElementProcessor.forElement(methods.get(0));
+      RenamePsiElementProcessor methodRenameProcessor = RenamePsiElementProcessor.forElement(methods.getFirst());
       methods.forEach(method -> {
         myAllRenames.put(method, backingFieldName);
         methodRenameProcessor.prepareRenaming(method, backingFieldName, myAllRenames);

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.ResultKind;
@@ -444,7 +444,7 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(ChainVariable inVar, StreamToLoopReplacementContext context) {
       mySupplier.transform(context);
-      String candidate = mySupplier.suggestFinalOutputNames(context, myAccumulator.getParameterName(0), "acc").get(0);
+      String candidate = mySupplier.suggestFinalOutputNames(context, myAccumulator.getParameterName(0), "acc").getFirst();
       String acc = context.declareResult(candidate, mySupplier.getResultType(), mySupplier.getText(), ResultKind.FINAL);
       myAccumulator.transform(context, acc, inVar.getName());
       return myAccumulator.getStatementText();
@@ -764,7 +764,7 @@ abstract class TerminalOperation extends Operation {
 
     ToCollectionTerminalOperation(PsiType resultType, FunctionHelper fn, String desiredName) {
       super(resultType, CommonClassNames.JAVA_UTIL_COLLECTION,
-            context -> fn.suggestFinalOutputNames(context, desiredName, "collection").get(0), fn);
+            context -> fn.suggestFinalOutputNames(context, desiredName, "collection").getFirst(), fn);
       myList = InheritanceUtil.isInheritor(resultType, CommonClassNames.JAVA_UTIL_LIST);
     }
 

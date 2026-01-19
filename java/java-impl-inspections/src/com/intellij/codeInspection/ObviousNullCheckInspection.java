@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -60,7 +60,7 @@ public final class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspe
       if (!JavaMethodContractUtil.isPure(method)) return null;
       List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, call);
       if (contracts.isEmpty()) return null;
-      MethodContract contract = contracts.get(0);
+      MethodContract contract = contracts.getFirst();
       if (contract == null) return null;
       ContractReturnValue firstReturn = contract.getReturnValue();
       ContractValue condition = ContainerUtil.getOnlyItem(contract.getConditions());

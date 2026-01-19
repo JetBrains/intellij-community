@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -166,7 +166,7 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
       try {
         final List<PsiElement> newDeclarations = moveDeclaration(project, variable);
         if (newDeclarations.isEmpty()) return;
-        positionCaretToDeclaration(project, myFile, newDeclarations.get(newDeclarations.size() - 1));
+        positionCaretToDeclaration(project, myFile, newDeclarations.getLast());
         newDeclarations.forEach(declaration -> IntentionPreviewUtils.write(() -> ConvertToLocalUtils.inlineRedundant(declaration)));
       }
       catch (IncorrectOperationException e) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.optionalToIf;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -44,7 +44,7 @@ public final class OptionalToIfInspection extends AbstractBaseJavaLocalInspectio
         String methodName = terminalCall.getMethodExpression().getReferenceName();
         if (methodName == null || !SUPPORTED_TERMINALS.contains(methodName)) return;
         List<Operation> operations = extractOperations(terminalCall, true);
-        if (operations == null || operations.isEmpty() || !(operations.get(0) instanceof SourceOperation)) return;
+        if (operations == null || operations.isEmpty() || !(operations.getFirst() instanceof SourceOperation)) return;
         OptionalToIfContext context = OptionalToIfContext.create(terminalCall);
         if (context == null) return;
         holder.registerProblem(terminalCall, JavaBundle.message("inspection.message.replace.optional.with.if.statements"), new ReplaceOptionalWithIfFix());

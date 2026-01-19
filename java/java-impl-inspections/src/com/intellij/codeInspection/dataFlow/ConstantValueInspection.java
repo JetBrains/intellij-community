@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
@@ -178,7 +178,7 @@ public final class ConstantValueInspection extends AbstractBaseJavaLocalInspecti
       PsiMethod method = tryCast(methodRef.resolve(), PsiMethod.class);
       if (method != null && JavaMethodContractUtil.isPure(method)) {
         List<StandardMethodContract> contracts = JavaMethodContractUtil.getMethodContracts(method);
-        if (contracts.isEmpty() || !contracts.get(0).isTrivial()) {
+        if (contracts.isEmpty() || !contracts.getFirst().isTrivial()) {
           reporter.registerProblem(methodRef, JavaAnalysisBundle.message("dataflow.message.constant.method.reference", value),
                                    new ReplaceWithTrivialLambdaFix(value));
         }

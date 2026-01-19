@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -2271,7 +2271,7 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
       final PsiParameter parameter = parameters[0];
       final List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(parameter);
       if (references.size() != 1) return null;
-      final PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(references.get(0));
+      final PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(references.getFirst());
       if (call == null || !call.getArgumentList().isEmpty()) return null;
       return call;
     }
