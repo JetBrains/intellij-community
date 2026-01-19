@@ -1,16 +1,18 @@
 <component name="libraryTable">
   <library name="Gradle" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:gradle-api:9.2.0">
+    <properties maven-id="org.jetbrains.intellij.deps:gradle-api:9.3.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.2.0/gradle-api-9.2.0.jar">
-          <sha256sum>31544d2c27027027718397666f91fc1de36d77929e7376dd310d4f675321a5f1</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.3.0/gradle-api-9.3.0.jar">
+          <sha256sum>7c10581f4eb798fe7c9ad7218d42663cc433a231c14c173081a74512bb17f5d3</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.2.0/gradle-api-9.2.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.3.0/gradle-api-9.3.0.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9.3.0/gradle-api-9.3.0-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>
