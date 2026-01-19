@@ -66,6 +66,7 @@ jvm_library(
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
     "//platform/execution",
+    "//plugins/evaluation-plugin:evaluationPlugin-tests_test_lib",
     "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
   ]
