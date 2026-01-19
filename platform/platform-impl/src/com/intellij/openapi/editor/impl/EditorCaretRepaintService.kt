@@ -63,12 +63,19 @@ internal class EditorCaretRepaintService(coroutineScope: CoroutineScope) {
   init {
     coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
       editorFlow.combine(actionRequests, ::Pair).collectLatest { (editor, action) ->
-        if (editor != null && action is ActionRequest.Restart) {
-          runCatching {
-            delay(action.after)
-            blink(editor)
-          }.getOrHandleException { e ->
-            LOG.error("An exception occurred while blinking the active caret", e)
+        if (editor != null) {
+          when (action) {
+            is ActionRequest.Restart -> runCatching {
+              delay(action.after)
+              blink(editor)
+            }.getOrHandleException { e ->
+              LOG.error("An exception occurred while blinking the active caret", e)
+            }
+            is ActionRequest.Pause -> {
+              editor.myCaretCursor.isActive = true
+              editor.myCaretCursor.blinkOpacity = 1.0f
+              editor.myCaretCursor.repaint()
+            }
           }
         }
       }
