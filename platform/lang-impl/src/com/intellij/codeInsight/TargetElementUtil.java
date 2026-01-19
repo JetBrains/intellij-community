@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.BitUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +110,7 @@ public class TargetElementUtil  {
    * depending on the flags passed.
    * @see #findTargetElement(Editor, int, int)
    */
-  public static @Nullable PsiElement findTargetElement(Editor editor, int flags) {
+  public static @Nullable PsiElement findTargetElement(Editor editor, @MagicConstant(flagsFromClass = TargetElementUtil.class) int flags) {
     int offset = editor.getCaretModel().getOffset();
     final PsiElement result = getInstance().findTargetElement(editor, flags, offset);
     if (result != null) return result;
@@ -130,7 +131,9 @@ public class TargetElementUtil  {
    * depending on the flags passed.
    * @see #findTargetElement(Editor, int)
    */
-  public @Nullable PsiElement findTargetElement(@NotNull Editor editor, int flags, int offset) {
+  public @Nullable PsiElement findTargetElement(@NotNull Editor editor,
+                                                @MagicConstant(flagsFromClass = TargetElementUtil.class) int flags,
+                                                int offset) {
     Project project = editor.getProject();
     if (project == null) return null;
 
