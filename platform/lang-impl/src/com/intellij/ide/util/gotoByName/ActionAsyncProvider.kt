@@ -255,6 +255,8 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
     val extendedActions: Sequence<AnAction> = model.dataContext.getData(QuickActionProvider.KEY)?.getActions(true)?.asSequence() ?: emptySequence<AnAction>()
     val allActions: Sequence<AnAction> = mainActions + extendedActions + extendedActions.flatMap { (it as? ActionGroup)?.let { model.updateSession.children(it) } ?: emptyList() }
     val matchedActions = produce(capacity = Channel.UNLIMITED) {
+      val startAllTime = System.currentTimeMillis()
+
       allActions.forEach { action ->
         val isCollectLogsAction = LOG.isDebugEnabled && action::class.java.simpleName.let {
           it == "ClientCollectZippedLogsWithRemoteAction" || it == "CWMBackendCollectZippedLogsWithRemoteAction"
@@ -266,7 +268,12 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
 
         launch {
           runCatching {
+            val startOneTime = System.currentTimeMillis()
+            LOG.debug { "[$pattern] TEST DIAGNOSTICS: before model.actionMatches: ${action::class.java.simpleName}" }
             val mode = model.actionMatches(pattern, matcher, action)
+            val endTime = System.currentTimeMillis()
+            LOG.debug { "[$pattern] TEST DIAGNOSTICS: after model.actionMatches: ${action::class.java.simpleName} - (duration:${endTime - startOneTime} ms, totalDuration: ${endTime - startAllTime} ms)" }
+
             if (mode != MatchMode.NONE) {
               if (isCollectLogsAction) {
                 LOG.debug("[$pattern] TEST DIAGNOSTICS: Collect Logs action matched")
