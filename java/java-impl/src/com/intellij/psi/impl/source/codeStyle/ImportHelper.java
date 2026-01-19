@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -9,6 +9,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,6 +56,8 @@ import java.util.stream.Collectors;
 
 public final class ImportHelper extends ImportHelperBase {
   private static final Logger LOG = Logger.getInstance(ImportHelper.class);
+  private static final Key<Integer> IMPORTS_ADDED = Key.create("IMPORTS_ADDED");
+  private static final Key<Integer> IMPORTS_REMOVED = Key.create("IMPORTS_REMOVED");
 
   private static final @NonNls String JAVA_LANG_PACKAGE = "java.lang";
 
@@ -156,6 +159,7 @@ public final class ImportHelper extends ImportHelperBase {
       CodeStyle.reformatWithFileContext(dummyFile, file);
 
       PsiImportList newImportList = dummyFile.getImportList();
+      keepCommentsAndAttachStatistics(oldList, newImportList);
       assert newImportList != null : dummyFile.getText();
       if (oldList.isReplaceEquivalent(newImportList)) return null;
       return newImportList;
@@ -164,6 +168,46 @@ public final class ImportHelper extends ImportHelperBase {
       LOG.error(e);
       return null;
     }
+  }
+  
+  public static int getImportsAdded(PsiImportList importList) {
+    return IMPORTS_ADDED.get(importList, 0);
+  }
+  
+  public static int getImportsRemoved(PsiImportList importList) {
+    return IMPORTS_REMOVED.get(importList, 0);
+  }
+
+  private static void keepCommentsAndAttachStatistics(PsiImportList oldImportList, PsiImportList newImportList) {
+    int importsAdded = 0;
+    final Map<String, PsiImportStatementBase> oldImports = new HashMap<>();
+    PsiImportStatementBase[] oldImportStatements = oldImportList.getAllImportStatements();
+    for (PsiImportStatementBase statement : oldImportStatements) {
+      oldImports.put(getCanonicalText(statement), statement);
+    }
+    PsiImportStatementBase[] newImportStatements = newImportList.getAllImportStatements();
+    for (PsiImportStatementBase statement : newImportStatements) {
+      PsiImportStatementBase oldImport = oldImports.remove(getCanonicalText(statement));
+      if (oldImport == null) {
+        importsAdded++;
+      }
+      else {
+        statement.replace(oldImport); // to keep comments 
+      }
+    }
+    int importsRemoved = oldImportStatements.length + importsAdded - newImportStatements.length;
+    IMPORTS_ADDED.set(newImportList, importsAdded);
+    IMPORTS_REMOVED.set(newImportList, importsRemoved);
+  }
+
+  private static String getCanonicalText(PsiImportStatementBase statement) {
+    final StringBuilder result = new StringBuilder();
+    PsiTreeUtil.processElements(statement, e -> {
+      if (e instanceof PsiKeyword) result.append(e.getText()).append(' ');
+      if (e instanceof PsiIdentifier || PsiUtil.isJavaToken(e, JavaTokenType.DOT)) result.append(e.getText());
+      return true;
+    });
+    return result.toString();
   }
 
   /**

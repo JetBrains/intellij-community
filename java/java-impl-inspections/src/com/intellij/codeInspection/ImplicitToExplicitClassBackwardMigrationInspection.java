@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.wrongPackageStatement.AdjustPackageNameFix;
@@ -19,7 +19,6 @@ import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -132,7 +131,7 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
         final PsiImportList newImportList = newPsiJavaFile.getImportList();
         if (newImportList != null) {
           newImportList.getParent().addRangeAfter(newList.getParent().getFirstChild(), newList.getParent().getLastChild(), newImportList);
-          new CommentTracker().deleteAndRestoreComments(newImportList);
+          newImportList.delete();
         }
       }
     }

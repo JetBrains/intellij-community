@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.application.options.CodeStyle;
@@ -51,6 +51,11 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   @Override
   protected String getTestDataPath() {
     return BASE_PATH;
+  }
+
+  @Override
+  protected @NotNull String getExtension() {
+    return ".java";
   }
 
   @Override
@@ -170,7 +175,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     myFixture.addClass("package p1; public class A3 {}");
     myFixture.addClass("package p1; public class A4 {}");
     myFixture.addClass("package p1; public class A5 {}");
-    doTest();
+    doTest("Removed 5 imports, added 1 import");
   }
 
   public void testConflictModuleImport(){
@@ -326,6 +331,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     doTest();
   }
 
+  public void testKeepCommentsOnImports() { doTest("Removed 3 imports"); }
   public void testNewImportListIsEmptyAndCommentPreserved() { doTest(); }
   public void testNewImportListIsEmptyAndJavaDocWithInvalidCodePreserved() { doTest(); }
 
@@ -342,7 +348,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   public void testIgnoreInaccessible() { doTest();}
 
   public void testEnsureConflictingImportsNotCollapsed() {
-    doTest();
+    doTest("Removed 1 import, added 1 import");
   }
 
   public void testSameNamedImportedClasses() {
@@ -380,7 +386,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
                          public class Nine {}
                          public class Ten {}
                          """);
-    doTest();
+    doTest("Rearranged imports");
   }
 
   public void testConflictingOnDemandImports() {
@@ -543,6 +549,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     runOptimizeImports();
     myFixture.checkResult("package p;\n\n");
   }
+
   public void testRemoveUnusedImportFix() {
     myFixture.enableInspections(new UnusedImportInspection());
     myFixture.configureByText("a.java", """
@@ -554,6 +561,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     myFixture.launchAction(myFixture.findSingleIntention(JavaErrorBundle.message("remove.unused.imports.quickfix.text")));
     myFixture.checkResult("package p;\n\n");
   }
+
   public void testRemoveUnusedImportFixShownEvenForUnresolvedImport() {
     myFixture.enableInspections(new UnusedImportInspection());
     myFixture.configureByText("a.java", """
@@ -565,6 +573,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     myFixture.launchAction(myFixture.findSingleIntention(JavaErrorBundle.message("remove.unused.imports.quickfix.text")));
     myFixture.checkResult("package p;\n\n");
   }
+
   public void testRemoveUnusedImportFixMustDeleteAllUnusedImports() {
     myFixture.enableInspections(new UnusedImportInspection());
     myFixture.configureByText("a.java", """
@@ -627,10 +636,8 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     });
   }
 
-
   public void testImportModuleLastWithoutSpace() {
     IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-
       myFixture.addClass("package aaa; public class AAA {}");
       myFixture.addClass("package bbb; public class BBB {}");
       myFixture.addClass("package ccc; public class CCC {}");
@@ -649,7 +656,6 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
 
   public void testImportModuleInTheMiddleWithoutSpace() {
     IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-
       myFixture.addClass("package aaa; public class AAA {}");
       myFixture.addClass("package bbb; public class BBB {}");
       myFixture.addClass("package ccc; public class CCC {}");
@@ -688,7 +694,6 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testIncorrectOrderWithoutModuleImport() {
-
     myFixture.addClass("package ccc; public class CCC {}");
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
 
@@ -703,7 +708,6 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
 
   public void testIncorrectOrderWithoutModuleImportConfigWithModule() {
     IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-
       myFixture.addClass("package ccc; public class CCC {}");
       JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
 
@@ -719,7 +723,6 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
 
   public void testIncorrectOrderWithoutModuleImportMixStaticAndNonStatic() {
     IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-
       myFixture.addClass("package ccc; public class CCC {}");
       JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
 
@@ -784,7 +787,6 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       doTest();
     });
   }
-
 
   public void testDoNotInsertImportForClassVisibleByInheritanceWithModuleConflictDoNotDeleteModule() {
     JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
@@ -853,13 +855,6 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     doTest();
   }
 
-  public void testUnresolvedReferenceAfterParenthesis() {
-    doTest();
-  }
-
+  public void testUnresolvedReferenceAfterParenthesis() { doTest(); }
   public void testInvalidExtendsList() { doTest(); }
-  
-  private void doTest() {
-    doTest(".java");
-  }
 }
