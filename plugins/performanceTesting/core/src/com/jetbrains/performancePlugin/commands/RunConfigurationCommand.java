@@ -120,7 +120,6 @@ public final class RunConfigurationCommand extends AbstractCommand {
 
     ApplicationManager.getApplication().invokeLater(() -> {
       Executor executor = options.debug ? new DefaultDebugExecutor() : new DefaultRunExecutor();
-      ExecutionTarget target = DefaultExecutionTarget.INSTANCE;
       RunConfiguration configurationToRun = getConfigurationByName(runManager, options.configurationName);
 
       if (configurationToRun == null) {
@@ -128,6 +127,10 @@ public final class RunConfigurationCommand extends AbstractCommand {
         printAllConfigurationsNames(runManager);
       }
       else {
+        ExecutionTargetManager targetManager = ExecutionTargetManager.getInstance(project);
+        ExecutionTarget target = targetManager.findTarget(configurationToRun);
+        if (target == null) target = DefaultExecutionTarget.INSTANCE;
+
         RunnerAndConfigurationSettingsImpl runnerAndConfigurationSettings =
           new RunnerAndConfigurationSettingsImpl(runManager, configurationToRun);
 
