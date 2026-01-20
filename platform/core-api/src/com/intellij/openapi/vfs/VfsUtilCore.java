@@ -292,6 +292,14 @@ public class VfsUtilCore {
     return !Comparing.equal(result.skipToParent, root);
   }
 
+  /**
+   * Consider using methods that honor excluded directories: {@link com.intellij.openapi.roots.FileIndex#iterateContent} or {@link com.intellij.openapi.roots.FileIndex#iterateContentUnderDirectory}
+   * This method will recursively iterate over all files on disk under the specified root directory which may load too many files into
+   * VFS and lead to freezes (see IJPL-2189).
+   * <p>
+   * Alternatively, use this method but pass a cache-avoiding file instead {@link com.intellij.openapi.vfs.newvfs.NewVirtualFile#asCacheAvoiding}.
+   * This way files won't be loaded into VFS.
+   */
   @SuppressWarnings("UnsafeVfsRecursion")
   public static @NotNull VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
                                                                             @NotNull VirtualFileVisitor<?> visitor) throws VirtualFileVisitor.VisitorException {
@@ -341,6 +349,14 @@ public class VfsUtilCore {
     }
   }
 
+  /**
+   * Consider using methods that honor excluded directories: {@link com.intellij.openapi.roots.FileIndex#iterateContent} or {@link com.intellij.openapi.roots.FileIndex#iterateContentUnderDirectory}
+   * This method will recursively iterate over all files on disk under the specified root directory which may load too many files into
+   * VFS and lead to freezes (see IJPL-2189).
+   * <p>
+   * Alternatively, use this method but pass a cache-avoiding file instead {@link com.intellij.openapi.vfs.newvfs.NewVirtualFile#asCacheAvoiding}.
+   * This way files won't be loaded into VFS.
+   */
   public static @NotNull <E extends Exception> VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
                                                                                                   @NotNull VirtualFileVisitor<?> visitor,
                                                                                                   @NotNull Class<E> eClass) throws E {
