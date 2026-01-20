@@ -37,7 +37,7 @@ class ChangesViewCommitPanel internal constructor(
   private var rootComponent: JComponent? = null
 
   @ApiStatus.Internal
-  var postCommitRefreshCallback: (() -> Unit)? = null
+  var postCommitCallback: (() -> Unit)? = null
 
   init {
     Disposer.register(this, commitMessage)
@@ -97,9 +97,7 @@ class ChangesViewCommitPanel internal constructor(
   override val commitProgressUi: CommitProgressUi get() = progressPanel
 
   override fun endExecution() {
-    changesView.scheduleRefreshNow {
-      postCommitRefreshCallback?.invoke()
-    }
+    postCommitCallback?.invoke()
   }
 
   override fun activate(): Boolean {

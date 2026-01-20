@@ -286,20 +286,25 @@ class ChangesViewManager internal constructor(private val project: Project, priv
       updatePanelLayout()
     }
 
-    private fun closeEditorPreviewIfEmpty() {
-      if (!editorDiffPreview.hasContent()) editorDiffPreview.closePreview()
+    private fun closeEditorPreviewIfNoChanges() {
+      val changeListManager = ChangeListManager.getInstance(project)
+      changeListManager.invokeAfterUpdate(true) {
+        if (changeListManager.allChanges.isEmpty()) {
+          editorDiffPreview.closePreview()
+        }
+      }
     }
 
     fun setCommitUi(commitUi: ChangesViewCommitPanel?) {
       if (commitUi != null) {
         commitUi.registerRootComponent(this)
-        commitUi.postCommitRefreshCallback = { closeEditorPreviewIfEmpty() }
+        commitUi.postCommitCallback = { closeEditorPreviewIfNoChanges() }
         commitPanel = commitUi
         commitPanelSplitter.setSecondComponent(commitUi.getComponent())
       }
       else {
         commitPanelSplitter.setSecondComponent(null)
-        commitPanel?.postCommitRefreshCallback = null
+        commitPanel?.postCommitCallback = null
         commitPanel = null
       }
       configureToolbars()
