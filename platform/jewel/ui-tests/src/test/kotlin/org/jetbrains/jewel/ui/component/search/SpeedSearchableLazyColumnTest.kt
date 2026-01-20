@@ -297,7 +297,9 @@ class SpeedSearchableLazyColumnTest {
                             }
                         }
                     }
-                    DefaultButton(onClick = {}, modifier = Modifier.testTag("Button")) { Text("Press me") }
+                    DefaultButton(onClick = { println("Button Clicked") }, modifier = Modifier.testTag("Button")) {
+                        Text("Press me")
+                    }
                 }
             }
 

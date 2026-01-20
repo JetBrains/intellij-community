@@ -644,6 +644,7 @@ f:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult$NoMatch
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult$NoMatch
 f:org.jetbrains.jewel.foundation.search.SpeedSearchMatcherKt
+- sf:cached(org.jetbrains.jewel.foundation.search.SpeedSearchMatcher):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher
 - sf:filter(java.lang.Iterable,org.jetbrains.jewel.foundation.search.SpeedSearchMatcher):java.util.List
 - sf:filter(java.lang.Iterable,org.jetbrains.jewel.foundation.search.SpeedSearchMatcher,kotlin.jvm.functions.Function1):java.util.List
 - sf:matches(java.lang.CharSequence,org.jetbrains.jewel.foundation.search.SpeedSearchMatcher):Z
