@@ -3487,6 +3487,21 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/changeSignature/addFunctionParameterWithAnonymousFunction.kt");
         }
 
+        @TestMetadata("addFunctionParameterWithAnonymousObjectExtendingClass.kt")
+        public void testAddFunctionParameterWithAnonymousObjectExtendingClass() throws Exception {
+            runTest("testData/quickfix/changeSignature/addFunctionParameterWithAnonymousObjectExtendingClass.kt");
+        }
+
+        @TestMetadata("addFunctionParameterWithAnonymousObjectMultipleSupertypes.kt")
+        public void testAddFunctionParameterWithAnonymousObjectMultipleSupertypes() throws Exception {
+            runTest("testData/quickfix/changeSignature/addFunctionParameterWithAnonymousObjectMultipleSupertypes.kt");
+        }
+
+        @TestMetadata("addFunctionParameterWithAnonymousObjectViaThis.kt")
+        public void testAddFunctionParameterWithAnonymousObjectViaThis() throws Exception {
+            runTest("testData/quickfix/changeSignature/addFunctionParameterWithAnonymousObjectViaThis.kt");
+        }
+
         @TestMetadata("addFunctionParameterWithFunctionReference.kt")
         public void testAddFunctionParameterWithFunctionReference() throws Exception {
             runTest("testData/quickfix/changeSignature/addFunctionParameterWithFunctionReference.kt");
@@ -3565,6 +3580,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("changeFunctionLiteralParameters4.kt")
         public void testChangeFunctionLiteralParameters4() throws Exception {
             runTest("testData/quickfix/changeSignature/changeFunctionLiteralParameters4.kt");
+        }
+
+        @TestMetadata("changeFunctionParameterWithAnonymousObject.kt")
+        public void testChangeFunctionParameterWithAnonymousObject() throws Exception {
+            runTest("testData/quickfix/changeSignature/changeFunctionParameterWithAnonymousObject.kt");
         }
 
         @TestMetadata("changeFunctionReturnTypeToNothing.kt")

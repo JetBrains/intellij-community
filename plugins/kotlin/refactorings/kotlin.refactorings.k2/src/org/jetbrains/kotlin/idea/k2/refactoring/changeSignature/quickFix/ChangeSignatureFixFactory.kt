@@ -11,24 +11,13 @@ import com.intellij.refactoring.changeSignature.*
 import com.intellij.refactoring.util.CanonicalTypes
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.asPsiType
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.functionTypeKind
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.components.render
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
- import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
-import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.builtins.StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -343,7 +332,17 @@ object ChangeSignatureFixFactory {
     @OptIn(KaExperimentalApi::class)
     private fun getKtType(argumentExpression: KtExpression?): KaType? {
         val ktType = argumentExpression?.expressionType
-        return ktType?.toFunctionType() ?: ktType
+        val functionType = ktType?.toFunctionType()
+        if (functionType != null) return functionType
+
+        // Approximate anonymous objects to denotable supertypes
+        return (ktType as? KaClassType)?.let { classType ->
+            when (val symbol = classType.symbol) {
+                is KaClassSymbol if symbol.classKind == KaClassKind.ANONYMOUS_OBJECT ->
+                    classType.approximateToDenotableSupertypeOrSelf(allowLocalDenotableTypes = false) as? KaClassType ?: classType
+                else -> classType
+            }
+        } ?: ktType
     }
 
 
