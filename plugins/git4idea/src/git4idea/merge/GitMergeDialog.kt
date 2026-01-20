@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge
 
 import com.intellij.dvcs.DvcsUtil
@@ -304,7 +304,7 @@ class GitMergeDialog(private val project: Project,
   private fun getRepository(root: VirtualFile) = repositories.find { repo -> repo.root == root }
                                                  ?: error("Unable to find repository for root: ${root.presentableUrl}")
 
-  private fun getSelectedRepository() = getRepository(getSelectedRoot())
+  fun getSelectedRepository(): GitRepository = getRepository(getSelectedRoot())
 
   private fun updateDialogTitle() {
     val currentBranchName = getSelectedRepository().currentBranchName

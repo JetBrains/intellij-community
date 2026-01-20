@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.pull
 
 import com.intellij.codeInsight.hint.HintUtil
@@ -167,7 +167,7 @@ class GitPullDialog(private val project: Project,
 
   private fun validateBranchField() = validateBranchExists(branchField, GitBundle.message("pull.branch.not.selected.error"))
 
-  private fun getSelectedRepository(): GitRepository? = repositoryField.item
+  fun getSelectedRepository(): GitRepository? = repositoryField.item
 
   private fun updateRemotesField() {
     val repository = getSelectedRepository()

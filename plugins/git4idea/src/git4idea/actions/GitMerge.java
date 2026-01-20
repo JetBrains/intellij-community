@@ -18,7 +18,6 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -37,6 +36,10 @@ final class GitMerge extends GitMergeAction<GitMergeOption> {
     if (!dialog.showAndGet()) {
       return null;
     }
+    
+    GitRepository repository = dialog.getSelectedRepository();
+    GitOperationsCollector.logMergeFromDialog(project, repository, dialog.getSelectedBranch(), dialog.getSelectedOptions());
+    
     return new DialogState<>(dialog.getSelectedRoot(),
                              GitBundle.message("merging.title", dialog.getSelectedRoot().getPath()),
                              getHandlerProvider(project, dialog),

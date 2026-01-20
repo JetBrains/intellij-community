@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitBranch;
 import git4idea.GitOperationsCollector;
 import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
@@ -24,9 +23,7 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.update.GitUpdateExecutionProcess;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +47,11 @@ final class GitPull extends GitMergeAction<GitPullOption> {
     final GitPullDialog dialog = new GitPullDialog(project, gitRoots, defaultRoot);
     if (!dialog.showAndGet()) {
       return null;
+    }
+
+    GitRepository repository = dialog.getSelectedRepository();
+    if (repository != null) {
+      GitOperationsCollector.logPullFromDialog(project, repository, dialog.getSelectedBranch(), dialog.getSelectedOptions());
     }
 
     return new DialogState<>(dialog.gitRoot(),

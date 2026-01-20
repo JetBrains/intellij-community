@@ -11,6 +11,8 @@ import git4idea.actions.workingTree.GitWorkingTreeDialogData
 import git4idea.branch.GitRebaseParams
 import git4idea.commands.GitCommandResult
 import git4idea.inMemory.rebase.InMemoryRebaseResult
+import git4idea.merge.GitMergeOption
+import git4idea.pull.GitPullOption
 import git4idea.push.GitPushRepoResult
 import git4idea.push.GitPushTargetType
 import git4idea.rebase.GitRebaseEntry
@@ -224,6 +226,94 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
     is GitRebaseParams.RebaseUpstream.Root -> RebaseUpstreamType.Root
     is GitRebaseParams.RebaseUpstream.Commit -> RebaseUpstreamType.Commit
     is GitRebaseParams.RebaseUpstream.Reference -> RebaseUpstreamType.Reference
+  }
+  //endregion
+
+  //region Merge/Pull Dialog
+  // Merge/Pull common fields
+  private val MERGE_PULL_TRACKED_BRANCH = EventFields.Boolean("tracked_branch", "Tracked branch")
+  private val MERGE_PULL_OPTION_NO_FF = EventFields.Boolean("option_no_ff", "--no-ff")
+  private val MERGE_PULL_OPTION_FF_ONLY = EventFields.Boolean("option_ff_only", "--ff-only")
+  private val MERGE_PULL_OPTION_SQUASH = EventFields.Boolean("option_squash", "--squash")
+  private val MERGE_PULL_OPTION_NO_COMMIT = EventFields.Boolean("option_no_commit", "--no-commit")
+  private val MERGE_PULL_OPTION_NO_VERIFY = EventFields.Boolean("option_no_verify", "--no-verify")
+  
+  // Merge-specific options
+  private val MERGE_OPTION_COMMIT_MESSAGE = EventFields.Boolean("option_commit_message", "-m")
+  private val MERGE_OPTION_ALLOW_UNRELATED_HISTORIES = EventFields.Boolean("option_allow_unrelated_histories", "--allow-unrelated-histories")
+
+  private val MERGE_FROM_DIALOG_EVENT = GROUP.registerVarargEvent("merge.from.dialog",
+                                                                   "Merge from dialog was started",
+                                                                   MERGE_PULL_TRACKED_BRANCH,
+                                                                   MERGE_PULL_OPTION_NO_FF,
+                                                                   MERGE_PULL_OPTION_FF_ONLY,
+                                                                   MERGE_PULL_OPTION_SQUASH,
+                                                                   MERGE_PULL_OPTION_NO_COMMIT,
+                                                                   MERGE_OPTION_COMMIT_MESSAGE,
+                                                                   MERGE_PULL_OPTION_NO_VERIFY,
+                                                                   MERGE_OPTION_ALLOW_UNRELATED_HISTORIES)
+
+  // Pull-specific options
+  private val PULL_OPTION_REBASE = EventFields.Boolean("option_rebase", "--rebase")
+
+  private val PULL_FROM_DIALOG_EVENT = GROUP.registerVarargEvent("pull.from.dialog",
+                                                                  "Pull from dialog was started",
+                                                                  MERGE_PULL_TRACKED_BRANCH,
+                                                                  PULL_OPTION_REBASE,
+                                                                  MERGE_PULL_OPTION_FF_ONLY,
+                                                                  MERGE_PULL_OPTION_NO_FF,
+                                                                  MERGE_PULL_OPTION_SQUASH,
+                                                                  MERGE_PULL_OPTION_NO_COMMIT,
+                                                                  MERGE_PULL_OPTION_NO_VERIFY)
+
+  @JvmStatic
+  fun logMergeFromDialog(
+    project: Project,
+    repository: GitRepository?,
+    selectedBranch: GitBranch,
+    selectedOptions: Collection<GitMergeOption>,
+  ) {
+    MERGE_FROM_DIALOG_EVENT.log(
+      project,
+      MERGE_PULL_TRACKED_BRANCH.with(isTargetTrackedBranch(repository, selectedBranch)),
+      MERGE_PULL_OPTION_NO_FF.with(GitMergeOption.NO_FF in selectedOptions),
+      MERGE_PULL_OPTION_FF_ONLY.with(GitMergeOption.FF_ONLY in selectedOptions),
+      MERGE_PULL_OPTION_SQUASH.with(GitMergeOption.SQUASH in selectedOptions),
+      MERGE_PULL_OPTION_NO_COMMIT.with(GitMergeOption.NO_COMMIT in selectedOptions),
+      MERGE_OPTION_COMMIT_MESSAGE.with(GitMergeOption.COMMIT_MESSAGE in selectedOptions),
+      MERGE_PULL_OPTION_NO_VERIFY.with(GitMergeOption.NO_VERIFY in selectedOptions),
+      MERGE_OPTION_ALLOW_UNRELATED_HISTORIES.with(GitMergeOption.ALLOW_UNRELATED_HISTORIES in selectedOptions)
+    )
+  }
+
+  @JvmStatic
+  fun logPullFromDialog(
+    project: Project,
+    repository: GitRepository?,
+    selectedBranch: GitBranch,
+    selectedOptions: Collection<GitPullOption>,
+  ) {
+    PULL_FROM_DIALOG_EVENT.log(
+      project,
+      MERGE_PULL_TRACKED_BRANCH.with(isTargetTrackedBranch(repository, selectedBranch)),
+      PULL_OPTION_REBASE.with(GitPullOption.REBASE in selectedOptions),
+      MERGE_PULL_OPTION_FF_ONLY.with(GitPullOption.FF_ONLY in selectedOptions),
+      MERGE_PULL_OPTION_NO_FF.with(GitPullOption.NO_FF in selectedOptions),
+      MERGE_PULL_OPTION_SQUASH.with(GitPullOption.SQUASH in selectedOptions),
+      MERGE_PULL_OPTION_NO_COMMIT.with(GitPullOption.NO_COMMIT in selectedOptions),
+      MERGE_PULL_OPTION_NO_VERIFY.with(GitPullOption.NO_VERIFY in selectedOptions)
+    )
+  }
+
+  private fun isTargetTrackedBranch(
+    repository: GitRepository?,
+    selectedBranch: GitBranch,
+  ): Boolean {
+    if (repository == null) return false
+    val currentBranch = repository.currentBranch ?: return false
+
+    val trackedBranch = repository.getBranchTrackInfo(currentBranch.name)?.remoteBranch ?: return false
+    return trackedBranch == selectedBranch
   }
   //endregion
 }
