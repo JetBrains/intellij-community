@@ -4,12 +4,14 @@ package com.jetbrains.python.codeInsight.typing;
 import com.dynatrace.hash4j.hashing.HashValue128;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -39,6 +41,7 @@ import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.psi.types.PyTypeParameterMapping.Option;
 import one.util.streamex.StreamEx;
@@ -53,6 +56,7 @@ import java.util.stream.Stream;
 
 import static com.dynatrace.hash4j.hashing.Hashing.xxh3_128;
 import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
+import static com.jetbrains.python.codeInsight.typeRepresentation.PyTypeRepresentationDialectKt.PyModuleTypeName;
 import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_FINAL;
 import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_FINAL_EXT;
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -1029,6 +1033,12 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
             return Ref.create(result);
           }
         }
+        if (resolved instanceof PySubscriptionExpression subscriptionExpression) {
+          var moduleType = getModuleType(subscriptionExpression);
+          if (moduleType != null) {
+            return moduleType;
+          }
+        }
       }
       return null;
     }
@@ -1040,6 +1050,27 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         context.removeTypeAlias(alias);
       }
     }
+  }
+
+  private static @Nullable Ref<PyType> getModuleType(PySubscriptionExpression moduleDefinition) {
+    String name = moduleDefinition.getRootOperand().getName();
+    if (name == null || !name.equals(PyModuleTypeName)) {
+      return null;
+    }
+    if (!(moduleDefinition.getIndexExpression() instanceof PyReferenceExpression moduleReferenceExpression)) {
+      return null;
+    }
+    var moduleName = moduleReferenceExpression.getName();
+    if (moduleName == null) {
+      return null;
+    }
+    Project project = moduleDefinition.getProject();
+    var moduleInitFiles = PyModuleNameIndex.findByShortName(moduleName, project, GlobalSearchScope.everythingScope(project));
+    var firstModuleInitFile = ContainerUtil.find(moduleInitFiles, a -> a != null);
+    if (firstModuleInitFile == null) {
+      return null;
+    }
+    return Ref.create(new PyModuleType(firstModuleInitFile));
   }
 
   private static @Nullable Ref<PyType> getNoneType(@NotNull PyExpression typeHint, @NotNull PsiElement resolved) {
