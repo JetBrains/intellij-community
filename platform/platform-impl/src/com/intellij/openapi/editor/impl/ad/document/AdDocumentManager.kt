@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.document
 
 import com.intellij.openapi.components.Service
@@ -15,12 +15,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.pasta.common.DocumentEntity
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 
-@Experimental
 interface AdDocumentManager {
 
   companion object {
@@ -35,7 +33,7 @@ interface AdDocumentManager {
 
 
 @Service(Level.APP)
-private class AdDocumentManagerImpl(): AdDocumentManager {
+private class AdDocumentManagerImpl : AdDocumentManager {
 
   companion object {
     private val DOC_ENTITY_HANDLE_KEY: Key<AsyncEntityHandle<DocumentEntity>> = Key("AD_DOCUMENT_ENTITY_KEY")
@@ -92,7 +90,7 @@ private class AdDocumentManagerImpl(): AdDocumentManager {
     return isRhizomeAdRebornEnabled
   }
 
-  private class AdFileDocumentBindingListener : FileDocumentBindingListener {
+  class AdFileDocumentBindingListener : FileDocumentBindingListener {
     override fun fileDocumentBindingChanged(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
       getInstance().bindDocEntity(document, oldFile, file)
     }

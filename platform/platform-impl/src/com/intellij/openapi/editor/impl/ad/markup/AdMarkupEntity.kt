@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.markup
 
 import andel.editor.DocumentComponent
@@ -13,11 +13,9 @@ import com.jetbrains.rhizomedb.requireChangeScope
 import fleet.kernel.Durable
 import fleet.kernel.DurableEntityType
 import fleet.util.UID
-import org.jetbrains.annotations.ApiStatus.Experimental
 
 
 // needed to be public to register in EditorEntityTypeProvider
-@Experimental
 class AdMarkupEntity(override val eid: EID) : DocumentComponentEntity<DocumentComponent> {
 
   val uid: UID by Durable.Id
@@ -43,9 +41,9 @@ class AdMarkupEntity(override val eid: EID) : DocumentComponentEntity<DocumentCo
   override fun asComponent(changeScope: ChangeScope): DocumentComponent {
     val entity = this
     return object : DocumentComponent {
-      override fun edit(before: Text, after: Text, operation: Operation) {
+      override fun edit(before: Text, after: Text, edit: Operation) {
         changeScope.run {
-          entity[MarkupStorageAttr] = markupStorage.edit(after, operation)
+          entity[MarkupStorageAttr] = markupStorage.edit(after, edit)
         }
       }
     }

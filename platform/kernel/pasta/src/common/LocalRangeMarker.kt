@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.pasta.common
 
 import andel.editor.RangeMarkerId
@@ -6,9 +6,8 @@ import andel.editor.substring
 import andel.text.TextRange
 import com.jetbrains.rhizomedb.*
 import fleet.util.UID
-import org.jetbrains.annotations.ApiStatus.Experimental
 
-@Experimental
+
 internal data class LocalRangeMarker(override val eid: EID) : RetractableEntity, Entity {
   val rangeMarkerId: RangeMarkerId by RangeMarkerIdAttr
   val anchorStorage: LocalAnchorStorageEntity by AnchorStorageAttr
@@ -38,11 +37,10 @@ internal data class LocalRangeMarker(override val eid: EID) : RetractableEntity,
     ::LocalRangeMarker,
   ) {
     val RangeMarkerIdAttr: Required<RangeMarkerId> = requiredValue("rangeMarkerId", RangeMarkerId.serializer(), Indexing.UNIQUE)
-    val AnchorStorageAttr: Required<LocalAnchorStorageEntity> = requiredRef<LocalAnchorStorageEntity>("anchorStorage", RefFlags.CASCADE_DELETE_BY)
+    val AnchorStorageAttr: Required<LocalAnchorStorageEntity> = requiredRef("anchorStorage", RefFlags.CASCADE_DELETE_BY)
   }
 }
 
-@Experimental
 internal fun ChangeScope.createRangeMarker(
   document: DocumentEntity,
   from: Long,

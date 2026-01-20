@@ -1,10 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.document
 
 import andel.operation.Operation
-import andel.text.charSequence
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
@@ -19,18 +17,13 @@ import com.intellij.util.ui.EDT
 import fleet.kernel.change
 import fleet.kernel.rebase.awaitCommitted
 import fleet.kernel.rebase.shared
-import fleet.kernel.rete.*
 import fleet.util.openmap.OpenMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.annotations.ApiStatus.Internal
 
 
-@Experimental
-@Internal
 @Service(Level.APP)
 class AdDocumentSynchronizer(private val coroutineScope: CoroutineScope): Disposable.Default {
 
@@ -44,6 +37,7 @@ class AdDocumentSynchronizer(private val coroutineScope: CoroutineScope): Dispos
     coroutineScope.launch(AdTheManager.AD_DISPATCHER) {
       val entity = AdDocumentManager.getInstance().getDocEntity(document)
       checkNotNull(entity) { "entity $debugName not found" }
+      @Suppress("DEPRECATION")
       document.addDocumentListener(
         DocToEntitySynchronizer(
           debugName,

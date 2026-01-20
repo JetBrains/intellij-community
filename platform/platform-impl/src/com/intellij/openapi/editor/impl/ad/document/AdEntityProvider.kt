@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.document
 
 import com.intellij.openapi.editor.ex.DocumentEx
@@ -8,11 +8,9 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.platform.pasta.common.DocumentEntity
 import fleet.util.UID
-import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.*
 
 
-@Experimental
 interface AdEntityProvider {
 
   fun getDocEntityUid(document: DocumentEx): UID?

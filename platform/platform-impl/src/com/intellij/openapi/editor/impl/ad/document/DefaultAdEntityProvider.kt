@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.document
 
 import com.intellij.openapi.editor.ex.DocumentEx
@@ -14,12 +14,10 @@ import fleet.kernel.rebase.shared
 import fleet.util.UID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
-import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.concurrent.ConcurrentHashMap
 
 
-@Experimental
-internal class DefaultAdEntityProvider() : AdEntityProvider {
+internal class DefaultAdEntityProvider : AdEntityProvider {
   private val docToScope= ConcurrentHashMap<DocumentEntity, CoroutineScope>()
   private val markupToScope= ConcurrentHashMap<AdMarkupEntity, CoroutineScope>()
 

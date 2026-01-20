@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.document
 
 import com.intellij.openapi.Disposable
@@ -12,12 +12,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.pasta.common.DocumentEntity
 import com.intellij.util.Processor
-import org.jetbrains.annotations.ApiStatus.Experimental
 import java.beans.PropertyChangeListener
 import java.util.*
 
 
-@Experimental
 internal class AdDocument(private val entity: DocumentEntity) : DocumentEx {
 
   private val textDocument = AdTextDocument {
@@ -129,6 +127,7 @@ internal class AdDocument(private val entity: DocumentEntity) : DocumentEx {
     //TODO("Not yet implemented")
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun addDocumentListener(listener: DocumentListener) {
     //TODO("Not yet implemented")
   }
@@ -285,11 +284,11 @@ internal class AdDocument(private val entity: DocumentEntity) : DocumentEx {
 
   //region USER DATA
 
-  override fun <T : Any?> getUserData(key: Key<T>): T? {
+  override fun <T> getUserData(key: Key<T>): T? {
     TODO("Not yet implemented")
   }
 
-  override fun <T : Any?> putUserData(key: Key<T>, value: T?) {
+  override fun <T> putUserData(key: Key<T>, value: T?) {
     TODO("Not yet implemented")
   }
 

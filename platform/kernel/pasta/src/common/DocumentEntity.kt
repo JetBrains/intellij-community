@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.pasta.common
 
 import andel.editor.*
@@ -17,13 +17,11 @@ import fleet.util.UID
 import fleet.util.openmap.OpenMap
 import fleet.util.singleOrNullOrThrow
 import kotlinx.serialization.builtins.serializer
-import org.jetbrains.annotations.ApiStatus.Experimental
 import andel.editor.Document as AndelDocument
 
 
 private val logger = logger<DocumentEntity>()
 
-@Experimental
 class DocumentEntity(override val eid: EID) : Entity {
   val uid: UID by Durable.Id
   val text: Text by TextAttr
@@ -38,7 +36,7 @@ class DocumentEntity(override val eid: EID) : Entity {
   ) {
     val TextAttr: Required<Text> = requiredValue("text", Text.serializer())
     val WritableAttr: Required<Boolean> = requiredValue("writable", Boolean.serializer())
-    val EditLogAttr: Required<EditLogEntity> = requiredRef<EditLogEntity>("editLogEntity", RefFlags.UNIQUE)
+    val EditLogAttr: Required<EditLogEntity> = requiredRef("editLogEntity", RefFlags.UNIQUE)
     val SharedAnchorStorageAttr: Required<AnchorStorage> = requiredValue("sharedAnchorStorage", AnchorStorage.serializer())
 
     fun fromText(uid: UID, text: CharSequence): DocumentEntity = requireChangeScope {
