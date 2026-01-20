@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -8,6 +8,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -619,7 +620,7 @@ public final class PropertyInspectorTable extends JBTable implements UiDataProvi
    */
   @Override
   public boolean editCellAt(final int row, final int column, final EventObject e){
-    final boolean result = super.editCellAt(row, column, e);
+    final boolean result = WriteIntentReadAction.compute(() -> super.editCellAt(row, column, e));
     final Rectangle cellRect = getCellRect(row, column, true);
     repaint(cellRect);
     return result;
