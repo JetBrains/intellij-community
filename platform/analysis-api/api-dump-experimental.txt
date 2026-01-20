@@ -272,6 +272,76 @@ com.intellij.modcommand.ModPsiUpdater
 - p:<init>(java.lang.Class):V
 - pa:invoke(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement,com.intellij.modcommand.ModPsiUpdater):V
 - pf:perform(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement):com.intellij.modcommand.ModCommand
+*:com.intellij.modcompletion.ModCompletionItem
+- sf:DEFAULT_INSERTION_CONTEXT:com.intellij.modcompletion.ModCompletionItem$InsertionContext
+- additionalLookupStrings():java.util.Set
+- autoCompletionPolicy():com.intellij.codeInsight.lookup.AutoCompletionPolicy
+- a:contextObject():java.lang.Object
+- isValid():Z
+- a:mainLookupString():java.lang.String
+- a:perform(com.intellij.modcommand.ActionContext,com.intellij.modcompletion.ModCompletionItem$InsertionContext):com.intellij.modcommand.ModCommand
+- a:presentation():com.intellij.modcompletion.ModCompletionItemPresentation
+- priority():D
+*f:com.intellij.modcompletion.ModCompletionItem$InsertionContext
+- java.lang.Record
+- <init>(com.intellij.modcompletion.ModCompletionItem$InsertionMode,C):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- insertionCharacter():C
+- mode():com.intellij.modcompletion.ModCompletionItem$InsertionMode
+*e:com.intellij.modcompletion.ModCompletionItem$InsertionMode
+- java.lang.Enum
+- sf:INSERT:com.intellij.modcompletion.ModCompletionItem$InsertionMode
+- sf:OVERWRITE:com.intellij.modcompletion.ModCompletionItem$InsertionMode
+- s:valueOf(java.lang.String):com.intellij.modcompletion.ModCompletionItem$InsertionMode
+- s:values():com.intellij.modcompletion.ModCompletionItem$InsertionMode[]
+*f:com.intellij.modcompletion.ModCompletionItemPresentation
+- <init>(com.intellij.openapi.util.text.MarkupText):V
+- detailIcon():javax.swing.Icon
+- detailText():com.intellij.openapi.util.text.MarkupText
+- equals(java.lang.Object):Z
+- hashCode():I
+- mainIcon():javax.swing.Icon
+- mainText():com.intellij.openapi.util.text.MarkupText
+- withDetailIcon(java.util.function.Supplier):com.intellij.modcompletion.ModCompletionItemPresentation
+- withDetailText(com.intellij.openapi.util.text.MarkupText):com.intellij.modcompletion.ModCompletionItemPresentation
+- withMainIcon(java.util.function.Supplier):com.intellij.modcompletion.ModCompletionItemPresentation
+- withMainText(com.intellij.openapi.util.text.MarkupText):com.intellij.modcompletion.ModCompletionItemPresentation
+*:com.intellij.modcompletion.ModCompletionItemProvider
+- sf:EP_NAME:com.intellij.lang.LanguageExtension
+- s:forLanguage(com.intellij.lang.Language):java.util.List
+- a:provideItems(com.intellij.modcompletion.ModCompletionItemProvider$CompletionContext,java.util.function.Consumer):V
+*f:com.intellij.modcompletion.ModCompletionItemProvider$CompletionContext
+- java.lang.Record
+- com.intellij.codeInsight.completion.BaseCompletionParameters
+- <init>(com.intellij.psi.PsiFile,I,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.codeInsight.completion.PrefixMatcher,I,com.intellij.codeInsight.completion.CompletionType):V
+- element():com.intellij.psi.PsiElement
+- f:equals(java.lang.Object):Z
+- getCompletionType():com.intellij.codeInsight.completion.CompletionType
+- getInvocationCount():I
+- getOffset():I
+- getOriginalFile():com.intellij.psi.PsiFile
+- getOriginalPosition():com.intellij.psi.PsiElement
+- getPosition():com.intellij.psi.PsiElement
+- getProject():com.intellij.openapi.project.Project
+- f:hashCode():I
+- invocationCount():I
+- isBasic():Z
+- isSmart():Z
+- matcher():com.intellij.codeInsight.completion.PrefixMatcher
+- offset():I
+- original():com.intellij.psi.PsiElement
+- originalFile():com.intellij.psi.PsiFile
+- prefix():java.lang.String
+- type():com.intellij.codeInsight.completion.CompletionType
+*a:com.intellij.modcompletion.PsiUpdateCompletionItem
+- com.intellij.modcompletion.ModCompletionItem
+- p:<init>(java.lang.String,java.lang.Object):V
+- p:calculateEndOffsetForOverwrite(com.intellij.openapi.editor.Document,I):I
+- contextObject():java.lang.Object
+- mainLookupString():java.lang.String
+- perform(com.intellij.modcommand.ActionContext,com.intellij.modcompletion.ModCompletionItem$InsertionContext):com.intellij.modcommand.ModCommand
+- a:update(com.intellij.modcommand.ActionContext,com.intellij.modcompletion.ModCompletionItem$InsertionContext,com.intellij.modcommand.ModPsiUpdater):V
 *:com.intellij.model.psi.PsiCompletableReference
 - com.intellij.model.psi.PsiSymbolReference
 - a:getCompletionVariants():java.util.Collection
