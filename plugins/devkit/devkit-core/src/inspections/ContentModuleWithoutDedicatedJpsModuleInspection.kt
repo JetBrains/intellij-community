@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
@@ -18,7 +19,10 @@ internal class ContentModuleWithoutDedicatedJpsModuleInspection : DevKitPluginXm
     val moduleName = contentModule.name.stringValue ?: return
     if (moduleName.contains("/")) {
       val message = DevKitBundle.message("inspection.content.module.without.dedicated.jps.module.message")
-      holder.createProblem(contentModule, message, ExtractModuleFix(moduleName))
+      val fixes =
+        if (IntelliJProjectUtil.isIntelliJPlatformProject(element.xmlElement?.project)) arrayOf(ExtractModuleFix(moduleName))
+        else emptyArray()
+      holder.createProblem(contentModule, message, *fixes)
     }
   }
 }
