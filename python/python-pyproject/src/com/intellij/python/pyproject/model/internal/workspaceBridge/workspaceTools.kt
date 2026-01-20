@@ -132,13 +132,14 @@ private suspend fun generatePyProjectTomlEntries(
         participatedTools.add(toolAndName.first.id)
       }
     }
-    if (projectNameAsString != null) {
-      if (projectNameAsString in usedNamed) {
-        projectNameAsString = "$projectNameAsString@${usedNamed.size}"
-      }
-      usedNamed.add(projectNameAsString)
+    if (projectNameAsString == null) {
+      projectNameAsString = root.name
     }
-    val projectName = ProjectName(projectNameAsString ?: "${root.name}@${tomlFile.hashCode()}")
+    if (projectNameAsString in usedNamed) {
+      projectNameAsString = "$projectNameAsString@${usedNamed.size}"
+    }
+    usedNamed.add(projectNameAsString)
+    val projectName = ProjectName(projectNameAsString)
     val sourceRootsAndTools = Tool.EP.extensionList.flatMap { tool -> tool.getSrcRoots(toml.toml, root).map { Pair(tool, it) } }.toSet()
     val sourceRoots = sourceRootsAndTools.map { it.second }.toSet() + findSrc(root)
     participatedTools.addAll(sourceRootsAndTools.map { it.first.id })
