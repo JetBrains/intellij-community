@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQua
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
@@ -102,11 +103,14 @@ object CreateKotlinCallableActionTextBuilder {
                 ?.render(renderer, Variance.IN_VARIANCE)
 
             is KaClassSymbol if (classKind == KaClassKind.ANONYMOUS_OBJECT) -> {
-                if (isAbstract || request.isExtension) {
-                    ktType?.directSupertypes?.firstNotNullOfOrNull { it.selfOrSuperTypeWithAbstractMatch(isAbstract) }
+                when {
+                    isAbstract -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract = true)
                         ?.render(renderer, Variance.IN_VARIANCE)
-                } else {
-                    ""
+
+                    request.isExtension -> ktType?.approximateAnonymousObjectToSupertypeOrSelf()
+                        ?.render(renderer, Variance.IN_VARIANCE)
+
+                    else -> ""
                 }
             }
 
