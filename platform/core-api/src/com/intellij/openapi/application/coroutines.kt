@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
@@ -166,9 +166,10 @@ suspend fun <T> readAndBackgroundWriteAction(action: ReadAndWriteScope.() -> Rea
 }
 
 /**
- * Same as [readAndEdtWriteAction], but invokes write actions on a background thread instead of EDT.
- * The execution of read and write actions happens in the dispatcher of the caller.
- * This is useful when you expect several concurrent read-and-write actions, and you need to control their concurrency
+ * Same as [readAndBackgroundWriteAction], but invokes read action in the context of the caller.
+ * Write actions are invoked in their own dispatcher.
+ *
+ * This is useful when you expect several concurrent read-and-write actions, and you need to control their concurrency.
  */
 @Experimental
 suspend fun <T> readAndBackgroundWriteActionUndispatched(action: ReadAndWriteScope.() -> ReadResult<T>): T {
@@ -177,6 +178,8 @@ suspend fun <T> readAndBackgroundWriteActionUndispatched(action: ReadAndWriteSco
 
 /**
  * Same as [readAndEdtWriteAction], but invokes read action in the context of the caller.
+ * Write actions are invoked in their own dispatcher.
+ *
  * This is useful when you expect several concurrent read-and-write actions, and you need to control their concurrency.
  */
 @Experimental
