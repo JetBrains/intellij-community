@@ -461,15 +461,20 @@ fun <T : CommandChain> T.createAllServicesAndExtensions(): T = apply {
   addCommand("${CMD_PREFIX}CreateAllServicesAndExtensions")
 }
 
+enum class RunConfigurationMode {
+  TILL_STARTED,
+  TILL_TERMINATED
+}
+
 fun <T : CommandChain> T.runConfiguration(
   configurationName: String,
-  mode: String = "TILL_TERMINATED",
+  mode: RunConfigurationMode = RunConfigurationMode.TILL_TERMINATED,
   failureExpected: Boolean = false,
   debug: Boolean = false,
 ): T = apply {
   val command = mutableListOf("${CMD_PREFIX}runConfiguration")
   command.add("-configurationName=$configurationName")
-  command.add("-mode=$mode")
+  command.add("-mode=${mode.name}")
   if (failureExpected) {
     command.add("-failureExpected")
   }
