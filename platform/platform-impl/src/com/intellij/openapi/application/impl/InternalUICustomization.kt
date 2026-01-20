@@ -207,4 +207,7 @@ open class InternalUICustomization {
   open fun getTabLayoutStart(layout: ContentLayout): Int = 0
 
   open fun getSingleRowTabInsets(tabsPosition: JBTabsPosition): Insets? = null
+
+  open fun calculateTabWidth(widthWithInsets: Int, insetsWidth: Int): Int = widthWithInsets
+
 }

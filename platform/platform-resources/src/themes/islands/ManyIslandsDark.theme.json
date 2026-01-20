@@ -843,6 +843,7 @@
     "TabbedPane": {
       "tabHeight": 40,
       "tabSelectionArc": 4,
+      "tabContentMinWidth": 24,
       "hoverColor": "control-bg-hovered",
       "contentAreaColor": "container-dialog-border",
       "focusColor": "accent-brand-bg-muted"
