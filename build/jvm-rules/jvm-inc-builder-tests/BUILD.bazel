@@ -26,23 +26,23 @@ java_test(
     #"-agentlib:jdwp=transport=dt_socket,server=n,address=127.0.0.1:5008,suspend=y",
 
     # Whether to perform final 'bazel clean --expunge' on test suite completion
-    #"-Djvm-inc-builder.test.cleanup=false",
+    # When run from bazel, all test temp/work files are expected to be handled by the calling environment
+    "-Djvm-inc-builder.test.cleanup=false",
+
+    "-Djvm-inc-builder.bazel.executable=$(rlocationpath @test_bazel_tool//:bazel)",
 
   ] + JUNIT5_JVM_FLAGS,
 
   args = ["com.intellij.tools.build.bazel.AllTests"],
   test_class = "com.intellij.tools.build.bazel.AllTests",
-  env_inherit = [
-    # Need these variables for bazel.cmd to function properly in test environment
-    "LOCALAPPDATA",
-    "PROCESSOR_ARCHITECTURE",
-    "USERPROFILE",
-  ],
+  timeout = "eternal",
   runtime_deps = [
     ":jvm-inc-builder-test-lib",
     "//:junit5Launcher",
   ],
-  data = glob(["testData/**/*"]),
+  data = glob(["testData/**/*"]) + [
+     "@test_bazel_tool//:bazel",
+  ],
 )
 
 jvm_import(

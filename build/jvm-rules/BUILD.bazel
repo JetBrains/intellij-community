@@ -23,9 +23,9 @@ jvm_import(
 _kt_kotlinc_options(
     name = "rules_jvm_bootstrap_kotlinc_options",
     include_stdlibs = "none",
-    jvm_target = "17",
+    jvm_target = "21",
     visibility = ["//visibility:public"],  # used by @community//:monorepo-jvm-builder (@community//fleet/compiler-plugins/expects:expects-compiler-plugin, etc.)
-    x_jdk_release = "17",
+    x_jdk_release = "21",
 )
 
 # --@rules_jvm//:trace
