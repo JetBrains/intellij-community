@@ -16,7 +16,6 @@
   <vendor url="https://www.jetbrains.com">JetBrains</vendor>
 
   <dependencies>
-    <!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->
     <module name="intellij.java.backend"/>
     <module name="intellij.platform.ml.impl"/>
     <module name="intellij.platform.collaborationTools"/>
