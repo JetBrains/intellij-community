@@ -5883,6 +5883,21 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
 
+                    @TestMetadata("anonymousObject.kt")
+                    public void testAnonymousObject() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/anonymousObject.kt");
+                    }
+
+                    @TestMetadata("anonymousObjectExtendingClass.kt")
+                    public void testAnonymousObjectExtendingClass() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/anonymousObjectExtendingClass.kt");
+                    }
+
+                    @TestMetadata("anonymousObjectViaThis.kt")
+                    public void testAnonymousObjectViaThis() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/anonymousObjectViaThis.kt");
+                    }
+
                     @TestMetadata("argumentTypeMismatch.kt")
                     public void testArgumentTypeMismatch() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/simple/argumentTypeMismatch.kt");
