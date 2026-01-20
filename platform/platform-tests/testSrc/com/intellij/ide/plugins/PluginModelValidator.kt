@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
+import com.intellij.platform.plugins.parser.impl.ScopedElementsContainer
 import com.intellij.platform.plugins.parser.impl.elements.*
 import com.intellij.platform.plugins.testFramework.LoadFromSourceXIncludeLoader
 import com.intellij.platform.plugins.testFramework.loadRawPluginDescriptorInTest
@@ -266,7 +267,8 @@ class PluginModelValidator(
 
     // additional content check: services overrides
     if (!validationOptions.skipServicesOverridesCheck) {
-      checkServicesOverrides(descriptorFileInfos)
+      checkServicesOverrides(descriptorFileInfos, RawPluginDescriptor::projectElementsContainer)
+      checkServicesOverrides(descriptorFileInfos, RawPluginDescriptor::appElementsContainer)
     }
 
     // 3. check dependencies - we are aware about all modules now
@@ -371,28 +373,19 @@ class PluginModelValidator(
     return serviceInterface
   }
 
-  private fun checkServicesOverrides(descriptors: Collection<DescriptorFileInfo>) {
-    val allOpenAppServices = HashSet<String>()
-    val allOpenProjectServices = HashSet<String>()
-    val allOverriddenAppServices = HashSet<String>()
-    val allOverriddenProjectServices = HashSet<String>()
-
-    for (descriptor in descriptors) {
-      allOpenProjectServices.addAll(getOpenServices(descriptor.descriptor.projectElementsContainer.services, descriptor))
-      allOverriddenProjectServices.addAll(getOverriddenServices(descriptor.descriptor.projectElementsContainer.services, descriptor))
-      allOpenAppServices.addAll(getOpenServices(descriptor.descriptor.appElementsContainer.services, descriptor))
-      allOverriddenAppServices.addAll(getOverriddenServices(descriptor.descriptor.appElementsContainer.services, descriptor))
+  private fun checkServicesOverrides(descriptors: Collection<DescriptorFileInfo>, containerSelector: (RawPluginDescriptor) -> ScopedElementsContainer) {
+    val allOpenServices = descriptors.flatMapTo(HashSet()) {
+      getOpenServices(containerSelector(it.descriptor).services, it)
+    }
+    val allOverriddenServices = descriptors.flatMapTo(HashSet()) {
+      getOverriddenServices(containerSelector(it.descriptor).services, it)
     }
 
     for (descriptor in descriptors) {
       checkServicesOverridesInSingleScopedContainer(descriptor,
-                                                    descriptor.descriptor.appElementsContainer.services,
-                                                    allOpenAppServices,
-                                                    allOverriddenAppServices)
-      checkServicesOverridesInSingleScopedContainer(descriptor,
-                                                    descriptor.descriptor.projectElementsContainer.services,
-                                                    allOpenProjectServices,
-                                                    allOverriddenProjectServices)
+                                                    containerSelector(descriptor.descriptor).services,
+                                                    allOpenServices,
+                                                    allOverriddenServices)
     }
   }
 
