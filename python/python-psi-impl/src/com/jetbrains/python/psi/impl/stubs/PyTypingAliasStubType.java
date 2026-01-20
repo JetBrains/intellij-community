@@ -48,9 +48,18 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypingAliasStub> {
   private static final int STRING_LITERAL_LENGTH_THRESHOLD = 100;
 
-  private static final Pattern TYPE_ANNOTATION_LIKE = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*" +
-                                                                      "(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*" +
-                                                                      "(\\[.*])?$");
+  public static final Pattern RE_TYPE_HINT_LIKE_STRING = Pattern.compile(
+    """
+      (?x)
+      \\s*
+      \\S+(\\[.*])?   # initial type like: "list[int]"
+      (\\s*\\|\\s*    # union operator: " | "
+        \\S+(\\[.*])? # type between union operator
+      )*              # repeating
+      \\s*
+      """,
+    Pattern.DOTALL
+  );
 
   private static final TokenSet VALID_TYPE_ANNOTATION_ELEMENTS = TokenSet.create(PyElementTypes.REFERENCE_EXPRESSION,
                                                                                  PyElementTypes.SUBSCRIPTION_EXPRESSION,
@@ -80,7 +89,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
       return null;
     }
 
-    if (isExplicitTypeAlias(target) || (looksLikeTypeHint(value) && target.getAnnotation() == null)) {
+    if (isExplicitTypeAlias(target) || (target.getAnnotation() == null && looksLikeTypeHint(value))) {
       return value;
     }
     return null;
@@ -170,7 +179,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
                               || node.getStringNodes().size() != 1
                               || node.getTextLength() > STRING_LITERAL_LENGTH_THRESHOLD
                               || !node.getStringElements().getFirst().getPrefix().isEmpty()
-                              || !TYPE_ANNOTATION_LIKE.matcher(node.getStringValue()).matches());
+                              || !RE_TYPE_HINT_LIKE_STRING.matcher(node.getStringValue()).matches());
         if (nonTrivial) {
           illegal[0] = true;
         }

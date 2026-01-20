@@ -6859,6 +6859,15 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-87012
+  public void testLegacyTypeAliasesWithQuotedUnionTypesPreservedInStubs() {
+    doMultiFileStubAwareTest("int | str", """
+      from mod import x
+      
+      expr = x
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

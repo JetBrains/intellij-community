@@ -13,6 +13,7 @@ import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnot
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintDialect
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
@@ -77,18 +78,6 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
   }
 
   companion object {
-    val RE_TYPING_ANNOTATION: Regex = Regex(
-      """(?x)
-      \s*
-      \S+(\[.*])?   # initial type like: "list[int]"
-      (\s*\|\s*     # union operator: " | "
-        \S+(\[.*])? # type between union operator
-      )*            # repeating
-      \s*
-      """.trimIndent(),
-      RegexOption.DOT_MATCHES_ALL,
-    )
-
     private fun isInsideValueOfExplicitTypeAnnotation(expr: PyStringLiteralExpression): Boolean {
       val assignment = PsiTreeUtil.getParentOfType(expr, PyAssignmentStatement::class.java)
       if (assignment == null || !PsiTreeUtil.isAncestor(assignment.assignedValue, expr, false)) {
@@ -164,8 +153,8 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
                                          PyTypeParameterListOwner::class.java) != null
     }
 
-    private fun isTypingAnnotation(s: String): Boolean {
-      return RE_TYPING_ANNOTATION matches s
+    fun isTypingAnnotation(s: String): Boolean {
+      return PyTypingAliasStubType.RE_TYPE_HINT_LIKE_STRING.toRegex() matches s
     }
   }
 
