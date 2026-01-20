@@ -183,6 +183,10 @@ internal class MonolithSessionProxy(val session: XDebugSession) : XDebugSessionP
 
   override fun createTabLayouter(): XDebugTabLayouter = session.debugProcess.createTabLayouter()
 
+  override fun addSessionListener(listener: XDebugSessionListener) {
+    session.addSessionListener(listener)
+  }
+
   override fun addSessionListener(listener: XDebugSessionListener, disposable: Disposable) {
     session.addSessionListener(listener, disposable)
   }

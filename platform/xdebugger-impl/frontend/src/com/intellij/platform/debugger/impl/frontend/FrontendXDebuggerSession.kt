@@ -450,6 +450,10 @@ class FrontendXDebuggerSession private constructor(
     return tabLayouter ?: error("Tab layouter is accessed before tab initialization")
   }
 
+  override fun addSessionListener(listener: XDebugSessionListener) {
+    eventsDispatcher.addListener(listener)
+  }
+
   override fun addSessionListener(listener: XDebugSessionListener, disposable: Disposable) {
     eventsDispatcher.addListener(listener, disposable)
   }
