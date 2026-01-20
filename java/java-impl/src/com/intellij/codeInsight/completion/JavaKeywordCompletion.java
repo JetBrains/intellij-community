@@ -9,7 +9,6 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Conditions;
@@ -136,10 +135,6 @@ public class JavaKeywordCompletion {
     myKeywordMatcher = new StartOnlyMatcher(session.getMatcher());
     myPosition = parameters.getPosition();
     myPrevLeaf = prevSignificantLeaf(myPosition);
-    if (ModCompletionItemProvider.modCommandCompletionEnabled()) {
-      // Replaced with ModCommand-based completion
-      return;
-    }
     if (!isSmart) {
       addKeywords();
     }

@@ -11,6 +11,7 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -35,6 +36,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public final class JavaNoVariantsDelegator extends CompletionContributor implements DumbAware {
   @Override
   public void fillCompletionVariants(final @NotNull CompletionParameters parameters, final @NotNull CompletionResultSet result) {
+    if (ModCompletionItemProvider.modCommandCompletionEnabled()) return;
     ResultTracker tracker = new ResultTracker(result) {
       @Override
       public void consume(CompletionResult plainResult) {

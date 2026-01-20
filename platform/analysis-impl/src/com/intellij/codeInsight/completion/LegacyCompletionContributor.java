@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.project.DumbAware;
@@ -39,6 +40,7 @@ public class LegacyCompletionContributor extends CompletionContributor implement
     if (parameters.getCompletionType() != CompletionType.BASIC) {
       return;
     }
+    if (ModCompletionItemProvider.modCommandCompletionEnabled()) return;
     CompletionData completionData = getCompletionData(parameters);
     if (completionData == null) return;
 

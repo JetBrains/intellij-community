@@ -14,7 +14,6 @@ import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -291,8 +290,7 @@ public final class JavaCompletionUtil {
     }
 
     PsiElement refQualifier = javaReference.getQualifier();
-    if (!ModCompletionItemProvider.modCommandCompletionEnabled() && 
-        refQualifier == null && PsiTreeUtil.getParentOfType(element, PsiPackageStatement.class, PsiImportStatementBase.class) == null) {
+    if (refQualifier == null && PsiTreeUtil.getParentOfType(element, PsiPackageStatement.class, PsiImportStatementBase.class) == null) {
       StaticMemberProcessor memberProcessor = new JavaStaticMemberProcessor(parameters);
       memberProcessor.processMembersOfRegisteredClasses(nameCondition, (member, psiClass) -> {
         if (!mentioned.contains(member) && processor.satisfies(member, ResolveState.initial())) {
@@ -540,7 +538,7 @@ public final class JavaCompletionUtil {
         return Collections.singletonList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, PsiSubstitutor.EMPTY));
       }
 
-      if (completion instanceof PsiClass && !ModCompletionItemProvider.modCommandCompletionEnabled()) {
+      if (completion instanceof PsiClass) {
         List<JavaPsiClassReferenceElement> classItems = JavaClassNameCompletionContributor.createClassLookupItems(
           CompletionUtil.getOriginalOrSelf((PsiClass)completion),
           JavaClassNameCompletionContributor.AFTER_NEW.accepts(reference),
@@ -552,13 +550,13 @@ public final class JavaCompletionUtil {
 
     PsiSubstitutor substitutor = completionElement.getSubstitutor();
     if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
-    if (completion instanceof PsiClass && !ModCompletionItemProvider.modCommandCompletionEnabled()) {
+    if (completion instanceof PsiClass) {
       JavaPsiClassReferenceElement classItem =
         JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)completion, true).setSubstitutor(substitutor);
       return JavaConstructorCallElement.wrap(classItem, reference.getElement());
     }
     if (completion instanceof PsiMethod) {
-      if (reference instanceof PsiMethodReferenceExpression && !ModCompletionItemProvider.modCommandCompletionEnabled()) {
+      if (reference instanceof PsiMethodReferenceExpression) {
         return Collections.singleton((LookupElement)new JavaMethodReferenceElement(
           (PsiMethod)completion, (PsiMethodReferenceExpression)reference, completionElement.getMethodRefType()));
       }
@@ -567,14 +565,14 @@ public final class JavaCompletionUtil {
       item.setForcedQualifier(completionElement.getQualifierText());
       return Collections.singletonList(item);
     }
-    if (completion instanceof PsiVariable && !ModCompletionItemProvider.modCommandCompletionEnabled()) {
+    if (completion instanceof PsiVariable) {
       if (completion instanceof PsiEnumConstant enumConstant &&
           PsiTreeUtil.isAncestor(enumConstant.getArgumentList(), reference.getElement(), true)) {
         return Collections.emptyList();
       }
       return Collections.singletonList(new VariableLookupItem((PsiVariable)completion).setSubstitutor(substitutor).qualifyIfNeeded(reference, null));
     }
-    if (completion instanceof PsiPackage && !ModCompletionItemProvider.modCommandCompletionEnabled()) {
+    if (completion instanceof PsiPackage) {
       return Collections.singletonList(new PackageLookupItem((PsiPackage)completion, reference.getElement()));
     }
 
