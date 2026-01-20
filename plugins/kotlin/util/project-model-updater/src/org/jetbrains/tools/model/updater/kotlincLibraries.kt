@@ -7,7 +7,7 @@ import org.jetbrains.tools.model.updater.impl.*
 private const val ktGroup = "org.jetbrains.kotlin"
 
 /** The version should be aligned with gradle.properties#defaultSnapshotVersion from the Kotlin repo */
-internal const val BOOTSTRAP_VERSION = "2.3.255-dev-255"
+internal const val BOOTSTRAP_VERSION = "2.4.255-dev-255"
 
 // see .idea/jarRepositories.xml
 // This is the new repository where artifacts SINCE `2.2.20-dev-2414` are published to.
