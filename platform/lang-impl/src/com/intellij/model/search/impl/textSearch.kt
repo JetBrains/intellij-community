@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
-import com.intellij.psi.templateLanguages.TemplateLanguageUtil
+import com.intellij.psi.templateLanguages.OuterLanguageElement
 import com.intellij.psi.util.walkUp
 import com.intellij.refactoring.util.TextOccurrencesUtilBase
 import com.intellij.util.EmptyQuery
@@ -58,11 +58,8 @@ internal fun buildTextUsageQuery(
 }
 
 private fun isApplicableOccurrence(occurrence: TextOccurrence, searchStringLength: Int): Boolean {
-  val leaf = occurrence.element
-  if (TemplateLanguageUtil.isInsideTemplateFile(occurrence.element)) {
-    if (leaf.containingFile.findElementAt(leaf.textRange.startOffset + occurrence.offsetInElement) != leaf) {
-      return false
-    }
+  if (occurrence.element is OuterLanguageElement) {
+    return false
   }
   for ((element, offsetInElement) in occurrence.walkUp()) {
     if (hasDeclarationsOrReferences(element, offsetInElement, searchStringLength)) {
@@ -79,11 +76,8 @@ private fun isApplicableOccurrence(
   strings: Boolean,
   plainText: Boolean
 ): Boolean {
-  val leaf = occurrence.element
-  if (TemplateLanguageUtil.isInsideTemplateFile(occurrence.element)) {
-    if (leaf.containingFile.findElementAt(leaf.textRange.startOffset + occurrence.offsetInElement) != leaf) {
-      return false
-    }
+  if (occurrence.element is OuterLanguageElement) {
+    return false
   }
 
   var isComment = false
