@@ -55,6 +55,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalRadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSearchMatchStyle
+import org.jetbrains.jewel.ui.component.styling.LocalSearchTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSegmentedControlButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSelectableLazyColumnStyle
@@ -70,6 +71,7 @@ import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
+import org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle
@@ -195,6 +197,9 @@ public val JewelTheme.Companion.speedSearchStyle: SpeedSearchStyle
 
 public val JewelTheme.Companion.searchMatchStyle: SearchMatchStyle
     @Composable @ReadOnlyComposable get() = LocalSearchMatchStyle.current
+
+public val JewelTheme.Companion.searchTextFieldStyle: SearchTextFieldStyle
+    @Composable @ReadOnlyComposable get() = LocalSearchTextFieldStyle.current
 
 @Composable
 public fun BaseJewelTheme(theme: ThemeDefinition, styling: ComponentStyling, content: @Composable () -> Unit) {

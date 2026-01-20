@@ -5,14 +5,17 @@ package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,14 +31,17 @@ import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 import org.jetbrains.jewel.foundation.lazy.tree.rememberTreeState
-import org.jetbrains.jewel.foundation.search.filter
+import org.jetbrains.jewel.foundation.search.filter as filterWithMatcher
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
+import org.jetbrains.jewel.ui.component.FilterableLazyColumn
 import org.jetbrains.jewel.ui.component.GroupHeader
 import org.jetbrains.jewel.ui.component.InlineWarningBanner
+import org.jetbrains.jewel.ui.component.SearchArea
 import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.SpeedSearchArea
 import org.jetbrains.jewel.ui.component.Text
@@ -49,7 +55,7 @@ import org.jetbrains.jewel.ui.theme.colorPalette
 
 @Composable
 @Suppress("Nls")
-internal fun SpeedSearches(modifier: Modifier = Modifier) {
+internal fun FilterAndSearch(modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         InlineWarningBanner(
             text =
@@ -57,31 +63,29 @@ internal fun SpeedSearches(modifier: Modifier = Modifier) {
                     "Despite being possible, we strongly recommend using a different component for this behavior."
         )
 
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Column(
-                Modifier.widthIn(max = 200.dp).weight(1f, fill = false).semantics { isTraversalGroup = true },
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                GroupHeader(text = "Tree", modifier = Modifier.fillMaxWidth())
-                SpeedSearchTreeExample()
-            }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+        ) {
+            DefaultContainer("Filter - List") { SimpleSearchAreaSample() }
 
-            Column(
-                Modifier.widthIn(max = 200.dp).weight(1f, fill = false).semantics { isTraversalGroup = true },
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                GroupHeader(text = "List", modifier = Modifier.fillMaxWidth())
-                SpeedSearchListWithHighlighting()
-            }
+            DefaultContainer("Search - List") { SpeedSearchListWithHighlighting() }
 
-            Column(
-                Modifier.widthIn(max = 200.dp).weight(1f, fill = false).semantics { isTraversalGroup = true },
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                GroupHeader(text = "Filter", modifier = Modifier.fillMaxWidth())
-                SpeedSearchListWithFiltering()
-            }
+            DefaultContainer("Search - Tree") { SpeedSearchTreeExample() }
+
+            DefaultContainer("Filter - List with Speed Search") { SpeedSearchListWithFiltering() }
         }
+    }
+}
+
+@Composable
+private fun RowScope.DefaultContainer(title: @Nls String, content: @Composable () -> Unit) {
+    Column(
+        Modifier.width(200.dp).semantics { isTraversalGroup = true },
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        GroupHeader(text = title, modifier = Modifier.fillMaxWidth())
+        content()
     }
 }
 
@@ -242,7 +246,15 @@ private fun SpeedSearchListWithFiltering(modifier: Modifier = Modifier) {
     val state = rememberSelectableLazyListState()
     val speedSearchState = rememberSpeedSearchState()
 
-    val listItems by remember { derivedStateOf { TEST_LIST.filter(speedSearchState.currentMatcher) } }
+    val listItems by remember {
+        derivedStateOf {
+            if (speedSearchState.searchText.isEmpty()) {
+                TEST_LIST
+            } else {
+                TEST_LIST.filterWithMatcher(speedSearchState.currentMatcher)
+            }
+        }
+    }
 
     SpeedSearchArea(speedSearchState, modifier) {
         SpeedSearchableLazyColumn(modifier = Modifier.focusable(), state = state) {
@@ -267,6 +279,33 @@ private fun SpeedSearchListWithFiltering(modifier: Modifier = Modifier) {
         }
 
         VerticalScrollbar(state.lazyListState, modifier = Modifier.align(Alignment.CenterEnd))
+    }
+}
+
+/**
+ * Demonstrates a standard search area with simple text-based filtering.
+ *
+ * This example shows a basic search implementation using [SimpleSearchAreaSample] (which uses[SearchArea], not
+ * [SpeedSearchArea]) with straightforward string-based filtering. Unlike speed search, this provides a more traditional
+ * search experience without advanced matching algorithms or text highlighting.
+ */
+@Composable
+private fun SimpleSearchAreaSample(modifier: Modifier = Modifier) {
+    FilterableLazyColumn(modifier, onSelectedIndexesChange = { println("Selected index changed to $it") }) {
+        items(TEST_LIST, textContent = { it }, key = { it }) { item ->
+            LaunchedEffect(isSelected) {
+                if (isSelected) {
+                    JewelLogger.getInstance("SpeedSearches").info("Item $item got selected")
+                }
+            }
+
+            SimpleListItem(
+                text = item,
+                selected = isSelected,
+                active = isActive,
+                modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+            )
+        }
     }
 }
 

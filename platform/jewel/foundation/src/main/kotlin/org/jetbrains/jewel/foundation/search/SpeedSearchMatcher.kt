@@ -178,8 +178,9 @@ public enum class MatchingCaseSensitivity {
 @InternalJewelApi
 @ApiStatus.Internal
 public object EmptySpeedSearchMatcher : SpeedSearchMatcher {
+    override fun matches(text: String?): SpeedSearchMatcher.MatchResult = matches(text as? CharSequence)
 
-    override fun matches(text: String?): SpeedSearchMatcher.MatchResult = SpeedSearchMatcher.MatchResult.NoMatch
+    override fun matches(text: CharSequence?): SpeedSearchMatcher.MatchResult = SpeedSearchMatcher.MatchResult.NoMatch
 }
 
 /**

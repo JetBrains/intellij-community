@@ -13,7 +13,8 @@ f:org.jetbrains.jewel.ui.DefaultComponentStyling
 - org.jetbrains.jewel.ui.ComponentStyling
 - sf:$stable:I
 - b:<init>(org.jetbrains.jewel.ui.component.styling.CheckboxStyle,org.jetbrains.jewel.ui.component.styling.ChipStyle,org.jetbrains.jewel.ui.component.styling.CircularProgressStyle,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,org.jetbrains.jewel.ui.component.styling.SplitButtonStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.DividerStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle,org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,org.jetbrains.jewel.ui.component.styling.InlineBannerStyles,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,org.jetbrains.jewel.ui.component.styling.LinkStyle,org.jetbrains.jewel.ui.component.styling.MenuStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,org.jetbrains.jewel.ui.component.styling.SplitButtonStyle,org.jetbrains.jewel.ui.component.styling.RadioButtonStyle,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle,org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,org.jetbrains.jewel.ui.component.styling.SliderStyle,org.jetbrains.jewel.ui.component.styling.TextAreaStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,org.jetbrains.jewel.ui.component.styling.TooltipStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle):V
-- <init>(org.jetbrains.jewel.ui.component.styling.CheckboxStyle,org.jetbrains.jewel.ui.component.styling.ChipStyle,org.jetbrains.jewel.ui.component.styling.CircularProgressStyle,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,org.jetbrains.jewel.ui.component.styling.SplitButtonStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.DividerStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle,org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,org.jetbrains.jewel.ui.component.styling.InlineBannerStyles,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,org.jetbrains.jewel.ui.component.styling.LinkStyle,org.jetbrains.jewel.ui.component.styling.MenuStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,org.jetbrains.jewel.ui.component.styling.SplitButtonStyle,org.jetbrains.jewel.ui.component.styling.RadioButtonStyle,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle,org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,org.jetbrains.jewel.ui.component.styling.SliderStyle,org.jetbrains.jewel.ui.component.styling.TextAreaStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,org.jetbrains.jewel.ui.component.styling.TooltipStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle,org.jetbrains.jewel.ui.component.styling.SearchMatchStyle):V
+- b:<init>(org.jetbrains.jewel.ui.component.styling.CheckboxStyle,org.jetbrains.jewel.ui.component.styling.ChipStyle,org.jetbrains.jewel.ui.component.styling.CircularProgressStyle,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,org.jetbrains.jewel.ui.component.styling.SplitButtonStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.DividerStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle,org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,org.jetbrains.jewel.ui.component.styling.InlineBannerStyles,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,org.jetbrains.jewel.ui.component.styling.LinkStyle,org.jetbrains.jewel.ui.component.styling.MenuStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,org.jetbrains.jewel.ui.component.styling.SplitButtonStyle,org.jetbrains.jewel.ui.component.styling.RadioButtonStyle,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle,org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,org.jetbrains.jewel.ui.component.styling.SliderStyle,org.jetbrains.jewel.ui.component.styling.TextAreaStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,org.jetbrains.jewel.ui.component.styling.TooltipStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle,org.jetbrains.jewel.ui.component.styling.SearchMatchStyle):V
+- <init>(org.jetbrains.jewel.ui.component.styling.CheckboxStyle,org.jetbrains.jewel.ui.component.styling.ChipStyle,org.jetbrains.jewel.ui.component.styling.CircularProgressStyle,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,org.jetbrains.jewel.ui.component.styling.SplitButtonStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.DividerStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle,org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,org.jetbrains.jewel.ui.component.styling.InlineBannerStyles,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,org.jetbrains.jewel.ui.component.styling.LinkStyle,org.jetbrains.jewel.ui.component.styling.MenuStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,org.jetbrains.jewel.ui.component.styling.SplitButtonStyle,org.jetbrains.jewel.ui.component.styling.RadioButtonStyle,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle,org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,org.jetbrains.jewel.ui.component.styling.SliderStyle,org.jetbrains.jewel.ui.component.styling.TextAreaStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,org.jetbrains.jewel.ui.component.styling.TooltipStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle,org.jetbrains.jewel.ui.component.styling.SearchMatchStyle,org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle):V
 - b:<init>(org.jetbrains.jewel.ui.component.styling.CheckboxStyle,org.jetbrains.jewel.ui.component.styling.ChipStyle,org.jetbrains.jewel.ui.component.styling.CircularProgressStyle,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,org.jetbrains.jewel.ui.component.styling.SplitButtonStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.DividerStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle,org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,org.jetbrains.jewel.ui.component.styling.InlineBannerStyles,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,org.jetbrains.jewel.ui.component.styling.LinkStyle,org.jetbrains.jewel.ui.component.styling.MenuStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,org.jetbrains.jewel.ui.component.styling.SplitButtonStyle,org.jetbrains.jewel.ui.component.styling.RadioButtonStyle,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle,org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,org.jetbrains.jewel.ui.component.styling.SliderStyle,org.jetbrains.jewel.ui.component.styling.TextAreaStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,org.jetbrains.jewel.ui.component.styling.TooltipStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle):V
 - equals(java.lang.Object):Z
 - f:getCheckboxStyle():org.jetbrains.jewel.ui.component.styling.CheckboxStyle
@@ -40,6 +41,7 @@ f:org.jetbrains.jewel.ui.DefaultComponentStyling
 - f:getRadioButtonStyle():org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 - f:getScrollbarStyle():org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 - f:getSearchMatchStyle():org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
+- f:getSearchTextFieldStyle():org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle
 - f:getSegmentedControlButtonStyle():org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
 - f:getSegmentedControlStyle():org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
 - f:getSelectableLazyColumnStyle():org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle
@@ -331,6 +333,7 @@ f:org.jetbrains.jewel.ui.component.DropdownKt
 f:org.jetbrains.jewel.ui.component.EditableComboBoxKt
 - bsf:EditableComboBox(androidx.compose.foundation.text.input.TextFieldState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,org.jetbrains.jewel.ui.component.PopupManager,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I,I):V
 - sf:EditableComboBox-zcv-z8k(androidx.compose.foundation.text.input.TextFieldState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,F,F,Z,org.jetbrains.jewel.ui.Outline,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,org.jetbrains.jewel.ui.component.PopupManager,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I,I):V
+f:org.jetbrains.jewel.ui.component.FilterableLazyColumnKt
 f:org.jetbrains.jewel.ui.component.GroupHeaderKt
 - sf:GroupHeader(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.IconActionButtonKt
@@ -631,6 +634,25 @@ f:org.jetbrains.jewel.ui.component.ScrollableContainerKt
 f:org.jetbrains.jewel.ui.component.ScrollbarKt
 - sf:HorizontalScrollbar(androidx.compose.foundation.gestures.ScrollableState,androidx.compose.ui.Modifier,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,androidx.compose.runtime.Composer,I,I):V
 - sf:VerticalScrollbar(androidx.compose.foundation.gestures.ScrollableState,androidx.compose.ui.Modifier,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,androidx.compose.runtime.Composer,I,I):V
+f:org.jetbrains.jewel.ui.component.SearchAreaKt
+- sf:rememberSearchAreaState(org.jetbrains.jewel.ui.component.SearchTextFieldState,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.SearchAreaState
+f:org.jetbrains.jewel.ui.component.SearchAreaState
+- sf:$stable:I
+- f:clearAndHide():V
+- f:getSearchText():java.lang.String
+- f:getTextFieldState():androidx.compose.foundation.text.input.TextFieldState
+- f:isVisible():Z
+- f:processKeyEvent-ZmokQxo(java.lang.Object):Z
+f:org.jetbrains.jewel.ui.component.SearchTextFieldKt
+- sf:SearchTextField(org.jetbrains.jewel.ui.component.SearchTextFieldState,androidx.compose.ui.Modifier,Z,Z,androidx.compose.foundation.text.input.InputTransformation,androidx.compose.ui.text.TextStyle,androidx.compose.foundation.text.KeyboardOptions,androidx.compose.foundation.text.input.KeyboardActionHandler,kotlin.jvm.functions.Function2,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,org.jetbrains.jewel.ui.Outline,kotlin.jvm.functions.Function2,androidx.compose.foundation.text.input.OutputTransformation,Z,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,java.util.List,Z,Z,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I,I):V
+- sf:rememberSearchTextFieldState(androidx.compose.foundation.text.input.TextFieldState,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.SearchTextFieldState
+- sf:rememberSearchTextFieldState-Le-punE(java.lang.String,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.SearchTextFieldState
+f:org.jetbrains.jewel.ui.component.SearchTextFieldState
+- sf:$stable:I
+- f:getSearchText():java.lang.String
+- f:getTextFieldState():androidx.compose.foundation.text.input.TextFieldState
+- f:processKeyEvent-ZmokQxo(java.lang.Object):Z
+- f:setShowSearchHistory(Z):V
 f:org.jetbrains.jewel.ui.component.SegmentedControlButtonData
 - sf:$stable:I
 - <init>(Z,kotlin.jvm.functions.Function4,kotlin.jvm.functions.Function0):V
@@ -1838,6 +1860,45 @@ f:org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
 f:org.jetbrains.jewel.ui.component.styling.SearchMatchStyle$Companion
 f:org.jetbrains.jewel.ui.component.styling.SearchMatchStyleKt
 - sf:getLocalSearchMatchStyle():androidx.compose.runtime.ProvidableCompositionLocal
+f:org.jetbrains.jewel.ui.component.styling.SearchTextFieldColors
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.ui.component.styling.SearchTextFieldColors$Companion
+- equals(java.lang.Object):Z
+- f:getError-0d7_KjU():J
+- f:getForeground-0d7_KjU():J
+- hashCode():I
+f:org.jetbrains.jewel.ui.component.styling.SearchTextFieldColors$Companion
+f:org.jetbrains.jewel.ui.component.styling.SearchTextFieldIcons
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.ui.component.styling.SearchTextFieldIcons$Companion
+- <init>(org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.icon.IconKey):V
+- equals(java.lang.Object):Z
+- f:getClearIcon():org.jetbrains.jewel.ui.icon.IconKey
+- f:getSearchHistoryIcon():org.jetbrains.jewel.ui.icon.IconKey
+- f:getSearchIcon():org.jetbrains.jewel.ui.icon.IconKey
+- hashCode():I
+f:org.jetbrains.jewel.ui.component.styling.SearchTextFieldIcons$Companion
+f:org.jetbrains.jewel.ui.component.styling.SearchTextFieldMetrics
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.ui.component.styling.SearchTextFieldMetrics$Companion
+- equals(java.lang.Object):Z
+- f:getContentPadding():androidx.compose.foundation.layout.PaddingValues
+- f:getPopupContentPadding():androidx.compose.foundation.layout.PaddingValues
+- f:getSpaceBetweenIcons-D9Ej5fM():F
+- hashCode():I
+f:org.jetbrains.jewel.ui.component.styling.SearchTextFieldMetrics$Companion
+f:org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle$Companion
+- <init>(org.jetbrains.jewel.ui.component.styling.SearchTextFieldColors,org.jetbrains.jewel.ui.component.styling.SearchTextFieldMetrics,org.jetbrains.jewel.ui.component.styling.SearchTextFieldIcons):V
+- equals(java.lang.Object):Z
+- f:getColors():org.jetbrains.jewel.ui.component.styling.SearchTextFieldColors
+- f:getIcons():org.jetbrains.jewel.ui.component.styling.SearchTextFieldIcons
+- f:getMetrics():org.jetbrains.jewel.ui.component.styling.SearchTextFieldMetrics
+- hashCode():I
+f:org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle$Companion
+f:org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyleKt
+- sf:getLocalSearchTextFieldStyle():androidx.compose.runtime.ProvidableCompositionLocal
 f:org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonColors
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonColors$Companion
@@ -3968,6 +4029,7 @@ f:org.jetbrains.jewel.ui.theme.JewelThemeKt
 - sf:getRadioButtonStyle(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 - sf:getScrollbarStyle(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 - sf:getSearchMatchStyle(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
+- sf:getSearchTextFieldStyle(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle
 - sf:getSegmentedControlButtonStyle(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
 - sf:getSegmentedControlStyle(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
 - sf:getSelectableLazyColumnStyle(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle

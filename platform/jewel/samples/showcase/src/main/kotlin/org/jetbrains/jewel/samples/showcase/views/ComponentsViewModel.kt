@@ -15,6 +15,7 @@ import org.jetbrains.jewel.samples.showcase.components.Buttons
 import org.jetbrains.jewel.samples.showcase.components.Checkboxes
 import org.jetbrains.jewel.samples.showcase.components.ChipsAndTrees
 import org.jetbrains.jewel.samples.showcase.components.ComboBoxes
+import org.jetbrains.jewel.samples.showcase.components.FilterAndSearch
 import org.jetbrains.jewel.samples.showcase.components.Icons
 import org.jetbrains.jewel.samples.showcase.components.Links
 import org.jetbrains.jewel.samples.showcase.components.ProgressBar
@@ -22,7 +23,6 @@ import org.jetbrains.jewel.samples.showcase.components.RadioButtons
 import org.jetbrains.jewel.samples.showcase.components.Scrollbars
 import org.jetbrains.jewel.samples.showcase.components.SegmentedControls
 import org.jetbrains.jewel.samples.showcase.components.Sliders
-import org.jetbrains.jewel.samples.showcase.components.SpeedSearches
 import org.jetbrains.jewel.samples.showcase.components.SplitLayouts
 import org.jetbrains.jewel.samples.showcase.components.Tabs
 import org.jetbrains.jewel.samples.showcase.components.TextAreas
@@ -105,9 +105,9 @@ public class ComponentsViewModel(
             ),
             ViewInfo(title = "Brushes", iconKey = ShowcaseIcons.Components.brush, content = { BrushesShowcase() }),
             ViewInfo(
-                title = "Speed Search",
+                title = "Filter and Search",
                 iconKey = ShowcaseIcons.Components.speedSearch,
-                content = { SpeedSearches() },
+                content = { FilterAndSearch() },
             ),
         )
 

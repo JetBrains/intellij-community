@@ -1,14 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.jewel.ui.component.search
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -24,8 +20,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -36,36 +31,31 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
-import org.jetbrains.jewel.foundation.search.filter
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
-import org.jetbrains.jewel.ui.component.DefaultButton
-import org.jetbrains.jewel.ui.component.SimpleListItem
-import org.jetbrains.jewel.ui.component.SpeedSearchArea
-import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.interactions.performKeyPress
-import org.jetbrains.jewel.ui.component.rememberSpeedSearchState
 import org.junit.Rule
 
 /**
- * Tests for [SpeedSearchArea] focusing on the filtering pattern where non-matching items are hidden from view.
+ * Tests for [FilterableLazyColumn] validating the built-in filtering functionality.
  *
- * This test suite validates the behavior when using [filter] extension with [SpeedSearchState.currentMatcher] to
- * dynamically filter list items based on the search query, as demonstrated in the showcase example
- * [SpeedSearchListWithFiltering].
+ * This test suite validates the behavior of FilterableLazyColumn where the filtering logic is built directly into the
+ * component through FilterableLazyColumnScope.
  *
- * Key differences from highlighting tests:
- * - **Filtering**: Items that don't match are removed from the DOM (not rendered)
- * - **Highlighting**: All items remain visible, matches are visually highlighted
+ * Key features tested:
+ * - **Built-in filtering**: Items that don't match are removed from the DOM (not rendered)
+ * - **Search state integration**: Uses SearchAreaState for managing search query
+ * - **Selection handling**: Validates selection updates when items are filtered
+ * - **Index mapping**: Ensures proper mapping between filtered and original item indices
  *
  * Testing approach:
- * - Uses explicit [rememberSpeedSearchState] for state management
- * - Uses [derivedStateOf] with [filter] to create filtered lists
+ * - Uses [rememberSearchAreaState] for state management
+ * - Uses FilterableLazyColumn's built-in filtering through textContent parameter
  * - Validates items are actually removed from the component tree (not just hidden)
  * - Tests the complete user workflow: type → filter → navigate → clear
  */
 @Suppress("ImplicitUnitReturnType")
 @OptIn(ExperimentalCoroutinesApi::class)
-class SpeedSearchAreaFilteringTest {
+internal class FilterableLazyColumnTest {
     @get:Rule val rule = createComposeRule()
 
     private val testDispatcher = UnconfinedTestDispatcher()
@@ -73,8 +63,8 @@ class SpeedSearchAreaFilteringTest {
     private val ComposeContentTestRule.onLazyColumn
         get() = onNodeWithTag("LazyColumn")
 
-    private val ComposeContentTestRule.onSpeedSearchAreaInput
-        get() = onNodeWithTag("SpeedSearchArea.Input")
+    private val ComposeContentTestRule.onSearchAreaInput
+        get() = onNodeWithTag("Jewel.Search.Input")
 
     private fun ComposeContentTestRule.onLazyColumnItem(text: String) =
         onNode(hasAnyAncestor(hasTestTag("LazyColumn")) and hasText(text))
@@ -90,7 +80,29 @@ class SpeedSearchAreaFilteringTest {
     }
 
     @Test
-    fun `on type, filter list to show only matching items`() = runFilteringComposeTest {
+    fun `on type, search text field should appear`() = runFilterableComposeTest {
+        // Validate content was rendered
+        onLazyColumnItem("Spring Boot").assertExists()
+
+        // On type, show the input
+        onLazyColumn.performKeyPress("S", rule = this)
+        onSearchAreaInput.assertIsDisplayed()
+
+        // Continue typing, field still visible
+        onLazyColumn.performKeyPress("pring", rule = this)
+        onSearchAreaInput.assertIsDisplayed()
+
+        // Clear it partially, but still has text, still visible
+        repeat(5) { onLazyColumn.performKeyPress(Key.Backspace, rule = this) }
+        onSearchAreaInput.assertIsDisplayed()
+
+        // Clear all, hide the text
+        onLazyColumn.performKeyPress(Key.Backspace, rule = this)
+        onSearchAreaInput.assertDoesNotExist()
+    }
+
+    @Test
+    fun `on type, filter list to show only matching items`() = runFilterableComposeTest {
         // Initially, all items should be visible
         onLazyColumnItem("Spring Boot").assertExists()
         onLazyColumnItem("React").assertExists()
@@ -112,7 +124,7 @@ class SpeedSearchAreaFilteringTest {
     }
 
     @Test
-    fun `on type more characters, further narrow filtered results`() = runFilteringComposeTest {
+    fun `on type more characters, further narrow filtered results`() = runFilterableComposeTest {
         // Type "S" - many items match
         onLazyColumn.performKeyPress("S", rule = this)
         onLazyColumnItem("Spring Boot").assertExists()
@@ -133,14 +145,14 @@ class SpeedSearchAreaFilteringTest {
     }
 
     @Test
-    fun `on backspace, expand filtered list`() = runFilteringComposeTest {
+    fun `on backspace, expand filtered list`() = runFilterableComposeTest {
         // Type "Spring Boot" - only one item matches
         onLazyColumn.performKeyPress("Spring Boot", rule = this)
         onLazyColumnItem("Spring Boot").assertIsDisplayed()
         onLazyColumnItem("Spring Framework").assertDoesNotExist()
 
         // Delete " Boot" by pressing backspace 5 times
-        repeat(5) { onSpeedSearchAreaInput.performKeyPress(Key.Backspace, rule = this) }
+        repeat(5) { onLazyColumn.performKeyPress(Key.Backspace, rule = this) }
 
         // Now "Spring" matches multiple items
         onLazyColumnItem("Spring Boot").assertIsDisplayed()
@@ -150,7 +162,7 @@ class SpeedSearchAreaFilteringTest {
     }
 
     @Test
-    fun `on no matches, list should be empty`() = runFilteringComposeTest {
+    fun `on no matches, list should be empty`() = runFilterableComposeTest {
         // Type something that doesn't match any item
         onLazyColumn.performKeyPress("NonexistentFramework", rule = this)
 
@@ -164,7 +176,7 @@ class SpeedSearchAreaFilteringTest {
     }
 
     @Test
-    fun `filtered items should select first match`() = runFilteringComposeTest {
+    fun `filtered items should select first match`() = runFilterableComposeTest {
         // Type "Vue" - should select first match
         onLazyColumn.performKeyPress("Spring", rule = this)
 
@@ -178,7 +190,7 @@ class SpeedSearchAreaFilteringTest {
     }
 
     @Test
-    fun `navigation should cycle through filtered items only`() = runFilteringComposeTest {
+    fun `navigation should cycle through filtered items only`() = runFilterableComposeTest {
         // Type "Angular" - filters to Angular-related items
         onLazyColumn.performKeyPress("Angular", rule = this)
 
@@ -195,7 +207,7 @@ class SpeedSearchAreaFilteringTest {
     }
 
     @Test
-    fun `partial match filtering should work correctly`() = runFilteringComposeTest {
+    fun `partial match filtering should work correctly`() = runFilterableComposeTest {
         // Type "Nest" - should match NestJS
         onLazyColumn.performKeyPress("Nest", rule = this)
         onLazyColumnItem("NestJS").assertIsDisplayed()
@@ -205,7 +217,7 @@ class SpeedSearchAreaFilteringTest {
     }
 
     @Test
-    fun `case insensitive filtering should work`() = runFilteringComposeTest {
+    fun `case insensitive filtering should work`() = runFilterableComposeTest {
         // Type lowercase "spring"
         onLazyColumn.performKeyPress("spring", rule = this)
 
@@ -216,7 +228,7 @@ class SpeedSearchAreaFilteringTest {
 
     @Test
     fun `special characters should work in filtering`() =
-        runFilteringComposeTest(listEntries = listOf("React.js", "Vue.js", "Next.js", "Nuxt.js", "Express.js")) {
+        runFilterableComposeTest(listEntries = listOf("React.js", "Vue.js", "Next.js", "Nuxt.js", "Express.js")) {
             // Type ".js" - all items contain ".js"
             onLazyColumn.performKeyPress(".js", rule = this)
 
@@ -228,7 +240,7 @@ class SpeedSearchAreaFilteringTest {
         }
 
     @Test
-    fun `adding character after match should update filter immediately`() = runFilteringComposeTest {
+    fun `adding character after match should update filter immediately`() = runFilterableComposeTest {
         // Type "Spring"
         onLazyColumn.performKeyPress("Spring", rule = this)
 
@@ -249,14 +261,14 @@ class SpeedSearchAreaFilteringTest {
     }
 
     @Test
-    fun `changing search should update filtered list dynamically`() = runFilteringComposeTest {
+    fun `changing search should update filtered list dynamically`() = runFilterableComposeTest {
         // Type "Kotlin"
         onLazyColumn.performKeyPress("Kotlin", rule = this)
         onLazyColumnItem("Kotlinx Serialization").assertIsDisplayed()
         onLazyColumnItem("React").assertDoesNotExist()
 
         // Delete "Kotlin" and type "React"
-        repeat(6) { onSpeedSearchAreaInput.performKeyPress(Key.Backspace, rule = this) }
+        repeat(6) { onLazyColumn.performKeyPress(Key.Backspace, rule = this) }
         onLazyColumn.performKeyPress("React", rule = this)
 
         // Now React items should be visible, Kotlin items hidden
@@ -266,7 +278,7 @@ class SpeedSearchAreaFilteringTest {
     }
 
     @Test
-    fun `on press esc, hide the speed search and list all entries`() = runFilteringComposeTest {
+    fun `on press esc, hide the search text field and list all entries`() = runFilterableComposeTest {
         // All items should be visible when start
         onLazyColumnItem("React").assertExists()
         onLazyColumnItem("Redux").assertExists()
@@ -278,7 +290,7 @@ class SpeedSearchAreaFilteringTest {
 
         // Click button to lose focus
         onLazyColumn.performKeyPress(Key.Escape, rule = this)
-        onSpeedSearchAreaInput.assertDoesNotExist()
+        onSearchAreaInput.assertDoesNotExist()
 
         // All items should be visible again
         onLazyColumnItem("React").assertExists()
@@ -286,7 +298,7 @@ class SpeedSearchAreaFilteringTest {
     }
 
     @Test
-    fun `empty search should show all items`() = runFilteringComposeTest {
+    fun `empty search should show all items`() = runFilterableComposeTest {
         // Type a space (which is valid input)
         onLazyColumn.performKeyPress(" ", rule = this)
 
@@ -298,7 +310,7 @@ class SpeedSearchAreaFilteringTest {
 
     @Test
     fun `filtering large list should perform correctly`() =
-        runFilteringComposeTest(listEntries = List(500) { "Item $it" }) {
+        runFilterableComposeTest(listEntries = List(500) { "Item $it" }) {
             // Type "1" - should match all items containing "1"
             onLazyColumn.performKeyPress("1", rule = this)
 
@@ -322,7 +334,7 @@ class SpeedSearchAreaFilteringTest {
         }
 
     @Test
-    fun `multiple word search should filter correctly`() = runFilteringComposeTest {
+    fun `multiple word search should filter correctly`() = runFilterableComposeTest {
         // Type "Spring Frame" - should match "Spring Framework"
         onLazyColumn.performKeyPress("Spring Frame", rule = this)
 
@@ -332,47 +344,7 @@ class SpeedSearchAreaFilteringTest {
     }
 
     @Test
-    fun `on lose focus, hide input and show all items`() = runFilteringComposeTest {
-        // Type to filter
-        onLazyColumn.performKeyPress("Spring", rule = this)
-        onLazyColumnItem("Spring Boot").assertIsDisplayed()
-        onLazyColumnItem("React").assertDoesNotExist()
-        onSpeedSearchAreaInput.assertExists().assertIsDisplayed()
-
-        // Click button to lose focus
-        onNodeWithTag("Button").performClick()
-        onSpeedSearchAreaInput.assertDoesNotExist()
-
-        // All items should be visible again (filter cleared)
-        onLazyColumnItem("Spring Boot").assertExists()
-        onLazyColumnItem("React").assertExists()
-        onLazyColumnItem("Django").assertExists()
-    }
-
-    @Test
-    fun `on lose focus with dismissOnLoseFocus false, keep input and filtered items visible`() =
-        runFilteringComposeTest(dismissOnLoseFocus = false) {
-            // Type to filter
-            onLazyColumn.performKeyPress("Spring", rule = this)
-            onLazyColumnItem("Spring Boot").assertIsDisplayed()
-            onLazyColumnItem("React").assertDoesNotExist()
-            onSpeedSearchAreaInput.assertExists().assertIsDisplayed()
-
-            // Click button to lose focus
-            onNodeWithTag("Button").performClick()
-
-            // Input should still be visible
-            onSpeedSearchAreaInput.assertExists().assertIsDisplayed()
-
-            // Filtered items should still be visible, non-matching items should not exist
-            onLazyColumnItem("Spring Boot").assertIsDisplayed()
-            onLazyColumnItem("Spring Framework").assertIsDisplayed()
-            onLazyColumnItem("React").assertDoesNotExist()
-            onLazyColumnItem("Django").assertDoesNotExist()
-        }
-
-    @Test
-    fun `navigation after filter clear and dismiss should work correctly`() = runFilteringComposeTest {
+    fun `navigation after filter clear and dismiss should work correctly`() = runFilterableComposeTest {
         // Filter by 'RxJS' - will match only one item
         onLazyColumn.performKeyPress("RxJS", rule = this)
         onLazyColumnItem("RxJS").assertIsDisplayed()
@@ -380,12 +352,12 @@ class SpeedSearchAreaFilteringTest {
         onLazyColumnItem("Ruby on Rails").assertDoesNotExist()
 
         // Delete all filter text (4 characters)
-        repeat(4) { onSpeedSearchAreaInput.performKeyPress(Key.Backspace, rule = this) }
+        repeat(4) { onLazyColumn.performKeyPress(Key.Backspace, rule = this) }
         waitForIdle()
 
-        // Close speed search with Escape - this should restore the full list and keep RxJS selected
+        // Close the search with Escape - this should restore the full list and keep RxJS selected
         onLazyColumn.performKeyPress(Key.Escape, rule = this)
-        onSpeedSearchAreaInput.assertDoesNotExist()
+        onSearchAreaInput.assertDoesNotExist()
 
         // RxJS should still be selected and visible
         // My fix ensures lastActiveItemIndex is updated to RxJS's position in the full list (index 10)
@@ -401,48 +373,81 @@ class SpeedSearchAreaFilteringTest {
         onLazyColumnItem("Ruby on Rails").assertIsDisplayed().assertIsSelected()
     }
 
-    private fun runFilteringComposeTest(
+    @Test
+    fun `item function should properly filter single items`() = runFilterableComposeTest {
+        rule.setContent {
+            val focusRequester = remember { FocusRequester() }
+            val searchState = rememberSearchAreaState()
+            val state = rememberSelectableLazyListState()
+
+            IntUiTheme {
+                Column {
+                    FilterableLazyColumn(
+                        modifier = Modifier.testTag("FilterableLazyColumn"),
+                        lazyColumnModifier =
+                            Modifier.size(200.dp, 400.dp)
+                                .testTag("LazyColumn")
+                                .focusRequester(focusRequester)
+                                .onFirstVisible { focusRequester.requestFocus() },
+                        state = state,
+                        searchState = searchState,
+                        dispatcher = testDispatcher,
+                    ) {
+                        item(key = "item1", textContent = { "First Item" }) { Text(AnnotatedString("First Item")) }
+
+                        item(key = "item2", textContent = { "Second Item" }) { Text(AnnotatedString("Second Item")) }
+
+                        item(key = "item3", textContent = { "Third Item" }) { Text(AnnotatedString("Third Item")) }
+                    }
+
+                    DefaultButton(onClick = {}, modifier = Modifier.testTag("Button")) { Text("Press me") }
+                }
+            }
+        }
+
+        rule.waitForIdle()
+
+        // Initially all items should be visible
+        onLazyColumnItem("First Item").assertExists()
+        onLazyColumnItem("Second Item").assertExists()
+        onLazyColumnItem("Third Item").assertExists()
+
+        // Type "Second" - should show only Second Item
+        onLazyColumn.performKeyPress("Second", rule = this)
+        onLazyColumnItem("Second Item").assertIsDisplayed()
+        onLazyColumnItem("First Item").assertDoesNotExist()
+        onLazyColumnItem("Third Item").assertDoesNotExist()
+    }
+
+    private fun runFilterableComposeTest(
         listEntries: List<String> = TEST_FRAMEWORKS,
-        dismissOnLoseFocus: Boolean = true,
         block: ComposeContentTestRule.() -> Unit,
     ) {
         rule.setContent {
             val focusRequester = remember { FocusRequester() }
-            val speedSearchState = rememberSpeedSearchState()
+            val searchState = rememberSearchAreaState()
             val state = rememberSelectableLazyListState()
-
-            // Filter the list based on the current matcher - same pattern as showcase
-            val filteredItems by remember { derivedStateOf { listEntries.filter(speedSearchState.currentMatcher) } }
 
             IntUiTheme {
                 Column {
-                    SpeedSearchArea(
-                        state = speedSearchState,
-                        modifier = Modifier.testTag("SpeedSearchArea"),
-                        dismissOnLoseFocus = dismissOnLoseFocus,
+                    FilterableLazyColumn(
+                        modifier = Modifier.testTag("FilterableLazyColumn"),
+                        lazyColumnModifier =
+                            Modifier.size(200.dp, 400.dp)
+                                .testTag("LazyColumn")
+                                .focusRequester(focusRequester)
+                                .onFirstVisible { focusRequester.requestFocus() },
+                        state = state,
+                        searchState = searchState,
+                        dispatcher = testDispatcher,
                     ) {
-                        SpeedSearchableLazyColumn(
-                            modifier =
-                                Modifier.size(200.dp, 400.dp)
-                                    .testTag("LazyColumn")
-                                    .focusRequester(focusRequester)
-                                    .onFirstVisible { focusRequester.requestFocus() },
-                            state = state,
-                            dispatcher = testDispatcher,
-                            // Don't pass dispatcher to avoid circular dependency with filtering
-                        ) {
-                            items(filteredItems, textContent = { it }, key = { it }) { item ->
-                                var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-
-                                SimpleListItem(
-                                    text = item.highlightTextSearch(),
-                                    selected = isSelected,
-                                    active = isActive,
-                                    onTextLayout = { textLayoutResult = it },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textModifier = Modifier.highlightSpeedSearchMatches(textLayoutResult),
-                                )
-                            }
+                        items(items = listEntries, textContent = { it }, key = { it }) { item ->
+                            SimpleListItem(
+                                text = AnnotatedString(item),
+                                selected = isSelected,
+                                active = isActive,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
                         }
                     }
 

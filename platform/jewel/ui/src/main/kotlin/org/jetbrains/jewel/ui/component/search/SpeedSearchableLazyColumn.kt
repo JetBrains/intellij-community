@@ -187,16 +187,24 @@ internal class SpeedSearchableLazyColumnKeyActions(
                     }
                     return@lambda true
                 }
-                isSelectNextItem && speedSearchState.isVisible -> {
-                    onSelectNextItem(keys, state, speedSearchState.matchingIndexes.filter { it > initialIndex })
+                isSelectNextItem -> {
+                    if (speedSearchState.isVisible && speedSearchState.searchText.isNotEmpty()) {
+                        onSelectNextItem(keys, state, speedSearchState.matchingIndexes.filter { it > initialIndex })
+                    } else {
+                        onSelectNextItem(keys, state)
+                    }
                     return@lambda true
                 }
-                isSelectPreviousItem && speedSearchState.isVisible -> {
-                    onSelectPreviousItem(
-                        keys,
-                        state,
-                        speedSearchState.matchingIndexes.filter { it < initialIndex }.asReversed(),
-                    )
+                isSelectPreviousItem -> {
+                    if (speedSearchState.isVisible && speedSearchState.searchText.isNotEmpty()) {
+                        onSelectPreviousItem(
+                            keys,
+                            state,
+                            speedSearchState.matchingIndexes.filter { it < initialIndex }.asReversed(),
+                        )
+                    } else {
+                        onSelectPreviousItem(keys, state)
+                    }
                     return@lambda true
                 }
                 else -> Unit
