@@ -10,10 +10,12 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.text.UniqueNameGenerator
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.isAnyType
 import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -33,9 +35,11 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.ifEmpty
 
 object K2CreateClassFromUsageBuilder {
+    @OptIn(KaExperimentalApi::class)
     fun generateCreateClassActions(element: KtElement): List<IntentionAction> {
         val refExpr = element.findParentOfType<KtNameReferenceExpression>(strict = false) ?: return listOf()
         if (refExpr.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference } != null) return listOf()
@@ -45,8 +49,8 @@ object K2CreateClassFromUsageBuilder {
             val superClass: KtClass? = expectedType?.kaType?.convertToClass()
 
             val superClassSymbol = superClass?.classSymbol ?: (expectedType?.kaType as? KaClassType)?.symbol as? KaClassSymbol
-            val superClassName:String? = superClass?.name
-            val isAny = superClassName == StandardClassIds.Any.shortClassName.asString()
+            val superClassName: String? = expectedType?.kaType?.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.OUT_VARIANCE)
+            val isAny = superClassSymbol?.classId == StandardClassIds.Any
             val returnTypeString: String = if (superClass == null || superClassName == null || isAny) ""
                 else if (superClass.isInterface()) ": $superClassName" else ": $superClassName()"
 
@@ -70,6 +74,7 @@ object K2CreateClassFromUsageBuilder {
                         }
                         .map { it.createSmartPointer() }
                     val isAnnotation = kind == ClassKind.ANNOTATION_CLASS
+                    val isObject = kind == ClassKind.OBJECT
                     val paramListRendered = renderParamList(isAnnotation, refExpr)
                     val open = isInsideExtendsList(refExpr)
                     val name = refExpr.getReferencedName()
@@ -82,7 +87,7 @@ object K2CreateClassFromUsageBuilder {
                             open,
                             name,
                             superClassName,
-                            paramListRendered.renderedParamList,
+                            if (isObject) "" else paramListRendered.renderedParamList,
                             paramListRendered.candidateList,
                             returnTypeString,
                             paramListRendered.primaryConstructorVisibilityModifier

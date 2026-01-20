@@ -4401,6 +4401,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createClass/typeReference/createNestedClassInInner.kt");
             }
 
+            @TestMetadata("createObject.kt")
+            public void testCreateObject() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createClass/typeReference/createObject.kt");
+            }
+
             @TestMetadata("enumEntryNotQualifierNoTypeArgs.kt")
             public void testEnumEntryNotQualifierNoTypeArgs() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createClass/typeReference/enumEntryNotQualifierNoTypeArgs.kt");

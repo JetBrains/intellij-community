@@ -5222,6 +5222,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createClass/typeReference/createNestedClassInInner.kt");
                 }
 
+                @TestMetadata("createObject.kt")
+                public void testCreateObject() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createClass/typeReference/createObject.kt");
+                }
+
                 @TestMetadata("enumEntryNotQualifierNoTypeArgs.kt")
                 public void testEnumEntryNotQualifierNoTypeArgs() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createClass/typeReference/enumEntryNotQualifierNoTypeArgs.kt");
