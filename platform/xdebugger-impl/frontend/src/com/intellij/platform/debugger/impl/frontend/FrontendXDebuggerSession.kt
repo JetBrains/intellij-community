@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.execution.RunContentDescriptorIdImpl
@@ -68,13 +68,11 @@ private class StackFrameUpdate private constructor(val frame: FrontendXStackFram
 
 @VisibleForTesting
 @ApiStatus.Internal
-class FrontendXDebuggerSession private constructor(
+class FrontendXDebuggerSession(
   override val project: Project,
   scope: CoroutineScope,
   private val manager: FrontendXDebuggerManager,
   private val sessionDto: XDebugSessionDto,
-  override val processHandler: ProcessHandler,
-  override val consoleView: ConsoleView?,
 ) : XDebugSessionProxy {
   private val cs = scope.childScope("Session ${sessionDto.id}")
   private val tabScope = scope.childScope("Session tab ${sessionDto.id}")
@@ -157,6 +155,16 @@ class FrontendXDebuggerSession private constructor(
 
   override val sessionName: String = sessionDto.sessionName
   override val sessionData: XDebugSessionData = FrontendXDebugSessionData(sessionDto.sessionDataDto, tabScope, sessionStateFlow)
+
+  override val processHandler: ProcessHandler = createFrontendProcessHandler(project, sessionDto.processHandlerDto)
+
+  private val consoleViewDeferred: Deferred<ConsoleView?> = scope.async {
+    sessionDto.consoleViewData?.consoleView(processHandler)
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override val consoleView: ConsoleView?
+    get() = if (consoleViewDeferred.isCompleted) consoleViewDeferred.getCompleted() else null
 
   override val restartActions: List<AnAction>
     get() = sessionDto.restartActions.mapNotNull { it.action() }
@@ -335,6 +343,9 @@ class FrontendXDebuggerSession private constructor(
 
     val proxy = this@FrontendXDebuggerSession
     val tab = withContext(Dispatchers.EDT) {
+      // we need to await for the console view to be initialized before tab is created
+      // so [consoleView] will return an up-to-date result
+      consoleViewDeferred.await()
       // TODO restore content to reuse on frontend if needed (it is not used now in create)
       XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironmentProxyDto?.executionEnvironment(project, tabScope), null,
                               tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization, tabInfo.defaultFramesViewKey).apply {
@@ -551,21 +562,6 @@ class FrontendXDebuggerSession private constructor(
 
   override suspend fun resume() {
     XDebugSessionApi.getInstance().resume(id)
-  }
-
-  companion object {
-
-    suspend fun create(
-      project: Project,
-      scope: CoroutineScope,
-      manager: FrontendXDebuggerManager,
-      sessionDto: XDebugSessionDto,
-    ): FrontendXDebuggerSession {
-      val processHandler = createFrontendProcessHandler(project, sessionDto.processHandlerDto)
-      val consoleView = sessionDto.consoleViewData?.consoleView(processHandler)
-
-      return FrontendXDebuggerSession(project, scope, manager, sessionDto, processHandler, consoleView)
-    }
   }
 }
 
