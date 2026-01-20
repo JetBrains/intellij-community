@@ -4,6 +4,9 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleView
+import com.intellij.frontend.FrontendApplicationInfo
+import com.intellij.frontend.FrontendType
+import com.intellij.ide.rpc.AnActionId
 import com.intellij.ide.rpc.action
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.Disposable
@@ -460,8 +463,22 @@ class FrontendXDebuggerSession private constructor(
   }
 
   override fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup) {
-    // TODO: addittional actions are not registered in RemDev
-    XDebugMonolithUtils.findSessionById(id)?.debugProcess?.registerAdditionalActions(leftToolbar, topLeftToolbar, settings)
+    // Only individual actions are currently serialized in RemDev.
+    // As a result, additional actions registered on the backend are added here as a flat list,
+    // and separators e.g. from the original backend structure are not preserved.
+    // We maintain two code paths: one for Monolith (preserving full group structure) and one for RemDev (flat view).
+    val monolithSession = XDebugMonolithUtils.findSessionById(id)
+    if (monolithSession != null) {
+      monolithSession.debugProcess.registerAdditionalActions(leftToolbar, topLeftToolbar, settings)
+    } else {
+      leftToolbar.addActions(sessionDto.leftToolbarActions)
+      topLeftToolbar.addActions(sessionDto.topToolbarActions)
+      settings.addActions(sessionDto.settingsActions)
+    }
+  }
+
+  private fun DefaultActionGroup.addActions(actionIds: List<AnActionId>) {
+    actionIds.forEach { id -> id.action()?.let { add(it) } }
   }
 
   override fun putKey(sink: DataSink) {

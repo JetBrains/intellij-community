@@ -94,6 +94,9 @@ data class XDebugSessionDto(
   val restartActions: List<AnActionId>,
   val extraActions: List<AnActionId>,
   val extraStopActions: List<AnActionId>,
+  val leftToolbarActions: List<AnActionId>,
+  val topToolbarActions: List<AnActionId>,
+  val settingsActions: List<AnActionId>,
 )
 
 @ApiStatus.Internal
