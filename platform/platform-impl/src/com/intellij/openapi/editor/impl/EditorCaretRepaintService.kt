@@ -130,6 +130,7 @@ internal class EditorCaretRepaintService(coroutineScope: CoroutineScope) {
         cursor.setFullOpacity()
         cursor.repaint()
         phaseStart = now
+        fadingOut = true
         continue
       }
 
