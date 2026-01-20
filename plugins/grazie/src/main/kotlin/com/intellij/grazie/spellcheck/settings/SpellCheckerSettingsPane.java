@@ -20,6 +20,7 @@ import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.statistics.SpellcheckerActionStatistics;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
+import com.intellij.spellchecker.util.Strings;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
@@ -234,7 +235,8 @@ public final class SpellCheckerSettingsPane implements Disposable {
         word = word.trim();
       }
 
-      if (!manager.hasProblem(word)) {
+      boolean mixedCase = Strings.isMixedCase(word);
+      if (mixedCase && getWords().contains(word) || !mixedCase && !manager.hasProblem(word)) {
         Messages.showWarningDialog(SpellCheckerBundle.message("entered.word.0.is.correct.you.no.need.to.add.this.in.list", word),
                                    SpellCheckerBundle.message("add.new.word"));
         return null;
