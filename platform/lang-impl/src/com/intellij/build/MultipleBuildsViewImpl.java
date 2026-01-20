@@ -398,9 +398,7 @@ public final class MultipleBuildsViewImpl implements MultipleBuildsView {
       BuildView[] viewsToDispose = myViewMap.values().toArray(size -> new BuildView[size]);
       runOnEdt.add(() -> {
         for (BuildView view : viewsToDispose) {
-          if (view != null) { // ConcurrentHashMap#values is weakly constistent, can return nulls
-            Disposer.dispose(view);
-          }
+          Disposer.dispose(view);
         }
       });
 
