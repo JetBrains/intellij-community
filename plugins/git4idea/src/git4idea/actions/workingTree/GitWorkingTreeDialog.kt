@@ -103,14 +103,14 @@ internal class GitWorkingTreeDialog(
       row(GitBundle.message("working.tree.dialog.label.existing.branch")) {
         val localBranchesWithTrees: List<BranchWithWorkingTree?> = computeBranchesWithWorkingTrees()
         val comboBox = comboBox(localBranchesWithTrees, BranchWithTreeCellRenderer(data.project, data.repository))
-        comboBox.bindItem(existingBranchWithWorkingTree).align(Align.FILL).validationOnApply { validateBranchOnApply() }
+        comboBox.bindItem(existingBranchWithWorkingTree).align(Align.FILL).validationOnApply { validateExistingBranchOnApply() }
         comboBox.component.isSwingPopup = false
       }
 
       row {
         checkBox(GitBundle.message("working.tree.dialog.checkbox.new.branch")).bindSelected(createNewBranch).gap(RightGap.SMALL)
 
-        textField().bindText(newBranchName).align(Align.FILL).validationOnApply { validateBranchNameOnApply() }
+        textField().bindText(newBranchName).align(Align.FILL).validationOnApply { validateNewBranchNameOnApply() }
           .comment(getNewBranchComment())
           .enabledIf(createNewBranch)
       }
@@ -132,12 +132,12 @@ internal class GitWorkingTreeDialog(
     }
   }
 
-  private fun ValidationInfoBuilder.validateBranchOnApply(): ValidationInfo? {
+  private fun ValidationInfoBuilder.validateExistingBranchOnApply(): ValidationInfo? {
     val value = existingBranchWithWorkingTree.get()
     if (value == null) {
       return error(GitBundle.message("working.tree.dialog.location.validation.select.branch"))
     }
-    if (value.workingTree != null) {
+    if (value.workingTree != null && !createNewBranch.get()) {
       return error(GitBundle.message("working.tree.dialog.branch.validation.already.checked.out.in.working.tree",
                                      value.branch.name, value.workingTree.path.name))
     }
@@ -165,7 +165,7 @@ internal class GitWorkingTreeDialog(
     }
   }
 
-  private fun ValidationInfoBuilder.validateBranchNameOnApply(): ValidationInfo? {
+  private fun ValidationInfoBuilder.validateNewBranchNameOnApply(): ValidationInfo? {
     val name = newBranchName.get()
     return when {
       !createNewBranch.get() -> null
