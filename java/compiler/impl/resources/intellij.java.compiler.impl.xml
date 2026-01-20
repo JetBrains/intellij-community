@@ -9,8 +9,6 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.java"/>
     <module name="intellij.platform.ide.impl"/>
-    <!--todo check-->
-    <!--<module name="intellij.java.rt"/>-->
     <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.lang.impl"/>

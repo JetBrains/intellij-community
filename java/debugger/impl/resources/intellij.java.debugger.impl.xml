@@ -12,8 +12,6 @@
     <module name="intellij.platform.lang"/>
     <module name="intellij.java.compiler"/>
     <module name="intellij.java.compiler.impl"/>
-    <!--todo-->
-    <!--<module name="intellij.java.rt"/>-->
     <module name="intellij.jsp"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.impl.refactorings"/>

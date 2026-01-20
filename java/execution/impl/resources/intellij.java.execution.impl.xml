@@ -6,8 +6,6 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.java.execution"/>
-    <!--todo check if it is needed-->
-    <!--<module name="intellij.java.rt"/>-->
     <module name="intellij.java.debugger.impl"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.projectModel"/>
