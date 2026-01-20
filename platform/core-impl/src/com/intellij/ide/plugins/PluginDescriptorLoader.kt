@@ -408,6 +408,25 @@ private fun CoroutineScope.loadDescriptorsFromProperty(loadingContext: PluginDes
   return async { DiscoveredPluginsList(list.awaitAllNotNull(), PluginsSourceContext.SystemPropertyProvided) }
 }
 
+private fun CoroutineScope.loadThirdPartyBundledPluginDescriptors(loadingContext: PluginDescriptorLoadingContext, pool: ZipEntryResolverPool): Deferred<DiscoveredPluginsList?> {
+  if (System.getProperty("idea.allow.third.party.bundled.plugins", "true") != "true") {
+    return CompletableDeferred(value = null)
+  }
+  val thirdPartyBundledPluginsPath = PathManager.getHomeDir().resolve("third-party-plugins")
+  if (!Files.exists(thirdPartyBundledPluginsPath)) {
+    return CompletableDeferred(value = null)
+  }
+  return async(Dispatchers.IO) {
+    val list = mutableListOf<Deferred<PluginMainDescriptor?>>()
+    Files.newDirectoryStream(thirdPartyBundledPluginsPath).forEach { pluginPath ->
+      list.add(async(Dispatchers.IO) {
+        loadDescriptorFromFileOrDir(pluginPath, loadingContext, pool, isBundled = true)
+      })
+    }
+    return@async DiscoveredPluginsList(list.awaitAllNotNull(), PluginsSourceContext.Bundled)
+  }
+}
+
 suspend fun loadDescriptors(
   zipPoolDeferred: Deferred<ZipEntryResolverPool>,
   mainClassLoaderDeferred: Deferred<ClassLoader>?,
@@ -535,7 +554,7 @@ private suspend fun loadDescriptors(
 ): PluginDescriptorLoadingResult {
   val zipPool = zipPoolDeferred.await()
   val mainClassLoader = mainClassLoaderDeferred?.await() ?: PluginManagerCore::class.java.classLoader
-  val (plugins, pluginsFromProperty) = coroutineScope {
+  val discoveredPlugins = coroutineScope {
     val pluginsDeferred = ProductLoadingStrategy.strategy.loadPluginDescriptors(
       scope = this,
       loadingContext = loadingContext,
@@ -547,10 +566,10 @@ private suspend fun loadDescriptors(
       zipPool = zipPool,
       mainClassLoader = mainClassLoader,
     )
+    val thirdPartyBundledPluginsDeferred = loadThirdPartyBundledPluginDescriptors(loadingContext, zipPool)
     val pluginsFromPropertyDeferred = loadDescriptorsFromProperty(loadingContext, zipPool)
-    pluginsDeferred.await() to pluginsFromPropertyDeferred.await()
+    pluginsDeferred.await() + listOfNotNull(thirdPartyBundledPluginsDeferred.await(), pluginsFromPropertyDeferred.await())
   }
-  val discoveredPlugins = if (pluginsFromProperty == null) { plugins } else { plugins + pluginsFromProperty }
   return PluginDescriptorLoadingResult.build(discoveredPlugins)
 }
 
