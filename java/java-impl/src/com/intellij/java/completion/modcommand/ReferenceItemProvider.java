@@ -18,7 +18,6 @@ import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.modcommand.ModLaunchEditorAction;
 import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
-import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -57,7 +56,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.patterns.PsiJavaPatterns.virtualFile;
 
 @NotNullByDefault
-final class ReferenceItemProvider implements ModCompletionItemProvider {
+final class ReferenceItemProvider extends JavaModCompletionItemProvider {
   private static final ElementPattern<PsiElement> TOP_LEVEL_VAR_IN_MODULE = psiElement().withSuperParent(3, PsiJavaFile.class)
     .inVirtualFile(virtualFile().withName("module-info.java"));
   private static final ElementPattern<PsiElement> INSIDE_TYPECAST_EXPRESSION = psiElement().withParent(

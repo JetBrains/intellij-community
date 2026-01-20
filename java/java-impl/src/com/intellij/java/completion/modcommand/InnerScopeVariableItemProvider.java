@@ -4,7 +4,6 @@ package com.intellij.java.completion.modcommand;
 import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcompletion.ModCompletionItem;
-import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -12,7 +11,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import java.util.function.Consumer;
 
 @NotNullByDefault
-final class InnerScopeVariableItemProvider implements ModCompletionItemProvider {
+final class InnerScopeVariableItemProvider extends JavaModCompletionItemProvider {
   @Override
   public void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink) {
     if (context.invocationCount() < 1) return;

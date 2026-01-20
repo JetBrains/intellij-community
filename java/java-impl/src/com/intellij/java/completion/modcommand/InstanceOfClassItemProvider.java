@@ -4,7 +4,6 @@ package com.intellij.java.completion.modcommand;
 import com.intellij.codeInsight.completion.JavaInheritorsGetter;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcompletion.ModCompletionItem;
-import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.InstanceOfLeftPartTypeGetter;
@@ -20,7 +19,7 @@ import java.util.function.Consumer;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 @NotNullByDefault
-final class InstanceOfClassItemProvider implements ModCompletionItemProvider {
+final class InstanceOfClassItemProvider extends JavaModCompletionItemProvider {
   static final ElementPattern<PsiElement> AFTER_INSTANCEOF = psiElement().afterLeaf(JavaKeywords.INSTANCEOF);
 
   @Override

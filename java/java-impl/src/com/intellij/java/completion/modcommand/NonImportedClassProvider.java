@@ -6,7 +6,6 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcompletion.ModCompletionItem;
-import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -37,7 +36,7 @@ import static com.intellij.patterns.StandardPatterns.or;
 import static com.intellij.patterns.StandardPatterns.string;
 
 @NotNullByDefault
-final class NonImportedClassProvider implements ModCompletionItemProvider {
+final class NonImportedClassProvider extends JavaModCompletionItemProvider {
   private static final PsiJavaElementPattern.Capture<PsiElement> AFTER_NEW = psiElement().afterLeaf(JavaKeywords.NEW);
   private static final ElementPattern<PsiElement> IN_PERMITS_LIST = psiElement().afterLeaf(
     psiElement()

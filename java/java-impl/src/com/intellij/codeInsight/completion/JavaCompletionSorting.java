@@ -47,7 +47,12 @@ public final class JavaCompletionSorting {
     return result.withRelevanceSorter(sorter);
   }
 
-  private static @NotNull CompletionSorter getSorter(@NotNull BaseCompletionParameters parameters, @NotNull PrefixMatcher matcher) {
+  /**
+   * @param parameters completion parameters
+   * @param matcher matcher used
+   * @return the sorter that should be used to sort Java completion items
+   */
+  public static @NotNull CompletionSorter getSorter(@NotNull BaseCompletionParameters parameters, @NotNull PrefixMatcher matcher) {
     PsiElement position = parameters.getPosition();
     ExpectedTypeInfo[] expectedTypes = getExpectedTypesWithDfa(parameters, position);
     CompletionType type = parameters.getCompletionType();

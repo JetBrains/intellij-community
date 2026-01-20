@@ -5,7 +5,6 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaSmartCompletionContributor;
 import com.intellij.modcompletion.ModCompletionItem;
-import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -14,7 +13,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 @NotNullByDefault
-final class ExpectedTypeMemberItemProvider implements ModCompletionItemProvider {
+final class ExpectedTypeMemberItemProvider extends JavaModCompletionItemProvider {
   @Override
   public void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink) {
     if (!(context.getPosition() instanceof PsiIdentifier identifier)) {

@@ -310,6 +310,7 @@ com.intellij.modcommand.ModPsiUpdater
 *:com.intellij.modcompletion.ModCompletionItemProvider
 - sf:EP_NAME:com.intellij.lang.LanguageExtension
 - s:forLanguage(com.intellij.lang.Language):java.util.List
+- getSorter(com.intellij.modcompletion.ModCompletionItemProvider$CompletionContext):com.intellij.codeInsight.completion.CompletionSorter
 - a:provideItems(com.intellij.modcompletion.ModCompletionItemProvider$CompletionContext,java.util.function.Consumer):V
 *f:com.intellij.modcompletion.ModCompletionItemProvider$CompletionContext
 - java.lang.Record

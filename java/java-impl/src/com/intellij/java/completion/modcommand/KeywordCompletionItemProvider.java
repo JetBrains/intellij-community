@@ -14,7 +14,6 @@ import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
-import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsSafe;
@@ -58,7 +57,7 @@ import static com.intellij.psi.SyntaxTraverser.psiApi;
  * TODO: disable completion chars
  */
 @NotNullByDefault
-final class KeywordCompletionItemProvider implements ModCompletionItemProvider {
+final class KeywordCompletionItemProvider extends JavaModCompletionItemProvider {
   private static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
 
   private static final ElementPattern<PsiElement> VARIABLE_AFTER_FINAL =

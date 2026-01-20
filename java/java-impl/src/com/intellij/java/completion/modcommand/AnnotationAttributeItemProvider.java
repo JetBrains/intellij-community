@@ -7,7 +7,6 @@ import com.intellij.codeInsight.lookup.EqTailType;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
-import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.MarkupText;
@@ -23,7 +22,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 @NotNullByDefault
-final class AnnotationAttributeItemProvider implements ModCompletionItemProvider {
+final class AnnotationAttributeItemProvider extends JavaModCompletionItemProvider {
 
   @Override
   public void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink) {

@@ -10,7 +10,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
-import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsSafe;
@@ -37,7 +36,7 @@ import java.util.function.Supplier;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 @NotNullByDefault
-final class GenerateMemberItemProvider implements ModCompletionItemProvider {
+final class GenerateMemberItemProvider extends JavaModCompletionItemProvider {
   @Override
   public void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink) {
     PsiElement position = context.getPosition();

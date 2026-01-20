@@ -2,6 +2,7 @@
 package com.intellij.modcompletion;
 
 import com.intellij.codeInsight.completion.BaseCompletionParameters;
+import com.intellij.codeInsight.completion.CompletionSorter;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.lang.Language;
@@ -31,6 +32,14 @@ public interface ModCompletionItemProvider {
    * @param sink a consumer to pass completion items to
    */
   void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink);
+
+  /**
+   * @param context context to use
+   * @return the completion sorter that should be used to sort the items provided by this provider
+   */
+  default CompletionSorter getSorter(CompletionContext context) {
+    return CompletionSorter.defaultSorter(context, context.matcher());
+  }
 
   /**
    * @param language language to get providers for
