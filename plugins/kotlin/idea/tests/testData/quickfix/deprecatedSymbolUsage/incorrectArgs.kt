@@ -1,4 +1,5 @@
 // "class org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix" "false"
+// K2_ACTION: "class org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix" "false"
 // ERROR: The integer literal does not conform to the expected type Array<out String>
 // ERROR: Assigning single elements to varargs in named form is forbidden
 // K2_AFTER_ERROR: Argument type mismatch: actual type is 'Int', but 'Array<out String>' was expected.
