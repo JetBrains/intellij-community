@@ -27,7 +27,8 @@ jvm_library(
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
-  ]
+  ],
+  runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"]
 )
 
 jvm_library(
@@ -53,7 +54,6 @@ jvm_library(
     "//libraries/gson",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/evaluation-plugin:evaluationPlugin-tests_test_lib",
   ]
