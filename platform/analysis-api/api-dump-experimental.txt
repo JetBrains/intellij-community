@@ -224,8 +224,19 @@ com.intellij.modcommand.ModCommand
 - f:applyFix(com.intellij.openapi.project.Project,com.intellij.codeInspection.CommonProblemDescriptor[],java.util.List,java.lang.Runnable):V
 - perform(com.intellij.openapi.project.Project,com.intellij.codeInspection.ProblemDescriptor):com.intellij.modcommand.ModCommand
 - a:perform(com.intellij.openapi.project.Project,java.util.List):com.intellij.modcommand.ModCommand
+*f:com.intellij.modcommand.ModLaunchEditorAction
+- java.lang.Record
+- com.intellij.modcommand.ModCommand
+- sf:ACTION_CODE_COMPLETION:java.lang.String
+- sf:ACTION_PARAMETER_INFO:java.lang.String
+- <init>(java.lang.String,Z):V
+- actionId():java.lang.String
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- optional():Z
 com.intellij.modcommand.ModPsiUpdater
 - com.intellij.openapi.editor.ModNavigator
+- *a:editorAction(java.lang.String,Z):V
 - *a:trackDeclaration(com.intellij.psi.PsiElement):V
 *f:com.intellij.modcommand.ModUpdateReferences
 - java.lang.Record

@@ -90,10 +90,13 @@ public interface ModPsiUpdater extends ModNavigator {
    *
    * @param actionId action identifier; taken from the IntelliJ IDEA action system (see {@code com.intellij.openapi.actionSystem.IdeActions}).
    *                 For example, "CodeCompletion" will invoke the code completion at the caret position.
+   *                 The tested action IDs are declared as constants inside {@link ModLaunchEditorAction}.
+   *                 Other actions may work as well, but use with care!
    * @param optional if true, the action is optional and can be skipped if the ModCommand is executed non-interactively,
    *                 or if the action is not supported by the target editor. 
    *                 If false and it's unable to execute this action, an error should be displayed. 
    */
+  @ApiStatus.Experimental
   void editorAction(@NotNull @NonNls String actionId, boolean optional);
 
   /**

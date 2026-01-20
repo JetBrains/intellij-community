@@ -170,7 +170,11 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (ex.isDisposed()) return;
       DataContext ctx = ex.getDataContext();
-      anAction.actionPerformed(AnActionEvent.createEvent(anAction, ctx, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null));
+      AnActionEvent event = AnActionEvent.createEvent(anAction, ctx, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null);
+      if (!ActionUtil.updateAction(anAction, event).isPerformed()) return;
+      if (event.getPresentation().isEnabledAndVisible()) {
+        ActionUtil.performAction(anAction, event);
+      }
     });
     return true;
   }
