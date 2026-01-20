@@ -95,7 +95,7 @@ object StatisticBase : CounterUsagesCollector() {
   private val LOG = logger<StatisticBase>()
   private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
   private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-  private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 21)
+  private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 22)
 
   var isLearnProjectCloseLogged = false
 
