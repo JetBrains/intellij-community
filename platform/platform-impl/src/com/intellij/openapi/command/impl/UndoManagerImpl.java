@@ -349,7 +349,7 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
-  protected final int getStackSize(@Nullable DocumentReference docRef, boolean isUndo) {
+  public final int getStackSize(@Nullable DocumentReference docRef, boolean isUndo) {
     UndoClientState state = Objects.requireNonNull(getClientState(), "undo/redo is not available");
     return state.getStackSize(docRef, isUndo);
   }
