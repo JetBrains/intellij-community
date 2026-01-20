@@ -42,6 +42,12 @@ public final class JavaCompletionSorting {
   }
 
   public static CompletionResultSet addJavaSorting(final CompletionParameters parameters, CompletionResultSet result) {
+    PrefixMatcher matcher = result.getPrefixMatcher();
+    CompletionSorter sorter = getSorter(parameters, matcher);
+    return result.withRelevanceSorter(sorter);
+  }
+
+  private static @NotNull CompletionSorter getSorter(@NotNull BaseCompletionParameters parameters, @NotNull PrefixMatcher matcher) {
     PsiElement position = parameters.getPosition();
     ExpectedTypeInfo[] expectedTypes = getExpectedTypesWithDfa(parameters, position);
     CompletionType type = parameters.getCompletionType();
@@ -55,7 +61,7 @@ public final class JavaCompletionSorting {
     afterProximity.add(new PreferShorter(project, expectedTypes));
     afterProximity.add(new DispreferTechnicalOverloads(position));
 
-    CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, result.getPrefixMatcher());
+    CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, matcher);
     if (!smart && afterNew) {
       sorter = sorter.weighBefore("liftShorter", new PreferExpected(true, expectedTypes, position));
     } else if (PsiTreeUtil.getParentOfType(position, PsiReferenceList.class) == null) {
@@ -111,7 +117,7 @@ public final class JavaCompletionSorting {
 
     sorter = sorter.weighAfter("stats", afterStats.toArray(new LookupElementWeigher[0]));
     sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[0]));
-    return result.withRelevanceSorter(sorter);
+    return sorter;
   }
 
   private static @Nullable PsiClassType getServiceType(PsiElement position) {
@@ -160,7 +166,7 @@ public final class JavaCompletionSorting {
     return ObjectUtils.tryCast(ref.getQualifier(), PsiMethodCallExpression.class);
   }
 
-  private static ExpectedTypeInfo @NotNull [] getExpectedTypesWithDfa(CompletionParameters parameters, PsiElement position) {
+  private static ExpectedTypeInfo @NotNull [] getExpectedTypesWithDfa(BaseCompletionParameters parameters, PsiElement position) {
     if (PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText(".")).accepts(position)) {
       return ExpectedTypeInfo.EMPTY_ARRAY;
     }
@@ -172,7 +178,7 @@ public final class JavaCompletionSorting {
     return JavaSmartCompletionContributor.getExpectedTypes(parameters);
   }
 
-  private static @Nullable LookupElementWeigher recursion(CompletionParameters parameters, final ExpectedTypeInfo[] expectedInfos) {
+  private static @Nullable LookupElementWeigher recursion(BaseCompletionParameters parameters, final ExpectedTypeInfo[] expectedInfos) {
     final PsiElement position = parameters.getPosition();
     final PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class, true, PsiClass.class);
     final PsiReferenceExpression reference = expression != null ? expression.getMethodExpression() : PsiTreeUtil.getParentOfType(position, PsiReferenceExpression.class);
@@ -344,11 +350,11 @@ public final class JavaCompletionSorting {
   private static class PreferDefaultTypeWeigher extends LookupElementWeigher {
     private final PsiTypeParameter myTypeParameter;
     private final ExpectedTypeInfo[] myExpectedTypes;
-    private final CompletionParameters myParameters;
+    private final BaseCompletionParameters myParameters;
     private final boolean myPreferExact;
     private final CompletionLocation myLocation;
 
-    PreferDefaultTypeWeigher(ExpectedTypeInfo @NotNull [] expectedTypes, CompletionParameters parameters, boolean preferExact) {
+    PreferDefaultTypeWeigher(ExpectedTypeInfo @NotNull [] expectedTypes, BaseCompletionParameters parameters, boolean preferExact) {
       super("defaultType" + (preferExact ? "Exact" : ""));
       myExpectedTypes = ContainerUtil.map2Array(expectedTypes, ExpectedTypeInfo.class, info -> {
         PsiType type = removeClassWildcard(info.getType());

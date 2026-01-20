@@ -19,6 +19,9 @@ com.intellij.codeInsight.completion.BatchConsumer
 f:com.intellij.codeInsight.completion.CompletionConfidenceEP
 - com.intellij.lang.LanguageExtensionPoint
 - <init>():V
+f:com.intellij.codeInsight.completion.CompletionLocation
+- <init>(com.intellij.codeInsight.completion.BaseCompletionParameters):V
+- getBaseCompletionParameters():com.intellij.codeInsight.completion.BaseCompletionParameters
 f:com.intellij.codeInsight.completion.CompletionParameters
 - com.intellij.codeInsight.completion.BaseCompletionParameters
 - getCompletionType():com.intellij.codeInsight.completion.CompletionType
@@ -41,6 +44,10 @@ f:com.intellij.codeInsight.completion.CompletionParameters
 com.intellij.codeInsight.completion.CompletionProcess
 - a:isAutopopupCompletion():Z
 a:com.intellij.codeInsight.completion.CompletionService
+- a:defaultSorter(com.intellij.codeInsight.completion.BaseCompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionSorter
+- defaultSorter(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionSorter
+Fa:com.intellij.codeInsight.completion.CompletionSorter
+- s:defaultSorter(com.intellij.codeInsight.completion.BaseCompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionSorter
 a:com.intellij.codeInsight.completion.CompletionWeigher
 - com.intellij.psi.Weigher
 com.intellij.codeInsight.completion.InsertHandler

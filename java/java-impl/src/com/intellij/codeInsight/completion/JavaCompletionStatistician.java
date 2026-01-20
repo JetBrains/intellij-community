@@ -22,7 +22,7 @@ public final class JavaCompletionStatistician extends CompletionStatistician{
 
   @Override
   public @NotNull Function<@NotNull LookupElement, @Nullable StatisticsInfo> forLocation(@NotNull CompletionLocation location) {
-    PsiElement position = location.getCompletionParameters().getPosition();
+    PsiElement position = location.getBaseCompletionParameters().getPosition();
     if (SUPER_CALL.accepts(position) ||
         JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position) ||
         PreferByKindWeigher.isComparisonRhs(position)) {

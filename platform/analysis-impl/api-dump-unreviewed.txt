@@ -161,7 +161,6 @@ c:com.intellij.codeInsight.completion.BaseCompletionService
 - <init>():V
 - p:addWeighersBefore(com.intellij.codeInsight.completion.impl.CompletionSorterImpl):com.intellij.codeInsight.completion.impl.CompletionSorterImpl
 - p:createMatcher(java.lang.String,Z):com.intellij.codeInsight.completion.PrefixMatcher
-- defaultSorter(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionSorter
 - emptySorter():com.intellij.codeInsight.completion.impl.CompletionSorterImpl
 - getCurrentCompletion():com.intellij.codeInsight.completion.CompletionProcess
 - performCompletion(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.util.Consumer):V

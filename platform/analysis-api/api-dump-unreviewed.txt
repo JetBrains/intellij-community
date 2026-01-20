@@ -262,7 +262,6 @@ a:com.intellij.codeInsight.completion.CompletionService
 - sf:STATISTICS_KEY:com.intellij.openapi.util.Key
 - <init>():V
 - pa:createMatcher(java.lang.String,Z):com.intellij.codeInsight.completion.PrefixMatcher
-- a:defaultSorter(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionSorter
 - a:emptySorter():com.intellij.codeInsight.completion.CompletionSorter
 - s:getCompletionService():com.intellij.codeInsight.completion.CompletionService
 - a:getCurrentCompletion():com.intellij.codeInsight.completion.CompletionProcess

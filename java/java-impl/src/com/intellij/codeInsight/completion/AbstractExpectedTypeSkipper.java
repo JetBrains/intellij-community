@@ -33,7 +33,7 @@ public final class AbstractExpectedTypeSkipper extends CompletionPreselectSkippe
     if (location.getCompletionType() != CompletionType.SMART && !hasEmptyPrefix(location)) return Result.ACCEPT;
     if (DumbService.getInstance(location.getProject()).isDumb()) return Result.ACCEPT;
 
-    CompletionParameters parameters = location.getCompletionParameters();
+    BaseCompletionParameters parameters = location.getBaseCompletionParameters();
     PsiExpression expression = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiExpression.class);
     if (!(expression instanceof PsiNewExpression)) return Result.ACCEPT;
 
@@ -49,7 +49,7 @@ public final class AbstractExpectedTypeSkipper extends CompletionPreselectSkippe
       }
     }
 
-    toImplement += OverrideImplementExploreUtil.getMapToOverrideImplement(psiClass, true)
+    toImplement += (int)OverrideImplementExploreUtil.getMapToOverrideImplement(psiClass, true)
                                                .values()
                                                .stream()
                                                .filter(c -> ((PsiMethod)c.getElement()).hasModifierProperty(PsiModifier.ABSTRACT))
@@ -83,6 +83,6 @@ public final class AbstractExpectedTypeSkipper extends CompletionPreselectSkippe
   }
 
   private static boolean hasEmptyPrefix(CompletionLocation location) {
-    return location.getCompletionParameters().getPosition().getTextRange().getStartOffset() == location.getCompletionParameters().getOffset();
+    return location.getBaseCompletionParameters().getPosition().getTextRange().getStartOffset() == location.getBaseCompletionParameters().getOffset();
   }
 }
