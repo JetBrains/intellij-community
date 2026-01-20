@@ -278,7 +278,7 @@ public final class ListPluginComponent extends JPanel {
         myInstallButton.setVisible(showInstall);
 
         if (myInstalledDescriptorForMarketplace != null && myInstalledDescriptorForMarketplace.isDeleted()) {
-          if (installationState.getStatus() == PluginStatus.INSTALLED_WITHOUT_RESTART) {
+          if (installationState.getStatus() == PluginStatus.UNINSTALLED_WITHOUT_RESTART) {
             myInstallButton.setVisible(true);
             myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
             myInstallButton.setPreferredSize(null);
