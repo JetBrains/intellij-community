@@ -4,6 +4,7 @@ package com.intellij.ide.util.gotoByName
 import com.intellij.ide.SearchTopHitProvider
 import com.intellij.ide.actions.ApplyIntentionAction
 import com.intellij.ide.ui.OptionsSearchTopHitProvider
+import com.intellij.ide.ui.OptionsTopHitProvider
 import com.intellij.ide.ui.OptionsTopHitProvider.ProjectLevelProvidersAdapter
 import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider
 import com.intellij.ide.ui.search.OptionDescription
@@ -150,7 +151,15 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
 
     val list = try {
       collectMatchedActions(pattern, allIds, weightMatcher, unmatchedIdsChannel)
-    } finally {
+    }
+    catch (e: Throwable) {
+      val t = Throwable(e)
+      if (LOG.isDebugEnabled && pattern == "Collect Host and Client Logs") {
+        LOG.warn("[$pattern] TEST DIAGNOSTICS: exception during collectMatchedActions: ${t.message}", t)
+      }
+      throw e
+    }
+    finally {
       unmatchedIdsChannel.close()
     }
 
@@ -296,6 +305,9 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
       }
     }.toList()
 
+
+    LOG.debug { "[$pattern] TEST DIAGNOSTICS: matchedActions list is ready (${matchedActions.size})" }
+
     val comparator = Comparator.comparing<MatchedAction, Int> { it.weight ?: 0 }.reversed()
     return@coroutineScope matchedActions.sortedWith(comparator)
   }
@@ -359,7 +371,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
 
     for (provider in SearchTopHitProvider.EP_NAME.extensionList) {
       @Suppress("DEPRECATION")
-      if (provider is com.intellij.ide.ui.OptionsTopHitProvider.CoveredByToggleActions) {
+      if (provider is OptionsTopHitProvider.CoveredByToggleActions) {
         continue
       }
 
