@@ -22,6 +22,7 @@ f:com.intellij.codeInsight.completion.CompletionConfidenceEP
 f:com.intellij.codeInsight.completion.CompletionLocation
 - <init>(com.intellij.codeInsight.completion.BaseCompletionParameters):V
 - getBaseCompletionParameters():com.intellij.codeInsight.completion.BaseCompletionParameters
+- isTestingMode():Z
 f:com.intellij.codeInsight.completion.CompletionParameters
 - com.intellij.codeInsight.completion.BaseCompletionParameters
 - getCompletionType():com.intellij.codeInsight.completion.CompletionType
