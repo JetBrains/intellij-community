@@ -1,15 +1,24 @@
-package com.intellij.cce.callGraphs
+package com.intellij.evaluationPlugin.languages.callGraphs
 
-import com.intellij.cce.java.callGraphs.JavaCallGraphBuilder
+import com.intellij.evaluationPlugin.languages.kotlin.callGraphs.KotlinCallGraphBuilder
 import com.intellij.testFramework.PlatformTestUtil.getCommunityPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.io.File
 
 @RunWith(Parameterized::class)
-class JavaCallGraphBuilderTest(private val scenario: String) : BasePlatformTestCase() {
+class KotlinCallGraphBuilderTest(private val scenario: String) : BasePlatformTestCase(), ExpectedPluginModeProvider {
+
+  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+
+  override fun setUp() {
+    setUpWithKotlinPlugin { super.setUp() }
+  }
 
   companion object {
     @JvmStatic
@@ -21,12 +30,11 @@ class JavaCallGraphBuilderTest(private val scenario: String) : BasePlatformTestC
     }
 
     fun getStaticTestDataPath(): String {
-      return getCommunityPath().replace(File.separatorChar, '/') + "/plugins/evaluation-plugin/languages/java/testData"
+      return getCommunityPath().replace(File.separatorChar, '/') + "/plugins/evaluation-plugin/languages/kotlin/testData"
     }
   }
 
-  override fun getTestDataPath(): String = getStaticTestDataPath()
-
+  override fun getTestDataPath() = getStaticTestDataPath()
 
   @Test
   fun testCallGraphAgainstExpected() {
@@ -34,7 +42,7 @@ class JavaCallGraphBuilderTest(private val scenario: String) : BasePlatformTestC
       scenario,
       "callGraphs/${scenario}",
       myFixture,
-      JavaCallGraphBuilder(),
+      KotlinCallGraphBuilder()
     )
   }
 }

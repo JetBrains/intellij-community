@@ -1,7 +1,7 @@
-package com.intellij.cce.kotlin.callGraphs
+package com.intellij.evaluationPlugin.languages.kotlin.callGraphs
 
-import com.intellij.cce.callGraphs.*
 import com.intellij.cce.core.Language
+import com.intellij.evaluationPlugin.languages.callGraphs.*
 import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile

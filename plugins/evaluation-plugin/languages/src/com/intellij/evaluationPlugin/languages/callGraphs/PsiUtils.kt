@@ -1,4 +1,4 @@
-package com.intellij.cce.callGraphs
+package com.intellij.evaluationPlugin.languages.callGraphs
 
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import java.io.PrintStream
 
 private fun isInProjectRoots(file: VirtualFile, projectRoots: List<String>, project: Project): Boolean {
   val projectDir = project.guessProjectDir() ?: return false
@@ -56,7 +57,7 @@ private fun supportsAnsi(): Boolean {
 fun <T> Iterable<T>.forEachIndexedWithProgress(
   label: String = "Progress",
   barWidth: Int = 40,
-  out: java.io.PrintStream = System.out,
+  out: PrintStream = System.out,
   action: (index: Int, item: T) -> Unit,
 ) {
   val data: List<T> = when (this) {

@@ -1,7 +1,7 @@
 package com.intellij.cce.java.callGraphs
 
-import com.intellij.cce.callGraphs.*
 import com.intellij.cce.core.Language
+import com.intellij.evaluationPlugin.languages.callGraphs.*
 import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.project.Project

@@ -1,4 +1,4 @@
-package com.intellij.cce.callGraphs
+package com.intellij.evaluationPlugin.languages.callGraphs
 
 import com.intellij.cce.core.Language
 import com.intellij.openapi.extensions.ExtensionPointName

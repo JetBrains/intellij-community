@@ -1,4 +1,4 @@
-package com.intellij.cce.callGraphs
+package com.intellij.evaluationPlugin.languages.callGraphs
 
 import com.google.gson.*
 import java.lang.reflect.Type

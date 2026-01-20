@@ -1,4 +1,4 @@
-package com.intellij.cce.callGraphs
+package com.intellij.evaluationPlugin.languages.callGraphs
 
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture

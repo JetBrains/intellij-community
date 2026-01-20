@@ -12,6 +12,6 @@
     <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinDocGenerationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinRenameVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinCodeGenerationVisitor"/>
-    <callGraphBuilder implementation="com.intellij.cce.kotlin.callGraphs.KotlinCallGraphBuilder"/>
+    <callGraphBuilder implementation="com.intellij.evaluationPlugin.languages.kotlin.callGraphs.KotlinCallGraphBuilder"/>
   </extensions>
 </idea-plugin>
