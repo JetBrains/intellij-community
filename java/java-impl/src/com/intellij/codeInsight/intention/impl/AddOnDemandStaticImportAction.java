@@ -84,7 +84,6 @@ public final class AddOnDemandStaticImportAction extends PsiUpdateModCommandActi
       qualifier.delete();
       JavaResolveResult[] results = call.multiResolve(false);
       if (Arrays.stream(results)
-        .filter(Objects::nonNull)
         .map(ResolveResult::getElement)
         .anyMatch(psiElement ->
                     psiElement instanceof PsiMethod psiMethod &&
