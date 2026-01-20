@@ -8,4 +8,7 @@ public final class AllTests {
 
   @Nested
   class ZipTests extends ZipBuilderTest {}
+
+  @Nested
+  class DependencyGraphTests extends DependencyGraphTest {}
 }
