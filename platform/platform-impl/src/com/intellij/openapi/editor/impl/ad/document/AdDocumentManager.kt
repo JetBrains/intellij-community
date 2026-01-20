@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.document
 
-import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.impl.ad.isRhizomeAdRebornEnabled
 import com.intellij.openapi.editor.impl.ad.util.AsyncEntityHandle
 import com.intellij.openapi.editor.impl.ad.util.AsyncEntityService
 import com.intellij.openapi.editor.impl.ad.util.EntityCleanService
@@ -89,7 +89,7 @@ private class AdDocumentManagerImpl(): AdDocumentManager {
   }
 
   private fun isEnabled(): Boolean {
-    return isRhizomeAdEnabled
+    return isRhizomeAdRebornEnabled
   }
 
   private class AdFileDocumentBindingListener : FileDocumentBindingListener {

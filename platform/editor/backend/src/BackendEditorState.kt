@@ -2,8 +2,8 @@
 package com.intellij.platform.editor.backend
 
 import com.intellij.codeWithMe.clientId
-import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.ad.isRhizomeAdRebornEnabled
 import com.intellij.openapi.editor.impl.editorId
 import com.intellij.platform.editor.EditorEntity
 import com.intellij.platform.kernel.KernelService
@@ -21,7 +21,7 @@ internal class BackendEditorState(
 ) {
 
   init {
-    check(isRhizomeAdEnabled)
+    check(isRhizomeAdRebornEnabled)
   }
 
   private val cs: CoroutineScope = parentScope.childScope(

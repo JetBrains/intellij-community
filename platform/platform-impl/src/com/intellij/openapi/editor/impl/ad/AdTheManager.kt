@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl.ad
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
@@ -103,6 +102,6 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
   }
 
   private fun isEnabled(): Boolean {
-    return isRhizomeAdEnabled
+    return isRhizomeAdRebornEnabled
   }
 }

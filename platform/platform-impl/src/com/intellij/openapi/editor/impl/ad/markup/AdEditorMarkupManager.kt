@@ -1,13 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.markup
 
-import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.impl.ad.AdTheManager
 import com.intellij.openapi.editor.impl.ad.document.AdEntityProvider
+import com.intellij.openapi.editor.impl.ad.isRhizomeAdRebornEnabled
 import com.intellij.openapi.editor.impl.ad.util.AsyncEntityService
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import fleet.util.UID
@@ -47,6 +47,6 @@ internal class AdEditorMarkupManager(private val coroutineScope: CoroutineScope)
   }
 
   private fun isEnabled(): Boolean {
-    return isRhizomeAdEnabled
+    return isRhizomeAdRebornEnabled
   }
 }

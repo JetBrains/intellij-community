@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.impl.ad.isRhizomeAdRebornEnabled
 import com.intellij.openapi.editor.impl.ad.util.ThreadLocalRhizomeDB
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
@@ -1317,7 +1318,7 @@ private fun abracadabraDaberBoreh(eventQueue: IdeEventQueue) {
 }
 
 private fun setImplicitThreadLocalRhizomeIfEnabled() {
-  if (isRhizomeAdEnabled) {
+  if (isRhizomeAdRebornEnabled) {
     // It is a workaround on tricky `updateDbInTheEventDispatchThread()` where
     // the thread local DB is reset by `fleet.kernel.DbSource.ContextElement.restoreThreadContext`
     try {
