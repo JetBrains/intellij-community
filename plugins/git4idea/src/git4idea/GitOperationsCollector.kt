@@ -23,7 +23,7 @@ import git4idea.repo.GitRepository
 internal object GitOperationsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("git.operations", 8)
+  private val GROUP: EventLogGroup = EventLogGroup(id = "git.operations", version = 9, description = "Git operations")
 
   internal val UPDATE_FORCE_PUSHED_BRANCH_ACTIVITY = GROUP.registerIdeActivity("update.force.pushed")
 
@@ -48,6 +48,7 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
     "rebase.interactive.log.validation_error",
     EXPECTED_COMMITS_NUMBER,
     ACTUAL_COMMITS_NUMBER,
+    description = "Validation error during interactive rebase via log",
   )
   private val INTERACTIVE_REBASE_WAS_SUCCESSFUL = EventFields.Boolean("was_successful")
   private val INTERACTIVE_REBASE_ACTIVITY = GROUP.registerIdeActivity("interactive.rebase",
@@ -59,12 +60,15 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
                                                                                   IN_MEMORY_REBASE_RESULT))
 
   private val CANT_REBASE_USING_LOG_REASON = EventFields.Enum<CantRebaseUsingLogException.Reason>("cant_rebase_using_log_reason")
-  private val CANT_REBASE_USING_LOG_EVENT = GROUP.registerEvent("cant.rebase.using.log", CANT_REBASE_USING_LOG_REASON)
+  private val CANT_REBASE_USING_LOG_EVENT = GROUP.registerEvent("cant.rebase.using.log",
+                                                                CANT_REBASE_USING_LOG_REASON,
+                                                                description = "Rebase using log is not possible")
 
   val REBASE_ENTRY_TYPE_FIELDS: Map<String, RoundedIntEventField> = GitRebaseEntry.knownActions.associate {
     it.command to EventFields.RoundedInt("${it.command}_entries_count")
   }
   private val REBASE_START_USING_LOG_EVENT = GROUP.registerVarargEvent("rebase.start.using.log",
+                                                                       description = "Rebase started using log",
                                                                        *REBASE_ENTRY_TYPE_FIELDS.values.toTypedArray())
 
   private val WITH_PROVIDED_BRANCH = EventFields.Boolean("with_provided_branch")
@@ -187,7 +191,7 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
                                                                    OPTION_AUTOSQUASH)
 
   @JvmStatic
-  fun logRebaseFromDialog(project: Project, gitRepository: GitRepository?, selectedParams: GitRebaseParams) {
+  fun logRebaseFromDialog(project: Project, gitRepository: GitRepository, selectedParams: GitRebaseParams) {
     val upstream = selectedParams.upstream
 
     val rebaseOnTrackedBranch = isRebaseOnTrackedBranch(upstream, gitRepository, selectedParams.branch)
@@ -210,10 +214,9 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
 
   private fun isRebaseOnTrackedBranch(
     upstream: GitRebaseParams.RebaseUpstream,
-    gitRepository: GitRepository?,
+    gitRepository: GitRepository,
     selectedBranch: String?,
   ): Boolean {
-    if (gitRepository == null) return false
     if (upstream !is GitRebaseParams.RebaseUpstream.Reference) return false
 
     val branchToBeRebased = (selectedBranch ?: gitRepository.currentBranch?.name) ?: return false
