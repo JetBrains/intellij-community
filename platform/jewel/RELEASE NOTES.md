@@ -381,6 +381,10 @@ dependencies {
 
 ### ⚠️ Important Changes
 
+* **[JEWEL-1024](https://youtrack.jetbrains.com/issue/JEWEL-1024)** [Binary breaking change!] The `isVisible` property
+  in `SpeedSearchArea` changed from `val` to `var`, adding a setter to the ABI. Code that implements this type against
+  an older version will fail with `AbstractMethodError` at runtime once the setter is called (plain usage/reading
+  `isVisible` is unaffected). Recompile against this version.
 * **[JEWEL-1212](https://youtrack.jetbrains.com/issue/JEWEL-1212)** introduces a behavioural breaking change for list-based combo boxes:
   * The default sizing behaviour for `ListComboBox`, `EditableListComboBox`, and `SpeedSearchableComboBox` popup has changed from
     pixel-based to row-count-based. Popups now default to displaying 10 rows.
