@@ -7,9 +7,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.delete
 import androidx.compose.foundation.text.input.placeCursorAtEnd
@@ -30,21 +27,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.isSpecified
-import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
-import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.nativeKeyCode
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.layout.onFirstVisible
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
@@ -70,7 +61,7 @@ import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.theme.searchMatchStyle
 import org.jetbrains.jewel.ui.theme.speedSearchStyle
 import org.jetbrains.jewel.ui.theme.textFieldStyle
-import org.jetbrains.skiko.hostOs
+import org.jetbrains.jewel.ui.util.handleKeyEvent
 
 @Composable
 @ExperimentalJewelApi
@@ -317,7 +308,8 @@ public fun rememberSpeedSearchState(
     matcherBuilder: (String) -> SpeedSearchMatcher = SpeedSearchMatcher::patternMatcher
 ): SpeedSearchState {
     val currentMatcherBuilder = rememberUpdatedState(matcherBuilder)
-    return remember { SpeedSearchStateImpl(currentMatcherBuilder) }
+    val searchState = rememberSearchTextFieldState()
+    return remember { SpeedSearchStateImpl(searchState, currentMatcherBuilder) }
 }
 
 /**
@@ -390,8 +382,6 @@ private fun SpeedSearchInput(
     textStyle: TextStyle,
     textFieldStyle: TextFieldStyle,
 ) {
-    val foregroundColor = styling.getCurrentForegroundColor(hasMatch, textFieldStyle, textStyle)
-
     val (anchor, alignment) =
         remember(position) {
             when (position) {
@@ -403,40 +393,18 @@ private fun SpeedSearchInput(
     Popup(popupPositionProvider = rememberComponentRectPositionProvider(anchor, alignment)) {
         val focusRequester = remember { FocusRequester() }
 
-        BasicTextField(
-            state = state,
-            cursorBrush = SolidColor(foregroundColor),
-            textStyle = textStyle.merge(TextStyle(color = foregroundColor)),
+        SearchTextField(
+            state = rememberSearchTextFieldState(state),
+            textStyle = textStyle,
+            allowClear = false,
+            error = !hasMatch,
+            textFieldStyle = textFieldStyle,
             modifier =
-                Modifier.testTag("SpeedSearchArea.Input").focusRequester(focusRequester).onFirstVisible {
-                    focusRequester.requestFocus()
-                },
-            decorator = { innerTextField ->
-                Row(
-                    modifier =
-                        Modifier.background(styling.colors.background)
-                            .border(1.dp, styling.colors.border)
-                            .padding(styling.metrics.contentPadding)
-                ) {
-                    Icon(
-                        key = styling.icons.magnifyingGlass,
-                        contentDescription = null,
-                        tint = styling.colors.foreground,
-                        modifier = Modifier.padding(end = 10.dp),
-                    )
-
-                    Box(contentAlignment = Alignment.CenterStart) {
-                        if (state.text.isEmpty()) {
-                            Text(
-                                text = "Search",
-                                style = textStyle.merge(TextStyle(color = textFieldStyle.colors.placeholder)),
-                            )
-                        }
-
-                        innerTextField()
-                    }
-                }
-            },
+                Modifier.testTag("SpeedSearchArea.Input")
+                    .background(styling.colors.background)
+                    .border(1.dp, styling.colors.border)
+                    .focusRequester(focusRequester)
+                    .onFirstVisible { focusRequester.requestFocus() },
         )
     }
 }
@@ -470,17 +438,21 @@ private class SpeedSearchScopeImpl(
             textFieldState.text.isNotEmpty() && event.key.nativeKeyCode in validKeyEvent ->
                 textFieldState.handleTextNavigationKeys(event)
             event.key == Key.Escape -> hideSpeedSearch()
-            event.key == Key.Delete -> textFieldState.handleDeleteKeyInput(event)
-            event.key == Key.Backspace -> textFieldState.handleBackspaceKeyInput(event)
-            event.key == Key.Spacebar && textFieldState.text.isBlank() -> false
-            !event.isReallyTypedEvent() -> false // Only handle printable keys
-            else -> textFieldState.handleValidKeyInput(event)
+            else ->
+                speedSearchState.textFieldState.handleKeyEvent(
+                    event = event,
+                    allowNavigationWithArrowKeys = false,
+                    allowedSymbols = PUNCTUATION_MARKS,
+                    onTextChange = { text ->
+                        if (!speedSearchState.isVisible && text.isNotEmpty()) {
+                            speedSearchState.isVisible = true
+                        }
+                    },
+                )
         }
     }
 
     private fun hideSpeedSearch(): Boolean = speedSearchState.hideSearch()
-
-    private fun clearSearchInput(): Boolean = speedSearchState.clearSearch()
 
     private fun TextFieldState.handleTextNavigationKeys(event: KeyEvent): Boolean =
         when (event.key.nativeKeyCode) {
@@ -502,112 +474,17 @@ private class SpeedSearchScopeImpl(
                 }
             else -> false
         }
-
-    private fun TextFieldState.handleDeleteKeyInput(event: KeyEvent): Boolean =
-        when {
-            text.isEmpty() -> false
-            event.isAltPressed -> clearSearchInput()
-            selection.end < text.length -> false
-            else -> {
-                edit {
-                    if (selection.start != selection.end) {
-                        delete(selection.min, selection.max)
-                    } else if (selection.end < length) {
-                        delete(selection.end, selection.end + 1)
-                    }
-                }
-
-                true
-            }
-        }
-
-    private fun TextFieldState.handleBackspaceKeyInput(event: KeyEvent): Boolean =
-        when {
-            text.isEmpty() -> false
-            event.isAltPressed -> clearSearchInput()
-            selection.start <= 0 -> false
-            else -> {
-                edit {
-                    if (selection.start != selection.end) {
-                        delete(selection.min, selection.max)
-                    } else if (selection.end > 0) {
-                        delete(selection.start - 1, selection.start)
-                    }
-                }
-
-                true
-            }
-        }
-
-    private fun TextFieldState.handleValidKeyInput(event: KeyEvent): Boolean {
-        val char = event.toChar()
-
-        if (!char.isLetterOrDigit() && !PUNCTUATION_MARKS.contains(char)) {
-            return false
-        }
-
-        edit {
-            if (selection.start != selection.end) {
-                replace(selection.min, selection.max, char.toString())
-            } else {
-                append(char.toString())
-            }
-        }
-
-        if (!speedSearchState.isVisible && text.isNotEmpty()) {
-            speedSearchState.isVisible = true
-        }
-
-        return true
-    }
-}
-
-private fun SpeedSearchStyle.getCurrentForegroundColor(
-    hasMatch: Boolean,
-    textFieldStyle: TextFieldStyle,
-    textStyle: TextStyle,
-): Color {
-    if (!hasMatch && colors.error.isSpecified) return colors.error
-    return colors.foreground.takeOrElse { textFieldStyle.colors.content }.takeOrElse { textStyle.color }
-}
-
-/**
- * **Swing Version:**
- * [UIUtil.isReallyTypedEvent](https://github.com/JetBrains/intellij-community/blob/master/platform/util/ui/src/com/intellij/util/ui/UIUtil.java)
- */
-private fun KeyEvent.isReallyTypedEvent(): Boolean {
-    val keyChar = toChar()
-    val code = keyChar.code
-
-    return when {
-        // Ignoring undefined characters
-        keyChar == AWTKeyEvent.CHAR_UNDEFINED -> {
-            false
-        }
-
-        // Handling non-printable chars (e.g. Tab, Enter, Delete, etc.)
-        keyChar.code < 0x20 || keyChar.code == 0x7F -> {
-            false
-        }
-
-        // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4
-        hostOs.isWindows && code >= 0x200C && code <= 0x200D -> {
-            true
-        }
-        hostOs.isMacOS -> {
-            !isMetaPressed && !isCtrlPressed
-        }
-        else -> {
-            !isAltPressed && !isCtrlPressed
-        }
-    }
 }
 
 @ExperimentalJewelApi
 @ApiStatus.Experimental
-internal class SpeedSearchStateImpl(private val matcherBuilderState: State<(String) -> SpeedSearchMatcher>) :
-    SpeedSearchState {
-    override val textFieldState = TextFieldState()
+internal class SpeedSearchStateImpl(
+    private val searchState: SearchTextFieldState,
+    private val matcherBuilderState: State<(String) -> SpeedSearchMatcher>,
+) : SpeedSearchState {
+    override val textFieldState
+        get() = searchState.textFieldState
+
     private var allMatches: Map<String?, SpeedSearchMatcher.MatchResult> by mutableStateOf(emptyMap())
     override var searchText: String by mutableStateOf("")
 
@@ -671,7 +548,7 @@ internal class SpeedSearchStateImpl(private val matcherBuilderState: State<(Stri
 
     private fun Flow<Pair<String, SpeedSearchMatcher>>.combineWithEntries(entriesFlow: StateFlow<List<String?>>) =
         combine(entriesFlow) { (text, matcher), items ->
-            if (text.isBlank() || items.isEmpty()) {
+            if (text.isBlank()) {
                 // Batch all state updates in a single snapshot to prevent intermediate recompositions.
                 // This ensures atomicity when resetting the search state and improves performance by
                 // triggering only one recomposition instead of four separate ones.
@@ -717,12 +594,6 @@ internal class SpeedSearchStateImpl(private val matcherBuilderState: State<(Stri
             }
         }
 }
-
-private fun KeyEvent.toChar(): Char =
-    when (key) {
-        Key.Spacebar -> ' '
-        else -> utf16CodePoint.toChar()
-    }
 
 /**
  * **Swing Version:**

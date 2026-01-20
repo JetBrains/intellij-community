@@ -3,8 +3,8 @@ package org.jetbrains.jewel.foundation.search
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
-import org.jetbrains.jewel.foundation.search.SpeedSearchMatcher.Companion.patternMatcher
 import org.jetbrains.jewel.foundation.InternalJewelApi
+import org.jetbrains.jewel.foundation.search.SpeedSearchMatcher.Companion.patternMatcher
 import org.jetbrains.jewel.foundation.search.impl.ExactSubstringSpeedSearchMatcher
 import org.jetbrains.jewel.foundation.search.impl.PatternSpeedSearchMatcher
 
@@ -179,8 +179,9 @@ public enum class MatchingCaseSensitivity {
 @InternalJewelApi
 @ApiStatus.Internal
 public object EmptySpeedSearchMatcher : SpeedSearchMatcher {
+    override fun matches(text: String?): SpeedSearchMatcher.MatchResult = matches(text as? CharSequence)
 
-    override fun matches(text: String?): SpeedSearchMatcher.MatchResult = SpeedSearchMatcher.MatchResult.NoMatch
+    override fun matches(text: CharSequence?): SpeedSearchMatcher.MatchResult = SpeedSearchMatcher.MatchResult.NoMatch
 }
 
 /**

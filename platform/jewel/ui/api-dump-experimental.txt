@@ -31,6 +31,15 @@ f:org.jetbrains.jewel.ui.component.DropdownKt
 *f:org.jetbrains.jewel.ui.component.DropdownState$Companion
 - f:of-17HSnUM(Z,Z,Z,Z,Z):J
 - bs:of-17HSnUM$default(org.jetbrains.jewel.ui.component.DropdownState$Companion,Z,Z,Z,Z,Z,I,java.lang.Object):J
+f:org.jetbrains.jewel.ui.component.FilterableLazyColumnKt
+- *sf:FilterableLazyColumn(androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SelectionMode,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,org.jetbrains.jewel.ui.component.SearchAreaState,androidx.compose.foundation.layout.PaddingValues,Z,kotlin.jvm.functions.Function1,androidx.compose.foundation.layout.Arrangement$Vertical,androidx.compose.ui.Alignment$Horizontal,androidx.compose.foundation.gestures.FlingBehavior,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,androidx.compose.foundation.interaction.MutableInteractionSource,kotlinx.coroutines.CoroutineDispatcher,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I):V
+*:org.jetbrains.jewel.ui.component.FilterableLazyColumnScope
+- a:item(java.lang.Object,kotlin.jvm.functions.Function0,java.lang.Object,Z,kotlin.jvm.functions.Function3):V
+- bs:item$default(org.jetbrains.jewel.ui.component.FilterableLazyColumnScope,java.lang.Object,kotlin.jvm.functions.Function0,java.lang.Object,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
+- a:items(java.util.List,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function4):V
+- bs:items$default(org.jetbrains.jewel.ui.component.FilterableLazyColumnScope,java.util.List,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function4,I,java.lang.Object):V
+- a:stickyHeader(java.lang.Object,kotlin.jvm.functions.Function0,java.lang.Object,Z,kotlin.jvm.functions.Function3):V
+- bs:stickyHeader$default(org.jetbrains.jewel.ui.component.FilterableLazyColumnScope,java.lang.Object,kotlin.jvm.functions.Function0,java.lang.Object,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
 *f:org.jetbrains.jewel.ui.component.FixedCursorPoint
 - androidx.compose.foundation.TooltipPlacement
 - sf:$stable:I
@@ -45,6 +54,8 @@ f:org.jetbrains.jewel.ui.component.ListComboBoxKt
 *:org.jetbrains.jewel.ui.component.NodeSearchMatchState
 - a:getMatchResult():org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
 - a:getStyle():org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
+f:org.jetbrains.jewel.ui.component.SearchAreaKt
+- *sf:SearchArea(org.jetbrains.jewel.ui.component.SearchAreaState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle,androidx.compose.ui.text.TextStyle,androidx.compose.foundation.interaction.MutableInteractionSource,java.util.List,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.SpeedSearchAreaKt
 - *sf:ProvideSearchMatchState(org.jetbrains.jewel.ui.component.SpeedSearchState,java.lang.String,org.jetbrains.jewel.ui.component.styling.SearchMatchStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
 - *bsf:SpeedSearchArea(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,androidx.compose.ui.text.TextStyle,org.jetbrains.jewel.ui.component.styling.SearchMatchStyle,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
