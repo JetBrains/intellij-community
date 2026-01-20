@@ -12,6 +12,7 @@ import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.modcompletion.PsiUpdateCompletionItem;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -120,6 +121,8 @@ final class ConstructorCallCompletionItem extends PsiUpdateCompletionItem<Object
    * Inserts {@code <>()}.
    */
   private static void insertTail(ModPsiUpdater updater, PsiClass psiClass) {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    if (settings != null && !settings.isInsertParenthesesAutomatically()) return;
     int inparens = 1;
     int caret = updater.getCaretOffset();
     Document document = updater.getDocument();
