@@ -922,7 +922,39 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         allowAnalysisOnEdt {
             analyze(sourceKaModule) {
                 assertFalse(
-                    "The dangling file should not be analyzable in the context of its source module.",
+                    "The dangling file should not be analyzable in the scope of its context module.",
+                    temporaryFile.canBeAnalysed(),
+                )
+            }
+        }
+    }
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    fun `test dangling file element cannot be analyzed in the scope of an explicit context module`() {
+        // See KT-83777.
+        createModule(
+            moduleName = "a",
+            srcContentSpec = directoryContent {
+                dir("one") {
+                    file("A.kt", "class A")
+                }
+            }
+        )
+        val sourceKtFile = getFile("A.kt")
+        val sourceKaModule = kaModuleWithAssertion<KaSourceModule>(sourceKtFile)
+
+        val temporaryFile = KtPsiFactory.contextual(sourceKtFile).createFile(name, "A()")
+        temporaryFile.originalFile = sourceKtFile
+
+        // Compared to the test above, this test explicitly sets `contextModule`.
+        temporaryFile.contextModule = sourceKaModule
+
+        assertKaModuleType<KaDanglingFileModule>(temporaryFile)
+
+        allowAnalysisOnEdt {
+            analyze(sourceKaModule) {
+                assertFalse(
+                    "The dangling file should not be analyzable in the scope of its explicit context module.",
                     temporaryFile.canBeAnalysed(),
                 )
             }
