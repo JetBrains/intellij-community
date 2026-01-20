@@ -50,7 +50,6 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
 
     try {
       Launcher launcher = LauncherFactory.create(LauncherConfig.builder().enableLauncherSessionListenerAutoRegistration(true).build());
-      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       List<? extends DiscoverySelector> selectors;
       List<Filter<?>> filters = new ArrayList<>(0);
       if (args.length == 1) {
@@ -70,7 +69,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       }
       if (Boolean.getBoolean("idea.performance.tests.discovery.filter")) {
         // Add filter
-        filters.add(createPerformancePostDiscoveryFilter(classLoader));
+        filters.add(new PerformancePostDiscoveryFilter());
       }
       LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder.request()
         .selectors(selectors)
@@ -105,45 +104,6 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
 
     System.exit(exitCode);
   }
-
-  private static PostDiscoveryFilter createPerformancePostDiscoveryFilter(ClassLoader classLoader)
-    throws NoSuchMethodException, ClassNotFoundException, IllegalAccessException {
-    final MethodHandle method = MethodHandles.publicLookup()
-      .findStatic(Class.forName("com.intellij.testFramework.TestFrameworkUtil", true, classLoader),
-                  "isPerformanceTest", MethodType.methodType(boolean.class, String.class, Class.class));
-    return new PostDiscoveryFilter() {
-      private FilterResult isIncluded(Class<?> aClass, String methodName) {
-        try {
-          if ((boolean)method.invokeExact(methodName, aClass)) {
-            return FilterResult.included(null);
-          }
-          return FilterResult.excluded(null);
-        }
-        catch (Throwable e) {
-          return FilterResult.excluded(e.getMessage());
-        }
-      }
-
-      @Override
-      public FilterResult apply(TestDescriptor descriptor) {
-        if (descriptor instanceof EngineDescriptor) {
-          return FilterResult.included(null);
-        }
-        TestSource source = descriptor.getSource().orElse(null);
-        if (source == null) {
-          return FilterResult.included("No source for descriptor");
-        }
-        if (source instanceof MethodSource methodSource) {
-          return isIncluded(methodSource.getJavaClass(), methodSource.getMethodName());
-        }
-        if (source instanceof ClassSource classSource) {
-          return isIncluded(classSource.getJavaClass(), null);
-        }
-        return FilterResult.included("Unknown source type " + source.getClass());
-      }
-    };
-  }
-
 
   public static JUnit4TestAdapterCache createJUnit4TestAdapterCache() {
     return new JUnit4TestAdapterCache() {
@@ -558,6 +518,61 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       public void close() {
         finish();
         super.close();
+      }
+    }
+  }
+
+  public static class PerformancePostDiscoveryFilter implements PostDiscoveryFilter {
+    private static final boolean isIncludingPerformanceTestsRun;
+    private static final boolean isPerformanceTestsRun;
+    private static final MethodHandle isPerformanceTest;
+    static {
+      try {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        isIncludingPerformanceTestsRun = (boolean)MethodHandles.publicLookup()
+          .findStatic(Class.forName("com.intellij.TestCaseLoader", true, classLoader),
+                      "isIncludingPerformanceTestsRun", MethodType.methodType(boolean.class))
+          .invokeExact();
+        isPerformanceTestsRun = (boolean)MethodHandles.publicLookup()
+          .findStatic(Class.forName("com.intellij.TestCaseLoader", true, classLoader),
+                      "isPerformanceTestsRun", MethodType.methodType(boolean.class))
+          .invokeExact();
+        isPerformanceTest = MethodHandles.publicLookup()
+          .findStatic(Class.forName("com.intellij.testFramework.TestFrameworkUtil", true, classLoader),
+                      "isPerformanceTest", MethodType.methodType(boolean.class, String.class, Class.class));
+      }
+      catch (Throwable e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public FilterResult apply(TestDescriptor descriptor) {
+      if (descriptor instanceof EngineDescriptor) {
+        return FilterResult.included(null);
+      }
+      TestSource source = descriptor.getSource().orElse(null);
+      if (source == null) {
+        return FilterResult.included("No source for descriptor");
+      }
+      if (source instanceof MethodSource methodSource) {
+        return isIncluded(methodSource.getJavaClass(), methodSource.getMethodName());
+      }
+      if (source instanceof ClassSource classSource) {
+        return isIncluded(classSource.getJavaClass(), null);
+      }
+      return FilterResult.included("Unknown source type " + source.getClass());
+    }
+
+    private static FilterResult isIncluded(Class<?> aClass, String methodName) {
+      try {
+        if (isIncludingPerformanceTestsRun || isPerformanceTestsRun == (boolean)isPerformanceTest.invokeExact(methodName, aClass)) {
+          return FilterResult.included(null);
+        }
+        return FilterResult.excluded(null);
+      }
+      catch (Throwable e) {
+        return FilterResult.excluded(e.getMessage());
       }
     }
   }

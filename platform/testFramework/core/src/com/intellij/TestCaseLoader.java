@@ -520,11 +520,13 @@ public class TestCaseLoader {
     myLastTestClass = null;
   }
 
-  static boolean isPerformanceTestsRun() {
+  // called reflectively from `JUnit5TeamCityRunnerForTestAllSuite#createPerformancePostDiscoveryFilter`
+  public static boolean isPerformanceTestsRun() {
     return PERFORMANCE_TESTS_ONLY;
   }
 
-  static boolean isIncludingPerformanceTestsRun() {
+  // called reflectively from `JUnit5TeamCityRunnerForTestAllSuite#createPerformancePostDiscoveryFilter`
+  public static boolean isIncludingPerformanceTestsRun() {
     return INCLUDE_PERFORMANCE_TESTS;
   }
 
@@ -589,8 +591,7 @@ public class TestCaseLoader {
     // JUnit 5 might rediscover `@Nested` tests if they were previously filtered out by `isClassNameIncluded`,
     // but their host class was not filtered out. Let's not remove them again based on `ourFilter.matches(className)`,
     // so not checking for `isClassNameIncluded` here.
-    return (isIncludingPerformanceTestsRun() || isPerformanceTestsRun() == isPerformanceTest(null, aClass))
-           && matchesCurrentBucket(aClass.getName());
+    return matchesCurrentBucket(aClass.getName());
   }
 
   public void fillTestCases(String rootPackage, List<? extends Path> classesRoots) {
