@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ide.actions.searcheverywhere
@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
@@ -428,7 +429,9 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
       if (LOG.isTraceEnabled) {
         LOG.trace("Selected item for $searchText is not PsiElement, it is: ${selected}; performing non-suspending navigation")
       }
-      EditSourceUtil.navigate((selected as NavigationItem), true, false)
+      WriteIntentReadAction.run {
+        EditSourceUtil.navigate((selected as NavigationItem), true, false)
+      }
       return true
     }
 
