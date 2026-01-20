@@ -1,11 +1,11 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.ui.model
 
-import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.util.application
 import com.intellij.util.ui.EDT
 import com.jetbrains.rd.util.reactive.ExecutionOrder
 import com.jetbrains.rd.util.reactive.IScheduler
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 object SwingScheduler : IScheduler {
@@ -13,11 +13,11 @@ object SwingScheduler : IScheduler {
     get() = ExecutionOrder.Sequential
 
   override fun flush() {
-    SwingUtilities.invokeAndWait {}
+    application.invokeAndWait {}
   }
 
   override fun queue(action: () -> Unit) {
-    SwingUtilities.invokeLater { WriteIntentReadAction.run { action() } }
+    application.invokeLater { action() }
   }
 
   override val isActive: Boolean
