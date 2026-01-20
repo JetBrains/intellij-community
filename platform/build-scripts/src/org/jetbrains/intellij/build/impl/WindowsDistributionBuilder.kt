@@ -227,7 +227,7 @@ internal class WindowsDistributionBuilder(
     val classPathJars = context.bootClassPathJarNames
     var classPath = ""
     for (jar in classPathJars) {
-      classPath += "\nECHO|SET /P=\"\"%IDE_HOME:\\=/%/lib/${jar};\"\" >> \"%ARG_FILE%\""
+      classPath += "\nECHO|SET /P=\"\"%IDE_HOME:\\=/%/lib/${jar}\";\" >> \"%ARG_FILE%\""
     }
 
     val additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch, isScript = true)
