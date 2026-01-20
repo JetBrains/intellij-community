@@ -43,6 +43,7 @@ internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: D
     debugProcess.addDebugProcessListener(object : DebugProcessListener {
       override fun processDetached(process: DebugProcess, closedByUser: Boolean) {
         releaseAllClassLoaders()
+        debugProcess.removeDebugProcessListener(this)
       }
     })
     launchCleaningTask(managerThread)
