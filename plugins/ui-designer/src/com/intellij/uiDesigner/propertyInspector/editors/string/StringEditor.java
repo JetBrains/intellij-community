@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -162,40 +163,42 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
   private final class MyActionListener implements ActionListener{
     @Override
     public void actionPerformed(final ActionEvent e) {
-      // 1. Show editor dialog
+      WriteIntentReadAction.run(() -> {
+        // 1. Show editor dialog
 
-      final GuiEditor guiEditor = DesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
-      LOG.assertTrue(guiEditor != null);
+        final GuiEditor guiEditor = DesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
+        LOG.assertTrue(guiEditor != null);
 
-      final StringEditorDialog dialog = new StringEditorDialog(
-        myTfWithButton.getTextField(),
-        getValue(), // we have pass here "live" (modified) value
-        guiEditor.getStringDescriptorLocale(),
-        guiEditor
-      );
+        final StringEditorDialog dialog = new StringEditorDialog(
+          myTfWithButton.getTextField(),
+          getValue(), // we have pass here "live" (modified) value
+          guiEditor.getStringDescriptorLocale(),
+          guiEditor
+        );
 
-      CommandProcessor.getInstance().executeCommand(
-        myProject,
-        () -> {
-          if (!guiEditor.ensureEditable()) {
-            return;
-          }
-          if (!dialog.showAndGet()) {
-            return;
-          }
+        CommandProcessor.getInstance().executeCommand(
+          myProject,
+          () -> {
+            if (!guiEditor.ensureEditable()) {
+              return;
+            }
+            if (!dialog.showAndGet()) {
+              return;
+            }
 
-          // 2. Apply new value
-          final StringDescriptor descriptor = dialog.getDescriptor();
-          if (descriptor == null) {
-            return;
-          }
-          setValue(descriptor);
-          fireValueCommitted(true, false);
-          if (myProperty != null) {
-            myProperty.refreshValue(myComponent);
-          }
-          guiEditor.refreshAndSave(false);
-        }, UIDesignerBundle.message("command.edit.string.property"), null);
+            // 2. Apply new value
+            final StringDescriptor descriptor = dialog.getDescriptor();
+            if (descriptor == null) {
+              return;
+            }
+            setValue(descriptor);
+            fireValueCommitted(true, false);
+            if (myProperty != null) {
+              myProperty.refreshValue(myComponent);
+            }
+            guiEditor.refreshAndSave(false);
+          }, UIDesignerBundle.message("command.edit.string.property"), null);
+      });
     }
   }
 }
