@@ -754,7 +754,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                    @Nullable("if content size should be retrieved from a file") Long contentSize,
                                    @NotNull Set<FileType> noLimitFileTypes) {
     if (SingleRootFileViewProvider.isTooLargeForIntelligence(file, contentSize)) {
-      return !noLimitFileTypes.contains(file.getFileType()) || SingleRootFileViewProvider.isTooLargeForContentLoading(file, contentSize);
+      //!isEmpty(): try to avoid getFileType() calls if possible -- they could be expensive
+      if (!noLimitFileTypes.isEmpty() && noLimitFileTypes.contains(file.getFileType())) {
+        //if noLimitFileTypes match the file's type, we still need to enforce _some_ limit,
+        //  just the larger one, contentLoadingLimit:
+        return SingleRootFileViewProvider.isTooLargeForContentLoading(file, contentSize);
+      }
+      return true;
     }
     return false;
   }

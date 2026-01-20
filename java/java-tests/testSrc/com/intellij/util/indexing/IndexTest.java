@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.find.ngrams.TrigramIndex;
@@ -46,6 +46,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.FilePropertyKey;
@@ -647,7 +648,9 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   public void test_no_index_stamp_update_when_no_change_2() throws IOException {
     FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    @Language("JAVA") String text0 = """
+    @SuppressWarnings({"InfiniteRecursion", "NonFinalUtilityClass"})
+    @Language("JAVA")
+    String text0 = """
                   class Main111 {
                       static void staticMethod(Object o) {
                         staticMethod(null);
@@ -662,7 +665,9 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertEquals(1, files.size());
     assertEquals(files.iterator().next(), vFile);
 
-    @Language("JAVA") String text = """
+    @SuppressWarnings({"InfiniteRecursion", "NonFinalUtilityClass"})
+    @Language("JAVA")
+    String text = """
                   class Main {
                       static void staticMethod(Object o) {
                         staticMethod(null);
@@ -1069,8 +1074,13 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertFalse(foundClassStub.get(0));// do not allow access stub index processing other index
   }
 
+  private static String generateSequenceOfCharacterConstants(int fileSizeLimit) {
+    String item = "'c',";
+    return item.repeat(Integer.highestOneBit(fileSizeLimit) / item.length());
+  }
+
   public void test_document_increases_beyond_too_large_limit() {
-    String item = createLongSequenceOfCharacterConstants();
+    String item = generateSequenceOfCharacterConstants(FileSizeLimit.getIntellisenseLimit());
     String fileText = "class Bar { char[] item = { " + item + "};\n }";
     VirtualFile file = myFixture.addFileToProject("foo/Bar.java", fileText).getVirtualFile();
     assertNotNull(findClass("Bar"));
@@ -1080,36 +1090,44 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     for (int i = 0; i < 2; ++i) {
       WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(0, document.getTextLength(), item + item));
       PsiDocumentManager.getInstance(getProject()).commitDocument(document);
-      assertNull(findClass("Bar"));
+      assertNull("File size > limit, file should NOT be indexed",
+                 findClass("Bar"));
 
       WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(0, document.getTextLength(), fileText));
       PsiDocumentManager.getInstance(getProject()).commitDocument(document);
-      assertNotNull(findClass("Bar"));
+      assertNotNull("File size < limit, file should be indexed",
+                    findClass("Bar"));
     }
-  }
-
-  private static String createLongSequenceOfCharacterConstants() {
-    String item = "'c',";
-    return item.repeat(Integer.highestOneBit(FileUtilRt.getUserFileSizeLimit()) / item.length());
   }
 
   public void test_file_increases_beyond_too_large_limit() throws IOException {
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    String item = createLongSequenceOfCharacterConstants();
-    String fileText = "class Bar { char[] item = { " + item + "};\n }";
-    VirtualFile file = myFixture.addFileToProject("foo/Bar.java", fileText).getVirtualFile();
+    //length(item) should be slightly below contentLoadingLimit:
+    String item = generateSequenceOfCharacterConstants(FileSizeLimit.getIntellisenseLimit());
+    String fileTextBelowContentLoadingSizeLimit = "class Bar { char[] item = { " + item + "};\n }";
+    VirtualFile file = myFixture.addFileToProject("foo/Bar.java", fileTextBelowContentLoadingSizeLimit).getVirtualFile();
     int fileId = ((VirtualFileWithId)file).getId();
-    assertNotNull(findClass("Bar"));
-    assertNotNull(fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
+    //TODO RC: seems like there is more than one check for file size, and the one I've fixed
+    //         is not the key one?
 
-    for (int i = 0; i < 2; ++i) {
+    assertNotNull("File size("+file.getLength()+") < limit, file should be indexed",
+                  findClass("Bar"));
+    assertNotNull("File size("+file.getLength()+") < limit, file should be indexed",
+                  fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
+
+    for (int i = 0; i < 2; i++) {
       WriteAction.run(() -> VfsUtil.saveText(file, "class Bar { char[] item = { " + item + item + "};\n }"));
-      assertNull(findClass("Bar"));
-      assertNull(fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
+      assertNull("File size("+file.getLength()+") > limit, file should NOT be indexed",
+                 findClass("Bar"));
+      assertNull("File size("+file.getLength()+") > limit, file should NOT be indexed",
+                 fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
 
-      WriteAction.run(() -> VfsUtil.saveText(file, fileText));
-      assertNotNull(findClass("Bar"));
-      assertNotNull(fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
+      WriteAction.run(() -> VfsUtil.saveText(file, fileTextBelowContentLoadingSizeLimit));
+
+      assertNotNull("File size("+file.getLength()+") < limit, file should be indexed",
+                    findClass("Bar"));
+      assertNotNull("File size("+file.getLength()+") < limit, file should be indexed",
+                    fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
     }
   }
 
