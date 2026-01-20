@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -17,6 +17,7 @@ import com.intellij.util.ArrayFactory;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.text.CharArrayUtil;
+import kotlin.coroutines.Continuation;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -29,6 +30,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -680,6 +682,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * <p>When invoking synchronous refresh from a thread other than the event dispatch thread, the current thread must
    * NOT be in a read action, otherwise a deadlock may occur.</p>
+   *
+   * For suspend function of VFS refresh, use {@link com.intellij.openapi.vfs.newvfs.RefreshQueue#refresh(boolean, List, Continuation)}
    *
    * @param asynchronous if {@code true}, the method will return immediately and the refresh will be processed
    *                     in the background. If {@code false}, the method will return only after the refresh
