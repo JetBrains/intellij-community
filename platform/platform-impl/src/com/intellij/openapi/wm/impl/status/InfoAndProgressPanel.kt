@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 @file:OptIn(FlowPreview::class)
 
@@ -16,8 +16,8 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.Prog
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ProgressResumed
 import com.intellij.notification.impl.ApplicationNotificationsModel
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileEditor.impl.MergingUpdateChannel
 import com.intellij.openapi.observable.util.addMouseHoverListener
@@ -128,7 +128,7 @@ class InfoAndProgressPanel internal constructor(
   private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val removeProgressRequests = MergingUpdateChannel<MyProgressComponent>(delay = 50.milliseconds) { toUpdate ->
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.UI) {
       for (indicator in toUpdate) {
         removeProgress(indicator)
       }
@@ -170,7 +170,7 @@ class InfoAndProgressPanel internal constructor(
             indicators = ArrayList(dirtyIndicators)
             dirtyIndicators.clear()
           }
-          withContext(Dispatchers.EDT) {
+          withContext(Dispatchers.UI) {
             for (indicator in indicators) {
               indicator.updateAndRepaint()
             }
@@ -583,7 +583,7 @@ class InfoAndProgressPanel internal constructor(
       if (showNavBar) {
         val centralComponent = centralComponent
         if (centralComponent != null) {
-          host.coroutineScope.launch(Dispatchers.EDT) {
+          host.coroutineScope.launch(Dispatchers.UI) {
             refreshAndInfoPanel.add(centralComponent, BorderLayout.CENTER)
             centralComponent.updateUI()
           }
