@@ -129,7 +129,7 @@ public final class JUnit5TeamCityRunner {
         if (classpathRoots == null) throw new RuntimeException("Failed to get classpath roots");
         selectors = DiscoverySelectors.selectClasspathRoots(classpathRoots);
         filters.add(new CommonTestClassesFilter());                                           // name check
-        filters.add(new BucketingPostDiscoveryFilter());                                      // bucketing
+        filters.add(new BucketingClassNameFilter());                                          // bucketing
         if (!"false".equals(ENGINE_VINTAGE)) filters.add(new IgnorePostDiscoveryFilter());    // IJIgnore and Ignore support in JUnit 3/4
         filters.add(new PerformancePostDiscoveryFilter());                                    // PerformanceUnitTest support
         if (!"false".equals(ENGINE_VINTAGE)) filters.add(new HeadlessPostDiscoveryFilter());  // SkipInHeadlessEnvironment support in JUnit 3/4
@@ -764,52 +764,26 @@ public final class JUnit5TeamCityRunner {
     }
   }
 
-  public static class BucketingPostDiscoveryFilter implements PostDiscoveryFilter {
-    private static final MethodHandle isClassIncluded;
+  public static class BucketingClassNameFilter implements ClassNameFilter {
+    private static final MethodHandle matchesCurrentBucket;
 
     static {
       try {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        isClassIncluded = MethodHandles.publicLookup()
+        matchesCurrentBucket = MethodHandles.publicLookup()
           .findStatic(Class.forName("com.intellij.TestCaseLoader", true, classLoader),
-                      "isClassIncluded", MethodType.methodType(boolean.class, Class.class));
-        boolean ignored = (boolean)isClassIncluded.invokeExact(Object.class);  // force load bucketing scheme
+                      "matchesCurrentBucket", MethodType.methodType(boolean.class, String.class));
+        boolean ignored = (boolean)matchesCurrentBucket.invokeExact(Object.class.getName());  // force load bucketing scheme
       }
       catch (Throwable e) {
         throw new RuntimeException(e);
       }
     }
 
-    private LastCheckResult myLastResult = null;
-
     @Override
-    public FilterResult apply(TestDescriptor descriptor) {
-      if (descriptor instanceof EngineDescriptor) {
-        return FilterResult.included(null);
-      }
-      TestSource source = descriptor.getSource().orElse(null);
-      if (source == null) {
-        return FilterResult.included("No source for descriptor");
-      }
-      if (source instanceof MethodSource methodSource) {
-        return isIncluded(methodSource.getJavaClass());
-      }
-      if (source instanceof ClassSource classSource) {
-        return isIncluded(classSource.getJavaClass());
-      }
-      return FilterResult.included("Unknown source type " + source.getClass());
-    }
-
-    private FilterResult isIncluded(Class<?> aClass) {
-      if (myLastResult == null || !myLastResult.className.equals(aClass.getName())) {
-        myLastResult = new LastCheckResult(aClass.getName(), isIncludedImpl(aClass));
-      }
-      return myLastResult.result;
-    }
-
-    private static FilterResult isIncludedImpl(Class<?> aClass) {
+    public FilterResult apply(String className) {
       try {
-        if ((boolean)isClassIncluded.invokeExact(aClass)) {
+        if ((boolean)matchesCurrentBucket.invokeExact(className)) {
           return FilterResult.included(null);
         }
         return FilterResult.excluded(null);
@@ -817,9 +791,6 @@ public final class JUnit5TeamCityRunner {
       catch (Throwable e) {
         return FilterResult.excluded(e.getMessage());
       }
-    }
-
-    record LastCheckResult(String className, FilterResult result) {
     }
   }
 
