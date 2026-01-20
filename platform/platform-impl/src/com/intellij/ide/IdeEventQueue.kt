@@ -333,7 +333,7 @@ class IdeEventQueue private constructor() : EventQueue() {
           val progressManager = ProgressManager.getInstanceOrNull()
           try {
             runCustomProcessors(finalEvent, preProcessors)
-            performActivity(finalEvent, !nakedRunnable && isPureSwingEventWilEnabled) {
+            performActivity(finalEvent) {
               if (progressManager == null || (runnable != null && InvocationUtil.isFlushNow(runnable))) {
                 _dispatchEvent(finalEvent)
               }
@@ -1052,7 +1052,7 @@ private fun isInputEvent(e: AWTEvent): Boolean {
   return e is InputEvent || e is InputMethodEvent || e is WindowEvent || e is ActionEvent
 }
 
-internal fun performActivity(e: AWTEvent, needWIL: Boolean, runnable: () -> Unit) {
+internal fun performActivity(e: AWTEvent, runnable: () -> Unit) {
   var transactionGuard = transactionGuard
   if (transactionGuard == null && appIsLoaded()) {
     val app = ApplicationManager.getApplication()
@@ -1068,18 +1068,7 @@ internal fun performActivity(e: AWTEvent, needWIL: Boolean, runnable: () -> Unit
     runnable()
   }
   else {
-    val runnableWithWIL =
-      if (needWIL) {
-        {
-          WriteIntentReadAction.run {
-            runnable()
-          }
-        }
-      }
-      else {
-        runnable
-      }
-    transactionGuard.performActivity(isInputEvent(e) || e is ItemEvent || e is FocusEvent, runnableWithWIL)
+    transactionGuard.performActivity(isInputEvent(e) || e is ItemEvent || e is FocusEvent, runnable)
   }
 }
 
