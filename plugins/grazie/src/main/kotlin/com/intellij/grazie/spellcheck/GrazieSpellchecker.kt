@@ -4,7 +4,7 @@ package com.intellij.grazie.spellcheck
 import ai.grazie.detector.heuristics.rule.RuleFilter
 import ai.grazie.utils.toLinkedSet
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.GrazieDynamic.getLangDynamicFolder
+import com.intellij.grazie.GrazieDynamic.dynamicFolder
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.ide.msg.CONFIG_STATE_TOPIC
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
@@ -39,7 +39,7 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
 
   private fun isHunspellAvailable(lang: Lang, enabledLanguages: Set<Lang>): Boolean {
     val hunspell = lang.hunspellRemote ?: return false
-    return lang in enabledLanguages && Files.exists(getLangDynamicFolder(lang).resolve(hunspell.file))
+    return lang in enabledLanguages && Files.exists(dynamicFolder.resolve(hunspell.file))
   }
 
   private fun filterCheckers(word: String): Set<SpellerTool> {

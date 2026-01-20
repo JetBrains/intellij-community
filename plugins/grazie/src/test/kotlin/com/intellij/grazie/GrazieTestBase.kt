@@ -73,7 +73,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
       if (!Files.exists(zip)) {
         fail("Hunspell-${lang.iso} not found in classpath")
       }
-      val outputDir = GrazieDynamic.getLangDynamicFolder(lang).resolve(lang.hunspellRemote!!.storageName)
+      val outputDir = GrazieDynamic.dynamicFolder.resolve(lang.hunspellRemote!!.storageName)
       Files.createDirectories(outputDir)
       ZipUtil.extract(zip, outputDir, HunspellDescriptor.filenameFilter())
       getInstance(project).spellChecker!!.addDictionary(lang.dictionary!!)
@@ -85,7 +85,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     }
 
     private fun getDictionaryPath(lang: Lang): String {
-      return GrazieDynamic.getLangDynamicFolder(lang).resolve(lang.hunspellRemote!!.file).toString()
+      return GrazieDynamic.dynamicFolder.resolve(lang.hunspellRemote!!.file).toString()
     }
   }
 

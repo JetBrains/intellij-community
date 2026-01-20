@@ -15,7 +15,7 @@ interface RemoteLangDescriptor {
    * Implementation is free to decide what the file exactly is.
    * For example, it is a jar file in case of [LanguageToolDescriptor] and a .dic file in case of [HunspellDescriptor].
    *
-   * Must return a relative path to [com.intellij.grazie.GrazieDynamic.getLangDynamicFolder]
+   * Must return a relative path to [com.intellij.grazie.GrazieDynamic.dynamicFolder]
    */
   val file: Path
 

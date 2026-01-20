@@ -77,12 +77,11 @@ class LanguageToolBundleInfoTest : BasePlatformTestCase() {
   // copy-paste from [LanguageDownloader]
   private fun downloadLanguages(lang: Lang): Path {
     val downloaderService = DownloadableFileService.getInstance()
-    val folder = GrazieDynamic.getLangDynamicFolder(lang)
     val descriptors = listOf(lang.ltRemote!!)
       .map { downloaderService.createFileDescription(it.url, it.storageName) }
     downloaderService
       .createDownloader(descriptors, "Downloading ${lang.iso}")
-      .download(folder.toFile())
-    return folder.resolve(lang.ltRemote!!.storageName)
+      .download(GrazieDynamic.dynamicFolder.toFile())
+    return GrazieDynamic.dynamicFolder.resolve(lang.ltRemote!!.storageName)
   }
 }

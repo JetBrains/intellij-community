@@ -124,7 +124,7 @@ internal object LanguageDownloader {
   private fun promptToSelectLanguageBundleManually(language: Lang): Path? {
     language.ltRemote ?: return null
     val selectedFile = OfflineLanguageBundleSelectionDialog.show(null, language) ?: return null
-    val targetPath = GrazieDynamic.getLangDynamicFolder(language).resolve(language.ltRemote!!.storageName)
+    val targetPath = GrazieDynamic.dynamicFolder.resolve(language.ltRemote!!.storageName)
     selectedFile.copyTo(targetPath, overwrite = true)
     return targetPath
   }
@@ -134,14 +134,13 @@ internal object LanguageDownloader {
     val paths = mutableMapOf<Lang, Path>()
     try {
       languages.forEach { lang ->
-        val folder = GrazieDynamic.getLangDynamicFolder(lang)
         val descriptors = lang.remoteDescriptors
           .map { it.url to it.storageDescriptor }
           .map { downloaderService.createFileDescription(it.first, it.second) }
         downloaderService
           .createDownloader(descriptors, msg("grazie.settings.proofreading.languages.download"))
-          .download(folder.toFile())
-        paths.put(lang, folder)
+          .download(GrazieDynamic.dynamicFolder.toFile())
+        paths[lang] = GrazieDynamic.dynamicFolder
       }
     }
     catch (e: Exception) {

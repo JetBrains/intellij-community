@@ -6,7 +6,7 @@ import ai.grazie.nlp.langs.LanguageWithVariant
 import ai.grazie.spell.utils.DictionaryResources.transformSwissGermanDic
 import ai.grazie.spell.utils.DictionaryResources.transformSwissGermanTrigrams
 import com.intellij.grazie.GrazieDynamic
-import com.intellij.grazie.GrazieDynamic.getLangDynamicFolder
+import com.intellij.grazie.GrazieDynamic.dynamicFolder
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.grazie.remote.HunspellDescriptor
 import com.intellij.grazie.remote.LanguageToolDescriptor
@@ -78,7 +78,7 @@ enum class Lang(val displayName: String, val className: String, val iso: Languag
     if (isEnglish()) return@lazy GrazieSpellCheckerEngine.enDictionary
     if (hunspellRemote == null) return@lazy null
 
-    val dicPath = getLangDynamicFolder(this).resolve(hunspellRemote!!.file).toString()
+    val dicPath = dynamicFolder.resolve(hunspellRemote!!.file).toString()
     if (this == SWISS_GERMAN) createSwissDictionary(dicPath) else HunspellDictionary(dicPath, language = iso)
   }
 

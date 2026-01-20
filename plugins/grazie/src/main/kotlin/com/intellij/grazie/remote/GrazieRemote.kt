@@ -6,6 +6,7 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.remote.GrazieRemote.downloadAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
@@ -21,12 +22,14 @@ object GrazieRemote {
 
   fun isJLangAvailableLocally(lang: Lang): Boolean {
     if (lang.isEnglish()) return true
-    return GrazieDynamic.getLangDynamicFolder(lang).resolve(lang.ltRemote!!.file).exists()
+    return GrazieDynamic.dynamicFolder.resolve(lang.ltRemote!!.file).exists()
   }
 
   fun isAvailableLocally(lang: Lang): Boolean {
     if (lang.isEnglish()) return true
-    return GrazieDynamic.getLangDynamicFolder(lang).exists()
+    return lang.remoteDescriptors.all {
+      GrazieDynamic.dynamicFolder.resolve(it.storageName).exists()
+    }
   }
 
   fun allAvailableLocally(languages: Collection<Lang>): Boolean = languages.all { isAvailableLocally(it) }
