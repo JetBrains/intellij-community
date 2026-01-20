@@ -3,20 +3,12 @@ package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
-import org.jetbrains.kotlin.analysis.api.components.buildStarTypeProjection
-import org.jetbrains.kotlin.analysis.api.components.defaultType
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.components.hasCommonSubtypeWith
-import org.jetbrains.kotlin.analysis.api.components.isNullable
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.components.withNullability
+import org.jetbrains.kotlin.analysis.api.components.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 
 /**
@@ -53,3 +45,23 @@ fun buildClassTypeWithStarProjections(symbol: KaClassLikeSymbol): KaType =
             argument(buildStarTypeProjection())
         }
     }
+
+/**
+ * Approximates anonymous object types to their denotable supertypes.
+ * This is useful for generating code where anonymous object types cannot be written.
+ *
+ * For example, `object : Callback { ... }` will be approximated to `Callback`.
+ *
+ * @return The approximated type if the input is an anonymous object type, otherwise returns the input type unchanged.
+ */
+context(_: KaSession)
+@OptIn(KaExperimentalApi::class)
+fun KaType.approximateAnonymousObjectToSupertypeOrSelf(): KaType {
+    return (this as? KaClassType)?.let { classType ->
+        when (val symbol = classType.symbol) {
+            is KaClassSymbol if symbol.classKind == KaClassKind.ANONYMOUS_OBJECT ->
+                classType.approximateToDenotableSupertypeOrSelf(allowLocalDenotableTypes = false) as? KaClassType ?: classType
+            else -> classType
+        }
+    } ?: this
+}
