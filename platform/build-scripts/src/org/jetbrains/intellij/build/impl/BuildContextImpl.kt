@@ -342,6 +342,8 @@ class BuildContextImpl internal constructor(
   }
 
   override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isScript: Boolean, isPortableDist: Boolean, isQodana: Boolean): List<String> {
+    fun String.quoteIfNeeded(): String = if (isScript) '"' + this + '"' else this
+
     val jvmArgs = ArrayList<String>()
 
     val macroName = when (os) {
@@ -355,7 +357,7 @@ class BuildContextImpl internal constructor(
     if (bcpJarNames.isNotEmpty()) {
       val (pathSeparator, dirSeparator) = if (os == OsFamily.WINDOWS) ";" to "\\" else ":" to "/"
       val bootCp = bcpJarNames.joinToString(pathSeparator) { arrayOf(macroName, "lib", it).joinToString(dirSeparator) }
-      jvmArgs += "-Xbootclasspath/a:${bootCp}".let { if (isScript) '"' + it + '"' else it }
+      jvmArgs += "-Xbootclasspath/a:${bootCp}".quoteIfNeeded()
     }
 
     if (productProperties.enableCds) {
@@ -373,17 +375,17 @@ class BuildContextImpl internal constructor(
     jvmArgs += "-Didea.paths.selector=${systemSelector}"
 
     // require bundled JNA dispatcher lib
-    jvmArgs += "-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".let { if (isScript) '"' + it + '"' else it }
+    jvmArgs += "-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".quoteIfNeeded()
     jvmArgs += "-Djna.nosys=true"
     jvmArgs += "-Djna.noclasspath=true"
-    jvmArgs += "-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".let { if (isScript) '"' + it + '"' else it }
+    jvmArgs += "-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".quoteIfNeeded()
     jvmArgs += "-Dio.netty.allocator.type=pooled"
 
     // require bundled Skiko
-    jvmArgs.add("-Dskiko.library.path=${macroName}/lib/skiko-awt-runtime-all")
+    jvmArgs.add("-Dskiko.library.path=${macroName}/lib/skiko-awt-runtime-all".quoteIfNeeded())
 
     if (useModularLoader || generateRuntimeModuleRepository) {
-      jvmArgs += "-Dintellij.platform.runtime.repository.path=${macroName}/${MODULE_DESCRIPTORS_COMPACT_PATH}".let { if (isScript) '"' + it + '"' else it }
+      jvmArgs += "-Dintellij.platform.runtime.repository.path=${macroName}/${MODULE_DESCRIPTORS_COMPACT_PATH}".quoteIfNeeded()
     }
     if (useModularLoader) {
       jvmArgs += "-Dintellij.platform.root.module=${productProperties.rootModuleForModularLoader!!}"
