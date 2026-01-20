@@ -82,10 +82,9 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     }
     catch (Throwable e) {
       caughtException = e;
-      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestAllSuite", e);
     }
     finally {
-      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestAllSuite", null);
+      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestAllSuite", caughtException);
     }
 
     // Determine exit code OUTSIDE of try/catch/finally to avoid finally overriding the exit code

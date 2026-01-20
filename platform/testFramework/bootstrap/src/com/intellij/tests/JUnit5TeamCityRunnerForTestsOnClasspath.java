@@ -101,10 +101,9 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
     }
     catch (Throwable e) {
       caughtException = e;
-      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestsOnClasspath", e);
     }
     finally {
-      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestsOnClasspath", null);
+      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestsOnClasspath", caughtException);
     }
 
     // Determine exit code OUTSIDE of try/catch/finally to avoid finally overriding the exit code
