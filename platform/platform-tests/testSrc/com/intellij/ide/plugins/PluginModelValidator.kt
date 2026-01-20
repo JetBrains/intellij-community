@@ -80,6 +80,12 @@ data class PluginValidationOptions(
   val modulesWithIncorrectlyPlacedModuleDescriptor: Set<String> = emptySet(),
 
   /**
+   * Mapping from a plugin ID to the list of its content modules which don't have a dedicated JPS module and registered using deprecated
+   * `module.name/subDescriptor` syntax.
+   */
+  val pluginsToContentModulesWithoutDedicatedJpsModules: Map<String, List<String>> = emptyMap(),
+
+  /**
    * Set of implementation classes of existing application-level and project-level components which shouldn't be reported as errors. 
    */
   val componentImplementationClassesToIgnore: Set<String> = emptySet(),
@@ -681,6 +687,22 @@ class PluginModelValidator(
           ))
         }
         continue
+      }
+
+      if (moduleName.contains("/")) {
+        val knownViolations = validationOptions.pluginsToContentModulesWithoutDedicatedJpsModules[referencingModuleInfo.pluginId] ?: emptyList()
+        if (moduleName !in knownViolations) {
+          reportError(
+            message = """
+              |Module '$moduleName' is registered in '${referencingModuleInfo.pluginId}' plugin using deprecated module.name/subDescriptor syntax.
+              |Extract it to a separate JPS module using the quick-fix provided by the DevKit plugin as described in https://youtrack.jetbrains.com/issue/IJPL-165543.
+            """.trimMargin(),
+            sourceModule = moduleDescriptorFileInfo.sourceModule,
+            params = mapOf(
+              "referencingDescriptorFile" to referencingModuleInfo.descriptorFile,
+            )
+          )
+        }
       }
 
       val moduleDescriptor = moduleDescriptorFileInfo.descriptor

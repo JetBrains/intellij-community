@@ -91,8 +91,7 @@ class PluginModelValidatorTest {
   fun `content module in the same source module`() {
     val project = producePluginWithContentModuleInTheSameSourceModule()
     val result = validatePluginModel(project)
-    assertThat(result.errors).isEmpty()
-    assertWithMatchSnapshot(result.graphAsString(root))
+    assertWithMatchSnapshot(result.errorsAsString())
   }
 
   @Test
@@ -101,7 +100,15 @@ class PluginModelValidatorTest {
       it.replace("<dependencies>", "<dependencies><module name=\"com.intellij.diagram\"/>")
     }
 
-    val result = validatePluginModel(project)
+    val result = validatePluginModel(
+      project,
+      projectHomePath = root,
+      validationOptions = PluginValidationOptions(
+        pluginsToContentModulesWithoutDedicatedJpsModules = mapOf(
+          "AngularJs" to listOf("intellij.angularJs/diagram")
+        )
+      )
+    )
     assertWithMatchSnapshot(result.errorsAsString())
   }
 
