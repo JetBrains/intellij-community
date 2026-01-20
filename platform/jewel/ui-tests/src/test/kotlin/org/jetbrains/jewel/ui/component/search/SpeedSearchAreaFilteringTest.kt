@@ -4,7 +4,6 @@ package org.jetbrains.jewel.ui.component.search
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.layout.onFirstVisible
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -473,7 +473,10 @@ class SpeedSearchAreaFilteringTest {
                     ) {
                         SpeedSearchableLazyColumn(
                             modifier =
-                                Modifier.size(200.dp, 400.dp).testTag("LazyColumn").focusRequester(focusRequester),
+                                Modifier.size(200.dp, 400.dp)
+                                    .testTag("LazyColumn")
+                                    .focusRequester(focusRequester)
+                                    .onFirstVisible { focusRequester.requestFocus() },
                             state = listState,
                             dispatcher = testDispatcher,
                             // Don't pass dispatcher to avoid circular dependency with filtering
@@ -496,8 +499,6 @@ class SpeedSearchAreaFilteringTest {
                     DefaultButton(onClick = {}, modifier = Modifier.testTag("Button")) { Text("Press me") }
                 }
             }
-
-            LaunchedEffect(Unit) { focusRequester.requestFocus() }
         }
 
         rule.waitForIdle()

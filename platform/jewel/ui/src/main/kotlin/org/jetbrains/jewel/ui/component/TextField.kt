@@ -110,31 +110,20 @@ public fun TextField(
         outline = outline,
         outputTransformation = outputTransformation,
         decorator =
-            if (undecorated) {
-                TextFieldDecorator { innerTextField ->
-                    UndecoratedTextFieldDecorationBox(
-                        innerTextField = innerTextField,
-                        textStyle = textStyle,
-                        placeholderTextColor = style.colors.placeholder,
-                        placeholder = if (state.text.isEmpty()) placeholder else null,
-                    )
-                }
-            } else {
-                TextFieldDecorator { innerTextField ->
-                    val minSize = style.metrics.minSize
+            TextFieldDecorator { innerTextField ->
+                val minSize = style.metrics.minSize
 
-                    TextFieldDecorationBox(
-                        modifier =
-                            Modifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height)
-                                .padding(style.metrics.contentPadding),
-                        innerTextField = innerTextField,
-                        textStyle = textStyle,
-                        placeholderTextColor = style.colors.placeholder,
-                        placeholder = if (state.text.isEmpty()) placeholder else null,
-                        leadingIcon = leadingIcon,
-                        trailingIcon = trailingIcon,
-                    )
-                }
+                TextFieldDecorationBox(
+                    modifier =
+                        Modifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height)
+                            .padding(style.metrics.contentPadding),
+                    innerTextField = innerTextField,
+                    textStyle = textStyle,
+                    placeholderTextColor = style.colors.placeholder,
+                    placeholder = if (state.text.isEmpty()) placeholder else null,
+                    leadingIcon = leadingIcon,
+                    trailingIcon = trailingIcon,
+                )
             },
         undecorated = undecorated,
         scrollState = rememberScrollState(),
@@ -235,26 +224,6 @@ public fun TextField(
         },
         modifier = modifier,
     )
-}
-
-@Composable
-private fun UndecoratedTextFieldDecorationBox(
-    innerTextField: @Composable () -> Unit,
-    placeholder: @Composable (() -> Unit)?,
-    textStyle: TextStyle,
-    placeholderTextColor: Color,
-) {
-    Box(propagateMinConstraints = true, contentAlignment = Alignment.CenterStart) {
-        if (placeholder != null) {
-            CompositionLocalProvider(
-                LocalTextStyle provides textStyle.copy(color = placeholderTextColor),
-                LocalContentColor provides placeholderTextColor,
-                content = placeholder,
-            )
-        }
-
-        innerTextField()
-    }
 }
 
 @Composable
