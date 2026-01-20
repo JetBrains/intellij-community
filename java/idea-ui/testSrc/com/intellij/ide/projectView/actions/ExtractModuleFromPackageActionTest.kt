@@ -8,6 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -167,6 +168,35 @@ class ExtractModuleFromPackageActionTest {
       assertThat(ModuleRootManager.getInstance(referencesExtractedInProdModuleInTests).getDependencies(true)).containsExactly(main, extracted)
       assertAll()
     }
+  }
+
+  @Test
+  fun `extract package referenced from tests of the original module`() {
+    val (main, directory) = prepareProject()
+    projectModel.addSourceRoot(main, "testSrc", JavaSourceRootType.TEST_SOURCE).let {
+      VfsTestUtil.createFile(it, "tests/Test.java", "package tests;\npublic class Test { xxx.Main main; }")
+    }
+
+    extractModule(directory, main, targetSourceRoot = null)
+    val extracted = projectModel.moduleManager.findModuleByName("main.xxx")!!
+
+    val dependenciesOnExtracted = ModuleRootManager.getInstance(main).orderEntries.filterIsInstance<ModuleOrderEntry>().filter { it.module == extracted }
+    assertThat(dependenciesOnExtracted).hasSize(1)
+    assertThat(dependenciesOnExtracted.single().scope).isEqualTo(DependencyScope.TEST)
+  }
+
+  @Test
+  fun `extract package referenced from other classes in the original module`() {
+    val (main, directory) = prepareProject()
+    val mainSrc = ModuleRootManager.getInstance(main).sourceRoots.single()
+    VfsTestUtil.createFile(mainSrc, "main/OtherClass.java", "package main;\npublic class OtherClass { xxx.Main main; }")
+
+    extractModule(directory, main, targetSourceRoot = null)
+    val extracted = projectModel.moduleManager.findModuleByName("main.xxx")!!
+
+    val dependenciesOnExtracted = ModuleRootManager.getInstance(main).orderEntries.filterIsInstance<ModuleOrderEntry>().filter { it.module == extracted }
+    assertThat(dependenciesOnExtracted).hasSize(1)
+    assertThat(dependenciesOnExtracted.single().scope).isEqualTo(DependencyScope.COMPILE)
   }
 
   @Test
