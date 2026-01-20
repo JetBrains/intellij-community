@@ -23,7 +23,7 @@ import java.util.List;
 public class JavaStaticMemberProcessor extends StaticMemberProcessor {
   private final PsiElement myOriginalPosition;
 
-  public JavaStaticMemberProcessor(@NotNull CompletionParameters parameters) {
+  public JavaStaticMemberProcessor(@NotNull BaseCompletionParameters parameters) {
     super(parameters.getPosition());
     myOriginalPosition = parameters.getOriginalPosition();
     final PsiFile file = parameters.getPosition().getContainingFile();

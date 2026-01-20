@@ -93,6 +93,11 @@ final class MethodCallCompletionItem extends PsiUpdateCompletionItem<PsiMethod> 
     return null;
   }
 
+  public @Nullable PsiType getType() {
+    PsiType type = MemberLookupHelper.patchGetClass(myMethod, myInferenceSubstitutor.substitute(myMethod.getReturnType()));
+    return getSubstitutor().substitute(type);
+  }
+
   MethodCallCompletionItem withForcedQualifier(String forcedQualifier) {
     return new MethodCallCompletionItem(myMethod, myHelper, myAdditionalLookup, myQualifierSubstitutor, myInferenceSubstitutor,
                                         forcedQualifier, myNeedExplicitTypeParameters, myPresentableTypeArgs);
