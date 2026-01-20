@@ -8,9 +8,12 @@ import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
 import com.intellij.util.Function
 import com.intellij.vcs.log.*
+import com.intellij.vcs.log.VcsLogProvider.DetailedLogData
+import com.intellij.vcs.log.data.toRefsLoadingPolicy
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.RequirementsImpl
+import com.intellij.vcs.log.impl.SimpleLogProviderRequirements
 import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
@@ -19,73 +22,22 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromBranch
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromPattern
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRange
 import git4idea.config.GitVersion
+import git4idea.repo.GitRepositoryTagsHolderImpl
 import git4idea.test.*
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Assume
 
-class GitLogProviderTest : GitSingleRepoTest() {
-  private lateinit var myLogProvider: GitLogProvider
-  private lateinit var myObjectsFactory: VcsLogObjectsFactory
+class GitReadRecentCommitsTest : GitReadRecentCommitsTestBase()
 
-  public override fun setUp() {
+class GitExperimentalReadRecentCommitsTestBase : GitReadRecentCommitsTestBase() {
+  override fun setUp() {
     super.setUp()
-    myLogProvider = findGitLogProvider(myProject)
-    myObjectsFactory = myProject.getService(VcsLogObjectsFactory::class.java)
+    setRegistryPropertyForTest("git.log.provider.experimental.refs.collection", true.toString())
   }
+}
 
-  fun test_init_with_tagged_branch() {
-    prepareSomeHistory()
-    val expectedLogWithoutTaggedBranch = readCommitsFromGit()
-    createTaggedBranch()
-
-    val block =
-      myLogProvider.readFirstBlock(projectRoot, RequirementsImpl(1000, false, TestVcsRefsSequences(emptyList())))
-    assertOrderedEquals(block.commits, expectedLogWithoutTaggedBranch)
-  }
-
-  fun test_refresh_with_new_tagged_branch() {
-    prepareSomeHistory()
-    val prevRefs = readAllRefs(projectRoot, myObjectsFactory)
-    createTaggedBranch()
-
-    val expectedLog = readCommitsFromGit()
-    val block =
-      myLogProvider.readFirstBlock(
-        projectRoot,
-        RequirementsImpl(1000, true, TestVcsRefsSequences(prevRefs))
-      )
-    assertSameElements(block.commits, expectedLog)
-  }
-
-  fun test_refresh_when_new_tag_moved() {
-    prepareSomeHistory()
-    val prevRefs = readAllRefs(projectRoot, myObjectsFactory)
-    git("tag -f ATAG")
-
-    val expectedLog = readCommitsFromGit()
-    val refs = readAllRefs(projectRoot, myObjectsFactory)
-    val block =
-      myLogProvider.readFirstBlock(projectRoot, RequirementsImpl(1000, true, TestVcsRefsSequences(prevRefs)))
-    assertSameElements(block.commits, expectedLog)
-    assertSameElements(block.refs, refs)
-  }
-
-  fun test_new_tag_on_old_commit() {
-    prepareSomeHistory()
-    val prevRefs = readAllRefs(projectRoot, myObjectsFactory)
-    val commits = readCommitsFromGit()
-    val firstCommit = commits[commits.size - 1].id.asString()
-    git("tag NEW_TAG $firstCommit")
-
-    val refs = readAllRefs(projectRoot, myObjectsFactory)
-    val block =
-      myLogProvider.readFirstBlock(
-        projectRoot,
-        RequirementsImpl(1000, true, TestVcsRefsSequences(prevRefs))
-      )
-    assertSameElements(block.refs, refs)
-  }
-
+class GitLogProviderTest : GitLogProviderTestBase() {
   fun test_all_log_with_tagged_branch() {
     prepareSomeHistory()
     createTaggedBranch()
@@ -101,39 +53,6 @@ class GitLogProviderTest : GitSingleRepoTest() {
     val expected: VcsUser = defaultUser
     TestCase.assertEquals("User name is incorrect", expected.getName(), user!!.getName())
     TestCase.assertEquals("User email is incorrect", expected.getEmail(), user.getEmail())
-  }
-
-  fun test_dont_report_origin_HEAD() {
-    prepareSomeHistory()
-    git("update-ref refs/remotes/origin/HEAD master")
-
-    val block = myLogProvider.readFirstBlock(
-      projectRoot,
-      RequirementsImpl(1000, false, TestVcsRefsSequences(emptyList()))
-    )
-    assertFalse(
-      "origin/HEAD should be ignored",
-      block.refs.any { ref -> ref.getName() == "origin/HEAD" }
-    )
-  }
-
-  fun test_support_equally_named_branch_and_tag() {
-    prepareSomeHistory()
-    git("branch build")
-    git("tag build")
-
-    val data = myLogProvider.readFirstBlock(
-      projectRoot,
-      RequirementsImpl(1000, true, TestVcsRefsSequences(emptyList()))
-    )
-    val expectedLog = readCommitsFromGit()
-    assertOrderedEquals(data.commits, expectedLog)
-    assertTrue(
-      data.refs.any { ref -> ref.getName() == "build" && ref.getType() === GitRefManager.LOCAL_BRANCH }
-    )
-    assertTrue(
-      data.refs.any { ref -> ref.getName() == "build" && ref.getType() === GitRefManager.TAG }
-    )
   }
 
   fun test_filter_by_branch() {
@@ -338,12 +257,6 @@ class GitLogProviderTest : GitSingleRepoTest() {
     return commits.map { commit: TimedVcsCommit -> commit.getId().asString() }
   }
 
-  private fun prepareSomeHistory() {
-    repo.tac("a.txt")
-    git("tag ATAG")
-    repo.tac("b.txt")
-  }
-
   private fun prepareLongHistory() {
     for (i in 0..<15) {
       val file = "a" + (i % 10) + ".txt"
@@ -356,16 +269,101 @@ class GitLogProviderTest : GitSingleRepoTest() {
     }
   }
 
-  private fun createTaggedBranch() {
-    val hash = repo.last()
-    repo.tac("c.txt")
-    repo.tac("d.txt")
-    repo.tac("e.txt")
-    git("tag poor-tag")
-    git("reset --hard $hash")
+}
+
+abstract class GitReadRecentCommitsTestBase : GitLogProviderTestBase() {
+  fun test_init_with_tagged_branch() {
+    prepareSomeHistory()
+    val expectedLogWithoutTaggedBranch = readCommitsFromGit()
+    createTaggedBranch()
+
+    val block = readRecentCommits(SimpleLogProviderRequirements(1000))
+    assertOrderedEquals(block.commits, expectedLogWithoutTaggedBranch)
   }
 
-  private fun readCommitsFromGit(): List<VcsCommitMetadataImpl> {
+  fun test_refresh_with_new_tagged_branch() {
+    prepareSomeHistory()
+    val prevRefs = readAllRefs(projectRoot, myObjectsFactory)
+    createTaggedBranch()
+
+    val expectedLog = readCommitsFromGit()
+    val block = readRecentCommits(RequirementsImpl(1000, true, TestVcsRefsSequences(prevRefs)))
+    assertSameElements(block.commits, expectedLog)
+  }
+
+  fun test_refresh_when_new_tag_moved() {
+    prepareSomeHistory()
+    val prevRefs = readAllRefs(projectRoot, myObjectsFactory)
+    git("tag -f ATAG")
+
+    val expectedLog = readCommitsFromGit()
+    val refs = readAllRefs(projectRoot, myObjectsFactory)
+    val block = readRecentCommits(RequirementsImpl(1000, true, TestVcsRefsSequences(prevRefs)))
+    assertSameElements(block.commits, expectedLog)
+    assertSameElements(block.refsIterable.toList(), refs)
+  }
+
+  fun test_new_tag_on_old_commit() {
+    prepareSomeHistory()
+    val prevRefs = readAllRefs(projectRoot, myObjectsFactory)
+    val commits = readCommitsFromGit()
+    val firstCommit = commits[commits.size - 1].id.asString()
+    git("tag NEW_TAG $firstCommit")
+
+    val refs = readAllRefs(projectRoot, myObjectsFactory)
+    val block = readRecentCommits(RequirementsImpl(1000, true, TestVcsRefsSequences(prevRefs)))
+    assertSameElements(block.refsIterable.toList(), refs)
+  }
+
+  fun test_dont_report_origin_HEAD() {
+    prepareSomeHistory()
+    git("update-ref refs/remotes/origin/HEAD master")
+
+    val block = readRecentCommits(SimpleLogProviderRequirements(1000))
+    assertFalse(
+      "origin/HEAD should be ignored",
+      block.refsIterable.toList().any { ref -> ref.getName() == "origin/HEAD" }
+    )
+  }
+
+  fun test_support_equally_named_branch_and_tag() {
+    prepareSomeHistory()
+    git("branch build")
+    git("tag build")
+
+    val data = readRecentCommits(RequirementsImpl(1000, true, TestVcsRefsSequences(emptyList())))
+    val expectedLog = readCommitsFromGit()
+    assertOrderedEquals(data.commits, expectedLog)
+    assertTrue(
+      data.refsIterable.any { ref -> ref.getName() == "build" && ref.getType() === GitRefManager.LOCAL_BRANCH }
+    )
+    assertTrue(
+      data.refsIterable.any { ref -> ref.getName() == "build" && ref.getType() === GitRefManager.TAG }
+    )
+  }
+
+  private fun readRecentCommits(requirements: VcsLogProvider.Requirements): DetailedLogData {
+    repo.update()
+    (repo.tagsHolder as? GitRepositoryTagsHolderImpl)?.updateForTests()
+    return runBlocking {
+      val refsLoadingPolicy = requirements.toRefsLoadingPolicy()
+      myLogProvider.readRecentCommits(projectRoot, requirements, refsLoadingPolicy)
+    }
+  }
+}
+
+
+abstract class GitLogProviderTestBase : GitSingleRepoTest() {
+  protected lateinit var myLogProvider: GitLogProvider
+  protected lateinit var myObjectsFactory: VcsLogObjectsFactory
+
+  public override fun setUp() {
+    super.setUp()
+    myLogProvider = findGitLogProvider(myProject)
+    myObjectsFactory = myProject.getService(VcsLogObjectsFactory::class.java)
+  }
+
+  protected fun readCommitsFromGit(): List<VcsCommitMetadataImpl> {
     val output = git("log --all --date-order --full-history --sparse --pretty='%H|%P|%ct|%s|%B'")
     val defaultUser: VcsUser = defaultUser
     return StringUtil.splitByLines(output).map { record ->
@@ -385,13 +383,30 @@ class GitLogProviderTest : GitSingleRepoTest() {
     }
   }
 
+  protected fun prepareSomeHistory() {
+    repo.tac("a.txt")
+    git("tag ATAG")
+    repo.tac("b.txt")
+  }
+
+  protected fun createTaggedBranch() {
+    val hash = repo.last()
+    repo.tac("c.txt")
+    repo.tac("d.txt")
+    repo.tac("e.txt")
+    git("tag poor-tag")
+    git("reset --hard $hash")
+  }
+
   companion object {
     /**
      * Prior to 1.8.0 --regexp-ignore-case does not work when --fixed-strings parameter is specified, so can not filter case-insensitively without regex.
      */
-    private val FIXED_STRINGS_WORKS_WITH_IGNORE_CASE = GitVersion(1, 8, 0, 0)
+    @JvmStatic
+    protected val FIXED_STRINGS_WORKS_WITH_IGNORE_CASE = GitVersion(1, 8, 0, 0)
 
-    private val shortDetailsToString: Function<VcsShortCommitDetails?, String?>
+    @JvmStatic
+    protected val shortDetailsToString: Function<VcsShortCommitDetails?, String?>
       get() = Function { details: VcsShortCommitDetails? ->
         var result = ""
         result += details!!.getId().toShortString() + "\n"
@@ -403,7 +418,8 @@ class GitLogProviderTest : GitSingleRepoTest() {
         result
       }
 
-    private val defaultUser: VcsUser
+    @JvmStatic
+    protected val defaultUser: VcsUser
       get() = VcsUserUtil.createUser(USER_NAME, USER_EMAIL)
   }
 }
