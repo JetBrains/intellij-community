@@ -411,7 +411,7 @@ private fun CoroutineScope.loadDescriptorsFromProperty(loadingContext: PluginDes
 }
 
 private fun CoroutineScope.loadThirdPartyBundledPluginDescriptors(loadingContext: PluginDescriptorLoadingContext, pool: ZipEntryResolverPool): Deferred<DiscoveredPluginsList?> {
-  if (System.getProperty("idea.allow.third.party.bundled.plugins", "true") != "true") {
+  if (System.getProperty("intellij.platform.allow.third.party.bundled.plugins", "true") != "true") {
     return CompletableDeferred(value = null)
   }
   val thirdPartyBundledPluginsPath = PathManager.getHomeDir().resolve("third-party-plugins")
