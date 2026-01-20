@@ -12,6 +12,7 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
@@ -46,6 +47,9 @@ import java.util.function.Consumer
 import java.util.function.Function
 import javax.swing.JComponent
 
+// We're searching for "main/kotlin" or "test/kotlin", which are 2 parent directories for the file
+private const val MAIN_KOTLIN_OR_TEST_KOTLIN_PATH_SIZE = 2
+
 // Code is partially copied from com.intellij.codeInsight.daemon.impl.SetupSDKNotificationProvider
 class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
@@ -76,7 +80,7 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             return null
         }
 
-        if (!ModuleRootManager.getInstance(module).fileIndex.isInSourceContent(file) && !fileIsUnderKotlinSourceRoot(file)) {
+        if (!ModuleRootManager.getInstance(module).fileIndex.isInSourceContent(file) && !fileIsUnderKotlinSourceRoot(file, project)) {
             return null
         }
 
@@ -98,8 +102,28 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
         return null
     }
 
-    fun fileIsUnderKotlinSourceRoot(file: VirtualFile): Boolean {
-        return file.path.contains("src/main/kotlin/") || file.path.contains("src/test/kotlin/")
+    private val mainAndTestDirNames = listOf("main", "test")
+
+    fun fileIsUnderKotlinSourceRoot(file: VirtualFile, project: Project): Boolean {
+        val projectParent = ProjectFileIndex.getInstance(project).getContentRootForFile(file)?.parent ?: return false
+        var fileParent = file.parent ?: return false
+        var srcParentExists = false
+        val parentsList = mutableListOf<String>()
+        while (fileParent != projectParent) {
+            val fileParentName = fileParent.name
+            if (fileParentName == "src") {
+                srcParentExists = true
+                break
+            }
+            parentsList.add(fileParentName)
+            fileParent = fileParent.parent ?: return false
+        }
+        return when {
+            !srcParentExists -> false
+            parentsList.size < MAIN_KOTLIN_OR_TEST_KOTLIN_PATH_SIZE -> false
+            parentsList.last() in mainAndTestDirNames && parentsList[parentsList.lastIndex - 1] == "kotlin" -> true
+            else -> false
+        }
     }
 
     // We do this check only for JPS projects because for other build systems this problem is not topical
@@ -146,32 +170,35 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
                 }
             }
 
-        private fun createKotlinNotConfiguredPanel(module: Module, configurators: List<KotlinProjectConfigurator>): Function<in FileEditor, out JComponent?> =
+        private fun createKotlinNotConfiguredPanel(
+            module: Module,
+            configurators: List<KotlinProjectConfigurator>
+        ): Function<in FileEditor, out JComponent?> =
             Function { fileEditor: FileEditor ->
                 KotlinJ2KOnboardingFUSCollector.logShowConfigureKtPanel(module.project)
 
                 EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning).apply {
-                text = KotlinProjectConfigurationBundle.message("kotlin.not.configured")
-                if (configurators.isNotEmpty()) {
-                    val project = module.project
-                    createComponentActionLabel(KotlinProjectConfigurationBundle.message("action.text.configure")) { label ->
-                        val singleConfigurator = configurators.singleOrNull()
-                        if (singleConfigurator != null) {
-                            singleConfigurator.apply(project)
-                        } else {
-                            val configuratorsPopup = createConfiguratorsPopup(project, configurators)
-                            configuratorsPopup.showUnderneathOf(label)
+                    text = KotlinProjectConfigurationBundle.message("kotlin.not.configured")
+                    if (configurators.isNotEmpty()) {
+                        val project = module.project
+                        createComponentActionLabel(KotlinProjectConfigurationBundle.message("action.text.configure")) { label ->
+                            val singleConfigurator = configurators.singleOrNull()
+                            if (singleConfigurator != null) {
+                                singleConfigurator.apply(project)
+                            } else {
+                                val configuratorsPopup = createConfiguratorsPopup(project, configurators)
+                                configuratorsPopup.showUnderneathOf(label)
+                            }
+                            KotlinJ2KOnboardingFUSCollector.logClickConfigureKtNotification(project)
                         }
-                        KotlinJ2KOnboardingFUSCollector.logClickConfigureKtNotification(project)
-                    }
 
-                    createActionLabel(KotlinProjectConfigurationBundle.message("action.text.ignore")) {
-                        KotlinNotConfiguredSuppressedModulesState.suppressConfiguration(module)
-                        EditorNotifications.getInstance(project).updateAllNotifications()
+                        createActionLabel(KotlinProjectConfigurationBundle.message("action.text.ignore")) {
+                            KotlinNotConfiguredSuppressedModulesState.suppressConfiguration(module)
+                            EditorNotifications.getInstance(project).updateAllNotifications()
+                        }
                     }
                 }
             }
-        }
 
         private fun KotlinProjectConfigurator.apply(project: Project) {
             configure(project, emptyList())

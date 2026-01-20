@@ -11,15 +11,22 @@ import org.junit.runner.RunWith
 class KotlinSetupEnvironmentNotificationProviderTest : LightJavaCodeInsightFixtureTestCase() {
 
     @Test
-    fun testSrcMainKotlin() {
-        val kotlinFileRelativePath = "/src/main/kotlin/TestKotlin.kt"
+    fun testFileUnderSrcMainKotlin() {
+        val kotlinFileRelativePath = "/main/kotlin/TestKotlin.kt"
         createKotlinFile(kotlinFileRelativePath)
         assertFileIsUnderSourceRoots(kotlinFileRelativePath, fileShouldBeUnderSourceRoots = true)
     }
 
     @Test
-    fun testSrcMainKotlin_smth() {
-        val kotlinFileRelativePath = "/src/main/kotlin_smth.kt"
+    fun testFileUnderSrcTestKotlin() {
+        val kotlinFileRelativePath = "/test/kotlin/TestKotlin.kt"
+        createKotlinFile(kotlinFileRelativePath)
+        assertFileIsUnderSourceRoots(kotlinFileRelativePath, fileShouldBeUnderSourceRoots = true)
+    }
+
+    @Test
+    fun testFileNotUnderSrcMainKotlin() {
+        val kotlinFileRelativePath = "/main/kotlin_smth.kt"
         createKotlinFile(kotlinFileRelativePath)
         assertFileIsUnderSourceRoots(kotlinFileRelativePath, fileShouldBeUnderSourceRoots = false)
     }
@@ -32,6 +39,9 @@ class KotlinSetupEnvironmentNotificationProviderTest : LightJavaCodeInsightFixtu
     private fun assertFileIsUnderSourceRoots(kotlinFileRelativePath: String, fileShouldBeUnderSourceRoots: Boolean) {
         val selectedEditor = FileEditorManager.getInstance(project).selectedEditor
         val selectedFile = selectedEditor?.file ?: error("file $kotlinFileRelativePath has to be in the editor")
-        assertEquals(fileShouldBeUnderSourceRoots, KotlinSetupEnvironmentNotificationProvider().fileIsUnderKotlinSourceRoot(selectedFile))
+        assertEquals(
+            fileShouldBeUnderSourceRoots,
+            KotlinSetupEnvironmentNotificationProvider().fileIsUnderKotlinSourceRoot(selectedFile, project)
+        )
     }
 }
