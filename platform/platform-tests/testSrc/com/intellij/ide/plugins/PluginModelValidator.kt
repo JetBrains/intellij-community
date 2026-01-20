@@ -86,6 +86,10 @@ data class PluginValidationOptions(
 
   val pluginVariantsWithDynamicIncludes: List<PluginVariantWithDynamicIncludes> = emptyList(),
 
+  /**
+   * Names of service interfaces that are overridden by plugins which sources are located outside the current project, and therefore need
+   * to be registered as `open`.
+   */
   val externallyOverriddenServices: Set<String> = emptySet(),
 )
 
