@@ -11,6 +11,9 @@ string_list_flag(
         # Enable build process logging
         "-Djvm-inc-builder.log.build.process=true",
 
+        # Library graphs cache size in tests enough for one test
+        "-Djvm-inc-builder.library.graph.cache.size=10",
+
         # Uncomment to enable Debug configuration that attaches to the listening debugger
         #"-agentlib:jdwp=transport=dt_socket,server=n,address=127.0.0.1:5008,suspend=y",
     ]),

@@ -31,13 +31,22 @@ public final class SimpleJUnit5Launcher {
     final String testClassName = args[0];
 
     Runfiles runfiles = Runfiles.create();
-    String resolved = runfiles.rlocation("rules_jvm+/jvm-inc-builder-tests/testData/MODULE.bazel.txt");
-    if (resolved == null || resolved.isEmpty()) {
-      System.err.println("ERROR: Cannot find \"rules_jvm+/MODULE.bazel\" workspace file. This runner is designed for Bazel.");
+
+    String bazelExecRlocation = System.getProperty(BazelIncBuildTest.BAZEL_EXECUTABLE);
+    String bazelExecutable = bazelExecRlocation != null? runfiles.rlocation(bazelExecRlocation) : null;
+    if (bazelExecutable == null || bazelExecutable.isEmpty()) {
+      System.err.println("ERROR: Path to bazel executable is not specified. Please check system variable \"" + BazelIncBuildTest.BAZEL_EXECUTABLE + "\" is correctly set");
+      System.exit(EXIT_CODE_ERROR);
+    }
+    System.setProperty(BazelIncBuildTest.BAZEL_EXECUTABLE, bazelExecutable); // the test expects absolute path
+
+    String testWorkspace = runfiles.rlocation("rules_jvm+/jvm-inc-builder-tests/testData/MODULE.bazel.txt");
+    if (testWorkspace == null || testWorkspace.isEmpty()) {
+      System.err.println("ERROR: Cannot find \"rules_jvm+/MODULE.bazel.txt\" workspace file. This runner is designed for Bazel.");
       System.exit(EXIT_CODE_ERROR);
     }
 
-    Path modulePath = Path.of(resolved);
+    Path modulePath = Path.of(testWorkspace);
     if (!Files.exists(modulePath)) {
       System.err.println("ERROR: Test data workspace file \"" + modulePath + "\" does not exist");
       System.exit(EXIT_CODE_ERROR);

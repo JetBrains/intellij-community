@@ -18,8 +18,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  Base class describing the main test scenario for incremental build tests
@@ -52,6 +51,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public abstract class BazelIncBuildTest {
 
   public static final String WORKSPACE_ROOT_PROPERTY = "jvm-inc-builder.workspace.root";
+  public static final String BAZEL_EXECUTABLE = "jvm-inc-builder.bazel.executable";
 
   /*
     If disabled, the test project output directory will not be deleted. Useful for debugging
@@ -70,11 +70,15 @@ public abstract class BazelIncBuildTest {
   public BazelIncBuildTest() {
     Path tmpRoot = Path.of(System.getProperty("java.io.tmpdir"));
     myTestDataWorkRoot = tmpRoot.resolve(WORK_DIR_NAME).normalize();  // the work root should be the same across different test sessions
-    myBazelRunnerPath = myTestDataWorkRoot.resolve("bazel.cmd").toString().replace(File.separatorChar, '/');
+    String bazelPath = System.getProperty("jvm-inc-builder.bazel.executable");
+    myBazelRunnerPath = bazelPath != null? bazelPath.replace(File.separatorChar, '/') : null;
   }
 
   @BeforeAll
   protected void setupWorkDir() throws Exception {
+    assertNotNull(myBazelRunnerPath, "Path to bazel executable is expected to be set in \"" + BAZEL_EXECUTABLE + "\" system property");
+    assertTrue(Files.exists(Path.of(myBazelRunnerPath)), () -> "Specified path to bazel executable does not exist: \"" + myBazelRunnerPath + "\"");
+
     String wsRootPath = System.getProperty(WORKSPACE_ROOT_PROPERTY);
     assertTrue(wsRootPath != null && !wsRootPath.isBlank(), "Workspace root path for 'rules_jvm' is expected to be set in \"" + WORKSPACE_ROOT_PROPERTY + "\" system property");
     Path wsRoot = Path.of(wsRootPath).toRealPath();
