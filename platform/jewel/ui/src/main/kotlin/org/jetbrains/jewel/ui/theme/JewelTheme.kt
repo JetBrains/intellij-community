@@ -63,6 +63,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalRadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSearchMatchStyle
+import org.jetbrains.jewel.ui.component.styling.LocalSearchTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSegmentedControlButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSelectableLazyColumnStyle
@@ -79,6 +80,7 @@ import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
+import org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle
@@ -264,6 +266,10 @@ public val JewelTheme.Companion.gotItTooltipStyle: GotItTooltipStyle
 /** The styling for the buttons shown inside Got It tooltips. */
 public val JewelTheme.Companion.gotItButtonStyle: ButtonStyle
     @Composable @ReadOnlyComposable get() = LocalGotItButtonStyle.current
+
+/** The styling for search text field components. */
+public val JewelTheme.Companion.searchTextFieldStyle: SearchTextFieldStyle
+    @Composable @ReadOnlyComposable get() = LocalSearchTextFieldStyle.current
 
 /**
  * Applies [theme] and [styling] to the [content] composition tree with Swing compat mode disabled.
