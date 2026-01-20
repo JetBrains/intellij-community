@@ -14238,111 +14238,6 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.0.21/kotlin-compiler-embeddable-2.0.21.jar",
-  sha256 = "9fa8cdd1de0dccffe154c997d423ec6b5f53cd6d9177e3a77a9b0de03fb1bc81",
-  downloaded_file_path = "kotlin-compiler-embeddable-2.0.21.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlin-kotlin-script-runtime-2_0_21_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-script-runtime/2.0.21/kotlin-script-runtime-2.0.21.jar",
-  sha256 = "9c111f8d08ade455566272d561921adc2b2cb6b7a4ccee38d9829c5e3a1ca6a3",
-  downloaded_file_path = "kotlin-script-runtime-2.0.21.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlin-kotlin-reflect-1_6_10_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-reflect/1.6.10/kotlin-reflect-1.6.10.jar",
-  sha256 = "3277ac102ae17aad10a55abec75ff5696c8d109790396434b496e75087854203",
-  downloaded_file_path = "kotlin-reflect-1.6.10.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-daemon-embeddable/2.0.21/kotlin-daemon-embeddable-2.0.21.jar",
-  sha256 = "b1a0a73c5022f8dd05a638c6b76b2bd7361818a1f3860ff2644133b1dd2bdb03",
-  downloaded_file_path = "kotlin-daemon-embeddable-2.0.21.jar"
-)
-
-http_file(
-  name = "org_jetbrains_intellij_deps-trove4j-1_0_20200330_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330.jar",
-  sha256 = "c5fd725bffab51846bf3c77db1383c60aaaebfe1b7fe2f00d23fe1b7df0a439d",
-  downloaded_file_path = "trove4j-1.0.20200330.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlinx-kotlinx-coroutines-core-jvm-1_6_4_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.4/kotlinx-coroutines-core-jvm-1.6.4.jar",
-  sha256 = "c24c8bb27bb320c4a93871501a7e5e0c61607638907b197aef675513d4c820be",
-  downloaded_file_path = "kotlinx-coroutines-core-jvm-1.6.4.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.0.21/kotlin-compiler-embeddable-2.0.21-sources.jar",
-  sha256 = "106c3d24e3c3c01c8224c6360e0654e9d9239e87e627a068f25181dda7023cd1",
-  downloaded_file_path = "kotlin-compiler-embeddable-2.0.21-sources.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlin-kotlin-script-runtime-2_0_21-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-script-runtime/2.0.21/kotlin-script-runtime-2.0.21-sources.jar",
-  sha256 = "469d4efc2ffabd6c6ecc417872a411ea3fcc6540a697f0db7cc217fe4d78a7c4",
-  downloaded_file_path = "kotlin-script-runtime-2.0.21-sources.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlin-kotlin-reflect-1_6_10-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-reflect/1.6.10/kotlin-reflect-1.6.10-sources.jar",
-  sha256 = "39242dd149249c66edda7aa9822947e62aeff6194326039d4e8b5d528db5f006",
-  downloaded_file_path = "kotlin-reflect-1.6.10-sources.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-daemon-embeddable/2.0.21/kotlin-daemon-embeddable-2.0.21-sources.jar",
-  sha256 = "cc24adc550686d710be6c0853351af136710b24c6b2791c3cc6bf5b3f2d19a67",
-  downloaded_file_path = "kotlin-daemon-embeddable-2.0.21-sources.jar"
-)
-
-http_file(
-  name = "org_jetbrains_intellij_deps-trove4j-1_0_20200330-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330-sources.jar",
-  sha256 = "2e0174e80b989eb5deafcfb77407c908a0abe1f67a80306f98aeca63246e5481",
-  downloaded_file_path = "trove4j-1.0.20200330-sources.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlinx-kotlinx-coroutines-core-jvm-1_6_4-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.4/kotlinx-coroutines-core-jvm-1.6.4-sources.jar",
-  sha256 = "aa1335ddb56712a4acca7bb0a2dc0870818b508b6054feb3be253075b6a9ed03",
-  downloaded_file_path = "kotlinx-coroutines-core-jvm-1.6.4-sources.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlin-kotlin-stdlib-2_0_21_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.0.21/kotlin-stdlib-2.0.21.jar",
-  sha256 = "f31cc53f105a7e48c093683bbd5437561d1233920513774b470805641bedbc09",
-  downloaded_file_path = "kotlin-stdlib-2.0.21.jar"
-)
-
-http_file(
-  name = "org_jetbrains-annotations-13_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0.jar",
-  sha256 = "ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478",
-  downloaded_file_path = "annotations-13.0.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlin-kotlin-reflect-2_0_21_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-reflect/2.0.21/kotlin-reflect-2.0.21.jar",
-  sha256 = "3ad2fcad0c09ddc0922debab4444d612144b7b465b75a8bb7587e20ddfafd799",
-  downloaded_file_path = "kotlin-reflect-2.0.21.jar"
-)
-
-http_file(
   name = "io_gitlab_arturbosch_detekt-detekt-report-html-1_23_8_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/gitlab/arturbosch/detekt/detekt-report-html/1.23.8/detekt-report-html-1.23.8.jar",
   sha256 = "8068a15e07718e3bdbf501ede5f666812fb5f9fb1450db060449534c05e6722a",
@@ -14424,27 +14319,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.7.20/kotlin-stdlib-jdk7-1.7.20.jar",
   sha256 = "524da3c1a2ad56fd52c4ae2272ef3de421de8d2047ab1c51fc306d351243f2f5",
   downloaded_file_path = "kotlin-stdlib-jdk7-1.7.20.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlin-kotlin-stdlib-2_0_21-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.0.21/kotlin-stdlib-2.0.21-sources.jar",
-  sha256 = "5995c780c3ac742fb277ced561ebd7b0739227ea7c93a6bd9c7cee6593493fce",
-  downloaded_file_path = "kotlin-stdlib-2.0.21-sources.jar"
-)
-
-http_file(
-  name = "org_jetbrains-annotations-13_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0-sources.jar",
-  sha256 = "42a5e144b8e81d50d6913d1007b695e62e614705268d8cf9f13dbdc478c2c68e",
-  downloaded_file_path = "annotations-13.0-sources.jar"
-)
-
-http_file(
-  name = "org_jetbrains_kotlin-kotlin-reflect-2_0_21-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-reflect/2.0.21/kotlin-reflect-2.0.21-sources.jar",
-  sha256 = "9d88e821c645d67106ce7afb11c405acf1ae4153f0d41f3667d66e77d51dd5be",
-  downloaded_file_path = "kotlin-reflect-2.0.21-sources.jar"
 )
 
 http_file(
@@ -14539,6 +14413,34 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.0.21/kotlin-compiler-embeddable-2.0.21.jar",
+  sha256 = "9fa8cdd1de0dccffe154c997d423ec6b5f53cd6d9177e3a77a9b0de03fb1bc81",
+  downloaded_file_path = "kotlin-compiler-embeddable-2.0.21.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlin-kotlin-script-runtime-2_0_21_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-script-runtime/2.0.21/kotlin-script-runtime-2.0.21.jar",
+  sha256 = "9c111f8d08ade455566272d561921adc2b2cb6b7a4ccee38d9829c5e3a1ca6a3",
+  downloaded_file_path = "kotlin-script-runtime-2.0.21.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-daemon-embeddable/2.0.21/kotlin-daemon-embeddable-2.0.21.jar",
+  sha256 = "b1a0a73c5022f8dd05a638c6b76b2bd7361818a1f3860ff2644133b1dd2bdb03",
+  downloaded_file_path = "kotlin-daemon-embeddable-2.0.21.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps-trove4j-1_0_20200330_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330.jar",
+  sha256 = "c5fd725bffab51846bf3c77db1383c60aaaebfe1b7fe2f00d23fe1b7df0a439d",
+  downloaded_file_path = "trove4j-1.0.20200330.jar"
+)
+
+http_file(
   name = "io_gitlab_arturbosch_detekt-detekt-test-utils-1_23_8_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/gitlab/arturbosch/detekt/detekt-test-utils/1.23.8/detekt-test-utils-1.23.8.jar",
   sha256 = "c27c0673cad7cc1f2e932c89a060b7ae85749a03d69f221b4c1281f64136c702",
@@ -14599,6 +14501,34 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/gitlab/arturbosch/detekt/detekt-test/1.23.8/detekt-test-1.23.8-sources.jar",
   sha256 = "ed9e530342066c4fd160791996fed279ffa115df5d179295959b997aa6f5f30c",
   downloaded_file_path = "detekt-test-1.23.8-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlin-kotlin-compiler-embeddable-2_0_21-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.0.21/kotlin-compiler-embeddable-2.0.21-sources.jar",
+  sha256 = "106c3d24e3c3c01c8224c6360e0654e9d9239e87e627a068f25181dda7023cd1",
+  downloaded_file_path = "kotlin-compiler-embeddable-2.0.21-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlin-kotlin-script-runtime-2_0_21-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-script-runtime/2.0.21/kotlin-script-runtime-2.0.21-sources.jar",
+  sha256 = "469d4efc2ffabd6c6ecc417872a411ea3fcc6540a697f0db7cc217fe4d78a7c4",
+  downloaded_file_path = "kotlin-script-runtime-2.0.21-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-daemon-embeddable/2.0.21/kotlin-daemon-embeddable-2.0.21-sources.jar",
+  sha256 = "cc24adc550686d710be6c0853351af136710b24c6b2791c3cc6bf5b3f2d19a67",
+  downloaded_file_path = "kotlin-daemon-embeddable-2.0.21-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps-trove4j-1_0_20200330-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330-sources.jar",
+  sha256 = "2e0174e80b989eb5deafcfb77407c908a0abe1f67a80306f98aeca63246e5481",
+  downloaded_file_path = "trove4j-1.0.20200330-sources.jar"
 )
 
 http_file(
