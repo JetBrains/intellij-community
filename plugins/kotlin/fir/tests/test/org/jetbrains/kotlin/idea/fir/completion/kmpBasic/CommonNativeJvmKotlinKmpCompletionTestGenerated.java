@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.completion.kmpBasic;
 
@@ -649,9 +649,29 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/callableReference/ExpressionQualifier.kt");
         }
 
+        @TestMetadata("ExtensionOnNestedClasses.kt")
+        public void testExtensionOnNestedClasses() throws Exception {
+            runTest("../../completion/testData/basic/common/callableReference/ExtensionOnNestedClasses.kt");
+        }
+
         @TestMetadata("GenericConstructor.kt")
         public void testGenericConstructor() throws Exception {
             runTest("../../completion/testData/basic/common/callableReference/GenericConstructor.kt");
+        }
+
+        @TestMetadata("GenericExtensionCallableReference.kt")
+        public void testGenericExtensionCallableReference() throws Exception {
+            runTest("../../completion/testData/basic/common/callableReference/GenericExtensionCallableReference.kt");
+        }
+
+        @TestMetadata("GenericExtensionCallableReferenceWithTypeAlias.kt")
+        public void testGenericExtensionCallableReferenceWithTypeAlias() throws Exception {
+            runTest("../../completion/testData/basic/common/callableReference/GenericExtensionCallableReferenceWithTypeAlias.kt");
+        }
+
+        @TestMetadata("GenericNestedClassesExtensionReference.kt")
+        public void testGenericNestedClassesExtensionReference() throws Exception {
+            runTest("../../completion/testData/basic/common/callableReference/GenericNestedClassesExtensionReference.kt");
         }
 
         @TestMetadata("HigherOrderFunction.kt")
