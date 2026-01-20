@@ -8,12 +8,15 @@ import com.intellij.internal.statistic.eventLog.events.RoundedIntEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import git4idea.actions.workingTree.GitWorkingTreeDialogData
+import git4idea.branch.GitRebaseParams
 import git4idea.commands.GitCommandResult
 import git4idea.inMemory.rebase.InMemoryRebaseResult
 import git4idea.push.GitPushRepoResult
 import git4idea.push.GitPushTargetType
 import git4idea.rebase.GitRebaseEntry
+import git4idea.rebase.GitRebaseOption
 import git4idea.rebase.interactive.CantRebaseUsingLogException
+import git4idea.repo.GitRepository
 
 internal object GitOperationsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
@@ -154,4 +157,73 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
   fun logWorktreeProjectOpenedAfterCreation(activity: StructuredIdeActivity) {
     activity.stageStarted(WORKTREE_PROJECT_WAS_OPENED_AFTER_CREATION_STAGE)
   }
+
+  //region Rebase Dialog
+  private enum class RebaseUpstreamType { Root, Reference, Commit }
+
+  private val CURRENT_BRANCH = EventFields.Boolean("current_branch", "Current branch")
+  private val REBASE_ON_TRACKED_BRANCH = EventFields.Boolean("rebase_on_tracked_branch", "Rebase on tracked branch")
+
+  private val UPSTREAM_TYPE = EventFields.Enum<RebaseUpstreamType>("upstream_type", "Upstream")
+  private val OPTION_INTO = EventFields.Boolean("has_onto", "--onto")
+  private val OPTION_INTERACTIVE = EventFields.Boolean("option_interactive", "--interactive")
+  private val OPTION_REBASE_MERGES = EventFields.Boolean("option_rebase_merges", "--rebase-merges")
+  private val OPTION_KEEP_EMPTY = EventFields.Boolean("option_keep_empty", "--keep-empty")
+  private val OPTION_UPDATE_REFS = EventFields.Boolean("option_update_refs", "--update-refs")
+  private val OPTION_AUTOSQUASH = EventFields.Boolean("option_autosquash", "--autosquash")
+
+  private val REBASE_FROM_DIALOG_EVENT = GROUP.registerVarargEvent("rebase.from.dialog",
+                                                                   "Rebase from dialog was started",
+                                                                   CURRENT_BRANCH,
+                                                                   REBASE_ON_TRACKED_BRANCH,
+                                                                   UPSTREAM_TYPE,
+                                                                   OPTION_INTO,
+                                                                   OPTION_REBASE_MERGES,
+                                                                   OPTION_KEEP_EMPTY,
+                                                                   OPTION_INTERACTIVE,
+                                                                   OPTION_UPDATE_REFS,
+                                                                   OPTION_AUTOSQUASH)
+
+  @JvmStatic
+  fun logRebaseFromDialog(project: Project, gitRepository: GitRepository?, selectedParams: GitRebaseParams) {
+    val upstream = selectedParams.upstream
+
+    val rebaseOnTrackedBranch = isRebaseOnTrackedBranch(upstream, gitRepository, selectedParams.branch)
+    val upstreamType = getUpstreamType(upstream)
+    val options = selectedParams.getSelectedOptions()
+
+    REBASE_FROM_DIALOG_EVENT.log(
+      project,
+      CURRENT_BRANCH.with(selectedParams.branch == null),
+      REBASE_ON_TRACKED_BRANCH.with(rebaseOnTrackedBranch),
+      UPSTREAM_TYPE.with(upstreamType),
+      OPTION_INTO.with(GitRebaseOption.ONTO in options),
+      OPTION_REBASE_MERGES.with(GitRebaseOption.REBASE_MERGES in options),
+      OPTION_KEEP_EMPTY.with(GitRebaseOption.KEEP_EMPTY in options),
+      OPTION_INTERACTIVE.with(GitRebaseOption.INTERACTIVE in options),
+      OPTION_UPDATE_REFS.with(GitRebaseOption.UPDATE_REFS in options),
+      OPTION_AUTOSQUASH.with(GitRebaseOption.AUTOSQUASH in options)
+    )
+  }
+
+  private fun isRebaseOnTrackedBranch(
+    upstream: GitRebaseParams.RebaseUpstream,
+    gitRepository: GitRepository?,
+    selectedBranch: String?,
+  ): Boolean {
+    if (gitRepository == null) return false
+    if (upstream !is GitRebaseParams.RebaseUpstream.Reference) return false
+
+    val branchToBeRebased = (selectedBranch ?: gitRepository.currentBranch?.name) ?: return false
+    val trackedBranch = gitRepository.getBranchTrackInfo(branchToBeRebased)?.remoteBranch?.name ?: return false
+
+    return trackedBranch == upstream.ref
+  }
+
+  private fun getUpstreamType(upstream: GitRebaseParams.RebaseUpstream): RebaseUpstreamType = when (upstream) {
+    is GitRebaseParams.RebaseUpstream.Root -> RebaseUpstreamType.Root
+    is GitRebaseParams.RebaseUpstream.Commit -> RebaseUpstreamType.Commit
+    is GitRebaseParams.RebaseUpstream.Reference -> RebaseUpstreamType.Reference
+  }
+  //endregion
 }

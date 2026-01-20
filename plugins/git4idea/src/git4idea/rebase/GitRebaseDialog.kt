@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
 
 import com.intellij.dvcs.DvcsUtil
@@ -47,6 +47,7 @@ import git4idea.merge.GIT_REF_PROTOTYPE_VALUE
 import git4idea.merge.createRepositoryField
 import git4idea.merge.createSouthPanelWithOptionsDropDown
 import git4idea.merge.dialog.*
+import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.ComboBoxWithAutoCompletion
 import java.awt.Insets
@@ -169,7 +170,7 @@ internal class GitRebaseDialog(private val project: Project,
     return GitRebaseParams(gitVersion, branch, newBase, upstream, selectedOptions intersect REBASE_FLAGS)
   }
 
-  private fun getSelectedRepo() = rootField.item
+  fun getSelectedRepo(): GitRepository = rootField.item
 
   private fun saveSettings() {
     rebaseSettings.options = selectedOptions intersect REBASE_FLAGS
