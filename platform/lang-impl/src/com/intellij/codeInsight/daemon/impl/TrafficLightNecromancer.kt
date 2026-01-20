@@ -312,32 +312,12 @@ internal class TrafficLightZombie(
 }
 
 private class ZombieController(private val isToolbarEnabled: Boolean) : UIController {
-
-  override fun isToolbarEnabled(): Boolean {
-    return isToolbarEnabled
-  }
-
-  override fun getAvailableLevels(): List<InspectionsLevel?> {
-    return emptyList()
-  }
-
-  override fun getHighlightLevels(): List<LanguageHighlightLevel?> {
-    return emptyList()
-  }
-
-  override fun setHighLightLevel(newLevel: LanguageHighlightLevel) {
-  }
-
-  override fun fillHectorPanels(container: Container, gc: GridBag) {
-  }
-
-  override fun canClosePopup(): Boolean {
-    return false
-  }
-
-  override fun onClosePopup() {
-  }
-
-  override fun toggleProblemsView() {
-  }
+  override fun isToolbarEnabled(): Boolean = isToolbarEnabled
+  override fun getAvailableLevels(): List<InspectionsLevel?> = emptyList()
+  override fun getHighlightLevels(): List<LanguageHighlightLevel?> = emptyList()
+  override fun setHighLightLevel(newLevel: LanguageHighlightLevel) {}
+  override fun fillHectorPanels(container: Container, gc: GridBag) {}
+  override fun canClosePopup(): Boolean = false
+  override fun onClosePopup() {}
+  override fun toggleProblemsView() {}
 }
