@@ -6,8 +6,8 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.observable.properties.AtomicLazyProperty
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -58,19 +58,25 @@ internal class GitWorkingTreeDialog(
   private lateinit var parentPathCell: Cell<TextFieldWithBrowseButton>
   private lateinit var projectNameCell: Cell<JBTextField>
 
-  private val existingBranchWithWorkingTree: ObservableMutableProperty<BranchWithWorkingTree?> = AtomicLazyProperty {
-    data.initialExistingBranch?.toBranchWithWorkingTree()
-  }
-  private val projectName: ObservableMutableProperty<String> = AtomicLazyProperty { "" }
-  private val parentPath: ObservableMutableProperty<String> = AtomicLazyProperty { data.initialParentPath?.path ?: "" }
-  private val createNewBranch: ObservableMutableProperty<Boolean> = AtomicLazyProperty { false }
-  private val newBranchName: ObservableMutableProperty<String> = AtomicLazyProperty { "" }
+  private val existingBranchWithWorkingTree: GraphProperty<BranchWithWorkingTree?>
+  private val projectName: GraphProperty<String>
+  private val parentPath: GraphProperty<String>
+  private val createNewBranch: GraphProperty<Boolean>
+  private val newBranchName: GraphProperty<String>
 
-  private var lastSuggestedProjectName: String = ""
-  private var projectNameEdited: Boolean = false
   private val lastPathValidationChannel = Channel<PathValidationMessage>(Channel.CONFLATED)
 
   init {
+    val propertyGraph = PropertyGraph("Git Working Tree Dialog")
+    existingBranchWithWorkingTree = propertyGraph.property(data.initialExistingBranch?.toBranchWithWorkingTree())
+    createNewBranch = propertyGraph.property(false)
+    newBranchName = propertyGraph.property("")
+    projectName = propertyGraph.property("")
+    parentPath = propertyGraph.property(data.initialParentPath?.path ?: "")
+    propertyGraph.dependsOn(projectName, existingBranchWithWorkingTree, true, ::suggestProjectName)
+    propertyGraph.dependsOn(projectName, createNewBranch, true, ::suggestProjectName)
+    propertyGraph.dependsOn(projectName, newBranchName, true, ::suggestProjectName)
+
     init()
     title = GitBundle.message("working.tree.dialog.title")
     setOKButtonText(GitBundle.message("working.tree.dialog.button.ok"))
@@ -99,25 +105,20 @@ internal class GitWorkingTreeDialog(
         val comboBox = comboBox(localBranchesWithTrees, BranchWithTreeCellRenderer(data.project, data.repository))
         comboBox.bindItem(existingBranchWithWorkingTree).align(Align.FILL).validationOnApply { validateBranchOnApply() }
         comboBox.component.isSwingPopup = false
-        existingBranchWithWorkingTree.afterChange { updateSuggestedProjectName() }
       }
 
       row {
         checkBox(GitBundle.message("working.tree.dialog.checkbox.new.branch")).bindSelected(createNewBranch).gap(RightGap.SMALL)
-        createNewBranch.afterChange { updateSuggestedProjectName() }
 
         textField().bindText(newBranchName).align(Align.FILL).validationOnApply { validateBranchNameOnApply() }
           .comment(getNewBranchComment())
           .enabledIf(createNewBranch)
-        newBranchName.afterChange { updateSuggestedProjectName() }
       }
         .bottomGap(BottomGap.MEDIUM)
         .layout(RowLayout.LABEL_ALIGNED)
 
       row(GitBundle.message("working.tree.dialog.label.name")) {
         projectNameCell = textField().bindText(projectName).align(Align.FILL).validationOnApply { validateProjectNameOnApply() }
-        lastSuggestedProjectName = projectNameCell.component.text
-        updateSuggestedProjectName()
       }
       row(GitBundle.message("working.tree.dialog.label.location")) {
         val descriptor = FileChooserDescriptorFactory.singleDir()
@@ -225,16 +226,9 @@ internal class GitWorkingTreeDialog(
     }
   }
 
-  fun updateSuggestedProjectName() {
-    if (projectNameEdited) return
-    if (lastSuggestedProjectName != projectNameCell.component.text) {
-      projectNameEdited = true
-      return
-    }
+  private fun suggestProjectName(): String {
     val branchToUse = if (createNewBranch.get()) newBranchName.get() else existingBranchWithWorkingTree.get()?.branch?.name
-    val newName = createInitialWorkingTreeName(data.projectNameBase, branchToUse)
-    projectName.set(newName)
-    lastSuggestedProjectName = newName
+    return createInitialWorkingTreeName(data.projectNameBase, branchToUse)
   }
 
   private fun createInitialWorkingTreeName(root: Path, branchName: String?): String {
