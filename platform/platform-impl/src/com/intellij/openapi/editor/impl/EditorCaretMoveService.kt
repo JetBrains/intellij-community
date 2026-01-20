@@ -50,8 +50,6 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
    * the ImmediatePainterTest to work.
    */
   fun setCursorPositionImmediately(editor: EditorImpl) {
-    editor.pauseBlinking()
-
     val animationStates = calculateUpdates(editor)
     for (state in animationStates) {
       editor.lastPosMap[state.caret] = state.finalPos
@@ -59,8 +57,6 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
     editor.myCaretCursor.setPositions(animationStates.map { state ->
       EditorImpl.CaretRectangle(state.finalPos, state.width, state.caret, state.isRtl, 1.0f)
     }.toTypedArray())
-
-    editor.resumeBlinking()
   }
 
   // Replaying 128 requests is probably way too much, actually 2 should be enough. It shouldn't break
@@ -91,9 +87,10 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
 
   private suspend fun processRequest(editor: EditorImpl) {
     val cursor = editor.myCaretCursor
+    val animationDuration = Registry.intValue("editor.smooth.caret.duration")
 
-    editor.pauseBlinking()
     cursor.blinkOpacity = 1.0f
+    cursor.startTime = System.currentTimeMillis() + animationDuration
 
     val refreshRate = clamp(
       editor.component.graphicsConfiguration?.device?.displayMode?.refreshRate ?: 120,
@@ -106,7 +103,6 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
       AnimationState(lastPos, it)
     }
 
-    val animationDuration = Registry.doubleValue("editor.smooth.caret.duration")
     val enableHiding = Registry.`is`("editor.smooth.caret.hide.animation")
     val stateDurations = animationStates.associateWith { state ->
       val dx = state.update.finalPos.x - state.startPos.x
@@ -122,7 +118,7 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
       val now = System.currentTimeMillis()
       val elapsed = now - startTime
 
-      val t = min(elapsed / animationDuration, 1.0)
+      val t = min(1.0 * elapsed / animationDuration, 1.0)
       editor.caretAnimationElapsed += t * (1.0 - startingAnimationElapsed)
 
       var allDone = true
@@ -161,7 +157,6 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
     }
 
     editor.caretAnimationElapsed = 0.0
-    editor.resumeBlinking()
   }
 }
 

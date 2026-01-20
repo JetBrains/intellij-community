@@ -3204,25 +3204,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final @NotNull EditorCaretMoveService caretMoveService = EditorCaretMoveService.getInstance();
 
-  @ApiStatus.Internal
-  void pauseBlinking() {
-    synchronized (caretRepaintService) {
-      caretRepaintService.setEditor(this);
-      caretRepaintService.setBlinking(false);
-      caretRepaintService.restart();
-    }
-  }
-
-  @ApiStatus.Internal
-  void resumeBlinking() {
-    myCaretCursor.myStartTime = System.currentTimeMillis();
-    synchronized (caretRepaintService) {
-      caretRepaintService.setEditor(this);
-      caretRepaintService.setBlinking(mySettings.isBlinkCaret());
-      caretRepaintService.restart();
-    }
-  }
-
   private void setCursorPosition() {
     synchronized (caretMoveService) {
       if (!getSettings().isAnimatedCaret() || gainedFocus.getAndSet(false)) {
@@ -3416,6 +3397,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     long getStartTime() {
       synchronized (caretRepaintService) {
         return myStartTime;
+      }
+    }
+
+    void setStartTime(long startTime) {
+      synchronized (caretRepaintService) {
+        myStartTime = startTime;
       }
     }
 
