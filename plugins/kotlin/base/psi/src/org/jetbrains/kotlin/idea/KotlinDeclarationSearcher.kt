@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.idea.jvm
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea
 
 import com.intellij.lang.jvm.JvmElement
 import com.intellij.lang.jvm.source.JvmDeclarationSearcher
@@ -14,6 +13,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addIfNotNull
+import kotlin.collections.addAll
 
 class KotlinDeclarationSearcher : JvmDeclarationSearcher {
     override fun findDeclarations(declaringElement: PsiElement): Collection<JvmElement> =

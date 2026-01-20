@@ -25,6 +25,8 @@ jvm_library(
     "//platform/util-ex",
     "//java/java-psi-api:psi",
     "//platform/code-style-api:codeStyle",
+    "//platform/lang-impl",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.psi` end

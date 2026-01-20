@@ -171,7 +171,7 @@
 
     <typeDeclarationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinTypeDeclarationProvider"/>
     <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinGotoValVarTypeHandler"/>
-    <focusModeProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.core.KotlinFocusModeProvider" />
+    <focusModeProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinFocusModeProvider" />
 
     <lang.floatingToolbar language="kotlin"/>
 
@@ -533,7 +533,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.jvm">
-    <declarationSearcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.jvm.KotlinDeclarationSearcher"/>
+    <declarationSearcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinDeclarationSearcher"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
