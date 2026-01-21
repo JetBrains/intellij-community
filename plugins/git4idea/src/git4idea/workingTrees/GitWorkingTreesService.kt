@@ -2,7 +2,7 @@
 package git4idea.workingTrees
 
 import com.intellij.dvcs.repo.repositoryId
-import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
-import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
@@ -121,7 +120,7 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
 
   fun openWorkingTreeProject(tree: GitWorkingTree) {
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.Default) {
-      PlatformProjectOpenProcessor.getInstance().openProjectAndFile(Path(tree.path.path), false, OpenProjectTask.build())
+      ProjectUtil.openOrImportAsync(Path(tree.path.path))
     }
   }
 }
