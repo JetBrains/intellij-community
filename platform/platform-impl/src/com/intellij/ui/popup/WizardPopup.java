@@ -350,15 +350,14 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
         return super.getPreferredSize();
       }
       final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      Point p = null;
-      if (focusOwner != null && focusOwner.isShowing()) {
-        p = focusOwner.getLocationOnScreen();
-      }
-
-      return computeNotBiggerDimension(super.getPreferredSize().getSize(), p);
+      return computeNotBiggerDimension(super.getPreferredSize().getSize(), focusOwner);
     }
 
-    private static Dimension computeNotBiggerDimension(Dimension ofContent, final Point locationOnScreen) {
+    private static Dimension computeNotBiggerDimension(Dimension ofContent, @Nullable Component focusOwner) {
+      Point locationOnScreen = null;
+      if (focusOwner != null && focusOwner.isShowing()) {
+        locationOnScreen = focusOwner.getLocationOnScreen();
+      }
       int resultHeight;
       if (locationOnScreen == null) {
         resultHeight = ofContent.height > MAX_SIZE.height + 50 ? MAX_SIZE.height : ofContent.height;
