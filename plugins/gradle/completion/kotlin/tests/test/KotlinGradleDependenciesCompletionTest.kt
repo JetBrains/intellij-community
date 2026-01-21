@@ -52,12 +52,12 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         application.replaceService(DependencyCompletionService::class.java, testCompletionService, testRootDisposable)
     }
 
-    // TODO review expected suggestions when "org.jetbrains.kotlin.jvm" plugin is applied
-    // Currently, it suggest an invalid option "apiElements-published". Probably, there are also others.
+    // This list of configurations with `isCanBeDeclared == true`, coming from the Kotlin JVM plugin, also contains internal configurations
+    // that should not be exposed to the user. Adjust the test when KT-83780 is fixed.
     @ParameterizedTest
     @BaseGradleVersionSource
-    @TestMetadata("configurationOnTopLevelEmptyInput.test")
-    fun `test configuration completion on top level empty input`(gradleVersion: GradleVersion) = verifyCompletion(gradleVersion)
+    @TestMetadata("configurationOnTopLevelEmptyInputKotlinJVM.test")
+    fun `test configuration completion on top level empty input with kotlin jvm plugin`(gradleVersion: GradleVersion) = verifyCompletion(gradleVersion)
 
     // This test works incorrectly because isCurrentGradleAtLeast("8.2")) returns 9.2.0, this breaks the logic
     @Disabled("Enable when IDEA-378957 is merged in master, it allows getting a Gradle version of a project")

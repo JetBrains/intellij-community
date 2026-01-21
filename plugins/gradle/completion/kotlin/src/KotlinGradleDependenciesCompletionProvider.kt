@@ -173,11 +173,18 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     val module = ModuleUtilCore.findModuleForFile(psiFile) ?: return emptyList()
     val extensionsData = GradleExtensionsSettings.getInstance(psiFile.project).getExtensionsFor(module) ?: return emptyList()
     val configurations = extensionsData.configurations.values
-    return configurations.filter {
-      if (isCurrentGradleAtLeast("8.2")) it.isCanDeclareDependencies
-      else true
-    }.map { it.name }
+    return configurations
+      .filter { it.canBeUsedInDependenciesBlock() }
+      .filter { isValidNameInKotlin(it.name) }
+      .map { it.name }
   }
+
+  private fun GradleExtensionsSettings.GradleConfiguration.canBeUsedInDependenciesBlock(): Boolean =
+    if (isCurrentGradleAtLeast("8.2")) this.isCanDeclareDependencies else true
+
+  /** @return true if starts from a letter and contains only letters, digits and underscores after it */
+  private fun isValidNameInKotlin(string: String): Boolean =
+    string.matches(Regex("^[a-zA-Z_][a-zA-Z0-9_]*$"))
 
   /**
    * In the first completion invocation and zero (autocompletion), show only cleaned Gradle completion.
