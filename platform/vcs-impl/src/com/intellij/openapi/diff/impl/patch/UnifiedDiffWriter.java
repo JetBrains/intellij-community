@@ -22,6 +22,7 @@ import java.text.MessageFormat;
 import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.patch.PatchWriter.shouldForceUnixLineSeparator;
+import static com.intellij.openapi.vcs.changes.patch.PatchWriter.STANDARD_PATCH_FORMAT_KEY;
 
 public final class UnifiedDiffWriter {
   private static final @NonNls String INDEX_SIGNATURE = "Index: {0}{1}";
@@ -77,6 +78,7 @@ public final class UnifiedDiffWriter {
     boolean forceUnixSeparators = shouldForceUnixLineSeparator(project);
     String headerLineSeparator = forceUnixSeparators ? LineSeparator.LF.getSeparatorString()
                                                      : lineSeparator;
+    boolean standardFormat = commitContext != null && Boolean.TRUE.equals(commitContext.getUserData(STANDARD_PATCH_FORMAT_KEY));
 
     // write the patch files without content modifications strictly after the files with content modifications,
     // because GitPatchReader is not ready for mixed style patches
@@ -90,7 +92,7 @@ public final class UnifiedDiffWriter {
       String path = ObjectUtils.chooseNotNull(patch.getAfterName(), patch.getBeforeName());
       String pathRelatedToProjectDir = getPathRelatedToProjectDir(project, basePath, path);
       Map<String, CharSequence> additionalMap = new HashMap<>();
-      if (project != null) {
+      if (!standardFormat && project != null) {
         for (PatchEP extension : (patchEpExtensions == null ? PatchEP.EP_NAME.getExtensionList() : patchEpExtensions)) {
           CharSequence charSequence = extension.provideContent(project, pathRelatedToProjectDir, commitContext);
           if (!StringUtil.isEmpty(charSequence)) {
@@ -101,8 +103,7 @@ public final class UnifiedDiffWriter {
 
       String fileContentLineSeparator = forceUnixSeparators ? LineSeparator.LF.getSeparatorString()
                                                             : StringUtil.notNullize(patch.getLineSeparator(), headerLineSeparator);
-
-      writeFileHeading(writer, basePath, patch, headerLineSeparator, additionalMap);
+      writeFileHeading(writer, basePath, patch, headerLineSeparator, additionalMap, standardFormat);
       writeHunk(writer, patch, headerLineSeparator, fileContentLineSeparator);
     }
     for (FilePatch patch : noContentPatches) {
@@ -148,10 +149,13 @@ public final class UnifiedDiffWriter {
                                        @Nullable Path basePath,
                                        final @NotNull FilePatch patch,
                                        final @NotNull String lineSeparator,
-                                       @Nullable Map<String, CharSequence> additionalMap) throws IOException {
-    writer.write(MessageFormat.format(INDEX_SIGNATURE, patch.getBeforeName(), lineSeparator));
-    writeAdditionalInfo(writer, lineSeparator, additionalMap);
-    writer.write(HEADER_SEPARATOR + lineSeparator);
+                                       @Nullable Map<String, CharSequence> additionalMap,
+                                       boolean standardFormat) throws IOException {
+    if (!standardFormat) {
+      writer.write(MessageFormat.format(INDEX_SIGNATURE, patch.getBeforeName(), lineSeparator));
+      writeAdditionalInfo(writer, lineSeparator, additionalMap);
+      writer.write(HEADER_SEPARATOR + lineSeparator);
+    }
     GitPatchWriter.writeGitHeader(writer, basePath, patch, lineSeparator);
     writeBeforePath(writer, patch, lineSeparator, true);
     writeAfterPath(writer, patch, lineSeparator, true);

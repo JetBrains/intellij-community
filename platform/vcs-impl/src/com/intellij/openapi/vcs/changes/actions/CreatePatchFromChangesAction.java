@@ -143,11 +143,28 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
   }
 
   public static void createPatch(@NotNull Project project,
+                                 @Nullable String commitMessage,
+                                 @NotNull List<? extends Change> changes,
+                                 boolean silentClipboard,
+                                 @NotNull CommitContext commitContext) {
+    PatchBuilder patchBuilder = new CreatePatchCommitExecutor.DefaultPatchBuilder(project);
+    createPatch(project, commitMessage, changes, silentClipboard, patchBuilder, commitContext);
+  }
+
+  public static void createPatch(@NotNull Project project,
                                   @Nullable String commitMessage,
                                   @NotNull List<? extends Change> changes,
                                   boolean silentClipboard,
                                   @NotNull PatchBuilder patchBuilder) {
-    CommitContext commitContext = new CommitContext();
+    createPatch(project, commitMessage, changes, silentClipboard, patchBuilder, new CommitContext());
+  }
+
+  public static void createPatch(@NotNull Project project,
+                                 @Nullable String commitMessage,
+                                 @NotNull List<? extends Change> changes,
+                                 boolean silentClipboard,
+                                 @NotNull PatchBuilder patchBuilder,
+                                 @NotNull CommitContext commitContext) {
     if (silentClipboard) {
       createIntoClipboard(project, changes, commitMessage, patchBuilder, commitContext);
     }
