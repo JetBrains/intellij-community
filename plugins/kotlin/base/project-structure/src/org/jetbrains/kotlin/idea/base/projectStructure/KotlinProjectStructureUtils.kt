@@ -144,6 +144,13 @@ fun ProjectFileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSo
     }
 }
 
+fun Module.getKotlinSourceRootType(): KotlinSourceRootType? =
+    when {
+        hasRootsOfType(sourceRootTypes) -> SourceKotlinRootType
+        hasRootsOfType(testRootTypes) -> TestSourceKotlinRootType
+        else -> null
+    }
+
 @ApiStatus.ScheduledForRemoval
 @Deprecated("use ProjectFileIndex.getKotlinSourceRootType(VirtualFile)")
 fun FileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSourceRootType? {

@@ -8,6 +8,8 @@ import com.intellij.ide.actions.OpenFileAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -20,6 +22,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.platform.backend.observation.Observation
+import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -153,6 +156,7 @@ abstract class KotlinMavenConfigurator protected constructor(
 
         dialog.show()
         if (!dialog.isOK) return emptySet()
+        val modules = dialog.modulesToConfigure
         val kotlinVersion = dialog.kotlinVersion ?: return emptySet()
         KotlinJ2KOnboardingFUSCollector.logChosenKotlinVersion(project, kotlinVersion)
 
@@ -161,12 +165,13 @@ abstract class KotlinMavenConfigurator protected constructor(
         val configuredModules = mutableSetOf<Module>()
         project.executeWriteCommand(KotlinMavenBundle.message("configure.title")) {
             val collector = NotificationMessageCollector.create(project)
-            for (module in excludeMavenChildrenModules(project, dialog.modulesToConfigure)) {
+            for (module in excludeMavenChildrenModules(project, modules)) {
                 val file = findModulePomFile(module)
                 if (file != null) {
                     val configured = configureModule(module, file, IdeKotlinVersion.get(kotlinVersion), collector)
                     if (configured) {
-                        queueSyncIfNeeded(project)
+                        queueSyncAndRunPostConfiguration(module)
+
                         OpenFileAction.openFile(file.virtualFile, project)
                         configuredModules.add(module)
                     } else {
@@ -190,8 +195,59 @@ abstract class KotlinMavenConfigurator protected constructor(
         return configuredModules
     }
 
+    private fun configureCompilerPlugins(modules: List<Module>) {
+        val project = modules.firstOrNull()?.project ?: return
+        val rootModule = runReadAction { getRootModule(project) } ?: return
+
+        val effectiveModules = if (modules.contains(rootModule)) {
+            val rootGroup = getConfigurableModulesWithKotlinFiles(project).firstOrNull { it.baseModule == rootModule }
+            modules.filter { it != rootModule } + (rootGroup?.sourceRootModules ?: emptyList())
+        } else {
+            modules
+        }
+
+        effectiveModules.forEach { module ->
+            val configuratorsByModules =
+                KotlinProjectPostConfigurator.EP_NAME.extensionList
+                    .filter {
+                        runReadAction {
+                            it.isApplicable(module)
+                        }
+                    }
+            val configurationService = KotlinProjectConfigurationService.getInstance(project)
+            configurationService.coroutineScope.launchTracked {
+                edtWriteAction {
+                    CommandProcessor.getInstance().executeCommand(
+                        /* project = */ project,
+                        /* runnable = */ Runnable {
+                            configuratorsByModules.forEach { it.configureModule(module) }
+                        },
+                        /* name = */ KotlinProjectConfigurationBundle.message(
+                            "command.name.performing.post.configuration.0",
+                            configuratorsByModules.joinToString(separator = "<br/>") { it.name }),
+                        /* groupId = */ null,
+                        /* undoConfirmationPolicy = */ UndoConfirmationPolicy.REQUEST_CONFIRMATION
+                    )
+                }
+                configurationService.queueSyncIfPossible()
+            }
+        }
+    }
+
+
     override fun queueSyncIfNeeded(project: Project) {
         KotlinProjectConfigurationService.getInstance(project).queueSync()
+    }
+
+    private fun queueSyncAndRunPostConfiguration(module: Module) {
+        val project = module.project
+        val configurationService = KotlinProjectConfigurationService.getInstance(project)
+        configurationService.queueSync()
+        configurationService.coroutineScope.launchTracked {
+            configurationService.awaitSyncFinished()
+
+            configureCompilerPlugins(listOf(module))
+        }
     }
 
     override suspend fun queueSyncAndWaitForProjectToBeConfigured(project: Project) {
@@ -240,7 +296,7 @@ abstract class KotlinMavenConfigurator protected constructor(
                         changedBuildFiles.storeOriginalFileContent(file)
                         val configured = configureModuleSilently(module, file, settings.kotlinVersion)
                         if (configured) {
-                            queueSyncIfNeeded(project)
+                            queueSyncAndRunPostConfiguration(module)
                             val notificationHolder = KotlinMavenAutoConfigurationNotificationHolder.getInstance(project)
                             addUndoConfigurationListener(project, listOf(module), isAutoConfig = true, notificationHolder)
                             notificationHolder

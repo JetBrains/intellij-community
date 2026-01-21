@@ -4,10 +4,9 @@ package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.ide.actions.OpenFileAction
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.readAndEdtWriteAction
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.*
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
@@ -22,6 +21,7 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.progress.reportSequentialProgress
@@ -129,6 +129,8 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         dialog.show()
         if (!dialog.isOK) return emptySet()
         val kotlinVersion = dialog.kotlinVersion ?: return emptySet()
+        val modules = dialog.modulesToConfigure
+
         KotlinJ2KOnboardingFUSCollector.logChosenKotlinVersion(project, kotlinVersion)
 
         KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project)
@@ -136,7 +138,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val (result, collector) = runWithModalProgressBlocking(project, KotlinProjectConfigurationBundle.message(commandKey)) {
             configureSilently(
               project = project,
-              modules = dialog.modulesToConfigure,
+              modules = modules,
               kotlinVersionsAndModules = dialog.versionsAndModules,
               version = IdeKotlinVersion.get(kotlinVersion),
               modulesAndJvmTargets = dialog.modulesAndJvmTargets,
@@ -150,10 +152,57 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
         queueSyncIfNeeded(project)
 
+        val configurationService = KotlinProjectConfigurationService.getInstance(project)
+
+        configurationService.coroutineScope.launchTracked {
+            configurationService.awaitSyncFinished()
+
+            configureCompilerPlugins(modules)
+        }
+
         KotlinGradleAutoConfigurationNotificationHolder.getInstance(project).onManualConfigurationCompleted()
         collector.showNotification()
 
         return result.configuredModules
+    }
+
+    private fun configureCompilerPlugins(modules: List<Module>) {
+        val project = modules.firstOrNull()?.project ?: return
+        val rootModule = runReadAction { getRootModule(project) } ?: return
+
+        val effectiveModules = if (modules.contains(rootModule)) {
+            val rootGroup = getConfigurableModulesWithKotlinFiles(project).firstOrNull { it.baseModule == rootModule }
+            modules.filter { it != rootModule } + (rootGroup?.sourceRootModules ?: emptyList())
+        } else {
+            modules
+        }
+
+        effectiveModules.forEach { module ->
+            val configuratorsByModules =
+                KotlinProjectPostConfigurator.EP_NAME.extensionList
+                    .filter {
+                        runReadAction {
+                            it.isApplicable(module)
+                        }
+                    }
+            val configurationService = KotlinProjectConfigurationService.getInstance(project)
+            configurationService.coroutineScope.launchTracked {
+                edtWriteAction {
+                    CommandProcessor.getInstance().executeCommand(
+                        /* project = */ project,
+                        /* runnable = */ Runnable {
+                            configuratorsByModules.forEach { it.configureModule(module) }
+                        },
+                        /* name = */ KotlinProjectConfigurationBundle.message(
+                            "command.name.performing.post.configuration.0",
+                            configuratorsByModules.joinToString(separator = "<br/>") { it.name }),
+                        /* groupId = */ null,
+                        /* undoConfirmationPolicy = */ UndoConfirmationPolicy.REQUEST_CONFIRMATION
+                    )
+                }
+                configurationService.queueSyncIfPossible()
+            }
+        }
     }
 
     private fun Project.isGradleSyncPending(module: Module): Boolean {
@@ -449,6 +498,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                 }
             }
         }
+
         for (file in changedFiles.getChangedFiles()) {
             file.virtualFile?.let {
                 collector.addMessage(KotlinIdeaGradleBundle.message("text.was.modified", it.path))

@@ -6,7 +6,6 @@ import com.intellij.externalSystem.JavaModuleData
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleGrouper
@@ -248,10 +247,8 @@ fun getConfiguratorByName(name: String): KotlinProjectConfigurator? {
     return allConfigurators().firstOrNull { it.name == name }
 }
 
-fun allConfigurators(): Array<KotlinProjectConfigurator> {
-    @Suppress("DEPRECATION")
-    return Extensions.getExtensions(KotlinProjectConfigurator.EP_NAME)
-}
+fun allConfigurators(): List<KotlinProjectConfigurator> =
+    KotlinProjectConfigurator.EP_NAME.extensionList
 
 fun getCanBeConfiguredModules(project: Project, configurator: KotlinProjectConfigurator): List<Module> {
     val projectModules = project.modules.toList()

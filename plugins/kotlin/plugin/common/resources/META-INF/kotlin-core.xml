@@ -19,6 +19,10 @@
             interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator"
             dynamic="true"/>
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.projectPostConfigurator"
+            interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectPostConfigurator"
+            dynamic="true"/>
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.compilerPluginConfigurator"
             interface="org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator"
             dynamic="true"/>

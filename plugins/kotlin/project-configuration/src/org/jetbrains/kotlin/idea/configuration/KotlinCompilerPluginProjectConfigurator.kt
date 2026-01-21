@@ -18,6 +18,11 @@ interface KotlinCompilerPluginProjectConfigurator {
     companion object {
         val EP_NAME: ExtensionPointName<KotlinCompilerPluginProjectConfigurator> =
             ExtensionPointName.create<KotlinCompilerPluginProjectConfigurator>("org.jetbrains.kotlin.compilerPluginConfigurator")
+
+        @ApiStatus.Internal
+        fun compilerPluginProjectConfigurators(kotlinCompilerPluginId: String): List<KotlinCompilerPluginProjectConfigurator> =
+            KotlinCompilerPluginProjectConfigurator.EP_NAME.extensionList
+                .filter { it.kotlinCompilerPluginId == kotlinCompilerPluginId }
     }
 
 }

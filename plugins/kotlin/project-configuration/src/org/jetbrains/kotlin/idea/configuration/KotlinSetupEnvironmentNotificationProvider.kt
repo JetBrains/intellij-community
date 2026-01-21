@@ -96,7 +96,8 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             !isStdlibModule(module) &&
             getLibraryRootsWithIncompatibleAbi(module).isEmpty()
         ) {
-            return createKotlinNotConfiguredPanel(module, getAbleToRunConfigurators(module).toList())
+            val configurators = getAbleToRunConfigurators(module).toList()
+            return createKotlinNotConfiguredPanel(module, configurators)
         }
 
         return null
