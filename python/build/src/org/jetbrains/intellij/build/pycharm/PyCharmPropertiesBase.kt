@@ -33,6 +33,7 @@ abstract class PyCharmPropertiesBase(enlargeWelcomeScreen: Boolean) : JetBrainsP
     ))
 
     productLayout.compatiblePluginsToIgnore = productLayout.compatiblePluginsToIgnore.addAll(
+      //workaround (IJPL-209175) for IDEA-366600
       persistentListOf("intellij.java.plugin"))
   }
 
