@@ -11877,62 +11877,62 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.jetbrains.rd/rd-core-2025.3.1.jar_copy",
-  src = "@com_jetbrains_rd-rd-core-2025_3_1_http//file",
-  out = "com.jetbrains.rd/rd-core-2025.3.1.jar",
+  name = "com.jetbrains.rd/rd-core-2026.1.0.jar_copy",
+  src = "@com_jetbrains_rd-rd-core-2026_1_0_http//file",
+  out = "com.jetbrains.rd/rd-core-2026.1.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-rd-core-rd-core",
-  jar = "@com_jetbrains_rd-rd-core-2025_3_1_http//file",
-  source_jar = "@com_jetbrains_rd-rd-core-2025_3_1-sources_http//file",
+  jar = "@com_jetbrains_rd-rd-core-2026_1_0_http//file",
+  source_jar = "@com_jetbrains_rd-rd-core-2026_1_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "com.jetbrains.rd/rd-framework-2025.3.1.jar_copy",
-  src = "@com_jetbrains_rd-rd-framework-2025_3_1_http//file",
-  out = "com.jetbrains.rd/rd-framework-2025.3.1.jar",
+  name = "com.jetbrains.rd/rd-framework-2026.1.0.jar_copy",
+  src = "@com_jetbrains_rd-rd-framework-2026_1_0_http//file",
+  out = "com.jetbrains.rd/rd-framework-2026.1.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-rd-framework-rd-framework",
-  jar = "@com_jetbrains_rd-rd-framework-2025_3_1_http//file",
-  source_jar = "@com_jetbrains_rd-rd-framework-2025_3_1-sources_http//file",
+  jar = "@com_jetbrains_rd-rd-framework-2026_1_0_http//file",
+  source_jar = "@com_jetbrains_rd-rd-framework-2026_1_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "com.jetbrains.rd/rd-swing-2025.3.1.jar_copy",
-  src = "@com_jetbrains_rd-rd-swing-2025_3_1_http//file",
-  out = "com.jetbrains.rd/rd-swing-2025.3.1.jar",
+  name = "com.jetbrains.rd/rd-swing-2026.1.0.jar_copy",
+  src = "@com_jetbrains_rd-rd-swing-2026_1_0_http//file",
+  out = "com.jetbrains.rd/rd-swing-2026.1.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-rd-swing-rd-swing",
-  jar = "@com_jetbrains_rd-rd-swing-2025_3_1_http//file",
-  source_jar = "@com_jetbrains_rd-rd-swing-2025_3_1-sources_http//file",
+  jar = "@com_jetbrains_rd-rd-swing-2026_1_0_http//file",
+  source_jar = "@com_jetbrains_rd-rd-swing-2026_1_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "com.jetbrains.rd/rd-text-2025.3.1.jar_copy",
-  src = "@com_jetbrains_rd-rd-text-2025_3_1_http//file",
-  out = "com.jetbrains.rd/rd-text-2025.3.1.jar",
+  name = "com.jetbrains.rd/rd-text-2026.1.0.jar_copy",
+  src = "@com_jetbrains_rd-rd-text-2026_1_0_http//file",
+  out = "com.jetbrains.rd/rd-text-2026.1.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-rd-text-rd-text",
-  jar = "@com_jetbrains_rd-rd-text-2025_3_1_http//file",
-  source_jar = "@com_jetbrains_rd-rd-text-2025_3_1-sources_http//file",
+  jar = "@com_jetbrains_rd-rd-text-2026_1_0_http//file",
+  source_jar = "@com_jetbrains_rd-rd-text-2026_1_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -19127,17 +19127,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.jetbrains.rd/rd-gen-2025.3.1.jar_copy",
-  src = "@com_jetbrains_rd-rd-gen-2025_3_1_http//file",
-  out = "com.jetbrains.rd/rd-gen-2025.3.1.jar",
+  name = "com.jetbrains.rd/rd-gen-2026.1.0.jar_copy",
+  src = "@com_jetbrains_rd-rd-gen-2026_1_0_http//file",
+  out = "com.jetbrains.rd/rd-gen-2026.1.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "rd-gen",
-  jar = "@com_jetbrains_rd-rd-gen-2025_3_1_http//file",
-  source_jar = "@com_jetbrains_rd-rd-gen-2025_3_1-sources_http//file",
+  jar = "@com_jetbrains_rd-rd-gen-2026_1_0_http//file",
+  source_jar = "@com_jetbrains_rd-rd-gen-2026_1_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
