@@ -497,7 +497,7 @@ object DynamicPlugins {
     if (!containerDescriptor.components.isEmpty()) {
       return "Plugin '$pluginId' is not unload-safe because it declares components"
     }
-    if (containerDescriptor.services.any { it.overrides }) {
+    if (!Registry.`is`("ide.plugins.allow.dynamic.services.overrides") && containerDescriptor.services.any { it.overrides }) {
       return "Plugin '$pluginId' is not unload-safe because it overrides services"
     }
     return null
