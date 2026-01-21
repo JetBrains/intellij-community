@@ -151,7 +151,8 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     ) {
         val contextArguments: List<KaReceiverValue> = functionCall.contextArguments
 
-        val contextParameterPairs = contextParameters.zip(contextArguments)
+        val contextParameterPairs =
+            contextParameters.zip(contextArguments).filter { !it.first.name.isSpecial }
 
         sink.whenOptionEnabled(SHOW_CONTEXT_PARAMETERS.name) {
             collectContextParameters(callElement, sink, contextMenuPayloads, contextParameterPairs, valueParametersWithNames)
@@ -229,27 +230,28 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                 expandedState = {
                     for ((index, pair) in contextParameterPairs.withIndex()) {
                         val (parameterSymbol, receiverValue) = pair
-                        if (index > 0) text(" | ")
+                        if (index > 0) text(" , ")
                         addContextParameter(callElement, parameterSymbol, receiverValue)
                     }
 
                     if (!theOnlyOneContextParameter) {
                         // a unicode char <<
                         toggleButton { text(" \u00AB ") }
-                    } else {
-                        if (valueParametersWithNames.isNotEmpty()) text(" | ")
                     }
+                    if (valueParametersWithNames.isNotEmpty()) text(" , ")
                 },
 
                 collapsedState = {
                     val (parameterSymbol, receiverValue) = contextParameterPairs.first()
+
                     addContextParameter(callElement, parameterSymbol, receiverValue)
 
                     if (!theOnlyOneContextParameter) {
-                        toggleButton { text(" ${Typography.ellipsis} ") }
+                        // a unicode char >>
+                        toggleButton { text(" \u00BB ") }
                     }
 
-                    if (valueParametersWithNames.isNotEmpty()) text(" | ")
+                    if (valueParametersWithNames.isNotEmpty()) text(" , ")
                 })
         }
     }
@@ -263,10 +265,11 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     ) {
         val value = receiverValue as? KaImplicitReceiverValue ?: return
         val valueSymbol = value.symbol
-
         val name = parameterSymbol.name
+
         text(name.asString(), parameterSymbol.asNavigatablePsiLoad())
         text(" = ")
+
         val symbolPsi = when (val psi = valueSymbol.psi) {
             is KtParameter -> psi.name
             is KtFunctionLiteral -> {

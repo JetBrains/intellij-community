@@ -55,9 +55,24 @@ public class KtParameterHintsProviderTestGenerated extends AbstractKtParameterHi
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParametersSimpleWithArgument.kt");
     }
 
+    @TestMetadata("contextParametersUnusedMultiple.kt")
+    public void testContextParametersUnusedMultiple() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParametersUnusedMultiple.kt");
+    }
+
+    @TestMetadata("contextParametersUnusedMultipleWithArgument.kt")
+    public void testContextParametersUnusedMultipleWithArgument() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParametersUnusedMultipleWithArgument.kt");
+    }
+
     @TestMetadata("contextParametersWithNested.kt")
     public void testContextParametersWithNested() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParametersWithNested.kt");
+    }
+
+    @TestMetadata("contextParametersWithNestedLabeled.kt")
+    public void testContextParametersWithNestedLabeled() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParametersWithNestedLabeled.kt");
     }
 
     @TestMetadata("contextParametersWithThis.kt")

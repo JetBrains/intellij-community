@@ -3,10 +3,10 @@
 class Context1
 class Context2
 
-context(c1: Context1, c2: Context2)
+context(_: Context1, _: Context2)
 fun fooCtx() {}
 
 context(ctx: Context2, ctx1: Context1)
 fun example() {
-    fooCtx(/*<# [contextParametersMultiple.kt:108]c1| = |[contextParametersMultiple.kt:176]ctx1| »  #>*/)
+    fooCtx()
 }
