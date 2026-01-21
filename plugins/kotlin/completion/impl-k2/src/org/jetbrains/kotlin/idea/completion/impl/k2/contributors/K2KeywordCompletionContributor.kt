@@ -39,7 +39,7 @@ internal class K2KeywordCompletionContributor : K2SimpleCompletionContributor<Ko
                 BreakContinueKeywordHandler(KtTokens.BREAK_KEYWORD),
                 ActualKeywordHandler(context.importStrategyDetector),
                 OverrideKeywordHandler(context.importStrategyDetector),
-                ThisKeywordHandler(context.prefixMatcher),
+                ThisKeywordHandler(context.prefixMatcher, context.weighingContext.expectedType),
                 SuperKeywordHandler,
             )
         }

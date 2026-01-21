@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.completion.wheigher;
 
@@ -773,6 +773,16 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
         @TestMetadata("PreferNullForNullable.kt")
         public void testPreferNullForNullable() throws Exception {
             runTest("../../completion/testData/weighers/basic/PreferNullForNullable.kt");
+        }
+
+        @TestMetadata("PreferThis.kt")
+        public void testPreferThis() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferThis.kt");
+        }
+
+        @TestMetadata("PreferThisWithLabel.kt")
+        public void testPreferThisWithLabel() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferThisWithLabel.kt");
         }
 
         @TestMetadata("PreferTypesMatchingAnnotatedType.kt")

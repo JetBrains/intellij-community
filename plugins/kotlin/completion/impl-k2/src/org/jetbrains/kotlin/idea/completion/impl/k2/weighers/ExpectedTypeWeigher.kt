@@ -42,6 +42,9 @@ internal object ExpectedTypeWeigher {
     fun addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KaSymbol?) {
         val expectedType = context.expectedType
 
+        // The expected type was already set elsewhere, we prefer these results
+        if (lookupElement.matchesExpectedType != null) return
+
         lookupElement.matchesExpectedType = when {
             symbol != null -> if (expectedType != null) {
                 // If the symbol is a Typealias, we want to use the original symbol for matching the expected type
