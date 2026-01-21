@@ -6,5 +6,3 @@ fun bar() {
 }
 
 // ELEMENT_TEXT: "flag = true"
-
-// IGNORE_K2

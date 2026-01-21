@@ -5,6 +5,3 @@ class `this` {
 }
 
 // ELEMENT: "this@`this`"
-
-
-// IGNORE_K2

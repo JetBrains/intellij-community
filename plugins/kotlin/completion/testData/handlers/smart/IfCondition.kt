@@ -3,5 +3,3 @@ fun bar(b: Boolean){
 }
 
 // ELEMENT: b
-
-// IGNORE_K2

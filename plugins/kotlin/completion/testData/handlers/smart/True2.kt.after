@@ -5,5 +5,3 @@ fun bar() {
 }
 
 // ELEMENT: true
-
-// IGNORE_K2

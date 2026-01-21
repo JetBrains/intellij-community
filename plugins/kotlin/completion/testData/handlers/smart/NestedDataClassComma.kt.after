@@ -7,5 +7,3 @@ class Outer {
 }
 
 // ELEMENT: p
-
-// IGNORE_K2

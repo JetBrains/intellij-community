@@ -7,5 +7,3 @@ class C {
 }
 
 //ELEMENT: this
-
-// IGNORE_K2

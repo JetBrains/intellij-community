@@ -10,5 +10,3 @@ fun bar(){
 }
 
 // ELEMENT: X
-
-// IGNORE_K2

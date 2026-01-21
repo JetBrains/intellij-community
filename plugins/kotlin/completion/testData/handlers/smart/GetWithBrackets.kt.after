@@ -3,5 +3,3 @@ fun foo(map: Map<String, Int>, p: String) {
 }
 
 // ELEMENT: p
-
-// IGNORE_K2

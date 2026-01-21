@@ -1,7 +1,5 @@
-fun foo(map: Map<String, Int>, p: String) {
+fun foo(map: MutableMap<String, Int>, p: String) {
     map[<caret>] = 1
 }
 
 // ELEMENT: p
-
-// IGNORE_K2

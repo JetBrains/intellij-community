@@ -6,5 +6,3 @@ fun bar(ss: String) {
 
 //ELEMENT: ss
 //CHAR: \t
-
-// IGNORE_K2

@@ -5,5 +5,3 @@ fun bar(s: String){
 }
 
 // ELEMENT: s
-
-// IGNORE_K2

@@ -3,4 +3,3 @@ fun foo(list: List<String>) {
 }
 
 // ELEMENT: isEmpty
-// IGNORE_K2

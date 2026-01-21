@@ -10,5 +10,3 @@ fun foo(){
 }
 
 // ELEMENT: this@`fun`
-
-// IGNORE_K2
