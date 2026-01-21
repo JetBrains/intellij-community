@@ -201,13 +201,16 @@ public final class AboutDialog extends DialogWrapper {
     Properties properties = System.getProperties();
     String javaVersion = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
     String arch = properties.getProperty("os.arch", "");
-    String jcefSuffix = getJcefVersion();
-    if (!jcefSuffix.isEmpty()) {
-      jcefSuffix = " (" + jcefSuffix + ")";
-    }
-    String jreInfo = IdeBundle.message("about.box.jre", javaVersion, arch) + jcefSuffix;
-    lines.add(jreInfo);
-    myInfo.add(MessageFormat.format("Runtime version: {0} {1}", javaVersion, arch) + jcefSuffix);
+
+    String jreInfo = IdeBundle.message("about.box.jre", javaVersion, arch);
+
+    String jcefVersion = getJcefVersion();
+    String jcefNativeBundleVersion = getJcefNativeBundleVersion();
+    // check JBR bundled JCEF
+    String jreJcefSuffix = jcefVersion != null && jcefNativeBundleVersion == null ? " (JCEF " + jcefVersion + ")" : "";
+
+    lines.add(jreInfo + jreJcefSuffix);
+    myInfo.add(MessageFormat.format("Runtime version: {0} {1}", javaVersion, arch) + jcefVersion);
 
     String vmVersion = properties.getProperty("java.vm.name", "unknown");
     String vmVendor = properties.getProperty("java.vendor", "unknown");
@@ -215,6 +218,14 @@ public final class AboutDialog extends DialogWrapper {
     lines.add(vmVendorInfo);
     lines.add("");
     myInfo.add(MessageFormat.format("VM: {0} by {1}", vmVersion, vmVendor));
+
+    // check if there is a standalone JCEF bundle
+    if (jcefVersion != null && jcefNativeBundleVersion != null) {
+      String jcefVersionValue = jcefVersion.equals(jcefNativeBundleVersion) ? jcefVersion : jcefVersion + " (native " + jcefNativeBundleVersion + ")";
+      myInfo.add("JCEF version: " + jcefVersionValue);
+      lines.add(IdeBundle.message("about.box.jcef.version", jcefVersionValue));
+      lines.add("");
+    }
 
     // Print extra information from plugins
     for (AboutPopupDescriptionProvider aboutInfoProvider : EP_NAME.getExtensionList()) {
@@ -448,15 +459,47 @@ public final class AboutDialog extends DialogWrapper {
     return IdeBundle.message("dialog.message.jetbrains.client.for.ide", ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
-  private static @NotNull String getJcefVersion() {
+  private static @Nullable String getJcefVersion() {
     if (JBCefApp.isSupported()) {
       try {
         JCefVersionDetails version = JCefAppConfig.getVersionDetails();
-        return IdeBundle.message("about.box.jcef", version.cefVersion.major, version.cefVersion.api, version.cefVersion.patch);
+        return shortenJcefVersion(version.toString());
       }
       catch (JCefVersionDetails.VersionUnavailableException ignored) {
       }
     }
-    return "";
+    return null;
   }
+
+  private static @Nullable String getJcefNativeBundleVersion() {
+    if (JBCefApp.isSupported()) {
+       String detailedVersionString = JBCefApp.getNativeBundleVersionString();
+       if (detailedVersionString != null) {
+         return shortenJcefVersion(detailedVersionString);
+       }
+    }
+
+    return null;
+  }
+
+  private static @NotNull String shortenJcefVersion(@NotNull String detailedVersionString) {
+    final Pattern detailedVersionPattern = Pattern.compile(
+      "#.#.#-g([0-9a-f]{7})-chromium-#.#.#.#-api-#.#(?:-([^-]+)-([^-]+))?"
+        .replaceAll("\\.", "\\\\.").replaceAll("#", "(\\\\d+)"));
+
+    var matcher = detailedVersionPattern.matcher(detailedVersionString);
+    if (!matcher.matches()) {
+      Logger.getInstance(AboutDialog.class).warn("Cannot parse JCEF version string: " + detailedVersionString);
+      return detailedVersionString;
+    }
+
+    String branch = matcher.group(11);
+    String buildNumber = matcher.group(12);
+    if (branch != null && buildNumber != null) {
+      return MessageFormat.format("{0}.{1}.{2}-{3}-{4}", matcher.group(1), matcher.group(2), matcher.group(3), branch, buildNumber);
+    } else {
+      return MessageFormat.format("{0}.{1}.{2}", matcher.group(1), matcher.group(2), matcher.group(3));
+    }
+  }
+
 }

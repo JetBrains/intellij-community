@@ -706,4 +706,37 @@ public final class JBCefApp {
 
     return true;
   }
+
+  /**
+   * Extracts the version JCEF version from the native bundle.
+   * The version format is not specified and could be changed in the future. The method could be removed.
+   */
+  @ApiStatus.Internal()
+  public static @Nullable String getNativeBundleVersionString() {
+    String nativeBundlePath = getNativeBundlePath();
+    if (nativeBundlePath == null) {
+      return null;
+    }
+
+    // TODO: use JCefAppConfig.getNativeBundleVersion() instead after it's get promoted
+    final Path versionFile = Path.of(nativeBundlePath, "jcef.version");
+    if (Files.exists(versionFile)) {
+      try {
+        for (String line : Files.readAllLines(versionFile)) {
+          if (line.contains("JCEF_VERSION_DETAILED")) {
+            String[] split = line.split("=");
+            if (split.length == 2) {
+              return split[1].trim();
+            }
+          }
+        }
+
+        return null;
+      }
+      catch (IOException e) {
+        return null;
+      }
+    }
+    return null;
+  }
 }
