@@ -7,26 +7,20 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.view.TerminalView
-import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionService
+import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionTypingListener
 import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import kotlinx.coroutines.Deferred
-import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
-import org.jetbrains.plugins.terminal.session.guessShellName
 import org.jetbrains.plugins.terminal.session.impl.TerminalState
-import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import java.awt.Point
 import java.awt.event.InputEvent
@@ -51,8 +45,8 @@ internal open class TerminalEventsHandlerImpl(
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val scrollingModel: TerminalOutputScrollingModel?,
   private val outputModel: TerminalOutputModel,
-  private val shellIntegrationDeferred: Deferred<TerminalShellIntegration>?,
-  private val startupOptionsDeferred: Deferred<TerminalStartupOptions>?,
+  shellIntegrationDeferred: Deferred<TerminalShellIntegration>?,
+  startupOptionsDeferred: Deferred<TerminalStartupOptions>?,
   private val typeAhead: TerminalTypeAhead?,
 ) : TerminalEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
@@ -64,9 +58,22 @@ internal open class TerminalEventsHandlerImpl(
   private val vfsSynchronizer: TerminalVfsSynchronizer?
     get() = editor.getUserData(TerminalVfsSynchronizer.KEY)
 
+  private val completionTypingListener: TerminalCommandCompletionTypingListener? =
+    if (editor.isOutputModelEditor && shellIntegrationDeferred != null && startupOptionsDeferred != null) {
+      TerminalCommandCompletionTypingListener(
+        terminalView,
+        editor,
+        outputModel,
+        shellIntegrationDeferred,
+        startupOptionsDeferred,
+      )
+    }
+    else null
+
   override fun keyTyped(e: TimedKeyEvent) {
     LOG.trace { "Key typed event received: ${e.original}" }
     val charTyped = e.original.keyChar
+    val beforeTypingCursorOffset = outputModel.cursorOffset
 
     val selectionModel = editor.selectionModel
     if (selectionModel.hasSelection()) {
@@ -90,8 +97,8 @@ internal open class TerminalEventsHandlerImpl(
       }
     }
 
-    syncEditorCaretWithModel()
-    scheduleCompletionPopupIfNeeded(charTyped)
+    syncEditorCaretWithModel(editor, outputModel)
+    completionTypingListener?.onCharTyped(beforeTypingCursorOffset, charTyped)
   }
 
   override fun keyPressed(e: TimedKeyEvent) {
@@ -158,7 +165,7 @@ internal open class TerminalEventsHandlerImpl(
       LOG.error("Error sending pressed key to emulator", ex)
     }
     finally {
-      syncEditorCaretWithModel()
+      syncEditorCaretWithModel(editor, outputModel)
     }
     return false
   }
@@ -393,54 +400,26 @@ internal open class TerminalEventsHandlerImpl(
     return command.toByteArray(Charset.forName(charset))
   }
 
-  /**
-   * Guarantee that the editor caret is synchronized with the output model's cursor offset.
-   * Essential for correct lookup behavior.
-   */
-  private fun syncEditorCaretWithModel() {
-    val expectedCaretOffset = outputModel.cursorOffset.toRelative(outputModel)
-    val moveCaretAction = { editor.caretModel.moveToOffset(expectedCaretOffset) }
-    if (editor.caretModel.offset != expectedCaretOffset) {
-      val lookup = LookupManager.getActiveLookup(editor)
-      if (lookup != null) {
-        lookup.performGuardedChange(moveCaretAction)
-      }
-      else {
-        moveCaretAction()
-      }
-    }
-  }
-
-  private fun scheduleCompletionPopupIfNeeded(charTyped: Char) {
-    val project = editor.project ?: return
-    val shellName = startupOptionsDeferred?.getNow()?.guessShellName() ?: return
-    val shellIntegration = shellIntegrationDeferred?.getNow() ?: return
-    if (editor.isOutputModelEditor
-        && TerminalCommandCompletion.isEnabled(project)
-        && TerminalCommandCompletion.isSupportedForShell(shellName)
-        && TerminalOptionsProvider.instance.showCompletionPopupAutomatically
-        && shellIntegration.outputStatus.value == TerminalOutputStatus.TypingCommand
-        && canTriggerCompletion(charTyped)
-        && LookupManager.getActiveLookup(editor) == null
-        && outputModel.getTextAfterCursor().isBlank()
-    ) {
-      TerminalCommandCompletionService.getInstance(project).invokeCompletion(
-        terminalView,
-        editor,
-        outputModel,
-        shellIntegration,
-        isAutoPopup = true
-      )
-    }
-  }
-
-  private fun canTriggerCompletion(char: Char): Boolean {
-    return Character.isLetterOrDigit(char)
-  }
-
-  private fun TerminalOutputModel.getTextAfterCursor(): @NlsSafe CharSequence = getText(cursorOffset, endOffset)
-
   companion object {
     private val LOG = Logger.getInstance(TerminalEventsHandlerImpl::class.java)
+  }
+}
+
+
+/**
+ * Guarantee that the editor caret is synchronized with the output model's cursor offset.
+ * Essential for correct lookup behavior.
+ */
+internal fun syncEditorCaretWithModel(editor: EditorEx, outputModel: TerminalOutputModel) {
+  val expectedCaretOffset = outputModel.cursorOffset.toRelative(outputModel)
+  val moveCaretAction = { editor.caretModel.moveToOffset(expectedCaretOffset) }
+  if (editor.caretModel.offset != expectedCaretOffset) {
+    val lookup = LookupManager.getActiveLookup(editor)
+    if (lookup != null) {
+      lookup.performGuardedChange(moveCaretAction)
+    }
+    else {
+      moveCaretAction()
+    }
   }
 }
