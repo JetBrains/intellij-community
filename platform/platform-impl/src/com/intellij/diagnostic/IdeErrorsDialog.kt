@@ -409,9 +409,11 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     val pluginId = cluster.pluginId
     val plugin = cluster.plugin
     val info = StringBuilder()
+
     if (t is RemoteSerializedThrowable) {
       info.append("[backend] ")
     }
+
     if (pluginId != null && !t.isSpecialBackendException()) {
       val name = if (plugin != null) plugin.name else pluginId.toString()
       if (plugin != null && (!plugin.isBundled || plugin.allowBundledUpdate())) {
@@ -436,12 +438,16 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     else {
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().productName))
     }
-    if (pluginId != null && !ApplicationInfo.getInstance().isEssentialPlugin(pluginId)) {
+
+    if (pluginId != null
+        && !ApplicationInfo.getInstance().isEssentialPlugin(pluginId)
+        && !isImplementationDetailPlugin(pluginId)) {
       info.append(' ')
         .append("<a style=\"white-space: nowrap;\" href=\"$DISABLE_PLUGIN_URL\">")
         .append(DiagnosticBundle.message("error.list.disable.plugin"))
         .append("</a>")
     }
+
     if (message.isSubmitting) {
       info.append(' ').append(DiagnosticBundle.message("error.list.message.submitting"))
     }
@@ -464,6 +470,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       }
       info.append("</span>")
     }
+
     myInfoLabel.text = info.toString()
     val count = cluster.messages.size
     val date = DateFormatUtil.formatPrettyDateTime(cluster.messages[count - 1].date)
@@ -488,6 +495,10 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     if (submitter != null) {
       loadPrivacyNoticeText(submitter)
     }
+  }
+
+  private fun isImplementationDetailPlugin(pluginId: PluginId): Boolean {
+    return PluginManagerCore.getPlugin(pluginId)?.isImplementationDetail ?: false
   }
 
   private fun isValidUrl(url: String): Boolean = runCatching { URI(url).toURL() }.isSuccess
