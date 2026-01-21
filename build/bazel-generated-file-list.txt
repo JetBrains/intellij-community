@@ -1392,6 +1392,7 @@ plugins/properties/tests
 plugins/rareJavaRefactorings
 plugins/remote-control
 plugins/repository-search
+plugins/repository-search/common
 plugins/restructuredtext
 plugins/search-everywhere-ml
 plugins/search-everywhere-ml/ranking/core

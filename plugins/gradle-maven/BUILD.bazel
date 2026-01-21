@@ -25,7 +25,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/projectModel-api:projectModel",
-    "//plugins/repository-search",
+    "//plugins/repository-search/common",
   ]
 )
 
@@ -47,8 +47,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/projectModel-api:projectModel",
-    "//plugins/repository-search",
-    "//plugins/repository-search:repository-search_test_lib",
+    "//plugins/repository-search/common",
+    "//plugins/repository-search/common:common_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ]

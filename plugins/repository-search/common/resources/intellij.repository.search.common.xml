@@ -1,29 +1,17 @@
-<idea-plugin>
-  <id>org.jetbrains.idea.reposearch</id>
-  <name>Artifacts Repository Search</name>
-  <vendor>JetBrains</vendor>
-  <category>Build Tools</category>
-  <description><![CDATA[
-    Provides API for artifact search such as Maven/Gradle dependencies.
-  ]]></description>
-
+<idea-plugin visibility="public">
+  <!-- public because it's used in com.intellij.gradle plugin -->
   <dependencies>
     <module name="intellij.libraries.ktor.client"/>
     <module name="intellij.libraries.kotlinx.io"/>
     <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
     <module name="intellij.libraries.kotlinx.coroutines.slf4j"/>
   </dependencies>
-  <!--suppress PluginXmlValidity -->
-  <content namespace="jetbrains">
-    <!-- The implicit main module of the plugin depends on internal modules (intellij.libraries.ktor.client, intellij.libraries.kotlinx.io), so it's required to set the namespace for it
-         todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
-  </content>
 
   <extensionPoints>
-    <extensionPoint name="provider"
+    <extensionPoint qualifiedName="org.jetbrains.idea.reposearch.provider"
                     interface="org.jetbrains.idea.reposearch.DependencySearchProvidersFactory" dynamic="true"/>
 
-    <extensionPoint name="contributor"
+    <extensionPoint qualifiedName="org.jetbrains.idea.reposearch.contributor"
                     interface="org.jetbrains.idea.completion.api.DependencyCompletionContributor" dynamic="true"/>
   </extensionPoints>
 

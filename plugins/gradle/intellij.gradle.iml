@@ -68,5 +68,6 @@
     <orderEntry type="module" module-name="intellij.libraries.jspecify" />
     <orderEntry type="module" module-name="intellij.repository.search" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="module" module-name="intellij.repository.search.common" />
   </component>
 </module>

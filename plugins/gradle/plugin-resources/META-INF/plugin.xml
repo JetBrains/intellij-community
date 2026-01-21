@@ -22,6 +22,7 @@
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="com.intellij.modules.externalSystem"/>
     <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.repository.search.common"/>
     <plugin id="org.jetbrains.idea.reposearch"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.jspecify"/>

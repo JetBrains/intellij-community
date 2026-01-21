@@ -24,6 +24,7 @@ jvm_library(
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form", "src/main/gen/**/*.kt", "src/main/gen/**/*.java"], allow_empty = True),
   resources = [":maven_resources"],
   deps = [
+    "//plugins/repository-search/common",
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/editor-ui-api:editor-ui",

@@ -81,6 +81,7 @@ jvm_library(
     "//libraries/jspecify",
     "//plugins/repository-search",
     "//platform/util/text-matching",
+    "//plugins/repository-search/common",
   ],
   exports = [
     "//platform/external-system-api:externalSystem",
@@ -123,7 +124,7 @@ jvm_library(
     "//libraries/gson",
     "//libraries/guava",
     "//platform/forms_rt:java-guiForms-rt",
-    "//plugins/repository-search",
+    "//plugins/repository-search/common",
   ]
 )
 
@@ -196,8 +197,8 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt",
     "//java/testFramework/backend",
     "@lib//:junit5Pioneer",
-    "//plugins/repository-search",
-    "//plugins/repository-search:repository-search_test_lib",
+    "//plugins/repository-search/common",
+    "//plugins/repository-search/common:common_test_lib",
   ],
   exports = ["//platform/external-system-api/testFramework"],
   runtime_deps = [":gradle-tests"]
