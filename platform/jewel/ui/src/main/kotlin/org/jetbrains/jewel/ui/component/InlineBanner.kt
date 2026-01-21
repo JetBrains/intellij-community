@@ -16,10 +16,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -28,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
@@ -42,6 +44,7 @@ import org.jetbrains.jewel.ui.component.banner.BannerIconActionScope
 import org.jetbrains.jewel.ui.component.banner.BannerIconActionsRow
 import org.jetbrains.jewel.ui.component.banner.BannerLinkActionScope
 import org.jetbrains.jewel.ui.component.styling.InlineBannerStyle
+import org.jetbrains.jewel.ui.component.styling.LocalIconButtonStyle
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.inlineBannerStyle
 
@@ -1222,26 +1225,51 @@ private fun InlineBannerImpl(
     content: @Composable (() -> Unit),
 ) {
     val borderColor = style.colors.border
+    val originalPadding = style.metrics.padding
+    val hasActionIcons = actionIcons != null
+
+    // The "invisible" padding inside the IconButtonStyle ((iconButtonStyle.height - 16) / 2)
+    val iconMinSize = LocalIconButtonStyle.current.metrics.minSize
+    val iconVerticalPadding = (iconMinSize.height - 16.dp) / 2
+
+    val buttonInternalPadding = if (hasActionIcons) iconVerticalPadding else 0.dp
+    val bottomPadding =
+        if (hasActionIcons) {
+            (originalPadding.calculateBottomPadding() - buttonInternalPadding).coerceAtLeast(0.dp)
+        } else {
+            originalPadding.calculateBottomPadding()
+        }
+
+    val layoutDirection = LocalLayoutDirection.current
+
+    // We use max(0.dp) to prevent crashes if a user sets padding < 4dp
+    val adjustedContainerPadding =
+        PaddingValues(
+            start = originalPadding.calculateStartPadding(layoutDirection),
+            end = originalPadding.calculateEndPadding(layoutDirection),
+            top = (originalPadding.calculateTopPadding() - buttonInternalPadding).coerceAtLeast(0.dp),
+            bottom = bottomPadding,
+        )
+
     RoundedCornerBox(
         modifier = modifier.testTag("InlineBanner"),
         borderColor = borderColor,
         backgroundColor = style.colors.background,
         contentColor = JewelTheme.contentColor,
-        borderWidth = 1.dp,
-        cornerSize = CornerSize(8.dp),
-        padding = PaddingValues(),
+        borderWidth = style.metrics.borderWidth,
+        cornerSize = style.metrics.cornerSize,
+        padding = adjustedContainerPadding,
     ) {
-        Row(modifier = Modifier.padding(start = 12.dp)) {
+        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (icon != null) {
-                Box(modifier = Modifier.padding(top = 12.dp, bottom = 12.dp).size(16.dp)) { icon() }
-                Spacer(Modifier.width(8.dp))
+                Box(modifier = Modifier.padding(top = buttonInternalPadding).size(16.dp)) { icon() }
             }
 
             Column(
                 modifier =
-                    Modifier.weight(1f)
-                        .padding(top = 12.dp, bottom = 12.dp) // kftmt plz behave
+                    Modifier.padding(top = buttonInternalPadding)
                         .thenIf(actionIcons == null) { padding(end = 12.dp) }
+                        .weight(1f)
             ) {
                 if (title != null) {
                     Text(text = title, style = textStyle, fontWeight = Bold)
@@ -1256,11 +1284,7 @@ private fun InlineBannerImpl(
             }
 
             if (actionIcons != null) {
-                Spacer(Modifier.width(8.dp))
-                Row(
-                    modifier = Modifier.align(Alignment.Top).padding(top = 8.dp, end = 8.dp, bottom = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
+                Row(modifier = Modifier.align(Alignment.Top), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                     actionIcons()
                 }
             }
