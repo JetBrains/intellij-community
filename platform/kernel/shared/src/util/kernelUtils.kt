@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.kernel.util
 
 import com.intellij.openapi.application.EDT
@@ -24,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
 
 suspend fun <T> withKernel(middleware: TransactorMiddleware, body: suspend CoroutineScope.() -> T) {
@@ -102,7 +103,7 @@ val CommonInstructionSet: InstructionSet =
  * See the explanation in [fleet.kernel.DbSource.ContextElement.restoreThreadContext]
  */
 fun updateDbInTheEventDispatchThread(dbContext: DbContext<*>) {
-  runInEdt {
+  SwingUtilities.invokeLater {
     dbContext.updateToLatest()
     DbContext.threadLocal.set(dbContext)
   }
