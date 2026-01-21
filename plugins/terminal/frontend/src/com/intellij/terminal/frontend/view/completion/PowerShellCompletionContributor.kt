@@ -141,6 +141,9 @@ class PowerShellCompletionContributor : TerminalCommandCompletionContributor {
 
       val typeIcon = item.type.getIcon()
       if (typeIcon != null) icon(typeIcon)
+
+      // insertValue is already escaped
+      noEscaping()
     }
   }
 
@@ -198,14 +201,6 @@ class PowerShellCompletionContributor : TerminalCommandCompletionContributor {
     return if (shouldAddInvocationPrefix) invocationPrefix + str else str
   }
 
-  private fun String.isSurroundedByQuotes(): Boolean {
-    return isSurroundedBy("'") || isSurroundedBy("\"")
-  }
-
-  private fun String.isSurroundedBy(value: String): Boolean {
-    return startsWith(value) && endsWith(value)
-  }
-
   companion object {
     /**
      * Sequence that is sent to the shell when pressing `F12, e`.
@@ -216,4 +211,12 @@ class PowerShellCompletionContributor : TerminalCommandCompletionContributor {
 
     private val LOG = logger<PowerShellCompletionContributor>()
   }
+}
+
+internal fun String.isSurroundedByQuotes(): Boolean {
+  return isSurroundedBy("'") || isSurroundedBy("\"")
+}
+
+internal fun String.isSurroundedBy(value: String): Boolean {
+  return startsWith(value) && endsWith(value)
 }
