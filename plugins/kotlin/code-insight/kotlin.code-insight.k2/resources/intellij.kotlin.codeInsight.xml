@@ -231,6 +231,11 @@
             nameKey="hints.settings.parameters"
             descriptionKey="inlay.kotlin.parameters.hints">
       <option bundle="messages.KotlinBundle"
+              optionId="hints.parameters.context"
+              enabledByDefault="true"
+              nameKey="hints.settings.context.parameters"
+              descriptionKey="inlay.kotlin.parameters.hints.context"/>
+      <option bundle="messages.KotlinBundle"
               optionId="hints.parameters.compiled"
               enabledByDefault="true"
               nameKey="hints.settings.compiled.parameters"
