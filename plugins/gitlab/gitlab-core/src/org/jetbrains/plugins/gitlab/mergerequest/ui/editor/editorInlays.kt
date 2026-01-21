@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewM
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 
-internal sealed interface GitLabMergeRequestEditorMappedComponentModel : CodeReviewInlayModel {
+internal sealed interface GitLabMergeRequestEditorMappedComponentModel : CodeReviewInlayModel.Ranged {
   val vm: CodeReviewTrackableItemViewModel
 
   abstract class Discussion<VM : GitLabMergeRequestDiscussionViewModel>(override val vm: VM)

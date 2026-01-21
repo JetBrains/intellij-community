@@ -3,9 +3,11 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.async.transformConsecutiveSuccesses
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
@@ -32,6 +34,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNoteLocation
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 /**
@@ -48,6 +51,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     CodeReviewEditorGutterActionableChangesModel,
     CodeReviewEditorInlaysModel<GitLabMergeRequestEditorMappedComponentModel>,
     CodeReviewEditorGutterControlsModel,
+    CodeReviewCommentableEditorModel.WithMultilineComments,
     CodeReviewNavigableEditorViewModel {
 
   private val postReviewRanges = MutableStateFlow<List<Range>?>(null)
@@ -103,6 +107,14 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     val ranges = postReviewRanges.value ?: return
     val originalLine = ReviewInEditorUtil.transferLineFromAfter(ranges, lineIdx)?.takeIf { it >= 0 } ?: return
     fileVm.cancelNewDiscussion(originalLine)
+  }
+
+  override fun requestNewComment(lineRange: LineRange) {
+    TODO("not implemented")
+  }
+
+  override fun canCreateComment(lineRange: LineRange): Boolean {
+    TODO("not implemented")
   }
 
   override fun toggleComments(lineIdx: Int) {
@@ -184,12 +196,12 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     return inlay.isVisible.value
   }
 
-  private fun StateFlow<Int?>.shiftLine(): StateFlow<Int?> =
-    combineState(postReviewRanges) { line, ranges ->
-      if (ranges != null && line != null) {
-        ReviewInEditorUtil.transferLineToAfter(ranges, line).takeIf { it >= 0 }
-      }
-      else null
+  private fun StateFlow<GitLabNoteLocation?>.shiftLineRange(): StateFlow<LineRange?> =
+    combineState(postReviewRanges) { vmsLocation, ranges ->
+      if (ranges == null || vmsLocation == null) return@combineState null
+      val start = ReviewInEditorUtil.transferLineToAfter(ranges, vmsLocation.startLineIdx)
+      val end = ReviewInEditorUtil.transferLineToAfter(ranges, vmsLocation.lineIdx)
+      LineRange(start, end)
     }
 
   private fun Int.shiftLineToAfter(): Int? {
@@ -205,21 +217,23 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   private inner class ShiftedDiscussion(vm: GitLabMergeRequestEditorDiscussionViewModel)
     : GitLabMergeRequestEditorMappedComponentModel.Discussion<GitLabMergeRequestEditorDiscussionViewModel>(vm) {
     override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hiddenState) { visible, hidden -> visible && !hidden }
-    override val line: StateFlow<Int?> = vm.line.shiftLine()
+    override val range: StateFlow<LineRange?> = vm.location.shiftLineRange()
+    override val line: StateFlow<Int?> = range.mapState { it?.end }
   }
 
   private inner class ShiftedDraftNote(vm: GitLabMergeRequestEditorDraftNoteViewModel)
     : GitLabMergeRequestEditorMappedComponentModel.DraftNote<GitLabMergeRequestEditorDraftNoteViewModel>(vm) {
     override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hiddenState) { visible, hidden -> visible && !hidden }
-    override val line: StateFlow<Int?> = vm.line.shiftLine()
+    override val range: StateFlow<LineRange?> = vm.location.shiftLineRange()
+    override val line: StateFlow<Int?> = range.mapState { it?.end }
   }
 
   private inner class ShiftedNewDiscussion(vm: GitLabMergeRequestEditorNewDiscussionViewModel)
     : GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<GitLabMergeRequestEditorNewDiscussionViewModel>(vm) {
     override val key: Any = vm.key
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
-    override val line: StateFlow<Int?> = vm.line.shiftLine()
-
+    override val range: StateFlow<LineRange?> = vm.location.shiftLineRange()
+    override val line: StateFlow<Int?> = range.mapState { it?.end }
     override fun cancel() {
       vm.line.value?.let(::cancelNewDiscussion)
     }

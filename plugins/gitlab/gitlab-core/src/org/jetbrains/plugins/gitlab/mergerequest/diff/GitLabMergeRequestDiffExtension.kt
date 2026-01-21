@@ -11,10 +11,7 @@ import com.intellij.collaboration.async.transformConsecutiveSuccesses
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
 import com.intellij.collaboration.ui.codereview.diff.viewer.showCodeReview
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
+import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.Hideable
@@ -28,21 +25,20 @@ import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.util.DiffNotifications
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.LineRange
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.GitLabSettings
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNoteLocation
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffDiscussionViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffDraftNoteViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffNewDiscussionViewModel
@@ -88,15 +84,26 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
               changeVm.markViewed()
             }
 
-            viewer.showCodeReview(
-              modelFactory = { _, _, locationToLine, lineToLocations, lineToUnified ->
-                DiffEditorModel(this, project, changeVm, locationToLine, lineToLocations) {
+            viewer.showCodeReview { editor, _, locationToLine, lineToLocations, lineToUnified ->
+              coroutineScope {
+                val cs = this
+                val model = DiffEditorModel(cs, project, changeVm, locationToLine, lineToLocations) {
                   val (leftLine, rightLine) = lineToUnified(it)
                   UnifiedCodeReviewItemPosition(change, leftLine, rightLine)
                 }
-              },
-              rendererFactory = { createRenderer(it, changeVm.avatarIconsProvider, changeVm.imageLoader) }
-            )
+                val activeRangesTracker = CodeReviewActiveRangesTracker()
+                editor.showCodeReview(model) { inlayModel ->
+                  createRenderer(inlayModel,
+                                 changeVm.avatarIconsProvider,
+                                 changeVm.imageLoader,
+                                 activeRangesTracker).also { inlayRenderer ->
+                    launchNow {
+                      CodeReviewEditorInlayRangeOutlineUtils.showInlayOutline(editor, model, inlayModel, inlayRenderer, activeRangesTracker)
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }.cancelOnDispose(viewer)
@@ -106,23 +113,25 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
       model: GitLabMergeRequestEditorMappedComponentModel,
       avatarIconsProvider: IconsProvider<GitLabUserDTO>,
       imageLoader: GitLabImageLoader,
+      activeRangesTracker: CodeReviewActiveRangesTracker,
     ): CodeReviewComponentInlayRenderer =
       when (model) {
         is GitLabMergeRequestEditorMappedComponentModel.Discussion<*> ->
-          GitLabMergeRequestDiscussionInlayRenderer(this, project, model.vm, avatarIconsProvider, imageLoader,
+          GitLabMergeRequestDiscussionInlayRenderer(this, project, model, avatarIconsProvider, imageLoader, activeRangesTracker,
                                                     GitLabStatistics.MergeRequestNoteActionPlace.DIFF)
         is GitLabMergeRequestEditorMappedComponentModel.DraftNote<*> ->
-          GitLabMergeRequestDraftNoteInlayRenderer(this, project, model.vm, avatarIconsProvider, imageLoader,
+          GitLabMergeRequestDraftNoteInlayRenderer(this, project, model, avatarIconsProvider, imageLoader, activeRangesTracker,
                                                    GitLabStatistics.MergeRequestNoteActionPlace.DIFF)
         is GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<*> ->
-          GitLabMergeRequestNewDiscussionInlayRenderer(this, project, model.vm, avatarIconsProvider,
+          GitLabMergeRequestNewDiscussionInlayRenderer(this, project, model, avatarIconsProvider, activeRangesTracker,
                                                        GitLabStatistics.MergeRequestNoteActionPlace.DIFF, model::cancel)
       }
   }
 }
 
 internal interface GitLabReviewDiffEditorModel : CodeReviewEditorModel<GitLabMergeRequestEditorMappedComponentModel>,
-                                                 CodeReviewNavigableEditorViewModel
+                                                 CodeReviewNavigableEditorViewModel,
+                                                 CodeReviewCommentableEditorModel.WithMultilineComments
 
 private class DiffEditorModel(
   cs: CoroutineScope,
@@ -152,8 +161,8 @@ private class DiffEditorModel(
       diffReviewVm.locationsWithDiscussions,
       diffReviewVm.locationsWithNewDiscussions
     ) { locationsWithDiscussions, locationsWithNewDiscussions ->
-      val linesWithDiscussions = locationsWithDiscussions.mapNotNullTo(mutableSetOf(), locationToLine)
-      val linesWithNewDiscussions = locationsWithNewDiscussions.mapNotNullTo(mutableSetOf(), locationToLine)
+      val linesWithDiscussions = locationsWithDiscussions.mapNotNullTo(mutableSetOf(), { locationToLine(it.side to it.lineIdx) })
+      val linesWithNewDiscussions = locationsWithNewDiscussions.mapNotNullTo(mutableSetOf(), { locationToLine(it.side to it.lineIdx) })
       GutterState(linesWithDiscussions, linesWithNewDiscussions)
     }.stateInNow(cs, null)
 
@@ -165,6 +174,14 @@ private class DiffEditorModel(
   override fun cancelNewComment(lineIdx: Int) {
     val loc = lineToLocation(lineIdx) ?: return
     diffReviewVm.cancelNewDiscussion(loc)
+  }
+
+  override fun requestNewComment(lineRange: LineRange) {
+    TODO("not implemented")
+  }
+
+  override fun canCreateComment(lineRange: LineRange): Boolean {
+    TODO("not implemented")
   }
 
   override fun toggleComments(lineIdx: Int) {
@@ -214,20 +231,23 @@ private class DiffEditorModel(
   private inner class MappedDiscussion(vm: GitLabMergeRequestDiffDiscussionViewModel)
     : GitLabMergeRequestEditorMappedComponentModel.Discussion<GitLabMergeRequestDiffDiscussionViewModel>(vm) {
     override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hiddenState) { visible, hidden -> visible && !hidden }
-    override val line: StateFlow<Int?> = vm.location.mapState { loc -> loc?.let { locationToLine(it) } }
+    override val range: StateFlow<LineRange?> = vm.location.mapState { it?.toLineRange(locationToLine) }
+    override val line: StateFlow<Int?> = range.mapState { it?.end }
   }
 
   private inner class MappedDraftNote(vm: GitLabMergeRequestDiffDraftNoteViewModel)
     : GitLabMergeRequestEditorMappedComponentModel.DraftNote<GitLabMergeRequestDiffDraftNoteViewModel>(vm) {
     override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hiddenState) { visible, hidden -> visible && !hidden }
-    override val line: StateFlow<Int?> = vm.location.mapState { loc -> loc?.let { locationToLine(it) } }
+    override val range: StateFlow<LineRange?> = vm.location.mapState { it?.toLineRange(locationToLine) }
+    override val line: StateFlow<Int?> = range.mapState { it?.end }
   }
 
   private inner class MappedNewDiscussion(vm: GitLabMergeRequestDiffNewDiscussionViewModel)
     : GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<GitLabMergeRequestDiffNewDiscussionViewModel>(vm) {
     override val key: Any = "NEW_${vm.location.value}"
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
-    override val line: StateFlow<Int?> = vm.location.mapState { loc -> loc?.let { locationToLine(it) } }
+    override val range: StateFlow<LineRange?> = vm.location.mapState { it?.toLineRange(locationToLine) }
+    override val line: StateFlow<Int?> = range.mapState { it?.end }
 
     override fun cancel() {
       vm.location.value?.let(diffReviewVm::cancelNewDiscussion)
@@ -240,4 +260,10 @@ private class DiffEditorModel(
   ) : CodeReviewEditorGutterControlsModel.ControlsState {
     override fun isLineCommentable(lineIdx: Int): Boolean = true
   }
+}
+
+private fun GitLabNoteLocation.toLineRange(locationToLine: (DiffLineLocation) -> Int?): LineRange? {
+  val start = locationToLine(startSide to startLineIdx) ?: return null
+  val end = locationToLine(side to lineIdx) ?: return null
+  return LineRange(start, end)
 }

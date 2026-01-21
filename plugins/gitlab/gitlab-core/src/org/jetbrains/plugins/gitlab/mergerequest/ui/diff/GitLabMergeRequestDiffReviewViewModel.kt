@@ -23,6 +23,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNoteLocation
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabPersistentMergeRequestChangesViewedState
@@ -39,8 +40,8 @@ interface GitLabMergeRequestDiffReviewViewModel {
   val draftDiscussions: StateFlow<ComputedResult<Collection<GitLabMergeRequestDiffDraftNoteViewModel>>>
   val newDiscussions: StateFlow<Collection<GitLabMergeRequestDiffNewDiscussionViewModel>>
 
-  val locationsWithDiscussions: StateFlow<Set<DiffLineLocation>>
-  val locationsWithNewDiscussions: StateFlow<Set<DiffLineLocation>>
+  val locationsWithDiscussions: StateFlow<Set<GitLabNoteLocation>>
+  val locationsWithNewDiscussions: StateFlow<Set<GitLabNoteLocation>>
 
   val avatarIconsProvider: IconsProvider<GitLabUserDTO>
   val imageLoader: GitLabImageLoader
@@ -54,6 +55,8 @@ interface GitLabMergeRequestDiffReviewViewModel {
 
   fun requestNewDiscussion(location: DiffLineLocation, focus: Boolean)
   fun cancelNewDiscussion(location: DiffLineLocation)
+  fun requestNewDiscussion(location: GitLabNoteLocation, focus: Boolean)
+  fun cancelNewDiscussion(location: GitLabNoteLocation)
 
   fun markViewed()
 }
@@ -91,13 +94,13 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
     }
   }.stateInNow(cs, emptyList())
 
-  override val locationsWithDiscussions: StateFlow<Set<DiffLineLocation>> = GitLabMergeRequestDiscussionUtil
+  override val locationsWithDiscussions: StateFlow<Set<GitLabNoteLocation>> = GitLabMergeRequestDiscussionUtil
     .createDiscussionsPositionsFlow(mergeRequest, discussionsViewOption).toLocations {
       it.mapToLocation(diffData, Side.LEFT)
     }.stateInNow(cs, emptySet())
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override val locationsWithNewDiscussions: StateFlow<Set<DiffLineLocation>> =
+  override val locationsWithNewDiscussions: StateFlow<Set<GitLabNoteLocation>> =
     discussionsContainer.newDiscussions
       .map {
         it.keys.mapNotNullTo(mutableSetOf()) {
@@ -118,6 +121,14 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
       GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition(it, location.first)
     }
     discussionsContainer.cancelNewDiscussion(position)
+  }
+
+  override fun requestNewDiscussion(location: GitLabNoteLocation, focus: Boolean) {
+    TODO("not implemented")
+  }
+
+  override fun cancelNewDiscussion(location: GitLabNoteLocation) {
+    TODO("not implemented")
   }
 
   override fun markViewed() {

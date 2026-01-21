@@ -4,9 +4,11 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewActiveRangesTracker
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlayRangeOutlineUtils
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
 import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
 import com.intellij.collaboration.ui.codereview.editor.renderInlays
@@ -40,6 +42,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -146,8 +149,15 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
         CodeReviewEditorGutterControlsRenderer.render(model, editor)
       }
       launchNow {
-        editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GitLabMergeRequestEditorMappedComponentModel::key)) {
-          createRenderer(it, fileVm.avatarIconsProvider, fileVm.imageLoader)
+        val activeRangesTracker = CodeReviewActiveRangesTracker()
+        editor.renderInlays(
+          model.inlays,
+          HashingUtil.mappingStrategy(GitLabMergeRequestEditorMappedComponentModel::key)) { inlayModel ->
+          createRenderer(inlayModel, fileVm.avatarIconsProvider, fileVm.imageLoader, activeRangesTracker).also { inlayRenderer ->
+            launch {
+              CodeReviewEditorInlayRangeOutlineUtils.showInlayOutline(editor, model, inlayModel, inlayRenderer, activeRangesTracker)
+            }
+          }
         }
       }
 
@@ -167,18 +177,19 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
     inlayModel: GitLabMergeRequestEditorMappedComponentModel,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
     imageLoader: GitLabImageLoader,
+    activeRangesTracker: CodeReviewActiveRangesTracker,
   ) =
     when (inlayModel) {
       is GitLabMergeRequestEditorMappedComponentModel.Discussion<*> ->
-        GitLabMergeRequestDiscussionInlayRenderer(this, project, inlayModel.vm, avatarIconsProvider,
-                                                  imageLoader,
+        GitLabMergeRequestDiscussionInlayRenderer(this, project, inlayModel, avatarIconsProvider,
+                                                  imageLoader, activeRangesTracker,
                                                   GitLabStatistics.MergeRequestNoteActionPlace.EDITOR)
       is GitLabMergeRequestEditorMappedComponentModel.DraftNote<*> ->
-        GitLabMergeRequestDraftNoteInlayRenderer(this, project, inlayModel.vm, avatarIconsProvider,
-                                                 imageLoader,
+        GitLabMergeRequestDraftNoteInlayRenderer(this, project, inlayModel, avatarIconsProvider,
+                                                 imageLoader, activeRangesTracker,
                                                  GitLabStatistics.MergeRequestNoteActionPlace.EDITOR)
       is GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<*> ->
-        GitLabMergeRequestNewDiscussionInlayRenderer(this, project, inlayModel.vm, avatarIconsProvider,
+        GitLabMergeRequestNewDiscussionInlayRenderer(this, project, inlayModel, avatarIconsProvider, activeRangesTracker,
                                                      GitLabStatistics.MergeRequestNoteActionPlace.EDITOR, inlayModel::cancel)
 
     }

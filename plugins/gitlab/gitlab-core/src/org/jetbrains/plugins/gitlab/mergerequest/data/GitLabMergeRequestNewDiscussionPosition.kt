@@ -24,6 +24,10 @@ data class GitLabMergeRequestNewDiscussionPosition(
   override val filePathAfter: String? get() = paths.newPath
   override val lineIndexLeft: Int? get() = oldLineIndex
   override val lineIndexRight: Int? get() = newLineIndex
+  override val startOldLine: Int? get() = lineRange?.start?.oldLine
+  override val startNewLine: Int? get() = lineRange?.start?.newLine
+  override val endOldLine: Int? get() = lineRange?.end?.oldLine
+  override val endNewLine: Int? get() = lineRange?.end?.newLine
 
   companion object {
     fun calcFor(diffData: GitTextFilePatchWithHistory, location: DiffLineLocation): GitLabMergeRequestNewDiscussionPosition {

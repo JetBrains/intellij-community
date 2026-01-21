@@ -124,15 +124,18 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
   override val newDiscussions: StateFlow<Collection<GitLabMergeRequestEditorNewDiscussionViewModel>> =
     discussionsContainer.newDiscussions.map {
       it.mapNotNull { (position, vm) ->
-        val line = position.mapToLocation(diffData)?.takeIf { it.first == Side.RIGHT }?.second ?: return@mapNotNull null
-        GitLabMergeRequestEditorNewDiscussionViewModel(vm, line, discussionsViewOption)
+        val location =
+          position.mapToLocation(diffData)?.takeIf { it.startSide == Side.RIGHT && it.side == Side.RIGHT } ?: return@mapNotNull null
+        GitLabMergeRequestEditorNewDiscussionViewModel(vm, location, discussionsViewOption)
       }
     }.stateInNow(cs, emptyList())
 
   override val linesWithDiscussions: StateFlow<Set<Int>> =
     GitLabMergeRequestDiscussionUtil
       .createDiscussionsPositionsFlow(mergeRequest, discussionsViewOption).toLines {
-        it.mapToLocation(diffData, Side.RIGHT)?.takeIf { it.first == Side.RIGHT }?.second
+        it.mapToLocation(diffData, Side.RIGHT)?.takeIf {
+          it.startSide == Side.RIGHT && it.side == Side.RIGHT
+        }?.lineIdx
       }.stateInNow(cs, emptySet())
 
   override val canNavigate: Boolean = diffData.isCumulative
@@ -144,7 +147,9 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
     discussionsContainer.newDiscussions
       .map {
         it.keys.mapNotNullTo(mutableSetOf()) {
-          it.mapToLocation(diffData)?.takeIf { it.first == Side.RIGHT }?.second ?: return@mapNotNullTo null
+          it.mapToLocation(diffData)?.takeIf {
+            it.startSide == Side.RIGHT && it.side == Side.RIGHT
+          }?.lineIdx ?: return@mapNotNullTo null
         }
       }
       .stateInNow(cs, emptySet())
