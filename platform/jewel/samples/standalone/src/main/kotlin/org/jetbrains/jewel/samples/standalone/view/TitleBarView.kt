@@ -25,6 +25,7 @@ import org.jetbrains.jewel.ui.painter.hints.Size
 import org.jetbrains.jewel.window.DecoratedWindowScope
 import org.jetbrains.jewel.window.TitleBar
 import org.jetbrains.jewel.window.newFullscreenControls
+import org.jetbrains.jewel.window.utils.clientRegion
 
 @ExperimentalLayoutApi
 @Composable
@@ -32,7 +33,7 @@ internal fun DecoratedWindowScope.TitleBarView() {
     TitleBar(Modifier.newFullscreenControls(), gradientStartColor = MainViewModel.projectColor) {
         Row(Modifier.align(Alignment.Start)) {
             Dropdown(
-                Modifier.height(30.dp),
+                Modifier.height(30.dp).clientRegion("dropdown"),
                 menuContent = {
                     MainViewModel.views.forEach {
                         selectableItem(
@@ -73,7 +74,7 @@ internal fun DecoratedWindowScope.TitleBarView() {
                 val jewelGithubLink = "https://github.com/JetBrains/intellij-community/tree/master/platform/jewel"
                 IconButton(
                     { Desktop.getDesktop().browse(URI.create(jewelGithubLink)) },
-                    Modifier.size(40.dp).padding(5.dp),
+                    Modifier.size(40.dp).padding(5.dp).clientRegion("github_link"),
                 ) {
                     Icon(ShowcaseIcons.gitHub, "Github")
                 }
@@ -99,7 +100,7 @@ internal fun DecoratedWindowScope.TitleBarView() {
                                 IntUiThemes.System -> IntUiThemes.Light
                             }
                     },
-                    Modifier.size(40.dp).padding(5.dp),
+                    Modifier.size(40.dp).padding(5.dp).clientRegion("switch_theme"),
                 ) {
                     when (MainViewModel.theme) {
                         IntUiThemes.Light ->
