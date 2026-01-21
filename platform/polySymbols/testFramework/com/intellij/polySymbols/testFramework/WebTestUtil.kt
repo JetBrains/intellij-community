@@ -38,6 +38,7 @@ import com.intellij.polySymbols.impl.canUnwrapSymbols
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.utils.PolySymbolDeclaredInPsi
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -370,7 +371,11 @@ fun CodeInsightTestFixture.polySymbolAtCaret(): PolySymbol? =
 
 
 fun CodeInsightTestFixture.polySymbolSourceAtCaret(): PsiElement? =
-  polySymbolAtCaret()?.let { it as? PsiSourcedPolySymbol }?.source
+  when (val symbol = polySymbolAtCaret()){
+    is PsiSourcedPolySymbol -> symbol.source
+    is PolySymbolDeclaredInPsi -> symbol.sourceElement
+    else -> null
+  }
 
 fun CodeInsightTestFixture.resolvePolySymbolReference(signature: String): PolySymbol {
   val symbols = multiResolvePolySymbolReference(signature)
