@@ -609,13 +609,6 @@
     <depends>-com-intellij-css-</depends>
     <depends>com.intellij.modules.xml</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.guice/META-INF/plugin.xml">
-    <id>-com-intellij-guice-</id>
-    <name>Guice</name>
-    <depends>-com-intellij-properties-</depends>
-    <depends>com.intellij.modules.java</depends>
-    <depends>com.intellij.modules.ultimate</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.flex/META-INF/plugin.xml">
     <id>-com-intellij-flex-</id>
     <name>Flash/Flex</name>
