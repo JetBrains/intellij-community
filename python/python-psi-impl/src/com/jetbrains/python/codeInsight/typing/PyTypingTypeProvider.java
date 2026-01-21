@@ -1213,8 +1213,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     if (typeHint instanceof PyReferenceExpression && element instanceof PyTypedElement) {
       TypeEvalContext typeContext = context.getTypeContext();
       final PyType type;
-      if (context.myUseFqn) {
-        var class_ = PyPsiFacade.getInstance(element.getProject()).createClassByQName(element.getText(), element);
+      if (context.myUseFqn && element instanceof PyReferenceExpression referenceExpression) {
+        var qualifiedName = referenceExpression.asQualifiedName();
+        var project = element.getProject();
+        var class_ = qualifiedName != null ? PyPsiFacade.getInstance(project).createClassByQName(qualifiedName.toString(), element) : null;
         type = class_ != null ? class_.getType(typeContext) : null;
       }
       else {
