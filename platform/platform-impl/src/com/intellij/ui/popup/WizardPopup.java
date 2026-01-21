@@ -353,27 +353,30 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       return computeNotBiggerDimension(super.getPreferredSize().getSize(), focusOwner);
     }
 
-    private static Dimension computeNotBiggerDimension(Dimension ofContent, @Nullable Component focusOwner) {
-      Point locationOnScreen = null;
-      if (focusOwner != null && focusOwner.isShowing()) {
-        locationOnScreen = focusOwner.getLocationOnScreen();
-      }
-      int resultHeight;
-      if (locationOnScreen == null) {
-        resultHeight = ofContent.height > MAX_SIZE.height + 50 ? MAX_SIZE.height : ofContent.height;
-      }
-      else {
-        Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
-        resultHeight = Math.min(ofContent.height, r.height - (r.height / 4));
-      }
+    private static Dimension computeNotBiggerDimension(@NotNull Dimension ofContent, @Nullable Component focusOwner) {
+      int defaultHeight = ofContent.height > MAX_SIZE.height + 50 ? MAX_SIZE.height : ofContent.height;
+      @Nullable Integer computedHeight = computeNotBiggerHeight(ofContent, focusOwner);
+      int resultHeight = computedHeight != null ? computedHeight : defaultHeight;
 
       int resultWidth = Math.min(ofContent.width, MAX_SIZE.width);
-
       if (ofContent.height > resultHeight) {
         resultWidth += ScrollPaneFactory.createScrollPane().getVerticalScrollBar().getPreferredSize().getWidth();
       }
 
       return new Dimension(resultWidth, resultHeight);
+    }
+
+    private static @Nullable Integer computeNotBiggerHeight(@NotNull Dimension ofContent, @Nullable Component focusOwner) {
+      @Nullable Integer resultHeight = null;
+      Point locationOnScreen = null;
+      if (focusOwner != null && focusOwner.isShowing()) {
+        locationOnScreen = focusOwner.getLocationOnScreen();
+      }
+      if (locationOnScreen != null) {
+        Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
+        resultHeight = Math.min(ofContent.height, r.height - (r.height / 4));
+      }
+      return resultHeight;
     }
   }
 
