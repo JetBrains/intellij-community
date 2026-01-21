@@ -70,8 +70,7 @@ public class StoredContent extends Content {
 
   @Override
   public boolean isAvailable() {
-    //return myContentId != UNAVAILABLE;
-    return true;
+    return myContentId != UNAVAILABLE;
   }
 
   private static PersistentFS getFS() {
