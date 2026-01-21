@@ -272,7 +272,7 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
           (fontPreferences as ModifiableFontPreferences).apply {
             setCharacterVariant(feature, cb.isSelected)
           }
-          fireSchemeChanged()
+          fireFontChanged()
         }
         .component
 
