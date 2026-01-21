@@ -1,12 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.UnnamedConfigurable
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.*
@@ -20,14 +19,18 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vcs.configurable.VcsDirectoryConfigurationPanel.Companion.buildVcsesComboBox
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
-import com.intellij.openapi.vcs.impl.VcsDescriptor
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.dialog.VcsDialogUtils.getMorePluginsLink
+import com.intellij.vcs.VcsDisposable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.event.ActionListener
 import javax.swing.JComponent
@@ -41,16 +44,15 @@ internal class VcsMappingConfigurationDialog(
 ) : DialogWrapper(project, false) {
 
   private val vcsManager: ProjectLevelVcsManager = ProjectLevelVcsManager.getInstance(project)
+  private val coroutineScope = VcsDisposable.getInstance(project).childScope("VcsMappingConfigurationDialog", disposable)
 
   private val vcsComboBox: ComboBox<AbstractVcs?> = buildVcsesComboBox(project)
   private val directoryTextField: TextFieldWithBrowseButton = TextFieldWithBrowseButton()
-  private val vcsConfigurablePlaceholder: JPanel = JPanel(BorderLayout())
+  private val content = VcsMappingDialogContent()
 
   private val directoryRadioButton: JRadioButton = JRadioButton(VcsBundle.message("vcs.common.labels.directory"))
   private val projectRadioButton: JRadioButton = JRadioButton()
 
-  private var vcsConfigurable: UnnamedConfigurable? = null
-  private var vcsConfigurableComponent: JComponent? = null
   private var mappingCopy: VcsDirectoryMapping = VcsDirectoryMapping("", "")
 
   init {
@@ -75,7 +77,7 @@ internal class VcsMappingConfigurationDialog(
 
   fun getMapping(): VcsDirectoryMapping {
     val vcs = vcsComboBox.item
-    val vcsName = vcs?.name ?: ""
+    val vcsName = vcs?.name.orEmpty()
     val directory = if (projectRadioButton.isSelected) "" else toSystemIndependentName(directoryTextField.text)
     return VcsDirectoryMapping(directory, vcsName, mappingCopy.rootSettings)
   }
@@ -96,7 +98,7 @@ internal class VcsMappingConfigurationDialog(
       cell(vcsComboBox)
         .resizableColumn()
         .align(AlignX.FILL)
-      cell(getMorePluginsLink(contentPanel, Runnable { close(CANCEL_EXIT_CODE) }))
+      cell(getMorePluginsLink(contentPanel) { close(CANCEL_EXIT_CODE) })
     }.layout(RowLayout.LABEL_ALIGNED)
 
     buttonsGroup {
@@ -115,30 +117,20 @@ internal class VcsMappingConfigurationDialog(
     }
 
     row {
-      cell(vcsConfigurablePlaceholder)
+      cell(content.mainPanel)
         .align(Align.FILL)
     }.resizableRow()
   }
 
   private fun updateVcsConfigurable() {
-    vcsConfigurable?.let { configurable ->
-      vcsConfigurableComponent?.let(vcsConfigurablePlaceholder::remove)
-      configurable.disposeUIResources()
-      vcsConfigurable = null
-    }
-
-    vcsComboBox.item?.getRootConfigurable(mappingCopy)
-      ?.let { newConfigurable ->
-        vcsConfigurable = newConfigurable
-        vcsConfigurableComponent = newConfigurable.createComponent()
-          ?.also { vcsConfigurablePlaceholder.add(it, BorderLayout.CENTER) }
-      }
+    val newConfigurable = vcsComboBox.item?.getRootConfigurable(mappingCopy)
+    content.update(newConfigurable)
     pack()
   }
 
   override fun doOKAction() {
     try {
-      vcsConfigurable?.apply()
+      content.apply()
     }
     catch (ex: ConfigurationException) {
       Messages.showErrorDialog(contentPanel, VcsBundle.message("settings.vcs.mapping.invalid.vcs.options.error", ex.getMessageHtml()))
@@ -166,21 +158,42 @@ internal class VcsMappingConfigurationDialog(
       super.onFileChosen(chosenFile)
       val vcs = vcsComboBox.item
       if (oldText.isEmpty() && vcs != null) {
-        object : Task.Backgroundable(this@VcsMappingConfigurationDialog.project,
-                                     VcsBundle.message("settings.vcs.mapping.status.looking.for.vcs.administrative.area"),
-                                     true) {
-          private var probableVcs: VcsDescriptor? = null
-
-          override fun run(indicator: ProgressIndicator) {
-            val allVcss = vcsManager.getAllVcss().toList()
-            probableVcs = allVcss.single { descriptor -> descriptor.probablyUnderVcs(chosenFile) }
+        coroutineScope.launch {
+          withBackgroundProgress(this@VcsMappingConfigurationDialog.project,
+                                 VcsBundle.message("settings.vcs.mapping.status.looking.for.vcs.administrative.area")) {
+            val allVcss = vcsManager.getAllVcss()
+            val probableVcs = allVcss.firstOrNull { descriptor -> descriptor.probablyUnderVcs(chosenFile) }
+            withContext(Dispatchers.EDT) {
+              probableVcs?.let { vcsComboBox.selectedItem = it }
+            }
           }
-
-          override fun onSuccess() {
-            probableVcs?.let { vcsComboBox.selectedItem = it }
-          }
-        }.queue()
+        }
       }
+    }
+  }
+
+  private class VcsMappingDialogContent {
+    val mainPanel: JPanel = JPanel(BorderLayout())
+    private var configurable: UnnamedConfigurable? = null
+    private var component: JComponent? = null
+
+    fun update(newConfigurable: UnnamedConfigurable?) {
+      dispose()
+      configurable = newConfigurable
+      component = newConfigurable?.createComponent()?.also {
+        mainPanel.add(it, BorderLayout.CENTER)
+      }
+    }
+
+    fun dispose() {
+      component?.let(mainPanel::remove)
+      configurable?.disposeUIResources()
+      configurable = null
+      component = null
+    }
+
+    fun apply() {
+      configurable?.apply()
     }
   }
 
