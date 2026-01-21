@@ -5740,17 +5740,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-debugger-agent-1_127_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.127/debugger-agent-1.127.jar",
-  sha256 = "6ff754c762e064953dcf0ffd0956f10f1e34c1c233af2348a25cb1049262cf59",
-  downloaded_file_path = "debugger-agent-1.127.jar"
+  name = "org_jetbrains_intellij_deps-debugger-agent-1_129_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.129/debugger-agent-1.129.jar",
+  sha256 = "1e15ce245f9fdb99612e00d10d01876eeb7d7043fefc2ccb0adb05302b6c5a8b",
+  downloaded_file_path = "debugger-agent-1.129.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-debugger-agent-1_127-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.127/debugger-agent-1.127-sources.jar",
-  sha256 = "a249575150e384c1737cc1a3fd2b9a671e8ba5143ab9a6f03e0bbcd076aa93c9",
-  downloaded_file_path = "debugger-agent-1.127-sources.jar"
+  name = "org_jetbrains_intellij_deps-debugger-agent-1_129-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.129/debugger-agent-1.129-sources.jar",
+  sha256 = "c073294594a8ef0cbdec48ed7098ea6d79302fcdc7c493ee30a643c73381a082",
+  downloaded_file_path = "debugger-agent-1.129-sources.jar"
 )
 
 http_file(
