@@ -57,7 +57,7 @@ jvm_library(
 jvm_library(
   name = "ide-laf-bridge_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["ide-laf-bridge-tests/src/test/kotlin/**/*.kt", "ide-laf-bridge-tests/src/test/kotlin/**/*.java", "ide-laf-bridge-tests/src/test/kotlin/**/*.form"], allow_empty = True),
+  srcs = glob(["ide-laf-bridge-tests/src/test/kotlin/**/*.kt", "ide-laf-bridge-tests/src/test/kotlin/**/*.java", "ide-laf-bridge-tests/src/test/kotlin/**/*.form", "src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_ide-laf-bridge",
   associates = [":ide-laf-bridge"],
   deps = [
@@ -81,6 +81,12 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//platform/editor-ui-ex:editor-ex",
     "//libraries/compose-foundation-desktop-junit",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//plugins/textmate",
+    "//plugins/textmate/plugin",
+    "@lib//:io-mockk-jvm",
   ],
   exports = [
     "//platform/jewel/foundation",
