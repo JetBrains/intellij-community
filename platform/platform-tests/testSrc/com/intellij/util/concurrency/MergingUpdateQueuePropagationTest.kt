@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency
 
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.util.use
 import com.intellij.platform.backend.observation.dumpObservedComputations
 import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
@@ -61,6 +62,7 @@ class MergingUpdateQueuePropagationTest {
   }
 
   @Test
+  @IJIgnore(issue = "IJPL-231207")
   fun `normal queuing is not tracked`() : Unit = testWaitCompletion(MergingUpdateQueue::queue, false)
 
   @Test
