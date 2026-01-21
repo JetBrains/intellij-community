@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -8,6 +8,8 @@ import com.intellij.psi.impl.java.stubs.PsiImportStatementStub;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl implements PsiImportStaticStatement {
   public static final PsiImportStaticStatementImpl[] EMPTY_ARRAY = new PsiImportStaticStatementImpl[0];
@@ -71,8 +73,22 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
     }
   }
 
+  private @Nullable String getQualifiedName() {
+    PsiJavaCodeReferenceElement reference = getImportReference();
+    if (reference == null) return null;
+    return reference.getCanonicalText();
+  }
+
   @Override
-  public void accept(@NotNull PsiElementVisitor visitor){
+  public boolean isReplaceEquivalent(PsiImportStatementBase other) {
+    if (this == other) return true;
+    if (!(other instanceof PsiImportStaticStatementImpl)) return false;
+    PsiImportStaticStatementImpl statement = (PsiImportStaticStatementImpl)other;
+    return isOnDemand() == statement.isOnDemand() && Objects.equals(getQualifiedName(), statement.getQualifiedName());
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitImportStaticStatement(this);
     }
@@ -82,7 +98,7 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
   }
 
   @Override
-  public String toString(){
+  public String toString() {
     return "PsiImportStaticStatement";
   }
 }

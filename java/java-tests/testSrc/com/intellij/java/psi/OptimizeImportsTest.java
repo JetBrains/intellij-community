@@ -331,6 +331,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     doTest();
   }
 
+  public void testNoModifications() { doTest(); }
   public void testKeepCommentsOnImports() { doTest("Removed 3 imports"); }
   public void testNewImportListIsEmptyAndCommentPreserved() { doTest(); }
   public void testNewImportListIsEmptyAndJavaDocWithInvalidCodePreserved() { doTest(); }

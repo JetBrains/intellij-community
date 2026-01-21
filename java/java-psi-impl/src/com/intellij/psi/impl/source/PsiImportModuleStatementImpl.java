@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -20,6 +20,7 @@ import java.lang.ref.SoftReference;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 import static com.intellij.reference.SoftReference.dereference;
@@ -121,6 +122,13 @@ public class PsiImportModuleStatementImpl extends PsiImportStatementBaseImpl imp
   @Override
   public boolean isOnDemand() {
     return true;
+  }
+
+  @Override
+  public boolean isReplaceEquivalent(PsiImportStatementBase other) {
+    if (this == other) return true;
+    if (!(other instanceof PsiImportModuleStatementImpl)) return false;
+    return Objects.equals(getReferenceName(), ((PsiImportModuleStatementImpl)other).getReferenceName());
   }
 
   @Override
