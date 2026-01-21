@@ -1,5 +1,5 @@
 load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
-load("@rules_jvm//:src/jvm-args.bzl", "get_jvm_flags")
+load("@rules_jvm//:jvm-args.bzl", "get_jvm_flags")
 
 string_list_flag(
     name = "jvm-inc-builder-test_jvm_flags",

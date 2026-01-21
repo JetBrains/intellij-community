@@ -2,7 +2,7 @@ load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
 load("@rules_java//java:defs.bzl", "java_binary", "java_test")
 load("@rules_jvm//:jvm.bzl", "jvm_import")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-load("//:src/jvm-args.bzl", "get_jvm_flags")
+load("//:jvm-args.bzl", "get_jvm_flags")
 
 java_binary(
     name = "jvm-inc-builder",
@@ -97,7 +97,7 @@ kt_jvm_library(
         "//:qdox_import",
         "//dependency-graph",
         "//jps-builders-6:build-javac-rt",
-        "//src/worker-framework",
+        "//worker-framework",
         "//zip",
         ":forms_import",  # forms compilation support
         ":jaxen_import",  # forms compilation support

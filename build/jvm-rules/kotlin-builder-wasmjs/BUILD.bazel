@@ -2,7 +2,7 @@ load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("//:jvm.bzl", "jvm_import")
-load("//:src/jvm-args.bzl", "get_jvm_flags")
+load("//:jvm-args.bzl", "get_jvm_flags")
 
 java_binary(
     name = "kotlin-builder-wasmjs",
