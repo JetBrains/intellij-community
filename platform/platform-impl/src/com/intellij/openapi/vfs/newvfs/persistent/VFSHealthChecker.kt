@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 
 package com.intellij.openapi.vfs.newvfs.persistent
@@ -37,6 +37,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
+import kotlin.math.min
 import kotlin.system.exitProcess
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
@@ -230,12 +231,14 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
 
     val allRoots = IntOpenHashSet(impl.listRoots())
     val invalidFlagsMask = PersistentFS.Flags.getAllValidFlags().inv()
-    val fileIdsChunks = (FSRecords.MIN_REGULAR_FILE_ID..maxAllocatedID).chunked(RECORD_CHUNK_SIZE)
     val report = VFSHealthCheckReport.FileRecordsReport()
+
     return report.apply {
-      for(fileIdsChunk in fileIdsChunks){
+      for(fileIdsChunkStart in FSRecords.MIN_REGULAR_FILE_ID..maxAllocatedID step RECORD_CHUNK_SIZE) {
+        val fileIdsChunkEnd = min(fileIdsChunkStart + RECORD_CHUNK_SIZE - 1, maxAllocatedID)
+
         val checkChunkFilesTask = task@{
-          for (fileId in fileIdsChunk) {
+          for (fileId in fileIdsChunkStart..fileIdsChunkEnd) {
             try {
               val nameId = fileRecords.getNameId(fileId)
               val parentId = fileRecords.getParent(fileId)
