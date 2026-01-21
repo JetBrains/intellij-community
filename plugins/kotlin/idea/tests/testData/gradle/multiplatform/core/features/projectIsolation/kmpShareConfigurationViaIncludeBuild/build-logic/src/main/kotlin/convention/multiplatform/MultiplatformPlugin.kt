@@ -21,15 +21,9 @@ class MultiplatformPlugin : Plugin<Project> {
 
 private fun Project.configureMultiplatform(options: MultiplatformOptionsExtension) {
     extensions.configure<KotlinMultiplatformExtension> {
-        val (jvm, android, linux, iOS, tvOS, macOS, watchOS, windows) = options
+        val (jvm, linux, iOS, tvOS, macOS, watchOS, windows) = options
 
         explicitApi()
-
-        if (android) androidTarget {
-            compilerOptions {
-                freeCompilerArgs.addAll(Config.jvmCompilerArgs)
-            }
-        }
 
         if (jvm) jvm {
             compilerOptions {
@@ -46,21 +40,17 @@ private fun Project.configureMultiplatform(options: MultiplatformOptionsExtensio
 
         sequence {
             if (iOS) {
-                <!LINE_MARKER("descr='Suspend function call'")!>yield<!>(iosX64())
                 <!LINE_MARKER("descr='Suspend function call'")!>yield<!>(iosArm64())
                 <!LINE_MARKER("descr='Suspend function call'")!>yield<!>(iosSimulatorArm64())
             }
             if (macOS) {
-                <!LINE_MARKER("descr='Suspend function call'")!>yield<!>(macosX64())
                 <!LINE_MARKER("descr='Suspend function call'")!>yield<!>(macosArm64())
             }
             if (tvOS) {
-                <!LINE_MARKER("descr='Suspend function call'")!>yield<!>(tvosX64())
                 <!LINE_MARKER("descr='Suspend function call'")!>yield<!>(tvosArm64())
                 <!LINE_MARKER("descr='Suspend function call'")!>yield<!>(tvosSimulatorArm64())
             }
             if (watchOS) {
-                <!LINE_MARKER("descr='Suspend function call'")!>yield<!>(watchosX64())
                 <!LINE_MARKER("descr='Suspend function call'")!>yield<!>(watchosArm64())
                 <!LINE_MARKER("descr='Suspend function call'")!>yield<!>(watchosDeviceArm64())
                 <!LINE_MARKER("descr='Suspend function call'")!>yield<!>(watchosSimulatorArm64())
