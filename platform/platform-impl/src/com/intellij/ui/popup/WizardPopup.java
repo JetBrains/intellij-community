@@ -12,10 +12,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.PopupBorder;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.UiInterceptors;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.AnchoredPoint;
 import com.intellij.ui.popup.list.ComboBoxPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -24,6 +22,7 @@ import com.intellij.ui.popup.util.MnemonicsSearch;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.TimerUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
@@ -367,16 +366,26 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     }
 
     private static @Nullable Integer computeNotBiggerHeight(@NotNull Dimension ofContent, @Nullable Component focusOwner) {
-      @Nullable Integer resultHeight = null;
-      Point locationOnScreen = null;
-      if (focusOwner != null && focusOwner.isShowing()) {
-        locationOnScreen = focusOwner.getLocationOnScreen();
+      @Nullable Integer screenHeight = null;
+      if (StartupUiUtil.isWaylandToolkit()) {
+        if (focusOwner == null) return null;
+        Component parent = ComponentUtil.findUltimateParent(focusOwner);
+        // Check for IdeFrameImpl here because other windows can be too small for this calculation to have any meaning.
+        // The ultimate parent should be an IdeFrameImpl anyway.
+        if (!(parent instanceof IdeFrameImpl window) || !window.isShowing()) return null;
+        screenHeight = window.getHeight();
       }
-      if (locationOnScreen != null) {
-        Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
-        resultHeight = Math.min(ofContent.height, r.height - (r.height / 4));
+      else {
+        Point locationOnScreen = null;
+        if (focusOwner != null && focusOwner.isShowing()) {
+          locationOnScreen = focusOwner.getLocationOnScreen();
+        }
+        if (locationOnScreen != null) {
+          Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
+          screenHeight = r.height;
+        }
       }
-      return resultHeight;
+      return screenHeight == null ? null : Math.min(ofContent.height, screenHeight - (screenHeight / 4));
     }
   }
 
