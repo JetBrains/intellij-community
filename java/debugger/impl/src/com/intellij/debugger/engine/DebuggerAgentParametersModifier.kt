@@ -3,11 +3,15 @@ package com.intellij.debugger.engine
 
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 @ApiStatus.Internal
 interface DebuggerAgentParametersModifier {
-  fun modify(parametersList: ParametersList)
+  fun modifyParameters(parametersList: ParametersList, project: Project?) { }
+
+  fun modifyProperties(properties: Properties, project: Project?) { }
 
   companion object {
     private val EP: ExtensionPointName<DebuggerAgentParametersModifier> =

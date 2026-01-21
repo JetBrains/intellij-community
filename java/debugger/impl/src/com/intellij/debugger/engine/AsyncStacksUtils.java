@@ -373,7 +373,7 @@ public final class AsyncStacksUtils {
     }
 
     for (var modifier : DebuggerAgentParametersModifier.getAgentModifiers()) {
-      modifier.modify(parametersList);
+      modifier.modifyParameters(parametersList, project);
     }
   }
 
@@ -494,6 +494,9 @@ public final class AsyncStacksUtils {
 
   private static String generateAgentSettings(@Nullable Project project) {
     Properties properties = CaptureSettingsProvider.getPointsProperties(project);
+    for (var modifier : DebuggerAgentParametersModifier.getAgentModifiers()) {
+      modifier.modifyProperties(properties, project);
+    }
     if (isSuspendHelperEnabled()) {
       properties.setProperty("suspendHelper", "true");
     }
