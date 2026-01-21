@@ -10,6 +10,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.nio.file.Files
+import java.nio.file.Paths
 
 internal val LOG = fileLogger()
 
@@ -58,5 +60,18 @@ internal data class ModuleTests(val module: String?, val tests: List<String>)
 internal fun isMaven(project: Project): Boolean =
   MavenProjectsManager.getInstance(project).hasProjects()
 
-internal fun isGradle(project: Project): Boolean =
-  ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).getLinkedProjectsSettings().isNotEmpty()
+internal fun isGradle(project: Project): Boolean {
+  val isGradleProjectFound = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).getLinkedProjectsSettings().isNotEmpty()
+  if (isGradleProjectFound) {
+    return isGradleProjectFound
+  }
+  val isGradleFilePresent = project.basePath?.let {
+    Files.exists(Paths.get(it, GradleConstants.DEFAULT_SCRIPT_NAME)) ||
+    Files.exists(Paths.get(it, GradleConstants.KOTLIN_DSL_SCRIPT_NAME))
+  } ?: false
+  if (isGradleFilePresent) {
+    LOG.warn("Gradle file is present, but no Gradle project configured in IDEA. " +
+             "This might affect the set of tools in MCP available to agent. Project: ${project.basePath}")
+  }
+  return isGradleFilePresent
+}
