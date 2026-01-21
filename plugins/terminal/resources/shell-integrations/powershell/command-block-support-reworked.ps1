@@ -89,19 +89,42 @@ function Global:__JetBrainsIntellijSendCompletions {
 	$CursorIndex = 0
 	[Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$CommandText, [ref]$CursorIndex)
 
-	$Completions = TabExpansion2 -inputScript $CommandText -cursorColumn $CursorIndex
-  if ($Completions -ne $null) {
-    $ResultObject = [PSCustomObject]@{
-      CommandText = $CommandText
-      CursorIndex = $CursorIndex
-      ReplacementIndex = $Completions.ReplacementIndex
-      ReplacementLength = $Completions.ReplacementLength
-      CompletionMatches = $Completions.CompletionMatches
+  $ResultObject = $null
+	if ($CommandText.Length -eq 0) {
+	  # TabExpansion2 will throw if command text is empty, so just return an empty result.
+	  $ResultObject = [PSCustomObject]@{
+      CommandText = ""
+      CursorIndex = 0
+      ReplacementIndex = 0
+      ReplacementLength = 0
+      CompletionMatches = @()
     }
-    $ResultJson = $ResultObject | ConvertTo-Json -Compress
-    $ResultOSC = Global:__JetBrainsIntellijOSC "completion_finished;result=$(Global:__JetBrainsIntellijEncode $ResultJson)"
-  	Write-Host -NoNewLine $ResultOSC
-  }
+	}
+	else {
+  	$Completions = TabExpansion2 -inputScript $CommandText -cursorColumn $CursorIndex
+    if ($Completions -ne $null) {
+      $ResultObject = [PSCustomObject]@{
+        CommandText = $CommandText
+        CursorIndex = $CursorIndex
+        ReplacementIndex = $Completions.ReplacementIndex
+        ReplacementLength = $Completions.ReplacementLength
+        CompletionMatches = $Completions.CompletionMatches
+      }
+    }
+    else {
+      $ResultObject = [PSCustomObject]@{
+        CommandText = $CommandText
+        CursorIndex = $CursorIndex
+        ReplacementIndex = $CursorIndex
+        ReplacementLength = 0
+        CompletionMatches = @()
+      }
+    }
+	}
+
+  $ResultJson = $ResultObject | ConvertTo-Json -Compress
+  $ResultOSC = Global:__JetBrainsIntellijOSC "completion_finished;result=$(Global:__JetBrainsIntellijEncode $ResultJson)"
+  Write-Host -NoNewLine $ResultOSC
 }
 
 Set-PSReadLineKeyHandler -Chord 'F12,e' -ScriptBlock {
