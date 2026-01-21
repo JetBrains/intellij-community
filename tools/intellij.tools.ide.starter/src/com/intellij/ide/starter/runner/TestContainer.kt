@@ -25,10 +25,6 @@ import kotlin.reflect.jvm.isAccessible
 typealias IDEDataPathsProvider = (testName: String, testDirectory: Path, useInMemoryFileSystem: Boolean) -> IDEDataPaths
 
 interface TestContainer<T> {
-  // TODO: Port setup hooks on using events
-  // https://youtrack.jetbrains.com/issue/AT-18/Simplify-refactor-code-for-starting-IDE-in-IdeRunContext#focus=Comments-27-8300203.0-0
-  val setupHooks: MutableList<IDETestContext.() -> IDETestContext>
-
   companion object {
     init {
       EventsBus.subscribe(TestContainer<*>::javaClass) { _: TestContextInitializedEvent ->
@@ -94,13 +90,6 @@ interface TestContainer<T> {
   }
 
   /**
-   * Allows to apply the common configuration to all created IDETestContext instances
-   */
-  fun withSetupHook(hook: IDETestContext.() -> IDETestContext): T = apply {
-    setupHooks += hook
-  } as T
-
-  /**
    * @return <Build Number, InstalledIde>
    */
   suspend fun resolveIDE(ideInfo: IdeInfo): Pair<String, InstalledIde> {
@@ -163,14 +152,14 @@ interface TestContainer<T> {
 
     testContext = applyDefaultVMOptions(testContext)
 
-    val contextWithAppliedHooks = setupHooks
-      .fold(testContext.updateGeneralSettings()) { acc, hook -> acc.hook() }
+    val preparedContext = testContext
+      .updateGeneralSettings()
       .apply { installPerformanceTestingPluginIfMissing(this) }
 
-    testCase.projectInfo.configureProjectBeforeUse.invoke(contextWithAppliedHooks)
+    testCase.projectInfo.configureProjectBeforeUse.invoke(preparedContext)
 
-    EventsBus.postAndWaitProcessing(TestContextInitializedEvent(contextWithAppliedHooks))
+    EventsBus.postAndWaitProcessing(TestContextInitializedEvent(this, preparedContext))
 
-    return contextWithAppliedHooks
+    return preparedContext
   }
 }

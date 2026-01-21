@@ -7,8 +7,6 @@ import com.intellij.ide.starter.models.TestCase
 import com.intellij.tools.ide.util.common.logOutput
 
 class RemDevTestContainer : TestContainer<RemDevTestContainer> {
-  override val setupHooks: MutableList<IDETestContext.() -> IDETestContext> = mutableListOf()
-
   override fun newContext(testName: String, testCase: TestCase<*>, preserveSystemDir: Boolean): IDETestContext {
     val container = TestContainer.newInstance<TestContainerImpl>()
 

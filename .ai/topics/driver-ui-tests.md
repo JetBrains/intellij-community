@@ -28,8 +28,8 @@ import com.intellij.ide.starter.utils.catchAll
 // Extended test infrastructure
 import com.intellij.ide.starter.extended.allure.AllureHelperExtended.step
 import com.intellij.ide.starter.extended.allure.Subsystems
-import com.intellij.ide.starter.extended.engine.JBTestContainer
-import com.intellij.ide.starter.extended.engine.newJBTestContainer
+import com.intellij.ide.starter.extended.engine.newTestContainerExtended
+import com.intellij.ide.starter.extended.engine.TestContainerExtended
 import com.intellij.ide.starter.extended.license.StagingLicenseGenerator.licenseProductCode
 import com.intellij.ide.starter.extended.loadMetadataFromServer
 import com.intellij.ide.starter.extended.setupTestMetadataSchemeWithGroupsFromCode
