@@ -1344,7 +1344,6 @@
                        key="notification.group.preview.features"/>
     <notificationGroup id="Remove redundant exports/opens" displayType="BALLOON" bundle="messages.JavaBundle"
                        key="notification.group.redundant.exports"/>
-    <notificationGroup id="Setup JDK" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.setup.jdk"/>
     <notificationGroup id="External annotations" displayType="BALLOON" bundle="messages.JavaBundle"
                        key="notification.group.setup.external.annotations"/>
     <notificationGroup id="Test integration" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.testintegration"/>

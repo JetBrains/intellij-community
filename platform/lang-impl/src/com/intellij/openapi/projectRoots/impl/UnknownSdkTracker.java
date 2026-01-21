@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.components.Service;
@@ -287,7 +287,6 @@ public final class UnknownSdkTracker {
         }
       }
 
-      UnknownSdkBalloonNotification.getInstance(myProject).notifyFixedSdks(localFixes);
       indicator.popState();
     }
     return otherFixes;
@@ -309,7 +308,6 @@ public final class UnknownSdkTracker {
     }
     finally {
       indicator.popState();
-      UnknownSdkBalloonNotification.getInstance(myProject).notifyFixedSdks(List.of((UnknownMissingSdkFixLocal)fix));
     }
   }
 

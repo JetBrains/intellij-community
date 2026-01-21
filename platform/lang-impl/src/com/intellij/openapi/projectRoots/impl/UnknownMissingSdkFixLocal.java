@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -60,10 +60,6 @@ final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase imple
   public @NotNull @Nls String getActionShortText() {
     String sdkTypeName = mySdk.getSdkType().getPresentableName();
     return ProjectBundle.message("config.unknown.sdk.local", sdkTypeName, myFix.getPresentableVersionString());
-  }
-
-  public @NotNull @Nls String getActionAppliedMessage() {
-    return ProjectBundle.message("notification.text.sdk.usage.is.set.to", getSdkNameForUi(), myFix.getVersionString());
   }
 
   @Override
