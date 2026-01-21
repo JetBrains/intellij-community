@@ -93,7 +93,7 @@ private fun PrinterContext.expectedKonanDistForFamily(family: Family, konanTarge
             appendLine("Can't find file with serialized expected Kotlin/Native Distribution content for $family")
             appendLine("looked at: ${chosenDist.canonicalPath}")
             appendLine("Try regenerating using:")
-            val platformPrefix = "org.jetbrains.kotlin.native.platform."
+            val platformPrefix = "org.jetbrains.kotlin.native.platform"
             appendLine("ls ~/.konan/kotlin-native-prebuilt-*-${versionClassifier}/klib/platform/${anyTargetFromFamily.name}/ | fgrep ${platformPrefix} | cut -c ${platformPrefix.length}- | sort | xargs -n1 echo 'Kotlin/Native:' > '${chosenDist.canonicalPath}'")
         }
     }

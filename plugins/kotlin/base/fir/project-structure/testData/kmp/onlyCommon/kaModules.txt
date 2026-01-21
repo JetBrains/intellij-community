@@ -35,12 +35,12 @@ KaLibraryModule:
     <empty>
 
 KaLibraryModule:
-  description: Library org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.21
+  description: Library org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.4.0-dev-539
   targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
-  libraryName: org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.21
+  libraryName: org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.4.0-dev-539
   isSdk: false
   regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.21)
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.4.0-dev-539)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -66,7 +66,7 @@ KaSourceModule:
   stableModuleName: <Common>
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.21)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.4.0-dev-539)
     KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
   friendDependencies:
     <empty>
@@ -81,7 +81,7 @@ KaSourceModule:
   stableModuleName: <Common>
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.21)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.4.0-dev-539)
     KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
     KaSourceModule(Common, production)
   friendDependencies:
