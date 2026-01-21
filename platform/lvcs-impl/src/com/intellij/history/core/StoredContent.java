@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -41,7 +41,7 @@ public class StoredContent extends Content {
     };
   }
 
-  @TestOnly
+  @VisibleForTesting
   public StoredContent(int contentId) {
     myContentId = contentId;
   }
