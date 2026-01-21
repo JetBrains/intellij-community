@@ -4401,8 +4401,8 @@ f:com.intellij.codeInsight.lookup.impl.LookupTypedHandler
 - execute(com.intellij.openapi.editor.Editor,C,com.intellij.openapi.actionSystem.DataContext):V
 - s:getLookupAction(C,com.intellij.codeInsight.lookup.impl.LookupImpl):com.intellij.codeInsight.lookup.CharFilter$Result
 a:com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction
-- com.intellij.codeInsight.hint.HintManagerImpl$ActionToIgnore
 - com.intellij.openapi.editor.actionSystem.EditorAction
+- com.intellij.codeInsight.hint.HintManagerImpl$ActionToIgnore
 - com.intellij.openapi.editor.actionSystem.LatencyAwareEditorAction
 - <init>(com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$Handler):V
 - s:hasTemplatePrefix(com.intellij.codeInsight.lookup.impl.LookupImpl,C):Z
