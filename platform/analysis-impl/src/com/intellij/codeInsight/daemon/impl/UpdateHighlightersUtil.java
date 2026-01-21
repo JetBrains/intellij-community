@@ -349,7 +349,8 @@ public final class UpdateHighlightersUtil {
     }
   }
 
-  static int getLayer(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {
+  @ApiStatus.Internal
+  public static int getLayer(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {
     int hardCodedLayer = InternalLayerSuppliers.getLayerFromSuppliers(info);
     if (hardCodedLayer > 0) {
       return hardCodedLayer;
