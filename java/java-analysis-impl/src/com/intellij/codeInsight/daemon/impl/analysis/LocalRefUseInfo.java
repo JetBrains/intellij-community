@@ -377,7 +377,7 @@ public final class LocalRefUseInfo {
       if (resolveResult.getCurrentFileResolveScope() instanceof PsiImportStatementBase importStatement) {
         registerImportStatement(importStatement);
       } else if (ref instanceof PsiJavaCodeReferenceElement javaRef &&
-                 isMethodCallResolvedToLocalVariable(refElement, javaRef)) {
+                 isMethodCallResolvedToVariable(refElement, javaRef)) {
         for (PsiImportStatementBase potentialImport : IncompleteModelUtil.getPotentialImports(javaRef, false)) {
           registerImportStatement(potentialImport);
         }
@@ -469,9 +469,13 @@ public final class LocalRefUseInfo {
       registerConstructorCall(enumConstant);
     }
 
-    private static boolean isMethodCallResolvedToLocalVariable(@Nullable PsiElement refElement, @NotNull PsiJavaCodeReferenceElement javaRef) {
+    private static boolean isMethodCallResolvedToVariable(@Nullable PsiElement refElement, @NotNull PsiJavaCodeReferenceElement javaRef) {
       return javaRef.getParent() instanceof PsiMethodCallExpression &&
-             refElement instanceof PsiLocalVariable;
+             (
+               refElement instanceof PsiLocalVariable ||
+               refElement instanceof PsiField ||
+               refElement instanceof PsiParameter
+             );
     }
 
     private void registerConstructorCall(@NotNull PsiConstructorCall constructorCall) {

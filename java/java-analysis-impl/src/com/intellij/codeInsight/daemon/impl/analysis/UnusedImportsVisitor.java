@@ -271,7 +271,7 @@ public class UnusedImportsVisitor extends JavaElementVisitor {
 
       myState.builderList.add(builder);
 
-      if (!predefinedImport && !myState.requiresFix/* && importStatement.resolve() != null*/) {
+      if (!predefinedImport && !myState.requiresFix) {
         myState.requiresFix = true;
       }
     }
