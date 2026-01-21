@@ -20,9 +20,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
-import org.jetbrains.plugins.terminal.util.getNow
-import org.jetbrains.plugins.terminal.view.TerminalOutputModel
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandFinishedEvent
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
@@ -616,41 +613,6 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
 
     shellIntegration.outputStatus.first { it == TerminalOutputStatus.TypingCommand }
   }
-
-  private suspend fun TerminalCompletionFixture.assertCommandTextState(expectedCommandPattern: String) {
-    val cursorMarker = "<cursor>"
-    val expectedText = expectedCommandPattern.replace(cursorMarker, "")
-    val expectedCursorOffset = expectedCommandPattern.indexOf(cursorMarker).toLong()
-
-    val blockModel = view.shellIntegrationDeferred.getNow()!!.blocksModel
-    val activeBlock = blockModel.activeBlock as TerminalCommandBlock
-    val conditionMet = awaitOutputModelState(3.seconds) { outputModel ->
-      val commandStartOffset = activeBlock.commandStartOffset ?: return@awaitOutputModelState false
-      val textBeforeCursor = outputModel.getText(commandStartOffset, outputModel.cursorOffset).toString()
-      val textAfterCursor = outputModel.getText(outputModel.cursorOffset, outputModel.endOffset).toString()
-      val commandText = textBeforeCursor + textAfterCursor.trimEnd()
-
-      commandText == expectedText && outputModel.cursorOffset == commandStartOffset + expectedCursorOffset
-    }
-
-    val model = outputModel
-    assertThat(conditionMet)
-      .overridingErrorMessage {
-        val modelText = buildString {
-          append(model.text)
-          insert(model.cursorOffset.toAbsolute().toInt(), cursorMarker)
-        }
-        """
-          Command text doesn't match the expected pattern: '$expectedCommandPattern'
-          Current output model text:
-          
-        """.trimIndent() + modelText
-      }
-      .isTrue
-  }
-
-  private val TerminalOutputModel.text: String
-    get() = getText(startOffset, endOffset).toString()
 
   private fun createTempDir(): Path {
     return createTempDirectory().toRealPath().also {
