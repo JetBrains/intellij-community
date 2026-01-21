@@ -29,10 +29,12 @@ import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamAp
 import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.assertNotNull;
 import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.createIonWriter;
 import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readBoolean;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readBooleanNullable;
 import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readInt;
 import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readString;
 import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readStringList;
 import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeBoolean;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeBooleanNullable;
 import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeString;
 import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeStrings;
 
@@ -111,7 +113,7 @@ public final class GradleExtensionsSerializationService implements Serialization
           writeBoolean(writer, "visible", configuration.isVisible());
           writeBoolean(writer, "scriptClasspathConfiguration", configuration.isScriptClasspathConfiguration());
           writeStrings(writer, "declarationAlternatives", configuration.getDeclarationAlternatives());
-          writeBoolean(writer, "canBeDeclared", configuration.isCanBeDeclared());
+          writeBooleanNullable(writer, "canBeDeclared", configuration.getCanBeDeclared());
         }
         writer.stepOut();
       }
@@ -216,7 +218,7 @@ public final class GradleExtensionsSerializationService implements Serialization
             readBoolean(reader, "visible"),
             readBoolean(reader, "scriptClasspathConfiguration"),
             readStringList(reader, null),
-            readBoolean(reader, "canBeDeclared")
+            readBooleanNullable(reader, "canBeDeclared")
           );
         }
       });

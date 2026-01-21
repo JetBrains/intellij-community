@@ -97,20 +97,16 @@ class ProjectExtensionsDataBuilderImpl : ModelBuilderService {
             visible,
             scriptClasspathConfiguration,
             getDeclarationAlternatives(configuration),
-            isCanBeDeclared(configuration)
+            canBeDeclared(configuration)
           )
         )
       }
       return result
     }
 
-    /**
-     * @return `true` if a configuration can have dependencies declared. For example, if it's a scope or an annotation processor.
-     * Could be used since Gradle 8.2.
-     * [Gradle documentation](https://docs.gradle.org/current/kotlin-dsl/gradle/org.gradle.api.artifacts/-configuration/is-can-be-declared.html)
-     */
-    private fun isCanBeDeclared(configuration: Configuration): Boolean =
-      isCurrentGradleAtLeast("8.2") && configuration.isCanBeDeclared
+    private fun canBeDeclared(configuration: Configuration): Boolean? =
+      if (isCurrentGradleAtLeast("8.2")) configuration.isCanBeDeclared
+      else null
 
     private fun getDeclarationAlternatives(configuration: Configuration): List<String> {
       try {

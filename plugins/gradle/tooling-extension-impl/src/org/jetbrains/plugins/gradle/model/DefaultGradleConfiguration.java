@@ -16,7 +16,7 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
   private final boolean visible;
   private final boolean scriptClasspathConfiguration;
   private final List<String> declarationAlternatives;
-  private final boolean canBeDeclared;
+  private final Boolean canBeDeclared;
 
 
   @PropertyMapping({"name", "description", "visible", "declarationAlternatives"})
@@ -30,7 +30,7 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
     boolean visible,
     boolean scriptClasspathConfiguration,
     @NotNull List<String> declarationAlternatives,
-    boolean canBeDeclared
+    @Nullable Boolean canBeDeclared
   ) {
     this.name = name;
     this.description = description;
@@ -46,7 +46,7 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
          configuration.isVisible(),
          configuration.isScriptClasspathConfiguration(),
          configuration.getDeclarationAlternatives(),
-         configuration.isCanBeDeclared()
+         configuration.getCanBeDeclared()
     );
   }
 
@@ -76,7 +76,7 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
   }
 
   @Override
-  public boolean isCanBeDeclared() {
+  public @Nullable Boolean getCanBeDeclared() {
     return canBeDeclared;
   }
 
@@ -92,7 +92,7 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
     if (!Objects.equals(name, that.name)) return false;
     if (!Objects.equals(description, that.description)) return false;
     if (!declarationAlternatives.equals(that.declarationAlternatives)) return false;
-    if (canBeDeclared != that.canBeDeclared) return false;
+    if (!Objects.equals(canBeDeclared, that.canBeDeclared)) return false;
 
     return true;
   }
@@ -104,7 +104,7 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
     result = 31 * result + (visible ? 1 : 0);
     result = 31 * result + (scriptClasspathConfiguration ? 1 : 0);
     result = 31 * result + (declarationAlternatives.hashCode());
-    result = 31 * result + (canBeDeclared ? 1 : 0);
+    result = 31 * result + (canBeDeclared != null ? canBeDeclared.hashCode() : 0);
     return result;
   }
 }

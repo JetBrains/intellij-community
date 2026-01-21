@@ -114,6 +114,32 @@ public final class ToolingStreamApiUtils {
     return reader.booleanValue();
   }
 
+  public static void writeBooleanNullable(
+    @NotNull IonWriter writer,
+    @NotNull String fieldName,
+    @Nullable Boolean value
+  ) throws IOException {
+    writer.setFieldName(fieldName);
+    if (value == null) {
+      writer.writeNull(IonType.BOOL);
+    } else {
+      writer.writeBool(value);
+    }
+  }
+
+  public static @Nullable Boolean readBooleanNullable(
+    @NotNull IonReader reader,
+    @Nullable String fieldName
+  ) {
+    reader.next();
+    assertFieldName(reader, fieldName);
+    if (reader.isNullValue()) {
+      return null;
+    } else {
+      return reader.booleanValue();
+    }
+  }
+
   public static void writeString(
     @NotNull IonWriter writer,
     @NotNull String fieldName,

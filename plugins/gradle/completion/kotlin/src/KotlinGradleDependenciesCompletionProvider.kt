@@ -179,8 +179,12 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
       .map { it.name }
   }
 
+  /**
+   * @return true if a configuration can declare dependencies and it's Gradle 8.2+.
+   * For older versions, returns true for each configuration.
+   */
   private fun GradleExtensionsSettings.GradleConfiguration.canBeUsedInDependenciesBlock(): Boolean =
-    if (isCurrentGradleAtLeast("8.2")) this.isCanDeclareDependencies else true
+    this.canDeclareDependencies != false
 
   /** @return true if starts from a letter and contains only letters, digits and underscores after it */
   private fun isValidNameInKotlin(string: String): Boolean =

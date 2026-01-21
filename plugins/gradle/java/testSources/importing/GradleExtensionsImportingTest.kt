@@ -85,15 +85,17 @@ class GradleExtensionsImportingTest : GradleImportingTestCase() {
     }
 
   private fun verifyDependencyConfigurations(extensions: GradleExtensionsSettings.GradleExtensionsData) {
-    // For earlier versions we cannot reliably distinguish if a configuration could declare dependencies in the `dependencies { }` block
-    if (isGradleOlderThan("8.2")) return
-
     val scopes = listOf("compileOnly", "testCompileOnly", "implementation", "testImplementation", "runtimeOnly", "testRuntimeOnly")
     val annotationProcessors = listOf("annotationProcessor", "testAnnotationProcessor")
-    val expectedConfigurations = scopes + annotationProcessors
+
+    val expectedConfigurations = if (isGradleAtLeast("8.2"))
+      scopes + annotationProcessors
+    else
+      // For Gradle < 8.2, it's unclear whether a configuration could declare dependencies or not.
+      emptyList()
 
     val actualDependencyConfigurations = extensions.configurations.values
-      .filter { it.isCanDeclareDependencies }
+      .filter { it.canDeclareDependencies == true }
       .map { it.name }
     assertEqualsUnordered(expectedConfigurations, actualDependencyConfigurations) {
       "The list of configurations received from Gradle at sync that are dependency scopes should match the expected list"

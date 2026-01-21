@@ -1,13 +1,12 @@
-// "EXPECTED-SUGGESTION": annotationProcessor, api, apiDependenciesMetadata, apiElements-published, compileOnly, compileOnlyDependenciesMetadata, implementation, implementationDependenciesMetadata, intransitiveDependenciesMetadata, kotlinBuildToolsApiClasspath, kotlinCompilerClasspath, kotlinCompilerPluginClasspath, kotlinCompilerPluginClasspathMain, kotlinCompilerPluginClasspathTest, kotlinKlibCommonizerClasspath, kotlinNativeBundleConfiguration, kotlinNativeCompilerPluginClasspath, kotlinScriptDef, kotlinScriptDefExtensions, runtimeElements-published, runtimeOnly, testAnnotationProcessor, testApi, testApiDependenciesMetadata, testCompileOnly, testCompileOnlyDependenciesMetadata, testImplementation, testImplementationDependenciesMetadata, testIntransitiveDependenciesMetadata, testKotlinScriptDef, testKotlinScriptDefExtensions, testRuntimeOnly
-// "OTHER-SUGGESTIONS-ARE-NOT-EXPECTED"
-// "SUGGESTION-INDEX-TO-APPLY": 1
+// "NO-EXPECTED-SUGGESTIONS"
 // "COMPLETION-RESULT-PATH": build.gradle.after.kts
 // FILE: build.gradle.kts
 plugins {
     id("org.jetbrains.kotlin.jvm")
 }
 dependencies {
-    <caret>
+    // `archives` cannot declare dependencies
+    arc<caret>
 }
 
 // FILE: build.gradle.after.kts
@@ -15,6 +14,7 @@ plugins {
     id("org.jetbrains.kotlin.jvm")
 }
 dependencies {
-    api(<caret>)
+    // `archives` cannot declare dependencies
+    archives(<caret>)
 }
 
