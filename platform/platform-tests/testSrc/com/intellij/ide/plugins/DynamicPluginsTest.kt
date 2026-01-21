@@ -1180,8 +1180,8 @@ class DynamicPluginsTest {
 
   @Test
   fun `test ide-plugins-allow-dynamic-services-overrides registry flag`() {
-    for (r in listOf(true, false)) {
-      Registry.get("ide.plugins.allow.dynamic.services.overrides").setValue(r, testDisposable.disposable)
+    for (dynamicServiceOverridesAllowed in listOf(true, false)) {
+      Registry.get("ide.plugins.allow.dynamic.services.overrides").setValue(dynamicServiceOverridesAllowed, testDisposable.disposable)
       plugin("foo") {
         extensions("""
         <applicationService serviceInterface="${ServiceInterface::class.qualifiedName}" 
@@ -1195,7 +1195,7 @@ class DynamicPluginsTest {
         includePackageClassFiles<DefaultService>()
       }.buildDir(pluginsDir.resolve("foo"))
       val foo = loadDescriptorInTest(pluginsDir.resolve("foo"))
-      assertThat(DynamicPlugins.loadPlugin(foo)).isEqualTo(r)
+      assertThat(DynamicPlugins.loadPlugin(foo)).isEqualTo(dynamicServiceOverridesAllowed)
     }
   }
 

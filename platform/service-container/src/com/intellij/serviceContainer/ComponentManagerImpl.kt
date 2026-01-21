@@ -38,6 +38,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.platform.instanceContainer.internal.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.IntelliJCoroutinesFacade
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.UList
@@ -559,7 +560,7 @@ abstract class ComponentManagerImpl(
       null
     }
     val registrar = serviceContainer.startRegistration(registrationScope)
-    val app = getApplication()!!
+    val app: Application? = getApplication()
     for (descriptor in services) {
       if (!isServiceSuitable(descriptor) || (descriptor.os != null && !descriptor.os.isSuitableForOs())) {
         continue
@@ -569,6 +570,7 @@ abstract class ComponentManagerImpl(
       // Null serviceImplementation means we want unregistering service. (empty serviceImplementation will be nullized by the reader)
       // This is the same code as in the ServiceDescriptor.getImplementation with the difference in how application instance is obtained.
       val implementation: String? = when {
+        app == null -> descriptor.serviceImplementation
         descriptor.testServiceImplementation != null && app.isUnitTestMode -> descriptor.testServiceImplementation
         descriptor.headlessImplementation != null && app.isHeadlessEnvironment -> descriptor.headlessImplementation
         else -> descriptor.serviceImplementation
@@ -577,7 +579,7 @@ abstract class ComponentManagerImpl(
       val key = descriptor.serviceInterface ?: implementation
       if (key == null) {
         LOG.error("Either 'serviceInterface' or 'serviceImplementation' must be non-null and non-empty. " +
-                  "(isUnitTestMode=${app.isUnitTestMode}, isHeadlessEnvironment=${app.isHeadlessEnvironment}. " +
+                  "(isUnitTestMode=${app?.isUnitTestMode}, isHeadlessEnvironment=${app?.isHeadlessEnvironment}. " +
                   "Error while loading service descriptor: $descriptor")
         continue
       }
@@ -612,9 +614,35 @@ abstract class ComponentManagerImpl(
         )
       }
     }
-    val handle = registrar.complete()?.unregisterHandle
-    if (handle != null) {
-      pluginServicesStore.putServicesUnregisterHandle(pluginDescriptor, handle)
+    val result = registrar.complete()
+    if (result != null) {
+      setForwarding(result.shadowedInstances)
+      pluginServicesStore.putServicesUnregisterHandle(pluginDescriptor, result.unregisterHandle)
+    }
+  }
+
+  private fun setForwarding(shadowedInstances: Map<String, InstanceHolder>) {
+    if (!useProxiesForOpenServices) return // shortcut: there are no ServiceProxyInstrumentation instances in the list
+
+    shadowedInstances.forEach { (k, v) ->
+      val inst = v.tryGetInstance()
+      if (inst is ServiceProxyInstrumentation) {
+        inst.setForwarding(lazy(LazyThreadSafetyMode.PUBLICATION) {
+          // the warning is muted, because we have too many violations at the moment
+          //LOG.warn("Accessing overridden service using stale reference")
+          // TODO: is there a better way to get the service interface type here?
+          val serviceClass = v.instanceClass().classLoader.loadClass(k)
+          getService(serviceClass)!!
+        })
+      }
+    }
+  }
+
+  private fun resetForwarding(reactivatedInstances: Map<String, InstanceHolder>) {
+    if (!useProxiesForOpenServices) return // shortcut: there are no ServiceProxyInstrumentation instances in the list
+
+    reactivatedInstances.forEach { (_, holder) ->
+      (holder.tryGetInstance() as? ServiceProxyInstrumentation)?.setForwarding(null)
     }
   }
 
@@ -993,7 +1021,8 @@ abstract class ComponentManagerImpl(
       LOG.trace { "$debugString : nothing to unload ${module.pluginId}:${module.descriptorPath}" }
       return
     }
-    val holders = handle?.unregister()?.unregisteredInstances ?: emptyMap()
+    val unregisterResult = handle?.unregister()
+    val holders = unregisterResult?.unregisteredInstances ?: emptyMap()
     if (holders.isEmpty() && dynamicInstances.isEmpty()) {
       // warn because the handle should not be in the map in the first place
       LOG.warn("$debugString : nothing unloaded for ${module.pluginId}:${module.descriptorPath}")
@@ -1010,6 +1039,11 @@ abstract class ComponentManagerImpl(
         Disposer.dispose(instance)
       }
       store.unloadComponent(instance)
+    }
+
+    val unshadowedInstances = unregisterResult?.unshadowedInstances
+    if (unshadowedInstances != null) {
+      resetForwarding(unshadowedInstances)
     }
   }
 
@@ -1403,6 +1437,9 @@ abstract class ComponentManagerImpl(
     }
     return intersectionScope
   }
+
+  internal open val useProxiesForOpenServices: Boolean =
+    SystemProperties.getBooleanProperty("intellij.platform.use.proxies.for.open.services", false)
 }
 
 private class PluginServicesStore {
