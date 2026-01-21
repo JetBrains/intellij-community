@@ -295,15 +295,7 @@ class PluginDependenciesValidator private constructor(
       }
     }
       .withProductMode(productMode)
-      .withDisabledPlugins("com.jetbrains.kmm") // TODO: support incompatible plugins (IJI-2975)
-      .withDisabledPlugins(
-        "com.intellij.marketplace",
-        "org.jetbrains.plugins.clion.radler", "com.intellij.cidr.lang",
-        "org.jetbrains.plugins.docker.gateway", "intellij.gateway.station.plugin",
-        "com.intellij.clouds.docker.integrationTests.plugin",
-        "com.jetbrains.gateway",
-        "com.intellij.cidr.strings"
-      )
+      .withDisabledPlugins(*options.pluginsToIgnore.map { it.idString }.toTypedArray())
       .withCustomCoreLoader(UrlClassLoader.build().files(corePluginDescription.jpsModulesInClasspath.map { getModuleOutputDir(it) }).get())
     
     return pluginSetBuilder.build()
