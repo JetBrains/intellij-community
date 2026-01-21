@@ -50,18 +50,19 @@ public class BazelIncBuilder {
 
         LOG.info(() -> "Building " + context.getTargetName() + " (rebuild requested: " + context.isRebuild() + ")");
 
-        if (context.isRebuild() || !storageManager.getOutputBuilder().isInputZipExist()) {
-          // either rebuild is explicitly requested, or there is no previous data, need to compile the whole target
+        if (context.isRebuild()) {
           srcSnapshotDelta = new SnapshotDeltaImpl(context.getSources());
           srcSnapshotDelta.markRecompileAll(); // force rebuild
         }
         else {
           ConfigurationState pastState = ConfigurationState.loadSavedState(context);
-          ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), context.getResources(), context.getBinaryDependencies(), context.getFlags());
+          ConfigurationState presentState = new ConfigurationState(
+            context.getPathMapper(), context.getSources(), context.getResources(), context.getBinaryDependencies(), context.getFlags(), context.getUntrackedInputsDigest()
+          );
 
           srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), presentState.getSources());
 
-          if (shouldRecompileAll(srcSnapshotDelta) || pastState.getFlagsDigest() != presentState.getFlagsDigest() || pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest() || pastState.getRunnersDigest() != presentState.getRunnersDigest()) {
+          if (shouldRecompileAll(srcSnapshotDelta) || pastState.digestsDiffer(presentState) || !Files.exists(DataPaths.getJarBackupStoreFile(context, context.getOutputZip()) /*previous output state is missing*/)) {
             int changedPercent = srcSnapshotDelta.getChangedPercent();
             LOG.info(() -> "Marking whole target for recompilation [" + context.getTargetName() + "]. Changed sources: " + changedPercent + "% (threshold " + RECOMPILE_CHANGED_RATIO_PERCENT + "%) ");
             srcSnapshotDelta.markRecompileAll();
@@ -440,7 +441,7 @@ public class BazelIncBuilder {
 
       // at this point saved build state contains all successfully compiled files and classes
       new ConfigurationState(
-        context.getPathMapper(), sourcesState, resourcesState, context.getBinaryDependencies(), context.getFlags()
+        context.getPathMapper(), sourcesState, resourcesState, context.getBinaryDependencies(), context.getFlags(), context.getUntrackedInputsDigest()
       ).save(context);
 
       BuildProcessLogger buildLogger = context.getBuildLogger();

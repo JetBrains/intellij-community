@@ -106,7 +106,7 @@ public class BuildDiagnosticCollector {
 
         ConfigurationState pastState = ConfigurationState.loadSavedState(myContext);
         NodeSourcePathMapper pathMapper = myContext.getPathMapper();
-        ConfigurationState presentState = new ConfigurationState(pathMapper, myContext.getSources(), myContext.getResources(), myContext.getBinaryDependencies(), myContext.getFlags());
+        ConfigurationState presentState = new ConfigurationState(pathMapper, myContext.getSources(), myContext.getResources(), myContext.getBinaryDependencies(), myContext.getFlags(), myContext.getUntrackedInputsDigest());
 
         zos.putNextEntry(createZipEntry(dataDir, "description.txt"));
         //noinspection IOResourceOpenedButNotSafelyClosed
@@ -133,6 +133,8 @@ public class BuildDiagnosticCollector {
         };
         digestRenderer.formatDigest("Worker Flags", pastState, presentState, ConfigurationState::getFlagsDigest);
         digestRenderer.formatDigest("Classpath Structure", pastState, presentState, ConfigurationState::getClasspathStructureDigest);
+        digestRenderer.formatDigest("Runners", pastState, presentState, ConfigurationState::getRunnersDigest);
+        digestRenderer.formatDigest("Untracked Inputs", pastState, presentState, ConfigurationState::getUntrackedInputsDigest);
         readme.println();
         readme.format("Whole target rebuild from the beginning? %s", myIsWholeTargetRebuild? "Yes" : "No");
 

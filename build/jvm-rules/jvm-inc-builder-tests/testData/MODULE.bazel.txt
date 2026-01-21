@@ -3,7 +3,8 @@ module(
     version = "0.1",
 )
 
-bazel_dep(name = "bazel_skylib", version = "1.8.1")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "rules_kotlin", version = "2.2.2")
 
 # the module is supposed to always be overridden with the local version
 bazel_dep(name = "rules_jvm", version = "")

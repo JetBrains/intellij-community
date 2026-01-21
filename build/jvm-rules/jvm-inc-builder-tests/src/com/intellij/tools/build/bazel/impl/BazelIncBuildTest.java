@@ -248,7 +248,7 @@ public abstract class BazelIncBuildTest {
   @NotNull
   protected ExecutionResult runBazelCommand(OutputConsumer outputSink, String command, String... options) throws Exception {
     ProcessBuilder processBuilder = new ProcessBuilder(
-      myBazelRunnerPath, "--nosystem_rc", "--nohome_rc", "--max_idle_secs=10", command
+      myBazelRunnerPath, "--nosystem_rc", "--nohome_rc", "--max_idle_secs=600", command
     );
     processBuilder.command().addAll(List.of(options));
     processBuilder.command().addAll(List.of(

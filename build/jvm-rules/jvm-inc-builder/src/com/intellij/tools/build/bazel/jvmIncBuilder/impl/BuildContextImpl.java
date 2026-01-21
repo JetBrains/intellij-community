@@ -13,9 +13,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.jetbrains.jps.util.Iterators.filter;
 import static org.jetbrains.jps.util.Iterators.map;
 
 /** @noinspection IO_FILE_USAGE*/
@@ -23,6 +25,7 @@ public class BuildContextImpl implements BuildContext {
   private static final Logger LOG = Logger.getLogger("com.intellij.tools.build.bazel.jvmIncBuilder.impl.BuildContextImpl");
   private final String myTargetName;
   private final Map<CLFlags, List<String>> myFlags;
+  private final long myUntrackedInputsDigest;
   private final boolean myAllowWarnings;
   private final Path myBaseDir;
   private final PathSourceMapper myPathMapper;
@@ -69,25 +72,25 @@ public class BuildContextImpl implements BuildContext {
     
     myIsRebuild = CLFlags.NON_INCREMENTAL.isFlagSet(flags);
 
-    Map<String, String> digestsMap = new HashMap<>();
-    Base64.Encoder base64 = Base64.getEncoder().withoutPadding();
+    Map<String, byte[]> digestsMap = new HashMap<>();
     for (Input input : inputs) {
-      String inputDigest = base64.encodeToString(input.digest);
-      digestsMap.put(input.path, inputDigest);
+      digestsMap.put(input.path, input.digest);
     }
+    Base64.Encoder base64 = Base64.getEncoder().withoutPadding();
+    Function<String, String> getDigest = path -> base64.encodeToString(Objects.requireNonNull(digestsMap.remove(path)));
 
     Map<NodeSource, String> sourcesMap = new HashMap<>();
     for (String src : CLFlags.SRCS.getValue(flags)) {
       Path inputPath = baseDir.resolve(src).normalize();
       assert isSourceDependency(inputPath);
-      sourcesMap.put(myPathMapper.toNodeSource(inputPath), Objects.requireNonNull(digestsMap.get(src)));
+      sourcesMap.put(myPathMapper.toNodeSource(inputPath), getDigest.apply(src));
     }
     mySources = new SourceSnapshotImpl(sourcesMap);
 
     Map<NodeSource, String> libsMap = new LinkedHashMap<>(); // for the classpath order is important
     for (String cpEntry : CLFlags.CP.getValue(flags)) {
       Path path = baseDir.resolve(cpEntry).normalize();
-      libsMap.put(myPathMapper.toNodeSource(path), Objects.requireNonNull(digestsMap.get(cpEntry)));
+      libsMap.put(myPathMapper.toNodeSource(path), getDigest.apply(cpEntry));
     }
     myLibraries = new SourceSnapshotImpl(libsMap);
 
@@ -99,7 +102,7 @@ public class BuildContextImpl implements BuildContext {
       Map<NodeSource, String> resourcesMap = new HashMap<>();
       for (String file : parts[2].split(":")) {
         Path path = baseDir.resolve(file).normalize();
-        String digest = Objects.requireNonNull(digestsMap.get(file));
+        String digest = getDigest.apply(file);
         resourcesMap.put(myPathMapper.toNodeSource(path), digest);
       }
       if (!resourcesMap.isEmpty()) {
@@ -107,6 +110,10 @@ public class BuildContextImpl implements BuildContext {
       }
     }
     myResources = resources;
+
+    List<String> untrackedInputs = new ArrayList<>(digestsMap.keySet());
+    Collections.sort(untrackedInputs); // ensure same order over invocations; params are tracked selectively by flags digest
+    myUntrackedInputsDigest = Utils.digestContent(map(filter(untrackedInputs, inp -> !inp.endsWith(DataPaths.PARAMS_FILE_NAME_SUFFIX)), digestsMap::get));
 
     myBuilderOptions = BuilderOptions.create(buildJavaOptions(flags), buildKotlinOptions(flags, map(myLibraries.getElements(), myPathMapper::toPath)));
     myBuildProcessLogger = VMFlags.isBuildProcessLoggerEnabled()? new BuildProcessLoggerImpl(baseDir) : BuildProcessLogger.EMPTY;
@@ -304,6 +311,11 @@ public class BuildContextImpl implements BuildContext {
   @Override
   public Map<CLFlags, List<String>> getFlags() {
     return myFlags;
+  }
+
+  @Override
+  public long getUntrackedInputsDigest() {
+    return myUntrackedInputsDigest;
   }
 
   @Override

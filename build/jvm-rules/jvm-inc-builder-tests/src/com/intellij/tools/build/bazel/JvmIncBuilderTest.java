@@ -27,4 +27,9 @@ public class JvmIncBuilderTest extends BazelIncBuildTest {
   void testAssignFieldFromSubclassAcrossTargets() throws Exception {
     performTest("java/assignFieldFromSubclassAcrossTargets").assertFailure();
   }
+
+  @Test
+  void testRebuildOnUntrackedInputChange() throws Exception {
+    performTest("worker/rebuildOnUntrackedInputChange").assertSuccessful();
+  }
 }
