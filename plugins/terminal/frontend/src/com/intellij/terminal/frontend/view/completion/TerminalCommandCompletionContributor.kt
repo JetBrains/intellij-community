@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.frontend.view.TerminalView
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.session.ShellName
 import org.jetbrains.plugins.terminal.session.guessShellName
 import org.jetbrains.plugins.terminal.util.getNow
@@ -11,11 +12,13 @@ import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 
-internal interface TerminalCommandCompletionContributor {
+@ApiStatus.Internal
+interface TerminalCommandCompletionContributor {
   suspend fun getCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCommandCompletionResult?
 }
 
-internal data class TerminalCommandCompletionContext(
+@ApiStatus.Internal
+data class TerminalCommandCompletionContext(
   val project: Project,
   val terminalView: TerminalView,
   val editor: Editor,
@@ -31,7 +34,8 @@ internal data class TerminalCommandCompletionContext(
     get() = terminalView.startupOptionsDeferred.getNow()?.guessShellName() ?: ShellName.of("unknown")
 }
 
-internal data class TerminalCommandCompletionResult(
+@ApiStatus.Internal
+data class TerminalCommandCompletionResult(
   val suggestions: List<ShellCompletionSuggestion>,
   val prefix: String,
   /** The length of the text to be replaced before the prefix when a completion item is inserted. */
