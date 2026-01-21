@@ -450,7 +450,7 @@ class InstancesView extends InstancesViewBase {
   }
 
   private void customizeView(@NotNull InstancesView view, @NotNull XDebugSession session, String className, JComponent tree) {
-    final StackFrameList list = new StackFrameList(myDebugProcess);
+    final StackFrameList list = new StackFrameList(myDebugProcess.getProject());
     list.addListSelectionListener(e -> list.navigateToSelectedValue(false));
     new DoubleClickListener() {
       @Override

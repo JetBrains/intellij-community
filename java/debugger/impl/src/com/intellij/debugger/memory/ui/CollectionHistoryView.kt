@@ -54,7 +54,7 @@ class CollectionHistoryView(private val myClsName: String,
   private val myDebugProcess = (debugProcess as JavaDebugProcess).debuggerSession.process
   private val myDebugSession = debugProcess.session
   private val mySuspendContext = myDebugProcess.suspendManager.pausedContext
-  private val myStackFrameList = StackFrameList(myDebugProcess)
+  private val myStackFrameList = StackFrameList(myDebugProcess.project)
   private val mySplitter = JBSplitter(false, DEFAULT_SPLITTER_PROPORTION)
   private val myNodeManager = MyNodeManager(myDebugSession.project)
   private val myHistoryInstancesTree: InstancesTree = InstancesTree(myDebugProcess.project, myDebugSession.debugProcess.editorsProvider,
@@ -108,7 +108,7 @@ class CollectionHistoryView(private val myClsName: String,
   private fun setupHistoryTreeSelectionListener() {
     myHistoryTree.addChildren(createChildren(listOf(), CollectionHistoryRenderer()), true)
     myHistoryTree.addTreeSelectionListener(TreeSelectionListener {
-      myStackFrameList.setFrameItems(listOf())
+      myStackFrameList.clearFrameItems()
       val selectedNode = getSelectedNode(myHistoryTree) ?: return@TreeSelectionListener
       val parentNode = getParentNode(myHistoryTree)
 
@@ -139,7 +139,7 @@ class CollectionHistoryView(private val myClsName: String,
           CollectionBreakpointUtils.getCollectionModificationStack(mySuspendContext, collectionInstance, modificationIndex)
         }
 
-        invokeLater { myStackFrameList.setFrameItems(items) }
+        invokeLater { myStackFrameList.setFrameItems(items, myDebugProcess) }
       }
     })
   }

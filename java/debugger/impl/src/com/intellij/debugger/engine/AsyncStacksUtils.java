@@ -161,8 +161,11 @@ public final class AsyncStacksUtils {
     return null;
   }
 
+  /**
+   * Parses stack trace captured by the debugger-agent. Result list can contain null elements corresponding to separator frames.
+   */
   @ApiStatus.Internal
-  public static List<StackFrameItem> parseAgentAsyncStackTrace(String value, VirtualMachineProxyImpl vm) {
+  public static List<@Nullable StackFrameItem> parseAgentAsyncStackTrace(String value, VirtualMachineProxyImpl vm) {
     List<StackFrameItem> res = new ArrayList<>();
     try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(value.getBytes(StandardCharsets.ISO_8859_1)))) {
       while (dis.available() > 0) {
