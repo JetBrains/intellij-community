@@ -59,7 +59,7 @@
     <!-- getDisplayName is overridden in GrazieInspection itself! Placeholder is required to suppress validation. -->
     <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieInspectionRunner"
                      implementationClass="com.intellij.grazie.ide.inspection.grammar.GrazieInspection"
-                     level="NON_SWITCHABLE_WARNING" key="grazie.grammar.inspection.grammar.text" language=""/>
+                     level="NON_SWITCHABLE_WARNING" key="grazie.grammar.inspection.grammar.text" language="" unfair="true"/>
 
     <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieInspection"
                      implementationClass="com.intellij.grazie.ide.inspection.grammar.GrazieInspection$Grammar"

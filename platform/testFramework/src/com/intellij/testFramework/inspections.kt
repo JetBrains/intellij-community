@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.InspectionWrapperUtil
+import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ex.*
 import com.intellij.openapi.Disposable
@@ -64,12 +65,16 @@ fun ProjectInspectionProfileManager.createProfile(localInspectionTool: LocalInsp
 }
 
 fun enableInspectionTool(project: Project, tool: InspectionProfileEntry, disposable: Disposable) {
+  enableAssociatedInspectionTool(project, tool, disposable)
   enableInspectionTool(project, InspectionWrapperUtil.wrapTool(tool), disposable)
 }
 
 fun enableInspectionTools(project: Project, disposable: Disposable, vararg tools: InspectionProfileEntry) {
   for (tool in tools) {
     enableInspectionTool(project, InspectionWrapperUtil.wrapTool(tool), disposable)
+  }
+  for (tool in tools) {
+    enableAssociatedInspectionTool(project, tool, disposable)
   }
 }
 
@@ -99,6 +104,24 @@ fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWrapper<*,
   }
 
   IdeaTestExecutionPolicy.current()?.inspectionToolEnabled(project, toolWrapper, disposable)
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun enableAssociatedInspectionTool(project: Project, tool: InspectionProfileEntry, disposable: Disposable) {
+  try {
+    val mainToolId = tool.mainToolId ?: return
+    val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
+    val isPresent = runInInitMode {
+      val mainTool = profile.getInspectionTool(mainToolId, project)
+      mainTool != null && mainTool.isInitialized
+    }
+    if (isPresent) return
+    val inspection = LocalInspectionEP.LOCAL_INSPECTION.extensionList.find { it.shortName == mainToolId } ?: return
+    val mainTool = inspection.instantiateTool()
+    enableInspectionTool(project, InspectionWrapperUtil.wrapTool(mainTool), disposable)
+  } catch (_: Throwable) {
+    return
+  }
 }
 
 @TestOnly

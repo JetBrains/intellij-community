@@ -4,7 +4,11 @@ package com.intellij.grazie.ide.inspection.grammar
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.codeInspection.ex.InspectionProfileWrapper
+import com.intellij.codeInspection.ex.UnfairLocalInspectionTool
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.text.*
@@ -25,10 +29,11 @@ import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
-class GrazieInspection : LocalInspectionTool(), DumbAware {
+class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspectionTool {
 
   class Grammar : LocalInspectionTool(), DumbAware {
     override fun getShortName(): @NonNls String = GRAMMAR_INSPECTION
+    override fun getMainToolId(): @NonNls String = RUNNER
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
       return PsiElementVisitor.EMPTY_VISITOR
@@ -37,6 +42,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
 
   class Style : LocalInspectionTool(), DumbAware {
     override fun getShortName(): @NonNls String = STYLE_INSPECTION
+    override fun getMainToolId(): @NonNls String = RUNNER
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
       return PsiElementVisitor.EMPTY_VISITOR
@@ -67,7 +73,9 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
           .map { it to it.run() }
           .forEach { (runner, problems) ->
             problems.forEach { problem ->
-              runner.toProblemDescriptors(problem, holder.isOnTheFly).forEach(holder::registerProblem)
+              runner.toProblemDescriptors(problem, holder.isOnTheFly)
+                .retainEnabled()
+                .forEach(holder::registerProblem)
             }
           }
 
@@ -84,6 +92,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
 
   private fun reportProblem(problem: TextProblem, holder: ProblemsHolder) {
     CheckerRunner(problem.text).toProblemDescriptors(problem, holder.isOnTheFly)
+      .retainEnabled()
       .forEach { holder.registerProblem(it) }
   }
 
@@ -101,6 +110,9 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
     }
   }
 
+  private fun List<ProblemDescriptor>.retainEnabled() =
+    filter { isInspectionEnabled(it.problemGroup!!.problemName!!, it.startElement.containingFile) }
+
   /**
    * Most of those methods are used in Grazie Pro.
    */
@@ -112,6 +124,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
     private const val MAX_TEXT_LENGTH_IN_FILE = 200_000
     const val GRAMMAR_INSPECTION: String = "GrazieInspection"
     const val STYLE_INSPECTION: String = "GrazieStyle"
+    const val RUNNER: String = "GrazieInspectionRunner"
 
     private val hasSpellChecking: Boolean by lazy {
       try {
@@ -138,6 +151,13 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
         val length = contents.asSequence().filter { it.domain in checkedDomains }.sumOf { it.length }
         CachedValueProvider.Result.create(length > MAX_TEXT_LENGTH_IN_FILE, service<GrazieConfig>(), file)
       }
+    }
+
+    @JvmStatic
+    fun isInspectionEnabled(shortName: String, file: PsiFile): Boolean {
+      val profile = getActiveProfile(file)
+      val tools = profile.getToolsOrNull(shortName, file.project)
+      return tools != null && tools.isEnabled(file)
     }
 
     @JvmStatic
@@ -187,6 +207,13 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
           else -> 2
         }
       }
+    }
+
+    private fun getActiveProfile(file: PsiFile): InspectionProfileImpl {
+      val project = file.project
+      val profile = InspectionProfileManager.getInstance(project).currentProfile
+      val customizer = InspectionProfileWrapper.getCustomInspectionProfileWrapper(file)
+      return (customizer?.apply(profile)?.inspectionProfile ?: profile) as InspectionProfileImpl
     }
 
     data class TextContentRelatedData(private val psiFile: PsiFile, val contents: Set<TextContent>) {
