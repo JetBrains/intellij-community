@@ -127,6 +127,18 @@
       defaultValue="false"
     />
 
+    <editorSkeletonPolicy implementation="com.intellij.openapi.fileEditor.DefaultEditorSkeletonPolicy"/>
+    <registryKey
+      key="editor.skeleton.enabled"
+      defaultValue="true"
+      description="Enable editor skeleton when the editor is not shown for a long period"
+    />
+    <registryKey
+      key="editor.skeleton.delay.ms"
+      defaultValue="50"
+      description="Delay before the editor skeleton is shown if the editor is not shown (in milliseconds)"
+    />
+
     <projectService serviceInterface="com.intellij.toolWindow.ToolWindowStripeManager" open="true"
                     serviceImplementation="com.intellij.toolWindow.ToolWindowStripeManagerImpl"/>
 

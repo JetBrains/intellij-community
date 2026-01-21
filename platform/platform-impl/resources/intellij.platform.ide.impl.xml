@@ -69,11 +69,5 @@
       defaultValue="60"
       description="The interval between too-small window size checks on Windows and attempts to restore the size. Set to zero to disable"
     />
-
-    <editorSkeletonPolicy implementation="com.intellij.openapi.fileEditor.DefaultEditorSkeletonPolicy"/>
-    <registryKey key="editor.skeleton.enabled" defaultValue="true"
-                 description="Enable editor skeleton when the editor is not shown for a long period"/>
-    <registryKey key="editor.skeleton.delay.ms" defaultValue="50"
-                 description="Delay before the editor skeleton is shown if the editor is not shown (in milliseconds)"/>
   </extensions>
 </idea-plugin>
