@@ -3,11 +3,17 @@ package git4idea.workingTrees.ui
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -21,6 +27,8 @@ import git4idea.repo.GitRepository
 import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.io.path.Path
 
 internal class RemoveWorkingTreeAction : DumbAwareAction() {
 
@@ -70,6 +78,10 @@ internal class RemoveWorkingTreeAction : DumbAwareAction() {
   }
 
   private suspend fun delete(project: Project, tree: GitWorkingTree, repository: GitRepository) {
+    val existingProject = ProjectUtil.findProject(Path(tree.path.path))
+    if (existingProject != null) {
+      if (shouldStopDeletion(project, tree, existingProject)) return
+    }
     val commandResult = withBackgroundProgress(project, GitBundle.message("progress.title.deleting.worktree"), cancellable = true) {
       service<Git>().deleteWorkingTree(project, tree)
     }
@@ -85,5 +97,33 @@ internal class RemoveWorkingTreeAction : DumbAwareAction() {
                                                    commandResult.errorOutputAsHtmlString,
                                                    true)
     }
+  }
+
+  private suspend fun shouldStopDeletion(
+    project: Project,
+    tree: GitWorkingTree,
+    existingProject: Project,
+  ): Boolean {
+    val closeProjectAndDelete = withContext(Dispatchers.UiWithModelAccess) {
+      MessageDialogBuilder.yesNo(
+        GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.title"),
+        GitBundle.message("Git.WorkingTrees.delete.worktrees.worktree.opened.close.or.cancel",
+                          tree.path.presentableUrl, existingProject.name)
+      )
+        .yesText(GitBundle.message("Git.WorkingTrees.delete.worktrees.button.close.delete"))
+        .noText(GitBundle.message("Git.WorkingTrees.delete.worktrees.button.do.not.delete"))
+        .ask(project)
+    }
+    if (!closeProjectAndDelete) {
+      return true
+    }
+    withContext(Dispatchers.UiWithModelAccess) {
+      writeIntentReadAction {
+        ProjectManager.getInstance().closeAndDispose(existingProject)
+      }
+    }
+    //see com.intellij.ide.actions.CloseProjectsActionBase.actionPerformed
+    RecentProjectsManager.getInstance().updateLastProjectPath()
+    return false
   }
 }
