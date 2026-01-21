@@ -9,9 +9,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.util.Range
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -68,6 +70,9 @@ interface KotlinCodeFragmentCompiler {
         fun getInstance(): KotlinCodeFragmentCompiler = service<KotlinCodeFragmentCompiler>()
     }
 }
+
+@ApiStatus.Internal
+val KOTLIN_CODE_FRAGMENT_CLASS_AND_FUNCTION_NAMES: Key<Pair<String, String>> = Key<Pair<String, String>>("kotlin.code.fragment.class.and.function.names")
 
 class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
     override val compilerType: CompilerType = CompilerType.K2
@@ -174,13 +179,15 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
     private fun compiledCodeFragmentDataK2Impl(context: ExecutionContext, codeFragment: KtCodeFragment): CompiledCodeFragmentData {
         val module = codeFragment.module
 
+        val (generatedClassName, generatedEntryFunctionName) =
+            KOTLIN_CODE_FRAGMENT_CLASS_AND_FUNCTION_NAMES.get(codeFragment) ?: (GENERATED_CLASS_NAME to GENERATED_FUNCTION_NAME)
         val compilerConfiguration = CompilerConfiguration().apply {
             if (module != null) {
                 put(CommonConfigurationKeys.MODULE_NAME, module.name)
             }
             put(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS, codeFragment.languageVersionSettings)
-            put(CODE_FRAGMENT_CLASS_NAME, GENERATED_CLASS_NAME)
-            put(CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
+            put(CODE_FRAGMENT_CLASS_NAME, generatedClassName)
+            put(CODE_FRAGMENT_METHOD_NAME, generatedEntryFunctionName)
             put(FrontendConfigurationKeys.EXTENSIONS_STORAGE, CompilerPluginRegistrar.ExtensionStorage())
         }
 
@@ -198,11 +205,12 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                         reportMutedExceptions(result, context, codeFragment)
                         logCompilation(codeFragment)
 
-                        val classes: List<ClassToLoad> = result.output
-                            .filter { it.isClassFile && it.isCodeFragmentClassFile }
+                        val compiledFiles = result.output.filter { it.isClassFile && isCodeFragmentClassPath(it.path, generatedClassName) }
+
+                        val classes: List<ClassToLoad> = compiledFiles
                             .map { ClassToLoad(it.internalClassName, it.path, it.content) }
 
-                        val fragmentClass = classes.single { it.className == GENERATED_CLASS_NAME }
+                        val fragmentClass = classes.single { it.className == generatedClassName }
                         val methodSignature = getMethodSignature(fragmentClass)
 
                         val parameterInfo = computeCodeFragmentParameterInfo(result)
@@ -294,13 +302,10 @@ private fun reportMutedExceptions(
     }
 }
 
-fun isCodeFragmentClassPath(path: String): Boolean {
-    return path == "$GENERATED_CLASS_NAME.class" || (path.startsWith($$"$$GENERATED_CLASS_NAME$") && path.endsWith(".class"))
+private fun isCodeFragmentClassPath(path: String, generatedClassName: String): Boolean {
+    return path == "$generatedClassName.class"
+            || (path.startsWith("$generatedClassName$") && path.endsWith(".class"))
 }
-
-@KaExperimentalApi
-val KaCompiledFile.isCodeFragmentClassFile: Boolean
-    get() = isCodeFragmentClassPath(path)
 
 fun hasCastOperator(codeFragment: KtCodeFragment): Boolean {
     var result = false

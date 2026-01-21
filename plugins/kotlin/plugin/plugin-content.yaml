@@ -293,6 +293,7 @@
   - name: kotlin-ultimate.profiler
   - name: kotlin-ultimate.ultimate-plugin
   - name: intellij.kotlin.duplicate.scope
+  - name: intellij.debugger.jvm.advanced.kotlin
   - name: kotlin.plugin
 - name: lib/kotlinc.allopen-compiler-plugin.jar
   library: kotlinc.allopen-compiler-plugin

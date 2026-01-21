@@ -347,7 +347,8 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
     }
 
-    private fun compileCodeFragment(context: ExecutionContext): CompiledCodeFragmentData {
+    @ApiStatus.Internal
+    fun compileCodeFragment(context: ExecutionContext): CompiledCodeFragmentData {
         try {
             return KotlinCodeFragmentCompiler.getInstance().compileCodeFragment(context, codeFragment)
         } catch (e: ExecutionException) {
