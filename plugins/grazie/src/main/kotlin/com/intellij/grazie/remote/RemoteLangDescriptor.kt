@@ -41,4 +41,13 @@ interface RemoteLangDescriptor {
    */
   val storageDescriptor: String
     get() = storageName
+
+  /**
+   * The checksum of a file that is located at [storageDescriptor].
+   *
+   * It's used to validate that a file hasn't been modified in any way before the installation
+   * by comparing this field to a result of [GrazieRemote.checksum].
+   */
+  val checksum: String
+    get() = ""
 }
