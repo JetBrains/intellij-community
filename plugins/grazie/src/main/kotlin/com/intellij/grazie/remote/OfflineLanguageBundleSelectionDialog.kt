@@ -27,11 +27,7 @@ internal class OfflineLanguageBundleSelectionDialog private constructor(
   private var files: Files? = null
 
   init {
-    title = if (languages.size == 1) {
-      msg("grazie.offline.language.bundle.dialog.title.singular", languages.first().nativeName)
-    } else {
-      msg("grazie.offline.language.bundle.dialog.title.plural")
-    }
+    title = msg("grazie.offline.language.bundle.dialog.title.plural")
     init()
   }
 
@@ -74,7 +70,7 @@ internal class OfflineLanguageBundleSelectionDialog private constructor(
       if (chosenFiles.invalid.isNotEmpty()) {
         setErrorText(msg(
           "grazie.offline.language.incorrect.checksum",
-          languages.joinToString { it.toLanguage().nativeName }
+          chosenFiles.invalid.joinToString { it.fileName.toString() }
         ))
       }
     }
