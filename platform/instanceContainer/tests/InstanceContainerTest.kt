@@ -150,35 +150,54 @@ class InstanceContainerTest {
         assertNull(complete())
       }
 
-      suspend fun InstanceRegistrar.testOverride(instance: MyServiceInterface, overrideAllowed: Boolean) {
+      suspend fun InstanceRegistrar.testOverride(
+        instance: MyServiceInterface,
+        shadowedInstances: Set<MyServiceInterface>,
+        overrideAllowed: Boolean,
+      ) {
         if (overrideAllowed) {
           overrideInitializer(keyClassName, ReadyInitializer(instance))
         }
         else {
+          // currently we don't prevent incorrect overrides - we only log them
           assertErrorLogged<InstanceNotOverridableException> {
             overrideInitializer(keyClassName, ReadyInitializer(instance))
           }
         }
-        val handle = assertNotNull(complete()?.unregisterHandle)
+        val registrationResult = assertNotNull(complete())
+        assertContentEquals(shadowedInstances, registrationResult.shadowedInstances.values.mapNotNull(InstanceHolder::tryGetInstance))
+
+        val unregisterHandle = registrationResult.unregisterHandle
         val holder = assertRegistered(container, keyClass, instance, initialized = false)
-        val unregistered = handle.unregister().unregisteredInstances.entries.single()
+        val unregistrationResult = unregisterHandle.unregister()
+        val unregistered = unregistrationResult.unregisteredInstances.entries.single()
         assertSame(keyClassName, unregistered.key)
         assertSame(holder, unregistered.value)
+        assertEquals(registrationResult.shadowedInstances, unregistrationResult.unshadowedInstances)
       }
 
-      suspend fun InstanceRegistrar.testRemove(overrideAllowed: Boolean) {
+      suspend fun InstanceRegistrar.testRemove(
+        overrideAllowed: Boolean,
+        shadowedInstances: Set<MyServiceInterface>,
+      ) {
         if (overrideAllowed) {
           overrideInitializer(keyClassName, null)
         }
         else {
+          // currently we don't prevent incorrect overrides - we only log them
           assertErrorLogged<InstanceNotOverridableException> {
             overrideInitializer(keyClassName, null)
           }
         }
-        val handle = assertNotNull(complete()?.unregisterHandle)
+        val registrationResult = assertNotNull(complete())
+        assertContentEquals(shadowedInstances, registrationResult.shadowedInstances.values.mapNotNull(InstanceHolder::tryGetInstance))
+
+        val unregisterHandle = registrationResult.unregisterHandle
         assertNotRegistered(container, keyClass)
-        val unregistered = handle.unregister().unregisteredInstances
+        val unregistrationResult = unregisterHandle.unregister()
+        val unregistered = unregistrationResult.unregisteredInstances
         assertEquals(0, unregistered.size) // TODO consider removing [keyClass → null] mapping
+        assertEquals(registrationResult.shadowedInstances, unregistrationResult.unshadowedInstances)
       }
 
       fun InstanceRegistrar.testRemoveCancellingOut() {
@@ -209,13 +228,13 @@ class InstanceContainerTest {
 
           // override registered
           container.startRegistration(pluginScope).run {
-            testOverride(instance2, overrideAllowed)
+            testOverride(instance2, setOf(instance1), overrideAllowed)
           }
           assertRegistered(container, keyClass, instance1, initialized = true)
 
           // remove registered
           container.startRegistration(pluginScope).run {
-            testRemove(overrideAllowed)
+            testRemove(overrideAllowed, setOf(instance1))
           }
           assertRegistered(container, keyClass, instance1, initialized = true)
 
@@ -231,14 +250,14 @@ class InstanceContainerTest {
           // override overridden
           container.startRegistration(pluginScope).run {
             overrideInitializer(keyClassName, ThrowingInitializer(overrideAllowed))
-            testOverride(instance2, overrideAllowed)
+            testOverride(instance2, setOf(instance1), overrideAllowed)
           }
           assertRegistered(container, keyClass, instance1, initialized = true)
 
           // remove overridden
           container.startRegistration(pluginScope).run {
             overrideInitializer(keyClassName, ThrowingInitializer(overrideAllowed))
-            testRemove(overrideAllowed)
+            testRemove(overrideAllowed, setOf(instance1))
           }
           assertRegistered(container, keyClass, instance1, initialized = true)
 
@@ -249,14 +268,16 @@ class InstanceContainerTest {
         // override registered in the same scope
         container.startRegistration(pluginScope).run {
           registerInitializer(keyClassName, ThrowingInitializer(overrideAllowed))
-          testOverride(instance1, overrideAllowed)
+          // existing instances are not shadowed because there is nothing to shadow - original registration is not committed yet
+          testOverride(instance1, emptySet(), overrideAllowed)
         }
 
         // override overridden in the same scope
         container.startRegistration(pluginScope).run {
           registerInitializer(keyClassName, ThrowingInitializer(true))
           overrideInitializer(keyClassName, ThrowingInitializer(overrideAllowed))
-          testOverride(instance1, overrideAllowed)
+          // existing instances are not shadowed because there is nothing to shadow - original registration is not committed yet
+          testOverride(instance1, emptySet(), overrideAllowed)
         }
       }
 
@@ -268,14 +289,14 @@ class InstanceContainerTest {
         // override removed
         container.startRegistration(pluginScope).run {
           overrideInitializer(keyClassName, null)
-          testOverride(instance2, true)
+          testOverride(instance2, setOf(instance1), true)
         }
         assertRegistered(container, keyClass, instance1, initialized = true)
 
         // remove removed
         container.startRegistration(pluginScope).run {
           overrideInitializer(keyClassName, null)
-          testRemove(true)
+          testRemove(true, setOf(instance1))
         }
         assertRegistered(container, keyClass, instance1, initialized = true)
 

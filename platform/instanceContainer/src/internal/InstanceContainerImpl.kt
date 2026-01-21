@@ -177,8 +177,19 @@ class InstanceContainerImpl @VisibleForTesting constructor(
     // no need to store keysToRemove if we store restorationMap, the keys can be restored from there
     val keysToRemove: Array<String>? = if (hasPreviousHolders) null else ArrayUtil.toStringArray(keysToRemove)
     override fun unregister(): UnregistrationResult {
-      unregister(keysToUnregister ?: keysToReturn, holdersToUnregister ?: arrayOfNulls<InstanceHolder?>(keysToReturn.size), keysToRemove)
-      return UnregistrationResult(keysToReturn.zip(holdersToReturn).toMap())
+      val unshadowedInstanceHolders = holdersToUnregister ?: arrayOfNulls<InstanceHolder?>(keysToReturn.size)
+      val unshadowedKeys = keysToUnregister ?: keysToReturn
+      unregister(unshadowedKeys, unshadowedInstanceHolders, keysToRemove)
+      val unregisteredInstances = keysToReturn.zip(holdersToReturn).toMap()
+
+      val unshadowedInstancesMap = HashMap<String, InstanceHolder>()
+      for (i in unshadowedKeys.indices) {
+        val holder = unshadowedInstanceHolders[i]
+        if (holder != null) {
+          unshadowedInstancesMap[unshadowedKeys[i]] = holder
+        }
+      }
+      return UnregistrationResult(unregisteredInstances, unshadowedInstancesMap)
     }
   }
 
@@ -190,28 +201,33 @@ class InstanceContainerImpl @VisibleForTesting constructor(
     val preparedHolders = prepareHolders(parentScope, additionalContext, actions)
     val (holders, _, keysToRemove) = preparedHolders
     lateinit var handle: UnregisterHandle
+    val shadowedInstancesMap = LinkedHashMap<String, InstanceHolder>()
     updateState { state ->
       // key -> holder to add/replace; key -> null to remove
       val restorationMap = LinkedHashMap<String, InstanceHolder?>()
       val builder = HashMap<String, InstanceHolder>(state.holders.size + holders.size)
       builder.putAll(state.holders)
-      var hasPreviousHolders = false
       for (key in keysToRemove) {
         val previous = builder.remove(key)
         checkExistingRegistration(state.holders, preparedHolders, keyClassName = key, existing = previous, new = null)
         restorationMap[key] = previous
-        hasPreviousHolders = hasPreviousHolders || (previous != null)
+        if (previous != null) {
+          shadowedInstancesMap[key] = previous
+        }
       }
       for ((key, value) in holders) {
         val previous = builder.put(key, value)
         checkExistingRegistration(state.holders, preparedHolders, keyClassName = key, existing = previous, new = value)
         restorationMap[key] = previous
-        hasPreviousHolders = hasPreviousHolders || (previous != null)
+        if (previous != null) {
+          shadowedInstancesMap[key] = previous
+        }
       }
+      val hasPreviousHolders = shadowedInstancesMap.isNotEmpty()
       handle = UnregisterHandleImpl(restorationMap, holders, keysToRemove, hasPreviousHolders)
       InstanceContainerState(builder.takeUnless { it.isEmpty() } ?: java.util.Map.of())
     }
-    return RegistrationResult(handle)
+    return RegistrationResult(handle, shadowedInstancesMap)
   }
 
   private fun unregister(keys: Array<String>, instanceHolders: Array<InstanceHolder?>, keysToRemove: Array<String>?) {
@@ -265,7 +281,13 @@ class InstanceContainerImpl @VisibleForTesting constructor(
       val existingHolder = state.getByName(keyClassName)
       handle = UnregisterHandle {
         undoReplaceInstance(keyClassName = keyClassName, instance = instance, previousHolder = existingHolder)
-        return@UnregisterHandle UnregistrationResult(mapOf (keyClassName to holder))
+        val unshadowedInstancesMap = if (existingHolder != null) {
+          mapOf(keyClassName to existingHolder)
+        }
+        else {
+          emptyMap()
+        }
+        return@UnregisterHandle UnregistrationResult(mapOf(keyClassName to holder), unshadowedInstancesMap)
       }
       state.replaceByClass(keyClass, holder)
     }

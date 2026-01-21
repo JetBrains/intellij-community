@@ -16,6 +16,11 @@ data class RegistrationResult(
    * A handle to undo the registration
    */
   val unregisterHandle: UnregisterHandle,
+
+  /**
+   * Instance holders that were overridden during the registration
+   */
+  val shadowedInstances: Map<String, InstanceHolder>,
 )
 
 data class UnregistrationResult(
@@ -23,4 +28,9 @@ data class UnregistrationResult(
    * A map of just unregistered instance holders
    */
   val unregisteredInstances: Map<String, InstanceHolder>,
+
+  /**
+   * Instance holders for which override was canceled during deregistration (i.e., holders that were there before override)
+   */
+  val unshadowedInstances: Map<String, InstanceHolder>,
 )
