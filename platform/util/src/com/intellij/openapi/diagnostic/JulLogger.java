@@ -92,8 +92,8 @@ public class JulLogger extends Logger {
 
   @Override
   public void warn(String message, @Nullable Throwable t) {
-    if (myLogger.isLoggable(LogLevel.ERROR.getLevel())) {
-      log(new LogEvent(myLogger, LogLevel.ERROR, message, t));
+    if (myLogger.isLoggable(LogLevel.WARNING.getLevel())) {
+      log(new LogEvent(myLogger, LogLevel.WARNING, message, t));
     }
   }
 
