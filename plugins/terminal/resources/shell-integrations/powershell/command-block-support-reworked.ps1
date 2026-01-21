@@ -101,7 +101,14 @@ function Global:__JetBrainsIntellijSendCompletions {
     }
 	}
 	else {
-  	$Completions = TabExpansion2 -inputScript $CommandText -cursorColumn $CursorIndex
+	  $Completions = $null
+  	try {
+  	  $Completions = TabExpansion2 -inputScript $CommandText -cursorColumn $CursorIndex
+  	}
+  	catch {
+  	  # Catch all possible exceptions, just in case.
+  	  # Because failure here will print an error to the terminal screen.
+  	}
     if ($Completions -ne $null) {
       $ResultObject = [PSCustomObject]@{
         CommandText = $CommandText
