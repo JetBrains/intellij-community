@@ -61,24 +61,10 @@ data class ModuleDependency(
 
 @Serializable
 @ApiStatus.Internal
-enum class LoadingRule {
-  @SerialName("required")
-  REQUIRED,
-
-  @SerialName("optional")
-  OPTIONAL;
-
-  @Suppress("unused")
-  @JsonValue
-  fun toValue(): String = name.lowercase()
-}
-
-@Serializable
-@ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class PluginContentModule(
   val moduleName: String = "",
-  val loadingRule: LoadingRule = LoadingRule.OPTIONAL,
+  val loadingRule: String? = null,
 )
 
 @Serializable
