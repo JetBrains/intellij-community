@@ -1,0 +1,7 @@
+<!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+  <rect x="1" y="2" width="14" height="12" rx="2" stroke="#CED0D6"/>
+  <line x1="3" y1="5" x2="13" y2="5" stroke="#CED0D6" stroke-linecap="round"/>
+  <line x1="3" y1="8" x2="13" y2="8" stroke="#CED0D6" stroke-linecap="round"/>
+  <line x1="3" y1="11" x2="13" y2="11" stroke="#CED0D6" stroke-linecap="round"/>
+</svg>
