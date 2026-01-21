@@ -487,7 +487,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
           return@addVisibleToolbarsListener
         }
 
-        if (leftVisible && rightVisible || DistractionFreeModeController.isDistractionFreeModeEnabled()) {
+        if (DistractionFreeModeController.isDistractionFreeModeEnabled()) {
           if (toolWindowPaneParent.border != null) {
             toolWindowPaneParent.border = null
           }
@@ -503,7 +503,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
           else {
             val insets = border.getBorderInsets(toolWindowPaneParent)
             if (insets.left != left || insets.right != right) {
-              toolWindowPaneParent.border = JBUI.Borders.empty(0, left, 0, right)
+              toolWindowPaneParent.border = JBUI.Borders.empty(insets.top, left, insets.bottom, right)
             }
           }
         }
@@ -1218,6 +1218,31 @@ internal class IslandsUICustomization : InternalUICustomization() {
     val minWidth = JBUI.scale(JBUI.getInt("TabbedPane.tabContentMinWidth", 24))
     val contentWidth = (widthWithInsets - insetsWidth).coerceAtLeast(minWidth)
     return contentWidth + insetsWidth
+  }
+
+  override fun onStatusBarVisibilityChanged(centerComponent: JComponent, isStatusBarVisible: Boolean) {
+    if (!isManyIslandEnabled || DistractionFreeModeController.isDistractionFreeModeEnabled()) {
+      if (centerComponent.border != null) {
+        centerComponent.border = null
+      }
+    }
+    else {
+      val insets = centerComponent.border?.getBorderInsets(centerComponent) ?: JBUI.emptyInsets()
+
+      centerComponent.border = JBUI.Borders.empty(
+        insets.top,
+        insets.left,
+        if (isStatusBarVisible) {
+          0
+        }
+        else {
+          JBUI.getInt("Islands.emptyGap", 4)
+        },
+        insets.right
+      )
+    }
+    centerComponent.revalidate()
+    centerComponent.repaint()
   }
 }
 

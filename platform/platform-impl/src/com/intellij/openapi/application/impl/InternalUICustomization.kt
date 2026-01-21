@@ -210,4 +210,5 @@ open class InternalUICustomization {
 
   open fun calculateTabWidth(widthWithInsets: Int, insetsWidth: Int): Int = widthWithInsets
 
+  open fun onStatusBarVisibilityChanged(centerComponent: JComponent, isStatusBarVisible: Boolean) {}
 }
