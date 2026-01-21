@@ -1,35 +1,39 @@
 package com.intellij.tools.build.bazel.impl;
 
+import com.google.devtools.build.runfiles.Runfiles;
 import com.intellij.tools.build.bazel.jvmIncBuilder.DataPaths;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+
+import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Comparator;
+
+import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 /**
  Base class describing the main test scenario for incremental build tests
  Expected test data layout:
 
- root test data dir
+ Root test data dir
  |
  --testDir_1
  --testDir_2
  |
- --....
+ --...
  |
  --testDir_N
    |
@@ -47,80 +51,93 @@ import static org.junit.jupiter.api.Assertions.*;
       --File.kt.new1
       --build.log
  */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class BazelIncBuildTest {
 
-  public static final String WORKSPACE_ROOT_PROPERTY = "jvm-inc-builder.workspace.root";
+  private static Path ourTestDataRoot;
+  private static Path ourTestDataWorkRoot;
+  private static String ourBazelRunnerPath;
+  private static Path ourOutputBinRoot;
+
   public static final String BAZEL_EXECUTABLE = "jvm-inc-builder.bazel.executable";
 
   /*
     If disabled, the test project output directory will not be deleted. Useful for debugging
   */
   private static final boolean OUTPUT_FULL_CLEAN = Boolean.parseBoolean(System.getProperty("jvm-inc-builder.test.cleanup", "true"));
-  private static final String WORK_DIR_NAME = "bazel-rules-jvm-tests-c3a22ca0-16c8-4d20-9174-d6d2073faf35";
   private static final Predicate<String> ACTION_EXTENSION_MATCHER = Pattern.compile("\\.(?:log|delete|new)\\d*").asMatchPredicate();
 
-  private final Path myTestDataWorkRoot;
-  private final String myBazelRunnerPath;
+  @BeforeClass
+  public static void setupWorkDir() throws Exception {
+    ourTestDataWorkRoot = Files.createTempDirectory("bazel-rules-jvm-tests");
+    String bazelRelativePath = System.getProperty("jvm-inc-builder.bazel.executable");
+    String moduleBazelTxtRelativePath = System.getProperty("jvm-inc-builder.module.bazel.txt");
+    String rulesJvmRelativePath = System.getProperty("jvm-inc-builder.rules.jvm.zip");
+    Runfiles.Preloaded preloaded = Runfiles.preload();
+    assertNotNull("jvm-inc-builder.bazel.executable system property is not set", bazelRelativePath);
+    assertNotNull("jvm-inc-builder.module.bazel.txt system property is not set", moduleBazelTxtRelativePath);
+    assertNotNull("jvm-inc-builder.rules.jvm.zip system property is not set", rulesJvmRelativePath);
+    ourBazelRunnerPath = preloaded.unmapped().rlocation(bazelRelativePath);
 
-  private Path myTestDataRoot;
-  private String myModuleOverrideFlag;
-  private Path myOutputBinRoot;
+    assertNotNull("Path to bazel executable is expected to be set in \"" + BAZEL_EXECUTABLE + "\" system property", ourBazelRunnerPath);
+    assertTrue("Specified path to bazel executable does not exist: \"" + ourBazelRunnerPath + "\"", Files.exists(Path.of(ourBazelRunnerPath)));
 
-  public BazelIncBuildTest() {
-    Path tmpRoot = Path.of(System.getProperty("java.io.tmpdir"));
-    myTestDataWorkRoot = tmpRoot.resolve(WORK_DIR_NAME).normalize();  // the work root should be the same across different test sessions
-    String bazelPath = System.getProperty("jvm-inc-builder.bazel.executable");
-    myBazelRunnerPath = bazelPath != null? bazelPath.replace(File.separatorChar, '/') : null;
-  }
+    ourTestDataRoot = Paths.get(preloaded.unmapped().rlocation(moduleBazelTxtRelativePath)).getParent();
+    assertTrue("Test data root \"" + ourTestDataRoot + "\" does not exist", Files.isDirectory(ourTestDataRoot));
 
-  @BeforeAll
-  protected void setupWorkDir() throws Exception {
-    assertNotNull(myBazelRunnerPath, "Path to bazel executable is expected to be set in \"" + BAZEL_EXECUTABLE + "\" system property");
-    assertTrue(Files.exists(Path.of(myBazelRunnerPath)), () -> "Specified path to bazel executable does not exist: \"" + myBazelRunnerPath + "\"");
+    String rulesJvmZipPath = preloaded.unmapped().rlocation(rulesJvmRelativePath);
+    assertTrue("Rules JVM zip file does not exist: " + rulesJvmZipPath, Files.exists(Path.of(rulesJvmZipPath)));
 
-    String wsRootPath = System.getProperty(WORKSPACE_ROOT_PROPERTY);
-    assertTrue(wsRootPath != null && !wsRootPath.isBlank(), "Workspace root path for 'rules_jvm' is expected to be set in \"" + WORKSPACE_ROOT_PROPERTY + "\" system property");
-    Path wsRoot = Path.of(wsRootPath).toRealPath();
-    assertTrue(Files.exists(wsRoot), () -> "Passed workspace root for 'rules_jvm' \"" + wsRoot + "\" does not exist");
-
-    myTestDataRoot = wsRoot.resolve("jvm-inc-builder-tests").resolve("testData");
-    assertTrue(Files.exists(myTestDataRoot), () -> "Test data root \"" + myTestDataRoot + "\" does not exist");
-
-    myModuleOverrideFlag = "--override_module=rules_jvm=" + wsRoot.toString().replace(File.separatorChar, '/');
-
-    if (Files.exists(myTestDataWorkRoot)) {
-      for (Path path : Files.list(myTestDataWorkRoot).toList()) {
-        Utils.deleteRecursively(path); // local cleanup
-      }
+    Utils.deleteRecursively(ourTestDataWorkRoot);
+    Files.createDirectories(ourTestDataWorkRoot);
+    for (File file : ourTestDataRoot.toFile().listFiles(File::isFile)) {
+      copyTestDataFile(file.toPath(), ourTestDataWorkRoot);
     }
-    else {
-      Files.createDirectories(myTestDataWorkRoot);
+
+    String moduleBazelContent = Files.readString(ourTestDataWorkRoot.resolve("MODULE.bazel"));
+
+    String marker = "ABSOLUTE_RULES_JVM_ARTIFACT_PATH";
+
+    if (!moduleBazelContent.contains(marker)) {
+      throw new IllegalStateException("Expected to find ABSOLUTE_RULES_JVM_ARTIFACT_PATH in MODULE.bazel");
     }
-    for (Path path : Files.list(myTestDataRoot).filter(Files::isRegularFile).toList()) {
-      copyTestDataFile(path, myTestDataWorkRoot);
+    if (!rulesJvmZipPath.startsWith("/")) {
+      rulesJvmZipPath = "/" + rulesJvmZipPath;
     }
+    moduleBazelContent = moduleBazelContent.replace(marker, rulesJvmZipPath);
+    Files.writeString(ourTestDataWorkRoot.resolve("MODULE.bazel"), moduleBazelContent);
 
     // expected to be the module root output path, like '.../execroot/_main/bazel-out'
-    ExecutionResult execResult = runBazelCommand(OutputConsumer.lastLineConsumer(), "info", "output_path");
+    ExecutionResult execResult = runBazelCommand(
+      OutputConsumer.lastLineConsumer(),
+      Duration.ofMinutes(1),
+      "info",
+      "output_path"
+    );
     execResult.assertSuccessful();
     String infoCmdOutput = execResult.getOutput();
-    // assuming 'jvm-fastbuild' fixed name, if --experimental_platform_in_output_dir flag is used in .bazelrc
-    myOutputBinRoot = Path.of(infoCmdOutput).resolve("jvm-fastbuild").resolve("bin");
-
-    //System.out.println("Expected output root for test cases: " + myBaseOutputRoot);
+    // assuming 'jvm-fastbuild' fixed name if --experimental_platform_in_output_dir flag is used in .bazelrc
+    ourOutputBinRoot = Path.of(infoCmdOutput).resolve("jvm-fastbuild").resolve("bin");
   }
 
-  @AfterAll
-  protected void cleanup() throws Exception {
+  @AfterClass
+  public static void cleanupStatic() throws Exception {
     try {
       if (OUTPUT_FULL_CLEAN) {
-        runBazelCommand(OutputConsumer.allLinesConsumer(), "clean", "--expunge").assertSuccessful();
+        runBazelCommand(
+          OutputConsumer.allLinesConsumer(),
+          Duration.ofMinutes(10),
+          "clean",
+          "--expunge"
+        ).assertSuccessful();
       }
-      runBazelCommand(OutputConsumer.allLinesConsumer(), "shutdown").assertSuccessful();
+      runBazelCommand(
+        OutputConsumer.allLinesConsumer(),
+        Duration.ofMinutes(1),
+        "shutdown"
+      ).assertSuccessful();
     }
     finally {
-      Utils.deleteRecursively(myTestDataWorkRoot);
+      Utils.deleteRecursively(ourTestDataWorkRoot);
     }
   }
 
@@ -129,21 +146,21 @@ public abstract class BazelIncBuildTest {
   }
 
   protected ExecutionResult performTest(int makesCount, String testDataRelativePath) throws Exception {
-    Path testDataDir = myTestDataRoot.resolve(testDataRelativePath);      // the initial test data files
-    Path testWorkDir = myTestDataWorkRoot.resolve(testDataRelativePath);  // the working root directory for sources of this particular test
+    Path testDataDir = ourTestDataRoot.resolve(testDataRelativePath);      // the initial test data files
+    Path testWorkDir = ourTestDataWorkRoot.resolve(testDataRelativePath);  // the working root directory for sources of this particular test
     copyRecursively(testDataDir, testWorkDir.getParent(), path -> !ACTION_EXTENSION_MATCHER.test(getExtension(path)));
 
     Path testOutputDir = getTestOutputDir(testDataRelativePath);
     Path buildLogFile = testOutputDir.resolve(DataPaths.BUILD_LOG_FILE_NAME);
     Path expectedBuildLogFile = testDataDir.resolve(DataPaths.BUILD_LOG_FILE_NAME);
-    assertTrue(Files.exists(expectedBuildLogFile), () -> "File with expected build log " + expectedBuildLogFile + " must exist.");
+    assertTrue("File with expected build log " + expectedBuildLogFile + " must exist.", Files.exists(expectedBuildLogFile));
 
-      Utils.deleteRecursively(testOutputDir); // cleanup from previous run
+    Utils.deleteRecursively(testOutputDir); // cleanup from previous run
 
     String bazelTarget = "//" + testDataRelativePath + "/...";
 
     runBazelBuild(bazelTarget).assertSuccessful(); // the initial build
-    assertTrue(Files.exists(testOutputDir), () -> "Tests output root directory " + testOutputDir + " should exist. Probably test expectations differ from Bazel's current output dir naming policy");
+    assertTrue("Tests output root directory " + testOutputDir + " should exist. Probably test expectations differ from Bazel's current output dir naming policy", Files.exists(testOutputDir));
 
     ExecutionResult result = null;
     StringBuilder buildLog = new StringBuilder();
@@ -163,7 +180,7 @@ public abstract class BazelIncBuildTest {
 
     String expectedBuildLog = Files.readString(expectedBuildLogFile, StandardCharsets.UTF_8).replaceAll("\r\n?", "\n").trim();
     String actualBuildLog = buildLog.toString().trim();
-    assertEquals(expectedBuildLog, actualBuildLog, () -> collectDiagnostics(testOutputDir));
+    assertEquals(collectDiagnostics(testOutputDir), expectedBuildLog, actualBuildLog);
 
     if (result != null && result.isSuccessful()) {
       // todo: rebuild from scratch and compare graphs
@@ -173,24 +190,28 @@ public abstract class BazelIncBuildTest {
   }
 
   private @NotNull Path getTestOutputDir(String testDataPath) {
-    return myOutputBinRoot.resolve(testDataPath);
+    return ourOutputBinRoot.resolve(testDataPath);
   }
 
   private static String collectDiagnostics(Path testOutputDir) {
     StringBuilder content = new StringBuilder();
-    Comparator<Path> byFileName = Comparator.comparing(p -> getFileName(p));
+    content.append("Test output directory: ").append(testOutputDir).append("\n");
     try {
-      content.append("Test output directory: ").append(testOutputDir).append("\n");
-      for (Path dataDir : Files.list(testOutputDir).filter(p -> matches(p, DataPaths.DATA_DIR_NAME_SUFFIX) && Files.isDirectory(p)).sorted(byFileName).toList()) {
-        Path diagnostic = Files.list(dataDir).filter(p -> matches(p, DataPaths.DIAGNOSTIC_FILE_NAME_SUFFIX) && Files.isRegularFile(p)).findFirst().orElse(null);
-        String sessionLog = diagnostic != null? readLatestEntry(diagnostic) : null;
-        if (sessionLog != null) {
-          String targetName = getFileName(dataDir);
-          content.append("\n").append("--------------------------- BEGIN diagnostic log for \"").append(targetName).append("\" ---------------------------");
-          content.append("\n").append(sessionLog);
-          content.append("\n").append("--------------------------- END diagnostic log for \"").append(targetName).append("\" ---------------------------");
+      Files.walkFileTree(testOutputDir, new SimpleFileVisitor<>() {
+        @Override
+        public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
+          if (matches(file, DataPaths.DIAGNOSTIC_FILE_NAME_SUFFIX)) {
+            String sessionLog = readLatestEntry(file);
+            if (sessionLog != null) {
+              String targetName = getFileName(file.getParent());
+              content.append("\n").append("--------------------------- BEGIN diagnostic log for \"").append(targetName).append("\" ---------------------------");
+              content.append("\n").append(sessionLog);
+              content.append("\n").append("--------------------------- END diagnostic log for \"").append(targetName).append("\" ---------------------------");
+            }
+          }
+          return FileVisitResult.CONTINUE;
         }
-      }
+      });
     }
     catch (IOException e) {
       StringWriter buf = new StringWriter();
@@ -207,7 +228,7 @@ public abstract class BazelIncBuildTest {
           // the first description entry corresponds to the most recent build session
           ByteArrayOutputStream buf = new ByteArrayOutputStream();
           zis.transferTo(buf);
-          return new String(buf.toByteArray(), StandardCharsets.UTF_8);
+          return buf.toString(StandardCharsets.UTF_8);
         }
       }
     }
@@ -242,33 +263,65 @@ public abstract class BazelIncBuildTest {
 
   @NotNull
   protected ExecutionResult runBazelBuild(String... options) throws Exception {
-    return runBazelCommand(OutputConsumer.allLinesConsumer(), "build", options);
+    return runBazelCommand(
+      OutputConsumer.allLinesConsumer(),
+      Duration.ofMinutes(10),
+      "build",
+      options
+    );
   }
 
   @NotNull
-  protected ExecutionResult runBazelCommand(OutputConsumer outputSink, String command, String... options) throws Exception {
+  protected static ExecutionResult runBazelCommand(
+    OutputConsumer outputSink,
+    Duration timeout,
+    String command,
+    String... options
+  ) throws Exception {
     ProcessBuilder processBuilder = new ProcessBuilder(
-      myBazelRunnerPath, "--nosystem_rc", "--nohome_rc", "--max_idle_secs=600", command
+      ourBazelRunnerPath, "--nosystem_rc", "--nohome_rc", command
     );
     processBuilder.command().addAll(List.of(options));
-    processBuilder.command().addAll(List.of(
-      "--color=no", "--curses=no", myModuleOverrideFlag
-    ));
+    processBuilder.command().addAll(List.of("--color=no", "--curses=no"));
 
     processBuilder.redirectErrorStream(true);
-    processBuilder.directory(myTestDataWorkRoot.toFile());
+    processBuilder.directory(ourTestDataWorkRoot.toFile());
 
     Process proc = processBuilder.start();
     OutputConsumer allOutput = OutputConsumer.allLinesConsumer();
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream(), StandardCharsets.UTF_8))) {
-      String line;
-      while ((line = reader.readLine()) != null) {
-        outputSink.consumeLine(line);
-        allOutput.consumeLine(line);
+    Thread readerThread = new Thread(() -> {
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream(), StandardCharsets.UTF_8))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+          outputSink.consumeLine(line);
+          allOutput.consumeLine(line);
+        }
+      }
+      catch (IOException ignored) {
+      }
+    }, "bazel-inc-build-test-output");
+    readerThread.setDaemon(true);
+    readerThread.start();
+
+    boolean exitedInTime = proc.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS);
+    if (!exitedInTime) {
+      proc.destroy();
+      if (!proc.waitFor(5, TimeUnit.SECONDS)) {
+        proc.destroyForcibly();
+        proc.waitFor(5, TimeUnit.SECONDS);
       }
     }
-    
-    int exitCode = proc.waitFor();
+
+    readerThread.join(TimeUnit.SECONDS.toMillis(5));
+
+    if (!exitedInTime) {
+      return ExecutionResult.create(
+        -1,
+        "Bazel command timed out after " + timeout.toSeconds() + " sec\n" + allOutput.getResult()
+      );
+    }
+
+    int exitCode = proc.exitValue();
     return ExecutionResult.create(exitCode, exitCode == 0? outputSink.getResult() : allOutput.getResult());
   }
 

@@ -1,9 +1,11 @@
+load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_javac_options", "kt_kotlinc_options")
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "int_flag")
+load("@protobuf//bazel/toolchains:proto_lang_toolchain.bzl", "proto_lang_toolchain")
 load("@rules_java//java:defs.bzl", "java_import")
 load("@rules_kotlin//kotlin:core.bzl", _kt_kotlinc_options = "kt_kotlinc_options")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
-load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_javac_options", "kt_kotlinc_options")
-load("@protobuf//bazel/toolchains:proto_lang_toolchain.bzl", "proto_lang_toolchain")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files", "strip_prefix")
+load("@rules_pkg//pkg:pkg.bzl", "pkg_zip")
 
 # See https://github.com/aspect-build/toolchains_protoc (this has been already upstreamed to @protobuf, but it's not yet released)
 proto_lang_toolchain(
@@ -322,19 +324,11 @@ jvm_import(
 )
 
 java_library(
-  name = "junit5",
+  name = "junit4",
   exports = [
-    ":org_junit_jupiter-junit-jupiter-api-5_13_4_http_import",
-    ":org_opentest4j-opentest4j-1_3_0_http_import",
-    ":org_junit_platform-junit-platform-commons-1_13_4_http_import",
-    ":org_apiguardian-apiguardian-api-1_1_2_http_import",
+    ":junit-junit-4_13_2_http_import",
   ],
   visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org_junit_jupiter-junit-jupiter-api-5_13_4_http_import",
-  jar = "@org_junit_jupiter-junit-jupiter-api-5_13_4_http//file",
 )
 
 jvm_import(
@@ -343,44 +337,8 @@ jvm_import(
 )
 
 jvm_import(
-  name = "org_junit_platform-junit-platform-commons-1_13_4_http_import",
-  jar = "@org_junit_platform-junit-platform-commons-1_13_4_http//file",
-)
-
-jvm_import(
-  name = "org_apiguardian-apiguardian-api-1_1_2_http_import",
-  jar = "@org_apiguardian-apiguardian-api-1_1_2_http//file",
-)
-
-java_library(
-  name = "junit5Launcher",
-  exports = [
-    ":org_junit_platform-junit-platform-launcher-1_13_4_http_import",
-    ":org_junit_platform-junit-platform-engine-1_13_4_http_import",
-    ":org_junit_platform-junit-platform-reporting-1_12_2_http_import",
-    ":org_junit_jupiter-junit-jupiter-engine-5_13_4_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org_junit_platform-junit-platform-launcher-1_13_4_http_import",
-  jar = "@org_junit_platform-junit-platform-launcher-1_13_4_http//file",
-)
-
-jvm_import(
-  name = "org_junit_jupiter-junit-jupiter-engine-5_13_4_http_import",
-  jar = "@org_junit_jupiter-junit-jupiter-engine-5_13_4_http//file",
-)
-
-jvm_import(
-  name = "org_junit_platform-junit-platform-engine-1_13_4_http_import",
-  jar = "@org_junit_platform-junit-platform-engine-1_13_4_http//file",
-)
-
-jvm_import(
-  name = "org_junit_platform-junit-platform-reporting-1_12_2_http_import",
-  jar = "@org_junit_platform-junit-platform-reporting-1_12_2_http//file",
+  name = "junit-junit-4_13_2_http_import",
+  jar = "@junit-junit-4_13_2_http//file",
 )
 
 kt_javac_options(
@@ -414,5 +372,29 @@ label_flag(
 label_flag(
     name = "jvm-builder-jvm_flags",
     build_setting_default = "//jvm-inc-builder:jvm-inc-builder-jvm_flags",
+    visibility = ["//visibility:public"],
+)
+
+pkg_files(
+  name = "rules_to_zip",
+  srcs = glob(["rules/**/*"]),
+  strip_prefix = strip_prefix.from_pkg(),
+)
+
+pkg_zip(
+    name = "rules_jvm_zip",
+    srcs = glob([
+      "*.bzl",
+      "*.bazel",
+      "*.bazel.lock",
+    ]) + [
+      ":rules_to_zip",
+       "//dependency-graph:files_to_zip",
+       "//jps-builders-6:files_to_zip",
+       "//jvm-inc-builder:files_to_zip",
+       "//rules/impl/platforms:files_to_zip",
+       "//worker-framework:files_to_zip",
+       "//zip:files_to_zip",
+    ],
     visibility = ["//visibility:public"],
 )

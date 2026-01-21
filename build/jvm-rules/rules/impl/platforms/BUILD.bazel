@@ -1,3 +1,5 @@
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
+
 # JVM / host-agnostic platform:
 # jvm_library and jvm_resources rules use it as the target platform (see jvm_platform_transition), so output jars land under
 # the output directory w/ platform-independent name (e.g. bazel-out/jvm-fastbuild/, not bazel-out/darwin_arm64-fastbuild/),
@@ -19,4 +21,14 @@ platform(
 platform(
     name = "scrubbed_host",
     parents = ["@bazel_tools//tools:host_platform"],
+)
+
+pkg_files(
+    name = "files_to_zip",
+    prefix = "rules/impl/platforms",
+    srcs = glob(
+        ["**"],
+    ),
+    strip_prefix = strip_prefix.from_pkg(),
+    visibility = ["//visibility:public"],
 )

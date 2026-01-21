@@ -6,12 +6,14 @@ module(
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "bazel_worker_api", version = "0.0.9")
 bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
-bazel_dep(name = "rules_java", version = "9.3.0")
-bazel_dep(name = "rules_kotlin", version = "2.2.2")
-bazel_dep(name = "rules_python", version = "1.7.0")
-bazel_dep(name = "toolchains_protoc", version = "0.6.0")
 bazel_dep(name = "rules_apple", version = "4.3.3") # added explicitly to fix `No 'swiftc' executable found in $PATH` error
+bazel_dep(name = "rules_java", version = "9.3.0")
+bazel_dep(name = "rules_jvm_external", version = "6.9")
+bazel_dep(name = "rules_kotlin", version = "2.2.2")
+bazel_dep(name = "rules_pkg", version = "1.2.0")
+bazel_dep(name = "rules_python", version = "1.7.0")
 bazel_dep(name = "rules_swift", version = "3.4.1") # same as above
+bazel_dep(name = "toolchains_protoc", version = "0.6.0")
 
 # bazel tool to be used in jvm builder tests
 test_bazel_tool = use_extension("//:test_bazel_tool.bzl", "extension")
@@ -55,6 +57,14 @@ register_toolchains("//:all")
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 
 kotlin_compiler_version = "2.3.10-RC-385"
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    python_version = "3.14",
+    is_default = True,
+)
+use_repo(python, "python_3_14")
+register_toolchains("@python_3_14//:all")
 
 toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains", dev_dependency = True)  # `dev_dependency = True` to avoid leaking the extension in modules using that module
 use_repo(toolchains, "zig_sdk")
@@ -210,6 +220,13 @@ http_file(
     downloaded_file_path = "jvm-abi-gen-embeddable-%s.jar" % kotlin_compiler_version,
     sha256 = "18bc153c7b0ac366c461a641b51bd53c920ae2bb70ea84ddaf405df67c2c601e",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/jvm-abi-gen-embeddable/%s/jvm-abi-gen-embeddable-%s.jar" % (kotlin_compiler_version, kotlin_compiler_version),
+)
+
+http_file(
+  name = "junit-junit-4_13_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar",
+  sha256 = "8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3",
+  downloaded_file_path = "junit-4.13.2.jar"
 )
 
 http_file(
@@ -577,58 +594,8 @@ http_file(
 )
 
 http_file(
-  name = "org_junit_jupiter-junit-jupiter-api-5_13_4_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/5.13.4/junit-jupiter-api-5.13.4.jar",
-  sha256 = "d1bb81abfd9e03418306b4e6a3390c8db52c58372e749c2980ac29f0c08278f1",
-  downloaded_file_path = "junit-jupiter-api-5.13.4.jar"
-)
-
-http_file(
   name = "org_opentest4j-opentest4j-1_3_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar",
   sha256 = "48e2df636cab6563ced64dcdff8abb2355627cb236ef0bf37598682ddf742f1b",
   downloaded_file_path = "opentest4j-1.3.0.jar"
 )
-
-http_file(
-  name = "org_junit_platform-junit-platform-commons-1_13_4_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/1.13.4/junit-platform-commons-1.13.4.jar",
-  sha256 = "1c25ca641ebaae44ff3ad21ca1b2ef68d0dd84bfeb07c4805ba7840899b77408",
-  downloaded_file_path = "junit-platform-commons-1.13.4.jar"
-)
-
-http_file(
-  name = "org_apiguardian-apiguardian-api-1_1_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar",
-  sha256 = "b509448ac506d607319f182537f0b35d71007582ec741832a1f111e5b5b70b38",
-  downloaded_file_path = "apiguardian-api-1.1.2.jar"
-)
-
-http_file(
-  name = "org_junit_platform-junit-platform-launcher-1_13_4_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-launcher/1.13.4/junit-platform-launcher-1.13.4.jar",
-  sha256 = "0b0beaeb6880a31149641d2d848b863712885469670c12099586d7f798522564",
-  downloaded_file_path = "junit-platform-launcher-1.13.4.jar"
-)
-
-http_file(
-  name = "org_junit_jupiter-junit-jupiter-engine-5_13_4_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-engine/5.13.4/junit-jupiter-engine-5.13.4.jar",
-  sha256 = "027404a92fe618b72465792a257951495c503a7d5751e2791e0f51c87f67f5bc",
-  downloaded_file_path = "junit-jupiter-engine-5.13.4.jar"
-)
-
-http_file(
-  name = "org_junit_platform-junit-platform-engine-1_13_4_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-engine/1.13.4/junit-platform-engine-1.13.4.jar",
-  sha256 = "390c5f77b84283a64b644f88251b397e0b0debb80bdcc50f899881aecff43a5a",
-  downloaded_file_path = "junit-platform-engine-1.13.4.jar"
-)
-
-http_file(
-  name = "org_junit_platform-junit-platform-reporting-1_12_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-reporting/1.12.2/junit-platform-reporting-1.12.2.jar",
-  sha256 = "5d0964d0fba027a39cc0123b8521e72a1371157239d56dadcf929529074b8cb3",
-  downloaded_file_path = "junit-platform-reporting-1.12.2.jar"
-)
-

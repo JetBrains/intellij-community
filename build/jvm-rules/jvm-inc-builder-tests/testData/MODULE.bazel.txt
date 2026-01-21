@@ -9,6 +9,11 @@ bazel_dep(name = "rules_kotlin", version = "2.2.2")
 # the module is supposed to always be overridden with the local version
 bazel_dep(name = "rules_jvm", version = "")
 
+archive_override(
+    module_name = "rules_jvm",
+    url = "file://ABSOLUTE_RULES_JVM_ARTIFACT_PATH",
+)
+
 # The "hermetic_cc_toolchain" is used in rules_jvm
 # These explicit instructions help to avoid failures with zig_sdk repository creation in rules_jvm
 bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
