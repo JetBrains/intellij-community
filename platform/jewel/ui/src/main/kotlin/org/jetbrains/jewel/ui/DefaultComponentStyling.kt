@@ -29,6 +29,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalDefaultBannerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultComboBoxStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultDropdownStyle
+import org.jetbrains.jewel.ui.component.styling.LocalDefaultSlimButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultSplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultTabStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDividerStyle
@@ -41,6 +42,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalLazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSlimButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalRadioButtonStyle
@@ -73,6 +75,8 @@ import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
+import org.jetbrains.jewel.ui.component.styling.fallbackDefaultSlimButtonStyle
+import org.jetbrains.jewel.ui.component.styling.fallbackOutlinedSlimButtonStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSearchMatchStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSpeedSearchStyle
 
@@ -114,6 +118,8 @@ public class DefaultComponentStyling(
     public val undecoratedDropdownStyle: DropdownStyle,
     public val speedSearchStyle: SpeedSearchStyle,
     public val searchMatchStyle: SearchMatchStyle,
+    public val defaultSlimButtonStyle: ButtonStyle,
+    public val outlinedSlimButtonStyle: ButtonStyle,
 ) : ComponentStyling {
     @Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.HIDDEN)
     public constructor(
@@ -186,6 +192,8 @@ public class DefaultComponentStyling(
         undecoratedDropdownStyle,
         fallbackSpeedSearchStyle(),
         fallbackSearchMatchStyle(),
+        defaultSlimButtonStyle = fallbackDefaultSlimButtonStyle(defaultButtonStyle.colors),
+        outlinedSlimButtonStyle = fallbackOutlinedSlimButtonStyle(outlinedButtonStyle.colors),
     )
 
     @Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.HIDDEN)
@@ -258,6 +266,8 @@ public class DefaultComponentStyling(
         undecoratedDropdownStyle,
         fallbackSpeedSearchStyle(),
         fallbackSearchMatchStyle(),
+        defaultSlimButtonStyle = fallbackDefaultSlimButtonStyle(defaultButtonStyle.colors),
+        outlinedSlimButtonStyle = fallbackOutlinedSlimButtonStyle(outlinedButtonStyle.colors),
     )
 
     @Composable
@@ -300,6 +310,8 @@ public class DefaultComponentStyling(
             LocalUndecoratedDropdownStyle provides undecoratedDropdownStyle,
             LocalSpeedSearchStyle provides speedSearchStyle,
             LocalSearchMatchStyle provides searchMatchStyle,
+            LocalDefaultSlimButtonStyle provides defaultSlimButtonStyle,
+            LocalOutlinedSlimButtonStyle provides outlinedSlimButtonStyle,
         )
 
     override fun equals(other: Any?): Boolean {
@@ -343,6 +355,8 @@ public class DefaultComponentStyling(
         if (undecoratedDropdownStyle != other.undecoratedDropdownStyle) return false
         if (speedSearchStyle != other.speedSearchStyle) return false
         if (searchMatchStyle != other.searchMatchStyle) return false
+        if (defaultSlimButtonStyle != other.defaultSlimButtonStyle) return false
+        if (outlinedSlimButtonStyle != other.outlinedSlimButtonStyle) return false
 
         return true
     }
@@ -383,6 +397,8 @@ public class DefaultComponentStyling(
         result = 31 * result + undecoratedDropdownStyle.hashCode()
         result = 31 * result + speedSearchStyle.hashCode()
         result = 31 * result + searchMatchStyle.hashCode()
+        result = 31 * result + defaultSlimButtonStyle.hashCode()
+        result = 31 * result + outlinedSlimButtonStyle.hashCode()
         return result
     }
 
@@ -422,6 +438,8 @@ public class DefaultComponentStyling(
             "tooltipStyle=$tooltipStyle, " +
             "undecoratedDropdownStyle=$undecoratedDropdownStyle, " +
             "speedSearchStyle=$speedSearchStyle, " +
-            "searchMatchStyle=$searchMatchStyle" +
+            "searchMatchStyle=$searchMatchStyle, " +
+            "defaultSlimButtonStyle=$defaultSlimButtonStyle, " +
+            "outlinedSlimButtonStyle=$outlinedSlimButtonStyle" +
             ")"
 }
