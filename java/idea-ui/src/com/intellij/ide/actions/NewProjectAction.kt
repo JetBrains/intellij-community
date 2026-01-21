@@ -16,17 +16,36 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen
 import com.intellij.platform.ProjectGeneratorManager
 import com.intellij.ui.ExperimentalUI
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
-@Service()
-private class NewProjectActionCoroutineScopeHolder(@JvmField val coroutineScope: CoroutineScope)
+@Service
+private class NewProjectActionService(private val coroutineScope: CoroutineScope) {
+  @Volatile
+  private var job: Job? = null
+
+  fun isActionInProgress(): Boolean {
+    return job?.isActive == true
+  }
+
+  fun actionPerformed(project: Project?) {
+    job = coroutineScope.launch {
+      runCatching {
+        service<ProjectGeneratorManager>().initProjectGenerator(project)
+      }.onFailure {
+        thisLogger().warn("Failed to execute initProjectGenerator", it)
+      }
+      val wizard = withContext(Dispatchers.EDT) {
+        NewProjectWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null)
+      }
+      createNewProjectAsync(wizard)
+    }
+  }
+}
 
 open class NewProjectAction : AnAction(), DumbAware, NewProjectOrModuleAction {
   init {
@@ -50,20 +69,11 @@ open class NewProjectAction : AnAction(), DumbAware, NewProjectOrModuleAction {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    service<NewProjectActionCoroutineScopeHolder>().coroutineScope.launch {
-      runCatching {
-        service<ProjectGeneratorManager>().initProjectGenerator(e.project)
-      }.onFailure {
-        thisLogger().warn("Failed to execute initProjectGenerator", it)
-      }
-      val wizard = withContext(Dispatchers.EDT) {
-        NewProjectWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null)
-      }
-      createNewProjectAsync(wizard)
-    }
+    service<NewProjectActionService>().actionPerformed(e.project)
   }
 
   override fun update(e: AnActionEvent) {
+    e.presentation.isEnabled = !service<NewProjectActionService>().isActionInProgress()
     updateActionIcon(e)
     updateActionText(this, e)
   }
