@@ -226,6 +226,10 @@ f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurabl
 - getDependencies():java.util.Collection
 - getId():java.lang.String
 f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurable$Companion
+f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP
+- com.intellij.openapi.options.ConfigurableEP
+- sf:Companion:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP$Companion
+f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP$Companion
 f:com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.Disposable

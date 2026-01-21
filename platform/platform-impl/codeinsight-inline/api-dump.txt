@@ -53,10 +53,6 @@ com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement$Pres
 - a:startOffset():java.lang.Integer
 f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurable
 - com.intellij.openapi.options.SearchableConfigurable
-f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP
-- com.intellij.openapi.options.ConfigurableEP
-- sf:Companion:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP$Companion
-f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP$Companion
 com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion
 - com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 - sf:Companion:com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion$Companion
