@@ -59,10 +59,21 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
 
   override fun isAmendCommitModeSupported(): Boolean =
     workflow.isDefaultCommitEnabled &&
-    workflow.vcses.mapNotNull { it.checkinEnvironment }.filterIsInstance<AmendCommitAware>().any { it.isAmendCommitSupported() }
+    getAmendCommitAwareCheckinEnvironments().any { it.isAmendCommitSupported() }
+
+  override fun isAmendSpecificCommitSupported(): Boolean = isAmendCommitModeSupported() &&
+                                                           getAmendCommitAwareCheckinEnvironments().any { it.isAmendSpecificCommitSupported() }
+
+  private fun getAmendCommitAwareCheckinEnvironments(): List<AmendCommitAware> = workflow.vcses.mapNotNull { it.checkinEnvironment }.filterIsInstance<AmendCommitAware>()
 
   override fun addAmendCommitModeListener(listener: AmendCommitModeListener, parent: Disposable) =
     amendCommitEventDispatcher.addListener(listener, parent)
+
+  override suspend fun getAmendSpecificCommitTargets(limit: Int): List<CommitToAmend.Specific> {
+    val singleRoot = getSingleRoot()
+    val amendAware = singleRoot?.vcs?.checkinEnvironment as? AmendCommitAware
+    return amendAware?.getAmendSpecificCommitTargets(singleRoot.path, limit) ?: emptyList()
+  }
 
   private fun setAmendMessage() {
     val beforeAmendMessage = workflowHandler.getCommitMessage()

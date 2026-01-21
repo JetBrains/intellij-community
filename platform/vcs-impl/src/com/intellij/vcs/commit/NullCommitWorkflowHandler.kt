@@ -26,6 +26,7 @@ object NullAmendCommitHandler : AmendCommitHandler {
     set(value) = Unit
 
   override fun isAmendCommitModeSupported(): Boolean = false
+  override fun isAmendSpecificCommitSupported(): Boolean = false
 
   override fun addAmendCommitModeListener(listener: AmendCommitModeListener, parent: Disposable) = Unit
 }

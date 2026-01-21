@@ -10,9 +10,12 @@ import org.jetbrains.concurrency.CancellablePromise
 @ApiStatus.Experimental
 interface AmendCommitAware {
   fun isAmendCommitSupported(): Boolean
+  fun isAmendSpecificCommitSupported(): Boolean
 
   @Throws(VcsException::class)
   fun getLastCommitMessage(root: VirtualFile): String?
 
   fun getAmendCommitDetails(root: VirtualFile): CancellablePromise<EditedCommitDetails>
+
+  suspend fun getAmendSpecificCommitTargets(root: VirtualFile, limit: Int): List<CommitToAmend.Specific>? = null
 }

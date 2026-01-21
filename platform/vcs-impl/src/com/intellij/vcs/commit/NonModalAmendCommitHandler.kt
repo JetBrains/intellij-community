@@ -115,8 +115,14 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
   }
 
   private inner class EditedCommitCleaner : CommitterResultHandler {
-    override fun onSuccess() = setEditedCommit(null)
+    override fun onSuccess() {
+      commitToAmend = CommitToAmend.None
+      setEditedCommit(null)
+    }
     override fun onCancel() = Unit
-    override fun onFailure() = setEditedCommit(null)
+    override fun onFailure() {
+      commitToAmend = CommitToAmend.None
+      setEditedCommit(null)
+    }
   }
 }

@@ -22,7 +22,7 @@ internal object GitAmendSpecificCommitSquasher {
 
     runBlockingCancellable {
       val entries = repository.project.service<GitInteractiveRebaseEntriesProvider>()
-        .tryGetEntriesUsingLog(repository, targetCommit)?.plus(GitRebaseEntryGeneratedUsingLog(fixupCommit))
+          .tryGetEntriesUsingLog(repository, targetCommit)?.plus(GitRebaseEntryGeneratedUsingLog(fixupCommit))
       checkNotNull(entries)
 
       InMemoryRebaseOperations.squash(repository, listOf(fixupCommit, targetCommit), newMessage, RebaseEntriesSource.Entries(entries))

@@ -42,9 +42,11 @@ a:com.intellij.openapi.vcs.VcsRootChecker
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 *:com.intellij.vcs.commit.AmendCommitHandler
 - a:addAmendCommitModeListener(com.intellij.vcs.commit.AmendCommitModeListener,com.intellij.openapi.Disposable):V
+- getAmendSpecificCommitTargets(I,kotlin.coroutines.Continuation):java.lang.Object
 - a:getCommitToAmend():com.intellij.vcs.commit.CommitToAmend
 - a:isAmendCommitModeSupported():Z
 - a:isAmendCommitModeTogglingEnabled():Z
+- a:isAmendSpecificCommitSupported():Z
 - a:setAmendCommitModeTogglingEnabled(Z):V
 - a:setCommitToAmend(com.intellij.vcs.commit.CommitToAmend):V
 *f:com.intellij.vcs.commit.CommitWorkflowHandlerState

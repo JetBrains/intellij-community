@@ -116,6 +116,11 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
   }
 
   @Override
+  public boolean isAmendSpecificCommitSupported() {
+    return getAmendService().isAmendSpecificCommitSupported();
+  }
+
+  @Override
   public @Nullable String getLastCommitMessage(@NotNull VirtualFile root) {
     return getAmendService().getLastCommitMessage(root);
   }

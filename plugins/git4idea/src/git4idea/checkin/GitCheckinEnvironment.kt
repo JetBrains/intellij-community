@@ -129,6 +129,14 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     return amendService.isAmendCommitSupported()
   }
 
+  override fun isAmendSpecificCommitSupported(): Boolean {
+    return amendService.isAmendSpecificCommitSupported()
+  }
+
+  override suspend fun getAmendSpecificCommitTargets(root: VirtualFile, limit: Int): List<CommitToAmend.Specific> {
+    return amendService.getAmendSpecificCommitTargets(root, limit)
+  }
+
   @Throws(VcsException::class)
   override fun getLastCommitMessage(root: VirtualFile): String {
     return amendService.getLastCommitMessage(root)

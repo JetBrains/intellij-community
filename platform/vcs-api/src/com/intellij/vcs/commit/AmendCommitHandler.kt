@@ -12,7 +12,10 @@ interface AmendCommitHandler {
   var commitToAmend: CommitToAmend
   var isAmendCommitModeTogglingEnabled: Boolean
   fun isAmendCommitModeSupported(): Boolean
+  fun isAmendSpecificCommitSupported(): Boolean
   fun addAmendCommitModeListener(listener: AmendCommitModeListener, parent: Disposable)
+
+  suspend fun getAmendSpecificCommitTargets(limit: Int): List<CommitToAmend.Specific> = emptyList()
 }
 
 interface AmendCommitModeListener : EventListener {
