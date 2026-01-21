@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
   private static final String ACTION_EMPTY = "!!!EmptyAction";
@@ -102,6 +103,53 @@ public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
     IdeKeyEventDispatcher dispatcher = new IdeKeyEventDispatcher(null);
 
     assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED, 'z')));
+  }
+
+  /**
+   * Checks that when pressing SHIFT+MINUS once, we only get one single event instead of three events:
+   * (1) SHIFT+MINUS, then (2) UNDERSCORE, then (3) SHIFT+MINUS again.
+   */
+  public void testTripleCallRedundancyUnderscoreAndMinusKeys() {
+    IdeKeyEventDispatcher dispatcher = new IdeKeyEventDispatcher(null);
+    AtomicInteger counter = new AtomicInteger();
+    AnAction action = new AnAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        counter.incrementAndGet();
+      }
+    };
+    String actionId = "TripleCallAction";
+    ActionManager.getInstance().registerAction(actionId, action);
+    try {
+      myKeymap.addShortcut(actionId, new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_UNDERSCORE, InputEvent.SHIFT_DOWN_MASK), null));
+
+      assertEquals("Wrong init value", 0, counter.get());
+
+      // 1. SHIFT+UNDERSCORE
+      KeyEvent event1 = new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, System.currentTimeMillis(),
+                                     InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_UNDERSCORE, '_');
+      assertTrue(dispatcher.dispatchKeyEvent(event1));
+
+      assertEquals("Action have been performed", 1, counter.get());
+
+      // Should be consumed as a redundant event if in STATE_PROCESSED
+
+      // 2. MINUS
+      KeyEvent event2 = new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_MINUS, '-');
+      assertTrue(dispatcher.dispatchKeyEvent(event2));
+
+      assertEquals("Action should be performed only once", 1, counter.get());
+
+      // 3. SHIFT+UNDERSCORE
+      KeyEvent event3 = new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, System.currentTimeMillis(),
+                                     InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_UNDERSCORE, '_');
+      assertTrue(dispatcher.dispatchKeyEvent(event3));
+
+      assertEquals("Action should be performed only once", 1, counter.get());
+    }
+    finally {
+      ActionManager.getInstance().unregisterAction(actionId);
+    }
   }
 
   private static class EmptyAction extends AnAction {
