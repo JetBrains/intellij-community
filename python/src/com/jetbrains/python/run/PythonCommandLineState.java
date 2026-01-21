@@ -390,7 +390,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (sdk != null && getEnableRunTool()) {
       PyRunToolProvider runToolProvider = PyRunToolProvider.forSdk(sdk);
       if (runToolProvider != null && useRunTool(myConfig, sdk)) {
-        runToolParameters = PythonCommandLineStateExKt.getRunToolParametersForJvm(runToolProvider);
+        runToolParameters = PythonCommandLineStateExKt.getRunToolParametersForJvm(runToolProvider, sdk);
         PyRunToolUsageCollector.logRun(myConfig.getProject(), PyRunToolIds.idOf(runToolProvider));
       }
     }

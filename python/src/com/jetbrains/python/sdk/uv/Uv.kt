@@ -7,18 +7,19 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import io.github.z4kn4fein.semver.Version
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Internal
-interface UvCli {
-  suspend fun runUv(workingDir: Path, vararg args: String): PyResult<String>
+interface UvCli<P : PathHolder> {
+  suspend fun runUv(workingDir: Path, venvPath: P?, canChangeTomlOrLock: Boolean, vararg args: String): PyResult<String>
 }
 
 @ApiStatus.Internal
-interface UvLowLevel {
-  suspend fun initializeEnvironment(init: Boolean, version: Version?): PyResult<Path>
+interface UvLowLevel<P : PathHolder> {
+  suspend fun initializeEnvironment(init: Boolean, version: Version?): PyResult<P>
 
   suspend fun listUvPythons(): PyResult<Set<Path>>
   suspend fun listSupportedPythonVersions(versionRequest: String? = null): PyResult<List<Version>>

@@ -68,7 +68,7 @@ class PythonLanguageRuntimeUI(
       model = model,
       module = module,
       errorSink = ShowingMessageErrorSync,
-      limitExistingEnvironments = true,
+      limitExistingEnvironments = false,
       bestGuessCreateSdkInfo = CompletableDeferred(value = null)
     )
 

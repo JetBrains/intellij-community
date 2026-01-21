@@ -38,15 +38,14 @@ import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAd
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsRemovedByUser
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
-import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFilePermissions
-import java.time.Instant
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.div
 import kotlin.io.path.setPosixFilePermissions
 
 
 private const val STATE_FILE = ".state.json"
+private const val SUCCESS_FILE = ".success"
 
 @ApiStatus.Internal
 
@@ -81,15 +80,10 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, private val project: Project
     val execution = prepareHelperScriptExecution(helperPackage = PythonHelper.REMOTE_SYNC, helpersAwareTargetRequest = pyRequest)
 
     val stateFilePath = localRemoteSourcesRoot / STATE_FILE
-    val stateFilePrevTimestamp: FileTime
     if (Files.exists(stateFilePath)) {
-      stateFilePrevTimestamp = Files.getLastModifiedTime(stateFilePath)
       Files.copy(stateFilePath, localUploadDir / STATE_FILE)
       execution.addParameter("--state-file")
       execution.addParameter(uploadVolume.getTargetUploadPath().getRelativeTargetPath(STATE_FILE))
-    }
-    else {
-      stateFilePrevTimestamp = FileTime.from(Instant.MIN)
     }
     execution.addParameter(downloadVolume.getTargetDownloadPath())
 
@@ -128,8 +122,12 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, private val project: Project
     if (!Files.exists(stateFilePath)) {
       throw IllegalStateException("$stateFilePath is missing")
     }
-    if (Files.getLastModifiedTime(stateFilePath) <= stateFilePrevTimestamp) {
-      throw IllegalStateException("$stateFilePath has not been updated")
+    val successFilePath = localRemoteSourcesRoot / SUCCESS_FILE
+    if (!Files.exists(successFilePath)) {
+      throw IllegalStateException("$successFilePath is missing")
+    }
+    else {
+      Files.delete(successFilePath)
     }
 
     val stateFile: StateFile

@@ -18,17 +18,14 @@ import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
-import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.uv.impl.setUvExecutable
+import com.jetbrains.python.sdk.uv.impl.setUvExecutableLocal
 import com.jetbrains.python.sdk.uv.isUv
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.venvReader.VirtualEnvReader
-import com.jetbrains.python.venvReader.tryResolvePath
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.stream.Collectors
@@ -42,38 +39,42 @@ internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutabl
   override val toolState: ToolValidator<P> = model.uvViewModel.toolValidator
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.uvViewModel.uvExecutable
   override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
-    savePathForEelOnly(pathHolder) { path -> setUvExecutable(path) }
+    savePathForEelOnly(pathHolder) { path -> setUvExecutableLocal(path) }
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
     val sdkHomePath = selectedEnv.get()?.homePath
-    val selectedInterpreterPath = sdkHomePath as? PathHolder.Eel
-                                  ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", sdkHomePath))
+    val selectedInterpreterPath = sdkHomePath ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", sdkHomePath))
     val allSdk = PythonSdkUtil.getAllSdks()
-    val existingSdk = allSdk.find { it.homePath == selectedInterpreterPath.path.pathString }
+    val existingSdk = allSdk.find { it.homePath == selectedInterpreterPath.toString() }
+    val venvPath = when (sdkHomePath) {
+      is PathHolder.Eel -> model.fileSystem.parsePath(sdkHomePath.path.parent.parent.pathString)
+      // TODO PY-87712 Move this logic to a better place
+      is PathHolder.Target -> model.fileSystem.parsePath(sdkHomePath.pathString.substringBeforeLast("/bin/"))
+    }.getOr { return it }
     val associatedModule = extractModule(moduleOrProject)
-    val basePathString = associatedModule?.baseDir?.path ?: moduleOrProject.project.basePath
-    val projectDir = tryResolvePath(basePathString)
-                     ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", basePathString))
 
     // uv sdk in current module
     if (existingSdk != null && existingSdk.isUv && existingSdk.isAssociatedWithModule(associatedModule)) {
       return Result.success(existingSdk)
     }
 
-    val workingDirectory =
-      VirtualEnvReader().getVenvRootPath(selectedInterpreterPath.path)
-      ?: tryResolvePath(existingSdk?.associatedModulePath)
-      ?: projectDir
+    val basePathString = associatedModule?.baseDir?.path
+                         ?: moduleOrProject.project.basePath
+                         ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", null))
+    val workingDir = Path.of(basePathString)
 
     return setupExistingEnvAndSdk(
-      envExecutable = selectedInterpreterPath.path,
-      envWorkingDir = workingDirectory,
-      usePip = existingSdk?.isUv == true,
-      moduleDir = projectDir,
+      pythonBinary = selectedInterpreterPath,
+      uvPath = toolExecutable.get()!!.pathHolder!!,
+      workingDir = workingDir,
+      venvPath = venvPath,
+      fileSystem = model.fileSystem,
+      usePip = existingSdk?.isUv == true
     )
   }
 
+  // TODO PY-87712 Support detection for remotes
   override suspend fun detectEnvironments(modulePath: Path): List<DetectedSelectableInterpreter<P>> {
     val rootFolders = Files.walk(modulePath, 1)
       .filter(Files::isDirectory)

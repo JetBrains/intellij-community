@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import argparse
 import json
 import os
+import errno
 import re
 import sys
 import zipfile
@@ -62,6 +63,19 @@ else:
                       ensure_ascii=False,
                       separators=(',', ':'),
                       sort_keys=True)
+
+
+def delete_if_exists(path):
+    try:
+        os.remove(path)
+    except OSError as e:
+        if e.errno != errno.ENOENT:
+            raise
+
+
+def create_empty_file(path):
+    with open(path, 'w', encoding='utf-8'):
+        pass
 
 
 # noinspection DuplicatedCode
@@ -129,8 +143,10 @@ class RemoteSync(object):
         self.in_state_json = state_json
         self._name_counts = defaultdict(int)
         self._test_root = None
+        self._success_file = os.path.join(self.output_dir, '.success')
 
     def run(self):
+        delete_if_exists(self._success_file)
         out_state_json = {'roots': []}
         for root in self.roots:
             zip_path = os.path.join(self.output_dir, self.root_zip_name(root))
@@ -141,6 +157,7 @@ class RemoteSync(object):
         if self.skipped_roots:
             out_state_json['skipped_roots'] = self.skipped_roots
         dump_json(out_state_json, os.path.join(self.output_dir, '.state.json'))
+        create_empty_file(self._success_file)
 
     def collect_sources_in_root(self, root, zip_path, old_state):
         new_state = self.empty_root_state()

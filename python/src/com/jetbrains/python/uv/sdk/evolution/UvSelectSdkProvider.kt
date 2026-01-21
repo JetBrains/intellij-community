@@ -15,7 +15,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.uv.impl.getUvExecutable
+import com.jetbrains.python.sdk.uv.impl.getUvExecutableLocal
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import java.nio.file.Path
 
@@ -24,7 +24,7 @@ internal class UvSelectSdkProvider : EvoSelectSdkProvider {
   override fun getTreeElement(evoModuleSdk: EvoModuleSdk): EvoTreeLazyNodeElement {
     val icon = PythonCommunityImplUVCommonIcons.UV
     return EvoTreeLazyNodeElement("uv", icon) {
-      getUvExecutable() ?: return@EvoTreeLazyNodeElement PyResult.localizedError(PyBundle.message("evolution.uv.executable.is.not.found"))
+      getUvExecutableLocal() ?: return@EvoTreeLazyNodeElement PyResult.localizedError(PyBundle.message("evolution.uv.executable.is.not.found"))
 
       val environments = VenvEvoSdkManager.findEnvironments(evoModuleSdk.module).getOr {
         return@EvoTreeLazyNodeElement it

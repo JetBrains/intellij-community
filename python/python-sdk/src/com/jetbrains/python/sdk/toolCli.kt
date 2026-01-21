@@ -60,7 +60,6 @@ suspend fun detectTool(
   }
 
   paths.firstOrNull { it.isExecutable() }
-
 }
 
 private fun MutableList<Path>.addUnixPaths(eel: EelApi, binaryName: String) {

@@ -3,6 +3,9 @@ package com.jetbrains.python.pathValidation
 
 import com.intellij.execution.Platform
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.local
 import java.nio.file.Path
@@ -16,6 +19,11 @@ class PlatformAndRoot private constructor(val root: Path?, val platform: Platfor
      * Local system
      */
     val local: PlatformAndRoot = PlatformAndRoot(Path.of(""), Platform.current())
+
+    fun EelApi?.getPlatformAndRoot(): PlatformAndRoot = when {
+      this == null -> local
+      else -> PlatformAndRoot(this.fs.user.home.root.asNioPath(), if (platform.isWindows) Platform.WINDOWS else Platform.UNIX)
+    }
 
     /**
      * Creates [PlatformAndRoot] for [TargetEnvironmentConfiguration]. If null then returns either [local] or [platform] only depending

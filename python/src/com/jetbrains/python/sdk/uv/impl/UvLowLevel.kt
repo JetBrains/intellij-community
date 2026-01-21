@@ -5,6 +5,10 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.RuntimeJsonMappingException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.value.constant
+import com.intellij.execution.target.value.getRelativeTargetPath
+import com.intellij.platform.eel.provider.localEel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.ExecErrorReason
@@ -17,6 +21,8 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.uv.ScriptSyncCheckResult
 import com.jetbrains.python.sdk.uv.UvCli
 import com.jetbrains.python.sdk.uv.UvLowLevel
@@ -26,17 +32,16 @@ import io.github.z4kn4fein.semver.Version
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
-import kotlin.io.path.notExists
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 private const val NO_METADATA_MESSAGE = "does not contain a PEP 723 metadata tag"
 private const val OUTDATED_ENV_MESSAGE = "The environment is outdated"
 private val versionRegex = Regex("(\\d+\\.\\d+)\\.\\d+-.+\\s")
 
-private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLevel {
-  override suspend fun initializeEnvironment(init: Boolean, version: Version?): PyResult<Path> {
+private class UvLowLevelImpl<P : PathHolder>(private val cwd: Path, private val venvPath: P?, private val uvCli: UvCli<P>, private val fileSystem: FileSystem<P>) : UvLowLevel<P> {
+  override suspend fun initializeEnvironment(init: Boolean, version: Version?): PyResult<P> {
     val addPythonArg: (MutableList<String>) -> Unit = { args ->
       version?.let {
         args.add("--python")
@@ -47,31 +52,42 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     if (init) {
       val initArgs = mutableListOf("init")
       addPythonArg(initArgs)
-      initArgs.add("--no-readme")
-      initArgs.add("--no-pin-python")
-      initArgs.add("--vcs")
-      initArgs.add("none")
+      initArgs.add("--bare")
+      if (cwd.name.isNotBlank()) {
+        initArgs.add("--name")
+        initArgs.add(cwd.name)
+      }
       initArgs.add("--no-project")
-
-      val notExistingFiles = listOf("hello.py", "main.py").filter { cwd.resolve(it).notExists() }
-
-      uvCli.runUv(cwd, *initArgs.toTypedArray())
-        .getOr { return it }
-
-      notExistingFiles.forEach { cwd.resolve(it).deleteIfExists() }
+      uvCli.runUv(cwd, null, true, *initArgs.toTypedArray()).getOr { return it }
     }
 
     val venvArgs = mutableListOf("venv")
+    venvPath?.also { venvArgs += it.toString() }
     addPythonArg(venvArgs)
-    uvCli.runUv(cwd, *venvArgs.toTypedArray())
+    uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray())
       .getOr { return it }
 
     if (!init) {
-      uvCli.runUv(cwd, "sync")
+      uvCli.runUv(cwd, venvPath, true, "sync")
         .getOr { return it }
     }
 
-    val path = VirtualEnvReader().findPythonInPythonRoot(cwd.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
+    // TODO PY-87712 Would be great to get rid of unsafe casts
+    val path: P? = when (fileSystem) {
+      is FileSystem.Eel -> {
+        VirtualEnvReader().findPythonInPythonRoot((venvPath as? PathHolder.Eel)?.path ?: cwd.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
+          ?.let { fileSystem.resolvePythonBinary(PathHolder.Eel(it)) } as P?
+      }
+      is FileSystem.Target -> {
+        val pythonBinary = if (venvPath == null) {
+          val targetPath = constant(cwd.pathString)
+          val venvPath = targetPath.getRelativeTargetPath(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
+          venvPath.apply(fileSystem.targetEnvironmentConfiguration.createEnvironmentRequest(project = null).prepareEnvironment(TargetProgressIndicator.EMPTY))
+        } else venvPath.toString()
+        fileSystem.resolvePythonBinary(PathHolder.Target(pythonBinary)) as P?
+      }
+    }
+
     if (path == null) {
       return PyResult.localizedError(PyBundle.message("python.sdk.uv.failed.to.initialize.uv.environment"))
     }
@@ -80,7 +96,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   }
 
   override suspend fun listUvPythons(): PyResult<Set<Path>> {
-    var out = uvCli.runUv(cwd, "python", "dir")
+    var out = uvCli.runUv(cwd, venvPath, false, "python", "dir")
       .getOr { return it }
 
     val uvDir = tryResolvePath(out)
@@ -89,7 +105,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     }
 
     // TODO: ask for json output format
-    out = uvCli.runUv(cwd, "python", "list", "--only-installed")
+    out = uvCli.runUv(cwd, venvPath, false, "python", "list", "--only-installed")
       .getOr { return it }
 
     val pythons = parseUvPythonList(uvDir, out)
@@ -103,7 +119,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
       args += versionRequest
     }
 
-    val out = uvCli.runUv(cwd, *args.toTypedArray()).getOr { return it }
+    val out = uvCli.runUv(cwd, venvPath, false, *args.toTypedArray()).getOr { return it }
     val matches = versionRegex.findAll(out)
 
     return PyResult.success(
@@ -120,7 +136,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   }
 
   override suspend fun listPackages(): PyResult<List<PythonPackage>> {
-    val out = uvCli.runUv(cwd, "pip", "list", "--format", "json")
+    val out = uvCli.runUv(cwd, venvPath, false, "pip", "list", "--format", "json")
       .getOr { return it }
 
     data class PackageInfo(val name: String, val version: String)
@@ -135,7 +151,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   }
 
   override suspend fun listOutdatedPackages(): PyResult<List<PythonOutdatedPackage>> {
-    val out = uvCli.runUv(cwd, "pip", "list", "--outdated", "--format", "json")
+    val out = uvCli.runUv(cwd, venvPath, false, "pip", "list", "--outdated", "--format", "json")
       .getOr { return it }
 
     data class OutdatedPackageInfo(val name: String, val version: String, val latest_version: String)
@@ -155,42 +171,42 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   }
 
   override suspend fun listTopLevelPackages(): PyResult<List<PythonPackage>> {
-    val out = uvCli.runUv(cwd, "tree", "--depth=1", "--locked")
+    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--depth=1", "--locked")
       .getOr { return it }
 
     return PyExecResult.success(parsePackageList(out))
   }
 
   override suspend fun listPackageRequirements(name: PythonPackage): PyResult<List<PyPackageName>> {
-    val out = uvCli.runUv(cwd, "pip", "show", name.name)
+    val out = uvCli.runUv(cwd, venvPath, false, "pip", "show", name.name)
       .getOr { return it }
 
     return PyExecResult.success(parsePackageRequirements(out))
   }
 
   override suspend fun listPackageRequirementsTree(name: PythonPackage): PyResult<String> {
-    val out = uvCli.runUv(cwd, "tree", "--package", name.name, "--locked")
+    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--package", name.name, "--locked")
       .getOr { return it }
 
     return PyExecResult.success(out)
   }
 
   override suspend fun listProjectStructureTree(): PyResult<String> {
-    val out = uvCli.runUv(cwd, "tree", "--locked")
+    val out = uvCli.runUv(cwd, venvPath, false, "tree", "--locked")
       .getOr { return it }
 
     return PyExecResult.success(out)
   }
 
   override suspend fun listAllPackagesTree(): PyResult<String> {
-    val out = uvCli.runUv(cwd, "pip", "tree")
+    val out = uvCli.runUv(cwd, venvPath, false, "pip", "tree")
       .getOr { return it }
 
     return PyExecResult.success(out)
   }
 
   override suspend fun installPackage(name: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
-    uvCli.runUv(cwd, "pip", "install", *name.formatPackageName(), *options.toTypedArray())
+    uvCli.runUv(cwd, venvPath, true, "pip", "install", *name.formatPackageName(), *options.toTypedArray())
       .getOr { return it }
 
     return PyExecResult.success(Unit)
@@ -198,14 +214,14 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
 
   override suspend fun uninstallPackages(pyPackages: Array<out String>): PyResult<Unit> {
     // TODO: check if package is in dependencies and reject it
-    uvCli.runUv(cwd, "pip", "uninstall", *pyPackages)
+    uvCli.runUv(cwd, venvPath, true, "pip", "uninstall", *pyPackages)
       .getOr { return it }
 
     return PyExecResult.success(Unit)
   }
 
   override suspend fun addDependency(pyPackages: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
-    uvCli.runUv(cwd, "add", *pyPackages.formatPackageName(), *options.toTypedArray())
+    uvCli.runUv(cwd, venvPath, true, "add", *pyPackages.formatPackageName(), *options.toTypedArray())
       .getOr { return it }
 
     return PyExecResult.success(Unit)
@@ -219,7 +235,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     }
     args.addAll(pyPackages)
 
-    uvCli.runUv(cwd, *args.toTypedArray())
+    uvCli.runUv(cwd, venvPath, true, *args.toTypedArray())
       .getOr { return it }
 
     return PyExecResult.success(Unit)
@@ -228,7 +244,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   override suspend fun isProjectSynced(inexact: Boolean): PyResult<Boolean> {
     val args = constructSyncArgs(inexact)
 
-    uvCli.runUv(cwd, *args.toTypedArray())
+    uvCli.runUv(cwd, venvPath, false, *args.toTypedArray())
       .onFailure {
         val stderr = tryExtractStderr(it)
 
@@ -245,7 +261,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   override suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): PyResult<ScriptSyncCheckResult> {
     val args = constructSyncArgs(inexact) + listOf("--script", scriptPath.pathString)
 
-    uvCli.runUv(cwd, *args.toTypedArray())
+    uvCli.runUv(cwd, venvPath, false, *args.toTypedArray())
       .onFailure {
         val stderr = tryExtractStderr(it)
 
@@ -302,11 +318,11 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   }
 
   override suspend fun sync(): PyResult<String> {
-    return uvCli.runUv(cwd, "sync", "--all-packages", "--inexact")
+    return uvCli.runUv(cwd, venvPath, true, "sync", "--all-packages", "--inexact")
   }
 
   override suspend fun lock(): PyResult<String> {
-    return uvCli.runUv(cwd, "lock")
+    return uvCli.runUv(cwd, venvPath, true, "lock")
   }
 
   suspend fun parsePackageList(input: String): List<PythonPackage> = withContext(Dispatchers.Default) {
@@ -339,11 +355,14 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   }
 }
 
-fun createUvLowLevel(cwd: Path, uvCli: UvCli): UvLowLevel {
-  return UvLowLevelImpl(cwd, uvCli)
-}
+fun createUvLowLevelLocal(cwd: Path, uvCli: UvCli<PathHolder.Eel>): UvLowLevel<PathHolder.Eel> =
+  createUvLowLevel(cwd, uvCli, FileSystem.Eel(localEel), null)
 
-suspend fun createUvLowLevel(cwd: Path): PyResult<UvLowLevel> = createUvCli().mapSuccess { createUvLowLevel(cwd, it) }
+fun <P : PathHolder> createUvLowLevel(cwd: Path, uvCli: UvCli<P>, fileSystem: FileSystem<P>, venvPath: P?): UvLowLevel<P> =
+  UvLowLevelImpl(cwd, venvPath, uvCli, fileSystem)
+
+suspend fun createUvLowLevelLocal(cwd: Path): PyResult<UvLowLevel<PathHolder.Eel>> =
+  createUvCli(null, FileSystem.Eel(localEel)).mapSuccess { createUvLowLevelLocal(cwd, it) }
 
 private fun tryExtractStderr(err: PyError): String? =
   when (err) {

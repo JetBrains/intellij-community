@@ -66,7 +66,7 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
   open val state: AddInterpreterState<P> = AddInterpreterState(propertyGraph)
 
   val condaViewModel: CondaViewModel<P> = CondaViewModel(fileSystem, propertyGraph, projectPathFlows)
-  val uvViewModel: UvViewModel<P> = UvViewModel(fileSystem, propertyGraph)
+  val uvViewModel: UvViewModel<P> = UvViewModel(fileSystem, propertyGraph, projectPathFlows)
   val pipenvViewModel: PipenvViewModel<P> = PipenvViewModel(fileSystem, propertyGraph)
   val poetryViewModel: PoetryViewModel<P> = PoetryViewModel(fileSystem, propertyGraph)
   val hatchViewModel: HatchViewModel<P> = HatchViewModel(fileSystem, propertyGraph, projectPathFlows)

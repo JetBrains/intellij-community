@@ -43,11 +43,15 @@ data class PyRunToolData(
  *
  * @property exe The path to the Python executable or script.
  * @property args A list of arguments to be passed to the executable.
+ * @property envs A map of environment variables to be used during execution.
+ * @property dropOldExe Since we replace the original exe with a new one, we can drop the old executable altogether with this flag.
  */
 @ApiStatus.Internal
 data class PyRunToolParameters(
   val exe: String,
   val args: List<String>,
+  val envs: Map<String, String>,
+  val dropOldExe: Boolean,
 )
 
 /**
@@ -69,7 +73,7 @@ interface PyRunToolProvider {
    * Represents the parameters required to configure and run a Python tool.
    * This includes the path to the executable and a list of associated arguments.
    */
-  suspend fun getRunToolParameters(): PyRunToolParameters
+  suspend fun getRunToolParameters(sdk: Sdk): PyRunToolParameters
 
   /**
    * Represents the initial state of the tool, determining whether it is enabled or not by default.

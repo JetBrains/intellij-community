@@ -262,6 +262,49 @@ suspend fun createSdk(
          ?: PyResult.localizedError(PyBundle.message("python.sdk.failed.to.create.interpreter.title"))
 }
 
+@Internal
+suspend fun <P : PathHolder> createSdk(
+  pythonBinaryPath: P,
+  suggestedSdkName: String,
+  sdkAdditionalData: PythonSdkAdditionalData? = null,
+): PyResult<Sdk> {
+  val sdkType = PythonSdkType.getInstance()
+  val existingSdks = PythonSdkUtil.getAllSdks()
+  existingSdks.find {
+    it.sdkAdditionalData?.javaClass == sdkAdditionalData?.javaClass &&
+    it.homePath == pythonBinaryPath.toString()
+  }?.let { return PyResult.success(it) }
+
+  val sdk = when (pythonBinaryPath) {
+    is PathHolder.Eel -> {
+      val pythonBinaryVirtualFile = withContext(Dispatchers.IO) {
+        VirtualFileManager.getInstance().refreshAndFindFileByNioPath(pythonBinaryPath.path)
+      } ?: return PyResult.localizedError(PyBundle.message("python.sdk.python.executable.not.found", pythonBinaryPath))
+
+      SdkConfigurationUtil.setupSdk(
+        existingSdks.toTypedArray(),
+        pythonBinaryVirtualFile,
+        sdkType,
+        false,
+        sdkAdditionalData,
+        suggestedSdkName
+      )
+    }
+    is PathHolder.Target -> {
+      SdkConfigurationUtil.createSdk(
+        existingSdks,
+        pythonBinaryPath.pathString,
+        sdkType,
+        sdkAdditionalData,
+        suggestedSdkName
+      ).also { sdk -> sdkType.setupSdkPaths(sdk) }
+    }
+  }
+
+  return sdk?.let { PyResult.success(it) }
+         ?: PyResult.localizedError(PyBundle.message("python.sdk.failed.to.create.interpreter.title"))
+}
+
 internal fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.DialogTitle title: String) {
   runInEdt {
     val description = PyPackageManagementService.toErrorDescription(listOf(e), sdk) ?: return@runInEdt

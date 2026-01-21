@@ -18,17 +18,17 @@ import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequireme
 import com.jetbrains.python.packaging.packageRequirements.WorkspaceMemberPackageStructureNode
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.uv.UvLowLevel
-import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
-import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
+import com.jetbrains.python.sdk.uv.getUvExecutionContext
 import com.jetbrains.python.sdk.uv.isUv
 import java.nio.file.Path
 
-internal class UvPackageRequirementsTreeExtractor(private val uvWorkingDirectory: Path?, private val project: Project) : PythonPackageRequirementsTreeExtractor {
+internal class UvPackageRequirementsTreeExtractor(private val sdk: Sdk, private val project: Project) : PythonPackageRequirementsTreeExtractor {
 
   override suspend fun extract(declaredPackageNames: Set<String>): PackageStructureNode {
-    val uv = uvWorkingDirectory?.let { createUvLowLevel(it).getOrNull() } ?: return PackageCollectionPackageStructureNode(emptyList(), emptyList())
+    val uvExecutionContext = sdk.getUvExecutionContext() ?: return PackageCollectionPackageStructureNode(emptyList(), emptyList())
+    val uv = uvExecutionContext.createUvCli().getOr { return PackageCollectionPackageStructureNode(emptyList(), emptyList()) }
 
-    val workspaceTree = buildWorkspaceStructure(uv, declaredPackageNames)
+    val workspaceTree = buildWorkspaceStructure(uv, declaredPackageNames, uvExecutionContext.workingDir)
     if (workspaceTree != null) return workspaceTree
 
     val declaredPackages = declaredPackageNames.map { extractPackageTree(uv, it) }
@@ -36,7 +36,7 @@ internal class UvPackageRequirementsTreeExtractor(private val uvWorkingDirectory
     return PackageCollectionPackageStructureNode(declaredPackages, undeclaredPackages)
   }
 
-  private suspend fun extractPackageTree(uv: UvLowLevel, packageName: String): PackageNode {
+  private suspend fun extractPackageTree(uv: UvLowLevel<*>, packageName: String): PackageNode {
     val output = uv.listPackageRequirementsTree(PythonPackage(packageName, "", false)).getOr {
       return createLeafNode(packageName)
     }
@@ -46,8 +46,12 @@ internal class UvPackageRequirementsTreeExtractor(private val uvWorkingDirectory
   private fun createLeafNode(packageName: String): PackageNode =
     PackageNode(PyPackageName.from(packageName))
 
-  private suspend fun buildWorkspaceStructure(uv: UvLowLevel, declaredPackageNames: Set<String>): WorkspaceMemberPackageStructureNode? {
-    val (rootName, subMemberNames) = getWorkspaceLayout() ?: return null
+  private suspend fun buildWorkspaceStructure(
+    uv: UvLowLevel<*>,
+    declaredPackageNames: Set<String>,
+    uvWorkingDirectory: Path,
+  ): WorkspaceMemberPackageStructureNode? {
+    val (rootName, subMemberNames) = getWorkspaceLayout(uvWorkingDirectory) ?: return null
 
     val allMemberNames = (setOf(rootName) + subMemberNames).mapTo(mutableSetOf()) { PyPackageName.from(it).name }
 
@@ -70,8 +74,7 @@ internal class UvPackageRequirementsTreeExtractor(private val uvWorkingDirectory
     return PackageNode(name, filteredChildren.toMutableList(), group)
   }
 
-  private fun getWorkspaceLayout(): Pair<String, List<String>>? {
-    val workspaceRoot = uvWorkingDirectory ?: return null
+  private fun getWorkspaceLayout(uvWorkingDirectory: Path): Pair<String, List<String>>? {
     val modules = ModuleManager.getInstance(project).modules
       .filter { it.isPyProjectTomlBased }
 
@@ -81,8 +84,8 @@ internal class UvPackageRequirementsTreeExtractor(private val uvWorkingDirectory
     for (module in modules) {
       val moduleDir = ModuleRootManager.getInstance(module).contentRoots.firstOrNull()?.toNioPath() ?: continue
       when {
-        moduleDir == workspaceRoot -> rootName = module.name
-        moduleDir.startsWith(workspaceRoot) -> subMemberNames.add(module.name)
+        moduleDir == uvWorkingDirectory -> rootName = module.name
+        moduleDir.startsWith(uvWorkingDirectory) -> subMemberNames.add(module.name)
       }
     }
 
@@ -106,7 +109,7 @@ internal class UvPackageRequirementsTreeExtractor(private val uvWorkingDirectory
     }
   }
 
-  private suspend fun extractUndeclaredPackages(uv: UvLowLevel?, declaredPackageNames: Set<String>): List<PackageNode> {
+  private suspend fun extractUndeclaredPackages(uv: UvLowLevel<*>, declaredPackageNames: Set<String>): List<PackageNode> {
     val output = uv?.listAllPackagesTree()?.getOrNull() ?: return emptyList()
     return splitIntoPackageGroups(output.lines()).map { parseTree(it) }
       .filter { it.name.name !in declaredPackageNames }
@@ -131,7 +134,6 @@ internal class UvPackageRequirementsTreeExtractor(private val uvWorkingDirectory
 internal class UvPackageRequirementsTreeExtractorProvider : PythonPackageRequirementsTreeExtractorProvider {
   override fun createExtractor(sdk: Sdk, project: Project): PythonPackageRequirementsTreeExtractor? {
     if (!sdk.isUv) return null
-    val data = sdk.sdkAdditionalData as? UvSdkAdditionalData ?: return null
-    return UvPackageRequirementsTreeExtractor(data.uvWorkingDirectory, project)
+    return UvPackageRequirementsTreeExtractor(sdk, project)
   }
 }

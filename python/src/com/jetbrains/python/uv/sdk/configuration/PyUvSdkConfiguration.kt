@@ -23,7 +23,7 @@ import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.pyvenvContains
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.setAssociationToModule
-import com.jetbrains.python.sdk.uv.impl.getUvExecutable
+import com.jetbrains.python.sdk.uv.impl.getUvExecutableLocal
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.venvReader.tryResolvePath
@@ -61,7 +61,7 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
     module: Module,
     venvsInModule: List<PythonBinary>,
   ): EnvCheckerResult {
-    getUvExecutable() ?: return EnvCheckerResult.CannotConfigure
+    getUvExecutableLocal() ?: return EnvCheckerResult.CannotConfigure
     val intentionName = PyBundle.message("sdk.set.up.uv.environment", module.name)
     val envFound = getUvEnv(venvsInModule)?.findEnvOrNull(intentionName)
     return envFound ?: EnvCheckerResult.EnvNotFound(intentionName)
@@ -79,22 +79,21 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
     } ?: this
 
   private suspend fun createUv(module: Module, venvsInModule: List<PythonBinary>, envExists: Boolean): PyResult<Sdk> {
+    val uv = getUvExecutableLocal() ?: return PyResult.localizedError(PyBundle.message("sdk.cannot.find.uv.executable"))
     val sdkAssociatedModule = module.getSdkAssociatedModule()
-    val workingDir: Path? = tryResolvePath(sdkAssociatedModule.baseDir?.path)
-    if (workingDir == null) {
-      throw IllegalStateException("Can't determine working dir for the module")
-    }
+    val workingDir: Path = tryResolvePath(sdkAssociatedModule.baseDir?.path)
+                           ?: throw IllegalStateException("Can't determine working dir for the module")
 
     val sdkSetupResult = if (envExists) {
       getUvEnv(venvsInModule)?.let {
-        setupExistingEnvAndSdk(it, workingDir, false, workingDir)
+        setupExistingEnvAndSdk(it, uv, workingDir, false)
       } ?: run {
         logger.warn("Can't find existing uv environment in project, but it was expected. " +
                     "Probably it was deleted. New environment will be created")
-        setupNewUvSdkAndEnv(workingDir, null)
+        setupNewUvSdkAndEnv(uv, workingDir, null)
       }
     }
-    else setupNewUvSdkAndEnv(workingDir, null)
+    else setupNewUvSdkAndEnv(uv, workingDir, null)
 
     sdkSetupResult.onSuccess {
       withContext(Dispatchers.EDT) {
