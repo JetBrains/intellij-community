@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.instanceContainer.InstanceContainer
 import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
 import com.intellij.util.ArrayUtil
+import com.intellij.util.SystemProperties
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineName
@@ -30,7 +31,7 @@ class InstanceContainerImpl @VisibleForTesting constructor(
   ) : this(scopeHolder, containerName, dynamicInstanceSupport, ordered,
     // Use System.getProperty(), because the Registry is a service, and not available yet.
     // Default is `true` during the migration period, then will be changed to `false`
-           shouldTolerateIncorrectOverrides = System.getProperty("instance.conteiner.tolerate.incorrect.overrides", "true").toBoolean())
+           shouldTolerateIncorrectOverrides = SystemProperties.getBooleanProperty("intellij.platform.instance.container.tolerate.incorrect.overrides", true))
 
   override fun toString(): String {
     val state = _state
