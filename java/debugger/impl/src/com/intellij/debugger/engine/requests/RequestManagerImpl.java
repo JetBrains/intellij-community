@@ -47,6 +47,8 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   private final Map<Requestor, Set<EventRequest>> myRequestorToBelongedRequests = new HashMap<>();
   private EventRequestManager myEventRequestManager;
 
+  private final Map<Requestor, InstrumentationBreakpointState> myInstrumentationInfo = new HashMap<>();
+
   /**
    * It specifies the thread performing suspend-all stepping.
    * All events in other threads are ignored.
@@ -259,6 +261,11 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   public void deleteRequest(Requestor requestor) {
+    InstrumentationBreakpointState instrumentationInfo = getInstrumentationInfo(requestor);
+    if (instrumentationInfo != null) {
+      instrumentationInfo.updateInstrumentationModeEnabled(this, false);
+    }
+
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myRequestWarnings.remove(requestor);
     if (!myDebugProcess.isAttached()) {
@@ -484,5 +491,16 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     for (Requestor request : stepRequestors) {
       deleteRequest(request);
     }
+  }
+
+
+  @ApiStatus.Internal
+  public void addInstrumentationInfo(@NotNull Requestor requestor, @NotNull InstrumentationBreakpointState info) {
+    myInstrumentationInfo.put(requestor, info);
+  }
+
+  @ApiStatus.Internal
+  public @Nullable InstrumentationBreakpointState getInstrumentationInfo(@NotNull Requestor requestor) {
+    return myInstrumentationInfo.get(requestor);
   }
 }

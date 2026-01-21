@@ -132,6 +132,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private final List<ProcessListener> myProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final StringBuilder myTextBeforeStart = new StringBuilder();
+  protected @Nullable Method myIsUnderBreakpointCheckFn;
 
   protected enum State {INITIAL, ATTACHED, DETACHING, DETACHED}
 
@@ -3009,6 +3010,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (myReturnValueWatcher != null) {
       myReturnValueWatcher.enable(thread.getThreadReference());
     }
+  }
+
+  @ApiStatus.Internal
+  public void setIsUnderBreakpointCheckFn(@NotNull Method isUnderBreakpointCheckFn) {
+    this.myIsUnderBreakpointCheckFn = isUnderBreakpointCheckFn;
   }
 
   @ApiStatus.Internal

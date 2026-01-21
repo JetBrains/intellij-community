@@ -8,6 +8,12 @@ import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties
+import com.intellij.xdebugger.impl.breakpoints.BreakpointState
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.sun.jdi.ClassType
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Type
@@ -18,6 +24,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.completeWith
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
 import kotlin.time.Duration
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
@@ -140,6 +147,23 @@ private suspend fun <R> tryToBreakOnAnyMethodAndEvaluate(
   }
 
   return actionResult.await()
+}
+
+@ApiStatus.Internal
+fun <Self : XBreakpoint<P>, P : XBreakpointProperties<*>, S : BreakpointState> shouldInstrumentBreakpoint(xB: XBreakpointBase<Self, P, S>): Boolean {
+  if (!XBreakpointUtil.isBreakpointInstrumentationSwitchedOn()) {
+    return false
+  }
+  if (xB.isLogMessage || xB.isLogStack) return false
+  val properties = xB.properties
+  if (properties !is JavaLineBreakpointProperties) return false
+
+  // Do not use instrumentation for non-standard breakpoints: any filters will back up to the old behavior
+  if (JavaLineBreakpointProperties() != properties) return false
+
+  val isLoggingBp = xB.logExpressionObject != null && xB.suspendPolicy == SuspendPolicy.NONE
+  val isConditionalBp = xB.conditionExpression != null && xB.isConditionEnabled
+  return (isLoggingBp || isConditionalBp) && !(isLoggingBp && isConditionalBp)
 }
 
 @ApiStatus.Internal

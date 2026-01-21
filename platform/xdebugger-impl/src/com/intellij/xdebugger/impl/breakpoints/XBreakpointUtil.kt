@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
@@ -50,6 +51,12 @@ import java.util.concurrent.CompletableFuture
 import kotlin.math.max
 
 object XBreakpointUtil {
+  @ApiStatus.Internal
+  @JvmStatic
+  fun isBreakpointInstrumentationSwitchedOn(): Boolean {
+    return Registry.`is`("debugger.breakpoint.instrumentation")
+  }
+
   /**
    * The forcibly shortened version of [XBreakpointType.getShortText].
    */

@@ -9,10 +9,7 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.ContextUtil;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.icons.AllIcons;
@@ -41,6 +38,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import one.util.streamex.StreamEx;
@@ -56,6 +54,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import static com.intellij.debugger.engine.EvaluationUtilsKt.shouldInstrumentBreakpoint;
 
 public class LineBreakpoint<P extends JavaBreakpointProperties> extends BreakpointWithHighlighter<P> {
   private final boolean myIgnoreSameLineLocations;
@@ -116,6 +116,15 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     try {
       SourcePosition position = getSourcePosition();
       List<Location> locations = debugProcess.getPositionManager().locationsOfLine(classType, position);
+
+      if (myXBreakpoint instanceof XBreakpointBase<?, ?, ?> xBreakpointBase && shouldInstrumentBreakpoint(xBreakpointBase)) {
+        InstrumentationBreakpointState instrumentationBreakpointState = debugProcess.getRequestsManager().getInstrumentationInfo(this);
+        if (instrumentationBreakpointState != null) {
+          instrumentationBreakpointState.updateInstrumentationModeEnabled(debugProcess.getRequestsManager(), true);
+          return;
+        }
+      }
+
       if (!locations.isEmpty()) {
         locations = StreamEx.of(locations).peek(loc -> {
           if (LOG.isDebugEnabled()) {

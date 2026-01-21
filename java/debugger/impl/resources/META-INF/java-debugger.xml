@@ -335,6 +335,8 @@
                  description="Enable collection watchpoints support"/>
     <registryKey key="debugger.async.stacks.via.breakpoints" defaultValue="false"
                  description="Enable async stack traces implementation via breakpoints"/>
+    <registryKey key="debugger.breakpoint.instrumentation" defaultValue="false"
+                 description="Use instrumentation conditional and logging breakpoints if possible"/>
     <registryKey key="debugger.async.stacks.coroutines" defaultValue="true"
                  description="Enable async stack traces for coroutines"/>
     <registryKey key="debugger.async.stacks.max.depth" defaultValue="500"

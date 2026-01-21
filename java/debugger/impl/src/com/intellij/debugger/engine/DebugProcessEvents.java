@@ -7,6 +7,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.PositionManagerFactory;
 import com.intellij.debugger.engine.evaluation.DebuggerImplicitEvaluationContextUtil;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
@@ -656,16 +657,46 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
         ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
         boolean isEvaluationOnCurrentThread = threadProxy != null && threadProxy.isEvaluating();
-        if ((isEvaluationOnCurrentThread || myThreadBlockedMonitor.isInResumeAllMode()) &&
+
+        if (!DebuggerSession.enableBreakpointsDuringEvaluation() &&
             !(requestor instanceof InstrumentationTracker.InstrumentationMethodBreakpoint) &&
-            !DebuggerSession.enableBreakpointsDuringEvaluation()) {
-          notifySkippedBreakpointInEvaluation(event, suspendContext);
-          // is inside evaluation, so ignore any breakpoints
-          logSuspendContext(suspendContext,
-                            () -> "Resume because of evaluation: isEvaluationOnCurrentThread = " + isEvaluationOnCurrentThread +
-                            ", myThreadBlockedMonitor.isInResumeAllMode() = " + myThreadBlockedMonitor.isInResumeAllMode());
-          suspendManager.voteResume(suspendContext);
-          return;
+            !(requestor instanceof InstrumentedTechnicalBreakpoint)) {
+
+          if (isEvaluationOnCurrentThread || myThreadBlockedMonitor.isInResumeAllMode()) {
+            notifySkippedBreakpointInEvaluation(event, suspendContext);
+            // is inside evaluation, so ignore any breakpoints
+            logSuspendContext(suspendContext,
+                              () -> "Resume because of evaluation: isEvaluationOnCurrentThread = " + isEvaluationOnCurrentThread +
+                              ", myThreadBlockedMonitor.isInResumeAllMode() = " + myThreadBlockedMonitor.isInResumeAllMode());
+            suspendManager.voteResume(suspendContext);
+            return;
+          }
+
+          if (myIsUnderBreakpointCheckFn != null) {
+            EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, null);
+            try {
+              Value value = invokeMethod(
+                evaluationContext,
+                (ClassType)myIsUnderBreakpointCheckFn.declaringType(),
+                myIsUnderBreakpointCheckFn,
+                Collections.emptyList()
+              );
+              if (value instanceof BooleanValue booleanValue) {
+                if (booleanValue.value()) {
+                  notifySkippedBreakpointInEvaluation(event, suspendContext);
+                  suspendManager.voteResume(suspendContext);
+                  return;
+                }
+              }
+              else {
+                throw new RuntimeException("Expected BooleanValue, got: " + value);
+              }
+            }
+            catch (Throwable e) {
+              //TODO: switch off instrumentation breakpoint logic
+              logError("Error evaluating isUnderBreakpointCheckFn", e);
+            }
+          }
         }
 
         // Skip breakpoints in other threads during suspend-all stepping.
