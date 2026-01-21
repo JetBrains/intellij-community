@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
+import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.*
 import org.jetbrains.plugins.terminal.session.impl.dto.*
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockIdImpl
@@ -35,8 +36,13 @@ import kotlin.concurrent.withLock
  *
  * Can be useful to test typing in the [com.intellij.terminal.frontend.view.TerminalView]
  * without starting a real shell process.
+ *
+ * @param startupOptions options to be returned as a part of [TerminalInitialStateEvent].
  */
-internal class EchoingTerminalSession(coroutineScope: CoroutineScope) : TerminalSession {
+internal class EchoingTerminalSession(
+  private val startupOptions: TerminalStartupOptions,
+  coroutineScope: CoroutineScope,
+) : TerminalSession {
   private val inputChannel = Channel<TerminalInputEvent>(Channel.UNLIMITED)
   private val screenState = ScreenState()
   private val screenLock = ReentrantLock()
@@ -144,10 +150,10 @@ internal class EchoingTerminalSession(coroutineScope: CoroutineScope) : Terminal
     )
     val sessionState = TerminalSessionModelImpl.getInitialState().copy(
       isShellIntegrationEnabled = true,
-      currentDirectory = "fakeDir",
+      currentDirectory = startupOptions.workingDirectory,
     )
     return TerminalInitialStateEvent(
-      startupOptions = TerminalStartupOptionsDto(listOf("/bin/zsh", "--login", "-i"), "fakeDir", emptyMap()),
+      startupOptions = startupOptions.toDto(),
       sessionState = sessionState.toDto(),
       outputModelState = outputModelState,
       alternateBufferState = TerminalOutputModelStateDto("", 0, 0, 0, 0, emptyList()),

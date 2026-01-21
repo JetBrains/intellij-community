@@ -20,6 +20,7 @@ import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
+import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -391,7 +392,12 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
 
   private fun doTest(block: suspend (TerminalCompletionFixture) -> Unit) = timeoutRunBlocking(context = Dispatchers.EDT) {
     val fixtureScope = childScope("TerminalCompletionFixture")
-    val session = EchoingTerminalSession(fixtureScope.childScope("EchoingTerminalSession"))
+    val startupOptions = TerminalStartupOptionsImpl(
+      shellCommand = listOf("/bin/zsh", "--login", "-i"),
+      workingDirectory = "fakeDir",
+      envVariables = emptyMap()
+    )
+    val session = EchoingTerminalSession(startupOptions, fixtureScope.childScope("EchoingTerminalSession"))
     doWithCompletionFixture(project, session, fixtureScope) { fixture ->
       fixture.mockTestShellCommand(testCommandSpec)
       fixture.setCompletionOptions(
