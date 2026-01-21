@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.inspections
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
@@ -10,9 +10,8 @@ import com.intellij.psi.JavaElementVisitor
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.search.FileTypeIndex
-import com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesAndLibrariesScope
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.isGetEntriesMethod
@@ -59,8 +58,8 @@ internal fun hasKotlinFiles(module: Module): Boolean {
     return CachedValuesManager.getManager(module.project).getCachedValue(module, CachedValueProvider {
         val hasKotlinFiles = FileTypeIndex.containsFileOfType(
             KotlinFileType.INSTANCE,
-            moduleWithDependenciesAndLibrariesScope(module)
+            GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
         )
-        Result.create(hasKotlinFiles, OuterModelsModificationTrackerManager.getTracker(module.project))
+        CachedValueProvider.Result.create(hasKotlinFiles, OuterModelsModificationTrackerManager.getTracker(module.project))
     })
 }
