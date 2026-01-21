@@ -109,7 +109,7 @@ class InstanceContainerTest {
           registerInitializer(keyClassName, ThrowingInitializer(), override = false)
         }
 
-        assertNotNull(complete())
+        assertNotNull(complete()?.unregisterHandle)
       }
       assertEquals(1, container.instanceHolders().size)
       val holder = assertRegistered(container, keyClass, instance, initialized = false)
@@ -123,7 +123,7 @@ class InstanceContainerTest {
       }
       assertRegistered(container, keyClass, instance, initialized = true)
 
-      val unregistered = handle.unregister().entries.single()
+      val unregistered = handle.unregister().unregisteredInstances.entries.single()
       assertEquals(keyClassName, unregistered.key)
       assertSame(holder, unregistered.value)
     }
@@ -159,9 +159,9 @@ class InstanceContainerTest {
             overrideInitializer(keyClassName, ReadyInitializer(instance))
           }
         }
-        val handle = assertNotNull(complete())
+        val handle = assertNotNull(complete()?.unregisterHandle)
         val holder = assertRegistered(container, keyClass, instance, initialized = false)
-        val unregistered = handle.unregister().entries.single()
+        val unregistered = handle.unregister().unregisteredInstances.entries.single()
         assertSame(keyClassName, unregistered.key)
         assertSame(holder, unregistered.value)
       }
@@ -175,9 +175,9 @@ class InstanceContainerTest {
             overrideInitializer(keyClassName, null)
           }
         }
-        val handle = assertNotNull(complete())
+        val handle = assertNotNull(complete()?.unregisterHandle)
         assertNotRegistered(container, keyClass)
-        val unregistered = handle.unregister()
+        val unregistered = handle.unregister().unregisteredInstances
         assertEquals(0, unregistered.size) // TODO consider removing [keyClass → null] mapping
       }
 
@@ -204,7 +204,7 @@ class InstanceContainerTest {
       for (overrideAllowed in listOf(false, true)) {
         container.startRegistration(pluginScope).run {
           registerInitializer(keyClassName, ReadyInitializer(instance1, overrideAllowed))
-          val handle = assertNotNull(complete())
+          val handle = assertNotNull(complete()?.unregisterHandle)
           assertRegistered(container, keyClass, instance1, initialized = false)
 
           // override registered
@@ -225,7 +225,7 @@ class InstanceContainerTest {
 
         container.startRegistration(pluginScope).run {
           registerInitializer(keyClassName, ReadyInitializer(instance1, true))
-          val handle = assertNotNull(complete())
+          val handle = assertNotNull(complete()?.unregisterHandle)
           assertRegistered(container, keyClass, instance1, initialized = false)
 
           // override overridden
@@ -262,7 +262,7 @@ class InstanceContainerTest {
 
       container.startRegistration(pluginScope).run {
         registerInitializer(keyClassName, ReadyInitializer(instance1, true))
-        val handle = assertNotNull(complete())
+        val handle = assertNotNull(complete()?.unregisterHandle)
         assertRegistered(container, keyClass, instance1, initialized = false)
 
         // override removed

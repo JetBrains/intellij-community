@@ -10,7 +10,7 @@ internal class InstanceRegistrarImpl(
   private val existingKeys: Map<String, InstanceHolder>,
   // at the moment, this flag only changes log level error->warn but does not prevent incorrect registration
   private val shouldTolerateIncorrectOverrides: Boolean,
-  private val completion: (Map<String, RegistrationAction>) -> UnregisterHandle?,
+  private val completion: (Map<String, RegistrationAction>) -> RegistrationResult?,
 ) : InstanceRegistrar {
   private var _actions: MutableMap<String, RegistrationAction>? = LinkedHashMap()
   private fun actions(): MutableMap<String, RegistrationAction> = checkNotNull(_actions) {
@@ -22,7 +22,7 @@ internal class InstanceRegistrarImpl(
     return "$debugString instance registrar ($stateString)"
   }
 
-  override fun complete(): UnregisterHandle? {
+  override fun complete(): RegistrationResult? {
     val actions = actions()
     _actions = null
     return completion(actions)

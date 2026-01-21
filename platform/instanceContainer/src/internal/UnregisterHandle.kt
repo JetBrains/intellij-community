@@ -5,9 +5,22 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable
 
 @NonExtendable
 fun interface UnregisterHandle {
-
   /**
-   * @return map of registered instance holders back to the code which invoked the registration
+   * Undo the registration
    */
-  fun unregister(): Map<String, InstanceHolder>
+  fun unregister(): UnregistrationResult
 }
+
+data class RegistrationResult(
+  /**
+   * A handle to undo the registration
+   */
+  val unregisterHandle: UnregisterHandle,
+)
+
+data class UnregistrationResult(
+  /**
+   * A map of just unregistered instance holders
+   */
+  val unregisteredInstances: Map<String, InstanceHolder>,
+)

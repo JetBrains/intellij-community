@@ -612,7 +612,7 @@ abstract class ComponentManagerImpl(
         )
       }
     }
-    val handle = registrar.complete()
+    val handle = registrar.complete()?.unregisterHandle
     if (handle != null) {
       pluginServicesStore.putServicesUnregisterHandle(pluginDescriptor, handle)
     }
@@ -993,7 +993,7 @@ abstract class ComponentManagerImpl(
       LOG.trace { "$debugString : nothing to unload ${module.pluginId}:${module.descriptorPath}" }
       return
     }
-    val holders = handle?.unregister() ?: emptyMap()
+    val holders = handle?.unregister()?.unregisteredInstances ?: emptyMap()
     if (holders.isEmpty() && dynamicInstances.isEmpty()) {
       // warn because the handle should not be in the map in the first place
       LOG.warn("$debugString : nothing unloaded for ${module.pluginId}:${module.descriptorPath}")

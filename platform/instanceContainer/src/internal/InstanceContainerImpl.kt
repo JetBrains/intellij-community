@@ -144,7 +144,7 @@ class InstanceContainerImpl @VisibleForTesting constructor(
     debugString: String,
     registrationScope: CoroutineScope?,
     actions: Map<String, RegistrationAction>,
-  ): UnregisterHandle? {
+  ): RegistrationResult? {
     if (actions.isEmpty()) {
       LOG.trace { "$debugString : registration empty" }
       return null
@@ -176,9 +176,9 @@ class InstanceContainerImpl @VisibleForTesting constructor(
 
     // no need to store keysToRemove if we store restorationMap, the keys can be restored from there
     val keysToRemove: Array<String>? = if (hasPreviousHolders) null else ArrayUtil.toStringArray(keysToRemove)
-    override fun unregister(): Map<String, InstanceHolder> {
+    override fun unregister(): UnregistrationResult {
       unregister(keysToUnregister ?: keysToReturn, holdersToUnregister ?: arrayOfNulls<InstanceHolder?>(keysToReturn.size), keysToRemove)
-      return keysToReturn.zip(holdersToReturn).toMap()
+      return UnregistrationResult(keysToReturn.zip(holdersToReturn).toMap())
     }
   }
 
@@ -186,7 +186,7 @@ class InstanceContainerImpl @VisibleForTesting constructor(
     parentScope: CoroutineScope,
     additionalContext: CoroutineContext,
     actions: Map<String, RegistrationAction>,
-  ): UnregisterHandle {
+  ): RegistrationResult {
     val preparedHolders = prepareHolders(parentScope, additionalContext, actions)
     val (holders, _, keysToRemove) = preparedHolders
     lateinit var handle: UnregisterHandle
@@ -211,7 +211,7 @@ class InstanceContainerImpl @VisibleForTesting constructor(
       handle = UnregisterHandleImpl(restorationMap, holders, keysToRemove, hasPreviousHolders)
       InstanceContainerState(builder.takeUnless { it.isEmpty() } ?: java.util.Map.of())
     }
-    return handle
+    return RegistrationResult(handle)
   }
 
   private fun unregister(keys: Array<String>, instanceHolders: Array<InstanceHolder?>, keysToRemove: Array<String>?) {
@@ -265,7 +265,7 @@ class InstanceContainerImpl @VisibleForTesting constructor(
       val existingHolder = state.getByName(keyClassName)
       handle = UnregisterHandle {
         undoReplaceInstance(keyClassName = keyClassName, instance = instance, previousHolder = existingHolder)
-        return@UnregisterHandle mapOf(keyClassName to holder)
+        return@UnregisterHandle UnregistrationResult(mapOf (keyClassName to holder))
       }
       state.replaceByClass(keyClass, holder)
     }
