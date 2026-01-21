@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests
 
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.DevModeTestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.DevModeTweaks
 import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.AndroidGradlePluginVersionTestsProperty
@@ -214,12 +215,13 @@ class KotlinMppTestProperties(
                 """.trimIndent())
             }
 
-            if (kotlinVersion.version < KotlinGradlePluginVersions.V_2_2_0) {
-                put("minimalSupportedKotlinLanguageVersion", "1.7")
-                put("minimalSupportedKotlinVersion", "org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_7")
-            } else {
-                put("minimalSupportedKotlinLanguageVersion", "1.8")
-                put("minimalSupportedKotlinVersion", "org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_8")
+            minimalSupportedKotlinVersion(kotlinVersion.version).apply {
+                put("minimalSupportedKotlinLanguageVersion", kotlinLanguageVersion)
+                put("minimalSupportedKotlinVersion", kotlinVersionAccessor)
+
+                val nextKotlinLanguageVersion = LanguageVersion.fromVersionString(kotlinLanguageVersion)!!.next()
+                put("nextMinimalSupportedKotlinLanguageVersion", nextKotlinLanguageVersion.toString())
+                put("nextMinimalSupportedKotlinVersion", kotlinVersionAccessor.replaceAfterLast(".", nextKotlinLanguageVersion.name))
             }
         }
     }
@@ -254,6 +256,28 @@ class KotlinMppTestProperties(
                 null,
                 null,
             )
+
+        data class MinimalSupportConfiguration(
+            val kotlinLanguageVersion: String,
+            val kotlinVersionAccessor: String,
+        )
+
+        fun minimalSupportedKotlinVersion(kotlinVersion: KotlinToolingVersion): MinimalSupportConfiguration {
+            return if (kotlinVersion < KotlinGradlePluginVersions.V_2_2_0) {
+                MinimalSupportConfiguration("1.7", "org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_7")
+            } else if (kotlinVersion < KotlinGradlePluginVersions.V_2_3_0) {
+                MinimalSupportConfiguration("1.8", "org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_8")
+            } else {
+                MinimalSupportConfiguration("1.9", "org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9")
+            }
+        }
+
+        fun LanguageVersion.next(): LanguageVersion {
+            val values = LanguageVersion.entries.toTypedArray()
+            val nextOrdinal = ordinal + 1
+            return if (nextOrdinal < values.size) values[nextOrdinal] else error("No next language version available for $this")
+
+        }
     }
 }
 
