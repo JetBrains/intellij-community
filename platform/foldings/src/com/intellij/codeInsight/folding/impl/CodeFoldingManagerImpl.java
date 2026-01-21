@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.LanguageInjector;
+import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.KeyedLazyInstance;
@@ -119,6 +120,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     // see buildInitialFoldings(Document)
   }
 
+  @Deprecated
   @Override
   public @Nullable CodeFoldingState buildInitialFoldings(@NotNull Document document) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -127,14 +129,14 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     if (myProject.isDisposed()) {
       return null;
     }
-    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
-    if (psiDocumentManager.isUncommited(document)) {
+    if (PsiDocumentManager.getInstance(myProject).isUncommited(document)) {
       // skip building foldings for an uncommitted document, CodeFoldingPass invoked by daemon will do it later
       return null;
     }
+
     //Do not save/restore folding for code fragments
-    PsiFile psiFile = psiDocumentManager.getPsiFile(document);
-    if (psiFile == null || !psiFile.isValid() || !psiFile.getViewProvider().isPhysical() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    PsiFile psiFile = getPsiFileForFolding(myProject, document);
+    if (psiFile == null) {
       return null;
     }
 
@@ -148,9 +150,11 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
         return;
       }
       FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
-      if (!foldingModel.isFoldingEnabled()) return;
-      if (isFoldingsInitializedInEditor(editor)) return;
-      if (DumbService.isDumb(myProject) && !supportsDumbModeFolding) return;
+      if (!foldingModel.isFoldingEnabled() ||
+          isFoldingsInitializedInEditor(editor) ||
+          DumbService.isDumb(myProject) && !supportsDumbModeFolding) {
+        return;
+      }
       foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, psiFile, regionInfos,
                                                                                              UpdateFoldRegionsOperation.ApplyDefaultStateMode.YES,
                                                                                              false, false));
@@ -158,6 +162,18 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
         initFolding(editor);
       }
     };
+  }
+
+  @RequiresReadLock
+  static PsiFile getPsiFileForFolding(@NotNull Project project, @NotNull Document document) {
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (psiFile == null || !psiFile.isValid() || !psiFile.getViewProvider().isPhysical() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      return null;
+    }
+    if (psiFile instanceof PsiCompiledFile compiled) {
+      psiFile = compiled.getDecompiledPsiFile();
+    }
+    return psiFile;
   }
 
   @Override
@@ -283,6 +299,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   }
 
   @Override
+  @RequiresReadLock
   public void updateFoldRegions(@NotNull Editor editor) {
     if (!editor.getSettings().isAutoCodeFoldingEnabled()) {
       return;
@@ -314,9 +331,9 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     };
   }
 
-  private @Nullable Runnable updateFoldRegions(@NotNull Editor editor, boolean applyDefaultState) {
-    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-    return psiFile == null ? null : FoldingUpdate.updateFoldRegions(editor, psiFile, applyDefaultState);
+  private @Nullable Runnable updateFoldRegions(@NotNull Editor editor, boolean firstTime) {
+    PsiFile psiFile = getPsiFileForFolding(myProject, editor.getDocument());
+    return psiFile == null ? null : FoldingUpdate.updateFoldRegions(editor, psiFile, firstTime);
   }
 
   @Override

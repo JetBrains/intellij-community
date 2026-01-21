@@ -776,7 +776,9 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         }
       }
     });
-    if (adjustScrollingPosition) myScrollingPositionKeeper.restorePosition(true);
+    if (adjustScrollingPosition) {
+      myScrollingPositionKeeper.restorePosition(true);
+    }
   }
 
   private void clearCachedValues() {

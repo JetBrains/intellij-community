@@ -32,6 +32,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -50,12 +51,13 @@ public final class FoldingUpdate {
   private FoldingUpdate() {
   }
 
-  static @Nullable Runnable updateFoldRegions(@NotNull Editor editor, @NotNull PsiFile psiFile, boolean applyDefaultState) {
+  @RequiresReadLock
+  static @Nullable Runnable updateFoldRegions(@NotNull Editor editor, @NotNull PsiFile psiFile, boolean firstTime) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     Project project = psiFile.getProject();
     Document document = editor.getDocument();
-    LOG.assertTrue(!PsiDocumentManager.getInstance(project).isUncommited(document));
+    LOG.assertTrue(PsiDocumentManager.getInstance(project).isCommitted(document));
     if (document.getTextLength() != psiFile.getTextLength()) {
       LOG.error(DebugUtil.diagnosePsiDocumentInconsistency(psiFile, document));
       return null;
@@ -63,19 +65,19 @@ public final class FoldingUpdate {
 
     CachedValue<Runnable> value = editor.getUserData(CODE_FOLDING_KEY);
 
-    if (value != null && !applyDefaultState) {
+    if (value != null && !firstTime) {
       Supplier<Runnable> cached = value.getUpToDateOrNull();
       if (cached != null) {
         return cached.get();
       }
     }
-    if (applyDefaultState) {
+    if (firstTime) {
       return getUpdateResult(psiFile, document, project, editor, true).getFirst();
     }
 
     return CachedValuesManager.getManager(project).getCachedValue(
       editor, CODE_FOLDING_KEY, () -> {
-        PsiFile psiFile1 = PsiDocumentManager.getInstance(project).getPsiFile(document);
+        PsiFile psiFile1 = CodeFoldingManagerImpl.getPsiFileForFolding(project, document);
         Pair<@NotNull Runnable, @NotNull Object @NotNull []> result = getUpdateResult(psiFile1, document, project, editor, false);
         Runnable runnable = result.getFirst();
         Object[] dependencies = result.getSecond();
@@ -132,28 +134,28 @@ public final class FoldingUpdate {
   }
 
   private static final Key<Long> LAST_UPDATE_INJECTED_STAMP_KEY = Key.create("LAST_UPDATE_INJECTED_STAMP_KEY");
-  static @Nullable Runnable updateInjectedFoldRegions(@NotNull Editor editor, @NotNull PsiFile psiFile, boolean applyDefaultState) {
-    if (psiFile instanceof PsiCompiledElement) {
+  static @Nullable Runnable updateInjectedFoldRegions(@NotNull Editor hostEditor, @NotNull PsiFile hostPsiFile, boolean applyDefaultState) {
+    if (hostPsiFile instanceof PsiCompiledElement) {
       return null;
     }
-    boolean codeFoldingForInjectedEnabled = editor.getUserData(INJECTED_CODE_FOLDING_ENABLED) != Boolean.FALSE;
+    boolean codeFoldingForInjectedEnabled = hostEditor.getUserData(INJECTED_CODE_FOLDING_ENABLED) != Boolean.FALSE;
 
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    Project project = psiFile.getProject();
-    Document document = editor.getDocument();
+    Project project = hostPsiFile.getProject();
+    Document document = hostEditor.getDocument();
     LOG.assertTrue(!PsiDocumentManager.getInstance(project).isUncommited(document));
-    FoldingModel foldingModel = editor.getFoldingModel();
+    FoldingModel foldingModel = hostEditor.getFoldingModel();
 
     long timeStamp = document.getModificationStamp();
-    Long lastTimeStamp = editor.getUserData(LAST_UPDATE_INJECTED_STAMP_KEY);
+    Long lastTimeStamp = hostEditor.getUserData(LAST_UPDATE_INJECTED_STAMP_KEY);
     if (lastTimeStamp != null && lastTimeStamp.longValue() == timeStamp) {
       return null;
     }
 
     // we assume the injections are already done in InjectedGeneralHighlightingPass
-    List<DocumentWindow> injectedDocuments = InjectedLanguageManager.getInstance(project).getCachedInjectedDocumentsInRange(psiFile, psiFile.getTextRange());
+    List<DocumentWindow> injectedDocuments = InjectedLanguageManager.getInstance(project).getCachedInjectedDocumentsInRange(hostPsiFile, hostPsiFile.getTextRange());
     if (injectedDocuments.isEmpty()) {
       return null;
     }
@@ -164,8 +166,8 @@ public final class FoldingUpdate {
       if (!injectedDocument.isValid()) {
         continue;
       }
-      InjectedLanguageUtil.enumerate(injectedDocument, psiFile, (injectedFile, places) -> {
-        Editor injectedEditor = injectedFile.isValid() ? InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile) : null;
+      InjectedLanguageUtil.enumerate(injectedDocument, hostPsiFile, (injectedFile, places) -> {
+        Editor injectedEditor = injectedFile.isValid() ? InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile) : null;
         if (injectedEditor instanceof EditorWindow window) {
           injectedEditors.add(window);
           injectedFiles.add(injectedFile);
@@ -189,15 +191,15 @@ public final class FoldingUpdate {
           operation.run();
         }
       });
-      EditorFoldingInfo info = EditorFoldingInfo.get(editor);
-      for (FoldRegion region : editor.getFoldingModel().getAllFoldRegions()) {
+      EditorFoldingInfo info = EditorFoldingInfo.get(hostEditor);
+      for (FoldRegion region : hostEditor.getFoldingModel().getAllFoldRegions()) {
         FoldingRegionWindow injectedRegion = FoldingRegionWindow.getInjectedRegion(region);
         if (injectedRegion != null && !injectedRegion.isValid()) {
           info.removeRegion(region);
         }
       }
 
-      editor.putUserData(LAST_UPDATE_INJECTED_STAMP_KEY, timeStamp);
+      hostEditor.putUserData(LAST_UPDATE_INJECTED_STAMP_KEY, timeStamp);
     };
   }
 
@@ -219,9 +221,6 @@ public final class FoldingUpdate {
 
   @VisibleForTesting
   public static @NotNull @Unmodifiable List<RegionInfo> getFoldingsFor(@NotNull PsiFile psiFile, boolean quick) {
-    if (psiFile instanceof PsiCompiledFile compiled) {
-      psiFile = compiled.getDecompiledPsiFile();
-    }
     FileViewProvider viewProvider = psiFile.getViewProvider();
     Document document = viewProvider.getDocument();
     if (document == null) {

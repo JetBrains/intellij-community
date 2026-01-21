@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -20,6 +21,7 @@ public abstract class CodeFoldingManager {
     return project.getService(CodeFoldingManager.class);
   }
 
+  @RequiresReadLock
   public abstract void updateFoldRegions(@NotNull Editor editor);
 
   @RequiresBackgroundThread
@@ -32,6 +34,7 @@ public abstract class CodeFoldingManager {
 
   public abstract @NotNull CodeFoldingState saveFoldingState(@NotNull Editor editor);
 
+  @RequiresEdt
   public abstract void restoreFoldingState(@NotNull Editor editor, @NotNull CodeFoldingState state);
 
   public abstract void writeFoldingState(@NotNull CodeFoldingState state, @NotNull Element element);
