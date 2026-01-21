@@ -148,7 +148,7 @@ private fun ListComboBoxes() {
 
             SpeedSearchArea(Modifier.widthIn(max = 200.dp)) {
                 SpeedSearchableComboBox(
-                    items = stringItems,
+                    items = listOf("one", "two", "three"),
                     selectedIndex = selectedIndex,
                     onSelectedItemChange = { index -> selectedIndex = index },
                     modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
