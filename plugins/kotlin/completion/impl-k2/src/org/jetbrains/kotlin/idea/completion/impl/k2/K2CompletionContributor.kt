@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2
 
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.evaluateRuntimeKaType
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WrapSingleStringTemplateEntryWithBracesInsertHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.addSmartCompletionTailInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.handlers.CompletionCharInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStringTemplateBracesInsertHandler
 import org.jetbrains.kotlin.idea.completion.isAtFunctionLiteralStart
@@ -290,10 +292,17 @@ internal abstract class K2CompletionContributor<P : KotlinRawPositionContext>(
             else -> WrapSingleStringTemplateEntryWithBracesInsertHandler
         }
 
-        return LookupElementDecorator.withDelegateInsertHandler(
+        var element = element
+        if (context.completionContext.parameters.completionType == CompletionType.SMART) {
+            element = element.addSmartCompletionTailInsertHandler()
+        }
+
+        element = LookupElementDecorator.withDelegateInsertHandler(
             LookupElementDecorator.withDelegateInsertHandler(element, bracesInsertHandler),
             CompletionCharInsertHandler(context.parameters.delegate.isAutoPopup),
         )
+
+        return element
     }
 }
 
