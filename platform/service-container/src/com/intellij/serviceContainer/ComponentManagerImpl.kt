@@ -80,7 +80,8 @@ val emptyConstructorMethodType: MethodType = MethodType.methodType(Void.TYPE)
 val coroutineScopeMethodType: MethodType = MethodType.methodType(Void.TYPE, CoroutineScope::class.java)
 
 private val applicationMethodType: MethodType = MethodType.methodType(Void.TYPE, Application::class.java)
-private val applicationAndScopeMethodType: MethodType = MethodType.methodType(Void.TYPE, Application::class.java, CoroutineScope::class.java)
+private val applicationAndScopeMethodType: MethodType =
+  MethodType.methodType(Void.TYPE, Application::class.java, CoroutineScope::class.java)
 private val componentManagerMethodType: MethodType = MethodType.methodType(Void.TYPE, ComponentManager::class.java)
 
 private val defaultSupportedSignaturesOfLightServiceConstructors: List<MethodType> = java.util.List.of(
@@ -314,7 +315,7 @@ abstract class ComponentManagerImpl(
   open fun registerComponents(
     modules: List<IdeaPluginDescriptorImpl>,
     app: Application?,
-    listenerCallbacks: MutableList<in Runnable>? = null
+    listenerCallbacks: MutableList<in Runnable>? = null,
   ) {
     val activityNamePrefix = activityNamePrefix()
 
@@ -419,9 +420,11 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  private fun registerComponents2Inner(pluginDescriptor: IdeaPluginDescriptor,
-                                       containerDescriptor: ContainerDescriptor,
-                                       headless: Boolean) {
+  private fun registerComponents2Inner(
+    pluginDescriptor: IdeaPluginDescriptor,
+    containerDescriptor: ContainerDescriptor,
+    headless: Boolean,
+  ) {
     val components = containerDescriptor.components
     if (components.isEmpty()) {
       return
@@ -790,7 +793,7 @@ abstract class ComponentManagerImpl(
     implementation: Class<*>,
     pluginDescriptor: PluginDescriptor,
     override: Boolean,
-    clientKind: ClientKind?
+    clientKind: ClientKind?,
   ) {
     val descriptor = ServiceDescriptor(serviceInterface.name, implementation.name, null, null, false,
                                        false, null, PreloadMode.FALSE, clientKind, null)
@@ -962,10 +965,12 @@ abstract class ComponentManagerImpl(
 
   final override fun createError(message: String, pluginId: PluginId): PluginException = PluginException(message, pluginId)
 
-  final override fun createError(message: String,
-                                 error: Throwable?,
-                                 pluginId: PluginId,
-                                 attachments: MutableMap<String, String>?): RuntimeException {
+  final override fun createError(
+    message: String,
+    error: Throwable?,
+    pluginId: PluginId,
+    attachments: MutableMap<String, String>?,
+  ): RuntimeException {
     return PluginException(message, error, pluginId, attachments?.map { Attachment(it.key, it.value) } ?: java.util.List.of())
   }
 
@@ -1566,13 +1571,14 @@ private fun getInstanceBlocking(holder: InstanceHolder, debugString: String, cre
   }
 }
 
-private val forbidGetServiceEvenInNonCancellable: Boolean = System.getProperty("idea.forbid.get.service.in.nc.static.init", "false").toBoolean()
+private val forbidGetServiceEvenInNonCancellable: Boolean =
+  System.getProperty("idea.forbid.get.service.in.nc.static.init", "false").toBoolean()
 
 internal fun getOrCreateInstanceBlocking(holder: InstanceHolder, debugString: String, keyClass: Class<*>?): Any {
   // container scope might be canceled
   // => holder is initialized with CE
   // => caller should get PCE
-  rethrowCEasPCE(keyClass?:holder) {
+  rethrowCEasPCE(keyClass ?: holder) {
     val instance = holder.tryGetInstance()
     if (instance != null) {
       return instance
@@ -1606,7 +1612,7 @@ private fun doGetOrCreateInstanceBlocking(holder: InstanceHolder, keyClass: Clas
     }
   }
   catch (e: ProcessCanceledException) {
-    throwAlreadyDisposedIfNotUnderIndicatorOrJob(keyClass?:holder, cause = e)
+    throwAlreadyDisposedIfNotUnderIndicatorOrJob(keyClass ?: holder, cause = e)
     throw e
   }
 }
@@ -1710,7 +1716,7 @@ private inline fun <X> rethrowCEasPCE(self: Any, action: () -> X): X {
   }
 }
 
-private fun throwAlreadyDisposedIfNotUnderIndicatorOrJob(self:Any, cause: Throwable) {
+private fun throwAlreadyDisposedIfNotUnderIndicatorOrJob(self: Any, cause: Throwable) {
   if (!isUnderIndicatorOrJob()) {
     // in useInstanceContainer=false AlreadyDisposedException was thrown instead
     throw AlreadyDisposedException("Container $self is already disposed").initCause(cause)
@@ -1779,7 +1785,7 @@ fun ComponentManager.getComponentManagerImpl(): ComponentManagerImpl {
 private class StartUpMessageDeliveryListener(
   private val messageBus: MessageBusImpl,
   private val logMessageBusDeliveryFunction: (Topic<*>, String, Any, Long) -> Unit,
-): MessageDeliveryListener {
+) : MessageDeliveryListener {
   override fun messageDelivered(topic: Topic<*>, messageName: String, handler: Any, durationNanos: Long) {
     if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
       messageBus.removeMessageDeliveryListener(this)

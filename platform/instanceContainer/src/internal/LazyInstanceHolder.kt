@@ -177,7 +177,8 @@ internal abstract class LazyInstanceHolder(
   private fun complete(finalState: Any) {
     val result = when (finalState) {
       is Initial,
-      is InProgress -> error("Unexpected completion $finalState")
+      is InProgress,
+        -> error("Unexpected completion $finalState")
       is CannotLoadClass -> Result.failure(finalState.classLoadingError)
       is CannotInitialize -> Result.failure(finalState.initializationError)
       else -> Result.success(finalState)
@@ -279,18 +280,19 @@ internal abstract class LazyInstanceHolder(
   }
 }
 
-private class CurrentlyInitializingInstance(@JvmField val holder: LazyInstanceHolder)
-  : AbstractCoroutineContextElement(CurrentlyInitializingInstance), IntelliJContextElement {
+private class CurrentlyInitializingInstance(@JvmField val holder: LazyInstanceHolder) :
+  AbstractCoroutineContextElement(CurrentlyInitializingInstance), IntelliJContextElement {
   override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+
   companion object : CoroutineContext.Key<CurrentlyInitializingInstance>
 }
 
-internal class StaticInstanceHolder(scope: CoroutineScope, additionalContext: CoroutineContext, initializer: InstanceInitializer)
-  : LazyInstanceHolder(scope, additionalContext, initializer)
+internal class StaticInstanceHolder(scope: CoroutineScope, additionalContext: CoroutineContext, initializer: InstanceInitializer) :
+  LazyInstanceHolder(scope, additionalContext, initializer)
 
 /**
  * This class is separate from [StaticInstanceHolder] to differentiate them via `instanceof` later.
  * Another solution is to store a flag in a field.
  */
-internal class DynamicInstanceHolder(scope: CoroutineScope, additionalContext: CoroutineContext, initializer: InstanceInitializer)
-  : LazyInstanceHolder(scope, additionalContext, initializer)
+internal class DynamicInstanceHolder(scope: CoroutineScope, additionalContext: CoroutineContext, initializer: InstanceInitializer) :
+  LazyInstanceHolder(scope, additionalContext, initializer)

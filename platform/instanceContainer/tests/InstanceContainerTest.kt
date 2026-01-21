@@ -167,9 +167,10 @@ class InstanceContainerTest {
       }
 
       suspend fun InstanceRegistrar.testRemove(overrideAllowed: Boolean) {
-        if (overrideAllowed){
+        if (overrideAllowed) {
           overrideInitializer(keyClassName, null)
-        } else {
+        }
+        else {
           assertErrorLogged<InstanceNotOverridableException> {
             overrideInitializer(keyClassName, null)
           }

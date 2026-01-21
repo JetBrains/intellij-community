@@ -31,7 +31,8 @@ class InstanceContainerImpl @VisibleForTesting constructor(
   ) : this(scopeHolder, containerName, dynamicInstanceSupport, ordered,
     // Use System.getProperty(), because the Registry is a service, and not available yet.
     // Default is `true` during the migration period, then will be changed to `false`
-           shouldTolerateIncorrectOverrides = SystemProperties.getBooleanProperty("intellij.platform.instance.container.tolerate.incorrect.overrides", true))
+           shouldTolerateIncorrectOverrides = SystemProperties.getBooleanProperty("intellij.platform.instance.container.tolerate.incorrect.overrides",
+                                                                                  true))
 
   override fun toString(): String {
     val state = _state
@@ -164,11 +165,15 @@ class InstanceContainerImpl @VisibleForTesting constructor(
   ) : UnregisterHandle {
     // if restorationMap has null values only, it has no sense to store it because the keys can be obtained from keysToRemove
     val keysToUnregister: Array<String>? = if (hasPreviousHolders) ArrayUtil.toStringArray(restorationMap.keys) else null
+
     // store map as a pair of arrays (keysToUnregister/holdersToUnregister) with keys and values to conserve memory
     val holdersToUnregister: Array<InstanceHolder?>? = if (hasPreviousHolders) restorationMap.values.toTypedArray() else null
+
     // typically, returnMap keys are the same as restorationMap, no need to store them
-    val keysToReturn: Array<String> = ArrayUtil.toStringArray(returnMap.keys).let { if (keysToUnregister != null && it.contentEquals(keysToUnregister)) keysToUnregister else it }
+    val keysToReturn: Array<String> = ArrayUtil.toStringArray(returnMap.keys)
+      .let { if (keysToUnregister != null && it.contentEquals(keysToUnregister)) keysToUnregister else it }
     val holdersToReturn: Array<InstanceHolder> = returnMap.values.toTypedArray()
+
     // no need to store keysToRemove if we store restorationMap, the keys can be restored from there
     val keysToRemove: Array<String>? = if (hasPreviousHolders) null else ArrayUtil.toStringArray(keysToRemove)
     override fun unregister(): Map<String, InstanceHolder> {
@@ -177,7 +182,11 @@ class InstanceContainerImpl @VisibleForTesting constructor(
     }
   }
 
-  private fun register(parentScope: CoroutineScope, additionalContext: CoroutineContext, actions: Map<String, RegistrationAction>): UnregisterHandle {
+  private fun register(
+    parentScope: CoroutineScope,
+    additionalContext: CoroutineContext,
+    actions: Map<String, RegistrationAction>,
+  ): UnregisterHandle {
     val preparedHolders = prepareHolders(parentScope, additionalContext, actions)
     val (holders, _, keysToRemove) = preparedHolders
     lateinit var handle: UnregisterHandle
@@ -217,7 +226,7 @@ class InstanceContainerImpl @VisibleForTesting constructor(
     //  or, in other words, two should be fully nested into one
     updateState { state: InstanceContainerState ->
       val builder = HashMap(state.holders)
-      for(i in 0 until keys.size) {
+      for (i in 0 until keys.size) {
         val key = keys[i]
         val value = instanceHolders[i]
         if (value == null) {
