@@ -409,7 +409,7 @@ private suspend fun DeployingContextAndShell.uploadIjentBinary(
 
 
 private suspend fun DeployingContextAndShell.execIjent(remotePathToBinary: String): IjentSessionProcessMediator {
-  val joinedCmd = getIjentGrpcArgv(remotePathToBinary, selfDeleteOnExit = true, usrBinEnv = context.env).joinToString(" ")
+  val joinedCmd = getIjentGrpcArgv(remotePathToBinary, selfDeleteOnExit = true).joinToString(" ")
     return createMediator(remotePathToBinary, joinedCmd)
   }
 
@@ -433,7 +433,6 @@ private suspend fun DeployingContextAndShell.createMediator(
 private suspend fun DeployingContextAndShell.execIjentWithTcp(remotePathToBinary: String, deployInfo: TcpDeployInfo): IjentSessionProcessMediator {
   val joinedCmd = getIjentGrpcArgv(remotePathToBinary,
                                    selfDeleteOnExit = true,
-                                   usrBinEnv = context.env,
                                    deployInfo = deployInfo).joinToString(" ")
   return createMediator(remotePathToBinary, joinedCmd)
 }
