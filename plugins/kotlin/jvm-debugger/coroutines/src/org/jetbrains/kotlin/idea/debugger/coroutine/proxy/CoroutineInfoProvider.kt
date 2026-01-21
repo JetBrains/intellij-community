@@ -99,7 +99,8 @@ internal class CoroutinesInfoFromJsonAndReferencesProvider(
             if (stackTrace == null) emptyList()
             else {
                 AsyncStacksUtils.parseAgentAsyncStackTrace(stackTrace.value(), executionContext.vm)
-                    .mapNotNull { it?.location() }
+                    ?.mapNotNull { it?.location() }
+                    ?: emptyList()
             }
         }
 

@@ -165,9 +165,23 @@ public final class AsyncStacksUtils {
    * Parses stack trace captured by the debugger-agent. Result list can contain null elements corresponding to separator frames.
    */
   @ApiStatus.Internal
-  public static List<@Nullable StackFrameItem> parseAgentAsyncStackTrace(String value, VirtualMachineProxyImpl vm) {
-    List<StackFrameItem> res = new ArrayList<>();
+  public static @Nullable List<@Nullable StackFrameItem> parseAgentAsyncStackTrace(String value, VirtualMachineProxyImpl vm) {
     try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(value.getBytes(StandardCharsets.ISO_8859_1)))) {
+      return parseAgentAsyncStackTrace(dis, vm);
+    }
+    catch (IOException e) {
+      DebuggerUtilsImpl.logError(e);
+      return null;
+    }
+  }
+
+  /**
+   * Parses stack trace captured by the debugger-agent. Result list can contain null elements corresponding to separator frames.
+   */
+  @ApiStatus.Internal
+  public static @Nullable List<@Nullable StackFrameItem> parseAgentAsyncStackTrace(DataInputStream dis, VirtualMachineProxyImpl vm) {
+    try {
+      List<StackFrameItem> res = new ArrayList<>();
       while (dis.available() > 0) {
         StackFrameItem item = null;
         if (dis.readBoolean()) {
@@ -183,8 +197,8 @@ public final class AsyncStacksUtils {
     }
     catch (Exception e) {
       DebuggerUtilsImpl.logError(e);
+      return null;
     }
-    return null;
   }
 
   public static void setupAgent(DebugProcessImpl process) {
@@ -356,6 +370,10 @@ public final class AsyncStacksUtils {
     RegistryValue percentRegistry = Registry.get("debugger.async.stack.trace.overhead.percent");
     if (percentRegistry.isChangedFromDefault()) {
       parametersList.addProperty("debugger.agent.overhead.percent", percentRegistry.asString());
+    }
+
+    for (var modifier : DebuggerAgentParametersModifier.getAgentModifiers()) {
+      modifier.modify(parametersList);
     }
   }
 
