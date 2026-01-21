@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(IntellijInternalApi::class)
 
 package com.intellij.util.indexing.contentQueue
@@ -514,7 +514,7 @@ class IndexUpdateRunner(
 
     fun getPresentableLocationBeingIndexed(project: Project, file: VirtualFile): @NlsSafe String {
       var actualFile = file
-      if (actualFile.fileSystem is ArchiveFileSystem) {
+      if (actualFile.isValid && actualFile.fileSystem is ArchiveFileSystem) {
         actualFile = VfsUtil.getLocalFile(actualFile)
       }
       var path = getProjectRelativeOrAbsolutePath(project, actualFile)
