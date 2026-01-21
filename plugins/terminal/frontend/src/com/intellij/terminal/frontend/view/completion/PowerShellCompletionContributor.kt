@@ -8,6 +8,8 @@ import com.intellij.terminal.completion.spec.ShellSuggestionType
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.json.Json
 import org.jetbrains.plugins.terminal.TerminalIcons
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionItem
 import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionResultType
 import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionResultWithContext
@@ -21,7 +23,14 @@ import kotlin.coroutines.resume
 
 internal class PowerShellCompletionContributor : TerminalCommandCompletionContributor {
   override suspend fun getCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCommandCompletionResult? {
-    if (context.isAutoPopup || !ShellName.isPowerShell(context.shellName)) {
+    if (!ShellName.isPowerShell(context.shellName)) {
+      return null
+    }
+
+    if (context.isAutoPopup && TerminalOptionsProvider.instance.commandCompletionShowingMode != TerminalCommandCompletionShowingMode.ALWAYS) {
+      // Allow fetching completion suggestions from PowerShell only in two cases:
+      // 1. It is called explicitly by the user (for example, in pressing Ctrl+Space).
+      // 2. It is called automatically on typing, but command completion showing mode is set to ALWAYS.
       return null
     }
 
