@@ -1,8 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-#!/usr/bin/env node
+#!/usr/bin/env
+node
+
 /* global process */
-import {tools, toolHandlers} from './task-core.mjs'
+import {toolHandlers, tools} from './task-core.mjs'
 
 function printUsage() {
   const toolList = tools.map(tool => tool.name).sort().join(', ')
