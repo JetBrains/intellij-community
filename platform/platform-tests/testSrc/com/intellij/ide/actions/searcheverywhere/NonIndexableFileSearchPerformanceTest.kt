@@ -105,7 +105,10 @@ open class NonIndexableFileSearchPerformanceTest {
     val searchPattern = "ProjectRootEntity"
     val contributor = createContributor()
     Benchmark.newBenchmarkWithVariableInputSize("search \"$searchPattern\"", nonIndexableFilesCount) {
-      contributor.search(searchPattern, MockProgressIndicator(), 1)
+      // elementsLimit = 0, so when the first matching file is found, the search stops.
+      // Because it actually searches for `elementsLimit + 1` files
+      val elementsLimit = 0
+      contributor.search(searchPattern, MockProgressIndicator(), elementsLimit)
       nonIndexableFilesCount
     }.start(NonIndexableFileSearchPerformanceTest::`search for one file deep inside`.javaMethod!!, subtestName)
   }
@@ -139,7 +142,10 @@ open class NonIndexableFileSearchPerformanceTest {
     val filename = communityVirtualFile.getChildren(true).last().name
     val contributor = createContributor()
     Benchmark.newBenchmarkWithVariableInputSize("search \"$filename\"", nonIndexableFilesCount) {
-      contributor.search(filename, MockProgressIndicator(), 1)
+      // elementsLimit = 0, so when the first matching file is found, the search stops.
+      // Because it actually searches for `elementsLimit + 1` files
+      val elementsLimit = 0
+      contributor.search(filename, MockProgressIndicator(), elementsLimit)
       nonIndexableFilesCount
     }.start(NonIndexableFileSearchPerformanceTest::`search for one last root child`.javaMethod!!, subtestName)
   }
@@ -173,7 +179,10 @@ open class NonIndexableFileSearchPerformanceTest {
     val filename = communityVirtualFile.getChildren(true).first().name
     val contributor = createContributor()
     Benchmark.newBenchmark("search \"$filename\"") {
-      contributor.search(filename, MockProgressIndicator(), 1)
+      // elementsLimit = 0, so when the first matching file is found, the search stops.
+      // Because it actually searches for `elementsLimit + 1` files
+      val elementsLimit = 0
+      contributor.search(filename, MockProgressIndicator(), elementsLimit)
     }.start(NonIndexableFileSearchPerformanceTest::`search for the first root child`.javaMethod!!, subtestName)
   }
 
