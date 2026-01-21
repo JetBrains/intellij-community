@@ -8,10 +8,13 @@
 - Summary/issue objects include core fields only.
 
 ## Views and memory
-- Inputs: `view="summary" | "meta"` (default `summary`) and `meta_max_chars` (default 400; <=0 disables truncation).
+Inputs:
+- `view="summary" | "meta"` (default `summary`) and `meta_max_chars` (default 400; <=0 disables truncation).
 - Applies to: `task_status`, `task_start`, `task_reopen`.
+
+Outputs:
 - Summary issue fields: `id`, `title`, `status`, `priority`, `type`, `assignee`, `parent`, `ready_children`, `children`, `is_new` (omit empty).
-- `children` is returned for epic issue views (task_status(id)) as a list of summary issues.
+- `children` is returned for epic issue views (`task_status(id)`) as a list of summary issues.
 - Meta fields (only in `view="meta"`): `description`, `design`, `acceptance`.
 - `meta_truncated` lists meta fields that were truncated.
 - Memory payload is returned when `memory_limit > 0`.
@@ -43,6 +46,7 @@
 ## Tool behaviors (canonical)
 - `task_status()` -> `kind: "summary" | "empty" | "error"`
   - When in_progress tasks exist, `summary.issues` lists them all.
+  - `empty` means no in_progress tasks.
 - `task_status(id, memory_limit?, view?, meta_max_chars?)` -> `kind: "issue" | "error"` (optional `memory`)
 - `task_start(user_request, description?, design?, acceptance?, memory_limit?, view?, meta_max_chars?)` -> `kind: "issue" (is_new=true) | "error"`
   - If description/design/acceptance are provided, they are used.
@@ -78,12 +82,14 @@
 
 ## Usage hints
 - Start/claim: `task_start(id)` or `task_progress(id, status="in_progress")`.
+- Resume without an id: call `task_status()`; if `kind` is `empty`, ask whether to start a new epic; otherwise ask the user which issue to resume.
 - After multi-child decomposition, call `task_start(id)` on the chosen child to set `in_progress`.
 - Block/defer: `task_progress(id, status="blocked"|"deferred")`.
 - Close: `task_done(id, reason)`. Reopen: `task_reopen(id, reason)`.
 - `task_status(id=epic)` returns child statuses.
 - `task_done` returns `next_ready` and `epic_status`.
 - `task_start(user_request)` always creates a new epic; call `task_status()` first if you need to review in_progress work.
+- Use `task_update_meta` for description/design/acceptance changes; use `task_progress` for findings/decisions/status updates.
 
 ## Examples (one-liners)
 - `task_status()`
