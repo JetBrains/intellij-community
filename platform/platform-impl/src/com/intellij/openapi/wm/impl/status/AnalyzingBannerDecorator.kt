@@ -91,7 +91,7 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, private val p
     val banner = InlineBanner().apply {
       setMessage(IndexingBundle.message("progress.indexing.banner.text"))
       addAction(IdeBundle.message("link.learn.more")) {
-        val url = HelpManagerImpl.getHelpUrl("Project analysis")
+        val url = HelpManagerImpl.getHelpUrl("Project-analysis")
         if (url != null) {
           BrowserUtil.browse(url)
         }
