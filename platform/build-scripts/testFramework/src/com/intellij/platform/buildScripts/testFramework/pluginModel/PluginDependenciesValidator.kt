@@ -108,7 +108,7 @@ class PluginDependenciesValidator private constructor(
 
   private fun reportPluginLoadingErrors(loadingErrors: List<PluginLoadingError>) {
     for (error in loadingErrors) {
-      val errorMessage = error.htmlMessage.toString()
+      val errorMessage = error.htmlMessage.toString() + if (error.reason != null) { ":\n  ${error.reason!!.logMessage}" } else ""
       if (options.pluginErrorPrefixesToIgnore.any { errorMessage.startsWith(it) }) {
         continue
       }
