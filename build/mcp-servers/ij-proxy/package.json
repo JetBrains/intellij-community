@@ -1,0 +1,24 @@
+{
+  "name": "ij-mcp-proxy",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "bun build.ts",
+    "start": "bun dist/ij-mcp-proxy.mjs",
+    "test": "bun test community/build/mcp-servers/ij-proxy/integration-tests/*.test.ts community/build/mcp-servers/ij-proxy/proxy-tools/handlers/*.test.ts"
+  },
+  "dependencies": {
+    "@eslint-community/regexpp": "^4.12.2",
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "is-port-reachable": "^4.0.0",
+    "p-retry": "^7.1.1",
+    "p-timeout": "^7.0.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.10"
+  }
+}

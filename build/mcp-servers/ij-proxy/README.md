@@ -11,10 +11,28 @@ It forwards JSON-RPC messages between stdin/stdout and the upstream streamable H
 
 ## Usage
 
-Run directly:
+Install dependencies (once, from this directory):
 
 ```bash
-node community/build/mcp-servers/ij-proxy/ij-mcp-proxy.mjs
+bun install
+```
+
+Build the dist bundle (requires bun; run from this directory):
+
+```bash
+bun run build
+```
+
+Run from dist:
+
+```bash
+bun community/build/mcp-servers/ij-proxy/dist/ij-mcp-proxy.mjs
+```
+
+Or via bun:
+
+```bash
+bun start
 ```
 
 Environment variables (optional):
@@ -26,6 +44,8 @@ Environment variables (optional):
 - `JETBRAINS_MCP_CONNECT_TIMEOUT_S`: timeout for the initial port probe or explicit stream URL (seconds). Default: `10`. Use `0` to disable.
 - `JETBRAINS_MCP_SCAN_TIMEOUT_S`: timeout for additional port probes after the default port fails (seconds). Default: `1`. Use `0` to disable.
 - `JETBRAINS_MCP_QUEUE_LIMIT`: max number of queued client messages before the stream endpoint is ready. Default: `100`. Use `0` for unlimited.
+- `JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S`: timeout for upstream tool calls after they are sent (seconds). Default: `60`. Use `0` to disable.
+- `JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S`: timeout for upstream tool calls waiting to be sent while the stream is unavailable (seconds). Defaults to the tool-call timeout when set; use `0` to disable.
 - `MCP_LOG`: path to a log file for proxy progress (cleared on startup).
 - `JETBRAINS_MCP_TOOL_MODE`: tool API shape to expose. `codex` (default) uses `read_file`, `grep`, `find`, `list_dir`, `apply_patch`. `cc` uses `read`, `edit`, `write`, `glob`, `grep`.
 
@@ -76,8 +96,8 @@ Example `.mcp.toml` entry (Codex):
 ```toml
 [mcp_servers.ijproxy]
 type = "stdio"
-command = "node"
-args = ["community/build/mcp-servers/ij-proxy/ij-mcp-proxy.mjs"]
+command = "bun"
+args = ["community/build/mcp-servers/ij-proxy/dist/ij-mcp-proxy.mjs"]
 # Optional: tool mode is "codex" by default
 # env = { JETBRAINS_MCP_TOOL_MODE = "codex" }
 ```
@@ -89,9 +109,9 @@ Example `.mcp.json` entry (Claude Code):
   "mcpServers": {
     "ijproxy": {
       "type": "stdio",
-      "command": "node",
+      "command": "bun",
       "args": [
-        "community/build/mcp-servers/ij-proxy/ij-mcp-proxy.mjs"
+        "community/build/mcp-servers/ij-proxy/dist/ij-mcp-proxy.mjs"
       ],
       "env": {
         "JETBRAINS_MCP_TOOL_MODE": "cc"
@@ -106,11 +126,11 @@ Example `.mcp.json` entry (Claude Code):
 From the repo root:
 
 ```bash
-node --test community/build/mcp-servers/ij-proxy/**/*.test.mjs
+bun test community/build/mcp-servers/ij-proxy/integration-tests/*.test.ts community/build/mcp-servers/ij-proxy/proxy-tools/handlers/*.test.ts
 ```
 
 ## Notes
 
 - Run from the desired project root so `process.cwd()` matches the project path.
 - Direct `create_new_file` calls are blocked; use `apply_patch` (codex) or `write` (cc).
-- Requires Node 18+ (for global `fetch`).
+- Requires Bun 1.0+ (Node 18+ if you run the built proxy with node).

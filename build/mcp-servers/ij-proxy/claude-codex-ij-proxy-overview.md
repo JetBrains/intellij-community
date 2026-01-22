@@ -40,10 +40,10 @@ Note: The proxy tool list is mode-specific (`JETBRAINS_MCP_TOOL_MODE`, default: 
 - JetBrains MCP server: `community/plugins/mcp-server/src/com/intellij/mcpserver/toolsets/general/TextToolset.kt`,
   `community/plugins/mcp-server/src/com/intellij/mcpserver/toolsets/general/FileToolset.kt`
 - JetBrains MCP proxy: `community/build/mcp-servers/ij-proxy/README.md`,
-  `community/build/mcp-servers/ij-proxy/project-path.mjs`,
-  `community/build/mcp-servers/ij-proxy/stream-transport.mjs`,
-  `community/build/mcp-servers/ij-proxy/proxy-tools/tooling.mjs`,
-  `community/build/mcp-servers/ij-proxy/ij-mcp-proxy.mjs`
+  `community/build/mcp-servers/ij-proxy/project-path.ts`,
+  `community/build/mcp-servers/ij-proxy/stream-transport.ts`,
+  `community/build/mcp-servers/ij-proxy/proxy-tools/tooling.ts`,
+  `community/build/mcp-servers/ij-proxy/ij-mcp-proxy.ts`
 - Codex CLI (local checkout): `~/Downloads/codex-main/codex-rs/core/src/tools/spec.rs`,
   `~/Downloads/codex-main/codex-rs/core/src/tools/handlers/apply_patch.rs`
 - OpenAI docs:
