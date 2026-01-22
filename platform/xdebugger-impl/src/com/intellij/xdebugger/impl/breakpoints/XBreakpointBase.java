@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -23,10 +23,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XExpression;
-import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
@@ -196,7 +193,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   public void setSuspendPolicy(long requestId, @NotNull SuspendPolicy policy) {
     updateStateIfNeededAndNotify(requestId, policy, myState::getSuspendPolicy, (p) -> {
       myState.setSuspendPolicy(p);
-      if (p == SuspendPolicy.NONE) {
+      if (p == SuspendPolicy.NONE && !DapMode.isDap()) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("debugger.breakpoint.non.suspending");
       }
     });
