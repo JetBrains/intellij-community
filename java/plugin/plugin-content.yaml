@@ -18,29 +18,19 @@
   - name: intellij.java.psi
   - name: intellij.java.psi.impl
   - name: intellij.java.frontback.impl
-  - name: intellij.java.debugger.impl.shared
-  - name: intellij.java.execution.impl.shared
-- name: lib/javac2.jar
-  modules:
-  - name: intellij.java.compiler.antTasks
+  - name: intellij.platform.jps.build.dependencyGraph
+  - name: intellij.platform.jps.build.javac.rt
   - name: intellij.java.guiForms.compiler
+  - name: intellij.java.compiler.antTasks
   - name: intellij.java.compiler.instrumentationUtil
   - name: intellij.java.compiler.instrumentationUtil.java8
+  - name: intellij.java.debugger.impl.shared
+  - name: intellij.java.execution.impl.shared
 - name: lib/jb-jdi.jar
   library: jb-jdi
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2/jb-jdi-2.jar
   reason: withProjectLibrary
-- name: lib/jps-builders-6.jar
-  modules:
-  - name: intellij.platform.jps.build.javac.rt
-- name: lib/jps-builders.jar
-  modules:
-  - name: intellij.platform.jps.build
-    libraries:
-      qdox-java-parser:
-      - name: $MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2/qdox-2.jar
-  - name: intellij.platform.jps.build.dependencyGraph
 - name: lib/jps-javac-extension.jar
   library: jps-javac-extension
   files:
@@ -232,6 +222,12 @@
 - name: lib/modules/intellij.jvm.dfa.analysis.ui.jar
   contentModules:
   - name: intellij.jvm.dfa.analysis.ui
+- name: lib/modules/intellij.platform.jps.build.jar
+  contentModules:
+  - name: intellij.platform.jps.build
+    libraries:
+      qdox-java-parser:
+      - name: $MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2/qdox-2.jar
 - name: lib/modules/intellij.platform.uast.ide.jar
   contentModules:
   - name: intellij.platform.uast.ide

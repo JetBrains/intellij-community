@@ -13,6 +13,7 @@
     <module name="intellij.java.compiler"/>
     <module name="intellij.java.compiler.impl"/>
     <module name="intellij.jsp"/>
+    <module name="intellij.platform.jps.build"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.impl.refactorings"/>
     <module name="intellij.platform.ide.impl"/>

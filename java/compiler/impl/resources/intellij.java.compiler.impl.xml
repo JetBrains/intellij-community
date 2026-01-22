@@ -21,6 +21,10 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.xml.psi"/>
 
+    <module name="intellij.platform.jps.build"/>
+    <module name="intellij.platform.jps.build.javac.rt"/>
+    <module name="intellij.java.compiler.instrumentationUtil"/>
+
     <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>
   </dependencies>

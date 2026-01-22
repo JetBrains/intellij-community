@@ -60,6 +60,8 @@
     <module name="intellij.java.debugger.memory.agent"/>
     <module name="intellij.java.uast.ide"/>
 
+    <module name="intellij.platform.jps.build"/>
+
     <!--only backend-->
     <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>

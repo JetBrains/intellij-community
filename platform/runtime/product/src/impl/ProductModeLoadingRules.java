@@ -26,7 +26,8 @@ public final class ProductModeLoadingRules {
   public static @NotNull List<RuntimeModuleId> getIncompatibleRootModules(@NotNull ProductMode mode) {
     if (mode.equals(FRONTEND)) {
       return List.of(RuntimeModuleId.module("intellij.platform.backend"),
-                     RuntimeModuleId.module("intellij.platform.jps.build"));
+                     RuntimeModuleId.module("intellij.platform.jps.build"),
+                     RuntimeModuleId.module("intellij.platform.jps.build.dependencyGraph"));
     }
     else if (mode.equals(MONOLITH)) {
       //currently we use the same modules in 'backend' and 'monolith' modes, in the future we may disable some UI-only modules in 'backend' mode

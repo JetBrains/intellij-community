@@ -12,10 +12,6 @@
   <!--other dependencies inside java.backend plugin-->
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
-
-    <!--because of intellij.platform.jps modules-->
-    <module name="intellij.java.aetherDependencyResolver"/>
-    <module name="intellij.libraries.maven.resolver.provider"/>
   </dependencies>
 
   <module value="com.intellij.modules.java"/>
@@ -37,7 +33,7 @@
     <module name="intellij.java" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.resources" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.execution" required-if-available="intellij.platform.backend"/>
-    <module name="intellij.java.remoteServers"  loading="optional"/>
+    <module name="intellij.java.remoteServers" loading="optional"/>
     <module name="intellij.jvm.analysis" required-if-available="intellij.platform.backend"/>
     <module name="intellij.jsp" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.resources.en" required-if-available="intellij.platform.backend"/>
@@ -64,7 +60,15 @@
     <module name="intellij.java.debugger.impl" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.debugger.memory.agent" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.remoteServers.impl" loading="optional"/>
-    <module name="intellij.java.uast.ide"  required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.uast.ide" required-if-available="intellij.platform.backend"/>
+
+    <module name="intellij.platform.jps.build" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.platform.jps.build.dependencyGraph" loading="embedded"/>
+    <module name="intellij.platform.jps.build.javac.rt" loading="embedded"/>
+    <module name="intellij.java.guiForms.compiler" loading="embedded"/>
+    <module name="intellij.java.compiler.antTasks" loading="embedded"/>
+    <module name="intellij.java.compiler.instrumentationUtil" loading="embedded"/>
+    <module name="intellij.java.compiler.instrumentationUtil.java8" loading="embedded"/>
 
     <module name="intellij.java.backend" required-if-available="intellij.platform.backend"/>
 
