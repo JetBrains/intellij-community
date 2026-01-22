@@ -18,6 +18,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
@@ -318,6 +319,32 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
     }
   }
   return result
+}
+
+/**
+ * Collects executable file patterns from bundled plugins for a specific platform distribution.
+ * Returns patterns relative to distribution root (e.g., "plugins/plugin-name/bin/script.sh").
+ */
+internal fun collectPluginExecutablePatterns(
+  context: BuildContext,
+  os: OsFamily,
+  arch: JvmArchitecture,
+  libc: LibcImpl
+): Sequence<String> {
+  val productLayout = context.productProperties.productLayout
+  val bundledPluginLayouts = getPluginLayoutsByJpsModuleNames(
+    modules = productLayout.bundledPluginModules,
+    productLayout = productLayout
+  )
+
+  val platformDistribution = SupportedDistribution(os, arch, libc)
+  return bundledPluginLayouts.asSequence()
+    .flatMap { plugin ->
+      val patterns = plugin.executablePatterns[platformDistribution] ?: persistentListOf()
+      patterns.asSequence().map { pattern ->
+        "plugins/${plugin.directoryName}/$pattern"
+      }
+    }
 }
 
 private fun basePath(moduleName: String, outputProvider: ModuleOutputProvider): Path {

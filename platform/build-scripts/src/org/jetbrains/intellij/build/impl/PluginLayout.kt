@@ -19,6 +19,8 @@ import org.jetbrains.intellij.build.CustomAssetDescriptor
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LazySource
 import org.jetbrains.intellij.build.LibcImpl
+import org.jetbrains.intellij.build.LinuxLibcImpl
+import org.jetbrains.intellij.build.MacLibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.io.copyDir
@@ -104,6 +106,9 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     private set
 
   internal var platformResourceGenerators: PersistentMap<SupportedDistribution, PersistentList<ResourceGenerator>> = persistentMapOf()
+    private set
+
+  internal var executablePatterns: PersistentMap<SupportedDistribution, PersistentList<String>> = persistentMapOf()
     private set
 
   val hasPlatformSpecificResources: Boolean
@@ -289,6 +294,33 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       val key = SupportedDistribution(os, arch, libc)
       val newValue = layout.platformResourceGenerators.get(key)?.let { it + generator } ?: persistentListOf(generator)
       layout.platformResourceGenerators += key to newValue
+    }
+
+    /**
+     * Add executable file pattern for all Unix-like platforms (Linux and macOS).
+     * Pattern is relative to plugin root directory.
+     * Example: withExecutable("lib/native/fsnotifier")
+     */
+    fun withExecutable(pattern: String) {
+      val allPlatforms = listOf(
+        SupportedDistribution(OsFamily.LINUX, JvmArchitecture.x64, LinuxLibcImpl.GLIBC),
+        SupportedDistribution(OsFamily.LINUX, JvmArchitecture.aarch64, LinuxLibcImpl.GLIBC),
+        SupportedDistribution(OsFamily.MACOS, JvmArchitecture.x64, MacLibcImpl.DEFAULT),
+        SupportedDistribution(OsFamily.MACOS, JvmArchitecture.aarch64, MacLibcImpl.DEFAULT),
+      )
+      for (platform in allPlatforms) {
+        withPlatformExecutable(platform.os, platform.arch, platform.libcImpl, pattern)
+      }
+    }
+
+    /**
+     * Add platform-specific executable file pattern.
+     * Pattern is relative to plugin root directory.
+     */
+    fun withPlatformExecutable(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, pattern: String) {
+      val key = SupportedDistribution(os, arch, libc)
+      val existing = layout.executablePatterns.get(key) ?: persistentListOf()
+      layout.executablePatterns = layout.executablePatterns.put(key, existing.add(pattern))
     }
 
     /**

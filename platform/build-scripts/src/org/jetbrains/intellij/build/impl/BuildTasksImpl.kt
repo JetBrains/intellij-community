@@ -68,6 +68,7 @@ import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.intellij.build.zipSourcesOfModules
 import java.nio.file.FileVisitResult
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -877,7 +878,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
     productJson = productJson,
     extraFiles = extraFiles,
     crossPlatformPluginsDir = crossPlatformPluginsDir,
-    crossPlatformPluginDirNames = crossPlatformBuiltPlugins.mapTo(HashSet()) { it.layout.directoryName },
+    crossPlatformBuiltPlugins = crossPlatformBuiltPlugins,
     context = context,
   )
 
@@ -994,26 +995,43 @@ internal fun getLinuxFrameClass(context: BuildContext): String {
   return if (name.startsWith("jetbrains-")) name else "jetbrains-$name"
 }
 
-private fun crossPlatformZip(
+private suspend fun crossPlatformZip(
   distResults: List<DistributionForOsTaskResult>,
   targetFile: Path,
   executableName: String,
   productJson: String,
   extraFiles: Map<String, Path>,
   crossPlatformPluginsDir: Path?,
-  crossPlatformPluginDirNames: Set<String>,
+  crossPlatformBuiltPlugins: List<PluginBuildDescriptor>,
   context: BuildContext,
 ) {
   val winX64DistDir = distResults.first { it.builder.targetOs == OsFamily.WINDOWS && it.arch == JvmArchitecture.x64 }.outDir
   val macArm64DistDir = distResults.first { it.builder.targetOs == OsFamily.MACOS && it.arch == JvmArchitecture.aarch64 }.outDir
   val linuxX64DistDir = distResults.first { it.builder.targetOs == OsFamily.LINUX && it.arch == JvmArchitecture.x64 && it.libc == LinuxLibcImpl.GLIBC }.outDir
 
-  val executablePatterns = distResults.flatMap {
+  val distPatterns = distResults.flatMap {
     it.builder.generateExecutableFilesMatchers(includeRuntime = false, JvmArchitecture.x64).keys +
     it.builder.generateExecutableFilesMatchers(includeRuntime = false, JvmArchitecture.aarch64).keys
   }
+
+  val crossPlatformPluginDirNames = crossPlatformBuiltPlugins.mapTo(HashSet()) { it.layout.directoryName }
+
+  val fileSystem = FileSystems.getDefault()
+  val crossPlatformPluginPatterns = crossPlatformBuiltPlugins
+    .flatMap { descriptor ->
+      descriptor.layout.executablePatterns.flatMap { (_, patterns) ->
+        patterns.map { pattern ->
+          fileSystem.getPathMatcher("glob:plugins/${descriptor.layout.directoryName}/$pattern")
+        }
+      }
+    }
+
+  val executablePatterns = distPatterns + crossPlatformPluginPatterns
+
   val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, _, relativePathString ->
-    val relativePath = Path.of(relativePathString)
+    // relativePath for plugins comes relative to "plugins" directory
+    // so it's better to use full path relative to zip root
+    val relativePath = Path.of(entry.name)
     if (executablePatterns.any { it.matches(relativePath) }) {
       entry.unixMode = executableFileUnixMode
     }
