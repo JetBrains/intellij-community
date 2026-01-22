@@ -5,13 +5,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import org.jetbrains.annotations.ApiStatus;
 
-/**
- * @author Alexander Lobas
- */
 @ApiStatus.Internal
-public final class BgProgressIndicator extends AbstractProgressIndicatorExBase {
+public final class PluginDownloadBgProgressIndicator extends AbstractProgressIndicatorExBase {
 
-  public BgProgressIndicator() {
+  public PluginDownloadBgProgressIndicator() {
     super.setText(IdeBundle.message("progress.text.downloading"));
     setIndeterminate(false);
   }

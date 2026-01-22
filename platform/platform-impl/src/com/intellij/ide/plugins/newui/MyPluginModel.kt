@@ -229,7 +229,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       if (!PluginManagerMain.checkThirdPartyPluginsAllowed(listOf(actionDescriptor.getDescriptor()))) {
         return@withContext null
       }
-      val bgProgressIndicator = BgProgressIndicator()
+      val bgProgressIndicator = PluginDownloadBgProgressIndicator()
       val projectNotNull = tryToFindProject()
 
       val info = InstallPluginInfo(bgProgressIndicator, descriptor, this@MyPluginModel, updateDescriptor == null)
@@ -240,7 +240,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   private suspend fun runPluginInstallation(
     project: Project?,
-    bgProgressIndicator: BgProgressIndicator,
+    bgProgressIndicator: PluginDownloadBgProgressIndicator,
     descriptor: PluginUiModel,
     updateDescriptor: PluginUiModel?,
     controller: UiPluginManagerController,
