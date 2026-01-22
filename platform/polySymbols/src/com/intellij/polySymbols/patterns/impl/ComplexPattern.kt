@@ -48,7 +48,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
   ): List<MatchResult> =
     process(stack, params.queryExecutor) {
       patterns, newSymbolsResolver, apiStatus,
-      isRequired, priority, repeats, unique,
+      isRequired, priority, repeats, unique, additionalLastSegmentSymbol,
       ->
       performPatternMatch(params, start, end, patterns, repeats, unique, stack, newSymbolsResolver)
         .let { matchResults ->
@@ -60,7 +60,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
           else
             matchResults
         }
-        .postProcess(owner, apiStatus, priority)
+        .postProcess(owner, apiStatus, priority, additionalLastSegmentSymbol)
         .let { matchResults ->
           if (!isRequired)
             matchResults + MatchResult(PolySymbolNameSegment.create(start, start))
@@ -79,7 +79,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
   ): List<ListResult> =
     process(stack, params.queryExecutor) {
       patterns, newSymbolsResolver, apiStatus,
-      isRequired, priority, repeats, _,
+      isRequired, priority, repeats, _, additionalLastSegmentSymbol,
       ->
       if (repeats)
         if (isRequired)
@@ -91,7 +91,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
           .flatMap { it.list(null, stack, newSymbolsResolver, params) }
           .groupBy { it.name }
           .values
-          .flatMap { it.postProcess(owner, apiStatus, priority) }
+          .flatMap { it.postProcess(owner, apiStatus, priority, additionalLastSegmentSymbol) }
           .let {
             if (!isRequired)
               it + ListResult("", PolySymbolNameSegment.create(0, 0))
@@ -111,7 +111,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
   ): CompletionResults =
     process(stack, params.queryExecutor) {
       patterns, newSymbolsResolver, apiStatus,
-      isRequired, priority, repeats, unique,
+      isRequired, priority, repeats, unique, customPropertiesProvider,
       ->
       var staticPrefixes: Set<String> = emptySet()
 
@@ -171,13 +171,14 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
       patternPriority: PolySymbol.Priority?,
       patternRepeat: Boolean,
       patternUnique: Boolean,
+      additionalLastSegmentSymbol: PolySymbol?
     ) -> T,
   ): T {
     val options = configProvider.getOptions(queryExecutor, scopeStack)
 
     return scopeStack.withSymbols(options.additionalScope?.queryScope ?: emptyList()) {
       action(patterns, options.symbolsResolver, options.apiStatus, options.isRequired, options.priority,
-             options.repeats, options.unique)
+             options.repeats, options.unique, options.additionalLastSegmentSymbol)
     }
   }
 
@@ -185,6 +186,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     owner: PolySymbol?,
     apiStatus: PolySymbolApiStatus?,
     priority: PolySymbol.Priority?,
+    additionalLastSegmentSymbol: PolySymbol?,
   ): List<T> =
     // We need to filter and select match results separately for each length of the match
     let { matchResults ->
@@ -200,7 +202,14 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
             if (owner != null && owner.kind.kindName != SPECIAL_MATCHED_CONTRIB) {
               matchResult.addOwner(owner)
             }
-            else matchResult
+            else
+              matchResult
+          }
+          .map { matchResult ->
+            if (additionalLastSegmentSymbol != null)
+              matchResult.withAdditionalLastSegmentSymbol(additionalLastSegmentSymbol)
+            else
+              matchResult
           }
           .selectBest(MatchResult::segments, { item ->
             item.segments.asSequence().mapNotNull { it.priority }.maxOrNull() ?: PolySymbol.Priority.NORMAL
