@@ -1,10 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.ui
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.wayland
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.tabs.JBTabsEx
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Rectangle
@@ -14,7 +18,7 @@ import javax.swing.SwingUtilities
 /**
  * Returns the area where the given popup is allowed to be located.
  *
- * Normally the environment will allow the popup to be showing
+ * Normally the environment will allow the popup to be shown
  * only if at least one pixel of it is located within this area.
  *
  * For this function to return a non-`null` meaningful value,
@@ -122,6 +126,16 @@ fun addFakeScreenInsets(rectangle: Rectangle) {
   val top = total / 2
   rectangle.y += top
   rectangle.height -= total
+}
+
+@ApiStatus.Internal
+fun isAllowedTabDnD(tabs: JBTabsEx): Boolean {
+  if (!StartupUiUtil.isWaylandToolkit() || !tabs.isEditorTabs) {
+    return true
+  }
+
+  val window = SwingUtilities.getWindowAncestor(tabs.getComponent()) ?: return true
+  return window !is IdeFrame.Child
 }
 
 private fun fitValue(location: Int, width: Int, start1: Int, end1: Int, start2: Int, end2: Int, preferLess: Boolean): Int {

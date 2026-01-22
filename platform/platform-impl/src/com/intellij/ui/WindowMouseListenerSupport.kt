@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.getValidBoundsForPopup
+import com.intellij.ui.wayland.getValidBoundsForPopup
 import com.jetbrains.JBR
 import org.intellij.lang.annotations.JdkConstants
 import org.jetbrains.annotations.ApiStatus

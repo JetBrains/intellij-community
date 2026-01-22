@@ -16,6 +16,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.util.Axis;
+import com.intellij.ui.wayland.WaylandUtilKt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +45,13 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
     super(parentDisposable, tabs);
 
     this.tabs = tabs;
+  }
+
+  @Override
+  public void mouseDragged(@NotNull MouseEvent e) {
+    if (WaylandUtilKt.isAllowedTabDnD(tabs)) {
+      super.mouseDragged(e);
+    }
   }
 
   @Override
@@ -278,7 +286,6 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
     final TabLabel label = findLabel(at);
 
     return label != null && label.getParent() == tabs && label.getInfo() != dragSource ? label : null;
-
   }
 
   private @Nullable TabLabel findLabel(Component c) {
@@ -330,7 +337,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
 
     tabs.resetTabsCache();
     if (!willDragOutStart) {
-     tabs.fireTabsMoved();
+      tabs.fireTabsMoved();
     }
     tabs.relayout$intellij_platform_ide(true, false);
 

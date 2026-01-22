@@ -82,7 +82,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.UI;
-import static com.intellij.util.ui.WaylandUtilKt.getNearestTopLevelAncestor;
+import static com.intellij.ui.wayland.WaylandUtilKt.getNearestTopLevelAncestor;
 import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
