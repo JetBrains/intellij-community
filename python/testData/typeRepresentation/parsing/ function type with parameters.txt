@@ -1,0 +1,30 @@
+TypeRepresentation:a.pythonTypeRepresentation
+  PyFunctionTypeRepresentation
+    PsiElement(Py:DEF_KEYWORD)('def')
+    PsiWhiteSpace(' ')
+    PyReferenceExpression: test
+      PsiElement(Py:IDENTIFIER)('test')
+      PsiElement(Py:DOT)('.')
+      PsiElement(Py:IDENTIFIER)('f')
+    PyParameterListRepresentation
+      PsiElement(Py:LPAR)('(')
+      PyNamedParameterTypeRepresentation
+        PsiElement(Py:IDENTIFIER)('a')
+        PsiElement(Py:COLON)(':')
+        PsiWhiteSpace(' ')
+        PyReferenceExpression: int
+          PsiElement(Py:IDENTIFIER)('int')
+      PsiElement(Py:COMMA)(',')
+      PsiWhiteSpace(' ')
+      PyNamedParameterTypeRepresentation
+        PsiElement(Py:IDENTIFIER)('b')
+        PsiElement(Py:COLON)(':')
+        PsiWhiteSpace(' ')
+        PyReferenceExpression: str
+          PsiElement(Py:IDENTIFIER)('str')
+      PsiElement(Py:RPAR)(')')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:RARROW)('->')
+    PsiWhiteSpace(' ')
+    PyReferenceExpression: bool
+      PsiElement(Py:IDENTIFIER)('bool')

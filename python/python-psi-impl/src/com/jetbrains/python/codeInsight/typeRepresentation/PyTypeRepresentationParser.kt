@@ -107,8 +107,36 @@ class PyTypeRepresentationParser : PyParser() {
     }
 
     fun parseFunctionType(): Boolean {
+      val mark = myBuilder.mark()
+
+      // Parse 'def' types: `def foo.bar(a: int) -> str`
+      if (atToken(PyTokenTypes.DEF_KEYWORD)) {
+        myBuilder.advanceLexer() // consume 'def'
+
+        // Parse dotted name (e.g., foo.bar.baz)
+        if (!atToken(PyTokenTypes.IDENTIFIER)) {
+          mark.rollbackTo()
+          return false
+        }
+
+        val nameMarker = myBuilder.mark()
+        myBuilder.advanceLexer() // consume first identifier
+
+        // Parse remaining dotted parts
+        while (atToken(PyTokenTypes.DOT)) {
+          myBuilder.advanceLexer() // consume dot
+          if (!atToken(PyTokenTypes.IDENTIFIER)) {
+            mark.rollbackTo()
+            return false
+          }
+          myBuilder.advanceLexer() // consume identifier
+        }
+        nameMarker.done(PyElementTypes.REFERENCE_EXPRESSION)
+      }
+
+      // TODO: type parameters list `[T: int = int, *Ts, **P]`
+
       if (atToken(PyTokenTypes.LPAR)) {
-        val mark = myBuilder.mark()
         parseParameterTypeList()
         // Check if this is a function type (has ->) or just a parenthesized expression/tuple
         if (atToken(PyTokenTypes.RARROW)) {
@@ -118,12 +146,9 @@ class PyTypeRepresentationParser : PyParser() {
           mark.done(PyTypeRepresentationElementTypes.FUNCTION_SIGNATURE)
           return true
         }
-        else {
-          // Not a function type, rollback
-          mark.rollbackTo()
-          return false
-        }
       }
+      // Not a function type, rollback
+      mark.rollbackTo()
       return false
     }
 

@@ -16,32 +16,83 @@
 package com.jetbrains.python.codeInsight.typeRepresentation.psi
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.ast.findChildByClass
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.PyDoubleStarExpression
-import com.jetbrains.python.psi.PyExpression
-import com.jetbrains.python.psi.PySlashParameter
-import com.jetbrains.python.psi.PyStarExpression
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyElementImpl
 import com.jetbrains.python.psi.types.*
 
 class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), PyExpression {
+  val functionName: QualifiedName? by lazy {
+    // Function name is only present after a 'def' keyword
+    val defKeyword = node.findChildByType(PyTokenTypes.DEF_KEYWORD) ?: return@lazy null
+
+    // Find the first PyExpression after 'def' but before the parameter list
+    var sibling = defKeyword.treeNext
+    while (sibling != null) {
+      val psi = sibling.psi
+      if (psi is PyExpression && psi !is PyFunctionTypeRepresentation) {
+        return@lazy QualifiedName.fromDottedString(psi.text)
+      }
+      if (psi is PyParameterListRepresentation) {
+        return@lazy null
+      }
+      sibling = sibling.treeNext
+    }
+    null
+  }
+
   val parameterList: PyParameterListRepresentation
     get() = findNotNullChildByClass(PyParameterListRepresentation::class.java)
 
   val returnType: PyExpression?
-    get() = findChildByClass(PyExpression::class.java)
+    get() {
+      // Return type is after the -> token
+      val arrow = node.findChildByType(PyTokenTypes.RARROW) ?: return null
+      var sibling = arrow.treeNext
+      while (sibling != null) {
+        if (sibling.psi is PyExpression) {
+          return sibling.psi as PyExpression
+        }
+        sibling = sibling.treeNext
+      }
+      return null
+    }
 
   override fun getType(context: TypeEvalContext, key: TypeEvalContext.Key): PyType? {
-    val returnType = returnType ?: return null
-    val params = parameterList.parameters
-    val callableParams = params.map { param ->
-      when (param) {
-        is PySlashParameter -> {
-          // Positional-only separator
-          PyCallableParameterImpl.psi(param)
+    val returnTypeExpr = returnType ?: return null
+
+    // Parse callable parameters from the signature (shared by both callable and function types)
+    val callableParams = parseCallableParameters(context)
+    val retType = resolveTypeExpression(returnTypeExpr, context)
+
+    // If we have a function name, this is a 'def' type - try to resolve to PyFunctionType
+    val qualifiedFunctionName = functionName
+    if (qualifiedFunctionName != null) {
+      val resolvedFunction = tryResolveFunction(qualifiedFunctionName, context)
+
+      // If we resolved the function, create PyFunctionType with the signature from the representation
+      if (resolvedFunction != null) {
+        // Create a custom PyFunctionType that uses our return type, not the function's definition
+        return object : PyFunctionTypeImpl(resolvedFunction, callableParams) {
+          override fun getReturnType(context: TypeEvalContext): PyType? = retType
         }
+      }
+      // Fall through to create PyCallableType if resolution failed
+    }
+
+    // Create PyCallableType from the signature (for both unresolved functions and plain callables)
+    return PyCallableTypeImpl(callableParams, retType)
+  }
+
+  private fun parseCallableParameters(context: TypeEvalContext): List<PyCallableParameter> {
+    return parameterList.parameters.map { param ->
+      when (param) {
+        is PySlashParameter -> PyCallableParameterImpl.psi(param)
         is PyNamedParameterTypeRepresentation -> {
           val paramName = param.parameterName
           val paramType = param.typeExpression?.let { resolveTypeExpression(it, context) }
@@ -95,13 +146,38 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
           val paramType = resolveTypeExpression(param, context)
           PyCallableParameterImpl.nonPsi(paramType)
         }
-        else -> {
-          PyCallableParameterImpl.nonPsi(null)
-        }
+        else -> PyCallableParameterImpl.nonPsi(null)
       }
     }
-    val retType = resolveTypeExpression(returnType, context)
-    return PyCallableTypeImpl(callableParams, retType)
+  }
+
+  private fun tryResolveFunction(qualifiedFunctionName: QualifiedName, context: TypeEvalContext): PyFunction? {
+    val facade = PyPsiFacade.getInstance(project)
+    val resolveContext = facade.createResolveContextFromFoothold(this)
+
+    // Try to resolve the module first (e.g., "test" from "test.A.f")
+    val moduleName = qualifiedFunctionName.firstComponent?.let { QualifiedName.fromComponents(it) } ?: return null
+    val module = facade.resolveQualifiedName(moduleName, resolveContext).firstOrNull() as? PyFile ?: return null
+
+    // Walk through the remaining components to resolve nested members
+    var current: PsiElement? = module
+    for (i in 1 until qualifiedFunctionName.componentCount) {
+      val componentName = qualifiedFunctionName.components[i] ?: return null
+
+      current = when (val elem = current) {
+        is PyFile -> elem.multiResolveName(componentName).firstOrNull()?.element
+        is PyClass -> {
+          elem.findNestedClass(componentName, false)
+          ?: elem.findMethodByName(componentName, false, context)
+          ?: elem.findClassAttribute(componentName, false, context)
+        }
+        else -> null
+      }
+
+      if (current == null) return null
+    }
+
+    return current as? PyFunction
   }
 
   private fun resolveTypeExpression(expr: PyExpression, context: TypeEvalContext): PyType? = when (expr) {
