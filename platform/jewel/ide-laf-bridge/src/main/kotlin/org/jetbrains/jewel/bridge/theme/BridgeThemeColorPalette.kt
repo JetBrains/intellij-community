@@ -3,7 +3,6 @@ package org.jetbrains.jewel.bridge.theme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
 import com.intellij.openapi.diagnostic.Logger
-import java.util.TreeMap
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 
@@ -58,18 +57,16 @@ public fun ThemeColorPalette.Companion.readFromLaF(): ThemeColorPalette {
 }
 
 private fun Map<String, Color>.filterIntKeys(): Map<String, Color> {
-    val intMap = TreeMap<String, Color>()
-
-    for ((key, value) in this) {
-        val colorName = key.substringAfter("${ThemeColorPalette.PALETTE_KEY_PREFIX}.")
-        val colorNameWithoutIndex = colorName.takeWhile { !it.isDigit() }
-        val index = colorName.substring(colorNameWithoutIndex.length)
-
-        if (index.toIntOrNull() != null) {
-            intMap[key] = value
-        }
+    fun extractIndex(key: String): Int? {
+        val colorNameWithoutIndex = key.takeWhile { !it.isDigit() }
+        val index = key.substring(colorNameWithoutIndex.length)
+        return index.toIntOrNull()
     }
-    return intMap
+
+    return filterKeys { extractIndex(it) != null }
+        .entries
+        .sortedBy { extractIndex(it.key) ?: Int.MAX_VALUE }
+        .associate { it.toPair() }
 }
 
 private fun readPaletteColors(colorName: String): Map<String, Color> {
