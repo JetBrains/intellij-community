@@ -59,7 +59,7 @@
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
 
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeDumbModeInvalidationListener"
-              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
+              topic="com.intellij.openapi.project.DumbModeListenerBackgroundable"/>
   </projectListeners>
 
   <dependencies>
