@@ -183,7 +183,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   constructor(project: Project, scope: CoroutineScope) : this(
     project,
     project.messageBus.syncPublisher<DumbModeListener>(DUMB_MODE),
-    project.messageBus.syncPublisher<DumbModeListenerBackgroundable>(DUMB_MODE_BACKGROUNDABLE),
+    project.messageBus.syncPublisher<DumbModeListenerBackgroundable>(DumbModeListenerBackgroundable.TOPIC),
     scope
   )
 

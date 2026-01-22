@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.ide.lightEdit.LightEditCompatible
@@ -482,6 +482,8 @@ abstract class DumbService {
   /**
    * This listener is always invoked on EDT after dumb mode changes.
    * There is no guarantee that this listener runs synchronously with modification of dumb mode status.
+   * Consider using [DumbModeListenerBackgroundable]
+   *
    * @see [DUMB_MODE]
    */
   interface DumbModeListener {
@@ -492,20 +494,6 @@ abstract class DumbService {
     fun exitDumbMode() {}
   }
 
-  /**
-   * This listener is always invoked in write action synchronously with the change of dumb mode status.
-   * The thread of invocation is undefined.
-   */
-  @ApiStatus.Experimental
-  interface DumbModeListenerBackgroundable {
-    @RequiresWriteLock
-    fun enteredDumbMode() {
-    }
-
-    @RequiresWriteLock
-    fun exitDumbMode() {
-    }
-  }
 
   @ApiStatus.Internal
   abstract fun unsafeRunWhenSmart(runnable: Runnable)
@@ -533,12 +521,6 @@ abstract class DumbService {
     @JvmField
     @Topic.ProjectLevel
     val DUMB_MODE: Topic<DumbModeListener> = Topic("dumb mode", DumbModeListener::class.java, Topic.BroadcastDirection.NONE)
-
-    @ApiStatus.Experimental
-    @JvmField
-    @Topic.ProjectLevel
-    val DUMB_MODE_BACKGROUNDABLE: Topic<DumbModeListenerBackgroundable> =
-      Topic("dumb mode backgroundable", DumbModeListenerBackgroundable::class.java, Topic.BroadcastDirection.NONE)
 
     @JvmStatic
     fun isDumb(project: Project): Boolean {

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.codeInsight.multiverse.*;
@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbModeListenerBackgroundable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Key;
@@ -78,7 +78,7 @@ public final class FileManagerImpl implements FileManagerEx {
 
     LowMemoryWatcher.register(() -> processQueue(), manager);
 
-    myConnection.subscribe(DumbService.DUMB_MODE_BACKGROUNDABLE, new DumbService.DumbModeListenerBackgroundable() {
+    myConnection.subscribe(DumbModeListenerBackgroundable.TOPIC, new DumbModeListenerBackgroundable() {
       @Override
       public void enteredDumbMode() {
         processFileTypesChanged(false);
