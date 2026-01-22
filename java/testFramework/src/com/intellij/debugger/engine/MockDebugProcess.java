@@ -11,7 +11,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,16 +19,16 @@ public class MockDebugProcess extends DebugProcessEvents {
   private static final Logger LOG = Logger.getInstance(MockDebugProcess.class);
 
   private final MockVirtualMachine myVirtualMachine;
-  private final VirtualMachineProxyImpl myVirtualMachineProxy;
 
   public MockDebugProcess(Project project, MockVirtualMachine virtualMachine, Disposable disposable) {
     super(project);
     myVirtualMachine = virtualMachine;
     myState.set(State.ATTACHED);
+    DebuggerManagerThreadImpl managerThread = getManagerThread();
     Disposer.register(disposable, () -> {
       try {
-        getManagerThread().close();
-        while (!getManagerThread().getCurrentRequest().isDone()) {
+        managerThread.close();
+        while (!managerThread.getCurrentRequest().isDone()) {
           UIUtil.dispatchAllInvocationEvents();
         }
       }
@@ -40,24 +39,18 @@ public class MockDebugProcess extends DebugProcessEvents {
         dispose();
       }
     });
-    Ref<VirtualMachineProxyImpl> ref = Ref.create();
-    getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
+    managerThread.invokeAndWait(new DebuggerCommandImpl() {
       @Override
       protected void action() {
-        ref.set(new VirtualMachineProxyImpl(MockDebugProcess.this, myVirtualMachine));
+        VirtualMachineProxyImpl vmProxy = new VirtualMachineProxyImpl(MockDebugProcess.this, myVirtualMachine);
+        DebuggerManagerThreadImpl.getCurrentThread().setVmProxy(vmProxy);
       }
     });
-    myVirtualMachineProxy = ref.get();
   }
 
   @Override
   public @Nullable ExecutionResult attachVirtualMachine(@NotNull DebugEnvironment environment, @NotNull DebuggerSession session) {
     mySession = session;
     return null;
-  }
-
-  @Override
-  public @NotNull VirtualMachineProxyImpl getVirtualMachineProxy() {
-    return myVirtualMachineProxy;
   }
 }

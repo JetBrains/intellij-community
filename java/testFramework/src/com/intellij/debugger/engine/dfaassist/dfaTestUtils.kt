@@ -4,6 +4,7 @@ package com.intellij.debugger.engine.dfaassist
 import com.intellij.debugger.engine.MockDebugProcess
 import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.mockJDI.MockStackFrame
 import com.intellij.debugger.mockJDI.MockVirtualMachine
 import com.intellij.openapi.application.EDT
@@ -35,7 +36,8 @@ internal fun DfaAssistTest.doTestInternal(
   val process = MockDebugProcess(project, vm, getTestRootDisposable())
   val pointer = readAction { createPointer(element) }
   val runner = withDebugContext(process.managerThread) {
-    val threadProxy = process.virtualMachineProxy.allThreads().firstOrNull() ?: return@withDebugContext null
+    val vmProxy = VirtualMachineProxyImpl.getCurrent()
+    val threadProxy = vmProxy.allThreads().firstOrNull() ?: return@withDebugContext null
     val frameProxy = StackFrameProxyImpl(threadProxy, frame, 1)
     createDfaRunner(frameProxy, pointer)
   }

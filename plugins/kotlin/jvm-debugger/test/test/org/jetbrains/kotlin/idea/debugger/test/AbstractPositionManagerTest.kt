@@ -2,12 +2,12 @@
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.google.common.collect.Lists
-import com.intellij.debugger.PositionManager
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebugProcessEvents
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
+import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.text.StringUtil
@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.TestJdkKind
 import java.io.File
 import java.io.IOException
-import java.util.*
 import java.util.regex.Pattern
 
 abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -89,7 +88,7 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
 
         debugProcess = createDebugProcess(referencesByName)
 
-        val positionManager: PositionManager = createPositionManager(debugProcess!!)
+        val positionManager: KotlinPositionManager = createPositionManager(debugProcess!!)
 
         runBlocking {
             for (breakpoint in breakpoints) {
@@ -122,14 +121,18 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
 
     private fun createDebugProcess(referencesByName: Map<String, ReferenceType>): DebugProcessEvents {
         return object : DebugProcessEvents(project) {
-            private var virtualMachineProxy: VirtualMachineProxyImpl? = null
+            private var virtualMachineProxy: VirtualMachineProxyImpl = MockVirtualMachineProxy(this, referencesByName)
 
-            override fun getVirtualMachineProxy(): VirtualMachineProxyImpl {
-                if (virtualMachineProxy == null) {
-                    virtualMachineProxy = MockVirtualMachineProxy(this, referencesByName)
-                }
-                return virtualMachineProxy!!
+            init {
+                val dmt = managerThread
+                dmt.invokeAndWait(object : DebuggerCommandImpl() {
+                    override fun action() {
+                        dmt.setVmProxy(virtualMachineProxy)
+                    }
+                })
             }
+
+            override fun getVirtualMachineProxy(): VirtualMachineProxyImpl = virtualMachineProxy
 
             override fun getSearchScope(): GlobalSearchScope {
                 return GlobalSearchScope.allScope(project)
@@ -158,9 +161,12 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
         }
     }
 
-    private suspend fun assertBreakpointIsHandledCorrectly(breakpoint: Breakpoint, positionManager: PositionManager) {
+    private suspend fun assertBreakpointIsHandledCorrectly(breakpoint: Breakpoint, positionManager: KotlinPositionManager) {
         val position = readAction { SourcePosition.createFromLine(breakpoint.file, breakpoint.lineNumber)  }
-        val classes = positionManager.getAllClasses(position)
+        val managerThread = debugProcess!!.managerThread
+        val classes = withDebugContext(managerThread) {
+            positionManager.getAllClasses(position)
+        }
         assertNotNull(classes)
         assertFalse(
             "Classes not found for line " + (breakpoint.lineNumber + 1) + ", expected " + breakpoint.classNameRegexp,
@@ -177,12 +183,9 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
         val typeWithFqName = classes[0]
         val location: Location = MockLocation(typeWithFqName, breakpoint.file.name, breakpoint.lineNumber + 1)
 
-        var actualPosition: SourcePosition? = null
-        debugProcess!!.managerThread.invokeAndWait(object : DebuggerCommandImpl() {
-            override fun action() {
-                actualPosition = positionManager.getSourcePosition(location)
-            }
-        })
+        val actualPosition: SourcePosition? = withDebugContext(managerThread) {
+            positionManager.getSourcePositionAsync(location)
+        }
 
         assertNotNull(actualPosition)
         assertEquals(position.file, actualPosition!!.file)
