@@ -298,8 +298,8 @@ object Utils {
     val fastTrackTime = getFastTrackMaxTime(fastTrack, place, uiKind is ActionUiKind.Toolbar, true)
     val edtDispatcher =
       if (fastTrackTime > 0) AltEdtDispatcher.apply { switchToQueue() }
-      else if (isLockRequired(group)) Dispatchers.EDT[CoroutineDispatcher]!!
-      else Dispatchers.UI[CoroutineDispatcher]!!
+      else if (isLockRequired(group)) lockingEdtCoroutineDispatcher
+      else nonLockingEdtCoroutineDispatcher
     val updater = ActionUpdater(presentationFactory, asyncDataContext, place, uiKind, edtDispatcher)
     val deferred = async(edtDispatcher, CoroutineStart.UNDISPATCHED) {
       updater.runUpdateSession(updaterContext(place, fastTrackTime, uiKind)) {
@@ -1111,6 +1111,25 @@ object Utils {
     assert(ApplicationManager.getApplication().isUnitTestMode()) { "isUnitTestMode must be true"}
     return PreCachedDataContext(component, true)
   }
+
+  /**
+   * When we are updating a group of actions, the group itself and each individual action in it may have different rules regarding their lock usage.
+   * In this case, we tailor a dispatcher for each individual action specifically.
+   *
+   * There is an exception -- when actions are updated in fast-track mode, and we process them with [AltEdtDispatcher] regardless of the locking mode.
+   * Also, actions can be updated with [BlockingEventLoop].
+   */
+  internal fun adaptToLockPolicy(dispatcher: CoroutineDispatcher, isRWLockRequired: Boolean): CoroutineDispatcher = when (dispatcher) {
+    lockingEdtCoroutineDispatcher if !isRWLockRequired -> nonLockingEdtCoroutineDispatcher
+    nonLockingEdtCoroutineDispatcher if isRWLockRequired -> lockingEdtCoroutineDispatcher
+    else -> dispatcher
+  }
+
+  private val lockingEdtCoroutineDispatcher: CoroutineDispatcher
+    get() = Dispatchers.EDT[CoroutineDispatcher]!!
+
+  private val nonLockingEdtCoroutineDispatcher: CoroutineDispatcher
+    get() = Dispatchers.UI[CoroutineDispatcher]!!
 }
 
 @ApiStatus.Internal

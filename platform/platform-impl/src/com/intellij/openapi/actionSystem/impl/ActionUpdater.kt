@@ -466,7 +466,8 @@ internal class ActionUpdater @JvmOverloads constructor(
     val scope = bgtScope ?: service<CoreUiCoroutineScopeHolder>().coroutineScope
     val deferred = scope.async(
       currentCoroutineContext().minusKey(Job) +
-      CoroutineName("computeOnEdt ($place)") + edtDispatcher) {
+      CoroutineName("computeOnEdt ($place)") + Utils.adaptToLockPolicy(edtDispatcher, isRwLockRequired)) {
+      // explicit acquisition of RA here is needed for fast-track update sessions
       conditionalBlockingReadAction(isRwLockRequired, supplier)
     }
     try {
