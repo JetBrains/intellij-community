@@ -6,6 +6,7 @@ import com.intellij.ide.starter.ide.IdeInstaller
 import com.intellij.ide.starter.ide.InstalledIde
 import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.path.GlobalPaths
+import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
 import com.intellij.openapi.util.SystemInfo
@@ -34,7 +35,10 @@ class ExistingIdeInstaller(private val installedIdePath: Path) : IdeInstaller {
     installDir.deleteRecursivelyQuietly()
     val destDir = installDir.resolve(installedIdePath.name)
     if (SystemInfo.isMac) {
-      ProcessExecutor("copy app", null, 5.minutes, emptyMap(), listOf("ditto", installedIdePath.absolute().toString(), destDir.absolute().toString())).start()
+      val taskName = "copy app"
+      ProcessExecutor(taskName, null, 5.minutes, emptyMap(),
+                      stderrRedirect = ExecOutputRedirect.ToStdOut(taskName), stdoutRedirect = ExecOutputRedirect.ToStdOut(taskName),
+                      args = listOf("ditto", installedIdePath.absolute().toString(), destDir.absolute().toString())).start()
     }
     else {
       @OptIn(ExperimentalPathApi::class)
