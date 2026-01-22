@@ -31,7 +31,9 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
   }
 
   fun `test implicit usage of parameter in parameterized test`() {
-    if (pluginMode == K1) return // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
+    // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
+    // @see org.jetbrains.kotlin.checkers.KotlinHighlightVisitorCustomTest#testNoUnusedParameterWhenCustom()
+    if (pluginMode == K1) return
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         class MyTest {
           @org.junit.jupiter.params.ParameterizedTest(name = "{0}")
@@ -41,7 +43,9 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
   }
 
   fun `test implicit usage of multiple parameters in parameterized test`() {
-    if (pluginMode == K1) return // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
+    // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
+    // @see org.jetbrains.kotlin.checkers.KotlinHighlightVisitorCustomTest#testNoUnusedParameterWhenCustom()
+    if (pluginMode == K1) return
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.jupiter.params.provider.Arguments
       import java.util.stream.Stream
@@ -64,7 +68,9 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
   }
 
   fun `test unused parameter when not in display name`() {
-    if (pluginMode == K1) return // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
+    // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
+    // @see org.jetbrains.kotlin.checkers.KotlinHighlightVisitorCustomTest#testNoUnusedParameterWhenCustom()
+    if (pluginMode == K1) return
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MyTest {
         @org.junit.jupiter.params.ParameterizedTest
