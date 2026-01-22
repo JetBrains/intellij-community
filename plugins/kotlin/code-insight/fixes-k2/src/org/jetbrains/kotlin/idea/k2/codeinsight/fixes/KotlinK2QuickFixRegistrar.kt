@@ -293,7 +293,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     }
 
     /**
-     * Note: For the auto-import fixes, see [importOnTheFlyList] and [KotlinFirUnresolvedReferenceQuickFixProvider].
+     * Note: This section is for diagnostics reported on import statements.
+     * For the auto-import fixes, see [lazyImports] and [importOnTheFlyList] sections.
      */
     private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFixes(KaFirDiagnostic.ConflictingImport::class, RemovePsiElementSimpleFix.RemoveImportFactory)
@@ -301,6 +302,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     }
 
     private val lazyImports = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerFactory(ImportQuickFixFactories.unresolvedReferenceFactory)
+        registerFactory(ImportQuickFixFactories.unresolvedReferenceWrongReceiverFactory)
+        registerFactory(ImportQuickFixFactories.invisibleReferenceFactory)
+
         registerFactory(ImportQuickFixFactories.tooManyArgumentsFactory)
         registerFactory(ImportQuickFixFactories.noValueForParameterFactory)
         registerFactory(ImportQuickFixFactories.argumentTypeMismatchFactory)

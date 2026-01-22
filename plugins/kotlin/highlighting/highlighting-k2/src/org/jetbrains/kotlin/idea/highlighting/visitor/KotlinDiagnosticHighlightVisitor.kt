@@ -39,9 +39,7 @@ import org.jetbrains.kotlin.idea.base.analysis.injectionRequiresOnlyEssentialHig
 import org.jetbrains.kotlin.idea.base.analysis.isInjectedFileShouldBeAnalyzed
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.highlighter.clearSavedKaDiagnosticsForUnresolvedReference
 import org.jetbrains.kotlin.idea.highlighter.operationReferenceForBinaryExpressionOrThis
-import org.jetbrains.kotlin.idea.highlighter.saveKaDiagnosticForUnresolvedReference
 import org.jetbrains.kotlin.idea.highlighting.K2HighlightingBundle
 import org.jetbrains.kotlin.idea.highlighting.analyzers.ignoreIncompleteModeDiagnostics
 import org.jetbrains.kotlin.idea.inspections.suppress.CompilerWarningIntentionAction
@@ -101,7 +99,7 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
         val analysis = file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         val filteredAnalysisResult = analysis
             .filterOutCodeFragmentVisibilityErrors(file)
-            .onEach { diagnostic -> diagnostic.psi.clearSavedKaDiagnosticsForUnresolvedReference() }
+
         val builders = filteredAnalysisResult
             .map { diagnostic ->
                 Pair(
@@ -230,8 +228,6 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
             diagnostic is KaFirDiagnostic.UnresolvedReferenceWrongReceiver ||
             diagnostic is KaFirDiagnostic.InvisibleReference
         ) {
-            psiElement.saveKaDiagnosticForUnresolvedReference(diagnostic)
-            
             /*
             Two points here:
             1. It's enough to register only the main reference here, because later on we rely on the underlying PSI element anyway.
