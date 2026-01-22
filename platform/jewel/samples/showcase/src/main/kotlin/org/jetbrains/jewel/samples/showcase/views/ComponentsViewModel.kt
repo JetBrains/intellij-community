@@ -15,6 +15,7 @@ import org.jetbrains.jewel.samples.showcase.components.Buttons
 import org.jetbrains.jewel.samples.showcase.components.Checkboxes
 import org.jetbrains.jewel.samples.showcase.components.ChipsAndTrees
 import org.jetbrains.jewel.samples.showcase.components.ComboBoxes
+import org.jetbrains.jewel.samples.showcase.components.FilterAndSearch
 import org.jetbrains.jewel.samples.showcase.components.Icons
 import org.jetbrains.jewel.samples.showcase.components.Links
 import org.jetbrains.jewel.samples.showcase.components.ProgressBar
@@ -103,6 +104,11 @@ public class ComponentsViewModel(
                 content = { TypographyShowcase() },
             ),
             ViewInfo(title = "Brushes", iconKey = ShowcaseIcons.Components.brush, content = { BrushesShowcase() }),
+            ViewInfo(
+                title = "Filter and Search",
+                iconKey = ShowcaseIcons.Components.speedSearch,
+                content = { FilterAndSearch() },
+            ),
         )
 
     private var _currentView: ViewInfo by mutableStateOf(views.first())
