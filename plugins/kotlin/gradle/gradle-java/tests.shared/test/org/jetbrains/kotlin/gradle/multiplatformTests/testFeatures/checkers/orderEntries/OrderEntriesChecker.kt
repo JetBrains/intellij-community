@@ -224,7 +224,11 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
         "jetbrains.kotlin:kotlin-test:{{KGP_VERSION}}",
         "jetbrains.kotlin:kotlin-test-junit:{{KGP_VERSION}}",
         "hamcrest:hamcrest-core:1.3",
-        "junit:4.13.2"
+        "junit:4.13.2",
+
+        // after 2.0.*
+        "org.jetbrains.kotlin:kotlin-test:annotationsCommonMain:{{KGP_VERSION}}",
+        "org.jetbrains.kotlin:kotlin-test:assertionsCommonMain:{{KGP_VERSION}}",
     )
 
     private val NATIVE_DISTRIBUTION_LIBRARY_PATTERN = "^(Gradle: )?Kotlin/Native.*".toRegex()
