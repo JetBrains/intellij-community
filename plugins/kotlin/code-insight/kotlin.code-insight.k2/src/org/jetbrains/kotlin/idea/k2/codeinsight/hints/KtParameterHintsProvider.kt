@@ -61,7 +61,6 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     ) {
         val functionCall: KaFunctionCall<*> = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return
         val functionSymbol: KaFunctionSymbol = functionCall.symbol
-        val contextParameters = functionSymbol.contextParameters
         val valueParameters: List<KaValueParameterSymbol> = functionSymbol.valueParameters
 
         val excludeListed: Boolean
@@ -86,7 +85,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                 val valueParametersWithNames =
                     session.calculateValueParametersWithNames(functionSymbol, callElement, valueParameters) ?: return@whenOptionEnabled
 
-                collectFromParameters(callElement, functionCall, contextParameters, valueParametersWithNames, contextMenuPayloads, sink)
+                collectFromParameters(callElement, functionCall, valueParametersWithNames, contextMenuPayloads, sink)
             }
         }
 
@@ -102,10 +101,10 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
 
         if (compiledSource) {
             sink.whenOptionEnabled(SHOW_COMPILED_PARAMETERS.name) {
-                collectFromParameters(callElement, functionCall, contextParameters, valueParametersWithNames, contextMenuPayloads, sink)
+                collectFromParameters(callElement, functionCall, valueParametersWithNames, contextMenuPayloads, sink)
             }
         } else {
-            collectFromParameters(callElement, functionCall, contextParameters, valueParametersWithNames, contextMenuPayloads, sink)
+            collectFromParameters(callElement, functionCall, valueParametersWithNames, contextMenuPayloads, sink)
         }
     }
 
@@ -144,11 +143,12 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     private fun collectFromParameters(
         callElement: KtCallElement,
         functionCall: KaFunctionCall<*>,
-        contextParameters: List<KaContextParameterSymbol>,
         valueParametersWithNames: List<Pair<KaValueParameterSymbol, Name?>>,
         contextMenuPayloads: List<InlayPayload>?,
         sink: InlayTreeSink
     ) {
+        val functionSymbol: KaFunctionSymbol = functionCall.symbol
+        val contextParameters = functionSymbol.contextParameters
         val contextArguments: List<KaReceiverValue> = functionCall.contextArguments
 
         val contextParameterPairs =
