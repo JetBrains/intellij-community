@@ -22,6 +22,7 @@ import org.jetbrains.jewel.samples.showcase.components.RadioButtons
 import org.jetbrains.jewel.samples.showcase.components.Scrollbars
 import org.jetbrains.jewel.samples.showcase.components.SegmentedControls
 import org.jetbrains.jewel.samples.showcase.components.Sliders
+import org.jetbrains.jewel.samples.showcase.components.SpeedSearches
 import org.jetbrains.jewel.samples.showcase.components.SplitLayouts
 import org.jetbrains.jewel.samples.showcase.components.Tabs
 import org.jetbrains.jewel.samples.showcase.components.TextAreas
@@ -103,6 +104,11 @@ public class ComponentsViewModel(
                 content = { TypographyShowcase() },
             ),
             ViewInfo(title = "Brushes", iconKey = ShowcaseIcons.Components.brush, content = { BrushesShowcase() }),
+            ViewInfo(
+                title = "Speed Search",
+                iconKey = ShowcaseIcons.Components.speedSearch,
+                content = { SpeedSearches() },
+            ),
         )
 
     private var _currentView: ViewInfo by mutableStateOf(views.first())

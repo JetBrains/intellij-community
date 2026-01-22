@@ -47,8 +47,11 @@ f:org.jetbrains.jewel.ui.component.ListComboBoxKt
 - a:getStyle():org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
 f:org.jetbrains.jewel.ui.component.SpeedSearchAreaKt
 - *sf:ProvideSearchMatchState(org.jetbrains.jewel.ui.component.SpeedSearchState,java.lang.String,org.jetbrains.jewel.ui.component.styling.SearchMatchStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
-- *sf:SpeedSearchArea(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,androidx.compose.ui.text.TextStyle,org.jetbrains.jewel.ui.component.styling.SearchMatchStyle,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+- *bsf:SpeedSearchArea(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,androidx.compose.ui.text.TextStyle,org.jetbrains.jewel.ui.component.styling.SearchMatchStyle,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+- *sf:SpeedSearchArea(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,androidx.compose.ui.text.TextStyle,org.jetbrains.jewel.ui.component.styling.SearchMatchStyle,androidx.compose.foundation.interaction.MutableInteractionSource,Z,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+- *sf:SpeedSearchArea(org.jetbrains.jewel.ui.component.SpeedSearchState,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,androidx.compose.ui.text.TextStyle,org.jetbrains.jewel.ui.component.styling.SearchMatchStyle,androidx.compose.foundation.interaction.MutableInteractionSource,Z,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
 - *sf:getLocalNodeSearchMatchState():androidx.compose.runtime.ProvidableCompositionLocal
+- *sf:rememberSpeedSearchState(kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.SpeedSearchState
 *:org.jetbrains.jewel.ui.component.SpeedSearchScope
 - androidx.compose.foundation.layout.BoxScope
 - a:getInteractionSource():androidx.compose.foundation.interaction.MutableInteractionSource
@@ -59,6 +62,7 @@ f:org.jetbrains.jewel.ui.component.SpeedSearchAreaKt
 - a:attach(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.CoroutineDispatcher,kotlin.coroutines.Continuation):java.lang.Object
 - bs:attach$default(org.jetbrains.jewel.ui.component.SpeedSearchState,kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.CoroutineDispatcher,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - a:clearSearch():Z
+- a:getCurrentMatcher():org.jetbrains.jewel.foundation.search.SpeedSearchMatcher
 - a:getHasMatches():Z
 - a:getMatchingIndexes():java.util.List
 - a:getPosition():androidx.compose.ui.Alignment$Vertical
@@ -67,6 +71,7 @@ f:org.jetbrains.jewel.ui.component.SpeedSearchAreaKt
 - a:isVisible():Z
 - a:matchResultForText(java.lang.String):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
 - a:setPosition(androidx.compose.ui.Alignment$Vertical):V
+- a:setVisible(Z):V
 f:org.jetbrains.jewel.ui.component.TabStripKt
 - *bsf:TabStrip(java.util.List,org.jetbrains.jewel.ui.component.styling.TabStyle,androidx.compose.ui.Modifier,Z,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.TextAreaKt

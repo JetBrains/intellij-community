@@ -26,6 +26,7 @@ f:org.jetbrains.jewel.samples.showcase.ShowcaseIcons$Components
 - f:getScrollbar():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getSegmentedControls():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getSlider():org.jetbrains.jewel.ui.icon.PathIconKey
+- f:getSpeedSearch():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getSplitlayout():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getTabs():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getTextArea():org.jetbrains.jewel.ui.icon.PathIconKey
