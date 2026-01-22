@@ -2051,6 +2051,16 @@
 
     <applicationService serviceInterface="com.intellij.configurationStore.defaults.DefaultSettingsService" open="true"
                         serviceImplementation="com.intellij.configurationStore.defaults.DefaultSettingsServiceImpl" />
+    
+    <!-- Remove all this stuff when the notification is no longer needed -->
+    <typedHandler implementation="com.intellij.ide.ui.WaylandUserActivityTracker" />
+    <editorFactoryMouseListener implementation="com.intellij.ide.ui.WaylandUserActivityTracker" />
+    <editorFactoryMouseMotionListener implementation="com.intellij.ide.ui.WaylandUserActivityTracker" />
+    <registryKey key="wayland.notification.delay.after.first.activity" defaultValue="20"
+                 description="Show the notification about the native Wayland toolkit after this many minutes have passed since the first user activity" />
+    <registryKey key="wayland.notification.delay.after.previous.activity" defaultValue="1"
+                 description="Show the notification about the native Wayland toolkit after this many minutes have passed since the previous user activity" />
+    <notificationGroup id="Wayland" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.wayland" isLogByDefault="true"/>
   </extensions>
 
   <applicationListeners>
