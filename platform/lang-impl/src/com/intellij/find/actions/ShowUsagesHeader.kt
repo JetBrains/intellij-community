@@ -54,6 +54,7 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
         row {
           // Don't use Row.label method: it processes mnemonics and breaks symbol &
           val titleCell = cell(JLabel(XmlStringUtil.wrapInHtml("<body><nobr>$title</nobr></body>")))
+            .applyToComponent { minimumSize = JBUI.emptySize() } // Allow shrinking the title
             .resizableColumn()
             .gap(RightGap.SMALL)
           titleLabel = titleCell.component
