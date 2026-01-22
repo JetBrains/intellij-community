@@ -585,8 +585,10 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      myLastIndex = myIndex--
-      updateControls()
+      if (myIndex > 0) {
+        myLastIndex = myIndex--
+        updateControls()
+      }
     }
   }
 
@@ -605,8 +607,10 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      myLastIndex = myIndex++
-      updateControls()
+      if (myIndex < myMessageClusters.size - 1) {
+        myLastIndex = myIndex++
+        updateControls()
+      }
     }
   }
 
