@@ -534,6 +534,14 @@ internal class ShellCommandSpecSuggestionsTest(private val engine: TerminalEngin
     )
   }
 
+  @Test
+  fun `suggest for subcommand after unknown token`() {
+    assertSameElements(
+      getSuggestions(arguments = listOf("sub", "unknown")),
+      listOf("-o", "--opt1", "-a", "--long", "--withReqArg", "--withOptArg", "--bcde", "file")
+    )
+  }
+
   private fun getSuggestions(
     command: String = commandName,
     arguments: List<String>,

@@ -370,6 +370,22 @@ internal class ShellCommandTreeBuilderTest(private val engine: TerminalEngine) {
     }
   }
 
+  @Test
+  fun `option is resolved after unknown token`() {
+    doTest("unknown", "--bcde") {
+      assertUnknown("unknown", commandName)
+      assertOptionOf("--bcde", commandName)
+    }
+  }
+
+  @Test
+  fun `argument is resolved after unknown token`() {
+    doTest("unknown", "aaa") {
+      assertUnknown("unknown", commandName)
+      assertArgumentOfSubcommand("aaa", commandName)
+    }
+  }
+
   private fun doTest(vararg arguments: String, assertions: ShellCommandTreeAssertions.() -> Unit) =
     runBlocking {
       doTestImpl(arguments.toList(), assertions)

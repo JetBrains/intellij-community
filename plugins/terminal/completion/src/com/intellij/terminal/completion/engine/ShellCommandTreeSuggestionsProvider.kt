@@ -14,6 +14,7 @@ internal class ShellCommandTreeSuggestionsProvider(
       is ShellCommandNode -> getSuggestionsForSubcommand(node)
       is ShellOptionNode -> getSuggestionsForOption(node)
       is ShellArgumentNode -> node.parent?.let { getSuggestionsOfNext(it) } ?: emptyList()
+      is ShellUnknownNode -> node.parent?.let { getSuggestionsOfNext(it) } ?: emptyList()
       else -> emptyList()
     }
     return filterSuggestionsByPrefix(suggestions.distinctBy { it.name })
