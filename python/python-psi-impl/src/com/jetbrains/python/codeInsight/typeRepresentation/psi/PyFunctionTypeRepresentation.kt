@@ -28,23 +28,20 @@ import com.jetbrains.python.psi.types.*
 
 class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), PyExpression {
   val functionName: QualifiedName? by lazy {
-    // Function name is only present after a 'def' keyword
-    val defKeyword = node.findChildByType(PyTokenTypes.DEF_KEYWORD) ?: return@lazy null
-
-    // Find the first PyExpression after 'def' but before the parameter list
-    var sibling = defKeyword.treeNext
-    while (sibling != null) {
-      val psi = sibling.psi
-      if (psi is PyExpression && psi !is PyFunctionTypeRepresentation) {
-        return@lazy QualifiedName.fromDottedString(psi.text)
+    // Function name is the first PyExpression child that comes before the type parameter list (if present)
+    // or before the parameter list (if no type parameters)
+    val stopAt = typeParameterList ?: parameterList
+    for (child in children) {
+      if (child === stopAt) break
+      if (child is PyExpression) {
+        return@lazy QualifiedName.fromDottedString(child.text)
       }
-      if (psi is PyParameterListRepresentation) {
-        return@lazy null
-      }
-      sibling = sibling.treeNext
     }
-    null
+    return@lazy null
   }
+
+  val typeParameterList: PyTypeParameterList?
+    get() = findChildByClass(PyTypeParameterList::class.java)
 
   val parameterList: PyParameterListRepresentation
     get() = findNotNullChildByClass(PyParameterListRepresentation::class.java)
@@ -66,10 +63,12 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
   override fun getType(context: TypeEvalContext, key: TypeEvalContext.Key): PyType? {
     val returnTypeExpr = returnType ?: return null
 
-    // Parse callable parameters from the signature (shared by both callable and function types)
-    val callableParams = parseCallableParameters(context)
-    val retType = resolveTypeExpression(returnTypeExpr, context)
+    // Create type variables from type parameter list
+    val typeVarMap = createTypeVarMap(context)
 
+    // Parse callable parameters from the signature (shared by both callable and function types)
+    val callableParams = parseCallableParameters(context, typeVarMap)
+    val retType = resolveTypeExpression(returnTypeExpr, context, typeVarMap)
     // If we have a function name, this is a 'def' type - try to resolve to PyFunctionType
     val qualifiedFunctionName = functionName
     if (qualifiedFunctionName != null) {
@@ -89,13 +88,38 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
     return PyCallableTypeImpl(callableParams, retType)
   }
 
-  private fun parseCallableParameters(context: TypeEvalContext): List<PyCallableParameter> {
+  private fun createTypeVarMap(context: TypeEvalContext): Map<String, PyTypeVarType> {
+    val typeParams = typeParameterList ?: return emptyMap()
+    val result = mutableMapOf<String, PyTypeVarType>()
+
+    for (param in typeParams.typeParameters) {
+      val paramName = param.name ?: continue
+
+      // Determine bound type from the type parameter's bound expression
+      val boundType = param.boundExpression?.let { resolveTypeExpression(it, context, emptyMap()) }
+
+      // Create type variable - PyTypeVarTypeImpl(name, constraints, bound, defaultType, variance)
+      val typeVar = PyTypeVarTypeImpl(
+        paramName,
+        emptyList(), // constraints
+        boundType, // bound
+        null, // defaultType (Ref<PyType>?)
+        PyTypeVarType.Variance.INVARIANT // variance
+      )
+
+      result[paramName] = typeVar
+    }
+
+    return result
+  }
+
+  private fun parseCallableParameters(context: TypeEvalContext, typeVarMap: Map<String, PyTypeVarType>): List<PyCallableParameter> {
     return parameterList.parameters.map { param ->
       when (param) {
         is PySlashParameter -> PyCallableParameterImpl.psi(param)
         is PyNamedParameterTypeRepresentation -> {
           val paramName = param.parameterName
-          val paramType = param.typeExpression?.let { resolveTypeExpression(it, context) }
+          val paramType = param.typeExpression?.let { resolveTypeExpression(it, context, typeVarMap) }
           PyCallableParameterImpl.nonPsi(paramName, paramType, param.defaultValue)
         }
         is PyStarExpression -> {
@@ -105,13 +129,13 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
           if (namedParam != null) {
             // *args: type
             val paramName = namedParam.parameterName
-            val paramType = namedParam.typeExpression?.let { resolveTypeExpression(it, context) }
+            val paramType = namedParam.typeExpression?.let { resolveTypeExpression(it, context, typeVarMap) }
             PyCallableParameterImpl.positionalNonPsi(paramName, paramType)
           }
           else {
             // Unnamed *args: *type
             val innerExpr = param.expression
-            val paramType = innerExpr?.let { resolveTypeExpression(it, context) }
+            val paramType = innerExpr?.let { resolveTypeExpression(it, context, typeVarMap) }
             PyCallableParameterImpl.positionalNonPsi(null, paramType)
           }
         }
@@ -124,12 +148,12 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
             val paramType = namedParam.typeExpression?.let {
               if (it is PyDoubleStarExpression)
               // Named kwargs unpacked: `**name: **type`
-                resolveTypeExpression(it.expression!!, context)
+                resolveTypeExpression(it.expression!!, context, typeVarMap)
               else {
                 // Named kwargs: `**name: type`, adapt to `dict`
                 val builtins = PyBuiltinCache.getInstance(it)
                 PyCollectionTypeImpl(
-                  builtins.dictType!!.pyClass, false, listOf(builtins.strType, resolveTypeExpression(it, context))
+                  builtins.dictType!!.pyClass, false, listOf(builtins.strType, resolveTypeExpression(it, context, typeVarMap))
                 )
               }
             }
@@ -138,12 +162,12 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
           else {
             // Unnamed kwargs: `**type`
             val innerExpr = param.expression
-            val paramType = innerExpr?.let { resolveTypeExpression(it, context) }
+            val paramType = innerExpr?.let { resolveTypeExpression(it, context, typeVarMap) }
             PyCallableParameterImpl.keywordNonPsi(null, paramType)
           }
         }
         is PyExpression -> {
-          val paramType = resolveTypeExpression(param, context)
+          val paramType = resolveTypeExpression(param, context, typeVarMap)
           PyCallableParameterImpl.nonPsi(paramType)
         }
         else -> PyCallableParameterImpl.nonPsi(null)
@@ -180,8 +204,22 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
     return current as? PyFunction
   }
 
-  private fun resolveTypeExpression(expr: PyExpression, context: TypeEvalContext): PyType? = when (expr) {
-    is PyDoubleStarExpression -> PyTypingTypeProvider.getType(expr.expression!!, context)?.get()
-    else -> PyTypingTypeProvider.getType(expr, context)?.get()
+  private fun resolveTypeExpression(expr: PyExpression, context: TypeEvalContext, typeVarMap: Map<String, PyTypeVarType>): PyType? {
+    // Check if this is a reference to a type parameter
+    if (expr is PyReferenceExpression && expr.qualifier == null) {
+      val name = expr.name
+      if (name != null) {
+        val typeVar = typeVarMap[name]
+        if (typeVar != null) {
+          return typeVar
+        }
+      }
+    }
+
+    // Otherwise, resolve normally
+    return when (expr) {
+      is PyDoubleStarExpression -> PyTypingTypeProvider.getType(expr.expression!!, context)?.get()
+      else -> PyTypingTypeProvider.getType(expr, context)?.get()
+    }
   }
 }

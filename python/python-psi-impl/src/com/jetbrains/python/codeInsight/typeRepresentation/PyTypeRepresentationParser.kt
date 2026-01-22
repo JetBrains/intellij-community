@@ -134,7 +134,7 @@ class PyTypeRepresentationParser : PyParser() {
         nameMarker.done(PyElementTypes.REFERENCE_EXPRESSION)
       }
 
-      // TODO: type parameters list `[T: int = int, *Ts, **P]`
+      parseTypeParameterList()
 
       if (atToken(PyTokenTypes.LPAR)) {
         parseParameterTypeList()
@@ -150,6 +150,63 @@ class PyTypeRepresentationParser : PyParser() {
       // Not a function type, rollback
       mark.rollbackTo()
       return false
+    }
+
+    fun parseTypeParameterList() {
+      if (!atToken(PyTokenTypes.LBRACKET)) return
+      val typeParamList = myBuilder.mark()
+      myBuilder.advanceLexer() // consume [
+
+      do {
+        if (!parseTypeParameter()) {
+          myBuilder.error(PyParsingBundle.message("PARSE.expected.type.parameter"))
+        }
+
+        if (atToken(PyTokenTypes.COMMA)) {
+          myBuilder.advanceLexer()
+        }
+        else if (!atToken(PyTokenTypes.RBRACKET)) {
+          break
+        }
+      }
+      while (!atToken(PyTokenTypes.RBRACKET))
+
+      checkMatches(PyTokenTypes.RBRACKET, PyParsingBundle.message("PARSE.expected.symbols", ",", "]"))
+      typeParamList.done(PyElementTypes.TYPE_PARAMETER_LIST)
+    }
+
+    fun parseTypeParameter(): Boolean {
+      if (!atToken(PyTokenTypes.IDENTIFIER) && !atToken(PyTokenTypes.MULT) && !atToken(PyTokenTypes.EXP)) {
+        return false
+      }
+      val typeParamMarker = myBuilder.mark()
+
+      // Handle *Ts or **P
+      if (atAnyOfTokens(PyTokenTypes.MULT, PyTokenTypes.EXP)) {
+        myBuilder.advanceLexer()
+      }
+
+      // Parse identifier
+      if (!atToken(PyTokenTypes.IDENTIFIER)) {
+        typeParamMarker.drop()
+        return false
+      }
+      myBuilder.advanceLexer()
+
+      // Parse bound: T: int
+      if (atToken(PyTokenTypes.COLON)) {
+        myBuilder.advanceLexer()
+        parseExpression()
+      }
+
+      // Parse default: T = int
+      if (atToken(PyTokenTypes.EQ)) {
+        myBuilder.advanceLexer()
+        parseExpression()
+      }
+
+      typeParamMarker.done(PyElementTypes.TYPE_PARAMETER)
+      return true
     }
 
     fun parseParameterTypeList() {

@@ -3,6 +3,7 @@ package com.jetbrains.python
 
 import com.intellij.lang.LanguageASTFactory
 import com.intellij.testFramework.ParsingTestCase
+import com.jetbrains.python.ast.PyAstTypeParameter
 import com.jetbrains.python.codeInsight.typeRepresentation.PyTypeRepresentationDialect
 import com.jetbrains.python.codeInsight.typeRepresentation.PyTypeRepresentationParserDefinition
 import com.jetbrains.python.codeInsight.typeRepresentation.psi.PyFunctionTypeRepresentation
@@ -226,6 +227,139 @@ class PyTypeRepresentationParsingTest : ParsingTestCase("typeRepresentation/pars
     val callable = parseCallable("def test.f(pos: int, /, normal: str, *args: float, kw: bool, **kwargs: dict) -> None")
     assertNotNull(callable.functionName)
     assertSize(6, callable.parameterList.parameters) // pos, /, normal, args, kw, kwargs
+  }
+
+  // Tests for type parameter lists added in PY-86755
+  fun `test type parameter list simple`() {
+    val callable = parseCallable("[T](x: T) -> T")
+    val typeParamList = callable.typeParameterList
+    assertNotNull(typeParamList)
+    val typeParams = typeParamList!!.typeParameters
+    assertSize(1, typeParams)
+    assertEquals("T", typeParams[0].name)
+    assertNull(typeParams[0].boundExpression)
+  }
+
+  fun `test type parameter list with bound`() {
+    val callable = parseCallable("[T: int](x: T) -> T")
+    val typeParamList = callable.typeParameterList
+    assertNotNull(typeParamList)
+    val typeParams = typeParamList!!.typeParameters
+    assertSize(1, typeParams)
+    assertEquals("T", typeParams[0].name)
+    assertNotNull(typeParams[0].boundExpression)
+    assertEquals("int", typeParams[0].boundExpression!!.text)
+  }
+
+  fun `test type parameter list with qualified bound`() {
+    val callable = parseCallable("[T: builtins.int](x: T) -> T")
+    val typeParamList = callable.typeParameterList
+    assertNotNull(typeParamList)
+    val typeParams = typeParamList!!.typeParameters
+    assertSize(1, typeParams)
+    assertEquals("T", typeParams[0].name)
+    assertNotNull(typeParams[0].boundExpression)
+    assertEquals("builtins.int", typeParams[0].boundExpression!!.text)
+  }
+
+  fun `test type parameter list multiple params`() {
+    val callable = parseCallable("[T, U, V](x: T, y: U) -> V")
+    val typeParamList = callable.typeParameterList
+    assertNotNull(typeParamList)
+    val typeParams = typeParamList!!.typeParameters
+    assertSize(3, typeParams)
+    assertEquals("T", typeParams[0].name)
+    assertEquals("U", typeParams[1].name)
+    assertEquals("V", typeParams[2].name)
+  }
+
+  fun `test type parameter list with mixed bounds`() {
+    val callable = parseCallable("[T: int, U, V: str](x: T, y: U) -> V")
+    val typeParamList = callable.typeParameterList
+    assertNotNull(typeParamList)
+    val typeParams = typeParamList!!.typeParameters
+    assertSize(3, typeParams)
+    assertEquals("T", typeParams[0].name)
+    assertNotNull(typeParams[0].boundExpression)
+    assertEquals("U", typeParams[1].name)
+    assertNull(typeParams[1].boundExpression)
+    assertEquals("V", typeParams[2].name)
+    assertNotNull(typeParams[2].boundExpression)
+  }
+
+  fun `test type parameter list star`() {
+    val callable = parseCallable("[*Ts](x: *Ts) -> None")
+    val typeParamList = callable.typeParameterList
+    assertNotNull(typeParamList)
+    val typeParams = typeParamList!!.typeParameters
+    assertSize(1, typeParams)
+    assertEquals("Ts", typeParams[0].name)
+    assertEquals(PyAstTypeParameter.Kind.TypeVarTuple, typeParams[0].kind)
+  }
+
+  fun `test type parameter list double star`() {
+    val callable = parseCallable("[**P](x: int) -> None")
+    val typeParamList = callable.typeParameterList
+    assertNotNull(typeParamList)
+    val typeParams = typeParamList!!.typeParameters
+    assertSize(1, typeParams)
+    assertEquals("P", typeParams[0].name)
+    assertEquals(PyAstTypeParameter.Kind.ParamSpec, typeParams[0].kind)
+  }
+
+  fun `test type parameter list mixed kinds`() {
+    val callable = parseCallable("[T, *Ts, **P](x: T) -> None")
+    val typeParamList = callable.typeParameterList
+    assertNotNull(typeParamList)
+    val typeParams = typeParamList!!.typeParameters
+    assertSize(3, typeParams)
+    assertEquals("T", typeParams[0].name)
+    assertEquals(PyAstTypeParameter.Kind.TypeVar, typeParams[0].kind)
+    assertEquals("Ts", typeParams[1].name)
+    assertEquals(PyAstTypeParameter.Kind.TypeVarTuple, typeParams[1].kind)
+    assertEquals("P", typeParams[2].name)
+    assertEquals(PyAstTypeParameter.Kind.ParamSpec, typeParams[2].kind)
+  }
+
+  fun `test function type with type parameter list`() {
+    val callable = parseCallable("def test.f[T](x: T) -> T")
+    assertNotNull(callable.functionName)
+    assertEquals("test.f", callable.functionName!!.toString())
+    val typeParamList = callable.typeParameterList
+    assertNotNull(typeParamList)
+    val typeParams = typeParamList!!.typeParameters
+    assertSize(1, typeParams)
+    assertEquals("T", typeParams[0].name)
+  }
+
+  fun `test callable without type parameter list`() {
+    val callable = parseCallable("(x: int) -> str")
+    assertNull(callable.functionName)
+    assertNull(callable.typeParameterList)
+  }
+
+  fun `test type parameter list with default`() {
+    val callable = parseCallable("[T = int](x: T) -> T")
+    val typeParamList = callable.typeParameterList
+    assertNotNull(typeParamList)
+    val typeParams = typeParamList!!.typeParameters
+    assertSize(1, typeParams)
+    assertEquals("T", typeParams[0].name)
+    assertNotNull(typeParams[0].defaultExpression)
+    assertEquals("int", typeParams[0].defaultExpression!!.text)
+  }
+
+  fun `test type parameter list with bound and default`() {
+    val callable = parseCallable("[T: str = int](x: T) -> T")
+    val typeParamList = callable.typeParameterList
+    assertNotNull(typeParamList)
+    val typeParams = typeParamList!!.typeParameters
+    assertSize(1, typeParams)
+    assertEquals("T", typeParams[0].name)
+    assertNotNull(typeParams[0].boundExpression)
+    assertEquals("str", typeParams[0].boundExpression!!.text)
+    assertNotNull(typeParams[0].defaultExpression)
+    assertEquals("int", typeParams[0].defaultExpression!!.text)
   }
 
   override fun getTestDataPath(): String {
