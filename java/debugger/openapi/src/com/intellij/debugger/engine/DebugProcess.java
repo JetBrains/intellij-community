@@ -35,7 +35,8 @@ public interface DebugProcess extends UserDataHolder {
   /**
    * Get the current VM proxy connected to the process.
    * The VM can change due to a single debug process can be connected to several VMs.
-   * Prefer {@link SuspendContextImpl#getVirtualMachineProxy()} when possible.
+   * <p>
+   * Use {@link VirtualMachineProxy#getCurrent()}
    */
   @ApiStatus.Obsolete
   VirtualMachineProxy getVirtualMachineProxy();

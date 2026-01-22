@@ -7,6 +7,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
@@ -52,6 +53,7 @@ import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.jdi.connect.ListeningConnector;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -221,6 +223,13 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
 
   public static boolean isRemote(DebugProcess debugProcess) {
     return Boolean.TRUE.equals(debugProcess.getUserData(BatchEvaluator.REMOTE_SESSION_KEY));
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public VirtualMachineProxy getVmProxy() {
+    DebuggerManagerThreadImpl managerThread = DebuggerManagerThreadImpl.getCurrentThread();
+    return managerThread.getVmProxy();
   }
 
   @Override

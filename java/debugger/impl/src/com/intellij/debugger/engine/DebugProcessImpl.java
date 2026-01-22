@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.engine.requests.StepRequestor;
@@ -956,13 +957,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   /**
    * Get the current VM proxy connected to the process.
    * The VM can change due to a single debug process can be connected to several VMs (see {@link DebugProcessImpl#reattach(DebugEnvironment, boolean, Runnable)})
-   * Prefer {@link SuspendContextImpl#getVirtualMachineProxy()} when possible.
+   * Use {@link VirtualMachineProxy#getCurrent()}
    */
   @Override
   @ApiStatus.Obsolete
   public @NotNull VirtualMachineProxyImpl getVirtualMachineProxy() {
-    DebuggerManagerThreadImpl currentThread = DebuggerManagerThreadImpl.getCurrentThread();
-    final VirtualMachineProxyImpl vm = currentThread.getVmProxy();
+    final VirtualMachineProxyImpl vm = (VirtualMachineProxyImpl)VirtualMachineProxy.getCurrent();
     if (vm == null) {
       if (isInInitialState()) {
         throw new IllegalStateException("Virtual machine is not initialized yet");
