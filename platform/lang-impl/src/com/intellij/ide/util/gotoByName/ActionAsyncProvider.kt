@@ -278,10 +278,8 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
         launch {
           runCatching {
             val startOneTime = System.currentTimeMillis()
-            LOG.debug { "[$pattern] TEST DIAGNOSTICS: before model.actionMatches: ${action::class.java.simpleName}" }
             val mode = model.actionMatches(pattern, matcher, action)
             val endTime = System.currentTimeMillis()
-            LOG.debug { "[$pattern] TEST DIAGNOSTICS: after model.actionMatches: ${action::class.java.simpleName} - (duration:${endTime - startOneTime} ms, totalDuration: ${endTime - startAllTime} ms)" }
 
             if (mode != MatchMode.NONE) {
               if (isCollectLogsAction) {
