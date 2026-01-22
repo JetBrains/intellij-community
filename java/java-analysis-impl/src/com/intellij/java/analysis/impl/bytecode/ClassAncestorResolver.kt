@@ -43,14 +43,19 @@ internal class ClassAncestorResolver(private val classpath: List<Path>) {
   }
 
   private fun collectPackagesInClasspath(classpath: List<Path>): Map<String, List<Path>> {
+    data class PackageToClasspathRoot(val packageName: String, val classpathRoot: Path)
+
     return classpath
       .asSequence()
-      .flatMap { root ->
-        withClassRootEntries(root) {
-          it.map { entry -> root to entry.entryName.substringBeforeLast(delimiter = '/', missingDelimiterValue = "") }.toSet()
+      .flatMap { classpathRoot ->
+        withClassRootEntries(classpathRoot) {
+          it.map { entry ->
+            val packageName = entry.entryName.substringBeforeLast(delimiter = '/', missingDelimiterValue = "")
+            PackageToClasspathRoot(packageName, classpathRoot)
+          }.toSet()
         }
       }
-      .groupBy({ it.second }, { it.first })
+      .groupBy({ it.packageName }, { it.classpathRoot })
   }
 
   private fun collectSuperclasses(binaryClassName: String): List<String> {
