@@ -374,6 +374,10 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
         // The ultimate parent should be an IdeFrameImpl anyway.
         if (!(parent instanceof IdeFrameImpl window) || !window.isShowing()) return null;
         screenHeight = window.getHeight();
+        // Check if the main window is too small.
+        // Since the screen size on Wayland can't be trusted (JBR-9884), we can only fall back to the default size in this case.
+        // This is a reasonable fallback, as even a tiny 14" MacBook screen with the maximum scaling is 665 px, so 600 should be safe.
+        if (screenHeight < MAX_SIZE.height) return null;
       }
       else {
         Point locationOnScreen = null;
