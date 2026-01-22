@@ -3,6 +3,7 @@ package com.intellij.debugger.engine
 
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.debugger.statistics.DebuggerStatistics
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
@@ -18,11 +19,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 private class LastSessionPauseListener : XDebugSessionListener {
   private val isPaused = MutableStateFlow(false)
+  private val startNs = System.nanoTime()
 
   override fun sessionPaused() {
     isPaused.value = true
@@ -35,6 +38,10 @@ private class LastSessionPauseListener : XDebugSessionListener {
   @OptIn(FlowPreview::class)
   suspend fun awaitNoPauseFor(duration: Duration) {
     isPaused.debounce(duration).first { !it }
+  }
+
+  fun passedSinceSessionStartMs(): Long {
+    return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
   }
 }
 
@@ -53,7 +60,10 @@ internal fun showOverheadNotification(process: DebugProcessImpl, overhead: Objec
   val cs = xDebugSession.coroutineScope
   val managerThread = DebuggerManagerThreadImpl.getCurrentThread()
   cs.launch(Dispatchers.EDT) {
+    val project = xDebugSession.project
     val listener = process.getUserData(lastSessionPauseListenerKey)
+    val passedSinceSessionStartMs = listener?.passedSinceSessionStartMs() ?: -1
+    DebuggerStatistics.logAgentOverheadDetected(project, passedSinceSessionStartMs)
     if (listener != null) {
       // we don't want to show notification if user is actively debugging
       listener.awaitNoPauseFor(3.seconds)
@@ -65,6 +75,7 @@ internal fun showOverheadNotification(process: DebugProcessImpl, overhead: Objec
     val notification = Notification("AsyncStackTraces", title, content, NotificationType.WARNING)
     notification.addAction(DumbAwareAction.create(JavaDebuggerBundle.message("async.stack.traces.overhead.throttle.button")) {
       notification.expire()
+      DebuggerStatistics.logAgentOverheadNotificationThrottlingEnabled(project)
       executeOnDMT(managerThread) {
         val field = DebuggerUtils.findField(overhead.referenceType(), "throttleWhenOverhead")
         if (field != null) {
@@ -74,12 +85,14 @@ internal fun showOverheadNotification(process: DebugProcessImpl, overhead: Objec
     })
     notification.addAction(DumbAwareAction.create(JavaDebuggerBundle.message("async.stack.traces.overhead.disable.button")) {
       notification.expire()
+      DebuggerStatistics.logAgentOverheadNotificationAgentDisabled(project)
       executeOnDMT(managerThread) {
         DebuggerUtilsEx.setStaticBooleanField(process, AsyncStacksUtils.CAPTURE_STORAGE_CLASS_NAME, "ENABLED", false)
       }
     })
     notification.addAction(DumbAwareAction.create(JavaDebuggerBundle.message("async.stack.traces.overhead.ignore.button")) {
       notification.expire()
+      DebuggerStatistics.logAgentOverheadNotificationDismissed(project)
     })
     val processListener = object : DebugProcessListener {
       override fun processDetached(process: DebugProcess, closedByUser: Boolean) {
@@ -91,5 +104,6 @@ internal fun showOverheadNotification(process: DebugProcessImpl, overhead: Objec
       process.removeDebugProcessListener(processListener)
     }
     NotificationsManager.getNotificationsManager().showNotification(notification, process.project)
+    DebuggerStatistics.logAgentOverheadNotificationShown(project)
   }
 }
