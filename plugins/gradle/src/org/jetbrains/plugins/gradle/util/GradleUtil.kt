@@ -3,38 +3,35 @@ package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.platform.backend.workspace.WorkspaceModel.Companion.getInstance
-import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntity
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId
+import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import com.intellij.workspaceModel.ide.toPath
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.model.projectModel.gradleBuilds
+import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity
 import org.jetbrains.plugins.gradle.model.projectModel.gradleInfo
+import org.jetbrains.plugins.gradle.model.projectModel.gradleModuleEntity
 import java.nio.file.Path
 
 /**
  * @return the active Gradle version of the project related to the module, or null if unavailable
  */
 fun Module.getGradleVersion(): GradleVersion? {
-  val entity = this.getExternalProjectEntity() ?: return null
-  val version = entity.gradleInfo.gradleVersion
+  val rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(this) ?: return null
+  val storage = project.workspaceModel.currentSnapshot
+  val externalProjectEntity = storage.resolve(ExternalProjectEntityId(rootProjectPath)) ?: return null
+  val version = externalProjectEntity.gradleInfo.gradleVersion
   return GradleVersion.version(version)
 }
 
 /**
  * @return the root path of the (included) project based on the module.
  */
-fun Module.getGradleBuildPath(): Path? {
-  val entity = this.getExternalProjectEntity() ?: return null
-  val projectPath = ExternalSystemApiUtil.getExternalProjectPath(this)?.toNioPathOrNull() ?: return null
-  return entity.gradleBuilds.find { build ->
-    build.projects.any { project -> project.url.toPath() == projectPath }
-  }?.url?.toPath()
-}
+fun Module.getGradleBuildPath(): Path? = getGradleBuild()?.url?.toPath()
 
-private fun Module.getExternalProjectEntity(): ExternalProjectEntity? {
-  val rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(this) ?: return null
-  val entityStorage = getInstance(project).currentSnapshot
-  return entityStorage.resolve(ExternalProjectEntityId(rootProjectPath))
+fun Module.getGradleBuild(): GradleBuildEntity? {
+  val moduleEntity = findModuleEntity() ?: return null
+  val gradleModuleEntity = moduleEntity.gradleModuleEntity ?: return null
+  val storage = project.workspaceModel.currentSnapshot
+  return storage.resolve(gradleModuleEntity.gradleProjectId.buildId)
 }
