@@ -195,7 +195,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                 sink.addPresentation(
                     InlineInlayPosition(element.startOffset, true),
                     payloads = contextMenuPayloads,
-                    hintFormat = HintFormat.default
+                    hintFormat = PARAMETER_HINT_FORMAT
                 ) {
                     if (symbol.isVararg) text(Typography.ellipsis.toString())
                     text(stringName, symbol.asNavigatablePsiLoad())
@@ -222,7 +222,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         sink.addPresentation(
             InlineInlayPosition(offset, true),
             payloads = contextMenuPayloads,
-            hintFormat = HintFormat.default
+            hintFormat = CONTEXT_HINT_FORMAT
         ) {
             collapsibleList(
                 state = if (theOnlyOneContextParameter) CollapseState.Expanded else CollapseState.Collapsed,
@@ -238,7 +238,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                         // a unicode char <<
                         toggleButton { text(" \u00AB ") }
                     }
-                    if (valueParametersWithNames.isNotEmpty()) text(" , ")
+                    addCommaBeforeParameters(valueParametersWithNames)
                 },
 
                 collapsedState = {
@@ -251,9 +251,13 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                         toggleButton { text(" \u00BB ") }
                     }
 
-                    if (valueParametersWithNames.isNotEmpty()) text(" , ")
+                    addCommaBeforeParameters(valueParametersWithNames)
                 })
         }
+    }
+
+    private fun CollapsiblePresentationTreeBuilder.addCommaBeforeParameters(valueParametersWithNames: List<Pair<KaValueParameterSymbol, Name?>>) {
+        if (valueParametersWithNames.isNotEmpty()) text(" ,")
     }
 
     @OptIn(KaExperimentalApi::class)
@@ -347,6 +351,13 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         )
 
 }
+
+private val CONTEXT_HINT_FORMAT = HintFormat.default
+    .withFontSize(HintFontSize.ABitSmallerThanInEditor)
+    .withColorKind(HintColorKind.Parameter)
+
+private val PARAMETER_HINT_FORMAT = HintFormat.default
+    .withColorKind(HintColorKind.Parameter)
 
 context(_: KaSession)
 internal fun isExcludeListed(callableFqName: String, parameterNames: List<String>): Boolean {
