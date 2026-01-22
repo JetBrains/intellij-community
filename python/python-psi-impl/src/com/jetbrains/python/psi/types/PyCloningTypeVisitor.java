@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   private final @NotNull TypeEvalContext myTypeEvalContext;
   private final @NotNull Set<@Nullable PyType> cloning = Sets.newIdentityHashSet();
+  private final @NotNull Map<@Nullable PyType, @Nullable PyType> cloned = new IdentityHashMap<>();
 
   public static @Nullable PyType clone(@Nullable PyType type, @NotNull PyCloningTypeVisitor visitor) {
     return visitor.clone(type);
@@ -47,13 +48,25 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
 
   // Intentionally not marked as @Nullable to avoid false positives. 
   // A recursive type is an exceptional case.
-  protected <T extends PyType> T clone(@Nullable PyType type) {
+  protected final <T extends PyType> T clone(@Nullable PyType type) {
+    final @Nullable PyType result;
+    if (cloned.containsKey(type)) {
+      result = cloned.get(type);
+    }
+    else {
+      result = doClone(type);
+      cloned.put(type, result);
+    }
+    //noinspection unchecked
+    return (T)result;
+  }
+
+  private @Nullable PyType doClone(@Nullable PyType type) {
     if (!cloning.add(type)) {
       return null;
     }
     try {
-      //noinspection unchecked
-      return (T)visit(type, this);
+      return visit(type, this);
     }
     finally {
       cloning.remove(type);
