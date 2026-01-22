@@ -115,7 +115,7 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
    *
    * @see assertMultiModuleProjectStructure
    */
-  fun initMultiModuleProject(useBuildSrc: Boolean = isGradleAtLeast("8.0")) {
+  fun initMultiModuleProject(useBuildSrc: Boolean = isGradleAtLeast("8.0"), includeProjectsWithDuplicatedNames: Boolean = false) {
     if (useBuildSrc) {
       createBuildFile("buildSrc") {
         withPlugin("groovy")
@@ -124,25 +124,50 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
       }
     }
     createSettingsFile {
-      setProjectName("project")
+      setProjectName("rootProjectName")
       include("module")
       includeBuild("../includedProject")
+      if (includeProjectsWithDuplicatedNames) {
+        includeBuild("../includedProject2")
+      }
     }
     createBuildFile {
       withJavaPlugin()
     }
     createBuildFile("module") {
       withJavaPlugin()
+      addGroup("moduleGroup")
+      addVersion("1.0")
     }
     createSettingsFile("../includedProject") {
-      setProjectName("includedProject")
+      setProjectName("includedProjectName")
       include("module")
     }
     createBuildFile("../includedProject") {
       withJavaPlugin()
+      addGroup("includedProjectGroup")
+      addVersion("1.0")
     }
     createBuildFile("../includedProject/module") {
       withJavaPlugin()
+      addGroup("includedProjectModuleGroup")
+      addVersion("1.0")
+    }
+    if (includeProjectsWithDuplicatedNames) {
+      createSettingsFile("../includedProject2") {
+        setProjectName("includedProjectName")
+        include("module2")
+      }
+      createBuildFile("../includedProject2") {
+        withJavaPlugin()
+        addGroup("includedProject2Group")
+        addVersion("1.0")
+      }
+      createBuildFile("../includedProject2/module2") {
+        withJavaPlugin()
+        addGroup("includedProject2ModuleGroup")
+        addVersion("1.0")
+      }
     }
   }
 
@@ -153,19 +178,31 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
    * The IDEA syncs a project with build src in two sequent Gradle calls.
    * Therefore, by default, we don't use buildSrc for the model project.
    *
+   * @param includeProjectsWithDuplicatedNames whether to add any projects with duplicated names.
+   * This is used to test naming of the modules in those cases.
+   *
    * @see initMultiModuleProject
    */
-  fun assertMultiModuleProjectStructure(useBuildSrc: Boolean = isGradleAtLeast("8.0")) {
+  fun assertMultiModuleProjectStructure(
+    useBuildSrc: Boolean = isGradleAtLeast("8.0"),
+    includeProjectsWithDuplicatedNames: Boolean = false
+  ) {
     val buildSrcModules = listOf(
-      "project.buildSrc", "project.buildSrc.main", "project.buildSrc.test"
+      "rootProjectName.buildSrc", "rootProjectName.buildSrc.main", "rootProjectName.buildSrc.test"
     )
     val projectModules = listOf(
-      "project", "project.main", "project.test",
-      "project.module", "project.module.main", "project.module.test"
+      "rootProjectName", "rootProjectName.main", "rootProjectName.test",
+      "rootProjectName.module", "rootProjectName.module.main", "rootProjectName.module.test"
     )
+    // Naming semantics change after Gradle 6.0, so need to account for it
+    val includedProjectName = if(isGradleAtLeast("6.0")) "includedProject" else "includedProjectName"
     val includesProjectModules = listOf(
-      "includedProject", "includedProject.main", "includedProject.test",
-      "includedProject.module", "includedProject.module.main", "includedProject.module.test"
+      includedProjectName, "$includedProjectName.main", "$includedProjectName.test",
+      "$includedProjectName.module", "$includedProjectName.module.main", "$includedProjectName.module.test"
+    )
+    val includesProject2Modules = listOf(
+      "includedProject2", "includedProject2.main", "includedProject2.test",
+      "includedProject2.module2", "includedProject2.module2.main", "includedProject2.module2.test"
     )
     assertModules(buildList {
       if (useBuildSrc) {
@@ -173,6 +210,9 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
       }
       addAll(projectModules)
       addAll(includesProjectModules)
+      if (includeProjectsWithDuplicatedNames) {
+        addAll(includesProject2Modules)
+      }
     })
   }
 
