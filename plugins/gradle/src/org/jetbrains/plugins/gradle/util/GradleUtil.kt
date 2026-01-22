@@ -25,11 +25,11 @@ fun Module.getGradleVersion(): GradleVersion? {
 /**
  * @return the root path of the (included) project based on the module.
  */
-fun Module.getIncludedProjectRootPath(): Path? {
+fun Module.getGradleBuildPath(): Path? {
   val entity = this.getExternalProjectEntity() ?: return null
   val projectPath = ExternalSystemApiUtil.getExternalProjectPath(this)?.toNioPathOrNull() ?: return null
-  return entity.gradleBuilds.find { includedBuild ->
-    includedBuild.projects.any { project -> project.url.toPath() == projectPath }
+  return entity.gradleBuilds.find { build ->
+    build.projects.any { project -> project.url.toPath() == projectPath }
   }?.url?.toPath()
 }
 

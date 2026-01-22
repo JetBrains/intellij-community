@@ -7,13 +7,10 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.*
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.openapi.vfs.refreshAndFindVirtualDirectory
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
@@ -36,8 +33,8 @@ import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.settingsScript
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_REPOSITORY_HANDLER
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
+import org.jetbrains.plugins.gradle.util.getGradleBuildPath
 import org.jetbrains.plugins.gradle.util.getGradleVersion
-import org.jetbrains.plugins.gradle.util.getIncludedProjectRootPath
 import java.nio.file.Path
 import kotlin.io.path.exists
 
@@ -93,9 +90,9 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(private val holder: 
 
 
     private fun Module.getGradleSettingsPsiFile(): PsiFile? {
-        val root = getIncludedProjectRootPath() ?: return null
+        val gradleBuildPath = getGradleBuildPath() ?: return null
         return setOf("settings.gradle.kts", "settings.gradle")
-            .map { root.resolve(it) }
+            .map { gradleBuildPath.resolve(it) }
             .firstOrNull(Path::exists)
             ?.refreshAndFindVirtualFile()
             ?.findPsiFile(project)
@@ -132,12 +129,10 @@ private class CreateSettingsAndMoveRepositoriesAction(
             }
         }
 
-        val projectDir = element.module?.getIncludedProjectRootPath()?.refreshAndFindVirtualDirectory()
-            ?: ExternalSystemApiUtil.getExternalRootProjectPath(element.module)?.toNioPathOrNull()?.refreshAndFindVirtualDirectory()
-            ?: context.project.guessProjectDir()
+        val gradleBuildPath = element.module?.getGradleBuildPath()?.refreshAndFindVirtualDirectory()
             ?: element.containingFile.virtualFile.parent
         val settingsFile = FutureVirtualFile(
-            projectDir,
+            gradleBuildPath,
             KOTLIN_DSL_SETTINGS_FILE_NAME,
             FileTypeRegistry.getInstance().getFileTypeByExtension("kts")
         )
