@@ -1,0 +1,18 @@
+// FILE: before.kt
+// IGNORE_K1
+fun some() {
+    for (j in 0..5) {
+        for (i in 0..5) {
+            <caret>break
+        }
+    }
+}
+// FILE: after.kt
+// IGNORE_K1
+fun some() {
+    for (j in 0..5) {
+        for (i in 0..5) {
+            break
+        }<caret>
+    }
+}

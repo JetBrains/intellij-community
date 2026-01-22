@@ -35,6 +35,111 @@ public class FirGotoDeclarationTestGenerated extends AbstractFirGotoDeclarationT
         runTest("../../idea/tests/testData/navigation/gotoDeclaration/annotationCallWithMissedTypeArgs.test");
     }
 
+    @TestMetadata("breakInDoWhileLoop.test")
+    public void testBreakInDoWhileLoop() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/breakInDoWhileLoop.test");
+    }
+
+    @TestMetadata("breakInForNested.test")
+    public void testBreakInForNested() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/breakInForNested.test");
+    }
+
+    @TestMetadata("breakInForNested2.test")
+    public void testBreakInForNested2() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/breakInForNested2.test");
+    }
+
+    @TestMetadata("breakInForWithLocalProperty.test")
+    public void testBreakInForWithLocalProperty() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/breakInForWithLocalProperty.test");
+    }
+
+    @TestMetadata("breakInNestedWhileLoop.test")
+    public void testBreakInNestedWhileLoop() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/breakInNestedWhileLoop.test");
+    }
+
+    @TestMetadata("breakInOuterForLoop.test")
+    public void testBreakInOuterForLoop() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/breakInOuterForLoop.test");
+    }
+
+    @TestMetadata("breakInOuterWhileLoop.test")
+    public void testBreakInOuterWhileLoop() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/breakInOuterWhileLoop.test");
+    }
+
+    @TestMetadata("breakSimple.test")
+    public void testBreakSimple() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/breakSimple.test");
+    }
+
+    @TestMetadata("breakWithLabeledLoop.test")
+    public void testBreakWithLabeledLoop() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/breakWithLabeledLoop.test");
+    }
+
+    @TestMetadata("breakWithLabeledWhileLoop.test")
+    public void testBreakWithLabeledWhileLoop() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/breakWithLabeledWhileLoop.test");
+    }
+
+    @TestMetadata("breakinWhileLoop.test")
+    public void testBreakinWhileLoop() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/breakinWhileLoop.test");
+    }
+
+    @TestMetadata("continueInDoWhileLoop.test")
+    public void testContinueInDoWhileLoop() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/continueInDoWhileLoop.test");
+    }
+
+    @TestMetadata("continueInForNested.test")
+    public void testContinueInForNested() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/continueInForNested.test");
+    }
+
+    @TestMetadata("continueInForNested2.test")
+    public void testContinueInForNested2() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/continueInForNested2.test");
+    }
+
+    @TestMetadata("continueInNestedWhileLoop.test")
+    public void testContinueInNestedWhileLoop() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/continueInNestedWhileLoop.test");
+    }
+
+    @TestMetadata("continueInOuterWhileLoop.test")
+    public void testContinueInOuterWhileLoop() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/continueInOuterWhileLoop.test");
+    }
+
+    @TestMetadata("continueInWhileLoop.test")
+    public void testContinueInWhileLoop() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/continueInWhileLoop.test");
+    }
+
+    @TestMetadata("continueOuterForLoop.test")
+    public void testContinueOuterForLoop() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/continueOuterForLoop.test");
+    }
+
+    @TestMetadata("continueSimple.test")
+    public void testContinueSimple() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/continueSimple.test");
+    }
+
+    @TestMetadata("continueWithLabeledLoop.test")
+    public void testContinueWithLabeledLoop() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/continueWithLabeledLoop.test");
+    }
+
+    @TestMetadata("continueWithLabeledWhileLoop.test")
+    public void testContinueWithLabeledWhileLoop() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/continueWithLabeledWhileLoop.test");
+    }
+
     @TestMetadata("dataClassToString.test")
     public void testDataClassToString() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoDeclaration/dataClassToString.test");
