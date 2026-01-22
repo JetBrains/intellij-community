@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 import static com.intellij.reference.SoftReference.dereference;
 
@@ -430,18 +431,20 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     @Override
     public Result<PsiModifierList> compute() {
       List<PsiModifierList> modifiers = new ArrayList<>();
-      for(PsiDirectory directory: getDirectories()) {
-        PsiFile file = directory.findFile(PACKAGE_INFO_FILE);
+      Consumer<PsiFile> processFile = file -> {
         if (file instanceof PsiJavaFile) {
-          PsiPackageStatement stmt = ((PsiJavaFile)file).getPackageStatement();
-          if (stmt != null) {
-            ContainerUtil.addIfNotNull(modifiers, stmt.getAnnotationList());
+          PsiPackageStatement statement = ((PsiJavaFile)file).getPackageStatement();
+          if (statement != null) {
+            ContainerUtil.addIfNotNull(modifiers, statement.getAnnotationList());
           }
         }
+      };
+      for(PsiDirectory directory: getDirectories()) {
+        processFile.accept(directory.findFile(PACKAGE_INFO_FILE));
       }
 
       for (PsiClass aClass : getFacade().findClasses(getQualifiedName() + ".package-info", allScope())) {
-        ContainerUtil.addIfNotNull(modifiers, aClass.getModifierList());
+        processFile.accept(aClass.getContainingFile());
       }
 
       PsiCompositeModifierList result = modifiers.isEmpty() ? null : new PsiCompositeModifierList(getManager(), modifiers);
