@@ -125,7 +125,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private final Deque<VirtualMachineData> myStashedVirtualMachines = new LinkedList<>();
 
-  private volatile VirtualMachineProxyImpl myVirtualMachineProxy = null;
   protected final CheckedDisposable disposable = Disposer.newCheckedDisposable();
   protected final DisposableWrapperList<DebugProcessListener> myDebugProcessListeners = new DisposableWrapperList<>(); // propagate exceptions from listeners
   protected final EventDispatcher<EvaluationListener> myEvaluationDispatcher = EventDispatcher.create(EvaluationListener.class);
@@ -223,7 +222,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private DebuggerManagerThreadImpl createManagerThread() {
     CoroutineScope projectScope = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).getCoroutineScope();
-    return new DebuggerManagerThreadImpl(disposable, projectScope, this);
+    return new DebuggerManagerThreadImpl(disposable, projectScope);
   }
 
   @ApiStatus.Internal
@@ -432,7 +431,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     checkVirtualMachineVersion(vm);
     VirtualMachineProxyImpl proxy = new VirtualMachineProxyImpl(this, vm);
-    myVirtualMachineProxy = proxy;
+    DebuggerManagerThreadImpl.getCurrentThread().setVmProxy(proxy);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       Alarm alarm = new Alarm(disposable);
       alarm.addRequest(() -> myDebuggerManagerThread.schedule(PrioritizedTask.Priority.HIGH, () -> {
@@ -926,7 +925,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public boolean canRedefineClasses() {
-    final VirtualMachineProxyImpl vm = myVirtualMachineProxy;
+    VirtualMachineProxyImpl vm = getManagerThread().getVmProxy();
     return vm != null && vm.canRedefineClasses();
   }
 
@@ -962,8 +961,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   @Override
   @ApiStatus.Obsolete
   public @NotNull VirtualMachineProxyImpl getVirtualMachineProxy() {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    final VirtualMachineProxyImpl vm = myVirtualMachineProxy;
+    DebuggerManagerThreadImpl currentThread = DebuggerManagerThreadImpl.getCurrentThread();
+    final VirtualMachineProxyImpl vm = currentThread.getVmProxy();
     if (vm == null) {
       if (isInInitialState()) {
         throw new IllegalStateException("Virtual machine is not initialized yet");
@@ -1034,15 +1033,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     if (myState.compareAndSet(State.INITIAL, State.DETACHING) || myState.compareAndSet(State.ATTACHED, State.DETACHING)) {
+      DebuggerManagerThreadImpl managerThread = myDebuggerManagerThread;
       try {
         if (!keepManagerThread) {
-          myDebuggerManagerThread.close();
+          managerThread.close();
         }
       }
       finally {
         if (!(myConnection instanceof RemoteConnectionStub)) {
-          VirtualMachineData vmData = new VirtualMachineData(myVirtualMachineProxy, myConnection, myDebuggerManagerThread);
-          myVirtualMachineProxy = null;
+          VirtualMachineData vmData = new VirtualMachineData(managerThread.getVmProxy(), myConnection, managerThread);
           myPositionManager = CompoundPositionManager.DISABLED;
           myReturnValueWatcher = null;
           myNodeRenderersMap.clear();
@@ -1181,7 +1180,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public boolean isCurrentVirtualMachine(@NotNull VirtualMachineProxyImpl vmProxy) {
-    VirtualMachine vm = ObjectUtils.doIfNotNull(myVirtualMachineProxy, it -> it.getVirtualMachine());
+    VirtualMachineProxyImpl current = getManagerThread().getVmProxy();
+    VirtualMachine vm = ObjectUtils.doIfNotNull(current, it -> it.getVirtualMachine());
     return vmProxy.getVirtualMachine() == vm;
   }
 

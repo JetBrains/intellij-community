@@ -84,7 +84,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if (vm != null) {
       vmAttached(proxy);
       if (vm.canBeModified()) {
-        DebuggerEventThread eventThread = myEventThreads.computeIfAbsent(vm, __ -> new DebuggerEventThread(proxy));
+        DebuggerManagerThreadImpl managerThread = DebuggerManagerThreadImpl.getCurrentThread();
+        DebuggerEventThread eventThread = myEventThreads.computeIfAbsent(vm, __ -> new DebuggerEventThread(managerThread));
         ApplicationManager.getApplication().executeOnPooledThread(
           ConcurrencyUtil.underThreadNameRunnable("DebugProcessEvents", eventThread));
       }
@@ -131,9 +132,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
     private final VirtualMachineProxyImpl myVmProxy;
     private final DebuggerManagerThreadImpl myDebuggerManagerThread;
 
-    DebuggerEventThread(VirtualMachineProxyImpl proxy) {
-      myVmProxy = proxy;
-      myDebuggerManagerThread = getManagerThread();
+    DebuggerEventThread(DebuggerManagerThreadImpl managerThread) {
+      myVmProxy = managerThread.getVmProxy();
+      myDebuggerManagerThread = managerThread;
     }
 
     private boolean myIsStopped = false;

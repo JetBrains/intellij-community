@@ -10,6 +10,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.InvokeAndWaitThread
 import com.intellij.debugger.impl.PrioritizedTask
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.statistics.StatisticsStorage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -42,17 +43,29 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 import kotlin.system.measureNanoTime
 
-class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
+class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
   parent: Disposable,
   private val parentScope: CoroutineScope,
-  debugProcess: DebugProcess? = null,
 ) : InvokeAndWaitThread<DebuggerCommandImpl?>(), DebuggerManagerThread, Disposable {
 
   @Volatile
   private var myDisposed = false
 
   internal val debuggerThreadDispatcher = DebuggerThreadDispatcher(this)
-  private val myDebugProcess = WeakReference(debugProcess)
+  private var _vmProxy = WeakReference<VirtualMachineProxyImpl?>(null)
+
+  @get:ApiStatus.Internal
+  val vmProxy: VirtualMachineProxyImpl?
+    get() = _vmProxy.get()
+
+  @ApiStatus.Internal
+  fun setVmProxy(proxy: VirtualMachineProxyImpl) {
+    val current = vmProxy
+    if (current != null && current.virtualMachine !== proxy.virtualMachine) {
+      LOG.error("VM proxy changed from $current to $proxy")
+    }
+    _vmProxy = WeakReference(proxy)
+  }
 
   @ApiStatus.Internal
   var coroutineScope: CoroutineScope = createScope()
@@ -199,7 +212,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
         val commandTimeNs = measureNanoTime {
           managerCommand.invokeCommand()
         }
-        myDebugProcess.get()?.let { debugProcess ->
+        vmProxy?.debugProcess?.let { debugProcess ->
           val commandTimeMs = TimeUnit.NANOSECONDS.toMillis(commandTimeNs)
           StatisticsStorage.addCommandTime(debugProcess, commandTimeMs)
         }
