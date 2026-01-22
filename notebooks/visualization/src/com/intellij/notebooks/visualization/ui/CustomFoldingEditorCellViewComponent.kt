@@ -48,7 +48,7 @@ open class CustomFoldingEditorCellViewComponent(protected val cell: EditorCell, 
   open fun updateCustomComponent() { }
 
   private fun updateGutterIcons(gutterAction: AnAction?) {
-    editor.updateManager.update { ctx ->
+    editor.notebookViewUpdater.update { ctx ->
       gutterActionRenderer = gutterAction?.let { ActionToGutterRendererAdapter(it) }
       ctx.addFoldingOperation {
         foldingRegion?.update()
@@ -65,7 +65,7 @@ open class CustomFoldingEditorCellViewComponent(protected val cell: EditorCell, 
     }
   }
 
-  override fun dispose(): Unit = editor.updateManager.update { ctx ->
+  override fun dispose(): Unit = editor.notebookViewUpdater.update { ctx ->
     disposeFolding(ctx)
   }
 

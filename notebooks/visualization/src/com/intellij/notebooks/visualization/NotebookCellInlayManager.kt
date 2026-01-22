@@ -58,7 +58,7 @@ class NotebookCellInlayManager private constructor(
   private val cellViewEventListeners = EventDispatcher.create(EditorCellViewEventListener::class.java)
 
   private fun update(force: Boolean = false, keepScrollingPosition: Boolean = false, block: (UpdateContext) -> Unit) {
-    editor.updateManager.update(force = force, keepScrollingPositon = keepScrollingPosition, block = block)
+    editor.notebookViewUpdater.update(force = force, keepScrollingPositon = keepScrollingPosition, block = block)
   }
 
   override fun dispose() {
@@ -325,8 +325,6 @@ class NotebookCellInlayManager private constructor(
       editorNotebookPostprocessors: List<EditorNotebookPostprocessor> = listOf(),
     ): NotebookCellInlayManager {
       EditorEmbeddedComponentContainer(editor as EditorEx)
-      val updateManager = UpdateManager(editor)
-      Disposer.register(editor.disposable, updateManager)
       val notebook = createNotebook(editor, editorNotebookPostprocessors)
       val notebookCellInlayManager = NotebookCellInlayManager(
         editor,

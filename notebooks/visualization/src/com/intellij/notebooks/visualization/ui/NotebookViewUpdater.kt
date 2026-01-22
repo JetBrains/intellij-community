@@ -9,9 +9,10 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 
-class UpdateManager(val editor: EditorImpl) : Disposable {
+class NotebookViewUpdater private constructor(val editor: EditorImpl) : Disposable {
 
   private var updateCtx: UpdateContext? = null
 
@@ -97,9 +98,19 @@ class UpdateManager(val editor: EditorImpl) : Disposable {
   }
 
   override fun dispose(): Unit = Unit
+
+  companion object {
+    fun install(editor: EditorImpl) {
+      val notebookViewUpdater = NotebookViewUpdater(editor)
+      Disposer.register(editor.disposable, notebookViewUpdater)
+      editor.putUserData(UPDATE_MANAGER_KEY, notebookViewUpdater)
+    }
+
+    fun getOrNull(editor: Editor): NotebookViewUpdater? = editor.getUserData(UPDATE_MANAGER_KEY)
+  }
 }
 
-private val UPDATE_MANAGER_KEY = Key<UpdateManager>("UPDATE_MANAGER_KEY")
+private val UPDATE_MANAGER_KEY = Key<NotebookViewUpdater>("UPDATE_MANAGER_KEY")
 
-val Editor.updateManager: UpdateManager
+val Editor.notebookViewUpdater: NotebookViewUpdater
   get() = UPDATE_MANAGER_KEY.get(this)
