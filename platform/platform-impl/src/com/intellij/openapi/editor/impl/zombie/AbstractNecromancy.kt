@@ -100,4 +100,23 @@ abstract class AbstractNecromancy<Z : Zombie>(
       null
     }
   }
+
+  protected fun <T> writeList(grave: DataOutput, list: List<T>, write: (T) -> Unit) {
+    writeInt(grave, list.size)
+    for (value in list) {
+      write(value)
+    }
+  }
+
+  protected fun <T> readList(grave: DataInput, read: () -> T): List<T> {
+    val size = readInt(grave)
+    if (size == 0) {
+      return emptyList()
+    }
+    return buildList(size) {
+      repeat(size) {
+        add(read())
+      }
+    }
+  }
 }

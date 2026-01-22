@@ -86,13 +86,12 @@ internal class TrafficLightZombie(
     }
 
     private fun writeExpandedStatus(grave: DataOutput, expandedStatus: List<StatusItem>) {
-      writeInt(grave, expandedStatus.size)
-      for (item in expandedStatus) {
-        writeString(grave, item.text)
-        writeStringNullable(grave, item.detailsText)
-        val severityType = writeStatusMetadata(grave, item.metadata)
+      writeList(grave, expandedStatus) {
+        writeString(grave, it.text)
+        writeStringNullable(grave, it.detailsText)
+        val severityType = writeStatusMetadata(grave, it.metadata)
         val icon = if (severityType == SeverityType.CUSTOM) {
-          item.icon
+          it.icon
         } else {
           null
         }
@@ -101,18 +100,15 @@ internal class TrafficLightZombie(
     }
 
     private fun readExpandedStatus(grave: DataInput): List<StatusItem> {
-      val size = readInt(grave)
-      val result = ArrayList<StatusItem>(size)
-      repeat(size) {
-        @Suppress("HardCodedStringLiteral")
+      @Suppress("HardCodedStringLiteral")
+      return readList(grave) {
         val text:                                 String = readString(grave)
         val detailsText:                         String? = readStringNullable(grave)
         val metadata: Pair<StatusItemMetadata, Boolean>? = readStatusMetadata(grave)
         val icon:                                  Icon? = readIconNullable(grave)
         val finalIcon:                             Icon? = getFinalIcon(icon, metadata)
-        result.add(StatusItem(text, finalIcon, detailsText, metadata?.first))
+        StatusItem(text, finalIcon, detailsText, metadata?.first)
       }
-      return result
     }
 
     // TODO: refactor this icon hell logic

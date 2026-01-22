@@ -33,18 +33,14 @@ abstract class LimbedNecromancy<Z : LimbedZombie<L>, L> (
   protected abstract fun exhumeLimb(grave: DataInput): L
 
   final override fun buryZombie(grave: DataOutput, zombie: Z) {
-    writeInt(grave, zombie.limbs().size)
-    for (limb in zombie.limbs()) {
-      buryLimb(grave, limb)
+    writeList(grave, zombie.limbs()) {
+      buryLimb(grave, it)
     }
   }
 
   final override fun exhumeZombie(grave: DataInput): Z {
-    val limbCount = readInt(grave)
-    val limbs = buildList {
-      repeat(limbCount) {
-        add(exhumeLimb(grave))
-      }
+    val limbs = readList(grave) {
+      exhumeLimb(grave)
     }
     return formZombie(limbs)
   }
