@@ -80,7 +80,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -100,9 +99,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   private static final int MARKETPLACE_TAB = 0;
   private static final int INSTALLED_TAB = 1;
 
-  public static final int ITEMS_PER_GROUP = 9;
-
-  public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
+  private static final int ITEMS_PER_GROUP = 9;
 
   private TabbedPaneHeaderComponent myTabHeaderComponent;
   private MultiPanel myCardPanel;
