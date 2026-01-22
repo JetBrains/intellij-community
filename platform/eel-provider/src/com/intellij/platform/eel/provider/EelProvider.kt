@@ -147,6 +147,9 @@ fun Path.getEelDescriptor(): EelDescriptor {
   return LocalEelDescriptor
 }
 
+@get:ApiStatus.Experimental
+val Path.osFamily: EelOsFamily get() = getEelDescriptor().osFamily
+
 /**
  * Retrieves [EelDescriptor] for the environment where [this] is located.
  * If the project is not the real one (i.e., it is default or not backed by a real file), then [LocalEelDescriptor] will be returned.
@@ -169,7 +172,8 @@ fun Project.getEelDescriptor(): EelDescriptor {
 
 @get:ApiStatus.Experimental
 val localEel: LocalEelApi by lazy {
-  if (SystemInfo.isWindows) ApplicationManager.getApplication().service<LocalWindowsEelApi>() else ApplicationManager.getApplication().service<LocalPosixEelApi>()
+  if (SystemInfo.isWindows) ApplicationManager.getApplication().service<LocalWindowsEelApi>()
+  else ApplicationManager.getApplication().service<LocalPosixEelApi>()
 }
 
 @Deprecated("Use toEelApiBlocking() instead", ReplaceWith("toEelApiBlocking()"))

@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.osFamily
 import com.intellij.python.community.execService.*
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetInfo
@@ -150,7 +151,7 @@ object CondaExecutor {
     val pathOnEel = (binaryToExec as? BinOnEel)?.path
                     ?: return PyResult.success(emptyMap())
 
-    val osFamily = pathOnEel.getEelDescriptor().osFamily
+    val osFamily = pathOnEel.osFamily
     if (!osFamily.isWindows) return PyResult.success(emptyMap())
     if (!pathOnEel.exists()) {
       return PyResult.localizedError(PyBundle.message("python.add.sdk.conda.executable.path.is.not.found"))
