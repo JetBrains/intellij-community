@@ -2092,10 +2092,6 @@ f:com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 - setCurrent(com.intellij.openapi.editor.Inlay,Z):V
 - setHighlighted(com.intellij.openapi.editor.Inlay,Z):V
 - setPreviewMode(com.intellij.openapi.editor.Editor,Z):V
-f:com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName
-- com.intellij.codeInspection.ProblemDescriptorBase
-- <init>(com.intellij.codeInspection.ProblemDescriptorBase,java.lang.String):V
-- getReportingToolShortName():java.lang.String
 f:com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithUserDataKt
 - sf:getPROBLEM_DESCRIPTOR_TAG():com.intellij.openapi.util.Key
 - sf:getRELATED_LOCATIONS():com.intellij.openapi.util.Key

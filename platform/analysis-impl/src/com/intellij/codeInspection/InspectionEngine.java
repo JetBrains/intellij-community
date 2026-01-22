@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.Divider;
 import com.intellij.codeInsight.daemon.impl.InspectionVisitorOptimizer;
+import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
@@ -348,22 +349,19 @@ public final class InspectionEngine {
         }
         catch (Exception e) {
           if (inspectionListener != null) {
-            inspectionListener.inspectionFailed(
-              toolWrapper.getID(),
-              e,
-              psiFile,
-              psiFile.getProject()
-            );
+            inspectionListener.inspectionFailed(toolWrapper.getID(), e, psiFile, psiFile.getProject());
           }
           throw e;
         }
 
         if (holder.hasResults()) {
-          List<ProblemDescriptor> descriptors = ContainerUtil.filter(holder.getResults(), descriptor -> {
+          for (ProblemDescriptor descriptor : holder.getResults()) {
             PsiElement element = descriptor.getPsiElement();
-            return element == null || !ignoreSuppressedElements || !SuppressionUtil.inspectionResultSuppressed(element, tool);
-          });
-          resultDescriptors.put(toolWrapper, descriptors);
+            if (element == null || !ignoreSuppressedElements || !SuppressionUtil.inspectionResultSuppressed(element, tool)) {
+              LocalInspectionToolWrapper wrapper = getRedirectedToolWrapper(toolWrapper, descriptor);
+              resultDescriptors.computeIfAbsent(wrapper, x -> new ArrayList<>()).add(descriptor);
+            }
+          }
         }
 
         return true;
@@ -372,6 +370,19 @@ public final class InspectionEngine {
     });
 
     return resultDescriptors;
+  }
+
+  private static @Nullable LocalInspectionToolWrapper getRedirectedToolWrapper(LocalInspectionToolWrapper toolWrapper,
+                                                                               ProblemDescriptor descriptor) {
+    if (descriptor instanceof ProblemDescriptorWithReporterName name && toolWrapper.getTool() instanceof DynamicGroupTool groupTool) {
+      String reportingToolName = name.getReportingToolShortName();
+      for (LocalInspectionToolWrapper child : groupTool.getChildren()) {
+        if (child.getShortName().equals(reportingToolName)) {
+          return child;
+        }
+      }
+    }
+    return toolWrapper;
   }
 
   public static @NotNull @Unmodifiable List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile psiFile,

@@ -219,6 +219,10 @@ com.intellij.codeInsight.daemon.impl.IntentionActionFilter
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - accept(com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile):Z
 - accept(com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile,I):Z
+f:com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName
+- com.intellij.codeInspection.ProblemDescriptorBase
+- <init>(com.intellij.codeInspection.ProblemDescriptorBase,java.lang.String):V
+- getReportingToolShortName():java.lang.String
 com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
 - com.intellij.codeInsight.intention.IntentionActionWithOptions
 - belongsToMyFamily(com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption):Z

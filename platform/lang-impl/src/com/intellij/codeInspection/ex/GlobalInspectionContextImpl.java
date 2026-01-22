@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
@@ -10,7 +10,6 @@ import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl;
-import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.util.GlobalInspectionScopeKt;
 import com.intellij.codeInspection.*;
@@ -546,21 +545,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
             runInspectionEngine(localTools, psiFile, restrictRange, restrictRange, inspectInjectedPsi,
                                        progressIndicator, PairProcessor.alwaysTrue());
           for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
+            LocalInspectionToolWrapper toolWrapper = entry.getKey();
             List<ProblemDescriptor> descriptors = entry.getValue();
-            if (descriptors.isEmpty()) continue;
-            Map<String, Tools> tools = getTools();
-            if (descriptors.getFirst() instanceof ProblemDescriptorWithReporterName) {
-              descriptors = ContainerUtil.filter(
-                descriptors,
-                d -> tools.containsKey(((ProblemDescriptorWithReporterName)d).getReportingToolShortName())
-              );
-              if (descriptors.isEmpty()) continue;
-            }
-            ProblemDescriptor firstDescriptor = descriptors.getFirst();
-            LocalInspectionToolWrapper toolWrapper =
-              firstDescriptor instanceof ProblemDescriptorWithReporterName descriptor
-              ? (LocalInspectionToolWrapper)tools.get(descriptor.getReportingToolShortName()).getTool()
-              : entry.getKey();
             InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
             BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, this, toolWrapper.getTool());
           }
