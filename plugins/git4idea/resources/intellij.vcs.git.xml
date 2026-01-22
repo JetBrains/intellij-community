@@ -560,6 +560,8 @@
     <group id="Git.WorkingTrees.ToolwindowGroup.Toolbar">
       <reference ref="Git.CreateNewWorkingTree"/>
       <reference ref="Git.WorkingTrees.Remove"/>
+      <separator/>
+      <reference ref="ContextHelp"/>
     </group>
 
     <group id="Git.WorkingTrees.ToolwindowGroup.Popup" popup="true">

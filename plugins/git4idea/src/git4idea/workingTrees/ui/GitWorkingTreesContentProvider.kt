@@ -3,6 +3,7 @@ package git4idea.workingTrees.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -41,6 +42,8 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
     //registered with com.intellij.statistics.actionCustomPlaceAllowlist ExtensionPoint
     internal const val GIT_WORKING_TREE_TOOLWINDOW_TAB_TOOLBAR: String = "GitWorkingTreeToolWindowTabToolbar"
     internal const val GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST: String = "GitWorkingTreeToolWindowTabEmptyList"
+
+    private const val TOOLWINDOW_CONTENT_HELP_ID = "worktree-help"
   }
 
   override fun initTabContent(content: Content) {
@@ -113,6 +116,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
     override fun uiDataSnapshot(sink: DataSink) {
       sink[GitWorkingTreeTabActionsDataKeys.SELECTED_WORKING_TREES] = list.selectedValuesList
       sink[GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY] = model.repository
+      sink[PlatformCoreDataKeys.HELP_ID] = TOOLWINDOW_CONTENT_HELP_ID
     }
   }
 
