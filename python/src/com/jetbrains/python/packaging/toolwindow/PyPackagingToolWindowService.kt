@@ -339,7 +339,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
             val sdk = readAction {
               val module = ModuleUtilCore.findModuleForFile(newFile, project)
               PythonSdkUtil.findPythonSdk(module)
-            } ?: return@launch
+            }
             initForSdk(sdk)
           }
         }
