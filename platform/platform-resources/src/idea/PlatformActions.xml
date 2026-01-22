@@ -1329,7 +1329,9 @@
       <action id="ChangeToolWindowLayout" class="com.intellij.ide.actions.QuickChangeToolWindowLayout">
         <override-text place="GoToAction"/>
       </action>
-      <action id="ChangeIdeScale" class="com.intellij.ide.actions.QuickChangeIdeScaleAction"/>
+      <action id="ChangeIdeScale" class="com.intellij.ide.actions.QuickChangeIdeScaleAction">
+        <override-text place="GoToAction"/>
+      </action>
     </group>
 
     <group id="MaintenanceGroup">
