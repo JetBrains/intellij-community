@@ -39,6 +39,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/ide-core-impl",
     "//platform/diagnostic/telemetry",
+    "//platform/core-impl",
   ]
 )
 
@@ -79,6 +80,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:mockito",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.shared` end
