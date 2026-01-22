@@ -206,11 +206,11 @@ public final class Optional</*<# @NotNull #>*/T> {
         return this.isEmpty() ? Stream.empty() : Stream.of(this.value);
     }
 
-    /*<# @Contract(value = "!null -> !null", pure = true) #>*//*<# @Flow(sourceIsContainer = true) #>*/public T orElse(/*<# @Flow(targetIsContainer = true) #>*//*<# @Nullable #>*/T other) {
+    /*<# @Contract(value = "!null -> !null", pure = true) #>*//*<# @Flow(sourceIsContainer = true) #>*/public /*<# @Nullable #>*/T orElse(/*<# @Flow(targetIsContainer = true) #>*//*<# @Nullable #>*/T other) {
         return (T)(this.value != null ? this.value : other);
     }
 
-    public T orElseGet(Supplier<? extends T> supplier) {
+    public /*<# @UnknownNullability #>*/T orElseGet(Supplier<? extends /*<# @Nullable #>*/T> supplier) {
         return (T)(this.value != null ? this.value : supplier.get());
     }
 
