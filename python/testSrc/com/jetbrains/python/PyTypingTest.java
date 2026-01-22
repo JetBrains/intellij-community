@@ -2630,7 +2630,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicsIntersectsSameName() {
-    doTest("tuple[int, str, bool, Any]",
+    doTest("tuple[int, str, bool, list[str], dict[str, int]]",
            """
              from typing import Tuple, TypeVarTuple, TypeVar
 
@@ -2640,7 +2640,7 @@ public class PyTypingTest extends PyTestCase {
              MyType = Tuple[int, T, *Ts]
              MyType1 = MyType[str, bool, *Ts]
 
-             t: MyType1[list[str], dict[str, int]]  # first place \s
+             t: MyType1[list[str], dict[str, int]]
              expr = t
              """);
   }
@@ -6861,7 +6861,16 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-87012
   public void testLegacyTypeAliasesWithQuotedUnionTypesPreservedInStubs() {
-    doMultiFileStubAwareTest("int | str", """
+    doMultiFileStubAwareTest("list[int | str]", """
+      from mod import x
+      
+      expr = x
+      """);
+  }
+
+  // PY-87012
+  public void testLegacyTypeAliasWithFullyQuotedTypeIsNotAllowed() {
+    doMultiFileStubAwareTest("Any", """
       from mod import x
       
       expr = x

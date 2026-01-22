@@ -5,9 +5,9 @@ __version__ = '0.1'
 from typing_extensions import TypeAlias
 from typing import TypeAlias as TA
 
-S1_ok = "foo"
-S2_ok = "foo.bar"
-S3_ok = "foo.bar[baz]"
+S1_notOk = "foo"
+S2_notOk = "foo.bar"
+S3_notOk = "foo.bar[baz]"
 too_long_string = "foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo"
 natural_text = "Foo is baz."
 glued_string = 'foo' '.bar'

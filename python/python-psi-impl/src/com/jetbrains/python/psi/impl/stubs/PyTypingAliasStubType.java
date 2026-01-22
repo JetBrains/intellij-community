@@ -68,7 +68,8 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
                                                                                  PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                                                  PyElementTypes.STRING_LITERAL_EXPRESSION,
                                                                                  PyElementTypes.NONE_LITERAL_EXPRESSION,
-                                                                                 PyElementTypes.ELLIPSIS_LITERAL_EXPRESSION);
+                                                                                 PyElementTypes.ELLIPSIS_LITERAL_EXPRESSION,
+                                                                                 PyElementTypes.STAR_EXPRESSION);
 
   @Override
   public @Nullable PyTypingAliasStub createStub(@NotNull PyTargetExpression psi) {
@@ -89,7 +90,18 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
       return null;
     }
 
-    if (isExplicitTypeAlias(target) || (target.getAnnotation() == null && looksLikeTypeHint(value))) {
+    if (isExplicitTypeAlias(target)) {
+      return value;
+    }
+    // Typing specification doesn't allow fully quoted values of implicit type aliases
+    // because they ambiguous with ordinary top-level string variables.
+    // For instance:
+    //
+    // FOO = "int | str"
+    //
+    // is not considered a valid type alias, even though the string content looks like a type hint.
+    // See "BadTypeAlias14" in aliases_implicit.py of the conformance test suite.
+    if (target.getAnnotation() == null && !(value instanceof PyStringLiteralExpression) && looksLikeTypeHint(value)) {
       return value;
     }
     return null;

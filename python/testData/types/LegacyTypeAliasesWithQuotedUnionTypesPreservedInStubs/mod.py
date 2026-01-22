@@ -1,3 +1,3 @@
-Alias = 'int | str'
+Alias = list['int | str']
 
 x: Alias

@@ -2095,13 +2095,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         }
         // Presumably, a TypeVar definition or a type alias
         if (element instanceof PyTargetExpression targetExpr) {
-          final PyExpression assignedValue;
-          if (context.maySwitchToAST(targetExpr)) {
-            assignedValue = targetExpr.findAssignedValue();
-          }
-          else {
-            assignedValue = PyTypingAliasStubType.getAssignedValueStubLike(targetExpr);
-          }
+          final PyExpression assignedValue = PyTypingAliasStubType.getAssignedValueStubLike(targetExpr);
           if (assignedValue != null) {
             elements.add(Pair.create(targetExpr, assignedValue));
             continue;
