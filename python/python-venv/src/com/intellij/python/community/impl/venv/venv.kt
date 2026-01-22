@@ -39,7 +39,7 @@ suspend fun createVenv(
   python: PythonBinary,
   venvDir: Directory,
   inheritSitePackages: Boolean = false,
-  envReader: VirtualEnvReader = VirtualEnvReader.Instance,
+  envReader: VirtualEnvReader = VirtualEnvReader(),
 ): PyResult<PythonBinary> {
   createVenv(python.asBinToExec(), venvDir.asEelPath().toString(), inheritSitePackages).getOr { return it }
 

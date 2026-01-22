@@ -30,6 +30,7 @@ import com.jetbrains.python.sdk.CustomSdkHomePattern;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.venvReader.VirtualEnvReader;
+import com.jetbrains.python.venvReader.VirtualEnvReaderKt;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
@@ -199,7 +200,7 @@ public final class PythonSdkUtil {
   // It is only here for external plugins
   @RequiresBackgroundThread(generateAssertion = false)
   public static @Nullable String getPythonExecutable(@NotNull String rootPath) {
-    var python = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(rootPath));
+    var python = VirtualEnvReaderKt.VirtualEnvReader().findPythonInPythonRoot(Path.of(rootPath));
     return (python != null) ? python.toString() : null;
   }
 

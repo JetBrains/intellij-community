@@ -92,7 +92,7 @@ suspend fun setupPipEnv(projectPath: Path, basePythonBinaryPath: PythonBinary?, 
 private suspend fun setUpPipEnv(moduleBasePath: Path, basePythonBinaryPath: PythonBinary?, installPackages: Boolean): PyResult<Path> {
   val pipEnv = setupPipEnv(moduleBasePath, basePythonBinaryPath, installPackages).getOr { return it }
   val pipEnvExecutablePathString = withContext(Dispatchers.IO) {
-    VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(pipEnv))?.toString()
+    VirtualEnvReader().findPythonInPythonRoot(Path.of(pipEnv))?.toString()
   } ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", pipEnv))
   return PyResult.success(Path.of(pipEnvExecutablePathString))
 }

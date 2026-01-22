@@ -45,7 +45,6 @@ class VirtualEnvReader private constructor(
     null -> null
   })
 
-  private constructor() : this(forcedVars = null, forcedOs = null)
 
   /**
    * Dir with virtual envs
@@ -222,8 +221,7 @@ class VirtualEnvReader private constructor(
 
 
   companion object {
-    @JvmStatic
-    val Instance: VirtualEnvReader = VirtualEnvReader()
+    internal val Instance: VirtualEnvReader = VirtualEnvReader(forcedVars = null, forcedOs = null)
 
 
     /**
@@ -242,3 +240,9 @@ class VirtualEnvReader private constructor(
     private fun getLocalEelIfApp(): EelApi? = if (ApplicationManager.getApplication() != null) localEel else null
   }
 }
+
+/**
+ * Default (production) instance
+ */
+@ApiStatus.Internal
+fun VirtualEnvReader(): VirtualEnvReader = Instance

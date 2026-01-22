@@ -53,7 +53,7 @@ private enum class Group {
 suspend fun <P: PathHolder> sortForExistingEnvironment(
   pythons: Collection<PythonSelectableInterpreter<P>>,
   module: Module?,
-  venvReader: VirtualEnvReader = VirtualEnvReader.Instance,
+  venvReader: VirtualEnvReader = VirtualEnvReader(),
 ): List<PythonSelectableInterpreter<P>> {
   val venvRoot = withContext(Dispatchers.IO) {
     venvReader.getVEnvRootDir()

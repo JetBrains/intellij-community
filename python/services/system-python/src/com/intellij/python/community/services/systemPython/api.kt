@@ -154,5 +154,5 @@ suspend fun createVenvFromSystemPython(
   python: SystemPython,
   venvDir: Directory,
   inheritSitePackages: Boolean = false,
-  envReader: VirtualEnvReader = VirtualEnvReader.Instance,
+  envReader: VirtualEnvReader = VirtualEnvReader(),
 ): PyResult<PythonBinary> = createVenv(python.pythonBinary, venvDir, inheritSitePackages, envReader)

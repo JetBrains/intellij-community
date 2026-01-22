@@ -41,6 +41,7 @@ import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.venvReader.VirtualEnvReader;
+import com.jetbrains.python.venvReader.VirtualEnvReaderKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +109,7 @@ public class PyTargetEnvCreationManager {
     // TODO [targets] Pass `parentDir = null`
     getPythonProcessResult(pythonExecution, false, true, targetEnvironmentRequest);
 
-    final Path binary = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(destinationDir));
+    final Path binary = VirtualEnvReaderKt.VirtualEnvReader().findPythonInPythonRoot(Path.of(destinationDir));
     final char separator = targetEnvironmentRequest.getTargetPlatform().getPlatform().fileSeparator;
     final String binaryFallback = destinationDir + separator + "bin" + separator + "python";
 

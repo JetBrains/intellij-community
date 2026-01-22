@@ -30,7 +30,7 @@ fun main() {
     for (python in File(root).listFiles()!!) {
       println("Running on $python")
 
-      val executable =  VirtualEnvReader.Instance.findPythonInPythonRoot(Path(python.absolutePath))!!.toString()
+      val executable =  VirtualEnvReader().findPythonInPythonRoot(Path(python.absolutePath))!!.toString()
       val sdk = PySdkTools.createTempSdk(VfsUtil.findFileByIoFile(File(executable), true)!!, SdkCreationType.SDK_PACKAGES_ONLY, null, null)
 
       val skeletonsDir = File(workingDir, "skeletons-${sdk.versionString!!.replace(" ", "_")}_" + abs(sdk.homePath!!.hashCode()))

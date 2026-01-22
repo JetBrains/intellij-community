@@ -21,5 +21,5 @@ fun PythonBinary.resolvePythonHome(): PythonHomePath = when (getEelDescriptor().
 @RequiresBackgroundThread
 @ApiStatus.Internal
 fun PythonHomePath.resolvePythonBinary(): PythonBinary? {
-  return VirtualEnvReader.Instance.findPythonInPythonRoot(this)
+  return VirtualEnvReader().findPythonInPythonRoot(this)
 }

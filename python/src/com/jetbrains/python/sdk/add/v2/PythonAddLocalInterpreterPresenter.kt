@@ -26,7 +26,7 @@ import java.nio.file.Path
  */
 class PythonAddLocalInterpreterPresenter(
   val moduleOrProject: ModuleOrProject,
-  val envReader: VirtualEnvReader = VirtualEnvReader.Instance,
+  val envReader: VirtualEnvReader = VirtualEnvReader(),
   val errorSink: ErrorSink,
   val bestGuessCreateSdkInfo: Deferred<CreateSdkInfoWithTool?>,
 ) {

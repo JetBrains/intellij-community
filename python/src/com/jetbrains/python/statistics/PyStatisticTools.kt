@@ -161,7 +161,7 @@ val Sdk.interpreterType: InterpreterType
     isPoetry -> POETRY
     isHatch -> HATCH
     this.isCondaVirtualEnv || this.sdkAdditionalData.asSafely<PythonSdkAdditionalData>()?.flavor is CondaEnvSdkFlavor -> CONDAVENV
-    VirtualEnvReader.Instance.isPyenvSdk(getHomePath()) -> PYENV
+    VirtualEnvReader().isPyenvSdk(getHomePath()) -> PYENV
     this.isVirtualEnv -> VIRTUALENV
     else -> REGULAR
   }

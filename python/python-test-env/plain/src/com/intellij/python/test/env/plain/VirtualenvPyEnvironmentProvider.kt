@@ -49,7 +49,7 @@ class VirtualenvPyEnvironmentProvider : PyEnvironmentProvider<VirtualenvPyEnviro
       inheritSitePackages = false
     ).getOrThrow()
     
-    val venvPython = VirtualEnvReader.Instance.findPythonInPythonRoot(targetPath)
+    val venvPython = VirtualEnvReader().findPythonInPythonRoot(targetPath)
                      ?: error("Failed to find Python executable in virtual environment directory: $targetPath")
     logger.info("Virtual environment Python path: $venvPython")
 

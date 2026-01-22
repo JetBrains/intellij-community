@@ -32,7 +32,7 @@ fun createSdkForPerformance(module: Module,
                             sdkHome: String = File(TestPath, "envs/py36_64").absolutePath): Sdk {
   ApplicationManagerEx.setInStressTest(true)
   // To disable slow debugging
-  val executable = VirtualEnvReader.Instance.findPythonInPythonRoot(Path(sdkHome))?.toFile() ?: throw AssertionError("No python on $sdkHome")
+  val executable = VirtualEnvReader().findPythonInPythonRoot(Path(sdkHome))?.toFile() ?: throw AssertionError("No python on $sdkHome")
   println("Creating Python SDK $sdkHome")
   return PySdkTools.createTempSdk(VfsUtil.findFileByIoFile(executable, true)!!, sdkCreationType, module,
                                   PyPackagingSettings.getInstance(module.project))

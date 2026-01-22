@@ -8,6 +8,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.venvReader.VirtualEnvReader;
+import com.jetbrains.python.venvReader.VirtualEnvReaderKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,6 +82,6 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
   }
 
   static void collectPyenvPythons(@NotNull Collection<Path> candidates) {
-    candidates.addAll(VirtualEnvReader.getInstance().findPyenvInterpreters());
+    candidates.addAll(VirtualEnvReaderKt.VirtualEnvReader().findPyenvInterpreters());
   }
 }

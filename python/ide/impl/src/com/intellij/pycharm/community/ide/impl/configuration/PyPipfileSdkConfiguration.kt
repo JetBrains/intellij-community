@@ -134,7 +134,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
         return@withBackgroundProgress it
       }
 
-      val path = withContext(Dispatchers.IO) { VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(pipEnv)) }
+      val path = withContext(Dispatchers.IO) { VirtualEnvReader().findPythonInPythonRoot(Path.of(pipEnv)) }
       if (path == null) {
         return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", pipEnv))
       }

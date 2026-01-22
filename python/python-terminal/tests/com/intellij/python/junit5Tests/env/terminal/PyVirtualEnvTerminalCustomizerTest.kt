@@ -124,7 +124,7 @@ class PyVirtualEnvTerminalCustomizerTest {
         Pair(Path(sdk.homePath!!), envDir.toRealPath().pathString)
       }
       else {
-        val venv = VirtualEnvReader.Instance.findPythonInPythonRoot(tempDirFixture.get())!!
+        val venv = VirtualEnvReader().findPythonInPythonRoot(tempDirFixture.get())!!
         Pair(venv, tempDirFixture.get().name)
       }
 

@@ -13,6 +13,7 @@ import com.jetbrains.python.sdk.BasePySdkExtKt;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.venvReader.VirtualEnvReader;
+import com.jetbrains.python.venvReader.VirtualEnvReaderKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,7 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
       final VirtualFile baseDirFromModule = module == null ? null : BasePySdkExtKt.getBaseDir(module);
       final Path baseDirFromContext = context == null ? null : context.getUserData(PySdkExtKt.getBASE_DIR());
 
-      var reader = VirtualEnvReader.getInstance();
+      var reader = VirtualEnvReaderKt.VirtualEnvReader();
       if (baseDirFromModule != null) {
         candidates.addAll(reader.findVenvsInDir(baseDirFromModule.toNioPath()));
       } else if (baseDirFromContext != null) {

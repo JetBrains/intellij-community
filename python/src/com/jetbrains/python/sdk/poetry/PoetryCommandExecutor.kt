@@ -124,7 +124,7 @@ internal suspend fun getPoetryVersion(): String? =
 
 @Internal
 suspend fun getPythonExecutable(homePath: String): String = withContext(Dispatchers.IO) {
-  VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(homePath))?.toString() ?: FileUtil.join(homePath, "bin", "python")
+  VirtualEnvReader().findPythonInPythonRoot(Path.of(homePath))?.toString() ?: FileUtil.join(homePath, "bin", "python")
 }
 
 /**

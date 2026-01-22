@@ -43,6 +43,7 @@ import com.jetbrains.python.target.PyDetectedSdkAdditionalData;
 import com.jetbrains.python.target.PyInterpreterVersionUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import com.jetbrains.python.venvReader.VirtualEnvReader;
+import com.jetbrains.python.venvReader.VirtualEnvReaderKt;
 import kotlin.coroutines.Continuation;
 import kotlin.jvm.functions.Function2;
 import kotlinx.coroutines.CoroutineScope;
@@ -144,7 +145,7 @@ public final class PythonSdkType extends SdkType {
   @RequiresBackgroundThread
   public @NotNull String adjustSelectedSdkHome(@NotNull String homePath) {
     try {
-      Path pythonPath = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(homePath));
+      Path pythonPath = VirtualEnvReaderKt.VirtualEnvReader().findPythonInPythonRoot(Path.of(homePath));
       return pythonPath != null ? pythonPath.toString() : homePath;
     }
     catch (InvalidPathException e) {
@@ -193,7 +194,7 @@ public final class PythonSdkType extends SdkType {
       @Override
       public boolean isFileSelectable(@Nullable VirtualFile file) {
         if (file == null) return false;
-        Path pythonPath = VirtualEnvReader.getInstance().findPythonInPythonRoot(file.toNioPath());
+        Path pythonPath = VirtualEnvReaderKt.VirtualEnvReader().findPythonInPythonRoot(file.toNioPath());
         return pythonPath != null;
       }
     }
