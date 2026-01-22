@@ -3,9 +3,11 @@ package com.intellij.terminal.frontend.view.completion
 import com.google.common.base.Ascii
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.frontend.view.impl.TerminalInput
 import org.jetbrains.plugins.terminal.session.ShellName
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 
 /**
  * Sends the data to the [TerminalInput] to properly insert the completion item.
@@ -20,36 +22,38 @@ internal fun insertTerminalCompletionItem(
 
   // Get the active process to retrieve replacement lengths
   val process = TerminalCommandCompletionService.getInstance(lookup.project).activeProcess ?: error("No active completion process")
+  val suggestion = item.`object` as ShellCompletionSuggestion
+  val typedPrefixLength = lookup.itemPattern(item).length
   val insertionInfo = calculateInsertionInfo(
     process,
-    lookup,
-    item,
+    suggestion,
+    typedPrefixLength,
     process.beforePrefixReplacementLength,
     process.afterPrefixReplacementLength,
   )
+  val optimizedInfo = optimizeInsertionInfo(process.context.outputModel, insertionInfo, typedPrefixLength)
 
   // First step - remove characters after cursor (if any)
   // Move right and then backspace to delete text after cursor
-  if (insertionInfo.afterPrefixReplacementLength > 0) {
-    repeat(insertionInfo.afterPrefixReplacementLength) {
+  if (optimizedInfo.afterPrefixReplacementLength > 0) {
+    repeat(optimizedInfo.afterPrefixReplacementLength) {
       terminalInput.sendRight()
     }
-    terminalInput.sendBytes(ByteArray(insertionInfo.afterPrefixReplacementLength) { Ascii.DEL })
+    terminalInput.sendBytes(ByteArray(optimizedInfo.afterPrefixReplacementLength) { Ascii.DEL })
   }
 
   // Second step - remove the typed prefix AND beforePrefixReplacementLength
-  val typedPrefixLength = lookup.itemPattern(item).length
-  val charsToRemove = typedPrefixLength + insertionInfo.beforePrefixReplacementLength
+  val charsToRemove = typedPrefixLength + optimizedInfo.beforePrefixReplacementLength
   if (charsToRemove > 0) {
     terminalInput.sendBytes(ByteArray(charsToRemove) { Ascii.DEL })
   }
 
   // Third step - insert the completion item
-  val realInsertValue = insertionInfo.insertValue.replace(CURSOR_MARKER, "")
+  val realInsertValue = optimizedInfo.insertValue.replace(CURSOR_MARKER, "")
   terminalInput.sendString(realInsertValue)
 
   // Fourth step - move the cursor to the custom position if it is specified
-  val cursorOffset = insertionInfo.insertValue.indexOf(CURSOR_MARKER)
+  val cursorOffset = optimizedInfo.insertValue.indexOf(CURSOR_MARKER)
   if (cursorOffset != -1) {
     val delta = realInsertValue.length - cursorOffset
     repeat(delta) {
@@ -63,12 +67,11 @@ internal fun insertTerminalCompletionItem(
  */
 private fun calculateInsertionInfo(
   process: TerminalCommandCompletionProcess,
-  lookup: LookupImpl,
-  item: LookupElement,
+  suggestion: ShellCompletionSuggestion,
+  typedPrefixLength: Int,
   initialBeforeReplacementLength: Int,
   initialAfterReplacementLength: Int,
 ): CompletionItemInsertionInfo {
-  val suggestion = item.`object` as ShellCompletionSuggestion
   val baseInsertValue = suggestion.insertValue ?: suggestion.name
 
   if (!suggestion.shouldEscape) {
@@ -87,7 +90,7 @@ private fun calculateInsertionInfo(
   }
 
   val outputModel = process.context.outputModel
-  val prefixStartOffset = outputModel.cursorOffset - lookup.itemPattern(item).length.toLong()
+  val prefixStartOffset = outputModel.cursorOffset - typedPrefixLength.toLong()
   val tokenStartOffset = prefixStartOffset - suggestion.prefixReplacementIndex.toLong()
   val tokenText = outputModel.getText(tokenStartOffset, prefixStartOffset).toString()
 
@@ -128,9 +131,62 @@ private fun calculateInsertionInfo(
   }
 }
 
+private fun optimizeInsertionInfo(
+  outputModel: TerminalOutputModel,
+  baseInfo: CompletionItemInsertionInfo,
+  typedPrefixLength: Int,
+): CompletionItemInsertionInfo {
+  // It is a safety net for exceptions caused by arithmetic operations mostly.
+  return try {
+    doOptimizeInsertionInfo(outputModel, baseInfo, typedPrefixLength)
+  }
+  catch (e: Exception) {
+    LOG.error("""
+      Failed to optimize completion item insertion, typedPrefixLength: $typedPrefixLength, base info: $baseInfo,
+      cursor line context: '${outputModel.getCursorLineContext()}'
+    """.trimIndent(), e)
+    baseInfo
+  }
+}
+
+/**
+ * Tries to optimize completion item insertion info by reducing the amount of text to replace.
+ */
+private fun doOptimizeInsertionInfo(
+  outputModel: TerminalOutputModel,
+  baseInfo: CompletionItemInsertionInfo,
+  typedPrefixLength: Int,
+): CompletionItemInsertionInfo {
+  val cursorOffset = outputModel.cursorOffset
+  val prefixStartOffset = cursorOffset - typedPrefixLength.toLong()
+  val tokenStartOffset = prefixStartOffset - baseInfo.beforePrefixReplacementLength.toLong()
+
+  val typedTokenText = outputModel.getText(tokenStartOffset, prefixStartOffset).toString()
+  val commonPrefixLength = typedTokenText.commonPrefixWith(baseInfo.insertValue).length
+
+  val afterCursorText = outputModel.getText(cursorOffset, cursorOffset + baseInfo.afterPrefixReplacementLength.toLong()).toString()
+  val commonSuffixLength = afterCursorText.commonSuffixWith(baseInfo.insertValue).length
+
+  val newBeforeReplacementLength = baseInfo.beforePrefixReplacementLength - commonPrefixLength
+  val newAfterReplacementLength = baseInfo.afterPrefixReplacementLength - commonSuffixLength
+  val newInsertValue = baseInfo.insertValue.substring(commonPrefixLength, baseInfo.insertValue.length - commonSuffixLength)
+  return CompletionItemInsertionInfo(newInsertValue, newBeforeReplacementLength, newAfterReplacementLength)
+}
+
 private fun needsEscaping(shellName: ShellName, value: String): Boolean {
   val charsToEscape = if (ShellName.isPowerShell(shellName)) POWERSHELL_CHARS_TO_ESCAPE else UNIX_SHELLS_CHARS_TO_ESCAPE
   return value.replace(CURSOR_MARKER, "").any { it in charsToEscape }
+}
+
+/** For debugging purposes */
+private fun TerminalOutputModel.getCursorLineContext(): String {
+  val cursorLine = getLineByOffset(cursorOffset)
+  val lineStartOffset = getStartOfLine(cursorLine)
+  val lineEndOffset = getEndOfLine(cursorLine)
+  return buildString {
+    append(getText(lineStartOffset, lineEndOffset).toString())
+    insert((cursorOffset - lineStartOffset).toInt(), "<cursor>")
+  }
 }
 
 private data class CompletionItemInsertionInfo(
@@ -144,3 +200,5 @@ private const val CURSOR_MARKER = "{cursor}"
 private const val POWERSHELL_CHARS_TO_ESCAPE = " \n\t\r`$'\"(){}[]<>|;&,@#"
 
 private const val UNIX_SHELLS_CHARS_TO_ESCAPE = " \n\t\r`$'\"(){}[]<>|;&*?\\"
+
+private val LOG = fileLogger()
