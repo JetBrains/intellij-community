@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.hints.declarative.*
@@ -15,21 +15,22 @@ import com.intellij.util.io.IOUtil.writeUTF
 import java.io.DataInput
 import java.io.DataOutput
 
+
 internal class DeclarativeHintsZombie(limbs: List<InlayData>) : LimbedZombie<InlayData>(limbs)
 
 internal object DeclarativeHintsNecromancy
   : LimbedNecromancy<DeclarativeHintsZombie, InlayData>(NecromancyInlayDataExternalizer.serdeVersion()) {
 
-  override fun buryLimb(grave: DataOutput, limb: InlayData) {
-    NecromancyInlayDataExternalizer.save(grave, limb)
-  }
-
-  override fun exhumeLimb(grave: DataInput): InlayData {
-    return NecromancyInlayDataExternalizer.read(grave)
-  }
-
   override fun formZombie(limbs: List<InlayData>): DeclarativeHintsZombie {
     return DeclarativeHintsZombie(limbs)
+  }
+
+  override fun Out.writeLimb(limb: InlayData) {
+    NecromancyInlayDataExternalizer.save(output, limb)
+  }
+
+  override fun In.readLimb(): InlayData {
+    return NecromancyInlayDataExternalizer.read(input)
   }
 }
 

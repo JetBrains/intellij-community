@@ -5,40 +5,42 @@ import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.CounterCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.ZombieCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.renderers.providers.painter
-import com.intellij.codeInsight.daemon.impl.readGutterIcon
-import com.intellij.codeInsight.daemon.impl.writeGutterIcon
 import com.intellij.openapi.editor.impl.zombie.LimbedNecromancy
 import com.intellij.openapi.editor.impl.zombie.LimbedZombie
 import com.intellij.openapi.util.TextRange
-import java.io.DataInput
-import java.io.DataOutput
 import javax.swing.Icon
 
 
-internal class CodeVisionZombie(limbs: List<CodeVisionLimb>) : LimbedZombie<CodeVisionLimb>(limbs) {
+internal class CodeVisionZombie private constructor(
+  limbs: List<CodeVisionLimb>
+) : LimbedZombie<CodeVisionLimb>(limbs) {
 
-  internal object Necromancy : LimbedNecromancy<CodeVisionZombie, CodeVisionLimb>(spellLevel=3) {
+  internal object Necromancy : LimbedNecromancy<CodeVisionZombie, CodeVisionLimb>(spellLevel=4) {
 
-    override fun buryLimb(grave: DataOutput, limb: CodeVisionLimb) {
-      writeInt(grave, limb.startOffset)
-      writeInt(grave, limb.endOffset)
-      writeString(grave, limb.tooltip)
-      writeString(grave, limb.longPresentation)
-      writeString(grave, limb.providerId)
-      writeGutterIcon(grave, limb.icon)
-      writeIntNullable(grave, limb.count)
-      writeBool(grave, limb.shouldBeDelimited)
+    override fun formZombie(limbs: List<CodeVisionLimb>): CodeVisionZombie {
+      return CodeVisionZombie(limbs)
     }
 
-    override fun exhumeLimb(grave: DataInput): CodeVisionLimb {
-      val startOffset:           Int = readInt(grave)
-      val endOffset:             Int = readInt(grave)
-      val tooltip:            String = readString(grave)
-      val presentation:       String = readString(grave)
-      val providerId:         String = readString(grave)
-      val icon:                Icon? = readGutterIcon(grave)
-      val count:                Int? = readIntNullable(grave)
-      val shouldBeDelimited: Boolean = readBool(grave)
+    override fun Out.writeLimb(limb: CodeVisionLimb) {
+      writeInt(limb.startOffset)
+      writeInt(limb.endOffset)
+      writeString(limb.tooltip)
+      writeString(limb.longPresentation)
+      writeString(limb.providerId)
+      writeIconOrNull(limb.icon)
+      writeIntOrNull(limb.count)
+      writeBool(limb.shouldBeDelimited)
+    }
+
+    override fun In.readLimb(): CodeVisionLimb {
+      val startOffset:           Int = readInt()
+      val endOffset:             Int = readInt()
+      val tooltip:            String = readString()
+      val presentation:       String = readString()
+      val providerId:         String = readString()
+      val icon:                Icon? = readIconOrNull()
+      val count:                Int? = readIntOrNull()
+      val shouldBeDelimited: Boolean = readBool()
       return CodeVisionLimb(
         startOffset,
         endOffset,
@@ -49,10 +51,6 @@ internal class CodeVisionZombie(limbs: List<CodeVisionLimb>) : LimbedZombie<Code
         count,
         shouldBeDelimited,
       )
-    }
-
-    override fun formZombie(limbs: List<CodeVisionLimb>): CodeVisionZombie {
-      return CodeVisionZombie(limbs)
     }
   }
 }

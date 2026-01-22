@@ -2,8 +2,6 @@
 package com.intellij.codeInsight.folding.impl
 
 import com.intellij.openapi.editor.impl.zombie.LimbedNecromancy
-import java.io.DataInput
-import java.io.DataOutput
 
 
 internal object CodeFoldingNecromancy : LimbedNecromancy<CodeFoldingZombie, FoldLimb>(spellLevel=3) {
@@ -12,26 +10,26 @@ internal object CodeFoldingNecromancy : LimbedNecromancy<CodeFoldingZombie, Fold
     return CodeFoldingZombie(limbs)
   }
 
-  override fun buryLimb(grave: DataOutput, limb: FoldLimb) {
-    writeInt(grave, limb.startOffset)
-    writeInt(grave, limb.endOffset)
-    writeString(grave, limb.placeholderText)
-    writeLongNullable(grave, limb.groupId)
-    writeBool(grave, limb.neverExpands)
-    writeBool(grave, limb.isExpanded)
-    writeBool(grave, limb.isCollapsedByDefault)
-    writeBool(grave, limb.isFrontendCreated)
+  override fun Out.writeLimb(limb: FoldLimb) {
+    writeInt(limb.startOffset)
+    writeInt(limb.endOffset)
+    writeString(limb.placeholderText)
+    writeLongOrNull(limb.groupId)
+    writeBool(limb.neverExpands)
+    writeBool(limb.isExpanded)
+    writeBool(limb.isCollapsedByDefault)
+    writeBool(limb.isFrontendCreated)
   }
 
-  override fun exhumeLimb(grave: DataInput): FoldLimb {
-    val startOffset:              Int = readInt(grave)
-    val endOffset:                Int = readInt(grave)
-    val placeholderText:       String = readString(grave)
-    val groupId:                Long? = readLongNullable(grave)
-    val neverExpands:         Boolean = readBool(grave)
-    val isExpanded:           Boolean = readBool(grave)
-    val isCollapsedByDefault: Boolean = readBool(grave)
-    val isFrontendCreated:    Boolean = readBool(grave)
+  override fun In.readLimb(): FoldLimb {
+    val startOffset:              Int = readInt()
+    val endOffset:                Int = readInt()
+    val placeholderText:       String = readString()
+    val groupId:                Long? = readLongOrNull()
+    val neverExpands:         Boolean = readBool()
+    val isExpanded:           Boolean = readBool()
+    val isCollapsedByDefault: Boolean = readBool()
+    val isFrontendCreated:    Boolean = readBool()
     return FoldLimb(
       startOffset,
       endOffset,

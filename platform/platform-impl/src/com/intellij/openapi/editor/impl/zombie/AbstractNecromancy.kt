@@ -1,10 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.zombie
 
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.ui.icons.CachedImageIcon
+import com.intellij.ui.icons.decodeCachedImageIconFromByteArray
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.IOUtil
 import java.io.DataInput
 import java.io.DataOutput
+import javax.swing.Icon
 
 
 abstract class AbstractNecromancy<Z : Zombie>(
@@ -12,104 +16,120 @@ abstract class AbstractNecromancy<Z : Zombie>(
   private val isDeepBury: Boolean,
 ) : Necromancy<Z> {
 
-  final override fun spellLevel(): Int = spellLevel
+  protected abstract fun Out.writeZombie(zombie: Z)
 
-  final override fun isDeepBury(): Boolean = isDeepBury
+  protected abstract fun In.readZombie(): Z
 
-  protected fun writeInt(grave: DataOutput, value: Int) {
-    DataInputOutputUtil.writeINT(grave, value)
+  final override fun spellLevel(): Int {
+    return spellLevel
   }
 
-  protected fun readInt(grave: DataInput): Int {
-    return DataInputOutputUtil.readINT(grave)
+  final override fun isDeepBury(): Boolean {
+    return isDeepBury
   }
 
-  protected fun writeLong(grave: DataOutput, value: Long) {
-    DataInputOutputUtil.writeLONG(grave, value)
+  final override fun buryZombie(grave: DataOutput, zombie: Z) {
+    Out(grave).writeZombie(zombie)
   }
 
-  protected fun readLong(grave: DataInput): Long {
-    return DataInputOutputUtil.readLONG(grave)
+  final override fun exhumeZombie(grave: DataInput): Z {
+    return In(grave).readZombie()
   }
 
-  protected fun writeString(grave: DataOutput, value: String) {
-    IOUtil.writeUTF(grave, value)
+  protected fun Out.writeInt(value: Int) {
+    DataInputOutputUtil.writeINT(output, value)
   }
 
-  protected fun readString(grave: DataInput): String {
-    return IOUtil.readUTF(grave)
+  protected fun In.readInt(): Int {
+    return DataInputOutputUtil.readINT(input)
   }
 
-  protected fun writeBool(grave: DataOutput, value: Boolean) {
-    grave.writeBoolean(value)
+  protected fun Out.writeLong(value: Long) {
+    DataInputOutputUtil.writeLONG(output, value)
   }
 
-  protected fun readBool(grave: DataInput): Boolean {
-    return grave.readBoolean()
+  protected fun In.readLong(): Long {
+    return DataInputOutputUtil.readLONG(input)
   }
 
-  protected fun writeIntNullable(grave: DataOutput, value: Int?) {
-    writeNullable(grave, value) {
-      writeInt(grave, it)
+  protected fun Out.writeString(value: String) {
+    IOUtil.writeUTF(output, value)
+  }
+
+  protected fun In.readString(): String {
+    return IOUtil.readUTF(input)
+  }
+
+  protected fun Out.writeBool(value: Boolean) {
+    output.writeBoolean(value)
+  }
+
+  protected fun In.readBool(): Boolean {
+    return input.readBoolean()
+  }
+
+  protected fun Out.writeIntOrNull(value: Int?) {
+    writeNullable(value) {
+      writeInt(it)
     }
   }
 
-  protected fun readIntNullable(grave: DataInput): Int? {
-    return readNullable(grave) {
-      readInt(grave)
+  protected fun In.readIntOrNull(): Int? {
+    return readNullable {
+      readInt()
     }
   }
 
-  protected fun writeLongNullable(grave: DataOutput, value: Long?) {
-    writeNullable(grave, value) {
-      writeLong(grave, it)
+  protected fun Out.writeLongOrNull(value: Long?) {
+    writeNullable(value) {
+      writeLong(it)
     }
   }
 
-  protected fun readLongNullable(grave: DataInput): Long? {
-    return readNullable(grave) {
-      readLong(grave)
+  protected fun In.readLongOrNull(): Long? {
+    return readNullable {
+      readLong()
     }
   }
 
-  protected fun writeStringNullable(grave: DataOutput, value: String?) {
-    writeNullable(grave, value) {
-      writeString(grave, it)
+  protected fun Out.writeStringOrNull(value: String?) {
+    writeNullable(value) {
+      writeString(it)
     }
   }
 
-  protected fun readStringNullable(grave: DataInput): String? {
-    return readNullable(grave) {
-      readString(grave)
+  protected fun In.readStringOrNull(): String? {
+    return readNullable {
+      readString()
     }
   }
 
-  protected fun <T> writeNullable(grave: DataOutput, value: T?, write: (T) -> Unit) {
+  protected fun <T> Out.writeNullable(value: T?, write: (T) -> Unit) {
     if (value == null) {
-      writeBool(grave, false)
+      writeBool(false)
     } else {
-      writeBool(grave, true)
+      writeBool(true)
       write(value)
     }
   }
 
-  protected fun <T> readNullable(grave: DataInput, read: () -> T): T? {
-    return if (readBool(grave)) {
+  protected fun <T> In.readNullable(read: () -> T): T? {
+    return if (readBool()) {
       read()
     } else {
       null
     }
   }
 
-  protected fun <T> writeList(grave: DataOutput, list: List<T>, write: (T) -> Unit) {
-    writeInt(grave, list.size)
+  protected fun <T> Out.writeList(list: List<T>, write: (T) -> Unit) {
+    writeInt(list.size)
     for (value in list) {
       write(value)
     }
   }
 
-  protected fun <T> readList(grave: DataInput, read: () -> T): List<T> {
-    val size = readInt(grave)
+  protected fun <T> In.readList(read: () -> T): List<T> {
+    val size = readInt()
     if (size == 0) {
       return emptyList()
     }
@@ -119,4 +139,41 @@ abstract class AbstractNecromancy<Z : Zombie>(
       }
     }
   }
+
+  protected fun Out.writeIconOrNull(icon: Icon?) {
+    val bytes: ByteArray? = if (icon is CachedImageIcon) {
+      try {
+        icon.encodeToByteArray()
+      } catch (e: Throwable) {
+        logger<CachedImageIcon>().error(e)
+        null
+      }
+    } else {
+      null
+    }
+    if (bytes == null) {
+      writeInt(0)
+    } else {
+      writeInt(bytes.size)
+      output.write(bytes)
+    }
+  }
+
+  protected fun In.readIconOrNull(): Icon? {
+    val size = readInt()
+    if (size != 0) {
+      val byteArray = ByteArray(size)
+      input.readFully(byteArray)
+      try {
+        return decodeCachedImageIconFromByteArray(byteArray)
+      } catch (e: Throwable) {
+        logger<CachedImageIcon>().error(e)
+      }
+    }
+    return null
+  }
+
+  protected class Out(val output: DataOutput)
+
+  protected class In(val input: DataInput)
 }

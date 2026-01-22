@@ -24,27 +24,29 @@ internal class TrafficLightZombie(
   val expandedStatus: List<StatusItem>,
 ) : Zombie {
 
-  class Necromancy(private val project: Project) : AbstractNecromancy<TrafficLightZombie>(spellLevel=0, isDeepBury=false) {
+  class Necromancy(
+    private val project: Project,
+  ) : AbstractNecromancy<TrafficLightZombie>(spellLevel=0, isDeepBury=false) {
 
-    override fun buryZombie(grave: DataOutput, zombie: TrafficLightZombie) {
-      writeString(grave, zombie.title)
-      writeString(grave, zombie.details)
-      writeBool(grave, zombie.showNavigation)
-      writeBool(grave, zombie.textStatus)
-      writeBool(grave, zombie.isToolbarEnabled)
-      writeExpandedStatus(grave, zombie.expandedStatus)
+    override fun Out.writeZombie(zombie: TrafficLightZombie) {
+      writeString(zombie.title)
+      writeString(zombie.details)
+      writeBool(zombie.showNavigation)
+      writeBool(zombie.textStatus)
+      writeBool(zombie.isToolbarEnabled)
+      writeExpandedStatus(zombie.expandedStatus)
       val icon = getFinalIcon2(zombie)
-      writeIconNullable(grave, icon)
+      writeIconNullable(output, icon)
     }
 
-    override fun exhumeZombie(grave: DataInput): TrafficLightZombie {
-      val title:                    String = readString(grave)
-      val details:                  String = readString(grave)
-      val showNavigation:          Boolean = readBool(grave)
-      val textStatus:              Boolean = readBool(grave)
-      val isToolbarEnabled:        Boolean = readBool(grave)
-      val expandedStatus: List<StatusItem> = readExpandedStatus(grave)
-      val icon:                      Icon? = readIconNullable(grave)
+    override fun In.readZombie(): TrafficLightZombie {
+      val title:                    String = readString()
+      val details:                  String = readString()
+      val showNavigation:          Boolean = readBool()
+      val textStatus:              Boolean = readBool()
+      val isToolbarEnabled:        Boolean = readBool()
+      val expandedStatus: List<StatusItem> = readExpandedStatus()
+      val icon:                      Icon? = readIconNullable(input)
       val finalIcon:                  Icon = getFinalIcon1(icon, expandedStatus)
       return TrafficLightZombie(
         finalIcon,
@@ -85,27 +87,27 @@ internal class TrafficLightZombie(
       return readGutterIcon(grave)
     }
 
-    private fun writeExpandedStatus(grave: DataOutput, expandedStatus: List<StatusItem>) {
-      writeList(grave, expandedStatus) {
-        writeString(grave, it.text)
-        writeStringNullable(grave, it.detailsText)
-        val severityType = writeStatusMetadata(grave, it.metadata)
+    private fun Out.writeExpandedStatus(expandedStatus: List<StatusItem>) {
+      writeList(expandedStatus) {
+        writeString(it.text)
+        writeStringOrNull(it.detailsText)
+        val severityType = writeStatusMetadata(it.metadata)
         val icon = if (severityType == SeverityType.CUSTOM) {
           it.icon
         } else {
           null
         }
-        writeIconNullable(grave, icon)
+        writeIconNullable(output, icon)
       }
     }
 
-    private fun readExpandedStatus(grave: DataInput): List<StatusItem> {
+    private fun In.readExpandedStatus(): List<StatusItem> {
       @Suppress("HardCodedStringLiteral")
-      return readList(grave) {
-        val text:                                 String = readString(grave)
-        val detailsText:                         String? = readStringNullable(grave)
-        val metadata: Pair<StatusItemMetadata, Boolean>? = readStatusMetadata(grave)
-        val icon:                                  Icon? = readIconNullable(grave)
+      return readList {
+        val text:                                 String = readString()
+        val detailsText:                         String? = readStringOrNull()
+        val metadata: Pair<StatusItemMetadata, Boolean>? = readStatusMetadata()
+        val icon:                                  Icon? = readIconNullable(input)
         val finalIcon:                             Icon? = getFinalIcon(icon, metadata)
         StatusItem(text, finalIcon, detailsText, metadata?.first)
       }
@@ -123,57 +125,57 @@ internal class TrafficLightZombie(
       return icon
     }
 
-    private fun writeStatusMetadata(grave: DataOutput, metadata: StatusItemMetadata?): SeverityType? {
+    private fun Out.writeStatusMetadata(metadata: StatusItemMetadata?): SeverityType? {
       val meta = metadata as? TrafficLightStatusItemMetadata
       var severityType: SeverityType? = null
-      writeNullable(grave, meta) {
-        writeInt(grave, it.count)
-        severityType = writeSeverity(grave, it.severity, it.count)
+      writeNullable(meta) {
+        writeInt(it.count)
+        severityType = writeSeverity(it.severity, it.count)
       }
       return severityType
     }
 
-    private fun readStatusMetadata(grave: DataInput): Pair<StatusItemMetadata, Boolean>? {
-      return readNullable(grave) {
-        val count = readInt(grave)
-        val (severity, found) = readSeverity(grave)
+    private fun In.readStatusMetadata(): Pair<StatusItemMetadata, Boolean>? {
+      return readNullable {
+        val count = readInt()
+        val (severity, found) = readSeverity()
         TrafficLightStatusItemMetadata(count, severity) to found
       }
     }
 
-    private fun readSeverity(grave: DataInput): Pair<HighlightSeverity, Boolean> {
-      val severityType = readSeverityType(grave)
+    private fun In.readSeverity(): Pair<HighlightSeverity, Boolean> {
+      val severityType = readSeverityType()
       val severity = getDefaultSeverity(severityType)
       if (severity != null) {
         return severity to true
       }
-      return readCustomSeverity(grave)
+      return readCustomSeverity()
     }
 
-    private fun writeSeverity(grave: DataOutput, severity: HighlightSeverity, problemCount: Int): SeverityType {
+    private fun Out.writeSeverity(severity: HighlightSeverity, problemCount: Int): SeverityType {
       val severityType = getSeverityType(severity)
-      writeSeverityType(grave, severityType)
+      writeSeverityType(severityType)
       if (severityType == SeverityType.CUSTOM) {
-        writeCustomSeverity(grave, severity, problemCount)
+        writeCustomSeverity(severity, problemCount)
       }
       return severityType
     }
 
-    private fun writeCustomSeverity(grave: DataOutput, severity: HighlightSeverity, problemCount: Int) {
-      writeString(grave, severity.name)
-      writeString(grave, severity.displayName)
-      writeString(grave, severity.displayCapitalizedName)
-      writeString(grave, severity.getCountMessage(problemCount))
-      writeInt(grave, severity.myVal)
+    private fun Out.writeCustomSeverity(severity: HighlightSeverity, problemCount: Int) {
+      writeString(severity.name)
+      writeString(severity.displayName)
+      writeString(severity.displayCapitalizedName)
+      writeString(severity.getCountMessage(problemCount))
+      writeInt(severity.myVal)
     }
 
     @Suppress("HardCodedStringLiteral")
-    private fun readCustomSeverity(grave: DataInput): Pair<HighlightSeverity, Boolean> {
-      val name:                   String = readString(grave)
-      val displayName:            String = readString(grave)
-      val displayCapitalizedName: String = readString(grave)
-      val countMessageTemplate:   String = readString(grave)
-      val value:                     Int = readInt(grave)
+    private fun In.readCustomSeverity(): Pair<HighlightSeverity, Boolean> {
+      val name:                   String = readString()
+      val displayName:            String = readString()
+      val displayCapitalizedName: String = readString()
+      val countMessageTemplate:   String = readString()
+      val value:                     Int = readInt()
       val severity = severityRegistrar().getSeverity(name)
       if (severity != null) {
         return severity to true
@@ -187,12 +189,12 @@ internal class TrafficLightZombie(
       ) to false
     }
 
-    private fun writeSeverityType(grave: DataOutput, severityType: SeverityType) {
-      writeInt(grave, severityType.ordinal)
+    private fun Out.writeSeverityType(severityType: SeverityType) {
+      writeInt(severityType.ordinal)
     }
 
-    private fun readSeverityType(grave: DataInput): SeverityType {
-      val ordinal = readInt(grave)
+    private fun In.readSeverityType(): SeverityType {
+      val ordinal = readInt()
       return SeverityType.entries[ordinal]
     }
 
