@@ -10,7 +10,7 @@ public class SetUserTypeRenderersCommand extends AbstractCommand {
 
   private final @NotNull List<@NotNull PyUserTypeRenderer> myRenderers;
   private static final String COMMAND_HEADER = "RENDERERS";
-  private static final int RENDERER_FIELD_COUNT = 9;
+  private static final int RENDERER_FIELD_COUNT = 10;
   private static final int CHILD_FIELD_COUNT = 1;
 
   public SetUserTypeRenderersCommand(final @NotNull RemoteDebugger debugger, final @NotNull List<@NotNull PyUserTypeRenderer> renderer) {
@@ -25,6 +25,7 @@ public class SetUserTypeRenderersCommand extends AbstractCommand {
       payload
         .add(RENDERER_FIELD_COUNT + CHILD_FIELD_COUNT * renderer.getChildren().size())
         .add(buildCondition(renderer.getToType()))
+        .add(renderer.getSubclassMatch())
         .add(buildCondition(renderer.getTypeCanonicalImportPath()))
         .add(buildCondition(renderer.getTypeQualifiedName()))
         .add(buildCondition(renderer.getTypeSourceFile()))
