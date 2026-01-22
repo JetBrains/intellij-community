@@ -10,6 +10,7 @@
   <content namespace="jetbrains">
     <module name="intellij.repository.search.common"/>
     <module name="intellij.repository.search.completion"/>
+    <module name="intellij.repository.search.ultimate"/>
   </content>
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->

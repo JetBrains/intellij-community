@@ -4,6 +4,9 @@
 - name: lib/modules/intellij.repository.search.completion.jar
   contentModules:
   - name: intellij.repository.search.completion
+- name: lib/modules/intellij.repository.search.ultimate.jar
+  contentModules:
+  - name: intellij.repository.search.ultimate
 - name: lib/package-search-api-client.jar
   library: package-search-api-client
   files:
