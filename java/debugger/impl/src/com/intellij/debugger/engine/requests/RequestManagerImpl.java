@@ -9,6 +9,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.JvmtiError;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.RequestManager;
 import com.intellij.debugger.requests.Requestor;
@@ -439,8 +440,9 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   @Override
   public void processAttached(DebugProcessImpl process) {
-    if (myDebugProcess.getVirtualMachineProxy().canBeModified()) {
-      myEventRequestManager = myDebugProcess.getVirtualMachineProxy().eventRequestManager();
+    VirtualMachineProxyImpl vmProxy = VirtualMachineProxyImpl.getCurrent();
+    if (vmProxy.canBeModified()) {
+      myEventRequestManager = vmProxy.eventRequestManager();
     }
   }
 
@@ -477,7 +479,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   public boolean checkReadOnly(Requestor requestor) {
-    if (!myDebugProcess.getVirtualMachineProxy().canBeModified()) {
+    if (!VirtualMachineProxyImpl.getCurrent().canBeModified()) {
       setInvalid(requestor, "Not available in read only mode");
       return true;
     }

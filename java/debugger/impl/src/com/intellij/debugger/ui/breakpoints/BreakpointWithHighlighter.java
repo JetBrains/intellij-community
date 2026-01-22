@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.AccessToken;
@@ -113,15 +114,18 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     return this;
   }
 
-  private void updateCaches(@Nullable DebugProcessImpl debugProcess) {
-    myIcon = calcIcon(debugProcess);
-    if (isVisible() && isValid() && debugProcess != null && myXBreakpoint instanceof XLineBreakpoint) {
+  private void updateCaches(@NotNull DebugProcessImpl debugProcess) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    updateIcon(debugProcess);
+    if (isVisible() && isValid() && myXBreakpoint instanceof XLineBreakpoint) {
       JavaDebugProcess process = debugProcess.getXdebugProcess();
       if (process != null) {
         process.getSession().updateBreakpointPresentation(((XLineBreakpoint)myXBreakpoint), myIcon, myInvalidMessage);
       }
     }
-    if (debugProcess != null && debugProcess.isAttached() && debugProcess.getVirtualMachineProxy().canBeModified() && !isObsolete()) {
+    if (!debugProcess.isAttached()) return;
+    VirtualMachineProxyImpl vmProxy = VirtualMachineProxyImpl.getCurrent();
+    if (vmProxy.canBeModified() && !isObsolete()) {
       if (myClassName == null) {
         myClassName = JVMNameUtil.getSourcePositionClassDisplayName(debugProcess, getSourcePosition());
       }
@@ -129,6 +133,10 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
         myPackageName = JVMNameUtil.getSourcePositionPackageDisplayName(debugProcess, getSourcePosition());
       }
     }
+  }
+
+  private void updateIcon(@Nullable DebugProcessImpl debugProcess) {
+    myIcon = calcIcon(debugProcess);
   }
 
   private Icon calcIcon(@Nullable DebugProcessImpl debugProcess) {
@@ -314,7 +322,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
       DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myProject).getContext();
       DebugProcessImpl debugProcess = context.getDebugProcess();
       if (debugProcess == null || !debugProcess.isAttached()) {
-        updateCaches(null);
+        updateIcon(null);
       }
       else {
         Objects.requireNonNull(context.getManagerThread()).schedule(new DebuggerCommandImpl() {

@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -44,7 +45,7 @@ public final class InstrumentationTracker {
   }
 
   public static void track(DebugProcessImpl debugProcess) {
-    if (ourNoticeRedefineClassMethod != null || debugProcess.getVirtualMachineProxy().getVirtualMachine() instanceof VirtualMachineImpl) {
+    if (ourNoticeRedefineClassMethod != null || VirtualMachineProxyImpl.getCurrent().getVirtualMachine() instanceof VirtualMachineImpl) {
       new InstrumentationTracker(debugProcess);
     }
   }

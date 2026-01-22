@@ -561,4 +561,12 @@ public class VirtualMachineProxyImpl extends UserDataHolderBase implements JdiTi
     }
     myModelSuspendCount--;
   }
+
+  /**
+   * Should be called in the debugger manager thread only.
+   */
+  @ApiStatus.Internal
+  public static @NotNull VirtualMachineProxyImpl getCurrent() {
+    return (VirtualMachineProxyImpl)VirtualMachineProxy.getCurrent();
+  }
 }

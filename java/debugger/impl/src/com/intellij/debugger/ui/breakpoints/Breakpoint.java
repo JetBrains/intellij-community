@@ -53,7 +53,6 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
@@ -61,6 +60,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointActionsPanel;
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
@@ -284,7 +284,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
    */
   protected void createOrWaitPrepare(DebugProcessImpl debugProcess, String classToBeLoaded) {
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classToBeLoaded);
-    VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
+    VirtualMachineProxyImpl virtualMachineProxy = VirtualMachineProxyImpl.getCurrent();
     if (virtualMachineProxy.canBeModified()) {
       processClassesPrepare(debugProcess, virtualMachineProxy.classesByName(classToBeLoaded).stream());
     }
@@ -293,7 +293,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, final @NotNull SourcePosition classPosition) {
     long startTimeNs = System.nanoTime();
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classPosition);
-    if (debugProcess.getVirtualMachineProxy().canBeModified() && !isObsolete()) {
+    if (VirtualMachineProxyImpl.getCurrent().canBeModified() && !isObsolete()) {
       List<ReferenceType> classes = debugProcess.getPositionManager().getAllClasses(classPosition);
       long timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNs);
       DebuggerStatistics.logBreakpointInstallSearchOverhead(this, timeMs);

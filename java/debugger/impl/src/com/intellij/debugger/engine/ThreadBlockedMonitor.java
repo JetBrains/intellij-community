@@ -116,7 +116,7 @@ public class ThreadBlockedMonitor {
           process.getManagerThread().schedule(new DebuggerCommandImpl() {
             @Override
             protected void action() {
-              ThreadReferenceProxyImpl threadProxy = process.getVirtualMachineProxy().getThreadReferenceProxy(blockingThread);
+              ThreadReferenceProxyImpl threadProxy = VirtualMachineProxyImpl.getCurrent().getThreadReferenceProxy(blockingThread);
               SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(process.getSuspendManager(), threadProxy);
               getCommandManagerThread()
                 .invokeNow(process.createResumeThreadCommand(suspendingContext, threadProxy));
@@ -137,7 +137,7 @@ public class ThreadBlockedMonitor {
       @Override
       protected void action() {
         if (myWatchedThreads.isEmpty()) return;
-        VirtualMachineProxyImpl vmProxy = myProcess.getVirtualMachineProxy();
+        VirtualMachineProxyImpl vmProxy = VirtualMachineProxyImpl.getCurrent();
         //TODO: can we do fast check without suspending all
         vmProxy.suspend();
         try {

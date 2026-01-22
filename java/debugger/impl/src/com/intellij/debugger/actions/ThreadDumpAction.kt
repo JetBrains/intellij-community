@@ -105,7 +105,7 @@ class ThreadDumpAction {
 
         if (providers.any { it.requiresEvaluation }) {
 
-          val vm = context.debugProcess!!.virtualMachineProxy
+          val vm = VirtualMachineProxyImpl.getCurrent()
           // If the previous dump is still being evaluated, only show the Java platform thread dump and do not start a new evaluation.
           if (vm.getUserData(EVALUATION_IN_PROGRESS) == true) {
             sendJavaPlatformThreads()
@@ -138,7 +138,7 @@ class ThreadDumpAction {
           }
         }
         else {
-          val vm = context.debugProcess!!.virtualMachineProxy
+          val vm = VirtualMachineProxyImpl.getCurrent()
           vm.suspend()
           try {
             sendAllItems(null)
@@ -164,7 +164,7 @@ class ThreadDumpAction {
     }
 
     fun buildJavaPlatformThreadDump(context: DebuggerContextImpl): List<ThreadState> {
-      val vm = context.debugProcess!!.virtualMachineProxy
+      val vm = VirtualMachineProxyImpl.getCurrent()
       vm.suspend()
       try {
         return buildThreadStates(vm)
@@ -541,7 +541,7 @@ private fun splitFirstTwoAndRemainingLines(text: String): Triple<String, String,
 
 internal class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
   override fun getProvider(context: DebuggerContextImpl) = object : ThreadDumpItemsProvider {
-    val vm = context.debugProcess!!.virtualMachineProxy
+    val vm = VirtualMachineProxyImpl.getCurrent()
 
     private val enabled =
       Registry.`is`("debugger.thread.dump.include.virtual.threads") &&

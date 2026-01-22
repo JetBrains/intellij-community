@@ -121,7 +121,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         DebuggerManagerThreadImpl.assertIsManagerThread();
         debugProcess.removeDebugProcessListener(this);
         boolean activated = myIsTrackersActivated.get();
-        VirtualMachineProxyImpl proxy = debugProcess.getVirtualMachineProxy();
+        VirtualMachineProxyImpl proxy = VirtualMachineProxyImpl.getCurrent();
         if (!proxy.canBeModified()) {
           return;
         }
@@ -186,7 +186,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
                           @NotNull TrackingType type,
                           boolean isTrackerEnabled) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (!debugProcess.getVirtualMachineProxy().canBeModified()) {
+    if (!VirtualMachineProxyImpl.getCurrent().canBeModified()) {
       return;
     }
     if (type == TrackingType.CREATION) {

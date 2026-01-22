@@ -10,9 +10,10 @@ object DexDebugFacility {
         return virtualMachine.name() == "Dalvik"
     }
 
+    @Suppress("unused")
     @Deprecated("Use isDex(virtualMachine)")
     fun isDex(debugProcess: DebugProcess): Boolean {
-        val virtualMachineProxy = debugProcess.virtualMachineProxy as? VirtualMachineProxyImpl ?: return false
+        val virtualMachineProxy = VirtualMachineProxyImpl.getCurrent()
         return isDex(virtualMachineProxy.virtualMachine)
     }
 }

@@ -10,6 +10,7 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.DebuggerUtils.isSynthetic
 import com.intellij.debugger.engine.evaluation.EvaluationContext
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DexDebugFacility
@@ -92,9 +93,10 @@ import kotlin.coroutines.resume
 
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames,
                                                                       PositionManagerAsync {
+    private val project = debugProcess.project
     private val sourceSearchScopes: List<GlobalSearchScope> = listOf(
         debugProcess.searchScope,
-        KotlinAllFilesScopeProvider.getInstance(debugProcess.project).getAllKotlinFilesScope()
+        KotlinAllFilesScopeProvider.getInstance(project).getAllKotlinFilesScope()
     )
 
     override fun isAcceptedFileType(fileType: FileType): Boolean = fileType == KotlinFileType.INSTANCE
@@ -151,7 +153,6 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                 try {
                     val javaSourceFileName = location.sourceName(DebugProcess.JAVA_STRATUM)
                     val javaClassName = JvmClassName.byInternalName(defaultInternalName(location))
-                    val project = debugProcess.project
 
                     val defaultPsiFile = DebuggerUtils.findSourceFileForClass(
                         project, sourceSearchScopes, javaClassName, javaSourceFileName, location
@@ -180,7 +181,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             return null
         }
 
-        PositionManagerImpl.adjustPositionForConditionalReturn(debugProcess, location, psiFile, sourceLineNumber)?.let {
+        PositionManagerImpl.adjustPositionForConditionalReturn(location, psiFile, sourceLineNumber)?.let {
             return it
         }
 
@@ -295,10 +296,10 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         getInlineFunctionOrArgumentVariables().mapNotNull { it.getBorders() }.toList()
 
     private suspend fun getAlternativeSource(location: Location): PsiFile? {
-        val manager = PsiManager.getInstance(debugProcess.project)
+        val manager = PsiManager.getInstance(project)
         val qName = location.declaringType().name()
         return readAction {
-            val alternativeFileUrl = DebuggerUtilsEx.getAlternativeSourceUrl(qName, debugProcess.project) ?: return@readAction null
+            val alternativeFileUrl = DebuggerUtilsEx.getAlternativeSourceUrl(qName, project) ?: return@readAction null
             val alternativePsiFile = VirtualFileManager.getInstance().findFileByUrl(alternativeFileUrl) ?: return@readAction null
             manager.findFile(alternativePsiFile)
         }
@@ -489,7 +490,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     private suspend fun KtFunction.hasExecutableCodeInsideOnLine(lineNumber: Int): Boolean {
         val file = readAction { containingFile.virtualFile }
-        return hasExecutableCodeInsideOnLine(file, lineNumber, debugProcess.project) { element ->
+        return hasExecutableCodeInsideOnLine(file, lineNumber, this@KotlinPositionManager.project) { element ->
             when (element) {
                 is KtNamedFunction -> ApplicabilityResult.UNKNOWN
                 is KtElement -> {
@@ -556,7 +557,6 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
         val className = JvmClassName.byInternalName(referenceInternalName)
 
-        val project = debugProcess.project
         val files = findFileCandidatesWithBackgroundProcess(project, className, sourceName, sourceSearchScopes)
         return DebuggerUtils.chooseApplicableFile(files, location)
     }
@@ -569,10 +569,11 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     override fun getAllClasses(sourcePosition: SourcePosition): List<ReferenceType> {
+        DebuggerManagerThreadImpl.assertIsManagerThread()
         val psiFile = sourcePosition.file
         if (psiFile is KtFile) {
 
-            val candidates = syncNonBlockingReadAction(psiFile.project) {
+            val candidates = syncNonBlockingReadAction(project) {
                 if (!RootKindFilter.projectAndLibrarySources.matches(psiFile)) return@syncNonBlockingReadAction null
                 getCandidates(sourcePosition)
             } ?: return emptyList()
@@ -581,7 +582,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             val referenceTypesInKtFile = classes.ifNotEmpty { findTargetClasses(this, sourcePosition) } ?: emptyList()
 
             val composeClassesIfNeeded = if (sourcePosition.isInsideProjectWithCompose()) {
-                getComposableSingletonsClasses(debugProcess, psiFile)
+                getComposableSingletonsClasses(psiFile)
             } else {
                 emptyList()
             }
@@ -593,7 +594,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             val decompiledPsiFile = runReadAction { psiFile.decompiledPsiFile }
             if (decompiledPsiFile is KtClsFile && runReadAction { sourcePosition.line } == -1) {
                 val className = JvmFileClassUtil.getFileClassInternalName(decompiledPsiFile)
-                return debugProcess.virtualMachineProxy.classesByName(className)
+                val vmProxy = VirtualMachineProxy.getCurrent()
+                return vmProxy.classesByName(className)
             }
         }
 
@@ -605,7 +607,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         ClassNameProvider().getCandidatesInfo(sourcePosition)
 
     private fun List<ClassNameProvider.ClassNameCandidateInfo>.getReferenceTypesCandidates(sourcePosition: SourcePosition): CandidatesSet {
-        val classes = flatMap { (className, _) -> debugProcess.virtualMachineProxy.classesByName(className) }
+        val vmProxy = VirtualMachineProxy.getCurrent()
+        val classes = flatMap { (className, _) -> vmProxy.classesByName(className) }
 
         val candidatesWithInline = filterHasInlineElements()
         if (candidatesWithInline.isEmpty()) return CandidatesSet(classes, emptyList())
@@ -616,8 +619,9 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     private fun getClassesWithInlinedCode(candidatesWithInline: List<String>, line: Int): List<ReferenceType> {
+        val vmProxy = VirtualMachineProxy.getCurrent()
         val candidatesWithInlineInternalNames = candidatesWithInline.map { it.fqnToInternalName() }
-        val futures = debugProcess.virtualMachineProxy.allClasses().map { type ->
+        val futures = vmProxy.allClasses().map { type ->
             hasInlinedLinesToAsync(type, line, candidatesWithInlineInternalNames)
                 .thenApply { hasInlinedLines -> type.takeIf { hasInlinedLines } }
                 .exceptionally { e ->
@@ -633,7 +637,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     private fun findTargetClasses(candidates: List<ReferenceType>, sourcePosition: SourcePosition): List<ReferenceType> =
         wrapIncompatibleThreadStateException {
             val matchingCandidates = candidates
-                .flatMap { referenceType -> debugProcess.findTargetClasses(referenceType, sourcePosition.line) }
+                .flatMap { referenceType -> findTargetClasses(referenceType, sourcePosition.line) }
 
             matchingCandidates.ifEmpty { candidates }
         } ?: emptyList()
@@ -696,7 +700,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             }
         }.mapNotNull { request ->
             debugProcess.requestsManager.createClassPrepareRequest(request.requestor, request.pattern)?.apply {
-                val vmProxy = debugProcess.virtualMachineProxy as? VirtualMachineProxyImpl ?: return@apply
+                val vmProxy = VirtualMachineProxy.getCurrent() as? VirtualMachineProxyImpl ?: return@apply
                 if (request.fileName != null && vmProxy.canUseSourceNameFilters()) {
                     addSourceNameFilter(request.fileName)
                 }
@@ -884,7 +888,7 @@ fun Location.getClassName(): String? {
     return JvmClassName.byFqNameWithoutInnerClasses(FqName(currentLocationFqName)).internalName.internalNameToFqn()
 }
 
-private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: Int): List<ReferenceType> {
+private fun findTargetClasses(outerClass: ReferenceType, lineAt: Int): List<ReferenceType> {
     val targetClasses = ArrayList<ReferenceType>(1)
 
     try {
@@ -918,7 +922,8 @@ private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: In
         //             val a = Foo() /* line 3 */
         //          }
         //     }
-        val nestedTypes = virtualMachineProxy.nestedTypes(outerClass)
+        val vmProxy = VirtualMachineProxy.getCurrent()
+        val nestedTypes = vmProxy.nestedTypes(outerClass)
         for (nested in nestedTypes) {
             targetClasses += findTargetClasses(nested, lineAt)
         }

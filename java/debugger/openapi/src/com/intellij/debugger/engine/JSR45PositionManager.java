@@ -5,6 +5,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -113,7 +114,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
   public @NotNull List<ReferenceType> getAllClasses(@NotNull SourcePosition classPosition) throws NoDataException {
     checkSourcePositionFileType(classPosition);
 
-    final List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().allClasses();
+    final List<ReferenceType> referenceTypes = VirtualMachineProxy.getCurrent().allClasses();
 
     final List<ReferenceType> result = new ArrayList<>();
 

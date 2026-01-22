@@ -12,6 +12,7 @@ import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.GeneratedLocation;
 import com.intellij.debugger.jdi.GeneratedReferenceType;
@@ -1125,7 +1126,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
           return true;
         }
         if (methodClassName != null) {
-          if (ContainerUtil.exists(process.getVirtualMachineProxy().classesByName(className), t -> instanceOf(t, methodClassName))) {
+          if (ContainerUtil.exists(VirtualMachineProxy.getCurrent().classesByName(className), t -> instanceOf(t, methodClassName))) {
             return true;
           }
           PsiClass aClass = PositionManagerImpl.findClass(process.getProject(), className, process.getSearchScope(), true);

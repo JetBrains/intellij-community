@@ -24,6 +24,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -235,7 +236,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
 
   protected @NotNull Stream<ReferenceType> matchingClasses(DebugProcessImpl debugProcess) {
     Pattern pattern = PatternUtil.fromMask(getClassPattern());
-    return debugProcess.getVirtualMachineProxy().allClasses().stream()
+    return VirtualMachineProxyImpl.getCurrent().allClasses().stream()
       .filter(c -> pattern.matcher(c.name()).matches());
   }
 
