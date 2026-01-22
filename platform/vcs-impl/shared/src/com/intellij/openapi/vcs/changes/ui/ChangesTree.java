@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CommonActionsManager;
@@ -357,7 +357,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   }
 
   public void installPopupHandler(ActionGroup group) {
-    PopupHandler.installPopupMenu(this, group, "ChangesTreePopup");
+    PopupHandler.installPopupMenu(this, group, ActionPlaces.CHANGES_TREE_POPUP);
   }
 
   public JComponent getPreferredFocusedComponent() {
