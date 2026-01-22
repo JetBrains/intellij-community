@@ -38,7 +38,7 @@ internal class K2TypeParameterConstraintNameInWhereClauseCompletionContributor :
                 .withInsertHandler(TypeParameterInWhenClauseInsertionHandler)
                 .withPsiElement(typeParameter.psi)
                 .withIcon(icon)
-                .let { context.addElement(it) }
+                .let { addElement(it) }
         }
     }
 }

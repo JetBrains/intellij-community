@@ -52,7 +52,7 @@ internal class K2PackageCompletionContributor : K2SimpleCompletionContributor<Ko
                             scopeKind = KtOutsideTowerScopeKinds.PackageMemberScope,
                         ),
                     )
-            }.forEach { context.addElement(it) }
+            }.forEach { addElement(it) }
     }
 
     override fun K2CompletionSetupScope<KotlinRawPositionContext>.isAppropriatePosition(): Boolean = when (position) {

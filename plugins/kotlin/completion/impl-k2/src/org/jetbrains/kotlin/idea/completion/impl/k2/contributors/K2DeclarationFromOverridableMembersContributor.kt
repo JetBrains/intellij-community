@@ -48,7 +48,7 @@ internal class K2DeclarationFromOverridableMembersContributor : K2SimpleCompleti
         if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
             val elements = OverrideKeywordHandler(context.importStrategyDetector)
                 .createOverrideMemberLookups(context.parameters, declaration, context.project)
-            context.addElements(elements)
+            addElements(elements)
         }
     }
 

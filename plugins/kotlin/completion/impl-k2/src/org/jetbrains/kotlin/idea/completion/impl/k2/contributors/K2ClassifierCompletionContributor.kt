@@ -182,7 +182,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                 }
             }
 
-        scopeClassifiers.forEach { sectionContext.addElement(it) }
+        scopeClassifiers.forEach { addElement(it) }
     }
 
     context(_: KaSession, sectionContext: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
@@ -222,7 +222,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
             emptySequence()
         }
 
-        indexClassifiers.forEach { sectionContext.addElement(it) }
+        indexClassifiers.forEach { addElement(it) }
     }
 
     context(_: KaSession, sectionContext: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
@@ -244,7 +244,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                         positionContext = sectionContext.positionContext,
                         visibilityChecker = sectionContext.visibilityChecker,
                     ).map { it.applyWeighs(symbolWithOrigin) }
-                }.forEach { sectionContext.addElement(it) }
+                }.forEach { addElement(it) }
         } else {
             sectionContext.sink.registerChainContributor(this)
         }

@@ -68,7 +68,7 @@ internal class K2DeclarationFromUnresolvedNameContributor : K2SimpleCompletionCo
         if (unresolvedRef.reference?.resolve() == null) {
             val lookupElement = LookupElementBuilder.create(name).suppressAutoInsertion()
                 .also { it.priority = ItemPriority.FROM_UNRESOLVED_NAME_SUGGESTION }
-            context.addElement(lookupElement)
+            addElement(lookupElement)
         }
     }
 

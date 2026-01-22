@@ -92,9 +92,9 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         val isSingleCondition = whenCondition.isSingleConditionInEntry()
 
         createNullBranchLookupElement(subjectType)
-            ?.let { context.addElement(it) }
+            ?.let { addElement(it) }
         createElseBranchLookupElement(whenCondition)
-            ?.let { context.addElement(it) }
+            ?.let { addElement(it) }
 
         when {
             classSymbol?.classKind == KaClassKind.ENUM_CLASS -> {
@@ -163,7 +163,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
                     fqName = (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
                     isSingleCondition = isSingleCondition,
                 )
-            }.forEach { context.addElement(it) }
+            }.forEach { addElement(it) }
 
         if (prefixMatcher.prefix.isNotEmpty()) {
             context.completeLaterInSameSession("Index", priority = K2ContributorSectionPriority.FROM_INDEX) {
@@ -183,7 +183,11 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
                             fqName = (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
                             isSingleCondition = isSingleCondition,
                         )
-                    }.forEach { innerContext.addElement(it) }
+                    }.forEach {
+                        context(innerContext) {
+                            addElement(it)
+                        }
+                    }
             }
         }
     }
@@ -227,7 +231,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
                     fqName = classId.asSingleFqName(),
                     isSingleCondition = isSingleCondition,
                 )
-            }.forEach { context.addElement(it) }
+            }.forEach { addElement(it) }
 
         if (getAllSealedInheritors(classSymbol).any { it.modality == KaSymbolModality.ABSTRACT }) {
             completeAllTypes(
@@ -307,7 +311,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
                     fqName = entry.callableId?.asSingleFqName(),
                     isSingleCondition = isSingleCondition,
                 )
-            }.forEach { context.addElement(it) }
+            }.forEach { addElement(it) }
     }
 
     private fun KtWhenCondition.isSingleConditionInEntry(): Boolean {

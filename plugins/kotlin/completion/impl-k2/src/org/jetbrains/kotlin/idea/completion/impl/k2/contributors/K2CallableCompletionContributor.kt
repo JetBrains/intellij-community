@@ -179,7 +179,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         if (receiver == null) return
         val elements = collectDotCompletionFromLocalScope(receiver)
         elements.createFilteredLookupElements(shadowedCallablesFilter)
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<P>)
@@ -258,7 +258,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             collectDotCompletionFromIndex(receiver)
         }
         elements.createFilteredLookupElements(shadowedCallablesFilter)
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<P>)
@@ -753,7 +753,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
 
         createAndFilterMetadataForMemberCallables(enumEntries)
             .createFilteredLookupElements(shadowedCallablesFilter)
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<P>)
@@ -774,7 +774,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             }
 
         availableLocalAndMemberNonExtensions.createFilteredLookupElements(shadowedCallablesFilter)
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<P>)
@@ -803,7 +803,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
 
         (extensionsWhichCanBeCalled + availableStaticAndTopLevelNonExtensions)
             .createFilteredLookupElements(shadowedCallablesFilter)
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<P>)
@@ -856,7 +856,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         }
         createAndFilterMetadataForMemberCallables(enumEntries + enumConstants)
             .createFilteredLookupElements(shadowedCallablesFilter)
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<P>)

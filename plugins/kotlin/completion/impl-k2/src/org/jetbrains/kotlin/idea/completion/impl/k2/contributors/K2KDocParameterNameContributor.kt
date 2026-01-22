@@ -43,7 +43,7 @@ internal class K2KDocParameterNameContributor : K2SimpleCompletionContributor<KD
         getParametersForKDoc(ownerDeclaration.symbol)
             .filter { (it as KaNamedSymbol).name.asString() !in alreadyDocumentedParameters }
             .flatMap { createLookupElements(it) }
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<KDocNameReferencePositionContext>)

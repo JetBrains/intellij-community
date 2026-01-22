@@ -135,7 +135,7 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
                 elementBuilder
                     .apply { isTrailingLambdaParameter = true }
                     .applyWeighs()
-            }.forEach { context.addElement(it) }
+            }.forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<P>)

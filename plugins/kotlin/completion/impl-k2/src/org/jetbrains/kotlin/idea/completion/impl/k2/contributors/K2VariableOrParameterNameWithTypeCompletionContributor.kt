@@ -135,7 +135,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2Simple
             if (!shouldInsertType(contextElement) && lookupNamesAdded.contains(name)) continue
 
             lookupElement.nameWithTypePriority = -count // suggestions that appear more often than others get higher priority
-            context.addElement(lookupElement)
+            addElement(lookupElement)
             lookupNamesAdded.add(name)
         }
     }
@@ -225,7 +225,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2Simple
             lookupElement.nameWithTypePriority = userPrefix.length // suggestions with longer user prefix get lower priority
             lookupElement.applyWeighs(KtSymbolWithOrigin(symbol, scopeKind))
 
-            context.addElement(lookupElement)
+            addElement(lookupElement)
         }
     }
 

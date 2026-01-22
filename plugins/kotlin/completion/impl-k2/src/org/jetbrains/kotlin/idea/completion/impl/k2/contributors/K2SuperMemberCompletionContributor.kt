@@ -75,13 +75,13 @@ internal class K2SuperMemberCompletionContributor : K2SimpleCompletionContributo
                 namesNeedDisambiguation = namesNeedDisambiguation,
                 importStrategyDetector = context.importStrategyDetector,
             )
-        }.forEach { context.addElement(it) }
+        }.forEach { addElement(it) }
 
         collectDelegateCallToSuperMember(
             superReceiver = superReceiver,
             nonExtensionMembers = nonExtensionMembers,
             namesNeedDisambiguation = namesNeedDisambiguation,
-        ).forEach { context.addElement(it) }
+        ).forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>)

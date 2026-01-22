@@ -254,13 +254,15 @@ internal abstract class K2CompletionContributor<P : KotlinRawPositionContext>(
     context(_: KaSession, context: K2CompletionSectionContext<P>)
     open fun shouldExecute(): Boolean = true
 
-    protected fun K2CompletionSectionContext<P>.addElement(element: LookupElement) {
-        sink.addElement(decorateLookupElement(element))
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
+    protected fun addElement(element: LookupElement) {
+        context.sink.addElement(decorateLookupElement(element))
     }
 
-    protected fun K2CompletionSectionContext<P>.addElements(elements: Iterable<LookupElement>) {
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
+    protected fun addElements(elements: Iterable<LookupElement>) {
         val decoratedElements = elements.map { decorateLookupElement(it) }
-        sink.addElements(decoratedElements)
+        context.sink.addElements(decoratedElements)
     }
 
     /**
@@ -272,24 +274,25 @@ internal abstract class K2CompletionContributor<P : KotlinRawPositionContext>(
      */
     protected open fun K2CompletionSectionContext<P>.getGroupPriority(): Int = 0
 
-    private fun K2CompletionSectionContext<P>.decorateLookupElement(
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
+    private fun decorateLookupElement(
         element: LookupElement,
     ): LookupElement {
-        element.groupPriority = getGroupPriority()
+        element.groupPriority = context.getGroupPriority()
         element.contributorClass = this::class.java
 
-        if (isAtFunctionLiteralStart(parameters.position)) {
+        if (isAtFunctionLiteralStart(context.parameters.position)) {
             element.suppressItemSelectionByCharsOnTyping = true
         }
 
-        val bracesInsertHandler = when (parameters.type) {
+        val bracesInsertHandler = when (context.parameters.type) {
             KotlinFirCompletionParameters.CorrectionType.BRACES_FOR_STRING_TEMPLATE -> InsertStringTemplateBracesInsertHandler
             else -> WrapSingleStringTemplateEntryWithBracesInsertHandler
         }
 
         return LookupElementDecorator.withDelegateInsertHandler(
             LookupElementDecorator.withDelegateInsertHandler(element, bracesInsertHandler),
-            CompletionCharInsertHandler(parameters.delegate.isAutoPopup),
+            CompletionCharInsertHandler(context.parameters.delegate.isAutoPopup),
         )
     }
 }

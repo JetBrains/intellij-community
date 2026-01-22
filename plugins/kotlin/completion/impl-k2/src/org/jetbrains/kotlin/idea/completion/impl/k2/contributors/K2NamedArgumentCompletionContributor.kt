@@ -95,7 +95,7 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
                 }
             }
         }.map { it.applyWeighs() }
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 
     /**
