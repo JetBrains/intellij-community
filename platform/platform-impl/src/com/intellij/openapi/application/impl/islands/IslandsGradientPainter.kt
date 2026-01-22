@@ -142,11 +142,12 @@ private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project,
 
   alignTxToInt(g, null, false, true, PaintUtil.RoundingMode.FLOOR)
 
+  g.composite = initialComposite
+
   val startColor = if (SystemInfo.isMac) Gray.TRANSPARENT else ColorUtil.toAlpha(mainColor, 0)
   g.paint = GradientPaint(0f, 0f, startColor, 0f, height.toFloat(), mainColor)
   g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height)
 
-  g.composite = initialComposite
   islandsInactiveFrameGraphics2D?.preserveComposite = false
 }
 
