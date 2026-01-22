@@ -4,10 +4,7 @@ package com.intellij.grazie.ide.inspection.grammar
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.ex.InspectionProfileImpl
-import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
@@ -74,7 +71,6 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
           .forEach { (runner, problems) ->
             problems.forEach { problem ->
               runner.toProblemDescriptors(problem, holder.isOnTheFly)
-                .retainEnabled()
                 .forEach(holder::registerProblem)
             }
           }
@@ -92,7 +88,6 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
 
   private fun reportProblem(problem: TextProblem, holder: ProblemsHolder) {
     CheckerRunner(problem.text).toProblemDescriptors(problem, holder.isOnTheFly)
-      .retainEnabled()
       .forEach { holder.registerProblem(it) }
   }
 
@@ -109,9 +104,6 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
       tools == null || !tools.isEnabled(file)
     }
   }
-
-  private fun List<ProblemDescriptor>.retainEnabled() =
-    filter { isInspectionEnabled(it.problemGroup!!.problemName!!, it.startElement.containingFile) }
 
   /**
    * Most of those methods are used in Grazie Pro.
@@ -151,13 +143,6 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
         val length = contents.asSequence().filter { it.domain in checkedDomains }.sumOf { it.length }
         CachedValueProvider.Result.create(length > MAX_TEXT_LENGTH_IN_FILE, service<GrazieConfig>(), file)
       }
-    }
-
-    @JvmStatic
-    fun isInspectionEnabled(shortName: String, file: PsiFile): Boolean {
-      val profile = getActiveProfile(file)
-      val tools = profile.getToolsOrNull(shortName, file.project)
-      return tools != null && tools.isEnabled(file)
     }
 
     @JvmStatic
@@ -207,13 +192,6 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
           else -> 2
         }
       }
-    }
-
-    private fun getActiveProfile(file: PsiFile): InspectionProfileImpl {
-      val project = file.project
-      val profile = InspectionProfileManager.getInstance(project).currentProfile
-      val customizer = InspectionProfileWrapper.getCustomInspectionProfileWrapper(file)
-      return (customizer?.apply(profile)?.inspectionProfile ?: profile) as InspectionProfileImpl
     }
 
     data class TextContentRelatedData(private val psiFile: PsiFile, val contents: Set<TextContent>) {

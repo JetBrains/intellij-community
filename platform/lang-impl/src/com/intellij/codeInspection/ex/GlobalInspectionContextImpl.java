@@ -548,10 +548,18 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
             List<ProblemDescriptor> descriptors = entry.getValue();
             if (descriptors.isEmpty()) continue;
-            final ProblemDescriptor firstDescriptor = descriptors.get(0);
+            Map<String, Tools> tools = getTools();
+            if (descriptors.getFirst() instanceof ProblemDescriptorWithReporterName) {
+              descriptors = ContainerUtil.filter(
+                descriptors,
+                d -> tools.containsKey(((ProblemDescriptorWithReporterName)d).getReportingToolShortName())
+              );
+              if (descriptors.isEmpty()) continue;
+            }
+            ProblemDescriptor firstDescriptor = descriptors.getFirst();
             LocalInspectionToolWrapper toolWrapper =
               firstDescriptor instanceof ProblemDescriptorWithReporterName descriptor
-              ? (LocalInspectionToolWrapper)getTools().get(descriptor.getReportingToolShortName()).getTool()
+              ? (LocalInspectionToolWrapper)tools.get(descriptor.getReportingToolShortName()).getTool()
               : entry.getKey();
             InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
             BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, this, toolWrapper.getTool());
