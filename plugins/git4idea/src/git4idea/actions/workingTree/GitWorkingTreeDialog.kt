@@ -111,7 +111,6 @@ internal class GitWorkingTreeDialog(
         checkBox(GitBundle.message("working.tree.dialog.checkbox.new.branch")).bindSelected(createNewBranch).gap(RightGap.SMALL)
 
         textField().bindText(newBranchName).align(Align.FILL).validationOnApply { validateNewBranchNameOnApply() }
-          .comment(getNewBranchComment())
           .enabledIf(createNewBranch)
       }
         .bottomGap(BottomGap.MEDIUM)
@@ -214,16 +213,6 @@ internal class GitWorkingTreeDialog(
       .map { BranchWithWorkingTree(it, null) }
     result.addAll(remotes)
     return result
-  }
-
-  private fun getNewBranchComment(): @NlsContexts.DetailedDescription String {
-    val name = existingBranchWithWorkingTree.get()?.branch?.name
-    return if (name == null) {
-      GitBundle.message("working.tree.dialog.label.new.branch.detached.comment")
-    }
-    else {
-      GitBundle.message("working.tree.dialog.label.new.branch.comment", name)
-    }
   }
 
   private fun suggestProjectName(): String {
