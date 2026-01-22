@@ -347,8 +347,8 @@ class WelcomeScreenRightTab(
 
   @get:Composable
   private val secondaryFontColor
-    get() = color(dark = JewelTheme.colorPalette.grayOrNull(10),
-                  light = JewelTheme.colorPalette.grayOrNull(1),
+    get() = color(dark = Color(0xFFB4B8BF),
+                  light = Color(0xFF1E1F22),
                   fallback = Color(0xFFB4B8BF))
 
   private val panelBackgroundColor
