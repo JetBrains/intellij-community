@@ -76,10 +76,6 @@ class ChangesViewManager internal constructor(private val project: Project, priv
   override fun dispose() {
   }
 
-  override fun scheduleRefresh(callback: Runnable) {
-    changesView?.scheduleRefreshNow(callback)
-  }
-
   override fun scheduleRefresh() {
     changesView?.scheduleDelayedRefresh()
   }

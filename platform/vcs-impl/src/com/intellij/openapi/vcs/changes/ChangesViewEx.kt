@@ -1,12 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.changes.viewModel.ChangesViewProxy
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.CalledInAny
 
 @ApiStatus.NonExtendable
 interface ChangesViewEx : ChangesViewI {
@@ -15,9 +13,6 @@ interface ChangesViewEx : ChangesViewI {
    */
   @RequiresEdt
   fun resetViewImmediatelyAndRefreshLater()
-
-  @CalledInAny
-  fun scheduleRefresh(@RequiresBackgroundThread callback: Runnable)
 
   @RequiresEdt
   @ApiStatus.Internal

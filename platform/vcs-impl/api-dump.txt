@@ -755,7 +755,6 @@ com.intellij.openapi.vcs.changes.ChangesViewEx
 - com.intellij.openapi.vcs.changes.ChangesViewI
 - a:getCommitWorkflowHandler():com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 - a:resetViewImmediatelyAndRefreshLater():V
-- a:scheduleRefresh(java.lang.Runnable):V
 com.intellij.openapi.vcs.changes.ChangesViewI
 - a:scheduleRefresh():V
 - a:selectChanges(java.util.List):V
@@ -772,7 +771,6 @@ f:com.intellij.openapi.vcs.changes.ChangesViewManager
 - sf:getLocalChangesToolWindowName(com.intellij.openapi.project.Project):java.lang.String
 - resetViewImmediatelyAndRefreshLater():V
 - scheduleRefresh():V
-- scheduleRefresh(java.lang.Runnable):V
 - selectChanges(java.util.List):V
 - selectFile(com.intellij.openapi.vfs.VirtualFile):V
 - setGrouping(java.lang.String):V
