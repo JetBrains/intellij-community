@@ -174,7 +174,8 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
       return false;
     }
     if (file instanceof LightVirtualFile && ((LightVirtualFile)file).isTooLargeForIntelligence() == ThreeState.YES) {
-      return false;
+      //MAYBE RC: shouldn't we also return 'false' immediately, if isTooLargeForIntelligence() == NO?
+      return true;
     }
     int maxSize = FileSizeLimit.getIntellisenseLimit(file.getExtension());
     return contentSize == null
