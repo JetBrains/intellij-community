@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.FileASTNode;
@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -35,6 +34,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public class SingleRootFileViewProvider extends AbstractFileViewProvider implements FileViewProvider {
+  /** set on a file to bypass file size limit check */
   private static final Key<Boolean> OUR_NO_SIZE_LIMIT_KEY = Key.create("no.size.limit");
   private static final Logger LOG = Logger.getInstance(SingleRootFileViewProvider.class);
   private volatile PsiFile myPsiFile;
@@ -170,7 +170,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
 
   public static boolean isTooLargeForIntelligence(@NotNull VirtualFile file,
                                                   @Nullable("if content size should be retrieved from a file") Long contentSize) {
-    if (!checkFileSizeLimit(file)) {
+    if (shouldBypassFileSizeLimitCheck(file)) {
       return false;
     }
     if (file instanceof LightVirtualFile && ((LightVirtualFile)file).isTooLargeForIntelligence() == ThreeState.YES) {
@@ -195,13 +195,14 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
            ? fileSizeIsGreaterThan(vFile, maxLength)
            : contentSize > maxLength;
   }
-  private static boolean checkFileSizeLimit(@NotNull VirtualFile vFile) {
+
+  private static boolean shouldBypassFileSizeLimitCheck(@NotNull VirtualFile vFile) {
     if (Boolean.TRUE.equals(vFile.getCopyableUserData(OUR_NO_SIZE_LIMIT_KEY))) {
-      return false;
+      return true;
     }
     VirtualFile original = VirtualFileUtil.originalFile(vFile);
-    if (original != null) return checkFileSizeLimit(original);
-    return true;
+    if (original != null) return shouldBypassFileSizeLimitCheck(original);
+    return false;
   }
 
   public static void doNotCheckFileSizeLimit(@NotNull VirtualFile vFile) {
