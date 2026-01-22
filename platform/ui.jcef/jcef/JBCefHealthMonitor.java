@@ -108,7 +108,7 @@ public final class JBCefHealthMonitor {
       }
 
       if (output.getStdout().strip().equals("0")) {
-        LOG.warn("The IDE is run under superuser. CEF is suspended.");
+        LOG.warn("The IDE is run under superuser.");
         return true;
       }
 
