@@ -37,7 +37,6 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Dimension
-import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.JComponent
 import javax.swing.JList
@@ -216,16 +215,15 @@ internal class GitWorkingTreeDialog(
   }
 
   private fun suggestProjectName(): String {
-    val branchToUse = if (createNewBranch.get()) newBranchName.get() else existingBranchWithWorkingTree.get()?.branch?.name
-    return createInitialWorkingTreeName(data.projectNameBase, branchToUse)
-  }
+    val branchNameToCreate = newBranchName.get()
+    val existingBranchName = existingBranchWithWorkingTree.get()?.branch?.name
+    val branchToUse = if (createNewBranch.get() && branchNameToCreate.isNotEmpty()) branchNameToCreate else existingBranchName
 
-  private fun createInitialWorkingTreeName(root: Path, branchName: String?): String {
-    return if (branchName.isNullOrEmpty()) {
+    return if (branchToUse.isNullOrEmpty()) {
       ""
     }
     else {
-      root.name + "-" + branchName.substringAfterLast("/")
+      data.projectNameBase.name + "-" + branchToUse.substringAfterLast("/")
     }
   }
 
