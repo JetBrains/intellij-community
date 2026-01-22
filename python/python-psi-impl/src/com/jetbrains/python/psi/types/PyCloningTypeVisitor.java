@@ -1,16 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
+import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -37,7 +35,7 @@ import java.util.stream.Collectors;
 @ApiStatus.Experimental
 public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   private final @NotNull TypeEvalContext myTypeEvalContext;
-  private final @NotNull Set<@Nullable PyType> cloning = new HashSet<>();
+  private final @NotNull Set<@Nullable PyType> cloning = Sets.newIdentityHashSet();
 
   public static @Nullable PyType clone(@Nullable PyType type, @NotNull PyCloningTypeVisitor visitor) {
     return visitor.clone(type);
