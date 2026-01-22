@@ -390,6 +390,57 @@ class EditorHyperlinkSupportTest(private val trackDocumentChangesManually: Boole
     assertHyperlinks(barLinkText, 50)
   }
 
+  @Test
+  fun `test overlapping hyperlinks`() {
+    setRegistryPropertyForTest("execution.filters.with.hyperlinks.allow.overlapping", "true")
+
+    val linkText = "foo bar baz"
+    document.setText(linkText)
+    val filter = CompositeFilter(project).also {
+      it.addFilter(MyHyperlinkFilter("foo bar baz"))
+      it.addFilter(MyHyperlinkFilter("bar"))
+      it.setForceUseAllFilters(true)
+    }
+    hyperlinkSupport.highlightHyperlinksLater(filter, 0, 0, eternal())
+
+    val hyperlinks = collectAllHyperlinks()
+    assertEquals(2, hyperlinks.size)
+
+    val infoAtFoo = hyperlinkSupport.getHyperlinkAt(document.text.indexOf("foo"))
+    assertEquals("foo bar baz", (infoAtFoo as MyHyperlinkFilter.MyHyperlinkInfo).linkText)
+
+    val infoAtBar = hyperlinkSupport.getHyperlinkAt(document.text.indexOf("bar"))
+    assertEquals("bar", (infoAtBar as MyHyperlinkFilter.MyHyperlinkInfo).linkText)
+  }
+
+  @Test
+  fun `test overlapping hyperlinks partial overlap`() {
+    setRegistryPropertyForTest("execution.filters.with.hyperlinks.allow.overlapping", "true")
+
+    val linkText = "foo bar baz"
+    document.setText(linkText)
+    // Partially overlapping hyperlinks: "foo bar" and "bar baz"
+    val filter = CompositeFilter(project).also {
+      it.addFilter(MyHyperlinkFilter("bar baz"))
+      it.addFilter(MyHyperlinkFilter("foo bar"))
+      it.setForceUseAllFilters(true)
+    }
+    hyperlinkSupport.highlightHyperlinksLater(filter, 0, 0, eternal())
+
+    val hyperlinks = collectAllHyperlinks()
+    assertEquals(2, hyperlinks.size)
+
+    val infoAtFoo = hyperlinkSupport.getHyperlinkAt(document.text.indexOf("foo"))
+    assertEquals("foo bar", (infoAtFoo as MyHyperlinkFilter.MyHyperlinkInfo).linkText)
+
+    // prefer left one
+    val infoAtBar = hyperlinkSupport.getHyperlinkAt(document.text.indexOf("bar"))
+    assertEquals("foo bar", (infoAtBar as MyHyperlinkFilter.MyHyperlinkInfo).linkText)
+
+    val infoAtBaz = hyperlinkSupport.getHyperlinkAt(document.text.indexOf("baz"))
+    assertEquals("bar baz", (infoAtBaz as MyHyperlinkFilter.MyHyperlinkInfo).linkText)
+  }
+
   private fun assertHighlightings(textToHighlight: String, expectedCount: Int): List<RangeHighlighter> {
     val text = document.text
     val expectedRanges = text.allOccurrencesOf(textToHighlight).map {

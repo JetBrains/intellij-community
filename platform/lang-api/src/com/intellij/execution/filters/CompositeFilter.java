@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
@@ -112,10 +113,12 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
     if (resultItems == null) {
       resultItems = new ArrayList<>(newItems.size());
     }
+    var allowOverlapping = Registry.is("execution.filters.with.hyperlinks.allow.overlapping", true);
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < newItems.size(); i++) {
       ResultItem item = newItems.get(i);
-      if ((item.getHyperlinkInfo() == null || !intersects(resultItems, item)) && checkOffsetsCorrect(item, entireLength, filter)) {
+      if ((allowOverlapping || item.getHyperlinkInfo() == null || !intersects(resultItems, item)) &&
+          checkOffsetsCorrect(item, entireLength, filter)) {
         resultItems.add(item);
       }
     }

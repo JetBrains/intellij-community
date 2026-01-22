@@ -869,6 +869,7 @@ public final class IterationState {
         return layerDiff;
       }
       // prefer more specific region
+      // It should be synced with c.i.execution.impl.EditorHyperlinkSupport.findLinkRangeAt().
       int o1Length = o1.getAffectedAreaEndOffset() - o1.getAffectedAreaStartOffset();
       int o2Length = o2.getAffectedAreaEndOffset() - o2.getAffectedAreaStartOffset();
       return o1Length - o2Length;
