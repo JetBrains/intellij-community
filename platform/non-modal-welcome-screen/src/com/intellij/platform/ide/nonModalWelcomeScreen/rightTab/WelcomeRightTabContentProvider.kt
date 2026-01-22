@@ -52,6 +52,7 @@ interface WelcomeRightTabContentProvider {
    */
   class FeatureButtonModelWithBackend(
     val featureKey: String,
+    val isAlwaysAvailable: Boolean = false,
     text: String,
     icon: IconKey,
     tint: Color = Color.Unspecified,

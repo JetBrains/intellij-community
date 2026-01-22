@@ -167,7 +167,7 @@ class WelcomeScreenRightTab(
     Column(modifier = modifier.wrapContentSize(Alignment.Center), verticalArrangement = Arrangement.spacedBy(16.dp)) {
       // Show only available backend features (and all non-backend features)
       val featureModels = contentProvider.getFeatureButtonModels(project).filter {
-        it !is FeatureButtonModelWithBackend || it.featureKey in backendFeatureIds
+        it !is FeatureButtonModelWithBackend || it.isAlwaysAvailable || it.featureKey in backendFeatureIds
       }
 
       for (row in featureModels.chunked(3)) {
