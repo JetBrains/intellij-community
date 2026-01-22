@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
@@ -257,18 +258,50 @@ internal class GitWorkingTreeDialog(
         append(GitBundle.message("working.tree.dialog.existing.branch.combo.box.empty.text"))
         return
       }
-      val branch = value.branch
-      append(branch.name)
 
+      val branch = value.branch
       val isCurrent = repositoryModel?.state?.isCurrentRef(branch) ?: false
       val isFavorite = repositoryModel?.favoriteRefs?.contains(branch) ?: false
+      icon = GitBranchesTreeIconProvider.forRef(branch,
+                                                current = isCurrent,
+                                                favorite = isFavorite,
+                                                favoriteToggleOnClick = false,
+                                                selected = selected)
 
-      icon = GitBranchesTreeIconProvider.forRef(branch, current = isCurrent, favorite = isFavorite,
-                                                favoriteToggleOnClick = false, selected = selected)
+      val renderingData = TextToRender(branch.name, value.workingTree?.path?.name, isInPopup = index >= 0)
+      append(renderingData.branchNameToRender)
+      renderingData.workingTreeNameToRender?.apply {
+        append("   ")
+        append(renderingData.workingTreeNameToRender, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      }
+    }
 
-      val workingTreeName = value.workingTree?.path?.name ?: return
-      append("   ")
-      append(workingTreeName, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+    private class TextToRender(branchName: String, workingTreeName: String?, isInPopup: Boolean) {
+      val branchNameToRender: String
+      val workingTreeNameToRender: String?
+
+      init {
+        fun fitIntoLimit(text: String, limit: Int): String {
+          return StringUtil.shortenTextWithEllipsis(text, limit, (limit - "...".length) / 2)
+        }
+
+        val limit = if (isInPopup) 100 else 50
+
+        val minimalBranchText = StringUtil.shortenTextWithEllipsis(branchName, 6, 0)
+        if (workingTreeName != null && workingTreeName.length > limit - minimalBranchText.length) {
+          branchNameToRender = minimalBranchText
+          workingTreeNameToRender = fitIntoLimit(workingTreeName, limit - branchNameToRender.length)
+
+        }
+        else if (workingTreeName != null) {
+          workingTreeNameToRender = workingTreeName
+          branchNameToRender = fitIntoLimit(branchName, limit - workingTreeNameToRender.length)
+        }
+        else {
+          workingTreeNameToRender = null
+          branchNameToRender = fitIntoLimit(branchName, limit)
+        }
+      }
     }
   }
 
