@@ -13450,6 +13450,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/propertyIsVar.kt");
             }
 
+            @TestMetadata("propertyIsVarWithEmptySet.kt")
+            public void testPropertyIsVarWithEmptySet() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/propertyIsVarWithEmptySet.kt");
+            }
+
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/simple.kt");

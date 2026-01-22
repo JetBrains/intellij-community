@@ -1,26 +1,25 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import com.intellij.application.options.CodeStyle
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.util.childrenOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 /**
  * This is an experimental feature and has to be explicitly turned on. Then this inspection will be enabled by default.
@@ -81,19 +80,18 @@ internal class ConvertToExplicitBackingFieldsInspection :
                 append(": ")
                 append(propertyType)
 
-                val indent = getIndent(element)
                 val initializer = context.backingProperty.initializer
                 if (initializer != null) {
-                    append("\n$indent field = ")
+                    append("\nfield = ")
                     append(initializer.text)
                 } else if (backingPropertyType != null && backingPropertyType != propertyType) {
-                    append("\n$indent field: ")
+                    append("\nfield: ")
                     append(backingPropertyType)
                 }
             }
 
             val newProperty = psiFactory.createProperty(newPropertyText)
-            element.replace(newProperty)
+            element.replace(newProperty).reformat(canChangeWhiteSpacesOnly = true)
 
             backingProperty.delete()
         }
@@ -102,22 +100,21 @@ internal class ConvertToExplicitBackingFieldsInspection :
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean
-    ) = object : KtVisitorVoid() {
-        override fun visitProperty(property: KtProperty) {
-            visitTargetElement(property, holder, isOnTheFly)
-        }
+    ): KtVisitor<*, *> = propertyVisitor {
+        visitTargetElement(it, holder, isOnTheFly)
+    }
+
+    override fun isApplicableByPsi(element: KtProperty): Boolean {
+        if (element.isVar && element.setter != null) return false
+        return !element.isPrivate() && element.getter != null
     }
 
     override fun KaSession.prepareContext(element: KtProperty): Context? {
-        if (element.isPrivate()) return null
-        val getter = element.getter ?: return null
-
-        val returnedProperty = getReturnedPropertyFromGetter(getter) ?: return null
+        val returnedProperty = getReturnedPropertyFromGetter(element.getter) ?: return null
         if (!returnedProperty.isPrivate()) return null
 
         val allProperties = (element.parent as? KtElement)
-            ?.children
-            ?.filterIsInstance<KtProperty>()
+            ?.childrenOfType<KtProperty>()
             ?.filter { it != element }
             ?: emptyList()
 
@@ -133,8 +130,9 @@ internal class ConvertToExplicitBackingFieldsInspection :
     }
 
     context(_: KaSession)
-    private fun getReturnedPropertyFromGetter(getter: KtPropertyAccessor): KtProperty? {
-        val returnedExpr = when (val body = getter.bodyExpression ?: return null) {
+    private fun getReturnedPropertyFromGetter(getter: KtPropertyAccessor?): KtProperty? {
+        val body = getter?.bodyExpression ?: return null
+        val returnedExpr = when (body) {
             is KtNameReferenceExpression -> body
             is KtBlockExpression -> {
                 val returnExpr = body.statements.singleOrNull() as? KtReturnExpression
@@ -152,12 +150,4 @@ internal class ConvertToExplicitBackingFieldsInspection :
         return symbol.psi as? KtProperty
     }
 
-    private fun getIndent(element: KtProperty): String {
-        val file = element.containingKtFile
-        val indentOptions = CodeStyle.getIndentOptions(file)
-        val parentIndent = CodeStyleManager.getInstance(file.project).getLineIndent(file, element.parent.startOffset) ?: ""
-        return if (indentOptions.USE_TAB_CHARACTER) "$parentIndent\t" else "$parentIndent${" ".repeat(indentOptions.INDENT_SIZE)}"
-    }
-
-    private fun KtProperty.isPrivate(): Boolean = modifierList?.hasModifier(KtTokens.PRIVATE_KEYWORD) ?: false
 }
