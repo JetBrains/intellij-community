@@ -5,19 +5,15 @@ import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.PluginManagerCoroutineScopeHolder
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
-import javax.swing.JComponent
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
-import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComponent
 
 @ApiStatus.Internal
 @IntellijInternalApi
@@ -52,11 +48,17 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 
   @JvmOverloads
-  suspend fun installOrUpdatePlugin(component: JComponent?, model: PluginUiModel, updateDescriptor: PluginUiModel?, modalityState: ModalityState, controller: UiPluginManagerController = UiPluginManager.getInstance().getController()): InstallPluginResult? {
-    val scope = service<PluginManagerCoroutineScopeHolder>().coroutineScope.childScope("Install plugin ${model.pluginId}")
-    return withContext(NonCancellable + scope.coroutineContext) {
-      pluginModel.installOrUpdatePlugin(component, model, updateDescriptor, scope, modalityState, controller)
+  suspend fun installOrUpdatePlugin(
+    component: JComponent?,
+    model: PluginUiModel,
+    updateDescriptor: PluginUiModel?,
+    modalityState: ModalityState,
+    controller: UiPluginManagerController = UiPluginManager.getInstance().getController(),
+  ): InstallPluginResult? {
+    val installTask = service<PluginManagerCoroutineScopeHolder>().coroutineScope.async(CoroutineName("Install plugin ${model.pluginId}")) {
+      pluginModel.installOrUpdatePlugin(component, model, updateDescriptor, this, modalityState, controller)
     }
+    return withContext(NonCancellable) { installTask.await() }
   }
 
   fun addUninstalled(pluginId: PluginId) {
@@ -115,7 +117,7 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 
   suspend fun isDisabledInDiff(model: PluginUiModel): Boolean {
-    return UiPluginManager.getInstance().isDisabledInDiff(pluginModel.sessionId.toString(), model.pluginId)
+    return UiPluginManager.getInstance().isDisabledInDiff(pluginModel.sessionId, model.pluginId)
   }
 
   fun isLoaded(model: PluginUiModel): Boolean {
