@@ -1066,421 +1066,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       myInstalledSearchGroup.add(new InstalledSearchOptionAction(option));
     }
 
-    myInstalledTab = new PluginsTab() {
-      @Override
-      protected void createSearchTextField(int flyDelay) {
-        super.createSearchTextField(flyDelay);
-
-        JBTextField textField = searchTextField.getTextEditor();
-        textField.putClientProperty("search.extension", ExtendableTextComponent.Extension
-          .create(AllIcons.Actions.More, AllIcons.Actions.More, IdeBundle.message("plugins.configurable.search.options"), // TODO: icon
-                  true,
-                  () -> showRightBottomPopup(textField, IdeBundle.message("plugins.configurable.show"), myInstalledSearchGroup)));
-        textField.putClientProperty("JTextField.variant", null);
-        textField.putClientProperty("JTextField.variant", "search");
-
-        searchTextField.setHistoryPropertyName("InstalledPluginsSearchHistory");
-      }
-
-      @Override
-      protected @NotNull PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener) {
-        PluginDetailsPageComponent detailPanel = new PluginDetailsPageComponent(myPluginModelFacade, searchListener, false);
-        myPluginModelFacade.getModel().addDetailPanel(detailPanel);
-        return detailPanel;
-      }
-
-      @Override
-      protected @NotNull JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
-        MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
-        myInstalledPanel = new PluginsGroupComponentWithProgress(eventHandler) {
-          @Override
-          protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
-                                                                     @NotNull PluginsGroup group,
-                                                                     @NotNull ListPluginModel listPluginModel) {
-            return new ListPluginComponent(myPluginModelFacade, model, group, listPluginModel, searchListener, myCoroutineScope, false);
-          }
-        };
-
-        myInstalledPanel.setSelectionListener(selectionListener);
-        myInstalledPanel.getAccessibleContext().setAccessibleName(IdeBundle.message("plugin.manager.installed.panel.accessible.name"));
-        registerCopyProvider(myInstalledPanel);
-
-        //noinspection ConstantConditions
-        ((SearchUpDownPopupController)myInstalledSearchPanel.controller).setEventHandler(eventHandler);
-        myInstalledPanel.startLoading();
-
-        PluginsGroup downloaded =
-          new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
-
-        PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
-        PluginManagerPanelFactory.INSTANCE.createInstalledPanel(myCoroutineScope, myPluginModelFacade.getModel(), model -> {
-          try {
-            myPluginModelFacade.getModel().setDownloadedGroup(myInstalledPanel, downloaded, installing);
-            installing.getPreloadedModel().setErrors(model.getErrors());
-            installing.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
-            installing.addModels(MyPluginModel.getInstallingPlugins());
-            if (!installing.getModels().isEmpty()) {
-              installing.sortByName();
-              installing.titleWithCount();
-              myInstalledPanel.addGroup(installing);
-            }
-
-            downloaded.getPreloadedModel().setErrors(model.getErrors());
-            downloaded.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
-            downloaded.addModels(model.getInstalledPlugins());
-
-            myBundledUpdateGroup.getPreloadedModel().setErrors(model.getErrors());
-            myBundledUpdateGroup.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
-
-            // bundled includes bundled plugin updates
-            List<PluginUiModel> visibleNonBundledPlugins, visibleBundledPlugins;
-            {
-              Map<Boolean, List<PluginUiModel>> visiblePlugins = model.getVisiblePlugins()
-                .stream()
-                .collect(Collectors.partitioningBy(plugin -> plugin.isBundled() || plugin.isBundledUpdate()));
-              visibleNonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
-              visibleBundledPlugins = visiblePlugins.get(Boolean.TRUE);
-            }
-            List<PluginId> installedPluginIds = ContainerUtil.map(model.getInstalledPlugins(), it -> it.getPluginId());
-            List<PluginUiModel> nonBundledPlugins =
-              ContainerUtil.filter(visibleNonBundledPlugins, it -> !installedPluginIds.contains(it.getPluginId()));
-            downloaded.addModels(nonBundledPlugins);
-
-            LinkListener<Object> updateAllListener = new LinkListener<>() {
-              @Override
-              public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
-                myUpdateAll.setEnabled(false);
-                myUpdateAllBundled.setEnabled(false);
-
-                for (UIPluginGroup group : getInstalledGroups()) {
-                  if (group.excluded) {
-                    continue;
-                  }
-                  for (ListPluginComponent plugin : group.plugins) {
-                    plugin.updatePlugin();
-                  }
-                }
-              }
-            };
-            myUpdateAll.setListener(updateAllListener, null);
-            downloaded.addRightAction(myUpdateAll);
-            downloaded.addRightAction(myUpdateCounter);
-
-            if (!downloaded.getModels().isEmpty()) {
-              downloaded.sortByName();
-
-              long enabledNonBundledCount = nonBundledPlugins.stream()
-                .filter(descriptor -> !myPluginModelFacade.getModel().isDisabled(descriptor.getPluginId()))
-                .count();
-              downloaded.titleWithCount(Math.toIntExact(enabledNonBundledCount));
-              if (downloaded.ui == null) {
-                myInstalledPanel.addGroup(downloaded);
-              }
-              myPluginModelFacade.getModel().addEnabledGroup(downloaded);
-            }
-
-            String defaultCategory = IdeBundle.message("plugins.configurable.other.bundled");
-            visibleBundledPlugins
-              .stream()
-              .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getDisplayCategory(), defaultCategory)))
-              .entrySet()
-              .stream()
-              .map(entry -> new ComparablePluginsGroup(entry.getKey(), entry.getValue(), model.getVisiblePluginsRequiresUltimate()))
-              .sorted((o1, o2) -> defaultCategory.equals(o1.title) ? 1 :
-                                  defaultCategory.equals(o2.title) ? -1 :
-                                  o1.compareTo(o2))
-              .forEachOrdered(group -> {
-                group.getPreloadedModel().setErrors(model.getErrors());
-                group.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
-                myInstalledPanel.addGroup(group);
-                myPluginModelFacade.getModel().addEnabledGroup(group);
-              });
-
-            myUpdateAllBundled.setListener(updateAllListener, null);
-            myBundledUpdateGroup.addRightAction(myUpdateAllBundled);
-            myBundledUpdateGroup.addRightAction(myUpdateCounterBundled);
-
-            myPluginUpdatesService.calculateUpdates(updates -> {
-              if (ContainerUtil.isEmpty(updates)) {
-                clearUpdates(myInstalledPanel);
-                clearUpdates(myInstalledSearchPanel.getPanel());
-              }
-              else {
-                applyUpdates(myInstalledPanel, updates);
-                applyUpdates(myInstalledSearchPanel.getPanel(), updates);
-              }
-              applyBundledUpdates(updates);
-              selectionListener.accept(myInstalledPanel);
-              selectionListener.accept(myInstalledSearchPanel.getPanel());
-            });
-          }
-          finally {
-            myInstalledPanel.stopLoading();
-          }
-          return null;
-        });
-
-        return createScrollPane(myInstalledPanel, true);
-      }
-
-      @Override
-      protected void updateMainSelection(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
-        selectionListener.accept(myInstalledPanel);
-      }
-
-      @Override
-      public void hideSearchPanel() {
-        super.hideSearchPanel();
-        if (myInstalledSearchSetState) {
-          for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
-            ((InstalledSearchOptionAction)action).setState(null);
-          }
-        }
-        myPluginModelFacade.getModel().setInvalidFixCallback(null);
-      }
-
-      @Override
-      protected void onSearchReset() {
-        PluginManagerUsageCollector.INSTANCE.searchReset();
-      }
-
-      @Override
-      protected @NotNull SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
-        SearchUpDownPopupController installedController = new SearchUpDownPopupController(searchTextField) {
-          @Override
-          protected @NotNull @NonNls List<String> getAttributes() {
-            return Arrays
-              .asList(
-                "/downloaded",
-                "/outdated",
-                "/enabled",
-                "/disabled",
-                "/invalid",
-                "/bundled",
-                SearchWords.VENDOR.getValue(),
-                SearchWords.TAG.getValue()
-              );
-          }
-
-          @Override
-          protected @Nullable SortedSet<String> getValues(@NotNull String attribute) {
-            return SearchWords.VENDOR.getValue().equals(attribute) ?
-                   myPluginModelFacade.getModel().getVendors() :
-                   SearchWords.TAG.getValue().equals(attribute) ?
-                   myPluginModelFacade.getModel().getTags() :
-                   null;
-          }
-
-          @Override
-          protected void showPopupForQuery() {
-            showSearchPanel(searchTextField.getText());
-          }
-        };
-
-        MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
-        installedController.setSearchResultEventHandler(eventHandler);
-
-        PluginsGroupComponent panel = new PluginsGroupComponentWithProgress(eventHandler) {
-          @Override
-          protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
-                                                                     @NotNull PluginsGroup group,
-                                                                     @NotNull ListPluginModel listPluginModel) {
-            return new ListPluginComponent(myPluginModelFacade, model, group, listPluginModel, searchListener, myCoroutineScope, false);
-          }
-        };
-
-        panel.setSelectionListener(selectionListener);
-        registerCopyProvider(panel);
-
-        myInstalledSearchCallback = updateAction -> {
-          List<String> queries = new ArrayList<>();
-          new SearchQueryParser.Installed(searchTextField.getText()) {
-            @Override
-            protected void addToSearchQuery(@NotNull String query) {
-              queries.add(query);
-            }
-
-            @Override
-            protected void handleAttribute(@NotNull String name, @NotNull String value) {
-              if (!updateAction.myState) {
-                queries.add(name + (value.isEmpty() ? "" : SearchQueryParser.wrapAttribute(value)));
-              }
-            }
-          };
-
-          if (updateAction.myState) {
-            for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
-              if (action != updateAction) {
-                ((InstalledSearchOptionAction)action).myState = false;
-              }
-            }
-
-            queries.add(updateAction.getQuery());
-          }
-          else {
-            queries.remove(updateAction.getQuery());
-          }
-
-          try {
-            myInstalledSearchSetState = false;
-
-            String query = StringUtil.join(queries, " ");
-            searchTextField.setTextIgnoreEvents(query);
-            if (query.isEmpty()) {
-              myInstalledTab.hideSearchPanel();
-            }
-            else {
-              myInstalledTab.showSearchPanel(query);
-            }
-          }
-          finally {
-            myInstalledSearchSetState = true;
-          }
-        };
-
-        myInstalledSearchPanel = new SearchResultPanel(installedController, panel, false, 0, 0) {
-          @Override
-          protected void setEmptyText(@NotNull String query) {
-            myPanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.nothing.found"));
-            if (query.contains("/downloaded") || query.contains("/outdated") ||
-                query.contains("/enabled") || query.contains("/disabled") ||
-                query.contains("/invalid") || query.contains("/bundled")) {
-              return;
-            }
-            myPanel.getEmptyText().appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"),
-                                                       SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                                                       e -> myTabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB));
-          }
-
-          @Override
-          protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result, AtomicBoolean runQuery) {
-            int searchIndex = PluginManagerUsageCollector.updateAndGetSearchIndex();
-            myPluginModelFacade.getModel().setInvalidFixCallback(null);
-
-            SearchQueryParser.Installed parser = new SearchQueryParser.Installed(query);
-
-            if (myInstalledSearchSetState) {
-              for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
-                ((InstalledSearchOptionAction)action).setState(parser);
-              }
-            }
-
-            List<PluginUiModel> descriptors = myPluginModelFacade.getModel().getInstalledDescriptors();
-
-            if (!parser.vendors.isEmpty()) {
-              for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
-                if (!MyPluginModel.isVendor(I.next(), parser.vendors)) {
-                  I.remove();
-                }
-              }
-            }
-            if (!parser.tags.isEmpty()) {
-              String sessionId = myPluginModelFacade.getModel().getSessionId();
-
-              for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
-                if (!ContainerUtil.intersects(PluginUiModelKt.calculateTags(I.next(), sessionId), parser.tags)) {
-                  I.remove();
-                }
-              }
-            }
-            for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
-              PluginUiModel descriptor = I.next();
-              if (parser.attributes) {
-                if (parser.enabled &&
-                    (!myPluginModelFacade.isEnabled(descriptor) || !myPluginModelFacade.getErrors(descriptor).isEmpty())) {
-                  I.remove();
-                  continue;
-                }
-                if (parser.disabled &&
-                    (myPluginModelFacade.isEnabled(descriptor) || !myPluginModelFacade.getErrors(descriptor).isEmpty())) {
-                  I.remove();
-                  continue;
-                }
-                if (parser.bundled && !descriptor.isBundled()) {
-                  I.remove();
-                  continue;
-                }
-                if (parser.downloaded && descriptor.isBundled()) {
-                  I.remove();
-                  continue;
-                }
-                if (parser.invalid && myPluginModelFacade.getErrors(descriptor).isEmpty()) {
-                  I.remove();
-                  continue;
-                }
-                if (parser.needUpdate && !UiPluginManager.getInstance().isNeedUpdate(descriptor.getPluginId())) {
-                  I.remove();
-                  continue;
-                }
-              }
-              if (parser.searchQuery != null && !containsQuery(descriptor, parser.searchQuery)) {
-                I.remove();
-              }
-            }
-
-            result.addModels(descriptors);
-            Map<PluginId, CheckErrorsResult> errors = UiPluginManager.getInstance()
-              .loadErrors(myPluginModelFacade.getModel().mySessionId.toString(),
-                          ContainerUtil.map(descriptors, PluginUiModel::getPluginId));
-            result.getPreloadedModel().setErrors(MyPluginModel.getErrors(errors));
-            result.getPreloadedModel().setPluginInstallationStates(UiPluginManager.getInstance().getInstallationStatesSync());
-            PluginManagerUsageCollector.performInstalledTabSearch(
-              ProjectUtil.getActiveProject(), parser, result.getModels(), searchIndex, null);
-
-            if (!result.getModels().isEmpty()) {
-              if (parser.invalid) {
-                myPluginModelFacade.getModel().setInvalidFixCallback(() -> {
-                  PluginsGroup group = myInstalledSearchPanel.getGroup();
-                  if (group.ui == null) {
-                    myPluginModelFacade.getModel().setInvalidFixCallback(null);
-                    return;
-                  }
-
-                  PluginsGroupComponent resultPanel = myInstalledSearchPanel.getPanel();
-
-                  for (PluginUiModel descriptor : new ArrayList<>(group.getModels())) {
-                    if (myPluginModelFacade.getErrors(descriptor).isEmpty()) {
-                      resultPanel.removeFromGroup(group, descriptor);
-                    }
-                  }
-
-                  group.titleWithCount();
-                  myInstalledSearchPanel.fullRepaint();
-
-                  if (group.getModels().isEmpty()) {
-                    myPluginModelFacade.getModel().setInvalidFixCallback(null);
-                    myInstalledSearchPanel.removeGroup();
-                  }
-                });
-              }
-              else if (parser.needUpdate) {
-                result.rightAction = new LinkLabelButton<>(IdeBundle.message("plugin.manager.update.all"), null, (__, ___) -> {
-                  result.rightAction.setEnabled(false);
-
-                  for (ListPluginComponent plugin : result.ui.plugins) {
-                    plugin.updatePlugin();
-                  }
-                });
-              }
-              PluginModelAsyncOperationsExecutor.INSTANCE.loadUpdates(myCoroutineScope, updates -> {
-                if (!ContainerUtil.isEmpty(updates)) {
-                  myPostFillGroupCallback = () -> {
-                    //noinspection unchecked
-                    applyUpdates(myPanel, (Collection<PluginUiModel>)updates);
-                    selectionListener.accept(myInstalledPanel);
-                    selectionListener.accept(myInstalledSearchPanel.getPanel());
-                  };
-                }
-                return null;
-              });
-            }
-            updatePanel(runQuery);
-          }
-        };
-
-        return myInstalledSearchPanel;
-      }
-    };
+    myInstalledTab = new InstalledPluginsTab();
 
     myPluginModelFacade.getModel().setCancelInstallCallback(descriptor -> {
       if (myInstalledSearchPanel == null) {
@@ -2195,6 +1781,422 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       public AccessibleRole getAccessibleRole() {
         return AccessibleRole.PUSH_BUTTON;
       }
+    }
+  }
+
+  private class InstalledPluginsTab extends PluginsTab {
+    @Override
+    protected void createSearchTextField(int flyDelay) {
+      super.createSearchTextField(flyDelay);
+
+      JBTextField textField = searchTextField.getTextEditor();
+      textField.putClientProperty("search.extension", ExtendableTextComponent.Extension
+        .create(AllIcons.Actions.More, AllIcons.Actions.More, IdeBundle.message("plugins.configurable.search.options"), // TODO: icon
+                true,
+                () -> showRightBottomPopup(textField, IdeBundle.message("plugins.configurable.show"), myInstalledSearchGroup)));
+      textField.putClientProperty("JTextField.variant", null);
+      textField.putClientProperty("JTextField.variant", "search");
+
+      searchTextField.setHistoryPropertyName("InstalledPluginsSearchHistory");
+    }
+
+    @Override
+    protected @NotNull PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener) {
+      PluginDetailsPageComponent detailPanel = new PluginDetailsPageComponent(myPluginModelFacade, searchListener, false);
+      myPluginModelFacade.getModel().addDetailPanel(detailPanel);
+      return detailPanel;
+    }
+
+    @Override
+    protected @NotNull JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
+      MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
+      myInstalledPanel = new PluginsGroupComponentWithProgress(eventHandler) {
+        @Override
+        protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
+                                                                   @NotNull PluginsGroup group,
+                                                                   @NotNull ListPluginModel listPluginModel) {
+          return new ListPluginComponent(myPluginModelFacade, model, group, listPluginModel, searchListener, myCoroutineScope, false);
+        }
+      };
+
+      myInstalledPanel.setSelectionListener(selectionListener);
+      myInstalledPanel.getAccessibleContext().setAccessibleName(IdeBundle.message("plugin.manager.installed.panel.accessible.name"));
+      registerCopyProvider(myInstalledPanel);
+
+      //noinspection ConstantConditions
+      ((SearchUpDownPopupController)myInstalledSearchPanel.controller).setEventHandler(eventHandler);
+      myInstalledPanel.startLoading();
+
+      PluginsGroup downloaded =
+        new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
+
+      PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
+      PluginManagerPanelFactory.INSTANCE.createInstalledPanel(myCoroutineScope, myPluginModelFacade.getModel(), model -> {
+        try {
+          myPluginModelFacade.getModel().setDownloadedGroup(myInstalledPanel, downloaded, installing);
+          installing.getPreloadedModel().setErrors(model.getErrors());
+          installing.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
+          installing.addModels(MyPluginModel.getInstallingPlugins());
+          if (!installing.getModels().isEmpty()) {
+            installing.sortByName();
+            installing.titleWithCount();
+            myInstalledPanel.addGroup(installing);
+          }
+
+          downloaded.getPreloadedModel().setErrors(model.getErrors());
+          downloaded.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
+          downloaded.addModels(model.getInstalledPlugins());
+
+          myBundledUpdateGroup.getPreloadedModel().setErrors(model.getErrors());
+          myBundledUpdateGroup.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
+
+          // bundled includes bundled plugin updates
+          List<PluginUiModel> visibleNonBundledPlugins, visibleBundledPlugins;
+          {
+            Map<Boolean, List<PluginUiModel>> visiblePlugins = model.getVisiblePlugins()
+              .stream()
+              .collect(Collectors.partitioningBy(plugin -> plugin.isBundled() || plugin.isBundledUpdate()));
+            visibleNonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
+            visibleBundledPlugins = visiblePlugins.get(Boolean.TRUE);
+          }
+          List<PluginId> installedPluginIds = ContainerUtil.map(model.getInstalledPlugins(), it -> it.getPluginId());
+          List<PluginUiModel> nonBundledPlugins =
+            ContainerUtil.filter(visibleNonBundledPlugins, it -> !installedPluginIds.contains(it.getPluginId()));
+          downloaded.addModels(nonBundledPlugins);
+
+          LinkListener<Object> updateAllListener = new LinkListener<>() {
+            @Override
+            public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
+              myUpdateAll.setEnabled(false);
+              myUpdateAllBundled.setEnabled(false);
+
+              for (UIPluginGroup group : getInstalledGroups()) {
+                if (group.excluded) {
+                  continue;
+                }
+                for (ListPluginComponent plugin : group.plugins) {
+                  plugin.updatePlugin();
+                }
+              }
+            }
+          };
+          myUpdateAll.setListener(updateAllListener, null);
+          downloaded.addRightAction(myUpdateAll);
+          downloaded.addRightAction(myUpdateCounter);
+
+          if (!downloaded.getModels().isEmpty()) {
+            downloaded.sortByName();
+
+            long enabledNonBundledCount = nonBundledPlugins.stream()
+              .filter(descriptor -> !myPluginModelFacade.getModel().isDisabled(descriptor.getPluginId()))
+              .count();
+            downloaded.titleWithCount(Math.toIntExact(enabledNonBundledCount));
+            if (downloaded.ui == null) {
+              myInstalledPanel.addGroup(downloaded);
+            }
+            myPluginModelFacade.getModel().addEnabledGroup(downloaded);
+          }
+
+          String defaultCategory = IdeBundle.message("plugins.configurable.other.bundled");
+          visibleBundledPlugins
+            .stream()
+            .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getDisplayCategory(), defaultCategory)))
+            .entrySet()
+            .stream()
+            .map(entry -> new ComparablePluginsGroup(entry.getKey(), entry.getValue(), model.getVisiblePluginsRequiresUltimate()))
+            .sorted((o1, o2) -> defaultCategory.equals(o1.title) ? 1 :
+                                defaultCategory.equals(o2.title) ? -1 :
+                                o1.compareTo(o2))
+            .forEachOrdered(group -> {
+              group.getPreloadedModel().setErrors(model.getErrors());
+              group.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
+              myInstalledPanel.addGroup(group);
+              myPluginModelFacade.getModel().addEnabledGroup(group);
+            });
+
+          myUpdateAllBundled.setListener(updateAllListener, null);
+          myBundledUpdateGroup.addRightAction(myUpdateAllBundled);
+          myBundledUpdateGroup.addRightAction(myUpdateCounterBundled);
+
+          myPluginUpdatesService.calculateUpdates(updates -> {
+            if (ContainerUtil.isEmpty(updates)) {
+              clearUpdates(myInstalledPanel);
+              clearUpdates(myInstalledSearchPanel.getPanel());
+            }
+            else {
+              applyUpdates(myInstalledPanel, updates);
+              applyUpdates(myInstalledSearchPanel.getPanel(), updates);
+            }
+            applyBundledUpdates(updates);
+            selectionListener.accept(myInstalledPanel);
+            selectionListener.accept(myInstalledSearchPanel.getPanel());
+          });
+        }
+        finally {
+          myInstalledPanel.stopLoading();
+        }
+        return null;
+      });
+
+      return createScrollPane(myInstalledPanel, true);
+    }
+
+    @Override
+    protected void updateMainSelection(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
+      selectionListener.accept(myInstalledPanel);
+    }
+
+    @Override
+    public void hideSearchPanel() {
+      super.hideSearchPanel();
+      if (myInstalledSearchSetState) {
+        for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
+          ((InstalledSearchOptionAction)action).setState(null);
+        }
+      }
+      myPluginModelFacade.getModel().setInvalidFixCallback(null);
+    }
+
+    @Override
+    protected void onSearchReset() {
+      PluginManagerUsageCollector.INSTANCE.searchReset();
+    }
+
+    @Override
+    protected @NotNull SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
+      SearchUpDownPopupController installedController = new SearchUpDownPopupController(searchTextField) {
+        @Override
+        protected @NotNull @NonNls List<String> getAttributes() {
+          return Arrays
+            .asList(
+              "/downloaded",
+              "/outdated",
+              "/enabled",
+              "/disabled",
+              "/invalid",
+              "/bundled",
+              SearchWords.VENDOR.getValue(),
+              SearchWords.TAG.getValue()
+            );
+        }
+
+        @Override
+        protected @Nullable SortedSet<String> getValues(@NotNull String attribute) {
+          return SearchWords.VENDOR.getValue().equals(attribute) ?
+                 myPluginModelFacade.getModel().getVendors() :
+                 SearchWords.TAG.getValue().equals(attribute) ?
+                 myPluginModelFacade.getModel().getTags() :
+                 null;
+        }
+
+        @Override
+        protected void showPopupForQuery() {
+          showSearchPanel(searchTextField.getText());
+        }
+      };
+
+      MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
+      installedController.setSearchResultEventHandler(eventHandler);
+
+      PluginsGroupComponent panel = new PluginsGroupComponentWithProgress(eventHandler) {
+        @Override
+        protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
+                                                                   @NotNull PluginsGroup group,
+                                                                   @NotNull ListPluginModel listPluginModel) {
+          return new ListPluginComponent(myPluginModelFacade, model, group, listPluginModel, searchListener, myCoroutineScope, false);
+        }
+      };
+
+      panel.setSelectionListener(selectionListener);
+      registerCopyProvider(panel);
+
+      myInstalledSearchCallback = updateAction -> {
+        List<String> queries = new ArrayList<>();
+        new SearchQueryParser.Installed(searchTextField.getText()) {
+          @Override
+          protected void addToSearchQuery(@NotNull String query) {
+            queries.add(query);
+          }
+
+          @Override
+          protected void handleAttribute(@NotNull String name, @NotNull String value) {
+            if (!updateAction.myState) {
+              queries.add(name + (value.isEmpty() ? "" : SearchQueryParser.wrapAttribute(value)));
+            }
+          }
+        };
+
+        if (updateAction.myState) {
+          for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
+            if (action != updateAction) {
+              ((InstalledSearchOptionAction)action).myState = false;
+            }
+          }
+
+          queries.add(updateAction.getQuery());
+        }
+        else {
+          queries.remove(updateAction.getQuery());
+        }
+
+        try {
+          myInstalledSearchSetState = false;
+
+          String query = StringUtil.join(queries, " ");
+          searchTextField.setTextIgnoreEvents(query);
+          if (query.isEmpty()) {
+            myInstalledTab.hideSearchPanel();
+          }
+          else {
+            myInstalledTab.showSearchPanel(query);
+          }
+        }
+        finally {
+          myInstalledSearchSetState = true;
+        }
+      };
+
+      myInstalledSearchPanel = new SearchResultPanel(installedController, panel, false, 0, 0) {
+        @Override
+        protected void setEmptyText(@NotNull String query) {
+          myPanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.nothing.found"));
+          if (query.contains("/downloaded") || query.contains("/outdated") ||
+              query.contains("/enabled") || query.contains("/disabled") ||
+              query.contains("/invalid") || query.contains("/bundled")) {
+            return;
+          }
+          myPanel.getEmptyText().appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"),
+                                                     SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+                                                     e -> myTabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB));
+        }
+
+        @Override
+        protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result, AtomicBoolean runQuery) {
+          int searchIndex = PluginManagerUsageCollector.updateAndGetSearchIndex();
+          myPluginModelFacade.getModel().setInvalidFixCallback(null);
+
+          SearchQueryParser.Installed parser = new SearchQueryParser.Installed(query);
+
+          if (myInstalledSearchSetState) {
+            for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
+              ((InstalledSearchOptionAction)action).setState(parser);
+            }
+          }
+
+          List<PluginUiModel> descriptors = myPluginModelFacade.getModel().getInstalledDescriptors();
+
+          if (!parser.vendors.isEmpty()) {
+            for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
+              if (!MyPluginModel.isVendor(I.next(), parser.vendors)) {
+                I.remove();
+              }
+            }
+          }
+          if (!parser.tags.isEmpty()) {
+            String sessionId = myPluginModelFacade.getModel().getSessionId();
+
+            for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
+              if (!ContainerUtil.intersects(PluginUiModelKt.calculateTags(I.next(), sessionId), parser.tags)) {
+                I.remove();
+              }
+            }
+          }
+          for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
+            PluginUiModel descriptor = I.next();
+            if (parser.attributes) {
+              if (parser.enabled &&
+                  (!myPluginModelFacade.isEnabled(descriptor) || !myPluginModelFacade.getErrors(descriptor).isEmpty())) {
+                I.remove();
+                continue;
+              }
+              if (parser.disabled &&
+                  (myPluginModelFacade.isEnabled(descriptor) || !myPluginModelFacade.getErrors(descriptor).isEmpty())) {
+                I.remove();
+                continue;
+              }
+              if (parser.bundled && !descriptor.isBundled()) {
+                I.remove();
+                continue;
+              }
+              if (parser.downloaded && descriptor.isBundled()) {
+                I.remove();
+                continue;
+              }
+              if (parser.invalid && myPluginModelFacade.getErrors(descriptor).isEmpty()) {
+                I.remove();
+                continue;
+              }
+              if (parser.needUpdate && !UiPluginManager.getInstance().isNeedUpdate(descriptor.getPluginId())) {
+                I.remove();
+                continue;
+              }
+            }
+            if (parser.searchQuery != null && !containsQuery(descriptor, parser.searchQuery)) {
+              I.remove();
+            }
+          }
+
+          result.addModels(descriptors);
+          Map<PluginId, CheckErrorsResult> errors = UiPluginManager.getInstance()
+            .loadErrors(myPluginModelFacade.getModel().mySessionId.toString(),
+                        ContainerUtil.map(descriptors, PluginUiModel::getPluginId));
+          result.getPreloadedModel().setErrors(MyPluginModel.getErrors(errors));
+          result.getPreloadedModel().setPluginInstallationStates(UiPluginManager.getInstance().getInstallationStatesSync());
+          PluginManagerUsageCollector.performInstalledTabSearch(
+            ProjectUtil.getActiveProject(), parser, result.getModels(), searchIndex, null);
+
+          if (!result.getModels().isEmpty()) {
+            if (parser.invalid) {
+              myPluginModelFacade.getModel().setInvalidFixCallback(() -> {
+                PluginsGroup group = myInstalledSearchPanel.getGroup();
+                if (group.ui == null) {
+                  myPluginModelFacade.getModel().setInvalidFixCallback(null);
+                  return;
+                }
+
+                PluginsGroupComponent resultPanel = myInstalledSearchPanel.getPanel();
+
+                for (PluginUiModel descriptor : new ArrayList<>(group.getModels())) {
+                  if (myPluginModelFacade.getErrors(descriptor).isEmpty()) {
+                    resultPanel.removeFromGroup(group, descriptor);
+                  }
+                }
+
+                group.titleWithCount();
+                myInstalledSearchPanel.fullRepaint();
+
+                if (group.getModels().isEmpty()) {
+                  myPluginModelFacade.getModel().setInvalidFixCallback(null);
+                  myInstalledSearchPanel.removeGroup();
+                }
+              });
+            }
+            else if (parser.needUpdate) {
+              result.rightAction = new LinkLabelButton<>(IdeBundle.message("plugin.manager.update.all"), null, (__, ___) -> {
+                result.rightAction.setEnabled(false);
+
+                for (ListPluginComponent plugin : result.ui.plugins) {
+                  plugin.updatePlugin();
+                }
+              });
+            }
+            PluginModelAsyncOperationsExecutor.INSTANCE.loadUpdates(myCoroutineScope, updates -> {
+              if (!ContainerUtil.isEmpty(updates)) {
+                myPostFillGroupCallback = () -> {
+                  //noinspection unchecked
+                  applyUpdates(myPanel, (Collection<PluginUiModel>)updates);
+                  selectionListener.accept(myInstalledPanel);
+                  selectionListener.accept(myInstalledSearchPanel.getPanel());
+                };
+              }
+              return null;
+            });
+          }
+          updatePanel(runQuery);
+        }
+      };
+
+      return myInstalledSearchPanel;
     }
   }
 }
