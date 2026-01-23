@@ -53,6 +53,7 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.IntentionalUnstubbing;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
@@ -102,6 +103,7 @@ public abstract class PyTestCase extends UsefulTestCase {
       }
 
       FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
+      IntentionalUnstubbing.resetForciblyUnstubbedFileSet();
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -364,6 +366,9 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   protected static void assertNotParsed(PsiFile file) {
+    if (IntentionalUnstubbing.getForciblyUnstubbedFiles().contains(file)) {
+      return;
+    }
     assertInstanceOf(file, PyFileImpl.class);
     VirtualFile virtualFile = file.getVirtualFile();
     String path = virtualFile.getPath();
