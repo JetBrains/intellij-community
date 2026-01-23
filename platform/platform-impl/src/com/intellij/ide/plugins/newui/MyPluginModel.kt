@@ -74,7 +74,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   private var myPluginUpdatesService: PluginUpdatesService? = null
 
   private var myInvalidFixCallback: Runnable? = null
-  private var myCancelInstallCallback: ((PluginUiModel?) -> Unit)? = null
+  private var myCancelInstallCallback: ((PluginUiModel) -> Unit)? = null
 
   private val myRequiredPluginsForProject: MutableMap<PluginId, Boolean> = HashMap()
   private val myUninstalled: MutableSet<PluginId> = HashSet()
@@ -835,7 +835,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     myInvalidFixCallback = invalidFixCallback
   }
 
-  fun setCancelInstallCallback(callback: (PluginUiModel?) -> Unit) {
+  fun setCancelInstallCallback(callback: (PluginUiModel) -> Unit) {
     myCancelInstallCallback = callback
   }
 
