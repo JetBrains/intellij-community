@@ -26,7 +26,6 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 public abstract class VcsTreeModelData {
   public static @NotNull VcsTreeModelData all(@NotNull JTree tree) {
@@ -81,23 +80,6 @@ public abstract class VcsTreeModelData {
 
     Set<Object> includedSet = tree.getIncludedSet();
     return new IncludedUnderData(includedSet, tagNode);
-  }
-
-
-  /**
-   * @deprecated use {@link #iterateNodes()}
-   */
-  @Deprecated(forRemoval = true)
-  public final @NotNull Stream<ChangesBrowserNode<?>> nodesStream() {
-    return iterateNodes().toStream();
-  }
-
-  /**
-   * @deprecated use {@link #iterateUserObjects(Class)}
-   */
-  @Deprecated(forRemoval = true)
-  public final @NotNull <U> Stream<U> userObjectsStream(@NotNull Class<U> clazz) {
-    return iterateUserObjects(clazz).toStream();
   }
 
 

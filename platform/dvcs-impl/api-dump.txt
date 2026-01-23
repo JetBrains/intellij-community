@@ -230,8 +230,7 @@ f:com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase$Waiter
 com.intellij.dvcs.push.PrePushHandler
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getPresentableName():java.lang.String
-- handle(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.progress.ProgressIndicator):com.intellij.dvcs.push.PrePushHandler$Result
-- handle(java.util.List,com.intellij.openapi.progress.ProgressIndicator):com.intellij.dvcs.push.PrePushHandler$Result
+- a:handle(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.progress.ProgressIndicator):com.intellij.dvcs.push.PrePushHandler$Result
 e:com.intellij.dvcs.push.PrePushHandler$Result
 - java.lang.Enum
 - sf:ABORT:com.intellij.dvcs.push.PrePushHandler$Result

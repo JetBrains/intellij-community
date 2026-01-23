@@ -3,10 +3,8 @@ package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -14,23 +12,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 public interface ScopeInfo {
-  /**
-   * @deprecated Use {@link #getRoots(DataContext, ActionInfo)}
-   */
-  @Deprecated(forRemoval = true)
-  default FilePath[] getRoots(VcsContext context, @NotNull ActionInfo actionInfo) {
-    DataContext dataContext = SimpleDataContext.builder()
-      .add(CommonDataKeys.PROJECT, context.getProject())
-      .add(VcsDataKeys.FILE_PATHS, Arrays.asList(context.getSelectedFilePaths()))
-      .build();
-    return getRoots(dataContext, actionInfo).toArray(new FilePath[0]);
-  }
 
   List<FilePath> getRoots(@NotNull DataContext dataContext, @NotNull ActionInfo actionInfo);
 

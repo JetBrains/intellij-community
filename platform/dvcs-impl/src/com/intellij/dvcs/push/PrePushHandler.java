@@ -56,16 +56,5 @@ public interface PrePushHandler {
    * @return handler's decision on whether the push must be performed or canceled
    */
   @CalledInAny
-  default @NotNull Result handle(@NotNull Project project, @NotNull List<PushInfo> pushDetails, @NotNull ProgressIndicator indicator) {
-    return handle(pushDetails, indicator);
-  }
-
-  /**
-   * @deprecated Use {@link #handle(Project, List, ProgressIndicator)} instead
-   */
-  @CalledInAny
-  @Deprecated(forRemoval = true)
-  default @NotNull Result handle(@NotNull List<PushInfo> pushDetails, @NotNull ProgressIndicator indicator) {
-    throw new UnsupportedOperationException("This method is deprecated. Use #handle(Project, List, ProgressIndicator) instead.");
-  }
+  @NotNull Result handle(@NotNull Project project, @NotNull List<PushInfo> pushDetails, @NotNull ProgressIndicator indicator);
 }

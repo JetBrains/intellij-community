@@ -50,16 +50,6 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   }
 
   /**
-   * @deprecated use {@link SingleTaskController#SingleTaskController(String, Disposable, Consumer)} constructor.
-   */
-  @Deprecated(forRemoval = true)
-  public SingleTaskController(@NotNull @NonNls String name,
-                              @NotNull com.intellij.util.Consumer<? super Result> handler,
-                              @NotNull Disposable parent) {
-    this(name, parent, result -> handler.consume(result));
-  }
-
-  /**
    * Posts requests into a queue. <br/>
    * If there is no active task, starts a new one. <br/>
    * Otherwise just remembers requests in the queue. Later they can be retrieved by {@link #popRequests()}.

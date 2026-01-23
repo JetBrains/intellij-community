@@ -104,19 +104,6 @@ public final class IdeaTextPatchBuilder {
     return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch);
   }
 
-  /**
-   * @deprecated Use {@link #buildPatch}
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull List<FilePatch> buildPatch(@Nullable Project project,
-                                                    @NotNull Collection<? extends Change> changes,
-                                                    @NotNull Path basePath,
-                                                    boolean reversePatch,
-                                                    boolean honorExcludedFromCommit,
-                                                    @Nullable Runnable ignoredParameter) throws VcsException {
-    return buildPatch(project, changes, basePath, reversePatch, honorExcludedFromCommit);
-  }
-
   private static @Nullable AirContentRevision convertRevision(@Nullable ContentRevision cr) {
     return convertRevision(cr, null);
   }

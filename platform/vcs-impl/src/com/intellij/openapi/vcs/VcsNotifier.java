@@ -20,12 +20,6 @@ import static com.intellij.util.ui.UIUtil.BR;
 import static com.intellij.util.ui.UIUtil.LINE_SEPARATOR;
 
 public class VcsNotifier {
-  /**
-   * @deprecated Use {@link #toolWindowNotification()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static final NotificationGroup NOTIFICATION_GROUP_ID =
-    Cancellation.forceNonCancellableSectionInClassInitializer(() -> toolWindowNotification());
 
   /**
    * @deprecated Use {@link #importantNotification()} instead
@@ -40,13 +34,6 @@ public class VcsNotifier {
   @Deprecated
   public static final NotificationGroup STANDARD_NOTIFICATION =
     Cancellation.forceNonCancellableSectionInClassInitializer(() -> standardNotification());
-
-  /**
-   * @deprecated Use {@link #silentNotification()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static final NotificationGroup SILENT_NOTIFICATION =
-    Cancellation.forceNonCancellableSectionInClassInitializer(() -> silentNotification());
 
 
   /**
