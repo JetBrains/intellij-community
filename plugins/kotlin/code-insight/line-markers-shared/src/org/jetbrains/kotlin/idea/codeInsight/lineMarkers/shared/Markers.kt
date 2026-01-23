@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.idea.searching.kmp.findAllActualForExpect
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import javax.swing.Icon
 
 val KtNamedDeclaration.expectOrActualAnchor: PsiElement
@@ -205,10 +204,6 @@ fun buildNavigateToExpectedDeclarationsPopup(element: PsiElement?, allNavigatabl
         )
     }
 }
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use 'isExpectDeclaration()' instead", ReplaceWith("isExpectDeclaration()", "org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration"))
-fun KtDeclaration.isExpectDeclaration(): Boolean = isExpectDeclaration()
 
 @OptIn(KaExperimentalApi::class)
 fun hasExpectForActual(declaration: KtDeclaration): Boolean {

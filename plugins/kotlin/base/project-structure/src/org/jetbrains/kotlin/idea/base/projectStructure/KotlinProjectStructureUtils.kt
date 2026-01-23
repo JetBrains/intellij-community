@@ -10,7 +10,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.roots.FileIndex
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -150,23 +149,6 @@ fun Module.getKotlinSourceRootType(): KotlinSourceRootType? =
         hasRootsOfType(testRootTypes) -> TestSourceKotlinRootType
         else -> null
     }
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("use ProjectFileIndex.getKotlinSourceRootType(VirtualFile)")
-fun FileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSourceRootType? {
-    // Ignore injected files
-    if (virtualFile is VirtualFileWindow) {
-        return null
-    }
-
-    return runReadAction {
-        when {
-            isUnderSourceRootOfType(virtualFile, testRootTypes) -> TestSourceKotlinRootType
-            isInSourceContent(virtualFile) -> SourceKotlinRootType
-            else -> null
-        }
-    }
-}
 
 @RequiresReadLock
 fun GlobalSearchScope.hasKotlinJvmRuntime(project: Project): Boolean {
