@@ -30,6 +30,7 @@ import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.sdk.readOnlyErrorMessage
+import com.jetbrains.python.sdk.refreshPaths
 import kotlinx.coroutines.CoroutineStart
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
@@ -135,6 +136,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
     }
 
     if (packages != installedPackages) {
+      refreshPaths(project, sdk, "Reloading packages")
       installedPackages = packages
       PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
         reloadOutdatedPackages()
