@@ -700,12 +700,9 @@ f:org.jetbrains.jewel.foundation.theme.JewelThemeKt
 f:org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.foundation.theme.ThemeColorPalette$Companion
-- sf:PALETTE_KEY_PREFIX:java.lang.String
 - <init>(java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,java.util.Map):V
 - f:blue-vNxB06k(I):J
-- f:blueOrNull-6MYuD4A(I,I):androidx.compose.ui.graphics.Color
-- bs:blueOrNull-6MYuD4A$default(org.jetbrains.jewel.foundation.theme.ThemeColorPalette,I,I,I,java.lang.Object):androidx.compose.ui.graphics.Color
-- bf:blueOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
+- f:blueOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
 - equals(java.lang.Object):Z
 - f:getBlue():java.util.List
 - f:getGray():java.util.List
@@ -717,35 +714,21 @@ f:org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 - f:getTeal():java.util.List
 - f:getYellow():java.util.List
 - f:gray-vNxB06k(I):J
-- f:grayOrNull-6MYuD4A(I,I):androidx.compose.ui.graphics.Color
-- bs:grayOrNull-6MYuD4A$default(org.jetbrains.jewel.foundation.theme.ThemeColorPalette,I,I,I,java.lang.Object):androidx.compose.ui.graphics.Color
-- bf:grayOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
+- f:grayOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
 - f:green-vNxB06k(I):J
-- f:greenOrNull-6MYuD4A(I,I):androidx.compose.ui.graphics.Color
-- bs:greenOrNull-6MYuD4A$default(org.jetbrains.jewel.foundation.theme.ThemeColorPalette,I,I,I,java.lang.Object):androidx.compose.ui.graphics.Color
-- bf:greenOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
+- f:greenOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
 - hashCode():I
 - f:lookup-ijrfgN4(java.lang.String):androidx.compose.ui.graphics.Color
 - f:orange-vNxB06k(I):J
-- f:orangeOrNull-6MYuD4A(I,I):androidx.compose.ui.graphics.Color
-- bs:orangeOrNull-6MYuD4A$default(org.jetbrains.jewel.foundation.theme.ThemeColorPalette,I,I,I,java.lang.Object):androidx.compose.ui.graphics.Color
-- bf:orangeOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
+- f:orangeOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
 - f:purple-vNxB06k(I):J
-- f:purpleOrNull-6MYuD4A(I,I):androidx.compose.ui.graphics.Color
-- bs:purpleOrNull-6MYuD4A$default(org.jetbrains.jewel.foundation.theme.ThemeColorPalette,I,I,I,java.lang.Object):androidx.compose.ui.graphics.Color
-- bf:purpleOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
+- f:purpleOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
 - f:red-vNxB06k(I):J
-- f:redOrNull-6MYuD4A(I,I):androidx.compose.ui.graphics.Color
-- bs:redOrNull-6MYuD4A$default(org.jetbrains.jewel.foundation.theme.ThemeColorPalette,I,I,I,java.lang.Object):androidx.compose.ui.graphics.Color
-- bf:redOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
+- f:redOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
 - f:teal-vNxB06k(I):J
-- f:tealOrNull-6MYuD4A(I,I):androidx.compose.ui.graphics.Color
-- bs:tealOrNull-6MYuD4A$default(org.jetbrains.jewel.foundation.theme.ThemeColorPalette,I,I,I,java.lang.Object):androidx.compose.ui.graphics.Color
-- bf:tealOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
+- f:tealOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
 - f:yellow-vNxB06k(I):J
-- f:yellowOrNull-6MYuD4A(I,I):androidx.compose.ui.graphics.Color
-- bs:yellowOrNull-6MYuD4A$default(org.jetbrains.jewel.foundation.theme.ThemeColorPalette,I,I,I,java.lang.Object):androidx.compose.ui.graphics.Color
-- bf:yellowOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
+- f:yellowOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
 f:org.jetbrains.jewel.foundation.theme.ThemeColorPalette$Companion
 - f:getEmpty():org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 f:org.jetbrains.jewel.foundation.theme.ThemeDefinition
