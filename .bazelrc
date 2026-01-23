@@ -15,3 +15,5 @@ common --downloader_config=build/bazel_downloader.cfg
 
 # TeamCity-specific options
 common:teamcity --show_progress_rate_limit=30
+
+try-import %workspace%/.bazelrc-user.bazelrc
