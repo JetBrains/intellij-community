@@ -1,12 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.html.attributes
 
-import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.XmlAttributeInsertHandler
-import com.intellij.codeInsight.completion.XmlTagInsertHandler
+import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
+import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
 import com.intellij.polySymbols.framework.framework
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
@@ -20,11 +19,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
 
-import com.intellij.codeInsight.completion.InsertHandler
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-
-open class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttribute>() {
+class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttribute>() {
 
   override fun getContext(position: PsiElement): XmlAttribute? =
     PsiTreeUtil.getParentOfType(position, XmlAttribute::class.java)
@@ -108,21 +103,22 @@ open class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProvide
 
   }
 
-  protected open fun selectInsertHandler(
+  private fun selectInsertHandler(
     parameters: CompletionParameters,
     item: PolySymbolCodeCompletionItem,
-    info: HtmlAttributeSymbolInfo
+    info: HtmlAttributeSymbolInfo,
   ): InsertHandler<LookupElement> {
-    val framework = HtmlFrameworkSymbolsSupport.get(info.symbol)
-    return framework.createAttributeInsertHandler(parameters, item, info) ?: XmlAttributeInsertHandler.INSTANCE
+    return HtmlFrameworkSymbolsSupport.get(info.symbol)
+             .createAttributeInsertHandler(parameters, item, info)
+           ?: XmlAttributeInsertHandler.INSTANCE
   }
 
-  protected open fun shouldInsertValue(
+  private fun shouldInsertValue(
     parameters: CompletionParameters,
     item: PolySymbolCodeCompletionItem,
-    info: HtmlAttributeSymbolInfo
+    info: HtmlAttributeSymbolInfo,
   ): Boolean {
-    val framework = HtmlFrameworkSymbolsSupport.get(info.symbol)
-    return framework.shouldInsertAttributeValue(parameters, item, info)
+    return HtmlFrameworkSymbolsSupport.get(info.symbol)
+      .shouldInsertAttributeValue(parameters, item, info)
   }
 }
