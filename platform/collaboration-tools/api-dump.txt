@@ -47,8 +47,6 @@ c:com.intellij.collaboration.api.dto.GraphQLNodesDTO
 - <init>():V
 - <init>(java.util.List):V
 - b:<init>(java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- <init>(java.util.List,java.lang.Integer):V
-- b:<init>(java.util.List,java.lang.Integer,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - equals(java.lang.Object):Z
 - f:getNodes():java.util.List
 - hashCode():I

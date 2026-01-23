@@ -51,17 +51,6 @@ fun DisposingMainScope(parentDisposable: Disposable): CoroutineScope {
 @Deprecated("Prefer creating a service to supply a parent scope")
 fun Disposable.disposingMainScope(): CoroutineScope = DisposingMainScope(this)
 
-/**
- * Prefer creating a service to supply a parent scope
- */
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Prefer creating a service to supply a parent scope")
-fun Disposable.disposingScope(context: CoroutineContext = SupervisorJob()): CoroutineScope = CoroutineScope(context).also {
-  Disposer.register(this) {
-    it.cancel()
-  }
-}
-
 @OptIn(InternalCoroutinesApi::class)
 @ApiStatus.Experimental
 fun CoroutineScope.nestedDisposable(): Disposable {
