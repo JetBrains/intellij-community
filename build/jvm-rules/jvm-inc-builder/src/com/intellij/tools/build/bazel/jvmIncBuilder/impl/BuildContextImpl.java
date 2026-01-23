@@ -84,7 +84,7 @@ public class BuildContextImpl implements BuildContext {
     }
 
     List<Pair<String, byte[]>> untrackedInputs = new ArrayList<>();
-    for (String path : unique(flat(map(CLFlags.PLUGIN_CLASSPATH.getValue(flags), cp -> asIterable(cp.split(":")))))) {
+    for (String path : unique(flat(map(CLFlags.PLUGIN_CLASSPATH.getValue(flags), cp -> cp.isBlank()? List.of() : asIterable(cp.split(":")))))) {
       byte[] digest = digestsMap.get(path);
       if (digest != null) {
         untrackedInputs.add(Pair.create(path, digest));
