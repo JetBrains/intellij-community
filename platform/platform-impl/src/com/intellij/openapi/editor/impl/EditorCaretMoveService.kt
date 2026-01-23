@@ -56,7 +56,7 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
       editor.lastPosMap[state.caret] = state.finalPos
     }
     editor.myCaretCursor.setPositions(animationStates.map { state ->
-      EditorImpl.CaretRectangle(state.finalPos, state.width, state.caret, state.isRtl, 1.0f)
+      EditorImpl.CaretRectangle(state.finalPos, state.width, state.caret, state.isRtl)
     }.toTypedArray())
     editor.caretAnimationElapsed = 0.0
   }
@@ -64,12 +64,12 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
   // Replaying 128 requests is probably way too much, actually 2 should be enough. It shouldn't break
   // anything, though, since most of the time this would not contain more than 2 elements,
   // one for the main editor and one for the lite editor that can sometimes be opened on top
-  private val setPositionRequests = MutableSharedFlow<EditorImpl?>(replay = 128, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val setPositionRequests = MutableSharedFlow<EditorImpl>(replay = 128, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
       setPositionRequests.collect { editor ->
-        if (editor != null && !editor.isDisposed) {
+        if (!editor.isDisposed) {
           editor.caretAnimationJob?.cancel()
           editor.caretAnimationJob = launch {
             runCatching {
@@ -105,14 +105,6 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
       AnimationState(lastPos, it)
     }
 
-    val enableHiding = Registry.`is`("editor.smooth.caret.hide.animation")
-    val stateDurations = animationStates.associateWith { state ->
-      val dx = state.update.finalPos.x - state.startPos.x
-      val dy = state.update.finalPos.y - state.startPos.y
-
-      enableHiding && dx * dx + dy * dy >= 400
-    }
-
     val startingAnimationElapsed = editor.caretAnimationElapsed
     val easing = CaretEasing.fromSettings(editor.settings, startingAnimationElapsed)
     val startTime = System.currentTimeMillis()
@@ -129,22 +121,15 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
         val update = state.update
         val (startPos, finalPos) = Pair(state.startPos, update.finalPos)
 
-        val shouldBlink = stateDurations[state]!!
         if (t < 1) allDone = false
 
         val ease = easing.apply(t)
         val x = startPos.x + (finalPos.x - startPos.x) * ease
         val y = startPos.y + (finalPos.y - startPos.y) * ease
-        val opacity = when {
-          !shouldBlink || t >= 1 -> 1.0
-          ease < 0.2 -> 1.0 - (ease * 5)
-          ease > 0.8 && ease < 1.0 -> (ease - 0.8) * 5
-          else -> 0.0
-        }
 
         val interpolated = Point2D.Double(if (t >= 1) finalPos.x else x, if (t >= 1) finalPos.y else y)
         editor.lastPosMap[update.caret] = interpolated
-        EditorImpl.CaretRectangle(interpolated, update.width, update.caret, update.isRtl, opacity.toFloat())
+        EditorImpl.CaretRectangle(interpolated, update.width, update.caret, update.isRtl)
       }.toTypedArray()
 
       cursor.repaint()
@@ -196,13 +181,6 @@ private class CaretEasing(val type: CaretEasingType, val adjustP: Double) {
   }
 
   companion object {
-    @Suppress("unused")
-    fun fromRegistry(elapsed: Double): CaretEasing {
-      val type = Registry.get("editor.smooth.caret.curve").selectedOption?.let { CaretEasingType.valueOf(it) } ?: CaretEasingType.Ninja
-
-      return CaretEasing(type, elapsed)
-    }
-
     fun fromSettings(settings: EditorSettings, elapsed: Double): CaretEasing {
       val type = when (settings.caretEasing) {
         EditorSettings.CaretEasing.NINJA -> CaretEasingType.Ninja

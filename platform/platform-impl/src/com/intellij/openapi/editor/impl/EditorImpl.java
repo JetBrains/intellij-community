@@ -3206,7 +3206,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void setCursorPosition() {
     synchronized (caretMoveService) {
-      if (!getSettings().isAnimatedCaret() || gainedFocus.getAndSet(false) || myCurrentDragIsSubstantial) {
+      if (!getSettings().isAnimatedCaret() || gainedFocus.getAndSet(false) || myMouseDragStarted) {
         caretMoveService.setCursorPositionImmediately(this);
       } else {
         caretMoveService.setCursorPosition(this);
@@ -3312,15 +3312,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public final @Nullable Caret myCaret;
     public final boolean myIsRtl;
 
-    @ApiStatus.Internal
-    public final float myOpacity;
-
-    CaretRectangle(@NotNull Point2D point, float width, @Nullable Caret caret, boolean isRtl, float opacity) {
+    CaretRectangle(@NotNull Point2D point, float width, @Nullable Caret caret, boolean isRtl) {
       myPoint = point;
       myWidth = Math.max(width, 2);
       myCaret = caret;
       myIsRtl = isRtl;
-      myOpacity = opacity;
     }
 
     Point2D getPoint() {
@@ -3329,7 +3325,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   final class CaretCursor {
-    private CaretRectangle @NotNull [] myLocations = {new CaretRectangle(new Point(0, 0), 0, null, false, 1.0f)};
+    private CaretRectangle @NotNull [] myLocations = {new CaretRectangle(new Point(0, 0), 0, null, false)};
     private boolean myEnabled = true;
 
     private boolean myIsShown;
