@@ -137,22 +137,6 @@ public final class GitConfigUtil {
   }
 
   /**
-   * @deprecated Use {@link #getCommitEncodingCharset(Project, VirtualFile)}
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull String getCommitEncoding(@NotNull Project project, @NotNull VirtualFile root) {
-    return getCommitEncodingCharset(project, root).name();
-  }
-
-  /**
-   * @deprecated Use {@link #getLogEncodingCharset(Project, VirtualFile)}
-   */
-  @Deprecated(forRemoval = true)
-  public static String getLogEncoding(@NotNull Project project, @NotNull VirtualFile root) {
-    return getLogEncodingCharset(project, root).name();
-  }
-
-  /**
    * Get commit encoding for the specified root, or UTF-8 if the encoding is note explicitly specified
    */
   public static @NotNull Charset getCommitEncodingCharset(@NotNull Project project, @NotNull VirtualFile root) {

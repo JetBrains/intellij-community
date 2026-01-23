@@ -154,18 +154,6 @@ class GitUntrackedFilesHolder internal constructor(
     scheduleUpdate()
   }
 
-  /**
-   * Returns the list of unversioned files.
-   * This method may be slow, if the full-refresh of untracked files is needed.
-   *
-   * @return untracked files.
-   * @throws VcsException if there is an unexpected error during Git execution.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("use {@link #retrieveUntrackedFilePaths} instead")
-  @Throws(VcsException::class)
-  fun retrieveUntrackedFiles(): Collection<VirtualFile?> = retrieveUntrackedFilePaths().mapNotNull { it.getVirtualFile() }
-
   @Throws(VcsException::class)
   fun retrieveUntrackedFilePaths(): Collection<FilePath> {
     runBlockingMaybeCancellable {

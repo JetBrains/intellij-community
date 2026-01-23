@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch;
 
-import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.dvcs.ui.BranchActionGroup;
-import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -36,7 +34,6 @@ import java.util.*;
 import static com.intellij.dvcs.DvcsUtil.getShortHash;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
-import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
 import static git4idea.ui.branch.GitBranchActionsUtilKt.createOrCheckoutNewBranch;
@@ -102,24 +99,6 @@ public final class GitBranchPopupActions {
    */
   public static void addTooltipText(Presentation presentation, @NlsContexts.Tooltip String tooltipText) {
     presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, tooltipText);
-  }
-
-  /**
-   * @deprecated only used externally
-   */
-  @Deprecated(forRemoval = true)
-  public static class GitNewBranchAction extends NewBranchAction<GitRepository> {
-
-    public GitNewBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories) {
-      super(project, repositories);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      createOrCheckoutNewBranch(myProject, myRepositories, HEAD,
-                                GitBundle.message("branches.create.new.branch.dialog.title"),
-                                MultiRootBranches.getCommonCurrentBranch(myRepositories));
-    }
   }
 
   /**
