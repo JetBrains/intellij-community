@@ -128,6 +128,28 @@ fun addFakeScreenInsets(rectangle: Rectangle) {
   rectangle.height -= total
 }
 
+/**
+ * Tries to estimate the available screen height.
+ * 
+ * Since the screen size on Wayland can't be trusted (JBR-9884),
+ * the size of the topmost window owner is used as an estimate.
+ * If it's too small, then `null` is returned and the caller is expected
+ * to provide a sensible fallback.
+ */
+@ApiStatus.Internal
+fun getFakeScreenHeight(component: Component?): Int? {
+  if (component == null) return null
+  val parent = ComponentUtil.findUltimateParent(component)
+  // Check for IdeFrameImpl here because other windows can be too small for this calculation to have any meaning.
+  // The ultimate parent should be an IdeFrameImpl anyway.
+  if (parent !is Window || !parent.isShowing) return null
+  val screenHeight = parent.getHeight()
+  // Check if the main window is too small.
+  // This is a reasonable fallback, as even a tiny 14" MacBook screen with the maximum scaling is 665 px, so 600 should be safe.
+  if (screenHeight < 600) return null
+  return screenHeight
+}
+
 @ApiStatus.Internal
 fun isAllowedTabDnD(tabs: JBTabsEx): Boolean {
   if (!StartupUiUtil.isWaylandToolkit() || !tabs.isEditorTabs) {

@@ -12,8 +12,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.ui.*;
+import com.intellij.ui.PopupBorder;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.UiInterceptors;
 import com.intellij.ui.awt.AnchoredPoint;
 import com.intellij.ui.popup.list.ComboBoxPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -21,6 +23,7 @@ import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.MnemonicsSearch;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.ui.wayland.WaylandUtilKt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.TimerUtil;
@@ -368,16 +371,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     private static @Nullable Integer computeNotBiggerHeight(@NotNull Dimension ofContent, @Nullable Component focusOwner) {
       @Nullable Integer screenHeight = null;
       if (StartupUiUtil.isWaylandToolkit()) {
-        if (focusOwner == null) return null;
-        Component parent = ComponentUtil.findUltimateParent(focusOwner);
-        // Check for IdeFrameImpl here because other windows can be too small for this calculation to have any meaning.
-        // The ultimate parent should be an IdeFrameImpl anyway.
-        if (!(parent instanceof IdeFrameImpl window) || !window.isShowing()) return null;
-        screenHeight = window.getHeight();
-        // Check if the main window is too small.
-        // Since the screen size on Wayland can't be trusted (JBR-9884), we can only fall back to the default size in this case.
-        // This is a reasonable fallback, as even a tiny 14" MacBook screen with the maximum scaling is 665 px, so 600 should be safe.
-        if (screenHeight < MAX_SIZE.height) return null;
+        screenHeight = WaylandUtilKt.getFakeScreenHeight(focusOwner);
       }
       else {
         Point locationOnScreen = null;
