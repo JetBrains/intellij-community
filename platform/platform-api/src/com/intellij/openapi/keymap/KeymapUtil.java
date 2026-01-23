@@ -438,14 +438,6 @@ public final class KeymapUtil {
     return filtered.isEmpty() ? null : new CustomShortcutSet(filtered.toArray(Shortcut.EMPTY_ARRAY));
   }
 
-  /**
-   * @deprecated use {@link #getShortcutsForMnemonicChar} or {@link #getShortcutsForMnemonicCode} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable CustomShortcutSet getMnemonicAsShortcut(int mnemonic) {
-    return getShortcutsForMnemonicCode(mnemonic);
-  }
-
   public static @Nullable CustomShortcutSet getShortcutsForMnemonicChar(char mnemonic) {
     return getShortcutsForMnemonicCode(KeyEvent.getExtendedKeyCodeForChar(mnemonic));
   }

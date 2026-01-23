@@ -1,29 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
-import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.net.internal.ProxyMigrationService;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.proxy.PropertiesEncryptionSupport;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -289,31 +282,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public PasswordAuthentication getPromptedAuthentication(final String host, final @Nls String prompt) {
     Credentials credentials = ProxyAuthentication.getInstance().getPromptedAuthentication(prompt, host, PROXY_PORT);
     return credentialsToPasswordAuth(credentials);
-  }
-
-  /** @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings */
-  @Deprecated(forRemoval = true)
-  public void readExternal(Element element) throws InvalidDataException {
-    loadState(XmlSerializer.deserialize(element, HttpConfigurable.class));
-  }
-
-  /** @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings */
-  @Deprecated(forRemoval = true)
-  public void writeExternal(Element element) throws WriteExternalException {
-    com.intellij.util.xmlb.XmlSerializer.serializeInto(getState(), element);
-    if (USE_PROXY_PAC && USE_HTTP_PROXY && !ApplicationManager.getApplication().isDisposed()) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
-        if (frame != null) {
-          USE_PROXY_PAC = false;
-          Messages.showMessageDialog(
-            frame.getComponent(), IdeBundle.message("message.text.proxy.both.use.proxy.and.autodetect.proxy.set"),
-            IdeBundle.message("dialog.title.proxy.setup"), Messages.getWarningIcon()
-          );
-          editConfigurable(frame.getComponent());
-        }
-      }, ModalityState.nonModal());
-    }
   }
 
   /**

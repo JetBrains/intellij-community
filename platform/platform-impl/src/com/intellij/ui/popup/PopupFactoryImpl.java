@@ -222,27 +222,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             @Nullable String actionPlace,
                             @Nullable PresentationFactory presentationFactory,
                             boolean autoSelection) {
-      this(null, title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
-           disposeCallback, maxRowCount, preselectCondition, actionPlace, presentationFactory, autoSelection);
-    }
-
-    /** @deprecated Use {@link #ActionGroupPopup(WizardPopup, String, ActionGroup, DataContext, String, PresentationFactory, ActionPopupOptions, Runnable)} instead */
-    @Deprecated(forRemoval = true)
-    public ActionGroupPopup(@Nullable WizardPopup parentPopup,
-                            @PopupTitle @Nullable String title,
-                            @NotNull ActionGroup actionGroup,
-                            @NotNull DataContext dataContext,
-                            boolean showNumbers,
-                            boolean useAlphaAsNumbers,
-                            boolean showDisabledActions,
-                            boolean honorActionMnemonics,
-                            Runnable disposeCallback,
-                            int maxRowCount,
-                            Condition<? super AnAction> preselectCondition,
-                            @Nullable String actionPlace,
-                            @Nullable PresentationFactory presentationFactory,
-                            boolean autoSelection) {
-      this(parentPopup, title, actionGroup, dataContext,
+      this(null, title, actionGroup, dataContext,
            actionPlace == null ? ActionPlaces.POPUP : actionPlace,
            presentationFactory == null ? new PresentationFactory() : presentationFactory,
            ActionPopupOptions.create(showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,

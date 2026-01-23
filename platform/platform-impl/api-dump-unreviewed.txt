@@ -3250,7 +3250,6 @@ f:com.intellij.ide.plugins.PluginNode
 - getSuggestedCommercialIde():java.lang.String
 - getSuggestedFeatures():java.util.Collection
 - getTags():java.util.List
-- getTrialPeriod():java.lang.Integer
 - getUntilBuild():java.lang.String
 - getUrl():java.lang.String
 - getVendor():java.lang.String
@@ -3304,7 +3303,6 @@ f:com.intellij.ide.plugins.PluginNode
 - setSuggestedCommercialIde(java.lang.String):V
 - setSuggestedFeatures(java.util.Collection):V
 - setTags(java.util.List):V
-- setTrialPeriod(java.lang.Integer):V
 - setUntilBuild(java.lang.String):V
 - setUrl(java.lang.String):V
 - setVendor(java.lang.String):V
@@ -3749,11 +3747,6 @@ c:com.intellij.ide.ui.laf.IntelliJLaf
 - sf:NAME:java.lang.String
 - <init>():V
 - getName():java.lang.String
-f:com.intellij.ide.ui.laf.IntelliJLookAndFeelInfo
-- javax.swing.UIManager$LookAndFeelInfo
-- <init>():V
-- equals(java.lang.Object):Z
-- hashCode():I
 f:com.intellij.ide.ui.laf.LafManagerImpl
 - com.intellij.ide.ui.LafManager
 - com.intellij.openapi.components.PersistentStateComponent
@@ -4764,12 +4757,6 @@ f:com.intellij.notification.EventLog
 - s:getEventLog(com.intellij.openapi.project.Project):com.intellij.openapi.wm.ToolWindow
 - s:getLogModel(com.intellij.openapi.project.Project):com.intellij.notification.LogModel
 - s:toggleLog(com.intellij.openapi.project.Project,com.intellij.notification.Notification):V
-f:com.intellij.notification.EventLogToolWindowFactory
-- com.intellij.openapi.project.DumbAware
-- com.intellij.openapi.wm.ToolWindowFactory
-- <init>():V
-- createToolWindowContent(com.intellij.openapi.project.Project,com.intellij.openapi.wm.ToolWindow):V
-- isApplicable(com.intellij.openapi.project.Project):Z
 f:com.intellij.notification.LogModel
 - getNotifications():java.util.ArrayList
 f:com.intellij.notification.SingletonNotificationManager
@@ -6801,7 +6788,6 @@ f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbar
 - com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - <init>(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.Disposable):V
 f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$Companion
-- f:createExtensionDisposable(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider,com.intellij.openapi.Disposable):com.intellij.openapi.Disposable
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$DefaultImpls
 - s:getAutoHideable(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider):Z
@@ -9382,9 +9368,6 @@ f:com.intellij.openapi.wm.ex.ToolWindowEx$ToolWindowDecoration
 - <init>(javax.swing.Icon,com.intellij.openapi.actionSystem.ActionGroup):V
 - getActionGroup():com.intellij.openapi.actionSystem.ActionGroup
 - getIcon():javax.swing.Icon
-a:com.intellij.openapi.wm.ex.ToolWindowManagerAdapter
-- com.intellij.openapi.wm.ex.ToolWindowManagerListener
-- <init>():V
 a:com.intellij.openapi.wm.ex.ToolWindowManagerEx
 - com.intellij.openapi.wm.ToolWindowManager
 - sf:Companion:com.intellij.openapi.wm.ex.ToolWindowManagerEx$Companion
@@ -12310,7 +12293,6 @@ c:com.intellij.ui.TreeSpeedSearch
 c:com.intellij.ui.TreeTableSpeedSearch
 - com.intellij.ui.SpeedSearchBase
 - p:myCanExpand:Z
-- <init>(com.intellij.ui.treeStructure.treetable.TreeTable):V
 - <init>(com.intellij.ui.treeStructure.treetable.TreeTable,com.intellij.util.containers.Convertor):V
 - p:<init>(com.intellij.ui.treeStructure.treetable.TreeTable,java.lang.Void):V
 - p:<init>(com.intellij.ui.treeStructure.treetable.TreeTable,java.lang.Void,com.intellij.util.containers.Convertor):V
@@ -13624,7 +13606,6 @@ c:com.intellij.ui.popup.PopupFactoryImpl$ActionGroupPopup
 - com.intellij.ui.popup.list.ListPopupImpl
 - p:<init>(com.intellij.ui.popup.WizardPopup,com.intellij.openapi.ui.popup.ListPopupStep,java.lang.Runnable,com.intellij.openapi.actionSystem.DataContext,I):V
 - <init>(com.intellij.ui.popup.WizardPopup,java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.ui.popup.ActionPopupOptions,java.lang.Runnable):V
-- <init>(com.intellij.ui.popup.WizardPopup,java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z):V
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String):V
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z):V
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String,Z):V

@@ -1931,7 +1931,6 @@ f:com.intellij.util.proxy.CommonProxy
 - s:getHostNameReliably(java.lang.String,java.net.InetAddress,java.net.URL):java.lang.String
 - s:getInstance():com.intellij.util.proxy.CommonProxy
 - s:isInstalledAssertion():V
-- removeCustom(java.lang.String):V
 - removeCustomAuth(java.lang.String):V
 - select(java.net.URI):java.util.List
 - select(java.net.URL):java.util.List

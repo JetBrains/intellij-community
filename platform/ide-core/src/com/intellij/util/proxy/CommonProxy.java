@@ -151,12 +151,6 @@ public final class CommonProxy extends ProxySelector {
   /**
    * @deprecated see {@link com.intellij.util.net.JdkProxyCustomizer}
    */
-  @Deprecated(forRemoval = true)
-  public void removeCustom(final @NotNull String key) {}
-
-  /**
-   * @deprecated see {@link com.intellij.util.net.JdkProxyCustomizer}
-   */
   @Deprecated
   public void setCustomAuth(@NotNull String key, @NotNull NonStaticAuthenticator nonStaticAuthenticator) {
     synchronized (myLock) {

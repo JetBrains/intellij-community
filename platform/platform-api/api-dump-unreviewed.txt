@@ -2042,7 +2042,6 @@ f:com.intellij.openapi.keymap.KeymapUtil
 - s:getKeyStrokes(com.intellij.openapi.actionSystem.ShortcutSet):java.util.Collection
 - s:getKeyText(I):java.lang.String
 - s:getKeystrokeText(javax.swing.KeyStroke):java.lang.String
-- s:getMnemonicAsShortcut(I):com.intellij.openapi.actionSystem.CustomShortcutSet
 - s:getModifiersText(I):java.lang.String
 - s:getMouseShortcutString(com.intellij.openapi.actionSystem.MouseShortcut):java.lang.String
 - s:getMouseShortcutText(com.intellij.openapi.actionSystem.MouseShortcut):java.lang.String
@@ -9160,11 +9159,9 @@ c:com.intellij.util.net.HttpConfigurable
 - openHttpConnection(java.lang.String):java.net.HttpURLConnection
 - prepareURL(java.lang.String):V
 - putGenericPassword(java.lang.String,I,java.net.PasswordAuthentication,Z):V
-- readExternal(org.jdom.Element):V
 - removeGeneric(com.intellij.util.proxy.CommonProxy$HostInfo):V
 - setPlainProxyPassword(java.lang.String):V
 - setProxyLogin(java.lang.String):V
-- writeExternal(org.jdom.Element):V
 f:com.intellij.util.net.HttpConnectionUtils
 - sf:INSTANCE:com.intellij.util.net.HttpConnectionUtils
 - sf:openConnection(java.lang.String):java.net.URLConnection
@@ -9724,7 +9721,6 @@ a:com.intellij.util.ui.StatusText
 - appendText(java.lang.String,com.intellij.ui.SimpleTextAttributes):com.intellij.util.ui.StatusText
 - appendText(java.lang.String,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):com.intellij.util.ui.StatusText
 - appendText(Z,I,java.lang.String,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):com.intellij.util.ui.StatusText
-- appendText(Z,I,javax.swing.Icon,java.lang.String,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):com.intellij.util.ui.StatusText
 - attachTo(java.awt.Component):V
 - attachTo(java.awt.Component,java.awt.Component):V
 - clear():com.intellij.util.ui.StatusText
