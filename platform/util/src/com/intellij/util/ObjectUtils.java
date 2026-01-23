@@ -167,15 +167,6 @@ public final class ObjectUtils {
   }
 
   /**
-   * @deprecated Use Kotlin takeIf
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static @Nullable <T> T nullizeIfDefaultValue(@Nullable T obj, @NotNull T defaultValue) {
-    return obj == defaultValue ? null : obj;
-  }
-
-  /**
    * Performs binary search on the range [fromIndex, toIndex)
    * @param indexComparator a comparator which receives a middle index and returns the result of comparison of the value at this index and the goal value
    *                        (e.g., 0 if found, -1 if the value[middleIndex] < goal, or 1 if value[middleIndex] > goal)

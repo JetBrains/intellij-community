@@ -3673,7 +3673,6 @@ com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - kotlin.jvm.functions.Function2
 f:com.intellij.util.ui.ExtendableHTMLViewFactory$Extensions
 - sf:ADAPTIVE_IMAGE_EXTENSION:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
-- sf:BASE64_IMAGES:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:BLOCK_HR_SUPPORT:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:BLOCK_VIEW_EX:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:DETAILS_SUMMARY_SUPPORT:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
@@ -3984,7 +3983,6 @@ f:com.intellij.util.ui.JBHiDpiScalableIcon
 Fc:com.intellij.util.ui.JBHtmlEditorKit
 - javax.swing.text.html.HTMLEditorKit
 - <init>():V
-- <init>(Z):V
 - createDefaultDocument():javax.swing.text.Document
 - deinstall(javax.swing.JEditorPane):V
 - getDefaultCursor():java.awt.Cursor
@@ -3994,10 +3992,6 @@ Fc:com.intellij.util.ui.JBHtmlEditorKit
 - setFontResolver(com.intellij.util.ui.CSSFontResolver):V
 - setStyleSheet(javax.swing.text.html.StyleSheet):V
 - setUnderlineHoveredHyperlink(Z):V
-c:com.intellij.util.ui.JBHtmlEditorKit$JBHtmlFactory
-- javax.swing.text.html.HTMLEditorKit$HTMLFactory
-- <init>():V
-- create(javax.swing.text.Element):javax.swing.text.View
 c:com.intellij.util.ui.JBImageIcon
 - javax.swing.ImageIcon
 - <init>(java.awt.Image):V
@@ -4955,7 +4949,6 @@ f:com.intellij.util.ui.NamedColorUtil
 - s:getErrorForeground():java.awt.Color
 - s:getInactiveTextColor():java.awt.Color
 - s:getListSelectionForeground(Z):java.awt.Color
-- s:getTextCursor(java.awt.Color):java.awt.Cursor
 f:com.intellij.util.ui.PaletteAvatarPresentation
 - com.intellij.util.ui.AvatarPresentation
 - <init>(java.lang.String,java.lang.String,com.intellij.util.ui.ColorPalette):V

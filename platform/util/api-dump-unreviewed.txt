@@ -583,7 +583,6 @@ f:com.intellij.openapi.util.JDOMUtil
 - s:write(org.jdom.Element,java.nio.file.Path):V
 - s:write(org.jdom.Element,java.nio.file.Path,java.lang.String):V
 - s:write(org.jdom.Parent,java.io.File):V
-- s:write(org.jdom.Parent,java.io.File,java.lang.String):V
 - s:write(org.jdom.Parent,java.io.OutputStream):V
 - s:write(org.jdom.Parent,java.io.OutputStream,java.lang.String):V
 - s:write(org.jdom.Parent,java.io.Writer,java.lang.String):V
@@ -1889,7 +1888,6 @@ f:com.intellij.util.JavaModuleOptions
 - s:readOptions(java.io.InputStream,com.intellij.util.system.OS):java.util.List
 - s:readOptions(java.nio.file.Path,com.intellij.util.system.OS):java.util.List
 f:com.intellij.util.KotlinUtils
-- sf:alsoIfNull(java.lang.Object,kotlin.jvm.functions.Function0):java.lang.Object
 - sf:applyIf(java.lang.Object,Z,kotlin.jvm.functions.Function1):java.lang.Object
 - sf:getValue(java.util.concurrent.atomic.AtomicReference,java.lang.Object,kotlin.reflect.KProperty):java.lang.Object
 - sf:runIf(Z,kotlin.jvm.functions.Function0):java.lang.Object
@@ -2005,7 +2003,6 @@ f:com.intellij.util.ObjectUtils
 - s:notNull(java.lang.Object,com.intellij.openapi.util.NotNullFactory):java.lang.Object
 - s:notNull(java.lang.Object,java.lang.Object):java.lang.Object
 - s:nullizeByCondition(java.lang.Object,java.util.function.Predicate):java.lang.Object
-- s:nullizeIfDefaultValue(java.lang.Object,java.lang.Object):java.lang.Object
 - s:objectInfo(java.lang.Object):java.lang.String
 - s:sentinel(java.lang.String):java.lang.Object
 - s:sentinel(java.lang.String,java.lang.Class):java.lang.Object

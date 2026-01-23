@@ -114,16 +114,6 @@ class ExtendableHTMLViewFactory internal constructor(
     val ICONS: Extension = IconExtension(emptyMap())
 
     /**
-     * Render base64 encoded images
-     *
-     * Syntax is `<img src='data:image/png;base64,ENCODED_IMAGE_HERE'>`
-     */
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated(message = "Use HIDPI_IMAGES or FIT_TO_WIDTH_IMAGES, which support base64 as well.")
-    @JvmField
-    val BASE64_IMAGES: Extension = Base64ImagesExtension()
-
-    /**
      * Wrap words that are too long, for example, A_TEST_TABLE_SINGLE_ROW_UPDATE_AUTOCOMMIT_A_FIK
      */
     @JvmField

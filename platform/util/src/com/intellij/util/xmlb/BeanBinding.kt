@@ -24,7 +24,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.jdom.Element
 import org.jdom.Namespace
 import org.jdom.Text
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.reflect.AccessibleObject
 import java.lang.reflect.AnnotatedElement
@@ -278,12 +277,6 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : Binding, RootBinding
 
   override fun toString(): String = "BeanBinding(${beanClass.name}, tagName=$tagName)"
 
-  @Internal
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Don't use internal API", ReplaceWith(""))
-  fun serializeInto(bean: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
-    return serializeProperties(bean, preCreatedElement, filter)
-  }
 }
 
 // binding value will be not set if no data

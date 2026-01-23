@@ -51,18 +51,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
    */
   @Deprecated
   public JBHtmlEditorKit() {
-    this(true);
-  }
-
-  /**
-   * @deprecated use {@link HTMLEditorKitBuilder}
-   */
-  @Deprecated(forRemoval = true)
-  public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
     this(ExtendableHTMLViewFactory.DEFAULT, StyleSheetUtil.getDefaultStyleSheet(), false);
-    if (noGapsBetweenParagraphs) {
-      getStyleSheet().addStyleSheet(StyleSheetUtil.INSTANCE.getNO_GAPS_BETWEEN_PARAGRAPHS_STYLE());
-    }
+    getStyleSheet().addStyleSheet(StyleSheetUtil.INSTANCE.getNO_GAPS_BETWEEN_PARAGRAPHS_STYLE());
   }
 
   /**
@@ -246,21 +236,6 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
           e = e.getParentElement();
         }
       }
-    }
-  }
-
-  /**
-   * @see HTMLEditorKitBuilder
-   * @deprecated in favor of {@link ExtendableHTMLViewFactory}
-   */
-  @Deprecated(forRemoval = true)
-  public static class JBHtmlFactory extends HTMLFactory {
-
-    private final ViewFactory myDelegate = ExtendableHTMLViewFactory.DEFAULT;
-
-    @Override
-    public View create(Element elem) {
-      return myDelegate.create(elem);
     }
   }
 

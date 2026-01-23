@@ -72,16 +72,6 @@ public class Stack<T> extends ArrayList<T> {
   }
 
   /**
-   * @deprecated don't search for element index in a stack, use another collection
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public int search(Object o) {
-    int idx = lastIndexOf(o);
-    return idx == -1 ? -1 : size() - idx;
-  }
-
-  /**
    * Use {@link Deque#pollFirst}.
    */
   @Obsolete
