@@ -3,17 +3,12 @@ package com.intellij.microservices.url
 import org.jetbrains.annotations.ApiStatus
 
 interface UrlResolver {
-  @Deprecated("use and implement getAuthorityHints instead", ReplaceWith("getAuthorityHints(null)"))
-  @get:Deprecated("use and implement getAuthorityHints instead", ReplaceWith("getAuthorityHints(null)"))
-  @get:ApiStatus.ScheduledForRemoval
-  val authorityHints: List<Authority.Exact> get() = emptyList()
-
   /**
    * @param schema schema string with `://` in the end, like `http://` or `wss://`.
    * If not specified, then all authorities should be returned
    */
   @Suppress("DEPRECATION")
-  fun getAuthorityHints(schema: String?): List<Authority.Exact> = authorityHints
+  fun getAuthorityHints(schema: String?): List<Authority.Exact> = emptyList()
 
   val supportedSchemes: List<String>
 

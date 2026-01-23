@@ -838,7 +838,6 @@ com.intellij.microservices.url.UrlPath$PathSegmentRenderer
 - visitUndefined():java.lang.String
 - visitVariable(com.intellij.microservices.url.UrlPath$PathSegment$Variable):java.lang.String
 com.intellij.microservices.url.UrlResolver
-- getAuthorityHints():java.util.List
 - getAuthorityHints(java.lang.String):java.util.List
 - a:getSupportedSchemes():java.util.List
 - a:getVariants():java.lang.Iterable
