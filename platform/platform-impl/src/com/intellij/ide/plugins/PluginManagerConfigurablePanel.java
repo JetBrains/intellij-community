@@ -194,9 +194,9 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
     CustomPluginRepositoryService.getInstance().clearCache();
     myPluginUpdatesService =
-      UiPluginManager.getInstance().subscribeToUpdatesCount(myPluginModelFacade.getModel().getSessionId(), countValue -> {
+      UiPluginManager.getInstance().subscribeToUpdatesCount(myPluginModelFacade.getModel().getSessionId(), updatesCount -> {
         ApplicationManager.getApplication().invokeLater(() -> {
-          onUpdateCountReceived(countValue);
+          onPluginUpdatesRecalculation(updatesCount);
         });
         return null;
       });
@@ -422,8 +422,8 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     }
   }
 
-  private void onUpdateCountReceived(Integer countValue) {
-    int count = countValue == null ? 0 : countValue;
+  private void onPluginUpdatesRecalculation(Integer updatesCount) {
+    int count = updatesCount == null ? 0 : updatesCount;
     String text = Integer.toString(count);
     boolean visible = count > 0;
 
