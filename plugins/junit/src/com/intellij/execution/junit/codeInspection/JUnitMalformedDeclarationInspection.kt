@@ -226,7 +226,8 @@ private class JUnitMalformedSignatureVisitor(
     validVisibility = ::notPrivate,
     validParameters = { method ->
       if (method.uastParameters.isEmpty()) emptyList()
-      else if (MetaAnnotationUtil.isMetaAnnotated(method.javaPsi, listOf(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE))) null // handled in parameterized test check
+      else if (MetaAnnotationUtil.isMetaAnnotated(method.javaPsi,
+                                                  listOf(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE))) null // handled in parameterized test check
       else if (method.inParameterResolverContext()) method.uastParameters
       else method.uastParameters.filterIndexed { index, parameter -> isValidJupiterParameter(method, parameter, index) }
     }
@@ -237,7 +238,8 @@ private class JUnitMalformedSignatureVisitor(
   private fun notPrivate(method: UDeclaration): UastVisibility? =
     if (method.visibility == UastVisibility.PRIVATE) UastVisibility.PUBLIC else null
 
-  private fun UParameter.inParameterResolverContext(): Boolean = uAnnotations.any { ann -> ann.resolve()?.inParameterResolverContext() == true }
+  private fun UParameter.inParameterResolverContext(): Boolean =
+    uAnnotations.any { ann -> ann.resolve()?.inParameterResolverContext() == true }
 
   private fun UMethod.inParameterResolverContext(): Boolean {
     val sourcePsi = this.sourcePsi ?: return false
@@ -525,15 +527,16 @@ private class JUnitMalformedSignatureVisitor(
     if (javaClass.hasModifierProperty(PsiModifier.ABSTRACT)) return
     if (javaClass.isInterface) return
     val suiteAnnotation = javaClass.getAnnotation(ORG_JUNIT_PLATFORM_SUITE_API_SUITE) ?: return
-    val failIfNoTestsValue = suiteAnnotation.findAttributeValue(SuiteHelper.SUITE_ATTRIBUTE_NAME)
+    val failIfNoTestsValue = suiteAnnotation.findAttributeValue(SUITE_ATTRIBUTE_NAME)
     if (failIfNoTestsValue != null && failIfNoTestsValue.asSafely<PsiLiteralExpression>()?.value == false) return
     if (MetaAnnotationUtil.isMetaAnnotatedInHierarchy(javaClass, SUITE_SELECTOR_ANNOTATIONS)) return
 
-    if (SuiteHelper.hasFailIfNoTestsAttribute(suiteAnnotation)) {
+    if (suiteAnnotation.hasSuiteFailIfNoTestsAttribute()) {
       holder.registerUProblem(aClass,
                               JUnitBundle.message("jvm.inspections.junit.malformed.suite.no.selectors.descriptor"),
                               AddFailIfNoTestsAttributeFix())
-    }  else {
+    }
+    else {
       holder.registerUProblem(aClass,
                               JUnitBundle.message("jvm.inspections.junit.malformed.suite.no.selectors.descriptor"))
     }
@@ -942,7 +945,9 @@ private class JUnitMalformedSignatureVisitor(
     }
     if (declaration.providedParameters().isEmpty()) {
       val message = when (declaration) {
-        is UClass -> JUnitBundle.message("jvm.inspections.junit.malformed.source.without.constructor", annotation.shortName, declaration.javaPsi.name)
+        is UClass -> JUnitBundle.message("jvm.inspections.junit.malformed.source.without.constructor",
+                                         annotation.shortName,
+                                         declaration.javaPsi.name)
         is UMethod -> JUnitBundle.message("jvm.inspections.junit.malformed.source.without.params.descriptor", annotation.shortName)
         else -> return
       }
@@ -958,7 +963,9 @@ private class JUnitMalformedSignatureVisitor(
     val providedParameters = declaration.providedParameters()
     if (providedParameters.isEmpty()) {
       val message = when (declaration) {
-        is UClass -> JUnitBundle.message("jvm.inspections.junit.malformed.source.without.constructor", annotation.shortName, declaration.javaPsi.name)
+        is UClass -> JUnitBundle.message("jvm.inspections.junit.malformed.source.without.constructor",
+                                         annotation.shortName,
+                                         declaration.javaPsi.name)
         is UMethod -> JUnitBundle.message("jvm.inspections.junit.malformed.source.without.params.descriptor", annotation.shortName)
         else -> return
       }
@@ -997,7 +1004,11 @@ private class JUnitMalformedSignatureVisitor(
     checkEnumConstants(enumSource, enumType, declaration)
   }
 
-  private fun checkSourceTypeAndParameterTypeAgree(declaration: UDeclaration, attributeValue: PsiAnnotationMemberValue, componentType: PsiType) {
+  private fun checkSourceTypeAndParameterTypeAgree(
+    declaration: UDeclaration,
+    attributeValue: PsiAnnotationMemberValue,
+    componentType: PsiType,
+  ) {
     val parameters = declaration.providedParameters()
     val param = parameters.singleOrNull() ?: return
     val paramType = param.type
@@ -1230,18 +1241,18 @@ private class JUnitMalformedSignatureVisitor(
       val annotation = annotations
                          .firstOrNull { AnnotationUtil.isAnnotated(javaPsi, it, CHECK_HIERARCHY) }
                          ?.substringAfterLast('.') ?: return
-      
+
       if (requiredClassAnnotation != null) {
         val containingClass = getContainingClass(element)
         if (containingClass != null && !AnnotationUtil.isAnnotated(containingClass, requiredClassAnnotation, CHECK_HIERARCHY)) {
-          val message = JUnitBundle.message("jvm.inspections.junit.malformed.requires.class.annotation.descriptor", 
+          val message = JUnitBundle.message("jvm.inspections.junit.malformed.requires.class.annotation.descriptor",
                                             annotation, requiredClassAnnotation.substringAfterLast('.'))
           val actions = createAddAnnotationActions(containingClass, annotationRequest(requiredClassAnnotation))
           val quickFixes = IntentionWrapper.wrapToQuickFixes(actions, element.javaPsi.containingFile).toTypedArray()
           return holder.registerUProblem(element, message, *quickFixes)
         }
       }
-      
+
       val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
       val elementIsStatic = alternatives.any { it.isStatic }
       val visibility = validVisibility?.invoke(element)
@@ -1299,7 +1310,11 @@ private class JUnitMalformedSignatureVisitor(
         )
         problems.size == 2 && invalidParams.size > 1 -> JUnitBundle.message(
           "jvm.inspections.junit.malformed.annotated.method.double.param.double.descriptor",
-          annotation, problems.first(), problems.last(), invalidParams.dropLast(1).joinToString { "'${it.name}'" }, invalidParams.last().name
+          annotation,
+          problems.first(),
+          problems.last(),
+          invalidParams.dropLast(1).joinToString { "'${it.name}'" },
+          invalidParams.last().name
         )
         else -> error("Non valid problem.")
       }
@@ -1334,7 +1349,12 @@ private class JUnitMalformedSignatureVisitor(
         )
         problems.size == 2 && invalidParams.size > 1 -> JUnitBundle.message(
           "jvm.inspections.junit.malformed.annotated.method.double.typed.param.double.descriptor",
-          annotation, problems.first(), problems.last(), type, invalidParams.dropLast(1).joinToString { "'${it.name}'" }, invalidParams.last().name
+          annotation,
+          problems.first(),
+          problems.last(),
+          type,
+          invalidParams.dropLast(1).joinToString { "'${it.name}'" },
+          invalidParams.last().name
         )
         else -> error("Non valid problem.")
       }
@@ -1489,13 +1509,6 @@ private class JUnitMalformedSignatureVisitor(
     }
   }
 
-  private class SuiteHelper {
-    companion object {
-      const val SUITE_ATTRIBUTE_NAME = "failIfNoTests"
-      fun hasFailIfNoTestsAttribute(annotation: PsiAnnotation) = annotation.resolveAnnotationType()?.findMethodsByName(SUITE_ATTRIBUTE_NAME) != null
-    }
-  }
-
   private class AddFailIfNoTestsAttributeFix : CompositeModCommandQuickFix() {
     override fun getFamilyName(): String = JUnitBundle.message("jvm.inspections.junit.malformed.suite.no.selectors.quickfix")
 
@@ -1510,8 +1523,8 @@ private class JUnitMalformedSignatureVisitor(
       return listOf({ jvmClass ->
                       if (jvmClass !is PsiClass) return@listOf emptyList()
                       val annotation = jvmClass.getAnnotation(ORG_JUNIT_PLATFORM_SUITE_API_SUITE) ?: return@listOf emptyList()
-                      if (!SuiteHelper.hasFailIfNoTestsAttribute(annotation)) return@listOf emptyList()
-                      val value = constantAttribute(SuiteHelper.SUITE_ATTRIBUTE_NAME, "false")
+                      if (!annotation.hasSuiteFailIfNoTestsAttribute()) return@listOf emptyList()
+                      val value = constantAttribute(SUITE_ATTRIBUTE_NAME, "false")
                       return@listOf createChangeAnnotationAttributeActions(annotation, 0, value, name, familyName)
                     })
     }
@@ -1599,5 +1612,9 @@ private class JUnitMalformedSignatureVisitor(
       ORG_JUNIT_JUPITER_PARAMS_PROVIDER_EMPTY_SOURCE,
       ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_AND_EMPTY_SOURCE
     )
+
+    private const val SUITE_ATTRIBUTE_NAME = "failIfNoTests"
+    private fun PsiAnnotation.hasSuiteFailIfNoTestsAttribute() =
+      resolveAnnotationType()?.findMethodsByName(SUITE_ATTRIBUTE_NAME) != null
   }
 }
