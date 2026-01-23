@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
 private val colorKeyRegex: Regex
-    get() = "([a-z]+)(\\d+)(?:\\.(\\d+))?".toRegex(RegexOption.IGNORE_CASE)
+    get() = "([a-z]+)(\\d+)".toRegex(RegexOption.IGNORE_CASE)
 
 /**
  * A palette of colors provided by the theme.
@@ -16,15 +16,15 @@ private val colorKeyRegex: Regex
  * number of colors in each list depends on the implementation in the LaF. It is therefore important to use the
  * `*OrNull` accessors to avoid [IndexOutOfBoundsException]s.
  *
- * @property gray A list of gray colors with integer indices, from lightest to darkest.
- * @property blue A list of blue colors with integer indices.
- * @property green A list of green colors with integer indices.
- * @property red A list of red colors with integer indices.
- * @property yellow A list of yellow colors with integer indices.
- * @property orange A list of orange colors with integer indices.
- * @property purple A list of purple colors with integer indices.
- * @property teal A list of teal colors with integer indices.
- * @property rawMap A map of all colors in the palette, including fractional indices colors, with their original keys.
+ * @property gray A list of gray colors, from lightest to darkest.
+ * @property blue A list of blue colors.
+ * @property green A list of green colors.
+ * @property red A list of red colors.
+ * @property yellow A list of yellow colors.
+ * @property orange A list of orange colors.
+ * @property purple A list of purple colors.
+ * @property teal A list of teal colors.
+ * @property rawMap A map of all colors in the palette, with their original keys.
  */
 @Suppress("MemberVisibilityCanBePrivate", "KDocUnresolvedReference")
 @Immutable
@@ -68,22 +68,7 @@ public class ThemeColorPalette(
      * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
      * @return The [Color] at the specified index, or `null` if the index is out of bounds.
      */
-    @Deprecated("Use variant with fractional parameter", level = DeprecationLevel.HIDDEN)
     public fun grayOrNull(index: Int): Color? = gray.getOrNull(index - 1)
-
-    /**
-     * Retrieves a gray color from the palette by its index and optional fractional part, or `null` if the color is not
-     * found.
-     *
-     * Palette indices start at 1; how many entries exist for a color depends on the Look and Feel. Some LaFs may only
-     * have a partial palette, or none at all.
-     *
-     * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
-     * @param fractional The optional fractional part of the index (e.g., 25 for Gray1.25). The default value is 0.
-     * @return The [Color] at the specified index, or `null` if the index is out of bounds or the color is not found.
-     */
-    public fun grayOrNull(index: Int, fractional: Int = 0): Color? =
-        if (fractional == 0) gray.getOrNull(index - 1) else rawMap["$PALETTE_KEY_PREFIX.Gray$index.$fractional"]
 
     /**
      * Retrieves a blue color from the palette by its index. Note that this function is not safe to use and can throw an
@@ -113,22 +98,7 @@ public class ThemeColorPalette(
      * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
      * @return The [Color] at the specified index, or `null` if the index is out of bounds.
      */
-    @Deprecated("Use variant with fractional parameter", level = DeprecationLevel.HIDDEN)
     public fun blueOrNull(index: Int): Color? = blue.getOrNull(index - 1)
-
-    /**
-     * Retrieves a blue color from the palette by its index and optional fractional part, or `null` if the color is not
-     * found.
-     *
-     * Palette indices start at 1; how many entries exist for a color depends on the Look and Feel. Some LaFs may only
-     * have a partial palette, or none at all.
-     *
-     * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
-     * @param fractional The optional fractional part of the index (e.g., 25 for Blue1.25). The default value is 0.
-     * @return The [Color] at the specified index, or `null` if the index is out of bounds or the color is not found.
-     */
-    public fun blueOrNull(index: Int, fractional: Int = 0): Color? =
-        if (fractional == 0) blue.getOrNull(index - 1) else rawMap["$PALETTE_KEY_PREFIX.Blue$index.$fractional"]
 
     /**
      * Retrieves a green color from the palette by its index. Note that this function is not safe to use and can throw
@@ -158,22 +128,7 @@ public class ThemeColorPalette(
      * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
      * @return The [Color] at the specified index, or `null` if the index is out of bounds.
      */
-    @Deprecated("Use variant with fractional parameter", level = DeprecationLevel.HIDDEN)
     public fun greenOrNull(index: Int): Color? = green.getOrNull(index - 1)
-
-    /**
-     * Retrieves a green color from the palette by its index and optional fractional part, or `null` if the color is not
-     * found.
-     *
-     * Palette indices start at 1; how many entries exist for a color depends on the Look and Feel. Some LaFs may only
-     * have a partial palette, or none at all.
-     *
-     * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
-     * @param fractional The optional fractional part of the index (e.g., 25 for Green1.25). The default value is 0.
-     * @return The [Color] at the specified index, or `null` if the index is out of bounds or the color is not found.
-     */
-    public fun greenOrNull(index: Int, fractional: Int = 0): Color? =
-        if (fractional == 0) green.getOrNull(index - 1) else rawMap["$PALETTE_KEY_PREFIX.Green$index.$fractional"]
 
     /**
      * Retrieves a red color from the palette by its index. Note that this function is not safe to use and can throw an
@@ -203,22 +158,7 @@ public class ThemeColorPalette(
      * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
      * @return The [Color] at the specified index, or `null` if the index is out of bounds.
      */
-    @Deprecated("Use variant with fractional parameter", level = DeprecationLevel.HIDDEN)
     public fun redOrNull(index: Int): Color? = red.getOrNull(index - 1)
-
-    /**
-     * Retrieves a red color from the palette by its index and optional fractional part, or `null` if the color is not
-     * found.
-     *
-     * Palette indices start at 1; how many entries exist for a color depends on the Look and Feel. Some LaFs may only
-     * have a partial palette, or none at all.
-     *
-     * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
-     * @param fractional The optional fractional part of the index (e.g., 25 for Red1.25). The default value is 0.
-     * @return The [Color] at the specified index, or `null` if the index is out of bounds or the color is not found.
-     */
-    public fun redOrNull(index: Int, fractional: Int = 0): Color? =
-        if (fractional == 0) red.getOrNull(index - 1) else rawMap["$PALETTE_KEY_PREFIX.Red$index.$fractional"]
 
     /**
      * Retrieves a yellow color from the palette by its index. Note that this function is not safe to use and can throw
@@ -248,22 +188,7 @@ public class ThemeColorPalette(
      * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
      * @return The [Color] at the specified index, or `null` if the index is out of bounds.
      */
-    @Deprecated("Use variant with fractional parameter", level = DeprecationLevel.HIDDEN)
     public fun yellowOrNull(index: Int): Color? = yellow.getOrNull(index - 1)
-
-    /**
-     * Retrieves a yellow color from the palette by its index and optional fractional part, or `null` if the color is
-     * not found.
-     *
-     * Palette indices start at 1; how many entries exist for a color depends on the Look and Feel. Some LaFs may only
-     * have a partial palette, or none at all.
-     *
-     * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
-     * @param fractional The optional fractional part of the index (e.g., 25 for Yellow1.25). The default value is 0.
-     * @return The [Color] at the specified index, or `null` if the index is out of bounds or the color is not found.
-     */
-    public fun yellowOrNull(index: Int, fractional: Int = 0): Color? =
-        if (fractional == 0) yellow.getOrNull(index - 1) else rawMap["$PALETTE_KEY_PREFIX.Yellow$index.$fractional"]
 
     /**
      * Retrieves an orange color from the palette by its index. Note that this function is not safe to use and can throw
@@ -293,22 +218,7 @@ public class ThemeColorPalette(
      * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
      * @return The [Color] at the specified index, or `null` if the index is out of bounds.
      */
-    @Deprecated("Use variant with fractional parameter", level = DeprecationLevel.HIDDEN)
     public fun orangeOrNull(index: Int): Color? = orange.getOrNull(index - 1)
-
-    /**
-     * Retrieves an orange color from the palette by its index and optional fractional part, or `null` if the color is
-     * not found.
-     *
-     * Palette indices start at 1; how many entries exist for a color depends on the Look and Feel. Some LaFs may only
-     * have a partial palette, or none at all.
-     *
-     * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
-     * @param fractional The optional fractional part of the index (e.g., 25 for Orange1.25). The default value is 0.
-     * @return The [Color] at the specified index, or `null` if the index is out of bounds or the color is not found.
-     */
-    public fun orangeOrNull(index: Int, fractional: Int = 0): Color? =
-        if (fractional == 0) orange.getOrNull(index - 1) else rawMap["$PALETTE_KEY_PREFIX.Orange$index.$fractional"]
 
     /**
      * Retrieves a purple color from the palette by its index. Note that this function is not safe to use and can throw
@@ -338,22 +248,7 @@ public class ThemeColorPalette(
      * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
      * @return The [Color] at the specified index, or `null` if the index is out of bounds.
      */
-    @Deprecated("Use variant with fractional parameter", level = DeprecationLevel.HIDDEN)
     public fun purpleOrNull(index: Int): Color? = purple.getOrNull(index - 1)
-
-    /**
-     * Retrieves a purple color from the palette by its index and optional fractional part, or `null` if the color is
-     * not found.
-     *
-     * Palette indices start at 1; how many entries exist for a color depends on the Look and Feel. Some LaFs may only
-     * have a partial palette, or none at all.
-     *
-     * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
-     * @param fractional The optional fractional part of the index (e.g., 25 for Purple1.25). The default value is 0.
-     * @return The [Color] at the specified index, or `null` if the index is out of bounds or the color is not found.
-     */
-    public fun purpleOrNull(index: Int, fractional: Int = 0): Color? =
-        if (fractional == 0) purple.getOrNull(index - 1) else rawMap["$PALETTE_KEY_PREFIX.Purple$index.$fractional"]
 
     /**
      * Retrieves a teal color from the palette by its index. Note that this function is not safe to use and can throw an
@@ -383,22 +278,7 @@ public class ThemeColorPalette(
      * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
      * @return The [Color] at the specified index, or `null` if the index is out of bounds.
      */
-    @Deprecated("Use variant with fractional parameter", level = DeprecationLevel.HIDDEN)
     public fun tealOrNull(index: Int): Color? = teal.getOrNull(index - 1)
-
-    /**
-     * Retrieves a teal color from the palette by its index and optional fractional part, or `null` if the color is not
-     * found.
-     *
-     * Palette indices start at 1; how many entries exist for a color depends on the Look and Feel. Some LaFs may only
-     * have a partial palette, or none at all.
-     *
-     * @param index The 1-based index of the color to retrieve. Only values of 1 and above are valid.
-     * @param fractional The optional fractional part of the index (e.g., 25 for Teal1.25). The default value is 0.
-     * @return The [Color] at the specified index, or `null` if the index is out of bounds or the color is not found.
-     */
-    public fun tealOrNull(index: Int, fractional: Int = 0): Color? =
-        if (fractional == 0) teal.getOrNull(index - 1) else rawMap["$PALETTE_KEY_PREFIX.Teal$index.$fractional"]
 
     /**
      * Looks up a color in the palette by its key. The key can be in the format "colorNameN" (e.g., "gray1", "blue12")
@@ -408,10 +288,9 @@ public class ThemeColorPalette(
      * @return The [Color] associated with the key, or `null` if the key is not found.
      */
     public fun lookup(colorKey: String): Color? {
-        val result = colorKeyRegex.matchEntire(colorKey.trim().removePrefix("$PALETTE_KEY_PREFIX."))
+        val result = colorKeyRegex.matchEntire(colorKey.trim())
         val colorGroup = result?.groupValues?.getOrNull(1)?.lowercase()
         val colorIndex = result?.groupValues?.getOrNull(2)?.toIntOrNull()
-        val fractionalIndex = result?.groupValues?.getOrNull(3)?.toIntOrNull() ?: 0
 
         if (colorGroup == null || colorIndex == null) {
             return rawMap[colorKey]
@@ -419,14 +298,14 @@ public class ThemeColorPalette(
 
         return when (colorGroup) {
             "grey",
-            "gray" -> grayOrNull(colorIndex, fractionalIndex)
-            "blue" -> blueOrNull(colorIndex, fractionalIndex)
-            "green" -> greenOrNull(colorIndex, fractionalIndex)
-            "red" -> redOrNull(colorIndex, fractionalIndex)
-            "yellow" -> yellowOrNull(colorIndex, fractionalIndex)
-            "orange" -> orangeOrNull(colorIndex, fractionalIndex)
-            "purple" -> purpleOrNull(colorIndex, fractionalIndex)
-            "teal" -> tealOrNull(colorIndex, fractionalIndex)
+            "gray" -> grayOrNull(colorIndex)
+            "blue" -> blueOrNull(colorIndex)
+            "green" -> greenOrNull(colorIndex)
+            "red" -> redOrNull(colorIndex)
+            "yellow" -> yellowOrNull(colorIndex)
+            "orange" -> orangeOrNull(colorIndex)
+            "purple" -> purpleOrNull(colorIndex)
+            "teal" -> tealOrNull(colorIndex)
             else -> null
         }
     }
@@ -478,8 +357,6 @@ public class ThemeColorPalette(
     }
 
     public companion object {
-        public const val PALETTE_KEY_PREFIX: String = "ColorPalette"
-
         public val Empty: ThemeColorPalette =
             ThemeColorPalette(
                 gray = emptyList(),

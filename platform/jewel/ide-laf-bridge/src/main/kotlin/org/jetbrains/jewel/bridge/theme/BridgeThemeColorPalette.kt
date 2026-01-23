@@ -23,15 +23,6 @@ public fun ThemeColorPalette.Companion.readFromLaF(): ThemeColorPalette {
     val teal = readPaletteColors("Teal")
     val windowsPopupBorder = readPaletteColor("windowsPopupBorder")
 
-    val grayInt = gray.filterIntKeys()
-    val blueInt = blue.filterIntKeys()
-    val greenInt = green.filterIntKeys()
-    val redInt = red.filterIntKeys()
-    val yellowInt = yellow.filterIntKeys()
-    val orangeInt = orange.filterIntKeys()
-    val purpleInt = purple.filterIntKeys()
-    val tealInt = teal.filterIntKeys()
-
     val rawMap = buildMap {
         putAll(gray)
         putAll(blue)
@@ -45,55 +36,41 @@ public fun ThemeColorPalette.Companion.readFromLaF(): ThemeColorPalette {
     }
 
     return ThemeColorPalette(
-        gray = grayInt.values.toList(),
-        blue = blueInt.values.toList(),
-        green = greenInt.values.toList(),
-        red = redInt.values.toList(),
-        yellow = yellowInt.values.toList(),
-        orange = orangeInt.values.toList(),
-        purple = purpleInt.values.toList(),
-        teal = tealInt.values.toList(),
+        gray = gray.values.toList(),
+        blue = blue.values.toList(),
+        green = green.values.toList(),
+        red = red.values.toList(),
+        yellow = yellow.values.toList(),
+        orange = orange.values.toList(),
+        purple = purple.values.toList(),
+        teal = teal.values.toList(),
         rawMap = rawMap,
     )
-}
-
-private fun Map<String, Color>.filterIntKeys(): Map<String, Color> {
-    val intMap = TreeMap<String, Color>()
-
-    for ((key, value) in this) {
-        val colorName = key.substringAfter("${ThemeColorPalette.PALETTE_KEY_PREFIX}.")
-        val colorNameWithoutIndex = colorName.takeWhile { !it.isDigit() }
-        val index = colorName.substring(colorNameWithoutIndex.length)
-
-        if (index.toIntOrNull() != null) {
-            intMap[key] = value
-        }
-    }
-    return intMap
 }
 
 private fun readPaletteColors(colorName: String): Map<String, Color> {
     val defaults = uiDefaults
     val allKeys = defaults.keys
-    val colorNameKeyPrefix = "${ThemeColorPalette.PALETTE_KEY_PREFIX}.$colorName"
+    val colorNameKeyPrefix = "ColorPalette.$colorName"
     val colorNameKeyPrefixLength = colorNameKeyPrefix.length
 
-    val keys =
+    val lastColorIndex =
         allKeys
             .asSequence()
             .filterIsInstance(String::class.java)
             .filter { it.startsWith(colorNameKeyPrefix) }
-            .filter {
+            .mapNotNull {
                 val afterName = it.substring(colorNameKeyPrefixLength)
-                // Match integer or fractional color
-                afterName.matches("\\d+\\.\\d+".toRegex()) || afterName.toIntOrNull() != null
+                afterName.toIntOrNull()
             }
+            .maxOrNull() ?: return TreeMap()
 
     return buildMap {
-        for (key in keys) {
+        for (i in 1..lastColorIndex) {
+            val key = "$colorNameKeyPrefix$i"
             val value = defaults[key] as? java.awt.Color
             if (value == null) {
-                logger.error("Unable to find color value for palette key '$key'")
+                logger.error("Unable to find color value for palette key '$colorNameKeyPrefix$i'")
                 continue
             }
 
@@ -104,6 +81,6 @@ private fun readPaletteColors(colorName: String): Map<String, Color> {
 
 private fun readPaletteColor(colorName: String): Color {
     val defaults = uiDefaults
-    val colorNameKey = "${ThemeColorPalette.PALETTE_KEY_PREFIX}.$colorName"
+    val colorNameKey = "ColorPalette.$colorName"
     return (defaults[colorNameKey] as? java.awt.Color)?.toComposeColor() ?: Color.Unspecified
 }
