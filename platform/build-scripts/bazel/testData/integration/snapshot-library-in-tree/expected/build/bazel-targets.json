@@ -1,0 +1,28 @@
+{
+  "modules": {
+    "module": {
+      "productionTargets": [
+        "@community//module:module.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/module/module.jar"
+      ],
+      "testTargets": [],
+      "testJars": [],
+      "exports": [],
+      "moduleLibraries": {
+        "#": {
+          "target": "@lib//:module-dokka-core-1-4-10-2-dev-52-snapshot",
+          "jars": [
+            "execroot/_main/mylibs/dokka-core-1.4.10.2-dev-52-SNAPSHOT.jar"
+          ],
+          "jarTargets": [
+            "//mylibs:dokka-core-1.4.10.2-dev-52-SNAPSHOT.jar"
+          ],
+          "sourceJars": []
+        }
+      }
+    }
+  },
+  "projectLibraries": {}
+}

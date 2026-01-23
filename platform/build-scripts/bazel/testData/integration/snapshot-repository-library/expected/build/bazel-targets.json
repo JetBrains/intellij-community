@@ -1,0 +1,28 @@
+{
+  "modules": {
+    "module": {
+      "productionTargets": [
+        "@community//module:module.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/module/module.jar"
+      ],
+      "testTargets": [],
+      "testJars": [],
+      "exports": [],
+      "moduleLibraries": {}
+    }
+  },
+  "projectLibraries": {
+    "dokka": {
+      "target": "@lib//:dokka-core-1-4-10-2-dev-52-snapshot",
+      "jars": [
+        "external/lib+/snapshots/dokka-core-1.4.10.2-dev-52-SNAPSHOT-9f86d081884c7d659a2f.jar"
+      ],
+      "jarTargets": [
+        "@lib//snapshots:dokka-core-1.4.10.2-dev-52-SNAPSHOT-9f86d081884c7d659a2f.jar"
+      ],
+      "sourceJars": []
+    }
+  }
+}
