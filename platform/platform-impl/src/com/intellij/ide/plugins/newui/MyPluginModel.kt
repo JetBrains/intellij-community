@@ -61,7 +61,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     private set
   private var myInstalling: PluginsGroup? = null
   private var myTopController: TopComponentController? = null
-  private var myVendors: SortedSet<String>? = null
+  private var _vendorsSortedByPluginCountDescending: SortedSet<String>? = null
   private var myTags: SortedSet<String>? = null
 
   var needRestart: Boolean = false
@@ -611,7 +611,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       return
     }
 
-    myVendors = null
+    _vendorsSortedByPluginCountDescending = null
     myTags = null
 
     if (downloadedGroup!!.ui == null) {
@@ -644,15 +644,15 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   val vendors: SortedSet<String?>
     get() {
-      if (myVendors.isNullOrEmpty()) {
-        val vendorsCount = getVendorsCount(installedDescriptors)
-        myVendors = TreeSet { v1, v2 ->
-          val result = vendorsCount[v2]!! - vendorsCount[v1]!!
-          if (result == 0) v2.compareTo(v1, ignoreCase = true) else result
+      if (_vendorsSortedByPluginCountDescending.isNullOrEmpty()) {
+        val pluginsCountPerVendor = getPluginsCountPerVendor(installedDescriptors)
+        _vendorsSortedByPluginCountDescending = TreeSet { v1, v2 ->
+          val result = pluginsCountPerVendor[v2]!! - pluginsCountPerVendor[v1]!!
+          if (result != 0) result else v2.compareTo(v1, ignoreCase = true)
         }
-        myVendors!!.addAll(vendorsCount.keys)
+        _vendorsSortedByPluginCountDescending!!.addAll(pluginsCountPerVendor.keys)
       }
-      return myVendors?.let { Collections.unmodifiableSortedSet(it) } ?: TreeSet()
+      return _vendorsSortedByPluginCountDescending?.let { Collections.unmodifiableSortedSet(it) } ?: TreeSet()
     }
 
   val tags: SortedSet<String?>
@@ -1099,16 +1099,14 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       info.indicator.removeStateDelegate(indicator)
     }
 
-    private fun getVendorsCount(descriptors: Collection<PluginUiModel>): Map<String, Int> {
+    private fun getPluginsCountPerVendor(descriptors: Collection<PluginUiModel>): Map<String, Int> {
       val vendors = mutableMapOf<String, Int>()
-
       for (descriptor in descriptors) {
         val vendor = StringUtil.trim(descriptor.vendor)
         if (!vendor.isNullOrBlank()) {
           vendors[vendor] = (vendors[vendor] ?: 0) + 1
         }
       }
-
       return vendors
     }
 
