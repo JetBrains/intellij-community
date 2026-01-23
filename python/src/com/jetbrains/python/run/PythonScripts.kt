@@ -38,6 +38,7 @@ import com.jetbrains.python.run.features.PyRunToolParameters
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.target.PathMapping
 import com.jetbrains.python.run.target.tryResolveAsPythonHelperDir
+import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -47,9 +48,9 @@ import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAd
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.pathString
+import kotlin.text.Charsets.UTF_8
 
 private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
-
 
 @JvmOverloads
 @ApiStatus.Internal
@@ -166,12 +167,18 @@ private fun resolveUploadPath(localPath: String, uploads: List<PathMapping>): Ta
   return upload.targetPathFun.getRelativeTargetPath(localRelativePath)
 }
 
+private fun PythonExecution.setHelpersCharset() {
+  charset = UTF_8
+  addEnvironmentVariable(PythonEnvUtil.PYTHONIOENCODING, UTF_8.name())
+}
+
 @ApiStatus.Internal
 fun prepareHelperScriptExecution(helperPackage: HelperPackage,
                                  helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): PythonScriptExecution =
   PythonScriptExecution().apply {
     val uploads = applyHelperPackageToPythonPath(helperPackage, helpersAwareTargetRequest)
     pythonScriptPath = resolveUploadPath(helperPackage.asParamString(), uploads)
+    setHelpersCharset()
   }
 
 @ApiStatus.Internal
@@ -188,8 +195,9 @@ fun prepareHelperScriptViaToolExecution(
     toolParams,
     resolveUploadPath(helperPackage.asParamString(), uploads).andThen { Path.of(it) }
   )
-  execution.envs += envs;
-  return execution;
+  execution.envs += envs
+  execution.setHelpersCharset()
+  return execution
 }
 
 private const val PYTHONPATH_ENV = "PYTHONPATH"
