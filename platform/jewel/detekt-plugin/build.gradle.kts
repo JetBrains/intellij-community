@@ -10,6 +10,7 @@ dependencies {
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.detekt.core)
     testImplementation(libs.detekt.test)
+    testImplementation(libs.detekt.assertj)
     testImplementation(libs.assertj.core)
 }
 

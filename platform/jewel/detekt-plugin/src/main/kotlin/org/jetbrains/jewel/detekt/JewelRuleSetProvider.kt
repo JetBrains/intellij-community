@@ -2,15 +2,26 @@
 // Apache 2.0 license.
 package org.jetbrains.jewel.detekt
 
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.RuleSet
-import io.gitlab.arturbosch.detekt.api.RuleSetProvider
+import com.intellij.core.CoreApplicationEnvironment
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.psi.impl.source.tree.TreeCopyHandler
+import dev.detekt.api.RuleSet
+import dev.detekt.api.RuleSetProvider
 import org.jetbrains.jewel.detekt.rules.EqualityMembersRule
 import org.jetbrains.jewel.detekt.rules.MissingApiStatusAnnotationRule
 
 class JewelRuleSetProvider : RuleSetProvider {
-    override val ruleSetId: String = "jewel"
+    init {
+        @Suppress("UnstableApiUsage")
+        CoreApplicationEnvironment.registerExtensionPoint(
+            ApplicationManager.getApplication().extensionArea,
+            TreeCopyHandler.EP_NAME,
+            TreeCopyHandler::class.java,
+        )
+    }
 
-    override fun instance(config: Config): RuleSet =
-        RuleSet(ruleSetId, listOf(EqualityMembersRule(config), MissingApiStatusAnnotationRule(config)))
+    override val ruleSetId: RuleSet.Id = RuleSet.Id("jewel")
+
+    override fun instance(): RuleSet =
+        RuleSet(ruleSetId, listOf(::EqualityMembersRule, ::MissingApiStatusAnnotationRule))
 }
