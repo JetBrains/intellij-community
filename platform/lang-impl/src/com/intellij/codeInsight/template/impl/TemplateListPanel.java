@@ -2,10 +2,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.template.LiveTemplateContextService;
-import com.intellij.codeInsight.template.LiveTemplateContextsSnapshot;
-import com.intellij.codeInsight.template.TemplateFilter;
-import com.intellij.codeInsight.template.TemplateGroupHintProvider;
+import com.intellij.codeInsight.template.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -49,6 +46,7 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 import java.util.Queue;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.template.impl.TemplateContext.getDifference;
@@ -138,7 +136,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private static @NotNull List<TemplateGroup> getSortedGroups(TemplateSettings templateSettings) {
     List<TemplateGroup> groups = new ArrayList<>(templateSettings.getTemplateGroups());
 
-    groups.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+    TemplateGroupOrderProvider orderProvider = ApplicationManager.getApplication().getService(TemplateGroupOrderProvider.class);
+    groups.sort(orderProvider::compare);
     return groups;
   }
 
@@ -957,7 +956,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     node.setChecked(!template.isDeactivated());
     DefaultMutableTreeNode child = findGroup(myTreeRoot, newGroup.getPath());
     if (child != null) {
-      int index = getIndexToInsert(child, template.getKey(), false);
+      int index = getIndexToInsert(child, template);
       child.insert(node, index);
       ((DefaultTreeModel)myTree.getModel()).nodesWereInserted(child, new int[]{index});
       setSelectedNode(node);
@@ -1026,7 +1025,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         nextGroup.setModified(false);
       }
       myTemplateGroupsFullName.put(nextGroup.getName(), newGroup);
-      int index = getIndexToInsert(currentParent, nextGroup.getName(), true);
+      int index = getIndexToInsert(currentParent, nextGroup);
       CheckedTreeNode groupNode = new CheckedTreeNode(nextGroup);
       currentParent.insert(groupNode, index);
       ((DefaultTreeModel)myTree.getModel()).nodesWereInserted(currentParent, new int[]{index});
@@ -1035,19 +1034,36 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return currentParent;
   }
 
-  private static int getIndexToInsert(DefaultMutableTreeNode parent, String key, boolean group) {
+  private static int getIndexToInsert(DefaultMutableTreeNode parent, TemplateGroup t) {
+    TemplateGroupOrderProvider order = ApplicationManager.getApplication().getService(TemplateGroupOrderProvider.class);
+    return getIndexToInsert(parent, o1 -> {
+      if (o1 instanceof TemplateGroup t1) {
+        return order.compare(t1, t) > 0;
+      }
+      else {
+        return true;
+      }
+    });
+  }
+  private static int getIndexToInsert(DefaultMutableTreeNode parent, TemplateImpl o) {
+    String key = o.getKey();
+    return getIndexToInsert(parent, o1 -> {
+      String key1 = o1 instanceof TemplateImpl ? ((TemplateImpl)o1).getKey() : ((TemplateGroup)o1).getName();
+      return key1.compareToIgnoreCase(key) > 0;
+    });
+  }
+
+  private static int getIndexToInsert(DefaultMutableTreeNode parent, Predicate<Object> predicate) {
     if (parent.getChildCount() == 0) return 0;
 
     int res = 0;
     for (DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getFirstChild();
          child != null;
          child = (DefaultMutableTreeNode)parent.getChildAfter(child)) {
-      Object o = child.getUserObject();
-      if (group && !(o instanceof TemplateGroup)) {
+      Object o1 = child.getUserObject();
+      if (predicate.test(o1)) {
         return res;
       }
-      String key1 = o instanceof TemplateImpl ? ((TemplateImpl)o).getKey() : ((TemplateGroup)o).getName();
-      if (key1.compareToIgnoreCase(key) > 0) return res;
       res++;
     }
     return res;
