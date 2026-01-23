@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.openapi.components.Service
@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsContexts.DetailedDescription
 import com.intellij.util.system.OS
+import com.intellij.util.ui.UnixDesktopEnv
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -30,6 +31,10 @@ private class OsDataLogger(val coroutineScope: CoroutineScope) {
       if (osInfo is OS.LinuxInfo) {
         if (osInfo.isUnderWsl) info += " (in WSL)"
         if (osInfo.glibcVersion != null) info += "; glibc: " + osInfo.glibcVersion
+      }
+
+      UnixDesktopEnv.CURRENT?.also {
+        info += "; desktop: " + it.name
       }
 
       logger<OsDataLogger>().info(info)
