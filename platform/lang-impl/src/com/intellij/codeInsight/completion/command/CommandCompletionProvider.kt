@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion.command
 
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.CompletionResult.SHOULD_NOT_CHECK_WHEN_WRAP
+import com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 import com.intellij.codeInsight.completion.command.commands.AfterHighlightingCommandProvider
 import com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider
 import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
@@ -254,7 +255,12 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     prefix: String,
     customPrefixMatcher: PrefixMatcher?,
   ): List<LookupElement> {
-    val presentableName = command.presentableName.replace("_", "").replace("...", "").replace("…", "")
+    var presentableName = command.presentableName
+      .removeSuffix("...")
+      .removeSuffix("…")
+    if (command is ActionCompletionCommand) {
+      presentableName = presentableName.replace("_", "")
+    }
     val additionalInfo = command.additionalInfo ?: ""
     var tailText = ""
     if (additionalInfo.isNotEmpty()) {
