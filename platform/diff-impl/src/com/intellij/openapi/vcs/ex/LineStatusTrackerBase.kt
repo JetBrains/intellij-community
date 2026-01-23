@@ -116,6 +116,7 @@ abstract class LineStatusTrackerBase<R : Range>(
       isReleased = true
 
       Disposer.dispose(disposable)
+      listeners.listeners.clear()
     }
 
     if (!ApplicationManager.getApplication().isDispatchThread || LOCK.isHeldByCurrentThread) {

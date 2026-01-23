@@ -145,6 +145,8 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   private val undoableActions: WeakList<MyUndoableAction> = WeakList()
 
+  private val eventDispatcher = EventDispatcher.create(PartialLocalLineStatusTracker.Listener::class.java)
+
   init {
     defaultMarker = ChangeListMarker(changeListManager.defaultChangeList)
     affectedChangeLists.add(defaultMarker.changelistId)
@@ -153,6 +155,10 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       document.addDocumentListener(MyUndoDocumentListener(), disposable)
       project.messageBus.connect(disposable).subscribe(CommandListener.TOPIC, MyUndoCommandListener())
       Disposer.register(disposable, Disposable { dropExistingUndoActions() })
+    }
+
+    Disposer.register(disposable) {
+      eventDispatcher.listeners.clear()
     }
 
     documentTracker.addHandler(PartialDocumentTrackerHandler())
@@ -1021,7 +1027,6 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
   }
 
 
-  private val eventDispatcher = EventDispatcher.create(PartialLocalLineStatusTracker.Listener::class.java)
   override fun addListener(listener: PartialLocalLineStatusTracker.Listener, disposable: Disposable) {
     eventDispatcher.addListener(listener, disposable)
   }
