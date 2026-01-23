@@ -13,7 +13,8 @@ sealed interface RpcLookupElementEvent {
   @Serializable
   data class SelectedItem(
     val requestId: RpcCompletionRequestId,
-    val itemId: RpcCompletionItemId,
+    val arrangementId: RpcCompletionArrangementId,
+    val itemId: RpcCompletionItemId?,
     val itemPattern: String,
     val prefixLength: Int,
   ) : RpcLookupElementEvent {
