@@ -8,5 +8,5 @@ fun fooCtx() {}
 
 context(ctx: Context2, ctx1: Context1)
 fun example() {
-    fooCtx(/*<# [contextParametersMultiple.kt:108]c1| = |[contextParametersMultiple.kt:176]ctx1| »  #>*/)
+    fooCtx(/*<# [contextParametersMultiple.kt:108]c1| = |[contextParametersMultiple.kt:176]ctx1| , |[contextParametersMultiple.kt:122]c2| = |[contextParametersMultiple.kt:161]ctx| «  #>*/)
 }

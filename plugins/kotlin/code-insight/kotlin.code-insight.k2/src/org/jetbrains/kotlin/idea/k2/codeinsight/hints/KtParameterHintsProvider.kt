@@ -19,6 +19,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.createSmartPointer
+import com.intellij.psi.util.endOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_CONTEXT_PARAMETERS
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_EXCLUDED_PARAMETERS
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.ArgumentNameCommentInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExpectedArgumentNameComment
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -216,48 +218,37 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     ) {
         if (contextParameterPairs.isEmpty()) return
 
-        val offset = callElement.valueArgumentList?.let { it.startOffset + 1 } ?: callElement.startOffset
+        val offset = callElement.valueArgumentList?.endOffset ?: callElement.endOffset
 
-        val theOnlyOneContextParameter = contextParameterPairs.size == 1
         sink.addPresentation(
-            InlineInlayPosition(offset, true),
+            InlineInlayPosition(offset - 1, true),
             payloads = contextMenuPayloads,
             hintFormat = CONTEXT_HINT_FORMAT
         ) {
             collapsibleList(
-                state = if (theOnlyOneContextParameter) CollapseState.Expanded else CollapseState.Collapsed,
+                state = if (isUnitTestMode()) CollapseState.Expanded else CollapseState.Collapsed,
 
                 expandedState = {
+                    addParametersSeparator(valueParametersWithNames)
+
                     for ((index, pair) in contextParameterPairs.withIndex()) {
                         val (parameterSymbol, receiverValue) = pair
                         if (index > 0) text(" , ")
                         addContextParameter(callElement, parameterSymbol, receiverValue)
                     }
 
-                    if (!theOnlyOneContextParameter) {
-                        // a unicode char <<
-                        toggleButton { text(" \u00AB ") }
-                    }
-                    addCommaBeforeParameters(valueParametersWithNames)
+                    // a unicode char <<
+                    toggleButton { text(" \u00AB ") }
                 },
 
                 collapsedState = {
-                    val (parameterSymbol, receiverValue) = contextParameterPairs.first()
-
-                    addContextParameter(callElement, parameterSymbol, receiverValue)
-
-                    if (!theOnlyOneContextParameter) {
-                        // a unicode char >>
-                        toggleButton { text(" \u00BB ") }
-                    }
-
-                    addCommaBeforeParameters(valueParametersWithNames)
+                    toggleButton { text(Typography.ellipsis.toString()) }
                 })
         }
     }
 
-    private fun CollapsiblePresentationTreeBuilder.addCommaBeforeParameters(valueParametersWithNames: List<Pair<KaValueParameterSymbol, Name?>>) {
-        if (valueParametersWithNames.isNotEmpty()) text(" ,")
+    private fun CollapsiblePresentationTreeBuilder.addParametersSeparator(valueParametersWithNames: List<Pair<KaValueParameterSymbol, Name?>>) {
+        if (valueParametersWithNames.isNotEmpty()) text(", ")
     }
 
     @OptIn(KaExperimentalApi::class)

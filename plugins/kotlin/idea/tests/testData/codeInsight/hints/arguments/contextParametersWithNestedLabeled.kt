@@ -11,9 +11,9 @@ fun fooCtx() {}
 
 fun example() {
     b@ build {
-        fooCtx(/*<# [contextParametersWithNestedLabeled.kt:141]c| = |[contextParametersWithNestedLabeled.kt:199]this #>*/)
+        fooCtx(/*<# [contextParametersWithNestedLabeled.kt:141]c| = |[contextParametersWithNestedLabeled.kt:199]this| «  #>*/)
         buildString {
-            fooCtx(/*<# [contextParametersWithNestedLabeled.kt:141]c| = |[contextParametersWithNestedLabeled.kt:199]this@b #>*/)
+            fooCtx(/*<# [contextParametersWithNestedLabeled.kt:141]c| = |[contextParametersWithNestedLabeled.kt:199]this@b| «  #>*/)
         }
     }
 }

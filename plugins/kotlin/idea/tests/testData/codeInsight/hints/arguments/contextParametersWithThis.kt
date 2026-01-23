@@ -7,6 +7,6 @@ fun fooCtx() {}
 
 fun example() {
     with(/*<# [jar://kotlin-stdlib-sources.jar!/commonMain/kotlin/util/Standard.kt:*]receiver| = #>*/Context()) {
-        fooCtx(/*<# [contextParametersWithThis.kt:92]c| = |[contextParametersWithThis.kt:157]this #>*/)
+        fooCtx(/*<# [contextParametersWithThis.kt:92]c| = |[contextParametersWithThis.kt:157]this| «  #>*/)
     }
 }
