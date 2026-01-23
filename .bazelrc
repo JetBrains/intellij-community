@@ -3,7 +3,15 @@
 # ci — configuration tailored for CI
 
 ### --- ###
-import common.bazelrc
+import %workspace%/common.bazelrc
+
+try-import %workspace%/../build/remote_cache.bazelrc
+
+# Enable remote cache key scrubbing
+common --experimental_remote_scrubbing_config=build/bazel_scrubbing.cfg
+
+# Enable remote downloader config w/ allowed hosts and caching proxies
+common --downloader_config=build/bazel_downloader.cfg
 
 # TeamCity-specific options
 common:teamcity --show_progress_rate_limit=30

@@ -74,3 +74,8 @@ common --host_per_file_copt=external/.*grpc.*@--GRPC_WAS_NOT_SUPPOSED_TO_BE_BUIL
 
 # need to use Python from rules_python in rules_pkg in pkg_zip target
 common --@rules_python//python/config_settings:bootstrap_impl=script
+
+try-import %workspace%/../../../build/remote_cache.bazelrc
+
+# Enable remote downloader config w/ allowed hosts and caching proxies
+common --downloader_config=../../build/bazel_downloader.cfg
