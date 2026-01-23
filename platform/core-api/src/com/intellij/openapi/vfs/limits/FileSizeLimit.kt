@@ -7,6 +7,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.PersistentFSConstants
 import com.intellij.openapi.vfs.limits.FileSizeLimit.Companion.getDefaultContentLoadLimit
+import com.intellij.openapi.vfs.limits.FileSizeLimit.Companion.getDefaultIntellisenseLimit
+import com.intellij.openapi.vfs.limits.FileSizeLimit.Companion.getDefaultPreviewLimit
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
@@ -57,11 +59,23 @@ interface FileSizeLimit {
       return limitsByExtensions.hashCode()
     }
 
+    //TODO RC: isTooLargeForContentLoading
     @JvmStatic
     fun isTooLarge(fileSize: Long, extension: String?): Boolean {
       val fileContentLoadLimit = getContentLoadLimit(extension)
       return fileSize > fileContentLoadLimit
     }
+
+
+    /**
+     * It is not only the **default** limit for the file types/extensions without an explicitly defined one,
+     * but also a **minimum** file size limit -- i.e., if a custom limit is defined, but it is less than
+     * [getDefaultContentLoadLimit] -- it's value is ignored, and [getDefaultContentLoadLimit] is used
+     * instead
+     */
+    //MAYBE RC: rename to getMinContentLoadLimit()?
+    @JvmStatic
+    fun getDefaultContentLoadLimit(): Int = FileUtilRt.LARGE_FOR_CONTENT_LOADING
 
 
     /**
@@ -73,28 +87,37 @@ interface FileSizeLimit {
       return getValue(extension, ExtensionSizeLimitInfo::content, getDefaultContentLoadLimit())
     }
 
+
     /**
-     * It is not only the default limit for the file types/extensions without an explicitly defined one,
+     * It is not only the **default** limit for the file types/extensions without an explicitly defined one,
      * but also a **minimum** file size limit -- i.e., if a custom limit is defined, but it is less than
-     * [getDefaultContentLoadLimit] -- it's value is ignored, and [getDefaultContentLoadLimit] is used
+     * [getDefaultIntellisenseLimit] -- it's value is ignored, and [getDefaultIntellisenseLimit] is used
      * instead
      */
+    //MAYBE RC: rename to getMinIntellisenseLimit()
     @JvmStatic
-    fun getDefaultContentLoadLimit(): Int = FileUtilRt.LARGE_FOR_CONTENT_LOADING
-
-    @JvmStatic
-    fun getIntellisenseLimit(): Int = getIntellisenseLimit(null)
+    fun getDefaultIntellisenseLimit(): Int = PersistentFSConstants.getMaxIntellisenseFileSize()
 
     @JvmStatic
     fun getIntellisenseLimit(extension: String?): Int {
       @Suppress("DEPRECATION")
-      return getValue(extension, ExtensionSizeLimitInfo::intellijSense, PersistentFSConstants.getMaxIntellisenseFileSize())
+      return getValue(extension, ExtensionSizeLimitInfo::intellijSense, getDefaultIntellisenseLimit())
     }
+
+    /**
+     * It is not only the **default** limit for the file types/extensions without an explicitly defined one,
+     * but also a **minimum** file size limit -- i.e., if a custom limit is defined, but it is less than
+     * [getDefaultPreviewLimit] -- it's value is ignored, and [getDefaultPreviewLimit] is used instead
+     */
+    //MAYBE RC: getMinPreviewLimit()?
+    @JvmStatic
+    fun getDefaultPreviewLimit(): Int = FileUtilRt.LARGE_FILE_PREVIEW_SIZE
 
     @JvmStatic
     fun getPreviewLimit(extension: String?): Int {
-      return getValue(extension, ExtensionSizeLimitInfo::preview, FileUtilRt.LARGE_FILE_PREVIEW_SIZE)
+      return getValue(extension, ExtensionSizeLimitInfo::preview, getDefaultPreviewLimit())
     }
+
 
     /** @return `getter( getLimitsByExtension()[extension] )`, but no less than [minValue] */
     private fun getValue(extension: String?, getter: (ExtensionSizeLimitInfo) -> Int?, minValue: Int): Int {

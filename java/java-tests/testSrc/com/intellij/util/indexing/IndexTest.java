@@ -1080,7 +1080,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void test_document_increases_beyond_too_large_limit() {
-    String item = generateSequenceOfCharacterConstants(FileSizeLimit.getIntellisenseLimit());
+    String item = generateSequenceOfCharacterConstants(FileSizeLimit.getDefaultIntellisenseLimit());
     String fileText = "class Bar { char[] item = { " + item + "};\n }";
     VirtualFile file = myFixture.addFileToProject("foo/Bar.java", fileText).getVirtualFile();
     assertNotNull(findClass("Bar"));
@@ -1103,7 +1103,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   public void test_file_increases_beyond_too_large_limit() throws IOException {
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     //length(item) should be slightly below contentLoadingLimit:
-    String item = generateSequenceOfCharacterConstants(FileSizeLimit.getIntellisenseLimit());
+    String item = generateSequenceOfCharacterConstants(FileSizeLimit.getDefaultIntellisenseLimit());
     String fileTextBelowContentLoadingSizeLimit = "class Bar { char[] item = { " + item + "};\n }";
     VirtualFile file = myFixture.addFileToProject("foo/Bar.java", fileTextBelowContentLoadingSizeLimit).getVirtualFile();
     int fileId = ((VirtualFileWithId)file).getId();
