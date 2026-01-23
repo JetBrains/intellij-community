@@ -49,16 +49,6 @@ public interface ExternalSystemNotificationExtension {
   ) { }
 
   /**
-   * @deprecated Use {@link #customize(NotificationData, Project, String, Throwable)} instead
-   */
-  @Deprecated(forRemoval = true)
-  default void customize(
-    @NotNull NotificationData notificationData,
-    @NotNull Project project,
-    @Nullable Throwable error
-  ) { }
-
-  /**
    * Allows determining internal errors comes from an external system, which might be confusing for IDE users.
    * Such errors shouldn't be shown to the end user on UI.
    *
