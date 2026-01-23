@@ -100,11 +100,11 @@ def __get_table_provider(output):
                                         'tensorflow.python.framework.sparse_tensor.SparseTensor',
                                         'torch.Tensor']
     table_provider = None
-    if type_qualified_name in ['pandas.core.frame.DataFrame',
-                               'pandas.core.series.Series',
-                               'geopandas.geoseries.GeoSeries',
-                               'geopandas.geodataframe.GeoDataFrame',
-                               'pandera.typing.pandas.DataFrame']:
+    if type_qualified_name.startswith('pandas') and type_qualified_name.endswith('DataFrame') \
+            or type_qualified_name.startswith('pandas') and type_qualified_name.endswith('Series') \
+            or type_qualified_name.startswith('geopandas') and type_qualified_name.endswith('GeoSeries') \
+            or type_qualified_name.startswith('geopandas') and type_qualified_name.endswith('GeoDataFrame') \
+            or type_qualified_name.startswith('pandera') and type_qualified_name.endswith('DataFrame'):
         import _pydevd_bundle.tables.pydevd_pandas as table_provider
     # dict is needed for sort commands
     elif type_qualified_name == 'builtins.dict':
