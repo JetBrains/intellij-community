@@ -1,4 +1,4 @@
-import io.gitlab.arturbosch.detekt.Detekt
+import dev.detekt.gradle.Detekt
 import org.jetbrains.jewel.buildlogic.metalava.GenerateMetalavaApiTask
 import org.jetbrains.jewel.buildlogic.theme.IntelliJThemeGeneratorTask
 import org.jmailen.gradle.kotlinter.tasks.LintTask
