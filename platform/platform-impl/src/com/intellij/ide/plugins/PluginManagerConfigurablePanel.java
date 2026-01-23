@@ -272,78 +272,15 @@ public final class PluginManagerConfigurablePanel implements Disposable {
         }
       });
 
-      actions.add(new DumbAwareToggleAction(IdeBundle.message("updates.plugins.autoupdate.settings.action")) {
-        @Override
-        public boolean isSelected(@NotNull AnActionEvent e) {
-          return myPluginsAutoUpdateEnabled;
-        }
-
-        @Override
-        public void setSelected(@NotNull AnActionEvent e, boolean state) {
-          myPluginsAutoUpdateEnabled = state;
-        }
-
-        @Override
-        public @NotNull ActionUpdateThread getActionUpdateThread() {
-          return ActionUpdateThread.EDT;
-        }
-      });
+      actions.add(new UpdatePluginsAutomaticallyToggleAction());
       actions.addSeparator();
     }
-    actions.add(new DumbAwareAction(IdeBundle.message("plugin.manager.repositories")) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        if (ShowSettingsUtil.getInstance().editConfigurable(myCardPanel, new PluginHostsConfigurable())) {
-          if (myPluginManagerCustomizer == null) {
-            resetPanels();
-          }
-
-          PluginManagerCustomizer customizer = PluginManagerCustomizer.getInstance();
-          if (customizer != null) {
-            customizer.updateCustomRepositories(UpdateSettings.getInstance().getStoredPluginHosts(), () -> {
-              resetPanels();
-              return null;
-            });
-          }
-        }
-      }
-    });
-    actions.add(new DumbAwareAction(IdeBundle.message("button.http.proxy.settings")) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        if (HttpProxyConfigurable.editConfigurable(myCardPanel)) {
-          resetPanels();
-        }
-      }
-    });
+    actions.add(new ManagePluginRepositoriesAction());
+    actions.add(new OpenHttpProxyConfigurableAction());
     actions.addSeparator();
-    actions.add(new DumbAwareAction(IdeBundle.message("plugin.manager.custom.certificates")) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        if (ShowSettingsUtil.getInstance().editConfigurable(myCardPanel, new PluginCertificateManager())) {
-          resetPanels();
-        }
-      }
-    });
+    actions.add(new ManagePluginCertificatesAction());
 
-    actions.add(new InstallFromDiskAction(myPluginModelFacade.getModel(),
-                                          myPluginModelFacade.getModel(),
-                                          myCardPanel) {
-
-      @RequiresEdt
-      @Override
-      protected void onPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData,
-                                               @Nullable Project project) {
-        if (myPluginManagerCustomizer != null) {
-          myPluginManagerCustomizer.updateAfterModification(() -> {
-            PluginManagerConfigurablePanel.this.onPluginInstalledFromDisk(callbackData);
-            return null;
-          });
-          return;
-        }
-        PluginManagerConfigurablePanel.this.onPluginInstalledFromDisk(callbackData);
-      }
-    });
+    actions.add(new CustomInstallPluginFromDiskAction());
     if (myPluginManagerCustomizer != null) {
       actions.addAll(myPluginManagerCustomizer.getExtraPluginsActions());
     }
@@ -353,12 +290,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
     if (ApplicationManager.getApplication().isInternal()) {
       actions.addSeparator();
-      actions.add(new DumbAwareAction(IdeBundle.message("plugin.manager.refresh")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          resetPanels();
-        }
-      });
+      actions.add(new ResetConfigurableAction());
     }
     return actions;
   }
@@ -2197,6 +2129,99 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     @Override
     protected void onSearchReset() {
       PluginManagerUsageCollector.INSTANCE.searchReset();
+    }
+  }
+
+  private class ManagePluginRepositoriesAction extends DumbAwareAction {
+    private ManagePluginRepositoriesAction() { super(IdeBundle.message("plugin.manager.repositories")); }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      if (ShowSettingsUtil.getInstance().editConfigurable(myCardPanel, new PluginHostsConfigurable())) {
+        if (myPluginManagerCustomizer == null) {
+          resetPanels();
+        }
+
+        PluginManagerCustomizer customizer = PluginManagerCustomizer.getInstance();
+        if (customizer != null) {
+          customizer.updateCustomRepositories(UpdateSettings.getInstance().getStoredPluginHosts(), () -> {
+            resetPanels();
+            return null;
+          });
+        }
+      }
+    }
+  }
+
+  private class OpenHttpProxyConfigurableAction extends DumbAwareAction {
+    private OpenHttpProxyConfigurableAction() { super(IdeBundle.message("button.http.proxy.settings")); }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      if (HttpProxyConfigurable.editConfigurable(myCardPanel)) {
+        resetPanels();
+      }
+    }
+  }
+
+  private class ManagePluginCertificatesAction extends DumbAwareAction {
+    private ManagePluginCertificatesAction() { super(IdeBundle.message("plugin.manager.custom.certificates")); }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      if (ShowSettingsUtil.getInstance().editConfigurable(myCardPanel, new PluginCertificateManager())) {
+        resetPanels();
+      }
+    }
+  }
+
+  private class CustomInstallPluginFromDiskAction extends InstallFromDiskAction {
+
+    private CustomInstallPluginFromDiskAction() {
+      super(PluginManagerConfigurablePanel.this.myPluginModelFacade.getModel(),
+            PluginManagerConfigurablePanel.this.myPluginModelFacade.getModel(), PluginManagerConfigurablePanel.this.myCardPanel);
+    }
+
+    @RequiresEdt
+    @Override
+    protected void onPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData,
+                                             @Nullable Project project) {
+      if (myPluginManagerCustomizer != null) {
+        myPluginManagerCustomizer.updateAfterModification(() -> {
+          PluginManagerConfigurablePanel.this.onPluginInstalledFromDisk(callbackData);
+          return null;
+        });
+        return;
+      }
+      PluginManagerConfigurablePanel.this.onPluginInstalledFromDisk(callbackData);
+    }
+  }
+
+  private class ResetConfigurableAction extends DumbAwareAction {
+    private ResetConfigurableAction() { super(IdeBundle.message("plugin.manager.refresh")); }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      resetPanels();
+    }
+  }
+
+  private class UpdatePluginsAutomaticallyToggleAction extends DumbAwareToggleAction {
+    private UpdatePluginsAutomaticallyToggleAction() { super(IdeBundle.message("updates.plugins.autoupdate.settings.action")); }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return myPluginsAutoUpdateEnabled;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      myPluginsAutoUpdateEnabled = state;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }
