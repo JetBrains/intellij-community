@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 public enum UnixDesktopEnv {
   GNOME, KDE;
 
-  public static @Nullable UnixDesktopEnv CURRENT = getDesktop();
+  public static final @Nullable UnixDesktopEnv CURRENT = getDesktop();
 
   private static @Nullable UnixDesktopEnv getDesktop() {
     @SuppressWarnings({"SpellCheckingInspection", "RedundantSuppression"})

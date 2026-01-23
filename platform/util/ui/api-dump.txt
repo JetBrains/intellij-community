@@ -5542,7 +5542,7 @@ f:com.intellij.util.ui.UIUtil$TextPainter
 - withShortcutColor(java.awt.Color):com.intellij.util.ui.UIUtil$TextPainter
 e:com.intellij.util.ui.UnixDesktopEnv
 - java.lang.Enum
-- s:CURRENT:com.intellij.util.ui.UnixDesktopEnv
+- sf:CURRENT:com.intellij.util.ui.UnixDesktopEnv
 - sf:GNOME:com.intellij.util.ui.UnixDesktopEnv
 - sf:KDE:com.intellij.util.ui.UnixDesktopEnv
 - s:valueOf(java.lang.String):com.intellij.util.ui.UnixDesktopEnv
