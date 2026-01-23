@@ -5,13 +5,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.Groups;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.GroupedComboBoxRenderer;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -25,32 +20,15 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCombo.MySchemeListItem<T>> {
-  private static final @NotNull Supplier<@Nls String> PROJECT_LEVEL = IdeBundle.messagePointer("scheme.project");
-  private static final @NotNull Supplier<@Nls String> IDE_LEVEL = IdeBundle.messagePointer("scheme.ide");
-  private final Map<Scheme, @Nullable @Nls String> schemeSeparators = new HashMap<>();
+
+  static final @NotNull Supplier<@Nls String> PROJECT_LEVEL = IdeBundle.messagePointer("scheme.project");
+  static final @NotNull Supplier<@Nls String> IDE_LEVEL = IdeBundle.messagePointer("scheme.ide");
+
+  final Map<@NotNull Scheme, @Nullable @Nls String> schemeSeparators = new HashMap<>();
 
   public SchemesCombo() {
     super(new DefaultComboBoxModel<>());
-    setRenderer(new GroupedComboBoxRenderer<>(this) {
-      @Override
-      public void customize(@NotNull SimpleColoredComponent item,
-                            MySchemeListItem<T> value,
-                            int index,
-                            boolean isSelected,
-                            boolean hasFocus) {
-        customizeComponent(item, value, index);
-      }
-
-      @Override
-      public @Nullable ListSeparator separatorFor(MySchemeListItem<T> value) {
-        T scheme = value.getScheme();
-        if (scheme == null || !schemeSeparators.containsKey(scheme)) {
-          return null;
-        }
-
-        return new ListSeparator(schemeSeparators.get(scheme));
-      }
-    });
+    setRenderer(SchemesComboRendererKt.getRenderer(this));
     setSwingPopup(false);
   }
 
@@ -157,23 +135,5 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     public @NotNull @NlsContexts.ListItem String getPresentableText() {
       return myScheme != null ? myScheme.getDisplayName() : "";
     }
-  }
-
-  private void customizeComponent(@NotNull SimpleColoredComponent item, MySchemeListItem<T> value, int index) {
-    final var scheme = value.getScheme();
-    if (scheme != null) {
-      item.append(StringUtil.shortenTextWithEllipsis(value.getPresentableText(), 100, 20), getSchemeAttributes(scheme));
-      if (isDefaultScheme(scheme)) {
-        item.append(" " + IdeBundle.message("scheme.theme.default"), SimpleTextAttributes.GRAY_ATTRIBUTES);
-      }
-      if (supportsProjectSchemes()) {
-        if (index == -1) {
-          item.append("  " + (isProjectScheme(scheme) ? PROJECT_LEVEL.get() : IDE_LEVEL.get()),
-                      SimpleTextAttributes.GRAY_ATTRIBUTES);
-        }
-      }
-    }
-    int indent = index < 0 || scheme == null ? 0 : getIndent(scheme);
-    item.setIpad(JBUI.insetsLeft(indent > 0 ? indent * 10 : 0));
   }
 }
