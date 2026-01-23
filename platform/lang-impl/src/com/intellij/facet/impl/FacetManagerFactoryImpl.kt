@@ -30,6 +30,9 @@ class FacetManagerFactoryImpl(
   }
 
   override fun getFacetManager(module: Module): FacetManager {
+    if (module.isDisposed) {
+      throw IllegalStateException("Module is disposed: ${module.name}")
+    }
     return facetManagerInstances.computeIfAbsent(module) { FacetManagerBridge(module) }
   }
 }
