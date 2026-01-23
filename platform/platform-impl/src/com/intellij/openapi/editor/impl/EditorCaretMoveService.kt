@@ -57,6 +57,7 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
     editor.myCaretCursor.setPositions(animationStates.map { state ->
       EditorImpl.CaretRectangle(state.finalPos, state.width, state.caret, state.isRtl, 1.0f)
     }.toTypedArray())
+    editor.caretAnimationElapsed = 0.0
   }
 
   // Replaying 128 requests is probably way too much, actually 2 should be enough. It shouldn't break

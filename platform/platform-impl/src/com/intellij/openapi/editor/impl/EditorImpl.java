@@ -3206,7 +3206,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void setCursorPosition() {
     synchronized (caretMoveService) {
-      if (!getSettings().isAnimatedCaret() || gainedFocus.getAndSet(false)) {
+      if (!getSettings().isAnimatedCaret() || gainedFocus.getAndSet(false) || myCurrentDragIsSubstantial) {
         caretMoveService.setCursorPositionImmediately(this);
       } else {
         caretMoveService.setCursorPosition(this);
