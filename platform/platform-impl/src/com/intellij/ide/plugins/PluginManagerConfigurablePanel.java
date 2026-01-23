@@ -445,45 +445,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   }
 
 
-  private final class ComparablePluginsGroup extends PluginsGroup
-    implements Comparable<ComparablePluginsGroup> {
-
-    private boolean myIsEnable = false;
-
-    private ComparablePluginsGroup(@NotNull @NlsSafe String category,
-                                   @NotNull List<PluginUiModel> descriptors,
-                                   @NotNull Map<PluginId, Boolean> pluginsRequiresUltimate) {
-      super(category, PluginsGroupType.INSTALLED);
-
-      this.addModels(descriptors);
-      sortByName();
-
-      rightAction = new LinkLabelButton<>("",
-                                          null,
-                                          (__, ___) -> setEnabledState());
-      boolean hasPluginsAvailableForEnableDisable =
-        ContainerUtil.exists(descriptors, it -> !pluginsRequiresUltimate.get(it.getPluginId()));
-      rightAction.setVisible(hasPluginsAvailableForEnableDisable);
-      titleWithEnabled(myPluginModelFacade);
-    }
-
-    @Override
-    public int compareTo(@NotNull ComparablePluginsGroup other) {
-      return StringUtil.compare(title, other.title, true);
-    }
-
-    @Override
-    public void titleWithCount(int enabled) {
-      myIsEnable = enabled == 0;
-      String key = myIsEnable ? "plugins.configurable.enable.all" : "plugins.configurable.disable.all";
-      rightAction.setText(IdeBundle.message(key));
-    }
-
-    private void setEnabledState() {
-      setState(myPluginModelFacade, getModels(), myIsEnable);
-    }
-  }
-
   /** Modifies the state of the plugin list, excluding Ultimate plugins when the Ultimate license is not active. */
   private static void setState(PluginModelFacade pluginModelFacade, Collection<PluginUiModel> models, boolean isEnable) {
     if (models.isEmpty()) return;
@@ -652,138 +613,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   @SuppressWarnings("SameParameterValue")
   void setInstallSource(@Nullable FUSEventSource source) {
     this.myPluginModelFacade.getModel().setInstallSource(source);
-  }
-
-  private final class MarketplaceSortByAction extends ToggleAction implements DumbAware {
-    private final SortBy myOption;
-    private boolean myState;
-    private boolean myVisible;
-
-    private MarketplaceSortByAction(@NotNull SortBy option) {
-      super(option.getPresentableNameSupplier());
-      getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
-      myOption = option;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setVisible(myVisible);
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return myState;
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myState = state;
-      myMarketplaceSortByCallback.accept(this);
-    }
-
-    public void setState(@NotNull SearchQueryParser.Marketplace parser) {
-      if (myOption == SortBy.RELEVANCE) {
-        myState = parser.sortBy == null;
-        myVisible = parser.sortBy == null || !parser.tags.isEmpty() || !parser.vendors.isEmpty() || parser.searchQuery != null;
-      }
-      else {
-        myState = parser.sortBy != null && myOption == parser.sortBy;
-        myVisible = true;
-      }
-    }
-
-    public @Nullable String getQuery() {
-      if (myOption == SortBy.RELEVANCE) return null;
-      return SearchWords.SORT_BY.getValue() + myOption.getQuery();
-    }
-  }
-
-  private enum InstalledSearchOption {
-    Downloaded(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Downloaded")),
-    NeedUpdate(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.NeedUpdate")),
-    Enabled(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Enabled")),
-    Disabled(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Disabled")),
-    Invalid(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Invalid")),
-    Bundled(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Bundled"));
-
-    private final Supplier<@Nls String> myPresentableNameSupplier;
-
-    InstalledSearchOption(Supplier<@Nls String> name) { myPresentableNameSupplier = name; }
-  }
-
-  private final class InstalledSearchOptionAction extends ToggleAction implements DumbAware {
-    private final InstalledSearchOption myOption;
-    private boolean myState;
-
-    private InstalledSearchOptionAction(@NotNull InstalledSearchOption option) {
-      super(option.myPresentableNameSupplier);
-      getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
-      myOption = option;
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return myState;
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myState = state;
-      myInstalledSearchCallback.accept(this);
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    public void setState(@Nullable SearchQueryParser.Installed parser) {
-      if (parser == null) {
-        myState = false;
-        return;
-      }
-
-      myState = switch (myOption) {
-        case Enabled -> parser.enabled;
-        case Disabled -> parser.disabled;
-        case Downloaded -> parser.downloaded;
-        case Bundled -> parser.bundled;
-        case Invalid -> parser.invalid;
-        case NeedUpdate -> parser.needUpdate;
-      };
-    }
-
-    public @NotNull String getQuery() {
-      return myOption == InstalledSearchOption.NeedUpdate ? "/outdated" : "/" + StringUtil.decapitalize(myOption.name());
-    }
-  }
-
-  private static final class GroupByActionGroup extends DefaultActionGroup implements CheckedActionGroup {
-  }
-
-  private final class ChangePluginStateAction extends DumbAwareAction {
-    private final boolean myEnable;
-
-    private ChangePluginStateAction(boolean enable) {
-      super(enable ? IdeBundle.message("plugins.configurable.enable.all.downloaded")
-                   : IdeBundle.message("plugins.configurable.disable.all.downloaded"));
-      myEnable = enable;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      PluginModelAsyncOperationsExecutor.INSTANCE.switchPlugins(myCoroutineScope, myPluginModelFacade, myEnable, models -> {
-        //noinspection unchecked
-        setState(myPluginModelFacade, (List<PluginUiModel>)models, myEnable);
-        return null;
-      });
-    }
   }
 
   public static @NotNull JComponent createScrollPane(@NotNull PluginsGroupComponent panel, boolean initSelection) {
@@ -2219,6 +2048,177 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
+    }
+  }
+
+  private final class ComparablePluginsGroup extends PluginsGroup
+    implements Comparable<ComparablePluginsGroup> {
+
+    private boolean myIsEnable = false;
+
+    private ComparablePluginsGroup(@NotNull @NlsSafe String category,
+                                   @NotNull List<PluginUiModel> descriptors,
+                                   @NotNull Map<PluginId, Boolean> pluginsRequiresUltimate) {
+      super(category, PluginsGroupType.INSTALLED);
+
+      this.addModels(descriptors);
+      sortByName();
+
+      rightAction = new LinkLabelButton<>("",
+                                          null,
+                                          (__, ___) -> setEnabledState());
+      boolean hasPluginsAvailableForEnableDisable =
+        ContainerUtil.exists(descriptors, it -> !pluginsRequiresUltimate.get(it.getPluginId()));
+      rightAction.setVisible(hasPluginsAvailableForEnableDisable);
+      titleWithEnabled(myPluginModelFacade);
+    }
+
+    @Override
+    public int compareTo(@NotNull ComparablePluginsGroup other) {
+      return StringUtil.compare(title, other.title, true);
+    }
+
+    @Override
+    public void titleWithCount(int enabled) {
+      myIsEnable = enabled == 0;
+      String key = myIsEnable ? "plugins.configurable.enable.all" : "plugins.configurable.disable.all";
+      rightAction.setText(IdeBundle.message(key));
+    }
+
+    private void setEnabledState() {
+      setState(myPluginModelFacade, getModels(), myIsEnable);
+    }
+  }
+
+  private final class MarketplaceSortByAction extends ToggleAction implements DumbAware {
+    private final SortBy myOption;
+    private boolean myState;
+    private boolean myVisible;
+
+    private MarketplaceSortByAction(@NotNull SortBy option) {
+      super(option.getPresentableNameSupplier());
+      getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
+      myOption = option;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setVisible(myVisible);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return myState;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      myState = state;
+      myMarketplaceSortByCallback.accept(this);
+    }
+
+    public void setState(@NotNull SearchQueryParser.Marketplace parser) {
+      if (myOption == SortBy.RELEVANCE) {
+        myState = parser.sortBy == null;
+        myVisible = parser.sortBy == null || !parser.tags.isEmpty() || !parser.vendors.isEmpty() || parser.searchQuery != null;
+      }
+      else {
+        myState = parser.sortBy != null && myOption == parser.sortBy;
+        myVisible = true;
+      }
+    }
+
+    public @Nullable String getQuery() {
+      if (myOption == SortBy.RELEVANCE) return null;
+      return SearchWords.SORT_BY.getValue() + myOption.getQuery();
+    }
+  }
+
+  private enum InstalledSearchOption {
+    Downloaded(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Downloaded")),
+    NeedUpdate(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.NeedUpdate")),
+    Enabled(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Enabled")),
+    Disabled(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Disabled")),
+    Invalid(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Invalid")),
+    Bundled(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Bundled"));
+
+    private final Supplier<@Nls String> myPresentableNameSupplier;
+
+    InstalledSearchOption(Supplier<@Nls String> name) { myPresentableNameSupplier = name; }
+  }
+
+  private final class InstalledSearchOptionAction extends ToggleAction implements DumbAware {
+    private final InstalledSearchOption myOption;
+    private boolean myState;
+
+    private InstalledSearchOptionAction(@NotNull InstalledSearchOption option) {
+      super(option.myPresentableNameSupplier);
+      getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
+      myOption = option;
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return myState;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      myState = state;
+      myInstalledSearchCallback.accept(this);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    public void setState(@Nullable SearchQueryParser.Installed parser) {
+      if (parser == null) {
+        myState = false;
+        return;
+      }
+
+      myState = switch (myOption) {
+        case Enabled -> parser.enabled;
+        case Disabled -> parser.disabled;
+        case Downloaded -> parser.downloaded;
+        case Bundled -> parser.bundled;
+        case Invalid -> parser.invalid;
+        case NeedUpdate -> parser.needUpdate;
+      };
+    }
+
+    public @NotNull String getQuery() {
+      return myOption == InstalledSearchOption.NeedUpdate ? "/outdated" : "/" + StringUtil.decapitalize(myOption.name());
+    }
+  }
+
+  private static final class GroupByActionGroup extends DefaultActionGroup implements CheckedActionGroup {
+  }
+
+  private final class ChangePluginStateAction extends DumbAwareAction {
+    private final boolean myEnable;
+
+    private ChangePluginStateAction(boolean enable) {
+      super(enable ? IdeBundle.message("plugins.configurable.enable.all.downloaded")
+                   : IdeBundle.message("plugins.configurable.disable.all.downloaded"));
+      myEnable = enable;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      PluginModelAsyncOperationsExecutor.INSTANCE.switchPlugins(myCoroutineScope, myPluginModelFacade, myEnable, models -> {
+        //noinspection unchecked
+        setState(myPluginModelFacade, (List<PluginUiModel>)models, myEnable);
+        return null;
+      });
     }
   }
 }
