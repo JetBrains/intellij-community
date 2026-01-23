@@ -70,16 +70,6 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     return myFilterThread != null ? myFilterThread.getRealThread() : null;
   }
 
-  /** @deprecated Use setThreadFilter instead */
-  @Deprecated(forRemoval = true)
-  public void setFilterThread(final @Nullable ThreadReference filterThread) {
-    if (filterThread != null) {
-      setThreadFilter(new RealThreadInfo(filterThread));
-    }
-    else {
-      setThreadFilter(null);
-    }
-  }
   public void setThreadFilter(final @Nullable LightOrRealThreadInfo filter) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Thread filter is set to " + filter);

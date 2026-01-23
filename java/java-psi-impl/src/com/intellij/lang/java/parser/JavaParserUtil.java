@@ -37,7 +37,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.indexing.IndexingDataKeys;
 import kotlin.Unit;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -83,30 +82,6 @@ public final class JavaParserUtil {
   public interface ParserWrapper {
     void parse(@NotNull SyntaxTreeBuilder builder, @NotNull LanguageLevel languageLevel);
   }
-
-  /**
-   * @deprecated please, use {@link OldParserWhiteSpaceAndCommentSetHolder#INSTANCE} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER =
-    OldParserWhiteSpaceAndCommentSetHolder.INSTANCE.getPrecedingCommentBinder(LanguageLevel.HIGHEST);
-
-  /**
-   * @deprecated please, use {@link OldParserWhiteSpaceAndCommentSetHolder#INSTANCE} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER =
-    OldParserWhiteSpaceAndCommentSetHolder.INSTANCE.getSpecialPrecedingCommentBinder(LanguageLevel.HIGHEST);
-
-  /**
-   * @deprecated please, use {@link OldParserWhiteSpaceAndCommentSetHolder#INSTANCE} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static final WhitespacesAndCommentsBinder TRAILING_COMMENT_BINDER =
-    OldParserWhiteSpaceAndCommentSetHolder.INSTANCE.getTrailingCommentBinder();
 
 
   private JavaParserUtil() { }

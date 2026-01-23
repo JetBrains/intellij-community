@@ -5,14 +5,12 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.StorageException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
@@ -24,17 +22,6 @@ public abstract class CompilerReferenceReader<Index extends CompilerReferenceInd
   public CompilerReferenceReader(@NotNull Path buildDir, Index index) {
     myIndex = index;
     this.buildDir = buildDir;
-  }
-
-  /**
-   * @deprecated Use {@link #CompilerReferenceReader(Path, CompilerReferenceIndex)}
-   */
-  @SuppressWarnings("IO_FILE_USAGE")
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public CompilerReferenceReader(@NotNull File buildDir, Index index) {
-    myIndex = index;
-    this.buildDir = buildDir.toPath();
   }
 
   public @NotNull NameEnumerator getNameEnumerator() {

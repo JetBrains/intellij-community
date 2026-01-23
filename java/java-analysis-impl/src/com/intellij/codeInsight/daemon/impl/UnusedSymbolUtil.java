@@ -10,7 +10,6 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.find.findUsages.*;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -208,20 +207,6 @@ public final class UnusedSymbolUtil {
       useScope = globalUseScope.uniteWith(xmlFilesScope);
     }
     return useScope;
-  }
-
-  /**
-   * @deprecated use {@link #processUsages(Project, PsiFile, SearchScope, PsiMember, PsiFile, Processor)}
-   */
-  @SuppressWarnings("unused")
-  @Deprecated(forRemoval = true)
-  public static boolean processUsages(@NotNull Project project,
-                                      @NotNull PsiFile containingFile,
-                                      @NotNull PsiMember member,
-                                      @NotNull ProgressIndicator progress,
-                                      @Nullable PsiFile ignoreFile,
-                                      @NotNull Processor<? super UsageInfo> usageInfoProcessor) {
-    return processUsages(project, containingFile, member, ignoreFile, usageInfoProcessor);
   }
 
   // return false if can't process usages (weird member of too may usages) or processor returned false

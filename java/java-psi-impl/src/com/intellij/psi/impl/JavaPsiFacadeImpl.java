@@ -32,7 +32,6 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,15 +65,6 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     });
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
-  }
-
-  /**
-   * @deprecated Use {@link JavaPsiFacade#getInstance(Project)}
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public JavaPsiFacadeImpl(@NotNull Project project) {
-    this(project, null);
   }
 
   @Override

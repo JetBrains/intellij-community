@@ -124,21 +124,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
-  /**
-   * Does not handle array types correctly
-   * @deprecated use {@link DebuggerUtils#instanceOf(Type, String)}
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isAssignableFrom(@NotNull String baseQualifiedName, @NotNull Type checkedType) {
-    if (checkedType instanceof ReferenceType) {
-      if (CommonClassNames.JAVA_LANG_OBJECT.equals(baseQualifiedName)) {
-        return true;
-      }
-      return getSuperClass(baseQualifiedName, (ReferenceType)checkedType) != null;
-    }
-    return baseQualifiedName.equals(checkedType.name());
-  }
-
   @Deprecated
   public static ReferenceType getSuperClass(final @NotNull String baseQualifiedName, @NotNull ReferenceType checkedType) {
     if (baseQualifiedName.equals(checkedType.name())) {

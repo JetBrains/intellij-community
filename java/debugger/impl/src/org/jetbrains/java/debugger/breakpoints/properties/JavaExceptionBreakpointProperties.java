@@ -24,15 +24,6 @@ public class JavaExceptionBreakpointProperties extends JavaBreakpointProperties<
   private ClassFilter[] myCatchClassFilters;
   private ClassFilter[] myCatchClassExclusionFilters;
 
-  /**
-   * @deprecated use {@link #JavaExceptionBreakpointProperties(String)}
-   */
-  @Deprecated(forRemoval = true)
-  public JavaExceptionBreakpointProperties(String qualifiedName, String packageName) {
-    myQualifiedName = qualifiedName;
-    myPackageName = packageName;
-  }
-
   public JavaExceptionBreakpointProperties(String qualifiedName) {
     myQualifiedName = qualifiedName;
     myPackageName = StringUtil.getPackageName(qualifiedName);

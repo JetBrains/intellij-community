@@ -109,14 +109,6 @@ public abstract class LocalToFieldHandler {
   }
 
   /**
-   * @deprecated Use {@link #isStaticFieldAllowed(PsiClass)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean mayContainConstants(@NotNull PsiClass aClass) {
-    return isStaticFieldAllowed(aClass);
-  }
-
-  /**
    * Checks if adding a static field is allowed in the specified class.
    * Before Java 16 this was only allowed for inner, local and anonymous classes,
    * if the static field was a compile-time constant.

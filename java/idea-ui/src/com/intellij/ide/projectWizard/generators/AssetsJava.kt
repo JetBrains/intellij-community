@@ -25,11 +25,6 @@ private const val DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME_INSTANCE_MAIN = "Sa
 private const val DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME_INSTANCE_MAIN = "SampleCodeWithRenderedOnboardingTipsInstanceMain.java"
 
 object AssetsJava {
-  @ApiStatus.Internal
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("The onboarding tips generated unconditionally")
-  fun getJavaSampleTemplateName(generateOnboardingTips: Boolean): String =
-    getJavaSampleTemplateName()
 
   @ApiStatus.Internal
   fun getJavaSampleTemplateName(intent: ProjectWizardJdkIntent?): String {
