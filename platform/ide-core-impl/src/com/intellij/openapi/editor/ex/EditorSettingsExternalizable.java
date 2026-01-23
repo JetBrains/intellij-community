@@ -86,6 +86,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean IS_BLOCK_CURSOR = false;
     public boolean IS_FULL_LINE_HEIGHT_CURSOR = false;
     public boolean IS_ANIMATED_CARET = false;
+    public @NotNull EditorSettings.CaretEasing CARET_EASING = EditorSettings.CaretEasing.NINJA;
     public boolean IS_HIGHLIGHT_SELECTION_OCCURRENCES = true;
     public boolean IS_WHITESPACES_SHOWN = false;
     public boolean IS_LEADING_WHITESPACES_SHOWN = true;
@@ -543,6 +544,17 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     if (old == val) return;
     myOptions.IS_ANIMATED_CARET = val;
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_ANIMATED_CARET, old, val);
+  }
+
+  public EditorSettings.CaretEasing getCaretEasing() {
+    return myOptions.CARET_EASING;
+  }
+
+  public void setCaretEasing(EditorSettings.CaretEasing val) {
+    EditorSettings.CaretEasing old = myOptions.CARET_EASING;
+    if (old == val) return;
+    myOptions.CARET_EASING = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_CARET_EASING, old, val);
   }
   
   public boolean isHighlightSelectionOccurrences() {
@@ -1162,6 +1174,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public static final @NonNls String PROP_IS_BLOCK_CURSOR = "isBlockCursor";
     public static final @NonNls String PROP_IS_FULL_LINE_HEIGHT_CURSOR = "isFullLineHeightCursor";
     public static final @NonNls String PROP_IS_ANIMATED_CARET = "isAnimatedCaret";
+    public static final @NonNls String PROP_CARET_EASING = "caretEasing";
     public static final @NonNls String PROP_IS_HIGHLIGHT_SELECTION_OCCURRENCES = "isHighlightSelectionOccurrences";
     public static final @NonNls String PROP_IS_WHITESPACES_SHOWN = "isWhitespacesShown";
     public static final @NonNls String PROP_IS_LEADING_WHITESPACES_SHOWN = "isLeadingWhitespacesShown";

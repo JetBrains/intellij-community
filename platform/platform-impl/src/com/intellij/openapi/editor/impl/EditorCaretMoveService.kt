@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Caret
+import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.MathUtil.clamp
@@ -113,7 +114,7 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
     }
 
     val startingAnimationElapsed = editor.caretAnimationElapsed
-    val easing = CaretEasing.fromRegistry(startingAnimationElapsed)
+    val easing = CaretEasing.fromSettings(editor.settings, startingAnimationElapsed)
     val startTime = System.currentTimeMillis()
     while (true) {
       val now = System.currentTimeMillis()
@@ -170,7 +171,6 @@ private enum class CaretEasingType {
 }
 
 private class CaretEasing(val type: CaretEasingType, val adjustP: Double) {
-
   fun apply(t: Double): Double {
     return when (this.type) {
       CaretEasingType.Ninja -> {
@@ -196,9 +196,18 @@ private class CaretEasing(val type: CaretEasingType, val adjustP: Double) {
   }
 
   companion object {
+    @Suppress("unused")
     fun fromRegistry(elapsed: Double): CaretEasing {
       val type = Registry.get("editor.smooth.caret.curve").selectedOption?.let { CaretEasingType.valueOf(it) } ?: CaretEasingType.Ninja
 
+      return CaretEasing(type, elapsed)
+    }
+
+    fun fromSettings(settings: EditorSettings, elapsed: Double): CaretEasing {
+      val type = when (settings.caretEasing) {
+        EditorSettings.CaretEasing.NINJA -> CaretEasingType.Ninja
+        EditorSettings.CaretEasing.EASE -> CaretEasingType.Ease
+      }
       return CaretEasing(type, elapsed)
     }
   }

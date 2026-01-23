@@ -134,6 +134,8 @@ public interface EditorSettings {
 
   boolean isAnimatedCaret();
 
+  EditorSettings.CaretEasing getCaretEasing();
+
   boolean isCaretRowShown();
   void setCaretRowShown(boolean caretRowShown);
 
@@ -254,5 +256,10 @@ public interface EditorSettings {
     ABSOLUTE,
     RELATIVE,
     HYBRID,
+  }
+
+  enum CaretEasing {
+    NINJA,
+    EASE
   }
 }

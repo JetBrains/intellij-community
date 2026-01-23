@@ -76,6 +76,16 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       }
       row {
         checkBox(myCbAnimatedCaret)
+        comboBox(
+          DefaultComboBoxModel(EditorSettings.CaretEasing.entries.toTypedArray()),
+          renderer = textListCellRenderer {
+            when (it) {
+              EditorSettings.CaretEasing.NINJA -> "Ninja"
+              EditorSettings.CaretEasing.EASE -> "Ease"
+              null -> ""
+            }
+          }
+        ).bindItem(model::getCaretEasing, model::setCaretEasing)
       }
       row {
         checkBox(myCbHighlightSelectionOccurrences)

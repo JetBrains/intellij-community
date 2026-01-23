@@ -456,6 +456,10 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     return state.myIsAnimatedCaret
   }
 
+  override fun getCaretEasing(): EditorSettings.CaretEasing {
+    return state.myCaretEasing
+  }
+
   override fun isCaretRowShown(): Boolean {
     return state.myCaretRowShown
   }
