@@ -71,7 +71,7 @@ abstract class AbstractServerCommunicator : SettingsSyncRemoteCommunicator, Disp
    * @throws IOException If an I/O error occurs while attempting to retrieve the version information.
    */
   @Throws(IOException::class)
-  protected abstract fun getLatestVersion(filePath: String) : String?
+  abstract fun getLatestVersion(filePath: String) : String?
 
   @Throws(IOException::class)
   protected abstract fun deleteFileInternal(filePath: String)
@@ -79,7 +79,7 @@ abstract class AbstractServerCommunicator : SettingsSyncRemoteCommunicator, Disp
 
   @VisibleForTesting
   @Throws(IOException::class, SecurityException::class)
-  protected fun currentSnapshotFilePath(): Pair<String, Boolean>? {
+  protected open fun currentSnapshotFilePath(): Pair<String, Boolean>? {
     try {
       val crossIdeSyncEnabled = isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
       if (!myTemporary && crossIdeSyncEnabled != SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
@@ -106,7 +106,7 @@ abstract class AbstractServerCommunicator : SettingsSyncRemoteCommunicator, Disp
 
 
   @VisibleForTesting
-  internal fun sendSnapshotFile(
+  fun sendSnapshotFile(
     inputStream: InputStream,
     knownServerVersion: String?,
     force: Boolean,
@@ -143,6 +143,10 @@ abstract class AbstractServerCommunicator : SettingsSyncRemoteCommunicator, Disp
       // errors are thrown as exceptions and are handled above
       return SettingsSyncPushResult.Success(pushedVersion)
     }
+    catch (ive: InvalidVersionIdException) {
+      LOG.info("Rejected: version doesn't match the version on server: ${ive.message}")
+      return SettingsSyncPushResult.Rejected
+    }
     catch (e: Throwable) {
       return SettingsSyncPushResult.Error(e.message ?: defaultMessage)
     }
@@ -156,7 +160,7 @@ abstract class AbstractServerCommunicator : SettingsSyncRemoteCommunicator, Disp
       requestSuccessful()
       when (latestVersion) {
         null -> return ServerState.FileNotExists
-        SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId -> return ServerState.UpToDate
+        getKnownAndAppliedServerId() -> return ServerState.UpToDate
         else -> return ServerState.UpdateNeeded
       }
     }
@@ -165,6 +169,8 @@ abstract class AbstractServerCommunicator : SettingsSyncRemoteCommunicator, Disp
       return ServerState.Error(message)
     }
   }
+
+  open fun getKnownAndAppliedServerId(): String? = SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId
 
   override fun receiveUpdates(): UpdateResult {
     LOG.info("Receiving settings snapshot from the cloud config server...")
@@ -213,10 +219,6 @@ abstract class AbstractServerCommunicator : SettingsSyncRemoteCommunicator, Disp
       val pushResult = sendSnapshotFile(zip.inputStream(), expectedServerVersionId, force)
       requestSuccessful()
       return pushResult
-    }
-    catch (ive: InvalidVersionIdException) {
-      LOG.info("Rejected: version doesn't match the version on server: ${ive.message}")
-      return SettingsSyncPushResult.Rejected
     }
     catch (e: Throwable) {
       val message = handleRemoteError(e)

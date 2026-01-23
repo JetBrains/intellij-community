@@ -12,7 +12,7 @@ class JbaCommunicatorProvider(cs: CoroutineScope) : SettingsSyncCommunicatorProv
   private val authServiceLazy = lazy<JBAAuthService> { JBAAuthService(cs) }
 
   override val providerCode: String
-    get() = "jba"
+    get() = JBA_PROVIDER_CODE
 
   override val authService: SettingsSyncAuthService
     get() {
@@ -27,4 +27,8 @@ class JbaCommunicatorProvider(cs: CoroutineScope) : SettingsSyncCommunicatorProv
   }.value
 
   override fun dispose() {}
+
+  companion object {
+    const val JBA_PROVIDER_CODE: String = "jba"
+  }
 }

@@ -23,7 +23,7 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.readText
 
-internal object SettingsSnapshotZipSerializer {
+object SettingsSnapshotZipSerializer {
   private const val METAINFO = ".metainfo"
   private const val INFO = "info.json"
   const val PLUGINS = "plugins.json"
@@ -147,7 +147,7 @@ internal object SettingsSnapshotZipSerializer {
     return SettingsSyncPluginsState(emptyMap())
   }
 
-  private fun serializeMetaInfo(snapshotMetaInfo: SettingsSnapshot.MetaInfo): ByteArray {
+  fun serializeMetaInfo(snapshotMetaInfo: SettingsSnapshot.MetaInfo): ByteArray {
     val formattedDate = DateTimeFormatter.ISO_INSTANT.format(snapshotMetaInfo.dateCreated)
     val metaInfo = MetaInfo().apply {
       date = formattedDate
@@ -186,7 +186,7 @@ internal object SettingsSnapshotZipSerializer {
     return SettingsSnapshot.MetaInfo(Instant.now(), appInfo = null)
   }
 
-  private class MetaInfo {
+  class MetaInfo {
     lateinit var date: String
     lateinit var applicationId: String
     var buildNumber: String = ""
