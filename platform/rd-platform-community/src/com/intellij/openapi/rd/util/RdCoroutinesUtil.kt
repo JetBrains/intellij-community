@@ -252,14 +252,6 @@ fun <T> Lifetime.startBackgroundAsync(
   action: suspend CoroutineScope.() -> T
 ): Deferred<T> = async(applicationThreadPool + ModalityState.defaultModalityState().asContextElement() + context, start, action)
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use launch with a specific dispatcher for your purposes")
-fun <T> Lifetime.startNonUrgentBackgroundAsync(
-  context: CoroutineContext = EmptyCoroutineContext,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> T
-): Deferred<T> = async(nonUrgentDispatcher + context, start, action)
-
 @Deprecated("Use launch(Dispatchers.EDT)", ReplaceWith("launch(Dispatchers.EDT, start, action)", "kotlinx.coroutines.launch", "kotlinx.coroutines.Dispatchers",
                                                       "com.intellij.openapi.application.EDT"))
 fun CoroutineScope.launchChildOnUi(
@@ -273,26 +265,11 @@ fun CoroutineScope.launchChildBackground(
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(applicationThreadPool, start, action)
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use async(Dispatchers.EDT)", ReplaceWith("async(Dispatchers.EDT, start, action)", "kotlinx.coroutines.async", "kotlinx.coroutines.Dispatchers",
-                                                      "com.intellij.openapi.application.EDT"))
-fun <T> CoroutineScope.startChildOnUiAsync(
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> T
-): Deferred<T> = async(uiDispatcher, start, action)
-
 @Deprecated("For CPU-bound tasks, use async(Dispatchers.Default, action). For IO-bound tasks, use async(Dispatchers.IO, action)")
 fun <T> CoroutineScope.startChildBackgroundAsync(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> T
 ) = async(applicationThreadPool, start, action)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use async with a specific dispatcher for your purposes")
-fun <T> CoroutineScope.startChildNonUrgentBackgroundAsync(
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> T
-): Deferred<T> = async(nonUrgentDispatcher, start, action)
 
 @Deprecated("Use withContext(Dispatchers.EDT)", ReplaceWith("withContext(Dispatchers.EDT, action)", "kotlinx.coroutines.withContext", "kotlinx.coroutines.Dispatchers",
                                                             "com.intellij.openapi.application.EDT"))
