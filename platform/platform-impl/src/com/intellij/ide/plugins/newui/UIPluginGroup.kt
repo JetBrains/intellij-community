@@ -1,27 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.plugins.newui;
+package com.intellij.ide.plugins.newui
 
-import com.intellij.openapi.extensions.PluginId;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
+import com.intellij.openapi.extensions.PluginId
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
 
 @ApiStatus.Internal
-public final class UIPluginGroup {
-  public Component panel;
-  public List<ListPluginComponent> plugins = new ArrayList<>();
-  public boolean excluded;
+class UIPluginGroup {
+  @JvmField var panel: Component? = null
+  @JvmField var plugins: MutableList<ListPluginComponent> = ArrayList()
+  @JvmField var excluded: Boolean = false
 
-  public @Nullable ListPluginComponent findComponent(@NotNull PluginId pluginId) {
-    for (ListPluginComponent component : plugins) {
-      if (pluginId.equals(component.getPluginDescriptor().getPluginId())) {
-        return component;
-      }
-    }
-    return null;
-  }
+  fun findComponent(pluginId: PluginId): ListPluginComponent? =
+    plugins.find { pluginId == it.getPluginDescriptor().getPluginId() }
 }
