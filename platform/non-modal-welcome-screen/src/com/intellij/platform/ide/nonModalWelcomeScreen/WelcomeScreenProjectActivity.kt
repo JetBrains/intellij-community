@@ -32,7 +32,9 @@ internal class WelcomeScreenProjectActivity : ProjectActivity {
   }
 
   private suspend fun dropModalWelcomeScreenOnClose(project: Project) {
-    CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, !isNonModalWelcomeScreenEnabled)
+    if (isNonModalWelcomeScreenEnabled) {
+      CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, false)
+    }
     subscribeToSettingsChanges(project)
   }
 
