@@ -102,6 +102,7 @@ def __get_table_provider(output):
     table_provider = None
     if type_qualified_name in ['pandas.core.frame.DataFrame',
                                'pandas.core.series.Series',
+                               'pandas.DataFrame',
                                'geopandas.geoseries.GeoSeries',
                                'geopandas.geodataframe.GeoDataFrame',
                                'pandera.typing.pandas.DataFrame']:
