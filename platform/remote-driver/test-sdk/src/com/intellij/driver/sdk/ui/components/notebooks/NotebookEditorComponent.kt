@@ -167,6 +167,15 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     driver.invokeActionWithRetries("NotebookInsertMarkdownCellAction")
   }
 
+  /**
+   * Adds a new SQL cell with no content.
+   *
+   * @throws IllegalStateException if the notebook does not support SQL cells.
+   */
+  fun addEmptySqlCell() {
+    driver.invokeActionWithRetries("JupyterAddSQLCellAction")
+  }
+
   fun pasteToCurrentCell(text: String) {
     driver.ui.pasteText(text)
   }
@@ -193,8 +202,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
    * @throws IllegalStateException if the notebook does not support SQL cells.
    */
   fun addSqlCell(@Language("SQL") content: String) {
-    driver.invokeActionWithRetries("JupyterAddSQLCellAction")
-    driver.ui.pasteText(content)
+    addEmptySqlCell()
+    pasteToCurrentCell(content)
   }
 
   fun runAllCells(): Unit = runAllCells.strictClick()
@@ -229,11 +238,11 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   }
 
   /**
-   * Checks if there are exactly [expectedFinalExecutionCount] finished cells with green checkmark
+   * Checks if there are exactly [expectedFinalExecutionCount] finished cells with green checkmark or a red cross
    * in the current notebook editor.
    */
   fun areAllExecutionsFinished(
-    expectedFinalExecutionCount: Int,
+    expectedFinalExecutionCount: Int
   ): Boolean {
     val infos = notebookCellExecutionInfos
     return infos.isNotEmpty() &&
