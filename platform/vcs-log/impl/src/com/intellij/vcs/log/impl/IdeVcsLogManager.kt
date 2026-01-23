@@ -184,8 +184,9 @@ internal class IdeVcsLogManager(
     val existingUi = VcsLogContentUtil.findLogUi(window, MainVcsLogUi::class.java, true) {
       // already handled before
       if (it === selectedUi || it.id == MAIN_LOG_ID) return@findLogUi false
+      if (!predicate(it)) return@findLogUi false
       it.refresher.setValid(true, false)
-      predicate(it) && it.showCommitSync(hash, root, requestFocus)
+      it.showCommitSync(hash, root, requestFocus)
     }
     if (existingUi != null) return existingUi
 
