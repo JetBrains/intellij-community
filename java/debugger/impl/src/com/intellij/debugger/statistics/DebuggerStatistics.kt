@@ -21,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus
 object DebuggerStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("java.debugger", 14)
+  private val GROUP = EventLogGroup("java.debugger", 15)
 
   // fields
 
@@ -43,7 +43,7 @@ object DebuggerStatistics : CounterUsagesCollector() {
   private val dumpedVirtualThreadsCounter = Int("virtual_threads")
 
   private val threadDumpTriggeringExceptionField =
-    EventFields.StringValidatedByCustomRule("exception", ThreadDumpTriggeringExceptionValidator::class.java)
+    EventFields.String("exception", THREAD_DUMP_TRIGGERING_EXCEPTIONS_TO_LOG)
 
   // events
   /** Reports overhead spent on checking where a breakpoint must be installed. */
