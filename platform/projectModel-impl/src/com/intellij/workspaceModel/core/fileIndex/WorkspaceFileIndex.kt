@@ -40,7 +40,8 @@ interface WorkspaceFileIndex {
   fun isInContent(file: VirtualFile): Boolean
 
   /**
-   * Returns `true` if [file] is included to the workspace and doesn't have [WorkspaceFileKind.CONTENT_NON_INDEXABLE] kind.
+   * Returns `true` if [file] is included to the workspace and doesn't have [WorkspaceFileKind.CONTENT_NON_INDEXABLE] or
+   * [WorkspaceFileKind.EXTERNAL_NON_INDEXABLE] kind.
    */
   @RequiresReadLock
   fun isIndexable(file: VirtualFile): Boolean
@@ -75,6 +76,7 @@ interface WorkspaceFileIndex {
    * @param includeContentSets if `true` file sets of [content][WorkspaceFileKind.isContent] kind will be processed
    * @param includeExternalSets if `true` file sets of [WorkspaceFileKind.EXTERNAL] kind will be processed
    * @param includeExternalSourceSets if `true` file sets of [WorkspaceFileKind.EXTERNAL_SOURCE] kind will be processed
+   * @param includeExternalNonIndexableSets if `true` file sets of [WorkspaceFileKind.EXTERNAL_NON_INDEXABLE] kind will be processed
    * @param includeCustomKindSets if `true` file sets of [WorkspaceFileKind.CUSTOM] kind will be processed
    */
   fun findFileSet(
@@ -84,6 +86,7 @@ interface WorkspaceFileIndex {
     includeContentNonIndexableSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
+    includeExternalNonIndexableSets: Boolean,
     includeCustomKindSets: Boolean
   ): WorkspaceFileSet?
 
@@ -97,6 +100,7 @@ interface WorkspaceFileIndex {
    * @param includeContentSets if `true` file sets of [content][WorkspaceFileKind.isContent] kind will be processed
    * @param includeExternalSets if `true` file sets of [WorkspaceFileKind.EXTERNAL] kind will be processed
    * @param includeExternalSourceSets if `true` file sets of [WorkspaceFileKind.EXTERNAL_SOURCE] kind will be processed
+   * @param includeExternalNonIndexableSets if `true` file sets of [WorkspaceFileKind.EXTERNAL_NON_INDEXABLE] kind will be processed
    * @param includeCustomKindSets if `true` file sets of [WorkspaceFileKind.CUSTOM] kind will be processed
    */
   @ApiStatus.Experimental
@@ -107,6 +111,7 @@ interface WorkspaceFileIndex {
     includeContentNonIndexableSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
+    includeExternalNonIndexableSets: Boolean,
     includeCustomKindSets: Boolean
   ): List<WorkspaceFileSet>
 
@@ -121,6 +126,7 @@ interface WorkspaceFileIndex {
     includeContentNonIndexableSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
+    includeExternalNonIndexableSets: Boolean,
     includeCustomKindSets: Boolean,
     customDataClass: Class<out D>,
   ): WorkspaceFileSetWithCustomData<D>?
@@ -137,6 +143,7 @@ interface WorkspaceFileIndex {
     includeContentNonIndexableSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
+    includeExternalNonIndexableSets: Boolean,
     includeCustomKindSets: Boolean,
     customDataClass: Class<out D>,
   ): List<WorkspaceFileSetWithCustomData<D>>

@@ -207,7 +207,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
       var empty = projectFileIndex.findContainingLibraries(notNullVFile).isEmpty()
                   && projectFileIndex.findContainingSdks(notNullVFile).isEmpty();
       if (empty &&
-          (WorkspaceFileIndex.getInstance(myProject).findFileSet(notNullVFile, true, false, false, true, true, true) != null ||
+          (WorkspaceFileIndex.getInstance(myProject).findFileSet(notNullVFile, true, false, false, true, true, true, true) != null ||
            myAdditionalIndexableFileSet.isInSet(notNullVFile))) {
         return allScope;
       }

@@ -189,7 +189,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
 
 private fun WorkspaceFileIndexEx.findNonIndexableFileSet(
   file: VirtualFile,
-): WorkspaceFileSet? = findFileSet(file, true, false, true, false, false, false)
+): WorkspaceFileSet? = findFileSet(file, true, false, true, false, false, true, false)
 
 private fun PsiManager.getPsiFileSystemItem(file: VirtualFile): PsiFileSystemItem? = when {
   file.isDirectory -> ReadAction.nonBlocking<PsiDirectory?> { findDirectory(file) }.executeSynchronously()

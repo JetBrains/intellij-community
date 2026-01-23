@@ -167,6 +167,7 @@ internal class WorkspaceFileIndexDataImpl(
     includeContentNonIndexableSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
+    includeExternalNonIndexableSets: Boolean,
     includeCustomKindSets: Boolean
   ): WorkspaceFileInternalInfo = WorkspaceFileIndexDataMetrics.getFileInfoTimeNanosec.addMeasuredTime {
     if (!file.isValid) return@addMeasuredTime WorkspaceFileInternalInfo.NonWorkspace.INVALID
@@ -180,6 +181,7 @@ internal class WorkspaceFileIndexDataImpl(
         (if (includeContentNonIndexableSets) WorkspaceFileKindMask.CONTENT_NON_INDEXABLE else 0) or
         (if (includeExternalSets) WorkspaceFileKindMask.EXTERNAL_BINARY else 0) or
         (if (includeExternalSourceSets) WorkspaceFileKindMask.EXTERNAL_SOURCE else 0) or
+        (if (includeExternalNonIndexableSets) WorkspaceFileKindMask.EXTERNAL_NON_INDEXABLE else 0) or
         (if (includeCustomKindSets) WorkspaceFileKindMask.CUSTOM else 0)
     var acceptedKindsMask = originalAcceptedKindMask 
     var current: VirtualFile? = file
@@ -582,7 +584,7 @@ internal class WorkspaceFileIndexDataImpl(
   }
 
   override fun getPackageName(dirOrFile: VirtualFile): String? = WorkspaceFileIndexDataMetrics.getPackageNameTimeNanosec.addMeasuredTime {
-    val fileSet = when (val info = getFileInfo(dirOrFile, true, true, true, true, true, true)) {
+    val fileSet = when (val info = getFileInfo(dirOrFile, true, true, true, true, true, true, true)) {
                     is WorkspaceFileSetWithCustomData<*> -> info.takeIf { it.data is JvmPackageRootDataInternal }
                     is MultipleWorkspaceFileSets -> info.find(JvmPackageRootDataInternal::class.java)
                     else -> null
@@ -606,7 +608,7 @@ internal class WorkspaceFileIndexDataImpl(
     val query = CollectionQuery(packageDirectoryCache.getDirectoriesByPackageName(packageName))
     return@addMeasuredTime if (includeLibrarySources) query
     else query.filtering {
-      getFileInfo(it, true, true, true, true, false, true) !is WorkspaceFileInternalInfo.NonWorkspace
+      getFileInfo(it, true, true, true, true, false, true, true) !is WorkspaceFileInternalInfo.NonWorkspace
     }
   }
 
@@ -759,6 +761,7 @@ internal fun WorkspaceFileKind.toMask(): Int {
     WorkspaceFileKind.CONTENT, WorkspaceFileKind.TEST_CONTENT -> WorkspaceFileKindMask.CONTENT
     WorkspaceFileKind.EXTERNAL -> WorkspaceFileKindMask.EXTERNAL_BINARY
     WorkspaceFileKind.EXTERNAL_SOURCE -> WorkspaceFileKindMask.EXTERNAL_SOURCE
+    WorkspaceFileKind.EXTERNAL_NON_INDEXABLE -> WorkspaceFileKindMask.EXTERNAL_NON_INDEXABLE
     WorkspaceFileKind.CUSTOM -> WorkspaceFileKindMask.CUSTOM
     WorkspaceFileKind.CONTENT_NON_INDEXABLE -> WorkspaceFileKindMask.CONTENT_NON_INDEXABLE
   }
@@ -864,7 +867,7 @@ private class StoreFileSetsRegistrarImpl(
     }
     else {
       val mask = when (excludedFrom) {
-        WorkspaceFileKind.EXTERNAL -> WorkspaceFileKindMask.EXTERNAL
+        WorkspaceFileKind.EXTERNAL -> WorkspaceFileKindMask.EXTERNAL or WorkspaceFileKindMask.EXTERNAL_NON_INDEXABLE
         WorkspaceFileKind.CONTENT ->  WorkspaceFileKindMask.CONTENT or WorkspaceFileKindMask.CONTENT_NON_INDEXABLE
         else -> excludedFrom.toMask()
       }
