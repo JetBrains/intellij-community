@@ -93,61 +93,6 @@ public final class GradleExecutionHelper {
   public static final Key<Boolean> AUTO_JAVA_HOME = Key.create("AUTO_JAVA_HOME");
 
   /**
-   * @deprecated Use the {@link ProjectConnection#newBuild} function directly.
-   * Or use the {@link com.intellij.openapi.externalSystem.util.ExternalSystemUtil#runTask} API for the high-level Gradle task execution.
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull BuildLauncher getBuildLauncher(
-    @NotNull ProjectConnection connection,
-    @NotNull ExternalSystemTaskId id,
-    @NotNull List<String> tasksAndArguments,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskNotificationListener listener
-  ) {
-    BuildLauncher operation = connection.newBuild();
-    prepare(connection, operation, id, tasksAndArguments, settings, listener);
-    return operation;
-  }
-
-  /**
-   * @deprecated Use the {@link ProjectConnection#newTestLauncher} function directly.
-   * Or use the {@link com.intellij.openapi.externalSystem.util.ExternalSystemUtil#runTask} API for the high-level Gradle task execution.
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull TestLauncher getTestLauncher(
-    @NotNull ProjectConnection connection,
-    @NotNull ExternalSystemTaskId id,
-    @NotNull List<String> tasksAndArguments,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskNotificationListener listener
-  ) {
-    var operation = connection.newTestLauncher();
-    prepare(connection, operation, id, tasksAndArguments, settings, listener);
-    return operation;
-  }
-
-  /**
-   * @deprecated Existed for the {@link #getBuildLauncher} and {@link #getTestLauncher} functions.
-   */
-  @Deprecated
-  private static void prepare(
-    @NotNull ProjectConnection connection,
-    @NotNull LongRunningOperation operation,
-    @NotNull ExternalSystemTaskId id,
-    @NotNull List<String> tasksAndArguments,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskNotificationListener listener
-  ) {
-    GradleExecutionSettings effectiveSettings = new GradleExecutionSettings(settings);
-    effectiveSettings.setTasks(ContainerUtil.concat(effectiveSettings.getTasks(), tasksAndArguments));
-    CancellationToken cancellationToken = GradleConnector.newCancellationTokenSource().token();
-    GradleExecutionContextImpl context = new GradleExecutionContextImpl("", id, effectiveSettings, listener, cancellationToken);
-    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, context);
-    context.setBuildEnvironment(buildEnvironment);
-    prepareForExecution(operation, context);
-  }
-
-  /**
    * @deprecated use the {@link GradleExecutionHelper#execute} function with {@link GradleExecutionContext} instead.
    * The {@link BuildEnvironment} model will be automatically provided to {@link GradleExecutionContext}.
    */

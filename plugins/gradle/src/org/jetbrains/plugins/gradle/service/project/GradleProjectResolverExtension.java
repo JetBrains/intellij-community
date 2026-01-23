@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension;
-import org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtensionDebuggerBridge;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.util.*;
@@ -216,12 +215,6 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    */
   @Deprecated
   String GRADLE_VERSION = "GRADLE_VERSION";
-
-  /**
-   * @deprecated use {@link GradleTaskManagerExtensionDebuggerBridge#DEBUGGER_ENABLED} instead
-   */
-  @Deprecated(forRemoval = true)
-  String DEBUGGER_ENABLED = GradleTaskManagerExtensionDebuggerBridge.DEBUGGER_ENABLED;
 
   /**
    * @deprecated use {@link GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)} instead
