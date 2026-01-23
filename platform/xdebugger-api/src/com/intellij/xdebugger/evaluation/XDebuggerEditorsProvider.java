@@ -34,10 +34,18 @@ public abstract class XDebuggerEditorsProvider {
   public @NotNull Document createDocument(@NotNull Project project,
                                           @NotNull XExpression expression,
                                           @Nullable XSourcePosition sourcePosition,
-                                          @NotNull EvaluationMode mode) {
+                                          @NotNull EvaluationMode mode,
+                                          @Nullable String purpose) {
     return createDocument(project, expression.getExpression(), sourcePosition, mode);
   }
-  
+
+  public @NotNull Document createDocument(@NotNull Project project,
+                                          @NotNull XExpression expression,
+                                          @Nullable XSourcePosition sourcePosition,
+                                          @NotNull EvaluationMode mode) {
+    return createDocument(project, expression, sourcePosition, mode, null);
+  }
+
   public void afterEditorCreated(@Nullable Editor editor) {}
 
   public @NotNull @Unmodifiable Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {

@@ -67,6 +67,8 @@ com.intellij.xdebugger.impl.frame.XWatchesView
 - a:removeWatches(java.util.List):V
 com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter$HighlighterProvider
 - a:getHighlightRange():com.intellij.openapi.util.TextRange
+c:com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox
+- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,java.lang.String,com.intellij.xdebugger.XSourcePosition,Z,Z,java.lang.String):V
 com.intellij.xdebugger.impl.ui.XValueTextProvider
 - a:getValueText():java.lang.String
 com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem

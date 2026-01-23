@@ -79,6 +79,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
   private @Nullable XSourcePosition mySourcePosition;
   private int myHistoryIndex = -1;
   private @Nullable PsiElement myContext;
+  private final @Nullable String myPurpose;
 
   private final LanguageChooser myLanguageChooser = new LanguageChooser();
   private final JLabel myExpandButton = new JLabel(AllIcons.General.ExpandComponent);
@@ -91,7 +92,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
                                 @NotNull EvaluationMode mode,
                                 @Nullable @NonNls String historyId,
                                 final @Nullable XSourcePosition sourcePosition) {
-    this(project, debuggerEditorsProvider, mode, historyId, sourcePosition, null);
+    this(project, debuggerEditorsProvider, mode, historyId, sourcePosition, null, null);
   }
 
   XDebuggerEditorBase(final Project project,
@@ -99,13 +100,15 @@ public abstract class XDebuggerEditorBase implements Expandable {
                                 @NotNull EvaluationMode mode,
                                 @Nullable @NonNls String historyId,
                                 final @Nullable XSourcePosition sourcePosition,
-                                @Nullable PsiElement psiContext) {
+                                @Nullable PsiElement psiContext,
+                                @Nullable String purpose) {
     myProject = project;
     myDebuggerEditorsProvider = debuggerEditorsProvider;
     myMode = mode;
     myHistoryId = historyId;
     mySourcePosition = sourcePosition;
     myContext = psiContext;
+    myPurpose = purpose;
 
     // setup expand button
     myExpandButton.setToolTipText(KeymapUtil.createTooltipText(IdeBundle.message("action.expand"), "ExpandExpandableComponent"));
@@ -318,8 +321,10 @@ public abstract class XDebuggerEditorBase implements Expandable {
     if (myContext != null && provider instanceof XDebuggerEditorsProviderBase) {
       return ((XDebuggerEditorsProviderBase)provider).createDocument(myProject, text, myContext, myMode);
     }
-    else {
+    else if (myPurpose == null) {
       return provider.createDocument(myProject, text, mySourcePosition, myMode);
+    } else {
+      return provider.createDocument(myProject, text, mySourcePosition, myMode, myPurpose);
     }
   }
 
