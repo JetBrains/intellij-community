@@ -4,11 +4,9 @@ package com.intellij.xdebugger.impl.inline;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
-import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
@@ -22,28 +20,12 @@ import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 @ApiStatus.Internal
 public class InlineWatchesRootNode extends WatchesRootNode {
   private final @NotNull XWatchesView myWatchesView;
   private final XValueGroupNodeImpl myInlinesRootNode;
   private final InlinesGroup myInlinesGroup;
-
-  /**
-   * @deprecated Use {@link InlineWatchesRootNode#InlineWatchesRootNode(XDebuggerTree, XWatchesView, String, XStackFrame, boolean, XDebuggerTreeState)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public InlineWatchesRootNode(@NotNull XDebuggerTree tree,
-                               @NotNull XWatchesView watchesView,
-                               @NotNull List<XExpression> regularWatchesExpressions,
-                               @NotNull List<InlineWatch> inlineWatchesExpressions,
-                               @Nullable XStackFrame stackFrame,
-                               boolean watchesInVariables) {
-    this(tree, watchesView,
-         Objects.requireNonNull(((XVariablesView)watchesView).getSession()).getSessionData().getConfigurationName(),
-         stackFrame, watchesInVariables, null);
-  }
 
   public InlineWatchesRootNode(@NotNull XDebuggerTree tree,
                                @NotNull XWatchesView watchesView,

@@ -54,14 +54,6 @@ public class ExecutionPointHighlighter {
 
   private final AtomicBoolean updateRequested = new AtomicBoolean();
 
-  /**
-   * @deprecated This constructor doesn't subscribe to events for updating itself. Use the overload taking a {@link Disposable}.
-   */
-  @Deprecated(forRemoval = true)
-  public ExecutionPointHighlighter(@NotNull Project project) {
-    myProject = project;
-  }
-
   public ExecutionPointHighlighter(@NotNull Project project, @NotNull Disposable parentDisposable) {
     this(project, project.getMessageBus().connect(parentDisposable));
   }
