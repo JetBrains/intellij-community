@@ -290,8 +290,11 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     assertEquals("foo", getDocumentText(f[0]));
   }
 
-  public void testDeletionOfNoneJavaFiles() {
+  public void testDeletionOfNoneJavaFiles() throws IOException {
     VirtualFile f = createChildData(myRoot, "f.xxx");
+    // In order to be restored, content should be registered in persistent FS
+    // See StoredContent#acquireContent for details
+    f.contentsToByteArray(true);
 
     deleteInCommand(f);
     assertGlobalUndoIsAvailable();
