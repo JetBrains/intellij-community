@@ -551,6 +551,7 @@ public final class BuildTreeConsoleView
   }
 
   private void addNode(@NotNull Object eventId, @NotNull ExecutionNode node) {
+    node.setId(eventId);
     nodesMap.put(eventId, node);
   }
 

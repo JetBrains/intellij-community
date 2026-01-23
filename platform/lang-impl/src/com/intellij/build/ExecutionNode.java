@@ -52,6 +52,8 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   private static final Icon NODE_ICON_SIMPLE = ICON_16;
   private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.Default();
 
+  private @NotNull Object myId = new Object();
+
   private final List<ExecutionNode> myChildrenList = new ArrayList<>(); // Accessed from the async model thread only.
   private final AtomicInteger myErrors = new AtomicInteger();
   private final AtomicInteger myWarnings = new AtomicInteger();
@@ -119,6 +121,15 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   void applyFrom(@NotNull BuildEventPresentationData buildEventPresentationData) {
     myAlwaysVisible = true;
     setIconProvider(() -> buildEventPresentationData.getNodeIcon());
+  }
+
+  public @NotNull Object getId() {
+    return myId;
+  }
+
+  public void setId(@NotNull Object id) {
+    assert myIsCorrectThread.get();
+    myId = id;
   }
 
   @Override

@@ -257,6 +257,7 @@ c:com.intellij.build.ExecutionNode
 - getChildList():java.util.List
 - getDuration():java.lang.String
 - getHint():java.lang.String
+- getId():java.lang.Object
 - getName():java.lang.String
 - getNavigatable():com.intellij.pom.Navigatable
 - getParent():com.intellij.build.ExecutionNode
@@ -268,6 +269,7 @@ c:com.intellij.build.ExecutionNode
 - setEndTime(J):com.intellij.build.ExecutionNode
 - setHint(java.lang.String):V
 - setIconProvider(java.util.function.Supplier):V
+- setId(java.lang.Object):V
 - setName(java.lang.String):V
 - setResult(com.intellij.build.events.EventResult):com.intellij.build.ExecutionNode
 - setStartTime(J):V
