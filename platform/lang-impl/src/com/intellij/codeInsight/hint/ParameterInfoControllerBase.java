@@ -361,14 +361,6 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     throw new TimeoutException();
   }
 
-  /**
-   * @deprecated Always false
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean areParameterTemplatesEnabledOnCompletion() {
-    return false;
-  }
-
   public static @NotNull ParameterInfoControllerBase createParameterInfoController(@NotNull Project project,
                                                                                    @NotNull Editor editor,
                                                                                    int lbraceOffset,

@@ -157,20 +157,6 @@ public class SdkDetector {
   }
 
   /**
-   * Run Sdk detection assuming called in a background thread
-   *
-   * @deprecated Please use {@link SdkDetector#detectSdks(Project, SdkType, ProgressIndicator, DetectedSdkListener)}
-   */
-  @Deprecated(forRemoval = true)
-  public void detectSdks(
-    @NotNull SdkType type,
-    @NotNull ProgressIndicator indicator,
-    @NotNull DetectedSdkListener callback
-  ) {
-    detectSdks(null, type, indicator, callback);
-  }
-
-  /**
    * Run Sdk detection on the machine where {@code project} is located
    * This function assumes that it is called in background thread
    */

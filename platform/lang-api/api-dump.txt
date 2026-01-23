@@ -804,7 +804,6 @@ com.intellij.lang.surroundWith.Surrounder
 com.intellij.microservices.endpoints.EndpointsFilter
 com.intellij.microservices.endpoints.EndpointsProvider
 - sf:Companion:com.intellij.microservices.endpoints.EndpointsProvider$Companion
-- sf:DOCUMENTATION_ELEMENT:com.intellij.openapi.actionSystem.DataKey
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:URL_TARGET_INFO:com.intellij.openapi.actionSystem.DataKey
 - getDocumentationElement(java.lang.Object,java.lang.Object):com.intellij.psi.PsiElement

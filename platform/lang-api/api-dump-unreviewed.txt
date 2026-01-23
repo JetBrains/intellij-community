@@ -512,7 +512,6 @@ c:com.intellij.codeInsight.daemon.NavigateAction
 - s:setNavigateAction(com.intellij.codeInsight.daemon.LineMarkerInfo,java.lang.String,java.lang.String,javax.swing.Icon):com.intellij.codeInsight.daemon.LineMarkerInfo
 c:com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo
 - com.intellij.codeInsight.daemon.MergeableLineMarkerInfo
-- <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,javax.swing.Icon,I,com.intellij.util.Function,com.intellij.codeInsight.daemon.GutterIconNavigationHandler,com.intellij.openapi.editor.markup.GutterIconRenderer$Alignment,com.intellij.openapi.util.NotNullLazyValue):V
 - <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,javax.swing.Icon,com.intellij.util.Function,com.intellij.codeInsight.daemon.GutterIconNavigationHandler,com.intellij.openapi.editor.markup.GutterIconRenderer$Alignment,com.intellij.openapi.util.NotNullFactory):V
 - <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,javax.swing.Icon,com.intellij.util.Function,com.intellij.util.Function,com.intellij.codeInsight.daemon.GutterIconNavigationHandler,com.intellij.openapi.editor.markup.GutterIconRenderer$Alignment,com.intellij.openapi.util.NotNullFactory,java.util.function.Supplier):V
 - canMergeWith(com.intellij.codeInsight.daemon.MergeableLineMarkerInfo):Z

@@ -21,19 +21,6 @@ import java.util.function.Supplier;
 public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLineMarkerInfo<T> {
   private final NotNullLazyValue<? extends Collection<? extends GotoRelatedItem>> myTargets;
 
-  /**
-   * @deprecated Use {@link #RelatedItemLineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment, NotNullFactory)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public RelatedItemLineMarkerInfo(@NotNull T element, @NotNull TextRange range, Icon icon, int updatePass,
-                                   @Nullable Function<? super T, String> tooltipProvider,
-                                   @Nullable GutterIconNavigationHandler<T> navHandler,
-                                   @NotNull GutterIconRenderer.Alignment alignment,
-                                   @NotNull NotNullLazyValue<? extends Collection<? extends GotoRelatedItem>> targets) {
-    super(element, range, icon, tooltipProvider, navHandler, alignment);
-    myTargets = targets;
-  }
-
   public RelatedItemLineMarkerInfo(@NotNull T element, @NotNull TextRange range, Icon icon,
                                    @Nullable Function<? super T, String> tooltipProvider,
                                    @Nullable GutterIconNavigationHandler<T> navHandler,

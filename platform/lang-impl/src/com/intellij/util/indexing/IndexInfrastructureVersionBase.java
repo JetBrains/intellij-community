@@ -2,15 +2,12 @@
 package com.intellij.util.indexing;
 
 import com.google.common.collect.ImmutableSortedMap;
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
-import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TemplateLanguageStubBaseVersion;
 import com.intellij.util.Function;
@@ -155,21 +152,6 @@ public class IndexInfrastructureVersionBase {
     }
 
     return builder;
-  }
-
-  /**
-   * @deprecated use {@link #getAllLanguageStubDescriptors} intead
-   * @return
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull List<IFileElementType> getAllStubFileElementTypes() {
-    return Arrays.stream(FileTypeManager.getInstance().getRegisteredFileTypes())
-      .filter(type -> type instanceof LanguageFileType)
-      .map(type -> ((LanguageFileType)type).getLanguage())
-      .map(LanguageParserDefinitions.INSTANCE::forLanguage)
-      .filter(Objects::nonNull)
-      .map(ParserDefinition::getFileNodeType)
-      .collect(Collectors.toList());
   }
 
   public static @NotNull List<LanguageStubDescriptor> getAllLanguageStubDescriptors() {

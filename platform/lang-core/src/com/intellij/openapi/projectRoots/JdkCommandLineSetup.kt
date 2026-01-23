@@ -34,7 +34,6 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.lang.UrlClassLoader
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -156,27 +155,6 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
                                                                             t.localizedMessage))
         result.resolveFailure(t)
       }
-    }
-    return result
-  }
-
-  /**
-   * @param host the hostname the [localPort] is bound to
-   * @param localPort the local port that is listening for the incoming connections
-   * @return the promised value with the host and port the process started on the target may connect to be directed to the local one
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use `TargetEnvironment.getLocalPortBindings` after constructing `TargetEnvironment` instead")
-  fun requestLocalPortBinding(host: String, localPort: Int): TargetValue<HostPort> {
-    val binding = TargetEnvironment.LocalPortBinding(localPort, target = null)
-    request.localPortBindings.add(binding)
-    val result = DeferredTargetValue(HostPort(host, localPort))
-    dependingOnEnvironmentPromise += environmentPromise.then { (environment, targetProgressIndicator) ->
-      if (targetProgressIndicator.isCanceled || targetProgressIndicator.isStopped) {
-        return@then
-      }
-      val resolvedPortBinding = environment.localPortBindings[binding]
-      result.resolve(resolvedPortBinding?.localEndpoint)
     }
     return result
   }

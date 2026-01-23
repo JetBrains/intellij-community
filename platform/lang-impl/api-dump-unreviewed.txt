@@ -3162,7 +3162,6 @@ a:com.intellij.codeInsight.hint.ParameterInfoControllerBase
 - pf:myProject:com.intellij.openapi.project.Project
 - p:mySingleParameterInfo:Z
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,java.lang.Object[],java.lang.Object,com.intellij.psi.PsiElement,com.intellij.lang.parameterInfo.ParameterInfoHandler,Z):V
-- s:areParameterTemplatesEnabledOnCompletion():Z
 - pa:canBeDisposed():Z
 - s:createParameterInfoController(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,java.lang.Object[],java.lang.Object,com.intellij.psi.PsiElement,com.intellij.lang.parameterInfo.ParameterInfoHandler,Z,Z):com.intellij.codeInsight.hint.ParameterInfoControllerBase
 - dispose():V
@@ -3598,7 +3597,6 @@ f:com.intellij.codeInsight.hints.presentation.InlayTextMetrics
 - f:getLineHeight():I
 - f:getSpaceWidth():I
 - f:getStringWidth(java.lang.String):I
-- f:isActual(F,java.lang.String):Z
 - f:offsetFromTop():I
 f:com.intellij.codeInsight.hints.presentation.InlayTextMetrics$Companion
 f:com.intellij.codeInsight.hints.presentation.InsetPresentation
@@ -12570,7 +12568,6 @@ f:com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel$Companion
 c:com.intellij.openapi.roots.ui.configuration.SdkDetector
 - <init>():V
 - detectSdks(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.SdkType,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.roots.ui.configuration.SdkDetector$DetectedSdkListener):V
-- detectSdks(com.intellij.openapi.projectRoots.SdkType,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.roots.ui.configuration.SdkDetector$DetectedSdkListener):V
 - getDetectedSdksWithUpdate(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,com.intellij.openapi.application.ModalityState,com.intellij.openapi.roots.ui.configuration.SdkDetector$DetectedSdkListener):V
 - s:getInstance():com.intellij.openapi.roots.ui.configuration.SdkDetector
 a:com.intellij.openapi.roots.ui.configuration.SdkListItem
@@ -16438,26 +16435,6 @@ c:com.intellij.ui.popup.util.DetailViewImpl
 - setEditor(com.intellij.openapi.editor.Editor):V
 - setEmptyLabel(java.lang.String):V
 - setPropertiesPanel(javax.swing.JPanel):V
-f:com.intellij.ui.popup.util.MasterDetailPopupBuilder
-- <init>(com.intellij.openapi.project.Project):V
-- createMasterDetailPopup():com.intellij.openapi.ui.popup.JBPopup
-- getPathLabel():javax.swing.JLabel
-- getSelectedItems():com.intellij.ui.popup.util.ItemWrapper[]
-- setActionsGroup(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.ui.popup.util.MasterDetailPopupBuilder
-- setAddDetailViewToEast(Z):com.intellij.ui.popup.util.MasterDetailPopupBuilder
-- setDelegate(com.intellij.ui.popup.util.MasterDetailPopupBuilder$Delegate):com.intellij.ui.popup.util.MasterDetailPopupBuilder
-- setDetailView(com.intellij.ui.popup.util.DetailView):com.intellij.ui.popup.util.MasterDetailPopupBuilder
-- setDimensionServiceKey(java.lang.String):com.intellij.ui.popup.util.MasterDetailPopupBuilder
-- setDoneRunnable(java.lang.Runnable):com.intellij.ui.popup.util.MasterDetailPopupBuilder
-- setList(com.intellij.ui.components.JBList):com.intellij.ui.popup.util.MasterDetailPopupBuilder
-- setPopupTuner(com.intellij.util.Consumer):com.intellij.ui.popup.util.MasterDetailPopupBuilder
-com.intellij.ui.popup.util.MasterDetailPopupBuilder$Delegate
-- a:createAccessoryView(com.intellij.openapi.project.Project):javax.swing.JComponent
-- a:getSelectedItemsInTree():java.lang.Object[]
-- a:getTitle():java.lang.String
-- a:handleMnemonic(java.awt.event.KeyEvent,com.intellij.openapi.project.Project,com.intellij.openapi.ui.popup.JBPopup):V
-- a:itemChosen(com.intellij.ui.popup.util.ItemWrapper,com.intellij.openapi.project.Project,com.intellij.openapi.ui.popup.JBPopup,Z):V
-- a:removeSelectedItemsInTree():V
 a:com.intellij.ui.tabs.ColorButtonBase
 - com.intellij.notification.impl.ui.StickyButton
 - p:myColor:java.awt.Color
@@ -16607,7 +16584,6 @@ c:com.intellij.util.indexing.IndexInfrastructureVersionBase
 - equals(java.lang.Object):Z
 - s:fileBasedIndexVersions(java.util.List,com.intellij.util.Function):java.util.Map
 - s:getAllCompositeBinaryFileStubBuilderVersions():java.util.Map
-- s:getAllStubFileElementTypes():java.util.List
 - s:getBinaryFileStubBuilderVersion(com.intellij.psi.stubs.BinaryFileStubBuilder$CompositeBinaryFileStubBuilder):java.lang.String
 - s:getStubFileElementBaseVersion(com.intellij.psi.tree.IStubFileElementType):I
 - s:getStubFileElementTypeKey(com.intellij.psi.tree.IStubFileElementType):java.lang.String
