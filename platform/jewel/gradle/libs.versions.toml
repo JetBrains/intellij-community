@@ -3,7 +3,7 @@ assertJ = "3.26.3"
 coil = "3.2.0"
 commonmark = "0.24.0"
 composeDesktop = "1.10.0"
-detekt = "1.23.8"
+detekt = "2.0.0-alpha.1"
 dokka = "2.0.0"
 filepicker = "3.1.0"
 idea = "2025.3"
@@ -13,16 +13,16 @@ jbr = "1.6.0"
 jna = "5.17.0"
 junitJupiter = "5.13.4"
 junitPlatform = "1.13.4"
-kotlin = "2.2.20"
+kotlin = "2.3.0"
 kotlinpoet = "2.1.0"
 kotlinterGradlePlugin = "5.2.0"
 kotlinxSerialization = "1.8.1"
-ktfmtGradlePlugin = "0.23.0"
+ktfmtGradlePlugin = "0.25.0"
 metalava = "1.0.0-alpha13"
 jsoup = "1.21.2"
 
 [libraries]
-assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertJ"}
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertJ" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
@@ -31,9 +31,10 @@ commonmark-core = { module = "org.commonmark:commonmark", version.ref = "commonm
 commonmark-ext-autolink = { module = "org.commonmark:commonmark-ext-autolink", version.ref = "commonmark" }
 commonmark-ext-gfm-strikethrough = { module = "org.commonmark:commonmark-ext-gfm-strikethrough", version.ref = "commonmark" }
 commonmark-ext-gfm-tables = { module = "org.commonmark:commonmark-ext-gfm-tables", version.ref = "commonmark" }
-detekt-api = { module = "io.gitlab.arturbosch.detekt:detekt-api", version.ref = "detekt" }
-detekt-core = { module = "io.gitlab.arturbosch.detekt:detekt-core", version.ref = "detekt" }
-detekt-test = { module = "io.gitlab.arturbosch.detekt:detekt-test", version.ref = "detekt" }
+detekt-api = { module = "dev.detekt:detekt-api", version.ref = "detekt" }
+detekt-core = { module = "dev.detekt:detekt-core", version.ref = "detekt" }
+detekt-test = { module = "dev.detekt:detekt-test", version.ref = "detekt" }
+detekt-assertj = { module = "dev.detekt:detekt-test-assertj", version.ref = "detekt" }
 intellijPlatform-icons = { module = "com.jetbrains.intellij.platform:icons", version.ref = "intelliJPlatformBuild" }
 intellijPlatform-util-ui = { module = "com.jetbrains.intellij.platform:util-ui", version.ref = "intelliJPlatformBuild" }
 jbr-api = { module = "org.jetbrains.runtime:jbr-api", version.ref = "jbr" }
@@ -48,7 +49,7 @@ metalava = { module = "com.android.tools.metalava:metalava", version.ref = "meta
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 
 # Plugin libraries for build-logic's convention plugins to use to resolve the types/tasks coming from these plugins
-detekt-gradlePlugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+detekt-gradlePlugin = { module = "dev.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
@@ -58,7 +59,6 @@ ktfmt-gradlePlugin = { module = "com.ncorti.ktfmt.gradle:plugin", version.ref = 
 [plugins]
 composeDesktop = { id = "org.jetbrains.compose", version.ref = "composeDesktop" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 ideaPlugin = { id = "org.jetbrains.intellij.platform", version.ref = "ideaPlugin" }
 ideaPluginBase = { id = "org.jetbrains.intellij.platform.base", version.ref = "ideaPlugin" }
