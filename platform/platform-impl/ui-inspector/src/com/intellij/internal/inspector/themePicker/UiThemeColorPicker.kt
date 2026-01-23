@@ -10,6 +10,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -39,11 +40,10 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.*
 import com.intellij.util.ui.tree.TreeUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.debounce
 import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.MouseAdapter
@@ -56,6 +56,7 @@ import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeModel
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val THEME_VIEWER_UI_MARKER_KEY = "ThemeColorPopupIdentity"
 private const val TOOL_WINDOW_ID = "UI Theme Color Picker"
@@ -70,18 +71,54 @@ internal class UiThemeColorPickerState : SimplePersistentStateComponent<UiThemeC
   }
 }
 
+private data class PopupState(val colors: List<ThemeColorInfo>, val point: RelativePoint)
+
+@OptIn(FlowPreview::class)
 @Service(Service.Level.APP)
 internal class UiThemeColorPicker(internal val coroutineScope: CoroutineScope) {
 
   private var disposable: Disposable? = null
 
   private val colorMap = WeakHashMap<Window, PixelColorMap>()
-  private var currentPopup: WeakReference<JBPopup>? = null
+  private val popupState = MutableStateFlow<PopupState?>(null)
   internal var hoverState = MutableStateFlow<List<ThemeColorInfo>>(emptyList())
 
   companion object {
     @JvmStatic
     fun getInstance(): UiThemeColorPicker = service()
+  }
+  
+  init {
+    coroutineScope.launch(CoroutineName("UiThemeColorPicker.popup")) {
+      // weak reference just in case the popup is hidden from outside and our service is stuck for some reason
+      var currentPopup: WeakReference<JBPopup>? = null
+      popupState.debounce(50.milliseconds).collectLatest { popupState ->
+        try {
+          // We should really use UI instead of EDT here, but because TreeUtil requires the WIL (sic!),
+          // for now we can't get rid of the EDT here.
+          if (popupState == null) {
+            withContext(Dispatchers.EDT) {
+              currentPopup?.get()?.cancel()
+            }
+            currentPopup = null
+          }
+          else {
+            val newPopup = withContext(Dispatchers.EDT) {
+              showHoverPopup(currentPopup?.get(), popupState.colors, popupState.point)
+            }
+            currentPopup = newPopup?.let { WeakReference(it) }
+          }
+        }
+        catch (e: Exception) {
+          rethrowControlFlowException(e)
+          LOG.warn("Could not show a popup corresponding to the state $popupState", e)
+          withContext(Dispatchers.EDT) {
+            currentPopup?.get()?.cancel() // it's outdated anyway
+          }
+          currentPopup = null
+        }
+      }
+    }
   }
 
   fun isEnabled(): Boolean {
@@ -127,8 +164,7 @@ internal class UiThemeColorPicker(internal val coroutineScope: CoroutineScope) {
   private fun cleanup() {
     colorMap.clear()
 
-    currentPopup?.get()?.cancel()
-    currentPopup = null
+    popupState.value = null
 
     hoverState.tryEmit(emptyList())
 
@@ -146,13 +182,12 @@ internal class UiThemeColorPicker(internal val coroutineScope: CoroutineScope) {
       override fun mouseMoved(e: MouseEvent) {
         val point = RelativePoint(e)
         if (isOurOwnUi(point)) {
-          currentPopup?.get()?.cancel()
-          currentPopup = null
+          popupState.value = null
           return
         }
 
         val colors = getColorsAt(point)
-        showHoverPopup(colors, point)
+        popupState.value = PopupState(colors, point)
       }
     }
     val mouseClickListener = object : MouseAdapter() {
@@ -173,15 +208,14 @@ internal class UiThemeColorPicker(internal val coroutineScope: CoroutineScope) {
     window.repaint()
   }
 
-  private fun showHoverPopup(colors: List<ThemeColorInfo>, point: RelativePoint) {
-    val oldPopup = currentPopup?.get()
+  private fun showHoverPopup(oldPopup: JBPopup?, colors: List<ThemeColorInfo>, point: RelativePoint): JBPopup? {
     if (oldPopup != null && !oldPopup.isDisposed) {
       val oldColors = oldPopup.content.getClientProperty(THEME_VIEWER_UI_MARKER_KEY)
-      if (oldColors == colors) return
+      if (oldColors == colors) return oldPopup
       oldPopup.cancel()
     }
-    if (colors.isEmpty()) return
-    if (!service<UiThemeColorPickerState>().state.showPopup) return
+    if (colors.isEmpty()) return null
+    if (!service<UiThemeColorPickerState>().state.showPopup) return null
 
     val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(
       panel {
@@ -204,8 +238,8 @@ internal class UiThemeColorPicker(internal val coroutineScope: CoroutineScope) {
       .createPopup()
     popup.content.putClientProperty(THEME_VIEWER_UI_MARKER_KEY, colors)
 
-    currentPopup = WeakReference(popup)
     popup.show(RelativePoint(point.component, Point(point.point.x + 100, point.point.y + 30)))
+    return popup
   }
 
   fun storeColorForPixel(component: JComponent, rectangle: Rectangle, color: Color, erase: Boolean) {
@@ -543,3 +577,5 @@ private fun getRootPane(window: Any): JRootPane? {
 }
 
 private fun Color.toIcon(): Icon = ColorIcon(16, this)
+
+private val LOG = logger<UiThemeColorPicker>()
