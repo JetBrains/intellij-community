@@ -338,19 +338,16 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     myTagsSorted = null;
     myVendorsSorted = null;
 
-
     myPluginUpdatesService.recalculateUpdates();
 
-    if (myMarketplacePanel == null) {
-      return;
-    }
-
-    int selectionTab = myTabHeaderComponent.getSelectionTab();
-    if (selectionTab == MARKETPLACE_TAB) {
-      myMarketplaceRunnable.run();
-    }
-    else {
-      myMarketplacePanel.setVisibleRunnable(myMarketplaceRunnable);
+    if (myMarketplacePanel != null) {
+      int selectionTab = myTabHeaderComponent.getSelectionTab();
+      if (selectionTab == MARKETPLACE_TAB) {
+        myMarketplaceRunnable.run();
+      }
+      else {
+        myMarketplacePanel.setVisibleRunnable(myMarketplaceRunnable);
+      }
     }
   }
 
