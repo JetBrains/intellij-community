@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.core.script.shared
 
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -10,13 +9,12 @@ import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
-import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
-import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
+import kotlin.sequences.forEach
 
-class IDESettingsFUSCollector : ProjectUsagesCollector() {
+internal class ScriptingSettingsFUSCollector: ProjectUsagesCollector() {
     override fun getGroup() = GROUP
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
@@ -35,17 +33,10 @@ class IDESettingsFUSCollector : ProjectUsagesCollector() {
             }
         }
 
-        val settings: KotlinCodeInsightSettings = KotlinCodeInsightSettings.getInstance()
-        val projectSettings: KotlinCodeInsightWorkspaceSettings = KotlinCodeInsightWorkspaceSettings.getInstance(project)
-
-        // filling up addUnambiguousImportsOnTheFly and optimizeImportsOnTheFly Events
-        metrics.add(unambiguousImportsEvent.metric(settings.addUnambiguousImportsOnTheFly, pluginInfo))
-        metrics.add(optimizeImportsEvent.metric(projectSettings.optimizeImportsOnTheFly, pluginInfo))
-
         return metrics
     }
 
-    private val GROUP = EventLogGroup("kotlin.ide.settings", 4)
+    private val GROUP = EventLogGroup("kotlin.ide.script.settings", 1, recorder = "FUS", "Kotlin statistics on script usages")
 
     // scriptingAutoReloadEnabled Event
     private val scriptingAREnabledField = EventFields.Boolean("enabled")
@@ -68,12 +59,4 @@ class IDESettingsFUSCollector : ProjectUsagesCollector() {
         scriptingAREnabledField,
         scriptingPluginInfoField
     )
-
-    // addUnambiguousImportsOnTheFly Event
-    private val unambiguousImportsEvent =
-        GROUP.registerEvent("addUnambiguousImportsOnTheFly", EventFields.Boolean("enabled"), EventFields.PluginInfo)
-
-    // optimizeImportsOnTheFly Event
-    private val optimizeImportsEvent =
-        GROUP.registerEvent("optimizeImportsOnTheFly", EventFields.Boolean("enabled"), EventFields.PluginInfo)
 }
