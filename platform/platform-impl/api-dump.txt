@@ -2,7 +2,7 @@ com.intellij.application.options.OptionsContainingConfigurable
 - processListOptions():java.util.Set
 - processListOptionsWithPaths():java.util.Map
 a:com.intellij.application.options.colors.AbstractFontOptionsPanel
-- fireSchemeChanged():V
+- fireSchemeReset(com.intellij.openapi.editor.colors.FontPreferences):V
 com.intellij.application.options.colors.ColorAndFontPanelFactory
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createPanel(com.intellij.application.options.colors.ColorAndFontOptions):com.intellij.application.options.colors.NewColorAndFontPanel
@@ -13,6 +13,7 @@ com.intellij.application.options.colors.ColorAndFontSettingsListener
 - java.util.EventListener
 - a:fontChanged():V
 - a:schemeChanged(java.lang.Object):V
+- schemeReset(com.intellij.openapi.editor.colors.FontPreferences):V
 - a:selectedOptionChanged(java.lang.Object):V
 - a:selectionInPreviewChanged(java.lang.String):V
 - a:settingsChanged():V

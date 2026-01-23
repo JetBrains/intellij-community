@@ -46,6 +46,13 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
         restoreSelectedVariants()
         updateFontPreferences()
       }
+
+      override fun schemeReset(fontPreferences: FontPreferences) {
+        recentFeatures[fontPreferences.fontFamily] = fontPreferences.characterVariants
+        if (currentFont == fontPreferences.fontFamily) {
+          currentFeatures.forEach { (string, box) -> box.isSelected = string in fontPreferences.characterVariants }
+        }
+      }
     })
 
     AppEditorFontOptions.initDefaults(defaultPreferences)
@@ -268,7 +275,7 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
     row {
       val featureCb = checkBox(label)
         .selected(selected)
-        .onChanged { cb ->
+        .actionListener { _, cb ->
           (fontPreferences as ModifiableFontPreferences).apply {
             setCharacterVariant(feature, cb.isSelected)
           }

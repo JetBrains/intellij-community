@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -470,8 +470,8 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     myDispatcher.getMulticaster().fontChanged();
   }
 
-  public void fireSchemeChanged() {
-    myDispatcher.getMulticaster().schemeChanged(this);
+  public void fireSchemeReset(FontPreferences fontPreferences) {
+    myDispatcher.getMulticaster().schemeReset(fontPreferences);
   }
 
   @Override
