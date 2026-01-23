@@ -159,15 +159,6 @@ abstract class BranchesDashboardTreeModelBase(
         }
       }
     })
-    GitRepositoryManager.getInstance(project).repositories.forEach { repository ->
-      repository.coroutineScope.launch {
-        repository.tagsHolder.state.collectLatest {
-          withContext(Dispatchers.UiWithModelAccess) {
-            updateBranchesTree()
-          }
-        }
-      }
-    }
     project.messageBus.connect(this).subscribe(GitRepositoryTagsHolder.TAGS_UPDATED, GitTagsHolderListener {
       runInEdt {
         updateBranchesTree()
