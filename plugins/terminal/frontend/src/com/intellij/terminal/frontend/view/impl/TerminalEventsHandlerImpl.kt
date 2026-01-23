@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionTypingListener
@@ -138,6 +139,14 @@ internal open class TerminalEventsHandlerImpl(
         terminalInput.sendBytes(byteArrayOf(Ascii.NUL))
         return true
       }
+
+      // Shift+Enter handling as Esc+CR
+      if (AdvancedSettings.getBoolean("terminal.shift.enter.sends.esc.cr")
+          && keyCode == KeyEvent.VK_ENTER && isShiftPressedOnly(e.original)) {
+        terminalInput.sendBytes(byteArrayOf(Ascii.ESC, Ascii.CR))
+        return true
+      }
+
       val code = encodingManager.getCode(keyCode, e.original.modifiers)
       if (code != null) {
         terminalInput.sendBytes(code)
@@ -211,6 +220,14 @@ internal open class TerminalEventsHandlerImpl(
            && modifiersEx and InputEvent.ALT_GRAPH_DOWN_MASK == 0
            && modifiersEx and InputEvent.CTRL_DOWN_MASK == 0
            && modifiersEx and InputEvent.SHIFT_DOWN_MASK == 0
+  }
+
+  private fun isShiftPressedOnly(e: KeyEvent): Boolean {
+    val modifiersEx = e.modifiersEx
+    return modifiersEx and InputEvent.SHIFT_DOWN_MASK != 0
+           && modifiersEx and InputEvent.ALT_DOWN_MASK == 0
+           && modifiersEx and InputEvent.ALT_GRAPH_DOWN_MASK == 0
+           && modifiersEx and InputEvent.CTRL_DOWN_MASK == 0
   }
 
   private fun isCodeThatScrolls(keycode: Int): Boolean {
