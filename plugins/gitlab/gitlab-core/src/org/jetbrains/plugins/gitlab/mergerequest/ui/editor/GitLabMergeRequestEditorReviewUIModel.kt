@@ -13,6 +13,7 @@ import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterCha
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.editor.MutableCodeReviewEditorGutterChangesModel
 import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
 import com.intellij.collaboration.ui.codereview.editor.asLst
@@ -24,6 +25,7 @@ import com.intellij.collaboration.util.getOrNull
 import com.intellij.collaboration.util.syncOrToggleAll
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
+import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.util.cancelOnDispose
@@ -100,30 +102,33 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   override fun requestNewComment(lineIdx: Int) {
     val ranges = postReviewRanges.value ?: return
     val originalLine = ReviewInEditorUtil.transferLineFromAfter(ranges, lineIdx)?.takeIf { it >= 0 } ?: return
-    fileVm.requestNewDiscussion(originalLine, true)
+    val location = GitLabNoteLocation(Side.RIGHT, originalLine, Side.RIGHT, originalLine)
+    fileVm.requestNewDiscussion(location, true)
   }
 
   override fun cancelNewComment(lineIdx: Int) {
     val ranges = postReviewRanges.value ?: return
     val originalLine = ReviewInEditorUtil.transferLineFromAfter(ranges, lineIdx)?.takeIf { it >= 0 } ?: return
-    fileVm.cancelNewDiscussion(originalLine)
+    fileVm.cancelNewDiscussion(Side.RIGHT to originalLine)
   }
 
   override fun requestNewComment(lineRange: LineRange) {
-    TODO("not implemented")
+    val ranges = postReviewRanges.value ?: return
+    val startLine = ReviewInEditorUtil.transferLineFromAfter(ranges, lineRange.start)?.takeIf { it >= 0 } ?: return
+    val originalLine = ReviewInEditorUtil.transferLineFromAfter(ranges, lineRange.end)?.takeIf { it >= 0 } ?: return
+    val location = GitLabNoteLocation(Side.RIGHT, startLine, Side.RIGHT, originalLine)
+    fileVm.requestNewDiscussion(location, true)
   }
 
-  override fun canCreateComment(lineRange: LineRange): Boolean {
-    TODO("not implemented")
-  }
+  override fun canCreateComment(lineRange: LineRange) = true
 
   override fun toggleComments(lineIdx: Int) {
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
     GitLabStatistics.logToggledComments(project)
   }
 
-  fun cancelNewDiscussion(originalLine: Int) {
-    fileVm.cancelNewDiscussion(originalLine)
+  fun cancelNewDiscussion(lineLocation: DiffLineLocation) {
+    fileVm.cancelNewDiscussion(lineLocation)
   }
 
   override fun getBaseContent(lines: LineRange): String? = fileVm.getBaseContent(lines)
@@ -228,14 +233,30 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     override val line: StateFlow<Int?> = range.mapState { it?.end }
   }
 
-  private inner class ShiftedNewDiscussion(vm: GitLabMergeRequestEditorNewDiscussionViewModel)
-    : GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<GitLabMergeRequestEditorNewDiscussionViewModel>(vm) {
+  private inner class ShiftedNewDiscussion(vm: GitLabMergeRequestEditorNewDiscussionViewModel) :
+    GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<GitLabMergeRequestEditorNewDiscussionViewModel>(vm) {
     override val key: Any = vm.key
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
     override val range: StateFlow<LineRange?> = vm.location.shiftLineRange()
     override val line: StateFlow<Int?> = range.mapState { it?.end }
+    override val adjustmentDisabledReason = MutableStateFlow(null)
+    override fun adjustRange(newStart: Int?, newEnd: Int?) {
+      if (newStart == null && newEnd == null) return
+      val ranges = postReviewRanges.value ?: emptyList()
+      val transferredStart = newStart?.let {
+        val startLine = ReviewInEditorUtil.transferLineFromAfter(ranges, it)?.takeIf { it >= 0 } ?: return@let null
+        Side.RIGHT to startLine
+      }
+      val transferredEnd = newEnd?.let {
+        val endLine = ReviewInEditorUtil.transferLineFromAfter(ranges, it)?.takeIf { it >= 0 } ?: return@let null
+        Side.RIGHT to endLine
+      }
+      vm.updateLineRange(transferredStart, transferredEnd)
+      vm.requestFocus()
+    }
+
     override fun cancel() {
-      vm.line.value?.let(::cancelNewDiscussion)
+      vm.location.value?.let { cancelNewDiscussion(it.side to it.lineIdx) }
     }
   }
 }

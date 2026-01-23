@@ -26,7 +26,8 @@ interface CodeReviewInlayModel : EditorMappedViewModel {
       fun adjustRange(newStart: Int? = null, newEnd: Int? = null)
 
       enum class AdjustmentDisabledReason {
-        SUGGESTED_CHANGE
+        SUGGESTED_CHANGE,
+        SINGLE_COMMIT_REVIEW,
       }
     }
   }

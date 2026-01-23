@@ -4,6 +4,7 @@ import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.comment.CommentedCodeFrameRenderer
+import com.intellij.diff.util.DiffUtil
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel.Ranged.Adjustable.AdjustmentDisabledReason
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
@@ -187,6 +188,7 @@ private class ResizableOutlineHandler private constructor(
 
           handler.dragState.collectScoped { dragState ->
             if (dragState == null) {
+              if(initialRange.end > DiffUtil.getLineCount(editor.document)-1) return@collectScoped
               inlayRenderer.isVisible = true
               editor.showOutline(activeRangesTracker, initialRange)
             }
@@ -328,7 +330,7 @@ private class ResizableOutlineHandler private constructor(
    * @return null if the line under [y] is not commentable or the new range is invalid (start after end)
    */
   private fun DragState.withLineUnderYIfCommentable(y: Int): DragState? {
-    val lineUnderY = editor.xyToLogicalPosition(Point(0, y)).line
+    val lineUnderY = editor.xyToLogicalPosition(Point(0, y)).line.coerceIn(0, DiffUtil.getLineCount(editor.document)-1)
     val isCurrentBoundary = lineUnderY == line
     if (!canCreateComment(lineUnderY) && !isCurrentBoundary) return null
 
@@ -363,6 +365,9 @@ private class ResizableOutlineHandler private constructor(
       when (adjustmentDisabledReason) {
         AdjustmentDisabledReason.SUGGESTED_CHANGE -> {
           tooltipManager.showTooltip(component, point, OutlineTooltipManager.TooltipReason.SUGGESTION)
+        }
+        AdjustmentDisabledReason.SINGLE_COMMIT_REVIEW -> {
+          tooltipManager.showTooltip(component, point, OutlineTooltipManager.TooltipReason.SINGLE_COMMIT_REVIEW)
         }
         else -> {
           tooltipManager.showTooltip(component, point, OutlineTooltipManager.TooltipReason.MLC_EXPLANATION)
@@ -432,12 +437,14 @@ private class OutlineTooltipManager(private val editor: Editor) {
 
   enum class TooltipReason {
     SUGGESTION,
-    MLC_EXPLANATION;
+    MLC_EXPLANATION,
+    SINGLE_COMMIT_REVIEW;
 
     companion object {
       fun getTooltipMessage(tooltipReason: TooltipReason) = when (tooltipReason) {
         SUGGESTION -> CollaborationToolsBundle.message("review.comments.code.outline.tooltip.suggestion.disabling")
         MLC_EXPLANATION -> CollaborationToolsBundle.message("review.comments.code.outline.tooltip.explanation")
+        SINGLE_COMMIT_REVIEW -> CollaborationToolsBundle.message("review.comments.code.outline.tooltip.commit.review.disabling")
       }
     }
   }

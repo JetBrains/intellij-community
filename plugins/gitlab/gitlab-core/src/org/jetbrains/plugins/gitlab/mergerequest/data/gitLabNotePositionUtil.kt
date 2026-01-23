@@ -7,8 +7,12 @@ import com.intellij.diff.util.Side
 import git4idea.changes.GitTextFilePatchWithHistory
 
 object GitLabNotePositionUtil {
-  fun getLocation(position: GitLabNotePosition.WithLine, contextSide: Side = Side.LEFT): DiffLineRange? =
-    when {
+  fun getLocation(position: GitLabNotePosition.WithLine, contextSide: Side = Side.LEFT): DiffLineRange? {
+    val forceRightSide = (position.lineIndexLeft == null && position.lineIndexRight != null) ||
+                         (position.startLineIndexLeft == null && position.startLineIndexRight != null)
+
+    return when {
+      forceRightSide -> getRightSideLocation(position)
       position.lineIndexLeft != null && position.lineIndexRight != null -> when (contextSide) {
         Side.LEFT -> getLeftSideLocation(position)
 
@@ -18,33 +22,37 @@ object GitLabNotePositionUtil {
       position.lineIndexRight != null -> getRightSideLocation(position)
       else -> null
     }
-
+  }
   private fun getLeftSideLocation(position: GitLabNotePosition.WithLine): DiffLineRange? {
-    val startLine = position.startOldLine
-    val endLine = position.endOldLine
+    val (startSide, startLine) = position.startLineIndexLeft?.let { Side.LEFT to it } ?: (Side.RIGHT to position.startLineIndexRight)
+    val (endSide, endLine) = position.endLineIndexLeft?.let { Side.LEFT to it } ?: (Side.RIGHT to position.endLineIndexRight)
 
-    return if (startLine == null || endLine == null || endLine != position.lineIndexLeft) { // fallback to a single line
+    return if (startLine == null || endLine == null || // fallback to a single line
+               (endSide == Side.RIGHT && endLine != position.lineIndexRight) ||
+               (endSide == Side.LEFT && endLine != position.lineIndexLeft)) {
       getSingleLineLocation(position.lineIndexLeft, position.lineIndexRight, Side.LEFT)
         ?.let { single -> DiffLineRange(single, single) }
     }
     else {
-      val startLoc = DiffLineLocation(Side.LEFT, startLine)
-      val endLoc = DiffLineLocation(Side.LEFT, endLine)
+        val startLoc = DiffLineLocation(startSide, startLine)
+        val endLoc = DiffLineLocation(endSide, endLine)
       DiffLineRange(startLoc, endLoc)
     }
   }
 
   private fun getRightSideLocation(position: GitLabNotePosition.WithLine): DiffLineRange? {
-    val startLine = position.startNewLine
-    val endLine = position.endNewLine
+    val (startSide, startLine) = position.startLineIndexRight?.let { Side.RIGHT to it } ?: (Side.LEFT to position.startLineIndexLeft)
+    val (endSide, endLine) = position.endLineIndexRight?.let { Side.RIGHT to it } ?: (Side.LEFT to position.endLineIndexLeft)
 
-    return if (startLine == null || endLine == null || endLine != position.lineIndexRight) { // fallback to a single line
+    return if (startLine == null || endLine == null || // fallback to a single line
+               (endSide == Side.RIGHT && endLine != position.lineIndexRight) ||
+               (endSide == Side.LEFT && endLine != position.lineIndexLeft)) {
       getSingleLineLocation(position.lineIndexLeft, position.lineIndexRight, Side.RIGHT)
         ?.let { single -> DiffLineRange(single, single) }
     }
     else {
-      val startLoc = DiffLineLocation(Side.RIGHT, startLine)
-      val endLoc = DiffLineLocation(Side.RIGHT, endLine)
+      val startLoc = DiffLineLocation(startSide, startLine)
+      val endLoc = DiffLineLocation(endSide, endLine)
       DiffLineRange(startLoc, endLoc)
     }
   }

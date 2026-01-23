@@ -11,7 +11,14 @@ import com.intellij.collaboration.async.transformConsecutiveSuccesses
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
 import com.intellij.collaboration.ui.codereview.diff.viewer.showCodeReview
-import com.intellij.collaboration.ui.codereview.editor.*
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewActiveRangesTracker
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlayRangeOutlineUtils
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel.Ranged.Adjustable.AdjustmentDisabledReason
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.Hideable
@@ -31,10 +38,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.GitLabSettings
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
@@ -161,28 +172,31 @@ private class DiffEditorModel(
       diffReviewVm.locationsWithDiscussions,
       diffReviewVm.locationsWithNewDiscussions
     ) { locationsWithDiscussions, locationsWithNewDiscussions ->
-      val linesWithDiscussions = locationsWithDiscussions.mapNotNullTo(mutableSetOf(), { locationToLine(it.side to it.lineIdx) })
-      val linesWithNewDiscussions = locationsWithNewDiscussions.mapNotNullTo(mutableSetOf(), { locationToLine(it.side to it.lineIdx) })
-      GutterState(linesWithDiscussions, linesWithNewDiscussions)
+      val linesWithDiscussions = locationsWithDiscussions.mapNotNullTo(mutableSetOf(), { locationToLine(it.first to it.second) })
+      val linesWithNewDiscussions = locationsWithNewDiscussions.mapNotNullTo(mutableSetOf(), { locationToLine(it.first to it.second) })
+      GutterState(linesWithDiscussions, linesWithNewDiscussions, lineToLocation)
     }.stateInNow(cs, null)
 
   override fun requestNewComment(lineIdx: Int) {
-    val loc = lineToLocation(lineIdx) ?: return
+    val loc = lineToLocation(lineIdx)?.let {
+      GitLabNoteLocation(it.first, it.second, it.first, it.second)
+    } ?: return
     diffReviewVm.requestNewDiscussion(loc, true)
   }
 
   override fun cancelNewComment(lineIdx: Int) {
-    val loc = lineToLocation(lineIdx) ?: return
-    diffReviewVm.cancelNewDiscussion(loc)
+    val loc = newDiscussions.value.find { it.line.value == lineIdx }?.vm?.location?.value ?: return
+    diffReviewVm.cancelNewDiscussion(loc.side to loc.lineIdx)
   }
 
   override fun requestNewComment(lineRange: LineRange) {
-    TODO("not implemented")
+    val loc1 = lineToLocation(lineRange.start) ?: return
+    val loc2 = lineToLocation(lineRange.end) ?: return
+    val loc = GitLabNoteLocation(loc1.first, loc1.second, loc2.first, loc2.second)
+    diffReviewVm.requestNewDiscussion(loc, true)
   }
 
-  override fun canCreateComment(lineRange: LineRange): Boolean {
-    TODO("not implemented")
-  }
+  override fun canCreateComment(lineRange: LineRange) = true
 
   override fun toggleComments(lineIdx: Int) {
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
@@ -248,17 +262,30 @@ private class DiffEditorModel(
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
     override val range: StateFlow<LineRange?> = vm.location.mapState { it?.toLineRange(locationToLine) }
     override val line: StateFlow<Int?> = range.mapState { it?.end }
+    override val adjustmentDisabledReason = MutableStateFlow(
+      AdjustmentDisabledReason.SINGLE_COMMIT_REVIEW.takeIf { !diffReviewVm.isCumulativeChange }
+    )
 
+    override fun adjustRange(newStart: Int?, newEnd: Int?) {
+      if (newStart == null && newEnd == null) return
+      val range = range.value ?: return
+      val newRange = LineRange(newStart ?: range.start, newEnd ?: range.end)
+      val startLoc = lineToLocation(newRange.start) ?: return
+      val endLoc = lineToLocation(newRange.end) ?: return
+      vm.updateLineRange(startLoc, endLoc)
+      vm.requestFocus()
+    }
     override fun cancel() {
-      vm.location.value?.let(diffReviewVm::cancelNewDiscussion)
+      vm.location.value?.let { diffReviewVm.cancelNewDiscussion(it.side to it.lineIdx) }
     }
   }
 
   private data class GutterState(
     override val linesWithComments: Set<Int>,
     override val linesWithNewComments: Set<Int>,
+    val lineToLocation: (Int) -> DiffLineLocation?
   ) : CodeReviewEditorGutterControlsModel.ControlsState {
-    override fun isLineCommentable(lineIdx: Int): Boolean = true
+    override fun isLineCommentable(lineIdx: Int): Boolean = lineToLocation(lineIdx) != null
   }
 }
 

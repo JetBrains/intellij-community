@@ -16,10 +16,10 @@ sealed interface GitLabNotePosition {
   interface WithLine : GitLabNotePosition {
     val lineIndexLeft: Int?
     val lineIndexRight: Int?
-    val startOldLine: Int?
-    val startNewLine: Int?
-    val endOldLine: Int?
-    val endNewLine: Int?
+    val startLineIndexLeft: Int?
+    val startLineIndexRight: Int?
+    val endLineIndexLeft: Int?
+    val endLineIndexRight: Int?
   }
 
   data class Text(
@@ -29,10 +29,10 @@ sealed interface GitLabNotePosition {
     override val filePathAfter: String?,
     override val lineIndexLeft: Int?,
     override val lineIndexRight: Int?,
-    override val startOldLine: Int?,
-    override val startNewLine: Int?,
-    override val endOldLine: Int?,
-    override val endNewLine: Int?,
+    override val startLineIndexLeft: Int?,
+    override val startLineIndexRight: Int?,
+    override val endLineIndexLeft: Int?,
+    override val endLineIndexRight: Int?,
   ) : WithLine
 
   data class Image(

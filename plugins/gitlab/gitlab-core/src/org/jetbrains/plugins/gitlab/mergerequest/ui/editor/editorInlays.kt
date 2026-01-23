@@ -30,8 +30,8 @@ internal sealed interface GitLabMergeRequestEditorMappedComponentModel : CodeRev
     }
   }
 
-  abstract class NewDiscussion<VM : NewGitLabNoteViewModel>(override val vm: VM)
-    : GitLabMergeRequestEditorMappedComponentModel {
+  abstract class NewDiscussion<VM : NewGitLabNoteViewModel>(override val vm: VM) : GitLabMergeRequestEditorMappedComponentModel,
+                                                                                   CodeReviewInlayModel.Ranged.Adjustable {
     abstract fun cancel()
   }
 }

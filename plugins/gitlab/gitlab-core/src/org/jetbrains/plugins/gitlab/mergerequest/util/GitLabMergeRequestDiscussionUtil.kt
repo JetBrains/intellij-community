@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.util
 
 import com.intellij.collaboration.async.flatMapLatestEach
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -67,5 +68,5 @@ internal object GitLabMergeRequestDiscussionUtil {
 fun Flow<Set<GitLabNotePosition>>.toLines(mapper: (GitLabNotePosition) -> Int?): Flow<Set<Int>> =
   map { it.mapNotNullTo(mutableSetOf(), mapper) }
 
-fun Flow<Set<GitLabNotePosition>>.toLocations(mapper: (GitLabNotePosition) -> GitLabNoteLocation?): Flow<Set<GitLabNoteLocation>> =
+fun Flow<Set<GitLabNotePosition>>.toLocations(mapper: (GitLabNotePosition) -> DiffLineLocation?): Flow<Set<DiffLineLocation>> =
   map { it.mapNotNullTo(mutableSetOf(), mapper) }
