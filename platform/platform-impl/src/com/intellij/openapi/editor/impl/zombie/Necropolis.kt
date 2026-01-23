@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.zombie
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration.Companion.minutes
 
 
 /**
@@ -156,35 +157,53 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
   }
 
   private fun turnIntoZombiesAndBury(necromancers: List<Necromancer<Zombie>>, recipe: TurningRecipe) {
-    val zombies = necromancers
+    val zombies = turnIntoZombies(necromancers, recipe)
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Turned into zombies for ${recipe.fileId}: ${zombies.map { it.first.name() }}")
+    }
+    if (zombies.isNotEmpty()) {
+      coroutineScope.launch {
+        withContext(NonCancellable) {
+          withTimeout(1.minutes) {
+            buryZombies(zombies, recipe)
+          }
+        }
+      }
+    }
+  }
+
+  private fun turnIntoZombies(
+    necromancers: List<Necromancer<Zombie>>,
+    recipe: TurningRecipe,
+  ): List<Pair<Necromancer<Zombie>, Zombie>> {
+    return necromancers
       .filter { it.enoughMana(recipe) }
       .mapNotNull { necromancer ->
         necromancer.turnIntoZombie(recipe)?.let { zombie ->
           necromancer to zombie
         }
       }.toList()
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Turned into zombies for ${recipe.fileId}: ${zombies.map { it.first.name() }}")
+  }
+
+  private suspend fun CoroutineScope.buryZombies(
+    zombies: List<Pair<Necromancer<Zombie>, Zombie>>,
+    recipe: TurningRecipe,
+  ) {
+    val documentContent = readActionBlocking {
+      if (recipe.isValid()) {
+        recipe.document.immutableCharSequence
+      } else {
+        LOG.debug("Invalid recipe for ${recipe.fileId}}")
+        null
+      }
     }
-    if (zombies.isNotEmpty()) {
-      coroutineScope.launch {
-        val documentContent = readActionBlocking {
-          if (recipe.isValid()) {
-            recipe.document.immutableCharSequence
-          } else {
-            LOG.debug("Invalid recipe for ${recipe.fileId}}")
-            null
-          }
-        }
-        if (documentContent != null) {
-          val fingerprint = FingerprintedZombieImpl.captureFingerprint(documentContent)
-          for ((necromancer, zombie) in zombies) {
-            launch(CoroutineName(necromancer.name())) {
-              if (recipe.isValid() && necromancer.shouldBuryZombie(recipe, zombie)) {
-                necromancer.buryZombie(recipe.fileId, FingerprintedZombieImpl(fingerprint, zombie))
-                LOG.debug("Buried ${necromancer.name()} for ${recipe.fileId}")
-              }
-            }
+    if (documentContent != null) {
+      val fingerprint = FingerprintedZombieImpl.captureFingerprint(documentContent)
+      for ((necromancer, zombie) in zombies) {
+        launch(CoroutineName(necromancer.name())) {
+          if (recipe.isValid() && necromancer.shouldBuryZombie(recipe, zombie)) {
+            necromancer.buryZombie(recipe.fileId, FingerprintedZombieImpl(fingerprint, zombie))
+            LOG.debug("Buried ${necromancer.name()} for ${recipe.fileId}")
           }
         }
       }
