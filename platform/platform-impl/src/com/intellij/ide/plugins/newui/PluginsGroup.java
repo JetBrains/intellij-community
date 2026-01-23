@@ -6,7 +6,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.ListPluginModel;
 import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,7 +14,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @ApiStatus.Internal
 public class PluginsGroup {
@@ -96,11 +97,6 @@ public class PluginsGroup {
     }
   }
 
-  @Deprecated
-  public int addWithIndex(@NotNull IdeaPluginDescriptor descriptor) {
-    return addWithIndex(new PluginUiModelAdapter(descriptor));
-  }
-
   public int addWithIndex(@NotNull PluginUiModel model) {
     models.add(model);
     sortByName();
@@ -125,18 +121,8 @@ public class PluginsGroup {
     this.models.addAll(models);
   }
 
-  @Deprecated
-  public void addDescriptors(int index, @NotNull Collection<IdeaPluginDescriptor> descriptors) {
-    this.models.addAll(index, ContainerUtil.map(descriptors, PluginUiModelAdapter::new));
-  }
-
   public void addModels(int index, @NotNull Collection<PluginUiModel> models) {
     this.models.addAll(index, models);
-  }
-
-  @Deprecated
-  public void removeDescriptor(@NotNull IdeaPluginDescriptor descriptor) {
-    models.removeIf(it -> it.getDescriptor() == descriptor);
   }
 
   public void removeDescriptor(@NotNull PluginUiModel model) {
