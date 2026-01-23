@@ -82,6 +82,16 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   private var myInstallSource: FUSEventSource? = null
 
+  protected open val customRepoPlugins: Collection<PluginUiModel>? = null
+
+  private val myIcons: MutableMap<String?, Icon?> = HashMap<String?, Icon?>() // local cache for PluginLogo WeakValueMap
+
+  init {
+    val window = getActiveFrameOrWelcomeScreen()
+    myInitialWindow = WeakReference(window)
+    myPluginManagerCustomizer = PluginManagerCustomizer.getInstance()
+  }
+
   @ApiStatus.Internal
   fun setInstallSource(source: FUSEventSource?) {
     this.myInstallSource = source
@@ -309,7 +319,6 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   fun getErrors(result: InstallPluginResult): Map<PluginId, List<HtmlChunk>> {
     return result.errors.mapValues { getErrors(it.value) }
   }
-
 
   fun toBackground(): Boolean {
     val initialWindow = myInitialWindow.get()
@@ -1023,17 +1032,6 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
     val response = UiPluginManager.getInstance().getErrorsSync(mySessionId.toString(), pluginId)
     return getErrors(response)
-  }
-
-  protected open val customRepoPlugins: Collection<PluginUiModel>? = null
-
-  private val myIcons: MutableMap<String?, Icon?> = HashMap<String?, Icon?>() // local cache for PluginLogo WeakValueMap
-
-  init {
-    val window = getActiveFrameOrWelcomeScreen()
-    myInitialWindow = WeakReference(window)
-
-    myPluginManagerCustomizer = PluginManagerCustomizer.getInstance()
   }
 
   fun getIcon(descriptor: IdeaPluginDescriptor, big: Boolean, error: Boolean, disabled: Boolean): Icon {
