@@ -168,12 +168,13 @@ internal class IdeVcsLogManager(
 
     if (selectedUi?.id != MAIN_LOG_ID) {
       val mainLogContent = VcsLogContentUtil.findMainLog(window.contentManager)
-      if (mainLogContent != null) {
-        ToolWindowLazyContent.initLazyContent(mainLogContent)
-
-        val mainLogUi = mainUiState.filterNotNull().first()
+      val mainLogUi = mainLogContent?.let {
+        ToolWindowLazyContent.initLazyContent(it)
+        mainUiState.filterNotNull().first()
+      }
+      if (mainLogUi != null && predicate(mainLogUi)) {
         mainLogUi.refresher.setValid(true, false) // since the main ui is not visible, it needs to be validated to find the commit
-        if (predicate(mainLogUi) && mainLogUi.showCommitSync(hash, root, requestFocus)) {
+        if (mainLogUi.showCommitSync(hash, root, requestFocus)) {
           window.contentManager.setSelectedContent(mainLogContent)
           return mainLogUi
         }
