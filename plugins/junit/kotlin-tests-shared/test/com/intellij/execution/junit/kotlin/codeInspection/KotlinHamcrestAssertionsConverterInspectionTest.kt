@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
+import com.intellij.idea.IJIgnore
 import com.intellij.junit.testFramework.HamcrestAssertionsConverterInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
@@ -56,8 +56,8 @@ abstract class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAsserti
     """.trimIndent())
   }
 
+  @IJIgnore(issue = "KTIJ-37248")
   fun `test quickfix nested expression`() {
-    if (pluginMode == KotlinPluginMode.K2) return // TODO fix
     myFixture.testAllQuickfixes(JvmLanguage.KOTLIN, """
       import org.junit.Assert
 
