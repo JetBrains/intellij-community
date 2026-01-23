@@ -635,5 +635,5 @@ public abstract class DebuggerUtils {
    * Should be called in the debugger manager thread only.
    */
   @ApiStatus.Internal
-  public abstract VirtualMachineProxy getVmProxy();
+  public abstract @NotNull VirtualMachineProxy getVmProxy();
 }

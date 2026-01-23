@@ -962,16 +962,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   @Override
   @ApiStatus.Obsolete
   public @NotNull VirtualMachineProxyImpl getVirtualMachineProxy() {
-    final VirtualMachineProxyImpl vm = (VirtualMachineProxyImpl)VirtualMachineProxy.getCurrent();
-    if (vm == null) {
-      if (isInInitialState()) {
-        throw new IllegalStateException("Virtual machine is not initialized yet");
-      }
-      else {
-        throw new VMDisconnectedException();
-      }
-    }
-    return vm;
+    return VirtualMachineProxyImpl.getCurrent();
   }
 
   @Override

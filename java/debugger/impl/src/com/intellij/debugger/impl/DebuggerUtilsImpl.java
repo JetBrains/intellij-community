@@ -227,9 +227,9 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
 
   @ApiStatus.Internal
   @Override
-  public VirtualMachineProxy getVmProxy() {
+  public @NotNull VirtualMachineProxy getVmProxy() {
     DebuggerManagerThreadImpl managerThread = DebuggerManagerThreadImpl.getCurrentThread();
-    return managerThread.getVmProxy();
+    return Objects.requireNonNull(managerThread.getVmProxy(), "VM is not set in DMT");
   }
 
   @Override
