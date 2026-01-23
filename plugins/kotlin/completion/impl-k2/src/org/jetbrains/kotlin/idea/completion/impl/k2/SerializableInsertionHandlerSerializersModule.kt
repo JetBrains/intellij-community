@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.TypeParameterIn
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.WhenConditionInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.WhenConditionLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.AdaptToExplicitReceiverInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.AnonymousObjectInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.BracketOperatorInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.InsertRequiredTypeArgumentsInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.QualifyContextSensitiveResolutionHandler
@@ -57,6 +58,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.WithCallArgsInsert
 val serializableInsertionHandlerSerializersModule: SerializersModule = SerializersModule {
     polymorphic(SerializableLookupObject::class) {
         subclass(ClassifierLookupObject::class, ClassifierLookupObject.serializer())
+        subclass(AnonymousObjectLookupObject::class, AnonymousObjectLookupObject.serializer())
         subclass(TypeParameterInWhenClauseILookupObject::class, TypeParameterInWhenClauseILookupObject.serializer())
         subclass(WhenConditionLookupObject::class, WhenConditionLookupObject.serializer())
         subclass(FunctionCallLookupObject::class, FunctionCallLookupObject.serializer())
@@ -76,6 +78,7 @@ val serializableInsertionHandlerSerializersModule: SerializersModule = Serialize
     polymorphic(SerializableInsertHandler::class) {
         subclass(NamedArgumentInsertHandler::class, NamedArgumentInsertHandler.serializer())
         subclass(BracketOperatorInsertionHandler::class, BracketOperatorInsertionHandler.serializer())
+        subclass(AnonymousObjectInsertHandler::class, AnonymousObjectInsertHandler.serializer())
         subclass(TypeInsertHandler::class, TypeInsertHandler.serializer())
         subclass(InsertStringTemplateBracesInsertHandler::class, InsertStringTemplateBracesInsertHandler.serializer())
         subclass(KeywordCompletion.UseSiteAnnotationTargetInsertHandler::class, KeywordCompletion.UseSiteAnnotationTargetInsertHandler.serializer())

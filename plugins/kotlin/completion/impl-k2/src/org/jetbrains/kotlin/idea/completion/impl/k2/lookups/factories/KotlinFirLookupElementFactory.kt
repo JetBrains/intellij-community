@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.BracketOperatorInsertionHandler
@@ -101,6 +102,21 @@ object KotlinFirLookupElementFactory {
             .withInsertHandler(BracketOperatorInsertionHandler)
         indexingLookupElement.priority = ItemPriority.BRACKET_OPERATOR
         return indexingLookupElement
+    }
+
+    context(_: KaSession)
+    fun createAnonymousObjectLookupElement(
+        classSymbol: KaClassSymbol,
+        typeArguments: List<KaTypeProjection>?,
+        importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
+        aliasName: Name? = null,
+    ): LookupElementBuilder {
+        return ClassLookupElementFactory.createAnonymousObjectLookup(
+            symbol = classSymbol,
+            typeArguments = typeArguments,
+            importingStrategy = importingStrategy,
+            aliasName = aliasName
+        )
     }
 
     fun createPackagePartLookupElement(packagePartFqName: FqName): LookupElement =
