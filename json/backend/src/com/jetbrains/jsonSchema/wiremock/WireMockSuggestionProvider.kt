@@ -55,7 +55,7 @@ private class WireMockPluginSuggestion(val project: Project,
     val suggestedCommercialIde = PluginAdvertiserService.getIde(suggestedIdeCode)
 
     if (suggestedCommercialIde == null) {
-      panel.text = IdeBundle.message("plugins.advertiser.plugins.found", WIREMOCK_FILES)
+      panel.text = IdeBundle.message("plugins.advertiser.plugins.found", 1, WIREMOCK_FILES)
 
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugin.name", WIREMOCK_PLUGIN_NAME)) {
         val pluginIds = listOf(WIREMOCK_PLUGIN_ID)

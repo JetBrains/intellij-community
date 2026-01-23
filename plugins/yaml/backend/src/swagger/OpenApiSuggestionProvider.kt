@@ -54,7 +54,7 @@ private class OpenApiPluginSuggestion(val project: Project,
     val suggestedCommercialIde = PluginAdvertiserService.getIde(suggestedIdeCode)
 
     if (suggestedCommercialIde == null) {
-      panel.text = IdeBundle.message("plugins.advertiser.plugins.found", OPENAPI_FILES)
+      panel.text = IdeBundle.message("plugins.advertiser.plugins.found", 1, OPENAPI_FILES)
 
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugin.name", OPENAPI_PLUGIN_NAME)) {
         val pluginIds = listOf(OPENAPI_PLUGIN_ID)

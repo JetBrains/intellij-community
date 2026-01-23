@@ -20,30 +20,33 @@ import com.intellij.openapi.vfs.readText
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 
+private val JupyterAndNotebookPlugins = listOf(
+    "intellij.jupyter",
+    "com.intellij.notebooks.core",
+)
 
 // Universal checker for all notebook languages
 private val JupyterAndNotebookFilesEnablementChecker: PluginEnablementChecker = PluginEnablementChecker(
     notebookLanguages = null,
     dismissedKey = "jupyter.suggestion.dismissed",
-    suggestionText = IdeBundle.message("plugins.advertiser.plugins.found", "*.ipynb"),
+    suggestionText = IdeBundle.message("plugins.advertiser.plugins.found", JupyterAndNotebookPlugins.size, "*.ipynb"),
     suggestionActionText = IdeBundle.message("plugins.advertiser.action.enable.plugins"),
     requiresIdeRestart = true,
-    pluginIds = listOf(
-        "intellij.jupyter",
-        "com.intellij.notebooks.core",
-    )
+    pluginIds = JupyterAndNotebookPlugins
 )
+
+private val KotlinNotebookPlugins = listOf(
+    "org.jetbrains.plugins.kotlin.jupyter",
+    "org.jetbrains.kotlin",
+) + JupyterAndNotebookPlugins
 
 private val KotlinNotebookEnablementChecker: PluginEnablementChecker = PluginEnablementChecker(
     notebookLanguages = setOf("kotlin"),
     dismissedKey = "notebook.kotlin.suggestion.dismissed",
-    suggestionText = IdeBundle.message("plugins.advertiser.plugins.found", "Kotlin Notebook (*.ipynb)"),
+    suggestionText = IdeBundle.message("plugins.advertiser.plugins.found", KotlinNotebookPlugins.size, "Kotlin Notebook (*.ipynb)"),
     suggestionActionText = IdeBundle.message("plugins.advertiser.action.install.plugin.name", "Kotlin Notebook"),
     requiresIdeRestart = true,
-    pluginIds = listOf(
-        "org.jetbrains.plugins.kotlin.jupyter",
-        "org.jetbrains.kotlin",
-    ) + JupyterAndNotebookFilesEnablementChecker.pluginIds,
+    pluginIds = KotlinNotebookPlugins,
 )
 
 // More universal checkers should go later in the list

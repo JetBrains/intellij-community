@@ -147,7 +147,8 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       }
 
       val pluginAdvertiserExtensionsState = PluginAdvertiserExtensionsStateService.getInstance().createExtensionDataProvider(project)
-      panel.text = overrideSuggestionText ?: IdeBundle.message("plugins.advertiser.plugins.found", extensionOrFileName)
+      panel.text = overrideSuggestionText
+                   ?: IdeBundle.message("plugins.advertiser.plugins.found", (jbProduced + thirdParty).size, extensionOrFileName)
 
       fun createInstallActionLabel(plugins: Set<PluginData>) {
         this.pluginsToInstall = plugins

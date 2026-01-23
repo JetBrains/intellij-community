@@ -44,7 +44,7 @@ internal class DefaultPluginSuggestion(
   override fun apply(fileEditor: FileEditor): EditorNotificationPanel {
     val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info)
 
-    panel.text = IdeBundle.message("plugins.advertiser.plugins.found", fileLabel)
+    panel.text = IdeBundle.message("plugins.advertiser.plugins.found", pluginIds.size, fileLabel)
 
     panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugin.name", pluginName)) {
       FUSEventSource.EDITOR.logInstallPlugins(pluginIds, project)
