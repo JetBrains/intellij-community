@@ -75,6 +75,8 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Graphics
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.util.Collections
 import java.util.Enumeration
 import java.util.Vector
@@ -82,7 +84,6 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.Timer
-import javax.swing.event.TreeSelectionEvent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.MutableTreeNode
@@ -177,7 +178,20 @@ internal class BuildTreeView(
     tree.setCellRenderer(MyNodeRenderer())
     tree.putClientProperty(RenderingHelper.SHRINK_LONG_RENDERER, true)
     tree.getAccessibleContext().setAccessibleName(IdeBundle.message("buildToolWindow.tree.accessibleName"))
-    tree.addTreeSelectionListener(::onTreeSelectionChanged)
+    tree.addTreeSelectionListener { e ->
+      when (e.isAddedPath) {
+        true -> onNodeSelectionChange(e.path)
+        else -> onNodeSelectionChange(null)
+      }
+    }
+    tree.addMouseListener(object : MouseAdapter() {
+      override fun mousePressed(e: MouseEvent) {
+        val selectedPath = TreeUtil.getPathForLocation(tree, e.x, e.y) ?: return
+        if (tree.isPathSelected(selectedPath)) {
+          onNodeSelectionChange(selectedPath)
+        }
+      }
+    })
     tree.addMouseListener(object : PopupHandler() {
       override fun invokePopup(comp: Component?, x: Int, y: Int) {
         val group = getContextMenuGroup()
@@ -355,16 +369,14 @@ internal class BuildTreeView(
     }
   }
 
-  private fun onTreeSelectionChanged(e: TreeSelectionEvent) {
-    if (e.path != null) {
-      val selectedNode = tree.selectionPath?.lastPathComponent as? MyNode
-      val selectedNodeId = selectedNode?.id
-      uiScope.launch {
-        LOG.debug { "Selection change: $selectedNodeId" }
-        model.onSelectionChange(selectedNodeId)
-      }
-      updateNavigationContext()
+  private fun onNodeSelectionChange(selectedPath: TreePath?) {
+    val selectedNode = selectedPath?.lastPathComponent as? MyNode
+    val selectedNodeId = selectedNode?.id
+    uiScope.launch {
+      LOG.debug { "Selection change: $selectedNodeId" }
+      model.onSelectionChange(selectedNodeId)
     }
+    updateNavigationContext()
   }
 
   private fun updateNavigationContext() {
