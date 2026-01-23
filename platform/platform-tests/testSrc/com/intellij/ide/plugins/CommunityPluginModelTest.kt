@@ -40,6 +40,7 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
   // There are a number of platform services that are overridden in ultimate only. Instead of declaring all of them here, we
   // only perform the check once in AllProductsPackagingTest.pluginModel.
   skipServicesOverridesCheck = true,
+  pluginsToOptionalDepends = existingOptionalDependsTagInCommunityPlugins,
   filesNamedLikeContentModuleDescriptorsButIncludedViaXiInclude = setOf(
     "intellij.platform.project.xml",
     "intellij.platform.ide.progress.xml",

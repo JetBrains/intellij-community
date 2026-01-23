@@ -77,6 +77,11 @@ data class PluginValidationOptions(
   val pluginsToContentModulesWithoutDedicatedJpsModules: Map<String, List<String>> = emptyMap(),
 
   /**
+   * Mapping from a plugin ID to the set of IDs of plugins specified in `<depends optional="true">` tags in it.
+   */
+  val pluginsToOptionalDepends: Map<String, Set<String>> = emptyMap(),
+
+  /**
    * Set of implementation classes of existing application-level and project-level components which shouldn't be reported as errors. 
    */
   val componentImplementationClassesToIgnore: Set<String> = emptySet(),
@@ -396,6 +401,24 @@ internal class PluginModelValidator(
           "depends" to depends,
         )
       )
+    }
+
+    val allowedExistingOptionalDepends = validationOptions.pluginsToOptionalDepends[descriptor.id!!] ?: emptySet()
+    for (dependsElement in descriptor.depends) {
+      if (dependsElement.isOptional && dependsElement.pluginId !in allowedExistingOptionalDepends) {
+        reportError(
+          message = """
+          |New <depends optional="true"> tags aren't allowed in the plugins in the monorepo project, because they complicate validation of 
+          |dependencies and don't allow generating them automatically.
+          |Create a plugin content module with the additional dependency on '${dependsElement.pluginId}' and register it in plugin.xml instead. 
+          """.trimMargin(),
+          sourceModule = pluginInfo.sourceModule,
+          params = mapOf(
+            "descriptorFile" to pluginInfo.descriptorFile,
+            "depends" to dependsElement
+          )
+        )
+      }
     }
 
     if (validationOptions.reportDependsTagInPluginXmlWithPackageAttribute && pluginInfo.packageName != null) {
