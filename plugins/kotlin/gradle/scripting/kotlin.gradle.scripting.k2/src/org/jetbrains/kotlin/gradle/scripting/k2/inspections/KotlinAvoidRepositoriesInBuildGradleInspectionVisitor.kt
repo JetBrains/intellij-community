@@ -8,7 +8,6 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.*
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.findPsiFile
@@ -51,12 +50,9 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(private val holder: 
         val gradleVersion = expression.module?.getGradleVersion() ?: GradleVersion.current()
         if (repositoriesParentBlockKind == RepositoriesParentBlockKind.DEPENDENCY && gradleVersion < GradleVersion.version("6.8")) return
 
-        val settingsFile = expression.module?.getGradleSettingsPsiFile()
-        val fix = when (settingsFile) {
-            null -> LocalQuickFix.from(CreateSettingsAndMoveRepositoriesAction(repositoriesParentBlockKind, gradleVersion))
-            is KtFile -> MoveRepositoriesToSettingsFile(settingsFile, repositoriesParentBlockKind, gradleVersion)
-            else -> null
-        }
+        val gradleBuildPath = expression.module?.getGradleBuildPath()
+        val settingsFile = gradleBuildPath?.getGradleSettingsPsiFile(holder.project)
+        val fix = createPotentialFix(gradleBuildPath, settingsFile, repositoriesParentBlockKind, gradleVersion)
 
         holder.problem(
             expression,
@@ -88,14 +84,27 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(private val holder: 
         else RepositoriesParentBlockKind.DEPENDENCY
     }
 
-
-    private fun Module.getGradleSettingsPsiFile(): PsiFile? {
-        val gradleBuildPath = getGradleBuildPath() ?: return null
+    private fun Path.getGradleSettingsPsiFile(project: Project): PsiFile? {
         return setOf("settings.gradle.kts", "settings.gradle")
-            .map { gradleBuildPath.resolve(it) }
+            .map { this.resolve(it) }
             .firstOrNull(Path::exists)
             ?.refreshAndFindVirtualFile()
             ?.findPsiFile(project)
+    }
+
+    private fun createPotentialFix(
+        gradleBuildPath: Path?,
+        settingsFile: PsiFile?,
+        repositoriesParentBlockKind: RepositoriesParentBlockKind,
+        gradleVersion: GradleVersion
+    ): LocalQuickFix? {
+        if (gradleBuildPath == null) return null
+
+        return when (settingsFile) {
+            null -> LocalQuickFix.from(CreateSettingsAndMoveRepositoriesAction(repositoriesParentBlockKind, gradleVersion))
+            is KtFile -> MoveRepositoriesToSettingsFile(settingsFile, repositoriesParentBlockKind, gradleVersion)
+            else -> null
+        }
     }
 }
 
@@ -129,8 +138,7 @@ private class CreateSettingsAndMoveRepositoriesAction(
             }
         }
 
-        val gradleBuildPath = element.module?.getGradleBuildPath()?.refreshAndFindVirtualDirectory()
-            ?: element.containingFile.virtualFile.parent
+        val gradleBuildPath = element.module?.getGradleBuildPath()?.refreshAndFindVirtualDirectory() ?: return ModNothing()
         val settingsFile = FutureVirtualFile(
             gradleBuildPath,
             KOTLIN_DSL_SETTINGS_FILE_NAME,
