@@ -272,7 +272,7 @@ internal class UiThemeColorPicker(internal val coroutineScope: CoroutineScope) {
 }
 
 private class ThemeColorPickerTransform : BiFunction<JComponent, Graphics2D, Graphics2D?> {
-  override fun apply(component: JComponent, g: Graphics2D): Graphics2D? {
+  override fun apply(component: JComponent, g: Graphics2D): Graphics2D {
     if (isOurOwnUi(component)) {
       return g
     }
