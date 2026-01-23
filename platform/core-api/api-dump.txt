@@ -525,7 +525,6 @@ com.intellij.openapi.command.WriteCommandAction$Builder
 com.intellij.openapi.command.undo.UndoConstants
 - sf:Companion:com.intellij.openapi.command.undo.UndoConstants$Companion
 - sf:DONT_RECORD_UNDO:com.intellij.openapi.util.Key
-- sf:FORCE_RECORD_UNDO:com.intellij.openapi.util.Key
 com.intellij.openapi.components.ApplicationComponent
 - com.intellij.openapi.components.BaseComponent
 com.intellij.openapi.components.ExportableApplicationComponent

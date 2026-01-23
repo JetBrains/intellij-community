@@ -945,7 +945,6 @@ com.intellij.openapi.roots.libraries.Library$ModifiableModel
 c:com.intellij.openapi.roots.libraries.LibraryKind
 - <init>(java.lang.String):V
 - s:create(java.lang.String):com.intellij.openapi.roots.libraries.LibraryKind
-- s:findById(java.lang.String):com.intellij.openapi.roots.libraries.LibraryKind
 - f:getKindId():java.lang.String
 c:com.intellij.openapi.roots.libraries.LibraryKindRegistry
 - sf:Companion:com.intellij.openapi.roots.libraries.LibraryKindRegistry$Companion

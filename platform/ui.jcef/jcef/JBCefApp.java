@@ -437,16 +437,6 @@ public final class JBCefApp {
 
 
   /**
-   * @deprecated use {@link JBCefApp#getRemoteDebuggingPort(Consumer)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @Contract(pure = true)
-  public @NotNull Integer getRemoteDebuggingPort() {
-    if (myCefSettings == null) throw new UnsupportedOperationException();
-    return myCefSettings.remote_debugging_port;
-  }
-
-  /**
    * Schedules passing the debug port number to the consumer once the value is available.
    * In case of error, null will be passed to the consumer. The consumer will be called from EDT.
    *

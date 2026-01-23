@@ -718,7 +718,6 @@ c:com.intellij.structuralsearch.impl.matcher.strategies.XmlMatchingStrategy
 - continueMatching(com.intellij.psi.PsiElement):Z
 - shouldSkip(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
 f:com.intellij.structuralsearch.inspection.InspectionProfileUtil
-- s:fireProfileChanged(com.intellij.codeInspection.ex.InspectionProfileImpl):V
 - s:getGroup():java.lang.String[]
 - s:getInspectionProfile(java.awt.Component):com.intellij.codeInspection.ex.InspectionProfileModifiableModel
 c:com.intellij.structuralsearch.inspection.SSBasedInspection
