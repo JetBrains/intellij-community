@@ -13,7 +13,6 @@ import javax.swing.Icon
 
 abstract class AbstractNecromancy<Z : Zombie>(
   private val spellLevel: Int,
-  private val isDeepBury: Boolean,
 ) : Necromancy<Z> {
 
   protected abstract fun Out.writeZombie(zombie: Z)
@@ -22,10 +21,6 @@ abstract class AbstractNecromancy<Z : Zombie>(
 
   final override fun spellLevel(): Int {
     return spellLevel
-  }
-
-  final override fun isDeepBury(): Boolean {
-    return isDeepBury
   }
 
   final override fun buryZombie(grave: DataOutput, zombie: Z) {

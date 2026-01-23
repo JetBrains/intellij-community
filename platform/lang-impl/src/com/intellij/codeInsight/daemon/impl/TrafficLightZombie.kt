@@ -26,7 +26,7 @@ internal class TrafficLightZombie(
 
   class Necromancy(
     private val project: Project,
-  ) : AbstractNecromancy<TrafficLightZombie>(spellLevel=0, isDeepBury=false) {
+  ) : AbstractNecromancy<TrafficLightZombie>(spellLevel=0) {
 
     override fun Out.writeZombie(zombie: TrafficLightZombie) {
       writeString(zombie.title)

@@ -10,7 +10,7 @@ import javax.swing.Icon
 
 
 @Internal
-object HighlightingNecromancy : LimbedNecromancy<HighlightingZombie, HighlightingLimb>(spellLevel=1, isDeepBury=true) {
+object HighlightingNecromancy : LimbedNecromancy<HighlightingZombie, HighlightingLimb>(spellLevel=1) {
 
   override fun Out.writeLimb(limb: HighlightingLimb) {
     writeInt(limb.startOffset)

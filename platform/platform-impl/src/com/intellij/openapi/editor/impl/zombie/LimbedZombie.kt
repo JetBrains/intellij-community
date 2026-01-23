@@ -20,8 +20,7 @@ open class LimbedZombie<L>(private val limbs: List<L>) : Zombie {
  */
 abstract class LimbedNecromancy<Z : LimbedZombie<L>, L> (
   spellLevel: Int,
-  isDeepBury: Boolean = false,
-) : AbstractNecromancy<Z>(spellLevel, isDeepBury) {
+) : AbstractNecromancy<Z>(spellLevel) {
 
   abstract fun formZombie(limbs: List<L>): Z
 
