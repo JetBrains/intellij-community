@@ -8,7 +8,6 @@ import com.intellij.diff.*;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.actions.impl.DiffNextFileAction;
 import com.intellij.diff.actions.impl.DiffPreviousFileAction;
-import com.intellij.diff.actions.impl.OpenInEditorAction;
 import com.intellij.diff.editor.DiffViewerVirtualFile;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.impl.ui.DiffToolChooser;
@@ -1536,16 +1535,6 @@ public abstract class DiffRequestProcessor
     public void uiDataSnapshot(@NotNull DataSink sink) {
       sink.set(DiffDataKeys.WRAPPING_DIFF_VIEWER, myWrapperViewer);
       sink.set(DiffDataKeys.DIFF_VIEWER, myViewer);
-    }
-  }
-
-  /**
-   * @deprecated use {@link OpenInEditorAction}
-   */
-  @SuppressWarnings("InnerClassMayBeStatic") // left non-static for plugin compatibility
-  @Deprecated(forRemoval = true)
-  protected class MyOpenInEditorAction extends OpenInEditorAction {
-    public MyOpenInEditorAction() {
     }
   }
 
