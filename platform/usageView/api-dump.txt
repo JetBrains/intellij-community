@@ -161,7 +161,6 @@ com.intellij.usages.UsageContextPanel
 - a:updateLayout(com.intellij.openapi.project.Project,java.util.List):V
 - updateLayout(com.intellij.openapi.project.Project,java.util.List,com.intellij.usages.UsageView):V
 - a:updateLayout(java.util.List):V
-- updateLayout(java.util.List,com.intellij.usages.UsageView):V
 com.intellij.usages.UsageContextPanel$Provider
 - a:create(com.intellij.usages.UsageView):com.intellij.usages.UsageContextPanel
 - a:getTabTitle():java.lang.String
@@ -392,7 +391,6 @@ c:com.intellij.usages.UsageViewPresentation
 - setOpenInNewTab(Z):V
 - setPreserveCase(Z):V
 - setReplaceMode(Z):V
-- setReplacePattern(java.util.regex.Pattern):V
 - setReplaceString(java.lang.String):V
 - setRerunHash(I):V
 - setScopeText(java.lang.String):V
