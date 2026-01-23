@@ -221,7 +221,6 @@ a:org.jetbrains.jps.model.ex.JpsElementBase
 - org.jetbrains.jps.model.JpsElement$BulkModificationSupport
 - p:myParent:org.jetbrains.jps.model.ex.JpsElementBase
 - p:<init>():V
-- p:fireElementChanged():V
 - getBulkModificationSupport():org.jetbrains.jps.model.JpsElement$BulkModificationSupport
 - p:getModel():org.jetbrains.jps.model.JpsModel
 - getParent():org.jetbrains.jps.model.ex.JpsElementBase
