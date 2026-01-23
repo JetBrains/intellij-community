@@ -22,6 +22,10 @@ fun Starter.newContextWithLambda(testName: String, config: IdeStartConfig): IDET
       *LambdaTestPluginHolder.additionalPluginIds(All).toTypedArray(),
       target = AdditionalModulesForDevBuildServer.IdeTarget.ANY
     )
+    AdditionalModulesForDevBuildServer.addAdditionalModules(
+      *LambdaTestPluginHolder.additionalPluginIds(Monolith).toTypedArray(),
+      target = AdditionalModulesForDevBuildServer.IdeTarget.MONOLITH
+    )
 
     return newTestContainer().newContext(testName = testName, testCase = config.testCase, preserveSystemDir = false).apply {
       val contextToApplyHeadless = if (this.isRemDevContext()) this.asRemDevContext().frontendIDEContext else this
@@ -44,6 +48,10 @@ fun Starter.newContextWithLambda(testName: String, config: IdeStartConfig): IDET
     AdditionalModulesForDevBuildServer.removeAdditionalModules(
       *LambdaTestPluginHolder.additionalPluginIds(All).toTypedArray(),
       target = AdditionalModulesForDevBuildServer.IdeTarget.ANY
+    )
+    AdditionalModulesForDevBuildServer.removeAdditionalModules(
+      *LambdaTestPluginHolder.additionalPluginIds(Monolith).toTypedArray(),
+      target = AdditionalModulesForDevBuildServer.IdeTarget.MONOLITH
     )
   }
 }

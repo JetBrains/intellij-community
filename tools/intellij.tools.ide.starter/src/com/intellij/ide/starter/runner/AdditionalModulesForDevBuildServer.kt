@@ -9,9 +9,10 @@ object AdditionalModulesForDevBuildServer {
   private val additionalModules: MutableSet<String> = mutableSetOf()
   private val additionalFrontendModules: MutableSet<String> = mutableSetOf()
   private val additionalBackendModules: MutableSet<String> = mutableSetOf()
+  private val additionalMonolithModules: MutableSet<String> = mutableSetOf()
 
   enum class IdeTarget {
-    FRONTEND, BACKEND, ANY
+    FRONTEND, BACKEND, ANY, MONOLITH
   }
 
   private fun targetAdditionalModules(target: IdeTarget): MutableSet<String> {
@@ -19,6 +20,7 @@ object AdditionalModulesForDevBuildServer {
       IdeTarget.FRONTEND -> additionalFrontendModules
       IdeTarget.BACKEND -> additionalBackendModules
       IdeTarget.ANY -> additionalModules
+      IdeTarget.MONOLITH -> additionalMonolithModules
     }
   }
 
@@ -44,11 +46,11 @@ object AdditionalModulesForDevBuildServer {
                  if (ideInfo.platformPrefix == PlatformUtils.JETBRAINS_CLIENT_PREFIX) {
                    additionalFrontendModules
                  }
-                 else if (ConfigurationStorage.Companion.splitMode()) {
+                 else if (ConfigurationStorage.splitMode()) {
                    additionalBackendModules
                  }
                  else {
-                   emptySet()
+                   additionalMonolithModules
                  }
     return result.toList()
   }
