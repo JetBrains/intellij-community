@@ -12,7 +12,6 @@ import org.jetbrains.jps.dependency.impl.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;

@@ -34,7 +34,16 @@ public class BazelIncBuilder {
 
   public ExitCode build(BuildContext context) {
     // todo: support cancellation checks
-    // todo: additional diagnostics, if necessary
+
+    Iterable<String> unexpectedInputs = context.getUnexpectedInputs();
+    if (!isEmpty(unexpectedInputs)) {
+      StringBuilder msg = new StringBuilder("Unexpected inputs specified for the worker:");
+      for (String input : unexpectedInputs) {
+        msg.append("\n").append(input);
+      }
+      context.report(Message.error(null, msg.toString()));
+      return ExitCode.ERROR;
+    }
 
     DiagnosticSink diagnostic = context;
     NodeSourceSnapshotDelta srcSnapshotDelta = null;

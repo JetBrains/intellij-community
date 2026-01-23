@@ -53,6 +53,8 @@ public interface BuildContext extends DiagnosticSink {
 
   Iterable<ResourceGroup> getResources();
 
+  Iterable<String> getUnexpectedInputs();
+
   BuilderOptions getBuilderOptions();
 
   NodeSourcePathMapper getPathMapper();

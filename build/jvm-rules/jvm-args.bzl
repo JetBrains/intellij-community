@@ -37,4 +37,6 @@ def get_jvm_flags(flags):
         "-Dkotlin.jps.skip.cache.version.check=true",
         # Set UTF-8 by default as per https://openjdk.org/jeps/400
         "-Dfile.encoding=UTF-8",
+        #"-agentpath:C:/apps/yourkit/windows-x86-64/yjpagent.dll=disable_alloc,cpu=sampling,snapshot_name_format=JvmIncBuilder-{datetime},on_exit=snapshot",
+        #"-agentlib:jdwp=transport=dt_socket,server=n,address=127.0.0.1:5008,suspend=y",
     ] + flags
