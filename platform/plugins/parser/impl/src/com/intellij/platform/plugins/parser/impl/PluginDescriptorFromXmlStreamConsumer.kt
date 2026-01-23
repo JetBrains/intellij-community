@@ -40,7 +40,7 @@ class PluginDescriptorFromXmlStreamConsumer private constructor(
   }
 
   internal fun popIncludeBase() {
-    includeBaseStack.removeLast()
+    includeBaseStack.removeAt(includeBaseStack.lastIndex)
   }
 
   companion object {
