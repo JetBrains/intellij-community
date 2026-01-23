@@ -132,8 +132,10 @@ public interface EditorSettings {
   boolean isFullLineHeightCursor();
   void setFullLineHeightCursor(boolean fullLineHeightCursor);
 
+  @ApiStatus.Experimental
   boolean isAnimatedCaret();
 
+  @ApiStatus.Experimental
   EditorSettings.CaretEasing getCaretEasing();
 
   boolean isCaretRowShown();
@@ -258,6 +260,7 @@ public interface EditorSettings {
     HYBRID,
   }
 
+  @ApiStatus.Experimental
   enum CaretEasing {
     NINJA,
     EASE

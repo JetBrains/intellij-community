@@ -1488,7 +1488,6 @@ com.intellij.openapi.editor.EditorSettings
 - a:isAdditionalPageAtBottom():Z
 - a:isAllSoftWrapsShown():Z
 - a:isAllowSingleLogicalLineFolding():Z
-- a:isAnimatedCaret():Z
 - a:isAnimatedScrolling():Z
 - a:isAutoCodeFoldingEnabled():Z
 - a:isBlinkCaret():Z
