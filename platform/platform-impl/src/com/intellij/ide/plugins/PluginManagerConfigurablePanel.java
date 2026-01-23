@@ -63,7 +63,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.HttpProxyConfigurable;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -311,7 +311,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     actions.add(new DumbAwareAction(IdeBundle.message("button.http.proxy.settings")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        if (HttpConfigurable.editConfigurable(myCardPanel)) {
+        if (HttpProxyConfigurable.editConfigurable(myCardPanel)) {
           resetPanels();
         }
       }
