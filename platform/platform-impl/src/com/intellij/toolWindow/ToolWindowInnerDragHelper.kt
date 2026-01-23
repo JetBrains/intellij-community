@@ -2,7 +2,7 @@
 package com.intellij.toolWindow
 
 import com.intellij.ide.DataManager
-import com.intellij.idea.AppModeAssertions
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.invokeLater
@@ -471,7 +471,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   }
 
   private fun canReorderTabs(decorator: InternalDecoratorImpl): Boolean {
-    return AppModeAssertions.isMonolith()
+    return AppMode.isMonolith()
            && Registry.`is`("ide.allow.tool.window.tabs.reorder", false)
            && (Registry.`is`("ide.allow.tool.window.tabs.reorder.vcs", true)
                || decorator.toolWindow.id !in VCS_TOOLWINDOW_IDS)

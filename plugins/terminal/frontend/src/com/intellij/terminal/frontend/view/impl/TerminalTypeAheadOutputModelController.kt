@@ -1,7 +1,7 @@
 package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.idea.AppModeAssertions
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -215,7 +215,7 @@ internal class TerminalTypeAheadOutputModelController(
      * In monolith, it is small enough to make the delay less noticeable when updates from the backend do not match the predictions.
      * In RemDev, it should be greater than the regular ping.
      */
-    private val BACKEND_EVENTS_DELAY_MILLIS = if (AppModeAssertions.isMonolith()) 100L else 500L
+    private val BACKEND_EVENTS_DELAY_MILLIS = if (AppMode.isMonolith()) 100L else 500L
   }
 }
 

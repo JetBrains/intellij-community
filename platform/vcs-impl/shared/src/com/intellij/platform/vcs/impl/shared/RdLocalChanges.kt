@@ -1,7 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.shared
 
-import com.intellij.idea.AppModeAssertions
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
@@ -23,7 +23,7 @@ object RdLocalChanges {
     return if (registryValue.isChangedFromDefault()) {
       registryValue.asBoolean()
     } else {
-      !AppModeAssertions.isMonolith()
+      !AppMode.isMonolith()
         // Temporary disable in UI tests until AT-3942 is resolved
         && !ApplicationManagerEx.isInIntegrationTest()
     }

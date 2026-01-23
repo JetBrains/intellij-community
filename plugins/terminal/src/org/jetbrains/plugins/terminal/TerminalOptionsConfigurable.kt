@@ -7,7 +7,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
-import com.intellij.idea.AppModeAssertions
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.application.ApplicationBundle
@@ -195,7 +195,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         }.bottomGap(BottomGap.NONE)
           .visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
                        .and(shellPathField.shellWithIntegrationSelected())
-                       .and(ComponentPredicate.fromValue(AppModeAssertions.isMonolith()))
+                       .and(ComponentPredicate.fromValue(AppMode.isMonolith()))
                        .and(ComponentPredicate.fromValue(commandCompletionAvailable || inlineCompletionAvailable)))
 
         indent {

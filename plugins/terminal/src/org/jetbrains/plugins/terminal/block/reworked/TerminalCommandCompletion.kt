@@ -2,14 +2,13 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.idea.AppModeAssertions
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.session.ShellName
@@ -26,7 +25,7 @@ object TerminalCommandCompletion {
 
   fun isEnabled(project: Project): Boolean {
     return Registry.`is`(REGISTRY_KEY, false)
-           && AppModeAssertions.isMonolith()                    // Disable in RemDev at the moment because it is not supported yet
+           && AppMode.isMonolith()                              // Disable in RemDev at the moment because it is not supported yet
            && project.getEelDescriptor() == LocalEelDescriptor  // Disable in non-local projects for now as it requires additional support
   }
 

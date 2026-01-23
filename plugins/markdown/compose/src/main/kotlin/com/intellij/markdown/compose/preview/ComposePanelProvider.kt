@@ -2,7 +2,6 @@
 package com.intellij.markdown.compose.preview
 
 import com.intellij.idea.AppMode
-import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -21,7 +20,7 @@ internal class ComposePanelProvider : MarkdownHtmlPanelProvider() {
   }
 
   override fun isAvailable(): AvailabilityInfo {
-    if (Registry.`is`("enable.markdown.compose.preview.renderer.choice", false) && AppModeAssertions.isMonolith()) {
+    if (Registry.`is`("enable.markdown.compose.preview.renderer.choice", false) && AppMode.isMonolith()) {
       return AvailabilityInfo.AVAILABLE
     }
     return AvailabilityInfo.UNAVAILABLE

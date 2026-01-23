@@ -14,7 +14,6 @@ import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.execution.ui.RunContentManagerImpl
 import com.intellij.ide.ui.icons.icon
-import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -22,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.projectId
 import com.intellij.psi.search.ExecutionSearchScopes
+import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.ApiStatus
 internal class FrontendRunContentService(private val project: Project, private val cs: CoroutineScope) {
 
   init {
-    if (RunContentManagerImpl.isSplitRun() && AppModeAssertions.isFrontend()) {
+    if (RunContentManagerImpl.isSplitRun() && PlatformUtils.isJetBrainsClient()) {
       init()
     }
   }

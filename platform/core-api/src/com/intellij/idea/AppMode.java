@@ -2,6 +2,7 @@
 package com.intellij.idea;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,27 +62,28 @@ public final class AppMode {
    * This is an internal method supposed to be used only from code running during early startup phases.
    * If the instance container is initialized (in particular, in any plugin code), its equivalent
    * {@link com.intellij.platform.ide.productMode.IdeProductMode#isBackend()} should be used instead.
+   *
+   * @see PlatformUtils#isJetBrainsClient
    */
   public static boolean isRemoteDevHost() {
     return isRemoteDevHost;
+  }
+
+  public static boolean isMonolith() {
+    return !PlatformUtils.isJetBrainsClient() && !isRemoteDevHost();
   }
 
   /**
    * Returns {@code true} if the IDE is running from a development build, not a regular installation.
    * The IDE can be started with the development build by running '* (dev build)' configuration from source code, also some tests use this
    * mode.
-   * In this mode modules and plugins are loaded by different classloaders, the same as in production mode. However, the layout of
-   * class-files and resources may differ from the real production layout.
+   * In this mode modules and plugins are loaded by different classloaders, the same as in production mode.
+   * However, the layout of class-files and resources may differ from the real production layout.
+   *
    * @see com.intellij.ide.plugins.PluginManagerCore#isRunningFromSources
    */
   public static boolean isRunningFromDevBuild() {
     return Boolean.getBoolean("idea.use.dev.build.server");
-  }
-
-  /** @deprecated use {@link #isRunningFromDevBuild()} instead; this name may be confusing */
-  @Deprecated
-  public static boolean isDevServer() {
-    return isRunningFromDevBuild();
   }
 
   public static void setFlags(@NotNull List<String> args) {

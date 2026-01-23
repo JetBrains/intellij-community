@@ -2,7 +2,7 @@
 package com.intellij.openapi.editor.impl.zombie
 
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.idea.AppModeAssertions
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteIntentReadAction
@@ -66,9 +66,7 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
       return PathManager.getSystemDir().resolve("editor")
     }
 
-    private fun isEnabled(): Boolean {
-      return !AppModeAssertions.isBackend()
-    }
+    private fun isEnabled(): Boolean = !AppMode.isRemoteDevHost()
   }
 
   private val necromancersDeferred: Deferred<List<Necromancer<Zombie>>>

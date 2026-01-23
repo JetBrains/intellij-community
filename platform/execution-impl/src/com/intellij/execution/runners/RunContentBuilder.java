@@ -17,7 +17,7 @@ import com.intellij.ide.ui.customization.CustomActionsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
-import com.intellij.idea.AppModeAssertions;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
@@ -351,7 +351,7 @@ public final class RunContentBuilder extends RunTab {
                                                       @Nullable Icon icon,
                                                       @Nullable RunProfile runProfile) {
 
-    if (isSplitRun() && AppModeAssertions.isBackend() && myEnvironment.getExecutor().getToolWindowId().equals(RUN_TOOL_WINDOW_ID)) {
+    if (isSplitRun() && AppMode.isRemoteDevHost() && myEnvironment.getExecutor().getToolWindowId().equals(RUN_TOOL_WINDOW_ID)) {
       RunContentDescriptor descriptor = buildHiddenDescriptor(reuseContent);
       registerDescriptor(reuseContent, descriptor);
       RunSessionService runSessionService = RunSessionService.getInstance();

@@ -2,15 +2,12 @@
 package com.intellij.lang.xml
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement
-import com.intellij.idea.AppModeAssertions
 import com.intellij.lang.ASTNode
 import com.intellij.lang.ParserDefinition
 import com.intellij.lang.ParserDefinition.SpaceRequirements
 import com.intellij.lang.PsiParser
 import com.intellij.lexer.Lexer
-import com.intellij.lexer.XmlLexer
 import com.intellij.lexer.createXmlLexer
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
@@ -23,6 +20,7 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.UnsupportedNodeElementTypeException
 import com.intellij.psi.xml.XmlElementType
 import com.intellij.psi.xml.XmlTokenType
+import com.intellij.util.PlatformUtils
 
 open class XMLParserDefinition :
   ParserDefinition {
@@ -50,7 +48,7 @@ open class XMLParserDefinition :
 
     return when {
       elementType is XmlStubBasedElementType<*> -> elementType.createPsi(node)
-      AppModeAssertions.isFrontend() -> ASTWrapperPsiElement(node)
+      PlatformUtils.isJetBrainsClient() -> ASTWrapperPsiElement(node)
 
       else -> throw UnsupportedNodeElementTypeException(node)
     }
