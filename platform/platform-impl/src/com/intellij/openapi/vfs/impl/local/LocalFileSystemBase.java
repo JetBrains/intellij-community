@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.core.CoreBundle;
@@ -399,7 +399,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
     var length = Files.size(nioFile);
 
-    if (FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(nioFile.getFileName().toString()))) {
+    if (FileSizeLimit.isTooLargeForContentLoading(length, FileUtilRt.getExtension(nioFile.getFileName().toString()))) {
       throw new FileTooBigException("File " + nioFile.toAbsolutePath() + " is too large (=" + length + " b)");
     }
 

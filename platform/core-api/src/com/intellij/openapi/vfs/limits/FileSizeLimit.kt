@@ -59,9 +59,8 @@ interface FileSizeLimit {
       return limitsByExtensions.hashCode()
     }
 
-    //TODO RC: isTooLargeForContentLoading
     @JvmStatic
-    fun isTooLarge(fileSize: Long, extension: String?): Boolean {
+    fun isTooLargeForContentLoading(fileSize: Long, extension: String?): Boolean {
       val fileContentLoadLimit = getContentLoadLimit(extension)
       return fileSize > fileContentLoadLimit
     }
