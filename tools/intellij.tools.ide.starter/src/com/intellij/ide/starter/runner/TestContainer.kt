@@ -11,6 +11,7 @@ import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.plugins.PluginInstalledState
 import com.intellij.ide.starter.project.NoProject
+import com.intellij.ide.starter.runner.events.TestContextInitializationStartedEvent
 import com.intellij.ide.starter.telemetry.computeWithSpan
 import com.intellij.ide.starter.utils.PortUtil
 import com.intellij.tools.ide.starter.bus.EventsBus
@@ -132,6 +133,7 @@ interface TestContainer<T> {
       IDEDataPaths.createPaths<IDEDataPaths>(testName, testDirectory, useInMemoryFileSystem)
     },
   ): IDETestContext {
+    EventsBus.postAndWaitProcessing(TestContextInitializationStartedEvent())
     logOutput("Resolving IDE build for $testName...")
     val (buildNumber, ide) = @Suppress("SSBasedInspection")
     (runBlocking(Dispatchers.Default) {
