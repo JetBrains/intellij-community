@@ -1448,11 +1448,9 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private void paintCaretBar(@NotNull Graphics2D g, @Nullable Caret caret, float x, float y, float w, float h, boolean isRtl) {
-      int arc = JBUIScale.scale(Registry.intValue("editor.caret.corner.radius"));
-
       var old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g.fill(new RoundRectangle2D.Float(x, y, w, h, arc, arc));
+      g.fill(new RoundRectangle2D.Float(x, y, w, h, w, w));
       if (old != null) {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
       }
