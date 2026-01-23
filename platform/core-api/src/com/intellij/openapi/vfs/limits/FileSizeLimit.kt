@@ -11,6 +11,20 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 
+/**
+ * Extension point (`com.intellij.fileEditor.fileSizeChecker`) for limiting file sizes for a specific file type / extension.
+ *
+ * 3 kinds of limits are defined ([ExtensionSizeLimitInfo]):
+ * - Content loading size limit
+ * - Intellisense size limit
+ * - Preview size limit
+ *
+ * For each kind there is a default limit: [getDefaultContentLoadLimit], [getDefaultIntellisenseLimit], [getDefaultPreviewLimit],
+ * which could be enlarged on a per-file-extension basis.
+ *
+ * **BEWARE**: default limit could be *enlarged but not reduced*: if an extension provides a specific limit smaller than the apt
+ * default value -- the value provided by the extension will be ignored, and the default value will be used instead.
+ */
 @Suppress("DEPRECATION")
 @ApiStatus.Internal
 interface FileSizeLimit {
@@ -84,9 +98,9 @@ interface FileSizeLimit {
 
     /** @return `getter( getLimitsByExtension()[extension] )`, but no less than [minValue] */
     private fun getValue(extension: String?, getter: (ExtensionSizeLimitInfo) -> Int?, minValue: Int): Int {
-      //TODO RC: getValue(..., minValue) always returns value >= minValue. It is unclear: why such semantics?
-      //         'defaultValue' semantics seems to be more natural -- i.e. return defaultValue if specific value
-      //         is not defined, or just the specific value, regardless of it's value.
+      //getValue(..., minValue) always returns value >= minValue. Such semantics may look a bit unusual,
+      //but it seems there is no use-case for _reducing_ file-size-limit below the default one.
+      //If such a use-case arrives -- semantics could be changed, though.
       val providedValue = findApplicable(extension ?: "")?.let(getter) ?: return minValue
       return max(providedValue, minValue)
     }
