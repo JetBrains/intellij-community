@@ -7,6 +7,9 @@ import kotlinx.coroutines.CoroutineScope
 
 class RawTcpEelMachine(
   val host: String,
-  coroutineScope: CoroutineScope,
-  strategyFactory: () -> IjentIsolatedTcpDeployingStrategy,
-) : TcpEelMachine("tcp-$host", coroutineScope, strategyFactory)
+  private val coroutineScope: CoroutineScope,
+) : TcpEelMachine("tcp-$host") {
+  override fun createStrategy(): IjentIsolatedTcpDeployingStrategy {
+    TODO("not implemented")
+  }
+}
