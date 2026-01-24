@@ -192,7 +192,7 @@ You may find the list of available properties in [`TestingOptions.kt`](platform/
 ./tests.cmd -Dintellij.build.test.patterns=com.intellij.util.ArrayUtilTest
 ```
 
-To debug tests use: `-Dintellij.build.test.debug.suspend=true -Dintellij.build.test.debug.port=5005`
+To debug tests, use: `-Dintellij.build.test.debug.suspend=true -Dintellij.build.test.debug.port=5005`
 
 `tests.cmd` is used just to run [CommunityRunTestsBuildTarget](build/src/CommunityRunTestsBuildTarget.kt) from the command line.
 You can also call it directly from IDEA, see run configuration `tests` for an example.
