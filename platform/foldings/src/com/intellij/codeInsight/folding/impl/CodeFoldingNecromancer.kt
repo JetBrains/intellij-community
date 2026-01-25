@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.folding.impl
 
 import com.intellij.codeInsight.folding.CodeFoldingManager
+import com.intellij.formatting.visualLayer.visualFormattingElementKey
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
@@ -55,7 +56,10 @@ private class CodeFoldingNecromancer(
 
   override fun cutIntoLimbs(recipe: TurningRecipe): List<FoldLimb> {
     return recipe.editor.foldingModel.allFoldRegions
-      .filter { it.getUserData(ZOMBIE_REGION_KEY) == null }
+      .filter {
+        it.getUserData(ZOMBIE_REGION_KEY) == null &&
+        it.getUserData(visualFormattingElementKey) != true // `VisualFormattingNecromancer` handles vf
+      }
       .map { FoldLimb(it) }
   }
 

@@ -168,6 +168,24 @@ abstract class AbstractNecromancy<Z : Zombie>(
     return null
   }
 
+  protected fun <E : Enum<E>> Out.writeEnum(value: Enum<E>) {
+    val ordinal = value.ordinal
+    writeInt(ordinal)
+  }
+
+  protected inline fun <reified E : Enum<E>> In.readEnum(): E {
+    val ordinal = readInt()
+    val values = enumValues<E>()
+    if (0 <= ordinal && ordinal < values.size) {
+      return values[ordinal]
+    }
+    error(
+      "Invalid ordinal $ordinal " +
+      "for enum ${E::class.java} " +
+      "with values ${values.contentToString()}"
+    )
+  }
+
   protected class Out(val output: DataOutput)
 
   protected class In(val input: DataInput)
