@@ -105,6 +105,7 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
         speedSearchStyle = readSpeedSearchStyle(),
         searchMatchStyle = readSearchMatchStyle(theme.isDark),
         popupAdStyle = readPopupAdStyle(),
+        badgeStyle = readBadgeStyle(),
     )
 }
 

@@ -19,7 +19,7 @@ import org.jetbrains.jewel.ui.painter.badge.BadgeShape
  * Paints a badge over the [source].
  *
  * An area corresponding to the result of [BadgeShape.createHoleOutline] is cleared out first, to allow for visual
- * separation with the badge,and then the [BadgeShape.createOutline] is filled with the [color].
+ * separation with the badge, and then the [BadgeShape.createOutline] is filled with the [color].
  */
 public class BadgePainter(private val source: Painter, private val color: Color, private val shape: BadgeShape) :
     DelegatePainter(source) {
