@@ -71,5 +71,6 @@
     <orderEntry type="module" module-name="intellij.java.testFramework.backend" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5Pioneer" level="project" />
     <orderEntry type="module" module-name="intellij.repository.search.common" />
+    <orderEntry type="module" module-name="intellij.gradle.completion" scope="TEST" />
   </component>
 </module>

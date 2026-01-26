@@ -144,3 +144,6 @@
   - name: intellij.gradle
   - name: intellij.gradle.common
   - name: intellij.gradle.toolingProxy
+- name: lib/modules/intellij.gradle.completion.jar
+  contentModules:
+  - name: intellij.gradle.completion

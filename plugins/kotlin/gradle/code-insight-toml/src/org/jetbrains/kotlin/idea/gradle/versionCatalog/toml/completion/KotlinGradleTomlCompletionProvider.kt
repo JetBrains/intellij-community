@@ -9,11 +9,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.util.ProcessingContext
 import org.jetbrains.idea.completion.api.*
-import org.jetbrains.plugins.gradle.completion.FullStringInsertHandler
-import org.jetbrains.plugins.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
-import org.jetbrains.plugins.gradle.completion.GradleDependencyCompletionMatcher
-import org.jetbrains.plugins.gradle.completion.getCompletionContext
-import org.jetbrains.plugins.gradle.completion.removeDummySuffix
+import com.intellij.gradle.completion.FullStringInsertHandler
+import com.intellij.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
+import com.intellij.gradle.completion.GradleDependencyCompletionMatcher
+import com.intellij.gradle.completion.getCompletionContext
+import com.intellij.gradle.completion.removeDummySuffix
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 import org.toml.lang.psi.TomlLiteral
 

@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.completion
 
+import com.intellij.gradle.completion.GradleDependencyCompletionContributor
+import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
 import com.intellij.openapi.Disposable
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.testFramework.junit5.TestApplication
@@ -10,8 +12,7 @@ import com.intellij.util.application
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.idea.completion.api.*
-import org.jetbrains.plugins.gradle.service.cache.GradleLocalRepositoryIndexer
-import org.jetbrains.plugins.gradle.service.cache.GradleLocalRepositoryIndexerTestImpl
+import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest

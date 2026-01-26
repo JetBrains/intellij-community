@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.completion
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.completion
 
 import com.intellij.codeInsight.lookup.CharFilter
 import com.intellij.codeInsight.lookup.Lookup
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
  * the completions after typing special characters
  * like '-' or ':', which appear in dependencies.
  */
-private class GradleCompletionCharFilter : CharFilter() {
+internal class GradleCompletionCharFilter : CharFilter() {
   private val acceptableChars = setOf('-', ':', '.')
 
   override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup): Result? {

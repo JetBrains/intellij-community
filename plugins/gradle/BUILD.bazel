@@ -79,9 +79,7 @@ jvm_library(
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
     "//libraries/jspecify",
-    "//plugins/repository-search",
     "//platform/util/text-matching",
-    "//plugins/repository-search/common",
   ],
   exports = [
     "//platform/external-system-api:externalSystem",
@@ -199,6 +197,8 @@ jvm_library(
     "@lib//:junit5Pioneer",
     "//plugins/repository-search/common",
     "//plugins/repository-search/common:common_test_lib",
+    "//plugins/gradle/completion",
+    "//plugins/gradle/completion:completion_test_lib",
   ],
   exports = ["//platform/external-system-api/testFramework"],
   runtime_deps = [":gradle-tests"]

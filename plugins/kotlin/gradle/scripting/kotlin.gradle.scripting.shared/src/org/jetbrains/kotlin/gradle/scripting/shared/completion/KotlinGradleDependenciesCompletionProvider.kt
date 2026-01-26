@@ -12,11 +12,11 @@ import com.intellij.platform.workspace.storage.entities
 import com.intellij.util.ProcessingContext
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.idea.completion.api.*
-import org.jetbrains.plugins.gradle.completion.FullStringInsertHandler
-import org.jetbrains.plugins.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
-import org.jetbrains.plugins.gradle.completion.GradleDependencyCompletionMatcher
-import org.jetbrains.plugins.gradle.completion.getCompletionContext
-import org.jetbrains.plugins.gradle.completion.removeDummySuffix
+import com.intellij.gradle.completion.FullStringInsertHandler
+import com.intellij.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
+import com.intellij.gradle.completion.GradleDependencyCompletionMatcher
+import com.intellij.gradle.completion.getCompletionContext
+import com.intellij.gradle.completion.removeDummySuffix
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 
 private val exclude = setOf(

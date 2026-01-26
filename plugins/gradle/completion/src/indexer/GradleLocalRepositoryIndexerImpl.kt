@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.service.cache
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.completion.indexer
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -81,30 +81,6 @@ open class GradleLocalRepositoryIndexerImpl : GradleLocalRepositoryIndexer {
     service<CoroutineScopeProvider>().coroutineScope.launchTracked {
       withContext(Dispatchers.IO) {
         update(project)
-      }
-    }
-  }
-
-  class GradleLocalRepositoryIndexInitializer : ProjectActivity {
-    override suspend fun execute(project: Project) {
-      if (GradleSettings.getInstance(project).linkedProjectsSettings.isEmpty()) return
-      service<GradleLocalRepositoryIndexer>().let { indexer ->
-        project.trackActivity(ExternalSystemActivityKey) {
-          indexer.launchIndexUpdate(project)
-        }
-      }
-    }
-  }
-
-  class GradleLocalRepositoryIndexUpdater : ExternalSystemTaskNotificationListener {
-    override fun onEnd(proojecPath: String, id: ExternalSystemTaskId) {
-      if (id.projectSystemId == GradleConstants.SYSTEM_ID && id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
-        val project = id.findProject() ?: return
-        service<GradleLocalRepositoryIndexer>().let { indexer ->
-          project.trackActivityBlocking(ExternalSystemActivityKey) {
-            indexer.launchIndexUpdate(project)
-          }
-        }
       }
     }
   }
@@ -210,4 +186,28 @@ class GradleLocalRepositoryIndexerTestImpl(
   }
 
   override fun launchIndexUpdate(project: Project) {} // do nothing
+}
+
+internal class GradleLocalRepositoryIndexInitializer : ProjectActivity {
+  override suspend fun execute(project: Project) {
+    if (GradleSettings.getInstance(project).linkedProjectsSettings.isEmpty()) return
+    service<GradleLocalRepositoryIndexer>().let { indexer ->
+      project.trackActivity(ExternalSystemActivityKey) {
+        indexer.launchIndexUpdate(project)
+      }
+    }
+  }
+}
+
+internal class GradleLocalRepositoryIndexUpdater : ExternalSystemTaskNotificationListener {
+  override fun onEnd(proojecPath: String, id: ExternalSystemTaskId) {
+    if (id.projectSystemId == GradleConstants.SYSTEM_ID && id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
+      val project = id.findProject() ?: return
+      service<GradleLocalRepositoryIndexer>().let { indexer ->
+        project.trackActivityBlocking(ExternalSystemActivityKey) {
+          indexer.launchIndexUpdate(project)
+        }
+      }
+    }
+  }
 }

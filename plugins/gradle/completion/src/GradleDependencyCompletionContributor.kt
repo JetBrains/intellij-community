@@ -1,10 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.completion
+package com.intellij.gradle.completion
 
 import com.intellij.openapi.components.service
+import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.completion.api.*
-import org.jetbrains.plugins.gradle.service.cache.GradleLocalRepositoryIndexer
+import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionContext
+import org.jetbrains.idea.completion.api.DependencyCompletionContributor
+import org.jetbrains.idea.completion.api.DependencyCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionResult
+import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
+import org.jetbrains.idea.completion.api.GradleDependencyCompletionContext
 
 @ApiStatus.Internal
 class GradleDependencyCompletionContributor : DependencyCompletionContributor {
@@ -56,10 +63,10 @@ class GradleDependencyCompletionContributor : DependencyCompletionContributor {
   }
 
   private fun searchFull(
-    request: DependencyCompletionRequest,
-    groupSubstring: String,
-    artifactSubstring: String,
-    versionSubstring: String,
+      request: DependencyCompletionRequest,
+      groupSubstring: String,
+      artifactSubstring: String,
+      versionSubstring: String,
   ): List<DependencyCompletionResult> {
     val eelDescriptor = request.context.eelDescriptor
     val indexer = service<GradleLocalRepositoryIndexer>()

@@ -977,6 +977,7 @@ plugins/gitlab/gitlab-git
 plugins/gitlab/gitlab-yaml
 plugins/gradle
 plugins/gradle-maven
+plugins/gradle/completion
 plugins/gradle/gradle-declarative-sync
 plugins/gradle/gradle-dependency-updater
 plugins/gradle/intellij.gradle.analysis
