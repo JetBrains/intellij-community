@@ -478,6 +478,17 @@ public final class ScrollingUtil {
     if (selectionModel instanceof ImpossibleListSelectionModel impossibleListSelectionModel &&
         !impossibleListSelectionModel.canBeSelected(indexToSelect)) {
       indexToSelect += direction < 0 ? -1 : 1;
+      if (indexToSelect < 0) {
+        if (cycleScrolling) {
+          indexToSelect = size - 1;
+        }
+        else {
+          return;
+        }
+      }
+      if (!impossibleListSelectionModel.canBeSelected(indexToSelect)) {
+        return;
+      }
     }
     _ensureIndexIsVisible(c, indexToSelect, direction, size);
     selectOrAddSelection(selectionModel, indexToSelect, modifiers);
