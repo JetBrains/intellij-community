@@ -68,7 +68,7 @@ class GrazieMassApplyDialog : DialogWrapper {
   constructor(file: PsiFile, problems: ProofreadingProblems) : super(file.project) {
     this.text = file.text
     this.project = file.project
-    this.problems = problems.filterOutDuplicatedTypos()
+    this.problems = problems
     this.editor = createEditor()
     this.undoManager = DocumentUndoManager()
     massApply(MassOptions.SINGLE)

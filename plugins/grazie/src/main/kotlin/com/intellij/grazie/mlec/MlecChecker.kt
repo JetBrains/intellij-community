@@ -33,7 +33,7 @@ class MlecChecker : ExternalTextChecker() {
   }
 
   override suspend fun checkExternally(context: ProofreadingContext): Collection<TextProblem> {
-    if (!GrazieCloudConnector.seemsCloudConnected()) return emptyList()
+    if (!GrazieCloudConnector.seemsCloudConnected() || !context.shouldCheckGrammarStyle()) return emptyList()
 
     val rules = Constants.mlecRules[context.language] ?: return emptyList()
     if (rules.none { it.isCurrentlyEnabled(context.text) }) return emptyList()

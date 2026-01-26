@@ -65,20 +65,17 @@
                      implementationClass="com.intellij.grazie.ide.inspection.grammar.GrazieInspection$Grammar"
                      level="GRAMMAR_ERROR" key="grazie.grammar.inspection.grammar.text" language=""/>
 
-    <localInspection groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieStyle"
+    <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieStyle"
                      implementationClass="com.intellij.grazie.ide.inspection.grammar.GrazieInspection$Style"
-                     level="STYLE_SUGGESTION" key="grazie.style.inspection.display.name" language=""
-                     bundle="messages.GrazieBundle"/>
+                     level="STYLE_SUGGESTION" key="grazie.style.inspection.display.name" language=""/>
 
-    <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true"
-                     shortName="LanguageDetectionInspection"
+    <localInspection bundle="messages.SpellCheckerBundle" groupKey="proofread" enabledByDefault="true" shortName="SpellCheckingInspection"
+                     implementationClass="com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection"
+                     level="TYPO" key="spellchecking.inspection.name" language=""/>
+
+    <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="LanguageDetectionInspection"
                      implementationClass="com.intellij.grazie.ide.inspection.detection.LanguageDetectionInspection"
                      level="WEAK WARNING" key="grazie.detection.inspection.text" language=""/>
-
-    <localInspection shortName="SpellCheckingInspection" bundle="messages.SpellCheckerBundle"
-                     key="spellchecking.inspection.name" groupKey="proofread" enabledByDefault="true" level="TYPO"
-                     language=""
-                     implementationClass="com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection"/>
 
     <projectService serviceImplementation="com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine"
                     serviceInterface="com.intellij.spellchecker.engine.SpellCheckerEngine"/>
@@ -128,8 +125,7 @@
     <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker" id="treeRules"/>
     <grazie.textChecker implementation="com.intellij.grazie.grammar.LanguageToolChecker" id="languageTool"/>
     <grazie.textChecker implementation="com.intellij.grazie.mlec.MlecChecker" id="mlec"/>
-
-    <spellchecker.quickFixFactory implementation="com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieMassApplyActionProvider"/>
+    <grazie.textChecker implementation="com.intellij.grazie.spellcheck.SpellingTextChecker" id="spelling"/>
 
     <intentionAction>
       <language/>

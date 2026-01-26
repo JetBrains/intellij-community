@@ -34,9 +34,9 @@ internal class DevKitMnemonicsSpellingTest : LightJavaCodeInsightFixtureTestCase
     myFixture.configureByText("MyBundle.properties", """
       action.SwitchCoverage.text=Show Code Co_verage Data
       action.Annotate.text=A_nnotate
-      action.UnderscoreTypo.text=<TYPO descr="Typo: In word 'A_nnotatex'">A_nnotatex</TYPO>
+      action.UnderscoreTypo.text=<TYPO descr="Typo: In word 'Annotatex'">A_nnotatex</TYPO>
       before.check.cleanup.code=C&leanup
-      before.AmpersandTypo.code=<TYPO descr="Typo: In word 'C&leanupic'">C&leanupic</TYPO>
+      before.AmpersandTypo.code=<TYPO descr="Typo: In word 'Cleanupic'">C&leanupic</TYPO>
     """.trimIndent())
     myFixture.checkHighlighting()
   }

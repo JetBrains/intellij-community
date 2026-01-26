@@ -647,6 +647,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("inspections", pattern = Patterns.forRegex("^(inspections\\.test)$"), flatten = true,
                   excludedDirectories = listOf(
                       "canConvertToMultiDollarString", // K2-only
+                      "spelling/inspectionData"
                   )
             )
             model("inspectionsLocal", pattern = Patterns.forRegex("^(inspections\\.test)$"), flatten = true)

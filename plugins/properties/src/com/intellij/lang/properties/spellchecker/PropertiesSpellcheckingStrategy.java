@@ -29,7 +29,7 @@ final class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy implem
       return EMPTY_TOKENIZER;
     }
     if (element instanceof PropertyValueImpl) {
-      return myPropertyValueTokenizer;
+      return useTextLevelSpellchecking(element) ? EMPTY_TOKENIZER : myPropertyValueTokenizer;
     }
     if (element instanceof PropertyKeyImpl) {
       return myPropertyTokenizer;

@@ -12,47 +12,42 @@ import ai.grazie.spell.text.TextSpeller
 import ai.grazie.spell.text.Typo
 import ai.grazie.text.exclusions.SentenceWithExclusions
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.GrazieConfig.State.Processing
 import com.intellij.grazie.cloud.APIQueries
 import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.mlec.LanguageHolder
 import com.intellij.grazie.rule.SentenceBatcher
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
+import com.intellij.grazie.text.ExternalTextChecker
+import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.utils.NaturalTextDetector
 import com.intellij.grazie.utils.getProblems
 import com.intellij.grazie.utils.toLinkedSet
-import com.intellij.grazie.utils.toProofreadingContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import com.intellij.spellchecker.SpellCheckerManager
 import com.intellij.spellchecker.inspections.IdentifierSplitter.MINIMAL_TYPO_LENGTH
-import com.intellij.util.containers.ContainerUtil
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 private val spellingKey = Key.create<CachedResults>("grazie.text.spell.problems")
 
-class SpellingCheckerRunner(val text: TextContent) {
-
-  companion object {
-    private val knownPhrases = ContainerUtil.createConcurrentSoftValueMap<Language, KnownPhrases>()
-  }
-
-  fun run(): List<TypoProblem> {
+internal class SpellingTextChecker: ExternalTextChecker() {
+  override fun getRules(locale: Locale): Collection<Rule> = emptyList()
+  override suspend fun checkExternally(context: ProofreadingContext): Collection<TypoProblem> {
     val configStamp = service<GrazieConfig>().modificationCount + SpellCheckerManager.dictionaryModificationTracker.modificationCount
-    var cache = getCachedTypos(text, configStamp)
+    var cache = getCachedTypos(context.text, configStamp)
     if (cache == null) {
-      cache = findTypos(text)
+      cache = findTypos(context)
         .filterNot { it.word.length < MINIMAL_TYPO_LENGTH }
         .filterNot { hasUnknownFragments(it) }
-      text.putUserData(spellingKey, CachedResults(configStamp, cache))
+      context.text.putUserData(spellingKey, CachedResults(configStamp, cache))
     }
     return cache
   }
@@ -87,7 +82,7 @@ class SpellingCheckerRunner(val text: TextContent) {
           .asSequence()
           .map { it.base }
           .filter { it in KnownPhrases.SUPPORTED_LANGUAGES }
-          .map { lang -> knownPhrases.computeIfAbsent(lang) { KnownPhrases.forLanguage(lang) } }
+          .map { lang -> GrazieSpellCheckerEngine.knownPhrases.computeIfAbsent(lang) { KnownPhrases.forLanguage(lang) } }
           .flatMap {
             ProgressManager.checkCanceled()
             it.validPhrases(text)
@@ -98,30 +93,30 @@ class SpellingCheckerRunner(val text: TextContent) {
     }
   }
 
-  private fun findTypos(text: TextContent): List<TypoProblem> {
-    val project = text.containingFile.project
+  private suspend fun findTypos(context: ProofreadingContext): List<TypoProblem> {
+    val project = context.text.containingFile.project
     val textSpeller = getTextSpeller(project) ?: return emptyList()
-    val localTypos = textSpeller.checkText(object : BombedCharSequence(text) {
+    val localTypos = textSpeller.checkText(object : BombedCharSequence(context.text) {
       override fun checkCanceled() {
         ProgressManager.checkCanceled()
       }
     })
-    return findTyposInCloud(text, localTypos, project)
+    return findTyposInCloud(context, localTypos, project)
   }
 
-  private fun findTyposInCloud(text: TextContent, localTypos: List<Typo>, project: Project): List<TypoProblem> {
+  private suspend fun findTyposInCloud(context: ProofreadingContext, localTypos: List<Typo>, project: Project): List<TypoProblem> {
     if (!Registry.`is`("spellchecker.cloud.enabled", false)
         || localTypos.isEmpty()
-        || GrazieConfig.get().processing == Processing.Local
         || !GrazieCloudConnector.seemsCloudConnected()
         || GrazieCloudConnector.isAfterRecentGecError()
-        || !NaturalTextDetector.seemsNatural(text)) {
-      return localTypos.map { toProblem(text, it) }
+        || !NaturalTextDetector.seemsNatural(context.text)
+        || context.language == Language.UNKNOWN
+      ) {
+      return localTypos.map { toProblem(context.text, it) }
     }
 
-    val context = text.toProofreadingContext()
-    val cloudTypos = runBlockingCancellable { getProblems(context, SpellServerBatcherHolder::class.java) }
-    if (cloudTypos == null) return localTypos.map { toProblem(text, it) }
+    val cloudTypos = getProblems(context, SpellServerBatcherHolder::class.java)
+    if (cloudTypos == null) return localTypos.map { toProblem(context.text, it) }
 
     val manager = SpellCheckerManager.getInstance(project)
     return cloudTypos
@@ -131,10 +126,10 @@ class SpellingCheckerRunner(val text: TextContent) {
           .filter { part -> part.type == ProblemFix.Part.Change.ChangeType.REPLACE }
         if (parts.isEmpty()) return@mapNotNull null
 
-        val word = parts.first().range.substring(text.toString())
+        val word = parts.first().range.substring(context.text.toString())
         if (!manager.hasProblem(word)) return@mapNotNull null
 
-        TypoProblem(text, parts.first().range, word, true) {
+        TypoProblem(context.text, parts.first().range, word, true) {
           parts.map { part -> part.text }.toLinkedSet()
         }
       }

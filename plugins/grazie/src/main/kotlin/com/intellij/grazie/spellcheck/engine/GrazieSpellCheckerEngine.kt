@@ -6,6 +6,7 @@ package com.intellij.grazie.spellcheck.engine
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.LanguageISO
 import ai.grazie.nlp.utils.normalization.StripAccentsNormalizer
+import ai.grazie.rules.common.KnownPhrases
 import ai.grazie.spell.GrazieSpeller
 import ai.grazie.spell.GrazieSplittingSpeller
 import ai.grazie.spell.Speller
@@ -36,12 +37,14 @@ import com.intellij.spellchecker.engine.SpellCheckerEngine
 import com.intellij.spellchecker.engine.SpellCheckerEngineListener
 import com.intellij.spellchecker.engine.Transformation
 import com.intellij.spellchecker.settings.CustomDictionarySettingsListener
+import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.ConcurrentMap
 
 internal const val MAX_WORD_LENGTH: Int = 32
 
@@ -54,6 +57,7 @@ class GrazieSpellCheckerEngine(
     @JvmStatic
     fun getInstance(project: Project): GrazieSpellCheckerEngine = SpellCheckerEngine.getInstance(project) as GrazieSpellCheckerEngine
 
+    val knownPhrases: ConcurrentMap<Language, KnownPhrases> = ContainerUtil.createConcurrentSoftValueMap()
     val enDictionary: HunspellDictionary by lazy {
       val dic = Resources.text("/dictionary/en.dic")
       val aff = Resources.text("/dictionary/en.aff")
@@ -62,6 +66,7 @@ class GrazieSpellCheckerEngine(
         dic, aff, trigrams, "/dictionary/en.dic", LanguageISO.EN, Resources.text("/rule/en.dat")
       )
     }
+
   }
 
   override fun getTransformation(): Transformation = Transformation()
@@ -82,6 +87,8 @@ class GrazieSpellCheckerEngine(
     override suspend fun execute(project: Project) {
       getInstance(project).initializeSpeller(project)
       project.serviceAsync<SpellCheckerManager>()
+      knownPhrases.computeIfAbsent(Language.ENGLISH) { KnownPhrases.forLanguage(Language.ENGLISH) }
+        .validPhrases("Bugfix")
     }
   }
 

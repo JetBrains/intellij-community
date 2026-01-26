@@ -7,8 +7,8 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.grazie.GrazieConfig;
+import com.intellij.grazie.ide.inspection.grammar.GrazieInspection;
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine;
-import com.intellij.grazie.text.CheckerRunner;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
@@ -46,9 +46,16 @@ import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.grazie.utils.HighlightingUtil.getTool;
 import static com.intellij.spellchecker.tokenizer.SpellcheckingStrategy.getSpellcheckingStrategy;
 
 public final class GrazieSpellCheckingInspection extends SpellCheckingInspection {
+
+  public static Set<SpellCheckingScope> buildAllowedScopes(PsiElement element) {
+    var tool = getTool(element.getContainingFile(), SPELL_CHECKING_INSPECTION_TOOL_NAME, GrazieSpellCheckingInspection.class);
+    if (tool == null) return Set.of();
+    return tool.buildAllowedScopes();
+  }
 
   @Override
   public SuppressQuickFix @NotNull [] getBatchSuppressActions(@Nullable PsiElement element) {
@@ -73,6 +80,11 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
   @Override
   public @NonNls @NotNull String getShortName() {
     return SPELL_CHECKING_INSPECTION_TOOL_NAME;
+  }
+
+  @Override
+  public @NotNull String getMainToolId() {
+    return GrazieInspection.RUNNER;
   }
 
   @Override
@@ -102,20 +114,13 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
       public void visitWhiteSpace(@NotNull PsiWhiteSpace space) { }
 
       @Override
-      public void visitElement(final @NotNull PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (holder.getResultCount() > 1000 || element.getNode() == null) return;
 
         var strategy = getSpellcheckingStrategy(element);
-        if (strategy == null || !strategy.elementFitsScope(element, scopes) || isCopyrightComment(strategy, element)) return;
-
-        SpellCheckingResult result = GrazieTextLevelSpellCheckingExtension.INSTANCE.spellcheck(
-          element, strategy, session,
-          typo -> {
-            if (hasSameNamedReferenceInFile(typo.getWord(), element, strategy)) return;
-            registerProblem(typo, holder);
-          }
-        );
-        if (result == SpellCheckingResult.Checked) return;
+        if (strategy == null || !strategy.elementFitsScope(element, scopes)) return;
+        if (element instanceof PsiComment && strategy.useTextLevelSpellchecking(element)) return;
+        if (isCopyrightComment(strategy, element)) return;
 
         tokenize(
           strategy, element,
@@ -149,29 +154,6 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
     holder.registerProblem(problemDescriptor);
   }
 
-  private static void registerProblem(@NotNull TypoProblem typo, @NotNull ProblemsHolder holder) {
-    PsiElement element = typo.getText().getCommonParent();
-    SpellcheckingStrategy strategy = getSpellcheckingStrategy(element);
-    CheckerRunner.fileHighlightRanges(typo)
-      .stream()
-      .reduce(TextRange::union)
-      .map(range -> range.shiftLeft(element.getTextRange().getStartOffset()))
-      .ifPresent(typoRange -> {
-        if (!holder.isOnTheFly()) {
-          addBatchDescriptor(element, typoRange, typo.getWord(), holder);
-          return;
-        }
-
-        Set<String> suggestions = typo.isCloud() ? typo.getFixes() : null;
-        LocalQuickFix[] fixes = strategy != null
-                                ? strategy.getRegularFixes(element, typoRange, false, typo.getWord(), suggestions)
-                                : SpellcheckingStrategy.getDefaultRegularFixes(false, typo.getWord(), element, typoRange, suggestions);
-
-        ProblemDescriptor problemDescriptor = createProblemDescriptor(element, typoRange, fixes, true);
-        holder.registerProblem(problemDescriptor);
-      });
-  }
-
   private static void addRegularDescriptor(@NotNull PsiElement element, @NotNull TextRange textRange, @NotNull ProblemsHolder holder,
                                            boolean useRename, String wordWithTypo) {
     SpellcheckingStrategy strategy = getSpellcheckingStrategy(element);
@@ -187,7 +169,7 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
   private static ProblemDescriptor createProblemDescriptor(PsiElement element, TextRange textRange,
                                                            LocalQuickFix[] fixes,
                                                            boolean onTheFly) {
-    final String description = SpellCheckerBundle.message("typo.in.word.ref");
+    String description = SpellCheckerBundle.message("typo.in.word.ref");
     return new ProblemDescriptorBase(element, element, description, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                      false, textRange, onTheFly, onTheFly);
   }
@@ -334,8 +316,12 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
     }
   }
 
-  private static boolean hasSameNamedReferenceInFile(String word, PsiElement element, SpellcheckingStrategy strategy) {
-    if (!strategy.elementFitsScope(element, Set.of(SpellCheckingScope.Comments))) {
+  public static boolean hasSameNamedReferenceInFile(String word, PsiElement element) {
+    return hasSameNamedReferenceInFile(word, element, getSpellcheckingStrategy(element));
+  }
+
+  private static boolean hasSameNamedReferenceInFile(String word, PsiElement element, @Nullable SpellcheckingStrategy strategy) {
+    if (strategy == null || !strategy.elementFitsScope(element, Set.of(SpellCheckingScope.Comments))) {
       return false;
     }
 
