@@ -8,13 +8,12 @@ import com.intellij.openapi.editor.impl.multiverse.createCodeInsightContextPrese
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
-import javax.swing.Icon
 
 internal class ProblemsContextNode(
   val parent: FileNode,
   val contextGroup: CodeInsightContext,
   val problems: Collection<Problem>,
-  val isGroupIdToolSwitchedOn: () -> Boolean
+  val groupByToolId: Boolean
 ) : Node(parent) {
   private val presentation = createCodeInsightContextPresentation(contextGroup, parent.project)
 
@@ -28,24 +27,20 @@ internal class ProblemsContextNode(
     presentation.setIcon(this.presentation.icon)
   }
 
-  private fun getNodesForContext(problems: List<Problem>): Collection<Node> =
-    problems.map { ProblemNode(this, parent.file, it) }
-
   override fun getChildren(): List<Node> {
-    if (!isGroupIdToolSwitchedOn()) {
-      return problems.map { ProblemNode(this, parent.file, it) }
-    }
-    else {
+    if (groupByToolId) {
       return problems.groupBy { it.group }.flatMap { (group, problems) ->
         if (group != null) {
           listOf(ProblemsContextGroupNode(this, group, problems))
         }
         else {
-          getNodesForContext(problems)
+          problems.toProblemNodes(this, parent.file)
         }
       }
     }
-
+    else {
+      return problems.toProblemNodes(this, parent.file)
+    }
   }
 
   override fun hashCode(): Int = contextGroup.hashCode()
