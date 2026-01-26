@@ -162,7 +162,7 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
     val compactMode = UISettings.getInstance().compactMode
 
     val hOffset = JBUIScale.scale(getHOffsetUnscaled(compactMode, position).toFloat()).toDouble()
-    val minVOffset = JBUIScale.scale(if (compactMode) 4f else 8f).toDouble()
+    val minVOffset = JBUIScale.scale(if (compactMode) 4f else (if (position.isSide) 6f else 8f)).toDouble()
 
     val fullHeight = JBUIScale.scale(if (compactMode) 24f else 28f).toDouble()
     val vOffset = (rect.height - fullHeight).coerceAtLeast(minVOffset)

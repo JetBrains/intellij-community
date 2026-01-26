@@ -500,8 +500,8 @@
 
       "tabInsets": "-6,8,-6,8",
       "tabInsets.compact": "-2,6,-2,4",
-      "verticalTabInsets": "-6,8,-6,10",
-      "verticalTabInsets.compact": "0,10,0,10",
+      "verticalTabInsets": "-4,8,-4,10",
+      "verticalTabInsets.compact": "-2,10,-2,10",
       "tabContentActionsRightInsets": "0,4,0,2"
     },
 
