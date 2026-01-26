@@ -21,6 +21,7 @@ import com.intellij.xdebugger.impl.proxy.asProxy
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import kotlinx.coroutines.Dispatchers
@@ -89,7 +90,9 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
           withContext(Dispatchers.EDT) {
             DebuggerUIUtilShared.freezePaintingToReduceFlickering(treePanel.contentComponent)
             if (panel.isShowing) {
+              val state = XDebuggerTreeState.saveState(tree)
               tree.setRoot(XThreadsRootNode(tree, session), false)
+              state.restoreState(tree)
             }
           }
         }
