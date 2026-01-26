@@ -948,10 +948,13 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       super.createSearchTextField(flyDelay);
 
       JBTextField textField = searchTextField.getTextEditor();
-      textField.putClientProperty("search.extension", ExtendableTextComponent.Extension
-        .create(AllIcons.Actions.More, AllIcons.Actions.More, IdeBundle.message("plugins.configurable.search.options"), // TODO: icon
-                true,
-                () -> showRightBottomPopup(textField, IdeBundle.message("plugins.configurable.show"), myInstalledSearchGroup)));
+      ExtendableTextComponent.Extension searchFieldExtension = ExtendableTextComponent.Extension.create(
+        AllIcons.General.Filter, AllIcons.General.Filter,
+        IdeBundle.message("plugins.configurable.search.options"),
+        true,
+        () -> showRightBottomPopup(textField, IdeBundle.message("plugins.configurable.show"), myInstalledSearchGroup)
+      );
+      textField.putClientProperty("search.extension", searchFieldExtension);
       textField.putClientProperty("JTextField.variant", null);
       textField.putClientProperty("JTextField.variant", "search");
 
