@@ -16,18 +16,16 @@ internal class ProblemsContextNode(
   val problems: Collection<Problem>,
   val isGroupIdToolSwitchedOn: () -> Boolean
 ) : Node(parent) {
-  val myIcon: Icon? = createCodeInsightContextPresentation(contextGroup, parent.project).icon
+  private val presentation = createCodeInsightContextPresentation(contextGroup, parent.project)
 
   override fun getLeafState(): LeafState = LeafState.NEVER
 
-  override fun getName(): String {
-    val presentation = createCodeInsightContextPresentation(contextGroup, parent.project)
-    return presentation.text
-  }
+  override fun getName(): String =
+    presentation.text
 
   override fun update(project: Project, presentation: PresentationData) {
     presentation.addText(name, REGULAR_ATTRIBUTES)
-    presentation.setIcon(myIcon)
+    presentation.setIcon(this.presentation.icon)
   }
 
   private fun getNodesForContext(problems: List<Problem>): Collection<Node> =
