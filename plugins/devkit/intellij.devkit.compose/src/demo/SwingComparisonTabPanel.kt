@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.Badge
 import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
@@ -58,12 +59,14 @@ import org.jetbrains.jewel.ui.component.TextArea
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
+import org.jetbrains.jewel.ui.theme.badgeStyle
 import org.jetbrains.jewel.ui.theme.textAreaStyle
 import org.jetbrains.jewel.ui.typography
 import javax.swing.BoxLayout
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JLabel
 import javax.swing.JPanel
+import org.jetbrains.jewel.ui.component.Badge as JewelBadge
 
 internal class SwingComparisonTabPanel : BorderLayoutPanel() {
   private val mainContent =
@@ -82,6 +85,8 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
       textAreasRow()
       separator()
       comboBoxesRow()
+      separator()
+      badgesRow()
       separator()
     }
       .apply {
@@ -214,7 +219,8 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
     }
 
     row(DevkitComposeBundle.message("jewel.swing.titles.swing")) {
-      text(DevkitComposeBundle.message("jewel.swing.label.this.will.wrap.over.couple.rows"), maxLineLength = 30).component.font = JBFont.h1()
+      text(DevkitComposeBundle.message("jewel.swing.label.this.will.wrap.over.couple.rows"), maxLineLength = 30).component.font =
+        JBFont.h1()
     }
     row(DevkitComposeBundle.message("jewel.swing.titles.compose")) {
       compose {
@@ -506,6 +512,55 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
       }
     }
       .layout(RowLayout.PARENT_GRID)
+  }
+
+  private fun Panel.badgesRow() {
+    val allColorTypeBadges = listOf(
+      Badge(DevkitComposeBundle.message("jewel.swing.badge.blue"), Badge.ColorType.BLUE),
+      Badge(DevkitComposeBundle.message("jewel.swing.badge.blue.secondary"), Badge.ColorType.BLUE_SECONDARY),
+      Badge(DevkitComposeBundle.message("jewel.swing.badge.green"), Badge.ColorType.GREEN),
+      Badge(DevkitComposeBundle.message("jewel.swing.badge.green.secondary"), Badge.ColorType.GREEN_SECONDARY),
+      Badge(DevkitComposeBundle.message("jewel.swing.badge.purple.secondary"), Badge.ColorType.PURPLE_SECONDARY),
+      Badge(DevkitComposeBundle.message("jewel.swing.badge.gray.secondary"), Badge.ColorType.GRAY_SECONDARY),
+    )
+
+    row(DevkitComposeBundle.message("jewel.swing.badge.title")) {
+      label(DevkitComposeBundle.message("jewel.swing.label"))
+      cell(JPanel().apply {
+        isOpaque = false
+        for (badge in allColorTypeBadges) {
+          add(JLabel(badge))
+        }
+      })
+    }.layout(RowLayout.PARENT_GRID)
+    row("") {
+      label(DevkitComposeBundle.message("jewel.compose.label"))
+      compose {
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+          JewelBadge(style = JewelTheme.badgeStyle.blue) { Text("Blue") }
+          JewelBadge(style = JewelTheme.badgeStyle.blueSecondary) { Text("Blue secondary") }
+          JewelBadge(style = JewelTheme.badgeStyle.green) { Text("Green") }
+          JewelBadge(style = JewelTheme.badgeStyle.greenSecondary) { Text("Green secondary") }
+          JewelBadge(style = JewelTheme.badgeStyle.purpleSecondary) { Text("Purple secondary") }
+          JewelBadge(style = JewelTheme.badgeStyle.graySecondary) { Text("Gray secondary") }
+        }
+      }
+    }.layout(RowLayout.PARENT_GRID)
+    row("") {
+      label(DevkitComposeBundle.message("jewel.swing.label"))
+      cell(JPanel().apply {
+        isOpaque = false
+        for (badge in listOf(Badge.newDisabled, Badge.alphaDisabled, Badge.betaDisabled, Badge.trialDisabled)) {
+          add(JLabel(badge))
+        }
+      })
+    }.layout(RowLayout.PARENT_GRID)
+    row("") {
+      label(DevkitComposeBundle.message("jewel.compose.label"))
+      compose {
+        JewelBadge(enabled = false) { Text("Disabled") }
+      }
+    }.layout(RowLayout.PARENT_GRID)
   }
 
   private fun PaddingValues.vertical(): Dp = calculateTopPadding() + calculateBottomPadding()

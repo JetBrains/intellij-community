@@ -15,7 +15,8 @@ package org.jetbrains.jewel.ui {
   }
 
   @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class DefaultComponentStyling implements org.jetbrains.jewel.ui.ComponentStyling {
-    ctor public DefaultComponentStyling(org.jetbrains.jewel.ui.component.styling.CheckboxStyle checkboxStyle, org.jetbrains.jewel.ui.component.styling.ChipStyle chipStyle, org.jetbrains.jewel.ui.component.styling.CircularProgressStyle circularProgressStyle, org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles defaultBannerStyle, org.jetbrains.jewel.ui.component.styling.ComboBoxStyle comboBoxStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle defaultButtonStyle, org.jetbrains.jewel.ui.component.styling.DropdownStyle defaultDropdownStyle, org.jetbrains.jewel.ui.component.styling.SplitButtonStyle defaultSplitButtonStyle, org.jetbrains.jewel.ui.component.styling.TabStyle defaultTabStyle, org.jetbrains.jewel.ui.component.styling.DividerStyle dividerStyle, org.jetbrains.jewel.ui.component.styling.TabStyle editorTabStyle, org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle groupHeaderStyle, org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle horizontalProgressBarStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle iconButtonStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle transparentIconButtonStyle, org.jetbrains.jewel.ui.component.styling.InlineBannerStyles inlineBannerStyle, org.jetbrains.jewel.ui.component.styling.LazyTreeStyle lazyTreeStyle, org.jetbrains.jewel.ui.component.styling.LinkStyle linkStyle, org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedButtonStyle, org.jetbrains.jewel.ui.component.styling.PopupContainerStyle popupContainerStyle, org.jetbrains.jewel.ui.component.styling.SplitButtonStyle outlinedSplitButtonStyle, org.jetbrains.jewel.ui.component.styling.RadioButtonStyle radioButtonStyle, org.jetbrains.jewel.ui.component.styling.ScrollbarStyle scrollbarStyle, org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle segmentedControlButtonStyle, org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle segmentedControlStyle, org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle selectableLazyColumnStyle, org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle simpleListItemStyle, org.jetbrains.jewel.ui.component.styling.SliderStyle sliderStyle, org.jetbrains.jewel.ui.component.styling.TextAreaStyle textAreaStyle, org.jetbrains.jewel.ui.component.styling.TextFieldStyle textFieldStyle, org.jetbrains.jewel.ui.component.styling.TooltipStyle tooltipStyle, org.jetbrains.jewel.ui.component.styling.DropdownStyle undecoratedDropdownStyle, org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle speedSearchStyle, org.jetbrains.jewel.ui.component.styling.SearchMatchStyle searchMatchStyle, org.jetbrains.jewel.ui.component.styling.PopupAdStyle popupAdStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle defaultSlimButtonStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedSlimButtonStyle);
+    ctor public DefaultComponentStyling(org.jetbrains.jewel.ui.component.styling.CheckboxStyle checkboxStyle, org.jetbrains.jewel.ui.component.styling.ChipStyle chipStyle, org.jetbrains.jewel.ui.component.styling.CircularProgressStyle circularProgressStyle, org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles defaultBannerStyle, org.jetbrains.jewel.ui.component.styling.ComboBoxStyle comboBoxStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle defaultButtonStyle, org.jetbrains.jewel.ui.component.styling.DropdownStyle defaultDropdownStyle, org.jetbrains.jewel.ui.component.styling.SplitButtonStyle defaultSplitButtonStyle, org.jetbrains.jewel.ui.component.styling.TabStyle defaultTabStyle, org.jetbrains.jewel.ui.component.styling.DividerStyle dividerStyle, org.jetbrains.jewel.ui.component.styling.TabStyle editorTabStyle, org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle groupHeaderStyle, org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle horizontalProgressBarStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle iconButtonStyle, org.jetbrains.jewel.ui.component.styling.IconButtonStyle transparentIconButtonStyle, org.jetbrains.jewel.ui.component.styling.InlineBannerStyles inlineBannerStyle, org.jetbrains.jewel.ui.component.styling.LazyTreeStyle lazyTreeStyle, org.jetbrains.jewel.ui.component.styling.LinkStyle linkStyle, org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedButtonStyle, org.jetbrains.jewel.ui.component.styling.PopupContainerStyle popupContainerStyle, org.jetbrains.jewel.ui.component.styling.SplitButtonStyle outlinedSplitButtonStyle, org.jetbrains.jewel.ui.component.styling.RadioButtonStyle radioButtonStyle, org.jetbrains.jewel.ui.component.styling.ScrollbarStyle scrollbarStyle, org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle segmentedControlButtonStyle, org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle segmentedControlStyle, org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle selectableLazyColumnStyle, org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle simpleListItemStyle, org.jetbrains.jewel.ui.component.styling.SliderStyle sliderStyle, org.jetbrains.jewel.ui.component.styling.TextAreaStyle textAreaStyle, org.jetbrains.jewel.ui.component.styling.TextFieldStyle textFieldStyle, org.jetbrains.jewel.ui.component.styling.TooltipStyle tooltipStyle, org.jetbrains.jewel.ui.component.styling.DropdownStyle undecoratedDropdownStyle, org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle speedSearchStyle, org.jetbrains.jewel.ui.component.styling.SearchMatchStyle searchMatchStyle, org.jetbrains.jewel.ui.component.styling.PopupAdStyle popupAdStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle defaultSlimButtonStyle, org.jetbrains.jewel.ui.component.styling.ButtonStyle outlinedSlimButtonStyle, org.jetbrains.jewel.ui.component.styling.BadgeStyles badgeStyle);
+    method public org.jetbrains.jewel.ui.component.styling.BadgeStyles getBadgeStyle();
     method public org.jetbrains.jewel.ui.component.styling.CheckboxStyle getCheckboxStyle();
     method public org.jetbrains.jewel.ui.component.styling.ChipStyle getChipStyle();
     method public org.jetbrains.jewel.ui.component.styling.CircularProgressStyle getCircularProgressStyle();
@@ -55,6 +56,7 @@ package org.jetbrains.jewel.ui {
     method public org.jetbrains.jewel.ui.component.styling.IconButtonStyle getTransparentIconButtonStyle();
     method public org.jetbrains.jewel.ui.component.styling.DropdownStyle getUndecoratedDropdownStyle();
     method @androidx.compose.runtime.Composable public androidx.compose.runtime.ProvidedValue<? extends java.lang.Object?>[] styles();
+    property public org.jetbrains.jewel.ui.component.styling.BadgeStyles badgeStyle;
     property public org.jetbrains.jewel.ui.component.styling.CheckboxStyle checkboxStyle;
     property public org.jetbrains.jewel.ui.component.styling.ChipStyle chipStyle;
     property public org.jetbrains.jewel.ui.component.styling.CircularProgressStyle circularProgressStyle;
@@ -190,6 +192,26 @@ package org.jetbrains.jewel.ui.component {
     enum_constant @Deprecated public static final org.jetbrains.jewel.ui.component.AutoHideBehavior Long;
     enum_constant @Deprecated public static final org.jetbrains.jewel.ui.component.AutoHideBehavior Never;
     enum_constant @Deprecated public static final org.jetbrains.jewel.ui.component.AutoHideBehavior Normal;
+  }
+
+  public final class BadgeKt {
+    method @androidx.compose.runtime.Composable public static void Badge(optional androidx.compose.ui.Modifier modifier, optional kotlin.jvm.functions.Function0<kotlin.Unit>? onClick, optional boolean enabled, optional androidx.compose.foundation.interaction.MutableInteractionSource interactionSource, optional org.jetbrains.jewel.ui.component.styling.BadgeStyle style, optional androidx.compose.ui.text.TextStyle textStyle, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.RowScope,kotlin.Unit> content);
+  }
+
+  @androidx.compose.runtime.Immutable @kotlin.jvm.JvmInline public final value class BadgeState implements org.jetbrains.jewel.foundation.state.FocusableComponentState {
+    ctor @KotlinOnly public BadgeState(kotlin.ULong state);
+    method public long copy(optional boolean enabled, optional boolean focused, optional boolean hovered, optional boolean pressed, optional boolean active);
+    property public boolean isActive;
+    property public boolean isEnabled;
+    property public boolean isFocused;
+    property public boolean isHovered;
+    property public boolean isPressed;
+    property public kotlin.ULong state;
+    field public static final org.jetbrains.jewel.ui.component.BadgeState.Companion Companion;
+  }
+
+  public static final class BadgeState.Companion {
+    method public long of(optional boolean enabled, optional boolean focused, optional boolean hovered, optional boolean pressed, optional boolean active);
   }
 
   public final class BannerKt {
@@ -683,12 +705,12 @@ package org.jetbrains.jewel.ui.component {
     method @androidx.compose.runtime.Composable public static void HorizontallyScrollableContainer(androidx.compose.foundation.gestures.ScrollableState scrollState, optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier scrollbarModifier, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean reverseLayout, optional boolean scrollbarEnabled, optional androidx.compose.foundation.interaction.MutableInteractionSource scrollbarInteractionSource, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
     method @Deprecated @androidx.compose.runtime.Composable public static void HorizontallyScrollableContainer(androidx.compose.foundation.lazy.grid.LazyGridState scrollState, optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier scrollbarModifier, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean reverseLayout, optional boolean scrollbarEnabled, optional androidx.compose.foundation.interaction.MutableInteractionSource scrollbarInteractionSource, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
     method @Deprecated @androidx.compose.runtime.Composable public static void HorizontallyScrollableContainer(androidx.compose.foundation.lazy.LazyListState scrollState, optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier scrollbarModifier, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean reverseLayout, optional boolean scrollbarEnabled, optional androidx.compose.foundation.interaction.MutableInteractionSource scrollbarInteractionSource, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
-    method @androidx.compose.runtime.Composable public static void HorizontallyScrollableContainer(optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier scrollbarModifier, optional androidx.compose.foundation.ScrollState scrollState, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean reverseLayout, optional boolean scrollbarEnabled, optional androidx.compose.foundation.interaction.MutableInteractionSource scrollbarInteractionSource, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
+    method @Deprecated @androidx.compose.runtime.Composable public static void HorizontallyScrollableContainer(optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier scrollbarModifier, optional androidx.compose.foundation.ScrollState scrollState, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean reverseLayout, optional boolean scrollbarEnabled, optional androidx.compose.foundation.interaction.MutableInteractionSource scrollbarInteractionSource, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
     method @androidx.compose.runtime.Composable public static void HorizontallyScrollableContainer(optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier scrollbarModifier, optional androidx.compose.foundation.ScrollState scrollState, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean reverseLayout, optional boolean userScrollEnabled, optional boolean scrollbarEnabled, optional androidx.compose.foundation.interaction.MutableInteractionSource scrollbarInteractionSource, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
     method @androidx.compose.runtime.Composable public static void VerticallyScrollableContainer(androidx.compose.foundation.gestures.ScrollableState scrollState, optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier scrollbarModifier, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean reverseLayout, optional boolean scrollbarEnabled, optional androidx.compose.foundation.interaction.MutableInteractionSource scrollbarInteractionSource, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
     method @Deprecated @androidx.compose.runtime.Composable public static void VerticallyScrollableContainer(androidx.compose.foundation.lazy.grid.LazyGridState scrollState, optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier scrollbarModifier, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean reverseLayout, optional boolean scrollbarEnabled, optional androidx.compose.foundation.interaction.MutableInteractionSource scrollbarInteractionSource, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
     method @Deprecated @androidx.compose.runtime.Composable public static void VerticallyScrollableContainer(androidx.compose.foundation.lazy.LazyListState scrollState, optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier scrollbarModifier, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean reverseLayout, optional boolean scrollbarEnabled, optional androidx.compose.foundation.interaction.MutableInteractionSource scrollbarInteractionSource, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
-    method @androidx.compose.runtime.Composable public static void VerticallyScrollableContainer(optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier scrollbarModifier, optional androidx.compose.foundation.ScrollState scrollState, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean reverseLayout, optional boolean scrollbarEnabled, optional androidx.compose.foundation.interaction.MutableInteractionSource scrollbarInteractionSource, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
+    method @Deprecated @androidx.compose.runtime.Composable public static void VerticallyScrollableContainer(optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier scrollbarModifier, optional androidx.compose.foundation.ScrollState scrollState, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean reverseLayout, optional boolean scrollbarEnabled, optional androidx.compose.foundation.interaction.MutableInteractionSource scrollbarInteractionSource, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
     method @androidx.compose.runtime.Composable public static void VerticallyScrollableContainer(optional androidx.compose.ui.Modifier modifier, optional androidx.compose.ui.Modifier scrollbarModifier, optional androidx.compose.foundation.ScrollState scrollState, optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style, optional boolean reverseLayout, optional boolean userScrollEnabled, optional boolean scrollbarEnabled, optional androidx.compose.foundation.interaction.MutableInteractionSource scrollbarInteractionSource, kotlin.jvm.functions.Function1<? super androidx.compose.foundation.layout.BoxScope,kotlin.Unit> content);
     method @androidx.compose.runtime.Composable public static float scrollbarContentSafePadding(optional org.jetbrains.jewel.ui.component.styling.ScrollbarStyle style);
   }
@@ -1067,6 +1089,81 @@ package org.jetbrains.jewel.ui.component.search {
 }
 
 package org.jetbrains.jewel.ui.component.styling {
+
+  @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class BadgeColors {
+    ctor @KotlinOnly public BadgeColors(androidx.compose.ui.graphics.Brush background, androidx.compose.ui.graphics.Brush backgroundDisabled, androidx.compose.ui.graphics.Brush backgroundFocused, androidx.compose.ui.graphics.Brush backgroundPressed, androidx.compose.ui.graphics.Brush backgroundHovered, androidx.compose.ui.graphics.Color content, androidx.compose.ui.graphics.Color contentDisabled, androidx.compose.ui.graphics.Color contentFocused, androidx.compose.ui.graphics.Color contentPressed, androidx.compose.ui.graphics.Color contentHovered);
+    method @androidx.compose.runtime.Composable public androidx.compose.runtime.State<androidx.compose.ui.graphics.Brush> backgroundFor(long state);
+    method @androidx.compose.runtime.Composable public androidx.compose.runtime.State<androidx.compose.ui.graphics.Color> contentFor(long state);
+    method public androidx.compose.ui.graphics.Brush getBackground();
+    method public androidx.compose.ui.graphics.Brush getBackgroundDisabled();
+    method public androidx.compose.ui.graphics.Brush getBackgroundFocused();
+    method public androidx.compose.ui.graphics.Brush getBackgroundHovered();
+    method public androidx.compose.ui.graphics.Brush getBackgroundPressed();
+    property public androidx.compose.ui.graphics.Brush background;
+    property public androidx.compose.ui.graphics.Brush backgroundDisabled;
+    property public androidx.compose.ui.graphics.Brush backgroundFocused;
+    property public androidx.compose.ui.graphics.Brush backgroundHovered;
+    property public androidx.compose.ui.graphics.Brush backgroundPressed;
+    property public androidx.compose.ui.graphics.Color content;
+    property public androidx.compose.ui.graphics.Color contentDisabled;
+    property public androidx.compose.ui.graphics.Color contentFocused;
+    property public androidx.compose.ui.graphics.Color contentHovered;
+    property public androidx.compose.ui.graphics.Color contentPressed;
+    field public static final org.jetbrains.jewel.ui.component.styling.BadgeColors.Companion Companion;
+  }
+
+  public static final class BadgeColors.Companion {
+  }
+
+  @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class BadgeMetrics {
+    ctor @KotlinOnly public BadgeMetrics(androidx.compose.foundation.shape.CornerSize cornerSize, androidx.compose.foundation.layout.PaddingValues padding, androidx.compose.ui.unit.Dp minHeight);
+    method public androidx.compose.foundation.shape.CornerSize getCornerSize();
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    property public androidx.compose.foundation.shape.CornerSize cornerSize;
+    property public androidx.compose.ui.unit.Dp minHeight;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    field public static final org.jetbrains.jewel.ui.component.styling.BadgeMetrics.Companion Companion;
+  }
+
+  public static final class BadgeMetrics.Companion {
+  }
+
+  @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class BadgeStyle {
+    ctor public BadgeStyle(org.jetbrains.jewel.ui.component.styling.BadgeColors colors, org.jetbrains.jewel.ui.component.styling.BadgeMetrics metrics);
+    method public org.jetbrains.jewel.ui.component.styling.BadgeColors getColors();
+    method public org.jetbrains.jewel.ui.component.styling.BadgeMetrics getMetrics();
+    property public org.jetbrains.jewel.ui.component.styling.BadgeColors colors;
+    property public org.jetbrains.jewel.ui.component.styling.BadgeMetrics metrics;
+    field public static final org.jetbrains.jewel.ui.component.styling.BadgeStyle.Companion Companion;
+  }
+
+  public static final class BadgeStyle.Companion {
+  }
+
+  @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class BadgeStyles {
+    ctor public BadgeStyles(org.jetbrains.jewel.ui.component.styling.BadgeStyle blue, org.jetbrains.jewel.ui.component.styling.BadgeStyle blueSecondary, org.jetbrains.jewel.ui.component.styling.BadgeStyle green, org.jetbrains.jewel.ui.component.styling.BadgeStyle greenSecondary, org.jetbrains.jewel.ui.component.styling.BadgeStyle purpleSecondary, org.jetbrains.jewel.ui.component.styling.BadgeStyle graySecondary);
+    method public org.jetbrains.jewel.ui.component.styling.BadgeStyle getBlue();
+    method public org.jetbrains.jewel.ui.component.styling.BadgeStyle getBlueSecondary();
+    method public org.jetbrains.jewel.ui.component.styling.BadgeStyle getGraySecondary();
+    method public org.jetbrains.jewel.ui.component.styling.BadgeStyle getGreen();
+    method public org.jetbrains.jewel.ui.component.styling.BadgeStyle getGreenSecondary();
+    method public org.jetbrains.jewel.ui.component.styling.BadgeStyle getPurpleSecondary();
+    property public org.jetbrains.jewel.ui.component.styling.BadgeStyle blue;
+    property public org.jetbrains.jewel.ui.component.styling.BadgeStyle blueSecondary;
+    property public org.jetbrains.jewel.ui.component.styling.BadgeStyle graySecondary;
+    property public org.jetbrains.jewel.ui.component.styling.BadgeStyle green;
+    property public org.jetbrains.jewel.ui.component.styling.BadgeStyle greenSecondary;
+    property public org.jetbrains.jewel.ui.component.styling.BadgeStyle purpleSecondary;
+    field public static final org.jetbrains.jewel.ui.component.styling.BadgeStyles.Companion Companion;
+  }
+
+  public static final class BadgeStyles.Companion {
+  }
+
+  public final class BadgeStylingKt {
+    method public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.ui.component.styling.BadgeStyles> getLocalBadgeStyle();
+    property public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.ui.component.styling.BadgeStyles> LocalBadgeStyle;
+  }
 
   @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class BannerColors {
     ctor @KotlinOnly public BannerColors(androidx.compose.ui.graphics.Color background, androidx.compose.ui.graphics.Color border);
@@ -3966,6 +4063,7 @@ package org.jetbrains.jewel.ui.icons {
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Library;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Locked;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey LogFolder;
+    field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey McpServer;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Method;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey MethodReference;
     field @SuppressCompatibility public static final org.jetbrains.jewel.ui.icon.IntelliJIconKey Mnemonic;
@@ -4789,6 +4887,7 @@ package org.jetbrains.jewel.ui.theme {
   public final class JewelThemeKt {
     method @androidx.compose.runtime.Composable public static void BaseJewelTheme(org.jetbrains.jewel.foundation.theme.ThemeDefinition theme, org.jetbrains.jewel.ui.ComponentStyling styling, optional boolean swingCompatMode, kotlin.jvm.functions.Function0<kotlin.Unit> content);
     method @androidx.compose.runtime.Composable public static void BaseJewelTheme(org.jetbrains.jewel.foundation.theme.ThemeDefinition theme, org.jetbrains.jewel.ui.ComponentStyling styling, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.BadgeStyles getBadgeStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.CheckboxStyle getCheckboxStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.ChipStyle getChipStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.CircularProgressStyle getCircularProgressStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
@@ -4828,6 +4927,7 @@ package org.jetbrains.jewel.ui.theme {
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.TooltipStyle getTooltipStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @SuppressCompatibility @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.ui.component.styling.IconButtonStyle getTransparentIconButtonStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
     method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.LazyTreeStyle getTreeStyle(org.jetbrains.jewel.foundation.theme.JewelTheme.Companion);
+    property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.BadgeStyles org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.badgeStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.CheckboxStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.checkboxStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.ChipStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.chipStyle;
     property @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static org.jetbrains.jewel.ui.component.styling.CircularProgressStyle org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.circularProgressStyle;
