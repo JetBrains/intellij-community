@@ -1647,19 +1647,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
               sort -> sort.getQuery()
             );
             case VENDOR -> {
-              if (myVendorsSorted == null || myVendorsSorted.isEmpty()) {
-                LinkedHashSet<String> vendors = new LinkedHashSet<>();
-                try {
-                  ProcessIOExecutorService.INSTANCE.submit(() -> {
-                    vendors.addAll(UiPluginManager.getInstance().getAllVendors());
-                  }).get();
-                }
-                catch (InterruptedException | ExecutionException e) {
-                  LOG.error("Error while getting vendors from marketplace", e);
-                }
-                myVendorsSorted = new ArrayList<>(vendors);
-              }
-              yield myVendorsSorted;
+              yield getOrCalculateVendors();
             }
             case REPOSITORY -> RepositoryHelper.getCustomPluginRepositoryHosts();
             case INTERNAL, SUGGESTED, STAFF_PICKS -> null;
@@ -1926,6 +1914,24 @@ public final class PluginManagerConfigurablePanel implements Disposable {
           }
         };
       return myMarketplaceSearchPanel;
+    }
+
+    private List<String> getOrCalculateVendors() {
+      if (myVendorsSorted == null ||
+          myVendorsSorted.isEmpty() // FIXME seems like it shouldn't be here...
+      ) {
+        LinkedHashSet<String> vendors = new LinkedHashSet<>();
+        try {
+          ProcessIOExecutorService.INSTANCE.submit(() -> {
+            vendors.addAll(UiPluginManager.getInstance().getAllVendors());
+          }).get();
+        }
+        catch (InterruptedException | ExecutionException e) {
+          LOG.error("Error while getting vendors from marketplace", e);
+        }
+        myVendorsSorted = new ArrayList<>(vendors);
+      }
+      return myVendorsSorted;
     }
 
     private List<String> getOrCalculateTags() {
