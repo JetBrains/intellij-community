@@ -7,5 +7,5 @@ fun fooCtx(block: () -> Unit) {}
 
 context(ctx: Context)
 fun example() {
-    fooCtx /*<# [contextParametersLambda.kt:92]c| = |[contextParametersLambda.kt:146]ctx| «  #>*/{  }
+    fooCtx /*<# (|[contextParametersLambda.kt:92]c| = |[contextParametersLambda.kt:146]ctx| « |) #>*/{  }
 }

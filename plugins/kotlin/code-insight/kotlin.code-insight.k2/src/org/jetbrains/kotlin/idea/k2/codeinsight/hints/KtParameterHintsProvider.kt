@@ -217,9 +217,13 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     ) {
         if (contextParameterPairs.isEmpty()) return
 
-        val offset = callElement.valueArgumentList?.endOffset?.let { it - 1 }
+        val valueArgumentList = callElement.valueArgumentList
+
+        val offset = valueArgumentList?.endOffset?.let { it - 1 }
             ?: callElement.lambdaArguments.firstOrNull()?.startOffset
             ?: callElement.endOffset
+
+        val lambdaOnly = valueArgumentList == null
 
         sink.addPresentation(
             InlineInlayPosition(offset, true),
@@ -230,7 +234,11 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                 state = if (isUnitTestMode()) CollapseState.Expanded else CollapseState.Collapsed,
 
                 expandedState = {
-                    addParametersSeparator(callElement, valueParametersWithNames)
+                    if (lambdaOnly){
+                        text("(")
+                    } else {
+                        addParametersSeparator(valueParametersWithNames)
+                    }
 
                     for ((index, pair) in contextParameterPairs.withIndex()) {
                         val (parameterSymbol, receiverValue) = pair
@@ -240,6 +248,9 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
 
                     // a unicode char <<
                     toggleButton { text(" \u00AB ") }
+                    if (lambdaOnly){
+                        text(")")
+                    }
                 },
 
                 collapsedState = {
@@ -249,10 +260,8 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     }
 
     private fun CollapsiblePresentationTreeBuilder.addParametersSeparator(
-        callElement: KtCallElement,
         valueParametersWithNames: List<Pair<KaValueParameterSymbol, Name?>>
     ) {
-        if (callElement.valueArgumentList == null) return
         if (valueParametersWithNames.isNotEmpty()) text(", ")
     }
 
