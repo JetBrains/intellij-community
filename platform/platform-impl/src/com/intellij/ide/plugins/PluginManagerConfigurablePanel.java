@@ -334,7 +334,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
         myMarketplaceRunnable.run();
       }
       else {
-        myMarketplacePanel.setVisibleRunnable(myMarketplaceRunnable);
+        myMarketplacePanel.setOnBecomingVisibleCallback(myMarketplaceRunnable);
       }
     }
   }

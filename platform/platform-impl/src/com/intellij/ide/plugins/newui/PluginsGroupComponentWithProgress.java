@@ -16,7 +16,7 @@ public abstract class PluginsGroupComponentWithProgress extends PluginsGroupComp
   private static final Logger LOG = Logger.getInstance(PluginsGroupComponentWithProgress.class);
 
   private AsyncProcessIcon myIcon = new AsyncProcessIcon.BigCentered(IdeBundle.message("progress.text.loading"));
-  private @Nullable Runnable myVisibleRunnable;
+  private @Nullable Runnable myOnBecomingVisibleCallback;
 
   public PluginsGroupComponentWithProgress(@NotNull EventHandler eventHandler) {
     super(eventHandler);
@@ -84,16 +84,16 @@ public abstract class PluginsGroupComponentWithProgress extends PluginsGroupComp
     }
   }
 
-  public void setVisibleRunnable(@NotNull Runnable visibleRunnable) {
-    myVisibleRunnable = visibleRunnable;
+  public void setOnBecomingVisibleCallback(@NotNull Runnable onVisibilityChangeCallbackOnce) {
+    myOnBecomingVisibleCallback = onVisibilityChangeCallbackOnce;
   }
 
   @Override
-  public void setVisible(boolean aFlag) {
-    super.setVisible(aFlag);
-    if (aFlag && myVisibleRunnable != null) {
-      Runnable runnable = myVisibleRunnable;
-      myVisibleRunnable = null;
+  public void setVisible(boolean visible) {
+    super.setVisible(visible);
+    if (visible && myOnBecomingVisibleCallback != null) {
+      Runnable runnable = myOnBecomingVisibleCallback;
+      myOnBecomingVisibleCallback = null;
       runnable.run();
     }
   }
