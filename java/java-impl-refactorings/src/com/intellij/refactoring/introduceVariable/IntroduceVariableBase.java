@@ -57,10 +57,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -411,10 +408,23 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   private static @Nullable PsiType getNormalizedType(PsiExpression expr) {
-    PsiType type = expr.getType();
-    PsiClass refClass = PsiUtil.resolveClassInType(type);
-    if (refClass instanceof PsiAnonymousClass) {
-      return ((PsiAnonymousClass)refClass).getBaseClassType();
+    return normalizeType(expr.getType());
+  }
+
+  @Contract("null -> null")
+  private static PsiType normalizeType(PsiType type) {
+    if (type instanceof PsiClassType classType) {
+      PsiClass psiClass = classType.resolve();
+      if (psiClass instanceof PsiAnonymousClass anonymousClass) {
+        return anonymousClass.getBaseClassType();
+      }
+      if (psiClass != null && classType.hasNonTrivialParameters()) {
+        PsiType[] parameters = ContainerUtil.map2Array(classType.getParameters(), PsiType.class, t -> normalizeType(t));
+        return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, parameters);
+      }
+    }
+    if (type instanceof PsiCapturedWildcardType capturedWildcardType) {
+      return capturedWildcardType.getWildcard();
     }
     return type;
   }
