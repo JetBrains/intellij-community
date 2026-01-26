@@ -73,9 +73,9 @@ internal class TerminalCommandSpecCompletionContributorGen1 : CompletionContribu
     val document = parameters.editor.document
     val caretOffset = parameters.editor.caretModel.offset
     val command = document.getText(TextRange.create(promptModel.commandStartOffset, caretOffset))
-    val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command) ?: return
+    val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command)
     val allTokens = if (caretOffset != 0 && document.getText(TextRange.create(caretOffset - 1, caretOffset)) == " ") {
-      tokens + ""  // user inserted space after the last token, so add empty incomplete token as last
+      tokens + ""  // user inserted space after the last token, so add an empty incomplete token as last
     }
     else {
       tokens
@@ -239,7 +239,7 @@ internal class TerminalCommandSpecCompletionContributorGen1 : CompletionContribu
       return tokens  // command is not changed, so return initial tokens
     }
     val expandedTokens = context.shellSupport.getCommandTokens(context.project, command.toString())
-    return (expandedTokens ?: completeTokens) + tokens.last() // add incomplete token to the end
+    return expandedTokens + tokens.last() // add an incomplete token to the end
   }
 
   private fun ShellCompletionSuggestion.toLookupElement(shellType: ShellType): LookupElement {

@@ -15,10 +15,6 @@ internal abstract class BaseShSupport : TerminalShellSupport {
 
   override val lineContinuationChar: Char = '\\'
 
-  override fun getCommandTokens(project: Project, command: String): List<String>? {
-    return serviceOrNull<TerminalShLangService>()?.getShellCommandTokens(project, command)
-  }
-
   override fun parseAliases(aliasesDefinition: String): Map<String, String> {
     val aliases = splitAliases(aliasesDefinition)
     return aliases.asSequence().mapNotNull {

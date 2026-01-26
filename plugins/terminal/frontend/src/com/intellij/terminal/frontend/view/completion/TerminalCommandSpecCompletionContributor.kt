@@ -7,7 +7,6 @@ import com.intellij.terminal.completion.ShellCommandSpecsManager
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
-import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.util.ShellType
@@ -88,7 +87,7 @@ internal class TerminalCommandSpecCompletionContributor : TerminalCommandComplet
     val expandedTokens = readAction {
       parameters.shellSupport.getCommandTokens(parameters.project, command.toString())
     }
-    return (expandedTokens ?: completeTokens) + tokens.last() // add incomplete token to the end
+    return expandedTokens + tokens.last() // add an incomplete token to the end
   }
 
   private suspend fun computeSuggestions(
@@ -150,8 +149,7 @@ internal suspend fun getCommandTokens(context: TerminalCommandCompletionContext)
   val commandText = context.commandText.substring(0, localCursorOffset.toInt()).trimStart()
 
   val tokens = readAction {
-    val fromShellSupport = shellSupport.getCommandTokens(context.project, commandText)
-    fromShellSupport ?: ParametersListUtil.parse(commandText, true, true, false)
+    shellSupport.getCommandTokens(context.project, commandText)
   }
 
   return if (commandText.endsWith(' ') && commandText.isNotBlank()) {

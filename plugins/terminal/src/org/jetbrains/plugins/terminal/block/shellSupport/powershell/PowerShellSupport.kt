@@ -18,10 +18,6 @@ internal class PowerShellSupport : TerminalShellSupport {
 
   override val lineContinuationChar: Char = '`'
 
-  override fun getCommandTokens(project: Project, command: String): List<String>? {
-    return serviceOrNull<TerminalShLangService>()?.getShellCommandTokens(project, command)
-  }
-
   override fun parseCommandHistory(history: String): List<String> {
     val trimmedHistory = StringUtil.convertLineSeparators(history, "\n").trimEnd()
     if (trimmedHistory.isBlank()) {
