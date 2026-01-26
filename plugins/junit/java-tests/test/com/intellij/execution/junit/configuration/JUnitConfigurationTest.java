@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.configuration;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -44,6 +44,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -165,16 +166,25 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
   }
 
   public void testRunningJUnit() throws ExecutionException {
-    PsiClass testA = findTestA(getModule1());
-    JUnitConfiguration configuration = createConfiguration(testA);
-    JavaParameters parameters = checkCanRun(configuration);
-    assertEquals("[-ea, -Didea.test.cyclic.buffer.size=1048576]", parameters.getVMParametersList().toString());
-    final SegmentedOutputStream notifications = new SegmentedOutputStream(System.out);
-    assertTrue(JUnitStarter.checkVersion(parameters.getProgramParametersList().getArray(),
-                                         new PrintStream(notifications)));
-    assertTrue(parameters.getProgramParametersList().getList().contains(testA.getQualifiedName()));
-    assertEquals(JUnitStarter.class.getName(), parameters.getMainClass());
-    assertEquals(myJdk.getHomeDirectory().getPresentableUrl(), parameters.getJdkPath());
+    RegistryValue registryValue = Registry.get("idea.test.graceful.shutdown.timeout.seconds");
+    int timeout = registryValue.asInteger();
+    try {
+      registryValue.setValue(400);
+
+      PsiClass testA = findTestA(getModule1());
+      JUnitConfiguration configuration = createConfiguration(testA);
+      JavaParameters parameters = checkCanRun(configuration);
+      assertEquals("[-ea, -Didea.test.cyclic.buffer.size=1048576, -Didea.test.graceful.shutdown.timeout.seconds=400]", parameters.getVMParametersList().toString());
+      final SegmentedOutputStream notifications = new SegmentedOutputStream(System.out);
+      assertTrue(JUnitStarter.checkVersion(parameters.getProgramParametersList().getArray(),
+                                           new PrintStream(notifications)));
+      assertTrue(parameters.getProgramParametersList().getList().contains(testA.getQualifiedName()));
+      assertEquals(JUnitStarter.class.getName(), parameters.getMainClass());
+      assertEquals(myJdk.getHomeDirectory().getPresentableUrl(), parameters.getJdkPath());
+    }
+    finally {
+      registryValue.setValue(timeout);
+    }
   }
 
 

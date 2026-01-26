@@ -57,6 +57,15 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
   }
 
   public static ProcessOutput doStartTestsProcess(RunConfiguration configuration, Set<String> tests) throws ExecutionException {
+    ProcessOutput processOutput = doStartTestsProcessAsync(configuration, tests);
+    OSProcessHandler process = processOutput.process;
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    process.waitFor(10000);
+    process.destroyProcess();
+    return processOutput;
+  }
+
+  public static ProcessOutput doStartTestsProcessAsync(RunConfiguration configuration, Set<String> tests) throws ExecutionException {
     List<SMTestProxy> proxies = ContainerUtil.map(tests, hint -> {
       String path = hint.substring(hint.indexOf("://") + 3);
       String methodName = path.substring(path.lastIndexOf('/') + 1);
@@ -93,7 +102,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
       }, "", false, project, null);
     }
 
-    ProcessOutput processOutput = new ProcessOutput();
+    ProcessOutput processOutput = new ProcessOutput(process);
     process.addProcessListener(new ProcessListener() {
       final OutputEventSplitter splitter = new OutputEventSplitter() {
         @Override
@@ -142,10 +151,6 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
       }
     });
     process.startNotify();
-    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    process.waitFor(10000);
-    process.destroyProcess();
-
     return processOutput;
   }
 
@@ -195,5 +200,8 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     public List<String> err = new ArrayList<>();
     public List<String> sys = new ArrayList<>();
     public List<ServiceMessage> messages = new ArrayList<>();
+    public final OSProcessHandler process;
+
+    public ProcessOutput(OSProcessHandler process) { this.process = process; }
   }
 }

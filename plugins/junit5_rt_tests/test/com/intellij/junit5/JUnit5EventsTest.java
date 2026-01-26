@@ -167,7 +167,7 @@ public class JUnit5EventsTest {
   @Test
   void singleMethodTestOneFromMyTest() {
     var request =
-      JUnit5TestRunnerUtil.buildRequest(new String[]{"com.intellij.junit5.testData.InitStaticField$MyTest,testOne"}, new String[1], null);
+      new JUnit5TestRunnerHelper().buildRequest(new String[]{"com.intellij.junit5.testData.InitStaticField$MyTest,testOne"}, new String[1], null);
     var selectors = request.getSelectorsByType(DiscoverySelector.class);
     Assertions.assertFalse(selectors.isEmpty(), "Selectors should not be empty");
 

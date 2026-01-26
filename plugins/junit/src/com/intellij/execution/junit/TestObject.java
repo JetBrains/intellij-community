@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -41,6 +41,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
@@ -97,6 +98,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   private static final @NlsSafe String JUNIT_TEST_FRAMEWORK_NAME = "JUnit";
 
   private static final @NonNls String DEFAULT_RUNNER = "default";
+  private static final int DEFAULT_SHUTDOWN_TIMEOUT = 600;
 
   private final JUnitConfiguration myConfiguration;
   protected File myListenersFile;
@@ -352,6 +354,11 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     JavaParameters javaParameters = super.createJavaParameters();
+
+    int timeout = Registry.intValue("idea.test.graceful.shutdown.timeout.seconds", DEFAULT_SHUTDOWN_TIMEOUT);
+    if (timeout != DEFAULT_SHUTDOWN_TIMEOUT) {
+      javaParameters.getVMParametersList().addProperty("idea.test.graceful.shutdown.timeout.seconds", String.valueOf(timeout));
+    }
 
     if (javaParameters.getMainClass() == null) { // for custom main class, e.g. overridden by JUnitDevKitUnitTestingSettings.Companion#apply
       javaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);

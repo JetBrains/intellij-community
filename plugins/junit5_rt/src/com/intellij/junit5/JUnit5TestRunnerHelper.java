@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import org.junit.platform.commons.support.ReflectionSupport;
@@ -8,9 +8,7 @@ import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.discovery.*;
 import org.junit.platform.engine.support.descriptor.MethodSource;
-import org.junit.platform.launcher.LauncherDiscoveryRequest;
-import org.junit.platform.launcher.PostDiscoveryFilter;
-import org.junit.platform.launcher.TagFilter;
+import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 
 import java.io.BufferedReader;
@@ -26,11 +24,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class JUnit5TestRunnerUtil {
+public class JUnit5TestRunnerHelper {
   private static final Pattern VALUE_SOURCE_PATTERN = Pattern.compile("valueSource\\s(\\d+)");
   private static Class<?> NESTED_CLASS_SELECTOR_CLASS = null;
 
-  public static LauncherDiscoveryRequest buildRequest(String[] suiteClassNames, String[] packageNameRef, String param) {
+  public LauncherDiscoveryRequest buildRequest(String[] suiteClassNames, String[] packageNameRef, String param) {
     if (suiteClassNames.length == 0) {
       return null;
     }
@@ -79,7 +77,7 @@ public final class JUnit5TestRunnerUtil {
           for (String className : classNames) {
             if (!className.contains("*")) {
               try {
-                Class.forName(className, false, JUnit5TestRunnerUtil.class.getClassLoader());
+                Class.forName(className, false, getClass().getClassLoader());
               }
               catch (ClassNotFoundException e) {
                 System.err.println(MessageFormat.format(ResourceBundle.getBundle("messages.RuntimeBundle").getString("junit.class.not.found"), className));
@@ -122,6 +120,10 @@ public final class JUnit5TestRunnerUtil {
     return null;
   }
 
+  public void execute(Launcher launcher, LauncherDiscoveryRequest request, TestExecutionListener[] listeners) {
+    launcher.execute(request, listeners);
+  }
+
   private static boolean isNestedClassSelector(DiscoverySelector selector) {
     if (NESTED_CLASS_SELECTOR_CLASS == null) {
       try {
@@ -134,23 +136,18 @@ public final class JUnit5TestRunnerUtil {
     return NESTED_CLASS_SELECTOR_CLASS.isInstance(selector);
   }
 
-  private static boolean loadMethodByReflection(MethodSelector selector) {
+  protected boolean loadMethodByReflection(MethodSelector selector) {
     try {
       Class<?> aClass = Class.forName(selector.getClassName());
-      String parameterTypeNames;
-      if (ReflectionSupport.findMethod(MethodSelector.class, "getParameterTypeNames").isPresent()) {
-        parameterTypeNames = selector.getParameterTypeNames();
-      } else {
-        parameterTypeNames = selector.getMethodParameterTypes(); // this method is removed in JUnit 6.0.0 and higher
-      }
-      return ReflectionSupport.findMethod(aClass, selector.getMethodName(), parameterTypeNames).isPresent();
+      //noinspection deprecation
+      return ReflectionSupport.findMethod(aClass, selector.getMethodName(), selector.getMethodParameterTypes()).isPresent();
     }
     catch (ClassNotFoundException e) {
       return false;
     }
   }
 
-  private static boolean hasBrokenSelector(List<DiscoverySelector> selectors) {
+  private boolean hasBrokenSelector(List<DiscoverySelector> selectors) {
     for (DiscoverySelector selector : selectors) {
       if (selector instanceof MethodSelector && !loadMethodByReflection((MethodSelector)selector)) {
         return true;
@@ -213,7 +210,8 @@ public final class JUnit5TestRunnerUtil {
       List<ClasspathRootSelector> selectors = DiscoverySelectors.selectClasspathRoots(Collections.singleton(Paths.get(directory)));
       if (selectors.isEmpty()) {
         return null;
-      } else {
+      }
+      else {
         return selectors.iterator().next();
       }
     }
@@ -268,6 +266,7 @@ public final class JUnit5TestRunnerUtil {
     }
     return null;
   }
+
   private static NestedClassSelector getNestedSelector(String line, int nestedClassIdx) {
     String enclosingClass = line.substring(0, nestedClassIdx);
     String nestedClassName = line.substring(nestedClassIdx + 1);
