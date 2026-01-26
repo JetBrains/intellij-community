@@ -211,12 +211,15 @@ internal fun shouldUseEelApi(): Boolean = Registry.`is`("terminal.use.EelApi", t
  * loading the same configuration file twice might break things. 
  */
 internal suspend fun EelApi.fetchMinimalEnvironmentVariables(): Map<String, String> {
-  if (this.descriptor == LocalEelDescriptor) {
-    return System.getenv()
+  return try {
+    when (val exec = this.exec) {
+      is EelExecPosixApi -> exec.environmentVariables().minimal().eelIt().await()
+      is EelExecWindowsApi -> exec.environmentVariables().eelIt().await()
+    }
   }
-  return when (val exec = this.exec) {
-    is EelExecPosixApi -> exec.environmentVariables().minimal().eelIt().await()
-    is EelExecWindowsApi -> exec.environmentVariables().eelIt().await()
+  catch (err: EelExecApi.EnvironmentVariablesException) {
+    log.warn("Failed to fetch minimal environment variables for ${this.descriptor}, using an empty environment", err)
+    return emptyMap()
   }
 }
 
