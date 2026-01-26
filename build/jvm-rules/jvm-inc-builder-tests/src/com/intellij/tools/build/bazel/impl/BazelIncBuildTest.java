@@ -109,7 +109,7 @@ public abstract class BazelIncBuildTest {
     // expected to be the module root output path, like '.../execroot/_main/bazel-out'
     ExecutionResult execResult = runBazelCommand(
       OutputConsumer.lastLineConsumer(),
-      Duration.ofMinutes(1),
+      Duration.ofMinutes(5),
       "info",
       "output_path"
     );
