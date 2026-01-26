@@ -1,14 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.plugins.newui;
+package com.intellij.ide.plugins.newui
 
-import org.jetbrains.annotations.NotNull;
+import javax.swing.Icon
 
-import javax.swing.*;
-
-/**
- * @author Alexander Lobas
- */
-interface PluginLogoIconProvider {
-  @NotNull
-  Icon getIcon(boolean big, boolean error, boolean disabled);
+internal interface PluginLogoIconProvider {
+  fun getIcon(big: Boolean, error: Boolean, disabled: Boolean): Icon
 }
