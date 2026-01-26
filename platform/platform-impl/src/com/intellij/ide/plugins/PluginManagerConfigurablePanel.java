@@ -1178,16 +1178,16 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
           @Override
           protected void handleAttribute(@NotNull String name, @NotNull String value) {
-            if (!updateAction.myState) {
+            if (!updateAction.myIsSelected) {
               queries.add(name + (value.isEmpty() ? "" : SearchQueryParser.wrapAttribute(value)));
             }
           }
         };
 
-        if (updateAction.myState) {
+        if (updateAction.myIsSelected) {
           for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
             if (action != updateAction) {
-              ((InstalledSearchOptionAction)action).myState = false;
+              ((InstalledSearchOptionAction)action).myIsSelected = false;
             }
           }
 
@@ -2155,7 +2155,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
   private final class InstalledSearchOptionAction extends ToggleAction implements DumbAware {
     private final InstalledSearchOption myOption;
-    private boolean myState;
+    private boolean myIsSelected;
 
     private InstalledSearchOptionAction(@NotNull InstalledSearchOption option) {
       super(option.myPresentableNameSupplier);
@@ -2165,12 +2165,12 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return myState;
+      return myIsSelected;
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myState = state;
+      myIsSelected = state;
       myInstalledSearchCallback.accept(this);
     }
 
@@ -2181,11 +2181,11 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
     public void setState(@Nullable SearchQueryParser.Installed parser) {
       if (parser == null) {
-        myState = false;
+        myIsSelected = false;
         return;
       }
 
-      myState = switch (myOption) {
+      myIsSelected = switch (myOption) {
         case Enabled -> parser.enabled;
         case Disabled -> parser.disabled;
         case Downloaded -> parser.downloaded;
