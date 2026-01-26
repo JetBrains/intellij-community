@@ -3449,16 +3449,6 @@ c:com.intellij.ide.plugins.newui.LinkComponent
 - com.intellij.ui.components.labels.LinkLabel
 - <init>():V
 - p:getTextColor():java.awt.Color
-c:com.intellij.ide.plugins.newui.OneLineProgressIndicator
-- com.intellij.openapi.wm.impl.status.InlineProgressIndicator
-- <init>():V
-- <init>(java.lang.String,Z):V
-- <init>(Z):V
-- <init>(Z,Z):V
-- p:cancelRequest():V
-- createBaselineWrapper():javax.swing.JComponent
-- setCancelRunnable(java.lang.Runnable):V
-- s:task(java.lang.String):com.intellij.openapi.progress.TaskInfo
 f:com.intellij.ide.plugins.newui.PluginLogo
 - sf:INSTANCE:com.intellij.ide.plugins.newui.PluginLogo
 - sf:endBatchMode():V
