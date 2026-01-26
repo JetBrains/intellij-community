@@ -149,11 +149,11 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   @ApiStatus.Experimental
-  public void createNewSession(@Nullable AbstractTerminalRunner<?> terminalRunner,
-                               @Nullable TerminalTabState tabState,
-                               @Nullable ContentManager contentManager) {
+  public @NotNull TerminalWidget createNewSession(@Nullable AbstractTerminalRunner<?> terminalRunner,
+                                                  @Nullable TerminalTabState tabState,
+                                                  @Nullable ContentManager contentManager) {
     var runner = terminalRunner != null ? terminalRunner : myTerminalRunner;
-    createNewSession(contentManager, runner, TerminalEngine.CLASSIC, tabState, true, true);
+    return createNewSession(contentManager, runner, TerminalEngine.CLASSIC, tabState, true, true);
   }
 
   /** Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider} */
