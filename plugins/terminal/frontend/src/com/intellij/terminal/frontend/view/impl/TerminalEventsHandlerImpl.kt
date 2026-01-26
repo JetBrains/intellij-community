@@ -141,7 +141,7 @@ internal open class TerminalEventsHandlerImpl(
       }
 
       // Shift+Enter handling as Esc+CR
-      if (AdvancedSettings.getBoolean("terminal.shift.enter.sends.esc.cr")
+      if (settings.shiftEnterSendsEscCR()
           && keyCode == KeyEvent.VK_ENTER && isShiftPressedOnly(e.original)) {
         terminalInput.sendBytes(byteArrayOf(Ascii.ESC, Ascii.CR))
         return true
