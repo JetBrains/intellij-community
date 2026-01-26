@@ -32,9 +32,8 @@ class ProblemsContextNode(
     presentation.setIcon(myIcon)
   }
 
-  private fun getNodesForContext(problems: List<Problem>): Collection<Node> {
-    return problems.map { ProblemNode(this, parent.file, it) }
-  }
+  private fun getNodesForContext(problems: List<Problem>): Collection<Node> =
+    problems.map { ProblemNode(this, parent.file, it) }
 
   override fun getChildren(): List<Node> {
     if (!isGroupIdToolSwitchedOn()) {

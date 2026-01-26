@@ -17,7 +17,11 @@ import com.intellij.ui.tree.LeafState
 import org.jetbrains.annotations.ApiStatus
 import java.util.Objects.hash
 
-class ProblemNode(parent: Node, val file: VirtualFile, override val problem: Problem) : Node(parent), ProblemNodeI {
+class ProblemNode(
+  parent: Node,
+  val file: VirtualFile,
+  override val problem: Problem,
+) : Node(parent), ProblemNodeI {
   init {
     Logger.getInstance(javaClass).assertTrue(project != null, this)
   }

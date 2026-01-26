@@ -19,7 +19,8 @@ internal class ProblemsViewHighlightingFileRoot(panel: ProblemsViewPanel, val fi
     override val project = panel.project
   }
 
-  private val watcher: ProblemsViewHighlightingWatcher = ProblemsViewHighlightingWatcher(provider, this, file, document, HighlightSeverity.TEXT_ATTRIBUTES.myVal + 1)
+  private val watcher: ProblemsViewHighlightingWatcher =
+    ProblemsViewHighlightingWatcher(provider, this, file, document, HighlightSeverity.TEXT_ATTRIBUTES.myVal + 1)
 
   init {
     Disposer.register(this, provider)
