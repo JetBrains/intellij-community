@@ -116,7 +116,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             publisher.rootsChanged(rootChangedEvent)
         }
 
-        //on finish writeAction `FirIdeOutOfBlockPsiTreeChangePreprocessor.treeChanged` will collect data
+        //on finish writeAction `FirIdeOutOfBlockModificationService.OutOfBlockTreeChangePreprocessor.treeChanged` will collect data
         project.executeWriteCommand("doc change", null) {
             contentElement.replace(factory.createExpression("42"))
         }

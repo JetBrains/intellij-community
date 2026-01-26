@@ -44,7 +44,7 @@
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.statistics.K2IdeKotlinObjectSizeCalculator"/>
 
     <psi.treeChangePreprocessor
-            implementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockPsiTreeChangePreprocessor"/>
+            implementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockModificationService$OutOfBlockTreeChangePreprocessor"/>
   </extensions>
 
   <projectListeners>

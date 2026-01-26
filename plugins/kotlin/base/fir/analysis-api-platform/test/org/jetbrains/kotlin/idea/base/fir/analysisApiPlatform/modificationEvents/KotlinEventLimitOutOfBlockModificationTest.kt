@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventKind
-import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockPsiTreeChangePreprocessor
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockModificationService
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -19,11 +19,11 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.junit.Assert
 
 /**
- * The [tree change preprocessor][org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockPsiTreeChangePreprocessor] is
+ * The [tree change preprocessor][org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockModificationService] is
  * limited in the number of tree change events it should process and the number of modification events it should publish. This class
  * contains tests which verify these limitations.
  *
- * See [FirIdeOutOfBlockPsiTreeChangePreprocessor][org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockPsiTreeChangePreprocessor]
+ * See [FirIdeOutOfBlockModificationService][org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockModificationService]
  * for more information.
  */
 class KotlinEventLimitOutOfBlockModificationTest : AbstractKotlinModificationEventTest() {
@@ -33,7 +33,7 @@ class KotlinEventLimitOutOfBlockModificationTest : AbstractKotlinModificationEve
         // To avoid having to edit too many files in each test to trigger a global modification event, we set the processing limit to a low
         // value. In particular, 2 allows us to test single-file and multi-file behavior, without having to repeat steps for multi-file
         // behavior.
-        Registry.get(FirIdeOutOfBlockPsiTreeChangePreprocessor.FILE_PROCESSING_LIMIT_KEY).setValue(2)
+        Registry.get(FirIdeOutOfBlockModificationService.FILE_PROCESSING_LIMIT_KEY).setValue(2)
     }
 
     fun `test that modification events are limited when modifying multiple files`() {

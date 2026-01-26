@@ -6,6 +6,7 @@ import com.intellij.injected.editor.DocumentWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteActionListener
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
@@ -35,17 +36,18 @@ import java.util.WeakHashMap
 /**
  * Processes PSI tree change events to invalidate caches and publish modification events.
  *
- * To avoid performance problems associated with excessive handling of tree change events, the tree change preprocessor memorizes a
+ * To avoid performance problems associated with excessive handling of tree change events, the service memorizes a
  * [TreeChangeProcessingState] that allows avoiding the processing of further events for the duration of the write action.
  */
 @ApiStatus.Internal
-class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor, Disposable {
+@Service(Service.Level.PROJECT)
+class FirIdeOutOfBlockModificationService(private val project: Project) : Disposable {
     /**
-     * The maximum number of files that [FirIdeOutOfBlockPsiTreeChangePreprocessor] will process before publishing a global modification
-     * event. The processing limit applies for the duration of a single write action.
+     * The maximum number of files that [FirIdeOutOfBlockModificationService] will process before publishing a global modification event.
+     * The processing limit applies for the duration of a single write action.
      *
      * In the case of a multiverse project, an editor document is not necessarily associated with just one [PsiFile]. When multiple
-     * [CodeInsightContext][com.intellij.codeInsight.multiverse.CodeInsightContext]s exist for the same virtual file, the preprocessor
+     * [CodeInsightContext][com.intellij.codeInsight.multiverse.CodeInsightContext]s exist for the same virtual file, the service
      * might encounter different [PsiFile]s for the same virtual file in the same write action. Hence, a limit of just one file *does not*
      * ensure that editing a single document always results in a module modification event. With a multiverse context, even a "single-file"
      * edit can affect multiple [PsiFile]s.
@@ -59,18 +61,12 @@ class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : 
     init {
         ApplicationManagerEx.getApplicationEx().addWriteActionListener(ContextRemovalWriteActionListener(), this)
 
-        // `FirIdeOutOfBlockPsiTreeChangePreprocessor` is not a service, so we cannot easily grab an instance of the tree change
-        // preprocessor. This makes it difficult to register this listener in XML, and instead it's registered directly.
         project.analysisMessageBus
             .connect(this)
             .subscribe(KotlinAnalysisInWriteActionListener.TOPIC, ContextRemovalAnalysisInWriteActionListener())
     }
 
-    override fun treeChanged(event: PsiTreeChangeEventImpl) {
-        if (project.isDefault) {
-            return
-        }
-
+    private fun handleTreeChangeEvent(event: PsiTreeChangeEventImpl) {
         val context = threadLocalContext.get()
         if (context.state == TreeChangeProcessingState.GlobalEventPublished) {
             return
@@ -248,6 +244,23 @@ class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : 
     override fun dispose() {
     }
 
+    /**
+     * A stateless listener that delegates to [FirIdeOutOfBlockModificationService].
+     *
+     * Project extensions don't support [Disposable], so the stateful logic needs to be encapsulated in a project service. Hence, this
+     * preprocessor is separate from the modification service itself.
+     */
+    @ApiStatus.Internal
+    class OutOfBlockTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor {
+        override fun treeChanged(event: PsiTreeChangeEventImpl) {
+            if (project.isDefault) {
+                return
+            }
+
+            getInstance(project).handleTreeChangeEvent(event)
+        }
+    }
+
     private inner class ContextRemovalWriteActionListener : WriteActionListener {
         override fun writeActionStarted(action: Class<*>) {
             // Cleaning up on write action start is not strictly necessary because the context should have been cleaned up at the end of
@@ -285,6 +298,9 @@ class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : 
         const val FILE_PROCESSING_LIMIT_KEY: String = "kotlin.analysis.treeChangePreprocessor.fileProcessingLimit"
 
         const val DEFAULT_FILE_PROCESSING_LIMIT: Int = 5
+
+        fun getInstance(project: Project): FirIdeOutOfBlockModificationService =
+            project.getService(FirIdeOutOfBlockModificationService::class.java)
     }
 }
 
@@ -299,7 +315,7 @@ private class TreeChangeHandlingContext(
  * For each [PsiFile], [TreeChangeFileState] tracks the current progress of tree change processing. This allows us to stop tree change
  * processing for the file once an OOBM event has been published.
  *
- * @see FirIdeOutOfBlockPsiTreeChangePreprocessor
+ * @see FirIdeOutOfBlockModificationService
  */
 private sealed class TreeChangeFileState {
     /**
@@ -325,7 +341,7 @@ private sealed class TreeChangeFileState {
 /**
  * The [TreeChangeProcessingState] tracks whether the tree change preprocessor still accepts tree change events.
  *
- * @see FirIdeOutOfBlockPsiTreeChangePreprocessor
+ * @see FirIdeOutOfBlockModificationService
  */
 private sealed class TreeChangeProcessingState {
     /**
@@ -333,7 +349,7 @@ private sealed class TreeChangeProcessingState {
      * to track which files have been encountered and whether an out-of-block modification event has already been published for the file's
      * module.
      *
-     * When we encounter files beyond the [processing limit][FirIdeOutOfBlockPsiTreeChangePreprocessor.FILE_PROCESSING_LIMIT], we're likely
+     * When we encounter files beyond the [processing limit][FirIdeOutOfBlockModificationService.FILE_PROCESSING_LIMIT], we're likely
      * dealing with a complex write action. To avoid excessive processing, the preprocessor should proceed to publish a global modification
      * event and jump straight to [GlobalEventPublished].
      *
