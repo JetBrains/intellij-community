@@ -37,17 +37,17 @@ object PyProjectSdkConfiguration {
     val project = module.project
     PyPackageCoroutine.launch(project) {
       withBackgroundProgress(project, createSdkInfoWithTool.createSdkInfo.intentionName, false) {
-        lifetime.use { setSdkUsingCreateSdkInfo(module, createSdkInfoWithTool, false) }
+        lifetime.use { setSdkUsingCreateSdkInfo(module, createSdkInfoWithTool) }
       }
     }
   }
 
   suspend fun setSdkUsingCreateSdkInfo(
-    module: Module, createSdkInfoWithTool: CreateSdkInfoWithTool, needsConfirmation: Boolean,
+    module: Module, createSdkInfoWithTool: CreateSdkInfoWithTool,
   ): Boolean = withContext(Dispatchers.Default) {
     thisLogger().debug("Configuring sdk using ${createSdkInfoWithTool.toolId}")
 
-    val sdk = createSdkInfoWithTool.createSdkInfo.getSdkCreator(module).createSdk(needsConfirmation).getOr {
+    val sdk = createSdkInfoWithTool.createSdkInfo.getSdkCreator(module).createSdk().getOr {
       ShowingMessageErrorSync.emit(it.error, module.project)
       return@withContext true
     } ?: return@withContext false

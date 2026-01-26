@@ -9,8 +9,11 @@ import com.intellij.python.community.impl.pipenv.pipenvPath
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.ToolCommandExecutor
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.createSdk
+import com.jetbrains.python.sdk.detectToolExecutableOrNull
+import com.jetbrains.python.sdk.runTool
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -19,26 +22,27 @@ import org.jetbrains.annotations.SystemDependent
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-private val PIP_TOOL: ToolCommandExecutor = ToolCommandExecutor("pip") {
+private val PIPENV_TOOL: ToolCommandExecutor = ToolCommandExecutor("pipenv") {
   pipenvPath
 }
 
 @Internal
-suspend fun runPipEnv(dirPath: Path?, vararg args: String): PyResult<String> = PIP_TOOL.runTool(dirPath, *args)
+suspend fun runPipEnv(dirPath: Path?, vararg args: String): PyResult<String> = PIPENV_TOOL.runTool(dirPath, *args)
 
 @Internal
-suspend fun <T> runPipEnv(dirPath: Path?, vararg args: String, transformer: ProcessOutputTransformer<T>): PyResult<T> = PIP_TOOL.runTool(dirPath = dirPath, args = args, transformer = transformer)
+suspend fun <T> runPipEnv(dirPath: Path?, vararg args: String, transformer: ProcessOutputTransformer<T>): PyResult<T> =
+  PIPENV_TOOL.runTool(dirPath = dirPath, args = args, transformer = transformer)
 
 
 @Internal
 @JvmOverloads
-internal fun detectPipEnvExecutableOrNull(eel: EelApi = localEel): Path?  = PIP_TOOL.detectToolExecutableOrNull(eel)
+internal fun detectPipEnvExecutableOrNull(eel: EelApi = localEel): Path? = PIPENV_TOOL.detectToolExecutableOrNull(eel)
 
 /**
  * Returns the configured pipenv executable or detects it automatically.
  */
 @Internal
-suspend fun getPipEnvExecutable(eel: EelApi = localEel): Path? =  PIP_TOOL.getToolExecutable(eel)
+suspend fun getPipEnvExecutable(eel: EelApi = localEel): Path? = PIPENV_TOOL.getToolExecutable(eel)
 
 /**
  * Sets up the pipenv environment under the modal progress window.
@@ -73,7 +77,11 @@ suspend fun setupPipEnvSdkWithProgressReport(
  * @return the path to the pipenv environment.
  */
 @Internal
-suspend fun setupPipEnv(projectPath: Path, basePythonBinaryPath: PythonBinary?, installPackages: Boolean): PyResult<@SystemDependent String> {
+suspend fun setupPipEnv(
+  projectPath: Path,
+  basePythonBinaryPath: PythonBinary?,
+  installPackages: Boolean,
+): PyResult<@SystemDependent String> {
   when {
     installPackages -> {
       val pythonArgs = if (basePythonBinaryPath != null) listOf("--python", basePythonBinaryPath.pathString) else emptyList()

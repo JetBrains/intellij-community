@@ -17,6 +17,7 @@ import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.configuration.*
+import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 
@@ -88,6 +89,7 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
     val hatchVenv = HatchVirtualEnvironment(HatchEnvironment.DEFAULT, environment)
     val sdk = hatchVenv.createSdk(hatchService.getWorkingDirectoryPath()).onSuccess { sdk ->
       sdk.setAssociationToModule(module)
+      module.project.pySdkService.persistSdk(sdk)
     }
     sdk
   }

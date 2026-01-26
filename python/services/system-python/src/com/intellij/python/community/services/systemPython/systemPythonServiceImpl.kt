@@ -45,7 +45,8 @@ internal suspend fun getCacheTimeout(): Duration? =
 @State(name = "SystemPythonService", storages = [Storage("systemPythonService.xml", roamingType = RoamingType.LOCAL)],
        allowLoadInTests = true)
 @Internal
-class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonService, SimplePersistentStateComponent<MyServiceState>(MyServiceState()) {
+class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonService,
+                                                       SimplePersistentStateComponent<MyServiceState>(MyServiceState()) {
   private val findPythonsMutex = Mutex()
   private val _cacheImpl: CompletableDeferred<Cache<EelDescriptor, SystemPython>?> = CompletableDeferred()
   private suspend fun cache() = _cacheImpl.await()
@@ -64,7 +65,8 @@ class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonService, Simp
 
   override suspend fun registerSystemPython(pythonPath: PythonBinary): Result<SystemPython, SysPythonRegisterError> {
     val pythonWithLangLevel = VanillaPythonWithPythonInfoImpl.createByPythonBinary(pythonPath)
-      .getOr(PySystemPythonBundle.message("py.system.python.service.python.is.broken", pythonPath)) { return Result.failure(it.error.asSysPythonRegisterError()) }
+      .getOr(PySystemPythonBundle.message("py.system.python.service.python.is.broken",
+                                          pythonPath)) { return Result.failure(it.error.asSysPythonRegisterError()) }
     val systemPython = SystemPython.create(pythonWithLangLevel, null).getOr { return it }
     state.userProvidedPythons.add(pythonPath.pathString)
     cache()?.get(pythonPath.getEelDescriptor())?.add(systemPython)
@@ -84,8 +86,14 @@ class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonService, Simp
       }
       else {
         cache.get(eelApi.descriptor)
-      }.sorted()
-    } ?: searchPythonsPhysicallyNoCache(eelApi).sorted()
+      }.sortedSystemPythons()
+    } ?: searchPythonsPhysicallyNoCache(eelApi).sortedSystemPythons()
+
+  private fun Iterable<SystemPython>.sortedSystemPythons(): List<SystemPython> =
+    sortedWith(
+      // Free-threaded Python is unstable, we don't want to have it selected by default if we have alternatives
+      compareBy<SystemPython> { it.pythonInfo.freeThreaded }.thenByDescending { it.pythonInfo.languageLevel }
+    )
 
 
   class MyServiceState : BaseState() {

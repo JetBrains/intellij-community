@@ -11,12 +11,14 @@ import com.intellij.python.common.tools.ToolId
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -28,7 +30,7 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
     { checkManageableEnv(module) }
-  ) { { setupVenv(module) } }
+  ) { envExists -> { setupVenv(module, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
 
@@ -38,14 +40,22 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
     withContext(Dispatchers.IO) {
       getVirtualEnv(module)?.let {
         it.findEnvOrNull(PyCharmCommunityCustomizationBundle.message("sdk.use.existing.venv", it.name))
-      } ?: EnvCheckerResult.CannotConfigure
+      } ?: EnvCheckerResult.EnvNotFound(PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion.no.arg"))
     }
   }
 
   private fun getVirtualEnv(module: Module): PyDetectedSdk? = detectAssociatedEnvironments(module, existingSdks, context)
     .firstOrNull { !it.pyvenvContains("uv = ") }
 
-  private suspend fun setupVenv(module: Module): PyResult<Sdk> {
+  private suspend fun setupVenv(module: Module, envExists: EnvExists): PyResult<Sdk> =
+    if (envExists) {
+      setupExistingVenv(module)
+    }
+    else {
+      createVenvAndSdk(ModuleOrProject.ModuleAndProject(module))
+    }
+
+  private suspend fun setupExistingVenv(module: Module): PyResult<Sdk> {
     val env = withContext(Dispatchers.IO) {
       getVirtualEnv(module)
     } ?: return PyResult.failure(MessageError("Can't find venv for the module"))
@@ -57,6 +67,7 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
       PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance())
     ).getOr { return it }
     sdk.persist()
+    module.project.pySdkService.persistSdk(sdk)
 
     return PyResult.success(sdk)
   }

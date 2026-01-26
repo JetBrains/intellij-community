@@ -26,6 +26,7 @@ import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.poetry.*
+import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -109,6 +110,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
         LOGGER.debug("Adding associated poetry environment: $path, $basePath")
         sdk.setAssociationToModule(module)
         SdkConfigurationUtil.addSdk(sdk)
+        module.project.pySdkService.persistSdk(sdk)
       }
 
       PyResult.success(sdk)

@@ -20,6 +20,7 @@ import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
@@ -127,6 +128,7 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
       withContext(Dispatchers.EDT) {
         it.persist()
         it.setAssociationToModule(sdkAssociatedModule)
+        sdkAssociatedModule.project.pySdkService.persistSdk(it)
       }
     }
     return sdkSetupResult

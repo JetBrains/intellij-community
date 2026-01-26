@@ -15,7 +15,7 @@ typealias CheckToml = Boolean
 typealias EnvExists = Boolean
 
 fun interface SdkCreator {
-  suspend fun createSdk(needsConfirmation: Boolean): PyResult<Sdk?>
+  suspend fun createSdk(): PyResult<Sdk>
 }
 
 @ApiStatus.Internal
@@ -25,27 +25,20 @@ sealed class CreateSdkInfo(private val sdkCreator: SdkCreator) :
   abstract val intentionName: String
 
   /**
-   * Creates SDK for a module named [moduleName]. This does **not** affect the module itself, but just sets user readable title.
+   * Creates SDK for a module named [moduleName]. This does **not** affect the module itself but just sets a user-readable title.
    */
   fun getSdkCreator(moduleName: @NlsSafe String): SdkCreator = {
     withContext(TraceContext(moduleName)) {
-      sdkCreator.createSdk(it)
+      sdkCreator.createSdk()
     }
   }
 
 
   /**
-   * Nullable SDK is only possible when we requested user confirmation but didn't get it. The idea behind this function is to provide
-   * non-nullable SDK when no confirmation from the user is needed.
-   *
-   *  TODO: Make SDK non-null
-   * It's a temporary solution until we'll be able to remove all custom user dialogs and enable [enableSDKAutoConfigurator] by default.
-   * After that lands, we'll get rid of nullable SDK.
-   *
-   * [moduleName] does **not** affect the module itself, but just sets user readable title.
+   * Creates SDK for a module named [moduleName]. This does **not** affect the module itself but just sets a user-readable title.
    */
-  suspend fun createSdkWithoutConfirmation(moduleName: @NlsSafe String): PyResult<Sdk> =
-    getSdkCreator(moduleName).createSdk(needsConfirmation = false).mapSuccess { it!! }
+  suspend fun createSdk(moduleName: @NlsSafe String): PyResult<Sdk> =
+    getSdkCreator(moduleName).createSdk()
 
   /**
    * We want to preserve the initial order, but at the same time existing environment should have a higher priority by default
@@ -103,4 +96,4 @@ suspend fun prepareSdkCreator(
 fun CreateSdkInfo.getSdkCreator(module: Module): SdkCreator =
   getSdkCreator(module.name)
 
-suspend fun CreateSdkInfo.createSdkWithoutConfirmation(module: Module): PyResult<Sdk> = createSdkWithoutConfirmation(module.name)
+suspend fun CreateSdkInfo.createSdk(module: Module): PyResult<Sdk> = createSdk(module.name)

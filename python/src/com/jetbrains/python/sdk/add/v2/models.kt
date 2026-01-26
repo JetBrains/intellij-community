@@ -95,7 +95,7 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
       val projectPathPrefix = projectPathFlows.projectPathWithDefault.first()
       val existingSelectableInterpreters = fileSystem.getExistingSelectableInterpreters(projectPathPrefix)
       knownInterpreters.value = existingSelectableInterpreters
-      _detectedInterpreters.value = fileSystem.getDetectedSelectableInterpreters(existingSelectableInterpreters)
+      _detectedInterpreters.value = fileSystem.getDetectedSelectableInterpreters(projectPathPrefix, existingSelectableInterpreters)
     }
 
     this.allInterpreters = combine(
@@ -126,9 +126,14 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
     state.selectedInterpreter.set(interpreter)
   }
 
-  internal suspend fun addManuallyAddedPythonNotNecessarilySystem(homePath: P) = addManuallyAddedInterpreter(homePath, requireSystemPython = false)
+  internal suspend fun addManuallyAddedPythonNotNecessarilySystem(homePath: P) =
+    addManuallyAddedInterpreter(homePath, requireSystemPython = false)
+
   internal suspend fun addManuallyAddedSystemPython(homePath: P) = addManuallyAddedInterpreter(homePath, requireSystemPython = true)
-  private suspend fun addManuallyAddedInterpreter(homePath: P, requireSystemPython: Boolean): PyResult<ManuallyAddedSelectableInterpreter<P>> {
+  private suspend fun addManuallyAddedInterpreter(
+    homePath: P,
+    requireSystemPython: Boolean,
+  ): PyResult<ManuallyAddedSelectableInterpreter<P>> {
     val python = homePath.let { fileSystem.getSystemPythonFromSelection(it, requireSystemPython) }.getOr { return it }
 
     val interpreter = ManuallyAddedSelectableInterpreter(homePath, python.pythonInfo, isBase = python.isBase).also {
@@ -146,11 +151,13 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
   }
 }
 
-abstract class PythonMutableTargetAddInterpreterModel<P : PathHolder>(projectPathFlows: ProjectPathFlows, fileSystem: FileSystem<P>) : PythonAddInterpreterModel<P>(projectPathFlows, fileSystem) {
+abstract class PythonMutableTargetAddInterpreterModel<P : PathHolder>(projectPathFlows: ProjectPathFlows, fileSystem: FileSystem<P>) :
+  PythonAddInterpreterModel<P>(projectPathFlows, fileSystem) {
   override val state: MutableTargetState<P> = MutableTargetState(propertyGraph)
 }
 
-class PythonLocalAddInterpreterModel<P : PathHolder>(projectPathFlows: ProjectPathFlows, fileSystem: FileSystem<P>) : PythonMutableTargetAddInterpreterModel<P>(projectPathFlows, fileSystem) {
+class PythonLocalAddInterpreterModel<P : PathHolder>(projectPathFlows: ProjectPathFlows, fileSystem: FileSystem<P>) :
+  PythonMutableTargetAddInterpreterModel<P>(projectPathFlows, fileSystem) {
   override fun initialize(scope: CoroutineScope) {
     super.initialize(scope)
 

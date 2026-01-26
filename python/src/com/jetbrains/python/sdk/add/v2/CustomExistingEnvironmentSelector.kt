@@ -13,7 +13,6 @@ import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -67,11 +66,7 @@ internal abstract class CustomExistingEnvironmentSelector<P : PathHolder>(
     executablePath.initialize(scope)
     comboBox.initialize(
       scope = scope,
-      flow = existingEnvironments.map { existing ->
-        existing ?: return@map null
-        val withUniquePath = existing.distinctBy { interpreter -> interpreter.homePath }
-        sortForExistingEnvironment(withUniquePath, module)
-      }
+      flow = existingEnvironments.mapDistinctSortedForExistingEnvironment(module)
     )
   }
 

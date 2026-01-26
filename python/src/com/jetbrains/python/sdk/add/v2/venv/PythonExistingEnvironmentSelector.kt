@@ -14,9 +14,9 @@ import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.map
 
-class PythonExistingEnvironmentSelector<P : PathHolder>(model: PythonAddInterpreterModel<P>, private val module: Module?) : PythonExistingEnvironmentConfigurator<P>(model) {
+class PythonExistingEnvironmentSelector<P : PathHolder>(model: PythonAddInterpreterModel<P>, private val module: Module?) :
+  PythonExistingEnvironmentConfigurator<P>(model) {
   private lateinit var comboBox: PythonInterpreterComboBox<P>
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?>? = null
   override val toolExecutablePersister: suspend (P) -> Unit = { }
@@ -34,8 +34,7 @@ class PythonExistingEnvironmentSelector<P : PathHolder>(model: PythonAddInterpre
   }
 
   override fun onShown(scope: CoroutineScope) {
-    val interpretersFlow = model.allInterpreters.map { it?.let { sortForExistingEnvironment(it, module) } }
-    comboBox.initialize(scope, interpretersFlow)
+    comboBox.initialize(scope, model.allInterpreters.mapDistinctSortedForExistingEnvironment(module))
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
