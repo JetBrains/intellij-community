@@ -503,7 +503,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
           else {
             val insets = border.getBorderInsets(toolWindowPaneParent)
             if (insets.left != left || insets.right != right) {
-              toolWindowPaneParent.border = JBUI.Borders.empty(insets.top, left, insets.bottom, right)
+              val top = JBUI.unscale(insets.top)
+              val bottom = JBUI.unscale(insets.bottom)
+              toolWindowPaneParent.border = JBUI.Borders.empty(top, left, bottom, right)
             }
           }
         }
@@ -1230,15 +1232,15 @@ internal class IslandsUICustomization : InternalUICustomization() {
       val insets = centerComponent.border?.getBorderInsets(centerComponent) ?: JBUI.emptyInsets()
 
       centerComponent.border = JBUI.Borders.empty(
-        insets.top,
-        insets.left,
+        JBUI.unscale(insets.top),
+        JBUI.unscale(insets.left),
         if (isStatusBarVisible) {
           0
         }
         else {
           JBUI.getInt("Islands.emptyGap", 4)
         },
-        insets.right
+        JBUI.unscale(insets.right)
       )
     }
     centerComponent.revalidate()
