@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -9,6 +10,7 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public class TextHorizontalLayout extends HorizontalLayout {
   public static final @NonNls String FIX_LABEL = "fix_label";
 

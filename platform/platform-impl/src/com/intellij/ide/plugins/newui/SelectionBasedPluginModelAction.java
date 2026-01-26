@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.PluginEnableDisableAction;
+import com.intellij.ide.plugins.PluginEnabledState;
 import com.intellij.ide.plugins.newui.buttons.OptionButton;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.Producer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,13 +16,12 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.List;
 import java.util.*;
 import java.util.function.Function;
 
-import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.util.containers.ContainerUtil.*;
 
+@ApiStatus.Internal
 abstract class SelectionBasedPluginModelAction<C extends JComponent> extends DumbAwareAction {
 
   protected final @NotNull PluginModelFacade myPluginModelFacade;
