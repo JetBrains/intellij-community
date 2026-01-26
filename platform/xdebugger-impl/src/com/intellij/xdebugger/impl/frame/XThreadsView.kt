@@ -140,21 +140,36 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
 
   class ThreadsContainer(private val session: XDebugSessionProxy) : XValueContainer() {
     override fun computeChildren(node: XCompositeNode) {
-      val container = object : XSuspendContext.XExecutionStackContainer {
+      val container = object : XSuspendContext.XExecutionStackGroupContainer {
         override fun errorOccurred(errorMessage: String) {
         }
 
         override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
           val children = XValueChildrenList()
-          executionStacks.map { FramesContainer(it, session) }.forEach { children.add("", it) }
+          executionStacks.map { FramesContainer(it, session) }.forEach { children.add(it.executionStack.displayName, it) }
+          node.addChildren(children, last)
+        }
+
+        override fun addExecutionStackGroups(executionStackGroups: List<XExecutionStackGroup>, last: Boolean) {
+          val children = XValueChildrenList()
+          executionStackGroups.map { ThreadGroupContainer(it, session) }.forEach { children.add(it.group.name, it) }
           node.addChildren(children, last)
         }
       }
-      if (session.hasSuspendContext()) {
-        session.computeExecutionStacks(container)
-      } else {
-        session.computeRunningExecutionStacks(container)
-      }
+      session.computeRunningExecutionStacks(container)
+    }
+  }
+
+  class ThreadGroupContainer(val group: XExecutionStackGroup, private val session: XDebugSessionProxy) : XValue() {
+    override fun computeChildren(node: XCompositeNode) {
+      val children = XValueChildrenList()
+      group.groups.map { ThreadGroupContainer(it, session) }.forEach { children.add(it.group.name, it) }
+      group.stacks.forEach { children.add(it.displayName, FramesContainer(it, session)) }
+      node.addChildren(children, true)
+    }
+
+    override fun computePresentation(node: XValueNode, place: XValuePlace) {
+      node.setEmptyValuePresentation(group.icon)
     }
   }
 
