@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.textmate;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -40,7 +41,7 @@ public abstract class TextMateAcceptanceTestCase extends BasePlatformTestCase {
       }
       settings.setBundlesConfig(bundles);
       ((TextMateServiceImpl)TextMateService.getInstance()).disableBuiltinBundles(getTestRootDisposable());
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
   }
 
@@ -48,7 +49,7 @@ public abstract class TextMateAcceptanceTestCase extends BasePlatformTestCase {
   protected void tearDown() throws Exception {
     try {
       TextMateUserBundlesSettings.getInstance().setBundlesConfig(Collections.emptyMap());
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
     catch (Throwable e) {
       addSuppressedException(e);

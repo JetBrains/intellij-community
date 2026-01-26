@@ -16,6 +16,7 @@ import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.FileEditorManagerTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
@@ -54,7 +55,7 @@ public class VcsContextTest extends FileEditorManagerTestCase {
     Future<GitRepository> future =
       ApplicationManager.getApplication().executeOnPooledThread(() -> (GitRepository)createRepository("fooBar", getProject()));
     while (!future.isDone()) {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
     GitRepository repository = future.get();
 
@@ -98,7 +99,7 @@ public class VcsContextTest extends FileEditorManagerTestCase {
     LocalTaskImpl task = myTaskManager.createLocalTask(name);
     final LocalTask localTask = myTaskManager.activateTask(task, true);
     myTaskManager.createBranch(localTask, defaultTask, name, null);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     return task;
   }
 }

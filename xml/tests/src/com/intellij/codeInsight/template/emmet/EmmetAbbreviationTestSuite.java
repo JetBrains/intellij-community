@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
@@ -178,7 +179,7 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
       action.actionPerformed(myFixture.getEditor(), DataManager.getInstance().getDataContext());
 
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
       WriteCommandAction.runWriteCommandAction(getProject(), () -> {
         TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());

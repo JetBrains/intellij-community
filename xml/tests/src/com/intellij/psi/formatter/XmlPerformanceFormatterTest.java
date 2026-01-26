@@ -76,7 +76,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
       PlatformTestUtil.assertTiming("Fix xml formatter redo performance problem", 3400, end - start);
     }
     finally {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       final VirtualFile[] selectedFiles = editorManager.getSelectedFiles();
       if (selectedFiles.length > 0) editorManager.closeFile(selectedFiles[0]);
     }
@@ -102,7 +102,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
         doTest();
       }
       finally {
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       }
   };
   }
@@ -170,7 +170,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
       doTest(resultNumber);
     }
     finally {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       xmlSettings.XML_KEEP_WHITESPACES = oldValue;
     }
   }

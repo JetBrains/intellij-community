@@ -421,12 +421,12 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     runOpenTaskDialog(task);
 
     myChangeListManager.ensureUpToDate();
-    UIUtil.dispatchAllInvocationEvents(); // event from TaskManagerImpl.myChangeListListener
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // event from TaskManagerImpl.myChangeListListener
 
     runOpenTaskDialog(new LocalTaskImpl("next", ""));
 
     myChangeListManager.ensureUpToDate();
-    UIUtil.dispatchAllInvocationEvents(); // event from TaskManagerImpl.myChangeListListener
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // event from TaskManagerImpl.myChangeListListener
 
     final String changelistName = myTaskManager.getChangelistName(task);
     myChangeListManager.removeChangeList(changelistName);
@@ -513,7 +513,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     finally {
       dialog.close(DialogWrapper.OK_EXIT_CODE);
     }
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 
   public void testChangelistNameWithoutId() {
