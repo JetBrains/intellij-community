@@ -138,10 +138,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   private Consumer<MarketplaceSortByAction> myMarketplaceSortByCallback;
   private LinkComponent myMarketplaceSortByAction;
 
-  private DefaultActionGroup myInstalledSearchGroup;
-  private Consumer<InstalledSearchOptionAction> myInstalledSearchCallback;
-  private boolean myInstalledSearchSetState = true;
-
   private String myLaterSearchQuery;
   private boolean myForceShowInstalledTabForTag = false;
   private boolean myShowMarketplaceTab;
@@ -389,12 +385,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   }
 
   private void createInstalledTab() {
-    myInstalledSearchGroup = new DefaultActionGroup();
-
-    for (InstalledSearchOption option : InstalledSearchOption.values()) {
-      myInstalledSearchGroup.add(new InstalledSearchOptionAction(option));
-    }
-
     myInstalledTab = new InstalledPluginsTab();
 
     myPluginModelFacade.getModel().setCancelInstallCallback(descriptor -> {
@@ -943,6 +933,17 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   }
 
   private class InstalledPluginsTab extends PluginsTab {
+    private final DefaultActionGroup myInstalledSearchGroup;
+    private boolean myInstalledSearchSetState = true;
+
+    InstalledPluginsTab() {
+      super();
+      myInstalledSearchGroup = new DefaultActionGroup();
+      for (InstalledSearchOption option : InstalledSearchOption.values()) {
+        myInstalledSearchGroup.add(new InstalledSearchOptionAction(option));
+      }
+    }
+
     @Override
     protected void createSearchTextField(int flyDelay) {
       super.createSearchTextField(flyDelay);
@@ -1171,52 +1172,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       panel.setSelectionListener(selectionListener);
       registerCopyProvider(panel);
 
-      myInstalledSearchCallback = updateAction -> {
-        List<String> queries = new ArrayList<>();
-        new SearchQueryParser.Installed(searchTextField.getText()) {
-          @Override
-          protected void addToSearchQuery(@NotNull String query) {
-            queries.add(query);
-          }
-
-          @Override
-          protected void handleAttribute(@NotNull String name, @NotNull String value) {
-            if (!updateAction.myIsSelected) {
-              queries.add(name + (value.isEmpty() ? "" : SearchQueryParser.wrapAttribute(value)));
-            }
-          }
-        };
-
-        if (updateAction.myIsSelected) {
-          for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
-            if (action != updateAction) {
-              ((InstalledSearchOptionAction)action).myIsSelected = false;
-            }
-          }
-
-          queries.add(updateAction.getQuery());
-        }
-        else {
-          queries.remove(updateAction.getQuery());
-        }
-
-        try {
-          myInstalledSearchSetState = false;
-
-          String query = StringUtil.join(queries, " ");
-          searchTextField.setTextIgnoreEvents(query);
-          if (query.isEmpty()) {
-            myInstalledTab.hideSearchPanel();
-          }
-          else {
-            myInstalledTab.showSearchPanel(query);
-          }
-        }
-        finally {
-          myInstalledSearchSetState = true;
-        }
-      };
-
       myInstalledSearchPanel = new SearchResultPanel(installedController, panel, false, 0, 0) {
         @Override
         protected void setEmptyText(@NotNull String query) {
@@ -1358,6 +1313,99 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       };
 
       return myInstalledSearchPanel;
+    }
+
+    private void handleSearchOptionSelection(InstalledSearchOptionAction updateAction) {
+      List<String> queries = new ArrayList<>();
+      new SearchQueryParser.Installed(searchTextField.getText()) {
+        @Override
+        protected void addToSearchQuery(@NotNull String query) {
+          queries.add(query);
+        }
+
+        @Override
+        protected void handleAttribute(@NotNull String name, @NotNull String value) {
+          if (!updateAction.myIsSelected) {
+            queries.add(name + (value.isEmpty() ? "" : SearchQueryParser.wrapAttribute(value)));
+          }
+        }
+      };
+
+      if (updateAction.myIsSelected) {
+        for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
+          if (action != updateAction) {
+            ((InstalledSearchOptionAction)action).myIsSelected = false;
+          }
+        }
+
+        queries.add(updateAction.getQuery());
+      }
+      else {
+        queries.remove(updateAction.getQuery());
+      }
+
+      try {
+        myInstalledSearchSetState = false;
+
+        String query = StringUtil.join(queries, " ");
+        searchTextField.setTextIgnoreEvents(query);
+        if (query.isEmpty()) {
+          myInstalledTab.hideSearchPanel();
+        }
+        else {
+          myInstalledTab.showSearchPanel(query);
+        }
+      }
+      finally {
+        myInstalledSearchSetState = true;
+      }
+    }
+
+    private final class InstalledSearchOptionAction extends ToggleAction implements DumbAware {
+      private final InstalledSearchOption myOption;
+      private boolean myIsSelected;
+
+      private InstalledSearchOptionAction(@NotNull InstalledSearchOption option) {
+        super(option.myPresentableNameSupplier);
+        getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
+        myOption = option;
+      }
+
+      @Override
+      public boolean isSelected(@NotNull AnActionEvent e) {
+        return myIsSelected;
+      }
+
+      @Override
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
+        myIsSelected = state;
+        handleSearchOptionSelection(this);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      public void setState(@Nullable SearchQueryParser.Installed parser) {
+        if (parser == null) {
+          myIsSelected = false;
+          return;
+        }
+
+        myIsSelected = switch (myOption) {
+          case Enabled -> parser.enabled;
+          case Disabled -> parser.disabled;
+          case Downloaded -> parser.downloaded;
+          case Bundled -> parser.bundled;
+          case Invalid -> parser.invalid;
+          case NeedUpdate -> parser.needUpdate;
+        };
+      }
+
+      public @NotNull String getQuery() {
+        return myOption == InstalledSearchOption.NeedUpdate ? "/outdated" : "/" + StringUtil.decapitalize(myOption.name());
+      }
     }
   }
 
@@ -2154,53 +2202,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     private final Supplier<@Nls String> myPresentableNameSupplier;
 
     InstalledSearchOption(Supplier<@Nls String> name) { myPresentableNameSupplier = name; }
-  }
-
-  private final class InstalledSearchOptionAction extends ToggleAction implements DumbAware {
-    private final InstalledSearchOption myOption;
-    private boolean myIsSelected;
-
-    private InstalledSearchOptionAction(@NotNull InstalledSearchOption option) {
-      super(option.myPresentableNameSupplier);
-      getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
-      myOption = option;
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return myIsSelected;
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myIsSelected = state;
-      myInstalledSearchCallback.accept(this);
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    public void setState(@Nullable SearchQueryParser.Installed parser) {
-      if (parser == null) {
-        myIsSelected = false;
-        return;
-      }
-
-      myIsSelected = switch (myOption) {
-        case Enabled -> parser.enabled;
-        case Disabled -> parser.disabled;
-        case Downloaded -> parser.downloaded;
-        case Bundled -> parser.bundled;
-        case Invalid -> parser.invalid;
-        case NeedUpdate -> parser.needUpdate;
-      };
-    }
-
-    public @NotNull String getQuery() {
-      return myOption == InstalledSearchOption.NeedUpdate ? "/outdated" : "/" + StringUtil.decapitalize(myOption.name());
-    }
   }
 
   private static final class GroupByActionGroup extends DefaultActionGroup implements CheckedActionGroup {
