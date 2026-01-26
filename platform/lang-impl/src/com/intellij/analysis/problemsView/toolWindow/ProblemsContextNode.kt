@@ -13,7 +13,7 @@ internal class ProblemsContextNode(
   val parent: FileNode,
   val contextGroup: CodeInsightContext,
   val problems: Collection<Problem>,
-  val groupByToolId: Boolean
+  val groupByToolId: Boolean,
 ) : Node(parent) {
   private val presentation = createCodeInsightContextPresentation(contextGroup, parent.project)
 
@@ -27,21 +27,14 @@ internal class ProblemsContextNode(
     presentation.setIcon(this.presentation.icon)
   }
 
-  override fun getChildren(): List<Node> {
-    if (groupByToolId) {
-      return problems.groupBy { it.group }.flatMap { (group, problems) ->
-        if (group != null) {
-          listOf(ProblemsContextGroupNode(this, group, problems))
-        }
-        else {
-          problems.toProblemNodes(this, parent.file)
-        }
-      }
-    }
-    else {
-      return problems.toProblemNodes(this, parent.file)
-    }
-  }
+  override fun getChildren(): List<Node> =
+    ProblemsViewHighlightingChildrenBuilder.prepareChildrenWithToolIdGroupingIfEnabled(
+      problems = problems,
+      groupByToolId = groupByToolId,
+      parent = this,
+      virtualFile = parent.file,
+      groupNodeBuilder = { problems, group, parent -> ProblemsContextGroupNode(this, group, problems) }
+    )
 
   override fun hashCode(): Int = contextGroup.hashCode()
 

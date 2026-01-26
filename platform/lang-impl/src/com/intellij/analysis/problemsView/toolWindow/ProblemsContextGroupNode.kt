@@ -2,6 +2,7 @@
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.Problem
+import com.intellij.analysis.problemsView.toolWindow.ProblemsViewHighlightingChildrenBuilder.toProblemNodes
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES

@@ -3,7 +3,6 @@ package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsProvider
-import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
@@ -80,42 +79,9 @@ internal class ProblemsViewHighlightingFileRoot(panel: ProblemsViewPanel, val fi
     }
   }
 
-  private fun getContextGroups(node: FileNode): Map<CodeInsightContext?, List<HighlightingProblem>> {
-    return getFileProblems(node.file).groupBy { it.contextGroup }
-  }
-
-  private fun getAmountOfContexts(node: FileNode): Int {
-    return getContextGroups(node).size
-  }
-
-  private fun getFileNodesWithContext(node: FileNode): Collection<Node> {
-    return getContextGroups(node)
-      .flatMap { (group, problems) ->
-        group?.let {
-          listOf(ProblemsContextNode(node, it, problems, panel.state.groupByToolId))
-        }
-        ?: getNodesForProblems(node, problems)
-      }
-  }
-
-  private fun getFileNodesWithoutContext(node: FileNode): Collection<Node> {
-    return getFileProblems(node.file)
-      .groupBy { it.group }
-      .flatMap { (group, problems) ->
-        if (group != null) {
-          listOf(ProblemsViewGroupNode(node, group, problems))
-        }
-        else {
-          getNodesForProblems(node, problems)
-        }
-      }
-  }
-
-  override fun getChildren(node: FileNode): Collection<Node> = when {
-    getAmountOfContexts(node) > 1 ->
-      getFileNodesWithContext(node)
-    !panel.state.groupByToolId ->
-      super.getChildren(node)
-    else -> getFileNodesWithoutContext(node)
+  override fun getChildren(node: FileNode): Collection<Node> {
+    val fileProblems = getFileProblems(node.file)
+    val groupByToolId = panel.state.groupByToolId
+    return ProblemsViewHighlightingChildrenBuilder.prepareChildrenForFileRoot(fileProblems, node, groupByToolId)
   }
 }
