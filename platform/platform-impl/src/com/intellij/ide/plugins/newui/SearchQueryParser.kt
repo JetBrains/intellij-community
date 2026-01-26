@@ -1,263 +1,252 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.plugins.newui;
+package com.intellij.ide.plugins.newui
 
-import com.intellij.ide.plugins.enums.SortBy;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.plugins.enums.SortBy
+import com.intellij.ide.plugins.enums.SortBy.Companion.getByQueryOrNull
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.io.URLUtil
+import org.jetbrains.annotations.ApiStatus
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+@ApiStatus.Internal
+abstract class SearchQueryParser {
+  @JvmField var searchQuery: String? = null
 
-/**
- * @author Alexander Lobas
- */
-public abstract class SearchQueryParser {
-  public String searchQuery;
-
-  protected void addToSearchQuery(@NotNull String query) {
+  protected open fun addToSearchQuery(query: String) {
     if (searchQuery == null) {
-      searchQuery = query;
+      searchQuery = query
     }
     else {
-      searchQuery += " " + query;
+      searchQuery += " $query"
     }
   }
 
-  protected static @NotNull List<String> splitQuery(@NotNull String query) {
-    List<String> words = new ArrayList<>();
+  @ApiStatus.Internal
+  open class Marketplace(query: String) : SearchQueryParser() {
+    @JvmField val vendors: MutableSet<String> = HashSet()
+    @JvmField val tags: MutableSet<String> = HashSet()
+    @JvmField val repositories: MutableSet<String> = HashSet()
+    @JvmField var sortBy: SortBy? = null
+    @JvmField var suggested: Boolean = false
+    @JvmField var internal: Boolean = false
 
-    int length = query.length();
-    int index = 0;
+    var staffPicks: Boolean = false
 
-    while (index < length) {
-      char startCh = query.charAt(index++);
-      if (startCh == ' ') {
-        continue;
-      }
-      if (startCh == '"') {
-        int end = query.indexOf('"', index);
-        if (end == -1) {
-          break;
-        }
-        words.add(query.substring(index, end));
-        index = end + 1;
-        continue;
-      }
-
-      int start = index - 1;
-      while (index <= length) {
-        if (index == length) {
-          words.add(query.substring(start));
-          break;
-        }
-        char nextCh = query.charAt(index++);
-        if (nextCh == ':' || nextCh == ' ' || index == length) {
-          words.add(query.substring(start, nextCh == ' ' ? index - 1 : index));
-          break;
-        }
-      }
+    init {
+      parse(query)
     }
 
-    return words;
-  }
-
-  public static @NotNull String getTagQuery(@NotNull String tag) {
-    return "/tag:" + (tag.indexOf(' ') == -1 ? tag : StringUtil.wrapWithDoubleQuote(tag));
-  }
-
-  public static @NotNull String wrapAttribute(@NotNull String value) {
-    return StringUtil.containsAnyChar(value, " ,:") ? StringUtil.wrapWithDoubleQuote(value) : value;
-  }
-
-  public static class Marketplace extends SearchQueryParser {
-    public final Set<String> vendors = new HashSet<>();
-    public final Set<String> tags = new HashSet<>();
-    public final Set<String> repositories = new HashSet<>();
-    public SortBy sortBy;
-    public boolean suggested;
-    public boolean internal;
-    public boolean staffPicks = false;
-
-    public Marketplace(@NotNull String query) {
-      parse(query);
-    }
-
-    private void parse(@NotNull String query) {
-      List<String> words = splitQuery(query);
-      int size = words.size();
+    private fun parse(query: String) {
+      val words: MutableList<String> = splitQuery(query)
+      val size = words.size
 
       if (size == 0) {
-        return;
+        return
       }
       if (size == 1) {
-        addToSearchQuery(words.get(0));
-        return;
+        addToSearchQuery(words[0])
+        return
       }
 
-      int index = 0;
+      var index = 0
       while (index < size) {
-        String name = words.get(index++);
+        val name = words[index++]
         if (name.endsWith(":")) {
           if (index < size) {
-            handleAttribute(name, words.get(index++));
+            handleAttribute(name, words[index++])
           }
           else {
-            addToSearchQuery(query);
-            return;
+            addToSearchQuery(query)
+            return
           }
         }
         else {
-          addToSearchQuery(name);
+          addToSearchQuery(name)
         }
       }
     }
 
-    @Override
-    protected void addToSearchQuery(@NotNull String query) {
-      if (query.equals(SearchWords.SUGGESTED.getValue())) {
-        suggested = true;
-      }
-      else if (query.equals(SearchWords.INTERNAL.getValue())) {
-        internal = true;
-      }
-      else if (query.equals(SearchWords.STAFF_PICKS.getValue())) {
-        staffPicks = true;
-      }
-      else {
-        super.addToSearchQuery(query);
+    override fun addToSearchQuery(query: String) {
+      when (query) {
+        SearchWords.SUGGESTED.value -> suggested = true
+        SearchWords.INTERNAL.value -> internal = true
+        SearchWords.STAFF_PICKS.value -> staffPicks = true
+        else -> super.addToSearchQuery(query)
       }
     }
 
-    protected void handleAttribute(@NotNull String name, @NotNull String value) {
-      if (name.equals(SearchWords.TAG.getValue())) {
-        tags.add(value);
-      }
-      else if (name.equals(SearchWords.SORT_BY.getValue())) {
-        sortBy = SortBy.getByQueryOrNull(value);
-      }
-      else if (name.equals(SearchWords.REPOSITORY.getValue())) {
-        repositories.add(value);
-      }
-      else if (name.equals(SearchWords.VENDOR.getValue())) {
-        vendors.add(value);
+    protected open fun handleAttribute(name: String, value: String) {
+      when (name) {
+        SearchWords.TAG.value -> tags.add(value)
+        SearchWords.SORT_BY.value -> sortBy = getByQueryOrNull(value)
+        SearchWords.REPOSITORY.value -> repositories.add(value)
+        SearchWords.VENDOR.value -> vendors.add(value)
       }
     }
 
-    public @NotNull String getUrlQuery() {
-      StringBuilder url = new StringBuilder();
+    val urlQuery: String
+      get() {
+        val url = StringBuilder()
 
-      if (sortBy != null) {
-        url.append(sortBy.getMpParameter());
-      }
-
-      if (staffPicks) {
-        if (!url.isEmpty()) {
-          url.append("&");
+        if (sortBy != null) {
+          url.append(sortBy!!.mpParameter)
         }
-        url.append("is_featured_search=true");
-      }
 
-      for (String tag : tags) {
-        if (!url.isEmpty()) {
-          url.append("&");
+        if (staffPicks) {
+          if (!url.isEmpty()) {
+            url.append("&")
+          }
+          url.append("is_featured_search=true")
         }
-        url.append("tags=").append(URLUtil.encodeURIComponent(tag));
-      }
 
-      for (String vendor : vendors) {
-        if (!url.isEmpty()) {
-          url.append("&");
+        for (tag in tags) {
+          if (!url.isEmpty()) {
+            url.append("&")
+          }
+          url.append("tags=").append(URLUtil.encodeURIComponent(tag))
         }
-        url.append("organization=").append(URLUtil.encodeURIComponent(vendor));
-      }
 
-      if (searchQuery != null) {
-        if (!url.isEmpty()) {
-          url.append("&");
+        for (vendor in vendors) {
+          if (!url.isEmpty()) {
+            url.append("&")
+          }
+          url.append("organization=").append(URLUtil.encodeURIComponent(vendor))
         }
-        url.append("search=").append(URLUtil.encodeURIComponent(searchQuery));
+
+        if (searchQuery != null) {
+          if (!url.isEmpty()) {
+            url.append("&")
+          }
+          url.append("search=").append(URLUtil.encodeURIComponent(searchQuery!!))
+        }
+
+        return url.toString()
+      }
+  }
+
+  @ApiStatus.Internal
+  open class Installed(query: String) : SearchQueryParser() {
+    @JvmField val vendors: MutableSet<String> = HashSet()
+    @JvmField val tags: MutableSet<String> = HashSet()
+    @JvmField var enabled: Boolean = false
+    @JvmField var disabled: Boolean = false
+    @JvmField var bundled: Boolean = false
+    @JvmField var downloaded: Boolean = false
+    @JvmField var invalid: Boolean = false
+    @JvmField var needUpdate: Boolean = false
+    @JvmField var attributes: Boolean = false
+
+    init {
+      parse(query)
+    }
+
+    private fun parse(query: String) {
+      val words: MutableList<String> = splitQuery(query)
+      val size = words.size
+
+      if (size == 0) {
+        return
       }
 
-      return url.toString();
+      var index = 0
+      while (index < size) {
+        val name = words[index++]
+        if (name.startsWith("/")) {
+          if (name == SearchWords.VENDOR.value || name == SearchWords.TAG.value) {
+            if (index < size) {
+              handleAttribute(name, words[index++])
+            }
+            else {
+              addToSearchQuery(query)
+              break
+            }
+          }
+          else {
+            handleAttribute(name, "")
+          }
+        }
+        else {
+          addToSearchQuery(name)
+        }
+      }
+
+      attributes = enabled || disabled || bundled || downloaded || invalid || needUpdate
+    }
+
+    protected open fun handleAttribute(name: String, value: String) {
+      if ("/enabled" == name) {
+        enabled = true
+      }
+      else if ("/disabled" == name) {
+        disabled = true
+      }
+      else if ("/bundled" == name) {
+        bundled = true
+      }
+      else if ("/downloaded" == name) {
+        downloaded = true
+      }
+      else if ("/invalid" == name) {
+        invalid = true
+      }
+      else if ("/outdated" == name) {
+        needUpdate = true
+      }
+      else if (SearchWords.VENDOR.value == name) {
+        vendors.add(value)
+      }
+      else if (SearchWords.TAG.value == name) {
+        tags.add(value)
+      }
     }
   }
 
-  public static class Installed extends SearchQueryParser {
-    public final Set<String> vendors = new HashSet<>();
-    public final Set<String> tags = new HashSet<>();
-    public boolean enabled;
-    public boolean disabled;
-    public boolean bundled;
-    public boolean downloaded;
-    public boolean invalid;
-    public boolean needUpdate;
-    public boolean attributes;
+  companion object {
+    protected fun splitQuery(query: String): MutableList<String> {
+      val words: MutableList<String> = ArrayList()
 
-    public Installed(@NotNull String query) {
-      parse(query);
-    }
+      val length = query.length
+      var index = 0
 
-    private void parse(@NotNull String query) {
-      List<String> words = splitQuery(query);
-      int size = words.size();
-
-      if (size == 0) {
-        return;
-      }
-
-      int index = 0;
-      while (index < size) {
-        String name = words.get(index++);
-        if (name.startsWith("/")) {
-          if (name.equals(SearchWords.VENDOR.getValue()) || name.equals(SearchWords.TAG.getValue())) {
-            if (index < size) {
-              handleAttribute(name, words.get(index++));
-            }
-            else {
-              addToSearchQuery(query);
-              break;
-            }
+      while (index < length) {
+        val startCh = query[index++]
+        if (startCh == ' ') {
+          continue
+        }
+        if (startCh == '"') {
+          val end = query.indexOf('"', index)
+          if (end == -1) {
+            break
           }
-          else {
-            handleAttribute(name, "");
+          words.add(query.substring(index, end))
+          index = end + 1
+          continue
+        }
+
+        val start = index - 1
+        while (index <= length) {
+          if (index == length) {
+            words.add(query.substring(start))
+            break
+          }
+          val nextCh = query[index++]
+          if (nextCh == ':' || nextCh == ' ' || index == length) {
+            words.add(query.substring(start, if (nextCh == ' ') index - 1 else index))
+            break
           }
         }
-        else {
-          addToSearchQuery(name);
-        }
       }
 
-      attributes = enabled || disabled || bundled || downloaded || invalid || needUpdate;
+      return words
     }
 
-    protected void handleAttribute(@NotNull String name, @NotNull String value) {
-      if ("/enabled".equals(name)) {
-        enabled = true;
-      }
-      else if ("/disabled".equals(name)) {
-        disabled = true;
-      }
-      else if ("/bundled".equals(name)) {
-        bundled = true;
-      }
-      else if ("/downloaded".equals(name)) {
-        downloaded = true;
-      }
-      else if ("/invalid".equals(name)) {
-        invalid = true;
-      }
-      else if ("/outdated".equals(name)) {
-        needUpdate = true;
-      }
-      else if (SearchWords.VENDOR.getValue().equals(name)) {
-        vendors.add(value);
-      }
-      else if (SearchWords.TAG.getValue().equals(name)) {
-        tags.add(value);
-      }
+    @JvmStatic
+    fun getTagQuery(tag: String): String {
+      return "/tag:" + (if (tag.indexOf(' ') == -1) tag else StringUtil.wrapWithDoubleQuote(tag))
+    }
+
+    @JvmStatic
+    fun wrapAttribute(value: String): String {
+      return if (StringUtil.containsAnyChar(value, " ,:")) StringUtil.wrapWithDoubleQuote(value) else value
     }
   }
 }
