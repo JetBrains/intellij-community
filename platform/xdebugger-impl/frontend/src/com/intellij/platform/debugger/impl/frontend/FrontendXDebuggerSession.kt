@@ -4,8 +4,6 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleView
-import com.intellij.frontend.FrontendApplicationInfo
-import com.intellij.frontend.FrontendType
 import com.intellij.ide.rpc.AnActionId
 import com.intellij.ide.rpc.action
 import com.intellij.ide.ui.icons.icon
@@ -424,9 +422,9 @@ class FrontendXDebuggerSession(
     }
 
     currentStackFrame.value = StackFrameUpdate.notifyChanged(frame)
-    cs.launch {
-      XDebugSessionApi.getInstance().setCurrentStackFrame(id, executionStack.id,
-                                                          frame.id, isTopFrame, changedByUser = true)
+    val suspendContext = getCurrentSuspendContext() ?: return
+    suspendContext.lifetimeScope.launch {
+      XDebugSessionApi.getInstance().setCurrentStackFrame(id, suspendContext.id, executionStack.id, frame.id, isTopFrame)
     }
   }
 

@@ -191,12 +191,24 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
-  override suspend fun setCurrentStackFrame(sessionId: XDebugSessionId, executionStackId: XExecutionStackId, frameId: XStackFrameId, isTopFrame: Boolean, changedByUser: Boolean) {
-    val session = sessionId.findValue() ?: return
-    val executionStackModel = executionStackId.findValue() ?: return
-    val stackFrameModel = frameId.findValue() ?: return
+  override suspend fun setCurrentStackFrame(
+    sessionId: XDebugSessionId,
+    suspendContextId: XSuspendContextId,
+    executionStackId: XExecutionStackId,
+    frameId: XStackFrameId,
+    isTopFrame: Boolean,
+  ) {
     withContext(Dispatchers.EDT) {
-      session.setCurrentStackFrame(executionStackModel.executionStack, stackFrameModel.stackFrame, isTopFrame, changedByUser = changedByUser)
+      val session = sessionId.findValue() ?: return@withContext
+      val suspendContextModel = suspendContextId.findValue() ?: return@withContext
+      val executionStackModel = executionStackId.findValue() ?: return@withContext
+      val stackFrameModel = frameId.findValue() ?: return@withContext
+
+      session.setCurrentStackFrame(suspendContextModel.suspendContext,
+                                   executionStackModel.executionStack,
+                                   stackFrameModel.stackFrame,
+                                   isTopFrame,
+                                   changedByUser = true)
     }
   }
 
