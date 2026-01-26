@@ -560,6 +560,14 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     tab.showView(tab.getFramesContentId());
   }
 
+  @ApiStatus.Internal
+  public static void showThreadsView(@Nullable XDebugSessionProxy session) {
+    if (session == null) return;
+    XDebugSessionTab tab = (XDebugSessionTab)session.getSessionTab();
+    if (tab == null) return;
+    tab.showView(tab.getThreadsContentId());
+  }
+
   void showView(String viewId) {
     toFront(false, null);
     Content content = findOrRestoreContentIfNeeded(viewId);
@@ -610,6 +618,10 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   protected @NotNull String getFramesContentId() {
     return DebuggerContentInfo.FRAME_CONTENT;
+  }
+
+  protected @NotNull String getThreadsContentId() {
+    return DebuggerContentInfo.THREADS_CONTENT;
   }
 
   protected void registerView(String contentId, @NotNull XDebugView view) {
