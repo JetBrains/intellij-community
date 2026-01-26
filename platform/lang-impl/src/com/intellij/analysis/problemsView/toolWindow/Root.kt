@@ -13,8 +13,9 @@ import com.intellij.ui.tree.LeafState
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.tree.TreePath
 
-abstract class Root(val panel: ProblemsViewPanel)
-  : Node(panel.project), ProblemsCollector, Disposable {
+abstract class Root(
+  val panel: ProblemsViewPanel,
+) : Node(panel.project), ProblemsCollector, Disposable {
 
   private val nodes = mutableMapOf<VirtualFile, FileNode>()
 
@@ -42,9 +43,11 @@ abstract class Root(val panel: ProblemsViewPanel)
     return getChildren(node)
   }
 
-  open fun getChildren(node: FileNode): Collection<Node> = getNodesForProblems(node, getFileProblems(node.file))
+  open fun getChildren(node: FileNode): Collection<Node> =
+    getNodesForProblems(node, getFileProblems(node.file))
 
-  protected fun getNodesForProblems(node:FileNode, fileProblems: Collection<Problem>): List<Node> = fileProblems.map { p -> ProblemNode(node, node.file, p) }
+  protected fun getNodesForProblems(node: FileNode, fileProblems: Collection<Problem>): List<Node> =
+    fileProblems.map { p -> ProblemNode(node, node.file, p) }
 
   override fun problemAppeared(problem: Problem) {
     when (problem) {
