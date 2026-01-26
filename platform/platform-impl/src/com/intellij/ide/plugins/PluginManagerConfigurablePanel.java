@@ -10,7 +10,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.certificates.PluginCertificateManager;
 import com.intellij.ide.plugins.enums.PluginsGroupType;
-import com.intellij.ide.plugins.enums.SortBy;
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult;
 import com.intellij.ide.plugins.marketplace.PluginSearchResult;
 import com.intellij.ide.plugins.marketplace.ranking.MarketplaceLocalRanker;
@@ -1412,7 +1411,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     MarketplacePluginsTab() {
       super();
       myMarketplaceSortByGroup = new DefaultActionGroup();
-      for (SortBy option : SortBy.getEntries()) {
+      for (MarketplaceTabSearchSortByOptions option : MarketplaceTabSearchSortByOptions.getEntries()) {
         myMarketplaceSortByGroup.addAction(new MarketplaceSortByAction(option));
       }
     }
@@ -1652,7 +1651,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
               yield myTagsSorted;
             }
             case SORT_BY -> ContainerUtil.map(
-              Arrays.asList(SortBy.DOWNLOADS, SortBy.NAME, SortBy.RATING, SortBy.UPDATE_DATE),
+              Arrays.asList(MarketplaceTabSearchSortByOptions.DOWNLOADS, MarketplaceTabSearchSortByOptions.NAME, MarketplaceTabSearchSortByOptions.RATING, MarketplaceTabSearchSortByOptions.UPDATE_DATE),
               sort -> sort.getQuery()
             );
             case VENDOR -> {
@@ -1953,14 +1952,14 @@ public final class PluginManagerConfigurablePanel implements Disposable {
         addAction = updateAction;
       }
       else {
-        if (updateAction.myOption == SortBy.RELEVANCE) {
+        if (updateAction.myOption == MarketplaceTabSearchSortByOptions.RELEVANCE) {
           updateAction.myState = true;
           return;
         }
 
         for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
           MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
-          if (sortByAction.myOption == SortBy.RELEVANCE) {
+          if (sortByAction.myOption == MarketplaceTabSearchSortByOptions.RELEVANCE) {
             sortByAction.myState = true;
             break;
           }
@@ -2010,11 +2009,11 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     }
 
     private final class MarketplaceSortByAction extends ToggleAction implements DumbAware {
-      private final SortBy myOption;
+      private final MarketplaceTabSearchSortByOptions myOption;
       private boolean myState;
       private boolean myVisible;
 
-      private MarketplaceSortByAction(@NotNull SortBy option) {
+      private MarketplaceSortByAction(@NotNull MarketplaceTabSearchSortByOptions option) {
         super(option.getPresentableNameSupplier());
         getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
         myOption = option;
@@ -2043,7 +2042,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       }
 
       public void setState(@NotNull SearchQueryParser.Marketplace parser) {
-        if (myOption == SortBy.RELEVANCE) {
+        if (myOption == MarketplaceTabSearchSortByOptions.RELEVANCE) {
           myState = parser.sortBy == null;
           myVisible = parser.sortBy == null || !parser.tags.isEmpty() || !parser.vendors.isEmpty() || parser.searchQuery != null;
         }
@@ -2054,7 +2053,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       }
 
       public @Nullable String getQuery() {
-        if (myOption == SortBy.RELEVANCE) return null;
+        if (myOption == MarketplaceTabSearchSortByOptions.RELEVANCE) return null;
         return SearchWords.SORT_BY.getValue() + myOption.getQuery();
       }
     }

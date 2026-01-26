@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
-import com.intellij.ide.plugins.enums.SortBy
-import com.intellij.ide.plugins.enums.SortBy.Companion.getByQueryOrNull
+import com.intellij.ide.plugins.MarketplaceTabSearchSortByOptions
+import com.intellij.ide.plugins.MarketplaceTabSearchSortByOptions.Companion.getByQueryOrNull
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.ApiStatus
@@ -25,7 +25,7 @@ abstract class SearchQueryParser {
     @JvmField val vendors: MutableSet<String> = HashSet()
     @JvmField val tags: MutableSet<String> = HashSet()
     @JvmField val repositories: MutableSet<String> = HashSet()
-    @JvmField var sortBy: SortBy? = null
+    @JvmField var sortBy: MarketplaceTabSearchSortByOptions? = null
     @JvmField var suggested: Boolean = false
     @JvmField var internal: Boolean = false
 
