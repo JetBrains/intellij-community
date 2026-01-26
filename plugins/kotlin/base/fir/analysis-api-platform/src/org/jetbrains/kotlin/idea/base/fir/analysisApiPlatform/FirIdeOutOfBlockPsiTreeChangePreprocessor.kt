@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalSour
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
+import java.util.WeakHashMap
 
 /**
  * Processes PSI tree change events to invalidate caches and publish modification events.
@@ -107,8 +108,9 @@ class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : 
                 when (currentFileState) {
                     null -> {
                         // We've encountered a new file and need to decide if we're still in the bounds of the processing limit.
-                        if (currentState.fileStates.size < FILE_PROCESSING_LIMIT) {
+                        if (currentState.fileCount < FILE_PROCESSING_LIMIT) {
                             currentState.fileStates[containingFile] = TreeChangeFileState.Processing
+                            currentState.fileCount += 1
 
                             processElementModification(event, rootElement, containingFile, currentState)
                         } else {
@@ -343,9 +345,23 @@ private sealed class TreeChangeProcessingState {
      * whitespace modification processing can also cause performance problems. As such, all files for which at least one modification has
      * been processed are added to [fileStates].
      */
-    data class Accepting(
-        val fileStates: MutableMap<PsiFile, TreeChangeFileState> = hashMapOf(),
-    ) : TreeChangeProcessingState()
+    class Accepting : TreeChangeProcessingState() {
+        /**
+         * The number of [PsiFile]s that have been encountered so far.
+         *
+         * We need a separate counter to track the number of files because [fileStates] has weak keys, which means that entries could be
+         * collected as soon as a [PsiFile] becomes unreachable. Hence, [fileStates] is unreliable for counting the exact number of files.
+         */
+        var fileCount: Int = 0
+
+        /**
+         * The [TreeChangeFileState]s memorized for each encountered [PsiFile].
+         *
+         * The map must have weak references to its [PsiFile] keys to avoid PSI leaks. It does not have to be thread safe because the
+         * processing state is held in a thread-local variable.
+         */
+        val fileStates: MutableMap<PsiFile, TreeChangeFileState> = WeakHashMap()
+    }
 
     /**
      * The tree change preprocessor has published a global modification event.
