@@ -961,6 +961,48 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         }
     }
 
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    fun `test physical dangling file element can be analyzed in the scope of its own module`() {
+        // See KT-83777.
+        testDanglingFileCanBeAnalysedInOwnModule(isPhysical = true)
+    }
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    fun `test non-physical dangling file element can be analyzed in the scope of its own module`() {
+        // See KT-83777.
+        // This test ensures that the content scope of the dangling file module also supports non-physical files.
+        testDanglingFileCanBeAnalysedInOwnModule(isPhysical = false)
+    }
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    private fun testDanglingFileCanBeAnalysedInOwnModule(isPhysical: Boolean) {
+        createModule(
+            moduleName = "a",
+            srcContentSpec = directoryContent {
+                dir("one") {
+                    file("A.kt", "class A")
+                }
+            }
+        )
+        val sourceKtFile = getFile("A.kt")
+        assertKaModuleType<KaSourceModule>(sourceKtFile)
+
+        val temporaryFile = KtPsiFactory.contextual(sourceKtFile, eventSystemEnabled = isPhysical).createFile(name, "A()")
+        temporaryFile.originalFile = sourceKtFile
+
+        val danglingFileKaModule = kaModuleWithAssertion<KaDanglingFileModule>(temporaryFile)
+
+        allowAnalysisOnEdt {
+            analyze(danglingFileKaModule) {
+                val physicalText = if (isPhysical) "physical" else "non-physical"
+                assertTrue(
+                    "The $physicalText dangling file should be analyzable in the scope of its own module.",
+                    temporaryFile.canBeAnalysed(),
+                )
+            }
+        }
+    }
+
     @OptIn(KaExperimentalApi::class)
     fun `test script module`() {
         val dummyRoot = directoryContent { file("dummy.kts", "class A") }
