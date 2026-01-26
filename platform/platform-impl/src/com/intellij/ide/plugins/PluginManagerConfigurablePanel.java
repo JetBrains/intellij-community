@@ -102,7 +102,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   private TabbedPaneHeaderComponent myTabHeaderComponent;
   private MultiPanel myCardPanel;
 
-  private PluginsTab myMarketplaceTab;
+  private MarketplacePluginsTab myMarketplaceTab;
   private PluginsTab myInstalledTab;
 
   private PluginsGroupComponentWithProgress myMarketplacePanel;
@@ -129,7 +129,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
   private PluginManagerCustomizer myPluginManagerCustomizer;
 
-  private List<String> myTagsSorted;
   private List<String> myVendorsSorted;
 
   private String myLaterSearchQuery;
@@ -325,7 +324,9 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   private void resetPanels() {
     CustomPluginRepositoryService.getInstance().clearCache();
 
-    myTagsSorted = null;
+    if (myMarketplaceTab != null) {
+      myMarketplaceTab.resetCache();
+    }
     myVendorsSorted = null;
 
     myPluginUpdatesService.recalculateUpdates();
@@ -1407,12 +1408,20 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     private final DefaultActionGroup myMarketplaceSortByGroup;
     private LinkComponent myMarketplaceSortByAction;
 
+    private List<String> myTagsSorted;
+
     MarketplacePluginsTab() {
       super();
       myMarketplaceSortByGroup = new DefaultActionGroup();
       for (MarketplaceTabSearchSortByOptions option : MarketplaceTabSearchSortByOptions.getEntries()) {
         myMarketplaceSortByGroup.addAction(new MarketplaceSortByAction(option));
       }
+
+      myTagsSorted = null;
+    }
+
+    protected void resetCache() {
+      myTagsSorted = null;
     }
 
     @Override
