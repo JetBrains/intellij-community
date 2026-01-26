@@ -47,7 +47,7 @@ abstract class Root(
     getNodesForProblems(node, getFileProblems(node.file))
 
   protected fun getNodesForProblems(node: FileNode, fileProblems: Collection<Problem>): List<Node> =
-    fileProblems.map { p -> ProblemNode(node, node.file, p) }
+    fileProblems.toProblemNodes(node, node.file)
 
   override fun problemAppeared(problem: Problem) {
     when (problem) {
@@ -111,3 +111,16 @@ abstract class Root(
     }
   }
 }
+
+internal fun Collection<Problem>.toProblemNodes(
+  parent: Node,
+  virtualFile: VirtualFile,
+): List<ProblemNode> =
+  map { p ->
+    ProblemNode(
+      parent = parent,
+      file = virtualFile,
+      problem = p
+    )
+  }
+
