@@ -44,8 +44,9 @@ abstract class Root(
   }
 
   open fun getChildren(node: FileNode): Collection<Node> =
-    getNodesForProblems(node, getFileProblems(node.file))
+    getFileProblems(node.file).toProblemNodes(node, node.file)
 
+  @Deprecated("Use toProblemNodes instead", replaceWith = ReplaceWith("fileProblems.toProblemNodes(node, node.file)"))
   protected fun getNodesForProblems(node: FileNode, fileProblems: Collection<Problem>): List<Node> =
     fileProblems.toProblemNodes(node, node.file)
 
