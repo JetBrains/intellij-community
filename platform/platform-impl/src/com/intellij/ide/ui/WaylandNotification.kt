@@ -109,7 +109,10 @@ private fun showNotification(project: Project?) {
     "Wayland",
     IdeBundle.message("notification.wayland", "https://jetbrains.com/TODO-blog-post"), // TODO
     NotificationType.INFORMATION
-  ).notify(project)
+  ).also {
+    it.isSuggestionType = true
+    it.isImportantSuggestion = true
+  }.notify(project)
 }
 
 private const val WAYLAND_NOTIFICATION_ALREADY_SHOWN = "WAYLAND_NOTIFICATION_ALREADY_SHOWN"
