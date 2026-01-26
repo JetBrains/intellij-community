@@ -51,7 +51,7 @@ internal class RenameDialog(
   private val myPreviewAction: Action = object : DialogWrapperAction(RefactoringBundle.message("preview.button")) {
     override fun doAction(e: ActionEvent) {
       preview = true
-      okAction.actionPerformed(e)
+      doOKAction()
     }
   }
 
