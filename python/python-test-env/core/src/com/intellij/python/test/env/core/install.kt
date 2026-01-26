@@ -1,6 +1,7 @@
 package com.intellij.python.test.env.core
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.io.Decompressor
 import com.intellij.util.system.OS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -101,5 +102,40 @@ fun markExecutable(logger: Logger, executable: Path) {
         PosixFilePermission.OWNER_EXECUTE
       )
     )
+  }
+}
+
+/**
+ * Extract archive using Decompressor framework.
+ * Supports tar.gz, .tgz, and .zip formats.
+ *
+ * @param archiveFile Path to the archive file
+ * @param targetDir Directory where archive contents will be extracted
+ * @param prefixToStrip Path prefix to strip during extraction (e.g., "uv-x86_64-unknown-linux-gnu" for UV archives)
+ * @throws IllegalStateException if archive format is not supported
+ */
+@ApiStatus.Internal
+fun unpackArchive(archiveFile: Path, targetDir: Path, prefixToStrip: String? = null) {
+  val fileName = archiveFile.fileName.toString()
+  when {
+    fileName.endsWith(".tar.gz", ignoreCase = true) || fileName.endsWith(".tgz", ignoreCase = true) -> {
+      val decompressor = Decompressor.Tar(archiveFile)
+        .removePrefixPath("python")
+      if (prefixToStrip != null) {
+        decompressor.removePrefixPath(prefixToStrip)
+      }
+      decompressor.extract(targetDir)
+    }
+    fileName.endsWith(".zip", ignoreCase = true) -> {
+      val decompressor = Decompressor.Zip(archiveFile).withZipExtensions()
+        .removePrefixPath("python")
+      if (prefixToStrip != null) {
+        decompressor.removePrefixPath(prefixToStrip)
+      }
+      decompressor.extract(targetDir)
+    }
+    else -> {
+      error("Unsupported archive format: $fileName. Expected .tar.gz, .tgz, or .zip")
+    }
   }
 }

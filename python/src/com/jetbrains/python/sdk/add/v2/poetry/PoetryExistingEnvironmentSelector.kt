@@ -14,7 +14,6 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.sdk.poetry.createPoetrySdk
