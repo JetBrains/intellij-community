@@ -22,41 +22,29 @@ class PyTypedDictType @JvmOverloads constructor(
   private val name: String,
   val fields: Map<String, FieldTypeAndTotality>,
   private val dictClass: PyClass,
-  private val definitionLevel: DefinitionLevel,
+  isDefinition: Boolean,
   private val declaration: PyQualifiedNameOwner? = null,
-) : PyClassTypeImpl(dictClass, definitionLevel != DefinitionLevel.INSTANCE) {
+) : PyClassTypeImpl(dictClass, isDefinition) {
   fun getElementType(key: String): PyType? {
     return fields[key]?.type
   }
 
   override fun getCallType(context: TypeEvalContext, callSite: PyCallSiteExpression): PyType? {
-    if (definitionLevel == DefinitionLevel.NEW_TYPE) {
-      return toInstance()
-    }
-
-    return null
-  }
-
-  override fun isDefinition(): Boolean {
-    return definitionLevel == DefinitionLevel.NEW_TYPE
+    return if (isDefinition) toInstance() else null
   }
 
   override fun toInstance(): PyClassType {
-    return if (definitionLevel == DefinitionLevel.NEW_TYPE)
-      PyTypedDictType(name, fields, dictClass,
-                      DefinitionLevel.INSTANCE,
-                      declaration)
+    return if (isDefinition)
+      PyTypedDictType(name, fields, dictClass, false, declaration)
     else
       this
   }
 
   override fun toClass(): PyClassType {
-    return if (definitionLevel == DefinitionLevel.INSTANCE)
-      PyTypedDictType(name, fields, dictClass,
-                      DefinitionLevel.NEW_TYPE,
-                      declaration)
-    else
+    return if (isDefinition)
       this
+    else
+      PyTypedDictType(name, fields, dictClass, true, declaration)
   }
 
   override fun getName(): String {
@@ -66,7 +54,7 @@ class PyTypedDictType @JvmOverloads constructor(
   override fun isBuiltin(): Boolean = false
 
   override fun isCallable(): Boolean {
-    return definitionLevel != DefinitionLevel.INSTANCE
+    return isDefinition
   }
 
   override fun getParameters(context: TypeEvalContext): List<PyCallableParameter>? {
@@ -95,17 +83,12 @@ class PyTypedDictType @JvmOverloads constructor(
     val otherTypedDict = other as? PyTypedDictType ?: return false
     return name == otherTypedDict.name
            && fields == otherTypedDict.fields
-           && definitionLevel == otherTypedDict.definitionLevel
+           && isDefinition == otherTypedDict.isDefinition
            && declaration == otherTypedDict.declaration
   }
 
   override fun hashCode(): Int {
-    return Objects.hash(super.hashCode(), name, fields, definitionLevel, declaration)
-  }
-
-  enum class DefinitionLevel {
-    NEW_TYPE,
-    INSTANCE
+    return Objects.hash(super.hashCode(), name, fields, declaration)
   }
 
   override fun getDeclarationElement(): PyQualifiedNameOwner = declaration ?: super.getDeclarationElement()

@@ -261,7 +261,7 @@ object PyExpectedTypeJudgement {
           name = "Parameters",
           fields = fields,
           dictClass = dictClass,
-          definitionLevel = PyTypedDictType.DefinitionLevel.INSTANCE,
+          isDefinition = false,
           declaration = mapping.callableType?.declarationElement
         )
       }
