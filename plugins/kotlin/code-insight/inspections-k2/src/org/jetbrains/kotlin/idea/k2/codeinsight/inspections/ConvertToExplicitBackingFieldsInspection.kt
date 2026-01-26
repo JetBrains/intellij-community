@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.childrenOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -108,6 +110,8 @@ internal class ConvertToExplicitBackingFieldsInspection :
         if (element.isVar && element.setter != null) return false
         return !element.isPrivate() && element.getter != null
     }
+
+    override fun getApplicableRanges(element: KtProperty): List<TextRange> = ApplicabilityRange.single(element) { it.getter }
 
     override fun KaSession.prepareContext(element: KtProperty): Context? {
         val returnedProperty = getReturnedPropertyFromGetter(element.getter) ?: return null

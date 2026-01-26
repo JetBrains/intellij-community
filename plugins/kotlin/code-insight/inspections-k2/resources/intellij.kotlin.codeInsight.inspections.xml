@@ -1313,7 +1313,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="WARNING"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.kotlin.convert.to.explicit.backing.fields.display.name" bundle="messages.KotlinBundle"/>
 
