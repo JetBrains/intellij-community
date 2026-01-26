@@ -1,5 +1,5 @@
 from types import FrameType
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Final
 
 from gevent import pywsgi
 from gevent.pywsgi import WSGIHandler
@@ -10,7 +10,7 @@ from gunicorn.workers.base_async import AsyncWorker
 
 from .._types import _AddressType
 
-VERSION: str
+VERSION: Final[str]
 
 class GeventWorker(AsyncWorker):
     server_class: ClassVar[type[StreamServer] | None]

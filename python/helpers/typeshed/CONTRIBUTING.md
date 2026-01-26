@@ -134,7 +134,7 @@ there represents a PyPI distribution, and contains the following:
   source distribution.
 * (Rarely) some docs specific to a given type stub package in `README` file.
 
-When a third party stub is added or
+When a third-party stub is added or
 modified, an updated version of the corresponding distribution will be
 automatically uploaded to PyPI within a few hours.
 Each time this happens the least significant
@@ -186,7 +186,7 @@ supported:
   stubs for other reasons than the upstream library shipping with type
   information.
 * `upload` (optional): This field is set to `false` to prevent automatic
-  uploads to PyPI. This should only used in special cases, e.g. when the stubs
+  uploads to PyPI. This should only be used in special cases, e.g. when the stubs
   break the upload.
 * `partial_stub` (optional): This field marks the type stub package as
   [partial](https://peps.python.org/pep-0561/#partial-stub-packages). This is for

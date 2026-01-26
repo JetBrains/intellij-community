@@ -26,6 +26,7 @@ from tensorflow._aliases import (
     AnyArray,
     DTypeLike,
     IntArray,
+    RaggedTensorLike,
     ScalarTensorCompatible,
     ShapeLike,
     Slice,
@@ -448,4 +449,5 @@ def transpose(
 def clip_by_value(
     t: Tensor | IndexedSlices, clip_value_min: TensorCompatible, clip_value_max: TensorCompatible, name: str | None = None
 ) -> Tensor: ...
+def tile(input: RaggedTensorLike, multiples: Tensor | Sequence[int], name: str | None = None) -> Tensor: ...
 def __getattr__(name: str): ...  # incomplete module

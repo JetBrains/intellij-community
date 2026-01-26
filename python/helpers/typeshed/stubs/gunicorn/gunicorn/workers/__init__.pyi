@@ -9,5 +9,6 @@ class _SupportedWorkers(TypedDict):
     gevent_pywsgi: str
     tornado: str
     gthread: str
+    asgi: str
 
 SUPPORTED_WORKERS: _SupportedWorkers

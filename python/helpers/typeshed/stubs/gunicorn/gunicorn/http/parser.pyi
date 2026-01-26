@@ -9,6 +9,7 @@ from gunicorn.http.unreader import Unreader
 from .._types import _AddressType
 
 class Parser:
+    # TODO: Use Protocol instead of Request class
     mesg_class: ClassVar[type[Request] | None]
     cfg: Config
     unreader: Unreader
@@ -18,6 +19,7 @@ class Parser:
 
     def __init__(self, cfg: Config, source: socket.socket | Iterable[bytes], source_addr: _AddressType) -> None: ...
     def __iter__(self) -> Iterator[Request]: ...
+    def finish_body(self) -> None: ...
     def __next__(self) -> Request: ...
 
     next: Callable[[Parser], Request]

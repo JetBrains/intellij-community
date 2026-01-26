@@ -74,7 +74,6 @@
         "stubs/protobuf",
         "stubs/psutil/psutil/__init__.pyi",
         "stubs/psycopg2",
-        "stubs/punq",
         "stubs/pyasn1",
         "stubs/pycurl",
         "stubs/Pygments",

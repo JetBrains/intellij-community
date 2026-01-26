@@ -58,7 +58,7 @@ diagnostics.
 Many test cases also make use of
 [`assert_type`](https://docs.python.org/3.11/library/typing.html#typing.assert_type),
 a function which allows us to test whether a type checker's inferred type of an
-expression is what we'd like it be.
+expression is what we'd like it to be.
 
 Finally, some tests make use of `# type: ignore` comments (in combination with
 mypy's
