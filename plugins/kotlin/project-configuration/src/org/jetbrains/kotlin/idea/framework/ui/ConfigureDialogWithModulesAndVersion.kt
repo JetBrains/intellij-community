@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout.standaloneCompilerVersion
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle.message
-import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
+import org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupFUSCollector
 import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
@@ -59,7 +59,7 @@ class ConfigureDialogWithModulesAndVersion(
     val modulesAndJvmTargets: Map<ModuleName, TargetJvm>
 
     init {
-        KotlinJ2KOnboardingFUSCollector.logShowConfigureKtWindow(project)
+        KotlinProjectSetupFUSCollector.logShowConfigureKtWindow(project)
         title = message("configure.kotlin.title", configurator.presentableText)
         val compatibility = checkModuleJvmTargetCompatibility(
             chooseModulePanel.modules, defaultKotlinVersion

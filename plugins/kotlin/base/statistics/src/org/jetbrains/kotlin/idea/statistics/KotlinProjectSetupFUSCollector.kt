@@ -36,11 +36,11 @@ import kotlin.random.Random
 
 class KotlinJ2KOnboardingImportListener(private val project: Project) : ProjectDataImportListener {
     override fun onImportFinished(projectPath: String?) {
-        KotlinJ2KOnboardingFUSCollector.logProjectSyncCompleted(project)
+        KotlinProjectSetupFUSCollector.logProjectSyncCompleted(project)
     }
 }
 
-object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
+object KotlinProjectSetupFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
     val GROUP: EventLogGroup = EventLogGroup("kotlin.onboarding.j2k", 6)
@@ -218,12 +218,12 @@ internal data class KotlinOnboardingSession(
 ) {
     fun getPairs(): List<EventPair<*>> {
         return mutableListOf<EventPair<*>>().apply {
-            add(KotlinJ2KOnboardingFUSCollector.sessionIdField.with(id))
-            add(KotlinJ2KOnboardingFUSCollector.buildSystemField.with(buildSystemType))
+            add(KotlinProjectSetupFUSCollector.sessionIdField.with(id))
+            add(KotlinProjectSetupFUSCollector.buildSystemField.with(buildSystemType))
             buildSystemVersion?.let {
-                add(KotlinJ2KOnboardingFUSCollector.buildSystemVersionField.with(buildSystemVersion))
+                add(KotlinProjectSetupFUSCollector.buildSystemVersionField.with(buildSystemVersion))
             }
-            add(EventFields.Version.with(KotlinJ2KOnboardingFUSCollector.pluginVersion))
+            add(EventFields.Version.with(KotlinProjectSetupFUSCollector.pluginVersion))
         }
     }
 }

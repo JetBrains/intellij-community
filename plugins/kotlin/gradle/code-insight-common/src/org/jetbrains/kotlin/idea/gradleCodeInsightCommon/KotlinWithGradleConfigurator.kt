@@ -47,7 +47,7 @@ import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
 import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingConfigurationError
-import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
+import org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupFUSCollector
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
@@ -131,9 +131,9 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val kotlinVersion = dialog.kotlinVersion ?: return emptySet()
         val modules = dialog.modulesToConfigure
 
-        KotlinJ2KOnboardingFUSCollector.logChosenKotlinVersion(project, kotlinVersion)
+        KotlinProjectSetupFUSCollector.logChosenKotlinVersion(project, kotlinVersion)
 
-        KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project)
+        KotlinProjectSetupFUSCollector.logStartConfigureKt(project)
         val commandKey = "command.name.configure.kotlin"
         val (result, collector) = runWithModalProgressBlocking(project, KotlinProjectConfigurationBundle.message(commandKey)) {
             configureSilently(
@@ -268,7 +268,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val jvmTargets = readAction {
             checkModuleJvmTargetCompatibility(listOf(module), settings.kotlinVersion).moduleJvmTargets
         }
-        KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project, true)
+        KotlinProjectSetupFUSCollector.logStartConfigureKt(project, true)
         val commandKey = "command.name.configure.kotlin.automatically"
         val (result, _) = withModalProgress(project, KotlinProjectConfigurationBundle.message(commandKey)) {
             configureSilently(
@@ -315,9 +315,9 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                 project.executeCommand(KotlinProjectConfigurationBundle.message(commandKey)) {
                     val configurationResult = configureAction()
                     if (configurationResult.error != null) {
-                        KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(project, configurationResult.error)
+                        KotlinProjectSetupFUSCollector.logConfigureKtFailed(project, configurationResult.error)
                     } else if (configurationResult.configuredModules.isEmpty()) {
-                        KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(project, KotlinJ2KOnboardingConfigurationError.OTHER)
+                        KotlinProjectSetupFUSCollector.logConfigureKtFailed(project, KotlinJ2KOnboardingConfigurationError.OTHER)
                     }
                     val firstModule = modules.firstOrNull()
                     if (isAutoConfig && firstModule != null) {
