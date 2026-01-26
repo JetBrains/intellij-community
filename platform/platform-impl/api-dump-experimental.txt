@@ -361,6 +361,26 @@ a:com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 - a:openInChildProcess(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.project.impl.P3SupportKt
 - *sf:processPerProjectSupport():com.intellij.openapi.project.impl.P3Support
+*f:com.intellij.openapi.updateSettings.PluginUpdateCheckService
+- *sf:Companion:com.intellij.openapi.updateSettings.PluginUpdateCheckService$Companion
+- <init>():V
+- sf:getInstance():com.intellij.openapi.updateSettings.PluginUpdateCheckService
+- f:getPluginUpdate(com.intellij.openapi.extensions.PluginId,com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.updateSettings.PluginUpdateInfo
+- bs:getPluginUpdate$default(com.intellij.openapi.updateSettings.PluginUpdateCheckService,com.intellij.openapi.extensions.PluginId,com.intellij.openapi.progress.ProgressIndicator,I,java.lang.Object):com.intellij.openapi.updateSettings.PluginUpdateInfo
+*f:com.intellij.openapi.updateSettings.PluginUpdateCheckService$Companion
+- f:getInstance():com.intellij.openapi.updateSettings.PluginUpdateCheckService
+*:com.intellij.openapi.updateSettings.PluginUpdateInfo
+*f:com.intellij.openapi.updateSettings.PluginUpdateInfo$CheckFailed
+- com.intellij.openapi.updateSettings.PluginUpdateInfo
+- <init>(java.util.Map):V
+- f:getErrors():java.util.Map
+*f:com.intellij.openapi.updateSettings.PluginUpdateInfo$NoUpdate
+- com.intellij.openapi.updateSettings.PluginUpdateInfo
+- <init>():V
+*f:com.intellij.openapi.updateSettings.PluginUpdateInfo$UpdateAvailable
+- com.intellij.openapi.updateSettings.PluginUpdateInfo
+- <init>(com.intellij.openapi.updateSettings.impl.PluginDownloader):V
+- f:getUpdate():com.intellij.openapi.updateSettings.impl.PluginDownloader
 a:com.intellij.openapi.wm.impl.FrameTitleBuilder
 - *:getFileTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.wm.impl.IdeBackgroundUtil

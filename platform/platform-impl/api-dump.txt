@@ -322,6 +322,9 @@ com.intellij.ide.plugins.PluginManagerMain$PluginEnabler
 com.intellij.ide.plugins.PluginStateListener
 - a:install(com.intellij.ide.plugins.IdeaPluginDescriptor):V
 - uninstall(com.intellij.ide.plugins.IdeaPluginDescriptor):V
+f:com.intellij.ide.plugins.PluginUpdateStatus$Update
+- <init>(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.updateSettings.impl.PluginDownloader):V
+- f:getPluginDownloader():com.intellij.openapi.updateSettings.impl.PluginDownloader
 f:com.intellij.ide.plugins.RepositoryHelper
 com.intellij.ide.plugins.UIComponentVirtualFile$Content
 - a:createComponent():javax.swing.JComponent

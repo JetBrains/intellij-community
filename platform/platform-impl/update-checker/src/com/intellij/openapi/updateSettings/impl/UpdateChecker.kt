@@ -93,7 +93,7 @@ internal class UpdateCheckerFacadeImpl : UpdateCheckerFacade {
     UpdateChecker.updateDescriptorsForInstalledPlugins()
   }
 
-  override fun getInternalPluginUpdates(
+  override fun getPluginUpdates(
     plugins: Collection<PluginId>,
     indicator: ProgressIndicator?,
     buildNumber: BuildNumber?,
@@ -101,7 +101,6 @@ internal class UpdateCheckerFacadeImpl : UpdateCheckerFacade {
     return UpdateChecker.getPluginUpdates(plugins, indicator, buildNumber)
   }
 
-  @IntellijInternalApi
   override fun checkInstalledPluginUpdates(
     indicator: ProgressIndicator?,
     buildNumber: BuildNumber?,
@@ -284,37 +283,6 @@ object UpdateChecker {
       ApplicationManager.getApplication().executeOnPooledThread {
         checkInstalledPluginUpdates()
       }
-    }
-  }
-
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
-  @JvmOverloads
-  @JvmStatic
-  @ApiStatus.Experimental
-  fun getPluginUpdates(
-    pluginId: PluginId,
-    indicator: ProgressIndicator? = null,
-  ): PluginUpdatesInfo {
-    val result = getPluginUpdates(listOf(pluginId), indicator)
-    val updates = result.pluginUpdates
-    return PluginUpdatesInfo(
-      updates.allEnabled,
-      updates.allDisabled,
-      updates.incompatible.map { it.pluginId },
-      result.errors
-    )
-  }
-
-  @ApiStatus.Experimental
-  data class PluginUpdatesInfo @ApiStatus.Internal constructor(
-    val allEnabled: Collection<PluginDownloader> = emptyList(),
-    val allDisabled: Collection<PluginDownloader> = emptyList(),
-    val incompatible: Collection<PluginId> = emptyList(),
-    val errors: Map<String?, Exception> = emptyMap(),
-  ) {
-    val all: List<PluginDownloader> by lazy {
-      allEnabled + allDisabled
     }
   }
 
@@ -638,7 +606,7 @@ object UpdateChecker {
     get() = disabledToUpdate.mapTo(TreeSet()) { it.idString }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated(message = "Use checkForPluginUpdates", replaceWith = ReplaceWith(""))
+  @Deprecated(message = "Use PluginUpdateCheckService instead", replaceWith = ReplaceWith("PluginUpdateCheckService.getInstance().getPluginUpdate(pluginId, indicator)"))
   @JvmStatic
   fun getPluginUpdates(): Collection<PluginDownloader>? = null
 
@@ -647,6 +615,7 @@ object UpdateChecker {
   @JvmStatic
   @IntellijInternalApi
   @ApiStatus.Internal
+  @Deprecated(message = "Use PluginUpdateCheckService instead", replaceWith = ReplaceWith("PluginUpdateCheckService.getInstance().getPluginUpdate(pluginId, indicator)"))
   fun getInternalPluginUpdates(
     buildNumber: BuildNumber? = null,
     indicator: ProgressIndicator? = null,
@@ -669,8 +638,41 @@ object UpdateChecker {
   @Deprecated("Must not be used by plugins, only IDE itself. To remove without replacement!")
   @ApiStatus.ScheduledForRemoval
   @JvmStatic
-  fun updateDescriptorsForInstalledPlugins(state: InstalledPluginsState) {
+  fun updateDescriptorsForInstalledPlugins(@Suppress("unused") state: InstalledPluginsState) {
     // NO-OP
+  }
+
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
+  @ApiStatus.Internal
+  @Deprecated("Migrate to PluginUpdateCheckService")
+  @ApiStatus.ScheduledForRemoval
+  fun getPluginUpdates(
+    pluginId: PluginId,
+    indicator: ProgressIndicator? = null,
+  ): PluginUpdatesInfo {
+    val result = getPluginUpdates(listOf(pluginId), indicator)
+    val updates = result.pluginUpdates
+    return PluginUpdatesInfo(
+      updates.allEnabled,
+      updates.allDisabled,
+      updates.incompatible.map { it.pluginId },
+      result.errors
+    )
+  }
+
+  @ApiStatus.Internal
+  @Deprecated("Migrate to PluginUpdateCheckService")
+  @ApiStatus.ScheduledForRemoval
+  data class PluginUpdatesInfo @ApiStatus.Internal constructor(
+    val allEnabled: Collection<PluginDownloader> = emptyList(),
+    val allDisabled: Collection<PluginDownloader> = emptyList(),
+    val incompatible: Collection<PluginId> = emptyList(),
+    val errors: Map<String?, Exception> = emptyMap(),
+  ) {
+    val all: List<PluginDownloader> by lazy {
+      allEnabled + allDisabled
+    }
   }
   //</editor-fold>
 }

@@ -9,6 +9,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.updateSettings.PluginUpdateCheckService
+import com.intellij.openapi.updateSettings.PluginUpdateInfo
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerPluginsFacade
 import com.intellij.openapi.util.BuildNumber
@@ -19,6 +21,7 @@ import com.intellij.testFramework.junit5.http.url
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.utils.io.deleteChildrenRecursively
 import com.intellij.util.application
+import com.intellij.util.io.HttpRequests
 import com.intellij.util.queryParameters
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
@@ -163,10 +166,7 @@ class UpdateCheckerFacadeTest {
     assertEquals(CpuArch.CURRENT.name, queryParameters["arch"])
 
     // Java URI does not support repeatable names for pluginXmlId
-    val parsedQuery = URLEncodedUtils.parse(receivedUpdatesRequestUri, StandardCharsets.UTF_8)
-    val pluginIds = parsedQuery
-      .filter { it.name.equals("pluginXmlId", true) }
-      .map { it.value }
+    val pluginIds = getPluginIdsFromQuery(receivedUpdatesRequestUri)
 
     assertEquals(2, pluginIds.size)
     assertTrue(pluginIds.contains("ImageView"))
@@ -191,7 +191,7 @@ class UpdateCheckerFacadeTest {
       """.trimIndent()
     )
 
-    val result = UpdateCheckerFacade.getInstance().getInternalPluginUpdates(
+    val result = UpdateCheckerFacade.getInstance().getPluginUpdates(
       plugins = listOf(PluginId.getId("ColourChooser"), PluginId.getId("ImageView"))
     ).pluginUpdates
 
@@ -379,6 +379,90 @@ class UpdateCheckerFacadeTest {
     assertEquals("ImageView", result.allDisabled.first().id.idString)
   }
 
+  @Test
+  fun `server errors`() {
+    installedPluginsFacade.setPlugins(listOf(
+      InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "1.0", "0", "999.99999", true)
+    ))
+
+    setServerPlugins(listOf(RepositoryPluginMock("ColourChooser", "501", "101", "1.0")), "")
+
+    server.removeContext("/plugins/api/search/updates/compatible")
+    server.createContext("/plugins/api/search/updates/compatible") { handler ->
+      handler.sendResponseHeaders(501, 0)
+      handler.responseBody.writer().use {
+        it.write("Internal Server Error")
+      }
+    }
+
+    val result = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates()
+    assertEquals(1, result.errors.size)
+
+    val exception = result.errors.values.first()
+    assertTrue(exception is HttpRequests.HttpStatusException)
+    assertEquals(501, exception.statusCode)
+  }
+
+  @Test
+  fun `alien plugin IDs are not send to Marketplace`() {
+    installedPluginsFacade.setPlugins(listOf(
+      InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "1.0", "0", "999.99999", true),
+      InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
+    ))
+
+    setServerPlugins(
+      listOf(
+        RepositoryPluginMock("ColourChooser", "501", "101", "2.0"),
+        // No ImageView plugin in repository
+      ),
+      ""
+    )
+
+    server.removeContext("/plugins/api/search/updates/compatible")
+    server.createContext("/plugins/api/search/updates/compatible") { handler ->
+      receivedUpdatesRequestUri = handler.requestURI
+
+      handler.sendResponseHeaders(200, 0)
+      handler.responseBody.writer().use {
+        it.write(
+          """
+        [{"id": "101", "pluginId": "501", "pluginXmlId": "ColourChooser", "version": "2.0"}]
+        """.trimIndent())
+      }
+    }
+
+    UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates()
+
+    assertNotNull(receivedUpdatesRequestUri)
+
+    val pluginIds = getPluginIdsFromQuery(receivedUpdatesRequestUri)
+    assertEquals(1, pluginIds.size)
+    assertEquals("ColourChooser", pluginIds.first())
+  }
+
+  @Test
+  fun `single plugin update`() {
+    installedPluginsFacade.setPlugins(listOf(
+      InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "1.0", "0", "999.99999", true),
+      InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
+    ))
+
+    setServerPlugins(
+      listOf(
+        RepositoryPluginMock("ColourChooser", "501", "101", "2.0"),
+        RepositoryPluginMock("ImageView", "502", "102", "2.1"),
+      ),
+      """
+        [{"id": "102", "pluginId": "502", "pluginXmlId": "ImageView", "version": "2.1"}] 
+      """.trimIndent()
+    )
+
+    val result = PluginUpdateCheckService.getInstance().getPluginUpdate(PluginId.getId("ImageView"))
+
+    assertTrue(result is PluginUpdateInfo.UpdateAvailable)
+    assertEquals("ImageView", result.update.id.idString)
+  }
+
   private fun setServerPlugins(
     plugins: List<RepositoryPluginMock>,
     @Language("JSON") updatesResponse: String,
@@ -433,6 +517,15 @@ class UpdateCheckerFacadeTest {
                 "sourceCodeUrl": "https://example.com/plugin/${pluginId}"
               }
           """.trimIndent()
+  }
+
+  private fun getPluginIdsFromQuery(uri: URI?): List<String?> {
+    // Java URI does not support repeatable names for pluginXmlId
+    val parsedQuery = URLEncodedUtils.parse(uri, StandardCharsets.UTF_8)
+    val pluginIds = parsedQuery
+      .filter { it.name.equals("pluginXmlId", true) }
+      .map { it.value }
+    return pluginIds
   }
 }
 

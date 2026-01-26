@@ -46,9 +46,7 @@ interface UpdateCheckerFacade {
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   @IntellijInternalApi
-  @ApiStatus.Internal
-  @Deprecated("Use [getPluginUpdates] instead", ReplaceWith("getPluginUpdates(pluginId, buildNumber, indicator)"))
-  fun getInternalPluginUpdates(
+  fun getPluginUpdates(
     plugins: Collection<PluginId>,
     indicator: ProgressIndicator? = null,
     buildNumber: BuildNumber? = null,

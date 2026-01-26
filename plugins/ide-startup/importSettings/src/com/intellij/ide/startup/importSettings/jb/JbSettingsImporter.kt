@@ -407,7 +407,7 @@ internal class JbSettingsImporter(private val configDirPath: Path, private val p
     val updateableMap = HashMap<PluginId, IdeaPluginDescriptor?>(pluginsMap)
     progressIndicator.text2 = ImportSettingsBundle.message("progress.details.checking.for.plugin.updates")
     @Suppress("DEPRECATION")
-    val internalPluginUpdates = service<UpdateCheckerFacade>().getInternalPluginUpdates(pluginsMap.keys, progressIndicator)
+    val internalPluginUpdates = UpdateCheckerFacade.getInstance().getPluginUpdates(pluginsMap.keys, progressIndicator)
     for (pluginId in internalPluginUpdates.pluginUpdates.all) {
       updateableMap.remove(pluginId.id)
     }

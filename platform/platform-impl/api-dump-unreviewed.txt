@@ -3328,7 +3328,6 @@ f:com.intellij.ide.plugins.PluginStateManager
 a:com.intellij.ide.plugins.PluginUpdateStatus
 - sf:Companion:com.intellij.ide.plugins.PluginUpdateStatus$Companion
 - f:getTimestamp():J
-- f:mergeWith(com.intellij.ide.plugins.PluginUpdateStatus):com.intellij.ide.plugins.PluginUpdateStatus
 f:com.intellij.ide.plugins.PluginUpdateStatus$CheckFailed
 - com.intellij.ide.plugins.PluginUpdateStatus
 - <init>(java.lang.String,java.lang.String):V
@@ -3340,16 +3339,8 @@ f:com.intellij.ide.plugins.PluginUpdateStatus$Companion
 f:com.intellij.ide.plugins.PluginUpdateStatus$LatestVersionInstalled
 - com.intellij.ide.plugins.PluginUpdateStatus
 - sf:INSTANCE:com.intellij.ide.plugins.PluginUpdateStatus$LatestVersionInstalled
-f:com.intellij.ide.plugins.PluginUpdateStatus$Unverified
-- com.intellij.ide.plugins.PluginUpdateStatus
-- <init>(java.lang.String,java.lang.String,com.intellij.ide.plugins.PluginUpdateStatus$Update):V
-- f:getReason():java.lang.String
-- f:getUpdateStatus():com.intellij.ide.plugins.PluginUpdateStatus$Update
-- f:getVerifierName():java.lang.String
 f:com.intellij.ide.plugins.PluginUpdateStatus$Update
 - com.intellij.ide.plugins.PluginUpdateStatus
-- <init>(com.intellij.ide.plugins.IdeaPluginDescriptor,java.lang.String):V
-- f:getHostToInstallFrom():java.lang.String
 - f:getPluginDescriptor():com.intellij.ide.plugins.IdeaPluginDescriptor
 f:com.intellij.ide.plugins.RepositoryHelper
 - <init>():V
@@ -3366,16 +3357,13 @@ c:com.intellij.ide.plugins.StandalonePluginUpdateChecker
 - dispose():V
 - psf:getCACHED_REQUEST_DELAY():J
 - getCurrentVersion():java.lang.String
-- pf:getLastUpdateStatus():com.intellij.ide.plugins.PluginUpdateStatus
 - f:getPluginId():com.intellij.openapi.extensions.PluginId
 - f:installPluginUpdate(com.intellij.ide.plugins.PluginUpdateStatus$Update,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0):V
 - bs:installPluginUpdate$default(com.intellij.ide.plugins.StandalonePluginUpdateChecker,com.intellij.ide.plugins.PluginUpdateStatus$Update,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,I,java.lang.Object):V
 - f:pluginUsed():V
 - pf:queueUpdateCheck(kotlin.jvm.functions.Function1):V
-- pf:setLastUpdateStatus(com.intellij.ide.plugins.PluginUpdateStatus):V
 - skipUpdateCheck():Z
 - pf:updateCheck(kotlin.jvm.functions.Function1):V
-- verifyUpdate(com.intellij.ide.plugins.PluginUpdateStatus$Update):com.intellij.ide.plugins.PluginUpdateStatus
 f:com.intellij.ide.plugins.StandalonePluginUpdateChecker$Companion
 f:com.intellij.ide.plugins.UIComponentFileEditor
 - com.intellij.openapi.util.UserDataHolderBase
