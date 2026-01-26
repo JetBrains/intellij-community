@@ -283,12 +283,45 @@ public abstract class BazelIncBuildTest {
     );
     processBuilder.command().addAll(List.of(options));
     processBuilder.command().addAll(List.of("--color=no", "--curses=no"));
+    String commandText = String.join(" ", processBuilder.command());
 
     processBuilder.redirectErrorStream(true);
     processBuilder.directory(ourTestDataWorkRoot.toFile());
 
     Process proc = processBuilder.start();
-    OutputConsumer allOutput = OutputConsumer.allLinesConsumer();
+    long startNanos = System.nanoTime();
+    try {
+      OutputConsumer allOutput = OutputConsumer.allLinesConsumer();
+      Thread readerThread = outputReader(outputSink, proc, allOutput);
+
+      boolean exitedInTime = proc.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS);
+      if (!exitedInTime) {
+        proc.destroy();
+        if (!proc.waitFor(5, TimeUnit.SECONDS)) {
+          proc.destroyForcibly();
+          proc.waitFor(5, TimeUnit.SECONDS);
+        }
+      }
+
+      readerThread.join(TimeUnit.SECONDS.toMillis(5));
+
+      if (!exitedInTime) {
+        return ExecutionResult.create(
+          -1,
+          "Bazel command timed out after " + timeout.toSeconds() + " sec\n" + allOutput.getResult()
+        );
+      }
+
+      int exitCode = proc.exitValue();
+      return ExecutionResult.create(exitCode, exitCode == 0? outputSink.getResult() : allOutput.getResult());
+    }
+    finally {
+      long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+      System.out.println("runBazelCommand[" + elapsedMillis +  " ms]: " + commandText);
+    }
+  }
+
+  private static @NotNull Thread outputReader(OutputConsumer outputSink, Process proc, OutputConsumer allOutput) {
     Thread readerThread = new Thread(() -> {
       try (BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream(), StandardCharsets.UTF_8))) {
         String line;
@@ -302,27 +335,7 @@ public abstract class BazelIncBuildTest {
     }, "bazel-inc-build-test-output");
     readerThread.setDaemon(true);
     readerThread.start();
-
-    boolean exitedInTime = proc.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS);
-    if (!exitedInTime) {
-      proc.destroy();
-      if (!proc.waitFor(5, TimeUnit.SECONDS)) {
-        proc.destroyForcibly();
-        proc.waitFor(5, TimeUnit.SECONDS);
-      }
-    }
-
-    readerThread.join(TimeUnit.SECONDS.toMillis(5));
-
-    if (!exitedInTime) {
-      return ExecutionResult.create(
-        -1,
-        "Bazel command timed out after " + timeout.toSeconds() + " sec\n" + allOutput.getResult()
-      );
-    }
-
-    int exitCode = proc.exitValue();
-    return ExecutionResult.create(exitCode, exitCode == 0? outputSink.getResult() : allOutput.getResult());
+    return readerThread;
   }
 
   private static void copyRecursively(Path source, Path toDir, Predicate<Path> filter) throws IOException {
