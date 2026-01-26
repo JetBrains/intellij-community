@@ -1,9 +1,9 @@
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class MacosSpecificTest {
+class <!LINE_MARKER("descr='Run Test'")!>MacosSpecificTest<!> {
     @Test
-    fun testMacosLog() {
+    fun <!LINE_MARKER("descr='Run Test'")!>testMacosLog<!>() {
         val testMessage = "Test message for MacOS"
         val expected = "MacOS LOG: $testMessage"
 
