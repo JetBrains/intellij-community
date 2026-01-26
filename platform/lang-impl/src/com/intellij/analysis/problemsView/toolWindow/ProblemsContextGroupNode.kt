@@ -24,9 +24,7 @@ internal class ProblemsContextGroupNode(
   }
 
   override fun getChildren(): List<ProblemNode> =
-    problems.map { problem ->
-      ProblemNode(this, parent.parent.file, problem)
-    }
+    problems.toProblemNodes(this, parent.parent.file)
 
   override fun hashCode(): Int =
     group.hashCode() * 31 + parent.hashCode()

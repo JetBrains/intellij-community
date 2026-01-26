@@ -20,7 +20,7 @@ internal class ProblemsViewGroupNode(
   override fun update(project: Project, presentation: PresentationData) = presentation.addText(name, REGULAR_ATTRIBUTES)
 
   override fun getChildren(): List<ProblemNode> =
-    problems.map { ProblemNode(this, parent.file, it) }
+    problems.toProblemNodes(this, parent.file)
 
   override fun hashCode(): Int =
     group.hashCode()
