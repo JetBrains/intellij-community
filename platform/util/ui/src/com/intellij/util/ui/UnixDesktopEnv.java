@@ -10,20 +10,20 @@ import java.util.Comparator;
 import java.util.List;
 
 public enum UnixDesktopEnv {
-  Budgie("Budgie:GNOME", "budgie-desktop"),
-  Cinnamon("X-Cinnamon", "cinnamon"),
-  Deepin("Deepin", "dde-desktop"),
+  BUDGIE("Budgie:GNOME", "budgie-desktop"),
+  CINNAMON("X-Cinnamon", "cinnamon"),
+  DEEPIN("Deepin", "dde-desktop"),
   GNOME("GNOME", "gnome-shell"),
-  Hyprland("Hyprland", "hyprctl", List.of("version")),
+  HYPRLAND("Hyprland", "hyprctl", List.of("version")),
   KDE("KDE", "plasmashell"),
   LXDE("LXDE", "lxsession"),
   LXQT("LXQt", "lxqt-session"),
   MATE("MATE", "mate-session"),
-  Pantheon("Pantheon", "gala"),
-  Unity("Unity", "unity"),
+  PANTHEON("Pantheon", "gala"),
+  UNITY("Unity", "unity"),
   XFCE("XFCE", "xfce4-session"),
-  i3("i3", "i3"),
-  sway("sway", "sway");
+  I3("i3", "i3"),
+  SWAY("sway", "sway");
 
   public static final @Nullable UnixDesktopEnv CURRENT = getDesktop();
 

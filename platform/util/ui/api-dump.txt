@@ -5535,9 +5535,21 @@ f:com.intellij.util.ui.UIUtil$TextPainter
 - withShortcutColor(java.awt.Color):com.intellij.util.ui.UIUtil$TextPainter
 e:com.intellij.util.ui.UnixDesktopEnv
 - java.lang.Enum
+- sf:BUDGIE:com.intellij.util.ui.UnixDesktopEnv
+- sf:CINNAMON:com.intellij.util.ui.UnixDesktopEnv
 - sf:CURRENT:com.intellij.util.ui.UnixDesktopEnv
+- sf:DEEPIN:com.intellij.util.ui.UnixDesktopEnv
 - sf:GNOME:com.intellij.util.ui.UnixDesktopEnv
+- sf:HYPRLAND:com.intellij.util.ui.UnixDesktopEnv
+- sf:I3:com.intellij.util.ui.UnixDesktopEnv
 - sf:KDE:com.intellij.util.ui.UnixDesktopEnv
+- sf:LXDE:com.intellij.util.ui.UnixDesktopEnv
+- sf:LXQT:com.intellij.util.ui.UnixDesktopEnv
+- sf:MATE:com.intellij.util.ui.UnixDesktopEnv
+- sf:PANTHEON:com.intellij.util.ui.UnixDesktopEnv
+- sf:SWAY:com.intellij.util.ui.UnixDesktopEnv
+- sf:UNITY:com.intellij.util.ui.UnixDesktopEnv
+- sf:XFCE:com.intellij.util.ui.UnixDesktopEnv
 - s:valueOf(java.lang.String):com.intellij.util.ui.UnixDesktopEnv
 - s:values():com.intellij.util.ui.UnixDesktopEnv[]
 f:com.intellij.util.ui.WatermarkIcon
