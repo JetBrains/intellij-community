@@ -184,6 +184,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     verticalScrollModel.addChangeListener(new javax.swing.event.ChangeListener() {
       private boolean myIgnoreScrollEvent = false;
       private int myEventCount = 0;
+      private long mySecondScrollTimeMillis = -1;
 
       @Override
       public void stateChanged(ChangeEvent e) {
@@ -193,13 +194,17 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
         int id = myEventCount++;
         // id == 0 -> vertical scrollbar change caused by `ESC[2J` (moving screen lines to scrollback buffer)
         // id == 1 -> vertical scrollbar change caused by the initial terminal resize according to the UI component actual bounds
-        if (id > 1) {
+        // id == 2 -> vertical scrollbar change caused by the additional initial resize in RemDev
+        if (id > 2 || (id == 2 && System.currentTimeMillis() - mySecondScrollTimeMillis > 1000)) {
           verticalScrollModel.removeChangeListener(this);
           return;
         }
+        if (id == 1) {
+          mySecondScrollTimeMillis = System.currentTimeMillis();
+        }
         ApplicationManager.getApplication().invokeLater(() -> {
           if (!disposed.isDisposed()) {
-            if (id == 1) {
+            if (id >= 1) {
               runIgnoringScrollEvents(() -> {
                 verticalScrollModel.setValue(0); // scroll to bottom
               });
