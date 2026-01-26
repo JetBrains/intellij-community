@@ -5470,7 +5470,7 @@ var require_dist = __commonJS((exports, module) => {
 });
 
 // ij-mcp-proxy.ts
-import path8 from "path";
+import path9 from "path";
 import { cwd, env } from "process";
 
 // node_modules/zod/v4/core/index.js
@@ -24151,18 +24151,45 @@ function formatEntry(entry) {
 }
 
 // proxy-tools/handlers/read.ts
-var DEFAULT_READ_LIMIT = 2000, MAX_LINE_LENGTH = 500, TAB_WIDTH = 4, COMMENT_PREFIXES = ["#", "//", "--"], BLOCK_COMMENT_START = "/*", BLOCK_COMMENT_END = "*/", ANNOTATION_PREFIX = "@", TRUNCATION_ERROR = "file content truncated while reading";
+import path7 from "path";
+var DEFAULT_READ_LIMIT = 2000, MAX_LINE_LENGTH = 500, TAB_WIDTH = 4, COMMENT_PREFIXES = ["#", "//", "--"], BLOCK_COMMENT_START = "/*", BLOCK_COMMENT_END = "*/", ANNOTATION_PREFIX = "@", TRUNCATION_ERROR = "file content truncated while reading", SEARCH_FALLBACK_REGEX = "(?m)^.*$", SEARCH_FALLBACK_MAX_LINES = 200000;
 async function handleReadTool(args, projectPath, callUpstreamTool, { format = "numbered" } = {}) {
-  let filePath = requireString(args.file_path, "file_path"), offset = toPositiveInt(args.offset, 1, "offset"), limit = toPositiveInt(args.limit, DEFAULT_READ_LIMIT, "limit"), mode = (args.mode ? String(args.mode).toLowerCase() : "slice") === "indentation" ? "indentation" : "slice", includeLineNumbers = format !== "raw", indentation = args.indentation ?? {}, anchorLine = indentation.anchor_line === void 0 || indentation.anchor_line === null ? null : toPositiveInt(indentation.anchor_line, void 0, "anchor_line"), maxLevels = toNonNegativeInt(indentation.max_levels, 0, "max_levels"), includeSiblings = Boolean(indentation.include_siblings ?? !1), includeHeader = indentation.include_header === void 0 ? !0 : Boolean(indentation.include_header), maxLines = indentation.max_lines === void 0 || indentation.max_lines === null ? null : toPositiveInt(indentation.max_lines, void 0, "max_lines"), { relative } = resolvePathInProject(projectPath, filePath, "file_path");
+  let filePath = requireString(args.file_path, "file_path"), offset = toPositiveInt(args.offset, 1, "offset"), limit = toPositiveInt(args.limit, DEFAULT_READ_LIMIT, "limit"), mode = (args.mode ? String(args.mode).toLowerCase() : "slice") === "indentation" ? "indentation" : "slice", includeLineNumbers = format !== "raw", indentation = args.indentation ?? {}, anchorLine = indentation.anchor_line === void 0 || indentation.anchor_line === null ? null : toPositiveInt(indentation.anchor_line, void 0, "anchor_line"), maxLevels = toNonNegativeInt(indentation.max_levels, 0, "max_levels"), includeSiblings = Boolean(indentation.include_siblings ?? !1), includeHeader = indentation.include_header === void 0 ? !0 : Boolean(indentation.include_header), maxLines = indentation.max_lines === void 0 || indentation.max_lines === null ? null : toPositiveInt(indentation.max_lines, void 0, "max_lines"), { relative, absolute } = resolvePathInProject(projectPath, filePath, "file_path");
   if (mode === "indentation")
-    return await readIndentationMode(relative, offset, limit, {
-      anchorLine,
-      maxLevels,
-      includeSiblings,
-      includeHeader,
-      maxLines
-    }, includeLineNumbers, callUpstreamTool);
-  return await readSliceMode(relative, offset, limit, includeLineNumbers, callUpstreamTool);
+    try {
+      return await readIndentationMode(relative, offset, limit, {
+        anchorLine,
+        maxLevels,
+        includeSiblings,
+        includeHeader,
+        maxLines
+      }, includeLineNumbers, callUpstreamTool);
+    } catch (error48) {
+      if (!isTruncationError(error48))
+        throw error48;
+      try {
+        return await readIndentationModeFromSearch(projectPath, relative, absolute, offset, limit, {
+          anchorLine,
+          maxLevels,
+          includeSiblings,
+          includeHeader,
+          maxLines
+        }, includeLineNumbers, callUpstreamTool);
+      } catch {
+        throw error48;
+      }
+    }
+  try {
+    return await readSliceMode(relative, offset, limit, includeLineNumbers, callUpstreamTool);
+  } catch (error48) {
+    if (!isTruncationError(error48))
+      throw error48;
+    try {
+      return await readSliceModeFromSearch(projectPath, relative, absolute, offset, limit, includeLineNumbers, callUpstreamTool);
+    } catch {
+      throw error48;
+    }
+  }
 }
 function formatLine(line) {
   if (line.length <= MAX_LINE_LENGTH)
@@ -24201,6 +24228,24 @@ async function readSliceMode(relativePath, offset, limit, includeLineNumbers, ca
     throw Error("offset exceeds file length");
   }
   return sliceLines(lines, offset, limit, includeLineNumbers);
+}
+async function readSliceModeFromSearch(projectPath, relativePath, absolutePath, offset, limit, includeLineNumbers, callUpstreamTool) {
+  let requestedLines = offset + limit - 1;
+  if (requestedLines <= 0)
+    throw Error("limit must be greater than zero");
+  let { lineMap, maxLineNumber, hasMore } = await readLinesViaSearch(projectPath, relativePath, absolutePath, requestedLines, callUpstreamTool);
+  if (maxLineNumber < offset) {
+    if (hasMore)
+      throw Error(TRUNCATION_ERROR);
+    throw Error("offset exceeds file length");
+  }
+  let endLine = Math.min(offset + limit - 1, maxLineNumber), output = [];
+  for (let lineNumber = offset;lineNumber <= endLine; lineNumber += 1) {
+    let rawLine = lineMap.get(lineNumber) ?? "", display = includeLineNumbers ? formatLine(rawLine) : rawLine;
+    output.push(formatOutputLine(lineNumber, display, includeLineNumbers));
+  }
+  return output.join(`
+`);
 }
 function measureIndent(line) {
   let indent = 0;
@@ -24263,6 +24308,26 @@ async function readIndentationMode(relativePath, offset, limit, options, include
     }
     throw error48;
   }
+}
+async function readIndentationModeFromSearch(projectPath, relativePath, absolutePath, offset, limit, options, includeLineNumbers, callUpstreamTool) {
+  let anchorLine = options.anchorLine ?? offset;
+  if (anchorLine <= 0)
+    throw Error("anchor_line exceeds file length");
+  let guardLimit = options.maxLines ?? limit;
+  if (guardLimit <= 0)
+    throw Error("max_lines must be greater than zero");
+  let requestedLines = anchorLine + guardLimit, { lineMap, maxLineNumber, hasMore } = await readLinesViaSearch(projectPath, relativePath, absolutePath, requestedLines, callUpstreamTool);
+  if (maxLineNumber < anchorLine) {
+    if (hasMore)
+      throw Error(TRUNCATION_ERROR);
+    throw Error("anchor_line exceeds file length");
+  }
+  let cappedMaxLine = Math.min(requestedLines, maxLineNumber), lines = [];
+  for (let lineNumber = 1;lineNumber <= cappedMaxLine; lineNumber += 1)
+    lines.push(lineMap.get(lineNumber) ?? "");
+  let text = lines.join(`
+`);
+  return readIndentationFromText(text, offset, limit, options, includeLineNumbers);
 }
 function readIndentationFromText(text, offset, limit, options, includeLineNumbers) {
   let anchorLine = options.anchorLine ?? offset;
@@ -24434,9 +24499,43 @@ function stripTrailingLineBreak(text) {
 function isAnchorLineError(error48) {
   return error48 instanceof Error && error48.message === "anchor_line exceeds file length";
 }
+function isTruncationError(error48) {
+  return error48 instanceof Error && error48.message === TRUNCATION_ERROR;
+}
+async function readLinesViaSearch(projectPath, relativePath, absolutePath, maxLine, callUpstreamTool) {
+  let cappedMaxLine = Math.min(Math.max(1, maxLine), SEARCH_FALLBACK_MAX_LINES), directory = path7.dirname(relativePath), result = await callUpstreamTool("search_in_files_by_regex", {
+    regexPattern: SEARCH_FALLBACK_REGEX,
+    directoryToSearch: directory === "." ? void 0 : directory,
+    fileMask: path7.basename(relativePath),
+    caseSensitive: !0,
+    maxUsageCount: cappedMaxLine
+  }), entries = extractEntries(result), hasMore = extractStructuredContent(result)?.probablyHasMoreMatchingEntries === !0 || maxLine > cappedMaxLine, lineMap = /* @__PURE__ */ new Map, maxLineNumber = 0;
+  for (let entry of entries) {
+    if (!entry || typeof entry.lineNumber !== "number")
+      continue;
+    if (normalizeEntryPath(projectPath, entry.filePath) !== absolutePath)
+      continue;
+    let lineNumber = entry.lineNumber;
+    if (lineNumber > maxLineNumber)
+      maxLineNumber = lineNumber;
+    if (!lineMap.has(lineNumber))
+      lineMap.set(lineNumber, normalizeUsageLine(entry.lineText));
+  }
+  return { lineMap, maxLineNumber, hasMore };
+}
+function normalizeUsageLine(lineText) {
+  if (typeof lineText !== "string")
+    return "";
+  if (!lineText.startsWith("||"))
+    return lineText;
+  let tailIndex = lineText.lastIndexOf("||");
+  if (tailIndex <= 1)
+    return "";
+  return lineText.slice(2, tailIndex);
+}
 
 // proxy-tools/handlers/write.ts
-import path7 from "path";
+import path8 from "path";
 async function handleWriteTool(args, projectPath, callUpstreamTool) {
   let filePath = requireString(args.file_path, "file_path"), content = typeof args.content === "string" ? args.content : null;
   if (content === null)
@@ -24446,7 +24545,7 @@ async function handleWriteTool(args, projectPath, callUpstreamTool) {
     pathInProject: relative,
     text: content,
     overwrite: !0
-  }), `Wrote ${path7.resolve(projectPath, relative)}`;
+  }), `Wrote ${path8.resolve(projectPath, relative)}`;
 }
 
 // proxy-tools/tooling.ts
@@ -24508,7 +24607,7 @@ function parseEnvSeconds(name, fallbackSeconds) {
 function buildStreamUrl(port) {
   return `http://${defaultHost}:${port}${defaultPath}`;
 }
-var projectPath = path8.resolve(cwd()), defaultProjectPathKey = "project_path", projectPathManager = createProjectPathManager({ projectPath, defaultProjectPathKey }), toolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE), BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set(["create_new_file", "execute_terminal_command"]), REPLACED_TOOL_NAMES = /* @__PURE__ */ new Set([
+var projectPath = path9.resolve(cwd()), defaultProjectPathKey = "project_path", projectPathManager = createProjectPathManager({ projectPath, defaultProjectPathKey }), toolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE), BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set(["create_new_file", "execute_terminal_command"]), REPLACED_TOOL_NAMES = /* @__PURE__ */ new Set([
   "get_file_text_by_path",
   "replace_text_in_file",
   "find_files_by_name_keyword",

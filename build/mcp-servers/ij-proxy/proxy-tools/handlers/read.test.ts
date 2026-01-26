@@ -48,12 +48,21 @@ describe('ij MCP proxy read_file', {timeout: SUITE_TIMEOUT_MS}, () => {
         if (name === 'get_file_text_by_path') {
           return {text: truncated}
         }
+        if (name === 'search_in_files_by_regex') {
+          return {
+            structuredContent: {
+              entries: [],
+              probablyHasMoreMatchingEntries: true
+            }
+          }
+        }
         return {text: '{}'}
       }
     }, async ({fakeServer, proxyClient}) => {
       await proxyClient.send('tools/list')
       const callPromise = fakeServer.waitForToolCall()
       const retryPromise = fakeServer.waitForToolCall()
+      const searchPromise = fakeServer.waitForToolCall()
       const response = await proxyClient.send('tools/call', {
         name: 'read_file',
         arguments: {
@@ -64,9 +73,11 @@ describe('ij MCP proxy read_file', {timeout: SUITE_TIMEOUT_MS}, () => {
       })
       const call = await withTimeout(callPromise, TOOL_CALL_TIMEOUT_MS, 'tools/call')
       const retry = await withTimeout(retryPromise, TOOL_CALL_TIMEOUT_MS, 'tools/call')
+      const search = await withTimeout(searchPromise, TOOL_CALL_TIMEOUT_MS, 'tools/call')
 
       strictEqual(call.args.truncateMode, 'START')
       strictEqual(retry.args.truncateMode, 'NONE')
+      strictEqual(search.name, 'search_in_files_by_regex')
       strictEqual(response.result.isError, true)
       strictEqual(response.result.content[0].text, 'file content truncated while reading')
     })
@@ -78,7 +89,13 @@ describe('read handler (unit)', () => {
 
   async function expectInlineTruncation(text) {
     const {callUpstreamTool, calls} = createMockToolCaller({
-      get_file_text_by_path: () => ({text})
+      get_file_text_by_path: () => ({text}),
+      search_in_files_by_regex: () => ({
+        structuredContent: {
+          entries: [],
+          probablyHasMoreMatchingEntries: true
+        }
+      })
     })
 
     await rejects(
@@ -90,9 +107,10 @@ describe('read handler (unit)', () => {
       /file content truncated while reading/
     )
 
-    strictEqual(calls.length, 2)
+    strictEqual(calls.length, 3)
     strictEqual(calls[0].args.truncateMode, 'START')
     strictEqual(calls[1].args.truncateMode, 'NONE')
+    strictEqual(calls[2].name, 'search_in_files_by_regex')
   }
 
   it('reads a slice of lines with numbering', async () => {
@@ -160,6 +178,33 @@ describe('read handler (unit)', () => {
     await expectInlineTruncation(truncated)
   })
 
+  it('falls back to search when upstream truncates', async () => {
+    const truncated = ['alpha', `beta${TRUNCATION_MARKER}`].join('\n')
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: truncated}),
+      search_in_files_by_regex: () => ({
+        structuredContent: {
+          entries: [
+            {filePath: 'sample.txt', lineNumber: 1, lineText: '||alpha||'},
+            {filePath: 'sample.txt', lineNumber: 2, lineText: '||beta||'},
+            {filePath: 'sample.txt', lineNumber: 3, lineText: '||gamma||'}
+          ],
+          probablyHasMoreMatchingEntries: false
+        }
+      })
+    })
+
+    const result = await handleReadTool({
+      file_path: 'sample.txt',
+      offset: 3,
+      limit: 1
+    }, projectPath, callUpstreamTool, {format: 'numbered'})
+
+    strictEqual(result, 'L3: gamma')
+    strictEqual(calls.length, 3)
+    strictEqual(calls[2].name, 'search_in_files_by_regex')
+  })
+
   it('retries indentation read when truncated content hides anchor line', async () => {
     let callIndex = 0
     const {callUpstreamTool, calls} = createMockToolCaller({
@@ -192,7 +237,13 @@ describe('read handler (unit)', () => {
   it('reports truncation when indentation anchor is beyond inline marker', async () => {
     const truncated = ['root', `child${TRUNCATION_MARKER}`].join('\n')
     const {callUpstreamTool, calls} = createMockToolCaller({
-      get_file_text_by_path: () => ({text: truncated})
+      get_file_text_by_path: () => ({text: truncated}),
+      search_in_files_by_regex: () => ({
+        structuredContent: {
+          entries: [],
+          probablyHasMoreMatchingEntries: true
+        }
+      })
     })
 
     await rejects(
@@ -209,9 +260,10 @@ describe('read handler (unit)', () => {
       /file content truncated while reading/
     )
 
-    strictEqual(calls.length, 2)
+    strictEqual(calls.length, 3)
     strictEqual(calls[0].args.truncateMode, 'START')
     strictEqual(calls[1].args.truncateMode, 'NONE')
+    strictEqual(calls[2].name, 'search_in_files_by_regex')
   })
 
   it('supports indentation mode with anchor_line', async () => {
