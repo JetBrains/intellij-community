@@ -92,7 +92,7 @@ internal class ProblemsViewHighlightingFileRoot(panel: ProblemsViewPanel, val fi
     return getContextGroups(node)
       .flatMap { (group, problems) ->
         group?.let {
-          listOf(ProblemsContextNode(node, it, problems) { panel.state.groupByToolId })
+          listOf(ProblemsContextNode(node, it, problems, panel.state.groupByToolId))
         }
         ?: getNodesForProblems(node, problems)
       }
