@@ -7,7 +7,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
-import com.intellij.idea.IJIgnore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -113,7 +112,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     @Test
-    @IJIgnore(issue = "KTIJ-35262")
     fun testNewModuleInJavaProject() = runBlocking {
         waitForProjectCreation {
             createProjectFromTemplate(JAVA) {
@@ -143,7 +141,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     @Test
-    @IJIgnore(issue = "KTIJ-35262")
     fun testNewModuleInKotlinProjectIndependentHierarchy() {
         runNewProjectAndModuleTestCase(
             independentHierarchy = true
@@ -190,7 +187,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     @Test
-    @IJIgnore(issue = "KTIJ-35262")
     fun testCreateNewProject() {
         runBlocking {
             waitForProjectCreation {
@@ -203,19 +199,16 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     @Test
-    @IJIgnore(issue = "KTIJ-35262")
     fun testSimpleProject() {
         runNewProjectAndModuleTestCase()
     }
 
     @Test
-    @IJIgnore(issue = "KTIJ-35262")
     fun testAddSampleCodeEverywhere() {
         runNewProjectAndModuleTestCase(addSampleCodeToProject = true, addSampleCodeToModule = true)
     }
 
     @Test
-    @IJIgnore(issue = "KTIJ-35262")
     fun testAddSampleCodeOnlyInModule() {
         runNewProjectAndModuleTestCase(addSampleCodeToProject = false, addSampleCodeToModule = true)
     }
@@ -311,8 +304,9 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     override fun postprocessOutputFile(relativePath: String, fileContents: String): String {
-        val result = substituteCompilerSourceAndTargetLevels(fileContents)
-        return substituteArtifactsVersions(result)
+        val fileContentWithSubstitutedCompilerSourceAndTarget = substituteCompilerSourceAndTargetLevels(fileContents)
+        val fileContentWithSubstitutedKotlinVersion = substituteKotlinVersion(fileContentWithSubstitutedCompilerSourceAndTarget)
+        return substituteArtifactsVersions(fileContentWithSubstitutedKotlinVersion)
     }
 
     override fun getTestFolderName(): String {
@@ -323,8 +317,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
         var result = str
 
         result = substituteVersionForArtifact(result, "kotlin-maven-plugin", needMoreSpaces = true)
-        result = substituteVersionForArtifact(result, "kotlin-test-junit5")
-        result = substituteVersionForArtifact(result, "kotlin-stdlib")
         result = substituteVersionForArtifact(result, "maven-surefire-plugin", needMoreSpaces = true)
         result = substituteVersionForArtifact(result, "maven-failsafe-plugin", needMoreSpaces = true)
         result = substituteVersionForArtifact(result, "junit-jupiter")
@@ -333,10 +325,10 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
         return result
     }
 
-    private fun substituteVersionForArtifact(str: String, artifactId: String, needMoreSpaces: Boolean = false): String {
+    private fun substituteVersionForArtifact(fileContents: String, artifactId: String, needMoreSpaces: Boolean = false): String {
         val regex =
             Regex("<artifactId>$artifactId</artifactId>\n( )*<version>(([a-zA-Z]|(\\.)|(\\d)|-)+)")
-        var result = str
+        var result = fileContents
         if (result.contains(regex)) {
             val additionalSpaces = if (needMoreSpaces) {
                 "    "
@@ -346,6 +338,17 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             result = result.replace(
                 regex, "<artifactId>$artifactId</artifactId>\n" +
                         "$additionalSpaces            <version>VERSION"
+            )
+        }
+        return result
+    }
+
+    private fun substituteKotlinVersion(fileContents: String): String {
+        val kotlinVersionRegex = Regex("<kotlin.version>\\d\\.\\d\\.(\\d)+")
+        var result = fileContents
+        if (result.contains(kotlinVersionRegex)) {
+            result = result.replace(
+                kotlinVersionRegex, "<kotlin.version>VERSION"
             )
         }
         return result
