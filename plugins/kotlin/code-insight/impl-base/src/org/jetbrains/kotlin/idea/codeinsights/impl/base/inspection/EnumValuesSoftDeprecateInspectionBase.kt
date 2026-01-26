@@ -22,9 +22,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.codeInsight.*
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.DeprecationCollectingInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isOptInRequired
-import org.jetbrains.kotlin.idea.statistics.DeprecatedFeaturesInspectionData
 import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
@@ -35,10 +34,7 @@ import org.jetbrains.kotlin.psi.*
  *
  * See [KTIJ-22298](https://youtrack.jetbrains.com/issue/KTIJ-22298/Soft-deprecate-Enumvalues-for-Kotlin-callers).
  */
-abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInspection<DeprecatedFeaturesInspectionData>(
-    collector = KotlinLanguageFeaturesFUSCollector.enumEntriesCollector,
-    defaultDeprecationData = DeprecatedFeaturesInspectionData()
-) {
+abstract class EnumValuesSoftDeprecateInspectionBase : AbstractKotlinInspection() {
 
     protected open fun isEnumValuesSoftDeprecateEnabled(file: KtFile): Boolean = file.isEnumValuesSoftDeprecateEnabled()
 
@@ -59,7 +55,6 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
                     return
                 }
                 val quickFix = createQuickFix(callExpression, resolvedCallSymbol) ?: return
-                session.updateDeprecationData { it.withDeprecatedFeature() }
                 holder.registerProblem(
                     callExpression,
                     displayName,
