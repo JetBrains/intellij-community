@@ -25,6 +25,7 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.ui.ClassesFilteredView;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.AlternativeSourceNotificationProvider;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -94,6 +95,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
+
+import java.util.concurrent.CompletableFuture;
 
 public class JavaDebugProcess extends XDebugProcess {
   private final DebuggerSession myJavaSession;
@@ -291,7 +294,13 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   @Override
-  public void computeRunningExecutionStacks(XSuspendContext.XExecutionStackContainer container) {
+  public void computeRunningExecutionStacks(XSuspendContext.XExecutionStackGroupContainer container, @Nullable XSuspendContext suspendContext) {
+    // TODO: Provide a platform-level way to define threads view settings, IDEA-384653
+    var showThreadGroups = ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS;
+    if (!showThreadGroups && suspendContext != null) {
+      suspendContext.computeExecutionStacks(container);
+      return;
+    }
     var debugProcess = getDebuggerSession().getProcess();
     var context = debugProcess.getDebuggerContext();
     var managerThread = context.getManagerThread();
@@ -303,12 +312,11 @@ public class JavaDebugProcess extends XDebugProcess {
       @Override
       protected void action() {
         try {
-          var currentThread = context.getThreadProxy();
-          var allThreads = VirtualMachineProxyImpl.getCurrent().allThreads();
-          var executionStacks = ContainerUtil.map(
-            allThreads, (thread) -> (XExecutionStack) new JavaExecutionStack(thread, debugProcess, thread.equals(currentThread))
-          );
-          container.addExecutionStack(executionStacks, true);
+          if (showThreadGroups) {
+            addExecutionStackGroups(container, debugProcess);
+          } else {
+            addRunningExecutionStacks(container, debugProcess);
+          }
         }
         catch (Throwable e) {
           container.errorOccurred(XDebuggerBundle.message("debugger.threads.not.available") + ": " + e.getMessage());
@@ -320,6 +328,30 @@ public class JavaDebugProcess extends XDebugProcess {
         container.errorOccurred(XDebuggerBundle.message("debugger.threads.not.available"));
       }
     });
+  }
+
+  private static void addExecutionStackGroups(XSuspendContext.XExecutionStackGroupContainer container, DebugProcessImpl debugProcess) {
+    var vm = VirtualMachineProxyImpl.getCurrent();
+    var currentThread = debugProcess.getDebuggerContext().getThreadProxy();
+    var executionStackGroups = ContainerUtil.map(
+      vm.topLevelThreadGroups(),
+      t -> JavaThreadGroup.buildJavaThreadGroup(t, debugProcess, currentThread)
+    );
+    CompletableFuture.allOf(executionStackGroups.toArray(CompletableFuture[]::new))
+      .thenAccept(unused -> {
+        if (container.isObsolete()) return;
+        var groups = ContainerUtil.map(executionStackGroups, CompletableFuture::join);
+        container.addExecutionStackGroups(groups, true);
+      })
+      .exceptionally(DebuggerUtilsAsync::logError);
+  }
+
+  private static void addRunningExecutionStacks(XSuspendContext.XExecutionStackGroupContainer container, DebugProcessImpl debugProcess) {
+    var allThreads = VirtualMachineProxyImpl.getCurrent().allThreads();
+    var executionStacks = ContainerUtil.map(
+      allThreads, (thread) -> (XExecutionStack) new JavaExecutionStack(thread, debugProcess, false)
+    );
+    container.addExecutionStack(executionStacks, true);
   }
 
   @Override

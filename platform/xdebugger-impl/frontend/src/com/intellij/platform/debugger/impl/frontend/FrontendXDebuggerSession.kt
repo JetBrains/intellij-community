@@ -16,12 +16,14 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
 import com.intellij.platform.debugger.impl.frontend.frame.*
+import com.intellij.platform.debugger.impl.frontend.storage.FrontendXStackFramesStorage
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XSmartStepIntoHandlerEntry
 import com.intellij.platform.debugger.impl.shared.proxy.XStackFramesListColorsCache
+import com.intellij.platform.debugger.impl.shared.childScopeCancelledOnSessionEvents
 import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
 import com.intellij.platform.execution.impl.frontend.executionEnvironment
 import com.intellij.platform.util.coroutines.childScope
@@ -37,6 +39,7 @@ import com.intellij.xdebugger.frame.XDropFrameHandler
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.frame.XSuspendContext.XExecutionStackContainer
 import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
@@ -446,15 +449,23 @@ class FrontendXDebuggerSession(
     return currentContext.isStepping
   }
 
-  override fun computeExecutionStacks(container: XSuspendContext.XExecutionStackContainer) {
+  override fun computeExecutionStacks(container: XExecutionStackContainer) {
     getCurrentSuspendContext()?.computeExecutionStacks(container)
   }
 
-  override fun computeRunningExecutionStacks(container: XSuspendContext.XExecutionStackContainer) {
-    coroutineScope.launch {
+  override fun computeRunningExecutionStacks(container: XSuspendContext.XExecutionStackGroupContainer) {
+    val suspendContext = getCurrentSuspendContext()
+    val scope = suspendContext?.lifetimeScope ?: coroutineScope.childScopeForRunningExecutionStack()
+    scope.launch {
       XDebugSessionApi.getInstance()
-        .computeRunningExecutionStacks(id)
-        .collectExecutionStackEvents(project, coroutineScope, container)
+        .computeRunningExecutionStacks(id, suspendContext?.id)
+        .collectExecutionStackGroupEvents(project, scope, container)
+    }
+  }
+
+  private fun CoroutineScope.childScopeForRunningExecutionStack(): CoroutineScope {
+    return coroutineScope.childScopeCancelledOnSessionEvents("FrontendRunningExecutionStacksScope", this@FrontendXDebuggerSession).also {
+      coroutineContext.plus(FrontendXStackFramesStorage())
     }
   }
 
@@ -608,4 +619,29 @@ private fun <T> CoroutineScope.syncWithLocalFlow(sourceFlow: Flow<T>, localFlowS
     }
   }
 }
+
+private suspend fun Flow<XExecutionStackGroupsEvent>.collectExecutionStackGroupEvents(
+  project: Project,
+  coroutineScope: CoroutineScope,
+  container: XSuspendContext.XExecutionStackGroupContainer
+) {
+  collect { executionStackEvent ->
+    when (executionStackEvent) {
+      is ErrorOccurredEvent -> {
+        container.errorOccurred(executionStackEvent.errorMessage)
+      }
+      is NewExecutionStacksEvent -> {
+        val feStacks = executionStackEvent.stacks.map { FrontendXExecutionStack(it, project, coroutineScope) }
+        container.addExecutionStack(feStacks, executionStackEvent.last)
+      }
+      is NewExecutionStackGroupsEvent -> {
+        val feStackGroups = executionStackEvent.groups.map {
+          FrontendXExecutionStackGroup(it, project, coroutineScope)
+        }
+        container.addExecutionStackGroups(feStackGroups, executionStackEvent.last)
+      }
+    }
+  }
+}
+
 

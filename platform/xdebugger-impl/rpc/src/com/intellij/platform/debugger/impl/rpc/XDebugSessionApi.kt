@@ -66,7 +66,7 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent>
 
-  suspend fun computeRunningExecutionStacks(sessionId: XDebugSessionId): Flow<XExecutionStacksEvent>
+  suspend fun computeRunningExecutionStacks(sessionId: XDebugSessionId, suspendContextId: XSuspendContextId?): Flow<XExecutionStackGroupsEvent>
 
   suspend fun muteBreakpoints(sessionDataId: XDebugSessionDataId, muted: Boolean)
 
