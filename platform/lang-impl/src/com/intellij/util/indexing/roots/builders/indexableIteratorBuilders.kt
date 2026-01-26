@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.diagnostic.thisLogger
@@ -37,15 +37,10 @@ internal object IndexableIteratorBuilders {
     listOf(LibraryIdIteratorBuilder(libraryId, null, null, roots, dependencyChecked))
 
 
-  fun forSdkEntity(sdkId: SdkId,
-                   roots: IndexingUrlRootHolder): Collection<IndexableIteratorBuilder> = listOf(SdkIteratorBuilder(sdkId.name, sdkId.type, null, roots))
-
   @JvmOverloads
   fun forSdk(sdkName: String, sdkType: String, file: Collection<VirtualFile>? = null): IndexableIteratorBuilder = SdkIteratorBuilder(sdkName, sdkType, file)
 
   fun forSdk(sdkId: SdkId, file: Collection<VirtualFile>? = null): IndexableIteratorBuilder = forSdk(sdkId.name, sdkId.type, file)
-
-  fun forInheritedSdk(): Collection<IndexableIteratorBuilder> = listOf(InheritedSdkIteratorBuilder)
 
   fun forModuleContent(moduleId: ModuleId): Collection<IndexableIteratorBuilder> = listOf(FullModuleContentIteratorBuilder(moduleId))
 

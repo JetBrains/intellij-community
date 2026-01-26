@@ -2,7 +2,6 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.workspace.jps.entities.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
@@ -11,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
 @ApiStatus.Internal
@@ -27,9 +25,6 @@ public final class ModuleDependencyEntitiesIndexableEntityProvider implements In
                                                                                                 @NotNull Project project) {
     List<IndexableIteratorBuilder> iterators = new SmartList<>();
     iterators.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.getSymbolicId()));
-    for (ModuleDependencyItem dependency : entity.getDependencies()) {
-      iterators.addAll(createIteratorBuildersForDependency(dependency));
-    }
     return iterators;
   }
 
@@ -37,33 +32,6 @@ public final class ModuleDependencyEntitiesIndexableEntityProvider implements In
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ModuleEntity oldEntity,
                                                                                                    @NotNull ModuleEntity newEntity,
                                                                                                    @NotNull Project project) {
-    List<IndexableIteratorBuilder> iterators = new SmartList<>();
-    List<ModuleDependencyItem> newDependencies = newEntity.getDependencies();
-    Collection<ModuleDependencyItem> oldDependencies = new HashSet<>(oldEntity.getDependencies());
-    for (ModuleDependencyItem dependency : newDependencies) {
-      if (!oldDependencies.contains(dependency)) {
-        iterators.addAll(createIteratorBuildersForDependency(dependency));
-      }
-    }
-    if (!iterators.isEmpty()) {
-      return iterators;
-    }
-    return Collections.emptyList();
-  }
-
-  private static @NotNull Collection<? extends IndexableIteratorBuilder> createIteratorBuildersForDependency(@NotNull ModuleDependencyItem dependency) {
-    if (Registry.is("use.workspace.file.index.for.partial.scanning")) return Collections.emptyList();
-    if (dependency instanceof SdkDependency) {
-      return Collections.singletonList(IndexableIteratorBuilders.INSTANCE.forSdk(((SdkDependency)dependency).getSdk().getName(),
-                                                                                 ((SdkDependency)dependency).getSdk().getType()));
-    }
-    else if (dependency instanceof LibraryDependency) {
-      LibraryId libraryId = ((LibraryDependency)dependency).getLibrary();
-      return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(libraryId, true);
-    }
-    else if (dependency instanceof InheritedSdkDependency) {
-      return IndexableIteratorBuilders.INSTANCE.forInheritedSdk();
-    }
     return Collections.emptyList();
   }
 }

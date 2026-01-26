@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.lightEdit.LightEdit
@@ -21,7 +21,6 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.SmartList
-import com.intellij.util.indexing.BuildableRootsChangeRescanningInfoImpl.BuiltRescanningInfo
 import com.intellij.util.indexing.EntityIndexingServiceImpl.WorkspaceEntitiesRootsChangedRescanningInfo
 import com.intellij.util.indexing.EntityIndexingServiceImpl.WorkspaceEventRescanningInfo
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
@@ -223,9 +222,6 @@ class ProjectEntityIndexingService(
             ref.resolve(entityStorage)
           }
           builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, entities, entityStorage))
-        }
-        else if (change is BuiltRescanningInfo) {
-          builders.addAll(getBuildersOnBuildableChangeInfo(change))
         }
         else {
           LOG.warn("Unexpected change " + change.javaClass + " " + change + ", full reindex requested")
@@ -498,23 +494,6 @@ class ProjectEntityIndexingService(
         collectIteratorBuildersOnChange(Change.Added, null, entity, project, builders, descriptionsBuilder, entityStorage)
       }
       builders.addAll(descriptionsBuilder.createBuilders(project))
-      return builders
-    }
-
-    private fun getBuildersOnBuildableChangeInfo(
-      info: BuiltRescanningInfo,
-    ): MutableCollection<out IndexableIteratorBuilder> {
-      val builders = SmartList<IndexableIteratorBuilder>()
-      val instance = IndexableIteratorBuilders
-      if (info.hasInheritedSdk) {
-        builders.addAll(instance.forInheritedSdk())
-      }
-      for (sdk in info.sdks) {
-        builders.add(instance.forSdk(sdk.first, sdk.second))
-      }
-      for (library in info.libraries) {
-        builders.addAll(instance.forLibraryEntity(library, true))
-      }
       return builders
     }
   }
