@@ -184,8 +184,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
       indicator.checkCanceled();
       long started = System.currentTimeMillis();
       String fullPattern = parameters.getCompletePattern();
-      MinusculeMatcher matcher = buildPatternMatcher(namePattern, preferStartMatches, base.getModel());
-      MinusculeMatcher fullMatcher = buildPatternMatcher(fullPattern, preferStartMatches, base.getModel());
+      MinusculeMatcher matcher = buildPatternMatcher(namePattern, preferStartMatches);
+      MinusculeMatcher fullMatcher = buildPatternMatcher(buildFullPattern(base, fullPattern), preferStartMatches);
       ((ChooseByNameModelEx)model).processNames(sequence -> {
         indicator.checkCanceled();
         MatchResult result = matchesWithFullMatcherCheck(base, fullMatcher, fullPattern, matcher, sequence);
@@ -290,10 +290,6 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   }
 
   private static @NotNull String buildFullPattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
-    if (base.getModel() instanceof MatchResultCustomizerModel model) {
-      final var processedPattern = model.processRequestPatternForFullMatcher(pattern);
-      pattern = processedPattern != null ? processedPattern : pattern;
-    }
     String fullPattern = "*" + removeModelSpecificMarkup(base.getModel(), pattern);
     for (String separator : base.getModel().getSeparators()) {
       fullPattern = StringUtil.replace(fullPattern, separator, "*" + UNIVERSAL_SEPARATOR + "*");
@@ -360,7 +356,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
                                             final ProgressIndicator indicator,
                                             final @NotNull Consumer<? super MatchResult> consumer,
                                             boolean preferStartMatches) {
-    MinusculeMatcher matcher = buildPatternMatcher(pattern, preferStartMatches, base.getModel());
+    MinusculeMatcher matcher = buildPatternMatcher(pattern, preferStartMatches);
     Processor<String> processor = name -> {
       ProgressManager.checkCanceled();
       MatchResult result = matchesWithFullMatcherCheck(base, null, pattern, matcher, name);
@@ -435,16 +431,6 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   private static @Nullable MatchResult matchName(@NotNull MinusculeMatcher matcher, @NotNull String name) {
     @Nullable List<@NotNull MatchedFragment> fragments = matcher.match(name);
     return fragments != null ? new MatchResult(name, matcher.matchingDegree(name, false, fragments), MinusculeMatcher.isStartMatch(fragments)) : null;
-  }
-
-  @ApiStatus.Internal
-  protected static @NotNull MinusculeMatcher buildPatternMatcher(@NotNull String pattern, boolean preferStartMatches, ChooseByNameModel model) {
-    if (model instanceof MatchResultCustomizerModel customizerModel) {
-      final var transformedPattern = customizerModel.processRequestPatternForFullMatcher(pattern);
-      pattern = transformedPattern != null ? transformedPattern : pattern;
-    }
-
-    return buildPatternMatcher(pattern, preferStartMatches);
   }
 
   protected static @NotNull MinusculeMatcher buildPatternMatcher(@NotNull String pattern, boolean preferStartMatches) {
@@ -578,7 +564,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
       String lastFileComp = pathComponents.get(pathCompIndex);
 
       if (lastMatches) {
-        matcher = buildPatternMatcher(lastPatternComp, true, model);
+        matcher = buildPatternMatcher(lastPatternComp, true);
         if (matcher.matches(lastFileComp) && patternComponents.size() > 1) {
           distance = 1;
         }
@@ -599,7 +585,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
         while (pathCompIndex >= 0) {
           String lowerCasePatternComp = patternComponents.get(patternCompIndex).toLowerCase(Locale.ROOT);
           String lowerCasePathComp = pathComponents.get(pathCompIndex).toLowerCase(Locale.ROOT);
-          matcher = buildPatternMatcher(lowerCasePatternComp, true, model);
+          matcher = buildPatternMatcher(lowerCasePatternComp, true);
           if (matcher.matches(lowerCasePathComp)) {
             distance = 1;
           }

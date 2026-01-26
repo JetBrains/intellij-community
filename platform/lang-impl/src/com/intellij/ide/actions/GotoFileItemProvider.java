@@ -193,9 +193,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     // Find all directories and files names similar to the last component in patternComponents
     List<MatchResult> matchingNames = new ArrayList<>();
     final String fullPattern = String.join("", patternComponents);
-    final MinusculeMatcher fullMatcher = buildPatternMatcher(fullPattern, true, base.getModel());
+    final MinusculeMatcher fullMatcher = buildPatternMatcher(fullPattern, true);
     String lastPatternComponent = patternComponents.get(patternComponents.size() - 1);
-    MinusculeMatcher matcher = buildPatternMatcher(lastPatternComponent, true, base.getModel());
+    MinusculeMatcher matcher = buildPatternMatcher(lastPatternComponent, true);
     var nameMatchingCheck = new ProcessorWithThrottledCancellationCheck<>(
       (CharSequence fileNameCharSeq) -> {
         indicator.checkCanceled();

@@ -15,7 +15,4 @@ public interface MatchResultCustomizerModel {
    */
   @Nullable
   MatchResult getCustomRulesMatchResult(@NotNull MinusculeMatcher fullMatcher, @NotNull String pattern, @NotNull MinusculeMatcher nameMatcher, @Nullable String name);
-
-  @Nullable
-  String processRequestPatternForFullMatcher(@NotNull String pattern);
 }
