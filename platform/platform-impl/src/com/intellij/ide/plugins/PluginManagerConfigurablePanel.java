@@ -129,8 +129,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
   private PluginManagerCustomizer myPluginManagerCustomizer;
 
-  private List<String> myVendorsSorted;
-
   private String myLaterSearchQuery;
   private boolean myForceShowInstalledTabForTag = false;
   private boolean myShowMarketplaceTab;
@@ -327,7 +325,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     if (myMarketplaceTab != null) {
       myMarketplaceTab.resetCache();
     }
-    myVendorsSorted = null;
 
     myPluginUpdatesService.recalculateUpdates();
 
@@ -1409,6 +1406,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     private LinkComponent myMarketplaceSortByAction;
 
     private List<String> myTagsSorted;
+    private List<String> myVendorsSorted;
 
     MarketplacePluginsTab() {
       super();
@@ -1418,10 +1416,12 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       }
 
       myTagsSorted = null;
+      myVendorsSorted = null;
     }
 
     protected void resetCache() {
       myTagsSorted = null;
+      myVendorsSorted = null;
     }
 
     @Override
