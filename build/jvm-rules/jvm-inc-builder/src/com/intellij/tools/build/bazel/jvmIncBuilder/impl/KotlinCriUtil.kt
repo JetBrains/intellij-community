@@ -79,13 +79,33 @@ private fun ReferenceID.toFqName(): String {
   return jvmName
     .replace('/', '.')
     .replace("$$", DOUBLE_DOLLAR_PLACEHOLDER)
-    .replace(DOLLAR_DIGITS_SUFFIX_REGEX, "")
+    .removeAnonymousSuffix()
     .replace('$', '.')
     .replace(DOUBLE_DOLLAR_PLACEHOLDER, ".$")
 }
 
-private val DOLLAR_DIGITS_SUFFIX_REGEX = Regex("(?:\\$\\d+)+$")
 private const val DOUBLE_DOLLAR_PLACEHOLDER = "\u0000DOUBLE_DOLLAR\u0000"
+private fun String.removeAnonymousSuffix(): String {
+  var end = length
+
+  while (end > 0) {
+    var i = end - 1
+    // Skip digits
+    while (i >= 0 && this[i].isDigit()) {
+      i--
+    }
+
+    // Check for $ and at least one digit found
+    if (i >= 0 && i < end - 1 && this[i] == '$') {
+      end = i
+    }
+    else {
+      break
+    }
+  }
+
+  return if (end == length) this else substring(0, end)
+}
 
 private fun String.addFilePathIfNeeded(fileIdToPathEntryAccumulator: MutableMap<String, Int>): Int {
   return fileIdToPathEntryAccumulator.computeIfAbsent(this) { fileIdToPathEntryAccumulator.size + 1 }
