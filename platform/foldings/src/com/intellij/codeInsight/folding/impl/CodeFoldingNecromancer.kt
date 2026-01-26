@@ -86,11 +86,12 @@ private class CodeFoldingNecromancer(
     val document = recipe.document
     val codeFoldingManager = project.serviceAsync<CodeFoldingManager>()
     val psiDocumentManager = project.serviceAsync<PsiDocumentManager>()
+    val editor = recipe.editorSupplier()
     val foldingState = readAction {
       if (psiDocumentManager.isCommitted(document)) {
         catchingExceptions {
           blockingContextToIndicator {
-            codeFoldingManager.buildInitialFoldings(document)
+            codeFoldingManager.updateFoldRegionsAsync(editor, true)
           }
         }
       } else {
@@ -98,12 +99,11 @@ private class CodeFoldingNecromancer(
       }
     }
     if (foldingState != null) {
-      val editor = recipe.editorSupplier()
       withContext(Dispatchers.EDT) {
         if (editor.foldingModel.isFoldingEnabled) {
           runReadAction { // set to editor with RA IJPL-159083
             SlowOperations.knownIssue("IJPL-165088").use {
-              foldingState.setToEditor(editor)
+              foldingState.run()
             }
           }
         }

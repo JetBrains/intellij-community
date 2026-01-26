@@ -204,7 +204,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase(),
                                 ?: error("Couldn't find scratch panel")
 
         val previewEditor = scratchFileEditor.previewEditor as TextEditor
-        return CodeInsightTestFixtureImpl.getFoldingData(previewEditor.editor, false)
+        return CodeInsightTestFixtureImpl.getFoldingData(previewEditor.editor, false, false)
     }
 
     protected fun getInlays(start: Int = 0, end: Int = myFixture.file.textLength): List<InlayScratchFileRenderer> {

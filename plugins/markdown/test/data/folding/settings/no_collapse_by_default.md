@@ -29,4 +29,7 @@ to be collapsed
 <fold text='unordered list: * [Some primary header...ader)' expand='true'>* [Some primary header](<fold text='...' expand='true'>#some-primary-header</fold>)
   * [Some secondary header](<fold text='...' expand='true'>#some-secondary-header</fold>)</fold>
 <!-- TOC --></fold>
-</fold></fold>
+
+
+
+<caret></fold></fold>

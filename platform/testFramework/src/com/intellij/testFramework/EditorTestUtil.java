@@ -34,7 +34,6 @@ import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManage
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
-import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -672,7 +671,7 @@ public final class EditorTestUtil {
     UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(project);
     undoManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
       @Override
-      public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
+      public FileEditor getCurrentEditor(@Nullable Project project) {
         return fileEditor;
       }
     });
@@ -881,28 +880,26 @@ public final class EditorTestUtil {
       }
     }
   }
-
   public static void buildInitialFoldingsInBackground(@NotNull Editor editor) {
     ThreadingAssertions.assertEventDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
-    CodeFoldingState foldingState = PlatformTestUtil.waitForFuture(ReadAction.nonBlocking(() -> {
-        Project project = editor.getProject();
-        if (project == null || editor.isDisposed()) {
-          return null;
-        }
-        if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) {
-          return null;
-        }
-        Document document = editor.getDocument();
-        PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-        if (psiFile == null || !supportsDumbModeFolding(psiFile)) {
-          return null;
-        }
-        return CodeFoldingManager.getInstance(project).buildInitialFoldings(document);
-      })
-                                                                     .submit(AppExecutorUtil.getAppExecutorService()));
+    Runnable foldingState = PlatformTestUtil.waitForFuture(ReadAction.nonBlocking(() -> {
+      Project project = editor.getProject();
+      if (project == null || editor.isDisposed()) {
+        return null;
+      }
+      if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) {
+        return null;
+      }
+      Document document = editor.getDocument();
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (psiFile == null || !supportsDumbModeFolding(psiFile)) {
+        return null;
+      }
+      return CodeFoldingManager.getInstance(project).updateFoldRegionsAsync(editor, true);
+    }).submit(AppExecutorUtil.getAppExecutorService()));
     if (foldingState != null) {
-      foldingState.setToEditor(editor);
+      foldingState.run();
     }
   }
   private static boolean supportsDumbModeFolding(@NotNull PsiFile file) {

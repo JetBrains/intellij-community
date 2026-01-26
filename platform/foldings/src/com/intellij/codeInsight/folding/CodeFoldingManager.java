@@ -44,12 +44,16 @@ public abstract class CodeFoldingManager {
   public abstract void releaseFoldings(@NotNull Editor editor);
 
   /**
-   * @deprecated use {@link #buildInitialFoldings(Document)} from background thread and then {@link CodeFoldingState#setToEditor(Editor)} in EDT
+   * @deprecated use {@link #updateFoldRegionsAsync}
    */
   @TestOnly
   @Deprecated
   public abstract void buildInitialFoldings(@NotNull Editor editor);
 
+  /**
+   * @deprecated use {@link #updateFoldRegionsAsync}
+   */
+  @Deprecated
   @RequiresBackgroundThread
   public abstract @Nullable CodeFoldingState buildInitialFoldings(@NotNull Document document);
 
