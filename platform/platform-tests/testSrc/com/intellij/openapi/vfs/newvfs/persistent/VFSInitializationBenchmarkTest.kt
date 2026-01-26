@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.junit5.StressTestApplication
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -11,6 +12,7 @@ import java.nio.file.Path
 @StressTestApplication
 class VFSInitializationBenchmarkTest {
 
+  @PerformanceUnitTest
   @Test
   @Throws(Exception::class)
   fun benchmarkVfsInitializationTime_CreateVfsFromScratch(@TempDir temporaryDirectory: Path) {
@@ -29,6 +31,7 @@ class VFSInitializationBenchmarkTest {
       .start()
   }
 
+  @PerformanceUnitTest
   @Test
   @Throws(java.lang.Exception::class)
   fun benchmarkVfsInitializationTime_OpenExistingVfs(@TempDir temporaryDirectory: Path) {

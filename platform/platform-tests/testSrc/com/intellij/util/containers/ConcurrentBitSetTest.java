@@ -4,6 +4,7 @@ package com.intellij.util.containers;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ConcurrencyUtil;
@@ -74,6 +75,7 @@ class ConcurrentBitSetTest {
     }
   }
 
+  @PerformanceUnitTest
   @Test
   void testStressFineGrainedSmallSetModifications() {
     PlatformTestUtil.assumeEnoughParallelism();
@@ -84,6 +86,7 @@ class ConcurrentBitSetTest {
       .start();
   }
 
+  @PerformanceUnitTest
   @Test
   void testStressCoarseGrainedBigSet() {
     PlatformTestUtil.assumeEnoughParallelism();
@@ -171,6 +174,7 @@ class ConcurrentBitSetTest {
     assertEquals(4, threadUsed.size(), threadUsed.size() + " :\n" + StringUtil.join(threadUsed, "\n"));
   }
 
+  @PerformanceUnitTest
   @Test
   void testParallelReadPerformance() {
     PlatformTestUtil.assumeEnoughParallelism();
