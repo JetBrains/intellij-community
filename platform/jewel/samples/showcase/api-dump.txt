@@ -38,6 +38,8 @@ f:org.jetbrains.jewel.samples.showcase.ShowcaseIcons$ProgrammingLanguages
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.ShowcaseIcons$ProgrammingLanguages
 - f:getKotlin():org.jetbrains.jewel.ui.icon.PathIconKey
+f:org.jetbrains.jewel.samples.showcase.components.BadgesKt
+- sf:Badges(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.BannersKt
 - sf:Banners(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.BordersKt
