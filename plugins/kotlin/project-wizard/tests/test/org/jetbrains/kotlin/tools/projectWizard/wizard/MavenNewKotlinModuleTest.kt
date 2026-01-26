@@ -49,9 +49,10 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     override fun runInDispatchThread() = false
 
     override fun tearDown() {
-        runAll({ CodeStyle.getDefaultSettings().clearCodeStyleSettings() },
-               { KotlinSdkType.removeKotlinSdkInTests() },
-               { super.tearDown() })
+        runAll(
+            { CodeStyle.getDefaultSettings().clearCodeStyleSettings() },
+            { KotlinSdkType.removeKotlinSdkInTests() },
+            { super.tearDown() })
     }
 
     @Test
@@ -72,10 +73,8 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             Assert.assertEquals(ignoredPoms, mavenProjectsManager.ignoredFilesPaths)
 
             // create module
-            runBlocking {
-                waitForModuleCreation {
-                    createKotlinModuleFromTemplate(project)
-                }
+            waitForModuleCreation {
+                createKotlinModuleFromTemplate(project)
             }
             assertModules(project, "project", newModuleName)
 
@@ -97,10 +96,8 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             Assert.assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
 
             // create module
-            runBlocking {
-                waitForModuleCreation {
-                    createKotlinModuleFromTemplate(project)
-                }
+            waitForModuleCreation {
+                createKotlinModuleFromTemplate(project)
             }
             assertModules(project, "project", newModuleName)
 
@@ -127,10 +124,8 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             val mavenProjectsManager = MavenProjectsManager.getInstance(project)
             Assert.assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
 
-            runBlocking {
-                waitForModuleCreation {
-                    createKotlinModuleFromTemplate(project, addSampleCode = true)
-                }
+            waitForModuleCreation {
+                createKotlinModuleFromTemplate(project, addSampleCode = true)
             }
 
             assertModules(project, listOf("project", newModuleName))
@@ -167,15 +162,13 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             val mavenProjectsManager = MavenProjectsManager.getInstance(project)
             Assert.assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
 
-            runBlocking {
-                waitForModuleCreation {
-                    createKotlinModuleFromTemplate(
-                        project, groupId = groupId,
-                        version = version,
-                        addSampleCode = addSampleCodeToModule,
-                        independentHierarchy = independentHierarchy
-                    )
-                }
+            waitForModuleCreation {
+                createKotlinModuleFromTemplate(
+                    project, groupId = groupId,
+                    version = version,
+                    addSampleCode = addSampleCodeToModule,
+                    independentHierarchy = independentHierarchy
+                )
             }
 
             assertModules(project, expectedModules)
