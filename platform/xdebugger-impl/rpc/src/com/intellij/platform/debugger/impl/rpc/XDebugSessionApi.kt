@@ -126,6 +126,23 @@ data class XExecutionStackDto(
 )
 
 @ApiStatus.Internal
+fun XExecutionStackGroupDto.flatten(): Sequence<XExecutionStackDto> = sequence {
+  yieldAll(stacks)
+  for (group in groups) {
+    yieldAll(group.flatten())
+  }
+}
+
+@ApiStatus.Internal
+@Serializable
+data class XExecutionStackGroupDto(
+  val groups: List<XExecutionStackGroupDto>,
+  val stacks: List<XExecutionStackDto>,
+  val displayName: @Nls String,
+  val icon: IconId?,
+)
+
+@ApiStatus.Internal
 @Serializable
 data class XDebugSessionDataId(override val uid: UID) : Id
 
