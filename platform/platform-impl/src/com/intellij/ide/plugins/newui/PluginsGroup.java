@@ -4,7 +4,7 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.ListPluginModel;
-import com.intellij.ide.plugins.enums.PluginsGroupType;
+import com.intellij.ide.plugins.PluginsGroupType;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.labels.LinkLabel;

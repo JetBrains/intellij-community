@@ -9,7 +9,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.certificates.PluginCertificateManager;
-import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult;
 import com.intellij.ide.plugins.marketplace.PluginSearchResult;
 import com.intellij.ide.plugins.marketplace.ranking.MarketplaceLocalRanker;

@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.enums.PluginsGroupType;
+import com.intellij.ide.plugins.PluginsGroupType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;

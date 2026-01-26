@@ -3,7 +3,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
-import com.intellij.ide.plugins.enums.PluginsGroupType;
+import com.intellij.ide.plugins.PluginsGroupType;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
